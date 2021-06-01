@@ -10,7 +10,7 @@ services: # container lists
       - db
   db: # dbService
     image: mysql:8.0.0 # image to Use
-    restart: always
+    # restart: always
     container_name: mysql-test # set container name
     ports:
       - "3306:3306" # Set Container port [External Port:Internal Port]
