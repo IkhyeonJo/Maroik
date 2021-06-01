@@ -9,7 +9,7 @@ services: # container lists
     depends_on: # build connection between container to container
       - db
   db: # dbService
-    image: mysql:8.0.0 # image to Use
+    image: mysql # image to Use
     # restart: always
     container_name: mysql-test # set container name
     ports:
