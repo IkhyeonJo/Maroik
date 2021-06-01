@@ -61,12 +61,23 @@ namespace FESTRubricWebServer
             //app.UseCookiePolicy(); // 이거 키고 Session 키니 세션이 안 됩니다.
             app.UseSession(); // Application Session use enabled.
 
-            app.UseMvc(routes =>
+            //app.UseMvc(routes =>
+            //{
+            //    routes.MapRoute(
+            //        name: "default",
+            //        //template: "{controller=User}/{action=Login}/{id?}");
+            //        template: "{controller=Admin}/{action=Login}/{id?}");
+            //});
+            app.UseRouting();
+
+            app.UseAuthorization();
+
+            app.UseEndpoints(endpoints =>
             {
-                routes.MapRoute(
+                endpoints.MapControllerRoute(
                     name: "default",
-                    //template: "{controller=User}/{action=Login}/{id?}");
-                    template: "{controller=Admin}/{action=Login}/{id?}");
+                    //pattern: "{controller=User}/{action=Login}/{id?}");
+                    pattern: "{controller=Admin}/{action=Login}/{id?}");
             });
         }
     }
