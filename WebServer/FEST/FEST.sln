@@ -7,6 +7,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FESTRubricWebServer", "Fest
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FESTAudience", "FESTAudience\FESTAudience.csproj", "{9CC584B8-C9F4-4E2E-96E9-4CE5B8A766AA}"
 EndProject
+Project("{E53339B2-1760-4266-BCC7-CA923CBCF16C}") = "docker-compose", "docker-compose.dcproj", "{719C001A-20CE-4EFE-BD14-0FB6CD882A99}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{9CC584B8-C9F4-4E2E-96E9-4CE5B8A766AA}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9CC584B8-C9F4-4E2E-96E9-4CE5B8A766AA}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9CC584B8-C9F4-4E2E-96E9-4CE5B8A766AA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{719C001A-20CE-4EFE-BD14-0FB6CD882A99}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{719C001A-20CE-4EFE-BD14-0FB6CD882A99}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{719C001A-20CE-4EFE-BD14-0FB6CD882A99}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{719C001A-20CE-4EFE-BD14-0FB6CD882A99}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
