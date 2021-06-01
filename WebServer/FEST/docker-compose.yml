@@ -22,5 +22,5 @@ services: # container lists
       - --lower_case_table_names=1
       - --character-set-server=utf8mb4
       - --collation-server=utf8mb4_unicode_ci
-    #volumes:
-    #  -  /Users/Shared/data/mysql-test:/var/lib/mysql # -v option (Set Directory mount)
+    volumes:
+      -  /Users/Shared/data/mysql-test:/var/lib/mysql # -v option (Set Directory mount)
