@@ -1,24 +1,26 @@
-version: '3.4'
+version: '3.4' # File Form Version
 
-services:
-  festrubricwebserver:
-    image: ${DOCKER_REGISTRY-}festrubricwebserver
+services: # container lists
+  festrubricwebserver: # WebService
+    image: ${DOCKER_REGISTRY-}festrubricwebserver # image to Use
     build:
       context: .
-      dockerfile: FestRubricWebServer/Dockerfile
-    depends_on:
+      dockerfile: FestRubricWebServer/Dockerfile # just go Dockerfile
+    depends_on: # build connection between container to container
       - db
-  db:
-    image: mysql:8.0.0
+  db: # dbService
+    image: mysql:8.0.0 # image to Use
     restart: always
-    container_name: mysql-test
+    container_name: mysql-test # set container name
     ports:
-      - "3306:3306"
-    environment:
+      - "3306:3306" # Set Container port [External Port:Internal Port]
+    environment: # -e option
       - MYSQL_DATABASE=test
       - MYSQL_ROOT_PASSWORD=mariadb
       - TZ=Asia/Seoul
-    command:
+    command: # execute command
       - --lower_case_table_names=1
       - --character-set-server=utf8mb4
       - --collation-server=utf8mb4_unicode_ci
+    #volumes:
+    #  -  /Users/Shared/data/mysql-test:/var/lib/mysql # -v option (Set Directory mount)
