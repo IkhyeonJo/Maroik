@@ -1,0 +1,60 @@
+﻿@model IEnumerable<FESTRubricWebServer.Models.Admin.ProgramBookOutputModel>
+
+@{
+    ViewData["Title"] = "ProgramBook";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<h2>@(ViewBag.Category) 프로그램 북 페이지</h2>
+총 개수 : @Model.Count()
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @*@Html.DisplayNameFor(model => model.TeamNo)*@
+                팀번호
+            </th>
+            <th>
+                @*@Html.DisplayNameFor(model => model.TeamName)*@
+                팀명
+            </th>
+            <th>
+                @*@Html.DisplayNameFor(model => model.CoachName)*@
+                코치명
+            </th>
+            <th>
+                @*@Html.DisplayNameFor(model => model.MemberName)*@
+                팀원명
+            </th>
+
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>
+                    @Html.DisplayFor(modelItem => item.TeamNo)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.TeamName)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.CoachName)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.MemberName)
+                </td>
+
+            </tr>
+        }
+    </tbody>
+</table>
+<button type="button" onclick="GotoIndexPage()">인덱스(Index) 페이지로...</button>
+
+<script>
+    function GotoIndexPage() {
+        window.location.href = "@Url.Action("Index", "Admin", new { Category = ViewBag.Category})";
+    }
+</script>

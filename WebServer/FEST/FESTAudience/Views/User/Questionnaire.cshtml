@@ -1,0 +1,131 @@
+﻿@model FESTRubricWebServer.Models.User.QuestionnaireInputModel
+
+@{
+    ViewData["Title"] = "Questionnaire";
+}
+
+
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <form name="QuestionnaireForm" asp-action="Questionnaire" onsubmit="return ValidateRegisterForm()">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            
+            <div class="form-group">
+                <label asp-for="Name" class="control-label">성명: <font color="red"> *</font></label>
+                <input asp-for="Name" class="form-control" placeholder="홍길동"/>
+                <span asp-validation-for="Name" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="PhoneNumber" class="control-label">휴대폰 번호: <font color="red"> *</font></label>
+                <input name="PhoneNumber" type="text" asp-for="PhoneNumber" class="form-control" placeholder="010-0000-0000"/>
+                <span asp-validation-for="PhoneNumber" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Email" class="control-label">이메일 주소: </label>
+                <input asp-for="Email" class="form-control" placeholder="abcd@efghi.com"/>
+            </div>
+            <div class="form-group">
+                <label asp-for="Affiliation" class="control-label">소속기관: <font color="red"> *</font></label>
+                <input asp-for="Affiliation" class="form-control"/>
+                <span asp-validation-for="Affiliation" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Position" class="control-label">직책: <font color="red"> *</font></label>
+                <input asp-for="Position" class="form-control" />
+                <span asp-validation-for="Position" class="text-danger"></span>
+            </div>
+            <div>
+                <label class="control-label">참관 목적:</label>
+            </div>
+            <div class="form-group">
+                <div class="checkbox">
+                    <label>
+                        <input asp-for="ChkFamily" /> 참가자 가족
+                    </label>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="checkbox">
+                    <label>
+                        <input asp-for="ChkPrepareContest" /> 코리아로봇챔피언십 참가 준비
+                    </label>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="checkbox">
+                    <label>
+                        <input asp-for="ChkInfoRobot" /> 로봇대회 정보 수집
+                    </label>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="checkbox">
+                    <label>
+                        <input asp-for="ChkChildInfo" /> 자녀 교육 정보 취득
+                    </label>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="checkbox">
+                    <label>
+                        <input asp-for="ChkFTCInfo" /> 창의 융합 교육 정보 취득
+                    </label>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="checkbox">
+                    <label>
+                        <input asp-for="ChkCodingInfo" /> 코딩 교육 정보 취득
+                    </label>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="checkbox">
+                    <label>
+                        <input asp-for="ChkRobotEduInfo" /> 로봇 활용 교육 정보 취득
+                    </label>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="checkbox">
+                    <label>
+                        <input asp-for="ChkEtc" onclick="disableMyText()" id="etc"/> 기타
+                    </label>
+                </div>
+            </div>
+            <div class="form-group">
+                <input asp-for="EtcContents" class="form-control" id="etcContents" disabled/>
+                <span asp-validation-for="EtcContents" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <input type="submit" value="등록 제출" class="btn btn-primary" />
+            </div>
+        </form>
+    </div>
+</div>
+
+<div>
+    <a asp-action="Index">초기 화면으로...</a>
+</div>
+
+<script>
+    function disableMyText() {
+        if (document.getElementById("etc").checked == true) {
+            document.getElementById("etcContents").disabled = false;
+        } else {
+            document.getElementById("etcContents").disabled = true;
+        }
+    }
+    function ValidateRegisterForm() {
+        var emailRegex = /^(([^<>()\[\]\\.,;:\s@@"]+(\.[^<>()\[\]\\.,;:\s@@"]+)*)|(".+"))@@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+        var regExp = /^\d{3}-\d{3,4}-\d{4}$/;
+        if ((!regExp.test(String(document.forms["QuestionnaireForm"]["PhoneNumber"].value)))) {
+            alert("유효하지 않은 휴대폰 번호 형식입니다. \n(Invalid Phone Number Form)");
+            return false;
+        }
+        else {
+            return true;
+        }
+    }
+</script>

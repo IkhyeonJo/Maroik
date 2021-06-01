@@ -1,0 +1,17 @@
+﻿@model FESTRubricWebServer.Models.User.AdmissionTicketOutputModel
+
+@{
+    ViewData["Title"] = Model.Category + "KRCTeamAdmissionTicket";
+}
+@if (Model.Category == "FTC")
+{
+    @await Html.PartialAsync("~/Views/User/_AdmissionTicket/_FTC.cshtml")
+}
+else if (Model.Category == "FLL")
+{
+    @await Html.PartialAsync("~/Views/User/_AdmissionTicket/_FLL.cshtml")
+}
+else //FLL Jr.
+{
+    @await Html.PartialAsync("~/Views/User/_AdmissionTicket/_FLLJr.cshtml")
+}

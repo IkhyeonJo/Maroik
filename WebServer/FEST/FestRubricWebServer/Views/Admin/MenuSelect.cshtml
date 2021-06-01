@@ -1,0 +1,13 @@
+﻿
+@{
+    ViewData["Title"] = "MenuSelect";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+<h1 class="text-center">KRC Infonet</h1>
+<h2>메뉴선택(MenuSelect)</h2>
+
+<p>
+    @Html.ActionLink("FLL 본선 진출팀 선택 메뉴", "Index", new { Category = "FLL"})<br /><br />
+    @Html.ActionLink("FTC 본선 진출팀 선택 메뉴", "Index", new { Category = "FTC"})<br /><br />
+    @Html.ActionLink("FLL Jr. 본선 진출팀 선택 메뉴", "Index", new { Category = "FLL Jr."})<br /><br />
+</p>

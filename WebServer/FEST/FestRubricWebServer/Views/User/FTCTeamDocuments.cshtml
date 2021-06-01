@@ -1,0 +1,376 @@
+﻿
+@{
+    ViewData["Title"] = "FTCTeamDocuments";
+}
+<style>
+    span {
+        white-space: pre-wrap;
+    }
+
+    p.pt-a {
+        font-family: Calibri;
+        font-size: 11pt;
+        line-height: 108%;
+        margin-top: 0;
+        margin-left: 0;
+        margin-right: 0;
+        margin-bottom: .001pt;
+    }
+
+    span.pt-a0 {
+        font-family: Calibri;
+        font-size: 11pt;
+        font-style: normal;
+        font-weight: bold;
+        margin: 0;
+        padding: 0;
+    }
+
+    span.pt-a0-000000 {
+        font-family: 맑은 고딕;
+        font-size: 11pt;
+        font-style: normal;
+        font-weight: bold;
+        margin: 0;
+        padding: 0;
+    }
+
+    p.pt-a-000001 {
+        font-family: Calibri;
+        font-size: 10pt;
+        line-height: 108%;
+        margin-top: 0;
+        margin-left: 0;
+        margin-right: 0;
+        margin-bottom: .001pt;
+    }
+
+    span.pt-000002 {
+        font-size: 10pt;
+        font-style: normal;
+        font-weight: normal;
+        margin: 0;
+        padding: 0;
+    }
+
+    span.pt-a0-000003 {
+        font-family: Calibri;
+        font-size: 10pt;
+        font-style: normal;
+        font-weight: normal;
+        margin: 0;
+        padding: 0;
+    }
+
+    span.pt-a0-000004 {
+        font-family: 맑은 고딕;
+        font-size: 10pt;
+        font-style: normal;
+        font-weight: normal;
+        margin: 0;
+        padding: 0;
+    }
+
+    p.pt-000005 {
+        margin-left: 0.55in;
+        text-indent: -0.25in;
+        font-family: 맑은 고딕;
+        font-size: 10pt;
+        line-height: 108%;
+        margin-top: 0;
+        margin-right: 0;
+        margin-bottom: .001pt;
+    }
+
+    span.pt-000006 {
+        font-family: Calibri;
+        font-size: 10pt;
+        font-style: normal;
+        font-weight: normal;
+        margin: 0;
+        padding: 0;
+        display: inline-block;
+        text-indent: 0;
+        width: 0.250in;
+    }
+
+    p.pt-000007 {
+        margin-left: 0.75in;
+        text-indent: -0.25in;
+        font-family: 맑은 고딕;
+        font-size: 10pt;
+        line-height: 108%;
+        margin-top: 0;
+        margin-right: 0;
+        margin-bottom: .001pt;
+    }
+
+    span.pt-000008 {
+        font-family: Symbol;
+        font-size: 10pt;
+        font-style: normal;
+        font-weight: normal;
+        margin: 0;
+        padding: 0;
+        display: inline-block;
+        text-indent: 0;
+        width: 0.250in;
+    }
+
+    p.pt-000009 {
+        margin-left: 0.75in;
+        text-indent: -0.25in;
+        font-family: Symbol;
+        font-size: 10pt;
+        line-height: 108%;
+        margin-top: 0;
+        margin-right: 0;
+        margin-bottom: .001pt;
+    }
+
+    span.pt-000010 {
+        font-family: Symbol;
+        font-size: 10pt;
+        text-decoration: underline;
+        font-style: normal;
+        font-weight: bold;
+        margin: 0;
+        padding: 0;
+        display: inline-block;
+        text-indent: 0;
+        width: 0.250in;
+    }
+
+    span.pt-a0-000011 {
+        font-family: 맑은 고딕;
+        font-size: 10pt;
+        text-decoration: underline;
+        font-style: normal;
+        font-weight: bold;
+        margin: 0;
+        padding: 0;
+    }
+
+    span.pt-a0-000012 {
+        font-family: Calibri;
+        font-size: 10pt;
+        text-decoration: underline;
+        font-style: normal;
+        font-weight: bold;
+        margin: 0;
+        padding: 0;
+    }
+
+    p.pt-a6 {
+        margin-left: 0.75in;
+        font-family: Calibri;
+        font-size: 10pt;
+        line-height: 108%;
+        margin-top: 0;
+        margin-right: 0;
+        margin-bottom: .001pt;
+    }
+
+    p.pt-a-000013 {
+        font-family: 맑은 고딕;
+        font-size: 10pt;
+        line-height: 108%;
+        margin-top: 0;
+        margin-left: 0;
+        margin-right: 0;
+        margin-bottom: .001pt;
+    }
+</style>
+<br />
+<br />
+
+@if (TempData["check"] != null)
+{
+    @Html.Raw(TempData["check"])
+    <script>window.location.href = "@Url.Action("Notice", "User")";</script>
+}
+@if (TempData["msg"] != null)
+{
+    @Html.Raw(TempData["msg"])
+    <script>window.location.href = "@Url.Action("Notice", "User")";</script>
+}
+<form action="@Url.Action("FTCTeamDocuments", "User")" method="post" enctype="multipart/form-data" onsubmit="return ValidateFTCTeamDocumentsForm()">
+    <div>
+        <p dir="ltr"
+           class="pt-a">
+            <span class="pt-a0">FTC</span>
+            <span xml:space="preserve"
+                  class="pt-a0"> </span>
+            <span lang="ko-KR"
+                  class="pt-a0-000000">팀 제출 서류 안내</span>
+        </p>
+        <p dir="ltr"
+           class="pt-a-000001">
+            <span xml:space="preserve"
+                  class="pt-000002"> </span>
+        </p>
+        <p dir="ltr"
+           class="pt-a-000001">
+            <span class="pt-a0-000003">F</span>
+            <span xml:space="preserve"
+                  class="pt-a0-000003">TC </span>
+            <span lang="ko-KR"
+                  class="pt-a0-000004">팀은 디자인 심사 및 엔지니어링 노트 심사를 위해 다음과 같이 제출하여 주시기 바랍니다.</span>
+        </p>
+        <p dir="ltr"
+           class="pt-a-000001">
+            <span xml:space="preserve"
+                  class="pt-000002"> </span>
+        </p>
+        <p dir="ltr"
+           class="pt-000005">
+            <span class="pt-000006">1.</span>
+            <span lang="ko-KR"
+                  xml:space="preserve"
+                  class="pt-a0-000004">대회 전 제출 서류 </span>
+            <span xml:space="preserve"
+                  class="pt-a0-000003">: </span>
+            <span lang="ko-KR"
+                  class="pt-a0-000004">디자인</span>
+            <span xml:space="preserve"
+                  class="pt-a0-000003"> </span>
+            <span lang="ko-KR"
+                  xml:space="preserve"
+                  class="pt-a0-000004">리포트 </span>
+            <span class="pt-a0-000003">1</span>
+            <span lang="ko-KR"
+                  class="pt-a0-000004">부  (양식 다운로드)</span>
+        </p>
+        <p dir="ltr"
+           class="pt-000007">
+            <span class="pt-000008"></span>
+            <span lang="ko-KR"
+                  class="pt-a0-000004">양식을 다운로드하여 양식에 따라 작성합니다.</span>
+        </p>
+        <p dir="ltr"
+           class="pt-000009">
+            <span class="pt-000008"></span>
+            <span class="pt-a0-000003">KRC Infonet</span>
+            <span lang="ko-KR"
+                  xml:space="preserve"
+                  class="pt-a0-000004">에 업로드합니다. </span>
+        </p>
+        <p dir="ltr"
+           class="pt-000007">
+            <span class="pt-000008"></span>
+            <span lang="ko-KR"
+                  xml:space="preserve"
+                  class="pt-a0-000004">업로드 기한 </span>
+            <span class="pt-a0-000003">: 2019. 1. 24. (</span>
+            <span lang="ko-KR"
+                  class="pt-a0-000004">목)</span>
+        </p>
+        <p dir="ltr"
+           class="pt-000005">
+            <span class="pt-000006">2.</span>
+            <span lang="ko-KR"
+                  class="pt-a0-000004">대회 당일 제출 서류 : 디자인</span>
+            <span xml:space="preserve"
+                  class="pt-a0-000003"> </span>
+            <span lang="ko-KR"
+                  xml:space="preserve"
+                  class="pt-a0-000004">리포트 출력  </span>
+            <span class="pt-a0-000003">2</span>
+            <span lang="ko-KR"
+                  xml:space="preserve"
+                  class="pt-a0-000004">부, 엔지니어링 노트 사본 </span>
+            <span class="pt-a0-000003">1</span>
+            <span lang="ko-KR"
+                  class="pt-a0-000004">부</span>
+        </p>
+        <p dir="ltr"
+           class="pt-000007">
+            <span class="pt-000008"></span>
+            <span lang="ko-KR"
+                  xml:space="preserve"
+                  class="pt-a0-000004">업로드한 디자인 리포트를 </span>
+            <span class="pt-a0-000003">2</span>
+            <span lang="ko-KR"
+                  class="pt-a0-000004">부 출력하여 제출합니다.</span>
+        </p>
+        <p dir="ltr"
+           class="pt-000007">
+            <span class="pt-000008"></span>
+            <span lang="ko-KR"
+                  class="pt-a0-000004">팀이 작성한 엔지니어링 노트를 제출합니다.</span>
+        </p>
+        <p dir="ltr"
+           class="pt-000007">
+            <span class="pt-000010"></span>
+            <span lang="ko-KR"
+                  class="pt-a0-000011">제출한 서류는 반환되지 않습니다.</span>
+        </p>
+        <p dir="ltr"
+           class="pt-000007">
+            <span class="pt-000008"></span>
+            <span lang="ko-KR"
+                  class="pt-a0-000004">제출 방법 : 대회 당일 입장 직 후,</span>
+            <span xml:space="preserve"
+                  class="pt-a0-000003"> </span>
+            <span lang="ko-KR"
+                  xml:space="preserve"
+                  class="pt-a0-000004">바로 </span>
+            <span xml:space="preserve"
+                  class="pt-a0-000003">FTC </span>
+            <span lang="ko-KR"
+                  xml:space="preserve"
+                  class="pt-a0-000004">경기장의 </span>
+            <span xml:space="preserve"
+                  class="pt-a0-000012">FTC </span>
+            <span lang="ko-KR"
+                  class="pt-a0-000011">운영센터</span>
+            <span lang="ko-KR"
+                  class="pt-a0-000004">에 제출합니다.</span>
+        </p>
+        <p dir="ltr"
+           class="pt-a6">
+            <span xml:space="preserve"
+                  class="pt-000002"> </span>
+        </p>
+        <p dir="ltr"
+           class="pt-a-000013">
+            <span lang="ko-KR"
+                  class="pt-a0-000004">감사합니다.</span>
+        </p>
+        <p dir="ltr"
+           class="pt-a-000001" />
+        <p dir="ltr"
+           class="pt-a-000001">
+            <span xml:space="preserve"
+                  class="pt-000002"> </span>
+        </p>
+    </div>
+    <br/>
+    <div class="form-group">
+        <a href="~/download/2018-2019 Design Report.docx" download="2018-2019 Design Report.docx">디자인 리포트(Design Report)</a>
+    </div>
+    <div class="form-group">
+        <input type="file" name="files" id="chk_file" /> <br />
+        <input type="submit" value="서류 제출(Submit)" />
+    </div>
+</form>
+<script>
+    function ValidateFTCTeamDocumentsForm() {
+        var files = document.getElementById('chk_file').files[0];
+        if (files === undefined || files == null) {
+            alert("파일 첨부하여 주십시오. (Please attach a file)");
+            $('input[type=file]').val(null);
+            return false;
+        }
+        else {
+            if (files.size > 10485760) {
+                alert("파일 크기는 10MB 이하만 가능합니다. (File Size must be smaller than 10MB.)");
+                $('input[type=file]').val(null);
+                return false;
+            }
+            else if (files.size > 0 && files.size <= 10485760) {
+                return true;
+            }
+        }
+    }
+</script>

@@ -1,0 +1,120 @@
+﻿@model IEnumerable<FESTRubricWebServer.Models.User.MemberOutputModel>
+@using Microsoft.AspNetCore.Http
+@using FESTRubricWebServer.Models.User
+
+@{
+    ViewData["Title"] = "Index";
+}
+
+<h2>@Context.Session.GetString("FestSession") 팀원 정보 등록 (Team Member Registration)</h2>
+<h4>Category : @ViewBag.Category</h4>
+<h4><font color="red">- FLL Jr. : 1 ~ 6, FLL : 2 ~ 10, FTC : 3 ~ 15 명 등록 가능합니다.</font></h4><br />
+<h4><font color="red">기한 : 2018년 12월 28일까지 (Deadline : December 28, 2018)</font></h4><br />
+<h4>등록된 팀원 수 (Number of Registered Member) : @ViewBag.RegisteredMemberNumber</h4><br />
+
+@if (DateTime.Compare(DateTime.Now, new DateTime(2018, 12, 29)) >= 0)
+{
+    <h4><font color="red">기한 : 2018년 12월 28일까지 (Deadline : December 28, 2018)</font></h4>
+}
+else if ((ViewBag.Category == "FLL Jr." && Convert.ToInt32(ViewBag.RegisteredMemberNumber) < 6) || (ViewBag.Category == "FLL" && Convert.ToInt32(ViewBag.RegisteredMemberNumber) < 10) || (ViewBag.Category == "FTC" && Convert.ToInt32(ViewBag.RegisteredMemberNumber) < 15))
+{
+    <p>
+        <a asp-action="Create">Create New</a>
+    </p>
+}
+else
+{
+    <h4><font color="red">더 이상 등록하실 수 없습니다. (no more registration.)</font></h4>
+}
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.MemberName) <br />
+                (팀원 이름)<br />
+                @Html.DisplayNameFor(model => model.ResidentNumber) <br />
+                (주민등록번호)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Level) <br />
+                (학제)<br />
+                @Html.DisplayNameFor(model => model.Grade) <br />
+                (학년)<br />
+                @Html.DisplayNameFor(model => model.School) <br />
+                (학교명)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.MemberPhone) <br />
+                (팀원 핸드폰)<br />
+                @Html.DisplayNameFor(model => model.MemberEmail) <br />
+                (팀원 이메일)
+            </th>
+            <th>
+                GuardianName (보호자 성함)
+            </th>
+            <th>
+                GuardianPhone (보호자 전화번호)
+            </th>
+            <th>
+                GuardianRelationShip (팀원과의 관계)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>
+                    @Html.DisplayFor(modelItem => item.MemberName)<br />
+                    @Html.DisplayFor(modelItem => item.ResidentNumber)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Level)<br />
+                    @Html.DisplayFor(modelItem => item.Grade)<br />
+                    @Html.DisplayFor(modelItem => item.School)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.MemberPhone)<br />
+                    @Html.DisplayFor(modelItem => item.MemberEmail)
+                </td>
+
+                <td>
+                    @Html.DisplayFor(modelItem => item.GuardianName1)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.GuardianPhone1)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.RelationShip1)
+                </td>
+                @if (!(DateTime.Compare(DateTime.Now, new DateTime(2018, 12, 29)) >= 0))
+                {
+                <td>
+                    @Html.ActionLink("Edit", "Edit", new { id = item.MemberID }) |
+                    @Html.ActionLink("Delete", "Delete", new { id = item.MemberID }
+                         , new { onclick = "return ConfirmBox();" })
+                </td>
+                }
+                else
+                {
+                <td>
+                    <font color="red">기한 : 2018년 12월 28일까지 (Deadline : December 28, 2018)</font>
+                </td>
+                    
+                }
+            </tr>
+        }
+    </tbody>
+</table>
+<script>
+    function ConfirmBox() {
+        var r = confirm("정말 삭제하시겠습니까? (Are you sure?)");
+        if (r == true) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+</script>

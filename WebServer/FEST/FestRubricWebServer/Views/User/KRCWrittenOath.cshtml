@@ -1,0 +1,496 @@
+﻿
+@{
+    ViewData["Title"] = "KRCWrittenOath";
+}
+<style>
+    span {
+        white-space: pre-wrap;
+    }
+
+    p.pt-a5 {
+        margin-top: 0;
+        margin-bottom: 0;
+        text-align: center;
+        font-family: 맑은 고딕;
+        font-size: 14pt;
+        line-height: 108%;
+        margin-left: 0;
+        margin-right: 0;
+    }
+
+    span.pt-a0 {
+        color: #000000;
+        font-family: 맑은 고딕;
+        font-size: 14pt;
+        font-style: normal;
+        font-weight: bold;
+        margin: 0;
+        padding: 0;
+    }
+
+    p.pt-a5-000000 {
+        margin-top: 0;
+        margin-bottom: 0;
+        text-align: center;
+        font-family: 맑은 고딕;
+        font-size: 16pt;
+        line-height: 108%;
+        margin-left: 0;
+        margin-right: 0;
+    }
+
+    span.pt-a0-000001 {
+        color: #000000;
+        background: #FFFFFF;
+        font-family: 맑은 고딕;
+        font-size: 16pt;
+        font-style: normal;
+        font-weight: bold;
+        margin: 0;
+        padding: 0;
+    }
+
+    p.pt-a {
+        line-height: 18.0pt;
+        margin-bottom: 0;
+        background: #FFFFFF;
+        font-family: Calibri;
+        font-size: 10pt;
+        vertical-align: baseline;
+        margin-top: 0;
+        margin-left: 0;
+        margin-right: 0;
+    }
+
+    span.pt-000002 {
+        background: #FFFFFF;
+        font-size: 10pt;
+        font-style: normal;
+        font-weight: normal;
+        margin: 0;
+        padding: 0;
+    }
+
+    p.pt-000003 {
+        line-height: 18.0pt;
+        margin-bottom: 0;
+        margin-left: 0.53in;
+        text-indent: -0.25in;
+        background: #FFFFFF;
+        font-family: Calibri;
+        font-size: 10pt;
+        vertical-align: baseline;
+        margin-top: 0;
+        margin-right: 0;
+    }
+
+    span.pt-000004 {
+        background: #FFFFFF;
+        font-family: Calibri;
+        font-size: 10pt;
+        font-style: normal;
+        font-weight: normal;
+        margin: 0;
+        padding: 0;
+        display: inline-block;
+        text-indent: 0;
+        width: 0.250in;
+    }
+
+    span.pt-a0-000005 {
+        background: #FFFFFF;
+        font-family: Calibri;
+        font-size: 10pt;
+        font-style: normal;
+        font-weight: normal;
+        margin: 0;
+        padding: 0;
+    }
+
+    p.pt-000006 {
+        line-height: 18.0pt;
+        margin-bottom: 0;
+        margin-left: 0.53in;
+        text-indent: -0.25in;
+        text-align: justify;
+        background: #FFFFFF;
+        font-family: Calibri;
+        font-size: 10pt;
+        vertical-align: baseline;
+        margin-top: 0;
+        margin-right: 0;
+    }
+
+    p.pt-000007 {
+        line-height: 18.0pt;
+        margin-bottom: 0;
+        margin-left: 0.83in;
+        text-indent: -0.28in;
+        text-align: justify;
+        background: #FFFFFF;
+        font-family: Calibri;
+        font-size: 10pt;
+        vertical-align: baseline;
+        margin-top: 0;
+        margin-right: 0;
+    }
+
+    span.pt-000008 {
+        background: #FFFFFF;
+        font-family: Calibri;
+        font-size: 10pt;
+        font-style: normal;
+        font-weight: normal;
+        margin: 0;
+        padding: 0;
+        display: inline-block;
+        text-indent: 0;
+        width: 0.278in;
+    }
+
+    p.pt-a-000009 {
+        line-height: 18.0pt;
+        margin-bottom: 0;
+        margin-left: 0.53in;
+        text-align: justify;
+        background: #FFFFFF;
+        font-family: Calibri;
+        font-size: 10pt;
+        vertical-align: baseline;
+        margin-top: 0;
+        margin-right: 0;
+    }
+
+    p.pt-a-000010 {
+        line-height: 18.0pt;
+        margin-bottom: 0;
+        text-align: justify;
+        background: #FFFFFF;
+        font-family: Calibri;
+        font-size: 10pt;
+        vertical-align: baseline;
+        margin-top: 0;
+        margin-left: 0;
+        margin-right: 0;
+    }
+
+    span.pt-a0-000011 {
+        background: #FFFFFF;
+        font-size: 10pt;
+        font-style: normal;
+        font-weight: normal;
+        margin: 0;
+        padding: 0;
+    }
+
+    span.pt-000012 {
+        margin: 0 0 0 0.50in;
+        padding: 0 0 0 0;
+    }
+
+    span.pt-a0-000013 {
+        background: #FFFFFF;
+        font-family: Calibri;
+        font-size: 9pt;
+        font-style: normal;
+        font-weight: bold;
+        margin: 0;
+        padding: 0;
+    }
+</style>
+<br />
+<br />
+
+@if (TempData["check"] != null)
+{
+    @Html.Raw(TempData["check"])
+    <script>window.location.href = "@Url.Action("Notice", "User")";</script>
+}
+
+@if (TempData["msg"] != null)
+{
+    @Html.Raw(TempData["msg"])
+    <script>window.location.href = "@Url.Action("Notice", "User")";</script>
+}
+<form action="@Url.Action("KRCWrittenOath", "User")" method="post" enctype="multipart/form-data" onsubmit="return ValidateKRCWrittenOathForm()">
+    <div>
+        <p dir="ltr"
+           class="pt-a5">
+            <span class="pt-a0">Korea Robot Championship</span>
+        </p>
+        <br />
+        <p dir="ltr"
+           class="pt-a5-000000">
+            <span lang="ko-KR"
+                  xml:space="preserve"
+                  class="pt-a0-000001">팀 </span>
+            <span lang="ko-KR"
+                  xml:space="preserve"
+                  class="pt-a0-000001"> 서약서</span>
+        </p>
+        <p dir="ltr"
+           class="pt-a">
+            <span xml:space="preserve"
+                  class="pt-000002"> </span>
+        </p>
+        <p dir="ltr"
+           class="pt-000003">
+            <span class="pt-000004">1.</span>
+            <span xml:space="preserve"
+                  class="pt-a0-000005">KOREA ROBOT CHAMPIONSHIP이 </span>
+            <span lang="ko-KR"
+                  class="pt-a0-000005">지향하는 핵심가치</span>
+            <span class="pt-a0-000005">(Core Value)</span>
+            <span lang="ko-KR"
+                  class="pt-a0-000005">를 이해하고</span>
+            <span xml:space="preserve"
+                  class="pt-a0-000005">, </span>
+            <span lang="ko-KR"
+                  class="pt-a0-000005">팀 구성원과 함께 성실하고 즐겁게 활동하며</span>
+            <span lang="ko-KR"
+                  class="pt-a0-000005">, "</span>
+            <span lang="ko-KR"
+                  class="pt-a0-000005">아름답고 소중한 프로정신</span>
+            <span class="pt-a0-000005">(Gracious Professionalism)"</span>
+            <span lang="ko-KR"
+                  class="pt-a0-000005">을 열정적으로 발휘하겠습니다</span>
+            <span class="pt-a0-000005">.</span>
+        </p>
+        <p dir="ltr"
+           class="pt-000006">
+            <span class="pt-000004">2.</span>
+            <span xml:space="preserve"
+                  class="pt-a0-000005">KRC 행사 중 촬영된 모든 사진 및 영상을</span>
+            <span class="pt-a0-000005">FEST</span>
+            <span lang="ko-KR"
+                  xml:space="preserve"
+                  class="pt-a0-000005"> 창의공학교육협회 및 협회 지정기관에서 발행하는 인쇄물에 사용함을 동의합니다.</span>
+        </p>
+        <p dir="ltr"
+           class="pt-000006">
+            <span class="pt-000004">3.</span>
+            <span xml:space="preserve"
+                  class="pt-a0-000005">FEST </span>
+            <span lang="ko-KR"
+                  class="pt-a0-000005">창의공학교육협회는 세계대회 출전에 관한 업무와 안내를 제공하며,</span>
+            <span xml:space="preserve"
+                  class="pt-a0-000005"> KRC</span>
+            <span lang="ko-KR"
+                  xml:space="preserve"
+                  class="pt-a0-000005">를 통해 세계대회 진출 자격을 획득하여 세계 대회에 참가하는 팀의 모든 경비는 참가 팀이 부담함을</span>
+            <span lang="ko-KR"
+                  class="pt-a0-000005">인지합니다.</span>
+        </p>
+        <p dir="ltr"
+           class="pt-000006">
+            <span class="pt-000004">4.</span>
+            <span xml:space="preserve"
+                  class="pt-a0-000005">KRC </span>
+            <span lang="ko-KR"
+                  xml:space="preserve"
+                  class="pt-a0-000005">대회 중 참가 학생의 </span>
+            <span lang="ko-KR"
+                  xml:space="preserve"
+                  class="pt-a0-000005">개인적인 </span>
+            <span lang="ko-KR"
+                  class="pt-a0-000005">부주의로 인해 생긴 안전사고</span>
+            <span class="pt-a0-000005">(</span>
+            <span lang="ko-KR"
+                  class="pt-a0-000005">공식 사용 물품 이외의 위험</span>
+            <span xml:space="preserve"
+                  class="pt-a0-000005"> </span>
+            <span lang="ko-KR"
+                  class="pt-a0-000005">소지가 있는 제품을 사용하다 입은 상해</span>
+            <span lang="ko-KR"
+                  xml:space="preserve"
+                  class="pt-a0-000005"> 등)</span>
+            <span lang="ko-KR"
+                  class="pt-a0-000005">에 대해서는 보험 적용이 되지 않음을 알고 있으며,</span>
+            <span xml:space="preserve"
+                  class="pt-a0-000005"> </span>
+            <span lang="ko-KR"
+                  class="pt-a0-000005">안전하게</span>
+            <span lang="ko-KR"
+                  xml:space="preserve"
+                  class="pt-a0-000005"> 대회가 진행될 수 있도록</span>
+            <span lang="ko-KR"
+                  xml:space="preserve"
+                  class="pt-a0-000005"> 안전 수칙을 준수하고 개인 안전사고에 대해</span>
+            <span lang="ko-KR"
+                  xml:space="preserve"
+                  class="pt-a0-000005"> 주의하겠습니다</span>
+            <span class="pt-a0-000005">.</span>
+        </p>
+        <p dir="ltr"
+           class="pt-000006">
+            <span class="pt-000004">5.</span>
+            <span xml:space="preserve"
+                  class="pt-a0-000005">KRC </span>
+            <span lang="ko-KR"
+                  class="pt-a0-000005">대회 중 다음과 같은 행위를 한 팀은 수상에서 제외됨을 동의합니다.</span>
+        </p>
+        <p dir="ltr"
+           class="pt-000007">
+            <span class="pt-000008">A.</span>
+            <span lang="ko-KR"
+                  class="pt-a0-000005">욕설,</span>
+            <span xml:space="preserve"
+                  class="pt-a0-000005"> </span>
+            <span lang="ko-KR"
+                  class="pt-a0-000005">비속어 사용</span>
+        </p>
+        <p dir="ltr"
+           class="pt-000007">
+            <span class="pt-000008">B.</span>
+            <span lang="ko-KR"
+                  class="pt-a0-000005">싸움</span>
+        </p>
+        <p dir="ltr"
+           class="pt-000007">
+            <span class="pt-000008">C.</span>
+            <span lang="ko-KR"
+                  xml:space="preserve"
+                  class="pt-a0-000005">코치에 의한 로봇 수정, 프로그램 개발 </span>
+        </p>
+        <p dir="ltr"
+           class="pt-000007">
+            <span class="pt-000008">D.</span>
+            <span lang="ko-KR"
+                  class="pt-a0-000005">대회 운영 위원의 지시 사항을 준수하지 않거나 무례한 언행</span>
+        </p>
+        <p dir="ltr"
+           class="pt-000007">
+            <span class="pt-000008">E.</span>
+            <span lang="ko-KR"
+                  class="pt-a0-000005">학부모, 지인 등에 의한 개입</span>
+        </p>
+        <p dir="ltr"
+           class="pt-000007">
+            <span class="pt-000008">F.</span>
+            <span lang="ko-KR"
+                  class="pt-a0-000005">팀이 단체로 심사 결과에 이의를 제기하는 행위</span>
+        </p>
+        <p dir="ltr"
+           class="pt-000006">
+            <span class="pt-000004">6.</span>
+            <span lang="ko-KR"
+                  class="pt-a0-000005">대회 운영 위원 및 심판 등 대회를 진행하는</span>
+            <span xml:space="preserve"
+                  class="pt-a0-000005"> FEST</span>
+            <span lang="ko-KR"
+                  class="pt-a0-000005">의 모든</span>
+            <span lang="ko-KR"
+                  xml:space="preserve"
+                  class="pt-a0-000005"> 위원들은 재능기부로 봉사하시는 분들이며 대회 중 운영 위원들께 항상 존경을 표하며, 대회 운영 및 규정에 관해 의견이 있을 때에는</span>
+
+            <span lang="ko-KR"
+                  xml:space="preserve"
+                  class="pt-a0-000005"> 팀 리더를 통해서 의견을 제출하겠습니다.</span>
+        </p>
+        <p dir="ltr"
+           class="pt-000006">
+            <span class="pt-000004">7.</span>
+            <span lang="ko-KR"
+                  class="pt-a0-000005">대회 운영 및 심사는 운영 및 심사 위원회의 논의와 결정으로 진행됨을 이해하고 있으며,</span>
+            <span xml:space="preserve"
+                  class="pt-a0-000005"> </span>
+            <span lang="ko-KR"
+                  class="pt-a0-000005">대회 운영 및 심사에 관한 관련 위원회의 모든 최종 결정에 대해 동의하겠습니다.</span>
+        </p>
+        <p dir="ltr"
+           class="pt-000006">
+            <span class="pt-000004">8.</span>
+            <span lang="ko-KR"
+                  class="pt-a0-000005">모든 팀원, 코치는 KRC</span>
+            <span xml:space="preserve"
+                  class="pt-a0-000005"> </span>
+            <span lang="ko-KR"
+                  class="pt-a0-000005">팀 서약서에 서명하여 제출하여야 합니다.</span>
+        </p>
+        <p dir="ltr"
+           class="pt-a-000009">
+            <a href="~/download/KRC 팀 서약서.pdf" download="KRC 팀 서약서.pdf">팀 서약서 양식 다운로드</a>
+        </p>
+        <p dir="ltr"
+           class="pt-a-000009">
+            <span lang="ko-KR"
+                  class="pt-a0-000005">코치 및 모든 팀원의 서명을 완료한 팀 서약서를 스캔하여 업로드하세요.</span>
+        </p>
+        <p dir="ltr"
+           class="pt-a-000009">
+            <input type="file" name="files" id="chk_file" /> <br />
+        </p>
+        <p dir="ltr"
+           class="pt-a-000010">
+            <span lang="ko-KR">본인(코치)와</span>
+
+            <span lang="ko-KR"
+                  xml:space="preserve"> 팀원 모두는 개인정보 수집에 동의하며, 위의 모든</span>
+            <span lang="ko-KR"
+                  xml:space="preserve">사항에 대해</span>
+            <span lang="ko-KR"
+                  xml:space="preserve">동의하며 </span>
+            <span lang="ko-KR">준수할 것을 서약합니다</span>
+            <span>.</span>
+        </p>
+        <p dir="ltr"
+           class="pt-a-000010">
+            <span xml:space="preserve"
+                  class="pt-a0-000005">    </span>
+            <span lang="ko-KR"
+                  class="pt-a0-000005">동의합니다.(Agree)</span>
+            <input type="radio" name="chk_info" value="Agree" checked="checked" />
+        </p>
+        <p dir="ltr"
+           class="pt-a-000010">
+            <span lang="ko-KR"
+                  xml:space="preserve"
+                  class="pt-a0-000005">     동의하지 않습니다.(Disagree)</span>
+            <input type="radio" name="chk_info" value="Disagree" />
+        </p>
+        <p dir="ltr"
+           class="pt-a-000010">
+            <span class="pt-a0-000013">*</span>
+            <span xml:space="preserve"
+                  class="pt-a0-000013"> </span>
+            <span lang="ko-KR"
+                  xml:space="preserve"
+                  class="pt-a0-000013">본 서약에 동의하지 않으면 </span>
+            <span lang="ko-KR"
+                  xml:space="preserve"
+                  class="pt-a0-000013">KRC</span>
+            <span xml:space="preserve"
+                  class="pt-a0-000013">에 참가할 수 없습니다.</span>
+        </p>
+    </div>
+    <div class="form-group">
+        <input type="submit" value="서약서 제출(Submit)" />
+    </div>
+</form>
+<script>
+    function ValidateKRCWrittenOathForm() {
+        var files = document.getElementById('chk_file').files[0];
+        if ($("input[name=chk_info]:checked").val() == "Agree") {
+            if (files === undefined || files == null) {
+                alert("파일 첨부하여 주십시오. (Please attach a file)");
+                $('input[type=file]').val(null);
+                return false;
+            }
+            else {
+                if (files.size > 10485760) {
+                    alert("파일 크기는 10MB 이하만 가능합니다. (File Size must be smaller than 10MB.)");
+                    $('input[type=file]').val(null);
+                    return false;
+                }
+                else if (files.size > 0 && files.size <= 10485760) {
+                    return true;
+                }
+            }
+        }
+        else if ($("input[name=chk_info]:checked").val() == "Disagree") {
+            alert("서약에 동의하여 주십시오. (Please agree to the pledge.)");
+            //$('input[type=file]').val(null);
+            return false;
+        }
+    }
+</script>

@@ -1,0 +1,110 @@
+﻿@model IEnumerable<FESTRubricWebServer.Models.Admin.MemberOutputModel>
+
+@{
+    ViewData["Title"] = "CurrentAllRegisteredMember";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<h2>@(ViewBag.Category) 선수 등록 현황</h2>
+총 개수 : @Model.Count()
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.MemberName)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.ResidentNumber)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.School)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Level)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Grade)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.MemberPhone)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.MemberEmail)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Category)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Year)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.TeamNo)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.GuardianName1)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.GuardianPhone1)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Relationship1)
+            </th>
+
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>
+                    @Html.DisplayFor(modelItem => item.MemberName)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.ResidentNumber)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.School)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Level)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Grade)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.MemberPhone)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.MemberEmail)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Category)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Year)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.TeamNo)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.GuardianName1)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.GuardianPhone1)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Relationship1)
+                </td>
+
+            </tr>
+        }
+    </tbody>
+</table>
+<button type="button" onclick="GotoIndexPage()">인덱스(Index) 페이지로...</button>
+
+<script>
+    function GotoIndexPage() {
+        window.location.href = "@Url.Action("Index", "Admin", new { Category = ViewBag.Category})";
+    }
+</script>

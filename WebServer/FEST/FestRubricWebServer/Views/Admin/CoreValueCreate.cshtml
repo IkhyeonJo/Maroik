@@ -1,0 +1,183 @@
+﻿@using Microsoft.AspNetCore.Http
+@model FESTRubricWebServer.Models.Admin.AdminRubric
+
+@{
+    ViewData["Title"] = $"핵심가치 심사 {Context.Session.GetString("FESTAdminSession").Split("~")[1]}";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<h2>@ViewData["Title"] 등록</h2>
+
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        @*<div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div class="form-group">
+                <label asp-for="TeamNumber" class="control-label"></label>
+                <input asp-for="TeamNumber" class="form-control" />
+                <span asp-validation-for="TeamNumber" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Evaluator" class="control-label"></label>
+                <input asp-for="Evaluator" class="form-control" />
+                <span asp-validation-for="Evaluator" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Type" class="control-label"></label>
+                <input asp-for="Type" class="form-control" />
+                <span asp-validation-for="Type" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="CategoryOne0" class="control-label"></label>
+                <input asp-for="CategoryOne0" class="form-control" />
+                <span asp-validation-for="CategoryOne0" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="CategoryOne1" class="control-label"></label>
+                <input asp-for="CategoryOne1" class="form-control" />
+                <span asp-validation-for="CategoryOne1" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="CategoryOne2" class="control-label"></label>
+                <input asp-for="CategoryOne2" class="form-control" />
+                <span asp-validation-for="CategoryOne2" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="CategoryTwo0" class="control-label"></label>
+                <input asp-for="CategoryTwo0" class="form-control" />
+                <span asp-validation-for="CategoryTwo0" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="CategoryTwo1" class="control-label"></label>
+                <input asp-for="CategoryTwo1" class="form-control" />
+                <span asp-validation-for="CategoryTwo1" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="CategoryTwo2" class="control-label"></label>
+                <input asp-for="CategoryTwo2" class="form-control" />
+                <span asp-validation-for="CategoryTwo2" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="CategoryThree0" class="control-label"></label>
+                <input asp-for="CategoryThree0" class="form-control" />
+                <span asp-validation-for="CategoryThree0" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="CategoryThree1" class="control-label"></label>
+                <input asp-for="CategoryThree1" class="form-control" />
+                <span asp-validation-for="CategoryThree1" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="CategoryThree2" class="control-label"></label>
+                <input asp-for="CategoryThree2" class="form-control" />
+                <span asp-validation-for="CategoryThree2" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="CategoryScore" class="control-label"></label>
+                <input asp-for="CategoryScore" class="form-control" />
+                <span asp-validation-for="CategoryScore" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="GoodText" class="control-label"></label>
+                <input asp-for="GoodText" class="form-control" />
+                <span asp-validation-for="GoodText" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Opinion" class="control-label"></label>
+                <input asp-for="Opinion" class="form-control" />
+                <span asp-validation-for="Opinion" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Reserved0" class="control-label"></label>
+                <input asp-for="Reserved0" class="form-control" />
+                <span asp-validation-for="Reserved0" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Reserved1" class="control-label"></label>
+                <input asp-for="Reserved1" class="form-control" />
+                <span asp-validation-for="Reserved1" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Reserved2" class="control-label"></label>
+                <input asp-for="Reserved2" class="form-control" />
+                <span asp-validation-for="Reserved2" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Reserved3" class="control-label"></label>
+                <input asp-for="Reserved3" class="form-control" />
+                <span asp-validation-for="Reserved3" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Reserved4" class="control-label"></label>
+                <input asp-for="Reserved4" class="form-control" />
+                <span asp-validation-for="Reserved4" class="text-danger"></span>
+            </div>*@
+        <input type="number" />
+        <div class="form-group">
+            <button type="button" class="btn btn-primary" onclick="Save()">저장</button>
+            <button type="button" class="btn btn-danger" onclick="GotoIndex()">나가기</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    function GotoIndex() {
+        window.location.href = "@Url.Action("CoreValue", "Admin")";
+    }
+    function Save() {
+        if (!IsTeamNumberExist()) {
+            var paramValue = JSON.stringify({
+                TeamNumber: 1,
+                Evaluator: 'Evaluator',
+                CategoryOne0: 2,
+                CategoryOne1: 3,
+                CategoryOne2: 4,
+                CategoryTwo0: 5,
+                CategoryTwo1: 6,
+                CategoryTwo2: 7,
+                CategoryThree0: 8,
+                CategoryThree1: 9,
+                CategoryThree2: 10,
+                CategoryScore: 100,
+                GoodText: 'GoodText',
+                Opinion: 'Opinion'
+            });
+            $.ajax({
+                url: '@Url.Action("CoreValueCreate", "Admin")',
+                type: 'POST',
+                dataType: 'json',
+                data: paramValue,
+                contentType: 'application/json; charset=utf-8',
+                async: false,
+                cache: false,
+                success: function (data) {
+                    if (data.result) {
+                        window.location.href = "@Url.Action("CoreValue", "Admin")";
+                    }
+                    else {
+                        alert('저장에 실패하였습니다. 잠시 후 다시 시도해주시길 바랍니다.');
+                    }
+                }
+            });
+        } else {
+            alert('이 팀번호는 이미 등록되어 있습니다.');
+        }
+    }
+    function IsTeamNumberExist() {
+        var result = false;
+        
+        $.ajax({
+            url: '@Url.Action("IsAlreadyCoreValueRubricRegistered", "Admin")' + '?teamNumber=' + 1,
+            type: 'POST',
+            dataType: 'json',
+            data: null,
+            contentType: 'application/json; charset=utf-8',
+            async: false,
+            cache: false,
+            success: function (data) {
+                result = data.result;
+            }
+        });
+        return result;
+    }
+</script>

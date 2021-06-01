@@ -1,0 +1,71 @@
+﻿@model IEnumerable<FESTRubricWebServer.Models.User.CoachOutputModel>
+@using FESTRubricWebServer.Models.User
+
+@{
+    ViewData["Title"] = "CoachInfo";
+}
+<h2>코치 정보 (Coach Info)</h2><br />
+<h4><font color="red">기한 : 2018년 12월 28일까지 (Deadline : December 28, 2018)</font></h4><br />
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @*@Html.DisplayNameFor(model => model.coachName)*@
+                코치 이름 (Coach Name)
+            </th>
+            <th>
+                @*@Html.DisplayNameFor(model => model.coachPhone)*@
+                코치 핸드폰 (Coach Phone)
+            </th>
+            <th>
+                @*@Html.DisplayNameFor(model => model.coachEmail)*@
+                코치 이메일 (Coach Email)
+            </th>
+            <th>
+                @*@Html.DisplayNameFor(model => model.coachInstitution)*@
+                코치 조직 (Coach Organization)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>
+                    @Html.DisplayFor(modelItem => item.CoachName)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.CoachPhone)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.CoachEmail)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.TeamOrganization)
+                </td>
+                @if (!(DateTime.Compare(DateTime.Now, new DateTime(2018, 12, 29)) >= 0))
+                {
+                <td>
+                    @Html.ActionLink("Edit", "CoachEdit")
+                </td>
+                }
+                else
+                {
+                <td>
+                    <font color="red">기한 : 2018년 12월 28일까지 (Deadline : December 25, 2018)</font>
+                </td>
+                }
+            </tr>
+        }
+    </tbody>
+</table>
+
+<button type="button" class="btn btn-danger" onclick="GotoNotice()">Cancel (나가기)</button>
+
+<script>
+    function GotoNotice() {
+        window.location.href = "@Url.Action("Notice", "User")";
+    }
+</script>

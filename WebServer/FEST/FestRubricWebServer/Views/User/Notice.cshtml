@@ -1,0 +1,196 @@
+﻿@using Microsoft.AspNetCore.Http
+@{
+    ViewData["Title"] = "Notice";
+}
+<h1 class="text-center">KRC Infonet</h1>
+<h2>코리아로봇챔피언십 팀 이행 사항 및 공지 사항</h2><br />
+<p>
+    코리아로봇챔피언십은 대한민국 청소년들의 과학 및 공학의 축제입니다. <br />
+    KRC Infonet은 수백팀의 정보를 혼선없이 처리하여 참가팀들에게 도움되고자 개발되었습니다. <br />
+    우리의 청소년들이 멋진 축제를 제공하기 위해 코치분들의 협조를 부탁 드립니다.
+</p>
+
+<p>
+    1. 2018-2019 코리아로봇챔피언십에 참가하는 팀은 아래와 같은 이행 사항을 반드시 처리하셔야 합니다. <br />
+    - 각 이행 사항은 반드시 기한 내에 처리하여야 합니다. <br />
+    - 팀은 각 이행 사항 처리하지 않으면, 대회 진행에 차질이 발생하오니 협조하여 주시길 바랍니다.<br />
+    - 많은 팀의 업무를 형평성 있게 처리하기 위한 것이니 적극적인 협조 바랍니다. <br />
+</p>
+
+<p>
+    2. 필수 이행 사항 처리 방법 <br />
+    - 순서대로 필수 이행 사항을 완료하여야 합니다. <br />
+    - 이전 필수 이행 사항을 완료하지 않으면 다음 순서의 이행 사항이 활성화되지 않습니다.
+</p>
+
+
+<table class="table">
+    <thead>
+        <tr>
+            <th align="center">
+                순서
+            </th>
+            <th align="center">
+                구분
+            </th>
+            <th align="center">
+                팀 이행 사항
+            </th>
+            <th align="center">
+                처리 기한
+            </th>
+            <th align="center">
+                팀 이행 여부
+            </th>
+            <th align="center">
+                등록된 팀원 수
+            </th>
+        </tr>
+    </thead>
+    <tbody>
+        @if (Convert.ToInt32(Context.Session.GetString("FestSession")) / 1000 != 5)
+        {
+            <tr>
+                <td>
+                    1
+                </td>
+                <td>
+                    필수 이행
+                </td>
+                <td>
+                    @Html.ActionLink("팀원 정보 등록(Team Member Registration)", "Index")
+                </td>
+                <td>
+                    2018/12/28
+                </td>
+                <td>
+                    @ViewBag.IsMemberRegisterDone
+                </td>
+                <td>
+                    @ViewBag.RegisteredMemberNumber
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    2
+                </td>
+                <td>
+                    필수 이행
+                </td>
+                <td>
+                    @Html.ActionLink("KRC 팀 서약서 제출(Submit KRC Team Written Oath)", "KRCWrittenOath")
+                </td>
+                <td>
+                    2019/1/26
+                </td>
+                <td>
+                    @ViewBag.IsKRCWrittenOath
+                </td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>
+                    3
+                </td>
+                <td>
+                    필수 이행
+                </td>
+                <td>
+                    @Html.ActionLink("KRC 팀 입장권 출력(Print KRC Team Admission Ticket)", "KRCAdmissionTicket")
+                    <br />
+                    <font color="red">* 팀 입장권을 출력하여 지참하지 않으면 KRC 당일 입장이 불가능합니다.</font>
+                </td>
+                <td>
+                    2019/1/26
+                </td>
+                <td>
+                    @ViewBag.IsKRCAdmissionTicket
+                </td>
+                <td></td>
+            </tr>
+        }
+        else
+        {
+            <tr>
+                <td>
+                    1
+                </td>
+                <td>
+                    필수 이행
+                </td>
+                <td>
+                    @Html.ActionLink("팀원 정보 등록(Team Member Registration)", "Index")
+                </td>
+                <td>
+                    2018/12/28
+                </td>
+                <td>
+                    @ViewBag.IsMemberRegisterDone
+                </td>
+                <td>
+                    @ViewBag.RegisteredMemberNumber
+                </td>
+            </tr>
+            
+            <tr>
+                <td>
+                    2
+                </td>
+                <td>
+                    필수 이행
+                </td>
+                <td>
+                    @Html.ActionLink("FTC 팀 서류 제출(Submit FTC Team Documents)", "FTCTeamDocuments")
+                </td>
+                <td>
+                    2019/1/24
+                </td>
+                <td>
+                    @ViewBag.IsFTCTeamDocuments
+                </td>
+                <td></td>
+            </tr>
+
+            <tr>
+                <td>
+                    3
+                </td>
+                <td>
+                    필수 이행
+                </td>
+                <td>
+                    @Html.ActionLink("KRC 팀 서약서 제출(Submit KRC Team Written Oath)", "KRCWrittenOath")
+                </td>
+                <td>
+                    2019/1/26
+                </td>
+                <td>
+                    @ViewBag.IsKRCWrittenOath
+                </td>
+                <td></td>
+            </tr>
+
+            <tr>
+                <td>
+                    4
+                </td>
+                <td>
+                    필수 이행
+                </td>
+                <td>
+                    @Html.ActionLink("KRC 팀 입장권 출력(Print KRC Team Admission Ticket)", "KRCAdmissionTicket")
+                    <br />
+                    <font color="red">* 팀 입장권을 출력하여 지참하지 않으면 KRC 당일 입장이 불가능합니다.</font>
+                </td>
+                <td>
+                    2019/1/26
+                </td>
+                <td>
+                    @ViewBag.IsKRCAdmissionTicket
+                </td>
+                <td></td>
+            </tr>
+        }
+
+    </tbody>
+</table>

@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29201.188
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FESTRubricWebServer", "FestRubricWebServer\FESTRubricWebServer.csproj", "{A69418D7-B41B-4653-BD48-F72680ACABED}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FESTAudience", "FESTAudience\FESTAudience.csproj", "{9CC584B8-C9F4-4E2E-96E9-4CE5B8A766AA}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{A69418D7-B41B-4653-BD48-F72680ACABED}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A69418D7-B41B-4653-BD48-F72680ACABED}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A69418D7-B41B-4653-BD48-F72680ACABED}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A69418D7-B41B-4653-BD48-F72680ACABED}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9CC584B8-C9F4-4E2E-96E9-4CE5B8A766AA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9CC584B8-C9F4-4E2E-96E9-4CE5B8A766AA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9CC584B8-C9F4-4E2E-96E9-4CE5B8A766AA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9CC584B8-C9F4-4E2E-96E9-4CE5B8A766AA}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {B2B358F1-BEA7-463E-9B48-531F4BD42C4A}
+	EndGlobalSection
+EndGlobal
