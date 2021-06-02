@@ -15,8 +15,7 @@ namespace AspNetCoreMVCSample.src.Site.Configuration
             //services.AddDbContext<AppDbContext>(options =>
             //    options.UseMySql(configuration["mysqlconnection:connectionString"],  providerOptions => providerOptions.EnableRetryOnFailure()));
             services.AddDbContext<AppDbContext>(options =>
-                  options.UseMySql("server=mysql;port=3306;userid=root;password=root;database=produtosdb;", new MariaDbServerVersion(new Version(5, 7, 31))));
-
+                  options.UseMySql(configuration.GetConnectionString("DefaultConnection"), new MariaDbServerVersion(new Version(5, 7, 31))));
         }
     }
 }
