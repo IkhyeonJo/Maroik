@@ -14,8 +14,15 @@ namespace AspNetCoreMVCSample.src.Site.Configuration
 
             //services.AddDbContext<AppDbContext>(options =>
             //    options.UseMySql(configuration["mysqlconnection:connectionString"],  providerOptions => providerOptions.EnableRetryOnFailure()));
+            #region Publish DB Connection
             services.AddDbContext<AppDbContext>(options =>
-                  options.UseMySql(configuration.GetConnectionString("DefaultConnection"), new MariaDbServerVersion(new Version(5, 7, 31))));
+                  options.UseMySql(configuration.GetConnectionString("DefaultConnection"), new MariaDbServerVersion(new Version(8, 0, 13)))); // Modify docker-compose.yml too
+            #endregion
+
+            #region Develop DB Connection
+            //services.AddDbContext<AppDbContext>(options =>
+            //      options.UseMySql(configuration.GetConnectionString("DevelopConnection"), new MariaDbServerVersion(new Version(10, 5, 10))));
+            #endregion
         }
     }
 }
