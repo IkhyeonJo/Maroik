@@ -12,9 +12,11 @@ namespace AspNetCoreMVCSample.src.Site.Configuration
         {
             if (services == null) throw new ArgumentNullException(nameof(services));
 
+            //services.AddDbContext<AppDbContext>(options =>
+            //    options.UseMySql(configuration["mysqlconnection:connectionString"],  providerOptions => providerOptions.EnableRetryOnFailure()));
             services.AddDbContext<AppDbContext>(options =>
-                options.UseMySql(configuration["mysqlconnection:connectionString"],  providerOptions => providerOptions.EnableRetryOnFailure()));
-            
+                  options.UseMySql("server=mysql;port=3306;userid=root;password=root;database=produtosdb;", new MariaDbServerVersion(new Version(5, 7, 31))));
+
         }
     }
 }
