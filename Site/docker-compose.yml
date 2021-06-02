@@ -1,6 +1,6 @@
 #AWS Command List
 
-
+#-----------------------------------------------------------------------------------
 #sudo yum update -y
 #sudo amazon-linux-extras install docker
 #sudo service docker start
@@ -10,7 +10,9 @@
 #sudo chmod +x /usr/local/bin/docker-compose
 #sudo ln -s /usr/local/bin/docker-compose /usr/bin/docker-compose
 #docker-compose --version
+#-----------------------------------------------------------------------------------
 
+#when you should go debugging mode , change DB location (appsettings.json, DatabaseConfig.cs) and install (mariadb 10.5.10) and use IIS Express debugging mode
 
 #For Publish
 version: "3"
