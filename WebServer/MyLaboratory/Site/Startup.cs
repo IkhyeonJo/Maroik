@@ -8,6 +8,20 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using AspNetCoreMVCSample.src.Site.Configuration;
+using AspNetCoreMVCSample.src.Site.Models;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.HttpsPolicy;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+
 
 namespace Site
 {
@@ -23,6 +37,17 @@ namespace Site
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            // var host = Configuration["DBHOST"] ?? "localhost";
+            // var port = Configuration["DBPORT"] ?? "3306";
+            // var password = Configuration["DBPASSWORD"] ?? "root";
+
+            // services.AddDbContext<AppDbContext>(options =>
+            //      options.UseMySql($"server={host};port={port};userid=root;pwd={password};"
+            //          + $"database=produtosdb", providerOptions => providerOptions.EnableRetryOnFailure()));
+
+            services.AddDatabaseConfiguration(Configuration);
+            services.AddSingleton<IConfiguration>(Configuration);
+            services.AddScoped<IRepository, ProdutoRepository>();
             services.AddControllersWithViews();
         }
 
