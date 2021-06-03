@@ -6,6 +6,7 @@ dotnet ef
 
 dotnet tool install --global dotnet-ef
 dotnet tool update --global dotnet-ef
+dotnet add package Microsoft.EntityFrameworkCore.Design
 
 할 것
 
