@@ -2,6 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace AspNetCoreMVCSample.src.Site.Models.Home
 {
+    //Attribute ÀßÇÒ °Í...
     public class Product
     {
         [Key]
