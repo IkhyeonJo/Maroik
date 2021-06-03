@@ -41,7 +41,7 @@ services:
         image: "mariadb:10.2.38" # Modify DatabaseConfig.cs too
         volumes:
           - datasource:/var/lib/mysql
-          - ./_MariaDBSql_Init_Script:/docker-entrypoint-initdb.d
+          - ./_MariaDBSql_Init_Script:/docker-entrypoint-initdb.d # just insert sql scripts into container directory (docker-entrypoint-initdb.d)
         networks:
           - backend
         environment:
