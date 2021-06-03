@@ -12,16 +12,9 @@ namespace AspNetCoreMVCSample.src.Site.Configuration
         {
             if (services == null) throw new ArgumentNullException(nameof(services));
 
-            //services.AddDbContext<AppDbContext>(options =>
-            //    options.UseMySql(configuration["mysqlconnection:connectionString"],  providerOptions => providerOptions.EnableRetryOnFailure()));
-            #region Publish DB Connection
+            #region DB Connection
             services.AddDbContext<AppDbContext>(options =>
-                  options.UseMySql(configuration.GetConnectionString("DefaultConnection"), new MariaDbServerVersion(new Version(8, 0, 13)))); // Modify docker-compose.yml too
-            #endregion
-
-            #region Develop DB Connection
-            //services.AddDbContext<AppDbContext>(options =>
-            //      options.UseMySql(configuration.GetConnectionString("DefaultConnection"), new MariaDbServerVersion(new Version(10, 5, 10)))); // Modify docker-compose.yml too
+                  options.UseMySql(configuration.GetConnectionString("DefaultConnection"), new MariaDbServerVersion(new Version(10, 2, 38)))); // Modify docker-compose.yml too
             #endregion
         }
     }
