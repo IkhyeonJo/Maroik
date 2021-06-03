@@ -1,4 +1,4 @@
-선행지식: docker
+선행지식: docker, ASP.NET Core EF Core data migration
 
 cmd나 terminal 창에서 docker-compose up -d 하면 알아서 다 설치됨. (Mariadb 10.2.38 사용)
 
