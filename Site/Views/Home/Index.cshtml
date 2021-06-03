@@ -1,4 +1,5 @@
-﻿<!DOCTYPE html>
+﻿@model List<AspNetCoreMVCSample.src.Site.Models.Home.Product>
+<!DOCTYPE html>
 <html>
 <head>
     <meta name="viewport" content="width=device-width" />
@@ -6,6 +7,26 @@
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
 </head>
 <body>
-Hi
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Id</th>
+                <th>Nome</th>
+                <th>Categoria</th>
+                <th>Valor</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (AspNetCoreMVCSample.src.Site.Models.Home.Product item in Model)
+            {
+                <tr>
+                    <td>@item.Id</td>
+                    <td>@item.Nome</td>
+                    <td>@item.Categoria</td>
+                    <td>@item.Valor</td>
+                </tr>
+            }
+        </tbody>
+    </table>
 </body>
 </html>

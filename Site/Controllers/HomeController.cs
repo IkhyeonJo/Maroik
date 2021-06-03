@@ -3,7 +3,10 @@ using Microsoft.Extensions.Logging;
 using Site.Models;
 using System.Diagnostics;
 using Microsoft.Extensions.Configuration;
-using AspNetCoreMVCSample.src.Site.Models;
+using MySql.Data.MySqlClient;
+using System.Collections.Generic;
+using AspNetCoreMVCSample.src.Site.Models.Home;
+using System;
 
 namespace Site.Controllers
 {
@@ -20,8 +23,34 @@ namespace Site.Controllers
 
         public IActionResult Index()
         {
-            ViewBag.Message = message;
-            return View();
+
+            List<Product> products = new List<Product>();
+
+            //using (MySqlConnection con = new MySqlConnection("server=localhost;port=3306;userid=root;password=root;database=ikhyeondb;"))
+            using (MySqlConnection con = new MySqlConnection("server=mysql;port=3306;userid=root;password=root;database=ikhyeondb;"))
+            {
+                con.Open();
+                MySqlCommand cmd = new MySqlCommand("SELECT * FROM Product", con);
+                MySqlDataReader reader = cmd.ExecuteReader();
+
+                while (reader.Read())
+                {
+                    //Extract your Data.
+                    Product product = new Product
+                    {
+                        Id = Convert.ToInt32(reader["id"]),
+                        Nome = reader["Nome"].ToString(),
+                        Valor = Convert.ToDecimal(reader["Valor"]),
+                        Categoria = reader["Categoria"].ToString()
+                    };
+
+                    products.Add(product);
+                }
+                reader.Close();
+                con.Close();
+            }
+
+            return View(products);
         }
 
         public IActionResult Privacy()
