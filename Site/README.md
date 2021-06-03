@@ -13,17 +13,19 @@ cmd나 terminal 창에서 docker-compose up -d 하면 알아서 다 설치됨. (Mariadb 10.2.
 아래 방법대로 설정하여 Init.sql과 asp.net core 5.0 다 맞추고 설정할 것
 
 
-https://docs.microsoft.com/en-us/aspnet/core/data/ef-mvc/migrations?view=aspnetcore-5.0#pmc
-https://www.youtube.com/watch?v=N10QW_AIOnI
-Data Migration 방법:
 
+https://www.youtube.com/watch?v=N10QW_AIOnI
+MySql Table의 모든 종류를 자동으로 C# 모든 Model로 변환하는 방법
 Package Manager Console 열고
 cd .\Site
 dotnet ef dbcontext scaffold "server=localhost;port=3306;userid=root;password=root;database=ikhyeondb;" "Pomelo.EntityFrameworkCore.MySql" -o ./Models -f
 
-이러면 모델에 테이블이 알아서 다 모델로 변형된다.
+이러면 DB 테이블이 알아서 다 C# 모델로 변형된다.
 
 
+
+https://docs.microsoft.com/en-us/aspnet/core/data/ef-mvc/migrations?view=aspnetcore-5.0#pmc
+Data Migration 방법: (테이블 자동 생성) (AppDbContext에 따름...)
 dotnet tool install --global dotnet-ef
 dotnet tool update --global dotnet-ef
 dotnet add package Microsoft.EntityFrameworkCore.Design
