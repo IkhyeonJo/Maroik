@@ -23,7 +23,7 @@ namespace Site.Controllers
         public IActionResult Index()
         {
             ViewBag.Message = message;
-            return View(_repository.GetProdutos);
+            return View(_repository.GetProduct);
         }
 
         public IActionResult Privacy()

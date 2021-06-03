@@ -2,15 +2,15 @@ using System.Collections.Generic;
 
 namespace AspNetCoreMVCSample.src.Site.Models
 {
-    public class ProdutoRepository : IRepository
+    public class ProductRepository : IRepository
     {
         private readonly AppDbContext _ctx;
 
-        public ProdutoRepository(AppDbContext ctx)
+        public ProductRepository(AppDbContext ctx)
         {
             _ctx = ctx;
         }
 
-        public IEnumerable<Produto> GetProdutos { get => _ctx.Produtos; }
+        public IEnumerable<Product> GetProduct { get => _ctx.Product; }
     }
 }
