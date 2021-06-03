@@ -6,6 +6,11 @@ cmd나 terminal 창에서 docker-compose up -d 하면 알아서 다 설치됨. (Mariadb 10.2.
 
 배포나 디버깅 결정 DB에 따라서만 달리지므로 은 appsettings.json에서 하면 됨
 
-DB 자동 배포 및 설정, INSERT 등은 DOCKER-COMPOSE.yml과 ASP.NET.CORE EF Migration 문서 확인할 것.
+자세한 DB 자동 배포 및 설정, INSERT 등은 DOCKER-COMPOSE.yml과 ASP.NET.CORE EF Migration 문서 확인할 것.
 
-[VS 2019 - Tools - NuGet Package Manager - Package Manager Console - run command "Add-Migration DBInit" - once done, run another command "Update-Database".]
+아래 방법대로 설정하여 Init.sql과 asp.net core 5.0 설정할 것
+
+이 프로젝트 경로에서 cmd 열고
+dotnet tool install --global dotnet-ef
+dotnet tool update --global dotnet-ef
+dotnet add package Microsoft.EntityFrameworkCore.Design
