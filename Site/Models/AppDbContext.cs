@@ -4,8 +4,9 @@ namespace AspNetCoreMVCSample.src.Site.Models.Home
 {
      public class AppDbContext : DbContext
      {
-        public DbSet<Product> Product { get; set; } // DbSet<T>'s T is table type. (Migration)
-
+        #region (For Migration) DbSet<T>'s T is table type.
+        public DbSet<Product> Product { get; set; }
+        #endregion
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
         {
             ChangeTracker.QueryTrackingBehavior = QueryTrackingBehavior.NoTracking;
