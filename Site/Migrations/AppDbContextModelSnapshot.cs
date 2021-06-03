@@ -2,7 +2,6 @@
 using AspNetCoreMVCSample.src.Site.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
-using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace Site.Migrations
 {
