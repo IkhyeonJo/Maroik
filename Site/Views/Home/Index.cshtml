@@ -1,6 +1,4 @@
-﻿@model IEnumerable<AspNetCoreMVCSample.src.Site.Models.Product>
-@{ Layout = null; }
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html>
 <head>
     <meta name="viewport" content="width=device-width" />
@@ -8,23 +6,6 @@
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
 </head>
 <body>
-    <div class="m-1 p-1">
-        <h4 class="bg-primary text-xs-center p-1 text-white">@ViewBag.Message</h4>
-        <table class="table table-sm table-striped">
-            <thead>
-                <tr><th>ID</th><th>Nome</th><th>Categoria</th><th>Preco</th></tr>
-            </thead>
-            <tbody>
-                @foreach (var p in Model)
-                {
-    <tr>
-        <td>@p.Id</td>
-        <td>@p.Nome</td>
-        <td>@p.Categoria</td>
-        <td>$@p.Valor.ToString("F2")</td>
-    </tr>}
-            </tbody>
-        </table>
-    </div>
+Hi
 </body>
 </html>
