@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
+using AspNetCoreMVCSample.src.Site.Models.Home;
 
-namespace AspNetCoreMVCSample.src.Site.Models.Home
+namespace AspNetCoreMVCSample.src.Site.Models
 {
      public class AppDbContext : DbContext
      {
