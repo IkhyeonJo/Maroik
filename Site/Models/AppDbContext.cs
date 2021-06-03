@@ -1,10 +1,10 @@
 using Microsoft.EntityFrameworkCore;
 
-namespace AspNetCoreMVCSample.src.Site.Models
+namespace AspNetCoreMVCSample.src.Site.Models.Home
 {
      public class AppDbContext : DbContext
      {
-        public DbSet<Product> Product { get; set; }
+        public DbSet<Product> Product { get; set; } // DbSet<T>'s T is table type. (Migration)
 
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
         {
