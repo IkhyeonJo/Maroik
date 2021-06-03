@@ -16,6 +16,9 @@ cmd나 terminal 창에서 docker-compose up -d 하면 알아서 다 설치됨. (Mariadb 10.2.
 https://docs.microsoft.com/en-us/aspnet/core/data/ef-mvc/migrations?view=aspnetcore-5.0#pmc
 https://www.youtube.com/watch?v=N10QW_AIOnI
 Data Migration 방법: 이 프로젝트 경로에서 cmd 열고
+
+dotnet ef dbcontext scaffold "server=localhost;port=3306;userid=root;password=root;database=ikhyeondb;" "Pomelo.EntityFrameworkCore.MySql" -o ./Models -f
+
 dotnet tool install --global dotnet-ef
 dotnet tool update --global dotnet-ef
 dotnet add package Microsoft.EntityFrameworkCore.Design
