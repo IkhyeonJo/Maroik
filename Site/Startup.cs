@@ -29,7 +29,6 @@ namespace Site
         {
             services.AddDatabaseConfiguration(Configuration);
             services.AddSingleton<IConfiguration>(Configuration);
-            services.AddScoped<IRepository, ProductRepository>();
             services.AddControllersWithViews();
         }
 

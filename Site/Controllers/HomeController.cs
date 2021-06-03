@@ -9,21 +9,19 @@ namespace Site.Controllers
 {
     public class HomeController : Controller
     {
-        private readonly ILogger<HomeController> _logger;
-        private readonly IRepository _repository;
+        private readonly ILogger<HomeController> logger;
         private string message;
 
-        public HomeController(ILogger<HomeController> logger, IRepository repository, IConfiguration config)
+        public HomeController(ILogger<HomeController> logger, IConfiguration config)
         {
-            _logger = logger;
-            _repository = repository;
+            this.logger = logger;
             message = $"Docker - ({config["HOSTNAME"]})";
         }
 
         public IActionResult Index()
         {
             ViewBag.Message = message;
-            return View(_repository.GetProduct);
+            return View();
         }
 
         public IActionResult Privacy()
