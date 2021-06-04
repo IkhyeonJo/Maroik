@@ -8,7 +8,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Site.Configuration;
 using Site.Models;
 using Microsoft.EntityFrameworkCore;
 
@@ -27,7 +26,10 @@ namespace Site
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddDatabaseConfiguration(Configuration);
+            #region MariaDB Connection
+            services.AddDbContext<AppDbContext>(options =>
+                  options.UseMySql(Configuration.GetConnectionString("DefaultConnection"), new MariaDbServerVersion(new Version(10, 2, 38)))); // Modify docker-compose.yml too
+            #endregion
             services.AddSingleton<IConfiguration>(Configuration);
             services.AddControllersWithViews();
         }
