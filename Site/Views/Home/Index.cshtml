@@ -1,4 +1,4 @@
-﻿@model List<AspNetCoreMVCSample.src.Site.Models.Home.Product>
+﻿@model List<Site.Models.Home.Product>
 <!DOCTYPE html>
 <html>
 <head>
@@ -17,7 +17,7 @@
             </tr>
         </thead>
         <tbody>
-            @foreach (AspNetCoreMVCSample.src.Site.Models.Home.Product item in Model)
+            @foreach (Site.Models.Home.Product item in Model)
             {
                 <tr>
                     <td>@item.Id</td>

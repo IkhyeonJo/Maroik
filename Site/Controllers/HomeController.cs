@@ -5,7 +5,7 @@ using System.Diagnostics;
 using Microsoft.Extensions.Configuration;
 using MySql.Data.MySqlClient;
 using System.Collections.Generic;
-using AspNetCoreMVCSample.src.Site.Models.Home;
+using Site.Models.Home;
 using System;
 
 namespace Site.Controllers

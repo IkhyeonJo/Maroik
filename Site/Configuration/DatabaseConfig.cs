@@ -1,10 +1,10 @@
 using System;
-using AspNetCoreMVCSample.src.Site.Models;
+using Site.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace AspNetCoreMVCSample.src.Site.Configuration
+namespace Site.Configuration
 {
     public static class DatabaseConfig
     {

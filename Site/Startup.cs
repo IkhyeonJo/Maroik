@@ -8,8 +8,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using AspNetCoreMVCSample.src.Site.Configuration;
-using AspNetCoreMVCSample.src.Site.Models;
+using Site.Configuration;
+using Site.Models;
 using Microsoft.EntityFrameworkCore;
 
 
