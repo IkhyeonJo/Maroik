@@ -34,8 +34,9 @@ dotnet ef migrations add InitialCreate
 
 
 
-repository pattern...
-https://github.com/matthewschrager/Repository
+repository pattern & UnitWork pattern
+https://enlabsoftware.com/development/how-to-implement-repository-unit-of-work-design-patterns-in-dot-net-core-practical-examples-part-one.html
+githubÂüÁ¶.
 
 Login
 
