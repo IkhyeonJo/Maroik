@@ -31,7 +31,7 @@ networks:
 services:
 
       mysql:
-        image: "mariadb:latest"
+        image: "mariadb:10.2.38"
         volumes:
           - datasource:/var/lib/mysql
           - ./_MariaDBSql_Init_Script:/docker-entrypoint-initdb.d
