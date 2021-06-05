@@ -1,8 +1,8 @@
 선행지식: docker, ASP.NET Core EF Core data migration
 
-cmd나 terminal 창에서 docker-compose up -d 하면 알아서 다 설치됨. (Mariadb 10.2.38 사용) (docker 및 docker compose AWS에서 설치 방법은 docker-compose.yml 주석에 있음)
+cmd나 terminal 창에서 docker-compose up -d 하면 알아서 다 설치됨. (Mariadb 사용) (docker 및 docker compose AWS에서 설치 방법은 docker-compose.yml 주석에 있음)
 
-디버깅은 IIS Express로 잡고 로컬에 Mariadb 10.2.38 깔아서 디버깅할 것 (MariaDB 10.2.38 설치 파일은 Utility 폴더에 있음)
+디버깅은 IIS Express로 잡고 로컬에 Mariadb 깔아서 디버깅할 것 
 
 배포나 디버깅 결정 DB에 따라서만 달리지므로 은 appsettings.json에서 하면 됨
 
@@ -30,6 +30,12 @@ dotnet tool update --global dotnet-ef
 dotnet add package Microsoft.EntityFrameworkCore.Design
 dotnet ef migrations add InitialCreate
 
+(Migration 폴더 내용 다 지울 것)
+
+
+
+repository pattern...
+https://github.com/matthewschrager/Repository
 
 Login
 
