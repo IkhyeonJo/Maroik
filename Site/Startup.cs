@@ -10,7 +10,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Site.Models;
 using Microsoft.EntityFrameworkCore;
-
+using Site.Models.Home;
 
 namespace Site
 {
@@ -31,6 +31,11 @@ namespace Site
             services.AddDbContext<AppDbContext>(options =>
                   options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
             #endregion
+
+            #region Scope
+            services.AddScoped<IRepository, ProdutoRepository>();
+            #endregion
+
             services.AddSingleton<IConfiguration>(Configuration);
             services.AddControllersWithViews();
         }

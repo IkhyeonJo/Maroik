@@ -13,18 +13,20 @@ namespace Site.Controllers
     public class HomeController : Controller
     {
         private readonly ILogger<HomeController> logger;
+        private readonly IRepository repository;
         private string message;
 
-        public HomeController(ILogger<HomeController> logger, IConfiguration config)
+        public HomeController(ILogger<HomeController> logger, IRepository repository, IConfiguration config)
         {
             this.logger = logger;
+            this.repository = repository;
             message = $"Docker - ({config["HOSTNAME"]})";
         }
 
         public IActionResult Index()
         {
 
-            List<Product> products = new List<Product>();
+            //List<Product> products = new List<Product>();
 
             //using (MySqlConnection con = new MySqlConnection("server=localhost;port=3306;userid=root;password=root;database=ikhyeondb;"))
             ////using (MySqlConnection con = new MySqlConnection("server=mysql;port=3306;userid=root;password=root;database=ikhyeondb;"))
@@ -53,7 +55,9 @@ namespace Site.Controllers
             //var a = new AppDbContext();
             //var kk = a.Product.FromSqlRaw("SELECT * FROM dbo.Blogs");
 
-            return View(products);
+            var aaa = repository.GetProducts;
+
+            return View(aaa);
         }
 
         public IActionResult Privacy()
