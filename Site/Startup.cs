@@ -26,9 +26,10 @@ namespace Site
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            #region MariaDB Connection
+            string connectionString = Configuration.GetConnectionString("DefaultConnection");
+            #region Step 1. EF DI 및 옵션 지정 https://www.csharpstudy.com/web/article/14-ASP-NET-Core-EF-Core
             services.AddDbContext<AppDbContext>(options =>
-                  options.UseMySql(Configuration.GetConnectionString("DefaultConnection"), new MariaDbServerVersion(new Version(10, 2, 38)))); // Modify docker-compose.yml too
+                  options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
             #endregion
             services.AddSingleton<IConfiguration>(Configuration);
             services.AddControllersWithViews();
