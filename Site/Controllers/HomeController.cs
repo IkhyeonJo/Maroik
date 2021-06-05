@@ -13,10 +13,10 @@ namespace Site.Controllers
     public class HomeController : Controller
     {
         private readonly ILogger<HomeController> logger;
-        private readonly IRepository repository;
+        private readonly IProductRepository repository;
         private string message;
 
-        public HomeController(ILogger<HomeController> logger, IRepository repository, IConfiguration config)
+        public HomeController(ILogger<HomeController> logger, IProductRepository repository, IConfiguration config)
         {
             this.logger = logger;
             this.repository = repository;

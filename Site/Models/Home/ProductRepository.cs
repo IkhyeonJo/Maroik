@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Site.Models.Home
 {
-    public class ProductRepository : IRepository
+    public class ProductRepository : IProductRepository
     {
         private readonly AppDbContext context;
 

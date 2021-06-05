@@ -33,7 +33,7 @@ namespace Site
             #endregion
 
             #region Scope
-            services.AddScoped<IRepository, ProductRepository>();
+            services.AddScoped<IProductRepository, ProductRepository>();
             #endregion
 
             services.AddSingleton<IConfiguration>(Configuration);
