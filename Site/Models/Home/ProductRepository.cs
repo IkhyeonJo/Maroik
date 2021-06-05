@@ -4,11 +4,11 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Site.Models.Home
 {
-    public class ProdutoRepository : IRepository
+    public class ProductRepository : IRepository
     {
         private readonly AppDbContext context;
 
-        public ProdutoRepository(AppDbContext context)
+        public ProductRepository(AppDbContext context)
         {
             this.context = context;
         }
