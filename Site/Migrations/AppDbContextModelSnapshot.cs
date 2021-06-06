@@ -2,7 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using Site.Models;
+using Site.Database.Config;
 
 namespace Site.Migrations
 {
@@ -16,7 +16,7 @@ namespace Site.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 64)
                 .HasAnnotation("ProductVersion", "5.0.6");
 
-            modelBuilder.Entity("Site.Models.Home.Product", b =>
+            modelBuilder.Entity("Site.Database.Tables.Product", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -36,7 +36,7 @@ namespace Site.Migrations
                     b.ToTable("Product");
                 });
 
-            modelBuilder.Entity("Site.Models.Home.Worker", b =>
+            modelBuilder.Entity("Site.Database.Tables.Worker", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()

@@ -1,5 +1,7 @@
+using Site.Database.Tables;
 using System.Collections.Generic;
-namespace Site.Models.Home
+
+namespace Site.Database.Repositories.Interface
 {
     public interface IWorkerRepository
     {

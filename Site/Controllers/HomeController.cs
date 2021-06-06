@@ -4,9 +4,9 @@ using Site.Models;
 using System.Diagnostics;
 using Microsoft.Extensions.Configuration;
 using System.Collections.Generic;
-using Site.Models.Home;
 using System;
 using Microsoft.EntityFrameworkCore;
+using Site.Database.Repositories.Interface;
 
 namespace Site.Controllers
 {

@@ -1,8 +1,11 @@
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.EntityFrameworkCore;
+using Site.Database.Config;
+using Site.Database.Repositories.Interface;
+using Site.Database.Tables;
 
-namespace Site.Models.Home
+namespace Site.Database.Repositories.Class
 {
     public class ProductRepository : IProductRepository
     {

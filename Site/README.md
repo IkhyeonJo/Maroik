@@ -31,7 +31,7 @@ dotnet add package Microsoft.EntityFrameworkCore.Design
 dotnet ef migrations add InitialCreate
 
 (Migration 폴더 내용 다 지울 것)
-
+(dotnet ef migrations add InitialCreate) 명령 실행 시, 카피할 DB string 맞추고 할 것... 나같은 경우는 로컬 MariaDB...
 
 
 repository pattern & UnitWork pattern

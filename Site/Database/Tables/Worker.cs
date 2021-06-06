@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace Site.Models.Home
+namespace Site.Database.Tables
 {
     [Table("Worker")]
     public class Worker

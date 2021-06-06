@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
-using Site.Models.Home;
+using Site.Database.Tables;
 
-namespace Site.Models
+namespace Site.Database.Config
 {
      public class AppDbContext : DbContext
      {

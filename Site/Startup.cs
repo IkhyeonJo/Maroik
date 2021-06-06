@@ -10,7 +10,10 @@ using System.Linq;
 using System.Threading.Tasks;
 using Site.Models;
 using Microsoft.EntityFrameworkCore;
-using Site.Models.Home;
+using Site.Database;
+using Site.Database.Repositories.Interface;
+using Site.Database.Repositories.Class;
+using Site.Database.Config;
 
 namespace Site
 {
@@ -26,16 +29,8 @@ namespace Site
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            string connectionString = Configuration.GetConnectionString("DefaultConnection");
-            #region Step 1. EF DI 및 옵션 지정 https://www.csharpstudy.com/web/article/14-ASP-NET-Core-EF-Core
-            services.AddDbContext<AppDbContext>(options =>
-                  options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
-            #endregion
-
-            #region Scope
-            services.AddScoped<IProductRepository, ProductRepository>();
-            services.AddScoped<IWorkerRepository, WorkerRepository>();
-            #endregion
+            services.AddMariaDbContext()
+                .AddRepositories();
 
             services.AddSingleton<IConfiguration>(Configuration);
             services.AddControllersWithViews();
