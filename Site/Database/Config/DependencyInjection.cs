@@ -9,7 +9,7 @@ namespace Site.Database.Config
     {
         public static IServiceCollection AddMariaDbContext(this IServiceCollection services)
         {
-            string connectionString = "server=mysql;port=3306;userid=root;password=root;database=ikhyeondb;"; // publish
+            string connectionString = "server=mariadb;port=3306;userid=root;password=root;database=ikhyeondb;"; // publish
             //string connectionString = "server=localhost;port=3306;userid=root;password=root;database=ikhyeondb;"; // debugging
             services.AddDbContext<AppDbContext>(options =>
                   options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));

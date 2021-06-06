@@ -30,7 +30,7 @@ networks:
 
 services:
 
-      mysql:
+      mariadb:
         image: "mariadb:10.2.38"
         volumes:
           - datasource:/var/lib/mysql
@@ -58,5 +58,5 @@ services:
          - DBHOST=mysql
          - ASPNETCORE_ENVIRONMENT=Development
         depends_on :
-         - mysql  
+         - mariadb  
           
