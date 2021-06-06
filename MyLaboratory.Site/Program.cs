@@ -7,7 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace MyLaboratory.Site
+namespace Site
 {
     public class Program
     {

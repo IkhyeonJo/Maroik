@@ -1,6 +1,6 @@
 using System;
 
-namespace MyLaboratory.Site.Models
+namespace Site.Models
 {
     public class ErrorViewModel
     {

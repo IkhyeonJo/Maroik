@@ -8,8 +8,14 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Site.Models;
+using Microsoft.EntityFrameworkCore;
+using Site.Database;
+using Site.Database.Repositories.Interface;
+using Site.Database.Repositories.Class;
+using Site.Database.Config;
 
-namespace MyLaboratory.Site
+namespace Site
 {
     public class Startup
     {
@@ -23,6 +29,10 @@ namespace MyLaboratory.Site
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddMariaDbContext()
+                .AddRepositories();
+
+            services.AddSingleton<IConfiguration>(Configuration);
             services.AddControllersWithViews();
         }
 
