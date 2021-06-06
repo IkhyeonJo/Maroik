@@ -8,7 +8,7 @@ using Site.Models;
 namespace Site.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20210605162919_InitialCreate")]
+    [Migration("20210606163515_InitialCreate")]
     partial class InitialCreate
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -36,6 +36,26 @@ namespace Site.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Product");
+                });
+
+            modelBuilder.Entity("Site.Models.Home.Worker", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    b.Property<string>("Job")
+                        .HasColumnType("longtext");
+
+                    b.Property<decimal>("Wage")
+                        .HasColumnType("decimal(65,30)");
+
+                    b.Property<string>("WorkerName")
+                        .HasColumnType("longtext");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Worker");
                 });
 #pragma warning restore 612, 618
         }

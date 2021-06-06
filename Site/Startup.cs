@@ -34,6 +34,7 @@ namespace Site
 
             #region Scope
             services.AddScoped<IProductRepository, ProductRepository>();
+            services.AddScoped<IWorkerRepository, WorkerRepository>();
             #endregion
 
             services.AddSingleton<IConfiguration>(Configuration);

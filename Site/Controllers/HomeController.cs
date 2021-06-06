@@ -13,51 +13,24 @@ namespace Site.Controllers
     public class HomeController : Controller
     {
         private readonly ILogger<HomeController> logger;
-        private readonly IProductRepository repository;
-        private string message;
+        private readonly IProductRepository productRepository;
+        private readonly IWorkerRepository workerRepository;
 
-        public HomeController(ILogger<HomeController> logger, IProductRepository repository, IConfiguration config)
+        public HomeController(ILogger<HomeController> logger, IProductRepository productRepository, IWorkerRepository workerRepository)
         {
             this.logger = logger;
-            this.repository = repository;
-            message = $"Docker - ({config["HOSTNAME"]})";
+            this.productRepository = productRepository;
+            this.workerRepository = workerRepository;
         }
 
         public IActionResult Index()
         {
+            return View(productRepository.GetProducts);
+        }
 
-            //List<Product> products = new List<Product>();
-
-            //using (MySqlConnection con = new MySqlConnection("server=localhost;port=3306;userid=root;password=root;database=ikhyeondb;"))
-            ////using (MySqlConnection con = new MySqlConnection("server=mysql;port=3306;userid=root;password=root;database=ikhyeondb;"))
-            //{
-            //    con.Open();
-            //    MySqlCommand cmd = new MySqlCommand("SELECT * FROM Product", con);
-            //    MySqlDataReader reader = cmd.ExecuteReader();
-
-            //    while (reader.Read())
-            //    {
-            //        //Extract your Data.
-            //        Product product = new Product
-            //        {
-            //            Id = Convert.ToInt32(reader["id"]),
-            //            Nome = reader["Nome"].ToString(),
-            //            Valor = Convert.ToDecimal(reader["Valor"]),
-            //            Categoria = reader["Categoria"].ToString()
-            //        };
-
-            //        products.Add(product);
-            //    }
-            //    reader.Close();
-            //    con.Close();
-            //}
-
-            //var a = new AppDbContext();
-            //var kk = a.Product.FromSqlRaw("SELECT * FROM dbo.Blogs");
-
-            var aaa = repository.GetProducts;
-
-            return View(aaa);
+        public IActionResult Karl()
+        {
+            return View(workerRepository.GetWorkers);
         }
 
         public IActionResult Privacy()

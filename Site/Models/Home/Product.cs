@@ -1,8 +1,9 @@
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Site.Models.Home
 {
-    //Attribute ÀßÇÒ °Í...
+    [Table("Product")]
     public class Product
     {
         [Key]

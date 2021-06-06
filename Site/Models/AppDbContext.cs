@@ -7,6 +7,7 @@ namespace Site.Models
      {
         #region (For Migration) DbSet<T>'s T is table type.
         public DbSet<Product> Product { get; set; }
+        public DbSet<Worker> Worker { get; set; }
         #endregion
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
         {
