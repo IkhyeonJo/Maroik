@@ -19,7 +19,7 @@ cmd나 terminal 창에서 docker-compose up -d 하면 알아서 다 설치됨. (Mariadb 사용)
 https://www.youtube.com/watch?v=N10QW_AIOnI
 MySql Table의 모든 종류를 자동으로 C# 모든 Model로 변환하는 방법 (Init.sql을 MariaDB에 넣고... 이 방법을 쓰면 알아서 DB 테이블들이 다 C# 모델 클래스로 다 변환됨...)
 Package Manager Console 열고
-cd .\Site
+cd .\MyLaboratory.Site
 dotnet ef dbcontext scaffold "server=localhost;port=3306;userid=root;password=root;database=ikhyeondb;" "Pomelo.EntityFrameworkCore.MySql" -o ./Models -f
 이러면 DB 테이블이 알아서 다 C# 모델로 변형된다.
 

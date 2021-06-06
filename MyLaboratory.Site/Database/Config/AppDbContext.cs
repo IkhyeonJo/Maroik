@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
-using Site.Database.Tables;
+using MyLaboratory.Site.Database.Tables;
 
-namespace Site.Database.Config
+namespace MyLaboratory.Site.Database.Config
 {
      public class AppDbContext : DbContext
      {

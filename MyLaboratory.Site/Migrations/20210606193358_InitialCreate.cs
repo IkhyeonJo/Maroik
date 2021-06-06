@@ -1,7 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Migrations;
 
-namespace Site.Migrations
+namespace MyLaboratory.Site.Migrations
 {
     public partial class InitialCreate : Migration
     {

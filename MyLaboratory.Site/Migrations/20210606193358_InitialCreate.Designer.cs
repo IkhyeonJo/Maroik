@@ -3,12 +3,12 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using Site.Database.Config;
+using MyLaboratory.Site.Database.Config;
 
-namespace Site.Migrations
+namespace MyLaboratory.Site.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20210606182256_InitialCreate")]
+    [Migration("20210606193358_InitialCreate")]
     partial class InitialCreate
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -18,7 +18,7 @@ namespace Site.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 64)
                 .HasAnnotation("ProductVersion", "5.0.6");
 
-            modelBuilder.Entity("Site.Database.Tables.Product", b =>
+            modelBuilder.Entity("MyLaboratory.Site.Database.Tables.Product", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -38,7 +38,7 @@ namespace Site.Migrations
                     b.ToTable("Product");
                 });
 
-            modelBuilder.Entity("Site.Database.Tables.Worker", b =>
+            modelBuilder.Entity("MyLaboratory.Site.Database.Tables.Worker", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()

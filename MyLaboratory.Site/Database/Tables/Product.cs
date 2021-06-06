@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace Site.Database.Tables
+namespace MyLaboratory.Site.Database.Tables
 {
     [Table("Product")]
     public class Product

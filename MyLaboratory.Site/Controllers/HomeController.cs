@@ -1,14 +1,14 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
-using Site.Models;
+using MyLaboratory.Site.Models;
 using System.Diagnostics;
 using Microsoft.Extensions.Configuration;
 using System.Collections.Generic;
 using System;
 using Microsoft.EntityFrameworkCore;
-using Site.Database.Repositories.Interface;
+using MyLaboratory.Site.Database.Repositories.Interface;
 
-namespace Site.Controllers
+namespace MyLaboratory.Site.Controllers
 {
     public class HomeController : Controller
     {

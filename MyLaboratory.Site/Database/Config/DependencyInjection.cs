@@ -1,9 +1,9 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.EntityFrameworkCore;
-using Site.Database.Repositories.Interface;
-using Site.Database.Repositories.Class;
+using MyLaboratory.Site.Database.Repositories.Interface;
+using MyLaboratory.Site.Database.Repositories.Class;
 
-namespace Site.Database.Config
+namespace MyLaboratory.Site.Database.Config
 {
     public static class DependencyInjection
     {

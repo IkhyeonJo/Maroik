@@ -2,9 +2,9 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using Site.Database.Config;
+using MyLaboratory.Site.Database.Config;
 
-namespace Site.Migrations
+namespace MyLaboratory.Site.Migrations
 {
     [DbContext(typeof(AppDbContext))]
     partial class AppDbContextModelSnapshot : ModelSnapshot
@@ -16,7 +16,7 @@ namespace Site.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 64)
                 .HasAnnotation("ProductVersion", "5.0.6");
 
-            modelBuilder.Entity("Site.Database.Tables.Product", b =>
+            modelBuilder.Entity("MyLaboratory.Site.Database.Tables.Product", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -36,7 +36,7 @@ namespace Site.Migrations
                     b.ToTable("Product");
                 });
 
-            modelBuilder.Entity("Site.Database.Tables.Worker", b =>
+            modelBuilder.Entity("MyLaboratory.Site.Database.Tables.Worker", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()

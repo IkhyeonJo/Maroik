@@ -1,11 +1,11 @@
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.EntityFrameworkCore;
-using Site.Database.Config;
-using Site.Database.Repositories.Interface;
-using Site.Database.Tables;
+using MyLaboratory.Site.Database.Config;
+using MyLaboratory.Site.Database.Repositories.Interface;
+using MyLaboratory.Site.Database.Tables;
 
-namespace Site.Database.Repositories.Class
+namespace MyLaboratory.Site.Database.Repositories.Class
 {
     public class WorkerRepository : IWorkerRepository
     {

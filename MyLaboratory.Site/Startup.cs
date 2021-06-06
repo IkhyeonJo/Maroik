@@ -8,14 +8,14 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Site.Models;
+using MyLaboratory.Site.Models;
 using Microsoft.EntityFrameworkCore;
-using Site.Database;
-using Site.Database.Repositories.Interface;
-using Site.Database.Repositories.Class;
-using Site.Database.Config;
+using MyLaboratory.Site.Database;
+using MyLaboratory.Site.Database.Repositories.Interface;
+using MyLaboratory.Site.Database.Repositories.Class;
+using MyLaboratory.Site.Database.Config;
 
-namespace Site
+namespace MyLaboratory.Site
 {
     public class Startup
     {
