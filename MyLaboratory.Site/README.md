@@ -45,3 +45,5 @@ Login
 https://codinginfinite.com/creating-admin-panel-asp-net-core-mvc-tutorial/
 https://developer.okta.com/blog/2019/08/02/build-a-simple-crud-app-with-aspnetcore-mysql-and-twilio
 https://www.google.ca/search?q=asp.net+core+mvc+mysql+example&ei=8ra5YJnVB7HTmAX66KOIBg&oq=asp.net+core+mvc+mysql+example&gs_lcp=Cgdnd3Mtd2l6EAM6BwgAEEcQsAM6BggAEA0QHlD4FViUH2D0JGgBcAJ4AIABmAGIAYoHkgEDMS43mAEAoAEBqgEHZ3dzLXdpesgBCMABAQ&sclient=gws-wiz&ved=0ahUKEwiZlqC-nP3wAhWxKaYKHXr0CGEQ4dUDCA4&uact=5
+
+https://www.youtube.com/watch?v=1u8-ufTxIcQ
