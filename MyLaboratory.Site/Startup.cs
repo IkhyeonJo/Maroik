@@ -59,7 +59,7 @@ namespace MyLaboratory.Site
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllerRoute(name: "default", pattern: "{controller=Account}/{action=Login}/{id?}")
-                        .RequireAuthorization();
+                        .RequireAuthorization(); // Apply Authorization to all controller
             });
         }
     }
