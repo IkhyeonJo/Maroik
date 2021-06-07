@@ -47,3 +47,9 @@ https://developer.okta.com/blog/2019/08/02/build-a-simple-crud-app-with-aspnetco
 
 https://www.youtube.com/watch?v=1u8-ufTxIcQ
 https://mobiletonster.com/area/code
+
+
+
+
+Page Header나 MainSideBar, MainTopBar 등을 컨트롤러, 액션에 따라 다이나믹하게 바꿀필요가 있을 때 및 코드 참조... DB랑도 연동 생각하고!!
+System.Net.WebUtility.UrlEncode(returnUrl)
