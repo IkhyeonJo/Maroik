@@ -46,3 +46,4 @@ https://codinginfinite.com/creating-admin-panel-asp-net-core-mvc-tutorial/
 https://developer.okta.com/blog/2019/08/02/build-a-simple-crud-app-with-aspnetcore-mysql-and-twilio
 
 https://www.youtube.com/watch?v=1u8-ufTxIcQ
+https://mobiletonster.com/area/code
