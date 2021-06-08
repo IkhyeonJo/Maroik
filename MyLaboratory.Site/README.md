@@ -53,3 +53,8 @@ https://mobiletonster.com/area/code
 
 Page Header나 MainSideBar, MainTopBar 등을 컨트롤러, 액션에 따라 다이나믹하게 바꿀필요가 있을 때 및 코드 참조... DB랑도 연동 생각하고!!
 System.Net.WebUtility.UrlEncode(returnUrl)
+
+
+
+AntiForgeryToken 을 이용하여 폼 전송 경로의 유효성을 체크하자
+https://m.blog.naver.com/PostView.naver?isHttpsRedirect=true&blogId=happywow&logNo=80134498163
