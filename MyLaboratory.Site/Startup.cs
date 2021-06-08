@@ -64,7 +64,7 @@ namespace MyLaboratory.Site
             app.UseAuthorization();
             #endregion
 
-            #region HTTP Header Setting
+            #region Default HTTP Header Setting
             //https://docs.microsoft.com/en-us/aspnet/core/performance/caching/middleware?view=aspnetcore-5.0
             app.UseResponseCaching();
 
