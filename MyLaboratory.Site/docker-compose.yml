@@ -33,7 +33,7 @@ services:
       mariadb:
         image: "mariadb:10.2.38"
         volumes:
-          - datasource:/var/lib/mysql
+          - datasource:/var/lib/mariadb
           - ./_MariaDBSql_Init_Script:/docker-entrypoint-initdb.d
         networks:
           - backend
@@ -50,13 +50,18 @@ services:
          context : .
          dockerfile : Dockerfile
         networks :
-         - backend          
+          - backend          
         ports:
-         - 80:80
-         - 443:443
+          - 80:80
+          - 443:443
         environment :
-         - DBHOST=mysql
-         - ASPNETCORE_ENVIRONMENT=Development
+          - DBHOST=mariadb
+          - ASPNETCORE_ENVIRONMENT=Development
+          - ASPNETCORE_URLS=https://+:443;http://+:80
+          - ASPNETCORE_Kestrel__Certificates__Default__Password=Passw0rd
+          - ASPNETCORE_Kestrel__Certificates__Default__Path=/https/haha.pfx
+        volumes:
+          - ./:/https:ro
         depends_on :
-         - mariadb  
+          - mariadb  
           
