@@ -37,7 +37,7 @@ namespace MyLaboratory.Site.Controllers
         }
 
         [HttpPost]
-        [ValidateAntiForgeryToken]
+        [ValidateAntiForgeryToken] //To Prevent CSRF attack
         public async Task<IActionResult> Login(string username, string password)
         {
             if (username == "bob" && password == "pizza")

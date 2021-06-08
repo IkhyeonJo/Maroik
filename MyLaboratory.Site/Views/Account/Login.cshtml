@@ -11,7 +11,7 @@
     <h2 class="alert-danger" style="padding:20px;">@error</h2>
 }
 <form action="/Account/Login" method="post">
-    @Html.AntiForgeryToken()
+    @Html.AntiForgeryToken() @*To Prevent CSRF attack*@
     <input type="text" name="username" placeholder="Username" />
     <input type="password" name="password" placeholder="Password" />
     <input type="submit" value="login" />
