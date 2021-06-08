@@ -20,7 +20,7 @@ https://www.youtube.com/watch?v=N10QW_AIOnI
 MySql Table의 모든 종류를 자동으로 C# 모든 Model로 변환하는 방법 (Init.sql을 MariaDB에 넣고... 이 방법을 쓰면 알아서 DB 테이블들이 다 C# 모델 클래스로 다 변환됨...)
 Package Manager Console 열고
 cd .\MyLaboratory.Site
-dotnet ef dbcontext scaffold "server=localhost;port=3306;userid=root;password=root;database=ikhyeondb;" "Pomelo.EntityFrameworkCore.MySql" -o ./Models -f
+dotnet ef dbcontext scaffold "server=localhost;port=3306;userid=root;password=root;database=ikhyeondb;" "Pomelo.EntityFrameworkCore.MySql" -o ./Models11 -f
 이러면 DB 테이블이 알아서 다 C# 모델로 변형된다.
 
 https://docs.microsoft.com/en-us/aspnet/core/data/ef-mvc/migrations?view=aspnetcore-5.0#pmc
@@ -33,6 +33,7 @@ dotnet ef migrations add InitialCreate
 (Migration 폴더 내용 다 지울 것)
 (dotnet ef migrations add InitialCreate) 명령 실행 시, 카피할 DB string 맞추고 할 것... 나같은 경우는 로컬 MariaDB...
 
+dotnet ef database update // 로컬에 데이터 마이그레이션 시작 명령어
 
 repository pattern & UnitWork pattern
 https://enlabsoftware.com/development/how-to-implement-repository-unit-of-work-design-patterns-in-dot-net-core-practical-examples-part-one.html
