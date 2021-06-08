@@ -65,6 +65,7 @@ namespace MyLaboratory.Site
             #endregion
 
             #region HTTP Header Setting
+            //https://docs.microsoft.com/en-us/aspnet/core/performance/caching/middleware?view=aspnetcore-5.0
             app.UseResponseCaching();
 
             app.Use(async (context, next) =>
