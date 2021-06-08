@@ -58,7 +58,7 @@ services:
           - DBHOST=mariadb
           - ASPNETCORE_ENVIRONMENT=Development
           - ASPNETCORE_URLS=https://+:443;http://+:80
-          - ASPNETCORE_Kestrel__Certificates__Default__Password=Passw0rd # must equal to .pfx file password
+          - ASPNETCORE_Kestrel__Certificates__Default__Password=Passw0rd # must equal to .pfx file's' password
           - ASPNETCORE_Kestrel__Certificates__Default__Path=/https/testhttps.pfx
         volumes:
           - ./:/https:ro
