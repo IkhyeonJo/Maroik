@@ -16,6 +16,7 @@ using MyLaboratory.Site.Database.Repositories.Class;
 using MyLaboratory.Site.Database.Config;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using System.Security.Claims;
+using Microsoft.AspNetCore.Http;
 
 namespace MyLaboratory.Site
 {
@@ -36,6 +37,7 @@ namespace MyLaboratory.Site
                 .AddCookieAuthentication();
 
             services.AddSingleton<IConfiguration>(Configuration);
+            services.AddResponseCaching(); // For HTTP Header Setting 
             services.AddControllersWithViews();
         }
 
@@ -57,8 +59,30 @@ namespace MyLaboratory.Site
 
             app.UseRouting();
 
+            #region Login
             app.UseAuthentication();
             app.UseAuthorization();
+            #endregion
+
+            #region HTTP Header Setting
+            app.UseResponseCaching();
+
+            app.Use(async (context, next) =>
+            {
+                context.Response.GetTypedHeaders().CacheControl =
+                    new Microsoft.Net.Http.Headers.CacheControlHeaderValue()
+                    {
+                        //Public = true,
+                        //MaxAge = TimeSpan.FromSeconds(10),
+                        NoCache = true, // For resolve logout back button problem
+                        NoStore = true // For resolve logout back button problem
+                    };
+                context.Response.Headers[Microsoft.Net.Http.Headers.HeaderNames.Vary] =
+                    new string[] { "Accept-Encoding" };
+
+                await next();
+            });
+            #endregion
 
             app.UseEndpoints(endpoints =>
             {
