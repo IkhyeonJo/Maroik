@@ -14,6 +14,7 @@ namespace MyLaboratory.Site.Controllers
 {
 
     [AllowAnonymous]
+    [ResponseCache(Location = ResponseCacheLocation.None, NoStore = true)]
     public class AccountController : Controller
     {
         private readonly ILogger<HomeController> logger;
