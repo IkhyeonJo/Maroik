@@ -70,3 +70,10 @@ System.Net.WebUtility.UrlEncode(returnUrl)
 
 AntiForgeryToken 을 이용하여 폼 전송 경로의 유효성을 체크하자
 https://m.blog.naver.com/PostView.naver?isHttpsRedirect=true&blogId=happywow&logNo=80134498163
+
+
+Run ASP.NET Core 3.1 Apps in Docker with HTTPS.
+https://www.youtube.com/watch?v=lcaDDxJv260
+
+.NET Core 3.1 MVC REST API - Full Course
+https://www.youtube.com/watch?v=fmvcAzHpsk8
