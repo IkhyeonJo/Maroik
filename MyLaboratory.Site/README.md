@@ -48,7 +48,19 @@ https://developer.okta.com/blog/2019/08/02/build-a-simple-crud-app-with-aspnetco
 https://www.youtube.com/watch?v=1u8-ufTxIcQ
 https://mobiletonster.com/area/code
 
+https://jhyeok.com/aspnetcore-claim/
+https://www.youtube.com/watch?v=BWa7Mu-oMHk&t=3202s
+Cookies, when used correctly, are a safe option. The key is to 
+1. use https,
+2. make sure the cookie is bound to a specific domain
+3. set it to httponly so it can't be read on the client side in javascript
+4.  control the security level to be strict or same site, not lax. 
 
+Using these and other techniques such as CSRF tokens to prevent cross site scripting attacks will further improve the security of your site while using cookies.
+Alternatives to using cookies include using JWT tokens added to the Authorization header, but they are really not any safer thank a cookie. Like a cookie, the JWT token is passed in the header, but the JWT token is usually readable by the client side, whereas a cookie can be encrypted so that it is not readable by the client side or browser (httponly). 
+If you need store JWT tokens in the browser, don't store them in localstorage (which is a common practice, but not a good idea). Store tokens in sessionstorage or in memory (like in a react state object, or Angular state object) or .... in a cookie (lol).
+https://wonpaper.tistory.com/239
+PBKDF2 
 
 
 Page Header나 MainSideBar, MainTopBar 등을 컨트롤러, 액션에 따라 다이나믹하게 바꿀필요가 있을 때 및 코드 참조... DB랑도 연동 생각하고!!
