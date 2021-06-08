@@ -78,7 +78,11 @@ https://www.youtube.com/watch?v=lcaDDxJv260
 .NET Core 3.1 MVC REST API - Full Course
 https://www.youtube.com/watch?v=fmvcAzHpsk8
 
+
+
+#-------------------------------------------------------------------------------
 #인증서 생성 (powerShell창) C:\Users\HOME\.aspnet\https에 있음
 dotnet dev-certs https -ep $env:USERPROFILE/.aspnet/https/haha.pfx -p Passw0rd
 
 #인증서 이 프로젝트에 바로 놓을 것
+#-------------------------------------------------------------------------------
