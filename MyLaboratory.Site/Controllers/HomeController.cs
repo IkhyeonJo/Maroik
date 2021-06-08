@@ -11,7 +11,6 @@ using Microsoft.AspNetCore.Authorization;
 
 namespace MyLaboratory.Site.Controllers
 {
-    //[ResponseCache(Location = ResponseCacheLocation.None, NoStore = true)]
     public class HomeController : Controller
     {
         private readonly ILogger<HomeController> logger;
