@@ -90,3 +90,8 @@ dotnet dev-certs https -ep $env:USERPROFILE/.aspnet/https/haha.pfx -p Passw0rd
 도커 컴포즈에서
 - ASPNETCORE_Kestrel__Certificates__Default__Password=Passw0rd 와 인증서 패스워드가 같아야함
 #-------------------------------------------------------------------------------
+
+# MYSQL DB 백업하기
+mysqldump -u [사용자 계정] -p [패스워드] [원본 데이터베이스명] > [생성할 백업 DB명].sql
+# MYSQL DB 복원하기
+mysql -u [사용자 계정] -p [패스워드] [복원할 DB] < [백업된 DB].sql
