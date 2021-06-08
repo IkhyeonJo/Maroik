@@ -68,6 +68,14 @@ namespace MyLaboratory.Site
             //https://docs.microsoft.com/en-us/aspnet/core/performance/caching/middleware?view=aspnetcore-5.0
             app.UseResponseCaching();
 
+            #region 모든 페이지에 다음과 같은 코드를 적용한다. 로그아웃 후 뒤로가기하면 로그인 했던 페이지가 나오기 때문에 캐쉬 Disable 적용
+
+            //<META http-equiv="Expires" content="-1">
+            //<META http-equiv="Pragma" content="no-cache">
+            //<META http-equiv="Cache-Control" content="No-Cache">
+
+            //아래 코드는 위의 Html Header에 들어가는 META 데이터 내용과 같다.
+
             app.Use(async (context, next) =>
             {
                 context.Response.GetTypedHeaders().CacheControl =
@@ -83,6 +91,7 @@ namespace MyLaboratory.Site
 
                 await next();
             });
+            #endregion
             #endregion
 
             app.UseEndpoints(endpoints =>
