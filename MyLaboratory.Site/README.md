@@ -85,4 +85,7 @@ https://www.youtube.com/watch?v=fmvcAzHpsk8
 dotnet dev-certs https -ep $env:USERPROFILE/.aspnet/https/haha.pfx -p Passw0rd
 
 #인증서 이 프로젝트에 바로 놓을 것
+
+도커 컴포즈에서
+- ASPNETCORE_Kestrel__Certificates__Default__Password=Passw0rd 와 인증서 패스워드가 같아야함
 #-------------------------------------------------------------------------------
