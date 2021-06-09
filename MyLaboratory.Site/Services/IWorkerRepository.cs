@@ -1,7 +1,7 @@
 using MyLaboratory.Site.Models;
 using System.Collections.Generic;
 
-namespace MyLaboratory.Site.Database.Repositories.Interface
+namespace MyLaboratory.Site.Services
 {
     public interface IWorkerRepository
     {

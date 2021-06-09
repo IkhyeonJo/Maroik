@@ -6,7 +6,7 @@ using Microsoft.Extensions.Configuration;
 using System.Collections.Generic;
 using System;
 using Microsoft.EntityFrameworkCore;
-using MyLaboratory.Site.Database.Repositories.Interface;
+using MyLaboratory.Site.Services;
 using Microsoft.AspNetCore.Authorization;
 
 namespace MyLaboratory.Site.Controllers
