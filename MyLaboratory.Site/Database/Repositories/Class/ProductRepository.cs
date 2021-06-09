@@ -3,7 +3,7 @@ using System.Linq;
 using Microsoft.EntityFrameworkCore;
 using MyLaboratory.Site.Data;
 using MyLaboratory.Site.Database.Repositories.Interface;
-using MyLaboratory.Site.Database.Tables;
+using MyLaboratory.Site.Models;
 
 namespace MyLaboratory.Site.Database.Repositories.Class
 {

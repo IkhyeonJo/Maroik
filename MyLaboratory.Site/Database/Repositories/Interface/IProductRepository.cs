@@ -1,4 +1,4 @@
-using MyLaboratory.Site.Database.Tables;
+using MyLaboratory.Site.Models;
 using System.Collections.Generic;
 
 namespace MyLaboratory.Site.Database.Repositories.Interface

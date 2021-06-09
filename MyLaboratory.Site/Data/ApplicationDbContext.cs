@@ -1,5 +1,5 @@
 using Microsoft.EntityFrameworkCore;
-using MyLaboratory.Site.Database.Tables;
+using MyLaboratory.Site.Models;
 
 namespace MyLaboratory.Site.Data
 {
