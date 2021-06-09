@@ -1,46 +1,34 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
-using MyLaboratory.Site.Models;
-using System.Diagnostics;
-using Microsoft.Extensions.Configuration;
+﻿using System;
 using System.Collections.Generic;
-using System;
-using Microsoft.EntityFrameworkCore;
-using MyLaboratory.Site.Database.Repositories.Interface;
-using Microsoft.AspNetCore.Authorization;
+using System.Diagnostics;
+using System.Linq;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Mvc;
+using coderush.Models;
 
-namespace MyLaboratory.Site.Controllers
+namespace coderush.Controllers
 {
     public class HomeController : Controller
     {
-        private readonly ILogger<HomeController> logger;
-        private readonly IProductRepository productRepository;
-        private readonly IWorkerRepository workerRepository;
-
-        public HomeController(ILogger<HomeController> logger, IProductRepository productRepository, IWorkerRepository workerRepository)
-        {
-            this.logger = logger;
-            this.productRepository = productRepository;
-            this.workerRepository = workerRepository;
-        }
-
         public IActionResult Index()
         {
-            return View(productRepository.GetProducts);
+            return RedirectToAction("UserProfile", "UserRole");
         }
 
-        [Authorize(Roles = "Admin")]
-        public IActionResult Karl()
+        public IActionResult About()
         {
-            return View(workerRepository.GetWorkers);
-        }
+            ViewData["Message"] = "Your application description page.";
 
-        public IActionResult Privacy()
-        {
             return View();
         }
 
-        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+        public IActionResult Contact()
+        {
+            ViewData["Message"] = "Your contact page.";
+
+            return View();
+        }
+
         public IActionResult Error()
         {
             return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
