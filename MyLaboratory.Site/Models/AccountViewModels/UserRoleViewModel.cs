@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace coderush.Models.AccountViewModels
+namespace MyLaboratory.Site.Models.AccountViewModels
 {
     public class UserRoleViewModel
     {

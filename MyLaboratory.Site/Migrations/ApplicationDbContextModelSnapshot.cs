@@ -145,27 +145,7 @@ namespace MyLaboratory.Site.Migrations
                     b.ToTable("AspNetUserTokens");
                 });
 
-            modelBuilder.Entity("MyLaboratory.Site.Models.Worker", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    b.Property<string>("Job")
-                        .HasColumnType("longtext");
-
-                    b.Property<decimal>("Wage")
-                        .HasColumnType("decimal(65,30)");
-
-                    b.Property<string>("WorkerName")
-                        .HasColumnType("longtext");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Worker");
-                });
-
-            modelBuilder.Entity("coderush.Models.ApplicationUser", b =>
+            modelBuilder.Entity("MyLaboratory.Site.Models.ApplicationUser", b =>
                 {
                     b.Property<string>("Id")
                         .HasColumnType("varchar(255)");
@@ -229,7 +209,7 @@ namespace MyLaboratory.Site.Migrations
                     b.ToTable("AspNetUsers");
                 });
 
-            modelBuilder.Entity("coderush.Models.Bill", b =>
+            modelBuilder.Entity("MyLaboratory.Site.Models.Bill", b =>
                 {
                     b.Property<int>("BillId")
                         .ValueGeneratedOnAdd()
@@ -261,7 +241,7 @@ namespace MyLaboratory.Site.Migrations
                     b.ToTable("Bill");
                 });
 
-            modelBuilder.Entity("coderush.Models.BillType", b =>
+            modelBuilder.Entity("MyLaboratory.Site.Models.BillType", b =>
                 {
                     b.Property<int>("BillTypeId")
                         .ValueGeneratedOnAdd()
@@ -279,7 +259,7 @@ namespace MyLaboratory.Site.Migrations
                     b.ToTable("BillType");
                 });
 
-            modelBuilder.Entity("coderush.Models.Branch", b =>
+            modelBuilder.Entity("MyLaboratory.Site.Models.Branch", b =>
                 {
                     b.Property<int>("BranchId")
                         .ValueGeneratedOnAdd()
@@ -321,7 +301,7 @@ namespace MyLaboratory.Site.Migrations
                     b.ToTable("Branch");
                 });
 
-            modelBuilder.Entity("coderush.Models.CashBank", b =>
+            modelBuilder.Entity("MyLaboratory.Site.Models.CashBank", b =>
                 {
                     b.Property<int>("CashBankId")
                         .ValueGeneratedOnAdd()
@@ -338,7 +318,7 @@ namespace MyLaboratory.Site.Migrations
                     b.ToTable("CashBank");
                 });
 
-            modelBuilder.Entity("coderush.Models.Currency", b =>
+            modelBuilder.Entity("MyLaboratory.Site.Models.Currency", b =>
                 {
                     b.Property<int>("CurrencyId")
                         .ValueGeneratedOnAdd()
@@ -360,7 +340,7 @@ namespace MyLaboratory.Site.Migrations
                     b.ToTable("Currency");
                 });
 
-            modelBuilder.Entity("coderush.Models.Customer", b =>
+            modelBuilder.Entity("MyLaboratory.Site.Models.Customer", b =>
                 {
                     b.Property<int>("CustomerId")
                         .ValueGeneratedOnAdd()
@@ -399,7 +379,7 @@ namespace MyLaboratory.Site.Migrations
                     b.ToTable("Customer");
                 });
 
-            modelBuilder.Entity("coderush.Models.CustomerType", b =>
+            modelBuilder.Entity("MyLaboratory.Site.Models.CustomerType", b =>
                 {
                     b.Property<int>("CustomerTypeId")
                         .ValueGeneratedOnAdd()
@@ -417,7 +397,7 @@ namespace MyLaboratory.Site.Migrations
                     b.ToTable("CustomerType");
                 });
 
-            modelBuilder.Entity("coderush.Models.GoodsReceivedNote", b =>
+            modelBuilder.Entity("MyLaboratory.Site.Models.GoodsReceivedNote", b =>
                 {
                     b.Property<int>("GoodsReceivedNoteId")
                         .ValueGeneratedOnAdd()
@@ -449,7 +429,7 @@ namespace MyLaboratory.Site.Migrations
                     b.ToTable("GoodsReceivedNote");
                 });
 
-            modelBuilder.Entity("coderush.Models.Invoice", b =>
+            modelBuilder.Entity("MyLaboratory.Site.Models.Invoice", b =>
                 {
                     b.Property<int>("InvoiceId")
                         .ValueGeneratedOnAdd()
@@ -475,7 +455,7 @@ namespace MyLaboratory.Site.Migrations
                     b.ToTable("Invoice");
                 });
 
-            modelBuilder.Entity("coderush.Models.InvoiceType", b =>
+            modelBuilder.Entity("MyLaboratory.Site.Models.InvoiceType", b =>
                 {
                     b.Property<int>("InvoiceTypeId")
                         .ValueGeneratedOnAdd()
@@ -493,7 +473,7 @@ namespace MyLaboratory.Site.Migrations
                     b.ToTable("InvoiceType");
                 });
 
-            modelBuilder.Entity("coderush.Models.NumberSequence", b =>
+            modelBuilder.Entity("MyLaboratory.Site.Models.NumberSequence", b =>
                 {
                     b.Property<int>("NumberSequenceId")
                         .ValueGeneratedOnAdd()
@@ -519,7 +499,7 @@ namespace MyLaboratory.Site.Migrations
                     b.ToTable("NumberSequence");
                 });
 
-            modelBuilder.Entity("coderush.Models.PaymentReceive", b =>
+            modelBuilder.Entity("MyLaboratory.Site.Models.PaymentReceive", b =>
                 {
                     b.Property<int>("PaymentReceiveId")
                         .ValueGeneratedOnAdd()
@@ -548,7 +528,7 @@ namespace MyLaboratory.Site.Migrations
                     b.ToTable("PaymentReceive");
                 });
 
-            modelBuilder.Entity("coderush.Models.PaymentType", b =>
+            modelBuilder.Entity("MyLaboratory.Site.Models.PaymentType", b =>
                 {
                     b.Property<int>("PaymentTypeId")
                         .ValueGeneratedOnAdd()
@@ -566,7 +546,7 @@ namespace MyLaboratory.Site.Migrations
                     b.ToTable("PaymentType");
                 });
 
-            modelBuilder.Entity("coderush.Models.PaymentVoucher", b =>
+            modelBuilder.Entity("MyLaboratory.Site.Models.PaymentVoucher", b =>
                 {
                     b.Property<int>("PaymentvoucherId")
                         .ValueGeneratedOnAdd()
@@ -598,7 +578,7 @@ namespace MyLaboratory.Site.Migrations
                     b.ToTable("PaymentVoucher");
                 });
 
-            modelBuilder.Entity("coderush.Models.Product", b =>
+            modelBuilder.Entity("MyLaboratory.Site.Models.Product", b =>
                 {
                     b.Property<int>("ProductId")
                         .ValueGeneratedOnAdd()
@@ -640,7 +620,7 @@ namespace MyLaboratory.Site.Migrations
                     b.ToTable("Product");
                 });
 
-            modelBuilder.Entity("coderush.Models.ProductType", b =>
+            modelBuilder.Entity("MyLaboratory.Site.Models.ProductType", b =>
                 {
                     b.Property<int>("ProductTypeId")
                         .ValueGeneratedOnAdd()
@@ -658,7 +638,7 @@ namespace MyLaboratory.Site.Migrations
                     b.ToTable("ProductType");
                 });
 
-            modelBuilder.Entity("coderush.Models.PurchaseOrder", b =>
+            modelBuilder.Entity("MyLaboratory.Site.Models.PurchaseOrder", b =>
                 {
                     b.Property<int>("PurchaseOrderId")
                         .ValueGeneratedOnAdd()
@@ -711,7 +691,7 @@ namespace MyLaboratory.Site.Migrations
                     b.ToTable("PurchaseOrder");
                 });
 
-            modelBuilder.Entity("coderush.Models.PurchaseOrderLine", b =>
+            modelBuilder.Entity("MyLaboratory.Site.Models.PurchaseOrderLine", b =>
                 {
                     b.Property<int>("PurchaseOrderLineId")
                         .ValueGeneratedOnAdd()
@@ -760,7 +740,7 @@ namespace MyLaboratory.Site.Migrations
                     b.ToTable("PurchaseOrderLine");
                 });
 
-            modelBuilder.Entity("coderush.Models.PurchaseType", b =>
+            modelBuilder.Entity("MyLaboratory.Site.Models.PurchaseType", b =>
                 {
                     b.Property<int>("PurchaseTypeId")
                         .ValueGeneratedOnAdd()
@@ -778,7 +758,7 @@ namespace MyLaboratory.Site.Migrations
                     b.ToTable("PurchaseType");
                 });
 
-            modelBuilder.Entity("coderush.Models.SalesOrder", b =>
+            modelBuilder.Entity("MyLaboratory.Site.Models.SalesOrder", b =>
                 {
                     b.Property<int>("SalesOrderId")
                         .ValueGeneratedOnAdd()
@@ -834,7 +814,7 @@ namespace MyLaboratory.Site.Migrations
                     b.ToTable("SalesOrder");
                 });
 
-            modelBuilder.Entity("coderush.Models.SalesOrderLine", b =>
+            modelBuilder.Entity("MyLaboratory.Site.Models.SalesOrderLine", b =>
                 {
                     b.Property<int>("SalesOrderLineId")
                         .ValueGeneratedOnAdd()
@@ -883,7 +863,7 @@ namespace MyLaboratory.Site.Migrations
                     b.ToTable("SalesOrderLine");
                 });
 
-            modelBuilder.Entity("coderush.Models.SalesType", b =>
+            modelBuilder.Entity("MyLaboratory.Site.Models.SalesType", b =>
                 {
                     b.Property<int>("SalesTypeId")
                         .ValueGeneratedOnAdd()
@@ -901,7 +881,7 @@ namespace MyLaboratory.Site.Migrations
                     b.ToTable("SalesType");
                 });
 
-            modelBuilder.Entity("coderush.Models.Shipment", b =>
+            modelBuilder.Entity("MyLaboratory.Site.Models.Shipment", b =>
                 {
                     b.Property<int>("ShipmentId")
                         .ValueGeneratedOnAdd()
@@ -930,7 +910,7 @@ namespace MyLaboratory.Site.Migrations
                     b.ToTable("Shipment");
                 });
 
-            modelBuilder.Entity("coderush.Models.ShipmentType", b =>
+            modelBuilder.Entity("MyLaboratory.Site.Models.ShipmentType", b =>
                 {
                     b.Property<int>("ShipmentTypeId")
                         .ValueGeneratedOnAdd()
@@ -948,7 +928,7 @@ namespace MyLaboratory.Site.Migrations
                     b.ToTable("ShipmentType");
                 });
 
-            modelBuilder.Entity("coderush.Models.UnitOfMeasure", b =>
+            modelBuilder.Entity("MyLaboratory.Site.Models.UnitOfMeasure", b =>
                 {
                     b.Property<int>("UnitOfMeasureId")
                         .ValueGeneratedOnAdd()
@@ -966,7 +946,7 @@ namespace MyLaboratory.Site.Migrations
                     b.ToTable("UnitOfMeasure");
                 });
 
-            modelBuilder.Entity("coderush.Models.UserProfile", b =>
+            modelBuilder.Entity("MyLaboratory.Site.Models.UserProfile", b =>
                 {
                     b.Property<int>("UserProfileId")
                         .ValueGeneratedOnAdd()
@@ -1001,7 +981,7 @@ namespace MyLaboratory.Site.Migrations
                     b.ToTable("UserProfile");
                 });
 
-            modelBuilder.Entity("coderush.Models.Vendor", b =>
+            modelBuilder.Entity("MyLaboratory.Site.Models.Vendor", b =>
                 {
                     b.Property<int>("VendorId")
                         .ValueGeneratedOnAdd()
@@ -1040,7 +1020,7 @@ namespace MyLaboratory.Site.Migrations
                     b.ToTable("Vendor");
                 });
 
-            modelBuilder.Entity("coderush.Models.VendorType", b =>
+            modelBuilder.Entity("MyLaboratory.Site.Models.VendorType", b =>
                 {
                     b.Property<int>("VendorTypeId")
                         .ValueGeneratedOnAdd()
@@ -1058,7 +1038,7 @@ namespace MyLaboratory.Site.Migrations
                     b.ToTable("VendorType");
                 });
 
-            modelBuilder.Entity("coderush.Models.Warehouse", b =>
+            modelBuilder.Entity("MyLaboratory.Site.Models.Warehouse", b =>
                 {
                     b.Property<int>("WarehouseId")
                         .ValueGeneratedOnAdd()
@@ -1079,6 +1059,26 @@ namespace MyLaboratory.Site.Migrations
                     b.ToTable("Warehouse");
                 });
 
+            modelBuilder.Entity("MyLaboratory.Site.Models.Worker", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    b.Property<string>("Job")
+                        .HasColumnType("longtext");
+
+                    b.Property<decimal>("Wage")
+                        .HasColumnType("decimal(65,30)");
+
+                    b.Property<string>("WorkerName")
+                        .HasColumnType("longtext");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Worker");
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
                 {
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
@@ -1090,7 +1090,7 @@ namespace MyLaboratory.Site.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<string>", b =>
                 {
-                    b.HasOne("coderush.Models.ApplicationUser", null)
+                    b.HasOne("MyLaboratory.Site.Models.ApplicationUser", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1099,7 +1099,7 @@ namespace MyLaboratory.Site.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<string>", b =>
                 {
-                    b.HasOne("coderush.Models.ApplicationUser", null)
+                    b.HasOne("MyLaboratory.Site.Models.ApplicationUser", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1114,7 +1114,7 @@ namespace MyLaboratory.Site.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("coderush.Models.ApplicationUser", null)
+                    b.HasOne("MyLaboratory.Site.Models.ApplicationUser", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1123,16 +1123,16 @@ namespace MyLaboratory.Site.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<string>", b =>
                 {
-                    b.HasOne("coderush.Models.ApplicationUser", null)
+                    b.HasOne("MyLaboratory.Site.Models.ApplicationUser", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("coderush.Models.PurchaseOrderLine", b =>
+            modelBuilder.Entity("MyLaboratory.Site.Models.PurchaseOrderLine", b =>
                 {
-                    b.HasOne("coderush.Models.PurchaseOrder", "PurchaseOrder")
+                    b.HasOne("MyLaboratory.Site.Models.PurchaseOrder", "PurchaseOrder")
                         .WithMany("PurchaseOrderLines")
                         .HasForeignKey("PurchaseOrderId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1141,9 +1141,9 @@ namespace MyLaboratory.Site.Migrations
                     b.Navigation("PurchaseOrder");
                 });
 
-            modelBuilder.Entity("coderush.Models.SalesOrderLine", b =>
+            modelBuilder.Entity("MyLaboratory.Site.Models.SalesOrderLine", b =>
                 {
-                    b.HasOne("coderush.Models.SalesOrder", "SalesOrder")
+                    b.HasOne("MyLaboratory.Site.Models.SalesOrder", "SalesOrder")
                         .WithMany("SalesOrderLines")
                         .HasForeignKey("SalesOrderId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1152,12 +1152,12 @@ namespace MyLaboratory.Site.Migrations
                     b.Navigation("SalesOrder");
                 });
 
-            modelBuilder.Entity("coderush.Models.PurchaseOrder", b =>
+            modelBuilder.Entity("MyLaboratory.Site.Models.PurchaseOrder", b =>
                 {
                     b.Navigation("PurchaseOrderLines");
                 });
 
-            modelBuilder.Entity("coderush.Models.SalesOrder", b =>
+            modelBuilder.Entity("MyLaboratory.Site.Models.SalesOrder", b =>
                 {
                     b.Navigation("SalesOrderLines");
                 });

@@ -8,7 +8,6 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using MyLaboratory.Site.Services;
 using Microsoft.AspNetCore.Authorization;
-using coderush.Models;
 
 namespace MyLaboratory.Site.Controllers
 {

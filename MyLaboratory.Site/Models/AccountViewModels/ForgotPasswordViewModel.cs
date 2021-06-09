@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace coderush.Models.AccountViewModels
+namespace MyLaboratory.Site.Models.AccountViewModels
 {
     public class ForgotPasswordViewModel
     {

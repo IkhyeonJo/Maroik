@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace coderush.Models.ManageViewModels
+namespace MyLaboratory.Site.Models.ManageViewModels
 {
     public class ShowRecoveryCodesViewModel
     {

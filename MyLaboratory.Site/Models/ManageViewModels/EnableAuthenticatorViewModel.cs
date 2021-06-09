@@ -6,7 +6,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 
-namespace coderush.Models.ManageViewModels
+namespace MyLaboratory.Site.Models.ManageViewModels
 {
     public class EnableAuthenticatorViewModel
     {

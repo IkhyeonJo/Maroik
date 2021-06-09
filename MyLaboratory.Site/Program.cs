@@ -10,7 +10,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using MyLaboratory.Site.Data;
 using MyLaboratory.Site.Models;
-using coderush.Models;
 
 namespace MyLaboratory.Site
 {
@@ -35,7 +34,7 @@ namespace MyLaboratory.Site
                 catch (Exception ex)
                 {
                     var logger = services.GetRequiredService<ILogger<Program>>();
-                    logger.LogError(ex, "An error occurred while seeding the database.");
+                    logger.LogError(ex, "An error occurred while Program.cs process.");
                 }
             }
 
