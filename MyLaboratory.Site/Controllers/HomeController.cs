@@ -26,8 +26,7 @@ namespace MyLaboratory.Site.Controllers
 
         public IActionResult Index()
         {
-            //return View(productRepository.GetProducts);
-            return View();
+            return View(productRepository.GetProducts);
         }
 
         [Authorize(Roles = "Admin")]

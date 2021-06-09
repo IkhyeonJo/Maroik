@@ -15,19 +15,19 @@ namespace MyLaboratory.Site.Services
             this.context = context;
         }
 
-        //public IEnumerable<Product> GetProduct { get => context.Product; }
+        public IEnumerable<Product> GetProduct { get => context.Product; }
 
-        //public IEnumerable<Product> GetProducts
-        //{
-        //    get
-        //    {
-        //        var list = context.Product.FromSqlRaw("SELECT * FROM Product").ToList();
-        //        return list;
-        //    }
-        //    set
-        //    {
+        public IEnumerable<Product> GetProducts
+        {
+            get
+            {
+                var list = context.Product.FromSqlRaw("SELECT * FROM Product").ToList();
+                return list;
+            }
+            set
+            {
 
-        //    }
-        //}
+            }
+        }
     }
 }

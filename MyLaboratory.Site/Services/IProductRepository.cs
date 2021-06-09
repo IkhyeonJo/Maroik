@@ -5,7 +5,7 @@ namespace MyLaboratory.Site.Services
 {
     public interface IProductRepository
     {
-        //IEnumerable<Product> GetProduct { get; }
-        //IEnumerable<Product> GetProducts { get; }
+        IEnumerable<Product> GetProduct { get; }
+        IEnumerable<Product> GetProducts { get; }
     }
 }
