@@ -8,6 +8,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using MyLaboratory.Site.Services;
 using Microsoft.AspNetCore.Authorization;
+using coderush.Models;
 
 namespace MyLaboratory.Site.Controllers
 {
@@ -26,7 +27,8 @@ namespace MyLaboratory.Site.Controllers
 
         public IActionResult Index()
         {
-            return View(productRepository.GetProducts);
+            //return View(productRepository.GetProducts);
+            return View();
         }
 
         [Authorize(Roles = "Admin")]

@@ -1,15 +1,27 @@
+﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
+using System.Threading.Tasks;
 
-namespace MyLaboratory.Site.Models
+namespace coderush.Models
 {
-    [Table("Product")]
     public class Product
     {
-        [Key]
-        public int Id { get; set; }
-        public string Nome { get; set; }
-        public string Categoria { get; set; }
-        public decimal Valor { get; set; }
+        public int ProductId { get; set; }
+        [Required]
+        public string ProductName { get; set; }
+        public string ProductCode { get; set; }
+        public string Barcode { get; set; }
+        public string Description { get; set; }
+        public string ProductImageUrl { get; set; }
+        [Display(Name = "UOM")]
+        public int UnitOfMeasureId { get; set; }
+        public double DefaultBuyingPrice { get; set; } = 0.0;
+        public double DefaultSellingPrice { get; set; } = 0.0;
+        [Display(Name = "Branch")]
+        public int BranchId { get; set; }
+        [Display(Name = "Currency")]
+        public int CurrencyId { get; set; }
     }
 }

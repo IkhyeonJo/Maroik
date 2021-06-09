@@ -1,4 +1,4 @@
-﻿@model IEnumerable<MyLaboratory.Site.Models.Product>
+﻿@*@model IEnumerable<MyLaboratory.Site.Models.Product>*@
 @{
     Layout = null;
 }
@@ -10,7 +10,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 </head>
 <body>
-    @foreach (var p in Model)
+    @*@foreach (var p in Model)
     {
         <tr>
             <td>@p.Id</td>
@@ -18,7 +18,7 @@
             <td>@p.Categoria</td>
             <td>$@p.Valor.ToString("F2")</td>
         </tr>
-    }
+    }*@
 
     <h1>This is Top Secret</h1>
     <h2>Welcome @User.Identity.Name</h2>

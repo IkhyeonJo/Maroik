@@ -10,6 +10,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using MyLaboratory.Site.Data;
 using MyLaboratory.Site.Models;
+using coderush.Models;
 
 namespace MyLaboratory.Site
 {

@@ -1,6 +1,6 @@
 using System;
 
-namespace MyLaboratory.Site.Models
+namespace coderush.Models
 {
     public class ErrorViewModel
     {
