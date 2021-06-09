@@ -96,3 +96,6 @@ mysqldump -u [사용자 계정] -p [원본 데이터베이스명] > [생성할 백업 DB명].sql
 
 # MYSQL DB 복원하기 (Windows에서는 관리자 권한으로 C:\Program Files\MariaDB 10.2\bin cmd 가서 할 것)
 mysql -u [사용자 계정] -p [복원할 DB] < [백업된 DB].sql
+
+# Mariadb container 붙기
+docker exec -it mariadb /bin/bash
