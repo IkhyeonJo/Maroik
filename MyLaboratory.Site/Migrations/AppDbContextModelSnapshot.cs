@@ -6,7 +6,7 @@ using MyLaboratory.Site.Database.Config;
 
 namespace MyLaboratory.Site.Migrations
 {
-    [DbContext(typeof(AppDbContext))]
+    [DbContext(typeof(ApplicationDbContext))]
     partial class AppDbContextModelSnapshot : ModelSnapshot
     {
         protected override void BuildModel(ModelBuilder modelBuilder)

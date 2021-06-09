@@ -16,7 +16,7 @@ namespace MyLaboratory.Site.Database.Config
         {
             string connectionString = "server=mariadb;port=3306;userid=root;password=root;database=ikhyeondb;"; // publish
             //string connectionString = "server=localhost;port=3306;userid=root;password=root;database=ikhyeondb;"; // debugging
-            services.AddDbContext<AppDbContext>(options =>
+            services.AddDbContext<ApplicationDbContext>(options =>
                   options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
             return services;
         }

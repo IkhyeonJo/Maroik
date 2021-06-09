@@ -9,9 +9,9 @@ namespace MyLaboratory.Site.Database.Repositories.Class
 {
     public class ProductRepository : IProductRepository
     {
-        private readonly AppDbContext context;
+        private readonly ApplicationDbContext context;
 
-        public ProductRepository(AppDbContext context)
+        public ProductRepository(ApplicationDbContext context)
         {
             this.context = context;
         }

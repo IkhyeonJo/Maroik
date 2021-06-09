@@ -7,7 +7,7 @@ using MyLaboratory.Site.Database.Config;
 
 namespace MyLaboratory.Site.Migrations
 {
-    [DbContext(typeof(AppDbContext))]
+    [DbContext(typeof(ApplicationDbContext))]
     [Migration("20210606193358_InitialCreate")]
     partial class InitialCreate
     {

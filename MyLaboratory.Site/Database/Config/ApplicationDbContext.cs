@@ -3,13 +3,13 @@ using MyLaboratory.Site.Database.Tables;
 
 namespace MyLaboratory.Site.Database.Config
 {
-     public class AppDbContext : DbContext
+     public class ApplicationDbContext : DbContext
      {
         #region (For Migration) DbSet<T>'s T is table type.
         public DbSet<Product> Product { get; set; }
         public DbSet<Worker> Worker { get; set; }
         #endregion
-        public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
+        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)
         {
             ChangeTracker.QueryTrackingBehavior = QueryTrackingBehavior.NoTracking;
             ChangeTracker.AutoDetectChangesEnabled = false;

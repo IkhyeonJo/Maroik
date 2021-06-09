@@ -9,9 +9,9 @@ namespace MyLaboratory.Site.Database.Repositories.Class
 {
     public class WorkerRepository : IWorkerRepository
     {
-        private readonly AppDbContext context;
+        private readonly ApplicationDbContext context;
 
-        public WorkerRepository(AppDbContext context)
+        public WorkerRepository(ApplicationDbContext context)
         {
             this.context = context;
         }
