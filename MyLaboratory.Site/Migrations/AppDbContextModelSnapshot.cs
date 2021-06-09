@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+using MyLaboratory.Site.Data;
 using MyLaboratory.Site.Database.Config;
 
 namespace MyLaboratory.Site.Migrations

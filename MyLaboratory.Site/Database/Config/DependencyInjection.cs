@@ -7,6 +7,7 @@ using System.Security.Claims;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+using MyLaboratory.Site.Data;
 
 namespace MyLaboratory.Site.Database.Config
 {
