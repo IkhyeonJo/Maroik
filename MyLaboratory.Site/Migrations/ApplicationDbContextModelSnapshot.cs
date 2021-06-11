@@ -24,9 +24,6 @@ namespace MyLaboratory.Site.Migrations
                     b.Property<string>("FirstName")
                         .HasColumnType("varchar(256)");
 
-                    b.Property<string>("FullName")
-                        .HasColumnType("varchar(256)");
-
                     b.Property<string>("HashedPassword")
                         .IsRequired()
                         .HasColumnType("longtext");

@@ -10,6 +10,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
+using MyLaboratory.Site.Helpers;
 
 namespace MyLaboratory.Site.Controllers
 {
@@ -43,6 +44,10 @@ namespace MyLaboratory.Site.Controllers
         {
             if (ModelState.IsValid)
             {
+                #region Hash Password
+                string hashedPassword = Crypto.HashPassword(loginInputViewModel.Password);
+                var isMatched = Crypto.VerifyHashedPassword("AQAAAAEAACcQAAAAECBhgdIiE2wlfa/ORMIoj1az6uIYxb9qEKi5m1/NxbFw5eyUDEbEFHgl5dwrg4N4Yg==", loginInputViewModel.Password);
+                #endregion
                 if (loginInputViewModel.Email == "bob@gmail.com" && loginInputViewModel.Password== "Pa$$w0rd")
                 {
                     var claims = new List<Claim>();

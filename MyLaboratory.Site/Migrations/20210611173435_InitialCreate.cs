@@ -23,8 +23,6 @@ namespace MyLaboratory.Site.Migrations
                     FirstName = table.Column<string>(type: "varchar(256)", nullable: true)
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     LastName = table.Column<string>(type: "varchar(256)", nullable: true)
-                        .Annotation("MySql:CharSet", "utf8mb4"),
-                    FullName = table.Column<string>(type: "varchar(256)", nullable: true)
                         .Annotation("MySql:CharSet", "utf8mb4")
                 },
                 constraints: table =>

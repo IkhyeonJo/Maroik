@@ -8,7 +8,7 @@ using MyLaboratory.Site.Data;
 namespace MyLaboratory.Site.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20210611155610_InitialCreate")]
+    [Migration("20210611173435_InitialCreate")]
     partial class InitialCreate
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -24,9 +24,6 @@ namespace MyLaboratory.Site.Migrations
                         .HasColumnType("varchar(255)");
 
                     b.Property<string>("FirstName")
-                        .HasColumnType("varchar(256)");
-
-                    b.Property<string>("FullName")
                         .HasColumnType("varchar(256)");
 
                     b.Property<string>("HashedPassword")
