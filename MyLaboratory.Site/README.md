@@ -127,6 +127,9 @@ dotnet dev-certs https -ep $env:USERPROFILE/.aspnet/https/haha.pfx -p Passw0rd
 # MYSQL DB 백업하기 (procedure, function, trigger 포함) (Windows에서는 관리자 권한으로 C:\Program Files\MariaDB 10.2\bin cmd 가서 할 것)
 mysqldump --routines --triggers -u [사용자 계정] -p [원본 데이터베이스명] > [생성할 백업 DB명].sql
 
+#백업 시... 트리거 부분 조심해서 볼 것;;
+
+
 # MYSQL DB 복원하기 (Windows에서는 관리자 권한으로 C:\Program Files\MariaDB 10.2\bin cmd 가서 할 것)
 mysql -u [사용자 계정] -p [복원할 DB] < [백업된 DB].sql
 
