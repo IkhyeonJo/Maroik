@@ -11,6 +11,7 @@ using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using MyLaboratory.Site.Helpers;
+using MyLaboratory.Site.Services;
 
 namespace MyLaboratory.Site.Controllers
 {
@@ -19,10 +20,12 @@ namespace MyLaboratory.Site.Controllers
     public class AccountController : Controller
     {
         private readonly ILogger<HomeController> logger;
+        private readonly IAccountRepository accountRepository;
 
-        public AccountController(ILogger<HomeController> logger)
+        public AccountController(ILogger<HomeController> logger, IAccountRepository accountRepository)
         {
             this.logger = logger;
+            this.accountRepository = accountRepository;
         }
 
         [HttpGet]
@@ -44,27 +47,29 @@ namespace MyLaboratory.Site.Controllers
         {
             if (ModelState.IsValid)
             {
-                #region Hash Password
-                string hashedPassword = Crypto.HashPassword(loginInputViewModel.Password);
-                var isMatched = Crypto.VerifyHashedPassword("AQAAAAEAACcQAAAAECBhgdIiE2wlfa/ORMIoj1az6uIYxb9qEKi5m1/NxbFw5eyUDEbEFHgl5dwrg4N4Yg==", loginInputViewModel.Password);
-                #endregion
-                if (loginInputViewModel.Email == "bob@gmail.com" && loginInputViewModel.Password== "Pa$$w0rd")
-                {
-                    var claims = new List<Claim>();
-                    claims.Add(new Claim("email", loginInputViewModel.Email));
-                    claims.Add(new Claim(ClaimTypes.NameIdentifier, loginInputViewModel.Email));
-                    claims.Add(new Claim(ClaimTypes.Name, "Bob Edward Jones"));
-                    //claims.Add(new Claim(ClaimTypes.Role, "Admin"));
-                    var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
-                    var claimPrincipal = new ClaimsPrincipal(claimsIdentity);
-                    await HttpContext.SignInAsync(claimPrincipal);
-                    return RedirectToAction("Index", "Home");
-                }
-                else
+                var tempAccount = accountRepository.GetAccount(loginInputViewModel.Email);
+
+                if (tempAccount == null) // no account exist
                 {
                     TempData["Error"] = "Username or Password is invalid";
                     return RedirectToAction("Index", "Home");
                 }
+
+                if (!Crypto.VerifyHashedPassword(tempAccount.HashedPassword, loginInputViewModel.Password)) // wrong password
+                {
+                    TempData["Error"] = "Username or Password is invalid";
+                    return RedirectToAction("Index", "Home");
+                }
+
+                var claims = new List<Claim>();
+                claims.Add(new Claim("email", loginInputViewModel.Email));
+                claims.Add(new Claim(ClaimTypes.NameIdentifier, loginInputViewModel.Email));
+                claims.Add(new Claim(ClaimTypes.Name, $"{tempAccount?.FirstName}{tempAccount?.LastName}"));
+                //claims.Add(new Claim(ClaimTypes.Role, "Admin"));
+                var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+                var claimPrincipal = new ClaimsPrincipal(claimsIdentity);
+                await HttpContext.SignInAsync(claimPrincipal);
+                return RedirectToAction("Index", "Home");
             }
             else
             {
