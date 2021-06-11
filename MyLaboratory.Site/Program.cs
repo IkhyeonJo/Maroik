@@ -10,51 +10,45 @@ using System.Linq;
 using System.Threading.Tasks;
 using MyLaboratory.Site.Data;
 using MyLaboratory.Site.Models;
+using Microsoft.Extensions.Hosting;
 
 namespace MyLaboratory.Site
 {
+    //public class Program
+    //{
+    //    public static void Main(string[] args)
+    //    {
+    //        CreateHostBuilder(args).Build().Run();
+    //    }
+
+    //    //log level severity: Trace = 0, Debug = 1, Information = 2, Warning = 3, Error = 4, Critical = 5
+
+    //    //AzureAppService log activated by default if application hosted on Azure
+    //    //https://docs.microsoft.com/en-us/aspnet/core/fundamentals/logging/?view=aspnetcore-2.1&tabs=aspnetcore2x#appservice
+
+    //    public static IWebHost BuildWebHost(string[] args) =>
+    //        WebHost.CreateDefaultBuilder(args)
+    //             .ConfigureLogging((hostingContext, logging) =>
+    //             {
+    //                 logging.AddConfiguration(hostingContext.Configuration.GetSection("Logging"));
+    //                 logging.AddConsole();
+    //                 logging.AddDebug();
+    //             })
+    //            .UseStartup<Startup>()
+    //            .Build();
+    //}
     public class Program
     {
         public static void Main(string[] args)
         {
-            var host = BuildWebHost(args);
-
-            using (var scope = host.Services.CreateScope())
-            {
-                var services = scope.ServiceProvider;
-                try
-                {
-                    var context = services.GetRequiredService<ApplicationDbContext>();
-                    var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();
-                    var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
-                    //var functional = services.GetRequiredService<IFunctional>();
-                    
-                    //DbInitializer.Initialize(context, functional).Wait();
-                }
-                catch (Exception ex)
-                {
-                    var logger = services.GetRequiredService<ILogger<Program>>();
-                    logger.LogError(ex, "An error occurred while seeding the database.");
-                }
-            }
-
-            host.Run();
+            CreateHostBuilder(args).Build().Run();
         }
 
-        //log level severity: Trace = 0, Debug = 1, Information = 2, Warning = 3, Error = 4, Critical = 5
-
-        //AzureAppService log activated by default if application hosted on Azure
-        //https://docs.microsoft.com/en-us/aspnet/core/fundamentals/logging/?view=aspnetcore-2.1&tabs=aspnetcore2x#appservice
-
-        public static IWebHost BuildWebHost(string[] args) =>
-            WebHost.CreateDefaultBuilder(args)
-                 .ConfigureLogging((hostingContext, logging) =>
-                 {
-                     logging.AddConfiguration(hostingContext.Configuration.GetSection("Logging"));
-                     logging.AddConsole();
-                     logging.AddDebug();
-                 })
-                .UseStartup<Startup>()
-                .Build();
+        public static IHostBuilder CreateHostBuilder(string[] args) =>
+            Host.CreateDefaultBuilder(args)
+                .ConfigureWebHostDefaults(webBuilder =>
+                {
+                    webBuilder.UseStartup<Startup>();
+                });
     }
 }
