@@ -31,5 +31,7 @@ namespace MyLaboratory.Site.Models
 
         [Column(TypeName = "varchar(256)")]
         public string LastName { get; set; }
+
+        public bool IsLocked { get; set; }
     }
 }

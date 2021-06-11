@@ -28,6 +28,9 @@ namespace MyLaboratory.Site.Migrations
                         .IsRequired()
                         .HasColumnType("longtext");
 
+                    b.Property<bool>("IsLocked")
+                        .HasColumnType("tinyint(1)");
+
                     b.Property<string>("LastName")
                         .HasColumnType("varchar(256)");
 
