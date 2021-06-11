@@ -11,7 +11,6 @@ namespace MyLaboratory.Site.Models
     [Table("Account")]
     public class Account
     {
-
         [Key]
         [Required(ErrorMessage = "아이디를 입력하세요.")]
         [DataType(DataType.EmailAddress)]
@@ -32,9 +31,5 @@ namespace MyLaboratory.Site.Models
 
         [Column(TypeName = "varchar(256)")]
         public string LastName { get; set; }
-
-        [Column(TypeName = "varchar(256)")]
-        public string FullName { get; set; }
-
     }
 }
