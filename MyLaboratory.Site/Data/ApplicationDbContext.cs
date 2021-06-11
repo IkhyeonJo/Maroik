@@ -6,6 +6,7 @@ namespace MyLaboratory.Site.Data
      public class ApplicationDbContext : DbContext
      {
         #region (For Migration) DbSet<T>'s T is table type.
+        public DbSet<Account> Account { get; set; }
         public DbSet<Product> Product { get; set; }
         public DbSet<Worker> Worker { get; set; }
         #endregion
