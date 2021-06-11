@@ -124,8 +124,24 @@ dotnet dev-certs https -ep $env:USERPROFILE/.aspnet/https/haha.pfx -p Passw0rd
 - ASPNETCORE_Kestrel__Certificates__Default__Password=Passw0rd 와 인증서 패스워드가 같아야함
 #-------------------------------------------------------------------------------
 
-# MYSQL DB 백업하기 (Windows에서는 관리자 권한으로 C:\Program Files\MariaDB 10.2\bin cmd 가서 할 것)
-mysqldump -u [사용자 계정] -p [원본 데이터베이스명] > [생성할 백업 DB명].sql
+# MYSQL DB 백업하기 (procedure, function, trigger 포함) (Windows에서는 관리자 권한으로 C:\Program Files\MariaDB 10.2\bin cmd 가서 할 것)
+mysqldump --routines --triggers -u [사용자 계정] -p [원본 데이터베이스명] > [생성할 백업 DB명].sql
 
 # MYSQL DB 복원하기 (Windows에서는 관리자 권한으로 C:\Program Files\MariaDB 10.2\bin cmd 가서 할 것)
 mysql -u [사용자 계정] -p [복원할 DB] < [백업된 DB].sql
+
+
+#ASP.net Core - Entity Framework Core - Stored Procedure Call / EF Core에서 프로시저 호출하기
+
+https://glorymind.tistory.com/m/entry/ASPnet-Core-Entity-Framework-Core-Stored-Procedure-Call-EF-Core%EC%97%90%EC%84%9C-%ED%94%84%EB%A1%9C%EC%8B%9C%EC%A0%80-%ED%98%B8%EC%B6%9C%ED%95%98%EA%B8%B0?category=893375
+
+Install-Package StoredProcedureEFCore
+
+using 문 넣어주시고
+
+List<Model> rows = null;
+ 
+ctx.LoadStoredProc("dbo.ListAll")
+   .AddParam("limit", 300L)
+   .AddParam("limitOut", out IOutParam<long> limitOut)
+   .Exec(r => rows = r.ToList<Model>());
