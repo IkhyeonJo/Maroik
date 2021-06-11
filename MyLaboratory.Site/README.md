@@ -148,3 +148,7 @@ ctx.LoadStoredProc("dbo.ListAll")
    .AddParam("limit", 300L)
    .AddParam("limitOut", out IOutParam<long> limitOut)
    .Exec(r => rows = r.ToList<Model>());
+
+
+#MariaDB Stored Program - Stored Procedure (MySQL)
+https://reddb.tistory.com/126
