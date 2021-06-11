@@ -16,7 +16,7 @@ namespace MyLaboratory.Site.Models
         [Required(ErrorMessage = "아이디를 입력하세요.")]
         [DataType(DataType.EmailAddress)]
         [EmailAddress]
-        public string ID { get; set; }
+        public string Email { get; set; }
         
 
         [Required(ErrorMessage = "패스워드를 입력하세요.")]
@@ -26,6 +26,15 @@ namespace MyLaboratory.Site.Models
 
         [Column(TypeName = "varchar(256)")]
         public string Role { get; set; }
+
+        [Column(TypeName = "varchar(256)")]
+        public string FirstName { get; set; }
+
+        [Column(TypeName = "varchar(256)")]
+        public string LastName { get; set; }
+
+        [Column(TypeName = "varchar(256)")]
+        public string FullName { get; set; }
 
     }
 }

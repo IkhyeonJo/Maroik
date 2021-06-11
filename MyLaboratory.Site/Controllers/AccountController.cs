@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using MyLaboratory.Site.Models.AccountViewModels;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -38,23 +39,30 @@ namespace MyLaboratory.Site.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken] //To Prevent CSRF attack
-        public async Task<IActionResult> Login(string username, string password)
+        public async Task<IActionResult> Login(LoginInputViewModel loginInputViewModel)
         {
-            if (username == "bob" && password == "pizza")
+            if (ModelState.IsValid)
             {
-                var claims = new List<Claim>();
-                claims.Add(new Claim("username", username));
-                claims.Add(new Claim(ClaimTypes.NameIdentifier, username));
-                claims.Add(new Claim(ClaimTypes.Name, "Bob Edward Jones"));
-                //claims.Add(new Claim(ClaimTypes.Role, "Admin"));
-                var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
-                var claimPrincipal = new ClaimsPrincipal(claimsIdentity);
-                await HttpContext.SignInAsync(claimPrincipal);
-                return RedirectToAction("Index", "Home");
+                if (loginInputViewModel.Email == "bob@gmail.com" && loginInputViewModel.Password== "Pa$$w0rd")
+                {
+                    var claims = new List<Claim>();
+                    claims.Add(new Claim("email", loginInputViewModel.Email));
+                    claims.Add(new Claim(ClaimTypes.NameIdentifier, loginInputViewModel.Email));
+                    claims.Add(new Claim(ClaimTypes.Name, "Bob Edward Jones"));
+                    //claims.Add(new Claim(ClaimTypes.Role, "Admin"));
+                    var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+                    var claimPrincipal = new ClaimsPrincipal(claimsIdentity);
+                    await HttpContext.SignInAsync(claimPrincipal);
+                    return RedirectToAction("Index", "Home");
+                }
+                else
+                {
+                    TempData["Error"] = "Username or Password is invalid";
+                    return RedirectToAction("Index", "Home");
+                }
             }
             else
             {
-                TempData["Error"] = "Error. Username or Password is invalid";
                 return RedirectToAction("Index", "Home");
             }
         }

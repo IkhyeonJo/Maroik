@@ -1,18 +1,53 @@
-﻿@*
-    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-*@
-@{
-    Layout = null;
+﻿@using MyLaboratory.Site.Models.AccountViewModels
+
+@model LoginInputViewModel
+
+@{ 
     var error = TempData["Error"] as string;
 }
-<h1>Login</h1>
-@if (!string.IsNullOrEmpty(error))
-{
-    <h2 class="alert-danger" style="padding:20px;">@error</h2>
+
+<div class="login-box">
+
+    <!-- /.login-logo -->
+    <div class="login-box-body">
+        <div class="login-logo">
+            <a href="/"><b>My</b>Laboratory</a>
+        </div>
+        <p class="login-box-msg">Sign in to start your session</p>
+        <form name="loginForm" class="form-horizontal" method="post" asp-controller="Account" asp-action="Login">
+            @Html.AntiForgeryToken()
+            <div class="form-group has-feedback">
+                <label asp-for="Email"></label>
+                <input asp-for="Email" type="email" class="form-control" placeholder="Email" />
+                <span class="glyphicon glyphicon-envelope form-control-feedback"></span>
+                <span asp-validation-for="Email" class="text-danger"></span>
+            </div>
+            <div class="form-group has-feedback">
+                <label asp-for="Password"></label>
+                <input asp-for="Password" type="password" class="form-control" placeholder="Password" />
+                <span class="glyphicon glyphicon-lock form-control-feedback"></span>
+                <span asp-validation-for="Password" class="text-danger"></span>
+            </div>
+            <div class="row">
+                <div class="col-xs-4">
+                    <button type="submit" class="btn btn-primary btn-block btn-flat">Sign In</button>
+                </div>
+                <h2 style="padding:20px; margin-top:50px;font-size: 20px;color: red;">@error</h2>
+            </div>
+        </form>
+    </div>
+    <!-- /.login-box-body -->
+</div>
+
+@section Scripts{
+    @await Html.PartialAsync("_ValidationScriptsPartial")
+<script>
+    $(function () {
+        $('input').iCheck({
+            checkboxClass: 'icheckbox_square-blue',
+            radioClass: 'iradio_square-blue',
+            increaseArea: '20%' /* optional */
+        });
+    });
+</script>
 }
-<form action="/Account/Login" method="post">
-    @Html.AntiForgeryToken() @*To Prevent CSRF attack*@
-    <input type="text" name="username" placeholder="Username" />
-    <input type="password" name="password" placeholder="Password" />
-    <input type="submit" value="login" />
-</form>
