@@ -20,7 +20,7 @@ lower_case_table_names = 2  :  윈도우에서 대·소문자를 구분해서 테이블생성
 맥키토시 : 2
 
 C:\Program Files\MariaDB 10.5\data\my.ini에서
-[mysqld] 아래에 "lower_case_table_names = 2"로 넣어주고
+[mysqld] 항목의 [Port] 아래에 "lower_case_table_names = 2"로 넣어주고
 
 3) 작업관리자 - 서비스를 열어 MariaDB를 재시작 해준다. 
 
