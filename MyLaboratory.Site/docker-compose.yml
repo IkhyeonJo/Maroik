@@ -38,7 +38,7 @@ services:
         networks:
           - backend
         environment:
-          - MYSQL_ROOT_PASSWORD=root
+          - MYSQL_ROOT_PASSWORD=***REMOVED***
           - bind-address=0.0.0.0
           - TZ=Asia/Seoul
         command:
