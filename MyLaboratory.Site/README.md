@@ -152,3 +152,12 @@ ctx.LoadStoredProc("dbo.ListAll")
 
 #MariaDB Stored Program - Stored Procedure (MySQL)
 https://reddb.tistory.com/126
+
+DELIMITER $$
+CREATE PROCEDURE LockAccount(IN Email VARCHAR(255))
+BEGIN
+UPDATE ikhyeondb.Account
+SET IsLocked=1
+WHERE Email=Email;
+END $$
+DELIMITER
