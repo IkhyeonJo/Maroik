@@ -7,7 +7,5 @@ namespace MyLaboratory.Site.Services
     public interface IAccountRepository
     {
         public Account GetAccount(string email);
-
-        public Account LockAccount(string email);
     }
 }

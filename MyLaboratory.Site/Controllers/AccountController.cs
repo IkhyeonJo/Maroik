@@ -45,7 +45,7 @@ namespace MyLaboratory.Site.Controllers
         [ValidateAntiForgeryToken] //To Prevent CSRF attack
         public async Task<IActionResult> Login(LoginInputViewModel loginInputViewModel)
         {
-            var aa = accountRepository.LockAccount(loginInputViewModel.Email);
+            //var aa = accountRepository.LockAccount(loginInputViewModel.Email);
             if (ModelState.IsValid)
             {
                 var tempAccount = accountRepository.GetAccount(loginInputViewModel.Email);
