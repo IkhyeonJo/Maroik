@@ -53,22 +53,22 @@ namespace MyLaboratory.Site
                         options.Events = new CookieAuthenticationEvents()
                         {
                             OnSigningIn = async context => // 로그인 버튼 눌렀을 때 (SignInAsync 생성 중)
-                                        {
-                                            //var principal = context.Principal;
-                                            //if (principal.HasClaim(c => c.Type == ClaimTypes.NameIdentifier))
-                                            //{
-                                            //    if (principal.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier).Value == "bob") // 만일 NameIdentitfier가 bob이면
-                                            //    {
-                                            //        var claimsIdentity = principal.Identity as ClaimsIdentity;
-                                            //        claimsIdentity.AddClaim(new Claim(ClaimTypes.Role, "Admin")); // 관리자 권한으로 승격한다.
-                                            //    }
-                                            //}
-                                            await Task.CompletedTask;
-                                        },
+                            {
+                                //var principal = context.Principal;
+                                //if (principal.HasClaim(c => c.Type == ClaimTypes.NameIdentifier))
+                                //{
+                                //    if (principal.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier).Value == "bob") // 만일 NameIdentitfier가 bob이면
+                                //    {
+                                //        var claimsIdentity = principal.Identity as ClaimsIdentity;
+                                //        claimsIdentity.AddClaim(new Claim(ClaimTypes.Role, "Admin")); // 관리자 권한으로 승격한다.
+                                //    }
+                                //}
+                                await Task.CompletedTask;
+                            },
                             OnSignedIn = async context => // 로그인 버튼 눌렀을 때 (SignInAsync 생성 끝) 
-                                        {
-                                            await Task.CompletedTask;
-                                        },
+                            {
+                                await Task.CompletedTask;
+                            },
                             OnValidatePrincipal = async context =>
                             {
                                 await Task.CompletedTask;
