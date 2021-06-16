@@ -31,12 +31,6 @@ namespace MyLaboratory.Site.Controllers
             return View(productRepository.GetProducts);
         }
 
-        [Authorize(Roles = Role.Admin)]
-        public IActionResult Karl()
-        {
-            return View(workerRepository.GetWorkers);
-        }
-
         public IActionResult Privacy()
         {
             return View();
