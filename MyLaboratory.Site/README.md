@@ -161,3 +161,11 @@ SET IsLocked=1
 WHERE Email=Email;
 END $$
 DELIMITER
+
+
+
+
+
+
+
+https://stackoverflow.com/questions/53985013/how-do-i-get-all-dbcontext-classes-and-all-dbset-under-each-dbcontext
