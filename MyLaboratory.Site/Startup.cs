@@ -49,7 +49,7 @@ namespace MyLaboratory.Site
                         options.ExpireTimeSpan = TimeSpan.FromHours(1);
                         options.LoginPath = "/Account/Login"; // 로그인이 필요한 페이지의 경우 자동으로 리디렉션.
                         options.LogoutPath = "/Account/Logout"; // 만료 시간이 되면 쿠키가 사라져서 자동으로 로그아웃 페이지로 이동한다.
-                        options.AccessDeniedPath = "/Account/Denied"; // 엑세스가 거부되었을 때의 경로이다.
+                        options.AccessDeniedPath = "/Account/AccessDenied"; // 엑세스가 거부되었을 때의 경로이다.
                         options.Events = new CookieAuthenticationEvents()
                         {
                             OnSigningIn = async context => // 로그인 버튼 눌렀을 때 (SignInAsync 생성 중)
@@ -91,7 +91,7 @@ namespace MyLaboratory.Site
             }
             else
             {
-                app.UseExceptionHandler("/Home/Error");
+                app.UseExceptionHandler("/DashBoard/Error");
                 // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
                 app.UseHsts();
             }
@@ -137,7 +137,7 @@ namespace MyLaboratory.Site
 
             app.UseEndpoints(endpoints =>
             {
-                endpoints.MapControllerRoute(name: "default", pattern: "{controller=Home}/{action=Index}/{id?}")
+                endpoints.MapControllerRoute(name: "default", pattern: "{controller=DashBoard}/{action=Index}/{id?}")
                         .RequireAuthorization(); // Apply Authorization to all controller
             });
         }

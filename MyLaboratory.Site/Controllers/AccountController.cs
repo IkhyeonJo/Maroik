@@ -33,7 +33,7 @@ namespace MyLaboratory.Site.Controllers
         {
             if (User.Identity.IsAuthenticated)
             {
-                return RedirectToAction("Index", "Home");
+                return RedirectToAction("Index", "DashBoard");
             }
             else
             {
@@ -53,13 +53,13 @@ namespace MyLaboratory.Site.Controllers
                 if (tempAccount == null) // no account exist
                 {
                     TempData["Error"] = "Username or Password is invalid";
-                    return RedirectToAction("Index", "Home");
+                    return RedirectToAction("Index", "DashBoard");
                 }
 
                 if (!Crypto.VerifyHashedPassword(tempAccount.HashedPassword, loginInputViewModel.Password)) // wrong password
                 {
                     TempData["Error"] = "Username or Password is invalid";
-                    return RedirectToAction("Index", "Home");
+                    return RedirectToAction("Index", "DashBoard");
                 }
 
                 var claims = new List<Claim>();
@@ -70,11 +70,11 @@ namespace MyLaboratory.Site.Controllers
                 var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
                 var claimPrincipal = new ClaimsPrincipal(claimsIdentity);
                 await HttpContext.SignInAsync(claimPrincipal);
-                return RedirectToAction("Index", "Home");
+                return RedirectToAction("Index", "DashBoard");
             }
             else
             {
-                return RedirectToAction("Index", "Home");
+                return RedirectToAction("Index", "DashBoard");
             }
         }
 
@@ -87,7 +87,7 @@ namespace MyLaboratory.Site.Controllers
         }
 
         [HttpGet]
-        public IActionResult Denied()
+        public IActionResult AccessDenied()
         {
             return View();
         }

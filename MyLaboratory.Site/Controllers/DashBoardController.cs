@@ -13,13 +13,13 @@ using MyLaboratory.Site.Helpers;
 namespace MyLaboratory.Site.Controllers
 {
     [Authorize(Roles = Role.Admin)]
-    public class HomeController : Controller
+    public class DashBoardController : Controller
     {
-        private readonly ILogger<HomeController> logger;
+        private readonly ILogger<DashBoardController> logger;
         private readonly IProductRepository productRepository;
         private readonly IWorkerRepository workerRepository;
 
-        public HomeController(ILogger<HomeController> logger, IProductRepository productRepository, IWorkerRepository workerRepository)
+        public DashBoardController(ILogger<DashBoardController> logger, IProductRepository productRepository, IWorkerRepository workerRepository)
         {
             this.logger = logger;
             this.productRepository = productRepository;
