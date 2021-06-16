@@ -8,6 +8,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using MyLaboratory.Site.Services;
 using Microsoft.AspNetCore.Authorization;
+using MyLaboratory.Site.Helpers;
 
 namespace MyLaboratory.Site.Controllers
 {
@@ -29,7 +30,7 @@ namespace MyLaboratory.Site.Controllers
             return View(productRepository.GetProducts);
         }
 
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = Role.Admin)]
         public IActionResult Karl()
         {
             return View(workerRepository.GetWorkers);
