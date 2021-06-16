@@ -19,10 +19,10 @@ namespace MyLaboratory.Site.Controllers
     [AllowAnonymous]
     public class AccountController : Controller
     {
-        private readonly ILogger<HomeController> logger;
+        private readonly ILogger<AccountController> logger;
         private readonly IAccountRepository accountRepository;
 
-        public AccountController(ILogger<HomeController> logger, IAccountRepository accountRepository)
+        public AccountController(ILogger<AccountController> logger, IAccountRepository accountRepository)
         {
             this.logger = logger;
             this.accountRepository = accountRepository;
