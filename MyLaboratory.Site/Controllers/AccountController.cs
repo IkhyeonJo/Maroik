@@ -66,7 +66,7 @@ namespace MyLaboratory.Site.Controllers
                 claims.Add(new Claim("email", loginInputViewModel.Email));
                 claims.Add(new Claim(ClaimTypes.NameIdentifier, loginInputViewModel.Email));
                 claims.Add(new Claim(ClaimTypes.Name, $"{tempAccount?.FirstName}{tempAccount?.LastName}"));
-                //claims.Add(new Claim(ClaimTypes.Role, "Admin"));
+                claims.Add(new Claim(ClaimTypes.Role, tempAccount.Role));
                 var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
                 var claimPrincipal = new ClaimsPrincipal(claimsIdentity);
                 await HttpContext.SignInAsync(claimPrincipal);
