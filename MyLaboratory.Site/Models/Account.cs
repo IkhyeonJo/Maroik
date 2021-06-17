@@ -8,7 +8,6 @@ using Microsoft.AspNetCore.Identity;
 
 namespace MyLaboratory.Site.Models
 {
-    [Table("Account")]
     public partial class Account
     {
         public string Email { get; set; }
