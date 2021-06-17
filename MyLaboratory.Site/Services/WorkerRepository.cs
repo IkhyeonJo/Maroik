@@ -19,7 +19,7 @@ namespace MyLaboratory.Site.Services
         {
             get
             {
-                var list = context.Worker.FromSqlRaw("SELECT * FROM Worker").ToList();
+                var list = context.Workers.FromSqlRaw("SELECT * FROM Worker").ToList();
                 return list;
             }
             set

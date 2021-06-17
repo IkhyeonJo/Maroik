@@ -15,13 +15,13 @@ namespace MyLaboratory.Site.Services
             this.context = context;
         }
 
-        public IEnumerable<Product> GetProduct { get => context.Product; }
+        public IEnumerable<Product> GetProduct { get => context.Products; }
 
         public IEnumerable<Product> GetProducts
         {
             get
             {
-                var list = context.Product.FromSqlRaw("SELECT * FROM Product").ToList();
+                var list = context.Products.FromSqlRaw("SELECT * FROM Product").ToList();
                 return list;
             }
             set

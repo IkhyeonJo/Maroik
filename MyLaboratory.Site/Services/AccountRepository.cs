@@ -19,7 +19,7 @@ namespace MyLaboratory.Site.Services
         public Account GetAccount(string email)
         {
 
-            return context.Account.FirstOrDefault(x => x.Email == email);
+            return context.Accounts.FirstOrDefault(x => x.Email == email);
         }
     }
 }

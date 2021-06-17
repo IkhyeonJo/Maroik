@@ -4,9 +4,8 @@ using System.ComponentModel.DataAnnotations.Schema;
 namespace MyLaboratory.Site.Models
 {
     [Table("Worker")]
-    public class Worker
+    public partial class Worker
     {
-        [Key]
         public int Id { get; set; }
         public string WorkerName { get; set; }
         public string Job { get; set; }

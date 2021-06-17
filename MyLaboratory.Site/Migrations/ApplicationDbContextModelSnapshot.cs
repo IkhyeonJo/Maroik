@@ -13,6 +13,8 @@ namespace MyLaboratory.Site.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
+                .HasCharSet("utf8mb4")
+                .UseCollation("utf8mb4_general_ci")
                 .HasAnnotation("Relational:MaxIdentifierLength", 64)
                 .HasAnnotation("ProductVersion", "5.0.6");
 
@@ -22,6 +24,7 @@ namespace MyLaboratory.Site.Migrations
                         .HasColumnType("varchar(255)");
 
                     b.Property<string>("FirstName")
+                        .HasMaxLength(256)
                         .HasColumnType("varchar(256)");
 
                     b.Property<string>("HashedPassword")
@@ -32,21 +35,73 @@ namespace MyLaboratory.Site.Migrations
                         .HasColumnType("tinyint(1)");
 
                     b.Property<string>("LastName")
+                        .HasMaxLength(256)
                         .HasColumnType("varchar(256)");
 
                     b.Property<string>("Role")
+                        .HasMaxLength(256)
                         .HasColumnType("varchar(256)");
 
-                    b.HasKey("Email");
+                    b.HasKey("Email")
+                        .HasName("PRIMARY");
 
                     b.ToTable("Account");
+                });
+
+            modelBuilder.Entity("MyLaboratory.Site.Models.Category", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int(11)");
+
+                    b.Property<string>("Action")
+                        .HasMaxLength(256)
+                        .HasColumnType("varchar(256)");
+
+                    b.Property<string>("Controller")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("varchar(256)");
+
+                    b.Property<string>("DisplayName")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("varchar(256)");
+
+                    b.Property<string>("IconPath")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("varchar(256)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("varchar(256)");
+
+                    b.Property<int>("Order")
+                        .HasColumnType("int(11)");
+
+                    b.Property<string>("Role")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(256)
+                        .HasColumnType("varchar(256)")
+                        .HasDefaultValueSql("'Admin'");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Category");
+
+                    b
+                        .HasCharSet("utf8")
+                        .UseCollation("utf8_general_ci");
                 });
 
             modelBuilder.Entity("MyLaboratory.Site.Models.Product", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("int(11)");
 
                     b.Property<string>("Categoria")
                         .HasColumnType("longtext");
@@ -62,11 +117,61 @@ namespace MyLaboratory.Site.Migrations
                     b.ToTable("Product");
                 });
 
+            modelBuilder.Entity("MyLaboratory.Site.Models.SubCategory", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int(11)");
+
+                    b.Property<string>("Action")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("varchar(256)");
+
+                    b.Property<int>("CategoryId")
+                        .HasColumnType("int(11)");
+
+                    b.Property<string>("DisplayName")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("varchar(256)");
+
+                    b.Property<string>("IconPath")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("varchar(256)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("varchar(256)");
+
+                    b.Property<int>("Order")
+                        .HasColumnType("int(11)");
+
+                    b.Property<string>("Role")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(256)
+                        .HasColumnType("varchar(256)")
+                        .HasDefaultValueSql("'Admin'");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex(new[] { "CategoryId" }, "SubCategories_FK");
+
+                    b.ToTable("SubCategory");
+
+                    b
+                        .HasCharSet("utf8")
+                        .UseCollation("utf8_general_ci");
+                });
+
             modelBuilder.Entity("MyLaboratory.Site.Models.Worker", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("int(11)");
 
                     b.Property<string>("Job")
                         .HasColumnType("longtext");
@@ -80,6 +185,22 @@ namespace MyLaboratory.Site.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Worker");
+                });
+
+            modelBuilder.Entity("MyLaboratory.Site.Models.SubCategory", b =>
+                {
+                    b.HasOne("MyLaboratory.Site.Models.Category", "Category")
+                        .WithMany("SubCategories")
+                        .HasForeignKey("CategoryId")
+                        .HasConstraintName("SubCategories_FK")
+                        .IsRequired();
+
+                    b.Navigation("Category");
+                });
+
+            modelBuilder.Entity("MyLaboratory.Site.Models.Category", b =>
+                {
+                    b.Navigation("SubCategories");
                 });
 #pragma warning restore 612, 618
         }
