@@ -204,25 +204,6 @@ Action: String # (# or 진짜 Action) [이것에 따라 SubCategory 여부 및 화살표 없어
 Role: String # Admin or User (역할에 따른 보여주기)
 Order: int # 출력 순서
 
-CREATE TABLE ikhyeondb.Category (
-	Id INT auto_increment NOT NULL,
-	Name varchar(256) NOT NULL,
-	DisplayName varchar(256) NOT NULL,
-	IconPath varchar(256) NOT NULL,
-	Controller varchar(256) NOT NULL,
-	`Action` varchar(256) NULL,
-	`Role` varchar(256) DEFAULT 'Admin' NOT NULL,
-	`Order` INT NOT NULL,
-	CONSTRAINT PRIMARY KEY (Id),
-	CONSTRAINT Categories_check CHECK (Role = 'Admin' OR Role = 'User')
-)
-ENGINE=InnoDB
-DEFAULT CHARSET=utf8
-COLLATE=utf8_general_ci;
-
-
-
-
 
 SubCategory
 Id: PK(not null, Auto_Increment, Int) # 그냥 식별용
@@ -233,23 +214,6 @@ Icon: String (not null) # 보이는 아이콘
 Action: String # (이것이 View랑 일치하면 Active가 됨)
 Role: String # Admin or User (역할에 따른 보여주기)
 Order: int # 출력 순서
-
-CREATE TABLE ikhyeondb.SubCategory (
-	Id INT auto_increment NOT NULL,
-	CategoryId INT NOT NULL,
-	Name varchar(256) NOT NULL,
-	DisplayName varchar(256) NOT NULL,
-	IconPath varchar(256) NOT NULL,
-	`Action` varchar(256) NOT NULL,
-	`Role` varchar(256) DEFAULT 'Admin' NOT NULL,
-	`Order` INT NOT NULL,
-	CONSTRAINT PRIMARY KEY (Id),
-	CONSTRAINT SubCategories_check CHECK (Role='Admin' OR Role='User'),
-	CONSTRAINT SubCategories_FK FOREIGN KEY (CategoryId) REFERENCES ikhyeondb.Category(Id)
-)
-ENGINE=InnoDB
-DEFAULT CHARSET=utf8
-COLLATE=utf8_general_ci;
 #-----------------------------------------------------------------------------------------------------------------------------------------------
 
 
