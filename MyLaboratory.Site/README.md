@@ -204,6 +204,18 @@ Action: String # (# or 진짜 Action) [이것에 따라 SubCategory 여부 및 화살표 없어
 Role: String # Admin or User (역할에 따른 보여주기)
 Order: int # 출력 순서
 
+CREATE TABLE `Category` (
+  `Id` int(11) NOT NULL AUTO_INCREMENT,
+  `Name` varchar(256) NOT NULL,
+  `DisplayName` varchar(256) NOT NULL,
+  `IconPath` varchar(256) NOT NULL,
+  `Controller` varchar(256) NOT NULL,
+  `Action` varchar(256) DEFAULT NULL,
+  `Role` varchar(256) NOT NULL DEFAULT 'Admin',
+  `Order` int(11) NOT NULL,
+  PRIMARY KEY (`Id`),
+  CONSTRAINT `Categories_check` CHECK (`Role` = 'Admin' or `Role` = 'User')
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 SubCategory
 Id: PK(not null, Auto_Increment, Int) # 그냥 식별용
@@ -214,6 +226,21 @@ Icon: String (not null) # 보이는 아이콘
 Action: String # (이것이 View랑 일치하면 Active가 됨)
 Role: String # Admin or User (역할에 따른 보여주기)
 Order: int # 출력 순서
+
+CREATE TABLE `SubCategory` (
+  `Id` int(11) NOT NULL AUTO_INCREMENT,
+  `CategoryId` int(11) NOT NULL,
+  `Name` varchar(256) NOT NULL,
+  `DisplayName` varchar(256) NOT NULL,
+  `IconPath` varchar(256) NOT NULL,
+  `Action` varchar(256) NOT NULL,
+  `Role` varchar(256) NOT NULL DEFAULT 'Admin',
+  `Order` int(11) NOT NULL,
+  PRIMARY KEY (`Id`),
+  KEY `SubCategories_FK` (`CategoryId`),
+  CONSTRAINT `SubCategories_FK` FOREIGN KEY (`CategoryId`) REFERENCES `Category` (`Id`),
+  CONSTRAINT `SubCategories_check` CHECK (`Role` = 'Admin' or `Role` = 'User')
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 #-----------------------------------------------------------------------------------------------------------------------------------------------
 
 
