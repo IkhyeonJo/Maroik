@@ -190,3 +190,95 @@ CREATE TABLE test.SubCategories (
 ENGINE=InnoDB
 DEFAULT CHARSET=utf8
 COLLATE=utf8_general_ci;
+
+
+#_MainSideBar.cshtml DB 구조
+#-----------------------------------------------------------------------------------------------------------------------------------------------
+Categoies
+Id: PK(not null, Auto_Increment, Int) # 그냥 식별용
+Name: String (not null) # 이름
+DisplayName: String (not null) # 보이는 이름
+Icon: String (not null) # 보이는 아이콘
+Controller: String (not null) # Active or InActive 결정
+Action: String # (# or 진짜 Action) [이것에 따라 SubCategory 여부 및 화살표 없어짐 ]
+Role: String # Admin or User (역할에 따른 보여주기)
+Order: int # 출력 순서
+
+CREATE TABLE ikhyeondb.Categories (
+	Id INT auto_increment NOT NULL,
+	Name varchar(256) NOT NULL,
+	DisplayName varchar(256) NOT NULL,
+	IconPath varchar(256) NOT NULL,
+	Controller varchar(256) NOT NULL,
+	`Action` varchar(256) NULL,
+	`Role` varchar(256) DEFAULT 'Admin' NOT NULL,
+	`Order` INT NOT NULL,
+	CONSTRAINT PRIMARY KEY (Id),
+	CONSTRAINT Categories_check CHECK (Role = 'Admin' OR Role = 'User')
+)
+ENGINE=InnoDB
+DEFAULT CHARSET=utf8
+COLLATE=utf8_general_ci;
+
+
+
+
+
+SubCategoies
+Id: PK(not null, Auto_Increment, Int) # 그냥 식별용
+CategoryId: FK(int) (Categories의 Id 참조) # 외래키
+Name: String (not null) # 이름
+DisplayName: String (not null) # 보이는 이름
+Icon: String (not null) # 보이는 아이콘
+Action: String # (이것이 View랑 일치하면 Active가 됨)
+Role: String # Admin or User (역할에 따른 보여주기)
+Order: int # 출력 순서
+
+CREATE TABLE ikhyeondb.SubCategories (
+	Id INT auto_increment NOT NULL,
+	CategoryId INT NOT NULL,
+	Name varchar(256) NOT NULL,
+	DisplayName varchar(256) NOT NULL,
+	IconPath varchar(256) NOT NULL,
+	`Action` varchar(256) NOT NULL,
+	`Role` varchar(256) DEFAULT 'Admin' NOT NULL,
+	`Order` INT NOT NULL,
+	CONSTRAINT PRIMARY KEY (Id),
+	CONSTRAINT SubCategories_check CHECK (Role='Admin' OR Role='User'),
+	CONSTRAINT SubCategories_FK FOREIGN KEY (CategoryId) REFERENCES ikhyeondb.categories(Id)
+)
+ENGINE=InnoDB
+DEFAULT CHARSET=utf8
+COLLATE=utf8_general_ci;
+#-----------------------------------------------------------------------------------------------------------------------------------------------
+
+
+
+#_MainSideBar.cshtml 알고리즘
+#-----------------------------------------------------------------------------------------------------------------------------------------------
+# 로그인 후 DB 초기 (Cache)
+A-0: 카테고리 Role이 현재 사용자 Role과 같은 거 다 꺼내기
+A-1: 꺼낸 카테고리를 Order에 따라 다 정렬
+
+A-2: 서브 카테고리 Role이 현재 사용자 Role과 같은 거 다 꺼내기
+
+
+# View Load 시 Category 생성 Algorithm
+B-0: 정리한 카테고리 처음부터 마지막까지 하나씩 꺼냄 (다 꺼내면 종료)
+B-1: 꺼낸 카테고리의 Controller 값이 현 View의 Controller와 같다면 Active
+      Active 된 카테고리에 Action 값이 없으면 TreeOpen 그리고 B-3로 넘어감 // SubCategory 있음
+      Active 된 카테고리에 Action 값이 있으면 그냥 HyperLink 만들고 다음 카테고리로 넘어감 // SubCategory 없음
+
+B-2: 꺼낸 카테고리의 Controller 값이 현 View의 Controller와 같지 않다면 InActive
+      InActive 된 카테고리에 Action 값이 없으면 TreeClose 그리고 B-3로 넘어감 // SubCategory 있음
+      InActive 된 카테고리에 Action 값이 있으면 그냥 HyperLink 만들고 다음 카테고리로 넘어감 // SubCategory 없음
+
+# View Load 시 SubCategory 생성 Algorithm
+B-3: 현 카테고리의 Id와 일치하는 모든 SubCategory를 그 SubCategory 속성인 CategoryId를 통해 다 모음. 모은 SubCategory들을 Order에 맞게 배치.
+B-4: SubCategory들을 처음부터 마지막까지 하나씩 거냄
+B-5: 꺼낸 SubCategory의 Action 값이 현 View의 Action과 같다면 Active
+      hyperLink는 Category의 Controller와 SubCategory의 Action을 통해 생성.
+B-6: 꺼낸 SubCategory의 Action 값이 현 View의 Action과 같지 않다면 InActive
+      hyperLink는 Category의 Controller와 SubCategory의 Action을 통해 생성.
+B-7: B-0로 돌아감
+#-----------------------------------------------------------------------------------------------------------------------------------------------
