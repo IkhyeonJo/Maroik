@@ -169,3 +169,24 @@ DELIMITER
 
 
 https://stackoverflow.com/questions/53985013/how-do-i-get-all-dbcontext-classes-and-all-dbset-under-each-dbcontext
+
+
+https://stackoverflow.com/questions/3169559/mysql-categories-and-subcategories-table-structure
+CREATE TABLE test.Categories (
+	Id INT auto_increment NOT null primary key,
+	Main varchar(1000) NULL,
+	Sub varchar(1000) NULL
+)
+ENGINE=InnoDB
+DEFAULT CHARSET=utf8
+COLLATE=utf8_general_ci;
+
+CREATE TABLE test.SubCategories (
+	Id INT auto_increment NOT null primary key,
+	CategoryId int,
+	Name varchar(1000),
+	FOREIGN KEY (CategoryId) REFERENCES test.Categories (Id)
+)
+ENGINE=InnoDB
+DEFAULT CHARSET=utf8
+COLLATE=utf8_general_ci;
