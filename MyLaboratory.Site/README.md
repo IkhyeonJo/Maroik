@@ -194,7 +194,7 @@ COLLATE=utf8_general_ci;
 
 #_MainSideBar.cshtml DB 구조
 #-----------------------------------------------------------------------------------------------------------------------------------------------
-Categoies
+Category
 Id: PK(not null, Auto_Increment, Int) # 그냥 식별용
 Name: String (not null) # 이름
 DisplayName: String (not null) # 보이는 이름
@@ -204,7 +204,7 @@ Action: String # (# or 진짜 Action) [이것에 따라 SubCategory 여부 및 화살표 없어
 Role: String # Admin or User (역할에 따른 보여주기)
 Order: int # 출력 순서
 
-CREATE TABLE ikhyeondb.Categories (
+CREATE TABLE ikhyeondb.Category (
 	Id INT auto_increment NOT NULL,
 	Name varchar(256) NOT NULL,
 	DisplayName varchar(256) NOT NULL,
@@ -224,7 +224,7 @@ COLLATE=utf8_general_ci;
 
 
 
-SubCategoies
+SubCategory
 Id: PK(not null, Auto_Increment, Int) # 그냥 식별용
 CategoryId: FK(int) (Categories의 Id 참조) # 외래키
 Name: String (not null) # 이름
@@ -234,7 +234,7 @@ Action: String # (이것이 View랑 일치하면 Active가 됨)
 Role: String # Admin or User (역할에 따른 보여주기)
 Order: int # 출력 순서
 
-CREATE TABLE ikhyeondb.SubCategories (
+CREATE TABLE ikhyeondb.SubCategory (
 	Id INT auto_increment NOT NULL,
 	CategoryId INT NOT NULL,
 	Name varchar(256) NOT NULL,
@@ -245,7 +245,7 @@ CREATE TABLE ikhyeondb.SubCategories (
 	`Order` INT NOT NULL,
 	CONSTRAINT PRIMARY KEY (Id),
 	CONSTRAINT SubCategories_check CHECK (Role='Admin' OR Role='User'),
-	CONSTRAINT SubCategories_FK FOREIGN KEY (CategoryId) REFERENCES ikhyeondb.categories(Id)
+	CONSTRAINT SubCategories_FK FOREIGN KEY (CategoryId) REFERENCES ikhyeondb.Category(Id)
 )
 ENGINE=InnoDB
 DEFAULT CHARSET=utf8
