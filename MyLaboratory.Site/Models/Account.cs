@@ -10,7 +10,13 @@ namespace MyLaboratory.Site.Models
 {
     public partial class Account
     {
+        [Required(ErrorMessage = "아이디를 입력하세요.")]
+        [DataType(DataType.EmailAddress)]
+        [EmailAddress]
         public string Email { get; set; }
+
+        [Required(ErrorMessage = "패스워드를 입력하세요.")]
+        [DataType(DataType.Password)]
         public string HashedPassword { get; set; }
         public string Role { get; set; }
         public string FirstName { get; set; }
