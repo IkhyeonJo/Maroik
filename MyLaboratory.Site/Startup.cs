@@ -15,6 +15,8 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
 using MyLaboratory.Site.Data;
+using System.Net;
+using System.IO;
 
 namespace MyLaboratory.Site
 {
@@ -107,7 +109,7 @@ namespace MyLaboratory.Site
 
 
             app.UseHttpsRedirection(); // 2. HTTPS 리디렉션 미들웨어 (UseHttpsRedirection)는 HTTP 요청을 HTTPS로 리디렉션합니다.
-            app.UseStaticFiles(); // 3. 정적 파일 미들웨어 (UseStaticFiles)는 정적 파일을 리턴하고 추가 요청 처리를 단락시킵니다.
+            //app.UseStaticFiles(); // 3. 정적 파일 미들웨어 (UseStaticFiles)는 정적 파일을 리턴하고 추가 요청 처리를 단락시킵니다.
             // app.UseCookiePolicy(); 4. 쿠키 정책 미들웨어 (UseCookiePolicy)는 앱을 EU 일반 데이터 보호 규정 (GDPR) 규정에 따릅니다.
 
 
@@ -121,8 +123,24 @@ namespace MyLaboratory.Site
             app.UseAuthentication(); // 6.인증 미들웨어(UseAuthentication)는 보안 자원에 대한 액세스가 허용되기 전에 사용자 인증을 시도합니다.
             app.UseAuthorization(); // 7. 권한 미들웨어 (UseAuthorization)는 사용자가 보안 자원에 액세스 할 수있는 권한을 부여합니다.
             // app.UseSession(); // 8. 세션 미들웨어 (UseSession)는 세션 상태를 설정하고 유지합니다. 앱이 세션 상태를 사용하는 경우 쿠키 정책 미들웨어 이후 및 MVC 미들웨어 전에 세션 미들웨어를 호출하십시오.
-
             #endregion
+
+            #region 권한 없이 wwwroot에 접근하려고 하면 초기 화면으로 돌려보냄
+            app.UseStaticFiles(new StaticFileOptions
+            {
+                OnPrepareResponse = context =>
+                {
+                    if (!context.Context.User.Identity.IsAuthenticated && !context.Context.Request.Path.StartsWithSegments("/adminlte")) // 로그인에 쓰는 자원만 접근 허용
+                    {
+                        context.Context.Response.StatusCode = (int)HttpStatusCode.Unauthorized; // 권한 없음 
+                        context.Context.Response.ContentLength = 0; // 내용 길이 없음
+                        context.Context.Response.Body = Stream.Null; // 내용 없음
+                        context.Context.Response.Redirect("/"); // 로그인 화면으로
+                    }
+                }
+            });
+            #endregion
+
 
             #region Default HTTP Header Setting
             //https://docs.microsoft.com/en-us/aspnet/core/performance/caching/middleware?view=aspnetcore-5.0
