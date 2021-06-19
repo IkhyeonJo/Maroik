@@ -287,3 +287,11 @@ https://stackoverflow.com/questions/36775942/how-do-i-serve-static-files-only-to
 
 
 https://docs.microsoft.com/en-us/aspnet/core/mvc/controllers/filters?view=aspnetcore-5.0 // aspnetcore 5.0 Filter
+OnActionExecuting - 컨트롤러 액션이 실행되기 전에 호출됩니다.
+OnActionExecuted - 컨트롤러 액션이 실행된 후에 호출됩니다.
+OnResultExecuting - 컨트롤러의 액션결과가 실행되기 전에 호출됩니다.
+OnResultExecuted - 컨트롤러의 액션결과가 실행된 후에 호출됩니다.
+      var controllerName = routeData.Values["controller"];
+      var actionName = routeData.Values["action"];
+      var message = String.Format("{0} controller:{1} action:{2}", methodName, controllerName, actionName);
+      Debug.WriteLine(message, "Action Filter Log");
