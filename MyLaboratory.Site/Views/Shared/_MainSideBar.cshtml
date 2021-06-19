@@ -1,6 +1,17 @@
-﻿@{ 
+﻿@using System.Security.Claims; 
+@{
     var currentController = ViewContext.RouteData.Values["Controller"].ToString();
     var currentAction = ViewContext.RouteData.Values["Action"].ToString();
+    var userClaims = new List<KeyValuePair<string, string>>();
+
+    var aa = ClaimTypes.Role;
+
+    foreach (var c in User.Claims)
+    {
+        userClaims.Add(new KeyValuePair<string, string>(c.Type, c.Value));
+    }
+
+    string meow = "";
 }
 
 <!-- Main Sidebar Container -->
@@ -39,8 +50,87 @@
         <nav class="mt-2">
             <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
                 <!-- Add icons to the links using the .nav-icon class
-                with font-awesome or any other icon font library -->
-                <li class="nav-item menu-open">
+    with font-awesome or any other icon font library -->
+                <li class="nav-item">
+                    <a asp-controller="DashBoard" asp-action="Index" class="nav-link active">
+                        <i class="nav-icon fas fa-tachometer-alt"></i>
+                        <p>
+                            Dashboard
+                        </p>
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a href="pages/widgets.html" class="nav-link">
+                        <i class="nav-icon fas fa-th"></i>
+                        <p>
+                            Widgets
+                        </p>
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a href="#" class="nav-link">
+                        <i class="nav-icon fas fa-won-sign"></i>
+                        <p>
+                            AccountBook
+                            <i class="fas fa-angle-left right"></i>
+                        </p>
+                    </a>
+                    <ul class="nav nav-treeview">
+                        <li class="nav-item">
+                            <a asp-controller="AccountBook" asp-action="Main" class="nav-link">
+                                <i class="far fa-circle nav-icon"></i>
+                                <p>Main</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a asp-controller="AccountBook" asp-action="Chart" class="nav-link">
+                                <i class="far fa-circle nav-icon"></i>
+                                <p>Chart</p>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+
+
+                <li class="nav-item">
+                    <a href="#" class="nav-link">
+                        <i class="nav-icon fas fa-cog"></i>
+                        <p>
+                            Management
+                            <i class="fas fa-angle-left right"></i>
+                        </p>
+                    </a>
+                    <ul class="nav nav-treeview">
+                        <li class="nav-item">
+                            <a asp-controller="Management" asp-action="UserProfile" class="nav-link">
+                                <i class="far fa-circle nav-icon"></i>
+                                <p>UserProfile</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a asp-controller="Management" asp-action="Category" class="nav-link">
+                                <i class="far fa-circle nav-icon"></i>
+                                <p>Category</p>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+                @*<li class="nav-item menu-open">
                     <a href="#" class="nav-link active">
                         <i class="nav-icon fas fa-tachometer-alt"></i>
                         <p>
@@ -74,19 +164,10 @@
                         <i class="nav-icon fas fa-th"></i>
                         <p>
                             Widgets
-                            @*<span class="right badge badge-danger">New</span>*@
+                            <span class="right badge badge-danger">New</span>
                         </p>
                     </a>
                 </li>
-                @*<li class="nav-item">
-                        <a href="pages/widgets.html" class="nav-link">
-                            <i class="nav-icon fas fa-th"></i>
-                            <p>
-                                Employee Info
-                                <span class="right badge badge-danger">New</span>
-                            </p>
-                        </a>
-                    </li>*@
                 <li class="nav-item">
                     <a href="#" class="nav-link">
                         <i class="nav-icon fas fa-copy"></i>
@@ -679,7 +760,11 @@
                         <i class="nav-icon far fa-circle text-info"></i>
                         <p>Informational</p>
                     </a>
-                </li>
+                </li>*@
+
+
+
+
             </ul>
         </nav>
         <!-- /.sidebar-menu -->
