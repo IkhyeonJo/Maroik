@@ -273,3 +273,11 @@ B-6: 꺼낸 SubCategory의 Action 값이 현 View의 Action과 같지 않다면 InActive
       hyperLink는 Category의 Controller와 SubCategory의 Action을 통해 생성.
 B-7: B-0로 돌아감
 #-----------------------------------------------------------------------------------------------------------------------------------------------
+
+
+
+
+https://holjjack.tistory.com/105?category=831597 // [Core 3.1] ASP.NET Core ActionFilter를 이용한 Session 체크
+
+
+https://odetocode.com/blogs/scott/archive/2015/10/06/authorization-policies-and-middleware-in-asp-net-5.aspx // Authorization Policies and Middleware in ASP.NET 5
