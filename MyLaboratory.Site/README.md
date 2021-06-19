@@ -192,7 +192,7 @@ DEFAULT CHARSET=utf8
 COLLATE=utf8_general_ci;
 
 
-#_MainSideBar.cshtml DB 구조
+#_MainLeftSideBar.cshtml DB 구조
 #-----------------------------------------------------------------------------------------------------------------------------------------------
 Category
 Id: PK(not null, Auto_Increment, Int) # 그냥 식별용
@@ -245,7 +245,7 @@ CREATE TABLE `SubCategory` (
 
 
 
-#_MainSideBar.cshtml 알고리즘
+#_MainLeftSideBar.cshtml 알고리즘
 #-----------------------------------------------------------------------------------------------------------------------------------------------
 # 로그인 후 DB 초기 (Cache)
 A-0: 카테고리 Role이 현재 사용자 Role과 같은 거 다 꺼내기
