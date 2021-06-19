@@ -17,6 +17,7 @@ using Microsoft.AspNetCore.Http;
 using MyLaboratory.Site.Data;
 using System.Net;
 using System.IO;
+using MyLaboratory.Site.Filters;
 
 namespace MyLaboratory.Site
 {
@@ -82,6 +83,11 @@ namespace MyLaboratory.Site
             services.AddSingleton<IConfiguration>(Configuration);
             services.AddResponseCaching(); // For HTTP Header Setting 
             services.AddControllersWithViews();
+
+            services.AddControllersWithViews(options =>
+            {
+                options.Filters.Add(new GlobalActionFilter()); // An instance
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
