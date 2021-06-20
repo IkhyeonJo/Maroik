@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Microsoft.EntityFrameworkCore;
 using MyLaboratory.Site.Data;
+using MyLaboratory.Site.Helpers;
 using MyLaboratory.Site.Models;
 
 namespace MyLaboratory.Site.Services
@@ -19,7 +20,7 @@ namespace MyLaboratory.Site.Services
         {
             get
             {
-                return context.Categories.FromSqlRaw($"SELECT * FROM Category WHERE `Role` = 'Admin' ORDER BY `Order`;").ToList();
+                return context.Categories.FromSqlRaw($"SELECT * FROM Category WHERE `Role` = '{Role.Admin}' ORDER BY `Order`;").ToList();
 
             }
         }
@@ -28,7 +29,7 @@ namespace MyLaboratory.Site.Services
         {
             get
             {
-                return context.Categories.FromSqlRaw("SELECT * FROM Category WHERE `Role` = 'User' ORDER BY `Order`;").ToList();
+                return context.Categories.FromSqlRaw($"SELECT * FROM Category WHERE `Role` = '{Role.User}' ORDER BY `Order`;").ToList();
             }
         }
     }
