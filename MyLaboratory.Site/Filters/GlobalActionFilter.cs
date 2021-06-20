@@ -27,6 +27,18 @@ namespace MyLaboratory.Site.Filters
             //string controllerName = filterContext.ActionDescriptor.ControllerDescriptor.ControllerName
             //base.OnActionExecuting(filterContext);
 
+            #region Tell GET/POST
+            //var a = context.HttpContext.Request.Method; // GET/POST 방식 구하기
+
+            //if (context.HttpContext.Request.Method == "POST")
+            //{
+            //    // Do nothing
+            //}
+            //else
+            //{
+            //    //Do Something
+            //}
+            #endregion
 
             #region Valid Code
             //var controllerName = context.ActionDescriptor.RouteValues["controller"].ToString();
