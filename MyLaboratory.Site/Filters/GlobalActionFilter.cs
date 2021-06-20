@@ -1,10 +1,12 @@
-﻿using Microsoft.AspNetCore.Mvc.Filters;
+﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Filters;
 
 namespace MyLaboratory.Site.Filters
 {
-    public class GlobalActionFilter : IActionFilter
+    public class GlobalActionFilter : ActionFilterAttribute
     {
-        public void OnActionExecuting(ActionExecutingContext context)
+        // Do something before the action executes.
+        public override void OnActionExecuting(ActionExecutingContext context)
         {
             // Do something before the action executes.
             //        ...
@@ -24,13 +26,28 @@ namespace MyLaboratory.Site.Filters
             //string actionName = context.ActionDescriptor.ac;
             //string controllerName = filterContext.ActionDescriptor.ControllerDescriptor.ControllerName
             //base.OnActionExecuting(filterContext);
+
+
+            #region Valid Code
             var controllerName = context.ActionDescriptor.RouteValues["controller"].ToString();
             var actionName = context.ActionDescriptor.RouteValues["action"].ToString();
 
+            if (true)
+            {
+                //context.Result = new EmptyResult();
+                context.Result = new UnauthorizedObjectResult("user is unauthorized");
+
+            }
+            else
+            {
+                base.OnActionExecuting(context);
+            }
+            #endregion
         }
 
-        public void OnActionExecuted(ActionExecutedContext context)
-        {
+        // Do something after the action executes.
+        public override void OnActionExecuted(ActionExecutedContext context)
+        {   
             // Do something after the action executes.
 
         }
