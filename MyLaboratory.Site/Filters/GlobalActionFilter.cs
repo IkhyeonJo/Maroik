@@ -28,21 +28,21 @@ namespace MyLaboratory.Site.Filters
             //base.OnActionExecuting(filterContext);
 
 
-            #region Valid Code
-            var controllerName = context.ActionDescriptor.RouteValues["controller"].ToString();
-            var actionName = context.ActionDescriptor.RouteValues["action"].ToString();
+            //#region Valid Code
+            //var controllerName = context.ActionDescriptor.RouteValues["controller"].ToString();
+            //var actionName = context.ActionDescriptor.RouteValues["action"].ToString();
 
-            if (true)
-            {
-                //context.Result = new EmptyResult();
-                context.Result = new UnauthorizedObjectResult("user is unauthorized"); // Action Cancel !! https://stackoverflow.com/questions/5186425/best-way-to-abort-cancel-action-and-response-from-actionfilter
+            //if (true)
+            //{
+            //    //context.Result = new EmptyResult();
+            //    context.Result = new UnauthorizedObjectResult("user is unauthorized"); // Action Cancel !! https://stackoverflow.com/questions/5186425/best-way-to-abort-cancel-action-and-response-from-actionfilter
 
-            }
-            else
-            {
-                base.OnActionExecuting(context);
-            }
-            #endregion
+            //}
+            //else
+            //{
+            //    base.OnActionExecuting(context); // Do Action!!
+            //}
+            //#endregion
         }
 
         // Do something after the action executes.
