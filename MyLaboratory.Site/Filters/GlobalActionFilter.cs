@@ -1,5 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Http;
 
 namespace MyLaboratory.Site.Filters
 {
@@ -8,6 +10,15 @@ namespace MyLaboratory.Site.Filters
         // Do something before the action executes.
         public override void OnActionExecuting(ActionExecutingContext context)
         {
+            string controllerName = context.ActionDescriptor.RouteValues["controller"].ToString();
+            string actionName = context.ActionDescriptor.RouteValues["action"].ToString();
+
+            //var aa = HttpContext.User.Identity.IsAuthenticated;
+
+            var bb = "";
+
+            var cc = context.HttpContext.Request.Cookies.Keys;
+
             // Do something before the action executes.
             //        ...
             //if (needToRedirect)

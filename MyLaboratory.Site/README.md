@@ -295,3 +295,24 @@ OnResultExecuted - 컨트롤러의 액션결과가 실행된 후에 호출됩니다.
       var actionName = routeData.Values["action"];
       var message = String.Format("{0} controller:{1} action:{2}", methodName, controllerName, actionName);
       Debug.WriteLine(message, "Action Filter Log");
+
+
+
+
+
+
+
+
+
+
+
+
+# 세션 관리법
+var tempAccount = accountRepository.GetAccount(loginInputViewModel.Email);
+
+
+HttpContext.Session.Set("AccountSession", Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(tempAccount))); // Set Session
+
+byte[] resultByte = null;
+var isExist = HttpContext.Session.TryGetValue("AccountSession", out resultByte);
+var loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)); // Get Session

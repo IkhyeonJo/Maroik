@@ -45,39 +45,15 @@ namespace MyLaboratory.Site
             services.AddScoped<IWorkerRepository, WorkerRepository>();
             #endregion
 
-            #region AddCookieAuthentication
-            services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
-                    .AddCookie(options =>
-                    {
-                        options.ExpireTimeSpan = TimeSpan.FromHours(1);
-                        options.LoginPath = "/Account/Login"; // 로그인이 필요한 페이지의 경우 자동으로 리디렉션.
-                        options.LogoutPath = "/Account/Logout"; // 만료 시간이 되면 쿠키가 사라져서 자동으로 로그아웃 페이지로 이동한다.
-                        options.AccessDeniedPath = "/Account/AccessDenied"; // 엑세스가 거부되었을 때의 경로이다.
-                        options.Events = new CookieAuthenticationEvents()
-                        {
-                            OnSigningIn = async context => // 로그인 버튼 눌렀을 때 (SignInAsync 생성 중)
-                            {
-                                //var principal = context.Principal;
-                                //if (principal.HasClaim(c => c.Type == ClaimTypes.NameIdentifier))
-                                //{
-                                //    if (principal.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier).Value == "bob") // 만일 NameIdentitfier가 bob이면
-                                //    {
-                                //        var claimsIdentity = principal.Identity as ClaimsIdentity;
-                                //        claimsIdentity.AddClaim(new Claim(ClaimTypes.Role, "Admin")); // 관리자 권한으로 승격한다.
-                                //    }
-                                //}
-                                await Task.CompletedTask;
-                            },
-                            OnSignedIn = async context => // 로그인 버튼 눌렀을 때 (SignInAsync 생성 끝) 
-                            {
-                                await Task.CompletedTask;
-                            },
-                            OnValidatePrincipal = async context =>
-                            {
-                                await Task.CompletedTask;
-                            }
-                        };
-                    });
+            #region AddSession
+            services.AddDistributedMemoryCache(); // Session Storage
+
+            services.AddSession(options =>
+            {
+                options.IdleTimeout = TimeSpan.FromMinutes(15);
+                options.Cookie.HttpOnly = true;
+                options.Cookie.IsEssential = true;
+            });
             #endregion
 
             services.AddSingleton<IConfiguration>(Configuration);
@@ -128,22 +104,22 @@ namespace MyLaboratory.Site
             #region Login
             app.UseAuthentication(); // 6.인증 미들웨어(UseAuthentication)는 보안 자원에 대한 액세스가 허용되기 전에 사용자 인증을 시도합니다.
             app.UseAuthorization(); // 7. 권한 미들웨어 (UseAuthorization)는 사용자가 보안 자원에 액세스 할 수있는 권한을 부여합니다.
-            // app.UseSession(); // 8. 세션 미들웨어 (UseSession)는 세션 상태를 설정하고 유지합니다. 앱이 세션 상태를 사용하는 경우 쿠키 정책 미들웨어 이후 및 MVC 미들웨어 전에 세션 미들웨어를 호출하십시오.
+            app.UseSession(); // 8. 세션 미들웨어 (UseSession)는 세션 상태를 설정하고 유지합니다. 앱이 세션 상태를 사용하는 경우 쿠키 정책 미들웨어 이후 및 MVC 미들웨어 전에 세션 미들웨어를 호출하십시오.
             #endregion
 
             #region 권한 없이 wwwroot에 접근하려고 하면 초기 화면으로 돌려보냄
             app.UseStaticFiles(new StaticFileOptions
             {
-                OnPrepareResponse = context =>
-                {
-                    if (!context.Context.User.Identity.IsAuthenticated && !context.Context.Request.Path.StartsWithSegments("/adminlte")) // 로그인에 쓰는 자원만 접근 허용
-                    {
-                        context.Context.Response.StatusCode = (int)HttpStatusCode.Unauthorized; // 권한 없음 
-                        context.Context.Response.ContentLength = 0; // 내용 길이 없음
-                        context.Context.Response.Body = Stream.Null; // 내용 없음
-                        context.Context.Response.Redirect("/"); // 로그인 화면으로
-                    }
-                }
+                //OnPrepareResponse = context =>
+                //{
+                //    if (!context.Context.User.Identity.IsAuthenticated && !context.Context.Request.Path.StartsWithSegments("/adminlte")) // 로그인에 쓰는 자원만 접근 허용
+                //    {
+                //        context.Context.Response.StatusCode = (int)HttpStatusCode.Unauthorized; // 권한 없음 
+                //        context.Context.Response.ContentLength = 0; // 내용 길이 없음
+                //        context.Context.Response.Body = Stream.Null; // 내용 없음
+                //        context.Context.Response.Redirect("/"); // 로그인 화면으로
+                //    }
+                //}
             });
             #endregion
 
@@ -182,8 +158,7 @@ namespace MyLaboratory.Site
 
             app.UseEndpoints(endpoints =>
             {
-                endpoints.MapControllerRoute(name: "default", pattern: "{controller=DashBoard}/{action=Index}/{id?}")
-                        .RequireAuthorization(); // Apply Authorization to all controller
+                endpoints.MapControllerRoute(name: "default", pattern: "{controller=Account}/{action=Login}/{id?}");
             });
         }
     }

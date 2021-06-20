@@ -12,11 +12,12 @@ using System.Security.Claims;
 using System.Threading.Tasks;
 using MyLaboratory.Site.Helpers;
 using MyLaboratory.Site.Services;
+using Newtonsoft.Json;
+using System.Text;
+using MyLaboratory.Site.Models;
 
 namespace MyLaboratory.Site.Controllers
 {
-
-    [AllowAnonymous]
     public class AccountController : Controller
     {
         private readonly ILogger<AccountController> logger;
@@ -62,14 +63,21 @@ namespace MyLaboratory.Site.Controllers
                     return RedirectToAction("Index", "DashBoard");
                 }
 
-                var claims = new List<Claim>();
-                claims.Add(new Claim("email", loginInputViewModel.Email));
-                claims.Add(new Claim(ClaimTypes.NameIdentifier, loginInputViewModel.Email));
-                claims.Add(new Claim(ClaimTypes.Name, $"{tempAccount?.FirstName}{tempAccount?.LastName}"));
-                claims.Add(new Claim(ClaimTypes.Role, tempAccount.Role));
-                var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
-                var claimPrincipal = new ClaimsPrincipal(claimsIdentity);
-                await HttpContext.SignInAsync(claimPrincipal);
+                //var claims = new List<Claim>();
+                //claims.Add(new Claim("email", loginInputViewModel.Email));
+                //claims.Add(new Claim(ClaimTypes.NameIdentifier, loginInputViewModel.Email));
+                //claims.Add(new Claim(ClaimTypes.Name, $"{tempAccount?.FirstName}{tempAccount?.LastName}"));
+                //claims.Add(new Claim(ClaimTypes.Role, tempAccount.Role));
+                //var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+                //var claimPrincipal = new ClaimsPrincipal(claimsIdentity);
+                //await HttpContext.SignInAsync(claimPrincipal);
+
+                HttpContext.Session.Set("AccountSession", Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(tempAccount))); // Set Session
+
+                byte[] resultByte = null;
+                var isExist = HttpContext.Session.TryGetValue("AccountSession", out resultByte);
+                var loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)); // Get Session
+
                 return RedirectToAction("Index", "DashBoard");
             }
             else
@@ -79,7 +87,6 @@ namespace MyLaboratory.Site.Controllers
         }
 
         [HttpGet]
-        [Authorize]
         public async Task<IActionResult> Logout()
         {
             await HttpContext.SignOutAsync();

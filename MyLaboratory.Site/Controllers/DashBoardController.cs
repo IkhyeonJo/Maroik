@@ -12,7 +12,6 @@ using MyLaboratory.Site.Helpers;
 
 namespace MyLaboratory.Site.Controllers
 {
-    [Authorize(Roles = Role.Admin)]
     public class DashBoardController : Controller
     {
         private readonly ILogger<DashBoardController> logger;
@@ -34,12 +33,6 @@ namespace MyLaboratory.Site.Controllers
         public IActionResult Privacy()
         {
             return View();
-        }
-
-        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-        public IActionResult Error()
-        {
-            return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
         }
     }
 }

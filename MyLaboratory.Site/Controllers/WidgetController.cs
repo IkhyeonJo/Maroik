@@ -12,7 +12,6 @@ using MyLaboratory.Site.Helpers;
 
 namespace MyLaboratory.Site.Controllers
 {
-    [Authorize(Roles = Role.Admin)]
     public class WidgetController : Controller
     {
         private readonly ILogger<WidgetController> logger;
