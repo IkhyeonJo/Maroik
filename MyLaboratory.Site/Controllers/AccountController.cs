@@ -72,6 +72,8 @@ namespace MyLaboratory.Site.Controllers
                 //var claimPrincipal = new ClaimsPrincipal(claimsIdentity);
                 //await HttpContext.SignInAsync(claimPrincipal);
 
+                tempAccount.HashedPassword = null;
+
                 HttpContext.Session.Set("AccountSession", Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(tempAccount))); // Set Session
 
                 byte[] resultByte = null;
