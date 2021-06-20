@@ -73,8 +73,16 @@ namespace MyLaboratory.Site.Controllers
                 HttpContext.Session.Set("AccountSession", Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(tempAccount)));
 
                 #region DB Cache
-                DbCache.AdminCategories = categoryRepository.AdminCategories;
-                DbCache.AdminSubCategories = subCategoryRepository.AdminSubCategories;
+                if (tempAccount.Role == Role.Admin)
+                {
+                    DbCache.AdminCategories = categoryRepository.AdminCategories;
+                    DbCache.AdminSubCategories = subCategoryRepository.AdminSubCategories;
+                }
+                else if(tempAccount.Role == Role.User)
+                {
+                    DbCache.UserCategories = categoryRepository.UserCategories;
+                    DbCache.UserSubCategories = subCategoryRepository.UserSubCategories;
+                }
                 #endregion
 
                 return RedirectToAction("Index", "DashBoard");
