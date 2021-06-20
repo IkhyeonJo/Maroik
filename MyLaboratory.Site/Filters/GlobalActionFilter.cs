@@ -6,6 +6,7 @@ using Newtonsoft.Json;
 using MyLaboratory.Site.Models;
 using System.Text;
 using MyLaboratory.Site.Helpers;
+using MyLaboratory.Site.Data;
 
 namespace MyLaboratory.Site.Filters
 {
@@ -50,6 +51,9 @@ namespace MyLaboratory.Site.Filters
 
                 if (loginedAccount.Role == Role.Admin) // 로그인한 사용자 권한이 Admin일 경우
                 {
+                    var aaa = DbCache.AdminCategories;
+                    var bbb = DbCache.AdminSubCategories;
+                    var ccc = ";";
                     //DB Category & SubCategory 다 뽑아 현재 Access한 Controller & Action과 다 맞는지 비교하고 맞으면 넘어가고 아니면 UnAuthroizedObjectReslut 출력 (Action 취소!!)
                 }
                 else if(loginedAccount.Role == Role.User) // 로그인한 사용자 권한이 User일 경우

@@ -24,12 +24,14 @@ namespace MyLaboratory.Site.Controllers
         private readonly ILogger<AccountController> logger;
         private readonly IAccountRepository accountRepository;
         private readonly ICategoryRepository categoryRepository;
+        private readonly ISubCategoryRepository subCategoryRepository;
 
-        public AccountController(ILogger<AccountController> logger, IAccountRepository accountRepository, ICategoryRepository categoryRepository)
+        public AccountController(ILogger<AccountController> logger, IAccountRepository accountRepository, ICategoryRepository categoryRepository, ISubCategoryRepository subCategoryRepository)
         {
             this.logger = logger;
             this.accountRepository = accountRepository;
             this.categoryRepository = categoryRepository;
+            this.subCategoryRepository = subCategoryRepository;
         }
 
         [HttpGet]
@@ -72,6 +74,7 @@ namespace MyLaboratory.Site.Controllers
 
                 #region DB Cache
                 DbCache.AdminCategories = categoryRepository.AdminCategories;
+                DbCache.AdminSubCategories = subCategoryRepository.AdminSubCategories;
                 #endregion
 
                 return RedirectToAction("Index", "DashBoard");

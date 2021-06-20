@@ -44,6 +44,7 @@ namespace MyLaboratory.Site
             services.AddScoped<IProductRepository, ProductRepository>();
             services.AddScoped<IWorkerRepository, WorkerRepository>();
             services.AddScoped<ICategoryRepository, CategoryRepository>();
+            services.AddScoped<ISubCategoryRepository, SubCategoryRepository>();
             #endregion
 
             #region AddSession
