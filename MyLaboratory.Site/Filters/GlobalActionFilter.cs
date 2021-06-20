@@ -35,7 +35,7 @@ namespace MyLaboratory.Site.Filters
             if (true)
             {
                 //context.Result = new EmptyResult();
-                context.Result = new UnauthorizedObjectResult("user is unauthorized");
+                context.Result = new UnauthorizedObjectResult("user is unauthorized"); // Action Cancel !! https://stackoverflow.com/questions/5186425/best-way-to-abort-cancel-action-and-response-from-actionfilter
 
             }
             else
