@@ -28,7 +28,7 @@ namespace MyLaboratory.Site.Filters
             //base.OnActionExecuting(filterContext);
 
 
-            //#region Valid Code
+            #region Valid Code
             //var controllerName = context.ActionDescriptor.RouteValues["controller"].ToString();
             //var actionName = context.ActionDescriptor.RouteValues["action"].ToString();
 
@@ -42,7 +42,7 @@ namespace MyLaboratory.Site.Filters
             //{
             //    base.OnActionExecuting(context); // Do Action!!
             //}
-            //#endregion
+            #endregion
         }
 
         // Do something after the action executes.
