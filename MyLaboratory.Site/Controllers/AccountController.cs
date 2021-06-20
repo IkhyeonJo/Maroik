@@ -44,7 +44,7 @@ namespace MyLaboratory.Site.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken] //To Prevent CSRF attack
-        public async Task<IActionResult> Login(LoginInputViewModel loginInputViewModel)
+        public IActionResult Login(LoginInputViewModel loginInputViewModel)
         {
             //var aa = accountRepository.LockAccount(loginInputViewModel.Email);
             if (ModelState.IsValid)
@@ -63,22 +63,9 @@ namespace MyLaboratory.Site.Controllers
                     return RedirectToAction("Index", "DashBoard");
                 }
 
-                //var claims = new List<Claim>();
-                //claims.Add(new Claim("email", loginInputViewModel.Email));
-                //claims.Add(new Claim(ClaimTypes.NameIdentifier, loginInputViewModel.Email));
-                //claims.Add(new Claim(ClaimTypes.Name, $"{tempAccount?.FirstName}{tempAccount?.LastName}"));
-                //claims.Add(new Claim(ClaimTypes.Role, tempAccount.Role));
-                //var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
-                //var claimPrincipal = new ClaimsPrincipal(claimsIdentity);
-                //await HttpContext.SignInAsync(claimPrincipal);
-
                 tempAccount.HashedPassword = null;
 
-                HttpContext.Session.Set("AccountSession", Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(tempAccount))); // Set Session
-
-                byte[] resultByte = null;
-                var isExist = HttpContext.Session.TryGetValue("AccountSession", out resultByte);
-                var loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)); // Get Session
+                HttpContext.Session.Set("AccountSession", Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(tempAccount)));
 
                 return RedirectToAction("Index", "DashBoard");
             }
@@ -89,9 +76,9 @@ namespace MyLaboratory.Site.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> Logout()
+        public IActionResult Logout()
         {
-            await HttpContext.SignOutAsync();
+            HttpContext.Session.Clear();
             return RedirectToAction("Login", "Account");
         }
 

@@ -2,6 +2,10 @@
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Http;
+using Newtonsoft.Json;
+using MyLaboratory.Site.Models;
+using System.Text;
+using MyLaboratory.Site.Helpers;
 
 namespace MyLaboratory.Site.Filters
 {
@@ -13,11 +17,46 @@ namespace MyLaboratory.Site.Filters
             string controllerName = context.ActionDescriptor.RouteValues["controller"].ToString();
             string actionName = context.ActionDescriptor.RouteValues["action"].ToString();
 
-            //var aa = HttpContext.User.Identity.IsAuthenticated;
+            bool isAccountSessionExist = context.HttpContext.Session.TryGetValue("AccountSession", out _);
 
-            var bb = "";
+            if (isAccountSessionExist == false) // 로그인이 안 된 상태이면
+            {
+                if (controllerName == "Account" && actionName == "Login") // 로그인 페이지인 경우
+                {
+                    base.OnActionExecuting(context); // Do Action!!
+                }
+                else if (controllerName == "Account" && actionName == "Register") // 회원가입 페이지인 경우
+                {
+                    base.OnActionExecuting(context); // Do Action!!
+                }
+                else if (controllerName == "Account" && actionName == "IDInquiry") // 아이디 찾기 페이지인 경우
+                {
+                    base.OnActionExecuting(context); // Do Action!!
+                }
+                else if (controllerName == "Account" && actionName == "ForgotPassword") // 비밀번호 찾기 페이지인 경우
+                {
+                    base.OnActionExecuting(context); // Do Action!!
+                }
+                else // 그 외 페이지는 전부 접근 불가!!
+                {
+                    context.Result = new UnauthorizedObjectResult("User is unauthorized");
+                }
+            }
+            else if (isAccountSessionExist == true) // 로그인이 된 상태라면
+            {
+                byte[] resultByte = null;
+                context.HttpContext.Session.TryGetValue("AccountSession", out resultByte);
+                var loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)); // Get Session
 
-            var cc = context.HttpContext.Request.Cookies.Keys;
+                if (loginedAccount.Role == Role.Admin) // 로그인한 사용자 권한이 Admin일 경우
+                {
+                    //DB Category & SubCategory 다 뽑아 현재 Access한 Controller & Action과 다 맞는지 비교하고 맞으면 넘어가고 아니면 UnAuthroizedObjectReslut 출력 (Action 취소!!)
+                }
+                else if(loginedAccount.Role == Role.User) // 로그인한 사용자 권한이 User일 경우
+                {
+                    //DB Category & SubCategory 다 뽑아 현재 Access한 Controller & Action과 다 맞는지 비교하고 맞으면 넘어가고 아니면 UnAuthroizedObjectReslut 출력 (Action 취소!!)
+                }
+            }
 
             // Do something before the action executes.
             //        ...
@@ -48,22 +87,6 @@ namespace MyLaboratory.Site.Filters
             //else
             //{
             //    //Do Something
-            //}
-            #endregion
-
-            #region Valid Code
-            //var controllerName = context.ActionDescriptor.RouteValues["controller"].ToString();
-            //var actionName = context.ActionDescriptor.RouteValues["action"].ToString();
-
-            //if (true)
-            //{
-            //    //context.Result = new EmptyResult();
-            //    context.Result = new UnauthorizedObjectResult("user is unauthorized"); // Action Cancel !! https://stackoverflow.com/questions/5186425/best-way-to-abort-cancel-action-and-response-from-actionfilter
-
-            //}
-            //else
-            //{
-            //    base.OnActionExecuting(context); // Do Action!!
             //}
             #endregion
         }
