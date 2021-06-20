@@ -15,6 +15,7 @@ using MyLaboratory.Site.Services;
 using Newtonsoft.Json;
 using System.Text;
 using MyLaboratory.Site.Models;
+using MyLaboratory.Site.Data;
 
 namespace MyLaboratory.Site.Controllers
 {
@@ -22,11 +23,13 @@ namespace MyLaboratory.Site.Controllers
     {
         private readonly ILogger<AccountController> logger;
         private readonly IAccountRepository accountRepository;
+        private readonly ICategoryRepository categoryRepository;
 
-        public AccountController(ILogger<AccountController> logger, IAccountRepository accountRepository)
+        public AccountController(ILogger<AccountController> logger, IAccountRepository accountRepository, ICategoryRepository categoryRepository)
         {
             this.logger = logger;
             this.accountRepository = accountRepository;
+            this.categoryRepository = categoryRepository;
         }
 
         [HttpGet]
@@ -66,6 +69,10 @@ namespace MyLaboratory.Site.Controllers
                 tempAccount.HashedPassword = null;
 
                 HttpContext.Session.Set("AccountSession", Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(tempAccount)));
+
+                #region DB Cache
+                DbCache.AdminCategories = categoryRepository.AdminCategories;
+                #endregion
 
                 return RedirectToAction("Index", "DashBoard");
             }
