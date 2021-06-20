@@ -82,7 +82,7 @@ namespace MyLaboratory.Site
 
             services.AddSingleton<IConfiguration>(Configuration);
             services.AddResponseCaching(); // For HTTP Header Setting 
-            services.AddControllersWithViews();
+            //services.AddControllersWithViews();
 
             services.AddControllersWithViews(options =>
             {
