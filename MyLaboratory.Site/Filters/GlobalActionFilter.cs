@@ -51,6 +51,12 @@ namespace MyLaboratory.Site.Filters
             }
             else if (isAccountSessionExist == true) // 로그인이 된 상태라면
             {
+                if (currentControllerName == "Account" && currentActionName == "Login") // (로그인 된 상태에서 뒤로가기로 로그인 페이지에 갈 수 있음)
+                {
+                    base.OnActionExecuting(context); // Do Action!!
+                    return;
+                }
+
                 byte[] resultByte = null;
                 context.HttpContext.Session.TryGetValue("AccountSession", out resultByte);
                 var loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)); // Get Session
