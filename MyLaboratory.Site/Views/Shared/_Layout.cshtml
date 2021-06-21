@@ -31,9 +31,6 @@
     <!-- summernote -->
     <link rel="stylesheet" href="~/plugins/summernote/summernote-bs4.min.css">
 
-    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="~/css/site.css" />
-
 </head>
 @*
     <!--
@@ -86,9 +83,34 @@
     <!-- AdminLTE dashboard demo (This is only for demo purposes) -->
     <script src="~/dist/js/pages/dashboard3.js"></script>
 
-    <script src="~/lib/jquery/dist/jquery.min.js"></script>
-    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="~/js/site.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false) @* Model Only [Require] 이런거 모델 Model.IsValid 이런거 쓸 때 쓰는 자바스크립트임 aspnetcore를 위한 *@
+
+
+
+    @*https://stackoverflow.com/questions/37280885/jquery-redirect-inmediatly-after-session-timeout *@
+
+    @* Redirect browser to session expiration page on timeout *@
+
+<script type="text/javascript">
+        $(document).ready(function () {
+            function ilSessionTimeout() {
+                alert('장기간 미사용으로 자동 로그아웃 되었습니다. 다시 로그인 해주시길 바랍니다.');
+                window.location = '@Url.Action("Logout", "Account")';
+            };
+            @*function ilSessionTimeoutWarning() {
+                $.jGrowl('You will be logged off soon due to inactivity.', { sticky: true, theme: 'growl-warning', header: 'Attention' });
+            };*@
+            // remember our timers so we can cancel when we unload this page and reset them on the next page load
+            var expire_time = 15 * 60 * 1000; @* (15 Minutes) 변경 시, Startup.cs의 services.AddSession의 options.IdleTimeout도 바꿀 것 *@
+            var g_pageTimer = window.setTimeout(ilSessionTimeout, expire_time);
+            @*var g_pageTimerWarning = window.setTimeout(ilSessionTimeoutWarning, Math.round(expire_time*0.8));*@
+            // clean up anything that needs cleaning before we leave this page
+            window.onbeforeunload = function(e) {
+                // clear the timers
+                window.clearTimeout(g_pageTimer);
+                @*window.clearTimeout(g_pageTimerWarning);*@
+            };
+        });
+</script>
 </body>
 </html>
