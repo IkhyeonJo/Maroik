@@ -56,6 +56,11 @@ namespace MyLaboratory.Site.Filters
                     base.OnActionExecuting(context); // Do Action!!
                     return;
                 }
+                else if (currentControllerName == "Account" && currentActionName == "Logout") // 로그아웃
+                {
+                    base.OnActionExecuting(context); // Do Action!!
+                    return;
+                }
 
                 byte[] resultByte = null;
                 context.HttpContext.Session.TryGetValue("AccountSession", out resultByte);
