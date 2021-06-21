@@ -74,13 +74,13 @@ namespace MyLaboratory.Site.Controllers
                 if (tempAccount == null) // no account exist
                 {
                     TempData["Error"] = "Username or Password is invalid";
-                    return RedirectToAction("Index", "DashBoard");
+                    return RedirectToAction("Login", "Account");
                 }
 
                 if (!Crypto.VerifyHashedPassword(tempAccount.HashedPassword, loginInputViewModel.Password)) // wrong password
                 {
                     TempData["Error"] = "Username or Password is invalid";
-                    return RedirectToAction("Index", "DashBoard");
+                    return RedirectToAction("Login", "Account");
                 }
 
                 tempAccount.HashedPassword = null;
@@ -88,23 +88,27 @@ namespace MyLaboratory.Site.Controllers
                 HttpContext.Session.Set("AccountSession", Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(tempAccount)));
 
                 #region DB Cache
-                if (tempAccount.Role == Role.Admin)
+                if (tempAccount.Role == Role.Admin) // 로그인 권한이 Admin인 경우
                 {
                     DbCache.AdminCategories = categoryRepository.AdminCategories;
                     DbCache.AdminSubCategories = subCategoryRepository.AdminSubCategories;
+                    return RedirectToAction("Index", "DashBoard");
                 }
-                else if(tempAccount.Role == Role.User)
+                else if(tempAccount.Role == Role.User) // 로그인 권한이 User인 경우
                 {
                     DbCache.UserCategories = categoryRepository.UserCategories;
                     DbCache.UserSubCategories = subCategoryRepository.UserSubCategories;
+                    return RedirectToAction("Index", "UserDashBoard");
+                }
+                else // 로그인 권한은 Admin 또는 User만 있음 이 경우는 버그 발생한 것임
+                {
+                    return null;
                 }
                 #endregion
-
-                return RedirectToAction("Index", "DashBoard");
             }
             else
             {
-                return RedirectToAction("Index", "DashBoard");
+                return RedirectToAction("Login", "Account");
             }
         }
 
