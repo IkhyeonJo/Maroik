@@ -121,22 +121,15 @@ namespace MyLaboratory.Site
                         context.Context.Response.StatusCode = (int)HttpStatusCode.Unauthorized; // 권한 없음 
                         context.Context.Response.ContentLength = 0; // 내용 길이 없음
                         context.Context.Response.Body = Stream.Null; // 내용 없음
+                        //context.Context.Response.Redirect("/"); // 로그인 화면으로
                     }
-                    else if (true) // 로그인이 되었고 권한이 Admin인가? 그렇다면 ~/AdminResources 자원에만 접근 허용
-                    {
-
-                    }
-                    else if (true) // 로그인이 되었고 권한이 User인가? 그렇다면 ~/UserResources 자원에만 접근 허용
-                    {
-
-                    }
-
-                    //if (!context.Context.User.Identity.IsAuthenticated && !context.Context.Request.Path.StartsWithSegments("/adminlte")) // 로그인에 쓰는 자원만 접근 허용
+                    //else if (true) // 로그인이 되었고 권한이 Admin인가? 그렇다면 ~/AdminResources 자원에만 접근 허용
                     //{
-                    //    context.Context.Response.StatusCode = (int)HttpStatusCode.Unauthorized; // 권한 없음 
-                    //    context.Context.Response.ContentLength = 0; // 내용 길이 없음
-                    //    context.Context.Response.Body = Stream.Null; // 내용 없음
-                    //    context.Context.Response.Redirect("/"); // 로그인 화면으로
+
+                    //}
+                    //else if (true) // 로그인이 되었고 권한이 User인가? 그렇다면 ~/UserResources 자원에만 접근 허용
+                    //{
+
                     //}
                 }
             });
