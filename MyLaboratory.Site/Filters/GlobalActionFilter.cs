@@ -23,7 +23,12 @@ namespace MyLaboratory.Site.Filters
 
             if (isAccountSessionExist == false) // 로그인이 안 된 상태이면
             {
-                if (currentControllerName == "Account" && currentActionName == "Login") // 로그인 페이지인 경우
+                if (currentControllerName == "Exception" && currentActionName == "Error") // 예외처리 자원 접근 허용 (Error)
+                {
+                    base.OnActionExecuting(context); // Do Action!!
+                    return;
+                }
+                else if (currentControllerName == "Account" && currentActionName == "Login") // 로그인 페이지인 경우
                 {
                     base.OnActionExecuting(context); // Do Action!!
                     return;
@@ -51,7 +56,12 @@ namespace MyLaboratory.Site.Filters
             }
             else if (isAccountSessionExist == true) // 로그인이 된 상태라면
             {
-                if (currentControllerName == "Account" && currentActionName == "Login") // (로그인 된 상태에서 뒤로가기로 로그인 페이지에 갈 수 있음)
+                if (currentControllerName == "Exception" && currentActionName == "Error") // 예외처리 자원 접근 허용 (Error)
+                {
+                    base.OnActionExecuting(context); // Do Action!!
+                    return;
+                }
+                else if (currentControllerName == "Account" && currentActionName == "Login") // (로그인 된 상태에서 뒤로가기로 로그인 페이지에 갈 수 있음)
                 {
                     base.OnActionExecuting(context); // Do Action!!
                     return;
