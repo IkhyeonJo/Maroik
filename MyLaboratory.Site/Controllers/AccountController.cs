@@ -115,7 +115,7 @@ namespace MyLaboratory.Site.Controllers
         [HttpGet]
         public IActionResult Logout()
         {
-            HttpContext.Session.Clear();
+            HttpContext.Session.Remove("AccountSession");
             return RedirectToAction("Login", "Account");
         }
 
