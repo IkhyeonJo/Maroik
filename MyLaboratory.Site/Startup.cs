@@ -36,7 +36,7 @@ namespace MyLaboratory.Site
             #region AddMariaDbContext
             string connectionString = Configuration.GetConnectionString("DefaultConnection");
             services.AddDbContext<ApplicationDbContext>(options =>
-                  options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
+                  options.UseLazyLoadingProxies().UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
             #endregion
 
             #region AddRepositories

@@ -1,3 +1,5 @@
+https://www.learnentityframeworkcore5.com/lazy-loading-in-ef-core // Lazy Loading Proxy
+
 #--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 https://whitekeyboard.tistory.com/630
 디버깅 MariaDB Windows 로컬에 설치 시, 
