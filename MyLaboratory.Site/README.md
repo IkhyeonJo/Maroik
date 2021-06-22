@@ -371,3 +371,10 @@ file:///C:/Github/MyLaboratory/MyLaboratory.Site/wwwroot/pages/examples/404.html
 404 not found
 file:///C:/Github/MyLaboratory/MyLaboratory.Site/wwwroot/pages/examples/500.html
 500 Error Page
+
+
+https://www.youtube.com/watch?v=H0jeLTMLD5c&list=PL2UwEEhB4YafVIdKCBRjTyryET2EHgryp&index=8
+Build Completed E-Commerce with ASP.NET Core MVC - Part 8 - Category Management in Admin
+
+https://www.youtube.com/watch?v=lEjzIlliYJA&list=PL2UwEEhB4YafVIdKCBRjTyryET2EHgryp&index=12
+Build Completed E-Commerce with ASP.NET Core MVC - Part 12 - Banner Sliders Management in Admin [Image 업로드 같은데... 좋은 코드인듯]
