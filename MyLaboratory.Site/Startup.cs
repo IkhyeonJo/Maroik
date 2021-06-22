@@ -52,7 +52,7 @@ namespace MyLaboratory.Site
 
             services.AddSession(options =>
             {
-                options.IdleTimeout = TimeSpan.FromMinutes(15); // _Layout의 Session JavaScript의 expire_time도 바꿀 것... 
+                options.IdleTimeout = TimeSpan.FromMinutes(30); // 서버 세션 만료 시간은 클라이언트 세션 만료 시간보다 2배 커야한다. 
                 options.Cookie.HttpOnly = true;
                 options.Cookie.IsEssential = true;
             });
