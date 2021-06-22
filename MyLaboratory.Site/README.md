@@ -316,3 +316,56 @@ HttpContext.Session.Set("AccountSession", Encoding.UTF8.GetBytes(JsonConvert.Ser
 byte[] resultByte = null;
 var isExist = HttpContext.Session.TryGetValue("AccountSession", out resultByte);
 var loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)); // Get Session
+
+
+
+
+
+
+
+
+
+file:///C:/Github/MyLaboratory/MyLaboratory.Site/wwwroot/pages/UI/buttons.html
+Category Menu View 생성 시 Button 볼 것
+
+file:///C:/Github/MyLaboratory/MyLaboratory.Site/wwwroot/pages/UI/modals.html
+Category Menu View 생성 시 Modal 볼 것
+
+file:///C:/Github/MyLaboratory/MyLaboratory.Site/wwwroot/pages/forms/general.html
+File Upload
+
+file:///C:/Github/MyLaboratory/MyLaboratory.Site/wwwroot/pages/forms/advanced.html
+Date picker
+Dropzone.js jQuery File Upload like look
+
+file:///C:/Github/MyLaboratory/MyLaboratory.Site/wwwroot/pages/forms/editors.html
+Text Editors
+
+file:///C:/Github/MyLaboratory/MyLaboratory.Site/wwwroot/pages/tables/simple.html
+Category Menu View 생성 시 Ordered Lists 볼 것 Expandable Table Tree [카테고리 표시에 할 것]
+
+file:///C:/Github/MyLaboratory/MyLaboratory.Site/wwwroot/pages/tables/data.html
+DataTables
+
+file:///C:/Github/MyLaboratory/MyLaboratory.Site/wwwroot/pages/tables/jsgrid.html
+jsGrid
+
+file:///C:/Github/MyLaboratory/MyLaboratory.Site/wwwroot/pages/mailbox/compose.html
+메일 보내기인데 fileUpload로도 쓸 수 있을 듯
+
+file:///C:/Github/MyLaboratory/MyLaboratory.Site/wwwroot/pages/examples/profile.html#
+Pages/Profile -- 프로파일 할 때
+
+file:///C:/Github/MyLaboratory/MyLaboratory.Site/wwwroot/pages/examples/projects.html#
+그 Category View할 때 버튼 참조하면 좋을 껄?
+
+file:///C:/Github/MyLaboratory/MyLaboratory.Site/wwwroot/pages/examples/contact-us.html
+Contact us
+
+
+AdminLTE 그 ... 로그인 화면 엄청 많이 고려할 것!! 유용한 것 많음
+
+file:///C:/Github/MyLaboratory/MyLaboratory.Site/wwwroot/pages/examples/404.html
+404 not found
+file:///C:/Github/MyLaboratory/MyLaboratory.Site/wwwroot/pages/examples/500.html
+500 Error Page
