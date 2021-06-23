@@ -27,7 +27,8 @@ namespace MyLaboratory.Site.Controllers
 
         public IActionResult Index()
         {
-            return View(productRepository.GetProducts);
+            //return View(productRepository.GetProducts);
+            return View();
         }
 
         public IActionResult Privacy()
