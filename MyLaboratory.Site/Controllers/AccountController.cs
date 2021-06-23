@@ -118,11 +118,5 @@ namespace MyLaboratory.Site.Controllers
             HttpContext.Session.Remove("AccountSession");
             return RedirectToAction("Login", "Account");
         }
-
-        [HttpGet]
-        public IActionResult AccessDenied()
-        {
-            return View();
-        }
     }
 }
