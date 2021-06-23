@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
-using MyLaboratory.Site.Models.AccountViewModels;
+using MyLaboratory.Site.Models.ViewModels.Account;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
