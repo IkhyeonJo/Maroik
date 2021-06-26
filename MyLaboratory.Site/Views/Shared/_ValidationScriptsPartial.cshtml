@@ -1,2 +1,14 @@
-﻿<script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
-<script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
+﻿@{
+
+    bool isAccountSessionExist = Context.Session.TryGetValue("AccountSession", out _); // 로그인이 되어 계정 세션이 생겼는지 확인
+    if (isAccountSessionExist == false) // 로그인이 안 된 상태이면
+    {
+        <script src="~/adminlte/lib/jquery-validation/dist/jquery.validate.min.js"></script>
+        <script src="~/adminlte/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
+    }
+    else // 로그인이 된 상태이면
+    {
+        <script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
+        <script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
+    }
+}
