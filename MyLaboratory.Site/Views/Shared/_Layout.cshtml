@@ -52,14 +52,16 @@
     <!-- AdminLTE -->
     <script src="~/dist/js/adminlte.js"></script>
 
-    <!-- OPTIONAL SCRIPTS -->
-    <script src="~/plugins/chart.js/Chart.min.js"></script>
-    <!-- AdminLTE for demo purposes -->
-    <script src="~/dist/js/demo.js"></script>
-    <!-- AdminLTE dashboard demo (This is only for demo purposes) -->
-    <script src="~/dist/js/pages/dashboard3.js"></script>
-
     @await RenderSectionAsync("Scripts", required: false) @* Model Only [Require] 이런거 모델 Model.IsValid 이런거 쓸 때 쓰는 자바스크립트임 aspnetcore를 위한 *@
+
+    @*
+        <!-- OPTIONAL SCRIPTS -->
+        <script src="~/plugins/chart.js/Chart.min.js"></script>
+        <!-- AdminLTE for demo purposes -->
+        <script src="~/dist/js/demo.js"></script>
+        <!-- AdminLTE dashboard demo (This is only for demo purposes) -->
+        <script src="~/dist/js/pages/dashboard3.js"></script>
+    *@
 
     <div class="wrapper">
 
@@ -84,7 +86,6 @@
         @(await Html.PartialAsync("_MainFooter"))
     </div>
     <!-- ./wrapper -->
-
     @*https://stackoverflow.com/questions/37280885/jquery-redirect-inmediatly-after-session-timeout *@
     @* Redirect browser to session expiration page on timeout *@
     <script type="text/javascript">
