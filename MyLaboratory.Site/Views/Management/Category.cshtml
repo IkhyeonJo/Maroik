@@ -1,53 +1,39 @@
 ﻿<section class="content">
-    <div class="card">
-        <div class="card-body table-responsive pad">
-            <table class="table">
-                <thead>
-                    <tr>
-                        <td style="width: 90%">
-                            <div class="btn-group btn-group-toggle" data-toggle="buttons">
-                                <label class="btn btn-primary active">
-                                    <input type="radio" name="options" id="option_b1" autocomplete="off" checked> Admin
-                                </label>
-                                <label class="btn btn-primary">
-                                    <input type="radio" name="options" id="option_b2" autocomplete="off"> User
-                                </label>
-                            </div>
-                        </td>
-                        <td style="width: 10%">
-                            <button type="button" class="btn btn-block btn-danger">Add Category</button>
-                        </td>
-                    </tr>
-                </thead>
-            </table>
-        </div>
-    </div>
-
     <div class="card card-primary">
         <div class="card-header">
-            <h3 class="card-title">Admin Category Management</h3>
+            <h3 class="card-title">Category Management</h3>
         </div>
 
         <div class="card-body">
-            <!--그 뭐냐 ul Sidebar 연구해서 하면 될 것 같다-->
-        </div>
-    </div>
-
-    <div class="card card-primary">
-        <div class="card-header">
-            <h3 class="card-title">User Category Management</h3>
-        </div>
-
-        <div class="card-body">
-            <!--그 뭐냐 ul Sidebar 연구해서 하면 될 것 같다-->
+            <div id="jsGrid1"></div>
         </div>
     </div>
 
 </section>
 @section Scripts{
-    <script type="text/javascript">
-        $(document).ready(function () {
-            alert('ok');
+    <!-- jsGrid -->
+    <script src="~/plugins/jsgrid/demos/db.js"></script>
+    <script src="~/plugins/jsgrid/jsgrid.min.js"></script>
+
+    <script>
+        $(function () {
+            $("#jsGrid1").jsGrid({
+                height: "100%",
+                width: "100%",
+
+                sorting: true,
+                paging: true,
+
+                data: db.clients,
+
+                fields: [
+                    { name: "Name", type: "text", width: 150 },
+                    { name: "Age", type: "number", width: 50 },
+                    { name: "Address", type: "text", width: 200 },
+                    { name: "Country", type: "select", items: db.countries, valueField: "Id", textField: "Name" },
+                    { name: "Married", type: "checkbox", title: "Is Married" }
+                ]
+            });
         });
     </script>
 }
