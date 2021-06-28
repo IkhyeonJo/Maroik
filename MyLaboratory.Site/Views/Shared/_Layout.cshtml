@@ -3,6 +3,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     @*Prevent Web Cache*@
     @*<meta http-equiv="Expires" content="-1">
         <meta http-equiv="Pragma" content="no-cache">
@@ -30,7 +31,12 @@
     <link rel="stylesheet" href="~/plugins/daterangepicker/daterangepicker.css">
     <!-- summernote -->
     <link rel="stylesheet" href="~/plugins/summernote/summernote-bs4.min.css">
-
+    <!-- JsGrid -->
+    <link rel="stylesheet" type="text/css" href="~/plugins/jsgrid/demos/demos.css" />
+    <link rel="stylesheet" type="text/css" href="~/plugins/jsgrid/css/jsgrid.css" />
+    <link rel="stylesheet" type="text/css" href="~/plugins/jsgrid/css/theme.css" />
+    <!-- JQuery -->
+    <link rel="stylesheet" href="//code.jquery.com/ui/1.11.2/themes/cupertino/jquery-ui.css">
 </head>
 @*
     <!--
@@ -46,7 +52,21 @@
 @*<body class="hold-transition dark-mode sidebar-mini layout-fixed layout-navbar-fixed layout-footer-fixed">*@
 <body class="hold-transition dark-mode sidebar-mini">
     <!-- jQuery -->
-    <script src="~/plugins/jquery/jquery.min.js"></script>
+    <script src="//code.jquery.com/jquery-1.10.2.js"></script>
+    <script src="//code.jquery.com/ui/1.11.2/jquery-ui.js"></script>
+    <script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
+    <script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
+    <!-- JsGrid -->
+    <script src="~/plugins/jsgrid/src/jsgrid.core.js"></script>
+    <script src="~/plugins/jsgrid/src/jsgrid.load-indicator.js"></script>
+    <script src="~/plugins/jsgrid/src/jsgrid.load-strategies.js"></script>
+    <script src="~/plugins/jsgrid/src/jsgrid.sort-strategies.js"></script>
+    <script src="~/plugins/jsgrid/src/jsgrid.field.js"></script>
+    <script src="~/plugins/jsgrid/src/fields/jsgrid.field.text.js"></script>
+    <script src="~/plugins/jsgrid/src/fields/jsgrid.field.number.js"></script>
+    <script src="~/plugins/jsgrid/src/fields/jsgrid.field.select.js"></script>
+    <script src="~/plugins/jsgrid/src/fields/jsgrid.field.checkbox.js"></script>
+    <script src="~/plugins/jsgrid/src/fields/jsgrid.field.control.js"></script>
     <!-- Bootstrap -->
     <script src="~/plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
     <!-- AdminLTE -->
@@ -86,7 +106,6 @@
         @(await Html.PartialAsync("_MainFooter"))
     </div>
     <!-- ./wrapper -->
-
     @*https://stackoverflow.com/questions/37280885/jquery-redirect-inmediatly-after-session-timeout *@
     @* Redirect browser to session expiration page on timeout *@
     <script type="text/javascript">

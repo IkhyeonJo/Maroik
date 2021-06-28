@@ -2,7 +2,7 @@
 
 @model LoginInputViewModel
 
-@{ 
+@{
     var error = TempData["Error"] as string;
 }
 
@@ -38,16 +38,3 @@
     </div>
     <!-- /.login-box-body -->
 </div>
-
-@section Scripts{
-    @await Html.PartialAsync("_ValidationScriptsPartial")
-@*<script>
-    $(function () {
-        $('input').iCheck({
-            checkboxClass: 'icheckbox_square-blue',
-            radioClass: 'iradio_square-blue',
-            increaseArea: '20%' /* optional */
-        });
-    });
-</script>*@
-}
