@@ -11,27 +11,28 @@
     @*Prevent Web Cache*@
     <title>MyLaboratory Site</title>
 
-    <link href="~/css/mvc-grid/mvc-grid.css" rel="stylesheet">
+    <!-- NonFactor DataGrid -->
+    <link rel="stylesheet" href="~/css/mvc-grid/mvc-grid.css" asp-append-version="true">
     <!-- Google Font: Source Sans Pro -->
-    <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
+    <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback" asp-append-version="true">
     <!-- Ionicons -->
-    <link rel="stylesheet" href="//code.ionicframework.com/ionicons/2.0.1/css/ionicons.min.css">
+    <link rel="stylesheet" href="//code.ionicframework.com/ionicons/2.0.1/css/ionicons.min.css" asp-append-version="true">
     <!-- Font Awesome -->
-    <link rel="stylesheet" href="~/plugins/fontawesome-free/css/all.min.css">
+    <link rel="stylesheet" href="~/plugins/fontawesome-free/css/all.min.css" asp-append-version="true">
     <!-- Tempusdominus Bootstrap 4 -->
-    <link rel="stylesheet" href="~/plugins/tempusdominus-bootstrap-4/css/tempusdominus-bootstrap-4.min.css">
+    <link rel="stylesheet" href="~/plugins/tempusdominus-bootstrap-4/css/tempusdominus-bootstrap-4.min.css" asp-append-version="true">
     <!-- iCheck -->
-    <link rel="stylesheet" href="~/plugins/icheck-bootstrap/icheck-bootstrap.min.css">
+    <link rel="stylesheet" href="~/plugins/icheck-bootstrap/icheck-bootstrap.min.css" asp-append-version="true">
     <!-- JQVMap -->
-    <link rel="stylesheet" href="~/plugins/jqvmap/jqvmap.min.css">
+    <link rel="stylesheet" href="~/plugins/jqvmap/jqvmap.min.css" asp-append-version="true">
     <!-- Theme style -->
-    <link rel="stylesheet" href="~/dist/css/adminlte.min.css">
+    <link rel="stylesheet" href="~/dist/css/adminlte.min.css" asp-append-version="true">
     <!-- overlayScrollbars -->
-    <link rel="stylesheet" href="~/plugins/overlayScrollbars/css/OverlayScrollbars.min.css">
+    <link rel="stylesheet" href="~/plugins/overlayScrollbars/css/OverlayScrollbars.min.css" asp-append-version="true">
     <!-- Daterange picker -->
-    <link rel="stylesheet" href="~/plugins/daterangepicker/daterangepicker.css">
+    <link rel="stylesheet" href="~/plugins/daterangepicker/daterangepicker.css" asp-append-version="true">
     <!-- summernote -->
-    <link rel="stylesheet" href="~/plugins/summernote/summernote-bs4.min.css">
+    <link rel="stylesheet" href="~/plugins/summernote/summernote-bs4.min.css" asp-append-version="true">
     @*
         <!-- JsGrid -->
         <link rel="stylesheet" type="text/css" href="~/plugins/jsgrid/demos/demos.css" />
@@ -40,10 +41,12 @@
         <!-- JQuery -->
         <link rel="stylesheet" href="//code.jquery.com/ui/1.11.2/themes/cupertino/jquery-ui.css">
     *@
-    <!-- DataTables -->
-    <link rel="stylesheet" href="~/plugins/datatables-bs4/css/dataTables.bootstrap4.min.css">
-    <link rel="stylesheet" href="~/plugins/datatables-responsive/css/responsive.bootstrap4.min.css">
-    <link rel="stylesheet" href="~/plugins/datatables-buttons/css/buttons.bootstrap4.min.css">
+    @*
+        <!-- DataTables -->
+        <link rel="stylesheet" href="~/plugins/datatables-bs4/css/dataTables.bootstrap4.min.css" asp-append-version="true">
+        <link rel="stylesheet" href="~/plugins/datatables-responsive/css/responsive.bootstrap4.min.css" asp-append-version="true">
+        <link rel="stylesheet" href="~/plugins/datatables-buttons/css/buttons.bootstrap4.min.css" asp-append-version="true">
+    *@
 </head>
 @*
     <!--
@@ -77,27 +80,28 @@
         <script src="~/plugins/jsgrid/src/fields/jsgrid.field.control.js"></script>
     *@
     <!-- jQuery -->
-    <script src="~/plugins/jquery/jquery.min.js"></script>
+    <script src="~/plugins/jquery/jquery.min.js" asp-append-version="true"></script>
     <!-- Bootstrap -->
-    <script src="~/plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
+    <script src="~/plugins/bootstrap/js/bootstrap.bundle.min.js" asp-append-version="true"></script>
     <!-- AdminLTE -->
-    <script src="~/dist/js/adminlte.js"></script>
-    <!-- DataTables  & Plugins -->
-    <script src="~/plugins/datatables/jquery.dataTables.min.js"></script>
-    <script src="~/plugins/datatables-bs4/js/dataTables.bootstrap4.min.js"></script>
-    <script src="~/plugins/datatables-responsive/js/dataTables.responsive.min.js"></script>
-    <script src="~/plugins/datatables-responsive/js/responsive.bootstrap4.min.js"></script>
-    <script src="~/plugins/datatables-buttons/js/dataTables.buttons.min.js"></script>
-    <script src="~/plugins/datatables-buttons/js/buttons.bootstrap4.min.js"></script>
-    <script src="~/plugins/jszip/jszip.min.js"></script>
-    <script src="~/plugins/pdfmake/pdfmake.min.js"></script>
-    <script src="~/plugins/pdfmake/vfs_fonts.js"></script>
-    <script src="~/plugins/datatables-buttons/js/buttons.html5.min.js"></script>
-    <script src="~/plugins/datatables-buttons/js/buttons.print.min.js"></script>
-    <script src="~/plugins/datatables-buttons/js/buttons.colVis.min.js"></script>
-    <script src="~/plugins/datatables-buttons/js/buttons.colVis.min.js"></script>
-    <script src="~/plugins/datatables-fixedheader/js/dataTables.fixedHeader.min.js"></script>
-
+    <script src="~/dist/js/adminlte.js" asp-append-version="true"></script>
+    @*
+        <!-- DataTables  & Plugins -->
+        <script src="~/plugins/datatables/jquery.dataTables.min.js"></script>
+        <script src="~/plugins/datatables-bs4/js/dataTables.bootstrap4.min.js"></script>
+        <script src="~/plugins/datatables-responsive/js/dataTables.responsive.min.js"></script>
+        <script src="~/plugins/datatables-responsive/js/responsive.bootstrap4.min.js"></script>
+        <script src="~/plugins/datatables-buttons/js/dataTables.buttons.min.js"></script>
+        <script src="~/plugins/datatables-buttons/js/buttons.bootstrap4.min.js"></script>
+        <script src="~/plugins/jszip/jszip.min.js"></script>
+        <script src="~/plugins/pdfmake/pdfmake.min.js"></script>
+        <script src="~/plugins/pdfmake/vfs_fonts.js"></script>
+        <script src="~/plugins/datatables-buttons/js/buttons.html5.min.js"></script>
+        <script src="~/plugins/datatables-buttons/js/buttons.print.min.js"></script>
+        <script src="~/plugins/datatables-buttons/js/buttons.colVis.min.js"></script>
+        <script src="~/plugins/datatables-buttons/js/buttons.colVis.min.js"></script>
+        <script src="~/plugins/datatables-fixedheader/js/dataTables.fixedHeader.min.js"></script>
+    *@
     @await RenderSectionAsync("Scripts", required: false) @* Model Only [Require] 이런거 모델 Model.IsValid 이런거 쓸 때 쓰는 자바스크립트임 aspnetcore를 위한 *@
 
     @*
@@ -110,12 +114,12 @@
     *@
 
     <div class="wrapper">
-        
+
         @*
-        <!-- Preloader -->
-        <div class="preloader flex-column justify-content-center align-items-center">
-            <img class="animation__wobble" src="~/dist/img/AdminLTELogo.png" alt="AdminLTELogo" height="60" width="60">
-        </div>
+            <!-- Preloader -->
+            <div class="preloader flex-column justify-content-center align-items-center">
+                <img class="animation__wobble" src="~/dist/img/AdminLTELogo.png" alt="AdminLTELogo" height="60" width="60">
+            </div>
         *@
 
         @(await Html.PartialAsync("_MainTopBar"))
@@ -124,7 +128,7 @@
         <div class="content-wrapper">
             @(await Html.PartialAsync("_BodyPageHeader"))
             @RenderBody()
-            <script src="~/js/mvc-grid/mvc-grid.js"></script>
+            <script src="~/js/mvc-grid/mvc-grid.js" asp-append-version="true"></script>
             <script>
                 document.querySelectorAll(".mvc-grid").forEach(element => new MvcGrid(element));
             </script>
