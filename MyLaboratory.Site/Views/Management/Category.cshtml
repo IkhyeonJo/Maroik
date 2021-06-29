@@ -17,6 +17,7 @@
         columns.Add(model => model.Valor).Titled("Valor");
 
     })
+    .Using(GridFilterMode.Row)
     .Empty("No data found")
     .Filterable()
     .Sortable()
