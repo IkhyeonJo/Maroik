@@ -1,0 +1,49 @@
+msgid "Asp.Net Core - Jquery DataTables Server Side Multi Column Filtering And Ordering With Pagination And Excel Export Demo."
+msgstr "Asp.Net Core - Jquery Filtrage et classement multi-colonnes côté serveur DataTables avec pagination et démonstration d'exportation Excel"
+
+msgid "Choose your language"
+msgstr "Choisissez votre langue"
+
+msgid "Create"
+msgstr "Créer"
+
+msgid "Delete"
+msgstr "Supprimer"
+
+msgid "Demo By"
+msgstr "Démo par"
+
+msgid "Edit"
+msgstr "Modifier"
+
+msgid "Experience"
+msgstr "Expérience"
+
+msgid "Export to Excel"
+msgstr "Exporter vers Excel"
+
+msgid "External Search"
+msgstr "Recherche externe"
+
+msgid "Name"
+msgstr "Nom"
+
+msgid "Office"
+msgstr "Bureau"
+
+msgid "Position"
+msgstr "Position"
+
+msgid "Salary"
+msgstr "Salaire"
+
+msgid "Search"
+msgstr "Rechercher"
+
+msgid "Start Date"
+msgstr "Date début"
+
+
+
+
+
