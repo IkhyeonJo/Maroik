@@ -1,5 +1,4 @@
-﻿
-@model IEnumerable<Product>
+﻿@model IEnumerable<Product>
 <section class="content">
     <div class="card card-primary">
         <div class="card-header">
@@ -467,7 +466,7 @@
                         <td>U</td>
                     </tr>
                 </tbody>
-                <tfoot>
+                @*<tfoot>
                     <tr>
                         <th>Rendering engine</th>
                         <th>Browser</th>
@@ -475,7 +474,7 @@
                         <th>Engine version</th>
                         <th>CSS grade</th>
                     </tr>
-                </tfoot>
+                </tfoot>*@
             </table>
         </div>
     </div>
@@ -484,7 +483,25 @@
 @section Scripts{
     <script>
         $(function () {
-            $("#example1").DataTable({
+            // Setup - add a text input to each footer cell
+            $('#example1 thead tr').clone(true).appendTo('#example1 thead');
+            $('#example1 thead tr:eq(1) th').each(function (i) {
+                var title = $(this).text();
+                $(this).html('<input type="text" placeholder="Search ' + title + '" />');
+
+                $('input', this).on('keyup change', function () {
+                    if (table.column(i).search() !== this.value) {
+                        table
+                            .column(i)
+                            .search(this.value)
+                            .draw();
+                    }
+                });
+            });
+
+            var table = $("#example1").DataTable({
+                "orderCellsTop": true,
+                "fixedHeader": true,
                 "paging": true,
                 "lengthChange": false,
                 "searching": true,
@@ -492,19 +509,11 @@
                 "info": true,
                 "autoWidth": false,
                 "responsive": true,
-                "buttons": ["copy", "csv", "excel", "pdf", "print", "colvis"]
-            }).buttons().container().appendTo('#example1_wrapper .col-md-6:eq(0)');
-            //$('#example2').DataTable({
-            //    "responsive": true,
-            //    "paging": true,
-            //    "lengthChange": false,
-            //    "searching": true,
-            //    "ordering": true,
-            //    "info": true,
-            //    "autoWidth": false,
-            //    "responsive": true,
-            //    "buttons": ["copy", "csv", "excel", "pdf", "print", "colvis"]
-            //}).buttons().container().appendTo('#example1_wrapper .col-md-6:eq(0)');
+                "language": {
+                    "emptyTable": "No data available in table"
+                }
+                @*"buttons": ["copy", "csv", "excel", "pdf", "print", "colvis"]*@
+            });@*.buttons().container().appendTo('#example1_wrapper .col-md-6:eq(0)');*@
         });
     </script>
 }
