@@ -383,3 +383,5 @@ http://js-grid.com/ // CRUD Grid
 
 
 https://aspnet-core-grid.azurewebsites.net/ //Grid
+
+https://www.youtube.com/watch?v=OSveDDVdtOM //jQuery datatables export to pdf
