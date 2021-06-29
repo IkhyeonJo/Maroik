@@ -32,7 +32,7 @@ namespace MyLaboratory.Site.Controllers
         
         public IActionResult Category()
         {
-            return View();
+            return View(productRepository.GetProducts);
         }
     }
 }
