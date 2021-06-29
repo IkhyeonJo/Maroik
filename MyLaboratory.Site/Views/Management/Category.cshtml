@@ -20,7 +20,11 @@
     .Empty("No data found")
     .Filterable()
     .Sortable()
-    .Pageable()
+    .Pageable(pager => {
+        pager.PageSizes = new Dictionary<Int32, string> { { 10, "10" }, { 25, "25" }, { 50, "50" }, {100, "100" } };
+        pager.ShowPageSizes = true;
+        pager.RowsPerPage = 10;
+    })
 )
         </div>
     </div>
