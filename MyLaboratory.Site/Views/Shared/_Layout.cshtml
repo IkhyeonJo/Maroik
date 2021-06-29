@@ -11,6 +11,7 @@
     @*Prevent Web Cache*@
     <title>MyLaboratory Site</title>
 
+    <link href="~/css/mvc-grid/mvc-grid.css" rel="stylesheet">
     <!-- Google Font: Source Sans Pro -->
     <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
     <!-- Ionicons -->
@@ -121,6 +122,10 @@
         <div class="content-wrapper">
             @(await Html.PartialAsync("_BodyPageHeader"))
             @RenderBody()
+            <script src="~/js/mvc-grid/mvc-grid.js"></script>
+            <script>
+                document.querySelectorAll(".mvc-grid").forEach(element => new MvcGrid(element));
+            </script>
         </div>
         <!-- /.content-wrapper -->
         <!-- Control Sidebar -->

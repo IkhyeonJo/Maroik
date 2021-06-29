@@ -9,6 +9,7 @@ using Microsoft.EntityFrameworkCore;
 using MyLaboratory.Site.Services;
 using Microsoft.AspNetCore.Authorization;
 using MyLaboratory.Site.Helpers;
+using System.Linq;
 
 namespace MyLaboratory.Site.Controllers
 {
@@ -32,7 +33,13 @@ namespace MyLaboratory.Site.Controllers
         
         public IActionResult Category()
         {
-            return View(productRepository.GetProducts);
+            List<Product> aa = new List<Product>();
+            foreach(var item in productRepository.GetProducts)
+            {
+                aa.Add(new Product() { Id = item.Id, Categoria=item.Categoria, Nome=item.Nome, Valor=item.Valor });
+            }
+            var result = aa.AsQueryable();
+            return View(result);
         }
     }
 }
