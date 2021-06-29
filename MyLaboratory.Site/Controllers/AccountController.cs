@@ -66,13 +66,6 @@ namespace MyLaboratory.Site.Controllers
         [ValidateAntiForgeryToken] //To Prevent CSRF attack
         public IActionResult Login(LoginInputViewModel loginInputViewModel)
         {
-            string userAgent = Request.Headers["User-Agent"].ToString();
-            if (userAgent.Contains("MSIE") || userAgent.Contains("Trident")) // IsInternetExplorer (로그인 전 다른 화면에서 브라우저에 상관없이 모든 것을 진행해도 좋으나, 로그인 후 DataTable에서 문제가 생기기 때문에 차단!!)
-            {
-                TempData["Error"] = "이 사이트는 Internet Explorer를 지원하지 않습니다. 다른 브라우저를 이용하시길 바랍니다.";
-                return RedirectToAction("Login", "Account");
-            }
-
             if (ModelState.IsValid)
             {
                 var tempAccount = accountRepository.GetAccount(loginInputViewModel.Email);
