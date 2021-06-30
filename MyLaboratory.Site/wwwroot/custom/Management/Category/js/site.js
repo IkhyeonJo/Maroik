@@ -1,0 +1,64 @@
+﻿// Please see documentation at https://docs.microsoft.com/aspnet/core/client-side/bundling-and-minification
+// for details on configuring this project to bundle and minify static web assets.
+
+// Write your JavaScript code.
+const grid = document.querySelector(".mvc-grid");
+
+var selectedRowColor = "table-primary";
+
+// Triggered when grid's row is clicked. It's recommended to use event delegation in ajax scenarios.
+document.addEventListener("rowclick", e => {
+    //e.detail.data - clicked row's data from columns.
+    //e.detail.grid - grid's instance.
+    //e.detail.originalEvent - original tr click event which triggered the rowclick.
+
+    var selectedRow = e.detail;
+    var selectedRowId = selectedRow.data.Id;
+
+    $('#my-grid > table > tbody  > tr').each(function (index, tr){
+        $(this).removeClass(selectedRowColor);
+    }); // remove all selected row color
+
+    $('#my-grid > table > tbody  > tr').each(function (index, tr) {
+
+        if (new String(selectedRowId).valueOf() === new String($(this).attr('data-id')).valueOf()) {
+            $(this).addClass(selectedRowColor);
+        }
+    }); // set selected row color class
+});
+
+// Triggered before grid starts loading. It's recommended to use event delegation in ajax scenarios.
+document.addEventListener("reloadstart", e => {
+    //e.detail.grid - grid's instance.
+});
+
+// Triggered after grid stop loading. It's recommended to use event delegation in ajax scenarios.
+document.addEventListener("reloadend", e => {
+    //e.detail.grid - grid's instance.
+});
+
+// Triggered after grid reload fails. It's recommended to use event delegation in ajax scenarios.
+document.addEventListener("reloadfail", e => {
+    //e.detail.reason - failed response promise reason.
+    //e.detail.grid - grid's instance.
+
+    // Preventing default stops failed promise from bubbling out.
+});
+
+// Triggered after grid configuration changes. It's recommended to use event delegation in ajax scenarios.
+document.addEventListener("gridconfigure", e => {
+    //e.detail.grid - grid's instance.
+});
+
+
+$(document).on("dblclick", "#my-grid > table > tbody  > tr", function () {
+    //console.log('dblclick-start');
+    $('#my-grid > table > tbody  > tr').each(function (index, tr) {
+
+        if ($(this).attr("class").includes(selectedRowColor)) { // Get SelectedRow by Color
+            console.log("SelectedRow Id:" + $(this).attr("data-id"));
+            //pop Modal or something... 
+        }
+    }); 
+    //console.log('dblclick-end');
+});

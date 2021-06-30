@@ -11,38 +11,5 @@
 
 </section>
 @section Scripts{
-    <script>
-        const grid = document.querySelector(".mvc-grid");
-
-        // Triggered when grid's row is clicked. It's recommended to use event delegation in ajax scenarios.
-        document.addEventListener("rowclick", e => {
-            //e.detail.data - clicked row's data from columns.
-            //e.detail.grid - grid's instance.
-            //e.detail.originalEvent - original tr click event which triggered the rowclick.
-            alert('hi');
-        });
-
-        // Triggered before grid starts loading. It's recommended to use event delegation in ajax scenarios.
-        document.addEventListener("reloadstart", e => {
-            //e.detail.grid - grid's instance.
-        });
-
-        // Triggered after grid stop loading. It's recommended to use event delegation in ajax scenarios.
-        document.addEventListener("reloadend", e => {
-            //e.detail.grid - grid's instance.
-        });
-
-        // Triggered after grid reload fails. It's recommended to use event delegation in ajax scenarios.
-        document.addEventListener("reloadfail", e => {
-            //e.detail.reason - failed response promise reason.
-            //e.detail.grid - grid's instance.
-
-            // Preventing default stops failed promise from bubbling out.
-        });
-
-        // Triggered after grid configuration changes. It's recommended to use event delegation in ajax scenarios.
-        document.addEventListener("gridconfigure", e => {
-            //e.detail.grid - grid's instance.
-        });
-    </script>
+    <script src="~/custom/Management/Category/js/site.js" asp-append-version="true"></script>
 }
