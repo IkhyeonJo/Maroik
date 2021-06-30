@@ -15,7 +15,7 @@ document.addEventListener("rowclick", e => {
     var selectedRow = e.detail;
     var selectedRowId = selectedRow.data.Id;
 
-    $('#my-grid > table > tbody  > tr').each(function (index, tr){
+    $('#my-grid > table > tbody  > tr').each(function (index, tr) {
         $(this).removeClass(selectedRowColor);
     }); // remove all selected row color
 
@@ -59,6 +59,6 @@ $(document).on("dblclick", "#my-grid > table > tbody  > tr", function () {
             console.log("SelectedRow Id:" + $(this).attr("data-id"));
             //pop Modal or something... 
         }
-    }); 
+    });
     //console.log('dblclick-end');
 });
