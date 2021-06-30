@@ -102,7 +102,6 @@
         <script src="~/plugins/datatables-buttons/js/buttons.colVis.min.js"></script>
         <script src="~/plugins/datatables-fixedheader/js/dataTables.fixedHeader.min.js"></script>
     *@
-    @await RenderSectionAsync("Scripts", required: false) @* Model Only [Require] 이런거 모델 Model.IsValid 이런거 쓸 때 쓰는 자바스크립트임 aspnetcore를 위한 *@
 
     @*
         <!-- OPTIONAL SCRIPTS -->
@@ -132,6 +131,7 @@
             <script>
                 document.querySelectorAll(".mvc-grid").forEach(element => new MvcGrid(element));
             </script>
+            @await RenderSectionAsync("Scripts", required: false) @* Model Only [Require] 이런거 모델 Model.IsValid 이런거 쓸 때 쓰는 자바스크립트임 aspnetcore를 위한 *@
         </div>
         <!-- /.content-wrapper -->
         <!-- Control Sidebar -->

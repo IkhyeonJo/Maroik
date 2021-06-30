@@ -2,8 +2,6 @@
 // for details on configuring this project to bundle and minify static web assets.
 
 // Write your JavaScript code.
-const grid = document.querySelector(".mvc-grid");
-
 var selectedRowColor = "table-primary";
 
 // Triggered when grid's row is clicked. It's recommended to use event delegation in ajax scenarios.
@@ -61,4 +59,11 @@ $(document).on("dblclick", "#my-grid > table > tbody  > tr", function () {
         }
     });
     //console.log('dblclick-end');
+});
+$('#GridSearch').on('input', function () {
+    const grid = new MvcGrid(document.querySelector(".mvc-grid"));
+
+    grid.url.searchParams.set("WholeSearch", this.value);
+
+    grid.reload();
 });

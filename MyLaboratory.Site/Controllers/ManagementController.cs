@@ -31,7 +31,7 @@ namespace MyLaboratory.Site.Controllers
             return View();
         }
         
-        public IActionResult Category()
+        public IActionResult Category(string WholeSearch)
         {
             //List<Product> aa = new List<Product>();
             //foreach(var item in productRepository.GetProducts)
@@ -46,7 +46,18 @@ namespace MyLaboratory.Site.Controllers
                 List<Product> aa = new List<Product>();
                 foreach (var item in productRepository.GetProducts)
                 {
-                    aa.Add(new Product() { Id = item.Id, Categoria = item.Categoria, Nome = item.Nome, Valor = item.Valor });
+                    if (string.IsNullOrEmpty(WholeSearch))
+                    {
+                        aa.Add(new Product() { Id = item.Id, Categoria = item.Categoria, Nome = item.Nome, Valor = item.Valor });
+                    }
+                    else
+                    {
+                        if(item.Id.ToString().Contains(WholeSearch) || item.Categoria.ToString().Contains(WholeSearch) || item.Nome.ToString().Contains(WholeSearch) || item.Valor.ToString().Contains(WholeSearch))
+                        {
+                            aa.Add(new Product() { Id = item.Id, Categoria = item.Categoria, Nome = item.Nome, Valor = item.Valor });
+                        }
+                    }
+                    
                 }
                 var result = aa.AsQueryable();
                 return PartialView("_CategoryGrid", result);
