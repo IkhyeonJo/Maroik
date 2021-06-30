@@ -33,13 +33,26 @@ namespace MyLaboratory.Site.Controllers
         
         public IActionResult Category()
         {
-            List<Product> aa = new List<Product>();
-            foreach(var item in productRepository.GetProducts)
+            //List<Product> aa = new List<Product>();
+            //foreach(var item in productRepository.GetProducts)
+            //{
+            //    aa.Add(new Product() { Id = item.Id, Categoria=item.Categoria, Nome=item.Nome, Valor=item.Valor });
+            //}
+            //var result = aa.AsQueryable();
+            //return View(result);
+
+            if (HttpContext.Request.Headers["X-Requested-With"] == "XMLHttpRequest")
             {
-                aa.Add(new Product() { Id = item.Id, Categoria=item.Categoria, Nome=item.Nome, Valor=item.Valor });
+                List<Product> aa = new List<Product>();
+                foreach (var item in productRepository.GetProducts)
+                {
+                    aa.Add(new Product() { Id = item.Id, Categoria = item.Categoria, Nome = item.Nome, Valor = item.Valor });
+                }
+                var result = aa.AsQueryable();
+                return PartialView("_CategoryGrid", result);
             }
-            var result = aa.AsQueryable();
-            return View(result);
+                
+            return View();
         }
     }
 }

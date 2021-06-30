@@ -1,36 +1,19 @@
-﻿@model IQueryable<Product>
-
-<section class="content">
+﻿<section class="content">
     <div class="card card-primary">
         <div class="card-header">
             <h3 class="card-title">Category Management</h3>
         </div>
 
         <div class="card-body">
-            @(Html
-    .Grid(Model)
-    .Build(columns =>
-    {
-        columns.Add(model => model.Id).Titled("Id");
-        columns.Add(model => model.Nome).Titled("Nome");
-        columns.Add(model => model.Categoria).Titled("Categoria");
-        columns.Add(model => model.Valor).Titled("Valor");
-
-    })
-    .Using(GridFilterMode.Row)
-    .Empty("No data found")
-    .Filterable()
-    .Sortable()
-    .Pageable(pager => {
-        pager.PageSizes = new Dictionary<Int32, string> { { 10, "10" }, { 25, "25" }, { 50, "50" }, {100, "100" } };
-        pager.ShowPageSizes = true;
-        pager.RowsPerPage = 10;
-    })
-)
+            @Html.AjaxGrid(Url.Action("Category", "Management"))
         </div>
     </div>
 
 </section>
 @section Scripts{
-    
+    <script>
+        function ABCD() {
+            alert('hi');
+        }
+    </script>
 }

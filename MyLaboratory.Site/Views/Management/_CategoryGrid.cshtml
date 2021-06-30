@@ -1,0 +1,24 @@
+﻿@model IQueryable<Product>
+
+@* Should only include grid declaration *@
+
+@(Html
+    .Grid(Model)
+    .Build(columns =>
+    {
+        columns.Add(model => model.Id).Titled("Id");
+        columns.Add(model => model.Nome).Titled("Nome");
+        columns.Add(model => model.Categoria).Titled("Categoria");
+        columns.Add(model => model.Valor).Titled("Valor");
+
+    })
+    .Using(GridFilterMode.Row)
+    .Empty("No data found")
+    .Filterable()
+    .Sortable()
+    .Pageable(pager => {
+        pager.PageSizes = new Dictionary<Int32, string> { { 10, "10" }, { 25, "25" }, { 50, "50" }, {100, "100" } };
+        pager.ShowPageSizes = true;
+        pager.RowsPerPage = 10;
+    })
+)
