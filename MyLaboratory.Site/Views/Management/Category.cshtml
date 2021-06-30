@@ -5,7 +5,8 @@
         </div>
 
         <div class="card-body">
-            <input type="text" id="GridSearch" placeholder="Search..."/>
+
+            <input type="text" id="GridSearch" placeholder="Search..." style="margin-bottom: 7px; text-align: center; font-size: .7em; padding: 5px 0; color: #000; border: none; " />
             @Html.AjaxGrid(Url.Action("Category", "Management"))
         </div>
     </div>
