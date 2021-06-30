@@ -12,6 +12,12 @@
         columns.Add(model => model.Valor).Titled("Valor");
 
     })
+    .Id("my-grid")
+    .Css("table table-striped table-dark")
+    .AppendCss("table-hover")
+    //.Attributed(new { data_type = "individuals" })
+    //.RowAttributed(model => new { @class = model.IsWorking == true ? "working" : null, data_id = model.Id })
+    .RowAttributed(model => new { @class = "table-inactive", data_id = model.Id })
     .Using(GridFilterMode.Row)
     .Empty("No data found")
     .Filterable()
