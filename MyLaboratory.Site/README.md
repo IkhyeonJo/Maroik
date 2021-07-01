@@ -388,4 +388,9 @@ https://www.youtube.com/watch?v=OSveDDVdtOM //jQuery datatables export to pdf
 
 https://exceptionnotfound.net/using-anti-forgery-tokens-in-asp-net-core-razor-pages/ // antiforgerykey in ajax
 
-//var aa = Request.Headers;
+Bind(Include="ID,Title,ReleaseDate,Genre,Price")]Movie movie
+
+Post 파라미터 매개변수 옆에..
+
+Bind 어트리뷰트는 해커들이 오버포스팅(over-posting) 하지 못하도록 지켜주는 중요한 보안 메커니즘입니다. 
+(역주: User라는 모델에 IsAdmin 속성이 있다고 할때, 우리가 비록 입력폼에 이 속성을 노출하지 않았다 하더라도 해커가 이 속성을 유추하여 포스팅 데이터에 추가하는 것을 오버포스팅이라 한다.)
