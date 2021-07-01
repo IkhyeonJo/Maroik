@@ -385,3 +385,7 @@ http://js-grid.com/ // CRUD Grid
 https://aspnet-core-grid.azurewebsites.net/ //Grid
 
 https://www.youtube.com/watch?v=OSveDDVdtOM //jQuery datatables export to pdf
+
+https://exceptionnotfound.net/using-anti-forgery-tokens-in-asp-net-core-razor-pages/ // antiforgerykey in ajax
+
+//var aa = Request.Headers;
