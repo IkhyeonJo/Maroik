@@ -58,23 +58,23 @@ namespace MyLaboratory.Site.Controllers
 
             if (HttpContext.Request.Headers["X-Requested-With"] == "XMLHttpRequest")
             {
-                List<Product> aa = new List<Product>();
+                List<Product> products = new List<Product>();
                 foreach (var item in productRepository.GetProducts)
                 {
                     if (string.IsNullOrEmpty(WholeSearch))
                     {
-                        aa.Add(new Product() { Id = item.Id, Categoria = item.Categoria, Nome = item.Nome, Valor = item.Valor });
+                        products.Add(new Product() { Id = item.Id, Categoria = item.Categoria, Nome = item.Nome, Valor = item.Valor });
                     }
                     else
                     {
                         if (item.Id.ToString().Contains(WholeSearch) || item.Categoria.ToString().Contains(WholeSearch) || item.Nome.ToString().Contains(WholeSearch) || item.Valor.ToString().Contains(WholeSearch))
                         {
-                            aa.Add(new Product() { Id = item.Id, Categoria = item.Categoria, Nome = item.Nome, Valor = item.Valor });
+                            products.Add(new Product() { Id = item.Id, Categoria = item.Categoria, Nome = item.Nome, Valor = item.Valor });
                         }
                     }
 
                 }
-                var result = aa.AsQueryable();
+                var result = products.AsQueryable();
                 return PartialView("_CategoryGrid", result);
             }
 
