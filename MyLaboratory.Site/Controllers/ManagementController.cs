@@ -45,6 +45,7 @@ namespace MyLaboratory.Site.Controllers
             return View();
         }
 
+        #region Category
         public IActionResult Category(string WholeSearch)
         {
             //List<Product> aa = new List<Product>();
@@ -215,5 +216,6 @@ namespace MyLaboratory.Site.Controllers
         //        return Json(new { result = false });
         //    }
         //}
+        #endregion
     }
 }
