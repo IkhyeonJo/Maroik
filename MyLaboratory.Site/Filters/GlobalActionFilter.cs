@@ -18,7 +18,7 @@ namespace MyLaboratory.Site.Filters
         {
             string currentControllerName = context.ActionDescriptor.RouteValues["controller"].ToString(); // 실행 전 Controller 이름
             string currentActionName = context.ActionDescriptor.RouteValues["action"].ToString(); // 실행 전 Action 이름
-            string currentRequestMethod = context.HttpContext.Request.Method; // GET/POST 방식 구하기
+            string currentRequestMethod = context.HttpContext.Request.Method; // GET HTTP METHOD
             bool isAccountSessionExist = context.HttpContext.Session.TryGetValue("AccountSession", out _); // 로그인이 되어 계정 세션이 생겼는지 확인
 
             if (currentRequestMethod.ToUpper() == "GET") // GET 방식 (페이지 접근만 차단!!)
