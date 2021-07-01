@@ -49,15 +49,7 @@ namespace MyLaboratory.Site.Controllers
         #region Category
         public IActionResult Category(string WholeSearch)
         {
-            //List<Product> aa = new List<Product>();
-            //foreach(var item in productRepository.GetProducts)
-            //{
-            //    aa.Add(new Product() { Id = item.Id, Categoria=item.Categoria, Nome=item.Nome, Valor=item.Valor });
-            //}
-            //var result = aa.AsQueryable();
-            //return View(result);
-
-            if (HttpContext.Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+            if (HttpContext.Request.Headers["X-Requested-With"] == "XMLHttpRequest") // ajax
             {
                 List<Product> products = new List<Product>();
                 foreach (var item in productRepository.GetProducts)
