@@ -1,7 +1,7 @@
 using MyLaboratory.Site.Models;
 using System.Collections.Generic;
 
-namespace MyLaboratory.Site.Services
+namespace MyLaboratory.Site.Contracts
 {
     public interface IProductRepository
     {

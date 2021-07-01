@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using MyLaboratory.Site.Data;
 using MyLaboratory.Site.Models;
+using MyLaboratory.Site.Contracts;
 
 namespace MyLaboratory.Site.Services
 {

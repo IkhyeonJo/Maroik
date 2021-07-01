@@ -19,6 +19,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Hosting;
 using System.Threading;
 using OfficeOpenXml;
+using MyLaboratory.Site.Contracts;
 
 namespace MyLaboratory.Site.Controllers
 {

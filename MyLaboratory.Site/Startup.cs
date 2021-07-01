@@ -18,6 +18,7 @@ using MyLaboratory.Site.Data;
 using System.Net;
 using System.IO;
 using MyLaboratory.Site.Filters;
+using MyLaboratory.Site.Contracts;
 
 namespace MyLaboratory.Site
 {

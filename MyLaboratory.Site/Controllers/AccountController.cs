@@ -16,6 +16,7 @@ using Newtonsoft.Json;
 using System.Text;
 using MyLaboratory.Site.Models;
 using MyLaboratory.Site.Data;
+using MyLaboratory.Site.Contracts;
 
 namespace MyLaboratory.Site.Controllers
 {
