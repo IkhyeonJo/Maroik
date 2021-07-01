@@ -14,9 +14,9 @@
 
                 <ul class="navbar-nav ml-auto">
                     <li class="nav-item">
-                        <form id="myForm" method="post" asp-controller="Management" asp-action="ExportExcel">
+                        <form id="myForm" method="post" asp-controller="Management" asp-action="CategoryExportExcel">
                             @Html.AntiForgeryToken()
-                            <input type="hidden" name="fileName" value="Products" />
+                            <input type="hidden" name="fileName" value="Category-SubCategory" />
                             <a role="button" style="color: rgba(255,255,255,.75);" onclick="document.getElementById('myForm').submit();">
                                 <i class="fas fa-file-excel"></i>
                             </a>

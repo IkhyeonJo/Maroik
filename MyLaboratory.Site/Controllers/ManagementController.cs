@@ -28,12 +28,16 @@ namespace MyLaboratory.Site.Controllers
         private readonly IProductRepository productRepository;
         private readonly IWorkerRepository workerRepository;
         private readonly IHostEnvironment hostEnvironment;
-        public ManagementController(ILogger<ManagementController> logger, IProductRepository productRepository, IWorkerRepository workerRepository, IHostEnvironment hostEnvironment)
+        private readonly ICategoryRepository categoryRepository;
+        private readonly ISubCategoryRepository subCategoryRepository;
+        public ManagementController(ILogger<ManagementController> logger, IProductRepository productRepository, IWorkerRepository workerRepository, IHostEnvironment hostEnvironment, ICategoryRepository categoryRepository, ISubCategoryRepository subCategoryRepository)
         {
             this.logger = logger;
             this.productRepository = productRepository;
             this.workerRepository = workerRepository;
             this.hostEnvironment = hostEnvironment;
+            this.categoryRepository = categoryRepository;
+            this.subCategoryRepository = subCategoryRepository;
         }
 
         public IActionResult UserProfile()
@@ -78,7 +82,7 @@ namespace MyLaboratory.Site.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> ExportExcel(string fileName = "")
+        public async Task<IActionResult> CategoryExportExcel(string fileName = "")
         {
 
             // query data from database
@@ -89,15 +93,28 @@ namespace MyLaboratory.Site.Controllers
             //    new Product { Categoria = "james", Id= 20 },
             //};
 
-            var list = productRepository.GetProducts;
+            var adminCategories = categoryRepository.AdminCategories;
+            var adminSubCategories = subCategoryRepository.AdminSubCategories;
+            var userCategories = categoryRepository.UserCategories;
+            var userSubCategories = subCategoryRepository.UserSubCategories;
+
             var stream = new MemoryStream();
 
             using (var package = new ExcelPackage(stream))
             {
-                var workSheet = package.Workbook.Worksheets.Add("Sheet1");
+                var workSheetAdminCategories = package.Workbook.Worksheets.Add(nameof(adminCategories));
+                workSheetAdminCategories.Cells.LoadFromCollection(adminCategories, true);
 
+                var workSheetAdminSubCategories = package.Workbook.Worksheets.Add(nameof(adminSubCategories));
+                workSheetAdminSubCategories.Cells.LoadFromCollection(adminSubCategories, true);
+
+                var workSheetUserCategories = package.Workbook.Worksheets.Add(nameof(userCategories));
+                workSheetUserCategories.Cells.LoadFromCollection(userCategories, true);
+
+                var workSheetUserSubCategories = package.Workbook.Worksheets.Add(nameof(userSubCategories));
+                workSheetUserSubCategories.Cells.LoadFromCollection(userSubCategories, true);
                 // simple way
-                workSheet.Cells.LoadFromCollection(list, true);
+                //workSheet.Cells.LoadFromCollection(list, true);
 
                 //// mutual
                 //workSheet.Row(1).Height = 20;
