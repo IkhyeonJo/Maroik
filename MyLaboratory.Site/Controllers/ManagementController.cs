@@ -73,7 +73,7 @@ namespace MyLaboratory.Site.Controllers
                 return PartialView("_CategoryGrid", result);
             }
 
-            return View();
+            return View(new Product());
         }
 
         [HttpPost]
