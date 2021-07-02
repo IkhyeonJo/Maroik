@@ -1,4 +1,4 @@
-﻿@model IQueryable<Product>
+﻿@model IQueryable<MyLaboratory.Site.Models.ViewModels.Management.ManagementOutputViewModel>
 
 @* Should only include grid declaration *@
 
@@ -7,9 +7,14 @@
     .Build(columns =>
     {
         columns.Add(model => model.Id).Titled("Id");
-        columns.Add(model => model.Nome).Titled("Nome");
-        columns.Add(model => model.Categoria).Titled("Categoria");
-        columns.Add(model => model.Valor).Titled("Valor");
+        columns.Add(model => model.CategoryId).Titled("CategoryId");
+        columns.Add(model => model.Name).Titled("Name");
+        columns.Add(model => model.DisplayName).Titled("DisplayName");
+        columns.Add(model => model.IconPath).Titled("IconPath");
+        columns.Add(model => model.Controller).Titled("Controller");
+        columns.Add(model => model.Action).Titled("Action");
+        columns.Add(model => model.Role).Titled("Role");
+        columns.Add(model => model.Order).Titled("Order");
 
     })
     .Id("my-grid")

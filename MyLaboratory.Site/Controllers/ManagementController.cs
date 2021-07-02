@@ -20,6 +20,7 @@ using Microsoft.Extensions.Hosting;
 using System.Threading;
 using OfficeOpenXml;
 using MyLaboratory.Site.Contracts;
+using MyLaboratory.Site.Models.ViewModels.Management;
 
 namespace MyLaboratory.Site.Controllers
 {
@@ -53,27 +54,198 @@ namespace MyLaboratory.Site.Controllers
         {
             if (HttpContext.Request.Headers["X-Requested-With"] == "XMLHttpRequest") // ajax
             {
-                List<Product> products = new List<Product>();
-                foreach (var item in productRepository.GetProducts)
+                List<ManagementOutputViewModel> managementOutputViewModels = new List<ManagementOutputViewModel>();
+
+                #region AdminCategories
+                foreach (var item in categoryRepository.AdminCategories)
                 {
                     if (string.IsNullOrEmpty(WholeSearch))
                     {
-                        products.Add(new Product() { Id = item.Id, Categoria = item.Categoria, Nome = item.Nome, Valor = item.Valor });
+                        managementOutputViewModels.Add(new ManagementOutputViewModel() 
+                        { 
+                            Id = item.Id,
+                            CategoryId = null,
+                            Name = item.Name, 
+                            DisplayName = item.DisplayName, 
+                            IconPath = item.IconPath,
+                            Controller = item.Controller,
+                            Action = item.Action,
+                            Role = item.Role,
+                            Order = item.Order
+                        });
                     }
                     else
                     {
-                        if (item.Id.ToString().Contains(WholeSearch) || item.Categoria.ToString().Contains(WholeSearch) || item.Nome.ToString().Contains(WholeSearch) || item.Valor.ToString().Contains(WholeSearch))
+                        if (item.Id.ToString().Contains(WholeSearch) ||
+                            (item.Name?.ToString() ?? "").Contains(WholeSearch) ||
+                            (item.DisplayName?.ToString() ?? "").Contains(WholeSearch) ||
+                            (item.IconPath?.ToString() ?? "").Contains(WholeSearch) ||
+                            (item.Controller?.ToString() ?? "").Contains(WholeSearch) ||
+                            (item.Action?.ToString() ?? "").Contains(WholeSearch) ||
+                            (item.Role?.ToString() ?? "").Contains(WholeSearch) ||
+                            item.Order.ToString().Contains(WholeSearch))
                         {
-                            products.Add(new Product() { Id = item.Id, Categoria = item.Categoria, Nome = item.Nome, Valor = item.Valor });
+                            managementOutputViewModels.Add(new ManagementOutputViewModel()
+                            {
+                                Id = item.Id,
+                                CategoryId = null,
+                                Name = item.Name,
+                                DisplayName = item.DisplayName,
+                                IconPath = item.IconPath,
+                                Controller = item.Controller,
+                                Action = item.Action,
+                                Role = item.Role,
+                                Order = item.Order
+                            });
                         }
                     }
-
                 }
-                var result = products.AsQueryable();
+                #endregion
+
+                #region UserCategories
+                foreach (var item in categoryRepository.UserCategories)
+                {
+                    if (string.IsNullOrEmpty(WholeSearch))
+                    {
+                        managementOutputViewModels.Add(new ManagementOutputViewModel()
+                        {
+                            Id = item.Id,
+                            CategoryId = null,
+                            Name = item.Name,
+                            DisplayName = item.DisplayName,
+                            IconPath = item.IconPath,
+                            Controller = item.Controller,
+                            Action = item.Action,
+                            Role = item.Role,
+                            Order = item.Order
+                        });
+                    }
+                    else
+                    {
+                        if (item.Id.ToString().Contains(WholeSearch) ||
+                            (item.Name?.ToString() ?? "").Contains(WholeSearch) ||
+                            (item.DisplayName?.ToString() ?? "").Contains(WholeSearch) ||
+                            (item.IconPath?.ToString() ?? "").Contains(WholeSearch) ||
+                            (item.Controller?.ToString() ?? "").Contains(WholeSearch) ||
+                            (item.Action?.ToString() ?? "").Contains(WholeSearch) ||
+                            (item.Role?.ToString() ?? "").Contains(WholeSearch) ||
+                            item.Order.ToString().Contains(WholeSearch))
+                        {
+                            managementOutputViewModels.Add(new ManagementOutputViewModel()
+                            {
+                                Id = item.Id,
+                                CategoryId = null,
+                                Name = item.Name,
+                                DisplayName = item.DisplayName,
+                                IconPath = item.IconPath,
+                                Controller = item.Controller,
+                                Action = item.Action,
+                                Role = item.Role,
+                                Order = item.Order
+                            });
+                        }
+                    }
+                }
+                #endregion
+
+                #region AdminSubCategories
+                foreach (var item in subCategoryRepository.AdminSubCategories)
+                {
+                    if (string.IsNullOrEmpty(WholeSearch))
+                    {
+                        managementOutputViewModels.Add(new ManagementOutputViewModel()
+                        {
+                            Id = item.Id,
+                            CategoryId = item.CategoryId,
+                            Name = item.Name,
+                            DisplayName = item.DisplayName,
+                            IconPath = item.IconPath,
+                            Controller = null,
+                            Action = item.Action,
+                            Role = item.Role,
+                            Order = item.Order
+                        });
+                    }
+                    else
+                    {
+                        if (item.Id.ToString().Contains(WholeSearch) ||
+                            item.CategoryId.ToString().Contains(WholeSearch) ||
+                            (item.Name?.ToString() ?? "").Contains(WholeSearch) ||
+                            (item.DisplayName?.ToString() ?? "").Contains(WholeSearch) ||
+                            (item.IconPath?.ToString() ?? "").Contains(WholeSearch) ||
+                            (item.Action?.ToString() ?? "").Contains(WholeSearch) ||
+                            (item.Role?.ToString() ?? "").Contains(WholeSearch) ||
+                            item.Order.ToString().Contains(WholeSearch))
+                        {
+                            managementOutputViewModels.Add(new ManagementOutputViewModel()
+                            {
+                                Id = item.Id,
+                                CategoryId = item.CategoryId,
+                                Name = item.Name,
+                                DisplayName = item.DisplayName,
+                                IconPath = item.IconPath,
+                                Controller = null,
+                                Action = item.Action,
+                                Role = item.Role,
+                                Order = item.Order
+                            });
+                        }
+                    }
+                }
+                #endregion
+
+                #region UserSubCategories
+                foreach (var item in subCategoryRepository.UserSubCategories)
+                {
+                    if (string.IsNullOrEmpty(WholeSearch))
+                    {
+                        managementOutputViewModels.Add(new ManagementOutputViewModel()
+                        {
+                            Id = item.Id,
+                            CategoryId = item.CategoryId,
+                            Name = item.Name,
+                            DisplayName = item.DisplayName,
+                            IconPath = item.IconPath,
+                            Controller = null,
+                            Action = item.Action,
+                            Role = item.Role,
+                            Order = item.Order
+                        });
+                    }
+                    else
+                    {
+                        if (item.Id.ToString().Contains(WholeSearch) ||
+                            item.CategoryId.ToString().Contains(WholeSearch) ||
+                            (item.Name?.ToString() ?? "").Contains(WholeSearch) ||
+                            (item.DisplayName?.ToString() ?? "").Contains(WholeSearch) ||
+                            (item.IconPath?.ToString() ?? "").Contains(WholeSearch) ||
+                            (item.Action?.ToString() ?? "").Contains(WholeSearch) ||
+                            (item.Role?.ToString() ?? "").Contains(WholeSearch) ||
+                            item.Order.ToString().Contains(WholeSearch))
+                        {
+                            managementOutputViewModels.Add(new ManagementOutputViewModel()
+                            {
+                                Id = item.Id,
+                                CategoryId = item.CategoryId,
+                                Name = item.Name,
+                                DisplayName = item.DisplayName,
+                                IconPath = item.IconPath,
+                                Controller = null,
+                                Action = item.Action,
+                                Role = item.Role,
+                                Order = item.Order
+                            });
+                        }
+                    }
+                }
+                #endregion
+
+
+                var result = managementOutputViewModels.AsQueryable();
                 return PartialView("_CategoryGrid", result);
             }
 
-            return View(new Product());
+            return View(new ManagementOutputViewModel());
         }
 
         [HttpPost]
