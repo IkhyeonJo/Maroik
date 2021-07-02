@@ -26,6 +26,7 @@ namespace MyLaboratory.Site.Controllers
             this.workerRepository = workerRepository;
         }
 
+        [HttpGet]
         public IActionResult Index()
         {
             return View();

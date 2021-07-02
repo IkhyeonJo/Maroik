@@ -41,12 +41,14 @@ namespace MyLaboratory.Site.Controllers
             this.subCategoryRepository = subCategoryRepository;
         }
 
+        [HttpGet]
         public IActionResult UserProfile()
         {
             return View();
         }
 
         #region Category
+        [HttpGet]
         public IActionResult Category(string WholeSearch)
         {
             if (HttpContext.Request.Headers["X-Requested-With"] == "XMLHttpRequest") // ajax

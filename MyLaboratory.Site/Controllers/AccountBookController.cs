@@ -26,11 +26,13 @@ namespace MyLaboratory.Site.Controllers
             this.workerRepository = workerRepository;
         }
 
+        [HttpGet]
         public IActionResult Main()
         {
             return View();
         }
         
+        [HttpGet]
         public IActionResult Chart()
         {
             return View();
