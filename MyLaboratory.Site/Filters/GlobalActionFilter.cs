@@ -173,12 +173,16 @@ namespace MyLaboratory.Site.Filters
                     }
                 }
             }
-            else // (POST / PATCH / DELETE 등 방식은 다 허용)
+            else if (currentRequestMethod.ToUpper() == "POST") // POST 방식
             {
                 base.OnActionExecuting(context); // Do Action!!
                 return;
             }
-
+            else // (PATCH / DELETE 등 방식은 다 허용)
+            {
+                base.OnActionExecuting(context); // Do Action!!
+                return;
+            }
             // Do something before the action executes.
             //        ...
             //if (needToRedirect)
@@ -197,19 +201,6 @@ namespace MyLaboratory.Site.Filters
             //string actionName = context.ActionDescriptor.ac;
             //string controllerName = filterContext.ActionDescriptor.ControllerDescriptor.ControllerName
             //base.OnActionExecuting(filterContext);
-
-            #region Tell GET/POST
-            //var a = context.HttpContext.Request.Method; // GET/POST 방식 구하기
-
-            //if (context.HttpContext.Request.Method == "POST")
-            //{
-            //    // Do nothing
-            //}
-            //else
-            //{
-            //    //Do Something
-            //}
-            #endregion
         }
 
         // Do something after the action executes.
