@@ -8,6 +8,8 @@ using System.Text;
 using MyLaboratory.Site.Helpers;
 using MyLaboratory.Site.Data;
 using System.Linq;
+using System;
+using System.Reflection;
 
 namespace MyLaboratory.Site.Filters
 {
@@ -31,7 +33,7 @@ namespace MyLaboratory.Site.Filters
                         return;
                     }
                     else if (currentControllerName == "Account" && currentActionName == "Login") // 로그인 페이지인 경우
-                        {
+                    {
                         base.OnActionExecuting(context); // Do Action!!
                         return;
                     }
@@ -175,12 +177,83 @@ namespace MyLaboratory.Site.Filters
             }
             else if (currentRequestMethod.ToUpper() == "POST") // POST 방식
             {
-                base.OnActionExecuting(context); // Do Action!!
-                return;
+                var existingControllers = Assembly.GetExecutingAssembly().GetTypes()
+                    .Where(type => typeof(Controller).IsAssignableFrom(type)); //filter controllers
+
+                if (isAccountSessionExist == false) // 로그인이 안 된 상태이면
+                {
+                    var existingHttpPostMethods = existingControllers
+                    .Where(type => type.Name == "AccountController") // AccountController만 접근 가능
+                    .SelectMany(type => type.GetMethods()) // Method 들을 구한다
+                    .Where(method => method.IsPublic && !method.IsDefined(typeof(NonActionAttribute)) && method.IsDefined(typeof(HttpPostAttribute)) && method.IsDefined(typeof(ValidateAntiForgeryTokenAttribute))); // Method에서 접근 제한자가 Public이고 Attribute가 NonAction으로 되지 않고, HttpPost 및 ValidateAntiForgeryToken으로 된 메소드들을 구한다.
+
+                    foreach (var existingHttpPostMethod in existingHttpPostMethods)
+                    {
+                        if (currentControllerName == existingHttpPostMethod.DeclaringType.Name.Replace("Controller", "") && currentActionName == existingHttpPostMethod.Name) // (POST로 보낸) 현 Controller 명과 Action 명이 Account Controller의 NonAction Attribute가 없고 HttpPost & ValidateAntiForgeryToken Attribute를 가진 Method(Action) 명과 같다면
+                        {
+                            base.OnActionExecuting(context); // Do Action!!
+                            return;
+                        }
+                    }
+                    context.Result = new UnauthorizedObjectResult("Access is not allowed"); // 다 검사 했는데도 없으면 실행 불가!
+                    return;
+                }
+                else if (isAccountSessionExist == true) // 로그인이 된 상태라면
+                {
+                    byte[] resultByte = null;
+                    context.HttpContext.Session.TryGetValue("AccountSession", out resultByte);
+                    var loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)); // Get Session
+
+                    if (loginedAccount.Role == Role.Admin) // 로그인한 사용자 권한이 Admin일 경우
+                    {
+                        var adminCategories = DbCache.AdminCategories;
+                        foreach (var adminCategory in adminCategories)
+                        {
+                            var existingHttpPostMethods = existingControllers
+                            .Where(type => type.Name == $"{adminCategory.Controller}Controller") // 권한 Admin일 때 등록 된 Category의 Controller 이름만 접근 가능
+                            .SelectMany(type => type.GetMethods()) // Method 들을 구한다
+                            .Where(method => method.IsPublic && !method.IsDefined(typeof(NonActionAttribute)) && method.IsDefined(typeof(HttpPostAttribute)) && method.IsDefined(typeof(ValidateAntiForgeryTokenAttribute))); // Method에서 접근 제한자가 Public이고 Attribute가 NonAction으로 되지 않고, HttpPost 및 ValidateAntiForgeryToken으로 된 메소드들을 구한다.
+
+                            foreach (var existingHttpPostMethod in existingHttpPostMethods)
+                            {
+                                if (currentControllerName == existingHttpPostMethod.DeclaringType.Name.Replace("Controller", "") && currentActionName == existingHttpPostMethod.Name) // (POST로 보낸) 현 Controller 명과 Action 명이 Account Controller의 NonAction Attribute가 없고 HttpPost & ValidateAntiForgeryToken Attribute를 가진 Method(Action) 명과 같다면
+                                {
+                                    base.OnActionExecuting(context); // Do Action!!
+                                    return;
+                                }
+                            }
+                        }
+                        context.Result = new UnauthorizedObjectResult("Access is not allowed"); // 다 검사 했는데도 없으면 실행 불가!
+                        return;
+                    }
+                    else if (loginedAccount.Role == Role.User) // 로그인한 사용자 권한이 User일 경우
+                    {
+                        var userCategories = DbCache.UserCategories;
+                        foreach (var userCategory in userCategories)
+                        {
+                            var existingHttpPostMethods = existingControllers
+                            .Where(type => type.Name == $"{userCategory.Controller}Controller") // 권한 User일 때 등록 된 Category의 Controller 이름만 접근 가능
+                            .SelectMany(type => type.GetMethods()) // Method 들을 구한다
+                            .Where(method => method.IsPublic && !method.IsDefined(typeof(NonActionAttribute)) && method.IsDefined(typeof(HttpPostAttribute)) && method.IsDefined(typeof(ValidateAntiForgeryTokenAttribute))); // Method에서 접근 제한자가 Public이고 Attribute가 NonAction으로 되지 않고, HttpPost 및 ValidateAntiForgeryToken으로 된 메소드들을 구한다.
+
+                            foreach (var existingHttpPostMethod in existingHttpPostMethods)
+                            {
+                                if (currentControllerName == existingHttpPostMethod.DeclaringType.Name.Replace("Controller", "") && currentActionName == existingHttpPostMethod.Name) // (POST로 보낸) 현 Controller 명과 Action 명이 Account Controller의 NonAction Attribute가 없고 HttpPost & ValidateAntiForgeryToken Attribute를 가진 Method(Action) 명과 같다면
+                                {
+                                    base.OnActionExecuting(context); // Do Action!!
+                                    return;
+                                }
+                            }
+                        }
+                        context.Result = new UnauthorizedObjectResult("Access is not allowed"); // 다 검사 했는데도 없으면 실행 불가!
+                        return;
+                    }
+                }
             }
-            else // (PATCH / DELETE 등 방식은 다 허용)
+            else // (PATCH / DELETE 등 방식은 다 거부)
             {
-                base.OnActionExecuting(context); // Do Action!!
+                //base.OnActionExecuting(context); // Do Action!!
+                context.Result = new UnauthorizedObjectResult("Access is not allowed [Only Allowed GET/POST Method]");
                 return;
             }
             // Do something before the action executes.
@@ -205,7 +278,7 @@ namespace MyLaboratory.Site.Filters
 
         // Do something after the action executes.
         public override void OnActionExecuted(ActionExecutedContext context)
-        {   
+        {
             // Do something after the action executes.
 
         }
