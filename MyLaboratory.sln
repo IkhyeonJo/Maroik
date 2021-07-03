@@ -9,7 +9,7 @@ Project("{E53339B2-1760-4266-BCC7-CA923CBCF16C}") = "docker-compose", "docker-co
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MyLaboratory.WebAPI", "MyLaboratory.WebAPI\MyLaboratory.WebAPI.csproj", "{0EDD05C6-1658-4B86-B173-827533A1C4DC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MyLaboratory.RequestRESTful", "MyLaboratory.RequestRESTful\MyLaboratory.RequestRESTful.csproj", "{509B70BF-F0FE-4EF8-9A5C-C82D334B7498}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MyLaboratory.RequestWebAPI", "MyLaboratory.RequestRESTful\MyLaboratory.RequestWebAPI.csproj", "{509B70BF-F0FE-4EF8-9A5C-C82D334B7498}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
