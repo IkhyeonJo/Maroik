@@ -12,14 +12,18 @@ document.addEventListener("rowclick", e => {
 
     var selectedRow = e.detail;
     var selectedRowId = selectedRow.data.Id;
+    var selectedRowCategoryId = selectedRow.data.CategoryId;
+
+    if (selectedRowCategoryId === "") {
+        selectedRowCategoryId = "-1";
+    }
 
     $('#my-grid > table > tbody  > tr').each(function (index, tr) {
         $(this).removeClass(selectedRowColor);
     }); // remove all selected row color
 
     $('#my-grid > table > tbody  > tr').each(function (index, tr) {
-
-        if (new String(selectedRowId).valueOf() === new String($(this).attr('data-id')).valueOf()) {
+        if ((new String(selectedRowId).valueOf() === new String($(this).attr('data-id')).valueOf()) && (new String(selectedRowCategoryId).valueOf() === new String($(this).attr('data-categoryid')).valueOf())) {
             $(this).addClass(selectedRowColor);
         }
     }); // set selected row color class
