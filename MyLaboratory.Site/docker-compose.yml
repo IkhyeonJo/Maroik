@@ -7,15 +7,17 @@
 
 #when you should go debugging mode , change DB location (appsettings.json, DatabaseConfig.cs) and install (mariadb 10.5.10) and use IIS Express debugging mode
 
+## Tip: To see [CONTAINER ID], execute below this command
+#docker ps
 
 #----------------------------------------------------------------------------------------------------
 #Backup and restore a mysql database from a running Docker mysql container
 
 ## Backup
-#docker exec CONTAINER /usr/bin/mysqldump -u root --password=root DATABASE > backup.sql
+#docker exec [CONTAINER ID] /usr/bin/mysqldump -u root --password=***REMOVED*** [DATABASE] > backup.sql
 
 ## Restore
-#cat backup.sql | docker exec -i CONTAINER /usr/bin/mysql -u root --password=root DATABASE
+#cat backup.sql | docker exec -i [CONTAINER ID] /usr/bin/mysql -u root --password=***REMOVED*** [DATABASE]
 #----------------------------------------------------------------------------------------------------
 
 
