@@ -11,9 +11,32 @@ namespace MyLaboratory.RequestWebAPI
     {
         static async Task Main(string[] args)
         {
+            try
+            {
+                await PostRequest();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+            }
+
+            Console.WriteLine();
+
+            try
+            {
+                await GetRequest();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+            }
+
+            Console.ReadLine();
+        }
+        public static async Task PostRequest()
+        {
             HttpClientHandler clientHandler = new HttpClientHandler();
             clientHandler.ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) => { return true; };
-            //var student = "{'username':'admin','password':'securePassword'}";
             dynamic dynamicJson = new ExpandoObject();
             dynamicJson.username = "admin".ToString();
             dynamicJson.password = "securePassword";
@@ -22,16 +45,21 @@ namespace MyLaboratory.RequestWebAPI
 
 
             HttpClient client = new HttpClient(clientHandler);
-            //client.BaseAddress = new Uri("http://localhost:5001/");
-            client.BaseAddress = new Uri("https://***REMOVED***:5001/");
+            client.BaseAddress = new Uri("https://***REMOVED***:5001/"); // MyLaboratory.WebAPI Server
             var response = await client.PostAsync("/api/Account/login", new StringContent(json, Encoding.UTF8, "application/json"));
             if (response != null)
             {
                 Console.WriteLine(response.ToString());
-                string responJsonText = await response.Content.ReadAsStringAsync();
+                try
+                {
+                    string responJsonText = await response.Content.ReadAsStringAsync();
+                    Console.WriteLine(responJsonText);
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e);
+                }
             }
-
-            await GetRequest();
         }
 
         public static async Task GetRequest()
@@ -39,10 +67,11 @@ namespace MyLaboratory.RequestWebAPI
             HttpClientHandler clientHandler = new HttpClientHandler();
             clientHandler.ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) => { return true; };
 
-            Uri geturi = new Uri("https://***REMOVED***:5001/WeatherForecast"); //replace your url  
+            Uri geturi = new Uri("https://***REMOVED***:5001/WeatherForecast"); // MyLaboratory.WebAPI Server & Get
             System.Net.Http.HttpClient client = new System.Net.Http.HttpClient(clientHandler);
             System.Net.Http.HttpResponseMessage responseGet = await client.GetAsync(geturi);
             string response = await responseGet.Content.ReadAsStringAsync();
+            Console.WriteLine(response);
         }
     }
 }
