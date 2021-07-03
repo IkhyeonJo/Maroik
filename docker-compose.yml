@@ -67,3 +67,23 @@ services:
           - ./MyLaboratory.Site/:/https:ro
         depends_on :
           - mariadb  
+
+    mylaboratory.webapi:
+        build :
+         context : .
+         dockerfile : MyLaboratory.WebAPI/Dockerfile
+        networks :
+          - backend          
+        ports:
+          - 5000:80
+          - 5001:443
+        environment :
+          - DBHOST=mariadb
+          - ASPNETCORE_ENVIRONMENT=Development
+          - ASPNETCORE_URLS=https://+:443;http://+:80
+          - ASPNETCORE_Kestrel__Certificates__Default__Password=Passw0rd # must be equal to .pfx file's' password
+          - ASPNETCORE_Kestrel__Certificates__Default__Path=/https/testhttps.pfx
+        volumes:
+          - ./MyLaboratory.WebAPI/:/https:ro
+        depends_on :
+          - mariadb  
