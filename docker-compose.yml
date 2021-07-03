@@ -1,3 +1,5 @@
+#https://docs.microsoft.com/en-us/visualstudio/containers/docker-compose-properties?view=vs-2019
+
 #AWS Command (docker and docker-compose install)
 #go to docker-compose.yml file and execute below this command
 
@@ -7,10 +9,10 @@
 
 #when you should go debugging mode , change DB location (appsettings.json, DatabaseConfig.cs) and install (mariadb 10.5.10) and use IIS Express debugging mode
 
+#----------------------------------------------------------------------------------------------------
 ## Tip: To see [CONTAINER ID], execute below this command
 #docker ps
 
-#----------------------------------------------------------------------------------------------------
 #Backup and restore a mysql database from a running Docker mysql container
 
 ## Backup
@@ -31,12 +33,11 @@ networks:
        backend:
 
 services:
-
-      mariadb:
+    mariadb:
         image: "mariadb:10.2.38"
         volumes:
           - datasource:/var/lib/mariadb
-          - ./_MariaDBSql_Init_Script:/docker-entrypoint-initdb.d
+          - ./MyLaboratory.Site/_MariaDBSql_Init_Script:/docker-entrypoint-initdb.d
         networks:
           - backend
         environment:
@@ -46,11 +47,11 @@ services:
         command:
           - --character-set-server=utf8mb4
           - --collation-server=utf8mb4_unicode_ci
-      
-      mvc:
+
+    mylaboratory.site:
         build :
          context : .
-         dockerfile : Dockerfile
+         dockerfile : MyLaboratory.Site/Dockerfile
         networks :
           - backend          
         ports:
@@ -63,7 +64,6 @@ services:
           - ASPNETCORE_Kestrel__Certificates__Default__Password=Passw0rd # must be equal to .pfx file's' password
           - ASPNETCORE_Kestrel__Certificates__Default__Path=/https/testhttps.pfx
         volumes:
-          - ./:/https:ro
+          - ./MyLaboratory.Site/:/https:ro
         depends_on :
           - mariadb  
-          
