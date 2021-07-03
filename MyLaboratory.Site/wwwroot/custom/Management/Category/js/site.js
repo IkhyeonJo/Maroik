@@ -99,9 +99,9 @@ function CategoryExportExcel() {
 
 function CreateCategory() {
     var createForm = $('#CategoryCreate');
-    var id = createForm.find('input[id="Id"]').val();
-    console.log(id);
-    alert('CreateCategory' + id);
+    //var id = createForm.find('input[id="Id"]').val();
+    var role = createForm.find('select[id="Role"]').val();
+    alert(role);
 
     $('#CreateDialogModal').modal('hide'); // hide Modal
 
@@ -132,10 +132,16 @@ function CreateCategory() {
 
 function CreateSubCategory() {
     var createForm = $('#SubCategoryCreate');
-    var id = createForm.find('input[id="Id"]').val();
-    console.log(id);
-    alert('SubCreateCategory' + id);
+    //var id = createForm.find('input[id="Id"]').val();
+    var role = createForm.find('select[id="Role"]').val();
+    alert(role);
 
+    $('#CreateDialogModal').modal('hide'); // hide Modal
+
+    //doubtful code (not yet Insert function created...!)
+    const grid = new MvcGrid(document.querySelector(".mvc-grid")); //reload grid
+    grid.reload(); //reload grid
+    //doubtful code (not yet Insert function created...!)
 
     //var form = document.createElement("form");
     //var element1 = document.createElement("input");

@@ -71,13 +71,18 @@
                             </div>
                             <div class="form-group col-md-6 mb-3">
                                 <label asp-for="Role"></label>
-                                <input asp-for="Role" class="form-control form-control-sm" />
+                                @*<input asp-for="Role" class="form-control form-control-sm" />*@
+                                <br />
+                                <select asp-for="Role">
+                                    <option value="Admin">관리자</option>
+                                    <option value="User">사용자</option>
+                                </select>
                             </div>
                         </div>
                         <div class="form-row">
                             <div class="form-group col-md-6 mb-3">
                                 <label asp-for="Order"></label>
-                                <input asp-for="Order" class="form-control form-control-sm" min="0"/>
+                                <input asp-for="Order" class="form-control form-control-sm" min="0" />
                             </div>
                         </div>
                     </form>
@@ -118,11 +123,16 @@
                         <div class="form-row">
                             <div class="form-group col-md-6 mb-3">
                                 <label asp-for="Role"></label>
-                                <input asp-for="Role" class="form-control form-control-sm" />
+                                @*<input asp-for="Role" class="form-control form-control-sm" />*@
+                                <br />
+                                <select asp-for="Role">
+                                    <option value="Admin">관리자</option>
+                                    <option value="User">사용자</option>
+                                </select>
                             </div>
                             <div class="form-group col-md-6 mb-3">
                                 <label asp-for="Order"></label>
-                                <input asp-for="Order" class="form-control form-control-sm" min="0"/>
+                                <input asp-for="Order" class="form-control form-control-sm" min="0" />
                             </div>
                         </div>
                     </form>
