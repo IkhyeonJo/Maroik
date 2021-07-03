@@ -2,6 +2,10 @@
 // for details on configuring this project to bundle and minify static web assets.
 
 // Write your JavaScript code.
+$(function () {
+    $("#Tabs").tabs();
+});
+
 var selectedRowColor = "table-primary";
 
 // Triggered when grid's row is clicked. It's recommended to use event delegation in ajax scenarios.
@@ -94,9 +98,45 @@ function CategoryExportExcel() {
 }
 
 function CreateCategory() {
-    var createForm = $('#frmCategoryCreate');
+    var createForm = $('#CategoryCreate');
     var id = createForm.find('input[id="Id"]').val();
     console.log(id);
+    alert('CreateCategory' + id);
+
+    $('#CreateDialogModal').modal('hide'); // hide Modal
+
+    //doubtful code (not yet Insert function created...!)
+    const grid = new MvcGrid(document.querySelector(".mvc-grid")); //reload grid
+    grid.reload(); //reload grid
+    //doubtful code (not yet Insert function created...!)
+
+    //var form = document.createElement("form");
+    //var element1 = document.createElement("input");
+    //var element2 = document.createElement("input");
+
+    //form.method = "POST";
+    //form.action = "/Management/CategoryExportExcel";
+
+    //element1.name = "__RequestVerificationToken";
+    //element1.value = $('input[name="__RequestVerificationToken"]').val();
+    //form.appendChild(element1);
+
+    //element2.name = "fileName";
+    //element2.value = "listOfCategories";
+    //form.appendChild(element2);
+
+    //document.body.appendChild(form);
+
+    //form.submit();
+}
+
+function CreateSubCategory() {
+    var createForm = $('#SubCategoryCreate');
+    var id = createForm.find('input[id="Id"]').val();
+    console.log(id);
+    alert('SubCreateCategory' + id);
+
+
     //var form = document.createElement("form");
     //var element1 = document.createElement("input");
     //var element2 = document.createElement("input");
