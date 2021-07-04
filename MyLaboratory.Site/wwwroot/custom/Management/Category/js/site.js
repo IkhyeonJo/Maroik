@@ -71,7 +71,7 @@ $(document).on("dblclick", "#my-grid > table > tbody  > tr", function () {
 $('#GridSearch').on('input', function () {
     const grid = new MvcGrid(document.querySelector(".mvc-grid"));
 
-    grid.url.searchParams.set("WholeSearch", this.value);
+    grid.url.searchParams.set("wholeSearch", this.value);
 
     grid.reload();
 });

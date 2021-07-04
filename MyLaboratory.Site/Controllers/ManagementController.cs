@@ -50,7 +50,7 @@ namespace MyLaboratory.Site.Controllers
 
         #region Category
         [HttpGet]
-        public IActionResult Category(string WholeSearch)
+        public IActionResult Category(string wholeSearch)
         {
             if (HttpContext.Request.Headers["X-Requested-With"] == "XMLHttpRequest") // ajax
             {
@@ -59,7 +59,7 @@ namespace MyLaboratory.Site.Controllers
                 #region AdminCategories
                 foreach (var item in categoryRepository.AdminCategories)
                 {
-                    if (string.IsNullOrEmpty(WholeSearch))
+                    if (string.IsNullOrEmpty(wholeSearch))
                     {
                         managementOutputViewModels.Add(new ManagementOutputViewModel() 
                         { 
@@ -76,14 +76,14 @@ namespace MyLaboratory.Site.Controllers
                     }
                     else
                     {
-                        if (item.Id.ToString().Contains(WholeSearch) ||
-                            (item.Name?.ToString() ?? "").Contains(WholeSearch) ||
-                            (item.DisplayName?.ToString() ?? "").Contains(WholeSearch) ||
-                            (item.IconPath?.ToString() ?? "").Contains(WholeSearch) ||
-                            (item.Controller?.ToString() ?? "").Contains(WholeSearch) ||
-                            (item.Action?.ToString() ?? "").Contains(WholeSearch) ||
-                            (item.Role?.ToString() ?? "").Contains(WholeSearch) ||
-                            item.Order.ToString().Contains(WholeSearch))
+                        if (item.Id.ToString().Contains(wholeSearch) ||
+                            (item.Name?.ToString() ?? "").Contains(wholeSearch) ||
+                            (item.DisplayName?.ToString() ?? "").Contains(wholeSearch) ||
+                            (item.IconPath?.ToString() ?? "").Contains(wholeSearch) ||
+                            (item.Controller?.ToString() ?? "").Contains(wholeSearch) ||
+                            (item.Action?.ToString() ?? "").Contains(wholeSearch) ||
+                            (item.Role?.ToString() ?? "").Contains(wholeSearch) ||
+                            item.Order.ToString().Contains(wholeSearch))
                         {
                             managementOutputViewModels.Add(new ManagementOutputViewModel()
                             {
@@ -105,7 +105,7 @@ namespace MyLaboratory.Site.Controllers
                 #region UserCategories
                 foreach (var item in categoryRepository.UserCategories)
                 {
-                    if (string.IsNullOrEmpty(WholeSearch))
+                    if (string.IsNullOrEmpty(wholeSearch))
                     {
                         managementOutputViewModels.Add(new ManagementOutputViewModel()
                         {
@@ -122,14 +122,14 @@ namespace MyLaboratory.Site.Controllers
                     }
                     else
                     {
-                        if (item.Id.ToString().Contains(WholeSearch) ||
-                            (item.Name?.ToString() ?? "").Contains(WholeSearch) ||
-                            (item.DisplayName?.ToString() ?? "").Contains(WholeSearch) ||
-                            (item.IconPath?.ToString() ?? "").Contains(WholeSearch) ||
-                            (item.Controller?.ToString() ?? "").Contains(WholeSearch) ||
-                            (item.Action?.ToString() ?? "").Contains(WholeSearch) ||
-                            (item.Role?.ToString() ?? "").Contains(WholeSearch) ||
-                            item.Order.ToString().Contains(WholeSearch))
+                        if (item.Id.ToString().Contains(wholeSearch) ||
+                            (item.Name?.ToString() ?? "").Contains(wholeSearch) ||
+                            (item.DisplayName?.ToString() ?? "").Contains(wholeSearch) ||
+                            (item.IconPath?.ToString() ?? "").Contains(wholeSearch) ||
+                            (item.Controller?.ToString() ?? "").Contains(wholeSearch) ||
+                            (item.Action?.ToString() ?? "").Contains(wholeSearch) ||
+                            (item.Role?.ToString() ?? "").Contains(wholeSearch) ||
+                            item.Order.ToString().Contains(wholeSearch))
                         {
                             managementOutputViewModels.Add(new ManagementOutputViewModel()
                             {
@@ -151,7 +151,7 @@ namespace MyLaboratory.Site.Controllers
                 #region AdminSubCategories
                 foreach (var item in subCategoryRepository.AdminSubCategories)
                 {
-                    if (string.IsNullOrEmpty(WholeSearch))
+                    if (string.IsNullOrEmpty(wholeSearch))
                     {
                         managementOutputViewModels.Add(new ManagementOutputViewModel()
                         {
@@ -168,14 +168,14 @@ namespace MyLaboratory.Site.Controllers
                     }
                     else
                     {
-                        if (item.Id.ToString().Contains(WholeSearch) ||
-                            item.CategoryId.ToString().Contains(WholeSearch) ||
-                            (item.Name?.ToString() ?? "").Contains(WholeSearch) ||
-                            (item.DisplayName?.ToString() ?? "").Contains(WholeSearch) ||
-                            (item.IconPath?.ToString() ?? "").Contains(WholeSearch) ||
-                            (item.Action?.ToString() ?? "").Contains(WholeSearch) ||
-                            (item.Role?.ToString() ?? "").Contains(WholeSearch) ||
-                            item.Order.ToString().Contains(WholeSearch))
+                        if (item.Id.ToString().Contains(wholeSearch) ||
+                            item.CategoryId.ToString().Contains(wholeSearch) ||
+                            (item.Name?.ToString() ?? "").Contains(wholeSearch) ||
+                            (item.DisplayName?.ToString() ?? "").Contains(wholeSearch) ||
+                            (item.IconPath?.ToString() ?? "").Contains(wholeSearch) ||
+                            (item.Action?.ToString() ?? "").Contains(wholeSearch) ||
+                            (item.Role?.ToString() ?? "").Contains(wholeSearch) ||
+                            item.Order.ToString().Contains(wholeSearch))
                         {
                             managementOutputViewModels.Add(new ManagementOutputViewModel()
                             {
@@ -197,7 +197,7 @@ namespace MyLaboratory.Site.Controllers
                 #region UserSubCategories
                 foreach (var item in subCategoryRepository.UserSubCategories)
                 {
-                    if (string.IsNullOrEmpty(WholeSearch))
+                    if (string.IsNullOrEmpty(wholeSearch))
                     {
                         managementOutputViewModels.Add(new ManagementOutputViewModel()
                         {
@@ -214,14 +214,14 @@ namespace MyLaboratory.Site.Controllers
                     }
                     else
                     {
-                        if (item.Id.ToString().Contains(WholeSearch) ||
-                            item.CategoryId.ToString().Contains(WholeSearch) ||
-                            (item.Name?.ToString() ?? "").Contains(WholeSearch) ||
-                            (item.DisplayName?.ToString() ?? "").Contains(WholeSearch) ||
-                            (item.IconPath?.ToString() ?? "").Contains(WholeSearch) ||
-                            (item.Action?.ToString() ?? "").Contains(WholeSearch) ||
-                            (item.Role?.ToString() ?? "").Contains(WholeSearch) ||
-                            item.Order.ToString().Contains(WholeSearch))
+                        if (item.Id.ToString().Contains(wholeSearch) ||
+                            item.CategoryId.ToString().Contains(wholeSearch) ||
+                            (item.Name?.ToString() ?? "").Contains(wholeSearch) ||
+                            (item.DisplayName?.ToString() ?? "").Contains(wholeSearch) ||
+                            (item.IconPath?.ToString() ?? "").Contains(wholeSearch) ||
+                            (item.Action?.ToString() ?? "").Contains(wholeSearch) ||
+                            (item.Role?.ToString() ?? "").Contains(wholeSearch) ||
+                            item.Order.ToString().Contains(wholeSearch))
                         {
                             managementOutputViewModels.Add(new ManagementOutputViewModel()
                             {
