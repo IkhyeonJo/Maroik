@@ -9,7 +9,7 @@ namespace MyLaboratory.RequestWebAPI
 {
     class Program
     {
-        readonly static string url = "https://***REMOVED***:5001/";
+        readonly static string url = "https://***REMOVED***:5001";
         static async Task Main(string[] args)
         {
             try
@@ -68,7 +68,7 @@ namespace MyLaboratory.RequestWebAPI
             HttpClientHandler clientHandler = new HttpClientHandler();
             clientHandler.ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) => { return true; };
 
-            Uri geturi = new Uri($"{url}WeatherForecast"); // MyLaboratory.WebAPI Server & Get
+            Uri geturi = new Uri($"{url}/WeatherForecast"); // MyLaboratory.WebAPI Server & Get
             System.Net.Http.HttpClient client = new System.Net.Http.HttpClient(clientHandler);
             System.Net.Http.HttpResponseMessage responseGet = await client.GetAsync(geturi);
             string response = await responseGet.Content.ReadAsStringAsync();
