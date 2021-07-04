@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Identity;
 
 namespace MyLaboratory.Site.Models.ViewModels.Management
 {
-    public class ManagementOutputViewModel
+    public class CategoryOutputViewModel
     {
         public int Id { get; set; }
         public int? CategoryId { get; set; }

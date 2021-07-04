@@ -54,14 +54,14 @@ namespace MyLaboratory.Site.Controllers
         {
             if (HttpContext.Request.Headers["X-Requested-With"] == "XMLHttpRequest") // ajax
             {
-                List<ManagementOutputViewModel> managementOutputViewModels = new List<ManagementOutputViewModel>();
+                List<CategoryOutputViewModel> CategoryOutputViewModels = new List<CategoryOutputViewModel>();
 
                 #region AdminCategories
                 foreach (var item in categoryRepository.AdminCategories)
                 {
                     if (string.IsNullOrEmpty(wholeSearch))
                     {
-                        managementOutputViewModels.Add(new ManagementOutputViewModel() 
+                        CategoryOutputViewModels.Add(new CategoryOutputViewModel() 
                         { 
                             Id = item.Id,
                             CategoryId = null,
@@ -85,7 +85,7 @@ namespace MyLaboratory.Site.Controllers
                             (item.Role?.ToString() ?? "").Contains(wholeSearch) ||
                             item.Order.ToString().Contains(wholeSearch))
                         {
-                            managementOutputViewModels.Add(new ManagementOutputViewModel()
+                            CategoryOutputViewModels.Add(new CategoryOutputViewModel()
                             {
                                 Id = item.Id,
                                 CategoryId = null,
@@ -107,7 +107,7 @@ namespace MyLaboratory.Site.Controllers
                 {
                     if (string.IsNullOrEmpty(wholeSearch))
                     {
-                        managementOutputViewModels.Add(new ManagementOutputViewModel()
+                        CategoryOutputViewModels.Add(new CategoryOutputViewModel()
                         {
                             Id = item.Id,
                             CategoryId = null,
@@ -131,7 +131,7 @@ namespace MyLaboratory.Site.Controllers
                             (item.Role?.ToString() ?? "").Contains(wholeSearch) ||
                             item.Order.ToString().Contains(wholeSearch))
                         {
-                            managementOutputViewModels.Add(new ManagementOutputViewModel()
+                            CategoryOutputViewModels.Add(new CategoryOutputViewModel()
                             {
                                 Id = item.Id,
                                 CategoryId = null,
@@ -153,7 +153,7 @@ namespace MyLaboratory.Site.Controllers
                 {
                     if (string.IsNullOrEmpty(wholeSearch))
                     {
-                        managementOutputViewModels.Add(new ManagementOutputViewModel()
+                        CategoryOutputViewModels.Add(new CategoryOutputViewModel()
                         {
                             Id = item.Id,
                             CategoryId = item.CategoryId,
@@ -177,7 +177,7 @@ namespace MyLaboratory.Site.Controllers
                             (item.Role?.ToString() ?? "").Contains(wholeSearch) ||
                             item.Order.ToString().Contains(wholeSearch))
                         {
-                            managementOutputViewModels.Add(new ManagementOutputViewModel()
+                            CategoryOutputViewModels.Add(new CategoryOutputViewModel()
                             {
                                 Id = item.Id,
                                 CategoryId = item.CategoryId,
@@ -199,7 +199,7 @@ namespace MyLaboratory.Site.Controllers
                 {
                     if (string.IsNullOrEmpty(wholeSearch))
                     {
-                        managementOutputViewModels.Add(new ManagementOutputViewModel()
+                        CategoryOutputViewModels.Add(new CategoryOutputViewModel()
                         {
                             Id = item.Id,
                             CategoryId = item.CategoryId,
@@ -223,7 +223,7 @@ namespace MyLaboratory.Site.Controllers
                             (item.Role?.ToString() ?? "").Contains(wholeSearch) ||
                             item.Order.ToString().Contains(wholeSearch))
                         {
-                            managementOutputViewModels.Add(new ManagementOutputViewModel()
+                            CategoryOutputViewModels.Add(new CategoryOutputViewModel()
                             {
                                 Id = item.Id,
                                 CategoryId = item.CategoryId,
@@ -241,11 +241,11 @@ namespace MyLaboratory.Site.Controllers
                 #endregion
 
 
-                var result = managementOutputViewModels.AsQueryable();
+                var result = CategoryOutputViewModels.AsQueryable();
                 return PartialView("_CategoryGrid", result);
             }
 
-            return View(new ManagementOutputViewModel());
+            return View(new CategoryOutputViewModel());
         }
 
         [HttpPost]
