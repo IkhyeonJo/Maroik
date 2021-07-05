@@ -68,23 +68,6 @@ namespace MyLaboratory.Site.Controllers
             categoryRepository.CreateCategory(category);
 
             return Json(new { result = true });
-            //if (HttpContext.Session.GetString(AdminSessionKey) == null)
-            //{
-            //    return RedirectToAction("Login", "Admin");
-            //}
-            //if (!HttpContext.Session.GetString(AdminSessionKey).Contains("CoreValue"))
-            //{
-            //    return RedirectToAction("Logout", "Admin");
-            //}
-
-            //if (Context.CreateRubric(adminRubric, "corevaluerubric", HttpContext.Session.GetString(AdminSessionKey).Split("~")[1]) > 0)
-            //{
-            //    return Json(new { result = true });
-            //}
-            //else
-            //{
-            //    return Json(new { result = false });
-            //}
         }
         #endregion
 
