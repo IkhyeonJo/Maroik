@@ -38,5 +38,11 @@ namespace MyLaboratory.Site.Services
                         .ToList();
             }
         }
+
+        public void CreateCategory(Category category)
+        {
+            context.Categories.Add(category);
+            context.SaveChanges();
+        }
     }
 }

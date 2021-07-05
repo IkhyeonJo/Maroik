@@ -133,21 +133,17 @@ function CreateCategory() {
         //cache: false,
         success: function (data) {
             if (data.result) {
-                alert('저장 성공');
-                //window.location.href = "@Url.Action("CoreValue", "Admin")";
+                $('#CreateDialogModal').modal('hide'); // hide Modal
+
+                const grid = new MvcGrid(document.querySelector(".mvc-grid")); //reload grid
+                grid.reload(); //reload grid
+
             }
             else {
-                alert('저장 실패');
+                result = false;
             }
         }
     });
-
-    $('#CreateDialogModal').modal('hide'); // hide Modal
-
-    //doubtful code (not yet Insert function created...!)
-    const grid = new MvcGrid(document.querySelector(".mvc-grid")); //reload grid
-    grid.reload(); //reload grid
-    //doubtful code (not yet Insert function created...!)
 
     //var form = document.createElement("form");
     //var element1 = document.createElement("input");
