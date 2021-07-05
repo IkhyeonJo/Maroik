@@ -400,3 +400,12 @@ Bind ¾îÆ®¸®ºäÆ®´Â ÇØÄ¿µéÀÌ ¿À¹öÆ÷½ºÆÃ(over-posting) ÇÏÁö ¸øÇÏµµ·Ï ÁöÄÑÁÖ´Â Áß¿äÇ
 https://stackoverflow.com/questions/21583278/getting-all-controllers-and-actions-names-in-c-sharp/30969888
 
 https://docs.microsoft.com/en-us/aspnet/core/tutorials/first-mvc-app/validation?view=aspnetcore-5.0 // Validation Model value
+
+
+
+https://getbootstrap.com/docs/3.4/javascript/
+$('#myModal').modal()                      // initialized with defaults
+$('#myModal').modal({ keyboard: false })   // initialized with no keyboard
+$('#myModal').modal('show')                // initializes and invokes show immediately
+data-toggle="modal" data-target="#CreateDialogModal" data-backdrop="static" data-keyboard="false"
+https://stackoverflow.com/questions/13183630/how-to-open-a-bootstrap-modal-window-using-jquery

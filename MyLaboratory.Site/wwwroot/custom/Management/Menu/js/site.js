@@ -196,3 +196,80 @@ function CreateSubCategory() {
         }
     });
 }
+
+function EditMenuGridRow() {
+
+    var selectedRowId = -1;
+    var selectedRowCategoryId = -1;
+
+    $('#menuGrid > table > tbody  > tr').each(function (index, tr) {
+        if ($(this).attr("class").includes(selectedRowColor)) { // Get SelectedRow by Color
+            console.log("ToEditSelectedRow Id:" + $(this).attr("data-id"));
+            console.log("ToEditSelectedRow categoryId:" + $(this).attr("data-categoryid"));
+            selectedRowId = $(this).attr("data-id");
+            selectedRowCategoryId = $(this).attr("data-categoryid");
+        }
+    }); // Search Selected Row
+
+    console.log(selectedRowId + "||||" + selectedRowCategoryId);
+
+    if (selectedRowId == -1) {
+        alert("Please select grid row");
+        return false;
+    } // check whether selected row exist or not
+
+    if (selectedRowCategoryId == -1) {
+        console.log("Category");
+    } // Category
+    else {
+        console.log("SubCategory");
+    } // SubCategory
+
+    //if (!$('#formCreateSubCategory').valid()) {
+    //    return false;
+    //}
+
+    //var createForm = $('#formCreateSubCategory');
+
+    //var categoryId = createForm.find('input[id="subcategoryCategoryId"]').val();
+    //var name = createForm.find('input[id="subcategoryName"]').val();
+    //var displayName = createForm.find('input[id="subcategoryDisplayName"]').val();
+    //var iconPath = createForm.find('input[id="subcategoryIconPath"]').val();
+    //var action = createForm.find('input[id="subcategoryAction"]').val();
+    //var role = createForm.find('select[id="subcategoryRole"]').val();
+    //var order = createForm.find('input[id="subcategoryOrder"]').val();
+
+    //var paramValue = JSON.stringify({
+    //    CategoryId: categoryId,
+    //    Name: name,
+    //    DisplayName: displayName,
+    //    IconPath: iconPath,
+    //    Action: action,
+    //    Role: role,
+    //    Order: order
+    //});
+
+    //$.ajax({
+    //    url: '/Management/CreateSubCategory',
+    //    type: 'POST',
+    //    headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
+    //    dataType: 'json',
+    //    data: paramValue,
+    //    contentType: 'application/json; charset=utf-8',
+    //    //async: false,
+    //    //cache: false,
+    //    success: function (data) {
+    //        if (data.result) {
+    //            $('#createDialogModal').modal('hide'); // hide Modal
+
+    //            const grid = new MvcGrid(document.querySelector(".mvc-grid")); //reload grid
+    //            grid.reload(); //reload grid
+
+    //            toastr.success('Successfully created the subCategory');
+    //        }
+    //        else {
+    //            toastr.error(data.error);
+    //        }
+    //    }
+    //});
+}
