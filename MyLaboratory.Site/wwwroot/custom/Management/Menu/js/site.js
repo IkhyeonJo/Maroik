@@ -188,7 +188,7 @@ function CreateSubCategory() {
                 const grid = new MvcGrid(document.querySelector(".mvc-grid")); //reload grid
                 grid.reload(); //reload grid
 
-                toastr.success('Successfully created the category');
+                toastr.success('Successfully created the subCategory');
             }
             else {
                 toastr.error(data.error);
