@@ -48,37 +48,37 @@
                     <form id="formCreateCategory">
                         <div class="form-row">
                             <div class="form-group col-md-6 mb-3">
-                                <label for="categoryName">Name</label>
-                                <input class="form-control form-control-sm" type="text" data-val="true" data-val-required="Please enter Name" id="categoryName" name="categoryName" value="">
-                                <span class="field-validation-valid text-danger" data-valmsg-for="categoryName" data-valmsg-replace="true"></span>
+                                <label for="createCategoryName">Name</label>
+                                <input class="form-control form-control-sm" type="text" data-val="true" data-val-required="Please enter Name" id="createCategoryName" name="createCategoryName" value="">
+                                <span class="field-validation-valid text-danger" data-valmsg-for="createCategoryName" data-valmsg-replace="true"></span>
                             </div>
                             <div class="form-group col-md-6 mb-3">
-                                <label for="categoryDisplayName">DisplayName</label>
-                                <input class="form-control form-control-sm" type="text" data-val="true" data-val-required="Please enter DisplayName" id="categoryDisplayName" name="categoryDisplayName" value="">
-                                <span class="field-validation-valid text-danger" data-valmsg-for="categoryDisplayName" data-valmsg-replace="true"></span>
-                            </div>
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group col-md-6 mb-3">
-                                <label for="categoryIconPath">IconPath</label>
-                                <input class="form-control form-control-sm" type="text" data-val="true" data-val-required="Please enter IconPath" id="categoryIconPath" name="categoryIconPath" value="">
-                                <span class="field-validation-valid text-danger" data-valmsg-for="categoryIconPath" data-valmsg-replace="true"></span>
-                            </div>
-                            <div class="form-group col-md-6 mb-3">
-                                <label for="categoryController">Controller</label>
-                                <input class="form-control form-control-sm" type="text" data-val="true" data-val-required="Please enter Controller" id="categoryController" name="categoryController" value="">
-                                <span class="field-validation-valid text-danger" data-valmsg-for="categoryController" data-valmsg-replace="true"></span>
+                                <label for="createCategoryDisplayName">DisplayName</label>
+                                <input class="form-control form-control-sm" type="text" data-val="true" data-val-required="Please enter DisplayName" id="createCategoryDisplayName" name="createCategoryDisplayName" value="">
+                                <span class="field-validation-valid text-danger" data-valmsg-for="createCategoryDisplayName" data-valmsg-replace="true"></span>
                             </div>
                         </div>
                         <div class="form-row">
                             <div class="form-group col-md-6 mb-3">
-                                <label for="categoryAction">Action</label>
-                                <input class="form-control form-control-sm" type="text" data-val="false" id="categoryAction" name="categoryAction" value="">
+                                <label for="createCategoryIconPath">IconPath</label>
+                                <input class="form-control form-control-sm" type="text" data-val="true" data-val-required="Please enter IconPath" id="createCategoryIconPath" name="createCategoryIconPath" value="">
+                                <span class="field-validation-valid text-danger" data-valmsg-for="createCategoryIconPath" data-valmsg-replace="true"></span>
                             </div>
                             <div class="form-group col-md-6 mb-3">
-                                <label for="categoryRole">Role</label>
+                                <label for="createCategoryController">Controller</label>
+                                <input class="form-control form-control-sm" type="text" data-val="true" data-val-required="Please enter Controller" id="createCategoryController" name="createCategoryController" value="">
+                                <span class="field-validation-valid text-danger" data-valmsg-for="createCategoryController" data-valmsg-replace="true"></span>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group col-md-6 mb-3">
+                                <label for="createCategoryAction">Action</label>
+                                <input class="form-control form-control-sm" type="text" data-val="false" id="createCategoryAction" name="createCategoryAction" value="">
+                            </div>
+                            <div class="form-group col-md-6 mb-3">
+                                <label for="createCategoryRole">Role</label>
                                 <br />
-                                <select id="categoryRole" name="categoryRole">
+                                <select id="createCategoryRole" name="createCategoryRole">
                                     <option value="Admin">관리자</option>
                                     <option value="User">사용자</option>
                                 </select>
@@ -86,8 +86,8 @@
                         </div>
                         <div class="form-row">
                             <div class="form-group col-md-6 mb-3">
-                                <label for="categoryOrder">Order</label>
-                                <input class="form-control form-control-sm" min="0" type="number" id="categoryOrder" name="categoryOrder" value="0">
+                                <label for="createCategoryOrder">Order</label>
+                                <input class="form-control form-control-sm" min="0" type="number" id="createCategoryOrder" name="createCategoryOrder" value="0">
                             </div>
                         </div>
                     </form>
@@ -101,37 +101,37 @@
                     <form id="formCreateSubCategory">
                         <div class="form-row">
                             <div class="form-group col-md-6 mb-3">
-                                <label for="subcategoryCategoryId">CategoryId</label>
-                                <input class="form-control form-control-sm" min="0" type="number" id="subcategoryCategoryId" name="subcategoryCategoryId" value="0">
+                                <label for="createSubcategoryCategoryId">CategoryId</label>
+                                <input class="form-control form-control-sm" min="0" type="number" id="createSubcategoryCategoryId" name="createSubcategoryCategoryId" value="0">
                             </div>
                             <div class="form-group col-md-6 mb-3">
-                                <label for="subcategoryName">Name</label>
-                                <input class="form-control form-control-sm" type="text" data-val="true" data-val-required="Please enter Name" id="subcategoryName" name="subcategoryName" value="">
-                                <span class="field-validation-valid text-danger" data-valmsg-for="subcategoryName" data-valmsg-replace="true"></span>
-                            </div>
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group col-md-6 mb-3">
-                                <label for="subcategoryDisplayName">DisplayName</label>
-                                <input class="form-control form-control-sm" type="text" data-val="true" data-val-required="Please enter DisplayName" id="subcategoryDisplayName" name="subcategoryDisplayName" value="">
-                                <span class="field-validation-valid text-danger" data-valmsg-for="subcategoryDisplayName" data-valmsg-replace="true"></span>
-                            </div>
-                            <div class="form-group col-md-6 mb-3">
-                                <label for="subcategoryIconPath">IconPath</label>
-                                <input class="form-control form-control-sm" type="text" data-val="true" data-val-required="Please enter IconPath" id="subcategoryIconPath" name="subcategoryIconPath" value="">
-                                <span class="field-validation-valid text-danger" data-valmsg-for="subcategoryIconPath" data-valmsg-replace="true"></span>
+                                <label for="createSubcategoryName">Name</label>
+                                <input class="form-control form-control-sm" type="text" data-val="true" data-val-required="Please enter Name" id="createSubcategoryName" name="createSubcategoryName" value="">
+                                <span class="field-validation-valid text-danger" data-valmsg-for="createSubcategoryName" data-valmsg-replace="true"></span>
                             </div>
                         </div>
                         <div class="form-row">
                             <div class="form-group col-md-6 mb-3">
-                                <label for="subcategoryAction">Action</label>
-                                <input class="form-control form-control-sm" type="text" data-val="true" data-val-required="Please enter Action" id="subcategoryAction" name="subcategoryAction" value="">
-                                <span class="field-validation-valid text-danger" data-valmsg-for="subcategoryAction" data-valmsg-replace="true"></span>
+                                <label for="createSubcategoryDisplayName">DisplayName</label>
+                                <input class="form-control form-control-sm" type="text" data-val="true" data-val-required="Please enter DisplayName" id="createSubcategoryDisplayName" name="createSubcategoryDisplayName" value="">
+                                <span class="field-validation-valid text-danger" data-valmsg-for="createSubcategoryDisplayName" data-valmsg-replace="true"></span>
                             </div>
                             <div class="form-group col-md-6 mb-3">
-                                <label for="subcategoryRole">Role</label>
+                                <label for="createSubcategoryIconPath">IconPath</label>
+                                <input class="form-control form-control-sm" type="text" data-val="true" data-val-required="Please enter IconPath" id="createSubcategoryIconPath" name="createSubcategoryIconPath" value="">
+                                <span class="field-validation-valid text-danger" data-valmsg-for="createSubcategoryIconPath" data-valmsg-replace="true"></span>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group col-md-6 mb-3">
+                                <label for="createSubcategoryAction">Action</label>
+                                <input class="form-control form-control-sm" type="text" data-val="true" data-val-required="Please enter Action" id="createSubcategoryAction" name="createSubcategoryAction" value="">
+                                <span class="field-validation-valid text-danger" data-valmsg-for="createSubcategoryAction" data-valmsg-replace="true"></span>
+                            </div>
+                            <div class="form-group col-md-6 mb-3">
+                                <label for="createSubcategoryRole">Role</label>
                                 <br />
-                                <select id="subcategoryRole" name="subcategoryRole">
+                                <select id="createSubcategoryRole" name="createSubcategoryRole">
                                     <option value="Admin">관리자</option>
                                     <option value="User">사용자</option>
                                 </select>
@@ -139,8 +139,8 @@
                         </div>
                         <div class="form-row">
                             <div class="form-group col-md-6 mb-3">
-                                <label for="subcategoryOrder">Order</label>
-                                <input class="form-control form-control-sm" min="0" type="number" id="subcategoryOrder" name="subcategoryOrder" value="0">
+                                <label for="createSubcategoryOrder">Order</label>
+                                <input class="form-control form-control-sm" min="0" type="number" id="createSubcategoryOrder" name="createSubcategoryOrder" value="0">
                             </div>
                         </div>
                     </form>

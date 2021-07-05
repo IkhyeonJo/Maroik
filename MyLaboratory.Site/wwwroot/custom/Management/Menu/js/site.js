@@ -105,13 +105,13 @@ function CreateCategory() {
     }
 
     var createForm = $('#formCreateCategory');
-    var name = createForm.find('input[id="categoryName"]').val();
-    var displayName = createForm.find('input[id="categoryDisplayName"]').val();
-    var iconPath = createForm.find('input[id="categoryIconPath"]').val();
-    var controller = createForm.find('input[id="categoryController"]').val();
-    var action = createForm.find('input[id="categoryAction"]').val();
-    var role = createForm.find('select[id="categoryRole"]').val();
-    var order = createForm.find('input[id="categoryOrder"]').val();
+    var name = createForm.find('input[id="createCategoryName"]').val();
+    var displayName = createForm.find('input[id="createCategoryDisplayName"]').val();
+    var iconPath = createForm.find('input[id="createCategoryIconPath"]').val();
+    var controller = createForm.find('input[id="createCategoryController"]').val();
+    var action = createForm.find('input[id="createCategoryAction"]').val();
+    var role = createForm.find('select[id="createCategoryRole"]').val();
+    var order = createForm.find('input[id="createCategoryOrder"]').val();
 
     var paramValue = JSON.stringify({
         Name: name,
@@ -155,13 +155,13 @@ function CreateSubCategory() {
 
     var createForm = $('#formCreateSubCategory');
 
-    var categoryId = createForm.find('input[id="subcategoryCategoryId"]').val();
-    var name = createForm.find('input[id="subcategoryName"]').val();
-    var displayName = createForm.find('input[id="subcategoryDisplayName"]').val();
-    var iconPath = createForm.find('input[id="subcategoryIconPath"]').val();
-    var action = createForm.find('input[id="subcategoryAction"]').val();
-    var role = createForm.find('select[id="subcategoryRole"]').val();
-    var order = createForm.find('input[id="subcategoryOrder"]').val();
+    var categoryId = createForm.find('input[id="createSubcategoryCategoryId"]').val();
+    var name = createForm.find('input[id="createSubcategoryName"]').val();
+    var displayName = createForm.find('input[id="createSubcategoryDisplayName"]').val();
+    var iconPath = createForm.find('input[id="createSubcategoryIconPath"]').val();
+    var action = createForm.find('input[id="createSubcategoryAction"]').val();
+    var role = createForm.find('select[id="createSubcategoryRole"]').val();
+    var order = createForm.find('input[id="createSubcategoryOrder"]').val();
 
     var paramValue = JSON.stringify({
         CategoryId: categoryId,
@@ -233,13 +233,13 @@ function EditMenuGridRow() {
 
     //var createForm = $('#formCreateSubCategory');
 
-    //var categoryId = createForm.find('input[id="subcategoryCategoryId"]').val();
-    //var name = createForm.find('input[id="subcategoryName"]').val();
-    //var displayName = createForm.find('input[id="subcategoryDisplayName"]').val();
-    //var iconPath = createForm.find('input[id="subcategoryIconPath"]').val();
-    //var action = createForm.find('input[id="subcategoryAction"]').val();
-    //var role = createForm.find('select[id="subcategoryRole"]').val();
-    //var order = createForm.find('input[id="subcategoryOrder"]').val();
+    //var categoryId = createForm.find('input[id="createSubcategoryCategoryId"]').val();
+    //var name = createForm.find('input[id="createSubcategoryName"]').val();
+    //var displayName = createForm.find('input[id="createSubcategoryDisplayName"]').val();
+    //var iconPath = createForm.find('input[id="createSubcategoryIconPath"]').val();
+    //var action = createForm.find('input[id="createSubcategoryAction"]').val();
+    //var role = createForm.find('select[id="createSubcategoryRole"]').val();
+    //var order = createForm.find('input[id="createSubcategoryOrder"]').val();
 
     //var paramValue = JSON.stringify({
     //    CategoryId: categoryId,
