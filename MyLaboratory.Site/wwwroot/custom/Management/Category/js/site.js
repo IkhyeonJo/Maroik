@@ -99,11 +99,11 @@ function CategoryExportExcel() {
 
 function CreateCategory() {
 
-    if (!$('#CategoryCreate').valid()) {
+    if (!$('#FormCreateCategory').valid()) {
         return false;
     }
 
-    var createForm = $('#CategoryCreate');
+    var createForm = $('#FormCreateCategory');
     var name = createForm.find('input[id="Name"]').val();
     var displayName = createForm.find('input[id="DisplayName"]').val();
     var iconPath = createForm.find('input[id="IconPath"]').val();
@@ -111,6 +111,36 @@ function CreateCategory() {
     var action = createForm.find('input[id="Action"]').val();
     var role = createForm.find('select[id="Role"]').val();
     var order = createForm.find('input[id="Order"]').val();
+
+    var paramValue = JSON.stringify({
+        Name: name,
+        DisplayName: displayName,
+        IconPath: iconPath,
+        Controller: controller,
+        Action: action,
+        Role: role,
+        Order: order
+    });
+
+    $.ajax({
+        url: '/Management/CreateCategory',
+        type: 'POST',
+        headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
+        dataType: 'json',
+        data: paramValue,
+        contentType: 'application/json; charset=utf-8',
+        //async: false,
+        //cache: false,
+        success: function (data) {
+            if (data.result) {
+                alert('저장 성공');
+                //window.location.href = "@Url.Action("CoreValue", "Admin")";
+            }
+            else {
+                alert('저장 실패');
+            }
+        }
+    });
 
     $('#CreateDialogModal').modal('hide'); // hide Modal
 

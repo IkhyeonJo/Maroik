@@ -44,7 +44,7 @@
                 </ul>
                 @*Tabs-1: Create Category Modal*@
                 <div id="Tabs-1">
-                    <form id="CategoryCreate" method="post">
+                    <form id="FormCreateCategory" method="post">
                         <div class="form-row">
                             <div class="form-group col-md-6 mb-3">
                                 <label asp-for="Name"></label>
@@ -72,7 +72,7 @@
                         <div class="form-row">
                             <div class="form-group col-md-6 mb-3">
                                 <label asp-for="Action"></label>
-                                <input asp-for="Action" class="form-control form-control-sm" />
+                                <input asp-for="Action" class="form-control form-control-sm" data-val="false" />
                             </div>
                             <div class="form-group col-md-6 mb-3">
                                 <label asp-for="Role"></label>
