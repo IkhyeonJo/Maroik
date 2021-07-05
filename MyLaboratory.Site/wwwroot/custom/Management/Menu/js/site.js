@@ -22,11 +22,11 @@ document.addEventListener("rowclick", e => {
         selectedRowCategoryId = "-1";
     }
 
-    $('#my-grid > table > tbody  > tr').each(function (index, tr) {
+    $('#menuGrid > table > tbody  > tr').each(function (index, tr) {
         $(this).removeClass(selectedRowColor);
     }); // remove all selected row color
 
-    $('#my-grid > table > tbody  > tr').each(function (index, tr) {
+    $('#menuGrid > table > tbody  > tr').each(function (index, tr) {
         if ((new String(selectedRowId).valueOf() === new String($(this).attr('data-id')).valueOf()) && (new String(selectedRowCategoryId).valueOf() === new String($(this).attr('data-categoryid')).valueOf())) {
             $(this).addClass(selectedRowColor);
         }
@@ -57,9 +57,9 @@ document.addEventListener("gridconfigure", e => {
 });
 
 
-$(document).on("dblclick", "#my-grid > table > tbody  > tr", function () {
+$(document).on("dblclick", "#menuGrid > table > tbody  > tr", function () {
     //console.log('dblclick-start');
-    $('#my-grid > table > tbody  > tr').each(function (index, tr) {
+    $('#menuGrid > table > tbody  > tr').each(function (index, tr) {
 
         if ($(this).attr("class").includes(selectedRowColor)) { // Get SelectedRow by Color
             console.log("SelectedRow Id:" + $(this).attr("data-id"));
