@@ -133,7 +133,7 @@ function CreateCategory() {
         //cache: false,
         success: function (data) {
             if (data.result) {
-                $('#CreateDialogModal').modal('hide'); // hide Modal
+                $('#createDialogModal').modal('hide'); // hide Modal
 
                 const grid = new MvcGrid(document.querySelector(".mvc-grid")); //reload grid
                 grid.reload(); //reload grid
@@ -183,7 +183,7 @@ function CreateSubCategory() {
         //cache: false,
         success: function (data) {
             if (data.result) {
-                $('#CreateDialogModal').modal('hide'); // hide Modal
+                $('#createDialogModal').modal('hide'); // hide Modal
 
                 const grid = new MvcGrid(document.querySelector(".mvc-grid")); //reload grid
                 grid.reload(); //reload grid
