@@ -82,14 +82,14 @@ function CategoryExportExcel() {
     var element2 = document.createElement("input");
 
     form.method = "POST";
-    form.action = "/Management/CategoryExportExcel";
+    form.action = "/Management/ExportExcelMenu";
 
     element1.name = "__RequestVerificationToken";
     element1.value = $('input[name="__RequestVerificationToken"]').val();
     form.appendChild(element1);
 
     element2.name = "fileName";
-    element2.value = "listOfCategories";
+    element2.value = "Menu";
     form.appendChild(element2);
 
     document.body.appendChild(form);

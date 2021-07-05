@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Identity;
 
 namespace MyLaboratory.Site.Models.ViewModels.Management
 {
-    public class CategoryOutputViewModel
+    public class MenuOutputViewModel
     {
         [Required(ErrorMessage = "Please enter Id")]
         [Display(Name = "Id")]

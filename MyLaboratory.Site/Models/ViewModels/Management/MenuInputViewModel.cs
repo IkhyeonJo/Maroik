@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Identity;
 
 namespace MyLaboratory.Site.Models.ViewModels.Management
 {
-    public class CategoryInputViewModel
+    public class MenuInputViewModel
     {
         public int CategoryId { get; set; }
         public string Name { get; set; }

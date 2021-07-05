@@ -48,12 +48,12 @@ namespace MyLaboratory.Site.Controllers
             return View();
         }
 
-        #region Category
+        #region Menu
 
         #region Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult CreateCategory([FromBody] CategoryInputViewModel categoryInputViewModel)
+        public IActionResult CreateCategory([FromBody] MenuInputViewModel MenuInputViewModel)
         {
             return Json(new { result = true });
             //if (HttpContext.Session.GetString(AdminSessionKey) == null)
@@ -77,18 +77,18 @@ namespace MyLaboratory.Site.Controllers
         #endregion
 
         [HttpGet]
-        public IActionResult Category(string wholeSearch)
+        public IActionResult Menu(string wholeSearch)
         {
             if (HttpContext.Request.Headers["X-Requested-With"] == "XMLHttpRequest") // ajax
             {
-                List<CategoryOutputViewModel> CategoryOutputViewModels = new List<CategoryOutputViewModel>();
+                List<MenuOutputViewModel> menuOutputViewModels = new List<MenuOutputViewModel>();
 
                 #region AdminCategories
                 foreach (var item in categoryRepository.AdminCategories)
                 {
                     if (string.IsNullOrEmpty(wholeSearch))
                     {
-                        CategoryOutputViewModels.Add(new CategoryOutputViewModel() 
+                        menuOutputViewModels.Add(new MenuOutputViewModel() 
                         { 
                             Id = item.Id,
                             CategoryId = null,
@@ -112,7 +112,7 @@ namespace MyLaboratory.Site.Controllers
                             (item.Role?.ToString() ?? "").Contains(wholeSearch) ||
                             item.Order.ToString().Contains(wholeSearch))
                         {
-                            CategoryOutputViewModels.Add(new CategoryOutputViewModel()
+                            menuOutputViewModels.Add(new MenuOutputViewModel()
                             {
                                 Id = item.Id,
                                 CategoryId = null,
@@ -134,7 +134,7 @@ namespace MyLaboratory.Site.Controllers
                 {
                     if (string.IsNullOrEmpty(wholeSearch))
                     {
-                        CategoryOutputViewModels.Add(new CategoryOutputViewModel()
+                        menuOutputViewModels.Add(new MenuOutputViewModel()
                         {
                             Id = item.Id,
                             CategoryId = null,
@@ -158,7 +158,7 @@ namespace MyLaboratory.Site.Controllers
                             (item.Role?.ToString() ?? "").Contains(wholeSearch) ||
                             item.Order.ToString().Contains(wholeSearch))
                         {
-                            CategoryOutputViewModels.Add(new CategoryOutputViewModel()
+                            menuOutputViewModels.Add(new MenuOutputViewModel()
                             {
                                 Id = item.Id,
                                 CategoryId = null,
@@ -180,7 +180,7 @@ namespace MyLaboratory.Site.Controllers
                 {
                     if (string.IsNullOrEmpty(wholeSearch))
                     {
-                        CategoryOutputViewModels.Add(new CategoryOutputViewModel()
+                        menuOutputViewModels.Add(new MenuOutputViewModel()
                         {
                             Id = item.Id,
                             CategoryId = item.CategoryId,
@@ -204,7 +204,7 @@ namespace MyLaboratory.Site.Controllers
                             (item.Role?.ToString() ?? "").Contains(wholeSearch) ||
                             item.Order.ToString().Contains(wholeSearch))
                         {
-                            CategoryOutputViewModels.Add(new CategoryOutputViewModel()
+                            menuOutputViewModels.Add(new MenuOutputViewModel()
                             {
                                 Id = item.Id,
                                 CategoryId = item.CategoryId,
@@ -226,7 +226,7 @@ namespace MyLaboratory.Site.Controllers
                 {
                     if (string.IsNullOrEmpty(wholeSearch))
                     {
-                        CategoryOutputViewModels.Add(new CategoryOutputViewModel()
+                        menuOutputViewModels.Add(new MenuOutputViewModel()
                         {
                             Id = item.Id,
                             CategoryId = item.CategoryId,
@@ -250,7 +250,7 @@ namespace MyLaboratory.Site.Controllers
                             (item.Role?.ToString() ?? "").Contains(wholeSearch) ||
                             item.Order.ToString().Contains(wholeSearch))
                         {
-                            CategoryOutputViewModels.Add(new CategoryOutputViewModel()
+                            menuOutputViewModels.Add(new MenuOutputViewModel()
                             {
                                 Id = item.Id,
                                 CategoryId = item.CategoryId,
@@ -268,16 +268,16 @@ namespace MyLaboratory.Site.Controllers
                 #endregion
 
 
-                var result = CategoryOutputViewModels.AsQueryable();
-                return PartialView("_CategoryGrid", result);
+                var result = menuOutputViewModels.AsQueryable();
+                return PartialView("_MenuGrid", result);
             }
 
-            return View(new CategoryOutputViewModel());
+            return View(new MenuOutputViewModel());
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> CategoryExportExcel(string fileName = "")
+        public async Task<IActionResult> ExportExcelMenu(string fileName = "")
         {
 
             // query data from database

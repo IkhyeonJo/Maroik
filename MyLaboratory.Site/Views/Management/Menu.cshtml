@@ -1,4 +1,4 @@
-﻿@model MyLaboratory.Site.Models.ViewModels.Management.CategoryOutputViewModel
+﻿@model MyLaboratory.Site.Models.ViewModels.Management.MenuOutputViewModel
 
 @Html.AntiForgeryToken()
 <section class="content">
@@ -27,7 +27,7 @@
                     </li>
                 </ul>
             </nav>
-            @Html.AjaxGrid(Url.Action("Category", "Management"))
+            @Html.AjaxGrid(Url.Action("Menu", "Management"))
         </div>
     </div>
 </section>
@@ -150,42 +150,5 @@
 </div>
 
 @section Scripts{
-    <script src="~/custom/Management/Category/js/site.js" asp-append-version="true"></script>
-    @*<script>
-            function ExportExcel() {
-                var paramValue = JSON.stringify({
-                    TeamNumber: 11,
-                    Evaluator: 'Evaluator33',
-                    CategoryOne0: 22,
-                    CategoryOne1: 33,
-                    CategoryOne2: 44,
-                    CategoryTwo0: 55,
-                    CategoryTwo1: 66,
-                    CategoryTwo2: 77,
-                    CategoryThree0: 88,
-                    CategoryThree1: 99,
-                    CategoryThree2: 100,
-                    CategoryScore: 1000,
-                    GoodText: 'GoodText0',
-                    Opinion: 'Opinion1'
-                });
-                var paramValue1 = JSON.stringify({
-                    method: 'aaa',
-                });
-                $.ajax({
-                    url: '@Url.Action("Category", "Management")',
-                    type: 'POST',
-                    headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val(), "MyLaboratoryCustomActionMethod": 'ExportExcel' },
-                    dataType: 'json',
-                    //data: paramValue,
-                    data: paramValue1,
-                    contentType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-                    async: true,
-                    cache: false,
-                    success: function (data) {
-
-                    }
-                });
-            }
-        </script>*@
+    <script src="~/custom/Management/Menu/js/site.js" asp-append-version="true"></script>
 }
