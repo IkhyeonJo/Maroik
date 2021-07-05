@@ -104,13 +104,13 @@ function CreateCategory() {
     }
 
     var createForm = $('#FormCreateCategory');
-    var name = createForm.find('input[id="Name"]').val();
-    var displayName = createForm.find('input[id="DisplayName"]').val();
-    var iconPath = createForm.find('input[id="IconPath"]').val();
-    var controller = createForm.find('input[id="Controller"]').val();
-    var action = createForm.find('input[id="Action"]').val();
-    var role = createForm.find('select[id="Role"]').val();
-    var order = createForm.find('input[id="Order"]').val();
+    var name = createForm.find('input[id="categoryName"]').val();
+    var displayName = createForm.find('input[id="categoryDisplayName"]').val();
+    var iconPath = createForm.find('input[id="categoryIconPath"]').val();
+    var controller = createForm.find('input[id="categoryController"]').val();
+    var action = createForm.find('input[id="categoryAction"]').val();
+    var role = createForm.find('select[id="categoryRole"]').val();
+    var order = createForm.find('input[id="categoryOrder"]').val();
 
     var paramValue = JSON.stringify({
         Name: name,
@@ -148,34 +148,50 @@ function CreateCategory() {
 }
 
 function CreateSubCategory() {
-    var createForm = $('#SubCategoryCreate');
-    //var id = createForm.find('input[id="Id"]').val();
-    var role = createForm.find('select[id="Role"]').val();
-    alert(role);
+    if (!$('#FormCreateSubCategory').valid()) {
+        return false;
+    }
 
-    $('#CreateDialogModal').modal('hide'); // hide Modal
+    var createForm = $('#FormCreateSubCategory');
+    var name = createForm.find('input[id="categoryName"]').val();
+    var displayName = createForm.find('input[id="categoryDisplayName"]').val();
+    var iconPath = createForm.find('input[id="categoryIconPath"]').val();
+    var controller = createForm.find('input[id="categoryController"]').val();
+    var action = createForm.find('input[id="categoryAction"]').val();
+    var role = createForm.find('select[id="categoryRole"]').val();
+    var order = createForm.find('input[id="categoryOrder"]').val();
 
-    //doubtful code (not yet Insert function created...!)
-    const grid = new MvcGrid(document.querySelector(".mvc-grid")); //reload grid
-    grid.reload(); //reload grid
-    //doubtful code (not yet Insert function created...!)
+    var paramValue = JSON.stringify({
+        Name: name,
+        DisplayName: displayName,
+        IconPath: iconPath,
+        Controller: controller,
+        Action: action,
+        Role: role,
+        Order: order
+    });
 
-    //var form = document.createElement("form");
-    //var element1 = document.createElement("input");
-    //var element2 = document.createElement("input");
+    $.ajax({
+        url: '/Management/CreateCategory',
+        type: 'POST',
+        headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
+        dataType: 'json',
+        data: paramValue,
+        contentType: 'application/json; charset=utf-8',
+        //async: false,
+        //cache: false,
+        success: function (data) {
+            if (data.result) {
+                $('#CreateDialogModal').modal('hide'); // hide Modal
 
-    //form.method = "POST";
-    //form.action = "/Management/CategoryExportExcel";
+                const grid = new MvcGrid(document.querySelector(".mvc-grid")); //reload grid
+                grid.reload(); //reload grid
 
-    //element1.name = "__RequestVerificationToken";
-    //element1.value = $('input[name="__RequestVerificationToken"]').val();
-    //form.appendChild(element1);
-
-    //element2.name = "fileName";
-    //element2.value = "listOfCategories";
-    //form.appendChild(element2);
-
-    //document.body.appendChild(form);
-
-    //form.submit();
+                toastr.success('Successfully created the category');
+            }
+            else {
+                result = false;
+            }
+        }
+    });
 }
