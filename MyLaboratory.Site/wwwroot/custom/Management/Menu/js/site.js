@@ -3,7 +3,7 @@
 
 // Write your JavaScript code.
 $(function () {
-    $("#tabs").tabs();
+    $("#createMenuTabs").tabs();
     $("#editCategoryTabs").tabs();
 });
 
