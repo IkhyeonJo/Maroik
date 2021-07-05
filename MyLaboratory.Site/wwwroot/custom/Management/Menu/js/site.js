@@ -4,6 +4,7 @@
 // Write your JavaScript code.
 $(function () {
     $("#tabs").tabs();
+    $("#editCategoryTabs").tabs();
 });
 
 var selectedRowColor = "table-primary";
@@ -220,6 +221,7 @@ function EditMenuGridRow() {
 
     if (selectedRowCategoryId == -1) {
         console.log("Category");
+        $('#editCategoryDialogModal').modal('show');
     } // Category
     else {
         console.log("SubCategory");
