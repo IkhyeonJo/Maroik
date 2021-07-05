@@ -76,7 +76,7 @@ $('#GridSearch').on('input', function () {
     grid.reload();
 });
 
-function CategoryExportExcel() {
+function ExportExcelMenu() {
     var form = document.createElement("form");
     var element1 = document.createElement("input");
     var element2 = document.createElement("input");
