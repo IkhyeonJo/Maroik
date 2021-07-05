@@ -205,22 +205,22 @@ function EditMenuGridRow() {
 
     $('#menuGrid > table > tbody  > tr').each(function (index, tr) {
         if ($(this).attr("class").includes(selectedRowColor)) { // Get SelectedRow by Color
-            console.log("ToEditSelectedRow Id:" + $(this).attr("data-id"));
-            console.log("ToEditSelectedRow categoryId:" + $(this).attr("data-categoryid"));
             selectedRowId = $(this).attr("data-id");
             selectedRowCategoryId = $(this).attr("data-categoryid");
         }
     }); // Search Selected Row
-
-    console.log(selectedRowId + "||||" + selectedRowCategoryId);
-
+    
     if (selectedRowId == -1) {
-        alert("Please select grid row");
+        toastr.error("Please select grid row");
         return false;
     } // check whether selected row exist or not
 
     if (selectedRowCategoryId == -1) {
-        console.log("Category");
+        $('#editCategoryDialogModal').modal({
+            keyboard: false,
+            backdrop: "static"
+        });
+        $('#editCategoryDialogModal').modal('toggle');
         $('#editCategoryDialogModal').modal('show');
     } // Category
     else {
