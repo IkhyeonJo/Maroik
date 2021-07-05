@@ -55,19 +55,52 @@ namespace MyLaboratory.Site.Controllers
         [ValidateAntiForgeryToken]
         public IActionResult CreateCategory([FromBody] MenuInputViewModel menuInputViewModel)
         {
-            Category category = new Category
+            try
             {
-                Name = menuInputViewModel.Name,
-                DisplayName = menuInputViewModel.DisplayName,
-                IconPath = menuInputViewModel.IconPath,
-                Controller = menuInputViewModel.Controller,
-                Action = menuInputViewModel.Action,
-                Role = menuInputViewModel.Role,
-                Order = menuInputViewModel.Order
-            };
-            categoryRepository.CreateCategory(category);
+                Category category = new Category
+                {
+                    Name = menuInputViewModel.Name,
+                    DisplayName = menuInputViewModel.DisplayName,
+                    IconPath = menuInputViewModel.IconPath,
+                    Controller = menuInputViewModel.Controller,
+                    Action = menuInputViewModel.Action,
+                    Role = menuInputViewModel.Role,
+                    Order = menuInputViewModel.Order
+                };
+                categoryRepository.CreateCategory(category);
 
-            return Json(new { result = true });
+                return Json(new { result = true });
+            }
+            catch(Exception e)
+            {
+                return Json(new { result = false, error = e.ToString() });
+            }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult CreateSubCategory([FromBody] MenuInputViewModel menuInputViewModel)
+        {
+            try
+            {
+                SubCategory subCategory = new SubCategory
+                {
+                    CategoryId = menuInputViewModel.CategoryId,
+                    Name = menuInputViewModel.Name,
+                    DisplayName = menuInputViewModel.DisplayName,
+                    IconPath = menuInputViewModel.IconPath,
+                    Action = menuInputViewModel.Action,
+                    Role = menuInputViewModel.Role,
+                    Order = menuInputViewModel.Order
+                };
+                subCategoryRepository.CreateSubCategory(subCategory);
+
+                return Json(new { result = true });
+            }
+            catch (Exception e)
+            {
+                return Json(new { result = false, error = e.ToString() });
+            }
         }
         #endregion
 

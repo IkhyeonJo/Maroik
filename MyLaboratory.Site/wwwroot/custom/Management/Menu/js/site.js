@@ -141,7 +141,7 @@ function CreateCategory() {
                 toastr.success('Successfully created the category');
             }
             else {
-                result = false;
+                toastr.error(data.error);
             }
         }
     });
@@ -153,26 +153,27 @@ function CreateSubCategory() {
     }
 
     var createForm = $('#FormCreateSubCategory');
-    var name = createForm.find('input[id="categoryName"]').val();
-    var displayName = createForm.find('input[id="categoryDisplayName"]').val();
-    var iconPath = createForm.find('input[id="categoryIconPath"]').val();
-    var controller = createForm.find('input[id="categoryController"]').val();
-    var action = createForm.find('input[id="categoryAction"]').val();
-    var role = createForm.find('select[id="categoryRole"]').val();
-    var order = createForm.find('input[id="categoryOrder"]').val();
+
+    var categoryId = createForm.find('input[id="subcategoryCategoryId"]').val();
+    var name = createForm.find('input[id="subcategoryName"]').val();
+    var displayName = createForm.find('input[id="subcategoryDisplayName"]').val();
+    var iconPath = createForm.find('input[id="subcategoryIconPath"]').val();
+    var action = createForm.find('input[id="subcategoryAction"]').val();
+    var role = createForm.find('select[id="subcategoryRole"]').val();
+    var order = createForm.find('input[id="subcategoryOrder"]').val();
 
     var paramValue = JSON.stringify({
+        CategoryId: categoryId,
         Name: name,
         DisplayName: displayName,
         IconPath: iconPath,
-        Controller: controller,
         Action: action,
         Role: role,
         Order: order
     });
 
     $.ajax({
-        url: '/Management/CreateCategory',
+        url: '/Management/CreateSubCategory',
         type: 'POST',
         headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
         dataType: 'json',
@@ -190,7 +191,7 @@ function CreateSubCategory() {
                 toastr.success('Successfully created the category');
             }
             else {
-                result = false;
+                toastr.error(data.error);
             }
         }
     });

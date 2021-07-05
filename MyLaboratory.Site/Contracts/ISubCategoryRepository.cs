@@ -7,5 +7,6 @@ namespace MyLaboratory.Site.Contracts
     {
         IEnumerable<SubCategory> AdminSubCategories { get; }
         IEnumerable<SubCategory> UserSubCategories { get; }
+        void CreateSubCategory(SubCategory subCategory);
     }
 }

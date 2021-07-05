@@ -100,38 +100,37 @@
                     <form id="FormCreateSubCategory" method="post">
                         <div class="form-row">
                             <div class="form-group col-md-6 mb-3">
-                                <label asp-for="CategoryId"></label>
-                                <input asp-for="CategoryId" class="form-control form-control-sm" />
-                                @*@Html.ValidationMessageFor(m => m.CategoryId, "", new { @class = "text-danger" })*@
+                                <label for="subcategoryCategoryId">CategoryId</label>
+                                <input class="form-control form-control-sm" min="0" type="number" id="subcategoryCategoryId" name="subcategoryCategoryId" value="0">
                             </div>
                             <div class="form-group col-md-6 mb-3">
-                                <label asp-for="Name"></label>
-                                <input asp-for="Name" class="form-control form-control-sm" />
-                                @*@Html.ValidationMessageFor(m => m.Name, "", new { @class = "text-danger" })*@
-                            </div>
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group col-md-6 mb-3">
-                                <label asp-for="DisplayName"></label>
-                                <input asp-for="DisplayName" class="form-control form-control-sm" />
-                                @*@Html.ValidationMessageFor(m => m.DisplayName, "", new { @class = "text-danger" })*@
-                            </div>
-                            <div class="form-group col-md-6 mb-3">
-                                <label asp-for="IconPath"></label>
-                                <input asp-for="IconPath" class="form-control form-control-sm" />
-                                @*@Html.ValidationMessageFor(m => m.IconPath, "", new { @class = "text-danger" })*@
+                                <label for="subcategoryName">Name</label>
+                                <input class="form-control form-control-sm" type="text" data-val="true" data-val-required="Please enter Name" id="subcategoryName" name="subcategoryName" value="">
+                                <span class="field-validation-valid text-danger" data-valmsg-for="subcategoryName" data-valmsg-replace="true"></span>
                             </div>
                         </div>
                         <div class="form-row">
                             <div class="form-group col-md-6 mb-3">
-                                <label asp-for="Action"></label>
-                                <input asp-for="Action" class="form-control form-control-sm" />
-                                @*@Html.ValidationMessageFor(m => m.Action, "", new { @class = "text-danger" })*@
+                                <label for="subcategoryDisplayName">DisplayName</label>
+                                <input class="form-control form-control-sm" type="text" data-val="true" data-val-required="Please enter DisplayName" id="subcategoryDisplayName" name="subcategoryDisplayName" value="">
+                                <span class="field-validation-valid text-danger" data-valmsg-for="subcategoryDisplayName" data-valmsg-replace="true"></span>
                             </div>
                             <div class="form-group col-md-6 mb-3">
-                                <label asp-for="Role"></label>
+                                <label for="subcategoryIconPath">IconPath</label>
+                                <input class="form-control form-control-sm" type="text" data-val="true" data-val-required="Please enter IconPath" id="subcategoryIconPath" name="subcategoryIconPath" value="">
+                                <span class="field-validation-valid text-danger" data-valmsg-for="subcategoryIconPath" data-valmsg-replace="true"></span>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group col-md-6 mb-3">
+                                <label for="subcategoryAction">Action</label>
+                                <input class="form-control form-control-sm" type="text" data-val="true" data-val-required="Please enter Action" id="subcategoryAction" name="subcategoryAction" value="">
+                                <span class="field-validation-valid text-danger" data-valmsg-for="subcategoryAction" data-valmsg-replace="true"></span>
+                            </div>
+                            <div class="form-group col-md-6 mb-3">
+                                <label for="subcategoryRole">Role</label>
                                 <br />
-                                <select asp-for="Role">
+                                <select id="subcategoryRole" name="subcategoryRole">
                                     <option value="Admin">관리자</option>
                                     <option value="User">사용자</option>
                                 </select>
@@ -139,8 +138,8 @@
                         </div>
                         <div class="form-row">
                             <div class="form-group col-md-6 mb-3">
-                                <label asp-for="Order"></label>
-                                <input asp-for="Order" class="form-control form-control-sm" min="0" />
+                                <label for="subcategoryOrder">Order</label>
+                                <input class="form-control form-control-sm" min="0" type="number" id="subcategoryOrder" name="subcategoryOrder" value="0">
                             </div>
                         </div>
                     </form>

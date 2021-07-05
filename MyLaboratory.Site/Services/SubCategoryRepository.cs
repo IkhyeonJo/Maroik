@@ -33,5 +33,11 @@ namespace MyLaboratory.Site.Services
                 return context.SubCategories.FromSqlRaw($"SELECT * FROM SubCategory WHERE `Role` = '{Role.User}' ORDER BY CategoryId, `Order`;").ToList();
             }
         }
+
+        public void CreateSubCategory(SubCategory subCategory)
+        {
+            context.SubCategories.Add(subCategory);
+            context.SaveChanges();
+        }
     }
 }
