@@ -21,8 +21,10 @@ namespace MyLaboratory.Site.Services
         {
             get
             {
-                return context.Categories.FromSqlRaw($"SELECT * FROM Category WHERE `Role` = '{Role.Admin}' ORDER BY `Order`;").ToList();
-
+                return context.Categories
+                        .Where(a => a.Role == Role.Admin)
+                        .OrderBy(a => a.Order)
+                        .ToList();
             }
         }
 
@@ -30,7 +32,10 @@ namespace MyLaboratory.Site.Services
         {
             get
             {
-                return context.Categories.FromSqlRaw($"SELECT * FROM Category WHERE `Role` = '{Role.User}' ORDER BY `Order`;").ToList();
+                return context.Categories
+                        .Where(a => a.Role == Role.User)
+                        .OrderBy(a => a.Order)
+                        .ToList();
             }
         }
     }
