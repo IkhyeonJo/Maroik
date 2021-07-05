@@ -3,7 +3,7 @@
 
 // Write your JavaScript code.
 $(function () {
-    $("#Tabs").tabs();
+    $("#tabs").tabs();
 });
 
 var selectedRowColor = "table-primary";
@@ -68,7 +68,7 @@ $(document).on("dblclick", "#my-grid > table > tbody  > tr", function () {
     });
     //console.log('dblclick-end');
 });
-$('#GridSearch').on('input', function () {
+$('#gridSearch').on('input', function () {
     const grid = new MvcGrid(document.querySelector(".mvc-grid"));
 
     grid.url.searchParams.set("wholeSearch", this.value);
@@ -99,11 +99,11 @@ function ExportExcelMenu() {
 
 function CreateCategory() {
 
-    if (!$('#FormCreateCategory').valid()) {
+    if (!$('#formCreateCategory').valid()) {
         return false;
     }
 
-    var createForm = $('#FormCreateCategory');
+    var createForm = $('#formCreateCategory');
     var name = createForm.find('input[id="categoryName"]').val();
     var displayName = createForm.find('input[id="categoryDisplayName"]').val();
     var iconPath = createForm.find('input[id="categoryIconPath"]').val();
@@ -148,11 +148,11 @@ function CreateCategory() {
 }
 
 function CreateSubCategory() {
-    if (!$('#FormCreateSubCategory').valid()) {
+    if (!$('#formCreateSubCategory').valid()) {
         return false;
     }
 
-    var createForm = $('#FormCreateSubCategory');
+    var createForm = $('#formCreateSubCategory');
 
     var categoryId = createForm.find('input[id="subcategoryCategoryId"]').val();
     var name = createForm.find('input[id="subcategoryName"]').val();

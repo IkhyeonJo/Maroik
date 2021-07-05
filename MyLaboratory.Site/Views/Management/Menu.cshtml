@@ -23,7 +23,7 @@
                         <button type="button" class="btn btn-secondary btn-block btn-sm" onclick="ExportExcelMenu()" style="width: 100px !important;"><i class="fas fa-file-excel" style="padding-right:3px;"></i> EXCEL</button>
                     </li>
                     <li class="nav-item ml-auto">
-                        <input type="text" id="GridSearch" placeholder="Search..." style="margin-bottom: 7px; text-align: center; font-size: .7em; padding: 5px 0; color: #000; border: none; " />
+                        <input type="text" id="gridSearch" placeholder="Search..." style="margin-bottom: 7px; text-align: center; font-size: .7em; padding: 5px 0; color: #000; border: none; " />
                     </li>
                 </ul>
             </nav>
@@ -36,15 +36,15 @@
 <div class="modal fade" tabindex="-1" role="dialog" id="createDialogModal">
     <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
-            <div id="Tabs">
+            <div id="tabs">
                 @*<!--Tab Menu-->*@
                 <ul>
-                    <li><a href="#Tabs-1">Add Category</a></li>
-                    <li><a href="#Tabs-2">Add SubCategory</a></li>
+                    <li><a href="#tabs-1">Add Category</a></li>
+                    <li><a href="#tabs-2">Add SubCategory</a></li>
                 </ul>
                 @*Tabs-1: Create Category Modal*@
-                <div id="Tabs-1">
-                    <form id="FormCreateCategory">
+                <div id="tabs-1">
+                    <form id="formCreateCategory">
                         <div class="form-row">
                             <div class="form-group col-md-6 mb-3">
                                 <label for="categoryName">Name</label>
@@ -96,8 +96,8 @@
                     </div>
                 </div>
                 @*Tabs-2: Create SubCategory Modal*@
-                <div id="Tabs-2">
-                    <form id="FormCreateSubCategory">
+                <div id="tabs-2">
+                    <form id="formCreateSubCategory">
                         <div class="form-row">
                             <div class="form-group col-md-6 mb-3">
                                 <label for="subcategoryCategoryId">CategoryId</label>
