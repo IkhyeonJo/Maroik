@@ -98,10 +98,19 @@ function CategoryExportExcel() {
 }
 
 function CreateCategory() {
+
+    if (!$('#CategoryCreate').valid()) {
+        return false;
+    }
+
     var createForm = $('#CategoryCreate');
-    //var id = createForm.find('input[id="Id"]').val();
+    var name = createForm.find('input[id="Name"]').val();
+    var displayName = createForm.find('input[id="DisplayName"]').val();
+    var iconPath = createForm.find('input[id="IconPath"]').val();
+    var controller = createForm.find('input[id="Controller"]').val();
+    var action = createForm.find('input[id="Action"]').val();
     var role = createForm.find('select[id="Role"]').val();
-    alert(role);
+    var order = createForm.find('input[id="Order"]').val();
 
     $('#CreateDialogModal').modal('hide'); // hide Modal
 
