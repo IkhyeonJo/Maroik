@@ -407,5 +407,5 @@ https://getbootstrap.com/docs/3.4/javascript/
 $('#myModal').modal()                      // initialized with defaults
 $('#myModal').modal({ keyboard: false })   // initialized with no keyboard
 $('#myModal').modal('show')                // initializes and invokes show immediately
-data-toggle="modal" data-target="#CreateDialogModal" data-backdrop="static" data-keyboard="false"
+data-toggle="modal" data-target="#createMenuDialogModal" data-backdrop="static" data-keyboard="false"
 https://stackoverflow.com/questions/13183630/how-to-open-a-bootstrap-modal-window-using-jquery
