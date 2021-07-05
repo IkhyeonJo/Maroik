@@ -6,15 +6,15 @@
     .Grid(Model)
     .Build(columns =>
     {
-        columns.Add(model => model.Id).Titled("Id");
-        columns.Add(model => model.CategoryId).Titled("CategoryId");
-        columns.Add(model => model.Name).Titled("Name");
-        columns.Add(model => model.DisplayName).Titled("DisplayName");
-        columns.Add(model => model.IconPath).Titled("IconPath");
-        columns.Add(model => model.Controller).Titled("Controller");
-        columns.Add(model => model.Action).Titled("Action");
-        columns.Add(model => model.Role).Titled("Role");
-        columns.Add(model => model.Order).Titled("Order");
+        columns.Add(model => model.Id);
+        columns.Add(model => model.CategoryId);
+        columns.Add(model => model.Name);
+        columns.Add(model => model.DisplayName);
+        columns.Add(model => model.IconPath);
+        columns.Add(model => model.Controller);
+        columns.Add(model => model.Action);
+        columns.Add(model => model.Role);
+        columns.Add(model => model.Order);
 
     })
     .Id("my-grid")

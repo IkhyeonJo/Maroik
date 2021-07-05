@@ -49,20 +49,24 @@
                             <div class="form-group col-md-6 mb-3">
                                 <label asp-for="Name"></label>
                                 <input asp-for="Name" class="form-control form-control-sm" />
+                                @Html.ValidationMessageFor(m => m.Name, "", new { @class = "text-danger" })
                             </div>
                             <div class="form-group col-md-6 mb-3">
                                 <label asp-for="DisplayName"></label>
                                 <input asp-for="DisplayName" class="form-control form-control-sm" />
+                                @Html.ValidationMessageFor(m => m.DisplayName, "", new { @class = "text-danger" })
                             </div>
                         </div>
                         <div class="form-row">
                             <div class="form-group col-md-6 mb-3">
                                 <label asp-for="IconPath"></label>
                                 <input asp-for="IconPath" class="form-control form-control-sm" />
+                                @Html.ValidationMessageFor(m => m.IconPath, "", new { @class = "text-danger" })
                             </div>
                             <div class="form-group col-md-6 mb-3">
                                 <label asp-for="Controller"></label>
                                 <input asp-for="Controller" class="form-control form-control-sm" />
+                                @Html.ValidationMessageFor(m => m.Controller, "", new { @class = "text-danger" })
                             </div>
                         </div>
                         <div class="form-row">
