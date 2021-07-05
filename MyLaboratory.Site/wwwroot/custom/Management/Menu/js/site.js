@@ -138,6 +138,7 @@ function CreateCategory() {
                 const grid = new MvcGrid(document.querySelector(".mvc-grid")); //reload grid
                 grid.reload(); //reload grid
 
+                toastr.success('Successfully created the category');
             }
             else {
                 result = false;
