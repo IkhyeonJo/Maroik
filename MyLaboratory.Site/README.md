@@ -398,3 +398,5 @@ Bind ¾îÆ®¸®ºäÆ®´Â ÇØÄ¿µéÀÌ ¿À¹öÆ÷½ºÆÃ(over-posting) ÇÏÁö ¸øÇÏµµ·Ï ÁöÄÑÁÖ´Â Áß¿äÇ
 À¥°³¹ß Â¥ÁõÀ¯¹ßÀÚ! CORS°¡ ¹º°¡¿ä? // POSTMAN °°Àº °Ç ´Ù µÇ´Âµ¥ Ajax ½ÇÁ¦ ÇÒ ¶§´Â ¾È µÊ.
 
 https://stackoverflow.com/questions/21583278/getting-all-controllers-and-actions-names-in-c-sharp/30969888
+
+https://docs.microsoft.com/en-us/aspnet/core/tutorials/first-mvc-app/validation?view=aspnetcore-5.0 // Validation Model value
