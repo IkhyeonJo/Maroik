@@ -303,6 +303,62 @@ namespace MyLaboratory.Site.Controllers
 
             return View(new MenuOutputViewModel());
         }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult IsCategoryExists(int id)
+        {
+            try
+            {
+                List<MenuOutputViewModel> menuOutputViewModels = new List<MenuOutputViewModel>();
+
+                #region AdminCategories
+                foreach (var item in categoryRepository.AdminCategories)
+                {
+                    menuOutputViewModels.Add(new MenuOutputViewModel()
+                    {
+                        Id = item.Id,
+                        CategoryId = null,
+                        Name = item.Name,
+                        DisplayName = item.DisplayName,
+                        IconPath = item.IconPath,
+                        Controller = item.Controller,
+                        Action = item.Action,
+                        Role = item.Role,
+                        Order = item.Order
+                    });
+                }
+                #endregion
+
+                #region UserCategories
+                foreach (var item in categoryRepository.UserCategories)
+                {
+                    menuOutputViewModels.Add(new MenuOutputViewModel()
+                    {
+                        Id = item.Id,
+                        CategoryId = null,
+                        Name = item.Name,
+                        DisplayName = item.DisplayName,
+                        IconPath = item.IconPath,
+                        Controller = item.Controller,
+                        Action = item.Action,
+                        Role = item.Role,
+                        Order = item.Order
+                    });
+                }
+                #endregion
+                var selectedCategory = menuOutputViewModels.Where(a => a.Id == id).FirstOrDefault();
+                if(selectedCategory == null)
+                {
+                    throw new Exception(); // DB에서 못 찾음
+                }
+                return Json(new { result = true, category = menuOutputViewModels.Where(a => a.Id == id).FirstOrDefault() });
+            }
+            catch (Exception e)
+            {
+                return Json(new { result = false, error = e.ToString() });
+            }
+        }
         #endregion
 
         #region Excel

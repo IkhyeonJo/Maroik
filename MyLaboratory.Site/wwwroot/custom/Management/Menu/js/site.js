@@ -216,62 +216,44 @@ function EditMenuGridRow() {
     } // check whether selected row exist or not
 
     if (selectedRowCategoryId == -1) {
-        $('#editCategoryDialogModal').modal({
-            keyboard: false,
-            backdrop: "static"
+
+        $.ajax({
+            url: '/Management/IsCategoryExists' + '?id=' + selectedRowId,
+            type: 'POST',
+            headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
+            dataType: 'json',
+            data: null,
+            contentType: 'application/json; charset=utf-8',
+            //async: false,
+            //cache: false,
+            success: function (data) {
+                if (data.result) {
+
+                    var editCategoryForm = $('#formEditCategory');
+
+                    var id = editCategoryForm.find('input[id="editCategoryId"]').val(data.category.id);
+                    var name = editCategoryForm.find('input[id="editCategoryName"]').val(data.category.name);
+                    var displayName = editCategoryForm.find('input[id="editCategoryDisplayName"]').val(data.category.displayName);
+                    var iconPath = editCategoryForm.find('input[id="editCategoryIconPath"]').val(data.category.iconPath);
+                    var controller = editCategoryForm.find('input[id="editCategoryController"]').val(data.category.controller);
+                    var action = editCategoryForm.find('input[id="editCategoryAction"]').val(data.category.action);
+                    var role = editCategoryForm.find('select[id="editCategoryRole"]').val(data.category.role).change();
+                    var order = editCategoryForm.find('input[id="editCategoryOrder"]').val(data.category.order);
+
+                    $('#editCategoryDialogModal').modal({
+                        keyboard: false,
+                        backdrop: "static"
+                    });
+                    $('#editCategoryDialogModal').modal('toggle');
+                    $('#editCategoryDialogModal').modal('show');
+                }
+                else {
+                    toastr.error(data.error);
+                }
+            }
         });
-        $('#editCategoryDialogModal').modal('toggle');
-        $('#editCategoryDialogModal').modal('show');
     } // Category
     else {
         console.log("SubCategory");
     } // SubCategory
-
-    //if (!$('#formCreateSubCategory').valid()) {
-    //    return false;
-    //}
-
-    //var createForm = $('#formCreateSubCategory');
-
-    //var categoryId = createForm.find('input[id="createSubcategoryCategoryId"]').val();
-    //var name = createForm.find('input[id="createSubcategoryName"]').val();
-    //var displayName = createForm.find('input[id="createSubcategoryDisplayName"]').val();
-    //var iconPath = createForm.find('input[id="createSubcategoryIconPath"]').val();
-    //var action = createForm.find('input[id="createSubcategoryAction"]').val();
-    //var role = createForm.find('select[id="createSubcategoryRole"]').val();
-    //var order = createForm.find('input[id="createSubcategoryOrder"]').val();
-
-    //var paramValue = JSON.stringify({
-    //    CategoryId: categoryId,
-    //    Name: name,
-    //    DisplayName: displayName,
-    //    IconPath: iconPath,
-    //    Action: action,
-    //    Role: role,
-    //    Order: order
-    //});
-
-    //$.ajax({
-    //    url: '/Management/CreateSubCategory',
-    //    type: 'POST',
-    //    headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
-    //    dataType: 'json',
-    //    data: paramValue,
-    //    contentType: 'application/json; charset=utf-8',
-    //    //async: false,
-    //    //cache: false,
-    //    success: function (data) {
-    //        if (data.result) {
-    //            $('#createMenuDialogModal').modal('hide'); // hide Modal
-
-    //            const grid = new MvcGrid(document.querySelector(".mvc-grid")); //reload grid
-    //            grid.reload(); //reload grid
-
-    //            toastr.success('Successfully created the subCategory');
-    //        }
-    //        else {
-    //            toastr.error(data.error);
-    //        }
-    //    }
-    //});
 }
