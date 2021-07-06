@@ -231,19 +231,20 @@ function EditMenuGridRow() {
 
                     var editCategoryForm = $('#formEditCategory');
 
-                    var id = editCategoryForm.find('input[id="editCategoryId"]').val(data.category.id);
-                    var name = editCategoryForm.find('input[id="editCategoryName"]').val(data.category.name);
-                    var displayName = editCategoryForm.find('input[id="editCategoryDisplayName"]').val(data.category.displayName);
-                    var iconPath = editCategoryForm.find('input[id="editCategoryIconPath"]').val(data.category.iconPath);
-                    var controller = editCategoryForm.find('input[id="editCategoryController"]').val(data.category.controller);
-                    var action = editCategoryForm.find('input[id="editCategoryAction"]').val(data.category.action);
-                    var role = editCategoryForm.find('select[id="editCategoryRole"]').val(data.category.role).change();
-                    var order = editCategoryForm.find('input[id="editCategoryOrder"]').val(data.category.order);
+                    editCategoryForm.find('input[id="editCategoryId"]').val(data.category.id);
+                    editCategoryForm.find('input[id="editCategoryName"]').val(data.category.name);
+                    editCategoryForm.find('input[id="editCategoryDisplayName"]').val(data.category.displayName);
+                    editCategoryForm.find('input[id="editCategoryIconPath"]').val(data.category.iconPath);
+                    editCategoryForm.find('input[id="editCategoryController"]').val(data.category.controller);
+                    editCategoryForm.find('input[id="editCategoryAction"]').val(data.category.action);
+                    editCategoryForm.find('select[id="editCategoryRole"]').val(data.category.role).change();
+                    editCategoryForm.find('input[id="editCategoryOrder"]').val(data.category.order);
 
                     $('#editCategoryDialogModal').modal({
                         keyboard: false,
                         backdrop: "static"
                     });
+
                     $('#editCategoryDialogModal').modal('toggle');
                     $('#editCategoryDialogModal').modal('show');
                 }
