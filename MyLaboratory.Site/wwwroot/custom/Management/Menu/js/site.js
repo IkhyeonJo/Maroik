@@ -200,8 +200,8 @@ function CreateSubCategory() {
 
 function EditMenuGridRow() {
 
-    var selectedRowId = -1;
-    var selectedRowCategoryId = -1;
+    var selectedRowId = "-1";
+    var selectedRowCategoryId = "-1";
 
     $('#menuGrid > table > tbody  > tr').each(function (index, tr) {
         if ($(this).attr("class").includes(selectedRowColor)) { // Get SelectedRow by Color
@@ -210,12 +210,12 @@ function EditMenuGridRow() {
         }
     }); // Search Selected Row
     
-    if (selectedRowId === -1) {
+    if (selectedRowId === "-1") {
         toastr.error("Please select grid row");
         return false;
     } // check whether selected row exist or not
 
-    if (selectedRowCategoryId === -1) {
+    if (selectedRowCategoryId === "-1") {
 
         $.ajax({
             url: '/Management/IsCategoryExists' + '?id=' + selectedRowId,
