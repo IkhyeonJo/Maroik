@@ -379,6 +379,16 @@ function UpdateSubCategory() {
     });
 }
 
+function ConfirmDeleteMenu() {
+    $('#confirmDeleteMenuDialogModal').modal({
+        keyboard: false,
+        backdrop: "static"
+    });
+
+    $('#confirmDeleteMenuDialogModal').modal('toggle');
+    $('#confirmDeleteMenuDialogModal').modal('show');    
+}
+
 function ExportExcelMenu() {
     var form = document.createElement("form");
     var element1 = document.createElement("input");
