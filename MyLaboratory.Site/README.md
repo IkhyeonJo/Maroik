@@ -424,3 +424,7 @@ https://www.youtube.com/watch?v=4I1rYUbjAhw // sendgrid
 https://www.youtube.com/watch?v=UQ2GdLzMmbE // User Registration With Email and Email Confirmation or Validation | ASP.NET Core Web API
 
 https://www.youtube.com/watch?v=C4O8vqg295o // Mail Send
+
+https://stackoverflow.com/questions/60634480/user-email-confirmation-optionsjwt // email validation
+
+https://stackoverflow.com/questions/15188829/how-to-use-a-guid-to-verify-user-email-in-asp-net-c-sharp // email validation
