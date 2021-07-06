@@ -416,3 +416,5 @@ wwwroot 아이콘 오른쪽 클릭 후 Add -> Client-Side Library -> 원하는 라이브러리 검
 
 
 https://www.youtube.com/watch?v=Hy9G30nncMM // Localization and Globalization in ASP.NET Core MVC (.NET 5)
+
+https://www.fitrianingrum.me/post/account-confirmation-aspnet-core-sendgrid/ // sendgrid
