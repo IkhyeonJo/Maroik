@@ -210,12 +210,12 @@ function EditMenuGridRow() {
         }
     }); // Search Selected Row
     
-    if (selectedRowId == -1) {
+    if (selectedRowId === -1) {
         toastr.error("Please select grid row");
         return false;
     } // check whether selected row exist or not
 
-    if (selectedRowCategoryId == -1) {
+    if (selectedRowCategoryId === -1) {
 
         $.ajax({
             url: '/Management/IsCategoryExists' + '?id=' + selectedRowId,
