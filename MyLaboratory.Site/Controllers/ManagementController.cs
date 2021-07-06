@@ -473,6 +473,61 @@ namespace MyLaboratory.Site.Controllers
         }
         #endregion
 
+        #region Delete
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult DeleteCategory([FromBody] MenuInputViewModel menuInputViewModel)
+        {
+            try
+            {
+                Category category = new Category
+                {
+                    Id = menuInputViewModel.Id,
+                    Name = menuInputViewModel.Name,
+                    DisplayName = menuInputViewModel.DisplayName,
+                    IconPath = menuInputViewModel.IconPath,
+                    Controller = menuInputViewModel.Controller,
+                    Action = menuInputViewModel.Action,
+                    Role = menuInputViewModel.Role,
+                    Order = menuInputViewModel.Order
+                };
+                categoryRepository.DeleteCategory(category);
+
+                return Json(new { result = true });
+            }
+            catch (Exception e)
+            {
+                return Json(new { result = false, error = e.ToString() });
+            }
+        }
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult DeleteSubCategory([FromBody] MenuInputViewModel menuInputViewModel)
+        {
+            try
+            {
+                SubCategory subCategory = new SubCategory
+                {
+                    Id = menuInputViewModel.Id,
+                    CategoryId = menuInputViewModel.CategoryId,
+                    Name = menuInputViewModel.Name,
+                    DisplayName = menuInputViewModel.DisplayName,
+                    IconPath = menuInputViewModel.IconPath,
+                    Action = menuInputViewModel.Action,
+                    Role = menuInputViewModel.Role,
+                    Order = menuInputViewModel.Order
+                };
+                subCategoryRepository.DeleteSubCategory(subCategory);
+
+                return Json(new { result = true });
+            }
+            catch (Exception e)
+            {
+                return Json(new { result = false, error = e.ToString() });
+            }
+        }
+        #endregion
+
         #region Excel
         [HttpPost]
         [ValidateAntiForgeryToken]

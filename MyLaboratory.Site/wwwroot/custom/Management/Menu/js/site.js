@@ -371,7 +371,7 @@ function UpdateSubCategory() {
                 const grid = new MvcGrid(document.querySelector(".mvc-grid")); //reload grid
                 grid.reload(); //reload grid
 
-                toastr.success('Successfully updated the SubCategory');
+                toastr.success('Successfully updated the subCategory');
             }
             else {
                 toastr.error(data.error);
@@ -405,7 +405,130 @@ function ConfirmDeleteMenu() {
 }
 
 function DeleteMenu() {
+    var selectedRowId = "-1";
+    var selectedRowCategoryId = "-1";
 
+    $('#menuGrid > table > tbody  > tr').each(function (index, tr) {
+        if ($(this).attr("class").includes(selectedRowColor)) { // Get SelectedRow by Color
+            selectedRowId = $(this).attr("data-id");
+            selectedRowCategoryId = $(this).attr("data-categoryid");
+        }
+    }); // Search Selected Row
+
+    if (selectedRowId === "-1") {
+        toastr.error("Please select grid row");
+        return false;
+    } // check whether selected row exist or not
+
+    if (selectedRowCategoryId === "-1") {
+
+        $.ajax({
+            url: '/Management/IsCategoryExists' + '?id=' + selectedRowId,
+            type: 'POST',
+            headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
+            dataType: 'json',
+            data: null,
+            contentType: 'application/json; charset=utf-8',
+            //async: false,
+            //cache: false,
+            success: function (data) {
+                if (data.result) {
+
+                    var paramValue = JSON.stringify({
+                        Id: data.category.id,
+                        Name: data.category.name,
+                        DisplayName: data.category.displayName,
+                        IconPath: data.category.iconPath,
+                        Controller: data.category.controller,
+                        Action: data.category.action,
+                        Role: data.category.role,
+                        Order: data.category.order
+                    });
+
+                    $.ajax({
+                        url: '/Management/DeleteCategory',
+                        type: 'POST',
+                        headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
+                        dataType: 'json',
+                        data: paramValue,
+                        contentType: 'application/json; charset=utf-8',
+                        //async: false,
+                        //cache: false,
+                        success: function (data) {
+                            if (data.result) {
+                                $('#confirmDeleteMenuDialogModal').modal('hide'); // hide Modal
+
+                                const grid = new MvcGrid(document.querySelector(".mvc-grid")); //reload grid
+                                grid.reload(); //reload grid
+
+                                toastr.success('Successfully deleted the category');
+                            }
+                            else {
+                                toastr.error(data.error);
+                            }
+                        }
+                    });
+                }
+                else {
+                    toastr.error(data.error);
+                }
+            }
+        });
+    } // Category
+    else {
+        $.ajax({
+            url: '/Management/IsSubCategoryExists' + '?id=' + selectedRowId,
+            type: 'POST',
+            headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
+            dataType: 'json',
+            data: null,
+            contentType: 'application/json; charset=utf-8',
+            //async: false,
+            //cache: false,
+            success: function (data) {
+                if (data.result) {
+
+                    var paramValue = JSON.stringify({
+                        Id: data.subCategory.id,
+                        CategoryId: data.subCategory.categoryId,
+                        Name: data.subCategory.name,
+                        DisplayName: data.subCategory.displayName,
+                        IconPath: data.subCategory.iconPath,
+                        Action: data.subCategory.action,
+                        Role: data.subCategory.role,
+                        Order: data.subCategory.order
+                    });
+
+                    $.ajax({
+                        url: '/Management/DeleteSubCategory',
+                        type: 'POST',
+                        headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
+                        dataType: 'json',
+                        data: paramValue,
+                        contentType: 'application/json; charset=utf-8',
+                        //async: false,
+                        //cache: false,
+                        success: function (data) {
+                            if (data.result) {
+                                $('#confirmDeleteMenuDialogModal').modal('hide'); // hide Modal
+
+                                const grid = new MvcGrid(document.querySelector(".mvc-grid")); //reload grid
+                                grid.reload(); //reload grid
+
+                                toastr.success('Successfully deleted the subCategory');
+                            }
+                            else {
+                                toastr.error(data.error);
+                            }
+                        }
+                    });
+                }
+                else {
+                    toastr.error(data.error);
+                }
+            }
+        });
+    } // SubCategory
 }
 
 function ExportExcelMenu() {

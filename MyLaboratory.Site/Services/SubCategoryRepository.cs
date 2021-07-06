@@ -45,5 +45,10 @@ namespace MyLaboratory.Site.Services
             context.SubCategories.Update(subCategory);
             context.SaveChanges();
         }
+        public void DeleteSubCategory(SubCategory subCategory)
+        {
+            context.SubCategories.Remove(subCategory);
+            context.SaveChanges();
+        }
     }
 }

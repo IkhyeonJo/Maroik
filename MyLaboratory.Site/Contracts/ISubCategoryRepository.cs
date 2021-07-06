@@ -9,5 +9,6 @@ namespace MyLaboratory.Site.Contracts
         IEnumerable<SubCategory> UserSubCategories { get; }
         void CreateSubCategory(SubCategory subCategory);
         void UpdateSubCategory(SubCategory subCategory);
+        void DeleteSubCategory(SubCategory subCategory);
     }
 }
