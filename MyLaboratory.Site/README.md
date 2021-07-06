@@ -425,6 +425,12 @@ https://www.youtube.com/watch?v=UQ2GdLzMmbE // User Registration With Email and 
 
 https://www.youtube.com/watch?v=C4O8vqg295o // Mail Send
 
+https://jinseongsoft.tistory.com/294 // Setting GMail for MailKit
+
+http://www.binaryintellect.net/articles/e30d07c6-6f57-43e7-a2ce-6d2d67ebf403.aspx // Send Emails In ASP.NET Core In 5 Easy Steps
+
+https://m.blog.naver.com/PostView.naver?isHttpsRedirect=true&blogId=eternalklaus&logNo=221601195622 // C# dotnet mailkit
+
 using MimeKit;
 using MailKit.Net.Smtp;
 
