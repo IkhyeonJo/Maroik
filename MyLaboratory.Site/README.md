@@ -425,6 +425,29 @@ https://www.youtube.com/watch?v=UQ2GdLzMmbE // User Registration With Email and 
 
 https://www.youtube.com/watch?v=C4O8vqg295o // Mail Send
 
+using MimeKit;
+using MailKit.Net.Smtp;
+
+var message = new MimeMessage();
+message.From.Add(new MailboxAddress("Test Project", "***REMOVED***"));  // ***REMOVED*** // "보안 수준이 낮은 앱 허용: 사용 안함" 설정을 On 시켜줌 (메일 계정에 들어가서)  
+message.To.Add(new MailboxAddress("naren", "***REMOVED***")); 
+message.Subject = "TEST FOR ASPNETCORE";
+message.Body = new TextPart("plain")
+{
+    Text = "Hello World mail"
+};
+
+using (var client = new SmtpClient())
+{
+    client.Connect("smtp.gmail.com", 587, false); // SSL을 사용하지 않아서 약점 존재
+    client.Authenticate("***REMOVED***", "***REMOVED***");
+
+    client.Send(message);
+    client.Disconnect(true);
+}
+
 https://stackoverflow.com/questions/60634480/user-email-confirmation-optionsjwt // email validation
 
 https://stackoverflow.com/questions/15188829/how-to-use-a-guid-to-verify-user-email-in-asp-net-c-sharp // email validation
+
+https://jasonwatmore.com/post/2019/10/11/aspnet-core-3-jwt-authentication-tutorial-with-example-api // JWT
