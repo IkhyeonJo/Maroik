@@ -409,3 +409,7 @@ $('#myModal').modal({ keyboard: false })   // initialized with no keyboard
 $('#myModal').modal('show')                // initializes and invokes show immediately
 data-toggle="modal" data-target="#createMenuDialogModal" data-backdrop="static" data-keyboard="false"
 https://stackoverflow.com/questions/13183630/how-to-open-a-bootstrap-modal-window-using-jquery
+
+
+https://craftpip.github.io/jquery-confirm/
+wwwroot 아이콘 오른쪽 클릭 후 Add -> Client-Side Library -> 원하는 라이브러리 검색 후 다운로드 받으면 libman.json과 함께 해당 Resource가 자동으로 다운받아집니다.
