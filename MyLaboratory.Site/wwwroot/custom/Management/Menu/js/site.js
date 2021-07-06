@@ -129,6 +129,7 @@ function CreateCategory() {
 }
 
 function CreateSubCategory() {
+
     if (!$('#formCreateSubCategory').valid()) {
         return false;
     }
@@ -401,6 +402,10 @@ function ConfirmDeleteMenu() {
 
     $('#confirmDeleteMenuDialogModal').modal('toggle');
     $('#confirmDeleteMenuDialogModal').modal('show');
+}
+
+function DeleteMenu() {
+
 }
 
 function ExportExcelMenu() {
