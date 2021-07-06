@@ -450,4 +450,6 @@ https://stackoverflow.com/questions/60634480/user-email-confirmation-optionsjwt 
 
 https://stackoverflow.com/questions/15188829/how-to-use-a-guid-to-verify-user-email-in-asp-net-c-sharp // email validation
 
+https://www.youtube.com/watch?v=yRP6C7fhAuE // ASP NET Core email confirmation
+
 https://jasonwatmore.com/post/2019/10/11/aspnet-core-3-jwt-authentication-tutorial-with-example-api // JWT
