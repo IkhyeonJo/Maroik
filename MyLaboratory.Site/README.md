@@ -413,3 +413,6 @@ https://stackoverflow.com/questions/13183630/how-to-open-a-bootstrap-modal-windo
 
 https://craftpip.github.io/jquery-confirm/
 wwwroot 아이콘 오른쪽 클릭 후 Add -> Client-Side Library -> 원하는 라이브러리 검색 후 다운로드 받으면 libman.json과 함께 해당 Resource가 자동으로 다운받아집니다.
+
+
+https://www.youtube.com/watch?v=Hy9G30nncMM // Localization and Globalization in ASP.NET Core MVC (.NET 5)
