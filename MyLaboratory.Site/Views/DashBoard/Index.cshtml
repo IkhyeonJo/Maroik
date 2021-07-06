@@ -1,37 +1,4 @@
-﻿@*@model IEnumerable<MyLaboratory.Site.Models.Product>
-    @{
-        Layout = null;
-    }
-
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <meta charset="utf-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    </head>
-    <body>
-        @foreach (var p in Model)
-        {
-            <tr>
-                <td>@p.Id</td>
-                <td>@p.Nome</td>
-                <td>@p.Categoria</td>
-                <td>$@p.Valor.ToString("F2")</td>
-            </tr>
-        }
-
-        <h1>This is Top Secret</h1>
-        <h2>Welcome @User.Identity.Name</h2>
-        <ul>
-            @foreach (var c in User.Claims)
-            {
-                <li>@c.Type: @c.Value</li>
-            }
-        </ul>
-    </body>
-    </html>*@
-
-<!-- Main content -->
+﻿<!-- Main content -->
 <div class="content">
     <div class="container-fluid">
         <div class="row">
