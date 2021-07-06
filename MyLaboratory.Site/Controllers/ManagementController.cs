@@ -361,6 +361,35 @@ namespace MyLaboratory.Site.Controllers
         }
         #endregion
 
+        #region Update
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult UpdateCategory([FromBody] MenuInputViewModel menuInputViewModel)
+        {
+            try
+            {
+                Category category = new Category
+                {
+                    Id = menuInputViewModel.Id,
+                    Name = menuInputViewModel.Name,
+                    DisplayName = menuInputViewModel.DisplayName,
+                    IconPath = menuInputViewModel.IconPath,
+                    Controller = menuInputViewModel.Controller,
+                    Action = menuInputViewModel.Action,
+                    Role = menuInputViewModel.Role,
+                    Order = menuInputViewModel.Order
+                };
+                categoryRepository.UpdateCategory(category);
+
+                return Json(new { result = true });
+            }
+            catch (Exception e)
+            {
+                return Json(new { result = false, error = e.ToString() });
+            }
+        }
+        #endregion
+
         #region Excel
         [HttpPost]
         [ValidateAntiForgeryToken]

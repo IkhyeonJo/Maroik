@@ -258,3 +258,55 @@ function EditMenuGridRow() {
         console.log("SubCategory");
     } // SubCategory
 }
+
+function UpdateCategory() {
+    if (!$('#formEditCategory').valid()) {
+        return false;
+    }
+
+    var createForm = $('#formEditCategory');
+
+    var id = createForm.find('input[id="editCategoryId"]').val();
+    var name = createForm.find('input[id="editCategoryName"]').val();
+    var displayName = createForm.find('input[id="editCategoryDisplayName"]').val();
+    var iconPath = createForm.find('input[id="editCategoryIconPath"]').val();
+    var controller = createForm.find('input[id="editCategoryController"]').val();
+    var action = createForm.find('input[id="editCategoryAction"]').val();
+    var role = createForm.find('select[id="editCategoryRole"]').val();
+    var order = createForm.find('input[id="editCategoryOrder"]').val();
+
+    var paramValue = JSON.stringify({
+        Id: id,
+        Name: name,
+        DisplayName: displayName,
+        IconPath: iconPath,
+        Controller: controller,
+        Action: action,
+        Role: role,
+        Order: order
+    });
+
+    $.ajax({
+        url: '/Management/UpdateCategory',
+        type: 'POST',
+        headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
+        dataType: 'json',
+        data: paramValue,
+        contentType: 'application/json; charset=utf-8',
+        //async: false,
+        //cache: false,
+        success: function (data) {
+            if (data.result) {
+                $('#editCategoryDialogModal').modal('hide'); // hide Modal
+
+                const grid = new MvcGrid(document.querySelector(".mvc-grid")); //reload grid
+                grid.reload(); //reload grid
+
+                toastr.success('Successfully updated the category');
+            }
+            else {
+                toastr.error(data.error);
+            }
+        }
+    });
+}

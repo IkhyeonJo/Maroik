@@ -44,5 +44,11 @@ namespace MyLaboratory.Site.Services
             context.Categories.Add(category);
             context.SaveChanges();
         }
+
+        public void UpdateCategory(Category category)
+        {
+            context.Categories.Update(category);
+            context.SaveChanges();
+        }
     }
 }

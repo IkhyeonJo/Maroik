@@ -8,5 +8,7 @@ namespace MyLaboratory.Site.Contracts
         IEnumerable<Category> AdminCategories { get; }
         IEnumerable<Category> UserCategories { get; }
         void CreateCategory(Category category);
+
+        void UpdateCategory(Category category);
     }
 }

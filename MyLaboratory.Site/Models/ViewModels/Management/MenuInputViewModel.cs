@@ -10,6 +10,7 @@ namespace MyLaboratory.Site.Models.ViewModels.Management
 {
     public class MenuInputViewModel
     {
+        public int Id { get; set; }
         public int CategoryId { get; set; }
         public string Name { get; set; }
         public string DisplayName { get; set; }
