@@ -64,8 +64,7 @@ $(document).on("dblclick", "#menuGrid > table > tbody  > tr", function () {
     $('#menuGrid > table > tbody  > tr').each(function (index, tr) {
 
         if ($(this).attr("class").includes(selectedRowColor)) { // Get SelectedRow by Color
-            console.log("SelectedRow Id:" + $(this).attr("data-id"));
-            //pop Modal or something... 
+            EditMenuGridRow();
         }
     });
     //console.log('dblclick-end');
