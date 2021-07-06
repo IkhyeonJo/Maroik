@@ -380,13 +380,27 @@ function UpdateSubCategory() {
 }
 
 function ConfirmDeleteMenu() {
+
+    var selectedRowId = "-1";
+
+    $('#menuGrid > table > tbody  > tr').each(function (index, tr) {
+        if ($(this).attr("class").includes(selectedRowColor)) { // Get SelectedRow by Color
+            selectedRowId = $(this).attr("data-id");
+        }
+    }); // Search Selected Row
+
+    if (selectedRowId === "-1") {
+        toastr.error("Please select grid row");
+        return false;
+    } // check whether selected row exist or not
+
     $('#confirmDeleteMenuDialogModal').modal({
         keyboard: false,
         backdrop: "static"
     });
 
     $('#confirmDeleteMenuDialogModal').modal('toggle');
-    $('#confirmDeleteMenuDialogModal').modal('show');    
+    $('#confirmDeleteMenuDialogModal').modal('show');
 }
 
 function ExportExcelMenu() {
