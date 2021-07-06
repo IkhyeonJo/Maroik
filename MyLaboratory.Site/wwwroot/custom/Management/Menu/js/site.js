@@ -5,6 +5,7 @@
 $(function () {
     $("#createMenuTabs").tabs();
     $("#editCategoryTabs").tabs();
+    $("#editSubCategoryTabs").tabs();
 });
 
 var selectedRowColor = "table-primary";
@@ -209,7 +210,7 @@ function EditMenuGridRow() {
             selectedRowCategoryId = $(this).attr("data-categoryid");
         }
     }); // Search Selected Row
-    
+
     if (selectedRowId === "-1") {
         toastr.error("Please select grid row");
         return false;
@@ -255,7 +256,42 @@ function EditMenuGridRow() {
         });
     } // Category
     else {
-        console.log("SubCategory");
+        $.ajax({
+            url: '/Management/IsSubCategoryExists' + '?id=' + selectedRowId,
+            type: 'POST',
+            headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
+            dataType: 'json',
+            data: null,
+            contentType: 'application/json; charset=utf-8',
+            //async: false,
+            //cache: false,
+            success: function (data) {
+                if (data.result) {
+
+                    var editCategoryForm = $('#formEditSubCategory');
+
+                    editCategoryForm.find('input[id="editSubCategoryId"]').val(data.subCategory.id);
+                    editCategoryForm.find('input[id="editSubCategoryCategoryId"]').val(data.subCategory.categoryId);
+                    editCategoryForm.find('input[id="editSubCategoryName"]').val(data.subCategory.name);
+                    editCategoryForm.find('input[id="editSubCategoryDisplayName"]').val(data.subCategory.displayName);
+                    editCategoryForm.find('input[id="editSubCategoryIconPath"]').val(data.subCategory.iconPath);
+                    editCategoryForm.find('input[id="editSubCategoryAction"]').val(data.subCategory.action);
+                    editCategoryForm.find('select[id="editSubCategoryRole"]').val(data.subCategory.role).change();
+                    editCategoryForm.find('input[id="editSubCategoryOrder"]').val(data.subCategory.order);
+
+                    $('#editSubCategoryDialogModal').modal({
+                        keyboard: false,
+                        backdrop: "static"
+                    });
+
+                    $('#editSubCategoryDialogModal').modal('toggle');
+                    $('#editSubCategoryDialogModal').modal('show');
+                }
+                else {
+                    toastr.error(data.error);
+                }
+            }
+        });
     } // SubCategory
 }
 
@@ -266,7 +302,8 @@ function UpdateCategory() {
 
     var createForm = $('#formEditCategory');
 
-    var id = createForm.find('input[id="editCategoryId"]').val();
+    var id = createForm.find('input[id="editSubCategoryId"]').val();
+    var categoryId = createForm.find('input[id="editSubCategoryId"]').val();
     var name = createForm.find('input[id="editCategoryName"]').val();
     var displayName = createForm.find('input[id="editCategoryDisplayName"]').val();
     var iconPath = createForm.find('input[id="editCategoryIconPath"]').val();
@@ -303,6 +340,58 @@ function UpdateCategory() {
                 grid.reload(); //reload grid
 
                 toastr.success('Successfully updated the category');
+            }
+            else {
+                toastr.error(data.error);
+            }
+        }
+    });
+}
+
+function UpdateSubCategory() {
+    if (!$('#formEditSubCategory').valid()) {
+        return false;
+    }
+
+    var createForm = $('#formEditSubCategory');
+
+    var id = createForm.find('input[id="editSubCategoryId"]').val();
+    var categoryId = createForm.find('input[id="editSubCategoryCategoryId"]').val();
+    var name = createForm.find('input[id="editSubCategoryName"]').val();
+    var displayName = createForm.find('input[id="editSubCategoryDisplayName"]').val();
+    var iconPath = createForm.find('input[id="editSubCategoryIconPath"]').val();
+    var action = createForm.find('input[id="editSubCategoryAction"]').val();
+    var role = createForm.find('select[id="editSubCategoryRole"]').val();
+    var order = createForm.find('input[id="editSubCategoryOrder"]').val();
+
+    var paramValue = JSON.stringify({
+        Id: id,
+        CategoryId: categoryId,
+        Name: name,
+        DisplayName: displayName,
+        IconPath: iconPath,
+        Action: action,
+        Role: role,
+        Order: order
+    });
+
+    $.ajax({
+        url: '/Management/UpdateSubCategory',
+        type: 'POST',
+        headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
+        dataType: 'json',
+        data: paramValue,
+        contentType: 'application/json; charset=utf-8',
+        //async: false,
+        //cache: false,
+        success: function (data) {
+            if (data.result) {
+                $('#editSubCategoryDialogModal').modal('hide'); // hide Modal
+
+                const grid = new MvcGrid(document.querySelector(".mvc-grid")); //reload grid
+                grid.reload(); //reload grid
+
+                toastr.success('Successfully updated the SubCategory');
             }
             else {
                 toastr.error(data.error);

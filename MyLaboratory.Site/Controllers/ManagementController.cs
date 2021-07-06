@@ -359,6 +359,62 @@ namespace MyLaboratory.Site.Controllers
                 return Json(new { result = false, error = e.ToString() });
             }
         }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult IsSubCategoryExists(int id)
+        {
+            try
+            {
+                List<MenuOutputViewModel> menuOutputViewModels = new List<MenuOutputViewModel>();
+
+                #region AdminCategories
+                foreach (var item in subCategoryRepository.AdminSubCategories)
+                {
+                    menuOutputViewModels.Add(new MenuOutputViewModel()
+                    {
+                        Id = item.Id,
+                        CategoryId = item.CategoryId,
+                        Name = item.Name,
+                        DisplayName = item.DisplayName,
+                        IconPath = item.IconPath,
+                        Controller = null,
+                        Action = item.Action,
+                        Role = item.Role,
+                        Order = item.Order
+                    });
+                }
+                #endregion
+
+                #region UserCategories
+                foreach (var item in subCategoryRepository.UserSubCategories)
+                {
+                    menuOutputViewModels.Add(new MenuOutputViewModel()
+                    {
+                        Id = item.Id,
+                        CategoryId = item.CategoryId,
+                        Name = item.Name,
+                        DisplayName = item.DisplayName,
+                        IconPath = item.IconPath,
+                        Controller = null,
+                        Action = item.Action,
+                        Role = item.Role,
+                        Order = item.Order
+                    });
+                }
+                #endregion
+                var selectedCategory = menuOutputViewModels.Where(a => a.Id == id).FirstOrDefault();
+                if (selectedCategory == null)
+                {
+                    throw new Exception(); // DB에서 못 찾음
+                }
+                return Json(new { result = true, subCategory = menuOutputViewModels.Where(a => a.Id == id).FirstOrDefault() });
+            }
+            catch (Exception e)
+            {
+                return Json(new { result = false, error = e.ToString() });
+            }
+        }
         #endregion
 
         #region Update
@@ -380,6 +436,33 @@ namespace MyLaboratory.Site.Controllers
                     Order = menuInputViewModel.Order
                 };
                 categoryRepository.UpdateCategory(category);
+
+                return Json(new { result = true });
+            }
+            catch (Exception e)
+            {
+                return Json(new { result = false, error = e.ToString() });
+            }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult UpdateSubCategory([FromBody] MenuInputViewModel menuInputViewModel)
+        {
+            try
+            {
+                SubCategory subCategory = new SubCategory
+                {
+                    Id = menuInputViewModel.Id,
+                    CategoryId = menuInputViewModel.CategoryId,
+                    Name = menuInputViewModel.Name,
+                    DisplayName = menuInputViewModel.DisplayName,
+                    IconPath = menuInputViewModel.IconPath,
+                    Action = menuInputViewModel.Action,
+                    Role = menuInputViewModel.Role,
+                    Order = menuInputViewModel.Order
+                };
+                subCategoryRepository.UpdateSubCategory(subCategory);
 
                 return Json(new { result = true });
             }
