@@ -422,3 +422,5 @@ https://www.fitrianingrum.me/post/account-confirmation-aspnet-core-sendgrid/ // 
 https://www.youtube.com/watch?v=4I1rYUbjAhw // sendgrid
 
 https://www.youtube.com/watch?v=UQ2GdLzMmbE // User Registration With Email and Email Confirmation or Validation | ASP.NET Core Web API
+
+https://www.youtube.com/watch?v=C4O8vqg295o // Mail Send
