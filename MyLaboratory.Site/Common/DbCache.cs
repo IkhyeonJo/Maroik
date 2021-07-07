@@ -2,7 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using MyLaboratory.Site.Models;
 using System.Collections.Generic;
 
-namespace MyLaboratory.Site.Data
+namespace MyLaboratory.Site.Common
 {
     public static class DbCache
     {
