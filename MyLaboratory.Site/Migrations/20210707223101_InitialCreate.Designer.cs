@@ -9,7 +9,7 @@ using MyLaboratory.Site.Data;
 namespace MyLaboratory.Site.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20210707221402_InitialCreate")]
+    [Migration("20210707223101_InitialCreate")]
     partial class InitialCreate
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -24,7 +24,6 @@ namespace MyLaboratory.Site.Migrations
             modelBuilder.Entity("MyLaboratory.Site.Models.Account", b =>
                 {
                     b.Property<string>("Email")
-                        .HasMaxLength(255)
                         .HasColumnType("varchar(255)");
 
                     b.Property<bool>("AgreedServiceTerms")

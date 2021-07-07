@@ -15,7 +15,7 @@ namespace MyLaboratory.Site.Migrations
                 name: "Account",
                 columns: table => new
                 {
-                    Email = table.Column<string>(type: "varchar(255)", maxLength: 255, nullable: false, collation: "utf8mb4_general_ci")
+                    Email = table.Column<string>(type: "varchar(255)", nullable: false, collation: "utf8mb4_general_ci")
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     HashedPassword = table.Column<string>(type: "longtext", nullable: false, collation: "utf8mb4_general_ci")
                         .Annotation("MySql:CharSet", "utf8mb4"),

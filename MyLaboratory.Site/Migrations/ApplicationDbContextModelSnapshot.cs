@@ -22,7 +22,6 @@ namespace MyLaboratory.Site.Migrations
             modelBuilder.Entity("MyLaboratory.Site.Models.Account", b =>
                 {
                     b.Property<string>("Email")
-                        .HasMaxLength(255)
                         .HasColumnType("varchar(255)");
 
                     b.Property<bool>("AgreedServiceTerms")
