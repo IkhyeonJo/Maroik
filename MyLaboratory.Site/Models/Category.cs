@@ -6,6 +6,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace MyLaboratory.Site.Models
 {
+    [Table("Category")]
     public partial class Category
     {
         public Category()

@@ -38,13 +38,21 @@ namespace MyLaboratory.Site.Data
 
                 entity.ToTable("Account");
 
-                entity.Property(e => e.FirstName).HasMaxLength(256);
+                entity.Property(e => e.Created).HasMaxLength(6);
+
+                entity.Property(e => e.FullName)
+                    .IsRequired()
+                    .HasMaxLength(255);
+
+                entity.Property(e => e.Guid).HasColumnName("GUID");
 
                 entity.Property(e => e.HashedPassword).IsRequired();
 
-                entity.Property(e => e.LastName).HasMaxLength(256);
+                entity.Property(e => e.Role)
+                    .IsRequired()
+                    .HasMaxLength(255);
 
-                entity.Property(e => e.Role).HasMaxLength(256);
+                entity.Property(e => e.Updated).HasMaxLength(6);
             });
 
             modelBuilder.Entity<Category>(entity =>

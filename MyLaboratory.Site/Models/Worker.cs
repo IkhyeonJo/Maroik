@@ -3,6 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace MyLaboratory.Site.Models
 {
+    [Table("Worker")]
     public partial class Worker
     {
         public int Id { get; set; }

@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore.Metadata;
+﻿using System;
+using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace MyLaboratory.Site.Migrations
@@ -14,17 +15,23 @@ namespace MyLaboratory.Site.Migrations
                 name: "Account",
                 columns: table => new
                 {
-                    Email = table.Column<string>(type: "varchar(255)", nullable: false, collation: "utf8mb4_general_ci")
+                    Email = table.Column<string>(type: "varchar(255)", maxLength: 255, nullable: false, collation: "utf8mb4_general_ci")
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     HashedPassword = table.Column<string>(type: "longtext", nullable: false, collation: "utf8mb4_general_ci")
                         .Annotation("MySql:CharSet", "utf8mb4"),
-                    Role = table.Column<string>(type: "varchar(256)", maxLength: 256, nullable: true, collation: "utf8mb4_general_ci")
+                    FullName = table.Column<string>(type: "varchar(255)", maxLength: 255, nullable: false, collation: "utf8mb4_general_ci")
                         .Annotation("MySql:CharSet", "utf8mb4"),
-                    FirstName = table.Column<string>(type: "varchar(256)", maxLength: 256, nullable: true, collation: "utf8mb4_general_ci")
+                    Role = table.Column<string>(type: "varchar(255)", maxLength: 255, nullable: false, collation: "utf8mb4_general_ci")
                         .Annotation("MySql:CharSet", "utf8mb4"),
-                    LastName = table.Column<string>(type: "varchar(256)", maxLength: 256, nullable: true, collation: "utf8mb4_general_ci")
+                    Locked = table.Column<bool>(type: "tinyint(1)", nullable: false),
+                    EmailConfirmed = table.Column<bool>(type: "tinyint(1)", nullable: false),
+                    AgreedServiceTerms = table.Column<bool>(type: "tinyint(1)", nullable: false),
+                    GUID = table.Column<string>(type: "longtext", nullable: true, collation: "utf8mb4_general_ci")
                         .Annotation("MySql:CharSet", "utf8mb4"),
-                    IsLocked = table.Column<bool>(type: "tinyint(1)", nullable: false)
+                    Created = table.Column<DateTime>(type: "datetime(6)", maxLength: 6, nullable: false),
+                    Updated = table.Column<DateTime>(type: "datetime(6)", maxLength: 6, nullable: false),
+                    Message = table.Column<string>(type: "longtext", nullable: true, collation: "utf8mb4_general_ci")
+                        .Annotation("MySql:CharSet", "utf8mb4")
                 },
                 constraints: table =>
                 {

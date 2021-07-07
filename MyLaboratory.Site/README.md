@@ -64,7 +64,7 @@ Data Migration 방법: (테이블 자동 생성) (AppDbContext에 따름...) (C# Migration �
 dotnet tool install --global dotnet-ef
 dotnet tool update --global dotnet-ef
 dotnet add package Microsoft.EntityFrameworkCore.Design
-dotnet ef migrations add InitialCreate
+dotnet ef migrations add InitialCreate // ApplicationDbContext에 있는 프로젝트에 가서 해당 명령 실행
 
 (Migration 폴더 내용 다 지울 것)
 (dotnet ef migrations add InitialCreate) 명령 실행 시, 카피할 DB string 맞추고 할 것... 나같은 경우는 로컬 MariaDB...
