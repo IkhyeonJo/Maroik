@@ -3,7 +3,6 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace MyLaboratory.Site.Models
 {
-    [Table("Product")]
     public partial class Product
     {
         public int Id { get; set; }
