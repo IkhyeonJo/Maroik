@@ -3,13 +3,17 @@ https://www.youtube.com/c/ThumbIKR/videos // useful videos for coding
 
 DB 테이블이나 Migarion시, 모든 것은 DB에 근거해서 모델이나 Migration이 만들어진다는 것을 명심할 것... (최우선)
 
-먼저 DB 깨끗이 다 지우고 DB Script로 다 복원 후 
+먼저 DB 깨끗이 다 지우고 새롭게 짜여진 DB Script로 다 복원 후 
 
 dotnet ef dbcontext scaffold "server=localhost;port=3306;userid=root;password=***REMOVED***;database=ikhyeondb;" "Pomelo.EntityFrameworkCore.MySql" -o ./Models11 -f
 
-이 명령어로 다시 복구하는 작업 할 것
+이 명령어를 통해 기존 모델, ApplicationDbContext것과 새롭게 생성된 모델, ApplicationDbContext 것을 비교하여 모델, ApplicationDbContext 다시 새롭게 덮어씌움
 
-모델에 의해 DB에 넣는 작업은 최우선이 아님
+그리고 기존 Migarion 폴더 다 지우고
+
+dotnet ef migrations add InitialCreate // ApplicationDbContext에 있는 프로젝트에 가서 해당 명령 실행
+
+이 명령어를 통해 새로운 Migration 생성
 
 #--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 https://whitekeyboard.tistory.com/630
