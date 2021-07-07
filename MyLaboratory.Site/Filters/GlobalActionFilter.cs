@@ -42,11 +42,6 @@ namespace MyLaboratory.Site.Filters
                         base.OnActionExecuting(context); // Do Action!!
                         return;
                     }
-                    else if (currentControllerName == "Account" && currentActionName == "IDInquiry") // 아이디 찾기 페이지인 경우
-                    {
-                        base.OnActionExecuting(context); // Do Action!!
-                        return;
-                    }
                     else if (currentControllerName == "Account" && currentActionName == "ForgotPassword") // 비밀번호 찾기 페이지인 경우
                     {
                         base.OnActionExecuting(context); // Do Action!!
