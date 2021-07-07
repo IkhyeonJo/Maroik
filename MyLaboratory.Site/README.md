@@ -1,4 +1,5 @@
 https://www.learnentityframeworkcore5.com/lazy-loading-in-ef-core // Lazy Loading Proxy
+https://www.youtube.com/c/ThumbIKR/videos // useful videos for coding
 
 #--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 https://whitekeyboard.tistory.com/630
