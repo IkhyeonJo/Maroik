@@ -42,7 +42,7 @@ namespace MyLaboratory.Site.Migrations
 
                     b.Property<string>("Guid")
                         .HasColumnType("longtext")
-                        .HasColumnName("Guid");
+                        .HasColumnName("GUID");
 
                     b.Property<string>("HashedPassword")
                         .IsRequired()

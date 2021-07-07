@@ -29,7 +29,7 @@ namespace MyLaboratory.Site.Data
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.HasCharSet("utf8mb4")
-    .UseCollation("utf8mb4_general_ci");
+                .UseCollation("utf8mb4_general_ci");
 
             modelBuilder.Entity<Account>(entity =>
             {
