@@ -421,6 +421,8 @@ https://www.fitrianingrum.me/post/account-confirmation-aspnet-core-sendgrid/ // 
 
 https://www.youtube.com/watch?v=4I1rYUbjAhw // sendgrid
 
+
+
 https://www.youtube.com/watch?v=UQ2GdLzMmbE // User Registration With Email and Email Confirmation or Validation | ASP.NET Core Web API
 
 https://www.youtube.com/watch?v=C4O8vqg295o // Mail Send
@@ -459,3 +461,10 @@ https://stackoverflow.com/questions/15188829/how-to-use-a-guid-to-verify-user-em
 https://www.youtube.com/watch?v=yRP6C7fhAuE // ASP NET Core email confirmation
 
 https://jasonwatmore.com/post/2019/10/11/aspnet-core-3-jwt-authentication-tutorial-with-example-api // JWT
+
+
+
+
+remember me logic과
+
+회원가입, 비밀번호 복구 등 이메일 인증과 (GUID를 통한) 다 구현할 것
