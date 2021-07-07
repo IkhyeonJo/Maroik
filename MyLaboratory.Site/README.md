@@ -1,6 +1,16 @@
 https://www.learnentityframeworkcore5.com/lazy-loading-in-ef-core // Lazy Loading Proxy
 https://www.youtube.com/c/ThumbIKR/videos // useful videos for coding
 
+DB 테이블이나 Migarion시, 모든 것은 DB에 근거해서 모델이나 Migration이 만들어진다는 것을 명심할 것... (최우선)
+
+먼저 DB 깨끗이 다 지우고 DB Script로 다 복원 후 
+
+dotnet ef dbcontext scaffold "server=localhost;port=3306;userid=root;password=***REMOVED***;database=ikhyeondb;" "Pomelo.EntityFrameworkCore.MySql" -o ./Models11 -f
+
+이 명령어로 다시 복구하는 작업 할 것
+
+모델에 의해 DB에 넣는 작업은 최우선이 아님
+
 #--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 https://whitekeyboard.tistory.com/630
 디버깅 MariaDB Windows 로컬에 설치 시, 
