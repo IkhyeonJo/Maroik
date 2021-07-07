@@ -479,3 +479,10 @@ www.something.com/email-verify/877ebd19-6852-4de9-b228-4d796a4cd7c7
 
 you create a table in your db where you store these generated tokens with the a user id so you know which user it is when they click the link, add a used flag so you know you only accept it once and you're pretty much done.
 }
+
+
+
+
+
+
+SignUpWithEmailConfirmation 프로젝트 버그 수정 및 테스트 완료한 거 소스코드 전부 분석하여서 이 프로젝트에 넣을 것.

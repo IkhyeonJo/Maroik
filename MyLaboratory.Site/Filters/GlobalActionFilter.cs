@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Http;
 using Newtonsoft.Json;
 using MyLaboratory.Site.Models;
 using System.Text;
-using MyLaboratory.Site.Helpers;
+using MyLaboratory.Site.Common;
 using MyLaboratory.Site.Data;
 using System.Linq;
 using System;

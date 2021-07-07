@@ -10,7 +10,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
-using MyLaboratory.Site.Helpers;
+using MyLaboratory.Site.Common;
 using MyLaboratory.Site.Services;
 using Newtonsoft.Json;
 using System.Text;

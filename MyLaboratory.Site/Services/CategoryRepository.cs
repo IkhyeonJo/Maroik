@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Microsoft.EntityFrameworkCore;
 using MyLaboratory.Site.Data;
-using MyLaboratory.Site.Helpers;
+using MyLaboratory.Site.Common;
 using MyLaboratory.Site.Models;
 using MyLaboratory.Site.Contracts;
 

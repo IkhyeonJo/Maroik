@@ -8,7 +8,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using MyLaboratory.Site.Services;
 using Microsoft.AspNetCore.Authorization;
-using MyLaboratory.Site.Helpers;
+using MyLaboratory.Site.Common;
 using MyLaboratory.Site.Contracts;
 
 namespace MyLaboratory.Site.Controllers

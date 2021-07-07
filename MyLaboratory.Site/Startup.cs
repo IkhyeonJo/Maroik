@@ -19,6 +19,7 @@ using System.Net;
 using System.IO;
 using MyLaboratory.Site.Filters;
 using MyLaboratory.Site.Contracts;
+using MyLaboratory.Site.Common;
 
 namespace MyLaboratory.Site
 {
@@ -34,6 +35,8 @@ namespace MyLaboratory.Site
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            Global.DomainName = Configuration["DomainName"];
+
             #region AddMariaDbContext
             string connectionString = Configuration.GetConnectionString("DefaultConnection");
             services.AddDbContext<ApplicationDbContext>(options =>

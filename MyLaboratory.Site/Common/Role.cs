@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace MyLaboratory.Site.Helpers
+namespace MyLaboratory.Site.Common
 {
     public static class Role
     {
