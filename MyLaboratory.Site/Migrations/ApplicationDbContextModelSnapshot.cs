@@ -14,8 +14,8 @@ namespace MyLaboratory.Site.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasCharSet("utf8mb4")
-                .UseCollation("utf8mb4_general_ci")
+                .HasCharSet("utf8")
+                .UseCollation("utf8_general_ci")
                 .HasAnnotation("Relational:MaxIdentifierLength", 64)
                 .HasAnnotation("ProductVersion", "5.0.7");
 
@@ -29,8 +29,10 @@ namespace MyLaboratory.Site.Migrations
                         .HasColumnType("tinyint(1)");
 
                     b.Property<DateTime>("Created")
+                        .ValueGeneratedOnAdd()
                         .HasMaxLength(6)
-                        .HasColumnType("datetime(6)");
+                        .HasColumnType("datetime(6)")
+                        .HasDefaultValueSql("'1900-01-01 00:00:00.000000'");
 
                     b.Property<bool>("EmailConfirmed")
                         .HasColumnType("tinyint(1)");
@@ -41,8 +43,7 @@ namespace MyLaboratory.Site.Migrations
                         .HasColumnType("varchar(255)");
 
                     b.Property<string>("Guid")
-                        .HasColumnType("longtext")
-                        .HasColumnName("GUID");
+                        .HasColumnType("longtext");
 
                     b.Property<string>("HashedPassword")
                         .IsRequired()
@@ -56,17 +57,25 @@ namespace MyLaboratory.Site.Migrations
 
                     b.Property<string>("Role")
                         .IsRequired()
+                        .ValueGeneratedOnAdd()
                         .HasMaxLength(255)
-                        .HasColumnType("varchar(255)");
+                        .HasColumnType("varchar(255)")
+                        .HasDefaultValueSql("'User'");
 
                     b.Property<DateTime>("Updated")
+                        .ValueGeneratedOnAdd()
                         .HasMaxLength(6)
-                        .HasColumnType("datetime(6)");
+                        .HasColumnType("datetime(6)")
+                        .HasDefaultValueSql("'1900-01-01 00:00:00.000000'");
 
                     b.HasKey("Email")
                         .HasName("PRIMARY");
 
                     b.ToTable("Account");
+
+                    b
+                        .HasCharSet("utf8mb4")
+                        .UseCollation("utf8mb4_general_ci");
                 });
 
             modelBuilder.Entity("MyLaboratory.Site.Models.Category", b =>
@@ -112,10 +121,6 @@ namespace MyLaboratory.Site.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Category");
-
-                    b
-                        .HasCharSet("utf8")
-                        .UseCollation("utf8_general_ci");
                 });
 
             modelBuilder.Entity("MyLaboratory.Site.Models.Product", b =>
@@ -136,6 +141,10 @@ namespace MyLaboratory.Site.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Product");
+
+                    b
+                        .HasCharSet("utf8mb4")
+                        .UseCollation("utf8mb4_general_ci");
                 });
 
             modelBuilder.Entity("MyLaboratory.Site.Models.SubCategory", b =>
@@ -182,10 +191,6 @@ namespace MyLaboratory.Site.Migrations
                     b.HasIndex(new[] { "CategoryId" }, "SubCategories_FK");
 
                     b.ToTable("SubCategory");
-
-                    b
-                        .HasCharSet("utf8")
-                        .UseCollation("utf8_general_ci");
                 });
 
             modelBuilder.Entity("MyLaboratory.Site.Models.Worker", b =>
@@ -206,6 +211,10 @@ namespace MyLaboratory.Site.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Worker");
+
+                    b
+                        .HasCharSet("utf8mb4")
+                        .UseCollation("utf8mb4_general_ci");
                 });
 
             modelBuilder.Entity("MyLaboratory.Site.Models.SubCategory", b =>

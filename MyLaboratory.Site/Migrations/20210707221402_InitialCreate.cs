@@ -9,7 +9,7 @@ namespace MyLaboratory.Site.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.AlterDatabase()
-                .Annotation("MySql:CharSet", "utf8mb4");
+                .Annotation("MySql:CharSet", "utf8");
 
             migrationBuilder.CreateTable(
                 name: "Account",
@@ -21,15 +21,15 @@ namespace MyLaboratory.Site.Migrations
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     FullName = table.Column<string>(type: "varchar(255)", maxLength: 255, nullable: false, collation: "utf8mb4_general_ci")
                         .Annotation("MySql:CharSet", "utf8mb4"),
-                    Role = table.Column<string>(type: "varchar(255)", maxLength: 255, nullable: false, collation: "utf8mb4_general_ci")
+                    Role = table.Column<string>(type: "varchar(255)", maxLength: 255, nullable: false, defaultValueSql: "'User'", collation: "utf8mb4_general_ci")
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     Locked = table.Column<bool>(type: "tinyint(1)", nullable: false),
                     EmailConfirmed = table.Column<bool>(type: "tinyint(1)", nullable: false),
                     AgreedServiceTerms = table.Column<bool>(type: "tinyint(1)", nullable: false),
-                    GUID = table.Column<string>(type: "longtext", nullable: true, collation: "utf8mb4_general_ci")
+                    Guid = table.Column<string>(type: "longtext", nullable: true, collation: "utf8mb4_general_ci")
                         .Annotation("MySql:CharSet", "utf8mb4"),
-                    Created = table.Column<DateTime>(type: "datetime(6)", maxLength: 6, nullable: false),
-                    Updated = table.Column<DateTime>(type: "datetime(6)", maxLength: 6, nullable: false),
+                    Created = table.Column<DateTime>(type: "datetime(6)", maxLength: 6, nullable: false, defaultValueSql: "'1900-01-01 00:00:00.000000'"),
+                    Updated = table.Column<DateTime>(type: "datetime(6)", maxLength: 6, nullable: false, defaultValueSql: "'1900-01-01 00:00:00.000000'"),
                     Message = table.Column<string>(type: "longtext", nullable: true, collation: "utf8mb4_general_ci")
                         .Annotation("MySql:CharSet", "utf8mb4")
                 },

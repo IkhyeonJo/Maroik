@@ -28,8 +28,8 @@ namespace MyLaboratory.Site.Data
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            modelBuilder.HasCharSet("utf8mb4")
-                .UseCollation("utf8mb4_general_ci");
+            modelBuilder.HasCharSet("utf8")
+                .UseCollation("utf8_general_ci");
 
             modelBuilder.Entity<Account>(entity =>
             {
@@ -38,29 +38,32 @@ namespace MyLaboratory.Site.Data
 
                 entity.ToTable("Account");
 
-                entity.Property(e => e.Created).HasMaxLength(6);
+                entity.HasCharSet("utf8mb4")
+                    .UseCollation("utf8mb4_general_ci");
+
+                entity.Property(e => e.Created)
+                    .HasMaxLength(6)
+                    .HasDefaultValueSql("'1900-01-01 00:00:00.000000'");
 
                 entity.Property(e => e.FullName)
                     .IsRequired()
                     .HasMaxLength(255);
 
-                entity.Property(e => e.Guid).HasColumnName("GUID");
-
                 entity.Property(e => e.HashedPassword).IsRequired();
 
                 entity.Property(e => e.Role)
                     .IsRequired()
-                    .HasMaxLength(255);
+                    .HasMaxLength(255)
+                    .HasDefaultValueSql("'User'");
 
-                entity.Property(e => e.Updated).HasMaxLength(6);
+                entity.Property(e => e.Updated)
+                    .HasMaxLength(6)
+                    .HasDefaultValueSql("'1900-01-01 00:00:00.000000'");
             });
 
             modelBuilder.Entity<Category>(entity =>
             {
                 entity.ToTable("Category");
-
-                entity.HasCharSet("utf8")
-                    .UseCollation("utf8_general_ci");
 
                 entity.Property(e => e.Id).HasColumnType("int(11)");
 
@@ -94,15 +97,15 @@ namespace MyLaboratory.Site.Data
             {
                 entity.ToTable("Product");
 
+                entity.HasCharSet("utf8mb4")
+                    .UseCollation("utf8mb4_general_ci");
+
                 entity.Property(e => e.Id).HasColumnType("int(11)");
             });
 
             modelBuilder.Entity<SubCategory>(entity =>
             {
                 entity.ToTable("SubCategory");
-
-                entity.HasCharSet("utf8")
-                    .UseCollation("utf8_general_ci");
 
                 entity.HasIndex(e => e.CategoryId, "SubCategories_FK");
 
@@ -143,6 +146,9 @@ namespace MyLaboratory.Site.Data
             modelBuilder.Entity<Worker>(entity =>
             {
                 entity.ToTable("Worker");
+
+                entity.HasCharSet("utf8mb4")
+                    .UseCollation("utf8mb4_general_ci");
 
                 entity.Property(e => e.Id).HasColumnType("int(11)");
             });
