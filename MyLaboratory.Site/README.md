@@ -468,3 +468,13 @@ https://jasonwatmore.com/post/2019/10/11/aspnet-core-3-jwt-authentication-tutori
 remember me logic과
 
 회원가입, 비밀번호 복구 등 이메일 인증과 (GUID를 통한) 다 구현할 것
+
+
+[Email Confirmation Industry Standard]
+{
+a typical way of building an email validation thing, with a one time code, would be to use a GUID. In the email you sent, add a link with this unique GUID attached at the end something like :
+
+www.something.com/email-verify/877ebd19-6852-4de9-b228-4d796a4cd7c7
+
+you create a table in your db where you store these generated tokens with the a user id so you know which user it is when they click the link, add a used flag so you know you only accept it once and you're pretty much done.
+}
