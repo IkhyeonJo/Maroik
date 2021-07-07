@@ -5,7 +5,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
-using MyLaboratory.Site.Models;
+using MyLaboratory.Site.Helpers;
+using MyLaboratory.Site.Models.ViewModels;
 
 namespace MyLaboratory.Site.Controllers
 {
