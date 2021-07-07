@@ -281,8 +281,7 @@ function UpdateCategory() {
 
     var createForm = $('#formEditCategory');
 
-    var id = createForm.find('input[id="editSubCategoryId"]').val();
-    var categoryId = createForm.find('input[id="editSubCategoryId"]').val();
+    var id = createForm.find('input[id="editCategoryId"]').val();
     var name = createForm.find('input[id="editCategoryName"]').val();
     var displayName = createForm.find('input[id="editCategoryDisplayName"]').val();
     var iconPath = createForm.find('input[id="editCategoryIconPath"]').val();
