@@ -1,6 +1,7 @@
 https://www.learnentityframeworkcore5.com/lazy-loading-in-ef-core // Lazy Loading Proxy
 https://www.youtube.com/c/ThumbIKR/videos // useful videos for coding
-
+OutputModel: Frontend에 쓰는 모델 (Required 등 Attribute가 존재)
+InputModel: Backend에 쓰는 모델 (거의 없음)
 #--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 https://whitekeyboard.tistory.com/630
 디버깅 MariaDB Windows 로컬에 설치 시, 
