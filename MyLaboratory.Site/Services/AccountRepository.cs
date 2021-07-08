@@ -17,10 +17,9 @@ namespace MyLaboratory.Site.Services
             this.context = context;
         }
 
-        public Account GetAccount(string email)
+        public async Task<Account> GetAccountAsync(string email)
         {
-
-            return context.Accounts.FirstOrDefault(x => x.Email == email);
+            return await context.Accounts.FirstOrDefaultAsync(x => x.Email == email);
         }
     }
 }

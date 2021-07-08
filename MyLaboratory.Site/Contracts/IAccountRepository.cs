@@ -6,6 +6,6 @@ namespace MyLaboratory.Site.Contracts
 {
     public interface IAccountRepository
     {
-        public Account GetAccount(string email);
+        public Task<Account> GetAccountAsync(string email);
     }
 }

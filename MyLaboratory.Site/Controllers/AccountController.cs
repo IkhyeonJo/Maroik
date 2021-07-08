@@ -96,7 +96,7 @@ namespace MyLaboratory.Site.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken] //To Prevent CSRF attack
-        public IActionResult Login(LoginInputViewModel loginInputViewModel)
+        public async Task<IActionResult> Login(LoginInputViewModel loginInputViewModel)
         {
             string userAgent = Request.Headers["User-Agent"].ToString();
             if (userAgent.Contains("MSIE") || userAgent.Contains("Trident")) // IsInternetExplorer (차단 이유: DataTable에서 문제생김...)
@@ -109,7 +109,7 @@ namespace MyLaboratory.Site.Controllers
             
             if (ModelState.IsValid)
             {
-                var tempAccount = accountRepository.GetAccount(loginInputViewModel.Email);
+                var tempAccount = await accountRepository.GetAccountAsync(loginInputViewModel.Email); // https://softwareengineering.stackexchange.com/questions/392512/async-why-have-an-async-for-a-login
 
                 if (tempAccount == null) // no account exist
                 {
