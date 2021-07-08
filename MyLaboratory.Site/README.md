@@ -1,5 +1,7 @@
 https://www.learnentityframeworkcore5.com/lazy-loading-in-ef-core // Lazy Loading Proxy
 https://www.youtube.com/c/ThumbIKR/videos // useful videos for coding
+https://softwareengineering.stackexchange.com/questions/392512/async-why-have-an-async-for-a-login // async
+https://code-maze.com/asynchronous-programming-with-async-and-await-in-asp-net-core/ // async
 OutputModel: Frontend¿¡ ¾²´Â ¸ðµ¨
 InputModel: Backend¿¡ ¾²´Â ¸ðµ¨
 

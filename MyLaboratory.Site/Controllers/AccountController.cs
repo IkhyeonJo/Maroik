@@ -109,7 +109,7 @@ namespace MyLaboratory.Site.Controllers
             
             if (ModelState.IsValid)
             {
-                var tempAccount = await accountRepository.GetAccountAsync(loginInputViewModel.Email); // https://softwareengineering.stackexchange.com/questions/392512/async-why-have-an-async-for-a-login
+                var tempAccount = await accountRepository.GetAccountAsync(loginInputViewModel.Email);
 
                 if (tempAccount == null) // no account exist
                 {
