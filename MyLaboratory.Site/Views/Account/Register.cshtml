@@ -2,6 +2,10 @@
 
 @model LoginOutputViewModel
 
+@{
+    var error = TempData["Error"] as string;
+}
+
 <div class="register-box">
     <div class="card card-outline card-primary">
         <div class="card-header text-center">
@@ -47,6 +51,9 @@
             </form>
 
             <a asp-controller="Account" asp-action="Login" class="text-center">I already have a membership</a>
+            <p class="mb-0">
+                <font style="font-weight:bold" color="red">@error</font>
+            </p>
         </div>
         <!-- /.form-box -->
     </div><!-- /.card -->
