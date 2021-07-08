@@ -57,21 +57,30 @@ namespace MyLaboratory.Site.Controllers
         {
             try
             {
-                Category category = new Category
-                {
-                    Name = menuInputViewModel.Name,
-                    DisplayName = menuInputViewModel.DisplayName,
-                    IconPath = menuInputViewModel.IconPath,
-                    Controller = menuInputViewModel.Controller,
-                    Action = menuInputViewModel.Action,
-                    Role = menuInputViewModel.Role,
-                    Order = menuInputViewModel.Order
-                };
-                categoryRepository.CreateCategory(category);
+                ModelState.Remove(nameof(menuInputViewModel.Action)); // remove ModelState check in Action (in Request parameters, Action can be null)
 
-                return Json(new { result = true });
+                if (ModelState.IsValid)
+                {
+                    Category category = new Category
+                    {
+                        Name = menuInputViewModel.Name,
+                        DisplayName = menuInputViewModel.DisplayName,
+                        IconPath = menuInputViewModel.IconPath,
+                        Controller = menuInputViewModel.Controller,
+                        Action = menuInputViewModel.Action,
+                        Role = menuInputViewModel.Role,
+                        Order = menuInputViewModel.Order
+                    };
+                    categoryRepository.CreateCategory(category);
+
+                    return Json(new { result = true });
+                }
+                else
+                {
+                    return Json(new { result = false, error = "Input is invalid" });
+                }
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 return Json(new { result = false, error = e.ToString() });
             }
@@ -83,19 +92,26 @@ namespace MyLaboratory.Site.Controllers
         {
             try
             {
-                SubCategory subCategory = new SubCategory
+                if (ModelState.IsValid)
                 {
-                    CategoryId = menuInputViewModel.CategoryId,
-                    Name = menuInputViewModel.Name,
-                    DisplayName = menuInputViewModel.DisplayName,
-                    IconPath = menuInputViewModel.IconPath,
-                    Action = menuInputViewModel.Action,
-                    Role = menuInputViewModel.Role,
-                    Order = menuInputViewModel.Order
-                };
-                subCategoryRepository.CreateSubCategory(subCategory);
+                    SubCategory subCategory = new SubCategory
+                    {
+                        CategoryId = menuInputViewModel.CategoryId,
+                        Name = menuInputViewModel.Name,
+                        DisplayName = menuInputViewModel.DisplayName,
+                        IconPath = menuInputViewModel.IconPath,
+                        Action = menuInputViewModel.Action,
+                        Role = menuInputViewModel.Role,
+                        Order = menuInputViewModel.Order
+                    };
+                    subCategoryRepository.CreateSubCategory(subCategory);
 
-                return Json(new { result = true });
+                    return Json(new { result = true });
+                }
+                else
+                {
+                    return Json(new { result = false, error = "Input is invalid" });
+                }
             }
             catch (Exception e)
             {
@@ -117,12 +133,12 @@ namespace MyLaboratory.Site.Controllers
                 {
                     if (string.IsNullOrEmpty(wholeSearch))
                     {
-                        menuOutputViewModels.Add(new MenuOutputViewModel() 
-                        { 
+                        menuOutputViewModels.Add(new MenuOutputViewModel()
+                        {
                             Id = item.Id,
                             CategoryId = null,
-                            Name = item.Name, 
-                            DisplayName = item.DisplayName, 
+                            Name = item.Name,
+                            DisplayName = item.DisplayName,
                             IconPath = item.IconPath,
                             Controller = item.Controller,
                             Action = item.Action,
@@ -348,7 +364,7 @@ namespace MyLaboratory.Site.Controllers
                 }
                 #endregion
                 var selectedCategory = menuOutputViewModels.Where(a => a.Id == id).FirstOrDefault();
-                if(selectedCategory == null)
+                if (selectedCategory == null)
                 {
                     throw new Exception(); // DB에서 못 찾음
                 }
@@ -424,20 +440,29 @@ namespace MyLaboratory.Site.Controllers
         {
             try
             {
-                Category category = new Category
-                {
-                    Id = menuInputViewModel.Id,
-                    Name = menuInputViewModel.Name,
-                    DisplayName = menuInputViewModel.DisplayName,
-                    IconPath = menuInputViewModel.IconPath,
-                    Controller = menuInputViewModel.Controller,
-                    Action = menuInputViewModel.Action,
-                    Role = menuInputViewModel.Role,
-                    Order = menuInputViewModel.Order
-                };
-                categoryRepository.UpdateCategory(category);
+                ModelState.Remove(nameof(menuInputViewModel.Action)); // remove ModelState check in Action (in Request parameters, Action can be null)
 
-                return Json(new { result = true });
+                if (ModelState.IsValid)
+                {
+                    Category category = new Category
+                    {
+                        Id = menuInputViewModel.Id,
+                        Name = menuInputViewModel.Name,
+                        DisplayName = menuInputViewModel.DisplayName,
+                        IconPath = menuInputViewModel.IconPath,
+                        Controller = menuInputViewModel.Controller,
+                        Action = menuInputViewModel.Action,
+                        Role = menuInputViewModel.Role,
+                        Order = menuInputViewModel.Order
+                    };
+                    categoryRepository.UpdateCategory(category);
+
+                    return Json(new { result = true });
+                }
+                else
+                {
+                    return Json(new { result = false, error = "Input is invalid" });
+                }
             }
             catch (Exception e)
             {
@@ -451,20 +476,27 @@ namespace MyLaboratory.Site.Controllers
         {
             try
             {
-                SubCategory subCategory = new SubCategory
+                if (ModelState.IsValid)
                 {
-                    Id = menuInputViewModel.Id,
-                    CategoryId = menuInputViewModel.CategoryId,
-                    Name = menuInputViewModel.Name,
-                    DisplayName = menuInputViewModel.DisplayName,
-                    IconPath = menuInputViewModel.IconPath,
-                    Action = menuInputViewModel.Action,
-                    Role = menuInputViewModel.Role,
-                    Order = menuInputViewModel.Order
-                };
-                subCategoryRepository.UpdateSubCategory(subCategory);
+                    SubCategory subCategory = new SubCategory
+                    {
+                        Id = menuInputViewModel.Id,
+                        CategoryId = menuInputViewModel.CategoryId,
+                        Name = menuInputViewModel.Name,
+                        DisplayName = menuInputViewModel.DisplayName,
+                        IconPath = menuInputViewModel.IconPath,
+                        Action = menuInputViewModel.Action,
+                        Role = menuInputViewModel.Role,
+                        Order = menuInputViewModel.Order
+                    };
+                    subCategoryRepository.UpdateSubCategory(subCategory);
 
-                return Json(new { result = true });
+                    return Json(new { result = true });
+                }
+                else
+                {
+                    return Json(new { result = false, error = "Input is invalid" });
+                }
             }
             catch (Exception e)
             {
@@ -480,20 +512,29 @@ namespace MyLaboratory.Site.Controllers
         {
             try
             {
-                Category category = new Category
-                {
-                    Id = menuInputViewModel.Id,
-                    Name = menuInputViewModel.Name,
-                    DisplayName = menuInputViewModel.DisplayName,
-                    IconPath = menuInputViewModel.IconPath,
-                    Controller = menuInputViewModel.Controller,
-                    Action = menuInputViewModel.Action,
-                    Role = menuInputViewModel.Role,
-                    Order = menuInputViewModel.Order
-                };
-                categoryRepository.DeleteCategory(category);
+                ModelState.Remove(nameof(menuInputViewModel.Action)); // remove ModelState check in Action (in Request parameters, Action can be null)
 
-                return Json(new { result = true });
+                if (ModelState.IsValid)
+                {
+                    Category category = new Category
+                    {
+                        Id = menuInputViewModel.Id,
+                        Name = menuInputViewModel.Name,
+                        DisplayName = menuInputViewModel.DisplayName,
+                        IconPath = menuInputViewModel.IconPath,
+                        Controller = menuInputViewModel.Controller,
+                        Action = menuInputViewModel.Action,
+                        Role = menuInputViewModel.Role,
+                        Order = menuInputViewModel.Order
+                    };
+                    categoryRepository.DeleteCategory(category);
+
+                    return Json(new { result = true });
+                }
+                else
+                {
+                    return Json(new { result = false, error = "Input is invalid" });
+                }
             }
             catch (Exception e)
             {
@@ -506,20 +547,27 @@ namespace MyLaboratory.Site.Controllers
         {
             try
             {
-                SubCategory subCategory = new SubCategory
+                if (ModelState.IsValid)
                 {
-                    Id = menuInputViewModel.Id,
-                    CategoryId = menuInputViewModel.CategoryId,
-                    Name = menuInputViewModel.Name,
-                    DisplayName = menuInputViewModel.DisplayName,
-                    IconPath = menuInputViewModel.IconPath,
-                    Action = menuInputViewModel.Action,
-                    Role = menuInputViewModel.Role,
-                    Order = menuInputViewModel.Order
-                };
-                subCategoryRepository.DeleteSubCategory(subCategory);
+                    SubCategory subCategory = new SubCategory
+                    {
+                        Id = menuInputViewModel.Id,
+                        CategoryId = menuInputViewModel.CategoryId,
+                        Name = menuInputViewModel.Name,
+                        DisplayName = menuInputViewModel.DisplayName,
+                        IconPath = menuInputViewModel.IconPath,
+                        Action = menuInputViewModel.Action,
+                        Role = menuInputViewModel.Role,
+                        Order = menuInputViewModel.Order
+                    };
+                    subCategoryRepository.DeleteSubCategory(subCategory);
 
-                return Json(new { result = true });
+                    return Json(new { result = true });
+                }
+                else
+                {
+                    return Json(new { result = false, error = "Input is invalid" });
+                }
             }
             catch (Exception e)
             {
@@ -536,7 +584,7 @@ namespace MyLaboratory.Site.Controllers
 
             // query data from database
             await Task.Yield();
-            
+
             List<MenuOutputViewModel> menuOutputViewModels = new List<MenuOutputViewModel>();
 
             #region AdminCategories
