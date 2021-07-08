@@ -172,6 +172,11 @@ namespace MyLaboratory.Site.Filters
             }
             else if (currentRequestMethod.ToUpper() == "POST") // POST 방식
             {
+                if (!context.ModelState.IsValid)
+                {
+                    context.Result = new BadRequestObjectResult(context.ModelState);
+                    return;
+                }
                 var existingControllers = Assembly.GetExecutingAssembly().GetTypes()
                     .Where(type => typeof(Controller).IsAssignableFrom(type)); //filter controllers
 

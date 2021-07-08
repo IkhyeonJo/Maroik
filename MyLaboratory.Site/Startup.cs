@@ -69,7 +69,7 @@ namespace MyLaboratory.Site
 
             services.AddControllersWithViews(options =>
             {
-                options.Filters.Add(new GlobalActionFilter()); // An instance
+                options.Filters.Add(typeof(GlobalActionFilter)); // An instance
             });
         }
 
