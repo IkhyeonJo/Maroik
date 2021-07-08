@@ -10,13 +10,20 @@ namespace MyLaboratory.Site.Models.ViewModels.Account
 {
     public class LoginInputViewModel
     {
-        [Required(ErrorMessage = "아이디를 입력하세요.")]
+        [Required(ErrorMessage = "Email is required")]
         [DataType(DataType.EmailAddress)]
         [EmailAddress]
         public string Email { get; set; }
 
-        [Required(ErrorMessage = "패스워드를 입력하세요.")]
+        [Required(ErrorMessage = "Password is required")]
+        [StringLength(255, ErrorMessage = "Must be between 5 and 255 characters", MinimumLength = 5)]
         [DataType(DataType.Password)]
         public string Password { get; set; }
+
+        [Required(ErrorMessage = "Full Name is required")]
+        [StringLength(255, ErrorMessage = "Must be between 5 and 255 characters", MinimumLength = 5)]
+        public string FullName { get; set; }
+
+        public bool AgreedServiceTerms { get; set; }
     }
 }
