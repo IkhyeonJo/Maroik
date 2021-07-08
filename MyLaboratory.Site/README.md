@@ -5,6 +5,8 @@ InputModel: Backend에 쓰는 모델
 
 OutputModel과 InputModel의 Attribute는 항상 같아야한다. (ModelState.IsValid 때문... Request 값이 적절한지 서버단에서 받는 Model의 Attribute를 보고 다시 판단함!!)
 
+ModelState.IsValid (받는 모델의 Property들의 Attribute를 조사해 전달 받은 값이 유효한 값인지 판단.)
+ModelState.Remove (ModelState.IsValid에서 Property 조사할 때, 조사 내용에서 제외함.)
 #--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 https://whitekeyboard.tistory.com/630
 디버깅 MariaDB Windows 로컬에 설치 시, 
