@@ -2,10 +2,6 @@
 
 @model LoginOutputViewModel
 
-@{
-    var error = TempData["Error"] as string;
-}
-
 <div class="register-box">
     <div class="card card-outline card-primary">
         <div class="card-header text-center">
@@ -16,43 +12,28 @@
 
             <form name="registerForm" class="form-horizontal" method="post" asp-controller="Account" asp-action="Register">
                 @Html.AntiForgeryToken()
-                <div class="input-group mb-3">
-                    <input type="text" class="form-control" placeholder="Full name">
-                    <div class="input-group-append">
-                        <div class="input-group-text">
-                            <span class="fas fa-user"></span>
-                        </div>
-                    </div>
+                <div class="form-group has-feedback">
+                    <input asp-for="FullName" type="text" class="form-control" placeholder="Full Name" />
+                    <span asp-validation-for="FullName" class="text-danger"></span>
                 </div>
-                <div class="input-group mb-3">
-                    <input type="email" class="form-control" placeholder="Email">
-                    <div class="input-group-append">
-                        <div class="input-group-text">
-                            <span class="fas fa-envelope"></span>
-                        </div>
-                    </div>
+                <div class="form-group has-feedback">
+                    <input asp-for="Email" type="email" class="form-control" placeholder="Email" />
+                    <span asp-validation-for="Email" class="text-danger"></span>
                 </div>
-                <div class="input-group mb-3">
-                    <input type="password" class="form-control" placeholder="Password">
-                    <div class="input-group-append">
-                        <div class="input-group-text">
-                            <span class="fas fa-lock"></span>
-                        </div>
-                    </div>
+                <div class="form-group has-feedback">
+                    <input asp-for="Password" type="password" class="form-control" placeholder="Password" />
+                    <span asp-validation-for="Password" class="text-danger"></span>
                 </div>
-                <div class="input-group mb-3">
-                    <input type="password" class="form-control" placeholder="Retype password">
-                    <div class="input-group-append">
-                        <div class="input-group-text">
-                            <span class="fas fa-lock"></span>
-                        </div>
-                    </div>
+                <div class="form-group has-feedback">
+                    <input asp-for="ConfirmPassword" type="password" class="form-control" placeholder="Confirm Password" />
+                    <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
                 </div>
+
                 <div class="row">
                     <div class="col-8">
                         <div class="icheck-primary">
-                            <input type="checkbox" id="agreeTerms" name="terms" value="agree">
-                            <label for="agreeTerms">
+                            <input asp-for="AgreedServiceTerms" />
+                            <label for="AgreedServiceTerms">
                                 I agree to the <a asp-controller="Account" asp-action="ConsentForm" target="_blank" rel="noopener noreferrer">terms</a> @* rel="noopener noreferrer" // prevent tabnabbing (https://www.freecodecamp.org/news/how-to-use-html-to-open-link-in-new-tab/) *@
                             </label>
                         </div>
