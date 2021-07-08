@@ -1,7 +1,10 @@
 https://www.learnentityframeworkcore5.com/lazy-loading-in-ef-core // Lazy Loading Proxy
 https://www.youtube.com/c/ThumbIKR/videos // useful videos for coding
-OutputModel: Frontend에 쓰는 모델 (Required 등 Attribute가 존재)
-InputModel: Backend에 쓰는 모델 (거의 없음)
+OutputModel: Frontend에 쓰는 모델
+InputModel: Backend에 쓰는 모델
+
+OutputModel과 InputModel의 Attribute는 항상 같아야한다. (ModelState.IsValid 때문... Request 값이 적절한지 서버단에서 받는 Model의 Attribute를 보고 다시 판단함!!)
+
 #--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 https://whitekeyboard.tistory.com/630
 디버깅 MariaDB Windows 로컬에 설치 시, 
