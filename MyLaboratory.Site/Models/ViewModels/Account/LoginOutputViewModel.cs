@@ -14,7 +14,6 @@ namespace MyLaboratory.Site.Models.ViewModels.Account
         [DataType(DataType.EmailAddress)]
         [EmailAddress]
         public string Email { get; set; }
-        
 
         [Required(ErrorMessage = "패스워드를 입력하세요.")]
         [DataType(DataType.Password)]
