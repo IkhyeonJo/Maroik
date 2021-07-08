@@ -73,43 +73,49 @@ namespace MyLaboratory.Site.Controllers
                 TempData["Error"] = "이 사이트는 Internet Explorer를 지원하지 않습니다. 다른 브라우저를 이용하시길 바랍니다.";
                 return RedirectToAction("Login", "Account");
             }
-
-            var tempAccount = accountRepository.GetAccount(loginInputViewModel.Email);
-
-            if (tempAccount == null) // no account exist
+            if (ModelState.IsValid)
             {
-                TempData["Error"] = "Username or Password is invalid";
+                var tempAccount = accountRepository.GetAccount(loginInputViewModel.Email);
+
+                if (tempAccount == null) // no account exist
+                {
+                    TempData["Error"] = "Username or Password is invalid";
+                    return RedirectToAction("Login", "Account");
+                }
+
+                if (!Crypto.VerifyHashedPassword(tempAccount.HashedPassword, loginInputViewModel.Password)) // wrong password
+                {
+                    TempData["Error"] = "Username or Password is invalid";
+                    return RedirectToAction("Login", "Account");
+                }
+
+                tempAccount.HashedPassword = null;
+
+                HttpContext.Session.Set("AccountSession", Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(tempAccount)));
+
+                #region DB Cache
+                if (tempAccount.Role == Role.Admin) // 로그인 권한이 Admin인 경우
+                {
+                    DbCache.AdminCategories = categoryRepository.AdminCategories;
+                    DbCache.AdminSubCategories = subCategoryRepository.AdminSubCategories;
+                    return RedirectToAction("Index", "DashBoard");
+                }
+                else if (tempAccount.Role == Role.User) // 로그인 권한이 User인 경우
+                {
+                    DbCache.UserCategories = categoryRepository.UserCategories;
+                    DbCache.UserSubCategories = subCategoryRepository.UserSubCategories;
+                    return RedirectToAction("Index", "UserDashBoard");
+                }
+                else // 로그인 권한은 Admin 또는 User만 있음 이 경우는 버그 발생한 것임
+                {
+                    return null;
+                }
+                #endregion
+            }
+            else
+            {
                 return RedirectToAction("Login", "Account");
             }
-
-            if (!Crypto.VerifyHashedPassword(tempAccount.HashedPassword, loginInputViewModel.Password)) // wrong password
-            {
-                TempData["Error"] = "Username or Password is invalid";
-                return RedirectToAction("Login", "Account");
-            }
-
-            tempAccount.HashedPassword = null;
-
-            HttpContext.Session.Set("AccountSession", Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(tempAccount)));
-
-            #region DB Cache
-            if (tempAccount.Role == Role.Admin) // 로그인 권한이 Admin인 경우
-            {
-                DbCache.AdminCategories = categoryRepository.AdminCategories;
-                DbCache.AdminSubCategories = subCategoryRepository.AdminSubCategories;
-                return RedirectToAction("Index", "DashBoard");
-            }
-            else if (tempAccount.Role == Role.User) // 로그인 권한이 User인 경우
-            {
-                DbCache.UserCategories = categoryRepository.UserCategories;
-                DbCache.UserSubCategories = subCategoryRepository.UserSubCategories;
-                return RedirectToAction("Index", "UserDashBoard");
-            }
-            else // 로그인 권한은 Admin 또는 User만 있음 이 경우는 버그 발생한 것임
-            {
-                return null;
-            }
-            #endregion
         }
 
         [HttpGet]
