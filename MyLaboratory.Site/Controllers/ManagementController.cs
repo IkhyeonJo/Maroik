@@ -92,6 +92,8 @@ namespace MyLaboratory.Site.Controllers
         {
             try
             {
+                ModelState.Remove(nameof(menuInputViewModel.Controller)); // remove ModelState check in Controller (in Request parameters, Controller can be null)
+
                 if (ModelState.IsValid)
                 {
                     SubCategory subCategory = new SubCategory
@@ -476,6 +478,8 @@ namespace MyLaboratory.Site.Controllers
         {
             try
             {
+                ModelState.Remove(nameof(menuInputViewModel.Controller)); // remove ModelState check in Controller (in Request parameters, Controller can be null)
+
                 if (ModelState.IsValid)
                 {
                     SubCategory subCategory = new SubCategory
@@ -547,6 +551,8 @@ namespace MyLaboratory.Site.Controllers
         {
             try
             {
+                ModelState.Remove(nameof(menuInputViewModel.Controller)); // remove ModelState check in Controller (in Request parameters, Controller can be null)
+
                 if (ModelState.IsValid)
                 {
                     SubCategory subCategory = new SubCategory
