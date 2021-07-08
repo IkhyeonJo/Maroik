@@ -9,8 +9,7 @@ namespace MyLaboratory.Site.Common
         {
             // byte[] time = BitConverter.GetBytes(DateTime.UtcNow.ToBinary());
             // byte[] key = Guid.NewGuid().ToByteArray();
-            //string token = Convert.ToBase64String(Guid.NewGuid().ToByteArray());
-            string token = Guid.NewGuid().ToString("N").ToUpper();
+            string token = Convert.ToBase64String(Guid.NewGuid().ToByteArray());
             return token;
         }
     }
