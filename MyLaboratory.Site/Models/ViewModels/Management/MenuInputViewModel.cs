@@ -15,7 +15,7 @@ namespace MyLaboratory.Site.Models.ViewModels.Management
         public int Id { get; set; }
         [Required(ErrorMessage = "Please enter CategoryId")]
         [Display(Name = "CategoryId")]
-        public int? CategoryId { get; set; }
+        public int CategoryId { get; set; }
         [Required(ErrorMessage = "Please enter Name")]
         [Display(Name = "Name")]
         public string Name { get; set; }
