@@ -9,12 +9,13 @@
 <div class="register-box">
     <div class="card card-outline card-primary">
         <div class="card-header text-center">
-            <a href="../../index2.html" class="h1"><b>Admin</b>LTE</a>
+            <a href="#" class="h1"><b>My</b>Laboratory</a>
         </div>
         <div class="card-body">
             <p class="login-box-msg">Register a new membership</p>
 
-            <form action="../../index.html" method="post">
+            <form name="registerForm" class="form-horizontal" method="post" asp-controller="Account" asp-action="Register">
+                @Html.AntiForgeryToken()
                 <div class="input-group mb-3">
                     <input type="text" class="form-control" placeholder="Full name">
                     <div class="input-group-append">
@@ -52,7 +53,7 @@
                         <div class="icheck-primary">
                             <input type="checkbox" id="agreeTerms" name="terms" value="agree">
                             <label for="agreeTerms">
-                                I agree to the <a href="#">terms</a>
+                                I agree to the <a asp-controller="Account" asp-action="ConsentForm" target="_blank" rel="noopener noreferrer">terms</a> @* rel="noopener noreferrer" // prevent tabnabbing (https://www.freecodecamp.org/news/how-to-use-html-to-open-link-in-new-tab/) *@
                             </label>
                         </div>
                     </div>
@@ -64,7 +65,7 @@
                 </div>
             </form>
 
-            <a href="login.html" class="text-center">I already have a membership</a>
+            <a asp-controller="Account" asp-action="Login" class="text-center">I already have a membership</a>
         </div>
         <!-- /.form-box -->
     </div><!-- /.card -->
