@@ -1,6 +1,6 @@
 namespace MyLaboratory.Site.Common
 {
-    public static class Message
+    public static class AccountMessage
     {
         public static string Success = "Success";
         public static string ErrorFound = "Error Found";
@@ -9,6 +9,6 @@ namespace MyLaboratory.Site.Common
         public static string InvalidUser = "Invalid User, Please Create account";
         public static string MailSent = "Mail Sent";
         public static string UserCreatedVerifyEmail = "User created,Check email, click link and verify";
-
+        public static string InvalidToken = "Invalid Token";
     }
 }
