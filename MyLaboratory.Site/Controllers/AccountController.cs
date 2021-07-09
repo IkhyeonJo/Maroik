@@ -202,7 +202,7 @@ namespace MyLaboratory.Site.Controllers
                     TempData["Error"] = "Please check the consent form";
                     return View();
                 }
-                //ViewBag.Guid = "SS";
+                //ViewBag.Guid = "SS"; // 정상 로직 시작
                 return View();
             }
             else
