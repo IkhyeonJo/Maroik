@@ -25,6 +25,7 @@ namespace MyLaboratory.Site.Models.ViewModels.Account
         public string FullName { get; set; }
 
         public bool AgreedServiceTerms { get; set; }
+
         public string Guid { get; set; }
     }
 }
