@@ -26,13 +26,15 @@ namespace MyLaboratory.Site.Controllers
         private readonly IAccountRepository accountRepository;
         private readonly ICategoryRepository categoryRepository;
         private readonly ISubCategoryRepository subCategoryRepository;
+        private readonly IMailRepository mailRepository;
 
-        public AccountController(ILogger<AccountController> logger, IAccountRepository accountRepository, ICategoryRepository categoryRepository, ISubCategoryRepository subCategoryRepository)
+        public AccountController(ILogger<AccountController> logger, IAccountRepository accountRepository, ICategoryRepository categoryRepository, ISubCategoryRepository subCategoryRepository, IMailRepository mailRepository)
         {
             this.logger = logger;
             this.accountRepository = accountRepository;
             this.categoryRepository = categoryRepository;
             this.subCategoryRepository = subCategoryRepository;
+            this.mailRepository = mailRepository;
         }
 
         #region 동의서
