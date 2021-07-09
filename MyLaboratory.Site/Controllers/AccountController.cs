@@ -200,9 +200,10 @@ namespace MyLaboratory.Site.Controllers
                 if(!loginInputViewModel.AgreedServiceTerms) // 계약서 동의 하지 않을 시,
                 {
                     TempData["Error"] = "Please check the consent form";
-                    return RedirectToAction("Register", "Account");
+                    return View();
                 }
-                return RedirectToAction("Register", "Account");
+                //ViewBag.Guid = "SS";
+                return View();
             }
             else
             {

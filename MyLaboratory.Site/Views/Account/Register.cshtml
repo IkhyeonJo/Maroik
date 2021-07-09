@@ -3,6 +3,7 @@
 @model LoginOutputViewModel
 
 @{
+    string guid = ViewBag.Guid ?? "";
     var error = TempData["Error"] as string;
 }
 
@@ -16,6 +17,7 @@
 
             <form name="registerForm" class="form-horizontal" method="post" asp-controller="Account" asp-action="Register">
                 @Html.AntiForgeryToken()
+                <input type="hidden" name="@nameof(LoginInputViewModel.Guid)" value="@guid" />
                 <div class="form-group has-feedback">
                     <input asp-for="FullName" type="text" class="form-control" placeholder="Full Name" />
                     <span asp-validation-for="FullName" class="text-danger"></span>
