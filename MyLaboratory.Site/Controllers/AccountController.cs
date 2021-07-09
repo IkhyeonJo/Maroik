@@ -106,7 +106,7 @@ namespace MyLaboratory.Site.Controllers
             }
 
             ModelState.Remove(nameof(loginInputViewModel.FullName));
-            
+
             if (ModelState.IsValid)
             {
                 var tempAccount = await accountRepository.GetAccountAsync(loginInputViewModel.Email);
@@ -193,23 +193,52 @@ namespace MyLaboratory.Site.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken] //To Prevent CSRF attack
-        public IActionResult Register(LoginInputViewModel loginInputViewModel)
+        public async Task<IActionResult> Register(LoginInputViewModel loginInputViewModel)
         {
-            if (ModelState.IsValid)
+            if (!string.IsNullOrEmpty(loginInputViewModel.Password)) // 회원 가입
             {
-                if(!loginInputViewModel.AgreedServiceTerms) // 계약서 동의 하지 않을 시,
+                if (ModelState.IsValid) // 입력 값 검증
                 {
-                    TempData["Error"] = "Please check the consent form";
+                    if (!loginInputViewModel.AgreedServiceTerms) // 계약서 동의 하지 않을 시,
+                    {
+                        TempData["Error"] = "Please check the consent form";
+                        return View();
+                    }
+                    var account = await accountRepository.GetAccountAsync(loginInputViewModel.Email);
+                    if (account == null) // 입력된 ID로 생성된 Record가 없다.
+                    {
+                        string guid = GUIDToken.Generate();
+
+                        await accountRepository.CreateAccountAsync
+                            (
+                            new Account()
+                            {
+                                Email = loginInputViewModel.Email,
+                                HashedPassword = Crypto.HashPassword(loginInputViewModel.Password),
+                                FullName = loginInputViewModel.FullName,
+                                Role = Role.User,
+                                Locked = false,
+                                EmailConfirmed = false,
+                                AgreedServiceTerms = true,
+                                Guid = guid,
+                                Created = DateTime.UtcNow,
+                                Updated = DateTime.UtcNow,
+                                Message = AccountMessage.UserCreatedVerifyEmail
+                            }
+                            );
+                        //메일 전송...
+                    }
                     return View();
+
                 }
-                #region 정상 로직
-                //ViewBag.Guid = "SS"; // 정상 로직 시작
-                return View();
-                #endregion
+                else
+                {
+                    return RedirectToAction("Register", "Account");
+                }
             }
             else
             {
-                return RedirectToAction("Register", "Account");
+                return View();
             }
         }
         #endregion
