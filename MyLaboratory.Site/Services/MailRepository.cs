@@ -17,6 +17,7 @@ namespace MyLaboratory.Site.Services
             return @$"<div style='text-align:centre;'>
                         <h1>Welcome to MyLaboratory Site<h1>
                         <h3>Click the link below to verify your Email<h3>
+                        <h3>If this link does not work, please copy & paste this link to your Internet URL<h3>
                         <a href='{url}' target='_blank' rel='noopener noreferrer'>{url}</a>
                       </div>";
         }
