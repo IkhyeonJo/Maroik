@@ -73,7 +73,7 @@ else
             <div class="card-body">
                 <p class="login-box-msg">Authentication Email has been sent</p>
 
-                <form id="resendEmailForm" class="form-horizontal" method="post" asp-controller="Account" asp-action="Register">
+                <form id="registerForm" class="form-horizontal" method="post" asp-controller="Account" asp-action="Register">
                     @Html.AntiForgeryToken()
                     <div class="form-group has-feedback">
                         <input asp-for="Email" type="hidden" class="form-control" />
@@ -81,7 +81,7 @@ else
                     <p class="mb-0">
                         <font style="font-weight:normal" color="black">Please check @resentEmailAddress's MailBox<br /><br />If you do not receive an email, <br /> please check your spam folder or resend the email.</font>
                     </p>
-                    <button type="submit" class="btn btn-primary btn-block">Resend</button>
+                    <button type="submit" class="btn btn-primary btn-block" onclick="ShowLoading()">Resend</button>
                 </form>
                 <p class="mb-0">
                     <font style="font-weight:bold" color="red">@error</font>

@@ -2,9 +2,6 @@
 // for details on configuring this project to bundle and minify static web assets.
 
 // Write your JavaScript code.
-$(function () {
-    //$('#loading').hide();
-});
 function ShowLoading() {
     if (!$('#registerForm').valid()) {
         $('#loading').hide();
