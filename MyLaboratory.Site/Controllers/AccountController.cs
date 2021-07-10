@@ -304,10 +304,35 @@ namespace MyLaboratory.Site.Controllers
                                 account.Email
                             };
                             string result = await mailRepository.SendMail(mail);
+                            if (result != AccountMessage.MailSent) // 메일 전송 오류 발생 했을 시..
+                            {
+                                Console.WriteLine(result); // ActivityLog 등으로 로그 남겨야 한다..
+                                try
+                                {
+                                    account.Updated = DateTime.UtcNow;
+                                    account.Message = AccountMessage.FailToMailSent;
+                                    await accountRepository.UpdateAccountAsync(account);
+                                }
+                                catch
+                                {
+                                    TempData["Error"] = "Error occurred when processing about mail fail account status";
+                                    View();
+                                }
+                                TempData["Error"] = "Error occurred when processing about sending account authentication mail";
+                                View();
+                            }
                             #endregion
-                            account.Message = AccountMessage.VerifyEmail;
-                            account.Updated = DateTime.UtcNow;
-                            await accountRepository.UpdateAccountAsync(account);
+                            try
+                            {
+                                account.Message = AccountMessage.VerifyEmail;
+                                account.Updated = DateTime.UtcNow;
+                                await accountRepository.UpdateAccountAsync(account);
+                            }
+                            catch
+                            {
+                                TempData["Error"] = "Error occurred when processing about mail send account status";
+                                View();
+                            }
                             ViewBag.ResendEmail = true; // 이메일 재전송 폼 활성화
                             ViewBag.ResentEmailAddress = account.Email; // 이메일 재전송 폼 이메일 주소 표시용
                             return View();
@@ -317,9 +342,17 @@ namespace MyLaboratory.Site.Controllers
                         #region 이메일 인증이 된 경우
                         else // 계정 생성 및 이메일 확인 완료
                         {
-                            account.Message = AccountMessage.UserAlreadyCreated;
-                            account.Updated = DateTime.UtcNow;
-                            await accountRepository.UpdateAccountAsync(account);
+                            try
+                            {
+                                account.Message = AccountMessage.VerifyEmail;
+                                account.Updated = DateTime.UtcNow;
+                                await accountRepository.UpdateAccountAsync(account);
+                            }
+                            catch
+                            {
+                                TempData["Error"] = "Error occurred when processing about mail send account status";
+                                View();
+                            }
                             TempData["Error"] = AccountMessage.UserAlreadyCreated;
                             ViewBag.ResendEmail = false; // 로그인 폼 활성화
                             return View();
