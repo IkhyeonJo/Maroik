@@ -214,23 +214,31 @@ namespace MyLaboratory.Site.Controllers
                     if (account == null) // 입력된 ID로 생성된 Record가 없다.
                     {
                         loginInputViewModel.Guid = GUIDToken.Generate();
-                        await accountRepository.CreateAccountAsync
-                            (
-                            new Account()
-                            {
-                                Email = loginInputViewModel.Email,
-                                HashedPassword = Crypto.HashPassword(loginInputViewModel.Password),
-                                FullName = loginInputViewModel.FullName,
-                                Role = Role.User,
-                                Locked = false,
-                                EmailConfirmed = false,
-                                AgreedServiceTerms = true,
-                                Guid = loginInputViewModel.Guid,
-                                Created = DateTime.UtcNow,
-                                Updated = DateTime.UtcNow,
-                                Message = AccountMessage.UserCreatedVerifyEmail
-                            }
-                            );
+                        try
+                        {
+                            await accountRepository.CreateAccountAsync
+                                (
+                                new Account()
+                                {
+                                    Email = loginInputViewModel.Email,
+                                    HashedPassword = Crypto.HashPassword(loginInputViewModel.Password),
+                                    FullName = loginInputViewModel.FullName,
+                                    Role = Role.User,
+                                    Locked = false,
+                                    EmailConfirmed = false,
+                                    AgreedServiceTerms = true,
+                                    Guid = loginInputViewModel.Guid,
+                                    Created = DateTime.UtcNow,
+                                    Updated = DateTime.UtcNow,
+                                    Message = AccountMessage.UserCreatedVerifyEmail
+                                }
+                                );
+                        }
+                        catch (Exception e)
+                        {
+                            TempData["Error"] = "Error occurred when processing about account registration";
+                            return View();
+                        }
                         #region 메일 전송
                         Mail mail = new Mail();
                         mail.Subject = "Mail Confirmation";
