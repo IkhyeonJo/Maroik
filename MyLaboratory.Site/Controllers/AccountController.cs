@@ -265,6 +265,9 @@ namespace MyLaboratory.Site.Controllers
                         }
                         else // 계정 생성 및 이메일 확인 완료
                         {
+                            account.Message = AccountMessage.UserAlreadyCreated;
+                            account.Updated = DateTime.UtcNow;
+                            await accountRepository.UpdateAccountAsync(account);
                             TempData["Error"] = AccountMessage.UserAlreadyCreated;
                             ViewBag.ResendEmail = false;
                             return View();
