@@ -42,6 +42,11 @@ namespace MyLaboratory.Site.Filters
                         base.OnActionExecuting(context); // Do Action!!
                         return;
                     }
+                    else if (currentControllerName == "Account" && currentActionName == "ConfirmEmail") // 이메일 인증 페이지인 경우
+                    {
+                        base.OnActionExecuting(context); // Do Action!!
+                        return;
+                    }
                     else if (currentControllerName == "Account" && currentActionName == "ConsentForm") // 동의서 페이지인 경우
                     {
                         base.OnActionExecuting(context); // Do Action!!
