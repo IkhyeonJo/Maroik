@@ -18,7 +18,7 @@
             <div class="card-body">
                 <p class="login-box-msg">Register a new membership</p>
 
-                <form name="registerForm" class="form-horizontal" method="post" asp-controller="Account" asp-action="Register">
+                <form id="registerForm" class="form-horizontal" method="post" asp-controller="Account" asp-action="Register">
                     @Html.AntiForgeryToken()
                     <div class="form-group has-feedback">
                         <input asp-for="FullName" type="text" class="form-control" placeholder="Full Name" />
@@ -48,7 +48,7 @@
                         </div>
                         <!-- /.col -->
                         <div class="col-4">
-                            <button type="submit" class="btn btn-primary btn-block">Register</button>
+                            <button type="submit" class="btn btn-primary btn-block" onclick="ShowLoading()">Register</button>
                         </div>
                         <!-- /.col -->
                     </div>
@@ -73,7 +73,7 @@ else
             <div class="card-body">
                 <p class="login-box-msg">Authentication Email has been sent</p>
 
-                <form name="registerForm" class="form-horizontal" method="post" asp-controller="Account" asp-action="Register">
+                <form id="resendEmailForm" class="form-horizontal" method="post" asp-controller="Account" asp-action="Register">
                     @Html.AntiForgeryToken()
                     <div class="form-group has-feedback">
                         <input asp-for="Email" type="hidden" class="form-control" />
@@ -90,4 +90,10 @@ else
             <!-- /.form-box -->
         </div><!-- /.card -->
     </div>
+}
+<div class="modal" id="loading">
+    <img src="~/adminlte/custom/Account/img/ajax-loader.gif" />
+</div>
+@section Scripts{
+    <script src="~/adminlte/custom/Account/js/site.js" asp-append-version="true"></script>
 }
