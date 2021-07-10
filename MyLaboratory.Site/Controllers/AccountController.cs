@@ -239,6 +239,7 @@ namespace MyLaboratory.Site.Controllers
                         string result = await mailRepository.SendMail(mail);
                         #endregion
                         ViewBag.ResendEmail = true;
+                        ViewBag.ResentEmailAddress = loginInputViewModel.Email;
                         return View();
                     }
                     else // 입력된 ID로 생성된 Record 있다.
@@ -259,6 +260,7 @@ namespace MyLaboratory.Site.Controllers
                             account.Updated = DateTime.UtcNow;
                             await accountRepository.UpdateAccountAsync(account);
                             ViewBag.ResendEmail = true;
+                            ViewBag.ResentEmailAddress = account.Email;
                             return View();
                         }
                         else
@@ -307,6 +309,7 @@ namespace MyLaboratory.Site.Controllers
                             account.Updated = DateTime.UtcNow;
                             await accountRepository.UpdateAccountAsync(account);
                             ViewBag.ResendEmail = true;
+                            ViewBag.ResentEmailAddress = account.Email;
                             return View();
                         }
                         else // 생성되고 Email 확인함
