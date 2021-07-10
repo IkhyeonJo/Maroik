@@ -6,33 +6,14 @@ using System.Text;
 namespace MyLaboratory.Site.Helpers
 {
     #region Code Example
+    //string plaintext = "plaintext";
+
     //var rsa = new RSA(RSAType.RSA2, Encoding.UTF8, RSA.privateKey, RSA.publicKey);
 
-    //string str = "博客园 http://www.cnblogs.com/";
-
-    //Console.WriteLine("原始字符串："+str);
-
-    //		//加密
-    //        string enStr = rsa.Encrypt(str);
-
-    //Console.WriteLine("加密字符串："+enStr);
-
-    //		//解密
-    //        string deStr = rsa.Decrypt(enStr);
-
-    //Console.WriteLine("解密字符串："+deStr);
-
-    //		//私钥签名
-    //        string signStr = rsa.Sign(str);
-
-    //Console.WriteLine("字符串签名：" + signStr);
-
-    //        //公钥验证签名
-    //        bool signVerify = rsa.Verify(str, signStr);
-
-    //Console.WriteLine("验证签名：" + signVerify);
-
-    //		Console.ReadKey();
+    //var aa = rsa.Encrypt(plaintext);
+    //var bb = rsa.Decrypt(aa);
+    //var cc = rsa.Sign(plaintext);
+    //var dd = rsa.Verify(plaintext, cc);
     #endregion
     /// <summary>
     /// RSA加解密 使用OpenSSL的公钥加密/私钥解密
