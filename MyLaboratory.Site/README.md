@@ -521,3 +521,5 @@ SignUpWithEmailConfirmation 프로젝트 버그 수정 및 테스트 완료한 거 소스코드 전부
 http://ajaxload.info/ // loading gif
 
 RSA // https://github.com/IkhyeonJo/DotnetCore.RSA
+
+TODO: Email Confirmation
