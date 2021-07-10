@@ -45,44 +45,6 @@ namespace MyLaboratory.Site.Helpers
     /// </summary>
     public class RSA
     {
-        #region Custom Added
-        public static readonly RSA helper = new RSA(RSAType.RSA2, Encoding.UTF8, RSA.privateKey, RSA.publicKey);
-        //2048 pkcs1 public key
-        private static readonly string publicKey = @"MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAuraNTpiLGdKQYJp5P8lX
-lBihAcoGIKSU1L9xD+6g7+9F9AFGLKUU5U/6irxGQgwZIcawD8BatH4Ol8HYuM/D
-SZ5Iq2JXI+OQN9XK2oNBT2wLNFfFRmMKt8NuUyimNZJhHSiFXGrQNTmxjn9q//Ci
-3OHwvEeOYbBqja0ICCazHL1ydD2Ilk5FTfiCT6NnVAWdjUvEnevadE6YsqVatsnJ
-ThqXpmdT9jo8XBkCNPgJ5U71POE88M60Z71olgKy4cuJF2EbwDX+naxXttiaNgYN
-nn5j4BncmknNrCdP/eyoqtIgnQiMDrZEB7+aFwX+nsfxLsKVKqWcjdjgv3XVN8HD
-rwIDAQAB";
-        //2048 pkcs1 private key
-        private static readonly string privateKey = @"MIIEpQIBAAKCAQEAuraNTpiLGdKQYJp5P8lXlBihAcoGIKSU1L9xD+6g7+9F9AFG
-LKUU5U/6irxGQgwZIcawD8BatH4Ol8HYuM/DSZ5Iq2JXI+OQN9XK2oNBT2wLNFfF
-RmMKt8NuUyimNZJhHSiFXGrQNTmxjn9q//Ci3OHwvEeOYbBqja0ICCazHL1ydD2I
-lk5FTfiCT6NnVAWdjUvEnevadE6YsqVatsnJThqXpmdT9jo8XBkCNPgJ5U71POE8
-8M60Z71olgKy4cuJF2EbwDX+naxXttiaNgYNnn5j4BncmknNrCdP/eyoqtIgnQiM
-DrZEB7+aFwX+nsfxLsKVKqWcjdjgv3XVN8HDrwIDAQABAoIBAAjWjzA7Kri/H/G6
-ssHjR8Q2XfS4OaArzIQGbLoF+3hm68KPBuGP+8IEe/OpGtqRpsBTnrvBSPwqp65S
-41tIMdJgW6PS6V4OLaJjjGyQhLPXYO+KSOxehtKRBuKI+mkmWFJXO8OyFBlrLDat
-XPLDQMXAUQ6QhNc40M75Bgo8Kigt0f1xcAi9w9ftPNusjX/isa5ZJzpUKppQjqNv
-51h2Bty8DoaVHBxTh2oyVho9+2VIEBWyQN/LjKkQFL3RYntOLiVPquCTlrJJODHT
-6mmmbx5gxhZM5rnO6j3reKVs/3GWb122hh660X55spYCggxsBHEtduVU8w/k+nHE
-QfsWXxECgYEA27rgN/kGJyHnfh0OpMbn+AriJJYt7fp69i5pPHRdZIwXt73LsPxA
-kpG1tIx5Ir1ej8hdNPRtFH5ot7vItC5iD2ie5O83SWbF6fDcytDn0RPHUT0LwWI7
-PEJheP4SlpYjZ1MziNgulq0UCMaQTqyUuAvaqioRkfyuaPgsg1Z7d58CgYEA2Yh7
-dfVX0chQil4STWqxtWKt0rG0PS2CqU0tdwdTKBIwEDInMD9CJQGfEM3CUte/wsQL
-boPb2tEYv8MIjrD/55Wm79toRBZpQz3HQmOyy20OtTRXZq96TsjeDHJVOjPu0Uc5
-WuOZy7i0ncsXS5sBLFdYKj4TW4EWqIXOcryEefECgYEAzDCfSKSLyTXCj/mksA9/
-ZYuHl4RP7kTEm52JgfqJB3UAXWlsrm3b+9iYSM35jAT6qRcDNsCl1VObMJK68mXg
-Dn2kmw6KDBYLeVixdXAo3KxKnv3hvLXyYg810WAaGgIvqEczLsnmkXMJmRYc6F+M
-XHP3ogYyCb4MvdNSWkK1vfUCgYEA0pYBjwvX3EojThALf86OAp5oz9MgPSlVmDgS
-j2wT4HLa/JLQxTA4BEMxjb7jI/eguBe5SV908rwBTYKtQhWvZq3FUeYBZgicFnAz
-+d0yNSR6XIkzI0E1Ehf6feog/5tO0mI07/vt4v4IO8lj39lKpXZY72vwqWCqYrJG
-TWSaisECgYEAsE076eW5jss8bkANMoyUtUqLKz6/eOscp+sabbPclpvwrAl6CEgL
-P8WGiIU4AKvZ/CRUQXDnVu6ZgM8bOa0cNu7rpQouefU72/SXtCyeubQzH0HYz4q3
-UJGwvsObGSwUfhFISDcxew/exQS5mfJdBLKJI1kf60cjqy5UxWqY/CE=";
-        #endregion
-
         private readonly System.Security.Cryptography.RSA _privateKeyRsaProvider;
         private readonly System.Security.Cryptography.RSA _publicKeyRsaProvider;
         private readonly HashAlgorithmName _hashAlgorithmName;
