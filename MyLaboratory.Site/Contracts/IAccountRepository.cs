@@ -9,6 +9,7 @@ namespace MyLaboratory.Site.Contracts
     {
         public Task<Account> GetAccountAsync(string email);
         public Task CreateAccountAsync(Account account);
+        public Task UpdateAccountAsync(Account account);
         public Task<LoginInputViewModel> SignUp(LoginInputViewModel loginInputViewModel);
         public Task<string> ConfirmMail(string guid);
     }

@@ -10,5 +10,6 @@ namespace MyLaboratory.Site.Common
         public static string MailSent = "Mail Sent";
         public static string UserCreatedVerifyEmail = "User created, Check email, click link and verify";
         public static string InvalidToken = "Invalid Token";
+        public static string FailToResendEmail = "Failed to resend email";
     }
 }

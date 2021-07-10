@@ -11,27 +11,14 @@ namespace MyLaboratory.Site.Services
 {
     public class MailRepository : IMailRepository
     {
-        public string GetMailBody(LoginInputViewModel loginInputViewModel)
+        public string GetMailConfirmationBody(LoginInputViewModel loginInputViewModel)
         {
-            string url = $"{Global.DomainName}api/LoginInfos/ConfirmMail/{loginInputViewModel.Guid}";
+            string url = $"{Global.DomainName}Account/ConfirmEmail?token={loginInputViewModel.Guid}";
             return @$"<div style='text-align:centre;'>
-                                        <h1>Welcome to MyLaboratory Site<h1>
-                                        <h3>Click the button below to verify your Email<h3>
-                                        <form method='get' action='{url}' style='display : inline;'>
-                                            <button type='submit' style='display : block;
-                                                                        text-align : centre;
-                                                                        font-weight : bold;
-                                                                        background-color : #008CBA;
-                                                                        font-size : 16px;
-                                                                        border-radius : 10px;
-                                                                        color : #ffffff;
-                                                                        cursor : pointer
-                                                                        width : 100%;
-                                                                        padding : 10px;'>
-                                            Confirm Mail
-                                            </button>
-                                        </form>
-                                    </div>";
+                        <h1>Welcome to MyLaboratory Site<h1>
+                        <h3>Click the link below to verify your Email<h3>
+                        <a href='{url}' target='_blank' rel='noopener noreferrer'>{url}</a>
+                      </div>";
         }
 
         public async Task<string> SendMail(Mail mail)
@@ -55,7 +42,7 @@ namespace MyLaboratory.Site.Services
                     {
                         smtp.Credentials = new System.Net.NetworkCredential(mail.FromMailId, mail.FromMailIdPassword);
                         smtp.EnableSsl = true;
-                        await smtp.SendMailAsync(mailMessage);
+                        await smtp.SendMailAsync(mailMessage); // lagging... must be multiThread
                         return AccountMessage.MailSent;
                     }
                 }

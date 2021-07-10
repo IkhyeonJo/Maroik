@@ -27,6 +27,11 @@ namespace MyLaboratory.Site.Services
             await context.Accounts.AddAsync(account);
             await context.SaveChangesAsync();
         }
+        public async Task UpdateAccountAsync(Account account)
+        {
+            context.Accounts.Update(account);
+            await context.SaveChangesAsync();
+        }
 
         public Task<string> ConfirmMail(string guid)
         {

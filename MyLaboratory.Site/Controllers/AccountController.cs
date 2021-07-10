@@ -17,6 +17,7 @@ using System.Text;
 using MyLaboratory.Site.Models;
 using MyLaboratory.Site.Data;
 using MyLaboratory.Site.Contracts;
+using MyLaboratory.Site.Helpers;
 
 namespace MyLaboratory.Site.Controllers
 {
@@ -209,8 +210,7 @@ namespace MyLaboratory.Site.Controllers
                     var account = await accountRepository.GetAccountAsync(loginInputViewModel.Email);
                     if (account == null) // 입력된 ID로 생성된 Record가 없다.
                     {
-                        string guid = GUIDToken.Generate();
-
+                        loginInputViewModel.Guid = GUIDToken.Generate();
                         await accountRepository.CreateAccountAsync
                             (
                             new Account()
@@ -222,25 +222,105 @@ namespace MyLaboratory.Site.Controllers
                                 Locked = false,
                                 EmailConfirmed = false,
                                 AgreedServiceTerms = true,
-                                Guid = guid,
+                                Guid = loginInputViewModel.Guid,
                                 Created = DateTime.UtcNow,
                                 Updated = DateTime.UtcNow,
                                 Message = AccountMessage.UserCreatedVerifyEmail
                             }
                             );
-                        //메일 전송...
+                        #region 메일 전송
+                        Mail mail = new Mail();
+                        mail.Subject = "Mail Confirmation";
+                        mail.Body = mailRepository.GetMailConfirmationBody(loginInputViewModel);
+                        mail.ToMailIds = new List<string>
+                        {
+                            loginInputViewModel.Email
+                        };
+                        string result = await mailRepository.SendMail(mail);
+                        #endregion
+                        ViewBag.ResendEmail = true;
+                        return View();
                     }
-                    return View();
-
+                    else // 입력된 ID로 생성된 Record 있다.
+                    {
+                        if (!account.EmailConfirmed) // 생성은 되었으나 Email 확인 안 함
+                        {
+                            #region 메일 전송
+                            Mail mail = new Mail();
+                            mail.Subject = "Mail Confirmation";
+                            mail.Body = mailRepository.GetMailConfirmationBody(new LoginInputViewModel() { Guid = account.Guid });
+                            mail.ToMailIds = new List<string>
+                            {
+                                account.Email
+                            };
+                            string result = await mailRepository.SendMail(mail);
+                            #endregion
+                            account.Message = AccountMessage.VerifyEmail;
+                            account.Updated = DateTime.UtcNow;
+                            await accountRepository.UpdateAccountAsync(account);
+                            ViewBag.ResendEmail = true;
+                            return View();
+                        }
+                        else
+                        {
+                            TempData["Error"] = AccountMessage.UserAlreadyCreated;
+                            ViewBag.ResendEmail = false;
+                            return View();
+                        }
+                    }
                 }
-                else
+                else // 입력 값 잘못 됨
                 {
                     return RedirectToAction("Register", "Account");
                 }
             }
-            else
+            else // 이메일 재전송
             {
-                return View();
+                ModelState.Remove(nameof(loginInputViewModel.Password));
+                ModelState.Remove(nameof(loginInputViewModel.FullName));
+
+                if (ModelState.IsValid) // 입력 값 검증
+                {
+                    var account = await accountRepository.GetAccountAsync(loginInputViewModel.Email);
+
+                    if (account == null) // 입력된 ID로 생성된 Record 없다.
+                    {
+                        TempData["Error"] = AccountMessage.FailToResendEmail;
+                        ViewBag.ResendEmail = true;
+                        return View();
+                    }
+                    else // 입력된 ID로 생성된 Record 있다.
+                    {
+                        if (!account.EmailConfirmed) // 생성은 되었으나 Email 확인 안 함.
+                        {
+                            #region 메일 전송
+                            Mail mail = new Mail();
+                            mail.Subject = "Mail Confirmation";
+                            mail.Body = mailRepository.GetMailConfirmationBody(new LoginInputViewModel() { Guid = account.Guid });
+                            mail.ToMailIds = new List<string>
+                            {
+                                account.Email
+                            };
+                            string result = await mailRepository.SendMail(mail);
+                            #endregion
+                            account.Message = AccountMessage.UserCreatedVerifyEmail;
+                            account.Updated = DateTime.UtcNow;
+                            await accountRepository.UpdateAccountAsync(account);
+                            ViewBag.ResendEmail = true;
+                            return View();
+                        }
+                        else // 생성되고 Email 확인함
+                        {
+                            TempData["Error"] = AccountMessage.UserAlreadyCreated;
+                            ViewBag.ResendEmail = false;
+                            return View();
+                        }
+                    }
+                }
+                else // 입력 값 잘못 됨
+                {
+                    return RedirectToAction("Register", "Account");
+                }
             }
         }
         #endregion
