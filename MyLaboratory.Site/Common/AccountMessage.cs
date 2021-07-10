@@ -8,6 +8,7 @@ namespace MyLaboratory.Site.Common
         public static string VerifyEmail = "User already created, please verify your given mail Id";
         public static string InvalidUser = "Invalid User, Please Create account";
         public static string MailSent = "Mail Sent";
+        public static string FailToMailSent = "Fail to mail sent";
         public static string UserCreatedVerifyEmail = "User created, Check email, click link and verify";
         public static string InvalidToken = "Invalid Token";
         public static string FailToResendEmail = "Failed to resend email";

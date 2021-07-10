@@ -213,7 +213,8 @@ namespace MyLaboratory.Site.Controllers
                     #region 새롭게 회원가입을 진행하는 경우
                     if (account == null) // 입력된 ID로 생성된 Record가 없다.
                     {
-                        loginInputViewModel.Guid = GUIDToken.Generate();
+                        string guid = GUIDToken.Generate();
+                        loginInputViewModel.Guid = guid;
                         try
                         {
                             await accountRepository.CreateAccountAsync
@@ -234,20 +235,53 @@ namespace MyLaboratory.Site.Controllers
                                 }
                                 );
                         }
-                        catch
+                        catch (Exception e)
                         {
+                            Console.WriteLine(e.ToString()); // ActivityLog 등으로 로그 남겨야 한다..
                             TempData["Error"] = "Error occurred when processing about account registration";
                             return View();
                         }
                         #region 메일 전송
                         Mail mail = new Mail();
                         mail.Subject = "Mail Confirmation";
+                        loginInputViewModel.Guid = new RSA(RSAType.RSA2, Encoding.UTF8, RSA.privateKey, RSA.publicKey).Sign(loginInputViewModel.Guid); // 암호화
                         mail.Body = mailRepository.GetMailConfirmationBody(loginInputViewModel);
                         mail.ToMailIds = new List<string>
                         {
                             loginInputViewModel.Email
                         };
                         string result = await mailRepository.SendMail(mail);
+                        if (result != AccountMessage.MailSent) // 메일 전송 오류 발생 했을 시..
+                        {
+                            Console.WriteLine(result); // ActivityLog 등으로 로그 남겨야 한다..
+                            loginInputViewModel.Guid = guid;
+                            try
+                            {
+                                await accountRepository.UpdateAccountAsync
+                                    (
+                                    new Account()
+                                    {
+                                        Email = loginInputViewModel.Email,
+                                        HashedPassword = Crypto.HashPassword(loginInputViewModel.Password),
+                                        FullName = loginInputViewModel.FullName,
+                                        Role = Role.User,
+                                        Locked = false,
+                                        EmailConfirmed = false,
+                                        AgreedServiceTerms = true,
+                                        Guid = loginInputViewModel.Guid,
+                                        Created = DateTime.UtcNow,
+                                        Updated = DateTime.UtcNow,
+                                        Message = AccountMessage.FailToMailSent
+                                    });
+                            }
+                            catch 
+                            {
+                                TempData["Error"] = "Error occurred when processing about mail fail account status";
+                                View();
+                            }
+                            TempData["Error"] = "Error occurred when processing about sending account authentication mail";
+                            View();
+                        }
                         #endregion
                         ViewBag.ResendEmail = true; // 이메일 재전송 폼 활성화
                         ViewBag.ResentEmailAddress = loginInputViewModel.Email; // 이메일 재전송 폼 이메일 주소 표시용
