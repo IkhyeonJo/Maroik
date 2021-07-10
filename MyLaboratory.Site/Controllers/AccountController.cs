@@ -263,7 +263,7 @@ namespace MyLaboratory.Site.Controllers
                             ViewBag.ResentEmailAddress = account.Email;
                             return View();
                         }
-                        else
+                        else // 계정 생성 및 이메일 확인 완료
                         {
                             TempData["Error"] = AccountMessage.UserAlreadyCreated;
                             ViewBag.ResendEmail = false;
