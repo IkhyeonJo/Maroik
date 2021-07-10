@@ -207,7 +207,10 @@ namespace MyLaboratory.Site.Controllers
                         TempData["Error"] = "Please check the consent form";
                         return View();
                     }
+
                     var account = await accountRepository.GetAccountAsync(loginInputViewModel.Email);
+
+                    #region 새롭게 회원가입을 진행하는 경우
                     if (account == null) // 입력된 ID로 생성된 Record가 없다.
                     {
                         loginInputViewModel.Guid = GUIDToken.Generate();
@@ -238,12 +241,16 @@ namespace MyLaboratory.Site.Controllers
                         };
                         string result = await mailRepository.SendMail(mail);
                         #endregion
-                        ViewBag.ResendEmail = true;
-                        ViewBag.ResentEmailAddress = loginInputViewModel.Email;
+                        ViewBag.ResendEmail = true; // 이메일 재전송 폼 활성화
+                        ViewBag.ResentEmailAddress = loginInputViewModel.Email; // 이메일 재전송 폼 이메일 주소 표시용
                         return View();
                     }
+                    #endregion
+
+                    #region 회원가입이 된 경우
                     else // 입력된 ID로 생성된 Record 있다.
                     {
+                        #region 이메일 인증이 안 된 경우
                         if (!account.EmailConfirmed) // 생성은 되었으나 Email 확인 안 함
                         {
                             #region 메일 전송
@@ -259,20 +266,25 @@ namespace MyLaboratory.Site.Controllers
                             account.Message = AccountMessage.VerifyEmail;
                             account.Updated = DateTime.UtcNow;
                             await accountRepository.UpdateAccountAsync(account);
-                            ViewBag.ResendEmail = true;
-                            ViewBag.ResentEmailAddress = account.Email;
+                            ViewBag.ResendEmail = true; // 이메일 재전송 폼 활성화
+                            ViewBag.ResentEmailAddress = account.Email; // 이메일 재전송 폼 이메일 주소 표시용
                             return View();
                         }
+                        #endregion
+
+                        #region 이메일 인증이 된 경우
                         else // 계정 생성 및 이메일 확인 완료
                         {
                             account.Message = AccountMessage.UserAlreadyCreated;
                             account.Updated = DateTime.UtcNow;
                             await accountRepository.UpdateAccountAsync(account);
                             TempData["Error"] = AccountMessage.UserAlreadyCreated;
-                            ViewBag.ResendEmail = false;
+                            ViewBag.ResendEmail = false; // 로그인 폼 활성화
                             return View();
                         }
+                        #endregion
                     }
+                    #endregion
                 }
                 else // 입력 값 잘못 됨
                 {
@@ -288,14 +300,19 @@ namespace MyLaboratory.Site.Controllers
                 {
                     var account = await accountRepository.GetAccountAsync(loginInputViewModel.Email);
 
+                    #region 이메일 재전송 하는데 받은 Email로 DB 조회를 했는데 Record가 없다. (버그임)
                     if (account == null) // 입력된 ID로 생성된 Record 없다.
                     {
                         TempData["Error"] = AccountMessage.FailToResendEmail;
-                        ViewBag.ResendEmail = true;
+                        ViewBag.ResendEmail = true; // 이메일 재전송 폼 활성화
                         return View();
                     }
+                    #endregion
+
+                    #region 이메일 재전송
                     else // 입력된 ID로 생성된 Record 있다.
                     {
+                        #region 생성은 되었으나 Email 확인 안 함
                         if (!account.EmailConfirmed) // 생성은 되었으나 Email 확인 안 함.
                         {
                             #region 메일 전송
@@ -311,21 +328,27 @@ namespace MyLaboratory.Site.Controllers
                             account.Message = AccountMessage.UserCreatedVerifyEmail;
                             account.Updated = DateTime.UtcNow;
                             await accountRepository.UpdateAccountAsync(account);
-                            ViewBag.ResendEmail = true;
-                            ViewBag.ResentEmailAddress = account.Email;
+                            ViewBag.ResendEmail = true; // 이메일 재전송 폼 활성화
+                            ViewBag.ResentEmailAddress = account.Email; // 이메일 재전송 폼 이메일 주소 표시용
                             return View();
                         }
+                        #endregion
+
+                        #region 생성되고 Email 확인함
                         else // 생성되고 Email 확인함
                         {
                             account.Message = AccountMessage.UserAlreadyCreated;
                             account.Updated = DateTime.UtcNow;
                             await accountRepository.UpdateAccountAsync(account);
                             TempData["Error"] = AccountMessage.UserAlreadyCreated;
-                            ViewBag.ResendEmail = false;
+                            ViewBag.ResendEmail = false; // 로그인 폼 활성화
                             return View();
                         }
+                        #endregion
                     }
+                    #endregion
                 }
+
                 else // 입력 값 잘못 됨
                 {
                     return RedirectToAction("Register", "Account");
