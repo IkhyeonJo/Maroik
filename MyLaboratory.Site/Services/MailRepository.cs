@@ -43,7 +43,7 @@ namespace MyLaboratory.Site.Services
                     {
                         smtp.Credentials = new System.Net.NetworkCredential(mail.FromMailId, mail.FromMailIdPassword);
                         smtp.EnableSsl = true;
-                        await smtp.SendMailAsync(mailMessage); // lagging... must be multiThread
+                        await smtp.SendMailAsync(mailMessage);
                         return AccountMessage.MailSent;
                     }
                 }
