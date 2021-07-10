@@ -344,7 +344,7 @@ namespace MyLaboratory.Site.Controllers
                         {
                             try
                             {
-                                account.Message = AccountMessage.VerifyEmail;
+                                account.Message = AccountMessage.UserAlreadyCreated;
                                 account.Updated = DateTime.UtcNow;
                                 await accountRepository.UpdateAccountAsync(account);
                             }
@@ -393,16 +393,41 @@ namespace MyLaboratory.Site.Controllers
                             #region 메일 전송
                             Mail mail = new Mail();
                             mail.Subject = "Mail Confirmation";
-                            mail.Body = mailRepository.GetMailConfirmationBody(new LoginInputViewModel() { Guid = account.Guid });
+                            mail.Body = mailRepository.GetMailConfirmationBody(new LoginInputViewModel() { Guid = new RSA(RSAType.RSA2, Encoding.UTF8, RSA.privateKey, RSA.publicKey).Sign(account.Guid) });
                             mail.ToMailIds = new List<string>
                             {
                                 account.Email
                             };
                             string result = await mailRepository.SendMail(mail);
+                            if (result != AccountMessage.MailSent) // 메일 전송 오류 발생 했을 시..
+                            {
+                                Console.WriteLine(result); // ActivityLog 등으로 로그 남겨야 한다..
+                                try
+                                {
+                                    account.Updated = DateTime.UtcNow;
+                                    account.Message = AccountMessage.FailToMailSent;
+                                    await accountRepository.UpdateAccountAsync(account);
+                                }
+                                catch
+                                {
+                                    TempData["Error"] = "Error occurred when processing about mail fail account status";
+                                    View();
+                                }
+                                TempData["Error"] = "Error occurred when processing about sending account authentication mail";
+                                View();
+                            }
                             #endregion
-                            account.Message = AccountMessage.UserCreatedVerifyEmail;
-                            account.Updated = DateTime.UtcNow;
-                            await accountRepository.UpdateAccountAsync(account);
+                            try
+                            {
+                                account.Message = AccountMessage.UserCreatedVerifyEmail;
+                                account.Updated = DateTime.UtcNow;
+                                await accountRepository.UpdateAccountAsync(account);
+                            }
+                            catch
+                            {
+                                TempData["Error"] = "Error occurred when processing about mail send account status";
+                                View();
+                            }
                             ViewBag.ResendEmail = true; // 이메일 재전송 폼 활성화
                             ViewBag.ResentEmailAddress = account.Email; // 이메일 재전송 폼 이메일 주소 표시용
                             ViewBag.RepeatEmailSend = true; // 이메일 재발송 확인
@@ -413,9 +438,17 @@ namespace MyLaboratory.Site.Controllers
                         #region 생성되고 Email 확인함
                         else // 생성되고 Email 확인함
                         {
-                            account.Message = AccountMessage.UserAlreadyCreated;
-                            account.Updated = DateTime.UtcNow;
-                            await accountRepository.UpdateAccountAsync(account);
+                            try
+                            {
+                                account.Message = AccountMessage.UserAlreadyCreated;
+                                account.Updated = DateTime.UtcNow;
+                                await accountRepository.UpdateAccountAsync(account);
+                            }
+                            catch
+                            {
+                                TempData["Error"] = "Error occurred when processing about account status";
+                                View();
+                            }
                             TempData["Error"] = AccountMessage.UserAlreadyCreated;
                             ViewBag.ResendEmail = false; // 로그인 폼 활성화
                             return View();
