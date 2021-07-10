@@ -3,6 +3,7 @@
 @model LoginOutputViewModel
 
 @{
+    bool repeatEmailSend = ViewBag.RepeatEmailSend ?? false;
     bool resendEmail = ViewBag.ResendEmail ?? false;
     string resentEmailAddress = ViewBag.ResentEmailAddress ?? "";
     var error = TempData["Error"] as string;
@@ -65,31 +66,62 @@
 }
 else
 {
-    <div class="register-box">
-        <div class="card card-outline card-primary">
-            <div class="card-header text-center">
-                <a href="#" class="h1"><b>My</b>Laboratory</a>
-            </div>
-            <div class="card-body">
-                <p class="login-box-msg">Authentication Email has been sent</p>
+    if (repeatEmailSend == false)
+    {
+        <div class="register-box">
+            <div class="card card-outline card-primary">
+                <div class="card-header text-center">
+                    <a href="#" class="h1"><b>My</b>Laboratory</a>
+                </div>
+                <div class="card-body">
+                    <p class="login-box-msg">Authentication Email has been sent</p>
 
-                <form id="registerForm" class="form-horizontal" method="post" asp-controller="Account" asp-action="Register">
-                    @Html.AntiForgeryToken()
-                    <div class="form-group has-feedback">
-                        <input asp-for="Email" type="hidden" class="form-control" />
-                    </div>
+                    <form id="registerForm" class="form-horizontal" method="post" asp-controller="Account" asp-action="Register">
+                        @Html.AntiForgeryToken()
+                        <div class="form-group has-feedback">
+                            <input asp-for="Email" type="hidden" class="form-control" />
+                        </div>
+                        <p class="mb-0">
+                            <font style="font-weight:normal" color="black">Please check @resentEmailAddress's MailBox<br /><br />If you do not receive an email, <br /> please check your spam folder or resend the email.</font>
+                        </p>
+                        <button type="submit" class="btn btn-primary btn-block" onclick="ShowLoading()">Resend</button>
+                    </form>
                     <p class="mb-0">
-                        <font style="font-weight:normal" color="black">Please check @resentEmailAddress's MailBox<br /><br />If you do not receive an email, <br /> please check your spam folder or resend the email.</font>
+                        <font style="font-weight:bold" color="red">@error</font>
                     </p>
-                    <button type="submit" class="btn btn-primary btn-block" onclick="ShowLoading()">Resend</button>
-                </form>
-                <p class="mb-0">
-                    <font style="font-weight:bold" color="red">@error</font>
-                </p>
-            </div>
-            <!-- /.form-box -->
-        </div><!-- /.card -->
-    </div>
+                </div>
+                <!-- /.form-box -->
+            </div><!-- /.card -->
+        </div>
+    }
+    else
+    {
+        <div class="register-box">
+            <div class="card card-outline card-primary">
+                <div class="card-header text-center">
+                    <a href="#" class="h1"><b>My</b>Laboratory</a>
+                </div>
+                <div class="card-body">
+                    <p class="login-box-msg">Authentication Email has been sent again</p>
+
+                    <form id="registerForm" class="form-horizontal" method="post" asp-controller="Account" asp-action="Register">
+                        @Html.AntiForgeryToken()
+                        <div class="form-group has-feedback">
+                            <input asp-for="Email" type="hidden" class="form-control" />
+                        </div>
+                        <p class="mb-0">
+                            <font style="font-weight:normal" color="black">Please check @resentEmailAddress's MailBox<br /><br />If you do not receive an email, <br /> please check your spam folder or resend the email. <br /><br />If you keep fail to receive authentication email, please contact to <a href="mailto:***REMOVED***m">Administrator</a></font>
+                        </p>
+                        <button type="submit" class="btn btn-primary btn-block" onclick="ShowLoading()">Resend</button>
+                    </form>
+                    <p class="mb-0">
+                        <font style="font-weight:bold" color="red">@error</font>
+                    </p>
+                </div>
+                <!-- /.form-box -->
+            </div><!-- /.card -->
+        </div>
+    }
 }
 <div class="modal" id="loading">
     <img src="~/adminlte/custom/Account/img/ajax-loader.gif" />

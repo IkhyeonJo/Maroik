@@ -330,6 +330,7 @@ namespace MyLaboratory.Site.Controllers
                             await accountRepository.UpdateAccountAsync(account);
                             ViewBag.ResendEmail = true; // 이메일 재전송 폼 활성화
                             ViewBag.ResentEmailAddress = account.Email; // 이메일 재전송 폼 이메일 주소 표시용
+                            ViewBag.RepeatEmailSend = true; // 이메일 재발송 확인
                             return View();
                         }
                         #endregion
