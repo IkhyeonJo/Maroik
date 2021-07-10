@@ -517,3 +517,5 @@ you create a table in your db where you store these generated tokens with the a 
 
 
 SignUpWithEmailConfirmation 프로젝트 버그 수정 및 테스트 완료한 거 소스코드 전부 분석하여서 이 프로젝트에 넣을 것.
+
+http://ajaxload.info/ // loading gif
