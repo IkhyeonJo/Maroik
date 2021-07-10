@@ -234,7 +234,7 @@ namespace MyLaboratory.Site.Controllers
                                 }
                                 );
                         }
-                        catch (Exception e)
+                        catch
                         {
                             TempData["Error"] = "Error occurred when processing about account registration";
                             return View();
