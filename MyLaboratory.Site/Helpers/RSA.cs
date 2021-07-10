@@ -5,7 +5,7 @@ using System.Text;
 
 namespace MyLaboratory.Site.Helpers
 {
-    #region Code Example
+    #region Code Example.
     //var rsa = new RSA(RSAType.RSA2, Encoding.UTF8, RSA.privateKey, RSA.publicKey);
 
     //string str = "博客园 http://www.cnblogs.com/";
