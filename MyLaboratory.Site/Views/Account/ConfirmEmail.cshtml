@@ -12,7 +12,7 @@
                 <a href="#" class="h1"><b>My</b>Laboratory</a>
             </div>
             <div class="card-body">
-                <p class="login-box-msg">You have already verified your email</p>
+                <p class="login-box-msg"><font style="font-weight:bold" color="black">You have already verified your email</font></p>
                 <div class="social-auth-links text-center mt-2 mb-3">
                     <a asp-controller="Account" asp-action="Login" class="btn btn-block btn-primary">
                         <i class="fas fa-sign-in-alt" style="padding-right:3px;"></i> Back To Login Page
@@ -30,7 +30,7 @@ else if (invalidToken == false && accountCreated == true) // 1.	계정이 성공
                 <a href="#" class="h1"><b>My</b>Laboratory</a>
             </div>
             <div class="card-body">
-                <p class="login-box-msg">Your account has been successfully created</p>
+                <p class="login-box-msg"><font style="font-weight:bold" color="green">Your account has been successfully created</font></p>
                 <div class="social-auth-links text-center mt-2 mb-3">
                     <a asp-controller="Account" asp-action="Login" class="btn btn-block btn-primary">
                         <i class="fas fa-sign-in-alt" style="padding-right:3px;"></i> Back To Login Page
@@ -48,7 +48,7 @@ else if (invalidToken == true && accountCreated == false) // 1.	승인 코드가
                 <a href="#" class="h1"><b>My</b>Laboratory</a>
             </div>
             <div class="card-body">
-                <p class="login-box-msg">The authentication token is invalid.</p>
+                <p class="login-box-msg"><font style="font-weight:bold" color="red">The authentication token is invalid.</font></p>
                 <div class="social-auth-links text-center mt-2 mb-3">
                     <p class="mb-0">
                         <font style="font-weight:bold" color="black">
@@ -82,7 +82,7 @@ else if (invalidToken == true && accountCreated == true) // 1.	(있을 수 없�
                 <a href="#" class="h1"><b>My</b>Laboratory</a>
             </div>
             <div class="card-body">
-                <p class="login-box-msg">Exception!!</p>
+                <p class="login-box-msg"><font style="font-weight:bold" color="red">Exception!!</font></p>
                 <div class="social-auth-links text-center mt-2 mb-3">
                     <p class="mb-0">
                         <font style="font-weight:bold" color="red">@error</font>
