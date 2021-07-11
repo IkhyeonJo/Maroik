@@ -523,3 +523,10 @@ http://ajaxload.info/ // loading gif
 RSA // https://github.com/IkhyeonJo/DotnetCore.RSA
 
 TODO: Email Confirmation
+
+메일 전송 시, Login Token Problem (+ 문자가 사라진다...) 해결법: var encodedToken = Uri.EscapeDataString(token); 메일 전송 전, 다 할 것 
+https://stackoverflow.com/questions/38781295/asp-net-core-identity-invalid-token-on-confirmation-email
+
+해독법
+
+Uri.UnescapeDataString()
