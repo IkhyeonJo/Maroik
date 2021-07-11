@@ -244,7 +244,7 @@ namespace MyLaboratory.Site.Controllers
                         #region 메일 전송
                         Mail mail = new Mail();
                         mail.Subject = "Mail Confirmation";
-                        loginInputViewModel.Guid = new RSA(RSAType.RSA2, Encoding.UTF8, RSA.privateKey, RSA.publicKey).Sign(loginInputViewModel.Guid); // 암호화
+                        loginInputViewModel.Guid = new RSA(RSAType.RSA2, Encoding.UTF8, RSA.privateKey, RSA.publicKey).Encrypt(loginInputViewModel.Guid); // 암호화
                         mail.Body = mailRepository.GetMailConfirmationBody(loginInputViewModel);
                         mail.ToMailIds = new List<string>
                         {
@@ -298,7 +298,7 @@ namespace MyLaboratory.Site.Controllers
                             #region 메일 전송
                             Mail mail = new Mail();
                             mail.Subject = "Mail Confirmation";
-                            mail.Body = mailRepository.GetMailConfirmationBody(new LoginInputViewModel() { Guid = new RSA(RSAType.RSA2, Encoding.UTF8, RSA.privateKey, RSA.publicKey).Sign(account.Guid) });
+                            mail.Body = mailRepository.GetMailConfirmationBody(new LoginInputViewModel() { Guid = new RSA(RSAType.RSA2, Encoding.UTF8, RSA.privateKey, RSA.publicKey).Encrypt(account.Guid) });
                             mail.ToMailIds = new List<string>
                             {
                                 account.Email
@@ -393,7 +393,7 @@ namespace MyLaboratory.Site.Controllers
                             #region 메일 전송
                             Mail mail = new Mail();
                             mail.Subject = "Mail Confirmation";
-                            mail.Body = mailRepository.GetMailConfirmationBody(new LoginInputViewModel() { Guid = new RSA(RSAType.RSA2, Encoding.UTF8, RSA.privateKey, RSA.publicKey).Sign(account.Guid) });
+                            mail.Body = mailRepository.GetMailConfirmationBody(new LoginInputViewModel() { Guid = new RSA(RSAType.RSA2, Encoding.UTF8, RSA.privateKey, RSA.publicKey).Encrypt(account.Guid) });
                             mail.ToMailIds = new List<string>
                             {
                                 account.Email
