@@ -35,9 +35,17 @@ namespace MyLaboratory.Site
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            Global.DomainName = Configuration.GetSection("ServerSetting")["DomainName"];
-            Global.FromMailId = Configuration.GetSection("ServerSetting").GetSection("SmtpOptions")["smtpUserName"];
-            Global.FromMailIdPassword = Configuration.GetSection("ServerSetting").GetSection("SmtpOptions")["smtpPassword"];
+            #region ServerSettings
+            ServerSetting.DomainName = Configuration.GetSection("ServerSetting")["DomainName"];
+            ServerSetting.SmtpUserName = Configuration.GetSection("ServerSetting").GetSection("SmtpOptions")["smtpUserName"];
+            ServerSetting.SmtpPassword = Configuration.GetSection("ServerSetting").GetSection("SmtpOptions")["smtpPassword"];
+            ServerSetting.SmtpHost = Configuration.GetSection("ServerSetting").GetSection("SmtpOptions")["smtpHost"];
+            ServerSetting.SmtpPort = Convert.ToInt32(Configuration.GetSection("ServerSetting").GetSection("SmtpOptions")["smtpPort"]);
+            ServerSetting.SmtpSSL = Convert.ToBoolean(Configuration.GetSection("ServerSetting").GetSection("SmtpOptions")["smtpSSL"]);
+            ServerSetting.FromEmail = Configuration.GetSection("ServerSetting").GetSection("SmtpOptions")["fromEmail"];
+            ServerSetting.FromFullName = Configuration.GetSection("ServerSetting").GetSection("SmtpOptions")["fromFullName"];
+            ServerSetting.IsDefault = Convert.ToBoolean(Configuration.GetSection("ServerSetting").GetSection("SmtpOptions")["IsDefault"]);
+            #endregion
 
             #region AddMariaDbContext
             string connectionString = Configuration.GetConnectionString("DefaultConnection");

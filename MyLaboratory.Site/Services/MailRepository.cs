@@ -13,7 +13,7 @@ namespace MyLaboratory.Site.Services
     {
         public string GetMailConfirmationBody(LoginInputViewModel loginInputViewModel)
         {
-            string url = $"{Global.DomainName}Account/ConfirmEmail?token={Uri.EscapeDataString(loginInputViewModel.Guid)}";
+            string url = $"{ServerSetting.DomainName}Account/ConfirmEmail?token={Uri.EscapeDataString(loginInputViewModel.Guid)}";
             return @$"<div style='text-align:centre;'>
                         <h1>Welcome to MyLaboratory Site<h1>
                         <h3>Click the link below to verify your Email<h3>
@@ -28,7 +28,7 @@ namespace MyLaboratory.Site.Services
             {
                 using (MailMessage mailMessage = new MailMessage())
                 {
-                    mailMessage.From = new MailAddress(mail.FromMailId);
+                    mailMessage.From = new MailAddress(mail.FromEmail, mail.FromFullName);
                     mail.ToMailIds.ForEach(x => {
                         mailMessage.To.Add(x);
                     });
@@ -39,10 +39,10 @@ namespace MyLaboratory.Site.Services
                         mailMessage.Attachments.Add(new Attachment(x));
                     });
 
-                    using (SmtpClient smtp = new SmtpClient("smtp.gmail.com", 587))
+                    using (SmtpClient smtp = new SmtpClient(mail.SmtpHost, mail.SmtpPort))
                     {
-                        smtp.Credentials = new System.Net.NetworkCredential(mail.FromMailId, mail.FromMailIdPassword);
-                        smtp.EnableSsl = true;
+                        smtp.Credentials = new System.Net.NetworkCredential(mail.SmtpUserName, mail.SmtpPassword);
+                        smtp.EnableSsl = mail.SmtpSSL;
                         await smtp.SendMailAsync(mailMessage);
                         return AccountMessage.MailSent;
                     }
