@@ -13,10 +13,13 @@
             </div>
             <div class="card-body">
                 <p class="login-box-msg">You have already verified your email</p>
-                <button type="button" class="btn btn-success btn-block btn-sm" style="width: 100px !important;"><i class="fas fa-edit" style="padding-right:3px;"></i>Back To Login Page</button>
+                <div class="social-auth-links text-center mt-2 mb-3">
+                    <a asp-controller="Account" asp-action="Login" class="btn btn-block btn-primary">
+                        <i class="fas fa-sign-in-alt" style="padding-right:3px;"></i> Back To Login Page
+                    </a>
+                </div>
             </div>
-            <!-- /.form-box -->
-        </div><!-- /.card -->
+        </div>
     </div>
 }
 else if (invalidToken == false && accountCreated == true) // 1.	계정이 성공적으로 생성되었습니다. [로그인 화면으로] <- 버튼
@@ -28,10 +31,13 @@ else if (invalidToken == false && accountCreated == true) // 1.	계정이 성공
             </div>
             <div class="card-body">
                 <p class="login-box-msg">Your account has been successfully created</p>
-                <button type="button" class="btn btn-success btn-block btn-sm" style="width: 100px !important;"><i class="fas fa-edit" style="padding-right:3px;"></i>Back To Login Page</button>
+                <div class="social-auth-links text-center mt-2 mb-3">
+                    <a asp-controller="Account" asp-action="Login" class="btn btn-block btn-primary">
+                        <i class="fas fa-sign-in-alt" style="padding-right:3px;"></i> Back To Login Page
+                    </a>
+                </div>
             </div>
-            <!-- /.form-box -->
-        </div><!-- /.card -->
+        </div>
     </div>
 }
 else if (invalidToken == true && accountCreated == false) // 1.	승인 코드가 유효하지 않습니다. [로그인 화면으로] <- 버튼
@@ -43,10 +49,29 @@ else if (invalidToken == true && accountCreated == false) // 1.	승인 코드가
             </div>
             <div class="card-body">
                 <p class="login-box-msg">The authentication token is invalid.</p>
-                <button type="button" class="btn btn-success btn-block btn-sm" style="width: 100px !important;"><i class="fas fa-edit" style="padding-right:3px;"></i>Back To Login Page</button>
+                <div class="social-auth-links text-center mt-2 mb-3">
+                    <p class="mb-0">
+                        <font style="font-weight:bold" color="black">
+                            The validity period of the authorization code may have expired or membership registration may have already been completed.
+                            <br />
+                            <br />
+                            If you have not registered as a member,
+                            <br />
+                            please try signing up again.
+                            <br />
+                            <br />
+                            If the problem persists,
+                            <br />
+                            please contact your <a href="mailto:***REMOVED***m">administrator</a>.
+                        </font>
+                    </p>
+                    <br />
+                    <a asp-controller="Account" asp-action="Login" class="btn btn-block btn-primary">
+                        <i class="fas fa-sign-in-alt" style="padding-right:3px;"></i> Back To Login Page
+                    </a>
+                </div>
             </div>
-            <!-- /.form-box -->
-        </div><!-- /.card -->
+        </div>
     </div>
 }
 else if (invalidToken == true && accountCreated == true) // 1.	(있을 수 없는 일) [이메일 활성화 중 예외 발생 시 사용하는 페이지]
@@ -58,11 +83,16 @@ else if (invalidToken == true && accountCreated == true) // 1.	(있을 수 없�
             </div>
             <div class="card-body">
                 <p class="login-box-msg">Exception!!</p>
-                <p class="mb-0">
-                    <font style="font-weight:bold" color="red">@error</font>
-                </p>
+                <div class="social-auth-links text-center mt-2 mb-3">
+                    <p class="mb-0">
+                        <font style="font-weight:bold" color="red">@error</font>
+                    </p>
+                    <br />
+                    <a asp-controller="Account" asp-action="Login" class="btn btn-block btn-primary">
+                        <i class="fas fa-sign-in-alt" style="padding-right:3px;"></i> Back To Login Page
+                    </a>
+                </div>
             </div>
-            <!-- /.form-box -->
-        </div><!-- /.card -->
+        </div>
     </div>
 }
