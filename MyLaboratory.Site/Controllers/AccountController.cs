@@ -128,24 +128,32 @@ namespace MyLaboratory.Site.Controllers
 
                 tempAccount.HashedPassword = null;
 
-                HttpContext.Session.Set("AccountSession", Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(tempAccount)));
+                if (tempAccount.EmailConfirmed == true && tempAccount.AgreedServiceTerms == true)
+                {
+                    HttpContext.Session.Set("AccountSession", Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(tempAccount)));
 
-                #region DB Cache
-                if (tempAccount.Role == Role.Admin) // 로그인 권한이 Admin인 경우
-                {
-                    DbCache.AdminCategories = categoryRepository.AdminCategories;
-                    DbCache.AdminSubCategories = subCategoryRepository.AdminSubCategories;
-                    return RedirectToAction("Index", "DashBoard");
+                    #region DB Cache
+                    if (tempAccount.Role == Role.Admin) // 로그인 권한이 Admin인 경우
+                    {
+                        DbCache.AdminCategories = categoryRepository.AdminCategories;
+                        DbCache.AdminSubCategories = subCategoryRepository.AdminSubCategories;
+                        return RedirectToAction("Index", "DashBoard");
+                    }
+                    else if (tempAccount.Role == Role.User) // 로그인 권한이 User인 경우
+                    {
+                        DbCache.UserCategories = categoryRepository.UserCategories;
+                        DbCache.UserSubCategories = subCategoryRepository.UserSubCategories;
+                        return RedirectToAction("Index", "UserDashBoard");
+                    }
+                    else // 로그인 권한은 Admin 또는 User만 있음 이 경우는 버그 발생한 것임
+                    {
+                        return null;
+                    }
                 }
-                else if (tempAccount.Role == Role.User) // 로그인 권한이 User인 경우
+                else
                 {
-                    DbCache.UserCategories = categoryRepository.UserCategories;
-                    DbCache.UserSubCategories = subCategoryRepository.UserSubCategories;
-                    return RedirectToAction("Index", "UserDashBoard");
-                }
-                else // 로그인 권한은 Admin 또는 User만 있음 이 경우는 버그 발생한 것임
-                {
-                    return null;
+                    TempData["Error"] = "Email verification was not completed. Please try sign up again.";
+                    return RedirectToAction("Login", "Account");
                 }
                 #endregion
             }
