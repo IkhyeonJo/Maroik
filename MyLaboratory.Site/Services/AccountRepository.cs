@@ -17,7 +17,10 @@ namespace MyLaboratory.Site.Services
         {
             this.context = context;
         }
-
+        public async Task<List<Account>> GetAllAsync()
+        {
+            return await context.Accounts.ToListAsync();
+        }
         public async Task<Account> GetAccountAsync(string email)
         {
             return await context.Accounts.FirstOrDefaultAsync(x => x.Email == email);
@@ -31,16 +34,6 @@ namespace MyLaboratory.Site.Services
         {
             context.Accounts.Update(account);
             await context.SaveChangesAsync();
-        }
-
-        public Task<string> ConfirmMail(string guid)
-        {
-            throw new System.NotImplementedException();
-        }
-
-        public Task<LoginInputViewModel> SignUp(LoginInputViewModel loginInputViewModel)
-        {
-            throw new System.NotImplementedException();
         }
     }
 }
