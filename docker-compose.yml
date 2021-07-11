@@ -1,9 +1,7 @@
 #https://docs.microsoft.com/en-us/visualstudio/containers/docker-compose-properties?view=vs-2019
 
 ### ------------------------------------------README !IMPORTANT---------------------------------------------------------
-#Before start this project, Set DomainName in appsettings.json (for registration & password recovery)
-#Gmail's ID & Password [you can change mailserver!!] [default is gmail] change ID & Password in mailServer 
-#Mail Class's FromMailId, FromMailIdPassword (should change!!) for mail option!!
+#Before start this project, Set Server settings in appsettings.json (for registration & password recovery)
 ### ------------------------------------------README !IMPORTANT---------------------------------------------------------
 
 ##AWS step
