@@ -274,13 +274,13 @@ namespace MyLaboratory.Site.Controllers
                                         Message = AccountMessage.FailToMailSent
                                     });
                             }
-                            catch 
+                            catch
                             {
                                 TempData["Error"] = "Error occurred when processing about mail fail account status";
-                                View();
+                                return View();
                             }
                             TempData["Error"] = "Error occurred when processing about sending account authentication mail";
-                            View();
+                            return View();
                         }
                         #endregion
                         ViewBag.ResendEmail = true; // 이메일 재전송 폼 활성화
@@ -316,10 +316,10 @@ namespace MyLaboratory.Site.Controllers
                                 catch
                                 {
                                     TempData["Error"] = "Error occurred when processing about mail fail account status";
-                                    View();
+                                    return View();
                                 }
                                 TempData["Error"] = "Error occurred when processing about sending account authentication mail";
-                                View();
+                                return View();
                             }
                             #endregion
                             try
@@ -331,7 +331,7 @@ namespace MyLaboratory.Site.Controllers
                             catch
                             {
                                 TempData["Error"] = "Error occurred when processing about mail send account status";
-                                View();
+                                return View();
                             }
                             ViewBag.ResendEmail = true; // 이메일 재전송 폼 활성화
                             ViewBag.ResentEmailAddress = account.Email; // 이메일 재전송 폼 이메일 주소 표시용
@@ -351,7 +351,7 @@ namespace MyLaboratory.Site.Controllers
                             catch
                             {
                                 TempData["Error"] = "Error occurred when processing about mail send account status";
-                                View();
+                                return View();
                             }
                             TempData["Error"] = AccountMessage.UserAlreadyCreated;
                             ViewBag.ResendEmail = false; // 로그인 폼 활성화
@@ -411,10 +411,10 @@ namespace MyLaboratory.Site.Controllers
                                 catch
                                 {
                                     TempData["Error"] = "Error occurred when processing about mail fail account status";
-                                    View();
+                                    return View();
                                 }
                                 TempData["Error"] = "Error occurred when processing about sending account authentication mail";
-                                View();
+                                return View();
                             }
                             #endregion
                             try
@@ -426,7 +426,7 @@ namespace MyLaboratory.Site.Controllers
                             catch
                             {
                                 TempData["Error"] = "Error occurred when processing about mail send account status";
-                                View();
+                                return View();
                             }
                             ViewBag.ResendEmail = true; // 이메일 재전송 폼 활성화
                             ViewBag.ResentEmailAddress = account.Email; // 이메일 재전송 폼 이메일 주소 표시용
@@ -447,7 +447,7 @@ namespace MyLaboratory.Site.Controllers
                             catch
                             {
                                 TempData["Error"] = "Error occurred when processing about account status";
-                                View();
+                                return View();
                             }
                             TempData["Error"] = AccountMessage.UserAlreadyCreated;
                             ViewBag.ResendEmail = false; // 로그인 폼 활성화
