@@ -675,7 +675,7 @@ namespace MyLaboratory.Site.Controllers
                 package.Save();
             }
             stream.Position = 0;
-            string excelName = $"{fileName}-{DateTime.Now.ToString("yyyyMMddHHmmssfff")}.xlsx";
+            string excelName = $"{fileName}-{DateTime.UtcNow.ToString("yyyyMMddHHmmssfff")}.xlsx";
 
             return File(stream, "application/octet-stream", excelName);
         }
