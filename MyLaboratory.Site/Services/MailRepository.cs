@@ -13,7 +13,7 @@ namespace MyLaboratory.Site.Services
     {
         public string GetMailConfirmationBody(LoginInputViewModel loginInputViewModel)
         {
-            string url = $"{Global.DomainName}Account/ConfirmEmail?token={loginInputViewModel.Guid}";
+            string url = $"{Global.DomainName}Account/ConfirmEmail?token={Uri.EscapeDataString(loginInputViewModel.Guid)}";
             return @$"<div style='text-align:centre;'>
                         <h1>Welcome to MyLaboratory Site<h1>
                         <h3>Click the link below to verify your Email<h3>
