@@ -35,7 +35,9 @@ namespace MyLaboratory.Site
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            Global.DomainName = Configuration["DomainName"];
+            Global.DomainName = Configuration.GetSection("ServerSetting")["DomainName"];
+            Global.FromMailId = Configuration.GetSection("ServerSetting")["FromMailId"];
+            Global.FromMailIdPassword = Configuration.GetSection("ServerSetting")["FromMailIdPassword"];
 
             #region AddMariaDbContext
             string connectionString = Configuration.GetConnectionString("DefaultConnection");
