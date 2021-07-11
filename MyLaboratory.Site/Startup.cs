@@ -36,8 +36,8 @@ namespace MyLaboratory.Site
         public void ConfigureServices(IServiceCollection services)
         {
             Global.DomainName = Configuration.GetSection("ServerSetting")["DomainName"];
-            Global.FromMailId = Configuration.GetSection("ServerSetting")["FromMailId"];
-            Global.FromMailIdPassword = Configuration.GetSection("ServerSetting")["FromMailIdPassword"];
+            Global.FromMailId = Configuration.GetSection("ServerSetting").GetSection("SmtpOptions")["smtpUserName"];
+            Global.FromMailIdPassword = Configuration.GetSection("ServerSetting").GetSection("SmtpOptions")["smtpPassword"];
 
             #region AddMariaDbContext
             string connectionString = Configuration.GetConnectionString("DefaultConnection");
