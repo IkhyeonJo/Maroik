@@ -549,7 +549,7 @@ namespace MyLaboratory.Site.Controllers
                     {
                         await accountRepository.UpdateAccountAsync(account);
                     }
-                    catch(Exception e) // 2.	Update 시, 예외 발생 했다 [있을 수 없는 일].
+                    catch (Exception e) // 2.	Update 시, 예외 발생 했다 [있을 수 없는 일].
                     {
                         ViewBag.InvalidToken = true;
                         ViewBag.AccountCreated = true;
@@ -571,7 +571,7 @@ namespace MyLaboratory.Site.Controllers
                     {
                         await accountRepository.UpdateAccountAsync(account);
                     }
-                    catch(Exception e) // 2.	Update 시, 예외 발생 했다 [있을 수 없는 일].
+                    catch (Exception e) // 2.	Update 시, 예외 발생 했다 [있을 수 없는 일].
                     {
                         ViewBag.InvalidToken = true;
                         ViewBag.AccountCreated = true;
@@ -620,6 +620,83 @@ namespace MyLaboratory.Site.Controllers
             else // 로그인 안 된 상태라면
             {
                 return View();
+            }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken] //To Prevent CSRF attack
+        public async Task<IActionResult> ForgotPassword(LoginInputViewModel loginInputViewModel)
+        {
+            ModelState.Remove(nameof(loginInputViewModel.FullName));
+            ModelState.Remove(nameof(loginInputViewModel.Password));
+
+            if (ModelState.IsValid)
+            {
+                var account = await accountRepository.GetAccountAsync(loginInputViewModel.Email);
+
+                if (account == null) // 입력 된 Email로 생성된 Record 없다.
+                {
+                    ViewBag.mailSent = true;
+                    ViewBag.sentEmailAddress = loginInputViewModel.Email;
+                    return View();
+                }
+
+                if (!account.EmailConfirmed) // 이메일 인증 안 됨
+                {
+                    ViewBag.mailSent = true;
+                    ViewBag.sentEmailAddress = loginInputViewModel.Email;
+                    return View();
+                }
+
+                if (account.EmailConfirmed) // 이메일 인증 됨
+                {
+                    string token = GUIDToken.Generate();
+                    try
+                    {
+                        #region 메일 전송
+                        Mail mail = new Mail();
+                        mail.Subject = "MyLaboratory Reset Password";
+                        mail.Body = mailRepository.GetMailResetPasswordBody(new LoginInputViewModel() { Guid = new RSA(RSAType.RSA2, Encoding.UTF8, RSA.privateKey, RSA.publicKey).Sign(token) });
+                        mail.ToMailIds = new List<string>
+                            {
+                                account.Email
+                            };
+                        string result = await mailRepository.SendMail(mail);
+                        if (result != AccountMessage.MailSent) // 메일 전송 오류 발생 했을 시..
+                        {
+                            Console.WriteLine(result); // ActivityLog 등으로 로그 남겨야 한다..
+                            account.Updated = DateTime.UtcNow;
+                            account.Message = AccountMessage.FailToMailSent;
+                            await accountRepository.UpdateAccountAsync(account);
+                            ViewBag.mailSent = true;
+                            ViewBag.sentEmailAddress = loginInputViewModel.Email;
+                            return View();
+                        }
+                        #endregion
+
+                        account.Guid = token;
+                        account.Locked = false;
+                        account.Updated = DateTime.UtcNow;
+                        account.Message = AccountMessage.ResetPasswordMail;
+                        await accountRepository.UpdateAccountAsync(account);
+                        ViewBag.mailSent = true;
+                        ViewBag.sentEmailAddress = loginInputViewModel.Email;
+                        return View();
+                    }
+                    catch
+                    {
+                        ViewBag.mailSent = true;
+                        ViewBag.sentEmailAddress = loginInputViewModel.Email;
+                        return View();
+                    }
+                }
+                ViewBag.mailSent = true;
+                ViewBag.sentEmailAddress = loginInputViewModel.Email;
+                return View();
+            }
+            else // 입력 값 잘못 됨
+            {
+                return RedirectToAction("ForgotPassword", "Account");
             }
         }
         #endregion

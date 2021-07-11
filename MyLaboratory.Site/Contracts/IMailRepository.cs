@@ -6,6 +6,7 @@ namespace MyLaboratory.Site.Contracts
 {
     public interface IMailRepository
     {
+        string GetMailResetPasswordBody(LoginInputViewModel loginInputViewModel);
         string GetMailConfirmationBody(LoginInputViewModel loginInputViewModel);
         Task<string> SendMail(Mail mail);
     }

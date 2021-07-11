@@ -22,6 +22,17 @@ namespace MyLaboratory.Site.Services
                       </div>";
         }
 
+        public string GetMailResetPasswordBody(LoginInputViewModel loginInputViewModel)
+        {
+            string url = $"{ServerSetting.DomainName}Account/ResetPassword?token={Uri.EscapeDataString(loginInputViewModel.Guid)}";
+            return @$"<div style='text-align:centre;'>
+                        <h1>Welcome to MyLaboratory Site<h1>
+                        <h3>Click the link below to reset your password<h3>
+                        <h3>If this link does not work, please copy & paste this link to your Internet URL<h3>
+                        <a href='{url}' target='_blank' rel='noopener noreferrer'>{url}</a>
+                      </div>";
+        }
+
         public async Task<string> SendMail(Mail mail)
         {
             try
