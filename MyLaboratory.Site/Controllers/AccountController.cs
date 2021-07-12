@@ -221,8 +221,8 @@ namespace MyLaboratory.Site.Controllers
                     #region 새롭게 회원가입을 진행하는 경우
                     if (account == null) // 입력된 ID로 생성된 Record가 없다.
                     {
-                        string guid = GUIDToken.Generate();
-                        loginInputViewModel.RegistrationToken = guid;
+                        string registrationToken = GUIDToken.Generate();
+                        loginInputViewModel.RegistrationToken = registrationToken;
                         try
                         {
                             await accountRepository.CreateAccountAsync
@@ -237,6 +237,7 @@ namespace MyLaboratory.Site.Controllers
                                     EmailConfirmed = false,
                                     AgreedServiceTerms = true,
                                     RegistrationToken = loginInputViewModel.RegistrationToken,
+                                    ResetPasswordToken = null,
                                     Created = DateTime.UtcNow,
                                     Updated = DateTime.UtcNow,
                                     Message = AccountMessage.UserCreatedVerifyEmail
@@ -262,7 +263,7 @@ namespace MyLaboratory.Site.Controllers
                         if (result != AccountMessage.MailSent) // 메일 전송 오류 발생 했을 시..
                         {
                             Console.WriteLine(result); // ActivityLog 등으로 로그 남겨야 한다..
-                            loginInputViewModel.RegistrationToken = guid;
+                            loginInputViewModel.RegistrationToken = registrationToken;
                             try
                             {
                                 await accountRepository.UpdateAccountAsync
@@ -277,6 +278,7 @@ namespace MyLaboratory.Site.Controllers
                                         EmailConfirmed = false,
                                         AgreedServiceTerms = true,
                                         RegistrationToken = loginInputViewModel.RegistrationToken,
+                                        ResetPasswordToken = null,
                                         Created = DateTime.UtcNow,
                                         Updated = DateTime.UtcNow,
                                         Message = AccountMessage.FailToMailSent
@@ -427,7 +429,7 @@ namespace MyLaboratory.Site.Controllers
                             #endregion
                             try
                             {
-                                account.Message = AccountMessage.UserCreatedVerifyEmail;
+                                account.Message = AccountMessage.VerifyEmail;
                                 account.Updated = DateTime.UtcNow;
                                 await accountRepository.UpdateAccountAsync(account);
                             }
@@ -476,7 +478,7 @@ namespace MyLaboratory.Site.Controllers
 
         #region 계정 인증
         [HttpGet]
-        public async Task<IActionResult> ConfirmEmail(string token)
+        public async Task<IActionResult> ConfirmEmail(string registrationToken)
         {
             byte[] resultByte = null;
             bool isAccountSessionExist = HttpContext.Session.TryGetValue("AccountSession", out resultByte);
@@ -508,7 +510,7 @@ namespace MyLaboratory.Site.Controllers
                 {
                     try
                     {
-                        if (rsaHelper.Verify(tempAccount.RegistrationToken, token)) // 암호화된 토큰과 DB 사용자 토큰이 같다
+                        if (rsaHelper.Verify(tempAccount.RegistrationToken, registrationToken)) // 암호화된 토큰과 DB 사용자 토큰이 같다
                         {
                             account = tempAccount;
                             break;
@@ -542,6 +544,7 @@ namespace MyLaboratory.Site.Controllers
                 #region 4.	해당 계정의 EmailConfirmd가 false이다. (이메일 인증을 하지 않았다.)
                 if (!account.EmailConfirmed)
                 {
+                    account.RegistrationToken = null;
                     account.EmailConfirmed = true;
                     account.Updated = DateTime.UtcNow;
                     account.Message = AccountMessage.Success;
@@ -549,11 +552,11 @@ namespace MyLaboratory.Site.Controllers
                     {
                         await accountRepository.UpdateAccountAsync(account);
                     }
-                    catch (Exception e) // 2.	Update 시, 예외 발생 했다 [있을 수 없는 일].
+                    catch  // 2. Update 시, 예외 발생 했다 [있을 수 없는 일].
                     {
                         ViewBag.InvalidToken = true;
                         ViewBag.AccountCreated = true;
-                        TempData["Error"] = e.ToString();
+                        TempData["Error"] = "Error occurred when processing about confirm email account status";
                         return View();
                     }
                     ViewBag.InvalidToken = false;
@@ -571,11 +574,11 @@ namespace MyLaboratory.Site.Controllers
                     {
                         await accountRepository.UpdateAccountAsync(account);
                     }
-                    catch (Exception e) // 2.	Update 시, 예외 발생 했다 [있을 수 없는 일].
+                    catch // 2.	Update 시, 예외 발생 했다 [있을 수 없는 일].
                     {
                         ViewBag.InvalidToken = true;
                         ViewBag.AccountCreated = true;
-                        TempData["Error"] = e.ToString();
+                        TempData["Error"] = "Error occurred when processing about update account status";
                         return View();
                     }
                     ViewBag.InvalidToken = false;
