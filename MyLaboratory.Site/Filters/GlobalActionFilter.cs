@@ -57,6 +57,11 @@ namespace MyLaboratory.Site.Filters
                         base.OnActionExecuting(context); // Do Action!!
                         return;
                     }
+                    else if (currentControllerName == "Account" && currentActionName == "ResetPassword") // 비밀번호 초기화 페이지인 경우
+                    {
+                        base.OnActionExecuting(context); // Do Action!!
+                        return;
+                    }
                     else if (currentControllerName == "Account" && currentActionName == "Logout") // 로그아웃인 경우
                     {
                         base.OnActionExecuting(context); // Do Action!!

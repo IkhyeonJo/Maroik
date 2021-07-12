@@ -699,6 +699,125 @@ namespace MyLaboratory.Site.Controllers
                 return RedirectToAction("ForgotPassword", "Account");
             }
         }
+
+        [HttpGet]
+        public async Task<IActionResult> ResetPassword(string token)
+        {
+            byte[] resultByte = null;
+            bool isAccountSessionExist = HttpContext.Session.TryGetValue("AccountSession", out resultByte);
+
+            if (isAccountSessionExist) // 로그인 된 상태라면
+            {
+                var loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)); // Get Session
+                if (loginedAccount.Role == Role.Admin) // 로그인한 사용자 권한이 Admin일 경우
+                {
+                    return RedirectToAction("Index", "DashBoard");
+                }
+                else if (loginedAccount.Role == Role.User) // 로그인한 사용자 권한이 User일 경우
+                {
+                    return RedirectToAction("Index", "UserDashBoard");
+                }
+                else // 로그인한 사용자 권한이 Admin도 아니고 User도 아니면 DB Insert 오류임
+                {
+                    return null; // 잘못된 값을 넣으면 잘못된 값이 나옴
+                }
+            }
+            else // 로그인 안 된 상태라면
+            {
+                return null;
+                //Account account = null;
+
+                //#region 1.	입력된 token[암호화 됨]이랑 모든 계정에 저장된 토큰 해쉬화 후 비교해서 해당 계정 찾아낸다.
+                //var rsaHelper = new RSA(RSAType.RSA2, Encoding.UTF8, RSA.privateKey, RSA.publicKey);
+
+                //foreach (var tempAccount in await accountRepository.GetAllAsync())
+                //{
+                //    try
+                //    {
+                //        if (rsaHelper.Verify(tempAccount.Guid, token)) // 암호화된 토큰과 DB 사용자 토큰이 같다
+                //        {
+                //            account = tempAccount;
+                //            break;
+                //        }
+                //    }
+                //    catch
+                //    {
+
+                //    }
+                //}
+                //#endregion
+
+                //#region 2.	해당 계정을 Token으로 찾지 못했다.
+                //if (account == null)
+                //{
+                //    ViewBag.InvalidToken = true;
+                //    ViewBag.AccountCreated = false;
+                //    return View();
+                //}
+                //#endregion
+
+                //#region 3.	해당 계정의 Token 만료 되었다.
+                //if (!GUIDToken.IsTokenAlive(account.Guid))
+                //{
+                //    ViewBag.InvalidToken = true;
+                //    ViewBag.AccountCreated = false;
+                //    return View();
+                //}
+                //#endregion
+
+                //#region 4.	해당 계정의 EmailConfirmd가 false이다. (이메일 인증을 하지 않았다.)
+                //if (!account.EmailConfirmed)
+                //{
+                //    account.EmailConfirmed = true;
+                //    account.Updated = DateTime.UtcNow;
+                //    account.Message = AccountMessage.Success;
+                //    try
+                //    {
+                //        await accountRepository.UpdateAccountAsync(account);
+                //    }
+                //    catch (Exception e) // 2.	Update 시, 예외 발생 했다 [있을 수 없는 일].
+                //    {
+                //        ViewBag.InvalidToken = true;
+                //        ViewBag.AccountCreated = true;
+                //        TempData["Error"] = e.ToString();
+                //        return View();
+                //    }
+                //    ViewBag.InvalidToken = false;
+                //    ViewBag.AccountCreated = true;
+                //    return View();
+                //}
+                //#endregion
+
+                //#region 5.	해당 계정의 EmailConfirmd가 true이다. (이메일 인증을 하였다.)
+                //if (account.EmailConfirmed)
+                //{
+                //    account.Updated = DateTime.UtcNow;
+                //    account.Message = AccountMessage.UserAlreadyCreated;
+                //    try
+                //    {
+                //        await accountRepository.UpdateAccountAsync(account);
+                //    }
+                //    catch (Exception e) // 2.	Update 시, 예외 발생 했다 [있을 수 없는 일].
+                //    {
+                //        ViewBag.InvalidToken = true;
+                //        ViewBag.AccountCreated = true;
+                //        TempData["Error"] = e.ToString();
+                //        return View();
+                //    }
+                //    ViewBag.InvalidToken = false;
+                //    ViewBag.AccountCreated = false;
+                //    return View();
+                //}
+                //#endregion
+
+                //#region 있을 수 없는 일
+                //ViewBag.InvalidToken = true;
+                //ViewBag.AccountCreated = true;
+                //TempData["Error"] = "Error occurred when processing about authenticating account";
+                //return View();
+                //#endregion
+            }
+        }
         #endregion
     }
 }
