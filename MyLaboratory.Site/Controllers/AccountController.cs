@@ -727,7 +727,7 @@ namespace MyLaboratory.Site.Controllers
             }
             else // 로그인 안 된 상태라면
             {
-                return null;
+                return View();
                 //Account account = null;
 
                 //#region 1.	입력된 token[암호화 됨]이랑 모든 계정에 저장된 토큰 해쉬화 후 비교해서 해당 계정 찾아낸다.
