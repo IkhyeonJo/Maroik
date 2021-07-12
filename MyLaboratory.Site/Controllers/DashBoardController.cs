@@ -25,11 +25,21 @@ namespace MyLaboratory.Site.Controllers
             this.productRepository = productRepository;
             this.workerRepository = workerRepository;
         }
-
+        #region Admin
         [HttpGet]
         public IActionResult AdminIndex()
         {
             return View();
         }
+        #endregion
+
+        #region User
+        [HttpGet]
+        public IActionResult UserIndex()
+        {
+            return View();
+        }
+        #endregion
+
     }
 }

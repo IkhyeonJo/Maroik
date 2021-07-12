@@ -54,7 +54,7 @@ namespace MyLaboratory.Site.Controllers
                 }
                 else if (loginedAccount.Role == Role.User) // 로그인한 사용자 권한이 User일 경우
                 {
-                    return RedirectToAction("Index", "UserDashBoard");
+                    return RedirectToAction("UserIndex", "DashBoard");
                 }
                 else // 로그인한 사용자 권한이 Admin도 아니고 User도 아니면 DB Insert 오류임
                 {
@@ -84,7 +84,7 @@ namespace MyLaboratory.Site.Controllers
                 }
                 else if (loginedAccount.Role == Role.User) // 로그인한 사용자 권한이 User일 경우
                 {
-                    return RedirectToAction("Index", "UserDashBoard");
+                    return RedirectToAction("UserIndex", "DashBoard");
                 }
                 else // 로그인한 사용자 권한이 Admin도 아니고 User도 아니면 DB Insert 오류임
                 {
@@ -164,7 +164,7 @@ namespace MyLaboratory.Site.Controllers
                     {
                         DbCache.UserCategories = categoryRepository.UserCategories;
                         DbCache.UserSubCategories = subCategoryRepository.UserSubCategories;
-                        return RedirectToAction("Index", "UserDashBoard");
+                        return RedirectToAction("UserIndex", "DashBoard");
                     }
                     else // 로그인 권한은 Admin 또는 User만 있음 이 경우는 버그 발생한 것임
                     {
@@ -210,7 +210,7 @@ namespace MyLaboratory.Site.Controllers
                 }
                 else if (loginedAccount.Role == Role.User) // 로그인한 사용자 권한이 User일 경우
                 {
-                    return RedirectToAction("Index", "UserDashBoard");
+                    return RedirectToAction("UserIndex", "DashBoard");
                 }
                 else // 로그인한 사용자 권한이 Admin도 아니고 User도 아니면 DB Insert 오류임
                 {
@@ -513,7 +513,7 @@ namespace MyLaboratory.Site.Controllers
                 }
                 else if (loginedAccount.Role == Role.User) // 로그인한 사용자 권한이 User일 경우
                 {
-                    return RedirectToAction("Index", "UserDashBoard");
+                    return RedirectToAction("UserIndex", "DashBoard");
                 }
                 else // 로그인한 사용자 권한이 Admin도 아니고 User도 아니면 DB Insert 오류임
                 {
@@ -627,7 +627,7 @@ namespace MyLaboratory.Site.Controllers
                 }
                 else if (loginedAccount.Role == Role.User) // 로그인한 사용자 권한이 User일 경우
                 {
-                    return RedirectToAction("Index", "UserDashBoard");
+                    return RedirectToAction("UserIndex", "DashBoard");
                 }
                 else // 로그인한 사용자 권한이 Admin도 아니고 User도 아니면 DB Insert 오류임
                 {
@@ -731,7 +731,7 @@ namespace MyLaboratory.Site.Controllers
                 }
                 else if (loginedAccount.Role == Role.User) // 로그인한 사용자 권한이 User일 경우
                 {
-                    return RedirectToAction("Index", "UserDashBoard");
+                    return RedirectToAction("UserIndex", "DashBoard");
                 }
                 else // 로그인한 사용자 권한이 Admin도 아니고 User도 아니면 DB Insert 오류임
                 {
