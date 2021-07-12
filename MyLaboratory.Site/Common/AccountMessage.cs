@@ -3,6 +3,7 @@ namespace MyLaboratory.Site.Common
     public static class AccountMessage
     {
         public static string Success = "Success";
+        public static string SuccessToResetPassword = "Success to reset password";
         public static string ErrorFound = "Error Found";
         public static string UserAlreadyCreated = "User already created, please login";
         public static string VerifyEmail = "User already created, please verify your given mail Id";

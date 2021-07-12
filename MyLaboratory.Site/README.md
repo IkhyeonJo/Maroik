@@ -531,4 +531,3 @@ https://stackoverflow.com/questions/38781295/asp-net-core-identity-invalid-token
 
 Uri.UnescapeDataString()
 
-RegistrationToken과 ResetPasswordToken을 분리한다.

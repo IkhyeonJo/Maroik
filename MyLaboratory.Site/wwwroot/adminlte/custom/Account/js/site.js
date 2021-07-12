@@ -23,3 +23,14 @@ function ShowForgotPasswordLoading() {
         return true;
     }
 }
+
+function ShowResetPasswordLoading() {
+    if (!$('#resetPasswordForm').valid()) {
+        $('#loading').hide();
+        return false;
+    }
+    else {
+        $('#loading').show();
+        return true;
+    }
+}

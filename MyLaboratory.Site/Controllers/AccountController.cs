@@ -671,7 +671,6 @@ namespace MyLaboratory.Site.Controllers
                         #endregion
 
                         account.ResetPasswordToken = resetPasswordToken;
-                        account.Locked = false;
                         account.Updated = DateTime.UtcNow;
                         account.Message = AccountMessage.ResetPasswordMail;
                         await accountRepository.UpdateAccountAsync(account);
@@ -774,6 +773,91 @@ namespace MyLaboratory.Site.Controllers
                     return View();
                 }
                 #endregion
+            }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken] //To Prevent CSRF attack
+        public async Task<IActionResult> ResetPassword(LoginInputViewModel loginInputViewModel)
+        {
+            ModelState.Remove(nameof(loginInputViewModel.Email));
+            ModelState.Remove(nameof(loginInputViewModel.FullName));
+            ModelState.Remove(nameof(loginInputViewModel.Password));
+
+            if (ModelState.IsValid)
+            {
+                Account account = null;
+
+                #region 1.	입력된 token[암호화 됨]이랑 모든 계정에 저장된 토큰 해쉬화 후 비교해서 해당 계정 찾아낸다.
+                var rsaHelper = new RSA(RSAType.RSA2, Encoding.UTF8, RSA.privateKey, RSA.publicKey);
+
+                foreach (var tempAccount in await accountRepository.GetAllAsync())
+                {
+                    try
+                    {
+                        if (rsaHelper.Verify(tempAccount.ResetPasswordToken, loginInputViewModel.ResetPasswordToken)) // 암호화된 토큰과 DB 사용자 토큰이 같다
+                        {
+                            account = tempAccount;
+                            break;
+                        }
+                    }
+                    catch
+                    {
+
+                    }
+                }
+                #endregion
+
+                #region 2.	해당 계정을 Token으로 찾지 못했다.
+                if (account == null)
+                {
+                    ViewBag.FailToResetPassword = true;
+                    return View();
+                }
+                #endregion
+
+                #region 3.	해당 계정의 Token 만료 되었다.
+                if (!GUIDToken.IsTokenAlive(account.ResetPasswordToken))
+                {
+                    ViewBag.FailToResetPassword = true;
+                    return View();
+                }
+                #endregion
+
+                #region 4.	해당 계정의 EmailConfirmd가 false이다. (이메일 인증을 하지 않았다.)
+                if (!account.EmailConfirmed)
+                {
+                    ViewBag.FailToResetPassword = true;
+                    return View();
+                }
+                #endregion
+
+                #region 5.	해당 계정의 EmailConfirmd가 true이다. (이메일 인증을 하였다.)
+                else
+                {
+                    account.ResetPasswordToken = null;
+                    account.HashedPassword = Crypto.HashPassword(loginInputViewModel.Password);
+                    account.Locked = false; // 잠금 해제
+                    account.Updated = DateTime.UtcNow;
+                    account.Message = AccountMessage.SuccessToResetPassword;
+                    try
+                    {
+                        await accountRepository.UpdateAccountAsync(account);
+                    }
+                    catch  // 2. Update 시, 예외 발생 했다
+                    {
+                        ViewBag.FailToResetPassword = true;
+                        TempData["Error"] = "Error occurred while processing about reset password";
+                        return View();
+                    }
+                    ViewBag.resetPasswordComplete = true;
+                    return View();
+                }
+                #endregion
+            }
+            else // 입력 값 잘못 됨
+            {
+                return RedirectToAction("ResetPassword", "Account");
             }
         }
         #endregion
