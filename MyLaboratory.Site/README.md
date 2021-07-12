@@ -531,3 +531,11 @@ https://stackoverflow.com/questions/38781295/asp-net-core-identity-invalid-token
 
 Uri.UnescapeDataString()
 
+
+
+###파일 업로드
+#파일 업로드는 
+#로그인 아닐 시: anonymous folder만 이용 (wwwroot)
+#User 로그인일 시: user folder만 이용 (wwwroot)
+#Admin 로그인일 시: admin folder만 이용 (wwwroot)
+#이므로 이외의 폴더에서 생성하면 Upload만 되고 접근 불가능해진다.
