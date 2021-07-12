@@ -9,7 +9,7 @@ using MyLaboratory.Site.Data;
 namespace MyLaboratory.Site.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20210712122459_InitialCreate")]
+    [Migration("20210712163710_InitialCreate")]
     partial class InitialCreate
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
