@@ -27,7 +27,7 @@ namespace MyLaboratory.Site.Controllers
         }
 
         [HttpGet]
-        public IActionResult Index()
+        public IActionResult AdminIndex()
         {
             return View();
         }

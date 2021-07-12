@@ -50,7 +50,7 @@ namespace MyLaboratory.Site.Controllers
                 var loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)); // Get Session
                 if (loginedAccount.Role == Role.Admin) // 로그인한 사용자 권한이 Admin일 경우
                 {
-                    return RedirectToAction("Index", "DashBoard");
+                    return RedirectToAction("AdminIndex", "DashBoard");
                 }
                 else if (loginedAccount.Role == Role.User) // 로그인한 사용자 권한이 User일 경우
                 {
@@ -80,7 +80,7 @@ namespace MyLaboratory.Site.Controllers
                 var loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)); // Get Session
                 if (loginedAccount.Role == Role.Admin) // 로그인한 사용자 권한이 Admin일 경우
                 {
-                    return RedirectToAction("Index", "DashBoard");
+                    return RedirectToAction("AdminIndex", "DashBoard");
                 }
                 else if (loginedAccount.Role == Role.User) // 로그인한 사용자 권한이 User일 경우
                 {
@@ -158,7 +158,7 @@ namespace MyLaboratory.Site.Controllers
                     {
                         DbCache.AdminCategories = categoryRepository.AdminCategories;
                         DbCache.AdminSubCategories = subCategoryRepository.AdminSubCategories;
-                        return RedirectToAction("Index", "DashBoard");
+                        return RedirectToAction("AdminIndex", "DashBoard");
                     }
                     else if (tempAccount.Role == Role.User) // 로그인 권한이 User인 경우
                     {
@@ -206,7 +206,7 @@ namespace MyLaboratory.Site.Controllers
                 var loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)); // Get Session
                 if (loginedAccount.Role == Role.Admin) // 로그인한 사용자 권한이 Admin일 경우
                 {
-                    return RedirectToAction("Index", "DashBoard");
+                    return RedirectToAction("AdminIndex", "DashBoard");
                 }
                 else if (loginedAccount.Role == Role.User) // 로그인한 사용자 권한이 User일 경우
                 {
@@ -509,7 +509,7 @@ namespace MyLaboratory.Site.Controllers
                 var loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)); // Get Session
                 if (loginedAccount.Role == Role.Admin) // 로그인한 사용자 권한이 Admin일 경우
                 {
-                    return RedirectToAction("Index", "DashBoard");
+                    return RedirectToAction("AdminIndex", "DashBoard");
                 }
                 else if (loginedAccount.Role == Role.User) // 로그인한 사용자 권한이 User일 경우
                 {
@@ -623,7 +623,7 @@ namespace MyLaboratory.Site.Controllers
                 var loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)); // Get Session
                 if (loginedAccount.Role == Role.Admin) // 로그인한 사용자 권한이 Admin일 경우
                 {
-                    return RedirectToAction("Index", "DashBoard");
+                    return RedirectToAction("AdminIndex", "DashBoard");
                 }
                 else if (loginedAccount.Role == Role.User) // 로그인한 사용자 권한이 User일 경우
                 {
@@ -727,7 +727,7 @@ namespace MyLaboratory.Site.Controllers
                 var loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)); // Get Session
                 if (loginedAccount.Role == Role.Admin) // 로그인한 사용자 권한이 Admin일 경우
                 {
-                    return RedirectToAction("Index", "DashBoard");
+                    return RedirectToAction("AdminIndex", "DashBoard");
                 }
                 else if (loginedAccount.Role == Role.User) // 로그인한 사용자 권한이 User일 경우
                 {
