@@ -157,7 +157,10 @@ namespace MyLaboratory.Site
                         }
                         else if(loginedAccount.Role == Role.User && !context.Context.Request.Path.StartsWithSegments("/user")) // 로그인이 되었고 권한이 User인가? 그렇다면 ~/user 자원에만 접근 허용
                         {
-
+                            context.Context.Response.StatusCode = (int)HttpStatusCode.Unauthorized; // 권한 없음 
+                            context.Context.Response.ContentLength = 0; // 내용 길이 없음
+                            context.Context.Response.Body = Stream.Null; // 내용 없음
+                            context.Context.Response.Redirect("/"); // 로그인 화면으로
                         }
                         else // 버그
                         {
