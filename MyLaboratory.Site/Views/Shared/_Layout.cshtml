@@ -11,35 +11,35 @@
     @*Prevent Web Cache*@
     <title>MyLaboratory Site</title>
 
-    <!-- NonFactor DataGrid -->
+    @*<!-- NonFactor DataGrid -->*@
     <link rel="stylesheet" href="~/css/mvc-grid/mvc-grid.css" asp-append-version="true">
-    <!-- Google Font: Source Sans Pro -->
+    @*<!-- Google Font: Source Sans Pro -->*@
     <link rel="stylesheet" href="~/lib/GoogleFont/SourceSansPro.css" asp-append-version="true">
-    <!-- Ionicons -->
+    @*<!-- Ionicons -->*@
     <link rel="stylesheet" href="~/lib/Ionicons/css/ionicons.min.css" asp-append-version="true">
-    <!-- Font Awesome -->
+    @*<!-- Font Awesome -->*@
     <link rel="stylesheet" href="~/plugins/fontawesome-free/css/all.min.css" asp-append-version="true">
-    <!-- Tempusdominus Bootstrap 4 -->
+    @*<!-- Tempusdominus Bootstrap 4 -->*@
     <link rel="stylesheet" href="~/plugins/tempusdominus-bootstrap-4/css/tempusdominus-bootstrap-4.min.css" asp-append-version="true">
-    <!-- iCheck -->
+    @*<!-- iCheck -->*@
     <link rel="stylesheet" href="~/plugins/icheck-bootstrap/icheck-bootstrap.min.css" asp-append-version="true">
-    <!-- JQVMap -->
+    @*<!-- JQVMap -->*@
     <link rel="stylesheet" href="~/plugins/jqvmap/jqvmap.min.css" asp-append-version="true">
-    <!-- Theme style -->
+    @*<!-- Theme style -->*@
     <link rel="stylesheet" href="~/dist/css/adminlte.min.css" asp-append-version="true">
-    <!-- overlayScrollbars -->
+    @*<!-- overlayScrollbars -->*@
     <link rel="stylesheet" href="~/plugins/overlayScrollbars/css/OverlayScrollbars.min.css" asp-append-version="true">
-    <!-- Daterange picker -->
+    @*<!-- Daterange picker -->*@
     <link rel="stylesheet" href="~/plugins/daterangepicker/daterangepicker.css" asp-append-version="true">
-    <!-- summernote -->
+    @*<!-- summernote -->*@
     <link rel="stylesheet" href="~/plugins/summernote/summernote-bs4.min.css" asp-append-version="true">
-    <!-- Jquery-ui -->
+    @*<!-- Jquery-ui -->*@
     <link rel="stylesheet" href="~/plugins/jquery-ui/jquery-ui.min.css" asp-append-version="true">
-    <!-- Toastr -->
+    @*<!-- Toastr -->*@
     <link rel="stylesheet" href="~/plugins/toastr/toastr.min.css" asp-append-version="true">
-    <!-- Jquery-confirm -->
+    @*<!-- Jquery-confirm -->*@
     <link rel="stylesheet" href="~/lib/jquery-confirm/jquery-confirm.min.css" asp-append-version="true">
-    <!-- Custom Modal CSS -->
+    @*<!-- Custom Modal CSS -->*@
     <link rel="stylesheet" href="~/custom/_Layout/css/modal.css" asp-append-version="true">
 </head>
 @*
@@ -55,17 +55,17 @@
 *@
 @*<body class="hold-transition dark-mode sidebar-mini layout-fixed layout-navbar-fixed layout-footer-fixed">*@
 <body class="hold-transition dark-mode sidebar-mini">
-    <!-- jQuery -->
+    @*<!-- jQuery -->*@
     <script src="~/plugins/jquery/jquery.min.js" asp-append-version="true"></script>
     <script src="~/plugins/jquery-ui/jquery-ui.min.js" asp-append-version="true"></script>
     <script src="~/lib/jquery-validation/dist/jquery.validate.min.js" asp-append-version="true"></script>
     <script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js" asp-append-version="true"></script>
     <script src="~/lib/jquery-confirm/jquery-confirm.min.js" asp-append-version="true"></script>
-    <!-- Bootstrap -->
+    @*<!-- Bootstrap -->*@
     <script src="~/plugins/bootstrap/js/bootstrap.bundle.min.js" asp-append-version="true"></script>
-    <!-- AdminLTE -->
+    @*<!-- AdminLTE -->*@
     <script src="~/dist/js/adminlte.js" asp-append-version="true"></script>
-    <!-- Toastr -->
+    @*<!-- Toastr -->*@
     <script src="~/plugins/toastr/toastr.min.js" asp-append-version="true"></script>
     @*
         <!-- OPTIONAL SCRIPTS -->
@@ -79,7 +79,7 @@
     <div class="wrapper">
 
 
-        <!-- Preloader -->
+        @*<!-- Preloader -->*@
         <div class="preloader flex-column justify-content-center align-items-center">
             <img class="animation__wobble" src="~/dist/img/AdminLTELogo.png" alt="AdminLTELogo" height="60" width="60">
         </div>
@@ -87,7 +87,7 @@
 
         @(await Html.PartialAsync("_MainTopBar"))
         @(await Html.PartialAsync("_MainLeftSideBar"))
-        <!-- Content Wrapper. Contains page content -->
+        @*<!-- Content Wrapper. Contains page content -->*@
         <div class="content-wrapper">
             @(await Html.PartialAsync("_BodyPageHeader"))
             @RenderBody()
@@ -97,15 +97,15 @@
             </script>
             @await RenderSectionAsync("Scripts", required: false) @* Model Only [Require] 이런거 모델 Model.IsValid 이런거 쓸 때 쓰는 자바스크립트임 aspnetcore를 위한 *@
         </div>
-        <!-- /.content-wrapper -->
-        <!-- Control Sidebar -->
+        @*<!-- /.content-wrapper -->*@
+        @*<!-- Control Sidebar -->*@
         <aside class="control-sidebar control-sidebar-dark">
-            <!-- Control sidebar content goes here -->
+            @*<!-- Control sidebar content goes here -->*@
         </aside>
-        <!-- /.control-sidebar -->
+        @*<!-- /.control-sidebar -->*@
         @(await Html.PartialAsync("_MainFooter"))
     </div>
-    <!-- ./wrapper -->
+    @*<!-- ./wrapper -->*@
     @*https://stackoverflow.com/questions/37280885/jquery-redirect-inmediatly-after-session-timeout *@
     @* Redirect browser to session expiration page on timeout *@
     <script type="text/javascript">
@@ -117,13 +117,13 @@
             @*function ilSessionTimeoutWarning() {
                 $.jGrowl('You will be logged off soon due to inactivity.', { sticky: true, theme: 'growl-warning', header: 'Attention' });
             };*@
-            // remember our timers so we can cancel when we unload this page and reset them on the next page load
+            @*// remember our timers so we can cancel when we unload this page and reset them on the next page load*@
             var expire_time = 15 * 60 * 1000; @* (15 Minutes) 변경 시, Startup.cs의 services.AddSession의 options.IdleTimeout도 바꿀 것 *@
             var g_pageTimer = window.setTimeout(ilSessionTimeout, expire_time);
             @*var g_pageTimerWarning = window.setTimeout(ilSessionTimeoutWarning, Math.round(expire_time*0.8));*@
-            // clean up anything that needs cleaning before we leave this page
+            @*// clean up anything that needs cleaning before we leave this page*@
             window.onbeforeunload = function(e) {
-                // clear the timers
+                @*// clear the timers*@
                 window.clearTimeout(g_pageTimer);
                 @*window.clearTimeout(g_pageTimerWarning);*@
             };
