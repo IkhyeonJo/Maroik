@@ -16,15 +16,17 @@
     @*<!-- Brand Logo -->*@
     @if (loginedAccount.Role == Role.Admin)
     {
-        <a href="/DashBoard/AdminIndex/" class="brand-link"></a>
-        <img src="~/admin/dist/img/AdminLTELogo.png" alt="AdminLTE Logo" class="brand-image img-circle elevation-3" style="opacity: .8">
-        <span class="brand-text font-weight-light">AdminLTE 3</span>
+        <a asp-controller="DashBoard" asp-action="AdminIndex" class="brand-link">
+            <img src="~/admin/dist/img/AdminLTELogo.png" alt="AdminLTE Logo" class="brand-image img-circle elevation-3" style="opacity: .8">
+            <span class="brand-text font-weight-light">AdminLTE 3</span>
+        </a>
     }
     else if (loginedAccount.Role == Role.User)
     {
-        <a href="/DashBoard/UserIndex/" class="brand-link"></a>
-        <img src="~/user/dist/img/AdminLTELogo.png" alt="AdminLTE Logo" class="brand-image img-circle elevation-3" style="opacity: .8">
-        <span class="brand-text font-weight-light">AdminLTE 3</span>
+        <a asp-controller="DashBoard" asp-action="UserIndex" class="brand-link">
+            <img src="~/user/dist/img/AdminLTELogo.png" alt="AdminLTE Logo" class="brand-image img-circle elevation-3" style="opacity: .8">
+            <span class="brand-text font-weight-light">AdminLTE 3</span>
+        </a>
     }
     else
     {
