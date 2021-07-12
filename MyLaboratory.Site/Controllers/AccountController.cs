@@ -552,7 +552,7 @@ namespace MyLaboratory.Site.Controllers
                     {
                         await accountRepository.UpdateAccountAsync(account);
                     }
-                    catch  // 2. Update 시, 예외 발생 했다 [있을 수 없는 일].
+                    catch  // 2. Update 시, 예외 발생 했다
                     {
                         ViewBag.InvalidToken = true;
                         ViewBag.AccountCreated = true;
@@ -566,7 +566,7 @@ namespace MyLaboratory.Site.Controllers
                 #endregion
 
                 #region 5.	해당 계정의 EmailConfirmd가 true이다. (이메일 인증을 하였다.)
-                if (account.EmailConfirmed)
+                else
                 {
                     account.Updated = DateTime.UtcNow;
                     account.Message = AccountMessage.UserAlreadyCreated;
@@ -585,13 +585,6 @@ namespace MyLaboratory.Site.Controllers
                     ViewBag.AccountCreated = false;
                     return View();
                 }
-                #endregion
-
-                #region 있을 수 없는 일
-                ViewBag.InvalidToken = true;
-                ViewBag.AccountCreated = true;
-                TempData["Error"] = "Error occurred when processing about authenticating account";
-                return View();
                 #endregion
             }
         }
@@ -727,98 +720,60 @@ namespace MyLaboratory.Site.Controllers
             }
             else // 로그인 안 된 상태라면
             {
-                return View();
-                //Account account = null;
+                Account account = null;
 
-                //#region 1.	입력된 token[암호화 됨]이랑 모든 계정에 저장된 토큰 해쉬화 후 비교해서 해당 계정 찾아낸다.
-                //var rsaHelper = new RSA(RSAType.RSA2, Encoding.UTF8, RSA.privateKey, RSA.publicKey);
+                #region 1.	입력된 token[암호화 됨]이랑 모든 계정에 저장된 토큰 해쉬화 후 비교해서 해당 계정 찾아낸다.
+                var rsaHelper = new RSA(RSAType.RSA2, Encoding.UTF8, RSA.privateKey, RSA.publicKey);
 
-                //foreach (var tempAccount in await accountRepository.GetAllAsync())
-                //{
-                //    try
-                //    {
-                //        if (rsaHelper.Verify(tempAccount.Guid, token)) // 암호화된 토큰과 DB 사용자 토큰이 같다
-                //        {
-                //            account = tempAccount;
-                //            break;
-                //        }
-                //    }
-                //    catch
-                //    {
+                foreach (var tempAccount in await accountRepository.GetAllAsync())
+                {
+                    try
+                    {
+                        if (rsaHelper.Verify(tempAccount.ResetPasswordToken, resetPasswordToken)) // 암호화된 토큰과 DB 사용자 토큰이 같다
+                        {
+                            account = tempAccount;
+                            break;
+                        }
+                    }
+                    catch
+                    {
 
-                //    }
-                //}
-                //#endregion
+                    }
+                }
+                #endregion
 
-                //#region 2.	해당 계정을 Token으로 찾지 못했다.
-                //if (account == null)
-                //{
-                //    ViewBag.InvalidToken = true;
-                //    ViewBag.AccountCreated = false;
-                //    return View();
-                //}
-                //#endregion
+                #region 2.	해당 계정을 Token으로 찾지 못했다.
+                if (account == null)
+                {
+                    ViewBag.FailToResetPassword = true;
+                    return View();
+                }
+                #endregion
 
-                //#region 3.	해당 계정의 Token 만료 되었다.
-                //if (!GUIDToken.IsTokenAlive(account.Guid))
-                //{
-                //    ViewBag.InvalidToken = true;
-                //    ViewBag.AccountCreated = false;
-                //    return View();
-                //}
-                //#endregion
+                #region 3.	해당 계정의 Token 만료 되었다.
+                if (!GUIDToken.IsTokenAlive(account.ResetPasswordToken))
+                {
+                    ViewBag.FailToResetPassword = true;
+                    return View();
+                }
+                #endregion
 
-                //#region 4.	해당 계정의 EmailConfirmd가 false이다. (이메일 인증을 하지 않았다.)
-                //if (!account.EmailConfirmed)
-                //{
-                //    account.EmailConfirmed = true;
-                //    account.Updated = DateTime.UtcNow;
-                //    account.Message = AccountMessage.Success;
-                //    try
-                //    {
-                //        await accountRepository.UpdateAccountAsync(account);
-                //    }
-                //    catch (Exception e) // 2.	Update 시, 예외 발생 했다 [있을 수 없는 일].
-                //    {
-                //        ViewBag.InvalidToken = true;
-                //        ViewBag.AccountCreated = true;
-                //        TempData["Error"] = e.ToString();
-                //        return View();
-                //    }
-                //    ViewBag.InvalidToken = false;
-                //    ViewBag.AccountCreated = true;
-                //    return View();
-                //}
-                //#endregion
+                #region 4.	해당 계정의 EmailConfirmd가 false이다. (이메일 인증을 하지 않았다.)
+                if (!account.EmailConfirmed)
+                {
+                    ViewBag.FailToResetPassword = true;
+                    return View();
+                }
+                #endregion
 
-                //#region 5.	해당 계정의 EmailConfirmd가 true이다. (이메일 인증을 하였다.)
-                //if (account.EmailConfirmed)
-                //{
-                //    account.Updated = DateTime.UtcNow;
-                //    account.Message = AccountMessage.UserAlreadyCreated;
-                //    try
-                //    {
-                //        await accountRepository.UpdateAccountAsync(account);
-                //    }
-                //    catch (Exception e) // 2.	Update 시, 예외 발생 했다 [있을 수 없는 일].
-                //    {
-                //        ViewBag.InvalidToken = true;
-                //        ViewBag.AccountCreated = true;
-                //        TempData["Error"] = e.ToString();
-                //        return View();
-                //    }
-                //    ViewBag.InvalidToken = false;
-                //    ViewBag.AccountCreated = false;
-                //    return View();
-                //}
-                //#endregion
-
-                //#region 있을 수 없는 일
-                //ViewBag.InvalidToken = true;
-                //ViewBag.AccountCreated = true;
-                //TempData["Error"] = "Error occurred when processing about authenticating account";
-                //return View();
-                //#endregion
+                #region 5.	해당 계정의 EmailConfirmd가 true이다. (이메일 인증을 하였다.)
+                else
+                {
+                    ViewBag.FailToResetPassword = false;
+                    ViewBag.ResetPasswordToken = resetPasswordToken;
+                    return View();
+                }
+                #endregion
             }
         }
         #endregion
