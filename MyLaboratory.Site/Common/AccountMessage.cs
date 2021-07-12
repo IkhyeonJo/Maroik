@@ -14,5 +14,6 @@ namespace MyLaboratory.Site.Common
         public static string InvalidToken = "Invalid Token";
         public static string FailToResendEmail = "Failed to resend email";
         public static string ResetPasswordMail = "Email has been sent to reset password";
+        public static string AccountLocked = "This account is locked";
     }
 }

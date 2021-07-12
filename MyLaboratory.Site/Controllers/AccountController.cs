@@ -120,16 +120,36 @@ namespace MyLaboratory.Site.Controllers
                     return RedirectToAction("Login", "Account");
                 }
 
-                if (!Crypto.VerifyHashedPassword(tempAccount.HashedPassword, loginInputViewModel.Password)) // wrong password
+                if (tempAccount.Locked)
                 {
-                    TempData["Error"] = "Username or Password is invalid";
+                    TempData["Error"] = "Your Account is Locked, Please reset your password by clicking Forgot password Button";
                     return RedirectToAction("Login", "Account");
                 }
 
-                tempAccount.HashedPassword = null;
+                if (!Crypto.VerifyHashedPassword(tempAccount.HashedPassword, loginInputViewModel.Password)) // wrong password
+                {
+                    if(tempAccount.LoginAttempt == 5)
+                    {
+                        tempAccount.Locked = true;
+                        tempAccount.Message = AccountMessage.AccountLocked;
+                        await accountRepository.UpdateAccountAsync(tempAccount);
+                        TempData["Error"] = "Your Account is Locked, Please reset your password by clicking Forgot password Button";
+                        return RedirectToAction("Login", "Account");
+                    }
+                    else
+                    {
+                        tempAccount.LoginAttempt++;
+                        await accountRepository.UpdateAccountAsync(tempAccount);
+                        TempData["Error"] = "Username or Password is invalid";
+                        return RedirectToAction("Login", "Account");
+                    }
+                }
 
                 if (tempAccount.EmailConfirmed == true && tempAccount.AgreedServiceTerms == true)
                 {
+                    tempAccount.LoginAttempt = 0;
+                    await accountRepository.UpdateAccountAsync(tempAccount);
+                    tempAccount.HashedPassword = null;
                     HttpContext.Session.Set("AccountSession", Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(tempAccount)));
 
                     #region DB Cache
@@ -838,6 +858,7 @@ namespace MyLaboratory.Site.Controllers
                     account.ResetPasswordToken = null;
                     account.HashedPassword = Crypto.HashPassword(loginInputViewModel.Password);
                     account.Locked = false; // 잠금 해제
+                    account.LoginAttempt = 0; // 로그인 시도 횟수 초기화
                     account.Updated = DateTime.UtcNow;
                     account.Message = AccountMessage.SuccessToResetPassword;
                     try
