@@ -128,7 +128,9 @@ namespace MyLaboratory.Site.Controllers
 
                 if (!Crypto.VerifyHashedPassword(tempAccount.HashedPassword, loginInputViewModel.Password)) // wrong password
                 {
-                    if(tempAccount.LoginAttempt == ServerSetting.MaxLoginAttempt)
+                    tempAccount.LoginAttempt++;
+
+                    if (tempAccount.LoginAttempt == ServerSetting.MaxLoginAttempt)
                     {
                         tempAccount.Locked = true;
                         tempAccount.Message = AccountMessage.AccountLocked;
@@ -138,7 +140,6 @@ namespace MyLaboratory.Site.Controllers
                     }
                     else
                     {
-                        tempAccount.LoginAttempt++;
                         await accountRepository.UpdateAccountAsync(tempAccount);
                         TempData["Error"] = "Username or Password is invalid";
                         return RedirectToAction("Login", "Account");
