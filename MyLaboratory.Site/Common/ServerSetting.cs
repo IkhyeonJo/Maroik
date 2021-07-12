@@ -11,5 +11,6 @@ namespace MyLaboratory.Site.Common
         public static string FromEmail { get; set; }
         public static string FromFullName { get; set; }
         public static bool IsDefault { get; set; }
+        public static int MaxLoginAttempt { get; set; }
     }
 }

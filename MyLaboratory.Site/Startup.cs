@@ -37,6 +37,7 @@ namespace MyLaboratory.Site
         {
             #region ServerSettings
             ServerSetting.DomainName = Configuration.GetSection("ServerSetting")["DomainName"];
+            ServerSetting.MaxLoginAttempt = Convert.ToInt32(Configuration.GetSection("ServerSetting")["MaxLoginAttempt"]);
             ServerSetting.SmtpUserName = Configuration.GetSection("ServerSetting").GetSection("SmtpOptions")["smtpUserName"];
             ServerSetting.SmtpPassword = Configuration.GetSection("ServerSetting").GetSection("SmtpOptions")["smtpPassword"];
             ServerSetting.SmtpHost = Configuration.GetSection("ServerSetting").GetSection("SmtpOptions")["smtpHost"];

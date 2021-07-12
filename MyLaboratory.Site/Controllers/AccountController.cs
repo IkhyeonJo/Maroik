@@ -128,7 +128,7 @@ namespace MyLaboratory.Site.Controllers
 
                 if (!Crypto.VerifyHashedPassword(tempAccount.HashedPassword, loginInputViewModel.Password)) // wrong password
                 {
-                    if(tempAccount.LoginAttempt == 5)
+                    if(tempAccount.LoginAttempt == ServerSetting.MaxLoginAttempt)
                     {
                         tempAccount.Locked = true;
                         tempAccount.Message = AccountMessage.AccountLocked;
