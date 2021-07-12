@@ -543,3 +543,49 @@ Uri.UnescapeDataString()
 #https://stackoverflow.com/questions/35379309/how-to-upload-files-in-asp-net-core
 #FEST Project File (File Upload 볼 것)
 #docker라 파일 권한 Linux 설정 필요 없음
+
+
+
+
+###Docker Compose File Contents
+
+
+#https://docs.microsoft.com/en-us/visualstudio/containers/docker-compose-properties?view=vs-2019
+
+### ------------------------------------------README !IMPORTANT---------------------------------------------------------
+#Before start this project, Set Server settings in appsettings.json (for registration & password recovery)
+### ------------------------------------------README !IMPORTANT---------------------------------------------------------
+
+##AWS step
+#step 1: Create AWS instance (in my case, AWS Linux)
+#step 2: open PORT
+#80, 443, 5000, 5001 (DevelopmentMode)
+#80, 443, 5001 (Deploy)
+
+#AWS Command (docker and docker-compose install)
+#go to docker-compose.yml file and execute below this command
+
+#-----------------------------------------------------------------------------------
+#sudo yum update -y && sudo amazon-linux-extras install docker -y && sudo service docker start && sudo curl -L https://github.com/docker/compose/releases/download/1.21.0/docker-compose-`uname -s`-`uname -m` | sudo tee /usr/local/bin/docker-compose > /dev/null && sudo chmod +x /usr/local/bin/docker-compose && sudo ln -s /usr/local/bin/docker-compose /usr/bin/docker-compose && sudo docker-compose up -d
+#-----------------------------------------------------------------------------------
+
+#when you should go debugging mode , change DB location (appsettings.json, DatabaseConfig.cs) and install (mariadb 10.5.10) and use IIS Express debugging mode
+
+#----------------------------------------------------------------------------------------------------
+### Tip: To see [CONTAINER ID], execute below this command
+#docker ps
+
+###Access docker container
+#docker exec -it <containerID> /bin/bash/
+
+###In order to copy a file from a container to the host, you can use the command
+#docker cp <containerId>:/file/path/within/container /host/path/target
+
+###Backup and restore a mysql database from a running Docker mysql container
+
+## Backup
+#docker exec [CONTAINER ID] /usr/bin/mysqldump -u root --password=***REMOVED*** [DATABASE] > backup.sql
+
+## Restore
+#cat backup.sql | docker exec -i [CONTAINER ID] /usr/bin/mysql -u root --password=***REMOVED*** [DATABASE]
+#----------------------------------------------------------------------------------------------------
