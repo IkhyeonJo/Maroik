@@ -102,7 +102,7 @@ namespace MyLaboratory.Site.Filters
 
                         #region SubCategory가 없는 Category일 경우
                         var singleCategories = from adminCategory in adminCategories
-                                               where adminCategory.Action != null
+                                               where !string.IsNullOrEmpty(adminCategory.Action)
                                                select adminCategory; // 서브 카테고리 없는 카테고리 모음.
 
                         foreach (var singleCategory in singleCategories)
@@ -117,7 +117,7 @@ namespace MyLaboratory.Site.Filters
 
                         #region SubCategory가 있는 Category일 경우
                         var nonSingleCategories = from adminCategory in adminCategories
-                                                  where adminCategory.Action == null
+                                                  where string.IsNullOrEmpty(adminCategory.Action)
                                                   select adminCategory; // 서브 카테고리 있는 카테고리 모음.
 
                         foreach (var nonSingleCategory in nonSingleCategories)
@@ -146,7 +146,7 @@ namespace MyLaboratory.Site.Filters
 
                         #region SubCategory가 없는 Category일 경우
                         var singleCategories = from userCategory in userCategories
-                                               where userCategory.Action != null
+                                               where !string.IsNullOrEmpty(userCategory.Action)
                                                select userCategory; // 서브 카테고리 없는 카테고리 모음.
 
                         foreach (var singleCategory in singleCategories)
@@ -161,7 +161,7 @@ namespace MyLaboratory.Site.Filters
 
                         #region SubCategory가 있는 Category일 경우
                         var nonSingleCategories = from userCategory in userCategories
-                                                  where userCategory.Action == null
+                                                  where string.IsNullOrEmpty(userCategory.Action)
                                                   select userCategory; // 서브 카테고리 있는 카테고리 모음.
 
                         foreach (var nonSingleCategory in nonSingleCategories)
