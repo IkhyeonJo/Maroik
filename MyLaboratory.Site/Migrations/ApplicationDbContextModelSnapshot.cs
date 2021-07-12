@@ -48,6 +48,9 @@ namespace MyLaboratory.Site.Migrations
                     b.Property<bool>("Locked")
                         .HasColumnType("tinyint(1)");
 
+                    b.Property<int>("LoginAttempt")
+                        .HasColumnType("int");
+
                     b.Property<string>("Message")
                         .HasColumnType("longtext");
 

@@ -9,7 +9,7 @@ using MyLaboratory.Site.Data;
 namespace MyLaboratory.Site.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20210712075132_InitialCreate")]
+    [Migration("20210712122459_InitialCreate")]
     partial class InitialCreate
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -49,6 +49,9 @@ namespace MyLaboratory.Site.Migrations
 
                     b.Property<bool>("Locked")
                         .HasColumnType("tinyint(1)");
+
+                    b.Property<int>("LoginAttempt")
+                        .HasColumnType("int");
 
                     b.Property<string>("Message")
                         .HasColumnType("longtext");

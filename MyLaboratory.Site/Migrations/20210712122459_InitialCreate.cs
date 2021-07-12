@@ -24,6 +24,7 @@ namespace MyLaboratory.Site.Migrations
                     Role = table.Column<string>(type: "varchar(255)", maxLength: 255, nullable: false, defaultValueSql: "'User'", collation: "utf8mb4_general_ci")
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     Locked = table.Column<bool>(type: "tinyint(1)", nullable: false),
+                    LoginAttempt = table.Column<int>(type: "int", nullable: false),
                     EmailConfirmed = table.Column<bool>(type: "tinyint(1)", nullable: false),
                     AgreedServiceTerms = table.Column<bool>(type: "tinyint(1)", nullable: false),
                     RegistrationToken = table.Column<string>(type: "longtext", nullable: true, collation: "utf8mb4_general_ci")
