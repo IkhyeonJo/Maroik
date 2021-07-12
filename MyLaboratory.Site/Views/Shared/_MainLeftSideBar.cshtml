@@ -168,7 +168,116 @@
                 }
                 else if (loginedAccount.Role == Role.User) // 로그인 한 사용자의 권한이 User인 경우
                 {
+                    var tempUserCategories = from userCategory in DbCache.UserCategories
+                                             orderby userCategory.Order ascending
+                                             select userCategory;
+                    var tempUserSubCategories = DbCache.UserSubCategories;
 
+                    foreach (var tempUserCategory in tempUserCategories)
+                    {
+                        if (!string.IsNullOrEmpty(tempUserCategory.Action)) // 단일 카테고리
+                        {
+                            if (tempUserCategory.Controller == currentController && tempUserCategory.Action == currentAction) // 선택된 것이라면
+                            {
+                                <li class="nav-item">
+                                    <a asp-controller="@tempUserCategory.Controller" asp-action="@tempUserCategory.Action" class="nav-link active">
+                                        <i class="@tempUserCategory.IconPath"></i>
+                                        <p>
+                                            @tempUserCategory.DisplayName
+                                        </p>
+                                    </a>
+                                </li>
+                            }
+                            else // 선택되지 않았다면
+                            {
+                                <li class="nav-item">
+                                    <a asp-controller="@tempUserCategory.Controller" asp-action="@tempUserCategory.Action" class="nav-link">
+                                        <i class="@tempUserCategory.IconPath"></i>
+                                        <p>
+                                            @tempUserCategory.DisplayName
+                                        </p>
+                                    </a>
+                                </li>
+                            }
+                        }
+                        else if (string.IsNullOrEmpty(tempUserCategory.Action)) // 다중 카테고리
+                        {
+                            var tempUserSelectedSubCategories = from tempUserSubCategory in tempUserSubCategories
+                                                                where tempUserCategory.Id == tempUserSubCategory.CategoryId
+                                                                orderby tempUserSubCategory.Order ascending
+                                                                select tempUserSubCategory;
+
+                            bool isExistSelectedSubCategoryInCategory = false;
+
+                            foreach (var tempUserSelectedSubCategory in tempUserSelectedSubCategories)
+                            {
+                                if (tempUserCategory.Controller == currentController && tempUserSelectedSubCategory.Action == currentAction)
+                                {
+                                    isExistSelectedSubCategoryInCategory = true;
+                                    break;
+                                }
+                            }
+
+                            if (isExistSelectedSubCategoryInCategory == true)
+                            {
+                                <li class="nav-item menu-open">
+                                    <a href="#" class="nav-link active">
+                                        <i class="@tempUserCategory.IconPath"></i>
+                                        <p>
+                                            @tempUserCategory.DisplayName
+                                            <i class="right fas fa-angle-left"></i>
+                                        </p>
+                                    </a>
+                                    <ul class="nav nav-treeview">
+                                        @foreach (var tempUserSelectedSubCategory in tempUserSelectedSubCategories)
+                                        {
+                                            if (tempUserSelectedSubCategory.Action == currentAction)
+                                            {
+                                                <li class="nav-item">
+                                                    <a asp-controller="@tempUserCategory.Controller" asp-action="@tempUserSelectedSubCategory.Action" class="nav-link active">
+                                                        <i class="@tempUserSelectedSubCategory.IconPath"></i>
+                                                        <p>@tempUserSelectedSubCategory.DisplayName</p>
+                                                    </a>
+                                                </li>
+                                            }
+                                            else
+                                            {
+                                                <li class="nav-item">
+                                                    <a asp-controller="@tempUserCategory.Controller" asp-action="@tempUserSelectedSubCategory.Action" class="nav-link">
+                                                        <i class="@tempUserSelectedSubCategory.IconPath"></i>
+                                                        <p>@tempUserSelectedSubCategory.DisplayName</p>
+                                                    </a>
+                                                </li>
+                                            }
+                                        }
+                                    </ul>
+                                </li>
+                            }
+                            else if (isExistSelectedSubCategoryInCategory == false)
+                            {
+                                <li class="nav-item">
+                                    <a href="#" class="nav-link">
+                                        <i class="@tempUserCategory.IconPath"></i>
+                                        <p>
+                                            @tempUserCategory.DisplayName
+                                            <i class="fas fa-angle-left right"></i>
+                                        </p>
+                                    </a>
+                                    <ul class="nav nav-treeview">
+                                        @foreach (var tempUserSelectedSubCategory in tempUserSelectedSubCategories)
+                                        {
+                                            <li class="nav-item">
+                                                <a asp-controller="@tempUserCategory.Controller" asp-action="@tempUserSelectedSubCategory.Action" class="nav-link">
+                                                    <i class="@tempUserSelectedSubCategory.IconPath"></i>
+                                                    <p>@tempUserSelectedSubCategory.DisplayName</p>
+                                                </a>
+                                            </li>
+                                        }
+                                    </ul>
+                                </li>
+                            }
+                        }
+                    }
                 }
                 else // 버그임. 로그인한 사용자는 Admin 또는 User 밖에 없음.
                 {
