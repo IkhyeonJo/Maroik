@@ -222,7 +222,7 @@ namespace MyLaboratory.Site.Controllers
                     if (account == null) // 입력된 ID로 생성된 Record가 없다.
                     {
                         string guid = GUIDToken.Generate();
-                        loginInputViewModel.Guid = guid;
+                        loginInputViewModel.RegistrationToken = guid;
                         try
                         {
                             await accountRepository.CreateAccountAsync
@@ -236,7 +236,7 @@ namespace MyLaboratory.Site.Controllers
                                     Locked = false,
                                     EmailConfirmed = false,
                                     AgreedServiceTerms = true,
-                                    Guid = loginInputViewModel.Guid,
+                                    RegistrationToken = loginInputViewModel.RegistrationToken,
                                     Created = DateTime.UtcNow,
                                     Updated = DateTime.UtcNow,
                                     Message = AccountMessage.UserCreatedVerifyEmail
@@ -252,7 +252,7 @@ namespace MyLaboratory.Site.Controllers
                         #region 메일 전송
                         Mail mail = new Mail();
                         mail.Subject = "MyLaboratory Email Confirmation";
-                        loginInputViewModel.Guid = new RSA(RSAType.RSA2, Encoding.UTF8, RSA.privateKey, RSA.publicKey).Sign(loginInputViewModel.Guid); // 암호화
+                        loginInputViewModel.RegistrationToken = new RSA(RSAType.RSA2, Encoding.UTF8, RSA.privateKey, RSA.publicKey).Sign(loginInputViewModel.RegistrationToken); // 암호화
                         mail.Body = mailRepository.GetMailConfirmationBody(loginInputViewModel);
                         mail.ToMailIds = new List<string>
                         {
@@ -262,7 +262,7 @@ namespace MyLaboratory.Site.Controllers
                         if (result != AccountMessage.MailSent) // 메일 전송 오류 발생 했을 시..
                         {
                             Console.WriteLine(result); // ActivityLog 등으로 로그 남겨야 한다..
-                            loginInputViewModel.Guid = guid;
+                            loginInputViewModel.RegistrationToken = guid;
                             try
                             {
                                 await accountRepository.UpdateAccountAsync
@@ -276,7 +276,7 @@ namespace MyLaboratory.Site.Controllers
                                         Locked = false,
                                         EmailConfirmed = false,
                                         AgreedServiceTerms = true,
-                                        Guid = loginInputViewModel.Guid,
+                                        RegistrationToken = loginInputViewModel.RegistrationToken,
                                         Created = DateTime.UtcNow,
                                         Updated = DateTime.UtcNow,
                                         Message = AccountMessage.FailToMailSent
@@ -306,7 +306,7 @@ namespace MyLaboratory.Site.Controllers
                             #region 메일 전송
                             Mail mail = new Mail();
                             mail.Subject = "MyLaboratory Email Confirmation";
-                            mail.Body = mailRepository.GetMailConfirmationBody(new LoginInputViewModel() { Guid = new RSA(RSAType.RSA2, Encoding.UTF8, RSA.privateKey, RSA.publicKey).Sign(account.Guid) });
+                            mail.Body = mailRepository.GetMailConfirmationBody(new LoginInputViewModel() { RegistrationToken = new RSA(RSAType.RSA2, Encoding.UTF8, RSA.privateKey, RSA.publicKey).Sign(account.RegistrationToken) });
                             mail.ToMailIds = new List<string>
                             {
                                 account.Email
@@ -401,7 +401,7 @@ namespace MyLaboratory.Site.Controllers
                             #region 메일 전송
                             Mail mail = new Mail();
                             mail.Subject = "MyLaboratory Email Confirmation";
-                            mail.Body = mailRepository.GetMailConfirmationBody(new LoginInputViewModel() { Guid = new RSA(RSAType.RSA2, Encoding.UTF8, RSA.privateKey, RSA.publicKey).Sign(account.Guid) });
+                            mail.Body = mailRepository.GetMailConfirmationBody(new LoginInputViewModel() { RegistrationToken = new RSA(RSAType.RSA2, Encoding.UTF8, RSA.privateKey, RSA.publicKey).Sign(account.RegistrationToken) });
                             mail.ToMailIds = new List<string>
                             {
                                 account.Email
@@ -508,7 +508,7 @@ namespace MyLaboratory.Site.Controllers
                 {
                     try
                     {
-                        if (rsaHelper.Verify(tempAccount.Guid, token)) // 암호화된 토큰과 DB 사용자 토큰이 같다
+                        if (rsaHelper.Verify(tempAccount.RegistrationToken, token)) // 암호화된 토큰과 DB 사용자 토큰이 같다
                         {
                             account = tempAccount;
                             break;
@@ -531,7 +531,7 @@ namespace MyLaboratory.Site.Controllers
                 #endregion
 
                 #region 3.	해당 계정의 Token 만료 되었다.
-                if (!GUIDToken.IsTokenAlive(account.Guid))
+                if (!GUIDToken.IsTokenAlive(account.RegistrationToken))
                 {
                     ViewBag.InvalidToken = true;
                     ViewBag.AccountCreated = false;
@@ -656,7 +656,7 @@ namespace MyLaboratory.Site.Controllers
                         #region 메일 전송
                         Mail mail = new Mail();
                         mail.Subject = "MyLaboratory Reset Password";
-                        mail.Body = mailRepository.GetMailResetPasswordBody(new LoginInputViewModel() { Guid = new RSA(RSAType.RSA2, Encoding.UTF8, RSA.privateKey, RSA.publicKey).Sign(token) });
+                        mail.Body = mailRepository.GetMailResetPasswordBody(new LoginInputViewModel() { ResetPasswordToken = new RSA(RSAType.RSA2, Encoding.UTF8, RSA.privateKey, RSA.publicKey).Sign(token) });
                         mail.ToMailIds = new List<string>
                             {
                                 account.Email
@@ -674,7 +674,7 @@ namespace MyLaboratory.Site.Controllers
                         }
                         #endregion
 
-                        account.Guid = token;
+                        account.ResetPasswordToken = token;
                         account.Locked = false;
                         account.Updated = DateTime.UtcNow;
                         account.Message = AccountMessage.ResetPasswordMail;

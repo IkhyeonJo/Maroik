@@ -26,7 +26,9 @@ namespace MyLaboratory.Site.Migrations
                     Locked = table.Column<bool>(type: "tinyint(1)", nullable: false),
                     EmailConfirmed = table.Column<bool>(type: "tinyint(1)", nullable: false),
                     AgreedServiceTerms = table.Column<bool>(type: "tinyint(1)", nullable: false),
-                    Guid = table.Column<string>(type: "longtext", nullable: true, collation: "utf8mb4_general_ci")
+                    RegistrationToken = table.Column<string>(type: "longtext", nullable: true, collation: "utf8mb4_general_ci")
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    ResetPasswordToken = table.Column<string>(type: "longtext", nullable: true, collation: "utf8mb4_general_ci")
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     Created = table.Column<DateTime>(type: "datetime(6)", maxLength: 6, nullable: false, defaultValueSql: "'1900-01-01 00:00:00.000000'"),
                     Updated = table.Column<DateTime>(type: "datetime(6)", maxLength: 6, nullable: false, defaultValueSql: "'1900-01-01 00:00:00.000000'"),

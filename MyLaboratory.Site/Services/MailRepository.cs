@@ -13,7 +13,7 @@ namespace MyLaboratory.Site.Services
     {
         public string GetMailConfirmationBody(LoginInputViewModel loginInputViewModel)
         {
-            string url = $"{ServerSetting.DomainName}Account/ConfirmEmail?token={Uri.EscapeDataString(loginInputViewModel.Guid)}";
+            string url = $"{ServerSetting.DomainName}Account/ConfirmEmail?token={Uri.EscapeDataString(loginInputViewModel.RegistrationToken)}";
             return @$"<div style='text-align:centre;'>
                         <h1>Welcome to MyLaboratory Site<h1>
                         <h3>Click the link below to verify your Email<h3>
@@ -24,7 +24,7 @@ namespace MyLaboratory.Site.Services
 
         public string GetMailResetPasswordBody(LoginInputViewModel loginInputViewModel)
         {
-            string url = $"{ServerSetting.DomainName}Account/ResetPassword?token={Uri.EscapeDataString(loginInputViewModel.Guid)}";
+            string url = $"{ServerSetting.DomainName}Account/ResetPassword?token={Uri.EscapeDataString(loginInputViewModel.ResetPasswordToken)}";
             return @$"<div style='text-align:centre;'>
                         <h1>Welcome to MyLaboratory Site<h1>
                         <h3>Click the link below to reset your password<h3>

@@ -27,6 +27,7 @@ namespace MyLaboratory.Site.Models.ViewModels.Account
 
         public bool AgreedServiceTerms { get; set; }
 
-        public string Guid { get; set; }
+        public string RegistrationToken { get; set; }
+        public string ResetPasswordToken { get; set; }
     }
 }

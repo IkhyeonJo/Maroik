@@ -9,7 +9,7 @@ using MyLaboratory.Site.Data;
 namespace MyLaboratory.Site.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20210707223101_InitialCreate")]
+    [Migration("20210712075132_InitialCreate")]
     partial class InitialCreate
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -43,9 +43,6 @@ namespace MyLaboratory.Site.Migrations
                         .HasMaxLength(255)
                         .HasColumnType("varchar(255)");
 
-                    b.Property<string>("Guid")
-                        .HasColumnType("longtext");
-
                     b.Property<string>("HashedPassword")
                         .IsRequired()
                         .HasColumnType("longtext");
@@ -54,6 +51,12 @@ namespace MyLaboratory.Site.Migrations
                         .HasColumnType("tinyint(1)");
 
                     b.Property<string>("Message")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("RegistrationToken")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("ResetPasswordToken")
                         .HasColumnType("longtext");
 
                     b.Property<string>("Role")
