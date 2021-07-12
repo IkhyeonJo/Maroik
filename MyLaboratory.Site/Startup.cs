@@ -20,6 +20,8 @@ using System.IO;
 using MyLaboratory.Site.Filters;
 using MyLaboratory.Site.Contracts;
 using MyLaboratory.Site.Common;
+using Newtonsoft.Json;
+using System.Text;
 
 namespace MyLaboratory.Site
 {
@@ -140,14 +142,25 @@ namespace MyLaboratory.Site
                         context.Context.Response.Body = Stream.Null; // 내용 없음
                         context.Context.Response.Redirect("/"); // 로그인 화면으로
                     }
-                    //else if (true) // 로그인이 되었고 권한이 Admin인가? 그렇다면 ~/AdminResources 자원에만 접근 허용
-                    //{
+                    else if (isAccountSessionExist == true)
+                    {
+                        byte[] resultByte = null;
+                        context.Context.Session.TryGetValue("AccountSession", out resultByte);
+                        var loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)); // Get Session
 
-                    //}
-                    //else if (true) // 로그인이 되었고 권한이 User인가? 그렇다면 ~/UserResources 자원에만 접근 허용
-                    //{
+                        if (loginedAccount.Role == Role.Admin) // 로그인이 되었고 권한이 Admin인가? 그렇다면 ~/AdminResources 자원에만 접근 허용
+                        {
 
-                    //}
+                        }
+                        else if(loginedAccount.Role == Role.User) // 로그인이 되었고 권한이 User인가? 그렇다면 ~/UserResources 자원에만 접근 허용
+                        {
+
+                        }
+                        else // 버그
+                        {
+
+                        }
+                    }
                 }
             });
             #endregion
