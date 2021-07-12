@@ -476,7 +476,7 @@ namespace MyLaboratory.Site.Controllers
         }
         #endregion
 
-        #region 계정 인증
+        #region 이메일 확인
         [HttpGet]
         public async Task<IActionResult> ConfirmEmail(string registrationToken)
         {
@@ -653,13 +653,13 @@ namespace MyLaboratory.Site.Controllers
 
                 if (account.EmailConfirmed) // 이메일 인증 됨
                 {
-                    string token = GUIDToken.Generate();
+                    string resetPasswordToken = GUIDToken.Generate();
                     try
                     {
                         #region 메일 전송
                         Mail mail = new Mail();
                         mail.Subject = "MyLaboratory Reset Password";
-                        mail.Body = mailRepository.GetMailResetPasswordBody(new LoginInputViewModel() { ResetPasswordToken = new RSA(RSAType.RSA2, Encoding.UTF8, RSA.privateKey, RSA.publicKey).Sign(token) });
+                        mail.Body = mailRepository.GetMailResetPasswordBody(new LoginInputViewModel() { ResetPasswordToken = new RSA(RSAType.RSA2, Encoding.UTF8, RSA.privateKey, RSA.publicKey).Sign(resetPasswordToken) });
                         mail.ToMailIds = new List<string>
                             {
                                 account.Email
@@ -677,7 +677,7 @@ namespace MyLaboratory.Site.Controllers
                         }
                         #endregion
 
-                        account.ResetPasswordToken = token;
+                        account.ResetPasswordToken = resetPasswordToken;
                         account.Locked = false;
                         account.Updated = DateTime.UtcNow;
                         account.Message = AccountMessage.ResetPasswordMail;
@@ -704,7 +704,7 @@ namespace MyLaboratory.Site.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> ResetPassword(string token)
+        public async Task<IActionResult> ResetPassword(string resetPasswordToken)
         {
             byte[] resultByte = null;
             bool isAccountSessionExist = HttpContext.Session.TryGetValue("AccountSession", out resultByte);
