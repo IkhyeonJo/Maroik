@@ -133,7 +133,7 @@ namespace MyLaboratory.Site
                 {
                     bool isAccountSessionExist = context.Context.Session.TryGetValue("AccountSession", out _); // 로그인이 되어 계정 세션이 생겼는지 확인
 
-                    if (isAccountSessionExist == false && !context.Context.Request.Path.StartsWithSegments("/adminlte")) // 로그인이 안 된 상태인가? 그렇다면 ~/adminlte 자원에만 접근 허용
+                    if (isAccountSessionExist == false && !context.Context.Request.Path.StartsWithSegments("/anonymous")) // 로그인이 안 된 상태인가? 그렇다면 ~/anonymous 자원에만 접근 허용
                     {
                         context.Context.Response.StatusCode = (int)HttpStatusCode.Unauthorized; // 권한 없음 
                         context.Context.Response.ContentLength = 0; // 내용 길이 없음
