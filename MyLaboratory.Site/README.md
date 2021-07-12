@@ -534,11 +534,11 @@ Uri.UnescapeDataString()
 
 
 ###파일 업로드
-#파일 업로드는 
-#로그인 아닐 시: anonymous folder만 이용 (wwwroot)
-#User 로그인일 시: user folder만 이용 (wwwroot)
-#Admin 로그인일 시: admin folder만 이용 (wwwroot)
-#이므로 이외의 폴더에서 생성하면 Upload만 되고 접근 불가능해진다.
+#파일 업로드는
+#로그인 아닐 시: [anonymous] folder만 이용 (wwwroot)
+#User 로그인일 시: [user] folder만 이용 (wwwroot)
+#Admin 로그인일 시: [admin] folder만 이용 (wwwroot)
+#이므로 이외의 폴더에서 생성하면 Upload만 되고 접근 불가능해진다. (Anonymous, User, Admin 등은 자기 폴더에만 갇혀있기 때문 (StartUp.cs에서 설정함))
 #그 이외의 폴더 만들 때는 README.md 파일 하나 붙여서 폴더가 git push할 때 성공적으로 들어갈 수 있도록 할 것!!
 #https://stackoverflow.com/questions/35379309/how-to-upload-files-in-asp-net-core
 #FEST Project File (File Upload 볼 것)
