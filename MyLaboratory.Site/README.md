@@ -539,3 +539,4 @@ Uri.UnescapeDataString()
 #User 로그인일 시: user folder만 이용 (wwwroot)
 #Admin 로그인일 시: admin folder만 이용 (wwwroot)
 #이므로 이외의 폴더에서 생성하면 Upload만 되고 접근 불가능해진다.
+#그 이외의 폴더 만들 때는 README.md 파일 하나 붙여서 폴더가 git push할 때 성공적으로 들어갈 수 있도록 할 것!!
