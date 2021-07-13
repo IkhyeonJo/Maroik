@@ -592,3 +592,4 @@ Uri.UnescapeDataString()
 
 
 다국어 처리 연구할 것...
+https://www.youtube.com/watch?v=Hy9G30nncMM
