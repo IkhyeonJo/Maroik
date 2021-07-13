@@ -27,6 +27,8 @@
 
     @if (loginedAccount.Role == Role.Admin)
     {
+        @*HomePage Site Icon*@
+        <link rel="Shortcut Icon" href="~/admin/favicon.ico" type="image/x-icon" />
         @*<!-- NonFactor DataGrid -->*@
         <link rel="stylesheet" href="~/admin/css/mvc-grid/mvc-grid.css" asp-append-version="true">
         @*<!-- Google Font: Source Sans Pro -->*@
@@ -60,6 +62,8 @@
     }
     else if (loginedAccount.Role == Role.User)
     {
+        @*HomePage Site Icon*@
+        <link rel="Shortcut Icon" href="~/user/favicon.ico" type="image/x-icon" />
         @*<!-- NonFactor DataGrid -->*@
         <link rel="stylesheet" href="~/user/css/mvc-grid/mvc-grid.css" asp-append-version="true">
         @*<!-- Google Font: Source Sans Pro -->*@
