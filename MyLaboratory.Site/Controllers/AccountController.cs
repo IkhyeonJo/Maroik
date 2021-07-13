@@ -127,7 +127,7 @@ namespace MyLaboratory.Site.Controllers
                     return RedirectToAction("Login", "Account");
                 }
 
-                if (!Crypto.VerifyHashedPassword(tempAccount.HashedPassword, loginInputViewModel.Password)) // wrong password
+                if (!Crypto.VerifyHashedPassword(tempAccount.HashedPassword, loginInputViewModel.Password ?? "")) // wrong password
                 {
                     tempAccount.LoginAttempt++;
 
