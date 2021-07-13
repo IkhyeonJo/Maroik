@@ -589,3 +589,6 @@ Uri.UnescapeDataString()
 ## Restore
 #cat backup.sql | docker exec -i [CONTAINER ID] /usr/bin/mysql -u root --password=***REMOVED*** [DATABASE]
 #----------------------------------------------------------------------------------------------------
+
+
+다국어 처리 연구할 것...
