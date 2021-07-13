@@ -22,6 +22,10 @@ using MyLaboratory.Site.Contracts;
 using MyLaboratory.Site.Common;
 using Newtonsoft.Json;
 using System.Text;
+using System.Globalization;
+using Microsoft.AspNetCore.Mvc.Razor;
+using Microsoft.AspNetCore.Localization;
+using Microsoft.Extensions.Options;
 
 namespace MyLaboratory.Site
 {
@@ -79,7 +83,24 @@ namespace MyLaboratory.Site
 
             services.AddSingleton<IConfiguration>(Configuration);
             services.AddResponseCaching(); // For HTTP Header Setting 
-            //services.AddControllersWithViews();
+
+            #region Multi-Language
+            services.AddLocalization(opt => { opt.ResourcesPath = "Resources"; });
+            services.AddMvc().AddViewLocalization(LanguageViewLocationExpanderFormat.Suffix).AddDataAnnotationsLocalization();
+
+            services.Configure<RequestLocalizationOptions>(
+                opt =>
+                {
+                    var supportedCultures = new List<CultureInfo>
+                    {
+                        new CultureInfo("en"),
+                        new CultureInfo("kr")
+                    };
+                    opt.DefaultRequestCulture = new RequestCulture("en");
+                    opt.SupportedCultures = supportedCultures;
+                    opt.SupportedUICultures = supportedCultures;
+                });
+            #endregion
 
             services.AddControllersWithViews(options =>
             {
@@ -203,6 +224,10 @@ namespace MyLaboratory.Site
             #endregion
 
             //app.UseEndpoints(endpoints => { endpoints.MapRazorPages(); endpoints.MapControllerRoute(name: "default", pattern: "{controller=Home}/{action=Index}/{id?}"); }); //9.엔드 포인트 라우팅 미들웨어(MapRazorPages 를 포함하는 UseEndPoints)를 사용하여 요청 파이프라인에 Razor Pages 엔드포인트를 추가합니다.
+
+            #region Multi-Language
+            app.UseRequestLocalization(app.ApplicationServices.GetRequiredService<IOptions<RequestLocalizationOptions>>().Value);
+            #endregion
 
             app.UseEndpoints(endpoints =>
             {
