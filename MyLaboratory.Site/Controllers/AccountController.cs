@@ -108,6 +108,7 @@ namespace MyLaboratory.Site.Controllers
                 return RedirectToAction("Login", "Account");
             }
 
+            ModelState.Remove(nameof(loginInputViewModel.Password));
             ModelState.Remove(nameof(loginInputViewModel.FullName));
 
             if (ModelState.IsValid)
