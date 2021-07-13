@@ -69,7 +69,8 @@ namespace MyLaboratory.Site.Filters
                     }
                     else // 그 외 페이지는 전부 접근 불가!!
                     {
-                        context.Result = new UnauthorizedObjectResult("User is unauthorized");
+                        //context.Result = new UnauthorizedObjectResult("User is unauthorized");
+                        context.Result = new RedirectResult("/Account/Login");
                         return;
                     }
                 }
@@ -135,7 +136,8 @@ namespace MyLaboratory.Site.Filters
                             }
                         }
                         #endregion
-                        context.Result = new UnauthorizedObjectResult("User is unauthorized"); // 다 검사했는데도 나오지 않은 경우는 DB에 없는 경우이다.
+                        //context.Result = new UnauthorizedObjectResult("User is unauthorized"); // 다 검사했는데도 나오지 않은 경우는 DB에 없는 경우이다.
+                        context.Result = new RedirectResult("/Account/Login");
                         return;
                         //DB Category & SubCategory 다 뽑아 현재 Access한 Controller & Action과 다 맞는지 비교하고 맞으면 넘어가고 아니면 UnAuthroizedObjectReslut 출력 (Action 취소!!)
                     }
@@ -179,7 +181,8 @@ namespace MyLaboratory.Site.Filters
                             }
                         }
                         #endregion
-                        context.Result = new UnauthorizedObjectResult("User is unauthorized"); // 다 검사했는데도 나오지 않은 경우는 DB에 없는 경우이다.
+                        //context.Result = new UnauthorizedObjectResult("User is unauthorized"); // 다 검사했는데도 나오지 않은 경우는 DB에 없는 경우이다.
+                        context.Result = new RedirectResult("/Account/Login");
                         return;
                         //DB Category & SubCategory 다 뽑아 현재 Access한 Controller & Action과 다 맞는지 비교하고 맞으면 넘어가고 아니면 UnAuthroizedObjectReslut 출력 (Action 취소!!)
                     }
@@ -205,7 +208,8 @@ namespace MyLaboratory.Site.Filters
                             return;
                         }
                     }
-                    context.Result = new UnauthorizedObjectResult("Access is not allowed"); // 다 검사 했는데도 없으면 실행 불가!
+                    //context.Result = new UnauthorizedObjectResult("Access is not allowed"); // 다 검사 했는데도 없으면 실행 불가!
+                    context.Result = new RedirectResult("/Account/Login");
                     return;
                 }
                 else if (isAccountSessionExist == true) // 로그인이 된 상태라면
@@ -233,7 +237,8 @@ namespace MyLaboratory.Site.Filters
                                 }
                             }
                         }
-                        context.Result = new UnauthorizedObjectResult("Access is not allowed"); // 다 검사 했는데도 없으면 실행 불가!
+                        //context.Result = new UnauthorizedObjectResult("Access is not allowed"); // 다 검사 했는데도 없으면 실행 불가!
+                        context.Result = new RedirectResult("/Account/Login");
                         return;
                     }
                     else if (loginedAccount.Role == Role.User) // 로그인한 사용자 권한이 User일 경우
@@ -255,7 +260,8 @@ namespace MyLaboratory.Site.Filters
                                 }
                             }
                         }
-                        context.Result = new UnauthorizedObjectResult("Access is not allowed"); // 다 검사 했는데도 없으면 실행 불가!
+                        //context.Result = new UnauthorizedObjectResult("Access is not allowed"); // 다 검사 했는데도 없으면 실행 불가!
+                        context.Result = new RedirectResult("/Account/Login");
                         return;
                     }
                 }
@@ -263,7 +269,8 @@ namespace MyLaboratory.Site.Filters
             else // (PATCH / DELETE 등 방식은 다 거부)
             {
                 //base.OnActionExecuting(context); // Do Action!!
-                context.Result = new UnauthorizedObjectResult("Access is not allowed [Only Allowed GET/POST Method]");
+                //context.Result = new UnauthorizedObjectResult("Access is not allowed [Only Allowed GET/POST Method]");
+                context.Result = new RedirectResult("/Account/Login");
                 return;
             }
             // Do something before the action executes.
