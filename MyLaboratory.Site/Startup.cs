@@ -93,10 +93,10 @@ namespace MyLaboratory.Site
                 {
                     var supportedCultures = new List<CultureInfo>
                     {
-                        new CultureInfo("en"),
-                        new CultureInfo("kr")
+                        new CultureInfo("en-US"),
+                        new CultureInfo("ko-KR")
                     };
-                    opt.DefaultRequestCulture = new RequestCulture("en");
+                    opt.DefaultRequestCulture = new RequestCulture("en-US");
                     opt.SupportedCultures = supportedCultures;
                     opt.SupportedUICultures = supportedCultures;
                 });
