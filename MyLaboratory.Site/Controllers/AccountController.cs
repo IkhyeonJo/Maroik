@@ -119,7 +119,7 @@ namespace MyLaboratory.Site.Controllers
         public async Task<IActionResult> Login(LoginInputViewModel loginInputViewModel)
         {
             string userAgent = Request.Headers["User-Agent"].ToString();
-            if (userAgent.Contains("MSIE") || userAgent.Contains("Trident")) // IsInternetExplorer (차단 이유: DataTable에서 문제생김...)
+            if (userAgent.Contains("MSIE") || userAgent.Contains("Trident")) // IsInternetExplorer (차단 이유: Nonfactor Data Grid에서 문제 생김...)
             {
                 TempData["Error"] = localizer["BlockInternetExplorer"].Value;
                 return RedirectToAction("Login", "Account");
