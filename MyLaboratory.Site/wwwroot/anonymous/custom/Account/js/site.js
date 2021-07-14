@@ -35,6 +35,17 @@ function ShowResetPasswordLoading() {
     }
 }
 
+function ShowLoginLoading() {
+    if (!$('#loginForm').valid()) {
+        $('#loading').hide();
+        return false;
+    }
+    else {
+        $('#loading').show();
+        return true;
+    }
+}
+
 function ChangeCulture(culture) {
     
     var paramValue = JSON.stringify({

@@ -13,7 +13,7 @@
         </div>
         <div class="card-body">
             <p class="login-box-msg">@localizer["Sign in to start your session"]</p>
-            <form name="loginForm" class="form-horizontal" method="post" asp-controller="Account" asp-action="Login">
+            <form id="loginForm" class="form-horizontal" method="post" asp-controller="Account" asp-action="Login">
                 @Html.AntiForgeryToken()
                 <div class="form-group has-feedback">
                     <input asp-for="Email" type="email" class="form-control" placeholder="@localizer["Email"]" />
@@ -34,7 +34,7 @@
                         </div>
                     </div>
                     <div class="col-8">
-                        <button type="submit" class="btn btn-primary btn-block">
+                        <button type="submit" class="btn btn-primary btn-block" onclick="ShowLoginLoading()">
                             <i class="fas fa-sign-in-alt" style="padding-right:6px;"></i>@localizer["Sign In"]
                         </button>
                     </div>
@@ -56,7 +56,9 @@
         </div>
     </div>
 </div>
-
+<div class="modal" id="loading">
+    <img src="~/anonymous/custom/Account/img/ajax-loader.gif" />
+</div>
 @section Scripts{
     <script src="~/anonymous/custom/Account/js/site.js" asp-append-version="true"></script>
 }
