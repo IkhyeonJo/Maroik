@@ -24,20 +24,12 @@
                 </div>
                 <div class="row">
                     <div class="col-4">
-                        @*
-                            <div class="icheck-primary">
-                                <input type="checkbox" id="remember">
-                                <label for="remember">
-                                    Remember Me
-                                </label>
-                            </div>
-                        *@
                         <div>
-                            <a href="#">
-                                <img src="~/anonymous/images/us.jpg" style="height: 42px !important; padding-bottom: 4px !important;"/>
+                            <a onclick="ChangeCulture('en')" style="cursor: pointer;">
+                                <img src="~/anonymous/images/us.jpg" style="height: 42px !important; padding-bottom: 4px !important;" />
                             </a>
-                            <a href="#">
-                                <img src="~/anonymous/images/kr.jpg" style="height: 42px !important; padding-bottom: 4px !important; padding-left: 3px !important;"/>
+                            <a onclick="ChangeCulture('kr')" style="cursor: pointer;">
+                                <img src="~/anonymous/images/kr.jpg" style="height: 42px !important; padding-bottom: 4px !important; padding-left: 3px !important;" />
                             </a>
                         </div>
                     </div>
@@ -64,3 +56,7 @@
         </div>
     </div>
 </div>
+
+@section Scripts{
+    <script src="~/anonymous/custom/Account/js/site.js" asp-append-version="true"></script>
+}

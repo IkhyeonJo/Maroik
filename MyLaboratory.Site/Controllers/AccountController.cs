@@ -18,25 +18,42 @@ using MyLaboratory.Site.Models;
 using MyLaboratory.Site.Data;
 using MyLaboratory.Site.Contracts;
 using MyLaboratory.Site.Helpers;
+using Microsoft.AspNetCore.Mvc.Localization;
+using Microsoft.AspNetCore.Localization;
+using Microsoft.AspNetCore.Http;
 
 namespace MyLaboratory.Site.Controllers
 {
     public class AccountController : Controller
     {
+        private readonly IHtmlLocalizer<AccountController> localizer;
         private readonly ILogger<AccountController> logger;
         private readonly IAccountRepository accountRepository;
         private readonly ICategoryRepository categoryRepository;
         private readonly ISubCategoryRepository subCategoryRepository;
         private readonly IMailRepository mailRepository;
 
-        public AccountController(ILogger<AccountController> logger, IAccountRepository accountRepository, ICategoryRepository categoryRepository, ISubCategoryRepository subCategoryRepository, IMailRepository mailRepository)
+        public AccountController(IHtmlLocalizer<AccountController> localizer, ILogger<AccountController> logger, IAccountRepository accountRepository, ICategoryRepository categoryRepository, ISubCategoryRepository subCategoryRepository, IMailRepository mailRepository)
         {
+            this.localizer = localizer;
             this.logger = logger;
             this.accountRepository = accountRepository;
             this.categoryRepository = categoryRepository;
             this.subCategoryRepository = subCategoryRepository;
             this.mailRepository = mailRepository;
         }
+
+        #region 언어 변경
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult CultureManagement([FromBody]LoginInputViewModel loginInputViewModel)
+        {
+            Response.Cookies.Append(CookieRequestCultureProvider.DefaultCookieName, CookieRequestCultureProvider.MakeCookieValue(new RequestCulture(loginInputViewModel.Culture)),
+                new CookieOptions { Expires = DateTimeOffset.Now.AddDays(30) });
+
+            return Json(new { result = true });
+        }
+        #endregion
 
         #region 동의서
         [HttpGet]
@@ -104,7 +121,7 @@ namespace MyLaboratory.Site.Controllers
             string userAgent = Request.Headers["User-Agent"].ToString();
             if (userAgent.Contains("MSIE") || userAgent.Contains("Trident")) // IsInternetExplorer (차단 이유: DataTable에서 문제생김...)
             {
-                TempData["Error"] = "이 사이트는 Internet Explorer를 지원하지 않습니다. 다른 브라우저를 이용하시길 바랍니다.";
+                TempData["Error"] = localizer["BlockInternetExplorer"].Value;
                 return RedirectToAction("Login", "Account");
             }
 

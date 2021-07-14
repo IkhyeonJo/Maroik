@@ -29,5 +29,6 @@ namespace MyLaboratory.Site.Models.ViewModels.Account
 
         public string RegistrationToken { get; set; }
         public string ResetPasswordToken { get; set; }
+        public string Culture { get; set; }
     }
 }
