@@ -593,3 +593,6 @@ Uri.UnescapeDataString()
 
 다국어 처리
 https://www.youtube.com/watch?v=Hy9G30nncMM
+
+Repository Pattern
+https://codewithmukesh.com/blog/repository-pattern-in-aspnet-core/
