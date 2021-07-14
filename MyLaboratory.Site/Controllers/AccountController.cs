@@ -144,7 +144,7 @@ namespace MyLaboratory.Site.Controllers
                     return RedirectToAction("Login", "Account");
                 }
 
-                if (!Crypto.VerifyHashedPassword(tempAccount.HashedPassword, loginInputViewModel.Password ?? "")) // wrong password
+                if (!new RSA(RSAType.RSA2, Encoding.UTF8, RSA.privateKey, RSA.publicKey).Verify(loginInputViewModel.Password ?? "", tempAccount.HashedPassword)) // wrong password
                 {
                     tempAccount.LoginAttempt++;
 
@@ -269,7 +269,7 @@ namespace MyLaboratory.Site.Controllers
                                 new Account()
                                 {
                                     Email = loginInputViewModel.Email,
-                                    HashedPassword = Crypto.HashPassword(loginInputViewModel.Password),
+                                    HashedPassword = new RSA(RSAType.RSA2, Encoding.UTF8, RSA.privateKey, RSA.publicKey).Sign(loginInputViewModel.Password), // 암호화
                                     FullName = loginInputViewModel.FullName,
                                     Role = Role.User,
                                     Locked = false,
@@ -310,7 +310,7 @@ namespace MyLaboratory.Site.Controllers
                                     new Account()
                                     {
                                         Email = loginInputViewModel.Email,
-                                        HashedPassword = Crypto.HashPassword(loginInputViewModel.Password),
+                                        HashedPassword = new RSA(RSAType.RSA2, Encoding.UTF8, RSA.privateKey, RSA.publicKey).Sign(loginInputViewModel.Password), // 암호화
                                         FullName = loginInputViewModel.FullName,
                                         Role = Role.User,
                                         Locked = false,
@@ -875,7 +875,7 @@ namespace MyLaboratory.Site.Controllers
                 else
                 {
                     account.ResetPasswordToken = null;
-                    account.HashedPassword = Crypto.HashPassword(loginInputViewModel.Password);
+                    account.HashedPassword = new RSA(RSAType.RSA2, Encoding.UTF8, RSA.privateKey, RSA.publicKey).Sign(loginInputViewModel.Password); // 암호화
                     account.Locked = false; // 잠금 해제
                     account.LoginAttempt = 0; // 로그인 시도 횟수 초기화
                     account.Updated = DateTime.UtcNow;
