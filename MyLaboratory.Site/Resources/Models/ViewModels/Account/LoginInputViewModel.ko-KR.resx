@@ -120,4 +120,22 @@
   <data name="Email is required" xml:space="preserve">
     <value>이메일을 입력하십시오,</value>
   </data>
+  <data name="Full Name is required" xml:space="preserve">
+    <value>성명을 입력하여 주십시오.</value>
+  </data>
+  <data name="Invalid Email Address" xml:space="preserve">
+    <value>유효하지 않은 이메일 형식입니다.</value>
+  </data>
+  <data name="Must be between 5 and 255 characters" xml:space="preserve">
+    <value>5자리 또는 255자리 문자들이어야 합니다.</value>
+  </data>
+  <data name="Password is required" xml:space="preserve">
+    <value>비밀번호를 입력하여 주십시오.</value>
+  </data>
+  <data name="Password must be at least 8 characters and contain at 3 of 4 of the following: upper case (A-Z), lower case (a-z), number (0-9) and special character (e.g. !@#$%^&amp;*)" xml:space="preserve">
+    <value>비밀번호는 적어도 8자리 이상이고, 대소문자와 숫자, 특수문자를 포함해야 합니다.</value>
+  </data>
+  <data name="The {0} must be at least {2} characters long." xml:space="preserve">
+    <value>그것은 ({0}) 적어도 {2} 길이 이상이여야 합니다.</value>
+  </data>
 </root>
