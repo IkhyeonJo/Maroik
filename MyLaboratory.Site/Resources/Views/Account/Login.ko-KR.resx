@@ -117,7 +117,22 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <data name="SignIn" xml:space="preserve">
+  <data name="Email" xml:space="preserve">
+    <value>이메일</value>
+  </data>
+  <data name="Forgot password" xml:space="preserve">
+    <value>비밀번호 찾기</value>
+  </data>
+  <data name="Password" xml:space="preserve">
+    <value>비밀번호</value>
+  </data>
+  <data name="Sign In" xml:space="preserve">
     <value>로그인</value>
+  </data>
+  <data name="Sign in to start your session" xml:space="preserve">
+    <value>당신의 세션을 시작하기 위해 로그인 해주세요.</value>
+  </data>
+  <data name="Sign up" xml:space="preserve">
+    <value>회원가입</value>
   </data>
 </root>
