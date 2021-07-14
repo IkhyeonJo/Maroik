@@ -134,13 +134,13 @@ namespace MyLaboratory.Site.Controllers
 
                 if (tempAccount == null) // no account exist
                 {
-                    TempData["Error"] = "Username or Password is invalid";
+                    TempData["Error"] = localizer["Email or Password is wrong"].Value;
                     return RedirectToAction("Login", "Account");
                 }
 
                 if (tempAccount.Locked)
                 {
-                    TempData["Error"] = "Your Account is Locked, Please reset your password by clicking Forgot password Button";
+                    TempData["Error"] = localizer["Your Account is Locked, Please reset your password by clicking Forgot password Button"].Value;
                     return RedirectToAction("Login", "Account");
                 }
 
@@ -153,13 +153,13 @@ namespace MyLaboratory.Site.Controllers
                         tempAccount.Locked = true;
                         tempAccount.Message = AccountMessage.AccountLocked;
                         await accountRepository.UpdateAccountAsync(tempAccount);
-                        TempData["Error"] = "Your Account is Locked, Please reset your password by clicking Forgot password Button";
+                        TempData["Error"] = localizer["Your Account is Locked, Please reset your password by clicking Forgot password Button"].Value;
                         return RedirectToAction("Login", "Account");
                     }
                     else
                     {
                         await accountRepository.UpdateAccountAsync(tempAccount);
-                        TempData["Error"] = "Username or Password is invalid";
+                        TempData["Error"] = localizer["Email or Password is wrong"].Value;
                         return RedirectToAction("Login", "Account");
                     }
                 }
@@ -191,7 +191,7 @@ namespace MyLaboratory.Site.Controllers
                 }
                 else
                 {
-                    TempData["Error"] = "Email verification was not completed. Please try sign up again.";
+                    TempData["Error"] = localizer["Email verification was not completed. Please try sign up again."].Value;
                     return RedirectToAction("Login", "Account");
                 }
                 #endregion

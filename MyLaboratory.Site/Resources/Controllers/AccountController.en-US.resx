@@ -120,4 +120,13 @@
   <data name="BlockInternetExplorer" xml:space="preserve">
     <value>This site does not support Internet Explorer. Please use a different browser.</value>
   </data>
+  <data name="Email or Password is wrong" xml:space="preserve">
+    <value>Email or Password is wrong</value>
+  </data>
+  <data name="Email verification was not completed. Please try sign up again." xml:space="preserve">
+    <value>Email verification was not completed. Please try sign up again.</value>
+  </data>
+  <data name="Your Account is Locked, Please reset your password by clicking Forgot password Button" xml:space="preserve">
+    <value>Your Account is Locked, Please reset your password by clicking Forgot password Button</value>
+  </data>
 </root>
