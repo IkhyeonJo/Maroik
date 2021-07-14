@@ -17,24 +17,24 @@
                 <a href="#" class="h1"><b>My</b>Laboratory</a>
             </div>
             <div class="card-body">
-                <p class="login-box-msg">Register a new membership</p>
+                <p class="login-box-msg">@localizer["Register a new membership"]</p>
 
                 <form id="registerForm" class="form-horizontal" method="post" asp-controller="Account" asp-action="Register">
                     @Html.AntiForgeryToken()
                     <div class="form-group has-feedback">
-                        <input asp-for="FullName" type="text" class="form-control" placeholder="Full Name" />
+                        <input asp-for="FullName" type="text" class="form-control" placeholder="@localizer["Full Name"]" />
                         <span asp-validation-for="FullName" class="text-danger"></span>
                     </div>
                     <div class="form-group has-feedback">
-                        <input asp-for="Email" type="email" class="form-control" placeholder="Email" />
+                        <input asp-for="Email" type="email" class="form-control" placeholder="@localizer["Email"]" />
                         <span asp-validation-for="Email" class="text-danger"></span>
                     </div>
                     <div class="form-group has-feedback">
-                        <input asp-for="Password" type="password" class="form-control" placeholder="Password" />
+                        <input asp-for="Password" type="password" class="form-control" placeholder="@localizer["Password"]" />
                         <span asp-validation-for="Password" class="text-danger"></span>
                     </div>
                     <div class="form-group has-feedback">
-                        <input asp-for="ConfirmPassword" type="password" class="form-control" placeholder="Confirm Password" />
+                        <input asp-for="ConfirmPassword" type="password" class="form-control" placeholder="@localizer["Confirm Password"]" />
                         <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
                     </div>
 
@@ -43,17 +43,17 @@
                             <div class="icheck-primary">
                                 <input asp-for="AgreedServiceTerms" />
                                 <label for="AgreedServiceTerms">
-                                    I agree to the <a asp-controller="Account" asp-action="ConsentForm" target="_blank" rel="noopener noreferrer">terms</a> @* rel="noopener noreferrer" // prevent tabnabbing (https://www.freecodecamp.org/news/how-to-use-html-to-open-link-in-new-tab/) *@
+                                    @localizer["I agree to the"] <a asp-controller="Account" asp-action="ConsentForm" target="_blank" rel="noopener noreferrer">@localizer["terms"]</a> @* rel="noopener noreferrer" // prevent tabnabbing (https://www.freecodecamp.org/news/how-to-use-html-to-open-link-in-new-tab/) *@
                                 </label>
                             </div>
                         </div>
                         <div class="col-4">
-                            <button type="submit" class="btn btn-primary btn-block" onclick="ShowRegisterLoading()">Register</button>
+                            <button type="submit" class="btn btn-primary btn-block" onclick="ShowRegisterLoading()">@localizer["Register"]</button>
                         </div>
                     </div>
                 </form>
 
-                <a asp-controller="Account" asp-action="Login" class="text-center">I already have a membership</a>
+                <a asp-controller="Account" asp-action="Login" class="text-center">@localizer["I already have a membership"]</a>
                 <p class="mb-0">
                     <font style="font-weight:bold" color="red">@error</font>
                 </p>
@@ -71,7 +71,7 @@ else
                     <a href="#" class="h1"><b>My</b>Laboratory</a>
                 </div>
                 <div class="card-body">
-                    <p class="login-box-msg">Authentication Email has been sent</p>
+                    <p class="login-box-msg">@localizer["Authentication Email has been sent"]</p>
 
                     <form id="registerForm" class="form-horizontal" method="post" asp-controller="Account" asp-action="Register">
                         @Html.AntiForgeryToken()
@@ -79,9 +79,9 @@ else
                             <input asp-for="Email" type="hidden" class="form-control" />
                         </div>
                         <p class="mb-0">
-                            <font style="font-weight:normal" color="black">Please check @resentEmailAddress's MailBox<br /><br />If you do not receive an email, <br /> please check your spam folder or resend the email.</font>
+                            <font style="font-weight:normal" color="black">@localizer["Please check {0}'s MailBox", resentEmailAddress]<br /><br />@localizer["If you do not receive an email,"] <br />@localizer["please check your spam folder or resend the email."]</font>
                         </p>
-                        <button type="submit" class="btn btn-primary btn-block" onclick="ShowRegisterLoading()">Resend</button>
+                        <button type="submit" class="btn btn-primary btn-block" onclick="ShowRegisterLoading()">@localizer["Resend"]</button>
                     </form>
                     <p class="mb-0">
                         <font style="font-weight:bold" color="red">@error</font>
@@ -98,7 +98,7 @@ else
                     <a href="#" class="h1"><b>My</b>Laboratory</a>
                 </div>
                 <div class="card-body">
-                    <p class="login-box-msg">Authentication Email has been sent again</p>
+                    <p class="login-box-msg">@localizer["Authentication Email has been sent again"]</p>
 
                     <form id="registerForm" class="form-horizontal" method="post" asp-controller="Account" asp-action="Register">
                         @Html.AntiForgeryToken()
@@ -106,9 +106,9 @@ else
                             <input asp-for="Email" type="hidden" class="form-control" />
                         </div>
                         <p class="mb-0">
-                            <font style="font-weight:normal" color="black">Please check @resentEmailAddress's MailBox<br /><br />If you do not receive an email, <br /> please check your spam folder or resend the email. <br /><br />If you keep fail to receive authentication email, please contact to <a href="mailto:***REMOVED***m">Administrator</a></font>
+                            <font style="font-weight:normal" color="black">@localizer["Please check {0}'s MailBox", resentEmailAddress]<br /><br />@localizer["If you do not receive an email,"] <br /> @localizer["please check your spam folder or resend the email."] <br /><br />@localizer["If you keep fail to receive authentication email,"] @localizer["please contact to"]<a href='mailto: ***REMOVED***m'> @localizer["Administrator"]</a></font>
                         </p>
-                        <button type="submit" class="btn btn-primary btn-block" onclick="ShowRegisterLoading()">Resend</button>
+                        <button type="submit" class="btn btn-primary btn-block" onclick="ShowRegisterLoading()">@localizer["Resend"]</button>
                     </form>
                     <p class="mb-0">
                         <font style="font-weight:bold" color="red">@error</font>

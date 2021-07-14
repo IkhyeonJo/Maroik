@@ -139,6 +139,6 @@
     <value>비밀번호가 일치하지 않습니다.</value>
   </data>
   <data name="The {0} must be at least {2} characters long." xml:space="preserve">
-    <value>그것은 ({0}) 적어도 {2} 길이 이상이여야 합니다.</value>
+    <value>확인 비밀번호는 적어도 {2} 자리 이상이여야 합니다.</value>
   </data>
 </root>
