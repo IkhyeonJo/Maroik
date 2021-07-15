@@ -690,8 +690,8 @@ namespace MyLaboratory.Site.Controllers
                     {
                         #region 메일 전송
                         Mail mail = new Mail();
-                        mail.Subject = "MyLaboratory Reset Password";
-                        mail.Body = mailRepository.GetMailResetPasswordBody(new LoginInputViewModel() { ResetPasswordToken = new RSA(RSAType.RSA2, Encoding.UTF8, RSA.privateKey, RSA.publicKey).Sign(resetPasswordToken) });
+                        mail.Subject = localizer["MyLaboratory Reset Password"].Value;
+                        mail.Body = mailRepository.GetMailResetPasswordBody(new LoginInputViewModel() { ResetPasswordToken = new RSA(RSAType.RSA2, Encoding.UTF8, RSA.privateKey, RSA.publicKey).Sign(resetPasswordToken) }, localizer["Welcome to MyLaboratory Site"].Value, localizer["Click the link below to reset your password"].Value, localizer["If this link does not work, please copy & paste this link to your Internet URL"].Value);
                         mail.ToMailIds = new List<string>
                             {
                                 account.Email

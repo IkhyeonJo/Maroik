@@ -120,6 +120,9 @@
   <data name="BlockInternetExplorer" xml:space="preserve">
     <value>This site does not support Internet Explorer. Please use a different browser.</value>
   </data>
+  <data name="Click the link below to reset your password" xml:space="preserve">
+    <value>Click the link below to reset your password</value>
+  </data>
   <data name="Click the link below to verify your Email" xml:space="preserve">
     <value>Click the link below to verify your Email</value>
   </data>
@@ -155,6 +158,9 @@
   </data>
   <data name="MyLaboratory Email Confirmation" xml:space="preserve">
     <value>MyLaboratory Email Confirmation</value>
+  </data>
+  <data name="MyLaboratory Reset Password" xml:space="preserve">
+    <value>MyLaboratory Reset Password</value>
   </data>
   <data name="Please check the consent form" xml:space="preserve">
     <value>Please check the consent form</value>
