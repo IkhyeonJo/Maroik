@@ -122,7 +122,7 @@ namespace MyLaboratory.Site.Controllers
             if (userAgent.Contains("MSIE") || userAgent.Contains("Trident")) // IsInternetExplorer (차단 이유: Nonfactor Data Grid에서 문제 생김...)
             {
                 TempData["Error"] = localizer["BlockInternetExplorer"].Value;
-                return RedirectToAction("Login", "Account");
+                return View();
             }
 
             ModelState.Remove(nameof(loginInputViewModel.Password));
@@ -135,13 +135,13 @@ namespace MyLaboratory.Site.Controllers
                 if (tempAccount == null) // no account exist
                 {
                     TempData["Error"] = localizer["Email or Password is wrong"].Value;
-                    return RedirectToAction("Login", "Account");
+                    return View();
                 }
 
                 if (tempAccount.Locked)
                 {
                     TempData["Error"] = localizer["Your Account is Locked, Please reset your password by clicking Forgot password Button"].Value;
-                    return RedirectToAction("Login", "Account");
+                    return View();
                 }
 
                 if (!new RSA(RSAType.RSA2, Encoding.UTF8, RSA.privateKey, RSA.publicKey).Verify(loginInputViewModel.Password ?? "", tempAccount.HashedPassword)) // wrong password
@@ -154,13 +154,13 @@ namespace MyLaboratory.Site.Controllers
                         tempAccount.Message = AccountMessage.AccountLocked;
                         await accountRepository.UpdateAccountAsync(tempAccount);
                         TempData["Error"] = localizer["Your Account is Locked, Please reset your password by clicking Forgot password Button"].Value;
-                        return RedirectToAction("Login", "Account");
+                        return View();
                     }
                     else
                     {
                         await accountRepository.UpdateAccountAsync(tempAccount);
                         TempData["Error"] = localizer["Email or Password is wrong"].Value;
-                        return RedirectToAction("Login", "Account");
+                        return View();
                     }
                 }
 
@@ -192,13 +192,13 @@ namespace MyLaboratory.Site.Controllers
                 else
                 {
                     TempData["Error"] = localizer["Email verification was not completed. Please try sign up again."].Value;
-                    return RedirectToAction("Login", "Account");
+                    return View();
                 }
                 #endregion
             }
             else
             {
-                return RedirectToAction("Login", "Account");
+                return View();
             }
         }
         #endregion
