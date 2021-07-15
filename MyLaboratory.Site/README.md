@@ -599,3 +599,9 @@ https://codewithmukesh.com/blog/repository-pattern-in-aspnet-core/
 
 ASP.net Core 강좌
 https://le-piee.tistory.com/6
+
+웹사이트 제작 [게시판 종류와 명칭]
+https://m.blog.naver.com/PostView.naver?isHttpsRedirect=true&blogId=kjhjun&logNo=220868708278
+
+11.ASP.NET - 자료실 게시판(4) : Biz
+https://godffs.tistory.com/m/484?category=126912
