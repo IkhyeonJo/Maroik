@@ -11,13 +11,13 @@ namespace MyLaboratory.Site.Services
 {
     public class MailRepository : IMailRepository
     {
-        public string GetMailConfirmationBody(LoginInputViewModel loginInputViewModel)
+        public string GetMailConfirmationBody(LoginInputViewModel loginInputViewModel, string title, string content0, string content1)
         {
             string url = $"{ServerSetting.DomainName}Account/ConfirmEmail?registrationToken={Uri.EscapeDataString(loginInputViewModel.RegistrationToken)}";
             return @$"<div style='text-align:centre;'>
-                        <h1>Welcome to MyLaboratory Site<h1>
-                        <h3>Click the link below to verify your Email<h3>
-                        <h3>If this link does not work, please copy & paste this link to your Internet URL<h3>
+                        <h1>{title}<h1>
+                        <h3>{content0}<h3>
+                        <h3>{content1}<h3>
                         <a href='{url}' target='_blank' rel='noopener noreferrer'>{url}</a>
                       </div>";
         }

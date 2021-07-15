@@ -120,11 +120,47 @@
   <data name="BlockInternetExplorer" xml:space="preserve">
     <value>This site does not support Internet Explorer. Please use a different browser.</value>
   </data>
+  <data name="Click the link below to verify your Email" xml:space="preserve">
+    <value>Click the link below to verify your Email</value>
+  </data>
   <data name="Email or Password is wrong" xml:space="preserve">
     <value>Email or Password is wrong</value>
   </data>
   <data name="Email verification was not completed. Please try sign up again." xml:space="preserve">
     <value>Email verification was not completed. Please try sign up again.</value>
+  </data>
+  <data name="Error occurred while processing about account registration" xml:space="preserve">
+    <value>Error occurred while processing about account registration</value>
+  </data>
+  <data name="Error occurred while processing about account status" xml:space="preserve">
+    <value>Error occurred while processing about account status</value>
+  </data>
+  <data name="Error occurred while processing about mail send account status" xml:space="preserve">
+    <value>Error occurred while processing about mail send account status</value>
+  </data>
+  <data name="Error occurred while processing about send mail fail account status" xml:space="preserve">
+    <value>Error occurred while processing about send mail fail account status</value>
+  </data>
+  <data name="Error occurred while processing about sending account authentication mail" xml:space="preserve">
+    <value>Error occurred while processing about sending account authentication mail</value>
+  </data>
+  <data name="Failed to resend email" xml:space="preserve">
+    <value>Failed to resend email</value>
+  </data>
+  <data name="If this link does not work, please copy &amp; paste this link to your Internet URL" xml:space="preserve">
+    <value>If this link does not work, please copy &amp; paste this link to your Internet URL</value>
+  </data>
+  <data name="MyLaboratory Email Confirmation" xml:space="preserve">
+    <value>MyLaboratory Email Confirmation</value>
+  </data>
+  <data name="Please check the consent form" xml:space="preserve">
+    <value>Please check the consent form</value>
+  </data>
+  <data name="User already created, please login" xml:space="preserve">
+    <value>User already created, please login</value>
+  </data>
+  <data name="Welcome to MyLaboratory Site" xml:space="preserve">
+    <value>Welcome to MyLaboratory Site</value>
   </data>
   <data name="Your Account is Locked, Please reset your password by clicking Forgot password Button" xml:space="preserve">
     <value>Your Account is Locked, Please reset your password by clicking Forgot password Button</value>

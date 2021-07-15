@@ -251,7 +251,7 @@ namespace MyLaboratory.Site.Controllers
                 {
                     if (!loginInputViewModel.AgreedServiceTerms) // 계약서 동의 하지 않을 시,
                     {
-                        TempData["Error"] = "Please check the consent form";
+                        TempData["Error"] = localizer["Please check the consent form"].Value;
                         return View();
                     }
 
@@ -286,14 +286,14 @@ namespace MyLaboratory.Site.Controllers
                         catch (Exception e)
                         {
                             Console.WriteLine(e.ToString()); // ActivityLog 등으로 로그 남겨야 한다..
-                            TempData["Error"] = "Error occurred when processing about account registration";
+                            TempData["Error"] = localizer["Error occurred while processing about account registration"].Value;
                             return View();
                         }
                         #region 메일 전송
                         Mail mail = new Mail();
-                        mail.Subject = "MyLaboratory Email Confirmation";
+                        mail.Subject = localizer["MyLaboratory Email Confirmation"].Value;
                         loginInputViewModel.RegistrationToken = new RSA(RSAType.RSA2, Encoding.UTF8, RSA.privateKey, RSA.publicKey).Sign(loginInputViewModel.RegistrationToken); // 암호화
-                        mail.Body = mailRepository.GetMailConfirmationBody(loginInputViewModel);
+                        mail.Body = mailRepository.GetMailConfirmationBody(loginInputViewModel, localizer["Welcome to MyLaboratory Site"].Value, localizer["Click the link below to verify your Email"].Value, localizer["If this link does not work, please copy & paste this link to your Internet URL"].Value);
                         mail.ToMailIds = new List<string>
                         {
                             loginInputViewModel.Email
@@ -325,10 +325,10 @@ namespace MyLaboratory.Site.Controllers
                             }
                             catch
                             {
-                                TempData["Error"] = "Error occurred when processing about mail fail account status";
+                                TempData["Error"] = localizer["Error occurred while processing about account status"].Value;
                                 return View();
                             }
-                            TempData["Error"] = "Error occurred when processing about sending account authentication mail";
+                            TempData["Error"] = localizer["Error occurred while processing about sending account authentication mail"].Value;
                             return View();
                         }
                         #endregion
@@ -346,8 +346,8 @@ namespace MyLaboratory.Site.Controllers
                         {
                             #region 메일 전송
                             Mail mail = new Mail();
-                            mail.Subject = "MyLaboratory Email Confirmation";
-                            mail.Body = mailRepository.GetMailConfirmationBody(new LoginInputViewModel() { RegistrationToken = new RSA(RSAType.RSA2, Encoding.UTF8, RSA.privateKey, RSA.publicKey).Sign(account.RegistrationToken) });
+                            mail.Subject = localizer["MyLaboratory Email Confirmation"].Value;
+                            mail.Body = mailRepository.GetMailConfirmationBody(new LoginInputViewModel() { RegistrationToken = new RSA(RSAType.RSA2, Encoding.UTF8, RSA.privateKey, RSA.publicKey).Sign(account.RegistrationToken) }, localizer["Welcome to MyLaboratory Site"].Value, localizer["Click the link below to verify your Email"].Value, localizer["If this link does not work, please copy & paste this link to your Internet URL"].Value);
                             mail.ToMailIds = new List<string>
                             {
                                 account.Email
@@ -364,10 +364,10 @@ namespace MyLaboratory.Site.Controllers
                                 }
                                 catch
                                 {
-                                    TempData["Error"] = "Error occurred when processing about mail fail account status";
+                                    TempData["Error"] = localizer["Error occurred while processing about account status"].Value;
                                     return View();
                                 }
-                                TempData["Error"] = "Error occurred when processing about sending account authentication mail";
+                                TempData["Error"] = localizer["Error occurred while processing about sending account authentication mail"].Value;
                                 return View();
                             }
                             #endregion
@@ -379,7 +379,7 @@ namespace MyLaboratory.Site.Controllers
                             }
                             catch
                             {
-                                TempData["Error"] = "Error occurred when processing about mail send account status";
+                                TempData["Error"] = localizer["Error occurred while processing about account status"].Value;
                                 return View();
                             }
                             ViewBag.ResendEmail = true; // 이메일 재전송 폼 활성화
@@ -399,10 +399,10 @@ namespace MyLaboratory.Site.Controllers
                             }
                             catch
                             {
-                                TempData["Error"] = "Error occurred when processing about mail send account status";
+                                TempData["Error"] = localizer["Error occurred while processing about account status"].Value;
                                 return View();
                             }
-                            TempData["Error"] = AccountMessage.UserAlreadyCreated;
+                            TempData["Error"] = localizer[AccountMessage.UserAlreadyCreated].Value;
                             ViewBag.ResendEmail = false; // 로그인 폼 활성화
                             return View();
                         }
@@ -427,7 +427,7 @@ namespace MyLaboratory.Site.Controllers
                     #region 이메일 재전송 하는데 받은 Email로 DB 조회를 했는데 Record가 없다. (버그임)
                     if (account == null) // 입력된 ID로 생성된 Record 없다.
                     {
-                        TempData["Error"] = AccountMessage.FailToResendEmail;
+                        TempData["Error"] = localizer["Failed to resend email"].Value;
                         ViewBag.ResendEmail = true; // 이메일 재전송 폼 활성화
                         return View();
                     }
@@ -441,8 +441,8 @@ namespace MyLaboratory.Site.Controllers
                         {
                             #region 메일 전송
                             Mail mail = new Mail();
-                            mail.Subject = "MyLaboratory Email Confirmation";
-                            mail.Body = mailRepository.GetMailConfirmationBody(new LoginInputViewModel() { RegistrationToken = new RSA(RSAType.RSA2, Encoding.UTF8, RSA.privateKey, RSA.publicKey).Sign(account.RegistrationToken) });
+                            mail.Subject = localizer["MyLaboratory Email Confirmation"].Value;
+                            mail.Body = mailRepository.GetMailConfirmationBody(new LoginInputViewModel() { RegistrationToken = new RSA(RSAType.RSA2, Encoding.UTF8, RSA.privateKey, RSA.publicKey).Sign(account.RegistrationToken) }, localizer["Welcome to MyLaboratory Site"].Value, localizer["Click the link below to verify your Email"].Value, localizer["If this link does not work, please copy & paste this link to your Internet URL"].Value);
                             mail.ToMailIds = new List<string>
                             {
                                 account.Email
@@ -459,10 +459,10 @@ namespace MyLaboratory.Site.Controllers
                                 }
                                 catch
                                 {
-                                    TempData["Error"] = "Error occurred when processing about mail fail account status";
+                                    TempData["Error"] = localizer["Error occurred while processing about account status"].Value;
                                     return View();
                                 }
-                                TempData["Error"] = "Error occurred when processing about sending account authentication mail";
+                                TempData["Error"] = localizer["Error occurred while processing about sending account authentication mail"].Value;
                                 return View();
                             }
                             #endregion
@@ -474,7 +474,7 @@ namespace MyLaboratory.Site.Controllers
                             }
                             catch
                             {
-                                TempData["Error"] = "Error occurred when processing about mail send account status";
+                                TempData["Error"] = localizer["Error occurred while processing about mail send account status"].Value;
                                 return View();
                             }
                             ViewBag.ResendEmail = true; // 이메일 재전송 폼 활성화
@@ -495,10 +495,10 @@ namespace MyLaboratory.Site.Controllers
                             }
                             catch
                             {
-                                TempData["Error"] = "Error occurred when processing about account status";
+                                TempData["Error"] = localizer["Error occurred while processing about account status"].Value;
                                 return View();
                             }
-                            TempData["Error"] = AccountMessage.UserAlreadyCreated;
+                            TempData["Error"] = localizer[AccountMessage.UserAlreadyCreated].Value;
                             ViewBag.ResendEmail = false; // 로그인 폼 활성화
                             return View();
                         }
