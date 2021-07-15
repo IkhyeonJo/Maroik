@@ -144,6 +144,9 @@
   <data name="Error occurred while processing about mail send account status" xml:space="preserve">
     <value>메일 전송 계정 상태 처리 중 에러가 발생하였습니다.</value>
   </data>
+  <data name="Error occurred while processing about reset password" xml:space="preserve">
+    <value>비밀번호 초기화 중 에러가 발생하였습니다.</value>
+  </data>
   <data name="Error occurred while processing about send mail fail account status" xml:space="preserve">
     <value>메일 전송 실패 계정 상태 업데이트 중 에러가 발생하였습니다.</value>
   </data>

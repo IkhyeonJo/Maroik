@@ -887,7 +887,7 @@ namespace MyLaboratory.Site.Controllers
                     catch  // 2. Update 시, 예외 발생 했다
                     {
                         ViewBag.FailToResetPassword = true;
-                        TempData["Error"] = "Error occurred while processing about reset password";
+                        TempData["Error"] = localizer["Error occurred while processing about reset password"].Value;
                         return View();
                     }
                     ViewBag.resetPasswordComplete = true;

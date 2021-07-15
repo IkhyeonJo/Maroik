@@ -144,6 +144,9 @@
   <data name="Error occurred while processing about mail send account status" xml:space="preserve">
     <value>Error occurred while processing about mail send account status</value>
   </data>
+  <data name="Error occurred while processing about reset password" xml:space="preserve">
+    <value>Error occurred while processing about reset password</value>
+  </data>
   <data name="Error occurred while processing about send mail fail account status" xml:space="preserve">
     <value>Error occurred while processing about send mail fail account status</value>
   </data>
