@@ -135,6 +135,9 @@
   <data name="Error occurred while processing about account status" xml:space="preserve">
     <value>계정 상태 처리 중 에러가 발생하였습니다.</value>
   </data>
+  <data name="Error occurred while processing about confirm email account status" xml:space="preserve">
+    <value>이메일 확인 계정 상태 처리 중 에러가 발생하였습니다.</value>
+  </data>
   <data name="Error occurred while processing about mail send account status" xml:space="preserve">
     <value>메일 전송 계정 상태 처리 중 에러가 발생하였습니다.</value>
   </data>

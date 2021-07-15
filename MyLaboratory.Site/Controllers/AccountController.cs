@@ -595,7 +595,7 @@ namespace MyLaboratory.Site.Controllers
                     {
                         ViewBag.InvalidToken = true;
                         ViewBag.AccountCreated = true;
-                        TempData["Error"] = "Error occurred when processing about confirm email account status";
+                        TempData["Error"] = localizer["Error occurred while processing about confirm email account status"].Value;
                         return View();
                     }
                     ViewBag.InvalidToken = false;
@@ -617,7 +617,7 @@ namespace MyLaboratory.Site.Controllers
                     {
                         ViewBag.InvalidToken = true;
                         ViewBag.AccountCreated = true;
-                        TempData["Error"] = "Error occurred when processing about update account status";
+                        TempData["Error"] = localizer["Error occurred while processing about account status"].Value;
                         return View();
                     }
                     ViewBag.InvalidToken = false;
