@@ -12,10 +12,10 @@
                 <a href="#" class="h1"><b>My</b>Laboratory</a>
             </div>
             <div class="card-body">
-                <p class="login-box-msg"><font style="font-weight:bold" color="black">You have already verified your email</font></p>
+                <p class="login-box-msg"><font style="font-weight:bold" color="black">@localizer["You have already verified your email"]</font></p>
                 <div class="social-auth-links text-center mt-2 mb-3">
                     <a asp-controller="Account" asp-action="Login" class="btn btn-block btn-primary">
-                        <i class="fas fa-sign-in-alt" style="padding-right:3px;"></i> Back To Login Page
+                        <i class="fas fa-sign-in-alt" style="padding-right:3px;"></i>@localizer["Back To Login Page"]
                     </a>
                 </div>
             </div>
@@ -30,10 +30,10 @@ else if (invalidToken == false && accountCreated == true) // 1.	계정이 성공
                 <a href="#" class="h1"><b>My</b>Laboratory</a>
             </div>
             <div class="card-body">
-                <p class="login-box-msg"><font style="font-weight:bold" color="green">Your account has been successfully created</font></p>
+                <p class="login-box-msg"><font style="font-weight:bold" color="green">@localizer["Your account has been successfully created"]</font></p>
                 <div class="social-auth-links text-center mt-2 mb-3">
                     <a asp-controller="Account" asp-action="Login" class="btn btn-block btn-primary">
-                        <i class="fas fa-sign-in-alt" style="padding-right:3px;"></i> Back To Login Page
+                        <i class="fas fa-sign-in-alt" style="padding-right:3px;"></i>@localizer["Back To Login Page"]
                     </a>
                 </div>
             </div>
@@ -48,26 +48,26 @@ else if (invalidToken == true && accountCreated == false) // 1.	승인 코드가
                 <a href="#" class="h1"><b>My</b>Laboratory</a>
             </div>
             <div class="card-body">
-                <p class="login-box-msg"><font style="font-weight:bold" color="red">The authentication token is invalid.</font></p>
+                <p class="login-box-msg"><font style="font-weight:bold" color="red">@localizer["The authentication token is invalid."]</font></p>
                 <div class="social-auth-links text-center mt-2 mb-3">
                     <p class="mb-0">
                         <font style="font-weight:bold" color="black">
-                            The validity period of the authentication code may have expired or membership registration may have already been completed.
+                            @localizer["The validity period of the authentication token may have expired or membership registration may have already been completed."]
                             <br />
                             <br />
-                            If you have not registered as a member,
+                            @localizer["If you have not registered as a member,"]
                             <br />
-                            please try signing up again.
+                            @localizer["please try signing up again."]
                             <br />
                             <br />
-                            If the problem persists,
+                            @localizer["If the problem persists,"]
                             <br />
-                            please contact your <a href="mailto:***REMOVED***m">administrator</a>.
+                            @localizer["please contact your"] <a href="mailto:***REMOVED***m">@localizer["administrator"]</a>.
                         </font>
                     </p>
                     <br />
                     <a asp-controller="Account" asp-action="Login" class="btn btn-block btn-primary">
-                        <i class="fas fa-sign-in-alt" style="padding-right:3px;"></i> Back To Login Page
+                        <i class="fas fa-sign-in-alt" style="padding-right:3px;"></i>@localizer["Back To Login Page"]
                     </a>
                 </div>
             </div>
@@ -82,14 +82,14 @@ else if (invalidToken == true && accountCreated == true) // 1.	(있을 수 없�
                 <a href="#" class="h1"><b>My</b>Laboratory</a>
             </div>
             <div class="card-body">
-                <p class="login-box-msg"><font style="font-weight:bold" color="red">Exception!!</font></p>
+                <p class="login-box-msg"><font style="font-weight:bold" color="red">@localizer["Exception!!"]</font></p>
                 <div class="social-auth-links text-center mt-2 mb-3">
                     <p class="mb-0">
                         <font style="font-weight:bold" color="red">@error</font>
                     </p>
                     <br />
                     <a asp-controller="Account" asp-action="Login" class="btn btn-block btn-primary">
-                        <i class="fas fa-sign-in-alt" style="padding-right:3px;"></i> Back To Login Page
+                        <i class="fas fa-sign-in-alt" style="padding-right:3px;"></i>@localizer["Back To Login Page"]
                     </a>
                 </div>
             </div>
