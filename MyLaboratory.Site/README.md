@@ -596,3 +596,6 @@ https://www.youtube.com/watch?v=Hy9G30nncMM
 
 Repository Pattern
 https://codewithmukesh.com/blog/repository-pattern-in-aspnet-core/
+
+ASP.net Core °­ÁÂ
+https://le-piee.tistory.com/6
