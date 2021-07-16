@@ -22,7 +22,7 @@ namespace MyLaboratory.Site.Models.ViewModels.Account
         public string Password { get; set; }
 
         [Required(ErrorMessage = "Full Name is required")]
-        [StringLength(255, ErrorMessage = "Must be between 5 and 255 characters", MinimumLength = 5)]
+        [StringLength(255, ErrorMessage = "Must be between 1 and 255 characters", MinimumLength = 1)]
         public string FullName { get; set; }
 
         public bool AgreedServiceTerms { get; set; }
