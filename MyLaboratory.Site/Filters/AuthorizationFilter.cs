@@ -13,7 +13,7 @@ using System.Reflection;
 
 namespace MyLaboratory.Site.Filters
 {
-    public class GlobalActionFilter : ActionFilterAttribute
+    public class AuthorizationFilter : ActionFilterAttribute
     {
         // Do something before the action executes.
         public override void OnActionExecuting(ActionExecutingContext context)

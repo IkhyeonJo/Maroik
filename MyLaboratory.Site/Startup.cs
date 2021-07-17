@@ -104,7 +104,7 @@ namespace MyLaboratory.Site
 
             services.AddControllersWithViews(options =>
             {
-                options.Filters.Add(typeof(GlobalActionFilter)); // An instance
+                options.Filters.Add(typeof(AuthorizationFilter)); // An instance
             });
         }
 
