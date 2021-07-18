@@ -44,6 +44,7 @@ namespace MyLaboratory.Site
             #region ServerSettings
             ServerSetting.DomainName = Configuration.GetSection("ServerSetting")["DomainName"];
             ServerSetting.MaxLoginAttempt = Convert.ToInt32(Configuration.GetSection("ServerSetting")["MaxLoginAttempt"]);
+            ServerSetting.SessionExpireMinutes = Convert.ToInt32(Configuration.GetSection("ServerSetting")["SessionExpireMinutes"]);
             ServerSetting.SmtpUserName = Configuration.GetSection("ServerSetting").GetSection("SmtpOptions")["smtpUserName"];
             ServerSetting.SmtpPassword = Configuration.GetSection("ServerSetting").GetSection("SmtpOptions")["smtpPassword"];
             ServerSetting.SmtpHost = Configuration.GetSection("ServerSetting").GetSection("SmtpOptions")["smtpHost"];
@@ -75,7 +76,7 @@ namespace MyLaboratory.Site
 
             services.AddSession(options =>
             {
-                options.IdleTimeout = TimeSpan.FromMinutes(30); // 서버 세션 만료 시간은 클라이언트 세션 만료 시간보다 2배 커야한다. 
+                options.IdleTimeout = TimeSpan.FromMinutes(ServerSetting.SessionExpireMinutes); // 서버 세션 만료 시간은 클라이언트 세션 만료 시간보다 2배 커야한다. 
                 options.Cookie.HttpOnly = true;
                 options.Cookie.IsEssential = true;
             });
