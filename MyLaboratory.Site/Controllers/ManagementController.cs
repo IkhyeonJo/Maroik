@@ -43,7 +43,7 @@ namespace MyLaboratory.Site.Controllers
         }
 
         [HttpGet]
-        public IActionResult UserProfile()
+        public IActionResult Profile()
         {
             return View();
         }
