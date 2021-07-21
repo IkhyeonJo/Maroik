@@ -61,6 +61,21 @@ dotnet ef dbcontext scaffold "server=localhost;port=3306;userid=root;password=**
 dotnet ef migrations add InitialCreate
 
 이 명령어를 통해 새로운 Migration 생성
+
+안 되면 
+https://docs.microsoft.com/en-us/aspnet/core/data/ef-mvc/migrations?view=aspnetcore-5.0#pmc
+Data Migration 방법: (테이블 자동 생성) (AppDbContext에 따름...) (C# Migration 내용으로 생성)
+dotnet tool install --global dotnet-ef
+dotnet tool update --global dotnet-ef
+dotnet add package Microsoft.EntityFrameworkCore.Design
+dotnet ef migrations add InitialCreate // ApplicationDbContext에 있는 프로젝트에 가서 해당 명령 실행
+
+(Migration 폴더 내용 다 지울 것)
+(dotnet ef migrations add InitialCreate) 명령 실행 시, 카피할 DB string 맞추고 할 것... 나같은 경우는 로컬 MariaDB...
+
+dotnet ef database update // 로컬에 데이터 마이그레이션 시작 명령어 // ApplicationDbContext에 있는 프로젝트에 가서 해당 명령 실행
+
+이런 거 해서 어떻게든 되도록 할 것
 #--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 
