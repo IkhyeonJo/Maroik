@@ -172,19 +172,44 @@ namespace MyLaboratory.Site
 
                         if (loginedAccount.Role == Role.Admin && !context.Context.Request.Path.StartsWithSegments("/admin")) // 로그인이 되었고 권한이 Admin인가? 그렇다면 ~/admin 자원에만 접근 허용
                         {
-                            context.Context.Response.StatusCode = (int)HttpStatusCode.Unauthorized; // 권한 없음 
-                            context.Context.Response.ContentLength = 0; // 내용 길이 없음
-                            context.Context.Response.Body = Stream.Null; // 내용 없음
-                            context.Context.Response.Redirect("/"); // 로그인 화면으로
+                            #region Profile Image 이거나, Profile 개인 업로드 아바타 파일 접근 허용
+                            if (context.Context.Request.Path.ToString().Contains("/upload/Management/Profile/default-avatar.jpg") || context.Context.Request.Path.ToString().Contains($"/upload/Management/Profile/{loginedAccount.Email}/"))
+                            {
+
+                            }
+                            #endregion
+
+                            #region 그 외 접근 차단
+                            else
+                            {
+                                context.Context.Response.StatusCode = (int)HttpStatusCode.Unauthorized; // 권한 없음 
+                                context.Context.Response.ContentLength = 0; // 내용 길이 없음
+                                context.Context.Response.Body = Stream.Null; // 내용 없음
+                                context.Context.Response.Redirect("/"); // 로그인 화면으로
+                            }
+                            #endregion
+
                         }
                         else if(loginedAccount.Role == Role.User && !context.Context.Request.Path.StartsWithSegments("/user")) // 로그인이 되었고 권한이 User인가? 그렇다면 ~/user 자원에만 접근 허용
                         {
-                            context.Context.Response.StatusCode = (int)HttpStatusCode.Unauthorized; // 권한 없음 
-                            context.Context.Response.ContentLength = 0; // 내용 길이 없음
-                            context.Context.Response.Body = Stream.Null; // 내용 없음
-                            context.Context.Response.Redirect("/"); // 로그인 화면으로
+                            #region Profile Image 이거나, Profile 개인 업로드 아바타 파일 접근 허용
+                            if (context.Context.Request.Path.ToString().Contains("/upload/Management/Profile/default-avatar.jpg") || context.Context.Request.Path.ToString().Contains($"/upload/Management/Profile/{loginedAccount.Email}/"))
+                            {
+
+                            }
+                            #endregion
+
+                            #region 그 외 접근 차단
+                            else
+                            {
+                                context.Context.Response.StatusCode = (int)HttpStatusCode.Unauthorized; // 권한 없음 
+                                context.Context.Response.ContentLength = 0; // 내용 길이 없음
+                                context.Context.Response.Body = Stream.Null; // 내용 없음
+                                context.Context.Response.Redirect("/"); // 로그인 화면으로
+                            }
+                            #endregion
                         }
-                        else // 버그
+                        else
                         {
 
                         }

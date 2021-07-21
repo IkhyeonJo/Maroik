@@ -271,6 +271,7 @@ namespace MyLaboratory.Site.Controllers
                                     Email = loginInputViewModel.Email,
                                     HashedPassword = new RSA(RSAType.RSA2, Encoding.UTF8, RSA.privateKey, RSA.publicKey).Sign(loginInputViewModel.Password), // 암호화
                                     FullName = loginInputViewModel.FullName,
+                                    AvatarImagePath = "/upload/Management/Profile/default-avatar.jpg",
                                     Role = Role.User,
                                     Locked = false,
                                     EmailConfirmed = false,
@@ -312,6 +313,7 @@ namespace MyLaboratory.Site.Controllers
                                         Email = loginInputViewModel.Email,
                                         HashedPassword = new RSA(RSAType.RSA2, Encoding.UTF8, RSA.privateKey, RSA.publicKey).Sign(loginInputViewModel.Password), // 암호화
                                         FullName = loginInputViewModel.FullName,
+                                        AvatarImagePath = "/upload/Management/Profile/default-avatar.jpg",
                                         Role = Role.User,
                                         Locked = false,
                                         EmailConfirmed = false,

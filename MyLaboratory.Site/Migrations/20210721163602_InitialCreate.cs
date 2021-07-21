@@ -21,10 +21,12 @@ namespace MyLaboratory.Site.Migrations
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     FullName = table.Column<string>(type: "varchar(255)", maxLength: 255, nullable: false, collation: "utf8mb4_general_ci")
                         .Annotation("MySql:CharSet", "utf8mb4"),
+                    AvatarImagePath = table.Column<string>(type: "varchar(255)", maxLength: 255, nullable: false, defaultValueSql: "'/upload/Management/Profile/default-avatar.jpg'", collation: "utf8mb4_general_ci")
+                        .Annotation("MySql:CharSet", "utf8mb4"),
                     Role = table.Column<string>(type: "varchar(255)", maxLength: 255, nullable: false, defaultValueSql: "'User'", collation: "utf8mb4_general_ci")
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     Locked = table.Column<bool>(type: "tinyint(1)", nullable: false),
-                    LoginAttempt = table.Column<int>(type: "int", nullable: false),
+                    LoginAttempt = table.Column<int>(type: "int(11)", nullable: false),
                     EmailConfirmed = table.Column<bool>(type: "tinyint(1)", nullable: false),
                     AgreedServiceTerms = table.Column<bool>(type: "tinyint(1)", nullable: false),
                     RegistrationToken = table.Column<string>(type: "longtext", nullable: true, collation: "utf8mb4_general_ci")

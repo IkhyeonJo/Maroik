@@ -3,8 +3,8 @@ using MyLaboratory.Site.Models;
 
 namespace MyLaboratory.Site.Data
 {
-     public partial class ApplicationDbContext : DbContext
-     {
+    public partial class ApplicationDbContext : DbContext
+    {
         public ApplicationDbContext()
         {
         }
@@ -41,6 +41,11 @@ namespace MyLaboratory.Site.Data
                 entity.HasCharSet("utf8mb4")
                     .UseCollation("utf8mb4_general_ci");
 
+                entity.Property(e => e.AvatarImagePath)
+                    .IsRequired()
+                    .HasMaxLength(255)
+                    .HasDefaultValueSql("'/upload/Management/Profile/default-avatar.jpg'");
+
                 entity.Property(e => e.Created)
                     .HasMaxLength(6)
                     .HasDefaultValueSql("'1900-01-01 00:00:00.000000'");
@@ -50,6 +55,8 @@ namespace MyLaboratory.Site.Data
                     .HasMaxLength(255);
 
                 entity.Property(e => e.HashedPassword).IsRequired();
+
+                entity.Property(e => e.LoginAttempt).HasColumnType("int(11)");
 
                 entity.Property(e => e.Role)
                     .IsRequired()

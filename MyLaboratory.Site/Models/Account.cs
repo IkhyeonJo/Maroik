@@ -13,6 +13,7 @@ namespace MyLaboratory.Site.Models
         public string Email { get; set; }
         public string HashedPassword { get; set; }
         public string FullName { get; set; }
+        public string AvatarImagePath { get; set; }
         public string Role { get; set; }
         public bool Locked { get; set; }
         public int LoginAttempt { get; set; }

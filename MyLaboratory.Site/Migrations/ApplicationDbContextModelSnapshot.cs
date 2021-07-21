@@ -17,7 +17,7 @@ namespace MyLaboratory.Site.Migrations
                 .HasCharSet("utf8")
                 .UseCollation("utf8_general_ci")
                 .HasAnnotation("Relational:MaxIdentifierLength", 64)
-                .HasAnnotation("ProductVersion", "5.0.7");
+                .HasAnnotation("ProductVersion", "5.0.8");
 
             modelBuilder.Entity("MyLaboratory.Site.Models.Account", b =>
                 {
@@ -26,6 +26,13 @@ namespace MyLaboratory.Site.Migrations
 
                     b.Property<bool>("AgreedServiceTerms")
                         .HasColumnType("tinyint(1)");
+
+                    b.Property<string>("AvatarImagePath")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)")
+                        .HasDefaultValueSql("'/upload/Management/Profile/default-avatar.jpg'");
 
                     b.Property<DateTime>("Created")
                         .ValueGeneratedOnAdd()
@@ -49,7 +56,7 @@ namespace MyLaboratory.Site.Migrations
                         .HasColumnType("tinyint(1)");
 
                     b.Property<int>("LoginAttempt")
-                        .HasColumnType("int");
+                        .HasColumnType("int(11)");
 
                     b.Property<string>("Message")
                         .HasColumnType("longtext");
