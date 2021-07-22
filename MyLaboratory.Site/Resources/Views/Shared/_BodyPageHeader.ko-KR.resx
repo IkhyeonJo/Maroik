@@ -126,7 +126,13 @@
   <data name="Home" xml:space="preserve">
     <value>홈</value>
   </data>
+  <data name="Management" xml:space="preserve">
+    <value>관리</value>
+  </data>
   <data name="Menu" xml:space="preserve">
     <value>메뉴</value>
+  </data>
+  <data name="Profile" xml:space="preserve">
+    <value>프로필</value>
   </data>
 </root>
