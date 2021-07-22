@@ -123,7 +123,16 @@
   <data name="DashBoard" xml:space="preserve">
     <value>DashBoard</value>
   </data>
+  <data name="Home" xml:space="preserve">
+    <value>Home</value>
+  </data>
+  <data name="Management" xml:space="preserve">
+    <value>Management</value>
+  </data>
   <data name="Menu" xml:space="preserve">
     <value>Menu</value>
+  </data>
+  <data name="Profile" xml:space="preserve">
+    <value>Profile</value>
   </data>
 </root>
