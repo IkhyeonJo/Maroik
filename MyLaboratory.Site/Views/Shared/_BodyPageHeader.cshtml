@@ -28,7 +28,7 @@
                             <div class="col-sm-6">
                                 <ol class="breadcrumb float-sm-right">
                                     <li class="breadcrumb-item"><a href="/">@localizer["Home"]</a></li>
-                                    <li class="breadcrumb-item active">@localizer[tempAdminCategory.DisplayName]</li>
+                                    <li class="breadcrumb-item">@localizer[tempAdminCategory.DisplayName]</li>
                                 </ol>
                             </div>
                         </div>
@@ -57,7 +57,8 @@
                                 <div class="col-sm-6">
                                     <ol class="breadcrumb float-sm-right">
                                         <li class="breadcrumb-item"><a href="/">@localizer["Home"]</a></li>
-                                        <li class="breadcrumb-item active">@localizer[tempAdminSelectedSubCategory.DisplayName]</li>
+                                        <li class="breadcrumb-item active">@localizer[tempAdminCategory.DisplayName]</li>
+                                        <li class="breadcrumb-item">@localizer[tempAdminSelectedSubCategory.DisplayName]</li>
                                     </ol>
                                 </div>
                             </div>
@@ -92,7 +93,7 @@ else if (Model.Role == Role.User) // 로그인 한 사용자의 권한이 User�
                             <div class="col-sm-6">
                                 <ol class="breadcrumb float-sm-right">
                                     <li class="breadcrumb-item"><a href="/">@localizer["Home"]</a></li>
-                                    <li class="breadcrumb-item active">@localizer[tempUserCategory.DisplayName]</li>
+                                    <li class="breadcrumb-item">@localizer[tempUserCategory.DisplayName]</li>
                                 </ol>
                             </div>
                         </div>
@@ -121,7 +122,8 @@ else if (Model.Role == Role.User) // 로그인 한 사용자의 권한이 User�
                                 <div class="col-sm-6">
                                     <ol class="breadcrumb float-sm-right">
                                         <li class="breadcrumb-item"><a href="/">@localizer["Home"]</a></li>
-                                        <li class="breadcrumb-item active">@localizer[tempUserSelectedSubCategory.DisplayName]</li>
+                                        <li class="breadcrumb-item active">@localizer[tempUserCategory.DisplayName]</li>
+                                        <li class="breadcrumb-item">@localizer[tempUserSelectedSubCategory.DisplayName]</li>
                                     </ol>
                                 </div>
                             </div>
