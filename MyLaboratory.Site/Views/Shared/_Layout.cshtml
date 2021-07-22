@@ -1,6 +1,7 @@
 ﻿@using Newtonsoft.Json
 @using System.Text
 @using MyLaboratory.Site.Common
+@inject MyLaboratory.Site.Contracts.IAccountRepository accountRepository
 
 @{
     var currentController = ViewContext.RouteData.Values["Controller"].ToString();
@@ -9,7 +10,8 @@
 
     byte[] resultByte = null;
     Context.Session.TryGetValue("AccountSession", out resultByte);
-    var loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)); // Get Session
+
+    var loginedAccount = await accountRepository.GetAccountAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
 }
 
 <!DOCTYPE html>
@@ -183,8 +185,8 @@
         </div>
 
 
-        @(await Html.PartialAsync("_MainTopBar"))
-        @(await Html.PartialAsync("_MainLeftSideBar"))
+        @(await Html.PartialAsync("_MainTopBar", loginedAccount))
+        @(await Html.PartialAsync("_MainLeftSideBar", loginedAccount))
         @*<!-- Content Wrapper. Contains page content -->*@
         <div class="content-wrapper">
             @(await Html.PartialAsync("_BodyPageHeader"))

@@ -1,27 +1,23 @@
-﻿@using Newtonsoft.Json
+﻿@model MyLaboratory.Site.Models.Account
+@using Newtonsoft.Json
 @using System.Text
 @using MyLaboratory.Site.Common
 
 @{
     var currentController = ViewContext.RouteData.Values["Controller"].ToString();
     var currentAction = ViewContext.RouteData.Values["Action"].ToString();
-
-
-    byte[] resultByte = null;
-    Context.Session.TryGetValue("AccountSession", out resultByte);
-    var loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)); // Get Session
 }
 
 <aside class="main-sidebar sidebar-dark-primary elevation-4">
     @*<!-- Brand Logo -->*@
-    @if (loginedAccount.Role == Role.Admin)
+    @if (Model.Role == Role.Admin)
     {
         <a asp-controller="DashBoard" asp-action="AdminIndex" class="brand-link">
             <img src="~/admin/dist/img/AdminLTELogo.png" alt="AdminLTE Logo" class="brand-image img-circle elevation-3" style="opacity: .8">
             <span class="brand-text font-weight-light">MyLaboratory</span>
         </a>
     }
-    else if (loginedAccount.Role == Role.User)
+    else if (Model.Role == Role.User)
     {
         <a asp-controller="DashBoard" asp-action="UserIndex" class="brand-link">
             <img src="~/user/dist/img/AdminLTELogo.png" alt="AdminLTE Logo" class="brand-image img-circle elevation-3" style="opacity: .8">
@@ -36,15 +32,17 @@
     @*<!-- Sidebar -->*@
 <div class="sidebar">
     @*<!-- Sidebar user panel (optional) -->*@
+    
+    @*
     <div class="user-panel mt-3 pb-3 mb-3 d-flex">
         <div class="image">
-            @if (loginedAccount.Role == Role.Admin)
+            @if (Model.Role == Role.Admin)
             {
-                <img src="@loginedAccount.AvatarImagePath" class="img-circle elevation-2" alt="User Image">
+                <img src="@Model.AvatarImagePath" class="img-circle elevation-2" alt="User Image">
             }
-            else if (loginedAccount.Role == Role.User)
+            else if (Model.Role == Role.User)
             {
-                <img src="@loginedAccount.AvatarImagePath" class="img-circle elevation-2" alt="User Image">
+                <img src="@Model.AvatarImagePath" class="img-circle elevation-2" alt="User Image">
             }
             else
             {
@@ -52,13 +50,13 @@
             }
         </div>
         <div class="info">
-            @if (loginedAccount.Role == Role.Admin)
+            @if (Model.Role == Role.Admin)
             {
-                <a href="#" class="d-block">@loginedAccount.FullName</a>
+                <a href="#" class="d-block">@Model.FullName</a>
             }
-            else if (loginedAccount.Role == Role.User)
+            else if (Model.Role == Role.User)
             {
-                <a href="#" class="d-block">@loginedAccount.FullName</a>
+                <a href="#" class="d-block">@Model.FullName</a>
             }
             else
             {
@@ -66,6 +64,7 @@
             }
         </div>
     </div>
+    *@
 
     @*<!-- SidebarSearch Form -->*@
 
@@ -88,7 +87,7 @@
             @*<!-- Add icons to the links using the .nav-icon class
                 with font-awesome or any other icon font library -->*@
 
-            @if (loginedAccount.Role == Role.Admin) // 로그인 한 사용자의 권한이 Admin인 경우
+            @if (Model.Role == Role.Admin) // 로그인 한 사용자의 권한이 Admin인 경우
             {
                 var tempAdminCategories = from adminCategory in DbCache.AdminCategories
                                           orderby adminCategory.Order ascending
@@ -202,7 +201,7 @@
                 }
 
             }
-            else if (loginedAccount.Role == Role.User) // 로그인 한 사용자의 권한이 User인 경우
+            else if (Model.Role == Role.User) // 로그인 한 사용자의 권한이 User인 경우
             {
                 var tempUserCategories = from userCategory in DbCache.UserCategories
                                          orderby userCategory.Order ascending

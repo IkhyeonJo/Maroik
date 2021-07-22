@@ -1,4 +1,6 @@
-﻿@*<!-- Navbar -->*@
+﻿@model MyLaboratory.Site.Models.Account
+
+@*<!-- Navbar -->*@
 @*<nav class="main-header navbar navbar-expand navbar-white navbar-light">*@
 <nav class="main-header navbar navbar-expand navbar-dark">
     <!-- Left navbar links -->
@@ -153,7 +155,8 @@
             </div>
         </li>
         *@
-        @*<li class="nav-item">
+        @*
+        <li class="nav-item">
             <a class="nav-link" data-widget="fullscreen" href="#" role="button">
                 <i class="fas fa-expand-arrows-alt"></i>
             </a>
@@ -162,11 +165,45 @@
             <a class="nav-link" data-widget="control-sidebar" data-slide="true" href="#" role="button">
                 <i class="fas fa-th-large"></i>
             </a>
-        </li>*@
-        <li class="nav-item">
-            <a class="nav-link" asp-controller="Account" asp-action="Logout" role="button">
-                <i class="fas fa-sign-out-alt"></i>
+        </li>
+        *@
+        <li class="nav-item dropdown user-menu">
+            <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown">
+                <img src="@Model.AvatarImagePath" class="user-image img-circle elevation-2" alt="User Image">
+                <span class="d-none d-md-inline">@Model.FullName</span>
             </a>
+            <ul class="dropdown-menu dropdown-menu-lg dropdown-menu-right">
+                <!-- User image -->
+                <li class="user-header bg-primary">
+                    <img src="@Model.AvatarImagePath" class="img-circle elevation-2" alt="User Image">
+                    <p>
+                        @Model.FullName
+                        <small>Member since @Model.Created.ToString("d")</small>
+                    </p>
+                </li>
+                @*
+                <!-- Menu Body -->
+                <li class="user-body">
+                    <div class="row">
+                        <div class="col-4 text-center">
+                            <a href="#">Followers</a>
+                        </div>
+                        <div class="col-4 text-center">
+                            <a href="#">Sales</a>
+                        </div>
+                        <div class="col-4 text-center">
+                            <a href="#">Friends</a>
+                        </div>
+                    </div>
+                    <!-- /.row -->
+                </li>
+                *@
+                <!-- Menu Footer-->
+                <li class="user-footer">
+                    <a asp-controller="Management" asp-action="Profile" class="btn btn-default btn-flat">@localizer["Profile"]</a>
+                    <a asp-controller="Account" asp-action="Logout" class="btn btn-default btn-flat float-right">@localizer["Sign out"]</a>
+                </li>
+            </ul>
         </li>
     </ul>
 </nav>
