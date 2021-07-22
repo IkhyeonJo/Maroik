@@ -185,7 +185,7 @@
         @(await Html.PartialAsync("_MainLeftSideBar", loginedAccount))
         @*<!-- Content Wrapper. Contains page content -->*@
         <div class="content-wrapper">
-            @(await Html.PartialAsync("_BodyPageHeader"))
+            @(await Html.PartialAsync("_BodyPageHeader", loginedAccount))
             @RenderBody()
             @if (loginedAccount.Role == Role.Admin)
             {
