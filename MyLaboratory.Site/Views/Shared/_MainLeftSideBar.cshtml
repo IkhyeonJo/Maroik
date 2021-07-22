@@ -4,8 +4,8 @@
 @using MyLaboratory.Site.Common
 
 @{
-    var currentController = ViewContext.RouteData.Values["Controller"].ToString();
-    var currentAction = ViewContext.RouteData.Values["Action"].ToString();
+    var currentControllerName = ViewContext.RouteData.Values["Controller"].ToString();
+    var currentActionName = ViewContext.RouteData.Values["Action"].ToString();
 }
 
 <aside class="main-sidebar sidebar-dark-primary elevation-4">
@@ -98,7 +98,7 @@
                 {
                     if (!string.IsNullOrEmpty(tempAdminCategory.Action)) // 단일 카테고리
                     {
-                        if (tempAdminCategory.Controller == currentController && tempAdminCategory.Action == currentAction) // 선택된 것이라면
+                        if (tempAdminCategory.Controller == currentControllerName && tempAdminCategory.Action == currentActionName) // 선택된 것이라면
                         {
                             <li class="nav-item">
                                 <a asp-controller="@tempAdminCategory.Controller" asp-action="@tempAdminCategory.Action" class="nav-link active">
@@ -132,7 +132,7 @@
 
                         foreach (var tempAdminSelectedSubCategory in tempAdminSelectedSubCategories)
                         {
-                            if (tempAdminCategory.Controller == currentController && tempAdminSelectedSubCategory.Action == currentAction)
+                            if (tempAdminCategory.Controller == currentControllerName && tempAdminSelectedSubCategory.Action == currentActionName)
                             {
                                 isExistSelectedSubCategoryInCategory = true;
                                 break;
@@ -152,7 +152,7 @@
                                 <ul class="nav nav-treeview">
                                     @foreach (var tempAdminSelectedSubCategory in tempAdminSelectedSubCategories)
                                     {
-                                        if (tempAdminSelectedSubCategory.Action == currentAction)
+                                        if (tempAdminSelectedSubCategory.Action == currentActionName)
                                         {
                                             <li class="nav-item">
                                                 <a asp-controller="@tempAdminCategory.Controller" asp-action="@tempAdminSelectedSubCategory.Action" class="nav-link active">
@@ -212,7 +212,7 @@
                 {
                     if (!string.IsNullOrEmpty(tempUserCategory.Action)) // 단일 카테고리
                     {
-                        if (tempUserCategory.Controller == currentController && tempUserCategory.Action == currentAction) // 선택된 것이라면
+                        if (tempUserCategory.Controller == currentControllerName && tempUserCategory.Action == currentActionName) // 선택된 것이라면
                         {
                             <li class="nav-item">
                                 <a asp-controller="@tempUserCategory.Controller" asp-action="@tempUserCategory.Action" class="nav-link active">
@@ -246,7 +246,7 @@
 
                         foreach (var tempUserSelectedSubCategory in tempUserSelectedSubCategories)
                         {
-                            if (tempUserCategory.Controller == currentController && tempUserSelectedSubCategory.Action == currentAction)
+                            if (tempUserCategory.Controller == currentControllerName && tempUserSelectedSubCategory.Action == currentActionName)
                             {
                                 isExistSelectedSubCategoryInCategory = true;
                                 break;
@@ -266,7 +266,7 @@
                                 <ul class="nav nav-treeview">
                                     @foreach (var tempUserSelectedSubCategory in tempUserSelectedSubCategories)
                                     {
-                                        if (tempUserSelectedSubCategory.Action == currentAction)
+                                        if (tempUserSelectedSubCategory.Action == currentActionName)
                                         {
                                             <li class="nav-item">
                                                 <a asp-controller="@tempUserCategory.Controller" asp-action="@tempUserSelectedSubCategory.Action" class="nav-link active">
