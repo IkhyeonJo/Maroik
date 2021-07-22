@@ -4,10 +4,6 @@
 @inject MyLaboratory.Site.Contracts.IAccountRepository accountRepository
 
 @{
-    var currentController = ViewContext.RouteData.Values["Controller"].ToString();
-    var currentAction = ViewContext.RouteData.Values["Action"].ToString();
-
-
     byte[] resultByte = null;
     Context.Session.TryGetValue("AccountSession", out resultByte);
 
