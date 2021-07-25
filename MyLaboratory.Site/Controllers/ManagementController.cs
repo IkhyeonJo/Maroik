@@ -21,6 +21,7 @@ using System.Threading;
 using OfficeOpenXml;
 using MyLaboratory.Site.Contracts;
 using MyLaboratory.Site.Models.ViewModels.Management;
+using MyLaboratory.Site.Helpers;
 
 namespace MyLaboratory.Site.Controllers
 {
@@ -53,6 +54,7 @@ namespace MyLaboratory.Site.Controllers
         #region Create
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [RequiredHttpPostAccess(Role = Role.Admin)]
         public IActionResult CreateCategory([FromBody] MenuInputViewModel menuInputViewModel)
         {
             try
@@ -88,6 +90,7 @@ namespace MyLaboratory.Site.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [RequiredHttpPostAccess(Role = Role.Admin)]
         public IActionResult CreateSubCategory([FromBody] MenuInputViewModel menuInputViewModel)
         {
             try
@@ -324,6 +327,7 @@ namespace MyLaboratory.Site.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [RequiredHttpPostAccess(Role = Role.Admin)]
         public IActionResult IsCategoryExists(int id)
         {
             try
@@ -380,6 +384,7 @@ namespace MyLaboratory.Site.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [RequiredHttpPostAccess(Role = Role.Admin)]
         public IActionResult IsSubCategoryExists(int id)
         {
             try
@@ -438,6 +443,7 @@ namespace MyLaboratory.Site.Controllers
         #region Update
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [RequiredHttpPostAccess(Role = Role.Admin)]
         public IActionResult UpdateCategory([FromBody] MenuInputViewModel menuInputViewModel)
         {
             try
@@ -474,6 +480,7 @@ namespace MyLaboratory.Site.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [RequiredHttpPostAccess(Role = Role.Admin)]
         public IActionResult UpdateSubCategory([FromBody] MenuInputViewModel menuInputViewModel)
         {
             try
@@ -512,6 +519,7 @@ namespace MyLaboratory.Site.Controllers
         #region Delete
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [RequiredHttpPostAccess(Role = Role.Admin)]
         public IActionResult DeleteCategory([FromBody] MenuInputViewModel menuInputViewModel)
         {
             try
@@ -547,6 +555,7 @@ namespace MyLaboratory.Site.Controllers
         }
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [RequiredHttpPostAccess(Role = Role.Admin)]
         public IActionResult DeleteSubCategory([FromBody] MenuInputViewModel menuInputViewModel)
         {
             try
@@ -585,6 +594,7 @@ namespace MyLaboratory.Site.Controllers
         #region Excel
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [RequiredHttpPostAccess(Role = Role.Admin)]
         public async Task<IActionResult> ExportExcelMenu(string fileName = "")
         {
 
