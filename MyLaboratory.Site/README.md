@@ -637,3 +637,6 @@ https://qzqz.tistory.com/246
 https://security-code-scan.github.io/
 Error List Hotkey: Ctrl+\, E
 (Check Warnings)
+
+#시큐어코딩-쿠키-및-세션관리
+https://coyagi.tistory.com/entry/%EC%8B%9C%ED%81%90%EC%96%B4%EC%BD%94%EB%94%A9-%EC%BF%A0%ED%82%A4-%EB%B0%8F-%EC%84%B8%EC%85%98%EA%B4%80%EB%A6%AC
