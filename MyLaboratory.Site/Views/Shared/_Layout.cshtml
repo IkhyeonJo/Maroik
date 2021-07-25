@@ -4,8 +4,7 @@
 @inject MyLaboratory.Site.Contracts.IAccountRepository accountRepository
 
 @{
-    byte[] resultByte = null;
-    Context.Session.TryGetValue("AccountSession", out resultByte);
+    Context.Session.TryGetValue("AccountSession", out byte[] resultByte);
 
     var loginedAccount = await accountRepository.GetAccountAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
 }

@@ -59,8 +59,7 @@ namespace MyLaboratory.Site.Controllers
         [HttpGet]
         public IActionResult ConsentForm()
         {
-            byte[] resultByte = null;
-            bool isAccountSessionExist = HttpContext.Session.TryGetValue("AccountSession", out resultByte);
+            bool isAccountSessionExist = HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
 
             if (isAccountSessionExist) // 로그인 된 상태라면
             {
@@ -89,8 +88,7 @@ namespace MyLaboratory.Site.Controllers
         [HttpGet]
         public IActionResult Login()
         {
-            byte[] resultByte = null;
-            bool isAccountSessionExist = HttpContext.Session.TryGetValue("AccountSession", out resultByte);
+            bool isAccountSessionExist = HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
 
             if (isAccountSessionExist) // 로그인 된 상태라면
             {
@@ -216,8 +214,7 @@ namespace MyLaboratory.Site.Controllers
         [HttpGet]
         public IActionResult Register()
         {
-            byte[] resultByte = null;
-            bool isAccountSessionExist = HttpContext.Session.TryGetValue("AccountSession", out resultByte);
+            bool isAccountSessionExist = HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
 
             if (isAccountSessionExist) // 로그인 된 상태라면
             {
@@ -521,8 +518,7 @@ namespace MyLaboratory.Site.Controllers
         [HttpGet]
         public async Task<IActionResult> ConfirmEmail(string registrationToken)
         {
-            byte[] resultByte = null;
-            bool isAccountSessionExist = HttpContext.Session.TryGetValue("AccountSession", out resultByte);
+            bool isAccountSessionExist = HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
 
             if (isAccountSessionExist) // 로그인 된 상태라면
             {
@@ -635,8 +631,7 @@ namespace MyLaboratory.Site.Controllers
         [HttpGet]
         public IActionResult ForgotPassword()
         {
-            byte[] resultByte = null;
-            bool isAccountSessionExist = HttpContext.Session.TryGetValue("AccountSession", out resultByte);
+            bool isAccountSessionExist = HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
 
             if (isAccountSessionExist) // 로그인 된 상태라면
             {
@@ -739,8 +734,7 @@ namespace MyLaboratory.Site.Controllers
         [HttpGet]
         public async Task<IActionResult> ResetPassword(string resetPasswordToken)
         {
-            byte[] resultByte = null;
-            bool isAccountSessionExist = HttpContext.Session.TryGetValue("AccountSession", out resultByte);
+            bool isAccountSessionExist = HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
 
             if (isAccountSessionExist) // 로그인 된 상태라면
             {

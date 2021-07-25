@@ -362,8 +362,7 @@ var tempAccount = accountRepository.GetAccount(loginInputViewModel.Email);
 
 HttpContext.Session.Set("AccountSession", Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(tempAccount))); // Set Session
 
-byte[] resultByte = null;
-var isExist = HttpContext.Session.TryGetValue("AccountSession", out resultByte);
+var isExist = HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
 var loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)); // Get Session
 
 

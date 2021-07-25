@@ -93,8 +93,7 @@ namespace MyLaboratory.Site.Filters
                         return;
                     }
 
-                    byte[] resultByte = null;
-                    context.HttpContext.Session.TryGetValue("AccountSession", out resultByte);
+                    context.HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
                     var loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)); // Get Session
 
                     if (loginedAccount.Role == Role.Admin) // 로그인한 사용자 권한이 Admin일 경우
@@ -215,8 +214,7 @@ namespace MyLaboratory.Site.Filters
                 }
                 else if (isAccountSessionExist == true) // 로그인이 된 상태라면
                 {
-                    byte[] resultByte = null;
-                    context.HttpContext.Session.TryGetValue("AccountSession", out resultByte);
+                    context.HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
                     var loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)); // Get Session
 
                     if (loginedAccount.Role == Role.Admin) // 로그인한 사용자 권한이 Admin일 경우

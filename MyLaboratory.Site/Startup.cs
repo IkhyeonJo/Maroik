@@ -166,8 +166,7 @@ namespace MyLaboratory.Site
                     }
                     else if (isAccountSessionExist == true)
                     {
-                        byte[] resultByte = null;
-                        context.Context.Session.TryGetValue("AccountSession", out resultByte);
+                        context.Context.Session.TryGetValue("AccountSession", out byte[] resultByte);
                         var loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)); // Get Session
 
                         if (loginedAccount.Role == Role.Admin && !context.Context.Request.Path.StartsWithSegments("/admin")) // 로그인이 되었고 권한이 Admin인가? 그렇다면 ~/admin 자원에만 접근 허용
