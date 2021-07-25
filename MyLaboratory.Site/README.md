@@ -624,3 +624,12 @@ https://godffs.tistory.com/m/484?category=126912
 # 게시판 글 !!!
 ASP.NET Core 5.0 게시판 소스 다운로드 및 실행 데모
 https://www.youtube.com/watch?v=7lC6sYRh1fg
+
+#Custom Attribute
+CustomAttribute 만들어서 POST할 시 그 자동으로 로그인 권한 체크하기...!!
+
+Authorization Filter 할 때 Custom Attribute도 포함 되게 할 것... 없으면 POST 안 되도록
+
+Attribute Name: RequiredHttpPostAccess (Custom)
+
+https://qzqz.tistory.com/246
