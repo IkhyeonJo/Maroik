@@ -632,3 +632,6 @@ Authorization Filter 할 때 Custom Attribute도 포함 되게 할 것... 없으면 POST 안 
 Attribute Name: RequiredHttpPostAccess (Custom)
 
 https://qzqz.tistory.com/246
+
+#SecurityCodeScan.VS2019
+https://security-code-scan.github.io/

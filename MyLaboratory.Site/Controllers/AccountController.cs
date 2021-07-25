@@ -49,7 +49,7 @@ namespace MyLaboratory.Site.Controllers
         public IActionResult CultureManagement([FromBody]LoginInputViewModel loginInputViewModel)
         {
             Response.Cookies.Append(CookieRequestCultureProvider.DefaultCookieName, CookieRequestCultureProvider.MakeCookieValue(new RequestCulture(loginInputViewModel.Culture)),
-                new CookieOptions { Expires = DateTimeOffset.Now.AddDays(30) });
+                new CookieOptions { Expires = DateTimeOffset.Now.AddDays(30), Secure = true, HttpOnly = true });
 
             return Json(new { result = true });
         }
