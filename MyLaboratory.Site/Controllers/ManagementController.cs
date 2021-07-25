@@ -22,20 +22,24 @@ using OfficeOpenXml;
 using MyLaboratory.Site.Contracts;
 using MyLaboratory.Site.Models.ViewModels.Management;
 using MyLaboratory.Site.Helpers;
+using Newtonsoft.Json;
+using System.Text;
 
 namespace MyLaboratory.Site.Controllers
 {
     public class ManagementController : Controller
     {
         private readonly ILogger<ManagementController> logger;
+        private readonly IAccountRepository accountRepository;
         private readonly IProductRepository productRepository;
         private readonly IWorkerRepository workerRepository;
         private readonly IHostEnvironment hostEnvironment;
         private readonly ICategoryRepository categoryRepository;
         private readonly ISubCategoryRepository subCategoryRepository;
-        public ManagementController(ILogger<ManagementController> logger, IProductRepository productRepository, IWorkerRepository workerRepository, IHostEnvironment hostEnvironment, ICategoryRepository categoryRepository, ISubCategoryRepository subCategoryRepository)
+        public ManagementController(ILogger<ManagementController> logger, IAccountRepository accountRepository, IProductRepository productRepository, IWorkerRepository workerRepository, IHostEnvironment hostEnvironment, ICategoryRepository categoryRepository, ISubCategoryRepository subCategoryRepository)
         {
             this.logger = logger;
+            this.accountRepository = accountRepository;
             this.productRepository = productRepository;
             this.workerRepository = workerRepository;
             this.hostEnvironment = hostEnvironment;
@@ -43,11 +47,16 @@ namespace MyLaboratory.Site.Controllers
             this.subCategoryRepository = subCategoryRepository;
         }
 
+        #region Profile
         [HttpGet]
-        public IActionResult Profile()
+        public async Task<IActionResult> Profile()
         {
-            return View();
+            HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+            var tempAccount = await accountRepository.GetAccountAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+
+            return View(new ProfileOutputViewModel() { Email = tempAccount.Email, AvatarImagePath = tempAccount.AvatarImagePath, FullName = tempAccount.FullName, Created = tempAccount.Created });
         }
+        #endregion
 
         #region Menu
 
