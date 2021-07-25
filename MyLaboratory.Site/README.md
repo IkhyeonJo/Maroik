@@ -635,3 +635,5 @@ https://qzqz.tistory.com/246
 
 #SecurityCodeScan.VS2019
 https://security-code-scan.github.io/
+Error List Hotkey: Ctrl+\, E
+(Check Warnings)
