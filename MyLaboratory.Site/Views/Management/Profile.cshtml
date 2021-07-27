@@ -1,4 +1,14 @@
 ﻿@model MyLaboratory.Site.Models.ViewModels.Management.ProfileOutputViewModel
+@using Newtonsoft.Json
+@using System.Text
+@using MyLaboratory.Site.Common
+@inject MyLaboratory.Site.Contracts.IAccountRepository accountRepository
+
+@{
+    Context.Session.TryGetValue("AccountSession", out byte[] resultByte);
+
+    var loginedAccount = await accountRepository.GetAccountAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+}
 
 <section class="content">
     <div class="container-fluid">
@@ -578,5 +588,5 @@
 </section>
 
 @section Scripts{
-    <script src="~/admin/custom/Management/Profile/js/site.js" asp-append-version="true"></script>
+    <script src="~/@loginedAccount.Role.ToLower()/custom/Management/Profile/js/site.js" asp-append-version="true"></script>
 }
