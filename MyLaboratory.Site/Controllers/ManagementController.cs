@@ -24,6 +24,7 @@ using MyLaboratory.Site.Models.ViewModels.Management;
 using MyLaboratory.Site.Helpers;
 using Newtonsoft.Json;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace MyLaboratory.Site.Controllers
 {
@@ -56,6 +57,63 @@ namespace MyLaboratory.Site.Controllers
 
             return View(new ProfileOutputViewModel() { Email = tempAccount.Email, AvatarImagePath = tempAccount.AvatarImagePath, FullName = tempAccount.FullName, Created = tempAccount.Created });
         }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [RequiredHttpPostAccess(Role = Role.Admin)]
+        [RequiredHttpPostAccess(Role = Role.User)]
+        public async Task<IActionResult> UpdateProfileAvatar(List<IFormFile> profileAvatarFiles)
+        {
+            if (profileAvatarFiles == null) // 파일 없을 시
+            {
+                return Ok(new { result = false, errorMessage = "파일 첨부하여 주십시오. (Please attach a file)" });
+            }
+            else
+            {
+                var profileAvatarFile = profileAvatarFiles[0];
+                if (profileAvatarFile.Length > 0 && profileAvatarFile.Length <= 10485760) // profileAvatarFile Length : 파일 크기 0MB 이상, 10MB 이하)
+                {
+                    if (profileAvatarFile.ContentType.ToUpper() == "image/png".ToUpper() || profileAvatarFile.ContentType.ToUpper() == "image/jpeg".ToUpper())
+                    {
+                        HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+                        string avatarPath = Path.Combine(hostEnvironment.ContentRootPath, "wwwroot", "upload", "Management", "Profile", Regex.Replace($"{JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email}", string.Format(@"([{0}]*\.+$)|([{0}]+)", Regex.Escape(new string(Path.GetInvalidFileNameChars()))), "_"));
+                        if (!Directory.Exists(avatarPath))
+                            Directory.CreateDirectory(avatarPath);
+                        string avatarFile = Regex.Replace($"{JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email}{Path.GetExtension(profileAvatarFile.FileName)}", string.Format(@"([{0}]*\.+$)|([{0}]+)", Regex.Escape(new string(System.IO.Path.GetInvalidFileNameChars()))), "_");
+                        string filePath = Path.Combine(avatarPath, avatarFile);
+
+                        using (FileStream stream = new FileStream(filePath, FileMode.Create))
+                        {
+                            await profileAvatarFile.CopyToAsync(stream);
+                            await stream.FlushAsync();
+                        }
+
+                        try
+                        {
+                            var tempAccount = await accountRepository.GetAccountAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+                            tempAccount.AvatarImagePath = $"/upload/Management/Profile/{JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email}/{avatarFile}";
+                            await accountRepository.UpdateAccountAsync(tempAccount);
+                            return Ok(new { result = true });
+                        } 
+                        catch (Exception e)
+                        {
+                            return Ok(new { result = false, errorMessage = e.ToString() });
+                        }
+                    }
+                    else // 이미지 png 또는 jpg 외 확장자는 거절
+                    {
+                        return Ok(new { result = false, errorMessage = "Only .jpg or .png file allowed" });
+                    }
+                }
+                else // fileSizeLimitationErrorMessage
+                {
+                    return Ok(new { result = false, errorMessage = "파일 크기는 10MB 이하만 가능합니다. (File Size must be smaller than 10MB.)" });
+                }
+                // process uploaded files 
+                // Don't rely on or trust the FileName property without validation.
+            }
+        }
+
         #endregion
 
         #region Menu
