@@ -588,5 +588,17 @@
 </section>
 
 @section Scripts{
-    <script src="~/@loginedAccount.Role.ToLower()/custom/Management/Profile/js/site.js" asp-append-version="true"></script>
+    @if (loginedAccount.Role == Role.Admin)
+    {
+        <script src="~/admin/custom/Management/Profile/js/site.js" asp-append-version="true"></script>
+    }
+    else if (loginedAccount.Role == Role.User)
+    {
+        <script src="~/user/custom/Management/Profile/js/site.js" asp-append-version="true"></script>
+    }
+    else
+    {
+
+    }
+
 }
