@@ -1,7 +1,7 @@
 #https://docs.microsoft.com/en-us/visualstudio/containers/docker-compose-properties?view=vs-2019
 
 ### ------------------------------------------README !IMPORTANT---------------------------------------------------------
-#Before start this project, Set Server settings in appsettings.json (for registration & password recovery)
+#Before start this project, Set Server settings in appsettings.json (for registration & password recovery & Login) [Especially DomainName]
 ### ------------------------------------------README !IMPORTANT---------------------------------------------------------
 
 ##AWS step
