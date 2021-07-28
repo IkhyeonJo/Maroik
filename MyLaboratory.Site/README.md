@@ -1,127 +1,127 @@
-https://www.learnentityframeworkcore5.com/lazy-loading-in-ef-core // Lazy Loading Proxy
+ï»¿https://www.learnentityframeworkcore5.com/lazy-loading-in-ef-core // Lazy Loading Proxy
 https://www.youtube.com/c/ThumbIKR/videos // useful videos for coding
 https://softwareengineering.stackexchange.com/questions/392512/async-why-have-an-async-for-a-login // async
 https://code-maze.com/asynchronous-programming-with-async-and-await-in-asp-net-core/ // async
-OutputModel: Frontend¿¡ ¾²´Â ¸ğµ¨
-InputModel: Backend¿¡ ¾²´Â ¸ğµ¨
+OutputModel: Frontendì— ì“°ëŠ” ëª¨ë¸
+InputModel: Backendì— ì“°ëŠ” ëª¨ë¸
 
-OutputModel°ú InputModelÀÇ Attribute´Â Ç×»ó °°¾Æ¾ßÇÑ´Ù. (ModelState.IsValid ¶§¹®... Request °ªÀÌ ÀûÀıÇÑÁö ¼­¹ö´Ü¿¡¼­ ¹Ş´Â ModelÀÇ Attribute¸¦ º¸°í ´Ù½Ã ÆÇ´ÜÇÔ!!)
+OutputModelê³¼ InputModelì˜ AttributeëŠ” í•­ìƒ ê°™ì•„ì•¼í•œë‹¤. (ModelState.IsValid ë•Œë¬¸... Request ê°’ì´ ì ì ˆí•œì§€ ì„œë²„ë‹¨ì—ì„œ ë°›ëŠ” Modelì˜ Attributeë¥¼ ë³´ê³  ë‹¤ì‹œ íŒë‹¨í•¨!!)
 
-ModelState.IsValid (¹Ş´Â ¸ğµ¨ÀÇ PropertyµéÀÇ Attribute¸¦ Á¶»çÇØ Àü´Ş ¹ŞÀº °ªÀÌ À¯È¿ÇÑ °ªÀÎÁö ÆÇ´Ü.)
-ModelState.Remove (ModelState.IsValid¿¡¼­ Property Á¶»çÇÒ ¶§, Á¶»ç ³»¿ë¿¡¼­ Á¦¿ÜÇÔ.)
+ModelState.IsValid (ë°›ëŠ” ëª¨ë¸ì˜ Propertyë“¤ì˜ Attributeë¥¼ ì¡°ì‚¬í•´ ì „ë‹¬ ë°›ì€ ê°’ì´ ìœ íš¨í•œ ê°’ì¸ì§€ íŒë‹¨.)
+ModelState.Remove (ModelState.IsValidì—ì„œ Property ì¡°ì‚¬í•  ë•Œ, ì¡°ì‚¬ ë‚´ìš©ì—ì„œ ì œì™¸í•¨.)
 https://www.freecodecamp.org/news/how-to-use-html-to-open-link-in-new-tab/ // tabnapping
 #--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 https://whitekeyboard.tistory.com/630
-µğ¹ö±ë MariaDB Windows ·ÎÄÃ¿¡ ¼³Ä¡ ½Ã, 
+ë””ë²„ê¹… MariaDB Windows ë¡œì»¬ì— ì„¤ì¹˜ ì‹œ, 
 
-È¯°æ MariaDB 10.3  ( x64, windows )
+í™˜ê²½ MariaDB 10.3  ( x64, windows )
 
-Windows¿¡¼­ mysqldum¸¦ ÇÏ°í linux¿¡ DB¸¦ ³ÖÀ¸¸é Å×ÀÌºí¸íÀÌ ¼Ò¹®ÀÚ·Î µé¾î°¡´Â ¹®Á¦¸¦ Á¾Á¾ º» ÀûÀÌ ÀÖÀ» °ÍÀÌ´Ù.
+Windowsì—ì„œ mysqldumë¥¼ í•˜ê³  linuxì— DBë¥¼ ë„£ìœ¼ë©´ í…Œì´ë¸”ëª…ì´ ì†Œë¬¸ìë¡œ ë“¤ì–´ê°€ëŠ” ë¬¸ì œë¥¼ ì¢…ì¢… ë³¸ ì ì´ ìˆì„ ê²ƒì´ë‹¤.
 
-À©µµ¿ì ÀÚÃ¼ÀÇ ¹®Á¦ÀÎ ÁÙ ¾Ë¾Ò´Âµ¥ MariaDBÀÇ ¹®Á¦¿´´Ù. ¿Ö ÀÌ·±½ÄÀ¸·Î defalut°ªÀ» ÇØ³õÀºÁö´Â ÀÌÇØ´Â °¡Áö ¾ÊÁö¸¸.
+ìœˆë„ìš° ìì²´ì˜ ë¬¸ì œì¸ ì¤„ ì•Œì•˜ëŠ”ë° MariaDBì˜ ë¬¸ì œì˜€ë‹¤. ì™œ ì´ëŸ°ì‹ìœ¼ë¡œ defalutê°’ì„ í•´ë†“ì€ì§€ëŠ” ì´í•´ëŠ” ê°€ì§€ ì•Šì§€ë§Œ.
 
-linux¿¡ º¸Åë ¸¹ÀÌ ¼­ºñ½º Á¦Ç°À» ¿Ã¸®±â ¶§¹®¿¡ linux¿¡ ¸ÂÃß´Â ¼³Á¤À» Á¤¸®ÇÏ°íÀÚ ÇÑ´Ù.
+linuxì— ë³´í†µ ë§ì´ ì„œë¹„ìŠ¤ ì œí’ˆì„ ì˜¬ë¦¬ê¸° ë•Œë¬¸ì— linuxì— ë§ì¶”ëŠ” ì„¤ì •ì„ ì •ë¦¬í•˜ê³ ì í•œë‹¤.
 
-lower_case_table_names = 0  :  Å×ÀÌºí »ı¼º ¹× Á¶È¸ ½Ã ´ë¡¤¼Ò¹®ÀÚ ±¸ºĞÇÑ´Ù.
-lower_case_table_names = 1  :  ÀÔ·Â °ªÀÌ ´ë¡¤¼Ò¹®ÀÚµç ¼Ò¹®ÀÚ·Î ÀÎ½Ä ¼Ò¹®ÀÚ ÀÎ½Ä ÆÄÀÏ »ı¼º
-lower_case_table_names = 2  :  À©µµ¿ì¿¡¼­ ´ë¡¤¼Ò¹®ÀÚ¸¦ ±¸ºĞÇØ¼­ Å×ÀÌºí»ı¼º
+lower_case_table_names = 0  :  í…Œì´ë¸” ìƒì„± ë° ì¡°íšŒ ì‹œ ëŒ€Â·ì†Œë¬¸ì êµ¬ë¶„í•œë‹¤.
+lower_case_table_names = 1  :  ì…ë ¥ ê°’ì´ ëŒ€Â·ì†Œë¬¸ìë“  ì†Œë¬¸ìë¡œ ì¸ì‹ ì†Œë¬¸ì ì¸ì‹ íŒŒì¼ ìƒì„±
+lower_case_table_names = 2  :  ìœˆë„ìš°ì—ì„œ ëŒ€Â·ì†Œë¬¸ìë¥¼ êµ¬ë¶„í•´ì„œ í…Œì´ë¸”ìƒì„±
 
-±âº»°ª
-¸®´ª½º, À¯´Ğ½º : 0
-À©µµ¿ì : 1
-¸ÆÅ°Åä½Ã : 2
+ê¸°ë³¸ê°’
+ë¦¬ëˆ…ìŠ¤, ìœ ë‹‰ìŠ¤ : 0
+ìœˆë„ìš° : 1
+ë§¥í‚¤í† ì‹œ : 2
 
-C:\Program Files\MariaDB 10.5\data\my.ini¿¡¼­
-[mysqld] Ç×¸ñÀÇ [Port] ¾Æ·¡¿¡ lower_case_table_names = 2·Î ³Ö¾îÁÖ°í
+C:\Program Files\MariaDB 10.5\data\my.iniì—ì„œ
+[mysqld] í•­ëª©ì˜ [Port] ì•„ë˜ì— lower_case_table_names = 2ë¡œ ë„£ì–´ì£¼ê³ 
 
-3) ÀÛ¾÷°ü¸®ÀÚ - ¼­ºñ½º¸¦ ¿­¾î MariaDB¸¦ Àç½ÃÀÛ ÇØÁØ´Ù. 
+3) ì‘ì—…ê´€ë¦¬ì - ì„œë¹„ìŠ¤ë¥¼ ì—´ì–´ MariaDBë¥¼ ì¬ì‹œì‘ í•´ì¤€ë‹¤. 
 
-(MariaDB3306Àº install ´ç½Ã ÀÌ¸§¸íÀ» Àú·¸°Ô ³ÖÀº °Í, default°ªÀº ¾Æ¸¶ "Mysql" ÀÌ·¸°Ô µÇ¾î ÀÖÀ» °ÍÀÌ´Ù.)
+(MariaDB3306ì€ install ë‹¹ì‹œ ì´ë¦„ëª…ì„ ì €ë ‡ê²Œ ë„£ì€ ê²ƒ, defaultê°’ì€ ì•„ë§ˆ "Mysql" ì´ë ‡ê²Œ ë˜ì–´ ìˆì„ ê²ƒì´ë‹¤.)
 
-4) ÀÌ·¸°Ô ¼³Á¤ÀÌµÇ¸é mysqldump ÇÒ ¶§ ´ë¼Ò¹®ÀÚ ±¸ºĞÇÏ¿© ¹é¾÷ ¹ŞÀ» ¼ö ÀÖ°í, ¹é¾÷ ÆÄÀÏÀ» ¸¸µé ¼ö ÀÖ°Ô µÈ´Ù.
+4) ì´ë ‡ê²Œ ì„¤ì •ì´ë˜ë©´ mysqldump í•  ë•Œ ëŒ€ì†Œë¬¸ì êµ¬ë¶„í•˜ì—¬ ë°±ì—… ë°›ì„ ìˆ˜ ìˆê³ , ë°±ì—… íŒŒì¼ì„ ë§Œë“¤ ìˆ˜ ìˆê²Œ ëœë‹¤.
 
 
 
-#Docker DB ¼³Á¤ ÀÚµ¿È­ ÀÛ¾÷
+#Docker DB ì„¤ì • ìë™í™” ì‘ì—…
 
-DB Å×ÀÌºíÀÌ³ª Migarion½Ã, ¸ğµç °ÍÀº DB¿¡ ±Ù°ÅÇØ¼­ ¸ğµ¨ÀÌ³ª MigrationÀÌ ¸¸µé¾îÁø´Ù´Â °ÍÀ» ¸í½ÉÇÒ °Í... (ÃÖ¿ì¼±)
+DB í…Œì´ë¸”ì´ë‚˜ Migarionì‹œ, ëª¨ë“  ê²ƒì€ DBì— ê·¼ê±°í•´ì„œ ëª¨ë¸ì´ë‚˜ Migrationì´ ë§Œë“¤ì–´ì§„ë‹¤ëŠ” ê²ƒì„ ëª…ì‹¬í•  ê²ƒ... (ìµœìš°ì„ )
 
-¸ÕÀú DB ±ú²ıÀÌ ´Ù Áö¿ì°í »õ·Ó°Ô Â¥¿©Áø DB Script (_MariaDBSql_Init_Script)·Î ´Ù º¹¿ø ÈÄ [·ÎÄÃ DB¿¡ ÇÒ °Í!!] [±× appsettings.jsonµµ ·ÎÄÃ·Î ¸ÂÃß°í]
+ë¨¼ì € DB ê¹¨ë—ì´ ë‹¤ ì§€ìš°ê³  ìƒˆë¡­ê²Œ ì§œì—¬ì§„ DB Script (_MariaDBSql_Init_Script)ë¡œ ë‹¤ ë³µì› í›„ [ë¡œì»¬ DBì— í•  ê²ƒ!!] [ê·¸ appsettings.jsonë„ ë¡œì»¬ë¡œ ë§ì¶”ê³ ]
 
-[Package Manager Console] Ã¢ ¶ç¿ì°í [cd .\MyLaboratory.Site] ¸í·É¾î¸¦ ÅëÇØ MyLaboratory.Site·Î ÀÌµ¿ (ApplicationDbContext°¡ °Å±â ÀÖÀ¸¹Ç·Î) 
+[Package Manager Console] ì°½ ë„ìš°ê³  [cd .\MyLaboratory.Site] ëª…ë ¹ì–´ë¥¼ í†µí•´ MyLaboratory.Siteë¡œ ì´ë™ (ApplicationDbContextê°€ ê±°ê¸° ìˆìœ¼ë¯€ë¡œ) 
 
 dotnet ef dbcontext scaffold "server=localhost;port=3306;userid=root;password=***REMOVED***;database=ikhyeondb;" "Pomelo.EntityFrameworkCore.MySql" -o ./Models11 -f
 
-ÀÌ ¸í·É¾î¸¦ ÅëÇØ ±âÁ¸ ¸ğµ¨, ApplicationDbContext°Í°ú »õ·Ó°Ô »ı¼ºµÈ ¸ğµ¨, ApplicationDbContext °ÍÀ» ºñ±³ÇÏ¿© ¸ğµ¨, ApplicationDbContext ´Ù½Ã »õ·Ó°Ô µ¤¾î¾º¿ò
+ì´ ëª…ë ¹ì–´ë¥¼ í†µí•´ ê¸°ì¡´ ëª¨ë¸, ApplicationDbContextê²ƒê³¼ ìƒˆë¡­ê²Œ ìƒì„±ëœ ëª¨ë¸, ApplicationDbContext ê²ƒì„ ë¹„êµí•˜ì—¬ ëª¨ë¸, ApplicationDbContext ë‹¤ì‹œ ìƒˆë¡­ê²Œ ë®ì–´ì”Œì›€
 
-±×¸®°í ±âÁ¸ Migarion Æú´õ ´Ù Áö¿ì°í
+ê·¸ë¦¬ê³  ê¸°ì¡´ Migarion í´ë” ë‹¤ ì§€ìš°ê³ 
 
-[Package Manager Console] Ã¢ ¶ç¿ì°í [cd .\MyLaboratory.Site] ¸í·É¾î¸¦ ÅëÇØ MyLaboratory.Site·Î ÀÌµ¿ (ApplicationDbContext°¡ °Å±â ÀÖÀ¸¹Ç·Î) 
+[Package Manager Console] ì°½ ë„ìš°ê³  [cd .\MyLaboratory.Site] ëª…ë ¹ì–´ë¥¼ í†µí•´ MyLaboratory.Siteë¡œ ì´ë™ (ApplicationDbContextê°€ ê±°ê¸° ìˆìœ¼ë¯€ë¡œ) 
 
 dotnet ef migrations add InitialCreate
 
-ÀÌ ¸í·É¾î¸¦ ÅëÇØ »õ·Î¿î Migration »ı¼º
+ì´ ëª…ë ¹ì–´ë¥¼ í†µí•´ ìƒˆë¡œìš´ Migration ìƒì„±
 
-¾È µÇ¸é 
+ì•ˆ ë˜ë©´ 
 https://docs.microsoft.com/en-us/aspnet/core/data/ef-mvc/migrations?view=aspnetcore-5.0#pmc
-Data Migration ¹æ¹ı: (Å×ÀÌºí ÀÚµ¿ »ı¼º) (AppDbContext¿¡ µû¸§...) (C# Migration ³»¿ëÀ¸·Î »ı¼º)
+Data Migration ë°©ë²•: (í…Œì´ë¸” ìë™ ìƒì„±) (AppDbContextì— ë”°ë¦„...) (C# Migration ë‚´ìš©ìœ¼ë¡œ ìƒì„±)
 dotnet tool install --global dotnet-ef
 dotnet tool update --global dotnet-ef
 dotnet add package Microsoft.EntityFrameworkCore.Design
-dotnet ef migrations add InitialCreate // ApplicationDbContext¿¡ ÀÖ´Â ÇÁ·ÎÁ§Æ®¿¡ °¡¼­ ÇØ´ç ¸í·É ½ÇÇà
+dotnet ef migrations add InitialCreate // ApplicationDbContextì— ìˆëŠ” í”„ë¡œì íŠ¸ì— ê°€ì„œ í•´ë‹¹ ëª…ë ¹ ì‹¤í–‰
 
-(Migration Æú´õ ³»¿ë ´Ù Áö¿ï °Í)
-(dotnet ef migrations add InitialCreate) ¸í·É ½ÇÇà ½Ã, Ä«ÇÇÇÒ DB string ¸ÂÃß°í ÇÒ °Í... ³ª°°Àº °æ¿ì´Â ·ÎÄÃ MariaDB...
+(Migration í´ë” ë‚´ìš© ë‹¤ ì§€ìš¸ ê²ƒ)
+(dotnet ef migrations add InitialCreate) ëª…ë ¹ ì‹¤í–‰ ì‹œ, ì¹´í”¼í•  DB string ë§ì¶”ê³  í•  ê²ƒ... ë‚˜ê°™ì€ ê²½ìš°ëŠ” ë¡œì»¬ MariaDB...
 
-dotnet ef database update // ·ÎÄÃ¿¡ µ¥ÀÌÅÍ ¸¶ÀÌ±×·¹ÀÌ¼Ç ½ÃÀÛ ¸í·É¾î // ApplicationDbContext¿¡ ÀÖ´Â ÇÁ·ÎÁ§Æ®¿¡ °¡¼­ ÇØ´ç ¸í·É ½ÇÇà
+dotnet ef database update // ë¡œì»¬ì— ë°ì´í„° ë§ˆì´ê·¸ë ˆì´ì…˜ ì‹œì‘ ëª…ë ¹ì–´ // ApplicationDbContextì— ìˆëŠ” í”„ë¡œì íŠ¸ì— ê°€ì„œ í•´ë‹¹ ëª…ë ¹ ì‹¤í–‰
 
-ÀÌ·± °Å ÇØ¼­ ¾î¶»°Ôµç µÇµµ·Ï ÇÒ °Í
+ì´ëŸ° ê±° í•´ì„œ ì–´ë–»ê²Œë“  ë˜ë„ë¡ í•  ê²ƒ
 #--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 
 
 #--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-¼±ÇàÁö½Ä: docker, ASP.NET Core EF Core data migration
+ì„ í–‰ì§€ì‹: docker, ASP.NET Core EF Core data migration
 
-cmd³ª terminal Ã¢¿¡¼­ docker-compose up -d ÇÏ¸é ¾Ë¾Æ¼­ ´Ù ¼³Ä¡µÊ. (Mariadb »ç¿ë) (docker ¹× docker compose AWS¿¡¼­ ¼³Ä¡ ¹æ¹ıÀº docker-compose.yml ÁÖ¼®¿¡ ÀÖÀ½)
+cmdë‚˜ terminal ì°½ì—ì„œ docker-compose up -d í•˜ë©´ ì•Œì•„ì„œ ë‹¤ ì„¤ì¹˜ë¨. (Mariadb ì‚¬ìš©) (docker ë° docker compose AWSì—ì„œ ì„¤ì¹˜ ë°©ë²•ì€ docker-compose.yml ì£¼ì„ì— ìˆìŒ)
 
-µğ¹ö±ëÀº IIS Express·Î Àâ°í ·ÎÄÃ¿¡ Mariadb ±ò¾Æ¼­ µğ¹ö±ëÇÒ °Í 
+ë””ë²„ê¹…ì€ IIS Expressë¡œ ì¡ê³  ë¡œì»¬ì— Mariadb ê¹”ì•„ì„œ ë””ë²„ê¹…í•  ê²ƒ 
 
-¹èÆ÷³ª µğ¹ö±ë °áÁ¤ DB¿¡ µû¶ó¼­¸¸ ´Ş¸®Áö¹Ç·Î Àº appsettings.json¿¡¼­ ÇÏ¸é µÊ
+ë°°í¬ë‚˜ ë””ë²„ê¹… ê²°ì • DBì— ë”°ë¼ì„œë§Œ ë‹¬ë¦¬ì§€ë¯€ë¡œ ì€ appsettings.jsonì—ì„œ í•˜ë©´ ë¨
 
-ÀÚ¼¼ÇÑ DB ÀÚµ¿ ¹èÆ÷ ¹× ¼³Á¤, INSERT µîÀº DOCKER-COMPOSE.yml°ú ASP.NET.CORE EF Migration ¹®¼­ È®ÀÎÇÒ °Í.
+ìì„¸í•œ DB ìë™ ë°°í¬ ë° ì„¤ì •, INSERT ë“±ì€ DOCKER-COMPOSE.ymlê³¼ ASP.NET.CORE EF Migration ë¬¸ì„œ í™•ì¸í•  ê²ƒ.
 #--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 
 
-¾Æ·¡ ¹æ¹ı´ë·Î ¼³Á¤ÇÏ¿© Init.sql°ú asp.net core 5.0(Migration Folder¿¡ ÀÖ´Â ³»¿ë) ´Ù ¸ÂÃß°í ¼³Á¤ÇÒ °Í
+ì•„ë˜ ë°©ë²•ëŒ€ë¡œ ì„¤ì •í•˜ì—¬ Init.sqlê³¼ asp.net core 5.0(Migration Folderì— ìˆëŠ” ë‚´ìš©) ë‹¤ ë§ì¶”ê³  ì„¤ì •í•  ê²ƒ
 
 
 
 https://www.youtube.com/watch?v=N10QW_AIOnI
-MySql TableÀÇ ¸ğµç Á¾·ù¸¦ ÀÚµ¿À¸·Î C# ¸ğµç Model·Î º¯È¯ÇÏ´Â ¹æ¹ı (Init.sqlÀ» MariaDB¿¡ ³Ö°í... ÀÌ ¹æ¹ıÀ» ¾²¸é ¾Ë¾Æ¼­ DB Å×ÀÌºíµéÀÌ ´Ù C# ¸ğµ¨ Å¬·¡½º·Î ´Ù º¯È¯µÊ...)
-Package Manager Console ¿­°í
+MySql Tableì˜ ëª¨ë“  ì¢…ë¥˜ë¥¼ ìë™ìœ¼ë¡œ C# ëª¨ë“  Modelë¡œ ë³€í™˜í•˜ëŠ” ë°©ë²• (Init.sqlì„ MariaDBì— ë„£ê³ ... ì´ ë°©ë²•ì„ ì“°ë©´ ì•Œì•„ì„œ DB í…Œì´ë¸”ë“¤ì´ ë‹¤ C# ëª¨ë¸ í´ë˜ìŠ¤ë¡œ ë‹¤ ë³€í™˜ë¨...)
+Package Manager Console ì—´ê³ 
 cd .\MyLaboratory.Site
 dotnet ef dbcontext scaffold "server=localhost;port=3306;userid=root;password=***REMOVED***;database=ikhyeondb;" "Pomelo.EntityFrameworkCore.MySql" -o ./Models11 -f
-ÀÌ·¯¸é DB Å×ÀÌºíÀÌ ¾Ë¾Æ¼­ ´Ù C# ¸ğµ¨·Î º¯ÇüµÈ´Ù.
+ì´ëŸ¬ë©´ DB í…Œì´ë¸”ì´ ì•Œì•„ì„œ ë‹¤ C# ëª¨ë¸ë¡œ ë³€í˜•ëœë‹¤.
 
 https://docs.microsoft.com/en-us/aspnet/core/data/ef-mvc/migrations?view=aspnetcore-5.0#pmc
-Data Migration ¹æ¹ı: (Å×ÀÌºí ÀÚµ¿ »ı¼º) (AppDbContext¿¡ µû¸§...) (C# Migration ³»¿ëÀ¸·Î »ı¼º)
+Data Migration ë°©ë²•: (í…Œì´ë¸” ìë™ ìƒì„±) (AppDbContextì— ë”°ë¦„...) (C# Migration ë‚´ìš©ìœ¼ë¡œ ìƒì„±)
 dotnet tool install --global dotnet-ef
 dotnet tool update --global dotnet-ef
 dotnet add package Microsoft.EntityFrameworkCore.Design
-dotnet ef migrations add InitialCreate // ApplicationDbContext¿¡ ÀÖ´Â ÇÁ·ÎÁ§Æ®¿¡ °¡¼­ ÇØ´ç ¸í·É ½ÇÇà
+dotnet ef migrations add InitialCreate // ApplicationDbContextì— ìˆëŠ” í”„ë¡œì íŠ¸ì— ê°€ì„œ í•´ë‹¹ ëª…ë ¹ ì‹¤í–‰
 
-(Migration Æú´õ ³»¿ë ´Ù Áö¿ï °Í)
-(dotnet ef migrations add InitialCreate) ¸í·É ½ÇÇà ½Ã, Ä«ÇÇÇÒ DB string ¸ÂÃß°í ÇÒ °Í... ³ª°°Àº °æ¿ì´Â ·ÎÄÃ MariaDB...
+(Migration í´ë” ë‚´ìš© ë‹¤ ì§€ìš¸ ê²ƒ)
+(dotnet ef migrations add InitialCreate) ëª…ë ¹ ì‹¤í–‰ ì‹œ, ì¹´í”¼í•  DB string ë§ì¶”ê³  í•  ê²ƒ... ë‚˜ê°™ì€ ê²½ìš°ëŠ” ë¡œì»¬ MariaDB...
 
-dotnet ef database update // ·ÎÄÃ¿¡ µ¥ÀÌÅÍ ¸¶ÀÌ±×·¹ÀÌ¼Ç ½ÃÀÛ ¸í·É¾î // ApplicationDbContext¿¡ ÀÖ´Â ÇÁ·ÎÁ§Æ®¿¡ °¡¼­ ÇØ´ç ¸í·É ½ÇÇà
+dotnet ef database update // ë¡œì»¬ì— ë°ì´í„° ë§ˆì´ê·¸ë ˆì´ì…˜ ì‹œì‘ ëª…ë ¹ì–´ // ApplicationDbContextì— ìˆëŠ” í”„ë¡œì íŠ¸ì— ê°€ì„œ í•´ë‹¹ ëª…ë ¹ ì‹¤í–‰
 
 repository pattern & UnitWork pattern
 https://enlabsoftware.com/development/how-to-implement-repository-unit-of-work-design-patterns-in-dot-net-core-practical-examples-part-one.html
 
 https://www.programmingwithwolfgang.com/repository-pattern-net-core/
-githubÂüÁ¶.
+githubì°¸ì¡°.
 
 Login
 
@@ -146,12 +146,12 @@ https://wonpaper.tistory.com/239
 PBKDF2 
 
 
-Page Header³ª MainSideBar, MainTopBar µîÀ» ÄÁÆ®·Ñ·¯, ¾×¼Ç¿¡ µû¶ó ´ÙÀÌ³ª¹ÍÇÏ°Ô ¹Ù²ÜÇÊ¿ä°¡ ÀÖÀ» ¶§ ¹× ÄÚµå ÂüÁ¶... DB¶ûµµ ¿¬µ¿ »ı°¢ÇÏ°í!!
+Page Headerë‚˜ MainSideBar, MainTopBar ë“±ì„ ì»¨íŠ¸ë¡¤ëŸ¬, ì•¡ì…˜ì— ë”°ë¼ ë‹¤ì´ë‚˜ë¯¹í•˜ê²Œ ë°”ê¿€í•„ìš”ê°€ ìˆì„ ë•Œ ë° ì½”ë“œ ì°¸ì¡°... DBë‘ë„ ì—°ë™ ìƒê°í•˜ê³ !!
 System.Net.WebUtility.UrlEncode(returnUrl)
 
 
 
-AntiForgeryToken À» ÀÌ¿ëÇÏ¿© Æû Àü¼Û °æ·ÎÀÇ À¯È¿¼ºÀ» Ã¼Å©ÇÏÀÚ
+AntiForgeryToken ì„ ì´ìš©í•˜ì—¬ í¼ ì „ì†¡ ê²½ë¡œì˜ ìœ íš¨ì„±ì„ ì²´í¬í•˜ì
 https://m.blog.naver.com/PostView.naver?isHttpsRedirect=true&blogId=happywow&logNo=80134498163
 
 
@@ -164,32 +164,32 @@ https://www.youtube.com/watch?v=fmvcAzHpsk8
 
 
 #-------------------------------------------------------------------------------
-#ÀÎÁõ¼­ »ı¼º (powerShellÃ¢) C:\Users\HOME\.aspnet\https¿¡ ÀÖÀ½
+#ì¸ì¦ì„œ ìƒì„± (powerShellì°½) C:\Users\HOME\.aspnet\httpsì— ìˆìŒ
 dotnet dev-certs https -ep $env:USERPROFILE/.aspnet/https/haha.pfx -p Passw0rd
 
-#ÀÎÁõ¼­ ÀÌ ÇÁ·ÎÁ§Æ®¿¡ ¹Ù·Î ³õÀ» °Í
+#ì¸ì¦ì„œ ì´ í”„ë¡œì íŠ¸ì— ë°”ë¡œ ë†“ì„ ê²ƒ
 
-µµÄ¿ ÄÄÆ÷Áî¿¡¼­
-- ASPNETCORE_Kestrel__Certificates__Default__Password=Passw0rd ¿Í ÀÎÁõ¼­ ÆĞ½º¿öµå°¡ °°¾Æ¾ßÇÔ
+ë„ì»¤ ì»´í¬ì¦ˆì—ì„œ
+- ASPNETCORE_Kestrel__Certificates__Default__Password=Passw0rd ì™€ ì¸ì¦ì„œ íŒ¨ìŠ¤ì›Œë“œê°€ ê°™ì•„ì•¼í•¨
 #-------------------------------------------------------------------------------
 
-### MYSQL DB ¹é¾÷ÇÏ±â (procedure, function, trigger Æ÷ÇÔ) (Windows¿¡¼­´Â °ü¸®ÀÚ ±ÇÇÑÀ¸·Î C:\Program Files\MariaDB 10.2\bin cmd °¡¼­ ÇÒ °Í)
-mysqldump --routines --triggers -u [»ç¿ëÀÚ °èÁ¤] -p [¿øº» µ¥ÀÌÅÍº£ÀÌ½º¸í] > [»ı¼ºÇÒ ¹é¾÷ DB¸í].sql
+### MYSQL DB ë°±ì—…í•˜ê¸° (procedure, function, trigger í¬í•¨) (Windowsì—ì„œëŠ” ê´€ë¦¬ì ê¶Œí•œìœ¼ë¡œ C:\Program Files\MariaDB 10.2\bin cmd ê°€ì„œ í•  ê²ƒ)
+mysqldump --routines --triggers -u [ì‚¬ìš©ì ê³„ì •] -p [ì›ë³¸ ë°ì´í„°ë² ì´ìŠ¤ëª…] > [ìƒì„±í•  ë°±ì—… DBëª…].sql
 
-#¹é¾÷ ½Ã... Æ®¸®°Å ºÎºĞ Á¶½ÉÇØ¼­ º¼ °Í;;
-
-
-### MYSQL DB º¹¿øÇÏ±â (Windows¿¡¼­´Â °ü¸®ÀÚ ±ÇÇÑÀ¸·Î C:\Program Files\MariaDB 10.2\bin cmd °¡¼­ ÇÒ °Í)
-mysql -u [»ç¿ëÀÚ °èÁ¤] -p [º¹¿øÇÒ DB] < [¹é¾÷µÈ DB].sql
+#ë°±ì—… ì‹œ... íŠ¸ë¦¬ê±° ë¶€ë¶„ ì¡°ì‹¬í•´ì„œ ë³¼ ê²ƒ;;
 
 
-#ASP.net Core - Entity Framework Core - Stored Procedure Call / EF Core¿¡¼­ ÇÁ·Î½ÃÀú È£ÃâÇÏ±â
+### MYSQL DB ë³µì›í•˜ê¸° (Windowsì—ì„œëŠ” ê´€ë¦¬ì ê¶Œí•œìœ¼ë¡œ C:\Program Files\MariaDB 10.2\bin cmd ê°€ì„œ í•  ê²ƒ)
+mysql -u [ì‚¬ìš©ì ê³„ì •] -p [ë³µì›í•  DB] < [ë°±ì—…ëœ DB].sql
+
+
+#ASP.net Core - Entity Framework Core - Stored Procedure Call / EF Coreì—ì„œ í”„ë¡œì‹œì € í˜¸ì¶œí•˜ê¸°
 
 https://glorymind.tistory.com/m/entry/ASPnet-Core-Entity-Framework-Core-Stored-Procedure-Call-EF-Core%EC%97%90%EC%84%9C-%ED%94%84%EB%A1%9C%EC%8B%9C%EC%A0%80-%ED%98%B8%EC%B6%9C%ED%95%98%EA%B8%B0?category=893375
 
 Install-Package StoredProcedureEFCore
 
-using ¹® ³Ö¾îÁÖ½Ã°í
+using ë¬¸ ë„£ì–´ì£¼ì‹œê³ 
 
 List<Model> rows = null;
  
@@ -241,17 +241,17 @@ DEFAULT CHARSET=utf8
 COLLATE=utf8_general_ci;
 
 
-#_MainLeftSideBar.cshtml DB ±¸Á¶
+#_MainLeftSideBar.cshtml DB êµ¬ì¡°
 #-----------------------------------------------------------------------------------------------------------------------------------------------
 Category
-Id: PK(not null, Auto_Increment, Int) # ±×³É ½Äº°¿ë
-Name: String (not null) # ÀÌ¸§
-DisplayName: String (not null) # º¸ÀÌ´Â ÀÌ¸§
-Icon: String (not null) # º¸ÀÌ´Â ¾ÆÀÌÄÜ
-Controller: String (not null) # Active or InActive °áÁ¤
-Action: String # (# or ÁøÂ¥ Action) [ÀÌ°Í¿¡ µû¶ó SubCategory ¿©ºÎ ¹× È­»ìÇ¥ ¾ø¾îÁü ]
-Role: String # Admin or User (¿ªÇÒ¿¡ µû¸¥ º¸¿©ÁÖ±â)
-Order: int # Ãâ·Â ¼ø¼­
+Id: PK(not null, Auto_Increment, Int) # ê·¸ëƒ¥ ì‹ë³„ìš©
+Name: String (not null) # ì´ë¦„
+DisplayName: String (not null) # ë³´ì´ëŠ” ì´ë¦„
+Icon: String (not null) # ë³´ì´ëŠ” ì•„ì´ì½˜
+Controller: String (not null) # Active or InActive ê²°ì •
+Action: String # (# or ì§„ì§œ Action) [ì´ê²ƒì— ë”°ë¼ SubCategory ì—¬ë¶€ ë° í™”ì‚´í‘œ ì—†ì–´ì§ ]
+Role: String # Admin or User (ì—­í• ì— ë”°ë¥¸ ë³´ì—¬ì£¼ê¸°)
+Order: int # ì¶œë ¥ ìˆœì„œ
 
 CREATE TABLE `Category` (
   `Id` int(11) NOT NULL AUTO_INCREMENT,
@@ -267,14 +267,14 @@ CREATE TABLE `Category` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 SubCategory
-Id: PK(not null, Auto_Increment, Int) # ±×³É ½Äº°¿ë
-CategoryId: FK(int) (CategoriesÀÇ Id ÂüÁ¶) # ¿Ü·¡Å°
-Name: String (not null) # ÀÌ¸§
-DisplayName: String (not null) # º¸ÀÌ´Â ÀÌ¸§
-Icon: String (not null) # º¸ÀÌ´Â ¾ÆÀÌÄÜ
-Action: String # (ÀÌ°ÍÀÌ View¶û ÀÏÄ¡ÇÏ¸é Active°¡ µÊ)
-Role: String # Admin or User (¿ªÇÒ¿¡ µû¸¥ º¸¿©ÁÖ±â)
-Order: int # Ãâ·Â ¼ø¼­
+Id: PK(not null, Auto_Increment, Int) # ê·¸ëƒ¥ ì‹ë³„ìš©
+CategoryId: FK(int) (Categoriesì˜ Id ì°¸ì¡°) # ì™¸ë˜í‚¤
+Name: String (not null) # ì´ë¦„
+DisplayName: String (not null) # ë³´ì´ëŠ” ì´ë¦„
+Icon: String (not null) # ë³´ì´ëŠ” ì•„ì´ì½˜
+Action: String # (ì´ê²ƒì´ Viewë‘ ì¼ì¹˜í•˜ë©´ Activeê°€ ë¨)
+Role: String # Admin or User (ì—­í• ì— ë”°ë¥¸ ë³´ì—¬ì£¼ê¸°)
+Order: int # ì¶œë ¥ ìˆœì„œ
 
 CREATE TABLE `SubCategory` (
   `Id` int(11) NOT NULL AUTO_INCREMENT,
@@ -294,52 +294,52 @@ CREATE TABLE `SubCategory` (
 
 
 
-#_MainLeftSideBar.cshtml ¾Ë°í¸®Áò
+#_MainLeftSideBar.cshtml ì•Œê³ ë¦¬ì¦˜
 #-----------------------------------------------------------------------------------------------------------------------------------------------
-# ·Î±×ÀÎ ÈÄ DB ÃÊ±â (Cache)
-A-0: Ä«Å×°í¸® RoleÀÌ ÇöÀç »ç¿ëÀÚ Role°ú °°Àº °Å ´Ù ²¨³»±â
-A-1: ²¨³½ Ä«Å×°í¸®¸¦ Order¿¡ µû¶ó ´Ù Á¤·Ä
+# ë¡œê·¸ì¸ í›„ DB ì´ˆê¸° (Cache)
+A-0: ì¹´í…Œê³ ë¦¬ Roleì´ í˜„ì¬ ì‚¬ìš©ì Roleê³¼ ê°™ì€ ê±° ë‹¤ êº¼ë‚´ê¸°
+A-1: êº¼ë‚¸ ì¹´í…Œê³ ë¦¬ë¥¼ Orderì— ë”°ë¼ ë‹¤ ì •ë ¬
 
-A-2: ¼­ºê Ä«Å×°í¸® RoleÀÌ ÇöÀç »ç¿ëÀÚ Role°ú °°Àº °Å ´Ù ²¨³»±â
+A-2: ì„œë¸Œ ì¹´í…Œê³ ë¦¬ Roleì´ í˜„ì¬ ì‚¬ìš©ì Roleê³¼ ê°™ì€ ê±° ë‹¤ êº¼ë‚´ê¸°
 
 
-# View Load ½Ã Category »ı¼º Algorithm
-B-0: Á¤¸®ÇÑ Ä«Å×°í¸® Ã³À½ºÎÅÍ ¸¶Áö¸·±îÁö ÇÏ³ª¾¿ ²¨³¿ (´Ù ²¨³»¸é Á¾·á)
-B-1: ²¨³½ Ä«Å×°í¸®ÀÇ Controller °ªÀÌ Çö ViewÀÇ Controller¿Í °°´Ù¸é Active
-      Active µÈ Ä«Å×°í¸®¿¡ Action °ªÀÌ ¾øÀ¸¸é TreeOpen ±×¸®°í B-3·Î ³Ñ¾î°¨ // SubCategory ÀÖÀ½
-      Active µÈ Ä«Å×°í¸®¿¡ Action °ªÀÌ ÀÖÀ¸¸é ±×³É HyperLink ¸¸µé°í ´ÙÀ½ Ä«Å×°í¸®·Î ³Ñ¾î°¨ // SubCategory ¾øÀ½
+# View Load ì‹œ Category ìƒì„± Algorithm
+B-0: ì •ë¦¬í•œ ì¹´í…Œê³ ë¦¬ ì²˜ìŒë¶€í„° ë§ˆì§€ë§‰ê¹Œì§€ í•˜ë‚˜ì”© êº¼ëƒ„ (ë‹¤ êº¼ë‚´ë©´ ì¢…ë£Œ)
+B-1: êº¼ë‚¸ ì¹´í…Œê³ ë¦¬ì˜ Controller ê°’ì´ í˜„ Viewì˜ Controllerì™€ ê°™ë‹¤ë©´ Active
+      Active ëœ ì¹´í…Œê³ ë¦¬ì— Action ê°’ì´ ì—†ìœ¼ë©´ TreeOpen ê·¸ë¦¬ê³  B-3ë¡œ ë„˜ì–´ê° // SubCategory ìˆìŒ
+      Active ëœ ì¹´í…Œê³ ë¦¬ì— Action ê°’ì´ ìˆìœ¼ë©´ ê·¸ëƒ¥ HyperLink ë§Œë“¤ê³  ë‹¤ìŒ ì¹´í…Œê³ ë¦¬ë¡œ ë„˜ì–´ê° // SubCategory ì—†ìŒ
 
-B-2: ²¨³½ Ä«Å×°í¸®ÀÇ Controller °ªÀÌ Çö ViewÀÇ Controller¿Í °°Áö ¾Ê´Ù¸é InActive
-      InActive µÈ Ä«Å×°í¸®¿¡ Action °ªÀÌ ¾øÀ¸¸é TreeClose ±×¸®°í B-3·Î ³Ñ¾î°¨ // SubCategory ÀÖÀ½
-      InActive µÈ Ä«Å×°í¸®¿¡ Action °ªÀÌ ÀÖÀ¸¸é ±×³É HyperLink ¸¸µé°í ´ÙÀ½ Ä«Å×°í¸®·Î ³Ñ¾î°¨ // SubCategory ¾øÀ½
+B-2: êº¼ë‚¸ ì¹´í…Œê³ ë¦¬ì˜ Controller ê°’ì´ í˜„ Viewì˜ Controllerì™€ ê°™ì§€ ì•Šë‹¤ë©´ InActive
+      InActive ëœ ì¹´í…Œê³ ë¦¬ì— Action ê°’ì´ ì—†ìœ¼ë©´ TreeClose ê·¸ë¦¬ê³  B-3ë¡œ ë„˜ì–´ê° // SubCategory ìˆìŒ
+      InActive ëœ ì¹´í…Œê³ ë¦¬ì— Action ê°’ì´ ìˆìœ¼ë©´ ê·¸ëƒ¥ HyperLink ë§Œë“¤ê³  ë‹¤ìŒ ì¹´í…Œê³ ë¦¬ë¡œ ë„˜ì–´ê° // SubCategory ì—†ìŒ
 
-# View Load ½Ã SubCategory »ı¼º Algorithm
-B-3: Çö Ä«Å×°í¸®ÀÇ Id¿Í ÀÏÄ¡ÇÏ´Â ¸ğµç SubCategory¸¦ ±× SubCategory ¼Ó¼ºÀÎ CategoryId¸¦ ÅëÇØ ´Ù ¸ğÀ½. ¸ğÀº SubCategoryµéÀ» Order¿¡ ¸Â°Ô ¹èÄ¡.
-B-4: SubCategoryµéÀ» Ã³À½ºÎÅÍ ¸¶Áö¸·±îÁö ÇÏ³ª¾¿ °Å³¿
-B-5: ²¨³½ SubCategoryÀÇ Action °ªÀÌ Çö ViewÀÇ Action°ú °°´Ù¸é Active
-      hyperLink´Â CategoryÀÇ Controller¿Í SubCategoryÀÇ ActionÀ» ÅëÇØ »ı¼º.
-B-6: ²¨³½ SubCategoryÀÇ Action °ªÀÌ Çö ViewÀÇ Action°ú °°Áö ¾Ê´Ù¸é InActive
-      hyperLink´Â CategoryÀÇ Controller¿Í SubCategoryÀÇ ActionÀ» ÅëÇØ »ı¼º.
-B-7: B-0·Î µ¹¾Æ°¨
+# View Load ì‹œ SubCategory ìƒì„± Algorithm
+B-3: í˜„ ì¹´í…Œê³ ë¦¬ì˜ Idì™€ ì¼ì¹˜í•˜ëŠ” ëª¨ë“  SubCategoryë¥¼ ê·¸ SubCategory ì†ì„±ì¸ CategoryIdë¥¼ í†µí•´ ë‹¤ ëª¨ìŒ. ëª¨ì€ SubCategoryë“¤ì„ Orderì— ë§ê²Œ ë°°ì¹˜.
+B-4: SubCategoryë“¤ì„ ì²˜ìŒë¶€í„° ë§ˆì§€ë§‰ê¹Œì§€ í•˜ë‚˜ì”© ê±°ëƒ„
+B-5: êº¼ë‚¸ SubCategoryì˜ Action ê°’ì´ í˜„ Viewì˜ Actionê³¼ ê°™ë‹¤ë©´ Active
+      hyperLinkëŠ” Categoryì˜ Controllerì™€ SubCategoryì˜ Actionì„ í†µí•´ ìƒì„±.
+B-6: êº¼ë‚¸ SubCategoryì˜ Action ê°’ì´ í˜„ Viewì˜ Actionê³¼ ê°™ì§€ ì•Šë‹¤ë©´ InActive
+      hyperLinkëŠ” Categoryì˜ Controllerì™€ SubCategoryì˜ Actionì„ í†µí•´ ìƒì„±.
+B-7: B-0ë¡œ ëŒì•„ê°
 #-----------------------------------------------------------------------------------------------------------------------------------------------
 
 
 
 
-https://holjjack.tistory.com/105?category=831597 // [Core 3.1] ASP.NET Core ActionFilter¸¦ ÀÌ¿ëÇÑ Session Ã¼Å©
+https://holjjack.tistory.com/105?category=831597 // [Core 3.1] ASP.NET Core ActionFilterë¥¼ ì´ìš©í•œ Session ì²´í¬
 
 
 https://odetocode.com/blogs/scott/archive/2015/10/06/authorization-policies-and-middleware-in-asp-net-5.aspx // Authorization Policies and Middleware in ASP.NET 5
 
-https://stackoverflow.com/questions/36775942/how-do-i-serve-static-files-only-to-authorized-users //wwwroot ·Î±×ÀÎ Àü ÆÄÀÏ º¸È£
+https://stackoverflow.com/questions/36775942/how-do-i-serve-static-files-only-to-authorized-users //wwwroot ë¡œê·¸ì¸ ì „ íŒŒì¼ ë³´í˜¸
 
 
 
 https://docs.microsoft.com/en-us/aspnet/core/mvc/controllers/filters?view=aspnetcore-5.0 // aspnetcore 5.0 Filter
-OnActionExecuting - ÄÁÆ®·Ñ·¯ ¾×¼ÇÀÌ ½ÇÇàµÇ±â Àü¿¡ È£ÃâµË´Ï´Ù.
-OnActionExecuted - ÄÁÆ®·Ñ·¯ ¾×¼ÇÀÌ ½ÇÇàµÈ ÈÄ¿¡ È£ÃâµË´Ï´Ù.
-OnResultExecuting - ÄÁÆ®·Ñ·¯ÀÇ ¾×¼Ç°á°ú°¡ ½ÇÇàµÇ±â Àü¿¡ È£ÃâµË´Ï´Ù.
-OnResultExecuted - ÄÁÆ®·Ñ·¯ÀÇ ¾×¼Ç°á°ú°¡ ½ÇÇàµÈ ÈÄ¿¡ È£ÃâµË´Ï´Ù.
+OnActionExecuting - ì»¨íŠ¸ë¡¤ëŸ¬ ì•¡ì…˜ì´ ì‹¤í–‰ë˜ê¸° ì „ì— í˜¸ì¶œë©ë‹ˆë‹¤.
+OnActionExecuted - ì»¨íŠ¸ë¡¤ëŸ¬ ì•¡ì…˜ì´ ì‹¤í–‰ëœ í›„ì— í˜¸ì¶œë©ë‹ˆë‹¤.
+OnResultExecuting - ì»¨íŠ¸ë¡¤ëŸ¬ì˜ ì•¡ì…˜ê²°ê³¼ê°€ ì‹¤í–‰ë˜ê¸° ì „ì— í˜¸ì¶œë©ë‹ˆë‹¤.
+OnResultExecuted - ì»¨íŠ¸ë¡¤ëŸ¬ì˜ ì•¡ì…˜ê²°ê³¼ê°€ ì‹¤í–‰ëœ í›„ì— í˜¸ì¶œë©ë‹ˆë‹¤.
       var controllerName = routeData.Values["controller"];
       var actionName = routeData.Values["action"];
       var message = String.Format("{0} controller:{1} action:{2}", methodName, controllerName, actionName);
@@ -356,7 +356,7 @@ OnResultExecuted - ÄÁÆ®·Ñ·¯ÀÇ ¾×¼Ç°á°ú°¡ ½ÇÇàµÈ ÈÄ¿¡ È£ÃâµË´Ï´Ù.
 
 
 
-# ¼¼¼Ç °ü¸®¹ı
+# ì„¸ì…˜ ê´€ë¦¬ë²•
 var tempAccount = accountRepository.GetAccount(loginInputViewModel.Email);
 
 
@@ -374,10 +374,10 @@ var loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.Get
 
 
 file:///C:/Github/MyLaboratory/MyLaboratory.Site/wwwroot/pages/UI/buttons.html
-Category Menu View »ı¼º ½Ã Button º¼ °Í
+Category Menu View ìƒì„± ì‹œ Button ë³¼ ê²ƒ
 
 file:///C:/Github/MyLaboratory/MyLaboratory.Site/wwwroot/pages/UI/modals.html
-Category Menu View »ı¼º ½Ã Modal º¼ °Í
+Category Menu View ìƒì„± ì‹œ Modal ë³¼ ê²ƒ
 
 file:///C:/Github/MyLaboratory/MyLaboratory.Site/wwwroot/pages/forms/general.html
 File Upload
@@ -390,7 +390,7 @@ file:///C:/Github/MyLaboratory/MyLaboratory.Site/wwwroot/pages/forms/editors.htm
 Text Editors
 
 file:///C:/Github/MyLaboratory/MyLaboratory.Site/wwwroot/pages/tables/simple.html
-Category Menu View »ı¼º ½Ã Ordered Lists º¼ °Í Expandable Table Tree [Ä«Å×°í¸® Ç¥½Ã¿¡ ÇÒ °Í]
+Category Menu View ìƒì„± ì‹œ Ordered Lists ë³¼ ê²ƒ Expandable Table Tree [ì¹´í…Œê³ ë¦¬ í‘œì‹œì— í•  ê²ƒ]
 
 file:///C:/Github/MyLaboratory/MyLaboratory.Site/wwwroot/pages/tables/data.html
 DataTables
@@ -399,19 +399,19 @@ file:///C:/Github/MyLaboratory/MyLaboratory.Site/wwwroot/pages/tables/jsgrid.htm
 jsGrid
 
 file:///C:/Github/MyLaboratory/MyLaboratory.Site/wwwroot/pages/mailbox/compose.html
-¸ŞÀÏ º¸³»±âÀÎµ¥ fileUpload·Îµµ ¾µ ¼ö ÀÖÀ» µí
+ë©”ì¼ ë³´ë‚´ê¸°ì¸ë° fileUploadë¡œë„ ì“¸ ìˆ˜ ìˆì„ ë“¯
 
 file:///C:/Github/MyLaboratory/MyLaboratory.Site/wwwroot/pages/examples/profile.html#
-Pages/Profile -- ÇÁ·ÎÆÄÀÏ ÇÒ ¶§
+Pages/Profile -- í”„ë¡œíŒŒì¼ í•  ë•Œ
 
 file:///C:/Github/MyLaboratory/MyLaboratory.Site/wwwroot/pages/examples/projects.html#
-±× Category ViewÇÒ ¶§ ¹öÆ° ÂüÁ¶ÇÏ¸é ÁÁÀ» ²¬?
+ê·¸ Category Viewí•  ë•Œ ë²„íŠ¼ ì°¸ì¡°í•˜ë©´ ì¢‹ì„ ê»„?
 
 file:///C:/Github/MyLaboratory/MyLaboratory.Site/wwwroot/pages/examples/contact-us.html
 Contact us
 
 
-AdminLTE ±× ... ·Î±×ÀÎ È­¸é ¾öÃ» ¸¹ÀÌ °í·ÁÇÒ °Í!! À¯¿ëÇÑ °Í ¸¹À½
+AdminLTE ê·¸ ... ë¡œê·¸ì¸ í™”ë©´ ì—„ì²­ ë§ì´ ê³ ë ¤í•  ê²ƒ!! ìœ ìš©í•œ ê²ƒ ë§ìŒ
 
 file:///C:/Github/MyLaboratory/MyLaboratory.Site/wwwroot/pages/examples/404.html
 404 not found
@@ -423,7 +423,7 @@ https://www.youtube.com/watch?v=H0jeLTMLD5c&list=PL2UwEEhB4YafVIdKCBRjTyryET2EHg
 Build Completed E-Commerce with ASP.NET Core MVC - Part 8 - Category Management in Admin
 
 https://www.youtube.com/watch?v=lEjzIlliYJA&list=PL2UwEEhB4YafVIdKCBRjTyryET2EHgryp&index=12
-Build Completed E-Commerce with ASP.NET Core MVC - Part 12 - Banner Sliders Management in Admin [Image ¾÷·Îµå °°Àºµ¥... ÁÁÀº ÄÚµåÀÎµí]
+Build Completed E-Commerce with ASP.NET Core MVC - Part 12 - Banner Sliders Management in Admin [Image ì—…ë¡œë“œ ê°™ì€ë°... ì¢‹ì€ ì½”ë“œì¸ë“¯]
 
 http://js-grid.com/ // CRUD Grid
 
@@ -436,12 +436,12 @@ https://exceptionnotfound.net/using-anti-forgery-tokens-in-asp-net-core-razor-pa
 
 Bind(Include="ID,Title,ReleaseDate,Genre,Price")]Movie movie
 
-Post ÆÄ¶ó¹ÌÅÍ ¸Å°³º¯¼ö ¿·¿¡..
+Post íŒŒë¼ë¯¸í„° ë§¤ê°œë³€ìˆ˜ ì˜†ì—..
 
-Bind ¾îÆ®¸®ºäÆ®´Â ÇØÄ¿µéÀÌ ¿À¹öÆ÷½ºÆÃ(over-posting) ÇÏÁö ¸øÇÏµµ·Ï ÁöÄÑÁÖ´Â Áß¿äÇÑ º¸¾È ¸ŞÄ¿´ÏÁòÀÔ´Ï´Ù. 
-(¿ªÁÖ: User¶ó´Â ¸ğµ¨¿¡ IsAdmin ¼Ó¼ºÀÌ ÀÖ´Ù°í ÇÒ¶§, ¿ì¸®°¡ ºñ·Ï ÀÔ·ÂÆû¿¡ ÀÌ ¼Ó¼ºÀ» ³ëÃâÇÏÁö ¾Ê¾Ò´Ù ÇÏ´õ¶óµµ ÇØÄ¿°¡ ÀÌ ¼Ó¼ºÀ» À¯ÃßÇÏ¿© Æ÷½ºÆÃ µ¥ÀÌÅÍ¿¡ Ãß°¡ÇÏ´Â °ÍÀ» ¿À¹öÆ÷½ºÆÃÀÌ¶ó ÇÑ´Ù.)
+Bind ì–´íŠ¸ë¦¬ë·°íŠ¸ëŠ” í•´ì»¤ë“¤ì´ ì˜¤ë²„í¬ìŠ¤íŒ…(over-posting) í•˜ì§€ ëª»í•˜ë„ë¡ ì§€ì¼œì£¼ëŠ” ì¤‘ìš”í•œ ë³´ì•ˆ ë©”ì»¤ë‹ˆì¦˜ì…ë‹ˆë‹¤. 
+(ì—­ì£¼: Userë¼ëŠ” ëª¨ë¸ì— IsAdmin ì†ì„±ì´ ìˆë‹¤ê³  í• ë•Œ, ìš°ë¦¬ê°€ ë¹„ë¡ ì…ë ¥í¼ì— ì´ ì†ì„±ì„ ë…¸ì¶œí•˜ì§€ ì•Šì•˜ë‹¤ í•˜ë”ë¼ë„ í•´ì»¤ê°€ ì´ ì†ì„±ì„ ìœ ì¶”í•˜ì—¬ í¬ìŠ¤íŒ… ë°ì´í„°ì— ì¶”ê°€í•˜ëŠ” ê²ƒì„ ì˜¤ë²„í¬ìŠ¤íŒ…ì´ë¼ í•œë‹¤.)
 
-À¥°³¹ß Â¥ÁõÀ¯¹ßÀÚ! CORS°¡ ¹º°¡¿ä? // POSTMAN °°Àº °Ç ´Ù µÇ´Âµ¥ Ajax ½ÇÁ¦ ÇÒ ¶§´Â ¾È µÊ.
+ì›¹ê°œë°œ ì§œì¦ìœ ë°œì! CORSê°€ ë­”ê°€ìš”? // POSTMAN ê°™ì€ ê±´ ë‹¤ ë˜ëŠ”ë° Ajax ì‹¤ì œ í•  ë•ŒëŠ” ì•ˆ ë¨.
 
 https://stackoverflow.com/questions/21583278/getting-all-controllers-and-actions-names-in-c-sharp/30969888
 
@@ -458,7 +458,7 @@ https://stackoverflow.com/questions/13183630/how-to-open-a-bootstrap-modal-windo
 
 
 https://craftpip.github.io/jquery-confirm/
-wwwroot ¾ÆÀÌÄÜ ¿À¸¥ÂÊ Å¬¸¯ ÈÄ Add -> Client-Side Library -> ¿øÇÏ´Â ¶óÀÌºê·¯¸® °Ë»ö ÈÄ ´Ù¿î·Îµå ¹ŞÀ¸¸é libman.json°ú ÇÔ²² ÇØ´ç Resource°¡ ÀÚµ¿À¸·Î ´Ù¿î¹Ş¾ÆÁı´Ï´Ù.
+wwwroot ì•„ì´ì½˜ ì˜¤ë¥¸ìª½ í´ë¦­ í›„ Add -> Client-Side Library -> ì›í•˜ëŠ” ë¼ì´ë¸ŒëŸ¬ë¦¬ ê²€ìƒ‰ í›„ ë‹¤ìš´ë¡œë“œ ë°›ìœ¼ë©´ libman.jsonê³¼ í•¨ê»˜ í•´ë‹¹ Resourceê°€ ìë™ìœ¼ë¡œ ë‹¤ìš´ë°›ì•„ì§‘ë‹ˆë‹¤.
 
 
 https://www.youtube.com/watch?v=Hy9G30nncMM // Localization and Globalization in ASP.NET Core MVC (.NET 5)
@@ -483,7 +483,7 @@ using MimeKit;
 using MailKit.Net.Smtp;
 
 var message = new MimeMessage();
-message.From.Add(new MailboxAddress("Test Project", "***REMOVED***"));  // ***REMOVED*** // "º¸¾È ¼öÁØÀÌ ³·Àº ¾Û Çã¿ë: »ç¿ë ¾ÈÇÔ" ¼³Á¤À» On ½ÃÄÑÁÜ (¸ŞÀÏ °èÁ¤¿¡ µé¾î°¡¼­)  
+message.From.Add(new MailboxAddress("Test Project", "***REMOVED***"));  // ***REMOVED*** // "ë³´ì•ˆ ìˆ˜ì¤€ì´ ë‚®ì€ ì•± í—ˆìš©: ì‚¬ìš© ì•ˆí•¨" ì„¤ì •ì„ On ì‹œì¼œì¤Œ (ë©”ì¼ ê³„ì •ì— ë“¤ì–´ê°€ì„œ)  
 message.To.Add(new MailboxAddress("naren", "***REMOVED***")); 
 message.Subject = "TEST FOR ASPNETCORE";
 message.Body = new TextPart("plain")
@@ -493,7 +493,7 @@ message.Body = new TextPart("plain")
 
 using (var client = new SmtpClient())
 {
-    client.Connect("smtp.gmail.com", 587, false); // SSLÀ» »ç¿ëÇÏÁö ¾Ê¾Æ¼­ ¾àÁ¡ Á¸Àç
+    client.Connect("smtp.gmail.com", 587, false); // SSLì„ ì‚¬ìš©í•˜ì§€ ì•Šì•„ì„œ ì•½ì  ì¡´ì¬
     client.Authenticate("***REMOVED***", "***REMOVED***");
 
     client.Send(message);
@@ -511,9 +511,9 @@ https://jasonwatmore.com/post/2019/10/11/aspnet-core-3-jwt-authentication-tutori
 
 
 
-remember me logic°ú
+remember me logicê³¼
 
-È¸¿ø°¡ÀÔ, ºñ¹Ğ¹øÈ£ º¹±¸ µî ÀÌ¸ŞÀÏ ÀÎÁõ°ú (GUID¸¦ ÅëÇÑ) ´Ù ±¸ÇöÇÒ °Í
+íšŒì›ê°€ì…, ë¹„ë°€ë²ˆí˜¸ ë³µêµ¬ ë“± ì´ë©”ì¼ ì¸ì¦ê³¼ (GUIDë¥¼ í†µí•œ) ë‹¤ êµ¬í˜„í•  ê²ƒ
 
 
 [Email Confirmation Industry Standard]
@@ -530,7 +530,7 @@ you create a table in your db where you store these generated tokens with the a 
 
 
 
-SignUpWithEmailConfirmation ÇÁ·ÎÁ§Æ® ¹ö±× ¼öÁ¤ ¹× Å×½ºÆ® ¿Ï·áÇÑ °Å ¼Ò½ºÄÚµå ÀüºÎ ºĞ¼®ÇÏ¿©¼­ ÀÌ ÇÁ·ÎÁ§Æ®¿¡ ³ÖÀ» °Í.
+SignUpWithEmailConfirmation í”„ë¡œì íŠ¸ ë²„ê·¸ ìˆ˜ì • ë° í…ŒìŠ¤íŠ¸ ì™„ë£Œí•œ ê±° ì†ŒìŠ¤ì½”ë“œ ì „ë¶€ ë¶„ì„í•˜ì—¬ì„œ ì´ í”„ë¡œì íŠ¸ì— ë„£ì„ ê²ƒ.
 
 http://ajaxload.info/ // loading gif
 
@@ -538,26 +538,26 @@ RSA // https://github.com/IkhyeonJo/DotnetCore.RSA
 
 TODO: Email Confirmation
 
-¸ŞÀÏ Àü¼Û ½Ã, Login Token Problem (+ ¹®ÀÚ°¡ »ç¶óÁø´Ù...) ÇØ°á¹ı: var encodedToken = Uri.EscapeDataString(token); ¸ŞÀÏ Àü¼Û Àü, ´Ù ÇÒ °Í 
+ë©”ì¼ ì „ì†¡ ì‹œ, Login Token Problem (+ ë¬¸ìê°€ ì‚¬ë¼ì§„ë‹¤...) í•´ê²°ë²•: var encodedToken = Uri.EscapeDataString(token); ë©”ì¼ ì „ì†¡ ì „, ë‹¤ í•  ê²ƒ 
 https://stackoverflow.com/questions/38781295/asp-net-core-identity-invalid-token-on-confirmation-email
 
-ÇØµ¶¹ı
+í•´ë…ë²•
 
 Uri.UnescapeDataString()
 
 
 
-###ÆÄÀÏ ¾÷·Îµå
-#ÆÄÀÏ ¾÷·Îµå´Â
-#·Î±×ÀÎ ¾Æ´Ò ½Ã: [anonymous] folder¸¸ ÀÌ¿ë (wwwroot)
-#User ·Î±×ÀÎÀÏ ½Ã: [user] folder¸¸ ÀÌ¿ë (wwwroot)
-#Admin ·Î±×ÀÎÀÏ ½Ã: [admin] folder¸¸ ÀÌ¿ë (wwwroot)
-#ÀÌ¹Ç·Î ÀÌ¿ÜÀÇ Æú´õ¿¡¼­ »ı¼ºÇÏ¸é Upload¸¸ µÇ°í Á¢±Ù ºÒ°¡´ÉÇØÁø´Ù. (Anonymous, User, Admin µîÀº ÀÚ±â Æú´õ¿¡¸¸ °¤ÇôÀÖ±â ¶§¹® (StartUp.cs¿¡¼­ ¼³Á¤ÇÔ))
-#±× ÀÌ¿ÜÀÇ Æú´õ ¸¸µé ¶§´Â README.md ÆÄÀÏ ÇÏ³ª ºÙ¿©¼­ Æú´õ°¡ git pushÇÒ ¶§ ¼º°øÀûÀ¸·Î µé¾î°¥ ¼ö ÀÖµµ·Ï ÇÒ °Í!!
+###íŒŒì¼ ì—…ë¡œë“œ
+#íŒŒì¼ ì—…ë¡œë“œëŠ”
+#ë¡œê·¸ì¸ ì•„ë‹ ì‹œ: [anonymous] folderë§Œ ì´ìš© (wwwroot)
+#User ë¡œê·¸ì¸ì¼ ì‹œ: [user] folderë§Œ ì´ìš© (wwwroot)
+#Admin ë¡œê·¸ì¸ì¼ ì‹œ: [admin] folderë§Œ ì´ìš© (wwwroot)
+#ì´ë¯€ë¡œ ì´ì™¸ì˜ í´ë”ì—ì„œ ìƒì„±í•˜ë©´ Uploadë§Œ ë˜ê³  ì ‘ê·¼ ë¶ˆê°€ëŠ¥í•´ì§„ë‹¤. (Anonymous, User, Admin ë“±ì€ ìê¸° í´ë”ì—ë§Œ ê°‡í˜€ìˆê¸° ë•Œë¬¸ (StartUp.csì—ì„œ ì„¤ì •í•¨))
+#ê·¸ ì´ì™¸ì˜ í´ë” ë§Œë“¤ ë•ŒëŠ” README.md íŒŒì¼ í•˜ë‚˜ ë¶™ì—¬ì„œ í´ë”ê°€ git pushí•  ë•Œ ì„±ê³µì ìœ¼ë¡œ ë“¤ì–´ê°ˆ ìˆ˜ ìˆë„ë¡ í•  ê²ƒ!!
 #https://stackoverflow.com/questions/35379309/how-to-upload-files-in-asp-net-core
 #https://askforyou.tistory.com/10
-#FEST Project File (File Upload º¼ °Í)
-#docker¶ó ÆÄÀÏ ±ÇÇÑ Linux ¼³Á¤ ÇÊ¿ä ¾øÀ½
+#FEST Project File (File Upload ë³¼ ê²ƒ)
+#dockerë¼ íŒŒì¼ ê¶Œí•œ Linux ì„¤ì • í•„ìš” ì—†ìŒ
 
 
 
@@ -606,29 +606,29 @@ Uri.UnescapeDataString()
 #----------------------------------------------------------------------------------------------------
 
 
-´Ù±¹¾î Ã³¸®
+ë‹¤êµ­ì–´ ì²˜ë¦¬
 https://www.youtube.com/watch?v=Hy9G30nncMM
 
 Repository Pattern
 https://codewithmukesh.com/blog/repository-pattern-in-aspnet-core/
 
-ASP.net Core °­ÁÂ
+ASP.net Core ê°•ì¢Œ
 https://le-piee.tistory.com/6
 
-À¥»çÀÌÆ® Á¦ÀÛ [°Ô½ÃÆÇ Á¾·ù¿Í ¸íÄª]
+ì›¹ì‚¬ì´íŠ¸ ì œì‘ [ê²Œì‹œíŒ ì¢…ë¥˜ì™€ ëª…ì¹­]
 https://m.blog.naver.com/PostView.naver?isHttpsRedirect=true&blogId=kjhjun&logNo=220868708278
 
-11.ASP.NET - ÀÚ·á½Ç °Ô½ÃÆÇ(4) : Biz
+11.ASP.NET - ìë£Œì‹¤ ê²Œì‹œíŒ(4) : Biz
 https://godffs.tistory.com/m/484?category=126912
 
-# °Ô½ÃÆÇ ±Û !!!
-ASP.NET Core 5.0 °Ô½ÃÆÇ ¼Ò½º ´Ù¿î·Îµå ¹× ½ÇÇà µ¥¸ğ
+# ê²Œì‹œíŒ ê¸€ !!!
+ASP.NET Core 5.0 ê²Œì‹œíŒ ì†ŒìŠ¤ ë‹¤ìš´ë¡œë“œ ë° ì‹¤í–‰ ë°ëª¨
 https://www.youtube.com/watch?v=7lC6sYRh1fg
 
 #Custom Attribute
-CustomAttribute ¸¸µé¾î¼­ POSTÇÒ ½Ã ±× ÀÚµ¿À¸·Î ·Î±×ÀÎ ±ÇÇÑ Ã¼Å©ÇÏ±â...!!
+CustomAttribute ë§Œë“¤ì–´ì„œ POSTí•  ì‹œ ê·¸ ìë™ìœ¼ë¡œ ë¡œê·¸ì¸ ê¶Œí•œ ì²´í¬í•˜ê¸°...!!
 
-Authorization Filter ÇÒ ¶§ Custom Attributeµµ Æ÷ÇÔ µÇ°Ô ÇÒ °Í... ¾øÀ¸¸é POST ¾È µÇµµ·Ï
+Authorization Filter í•  ë•Œ Custom Attributeë„ í¬í•¨ ë˜ê²Œ í•  ê²ƒ... ì—†ìœ¼ë©´ POST ì•ˆ ë˜ë„ë¡
 
 Attribute Name: RequiredHttpPostAccess (Custom)
 
@@ -639,5 +639,33 @@ https://security-code-scan.github.io/
 Error List Hotkey: Ctrl+\, E
 (Check Warnings)
 
-#½ÃÅ¥¾îÄÚµù-ÄíÅ°-¹×-¼¼¼Ç°ü¸®
+#ì‹œíì–´ì½”ë”©-ì¿ í‚¤-ë°-ì„¸ì…˜ê´€ë¦¬
 https://coyagi.tistory.com/entry/%EC%8B%9C%ED%81%90%EC%96%B4%EC%BD%94%EB%94%A9-%EC%BF%A0%ED%82%A4-%EB%B0%8F-%EC%84%B8%EC%85%98%EA%B4%80%EB%A6%AC
+
+
+# MariaDB AutoCommit On/Off
+[MariaDB] autocommit ì„¤ì •ì„ ë³€ê²½í•˜ëŠ” ë°©ë²•
+ Posted on 2017-03-08 19:00:18
+
+Session ë ˆë²¨ì—ì„œ autocommit ì„¤ì •ì„ ë³€ê²½í•  ë•ŒëŠ”, ì•„ë˜ì˜ êµ¬ë¬¸ì„ ì‚¬ìš©í•œë‹¤.
+
+â€¢ autocommit ì„¤ì •ê°’ í™•ì¸
+
+show variables like 'autocommit%';
+
+â€¢ autocommit ì„¤ì • ë˜ëŠ” í•´ì œ
+
+SET AUTOCOMMIT = TRUE;  --> ì„¤ì •
+SET AUTOCOMMIT = FALSE; --> í•´ì œ
+
+â€¢ íŠ¸ëœì­ì…˜ commit, rollback
+
+COMMIT;
+ROLLBACK;
+
+ê·¸ë¦¬ê³  DBì˜ ê¸°ë³¸ autocommit ì„¤ì •ì„ ë³€ê²½í•˜ê¸° ì›í•œë‹¤ë©´, ì•„ë˜ì˜ ì„¤ì •ì„ ì¶”ê°€í•´ì£¼ë©´ ëœë‹¤.
+
+â€¢ /etc/my.cnf.d/server.cnf
+
+[mysqld]
+autocommit=0   --> autocommit í•´ì œ
