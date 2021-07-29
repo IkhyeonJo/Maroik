@@ -21,8 +21,11 @@ namespace MyLaboratory.Site.Services
         {
             get
             {
-                return context.SubCategories.FromSqlRaw($"SELECT * FROM SubCategory WHERE `Role` = '{Role.Admin}' ORDER BY CategoryId, `Order`;").ToList();
-
+                return context.SubCategories
+                        .Where(a => a.Role == Role.Admin)
+                        .OrderBy(a => a.CategoryId)
+                        .OrderBy(a => a.Order)
+                        .ToList();
             }
         }
 
@@ -30,7 +33,11 @@ namespace MyLaboratory.Site.Services
         {
             get
             {
-                return context.SubCategories.FromSqlRaw($"SELECT * FROM SubCategory WHERE `Role` = '{Role.User}' ORDER BY CategoryId, `Order`;").ToList();
+                return context.SubCategories
+                        .Where(a => a.Role == Role.User)
+                        .OrderBy(a => a.CategoryId)
+                        .OrderBy(a => a.Order)
+                        .ToList();
             }
         }
 
