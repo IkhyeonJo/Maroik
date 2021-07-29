@@ -24,7 +24,7 @@ namespace MyLaboratory.Site.Services
                 return context.SubCategories
                         .Where(a => a.Role == Role.Admin)
                         .OrderBy(a => a.CategoryId)
-                        .OrderBy(a => a.Order)
+                        .ThenBy(a => a.Order)
                         .ToList();
             }
         }
@@ -36,7 +36,7 @@ namespace MyLaboratory.Site.Services
                 return context.SubCategories
                         .Where(a => a.Role == Role.User)
                         .OrderBy(a => a.CategoryId)
-                        .OrderBy(a => a.Order)
+                        .ThenBy(a => a.Order)
                         .ToList();
             }
         }
