@@ -1,5 +1,6 @@
 ﻿#How To Use ASPNETCORE Entity Framework Core
 https://www.entityframeworktutorial.net/efcore/querying-in-ef-core.aspx
+https://www.learnentityframeworkcore.com/raw-sql
 
 https://www.learnentityframeworkcore5.com/lazy-loading-in-ef-core // Lazy Loading Proxy
 https://www.youtube.com/c/ThumbIKR/videos // useful videos for coding
