@@ -22,7 +22,7 @@ namespace MyLaboratory.Site.Models.ViewModels.Account
         public string Password { get; set; }
         
         
-        [Required(ErrorMessage = "Password is required")]
+        [Required(ErrorMessage = "Confirm Password is required")]
         [StringLength(100, ErrorMessage = "The {0} must be at least {2} characters long.", MinimumLength = 8)]
         [DataType(DataType.Password)]
         [Compare(nameof(Password), ErrorMessage = "The password do not match")]
