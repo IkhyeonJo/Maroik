@@ -96,7 +96,7 @@ namespace MyLaboratory.Site.Controllers
                             tempAccount.AvatarImagePath = $"/upload/Management/Profile/{JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email}/{avatarFile}";
                             await accountRepository.UpdateAccountAsync(tempAccount);
                             return Ok(new { result = true });
-                        } 
+                        }
                         catch (Exception e)
                         {
                             return Ok(new { result = false, errorMessage = e.ToString() });
