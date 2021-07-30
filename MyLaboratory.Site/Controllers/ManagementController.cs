@@ -62,15 +62,15 @@ namespace MyLaboratory.Site.Controllers
         [ValidateAntiForgeryToken]
         [RequiredHttpPostAccess(Role = Role.Admin)]
         [RequiredHttpPostAccess(Role = Role.User)]
-        public async Task<IActionResult> UpdateProfileAvatar(List<IFormFile> profileAvatarFiles)
+        public async Task<IActionResult> UpdateProfileAvatar(ProfileInputViewModel profileInputViewModel)
         {
-            if (profileAvatarFiles == null) // 파일 없을 시
+            if (profileInputViewModel.ProfileAvatarFiles == null) // 파일 없을 시
             {
                 return Ok(new { result = false, errorMessage = "파일 첨부하여 주십시오. (Please attach a file)" });
             }
             else
             {
-                var profileAvatarFile = profileAvatarFiles[0];
+                var profileAvatarFile = profileInputViewModel.ProfileAvatarFiles[0];
                 if (profileAvatarFile.Length > 0 && profileAvatarFile.Length <= 10485760) // profileAvatarFile Length : 파일 크기 0MB 이상, 10MB 이하)
                 {
                     if (profileAvatarFile.ContentType.ToUpper() == "image/png".ToUpper() || profileAvatarFile.ContentType.ToUpper() == "image/jpeg".ToUpper())
