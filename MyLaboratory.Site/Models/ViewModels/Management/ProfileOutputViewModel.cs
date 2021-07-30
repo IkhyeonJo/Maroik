@@ -16,7 +16,7 @@ namespace MyLaboratory.Site.Models.ViewModels.Management
         [Required(ErrorMessage = "Please enter AvatarImagePath")]
         [Display(Name = "AvatarImagePath")]
         public string AvatarImagePath { get; set; }
-        [Required(ErrorMessage = "Please enter FullName")]
+        [Required(ErrorMessage = "Please enter Full name")]
         [Display(Name = "FullName")]
         public string FullName { get; set; }
         [Required(ErrorMessage = "Please enter Created")]

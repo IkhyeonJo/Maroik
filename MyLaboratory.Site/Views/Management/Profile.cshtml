@@ -9,7 +9,7 @@
 
     var loginedAccount = await accountRepository.GetAccountAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
 }
-
+@Html.AntiForgeryToken()
 <section class="content">
     <div class="container-fluid">
         <div class="row">
@@ -378,7 +378,6 @@
                                                                         <div class="frame">
                                                                             <div class="control">
                                                                                 <form id="formUpdateProfileAvatar" method="POST" enctype="multipart/form-data">
-                                                                                    @Html.AntiForgeryToken()
                                                                                     <div class="form-group">
                                                                                         <div class="btn btn-default btn-file">
                                                                                             <i class="fas fa-paperclip" style="padding-right: 3px;"></i>&nbsp;&nbsp;&nbsp;Browse
@@ -399,7 +398,7 @@
                                                                 <div class="col-lg-9"><input class="form-control" value="@Model.Email" disabled /></div>
                                                             </div>
                                                             <div class="form-group">
-                                                                <div class="col-lg-3">First Name</div>
+                                                                <div class="col-lg-3">Full name</div>
                                                                 <div class="col-lg-9"><input class="form-control" value="@Model.FullName" disabled /></div>
                                                             </div>
                                                         </div>
@@ -415,161 +414,24 @@
                                                 <div class="card-header">
                                                     <h3 class="card-title">
                                                         <i class="fa fa-user"></i>
-                                                        Profile
+                                                        Profile Information
                                                     </h3>
                                                 </div>
                                                 <div class="card-body pad table-responsive">
-                                                    <p>Various types of buttons. Using the base class <code>.btn</code></p>
-                                                    <table class="table table-bordered text-center">
-                                                        <tr>
-                                                            <th>Normal</th>
-                                                            <th>Large <code>.btn-lg</code></th>
-                                                            <th>Small <code>.btn-sm</code></th>
-                                                            <th>Extra Small <code>.btn-xs</code></th>
-                                                            <th>Flat <code>.btn-flat</code></th>
-                                                            <th>Disabled <code>.disabled</code></th>
-                                                        </tr>
-                                                        <tr>
-                                                            <td>
-                                                                <button type="button" class="btn btn-block btn-default">Default</button>
-                                                            </td>
-                                                            <td>
-                                                                <button type="button" class="btn btn-block btn-default btn-lg">Default</button>
-                                                            </td>
-                                                            <td>
-                                                                <button type="button" class="btn btn-block btn-default btn-sm">Default</button>
-                                                            </td>
-                                                            <td>
-                                                                <button type="button" class="btn btn-block btn-default btn-xs">Default</button>
-                                                            </td>
-                                                            <td>
-                                                                <button type="button" class="btn btn-block btn-default btn-flat">Default</button>
-                                                            </td>
-                                                            <td>
-                                                                <button type="button" class="btn btn-block btn-default disabled">Default</button>
-                                                            </td>
-                                                        </tr>
-                                                        <tr>
-                                                            <td>
-                                                                <button type="button" class="btn btn-block btn-primary">Primary</button>
-                                                            </td>
-                                                            <td>
-                                                                <button type="button" class="btn btn-block btn-primary btn-lg">Primary</button>
-                                                            </td>
-                                                            <td>
-                                                                <button type="button" class="btn btn-block btn-primary btn-sm">Primary</button>
-                                                            </td>
-                                                            <td>
-                                                                <button type="button" class="btn btn-block btn-primary btn-xs">Primary</button>
-                                                            </td>
-                                                            <td>
-                                                                <button type="button" class="btn btn-block btn-primary btn-flat">Primary</button>
-                                                            </td>
-                                                            <td>
-                                                                <button type="button" class="btn btn-block btn-primary disabled">Primary</button>
-                                                            </td>
-                                                        </tr>
-                                                        <tr>
-                                                            <td>
-                                                                <button type="button" class="btn btn-block btn-secondary">Secondary</button>
-                                                            </td>
-                                                            <td>
-                                                                <button type="button" class="btn btn-block btn-secondary btn-lg">Secondary</button>
-                                                            </td>
-                                                            <td>
-                                                                <button type="button" class="btn btn-block btn-secondary btn-sm">Secondary</button>
-                                                            </td>
-                                                            <td>
-                                                                <button type="button" class="btn btn-block btn-secondary btn-xs">Secondary</button>
-                                                            </td>
-                                                            <td>
-                                                                <button type="button" class="btn btn-block btn-secondary btn-flat">Secondary</button>
-                                                            </td>
-                                                            <td>
-                                                                <button type="button" class="btn btn-block btn-secondary disabled">Secondary</button>
-                                                            </td>
-                                                        </tr>
-                                                        <tr>
-                                                            <td>
-                                                                <button type="button" class="btn btn-block btn-success">Success</button>
-                                                            </td>
-                                                            <td>
-                                                                <button type="button" class="btn btn-block btn-success btn-lg">Success</button>
-                                                            </td>
-                                                            <td>
-                                                                <button type="button" class="btn btn-block btn-success btn-sm">Success</button>
-                                                            </td>
-                                                            <td>
-                                                                <button type="button" class="btn btn-block btn-success btn-xs">Success</button>
-                                                            </td>
-                                                            <td>
-                                                                <button type="button" class="btn btn-block btn-success btn-flat">Success</button>
-                                                            </td>
-                                                            <td>
-                                                                <button type="button" class="btn btn-block btn-success disabled">Success</button>
-                                                            </td>
-                                                        </tr>
-                                                        <tr>
-                                                            <td>
-                                                                <button type="button" class="btn btn-block btn-info">Info</button>
-                                                            </td>
-                                                            <td>
-                                                                <button type="button" class="btn btn-block btn-info btn-lg">Info</button>
-                                                            </td>
-                                                            <td>
-                                                                <button type="button" class="btn btn-block btn-info btn-sm">Info</button>
-                                                            </td>
-                                                            <td>
-                                                                <button type="button" class="btn btn-block btn-info btn-xs">Info</button>
-                                                            </td>
-                                                            <td>
-                                                                <button type="button" class="btn btn-block btn-info btn-flat">Info</button>
-                                                            </td>
-                                                            <td>
-                                                                <button type="button" class="btn btn-block btn-info disabled">Info</button>
-                                                            </td>
-                                                        </tr>
-                                                        <tr>
-                                                            <td>
-                                                                <button type="button" class="btn btn-block btn-danger">Danger</button>
-                                                            </td>
-                                                            <td>
-                                                                <button type="button" class="btn btn-block btn-danger btn-lg">Danger</button>
-                                                            </td>
-                                                            <td>
-                                                                <button type="button" class="btn btn-block btn-danger btn-sm">Danger</button>
-                                                            </td>
-                                                            <td>
-                                                                <button type="button" class="btn btn-block btn-danger btn-xs">Danger</button>
-                                                            </td>
-                                                            <td>
-                                                                <button type="button" class="btn btn-block btn-danger btn-flat">Danger</button>
-                                                            </td>
-                                                            <td>
-                                                                <button type="button" class="btn btn-block btn-danger disabled">Danger</button>
-                                                            </td>
-                                                        </tr>
-                                                        <tr>
-                                                            <td>
-                                                                <button type="button" class="btn btn-block btn-warning">Warning</button>
-                                                            </td>
-                                                            <td>
-                                                                <button type="button" class="btn btn-block btn-warning btn-lg">Warning</button>
-                                                            </td>
-                                                            <td>
-                                                                <button type="button" class="btn btn-block btn-warning btn-sm">Warning</button>
-                                                            </td>
-                                                            <td>
-                                                                <button type="button" class="btn btn-block btn-warning btn-xs">Warning</button>
-                                                            </td>
-                                                            <td>
-                                                                <button type="button" class="btn btn-block btn-warning btn-flat">Warning</button>
-                                                            </td>
-                                                            <td>
-                                                                <button type="button" class="btn btn-block btn-warning disabled">Warning</button>
-                                                            </td>
-                                                        </tr>
-                                                    </table>
+                                                    <form id="editProfileForm" class="form-horizontal" method="post" asp-controller="Management" asp-action="UpdateProfileInformation">
+                                                        <div class="form-group row">
+                                                            <label asp-for="FullName" class="col-sm-2 col-form-label">Full name</label>
+                                                            <div class="col-sm-10">
+                                                                <input asp-for="FullName" type="text" class="form-control" placeholder="Full name" />
+                                                                <span asp-validation-for="FullName" class="text-danger"></span>
+                                                            </div>
+                                                        </div>
+                                                        <div class="form-group row">
+                                                            <div class="offset-sm-2 col-sm-10">
+                                                                <button type="submit" class="btn btn-danger">Modify</button>
+                                                            </div>
+                                                        </div>
+                                                    </form>
                                                 </div>
                                             </div>
                                         </div>
