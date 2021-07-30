@@ -122,6 +122,9 @@ namespace MyLaboratory.Site.Controllers
         [RequiredHttpPostAccess(Role = Role.User)]
         public async Task<IActionResult> UpdateProfileInformation(ProfileInputViewModel profileInputViewModel)
         {
+            ModelState.Remove(nameof(profileInputViewModel.Password));
+            ModelState.Remove(nameof(profileInputViewModel.NewPassword));
+
             if (ModelState.IsValid)
             {
                 try
