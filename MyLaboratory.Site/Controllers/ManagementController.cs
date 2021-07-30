@@ -141,6 +141,41 @@ namespace MyLaboratory.Site.Controllers
             }
             return RedirectToAction("Profile", "Management");
         }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [RequiredHttpPostAccess(Role = Role.Admin)]
+        [RequiredHttpPostAccess(Role = Role.User)]
+        public async Task<IActionResult> UpdateProfilePassword(ProfileInputViewModel profileInputViewModel)
+        {
+            ModelState.Remove(nameof(profileInputViewModel.FullName));
+
+            if (ModelState.IsValid)
+            {
+                try
+                {
+                    HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+                    var tempAccount = await accountRepository.GetAccountAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+                    //tempAccount.FullName = profileInputViewModel.FullName;
+                    //await accountRepository.UpdateAccountAsync(tempAccount);
+
+                    if (new RSA(RSAType.RSA2, Encoding.UTF8, RSA.privateKey, RSA.publicKey).Verify(profileInputViewModel.Password ?? "", tempAccount.HashedPassword)) // right password
+                    {
+
+                    }
+                    else // wrong password
+                    {
+
+                    }
+
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e.ToString());
+                }
+            }
+            return RedirectToAction("Profile", "Management");
+        }
         #endregion
 
         #region Menu
