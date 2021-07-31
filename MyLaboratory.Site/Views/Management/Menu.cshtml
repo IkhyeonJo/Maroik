@@ -230,7 +230,7 @@
                 </ul>
                 @*Tabs-1: Edit Category Modal*@
                 <div id="editSubCategoryTabs-1">
-                    <form id="formEditSubCategory">
+                    <form id="formEditSubCategory" onsubmit="return UpdateSubCategory()">
                         <input type="hidden" id="editSubCategoryId" />
                         <div class="form-row">
                             <div class="form-group col-md-6 mb-3">
@@ -276,11 +276,11 @@
                                 <input class="form-control form-control-sm" min="0" type="number" id="editSubCategoryOrder" name="editSubCategoryOrder" value="0">
                             </div>
                         </div>
+                        <div class="modal-footer justify-content-between">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                            <input type="submit" class="btn btn-primary" value="Save" />
+                        </div>
                     </form>
-                    <div class="modal-footer justify-content-between">
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                        <button type="button" class="btn btn-primary" onclick="UpdateSubCategory()">Save</button>
-                    </div>
                 </div>
             </div>
         </div>

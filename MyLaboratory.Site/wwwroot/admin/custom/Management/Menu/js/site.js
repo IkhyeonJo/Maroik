@@ -379,6 +379,7 @@ function UpdateSubCategory() {
             }
         }
     });
+    return false;
 }
 
 function ConfirmDeleteMenu() {
