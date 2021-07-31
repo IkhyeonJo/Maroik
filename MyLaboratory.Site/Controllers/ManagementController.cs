@@ -180,6 +180,14 @@ namespace MyLaboratory.Site.Controllers
         }
         #endregion
 
+        #region Account
+        [HttpGet]
+        public async Task<IActionResult> Account()
+        {
+            return View();
+        }
+        #endregion
+
         #region Menu
 
         #region Create
