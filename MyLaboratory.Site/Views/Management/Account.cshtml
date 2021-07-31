@@ -1,1 +1,252 @@
-﻿AAA
+﻿@Html.AntiForgeryToken()
+<section class="content">
+    <div class="card card-primary">
+        <div class="card-header">
+            <h3 class="card-title">Account Management</h3>
+        </div>
+
+        <div class="card-body">
+            <nav class="navbar-expand navbar-dark" style="position: relative; display: block !important; overflow-x: auto; overflow-y:hidden; align-items: center ">
+                <ul class="navbar-nav">
+                    <li class="nav-item" style="padding-bottom: 10px; padding-right: 7px;">
+                        <button type="button" class="btn btn-primary btn-block btn-sm" data-toggle="modal" data-target="#createAccountDialogModal" data-backdrop="static" data-keyboard="false" style="width: 100px !important;"><i class="fa fa-plus" style="padding-right:3px;"></i> CREATE</button>
+                    </li>
+                    <li class="nav-item" style="padding-bottom: 10px; padding-right: 7px;">
+                        <button type="button" class="btn btn-success btn-block btn-sm" onclick="EditMenuGridRow()" style="width: 100px !important;"><i class="fas fa-edit" style="padding-right:3px;"></i> EDIT</button>
+                    </li>
+                    <li class="nav-item" style="padding-bottom: 10px; padding-right: 7px;">
+                        <button type="button" class="btn btn-danger btn-block btn-sm" onclick="ConfirmDeleteMenu()" style="width: 100px !important;"><i class="fa fa-trash" style="padding-right:3px;"></i> DELETE</button>
+                    </li>
+                    <li class="nav-item" style="padding-bottom: 10px; padding-right: 7px;">
+                        <button type="button" class="btn btn-secondary btn-block btn-sm" onclick="ExportExcelMenu()" style="width: 100px !important;"><i class="fas fa-file-excel" style="padding-right:3px;"></i> EXCEL</button>
+                    </li>
+                    <li class="nav-item ml-auto">
+                        <input type="text" id="gridSearch" placeholder="Search..." style="margin-bottom: 7px; text-align: center; font-size: .7em; padding: 5px 0; color: #000; border: none; " />
+                    </li>
+                </ul>
+            </nav>
+            @Html.AjaxGrid(Url.Action("Account", "Management"))
+        </div>
+    </div>
+</section>
+
+@*<!--createAccountDialogModal-->*@
+<div class="modal fade" tabindex="-1" role="dialog" id="createAccountDialogModal">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div id="createAccountTabs">
+                @*<!--Tab Menu-->*@
+                <ul>
+                    <li><a href="#createAccountTabs-1">Add Account</a></li>
+                </ul>
+                @*Tabs-1: Create Account Modal*@
+                <div id="createAccountTabs-1">
+                    <form id="formCreateAccount">
+                        <div class="form-row">
+                            <div class="form-group col-md-6 mb-3">
+                                <label for="createCategoryName">Name</label>
+                                <input class="form-control form-control-sm" type="text" data-val="true" data-val-required="Please enter Name" id="createCategoryName" name="createCategoryName" value="">
+                                <span class="field-validation-valid text-danger" data-valmsg-for="createCategoryName" data-valmsg-replace="true"></span>
+                            </div>
+                            <div class="form-group col-md-6 mb-3">
+                                <label for="createCategoryDisplayName">DisplayName</label>
+                                <input class="form-control form-control-sm" type="text" data-val="true" data-val-required="Please enter DisplayName" id="createCategoryDisplayName" name="createCategoryDisplayName" value="">
+                                <span class="field-validation-valid text-danger" data-valmsg-for="createCategoryDisplayName" data-valmsg-replace="true"></span>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group col-md-6 mb-3">
+                                <label for="createCategoryIconPath">IconPath</label>
+                                <input class="form-control form-control-sm" type="text" data-val="true" data-val-required="Please enter IconPath" id="createCategoryIconPath" name="createCategoryIconPath" value="">
+                                <span class="field-validation-valid text-danger" data-valmsg-for="createCategoryIconPath" data-valmsg-replace="true"></span>
+                            </div>
+                            <div class="form-group col-md-6 mb-3">
+                                <label for="createCategoryController">Controller</label>
+                                <input class="form-control form-control-sm" type="text" data-val="true" data-val-required="Please enter Controller" id="createCategoryController" name="createCategoryController" value="">
+                                <span class="field-validation-valid text-danger" data-valmsg-for="createCategoryController" data-valmsg-replace="true"></span>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group col-md-6 mb-3">
+                                <label for="createCategoryAction">Action</label>
+                                <input class="form-control form-control-sm" type="text" data-val="false" id="createCategoryAction" name="createCategoryAction" value="">
+                            </div>
+                            <div class="form-group col-md-6 mb-3">
+                                <label for="createCategoryRole">Role</label>
+                                <br />
+                                <select id="createCategoryRole" name="createCategoryRole">
+                                    <option value="Admin">Admin</option>
+                                    <option value="User">User</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group col-md-6 mb-3">
+                                <label for="createCategoryOrder">Order</label>
+                                <input class="form-control form-control-sm" min="0" type="number" id="createCategoryOrder" name="createCategoryOrder" value="0">
+                            </div>
+                        </div>
+                    </form>
+                    <div class="modal-footer justify-content-between">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-primary" onclick="CreateCategory()">Save</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@*<!--EditCategoryDialogModal-->*@
+<div class="modal fade" tabindex="-1" role="dialog" id="editCategoryDialogModal">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div id="editCategoryTabs">
+                @*<!--Tab Menu-->*@
+                <ul>
+                    <li><a href="#editCategoryTabs-1">Edit Category</a></li>
+                </ul>
+                @*Tabs-1: Edit Category Modal*@
+                <div id="editCategoryTabs-1">
+                    <form id="formEditCategory">
+                        <input type="hidden" id="editCategoryId" />
+                        <div class="form-row">
+                            <div class="form-group col-md-6 mb-3">
+                                <label for="editCategoryName">Name</label>
+                                <input class="form-control form-control-sm" type="text" data-val="true" data-val-required="Please enter Name" id="editCategoryName" name="editCategoryName" value="">
+                                <span class="field-validation-valid text-danger" data-valmsg-for="editCategoryName" data-valmsg-replace="true"></span>
+                            </div>
+                            <div class="form-group col-md-6 mb-3">
+                                <label for="editCategoryDisplayName">DisplayName</label>
+                                <input class="form-control form-control-sm" type="text" data-val="true" data-val-required="Please enter DisplayName" id="editCategoryDisplayName" name="editCategoryDisplayName" value="">
+                                <span class="field-validation-valid text-danger" data-valmsg-for="editCategoryDisplayName" data-valmsg-replace="true"></span>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group col-md-6 mb-3">
+                                <label for="editCategoryIconPath">IconPath</label>
+                                <input class="form-control form-control-sm" type="text" data-val="true" data-val-required="Please enter IconPath" id="editCategoryIconPath" name="editCategoryIconPath" value="">
+                                <span class="field-validation-valid text-danger" data-valmsg-for="editCategoryIconPath" data-valmsg-replace="true"></span>
+                            </div>
+                            <div class="form-group col-md-6 mb-3">
+                                <label for="editCategoryController">Controller</label>
+                                <input class="form-control form-control-sm" type="text" data-val="true" data-val-required="Please enter Controller" id="editCategoryController" name="editCategoryController" value="">
+                                <span class="field-validation-valid text-danger" data-valmsg-for="editCategoryController" data-valmsg-replace="true"></span>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group col-md-6 mb-3">
+                                <label for="editCategoryAction">Action</label>
+                                <input class="form-control form-control-sm" type="text" data-val="false" id="editCategoryAction" name="editCategoryAction" value="">
+                            </div>
+                            <div class="form-group col-md-6 mb-3">
+                                <label for="editCategoryRole">Role</label>
+                                <br />
+                                <select id="editCategoryRole" name="editCategoryRole">
+                                    <option value="Admin">Admin</option>
+                                    <option value="User">User</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group col-md-6 mb-3">
+                                <label for="editCategoryOrder">Order</label>
+                                <input class="form-control form-control-sm" min="0" type="number" id="editCategoryOrder" name="editCategoryOrder" value="0">
+                            </div>
+                        </div>
+                    </form>
+                    <div class="modal-footer justify-content-between">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-primary" onclick="UpdateCategory()">Save</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@*<!--EditSubCategoryDialogModal-->*@
+<div class="modal fade" tabindex="-1" role="dialog" id="editSubCategoryDialogModal">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div id="editSubCategoryTabs">
+                @*<!--Tab Menu-->*@
+                <ul>
+                    <li><a href="#editSubCategoryTabs-1">Edit SubCategory</a></li>
+                </ul>
+                @*Tabs-1: Edit Category Modal*@
+                <div id="editSubCategoryTabs-1">
+                    <form id="formEditSubCategory">
+                        <input type="hidden" id="editSubCategoryId" />
+                        <div class="form-row">
+                            <div class="form-group col-md-6 mb-3">
+                                <label for="editSubCategoryCategoryId">CategoryId</label>
+                                <input class="form-control form-control-sm" min="0" type="number" id="editSubCategoryCategoryId" name="editSubCategoryCategoryId" value="0">
+                            </div>
+                            <div class="form-group col-md-6 mb-3">
+                                <label for="editSubCategoryName">Name</label>
+                                <input class="form-control form-control-sm" type="text" data-val="true" data-val-required="Please enter Name" id="editSubCategoryName" name="editSubCategoryName" value="">
+                                <span class="field-validation-valid text-danger" data-valmsg-for="editSubCategoryName" data-valmsg-replace="true"></span>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group col-md-6 mb-3">
+                                <label for="editSubCategoryDisplayName">DisplayName</label>
+                                <input class="form-control form-control-sm" type="text" data-val="true" data-val-required="Please enter DisplayName" id="editSubCategoryDisplayName" name="editSubCategoryDisplayName" value="">
+                                <span class="field-validation-valid text-danger" data-valmsg-for="editSubCategoryDisplayName" data-valmsg-replace="true"></span>
+                            </div>
+                            <div class="form-group col-md-6 mb-3">
+                                <label for="editSubCategoryIconPath">IconPath</label>
+                                <input class="form-control form-control-sm" type="text" data-val="true" data-val-required="Please enter IconPath" id="editSubCategoryIconPath" name="editSubCategoryIconPath" value="">
+                                <span class="field-validation-valid text-danger" data-valmsg-for="editSubCategoryIconPath" data-valmsg-replace="true"></span>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group col-md-6 mb-3">
+                                <label for="editSubCategoryAction">Action</label>
+                                <input class="form-control form-control-sm" type="text" data-val="true" data-val-required="Please enter Action" id="editSubCategoryAction" name="editSubCategoryAction" value="">
+                                <span class="field-validation-valid text-danger" data-valmsg-for="editSubCategoryAction" data-valmsg-replace="true"></span>
+                            </div>
+                            <div class="form-group col-md-6 mb-3">
+                                <label for="editSubCategoryRole">Role</label>
+                                <br />
+                                <select id="editSubCategoryRole" name="editSubCategoryRole">
+                                    <option value="Admin">Admin</option>
+                                    <option value="User">User</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group col-md-6 mb-3">
+                                <label for="editSubCategoryOrder">Order</label>
+                                <input class="form-control form-control-sm" min="0" type="number" id="editSubCategoryOrder" name="editSubCategoryOrder" value="0">
+                            </div>
+                        </div>
+                    </form>
+                    <div class="modal-footer justify-content-between">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-primary" onclick="UpdateSubCategory()">Save</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@*<!--ConfirmDeleteDialogModal-->*@
+<div class="modal" tabindex="-1" role="dialog" id="confirmDeleteMenuDialogModal">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-body">
+                Are you sure?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-danger" onclick="DeleteMenu()">Delete</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+@section Scripts{
+    <script src="~/admin/custom/Management/Account/js/site.js" asp-append-version="true"></script>
+}
