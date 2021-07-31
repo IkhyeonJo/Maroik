@@ -49,6 +49,8 @@ namespace MyLaboratory.Site.Controllers
         }
 
         #region Profile
+
+        #region Read
         [HttpGet]
         public async Task<IActionResult> Profile()
         {
@@ -57,7 +59,11 @@ namespace MyLaboratory.Site.Controllers
 
             return View(new ProfileOutputViewModel() { Email = tempAccount.Email, AvatarImagePath = tempAccount.AvatarImagePath, FullName = tempAccount.FullName, Created = tempAccount.Created });
         }
+        #endregion
 
+        #region Update
+
+        #region ProfileAvatar
         [HttpPost]
         [ValidateAntiForgeryToken]
         [RequiredHttpPostAccess(Role = Role.Admin)]
@@ -115,7 +121,9 @@ namespace MyLaboratory.Site.Controllers
                 // Don't rely on or trust the FileName property without validation.
             }
         }
+        #endregion
 
+        #region ProfileInformation
         [HttpPost]
         [ValidateAntiForgeryToken]
         [RequiredHttpPostAccess(Role = Role.Admin)]
@@ -141,7 +149,9 @@ namespace MyLaboratory.Site.Controllers
             }
             return RedirectToAction("Profile", "Management");
         }
+        #endregion
 
+        #region ProfilePassword
         [HttpPost]
         [ValidateAntiForgeryToken]
         [RequiredHttpPostAccess(Role = Role.Admin)]
@@ -180,7 +190,13 @@ namespace MyLaboratory.Site.Controllers
         }
         #endregion
 
+        #endregion
+
+        #endregion
+
         #region Account
+
+        #region Read
         [HttpGet]
         public async Task<IActionResult> Account(string wholeSearch)
         {
@@ -258,6 +274,8 @@ namespace MyLaboratory.Site.Controllers
             }
             return View();
         }
+        #endregion
+
         #endregion
 
         #region Menu
