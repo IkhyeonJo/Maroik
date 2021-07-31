@@ -268,7 +268,7 @@ namespace MyLaboratory.Site.Controllers
                     }
                 }
                 #endregion
-                
+
                 var result = accountOutputViewModels.AsQueryable();
                 return PartialView("_AccountGrid", result);
             }
