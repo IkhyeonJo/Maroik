@@ -456,7 +456,6 @@ namespace MyLaboratory.Site.Controllers
                 }
                 #endregion
 
-
                 var result = menuOutputViewModels.AsQueryable();
                 return PartialView("_MenuGrid", result);
             }
