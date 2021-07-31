@@ -555,6 +555,7 @@ namespace MyLaboratory.Site.Controllers
                 workSheetMenuOutputViewModels.Cells[1, 13].Value = nameof(AccountOutputViewModel.Updated).ToString();
                 workSheetMenuOutputViewModels.Cells[1, 14].Value = nameof(AccountOutputViewModel.Message).ToString();
                 workSheetMenuOutputViewModels.Cells[1, 15].Value = nameof(AccountOutputViewModel.Deleted).ToString();
+                workSheetMenuOutputViewModels.Cells.AutoFitColumns();
 
                 int recordIndex = 2;
                 foreach (var item in accountOutputViewModels)
