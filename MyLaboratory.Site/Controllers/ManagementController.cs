@@ -175,7 +175,7 @@ namespace MyLaboratory.Site.Controllers
             }
             else
             {
-                return Json(new { result = false, error = "Wrong Input" });
+                return Json(new { result = false, error = "Input is invalid" });
             }
         }
         #endregion
