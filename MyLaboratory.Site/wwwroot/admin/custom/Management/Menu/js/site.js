@@ -177,6 +177,7 @@ function CreateSubCategory() {
             }
         }
     });
+    return false;
 }
 
 function EditMenuGridRow() {
