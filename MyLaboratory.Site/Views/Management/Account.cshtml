@@ -12,7 +12,7 @@
                         <button type="button" class="btn btn-primary btn-block btn-sm" data-toggle="modal" data-target="#createAccountDialogModal" data-backdrop="static" data-keyboard="false" style="width: 100px !important;"><i class="fa fa-plus" style="padding-right:3px;"></i> CREATE</button>
                     </li>
                     <li class="nav-item" style="padding-bottom: 10px; padding-right: 7px;">
-                        <button type="button" class="btn btn-success btn-block btn-sm" onclick="EditMenuGridRow()" style="width: 100px !important;"><i class="fas fa-edit" style="padding-right:3px;"></i> EDIT</button>
+                        <button type="button" class="btn btn-success btn-block btn-sm" onclick="EditAccountGridRow()" style="width: 100px !important;"><i class="fas fa-edit" style="padding-right:3px;"></i> EDIT</button>
                     </li>
                     <li class="nav-item" style="padding-bottom: 10px; padding-right: 7px;">
                         <button type="button" class="btn btn-danger btn-block btn-sm" onclick="ConfirmDeleteMenu()" style="width: 100px !important;"><i class="fa fa-trash" style="padding-right:3px;"></i> DELETE</button>
@@ -80,17 +80,17 @@
     </div>
 </div>
 
-@*<!--EditCategoryDialogModal-->*@
-<div class="modal fade" tabindex="-1" role="dialog" id="editCategoryDialogModal">
+@*<!--EditAccountDialogModal-->*@
+<div class="modal fade" tabindex="-1" role="dialog" id="editAccountDialogModal">
     <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
-            <div id="editCategoryTabs">
+            <div id="editAccountTabs">
                 @*<!--Tab Menu-->*@
                 <ul>
-                    <li><a href="#editCategoryTabs-1">Edit Category</a></li>
+                    <li><a href="#editAccountTabs-1">Edit Category</a></li>
                 </ul>
-                @*Tabs-1: Edit Category Modal*@
-                <div id="editCategoryTabs-1">
+                @*Tabs-1: Edit Account Modal*@
+                <div id="editAccountTabs-1">
                     <form id="formEditCategory">
                         <input type="hidden" id="editCategoryId" />
                         <div class="form-row">
@@ -141,74 +141,6 @@
                     <div class="modal-footer justify-content-between">
                         <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
                         <button type="button" class="btn btn-primary" onclick="UpdateCategory()">Save</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-@*<!--EditSubCategoryDialogModal-->*@
-<div class="modal fade" tabindex="-1" role="dialog" id="editSubCategoryDialogModal">
-    <div class="modal-dialog modal-lg" role="document">
-        <div class="modal-content">
-            <div id="editSubCategoryTabs">
-                @*<!--Tab Menu-->*@
-                <ul>
-                    <li><a href="#editSubCategoryTabs-1">Edit SubCategory</a></li>
-                </ul>
-                @*Tabs-1: Edit Category Modal*@
-                <div id="editSubCategoryTabs-1">
-                    <form id="formEditSubCategory">
-                        <input type="hidden" id="editSubCategoryId" />
-                        <div class="form-row">
-                            <div class="form-group col-md-6 mb-3">
-                                <label for="editSubCategoryCategoryId">CategoryId</label>
-                                <input class="form-control form-control-sm" min="0" type="number" id="editSubCategoryCategoryId" name="editSubCategoryCategoryId" value="0">
-                            </div>
-                            <div class="form-group col-md-6 mb-3">
-                                <label for="editSubCategoryName">Name</label>
-                                <input class="form-control form-control-sm" type="text" data-val="true" data-val-required="Please enter Name" id="editSubCategoryName" name="editSubCategoryName" value="">
-                                <span class="field-validation-valid text-danger" data-valmsg-for="editSubCategoryName" data-valmsg-replace="true"></span>
-                            </div>
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group col-md-6 mb-3">
-                                <label for="editSubCategoryDisplayName">DisplayName</label>
-                                <input class="form-control form-control-sm" type="text" data-val="true" data-val-required="Please enter DisplayName" id="editSubCategoryDisplayName" name="editSubCategoryDisplayName" value="">
-                                <span class="field-validation-valid text-danger" data-valmsg-for="editSubCategoryDisplayName" data-valmsg-replace="true"></span>
-                            </div>
-                            <div class="form-group col-md-6 mb-3">
-                                <label for="editSubCategoryIconPath">IconPath</label>
-                                <input class="form-control form-control-sm" type="text" data-val="true" data-val-required="Please enter IconPath" id="editSubCategoryIconPath" name="editSubCategoryIconPath" value="">
-                                <span class="field-validation-valid text-danger" data-valmsg-for="editSubCategoryIconPath" data-valmsg-replace="true"></span>
-                            </div>
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group col-md-6 mb-3">
-                                <label for="editSubCategoryAction">Action</label>
-                                <input class="form-control form-control-sm" type="text" data-val="true" data-val-required="Please enter Action" id="editSubCategoryAction" name="editSubCategoryAction" value="">
-                                <span class="field-validation-valid text-danger" data-valmsg-for="editSubCategoryAction" data-valmsg-replace="true"></span>
-                            </div>
-                            <div class="form-group col-md-6 mb-3">
-                                <label for="editSubCategoryRole">Role</label>
-                                <br />
-                                <select id="editSubCategoryRole" name="editSubCategoryRole">
-                                    <option value="Admin">Admin</option>
-                                    <option value="User">User</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group col-md-6 mb-3">
-                                <label for="editSubCategoryOrder">Order</label>
-                                <input class="form-control form-control-sm" min="0" type="number" id="editSubCategoryOrder" name="editSubCategoryOrder" value="0">
-                            </div>
-                        </div>
-                    </form>
-                    <div class="modal-footer justify-content-between">
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                        <button type="button" class="btn btn-primary" onclick="UpdateSubCategory()">Save</button>
                     </div>
                 </div>
             </div>

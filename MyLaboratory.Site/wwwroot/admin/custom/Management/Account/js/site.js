@@ -4,8 +4,7 @@
 // Write your JavaScript code.
 $(function () {
     $("#createAccountTabs").tabs();
-    $("#editCategoryTabs").tabs();
-    $("#editSubCategoryTabs").tabs();
+    $("#editAccountTabs").tabs();
 });
 
 var selectedRowColor = "table-primary";
@@ -17,19 +16,14 @@ document.addEventListener("rowclick", e => {
     //e.detail.originalEvent - original tr click event which triggered the rowclick.
 
     var selectedRow = e.detail;
-    var selectedRowId = selectedRow.data.Id;
-    var selectedRowCategoryId = selectedRow.data.CategoryId;
-
-    if (selectedRowCategoryId === "") {
-        selectedRowCategoryId = "-1";
-    }
+    var selectedRowEmail = selectedRow.data.Email;
 
     $('#accountGrid > table > tbody  > tr').each(function (index, tr) {
         $(this).removeClass(selectedRowColor);
     }); // remove all selected row color
 
     $('#accountGrid > table > tbody  > tr').each(function (index, tr) {
-        if ((new String(selectedRowId).valueOf() === new String($(this).attr('data-email')).valueOf())) {
+        if ((new String(selectedRowEmail).valueOf() === new String($(this).attr('data-email')).valueOf())) {
             $(this).addClass(selectedRowColor);
         }
     }); // set selected row color class
@@ -64,7 +58,7 @@ $(document).on("dblclick", "#accountGrid > table > tbody  > tr", function () {
     $('#accountGrid > table > tbody  > tr').each(function (index, tr) {
 
         if ($(this).attr("class").includes(selectedRowColor)) { // Get SelectedRow by Color
-            EditMenuGridRow();
+            EditAccountGridRow();
         }
     });
     //console.log('dblclick-end');
@@ -175,12 +169,12 @@ function CreateSubCategory() {
     });
 }
 
-function EditMenuGridRow() {
+function EditAccountGridRow() {
 
     var selectedRowId = "-1";
     var selectedRowCategoryId = "-1";
 
-    $('#menuGrid > table > tbody  > tr').each(function (index, tr) {
+    $('#accountGrid > table > tbody  > tr').each(function (index, tr) {
         if ($(this).attr("class").includes(selectedRowColor)) { // Get SelectedRow by Color
             selectedRowId = $(this).attr("data-id");
             selectedRowCategoryId = $(this).attr("data-categoryid");
@@ -217,13 +211,13 @@ function EditMenuGridRow() {
                     editCategoryForm.find('select[id="editCategoryRole"]').val(data.category.role).change();
                     editCategoryForm.find('input[id="editCategoryOrder"]').val(data.category.order);
 
-                    $('#editCategoryDialogModal').modal({
+                    $('#editAccountDialogModal').modal({
                         keyboard: false,
                         backdrop: "static"
                     });
 
-                    $('#editCategoryDialogModal').modal('toggle');
-                    $('#editCategoryDialogModal').modal('show');
+                    $('#editAccountDialogModal').modal('toggle');
+                    $('#editAccountDialogModal').modal('show');
                 }
                 else {
                     toastr.error(data.error);
@@ -309,7 +303,7 @@ function UpdateCategory() {
         //cache: false,
         success: function (data) {
             if (data.result) {
-                $('#editCategoryDialogModal').modal('hide'); // hide Modal
+                $('#editAccountDialogModal').modal('hide'); // hide Modal
 
                 const grid = new MvcGrid(document.querySelector(".mvc-grid")); //reload grid
                 grid.reload(); //reload grid
