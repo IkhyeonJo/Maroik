@@ -171,32 +171,36 @@ function EditAccountGridRow() {
     });
 }
 
-function UpdateCategory() {
-    if (!$('#formEditCategory').valid()) {
+function UpdateAccount() {
+    if (!$('#formEditAccount').valid()) {
         return false;
     }
 
-    var createForm = $('#formEditCategory');
+    var createForm = $('#formEditAccount');
 
-    var id = createForm.find('input[id="editCategoryId"]').val();
-    var name = createForm.find('input[id="editCategoryName"]').val();
-    var displayName = createForm.find('input[id="editCategoryDisplayName"]').val();
-    var iconPath = createForm.find('input[id="editCategoryIconPath"]').val();
-    var controller = createForm.find('input[id="editCategoryController"]').val();
-    var action = createForm.find('input[id="editCategoryAction"]').val();
-    var role = createForm.find('select[id="editCategoryRole"]').val();
-    var order = createForm.find('input[id="editCategoryOrder"]').val();
+    var email = createForm.find('input[id="editAccountEmail"]').val();
+    var password = createForm.find('input[id="editAccountPassword"]').val();
+    var fullName = createForm.find('input[id="editAccountFullName"]').val();
+    var role = createForm.find('select[id="editAccountRole"]').val();
+    var locked = createForm.find('input[id="editAccountLocked"]').is(":checked");
+    var emailConfirmed = createForm.find('input[id="editAccountEmailConfirmed"]').is(":checked");
+    var agreedServiceTerms = createForm.find('input[id="editAccountAgreedServiceTerms"]').is(":checked");
+    var accountMessage = createForm.find('input[id="editAccountMessage"]').val();
+    var deleted = createForm.find('input[id="editAccountDeleted"]').is(":checked");
 
     var paramValue = JSON.stringify({
-        Id: id,
-        Name: name,
-        DisplayName: displayName,
-        IconPath: iconPath,
-        Controller: controller,
-        Action: action,
+        Email: email,
+        Password: password,
+        FullName: fullName,
         Role: role,
-        Order: order
+        Locked: locked,
+        EmailConfirmed: emailConfirmed,
+        AgreedServiceTerms: agreedServiceTerms,
+        AccountMessage: accountMessage,
+        Deleted: deleted
     });
+
+    return false;
 
     $.ajax({
         url: '/Management/UpdateCategory',
@@ -221,58 +225,7 @@ function UpdateCategory() {
             }
         }
     });
-}
-
-function UpdateSubCategory() {
-    if (!$('#formEditSubCategory').valid()) {
-        return false;
-    }
-
-    var createForm = $('#formEditSubCategory');
-
-    var id = createForm.find('input[id="editSubCategoryId"]').val();
-    var categoryId = createForm.find('input[id="editSubCategoryCategoryId"]').val();
-    var name = createForm.find('input[id="editSubCategoryName"]').val();
-    var displayName = createForm.find('input[id="editSubCategoryDisplayName"]').val();
-    var iconPath = createForm.find('input[id="editSubCategoryIconPath"]').val();
-    var action = createForm.find('input[id="editSubCategoryAction"]').val();
-    var role = createForm.find('select[id="editSubCategoryRole"]').val();
-    var order = createForm.find('input[id="editSubCategoryOrder"]').val();
-
-    var paramValue = JSON.stringify({
-        Id: id,
-        CategoryId: categoryId,
-        Name: name,
-        DisplayName: displayName,
-        IconPath: iconPath,
-        Action: action,
-        Role: role,
-        Order: order
-    });
-
-    $.ajax({
-        url: '/Management/UpdateSubCategory',
-        type: 'POST',
-        headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
-        dataType: 'json',
-        data: paramValue,
-        contentType: 'application/json; charset=utf-8',
-        //async: false,
-        //cache: false,
-        success: function (data) {
-            if (data.result) {
-                $('#editSubCategoryDialogModal').modal('hide'); // hide Modal
-
-                const grid = new MvcGrid(document.querySelector(".mvc-grid")); //reload grid
-                grid.reload(); //reload grid
-
-                toastr.success('Successfully updated the subCategory');
-            }
-            else {
-                toastr.error(data.error);
-            }
-        }
-    });
+    return false;
 }
 
 function ConfirmDeleteMenu() {
