@@ -118,151 +118,57 @@ function CreateAccount() {
     return false;
 }
 
-function CreateSubCategory() {
+function EditAccountGridRow() {
 
-    if (!$('#formCreateSubCategory').valid()) {
+    var selectedRowEmail = "";
+
+    $('#accountGrid > table > tbody  > tr').each(function (index, tr) {
+        if ($(this).attr("class").includes(selectedRowColor)) { // Get SelectedRow by Color
+            selectedRowEmail = $(this).attr("data-email");
+        }
+    }); // Search Selected Row
+
+    if (selectedRowEmail === "") {
+        toastr.error("Please select grid row");
         return false;
-    }
-
-    var createForm = $('#formCreateSubCategory');
-
-    var categoryId = createForm.find('input[id="createSubcategoryCategoryId"]').val();
-    var name = createForm.find('input[id="createSubcategoryName"]').val();
-    var displayName = createForm.find('input[id="createSubcategoryDisplayName"]').val();
-    var iconPath = createForm.find('input[id="createSubcategoryIconPath"]').val();
-    var action = createForm.find('input[id="createSubcategoryAction"]').val();
-    var role = createForm.find('select[id="createSubcategoryRole"]').val();
-    var order = createForm.find('input[id="createSubcategoryOrder"]').val();
-
-    var paramValue = JSON.stringify({
-        CategoryId: categoryId,
-        Name: name,
-        DisplayName: displayName,
-        IconPath: iconPath,
-        Action: action,
-        Role: role,
-        Order: order
-    });
+    } // check whether selected row exist or not
 
     $.ajax({
-        url: '/Management/CreateSubCategory',
+        url: '/Management/IsAccountExists' + '?email=' + selectedRowEmail,
         type: 'POST',
         headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
         dataType: 'json',
-        data: paramValue,
+        data: null,
         contentType: 'application/json; charset=utf-8',
         //async: false,
         //cache: false,
         success: function (data) {
             if (data.result) {
-                $('#createMenuDialogModal').modal('hide'); // hide Modal
 
-                const grid = new MvcGrid(document.querySelector(".mvc-grid")); //reload grid
-                grid.reload(); //reload grid
+                var formEditAccount = $('#formEditAccount');
 
-                toastr.success('Successfully created the subCategory');
+                formEditAccount.find('input[id="editAccountEmail"]').val(data.account.email);
+                formEditAccount.find('input[id="editAccountFullName"]').val(data.account.fullName);
+                formEditAccount.find('select[id="editAccountRole"]').val(data.account.role).change();
+                formEditAccount.find('input[id="editAccountLocked"]').prop("checked", data.account.locked);
+                formEditAccount.find('input[id="editAccountEmailConfirmed"]').prop("checked", data.account.emailConfirmed);
+                formEditAccount.find('input[id="editAccountAgreedServiceTerms"]').prop("checked", data.account.agreedServiceTerms);
+                formEditAccount.find('input[id="editAccountMessage"]').val(data.account.message);
+                formEditAccount.find('input[id="editAccountDeleted"]').prop("checked", data.account.deleted);
+
+                $('#editAccountDialogModal').modal({
+                    keyboard: false,
+                    backdrop: "static"
+                });
+
+                $('#editAccountDialogModal').modal('toggle');
+                $('#editAccountDialogModal').modal('show');
             }
             else {
                 toastr.error(data.error);
             }
         }
     });
-}
-
-function EditAccountGridRow() {
-
-    var selectedRowId = "-1";
-    var selectedRowCategoryId = "-1";
-
-    $('#accountGrid > table > tbody  > tr').each(function (index, tr) {
-        if ($(this).attr("class").includes(selectedRowColor)) { // Get SelectedRow by Color
-            selectedRowId = $(this).attr("data-id");
-            selectedRowCategoryId = $(this).attr("data-categoryid");
-        }
-    }); // Search Selected Row
-
-    if (selectedRowId === "-1") {
-        toastr.error("Please select grid row");
-        return false;
-    } // check whether selected row exist or not
-
-    if (selectedRowCategoryId === "-1") {
-
-        $.ajax({
-            url: '/Management/IsCategoryExists' + '?id=' + selectedRowId,
-            type: 'POST',
-            headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
-            dataType: 'json',
-            data: null,
-            contentType: 'application/json; charset=utf-8',
-            //async: false,
-            //cache: false,
-            success: function (data) {
-                if (data.result) {
-
-                    var editCategoryForm = $('#formEditCategory');
-
-                    editCategoryForm.find('input[id="editCategoryId"]').val(data.category.id);
-                    editCategoryForm.find('input[id="editCategoryName"]').val(data.category.name);
-                    editCategoryForm.find('input[id="editCategoryDisplayName"]').val(data.category.displayName);
-                    editCategoryForm.find('input[id="editCategoryIconPath"]').val(data.category.iconPath);
-                    editCategoryForm.find('input[id="editCategoryController"]').val(data.category.controller);
-                    editCategoryForm.find('input[id="editCategoryAction"]').val(data.category.action);
-                    editCategoryForm.find('select[id="editCategoryRole"]').val(data.category.role).change();
-                    editCategoryForm.find('input[id="editCategoryOrder"]').val(data.category.order);
-
-                    $('#editAccountDialogModal').modal({
-                        keyboard: false,
-                        backdrop: "static"
-                    });
-
-                    $('#editAccountDialogModal').modal('toggle');
-                    $('#editAccountDialogModal').modal('show');
-                }
-                else {
-                    toastr.error(data.error);
-                }
-            }
-        });
-    } // Category
-    else {
-        $.ajax({
-            url: '/Management/IsSubCategoryExists' + '?id=' + selectedRowId,
-            type: 'POST',
-            headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
-            dataType: 'json',
-            data: null,
-            contentType: 'application/json; charset=utf-8',
-            //async: false,
-            //cache: false,
-            success: function (data) {
-                if (data.result) {
-
-                    var editCategoryForm = $('#formEditSubCategory');
-
-                    editCategoryForm.find('input[id="editSubCategoryId"]').val(data.subCategory.id);
-                    editCategoryForm.find('input[id="editSubCategoryCategoryId"]').val(data.subCategory.categoryId);
-                    editCategoryForm.find('input[id="editSubCategoryName"]').val(data.subCategory.name);
-                    editCategoryForm.find('input[id="editSubCategoryDisplayName"]').val(data.subCategory.displayName);
-                    editCategoryForm.find('input[id="editSubCategoryIconPath"]').val(data.subCategory.iconPath);
-                    editCategoryForm.find('input[id="editSubCategoryAction"]').val(data.subCategory.action);
-                    editCategoryForm.find('select[id="editSubCategoryRole"]').val(data.subCategory.role).change();
-                    editCategoryForm.find('input[id="editSubCategoryOrder"]').val(data.subCategory.order);
-
-                    $('#editSubCategoryDialogModal').modal({
-                        keyboard: false,
-                        backdrop: "static"
-                    });
-
-                    $('#editSubCategoryDialogModal').modal('toggle');
-                    $('#editSubCategoryDialogModal').modal('show');
-                }
-                else {
-                    toastr.error(data.error);
-                }
-            }
-        });
-    } // SubCategory
 }
 
 function UpdateCategory() {
