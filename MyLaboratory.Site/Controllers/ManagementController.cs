@@ -415,6 +415,58 @@ namespace MyLaboratory.Site.Controllers
 
         #endregion
 
+        #region Update
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [RequiredHttpPostAccess(Role = Role.Admin)]
+        public async Task<IActionResult> UpdateAccount([FromBody] AccountInputViewModel accountInputViewModel)
+        {
+            try
+            {
+                ModelState.Remove(nameof(accountInputViewModel.AvatarImagePath));
+                ModelState.Remove(nameof(accountInputViewModel.RegistrationToken));
+                ModelState.Remove(nameof(accountInputViewModel.ResetPasswordToken));
+
+                if (ModelState.IsValid)
+                {
+                    var tempAccount = await accountRepository.GetAccountAsync(accountInputViewModel.Email);
+
+                    if (tempAccount == null)
+                    {
+                        return Json(new { result = false, error = "Email address is wrong" });
+                    }
+
+                    tempAccount.Email = accountInputViewModel.Email;
+                    tempAccount.HashedPassword = new RSA(RSAType.RSA2, Encoding.UTF8, RSA.privateKey, RSA.publicKey).Sign(accountInputViewModel.Password); // 암호화
+                    tempAccount.FullName = accountInputViewModel.FullName;
+                    tempAccount.Role = accountInputViewModel.Role;
+                    tempAccount.Locked = accountInputViewModel.Locked;
+                    if (accountInputViewModel.Locked == false)
+                    {
+                        tempAccount.LoginAttempt = 0;
+                    }
+                    tempAccount.EmailConfirmed = accountInputViewModel.EmailConfirmed;
+                    tempAccount.AgreedServiceTerms = accountInputViewModel.AgreedServiceTerms;
+                    tempAccount.Updated = DateTime.UtcNow;
+                    tempAccount.Message = accountInputViewModel.Message;
+                    tempAccount.Deleted = accountInputViewModel.Deleted;
+
+                    await accountRepository.UpdateAccountAsync(tempAccount);
+
+                    return Json(new { result = true, message = "Successfully updated the account" });
+                }
+                else
+                {
+                    return Json(new { result = false, error = "Input is invalid" });
+                }
+            }
+            catch (Exception e)
+            {
+                return Json(new { result = false, error = e.ToString() });
+            }
+        }
+        #endregion
+
         #endregion
 
         #region Menu

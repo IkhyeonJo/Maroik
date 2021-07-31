@@ -153,7 +153,7 @@ function EditAccountGridRow() {
                 formEditAccount.find('input[id="editAccountLocked"]').prop("checked", data.account.locked);
                 formEditAccount.find('input[id="editAccountEmailConfirmed"]').prop("checked", data.account.emailConfirmed);
                 formEditAccount.find('input[id="editAccountAgreedServiceTerms"]').prop("checked", data.account.agreedServiceTerms);
-                formEditAccount.find('input[id="editAccountMessage"]').val(data.account.message);
+                formEditAccount.find('input[id="editMessage"]').val(data.account.message);
                 formEditAccount.find('input[id="editAccountDeleted"]').prop("checked", data.account.deleted);
 
                 $('#editAccountDialogModal').modal({
@@ -185,7 +185,7 @@ function UpdateAccount() {
     var locked = createForm.find('input[id="editAccountLocked"]').is(":checked");
     var emailConfirmed = createForm.find('input[id="editAccountEmailConfirmed"]').is(":checked");
     var agreedServiceTerms = createForm.find('input[id="editAccountAgreedServiceTerms"]').is(":checked");
-    var accountMessage = createForm.find('input[id="editAccountMessage"]').val();
+    var message = createForm.find('input[id="editMessage"]').val();
     var deleted = createForm.find('input[id="editAccountDeleted"]').is(":checked");
 
     var paramValue = JSON.stringify({
@@ -196,14 +196,12 @@ function UpdateAccount() {
         Locked: locked,
         EmailConfirmed: emailConfirmed,
         AgreedServiceTerms: agreedServiceTerms,
-        AccountMessage: accountMessage,
+        Message: message,
         Deleted: deleted
     });
 
-    return false;
-
     $.ajax({
-        url: '/Management/UpdateCategory',
+        url: '/Management/UpdateAccount',
         type: 'POST',
         headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
         dataType: 'json',
@@ -218,7 +216,7 @@ function UpdateAccount() {
                 const grid = new MvcGrid(document.querySelector(".mvc-grid")); //reload grid
                 grid.reload(); //reload grid
 
-                toastr.success('Successfully updated the category');
+                toastr.success(data.message);
             }
             else {
                 toastr.error(data.error);
