@@ -44,46 +44,29 @@
                     <form id="formCreateAccount">
                         <div class="form-row">
                             <div class="form-group col-md-6 mb-3">
-                                <label for="createCategoryName">Name</label>
-                                <input class="form-control form-control-sm" type="text" data-val="true" data-val-required="Please enter Name" id="createCategoryName" name="createCategoryName" value="">
-                                <span class="field-validation-valid text-danger" data-valmsg-for="createCategoryName" data-valmsg-replace="true"></span>
+                                <label for="createAccountEmail">Email</label>
+                                <input class="form-control form-control-sm" type="text" data-val="true" data-val-required="Please enter email" id="createAccountEmail" name="createAccountEmail" value="">
+                                <span class="field-validation-valid text-danger" data-valmsg-for="createAccountEmail" data-valmsg-replace="true"></span>
                             </div>
                             <div class="form-group col-md-6 mb-3">
-                                <label for="createCategoryDisplayName">DisplayName</label>
-                                <input class="form-control form-control-sm" type="text" data-val="true" data-val-required="Please enter DisplayName" id="createCategoryDisplayName" name="createCategoryDisplayName" value="">
-                                <span class="field-validation-valid text-danger" data-valmsg-for="createCategoryDisplayName" data-valmsg-replace="true"></span>
-                            </div>
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group col-md-6 mb-3">
-                                <label for="createCategoryIconPath">IconPath</label>
-                                <input class="form-control form-control-sm" type="text" data-val="true" data-val-required="Please enter IconPath" id="createCategoryIconPath" name="createCategoryIconPath" value="">
-                                <span class="field-validation-valid text-danger" data-valmsg-for="createCategoryIconPath" data-valmsg-replace="true"></span>
-                            </div>
-                            <div class="form-group col-md-6 mb-3">
-                                <label for="createCategoryController">Controller</label>
-                                <input class="form-control form-control-sm" type="text" data-val="true" data-val-required="Please enter Controller" id="createCategoryController" name="createCategoryController" value="">
-                                <span class="field-validation-valid text-danger" data-valmsg-for="createCategoryController" data-valmsg-replace="true"></span>
+                                <label for="createAccountPassword">Password</label>
+                                <input class="form-control form-control-sm" type="text" data-val="true" data-val-required="Please enter password" id="createAccountPassword" name="createAccountPassword" value="">
+                                <span class="field-validation-valid text-danger" data-valmsg-for="createAccountPassword" data-valmsg-replace="true"></span>
                             </div>
                         </div>
                         <div class="form-row">
                             <div class="form-group col-md-6 mb-3">
-                                <label for="createCategoryAction">Action</label>
-                                <input class="form-control form-control-sm" type="text" data-val="false" id="createCategoryAction" name="createCategoryAction" value="">
+                                <label for="createAccountFullName">FullName</label>
+                                <input class="form-control form-control-sm" type="text" data-val="true" data-val-required="Please enter FullName" id="createAccountFullName" name="createAccountFullName" value="">
+                                <span class="field-validation-valid text-danger" data-valmsg-for="createAccountFullName" data-valmsg-replace="true"></span>
                             </div>
                             <div class="form-group col-md-6 mb-3">
-                                <label for="createCategoryRole">Role</label>
+                                <label for="createAccountRole">Role</label>
                                 <br />
-                                <select id="createCategoryRole" name="createCategoryRole">
+                                <select id="createAccountRole" name="createAccountRole">
                                     <option value="Admin">Admin</option>
                                     <option value="User">User</option>
                                 </select>
-                            </div>
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group col-md-6 mb-3">
-                                <label for="createCategoryOrder">Order</label>
-                                <input class="form-control form-control-sm" min="0" type="number" id="createCategoryOrder" name="createCategoryOrder" value="0">
                             </div>
                         </div>
                     </form>
