@@ -461,7 +461,7 @@ namespace MyLaboratory.Site.Controllers
                 return PartialView("_MenuGrid", result);
             }
 
-            return View(new MenuOutputViewModel());
+            return View();
         }
 
         [HttpPost]
