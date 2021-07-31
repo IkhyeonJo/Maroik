@@ -125,6 +125,7 @@ function CreateCategory() {
             }
         }
     });
+    return false;
 }
 
 function CreateSubCategory() {

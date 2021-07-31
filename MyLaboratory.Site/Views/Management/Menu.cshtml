@@ -42,7 +42,7 @@
                 </ul>
                 @*Tabs-1: Create Category Modal*@
                 <div id="createMenuTabs-1">
-                    <form id="formCreateCategory">
+                    <form id="formCreateCategory" onsubmit="return CreateCategory()">
                         <div class="form-row">
                             <div class="form-group col-md-6 mb-3">
                                 <label for="createCategoryName">Name</label>
@@ -87,11 +87,11 @@
                                 <input class="form-control form-control-sm" min="0" type="number" id="createCategoryOrder" name="createCategoryOrder" value="0">
                             </div>
                         </div>
+                        <div class="modal-footer justify-content-between">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                            <input type="submit" class="btn btn-primary" value="Save" />
+                        </div>
                     </form>
-                    <div class="modal-footer justify-content-between">
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                        <button type="button" class="btn btn-primary" onclick="CreateCategory()">Save</button>
-                    </div>
                 </div>
                 @*Tabs-2: Create SubCategory Modal*@
                 <div id="createMenuTabs-2">
