@@ -117,6 +117,9 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="Agreed Service Terms was not checked. Please try sign up again and login again." xml:space="preserve">
+    <value>약관 동의하지 않으셨습니다. 회원가입 재시도 후 로그인을 다시 해주시길 바랍니다.</value>
+  </data>
   <data name="BlockInternetExplorer" xml:space="preserve">
     <value>이 사이트는 Internet Explorer를 지원하지 않습니다. 다른 브라우저를 이용하시기 바랍니다.</value>
   </data>
@@ -128,6 +131,9 @@
   </data>
   <data name="Email or Password is wrong" xml:space="preserve">
     <value>이메일이나 비밀번호가 틀렸습니다.</value>
+  </data>
+  <data name="Email verification was not completed and Agreed Service Terms was not checked. Please try sign up again." xml:space="preserve">
+    <value>이메일 인증 및 약관에 동의하지 않으셨습니다. 회원가입을 다시 진행해주십시오.</value>
   </data>
   <data name="Email verification was not completed. Please try sign up again." xml:space="preserve">
     <value>이메일 인증이 완료되지 않았습니다. 다시 회원가입을 진행해주시길 바랍니다.</value>

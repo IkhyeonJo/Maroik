@@ -195,8 +195,21 @@ namespace MyLaboratory.Site.Controllers
                 }
                 else
                 {
-                    TempData["Error"] = localizer["Email verification was not completed. Please try sign up again."].Value;
-                    return View();
+                    if (tempAccount.EmailConfirmed == false)
+                    {
+                        TempData["Error"] = localizer["Email verification was not completed. Please try sign up again."].Value;
+                        return View();
+                    }
+                    else if (tempAccount.AgreedServiceTerms == false)
+                    {
+                        TempData["Error"] = localizer["Agreed Service Terms was not checked. Please try sign up again and login again."].Value;
+                        return View();
+                    }
+                    else
+                    {
+                        TempData["Error"] = localizer["Email verification was not completed and Agreed Service Terms was not checked. Please try sign up again."].Value;
+                        return View();
+                    }
                 }
                 #endregion
             }
@@ -404,6 +417,7 @@ namespace MyLaboratory.Site.Controllers
                             {
                                 account.Message = AccountMessage.UserAlreadyCreated;
                                 account.Updated = DateTime.UtcNow;
+                                account.AgreedServiceTerms = true;
                                 await accountRepository.UpdateAccountAsync(account);
                             }
                             catch
