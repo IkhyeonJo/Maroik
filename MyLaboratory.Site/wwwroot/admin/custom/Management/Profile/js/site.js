@@ -49,3 +49,39 @@ function UpdateProfileAvatar(noFileAttachedErrorMessage, fileSizeLimitationError
         }
     }
 }
+
+function UpdateProfilePassword() {
+
+    if (!$('#formUpdateProfilePassword').valid()) {
+        return false;
+    }
+
+    var createForm = $('#formUpdateProfilePassword');
+    var password = createForm.find('input[id="Password"]').val();
+    var newPassword = createForm.find('input[id="NewPassword"]').val();
+
+    var paramValue = JSON.stringify({
+        Password: password,
+        NewPassword: newPassword
+    });
+
+    $.ajax({
+        url: '/Management/UpdateProfilePassword',
+        type: 'POST',
+        headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
+        dataType: 'json',
+        data: paramValue,
+        contentType: 'application/json; charset=utf-8',
+        //async: false,
+        //cache: false,
+        success: function (data) {
+            if (data.result) {
+                toastr.success(data.error);
+            }
+            else {
+                toastr.error(data.error);
+            }
+        }
+    });
+    return false;
+}
