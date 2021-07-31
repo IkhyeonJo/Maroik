@@ -77,20 +77,21 @@ $('#gridSearch').on('input', function () {
     grid.reload();
 });
 
-function CreateCategory() {
+function CreateAccount() {
 
-    if (!$('#formCreateCategory').valid()) {
+    if (!$('#formCreateAccount').valid()) {
         return false;
     }
 
-    var createForm = $('#formCreateCategory');
-    var name = createForm.find('input[id="createCategoryName"]').val();
-    var displayName = createForm.find('input[id="createCategoryDisplayName"]').val();
-    var iconPath = createForm.find('input[id="createCategoryIconPath"]').val();
-    var controller = createForm.find('input[id="createCategoryController"]').val();
-    var action = createForm.find('input[id="createCategoryAction"]').val();
-    var role = createForm.find('select[id="createCategoryRole"]').val();
-    var order = createForm.find('input[id="createCategoryOrder"]').val();
+    var createForm = $('#formCreateAccount');
+
+    var email = createForm.find('input[id="createAccountEmail"]').val();
+    var password = createForm.find('input[id="createAccountPassword"]').val();
+    var fullName = createForm.find('input[id="createAccountFullName"]').val();
+    var role = createForm.find('select[id="createAccountRole"]').val();
+
+    var aa = '';
+    return false;
 
     var paramValue = JSON.stringify({
         Name: name,
