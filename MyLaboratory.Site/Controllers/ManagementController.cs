@@ -495,6 +495,58 @@ namespace MyLaboratory.Site.Controllers
         }
         #endregion
 
+        #region Excel
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [RequiredHttpPostAccess(Role = Role.Admin)]
+        public async Task<IActionResult> ExportExcelAccount(string fileName = "")
+        {
+
+            // query data from database
+            await Task.Yield();
+
+            List<AccountOutputViewModel> accountOutputViewModels = new List<AccountOutputViewModel>();
+
+            #region AdminCategories
+            foreach (var item in await accountRepository.GetAllAsync())
+            {
+                accountOutputViewModels.Add(new AccountOutputViewModel()
+                {
+                    Email = item.Email,
+                    HashedPassword = item.HashedPassword,
+                    FullName = item.FullName,
+                    AvatarImagePath = item.AvatarImagePath,
+                    Role = item.Role,
+                    Locked = item.Locked,
+                    LoginAttempt = item.LoginAttempt,
+                    EmailConfirmed = item.EmailConfirmed,
+                    AgreedServiceTerms = item.AgreedServiceTerms,
+                    RegistrationToken = item.RegistrationToken,
+                    ResetPasswordToken = item.ResetPasswordToken,
+                    Created = item.Created,
+                    Updated = item.Updated,
+                    Message = item.Message,
+                    Deleted = item.Deleted
+                });
+            }
+            #endregion
+
+            var stream = new MemoryStream();
+
+            using (var package = new ExcelPackage(stream))
+            {
+                var workSheetMenuOutputViewModels = package.Workbook.Worksheets.Add("Sheet1");
+                workSheetMenuOutputViewModels.Cells.LoadFromCollection(accountOutputViewModels, true);
+
+                package.Save();
+            }
+            stream.Position = 0;
+            string excelName = $"{fileName}-{DateTime.UtcNow.ToString("yyyyMMddHHmmssfff")}.xlsx";
+
+            return File(stream, "application/octet-stream", excelName);
+        }
+        #endregion
+
         #endregion
 
         #region Menu

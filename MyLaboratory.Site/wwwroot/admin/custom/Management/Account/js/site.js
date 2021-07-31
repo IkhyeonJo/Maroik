@@ -312,20 +312,20 @@ function DeleteAccount() {
     });
 }
 
-function ExportExcelMenu() {
+function ExportExcelAccount() {
     var form = document.createElement("form");
     var element1 = document.createElement("input");
     var element2 = document.createElement("input");
 
     form.method = "POST";
-    form.action = "/Management/ExportExcelMenu";
+    form.action = "/Management/ExportExcelAccount";
 
     element1.name = "__RequestVerificationToken";
     element1.value = $('input[name="__RequestVerificationToken"]').val();
     form.appendChild(element1);
 
     element2.name = "fileName";
-    element2.value = "Menu";
+    element2.value = "Account";
     form.appendChild(element2);
 
     document.body.appendChild(form);
