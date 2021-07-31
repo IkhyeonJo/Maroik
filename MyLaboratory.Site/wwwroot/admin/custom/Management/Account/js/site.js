@@ -226,155 +226,90 @@ function UpdateAccount() {
     return false;
 }
 
-function ConfirmDeleteMenu() {
+function ConfirmDeleteAccount() {
 
-    var selectedRowId = "-1";
+    var selectedRowEmail = "";
 
-    $('#menuGrid > table > tbody  > tr').each(function (index, tr) {
+    $('#accountGrid > table > tbody  > tr').each(function (index, tr) {
         if ($(this).attr("class").includes(selectedRowColor)) { // Get SelectedRow by Color
-            selectedRowId = $(this).attr("data-id");
+            selectedRowEmail = $(this).attr("data-email");
         }
     }); // Search Selected Row
 
-    if (selectedRowId === "-1") {
+    if (selectedRowEmail === "") {
         toastr.error("Please select grid row");
         return false;
     } // check whether selected row exist or not
 
-    $('#confirmDeleteMenuDialogModal').modal({
+    $('#confirmDeleteAccountDialogModal').modal({
         keyboard: false,
         backdrop: "static"
     });
 
-    $('#confirmDeleteMenuDialogModal').modal('toggle');
-    $('#confirmDeleteMenuDialogModal').modal('show');
+    $('#confirmDeleteAccountDialogModal').modal('toggle');
+    $('#confirmDeleteAccountDialogModal').modal('show');
 }
 
-function DeleteMenu() {
-    var selectedRowId = "-1";
-    var selectedRowCategoryId = "-1";
+function DeleteAccount() {
 
-    $('#menuGrid > table > tbody  > tr').each(function (index, tr) {
+    var selectedRowEmail = "";
+
+    $('#accountGrid > table > tbody  > tr').each(function (index, tr) {
         if ($(this).attr("class").includes(selectedRowColor)) { // Get SelectedRow by Color
-            selectedRowId = $(this).attr("data-id");
-            selectedRowCategoryId = $(this).attr("data-categoryid");
+            selectedRowEmail = $(this).attr("data-email");
         }
     }); // Search Selected Row
 
-    if (selectedRowId === "-1") {
+    if (selectedRowEmail === "") {
         toastr.error("Please select grid row");
         return false;
     } // check whether selected row exist or not
 
-    if (selectedRowCategoryId === "-1") {
+    $.ajax({
+        url: '/Management/IsAccountExists' + '?email=' + selectedRowEmail,
+        type: 'POST',
+        headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
+        dataType: 'json',
+        data: null,
+        contentType: 'application/json; charset=utf-8',
+        //async: false,
+        //cache: false,
+        success: function (data) {
+            if (data.result) {
 
-        $.ajax({
-            url: '/Management/IsCategoryExists' + '?id=' + selectedRowId,
-            type: 'POST',
-            headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
-            dataType: 'json',
-            data: null,
-            contentType: 'application/json; charset=utf-8',
-            //async: false,
-            //cache: false,
-            success: function (data) {
-                if (data.result) {
+                var paramValue = JSON.stringify({
+                    Email: data.account.email
+                });
 
-                    var paramValue = JSON.stringify({
-                        Id: data.category.id,
-                        Name: data.category.name,
-                        DisplayName: data.category.displayName,
-                        IconPath: data.category.iconPath,
-                        Controller: data.category.controller,
-                        Action: data.category.action,
-                        Role: data.category.role,
-                        Order: data.category.order
-                    });
+                $.ajax({
+                    url: '/Management/DeleteAccount',
+                    type: 'POST',
+                    headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
+                    dataType: 'json',
+                    data: paramValue,
+                    contentType: 'application/json; charset=utf-8',
+                    //async: false,
+                    //cache: false,
+                    success: function (data) {
+                        if (data.result) {
+                            $('#confirmDeleteAccountDialogModal').modal('hide'); // hide Modal
 
-                    $.ajax({
-                        url: '/Management/DeleteCategory',
-                        type: 'POST',
-                        headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
-                        dataType: 'json',
-                        data: paramValue,
-                        contentType: 'application/json; charset=utf-8',
-                        //async: false,
-                        //cache: false,
-                        success: function (data) {
-                            if (data.result) {
-                                $('#confirmDeleteMenuDialogModal').modal('hide'); // hide Modal
+                            const grid = new MvcGrid(document.querySelector(".mvc-grid")); //reload grid
+                            grid.reload(); //reload grid
 
-                                const grid = new MvcGrid(document.querySelector(".mvc-grid")); //reload grid
-                                grid.reload(); //reload grid
-
-                                toastr.success('Successfully deleted the category');
-                            }
-                            else {
-                                toastr.error(data.error);
-                            }
+                            toastr.success('Successfully deleted the account');
                         }
-                    });
-                }
-                else {
-                    toastr.error(data.error);
-                }
-            }
-        });
-    } // Category
-    else {
-        $.ajax({
-            url: '/Management/IsSubCategoryExists' + '?id=' + selectedRowId,
-            type: 'POST',
-            headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
-            dataType: 'json',
-            data: null,
-            contentType: 'application/json; charset=utf-8',
-            //async: false,
-            //cache: false,
-            success: function (data) {
-                if (data.result) {
-
-                    var paramValue = JSON.stringify({
-                        Id: data.subCategory.id,
-                        CategoryId: data.subCategory.categoryId,
-                        Name: data.subCategory.name,
-                        DisplayName: data.subCategory.displayName,
-                        IconPath: data.subCategory.iconPath,
-                        Action: data.subCategory.action,
-                        Role: data.subCategory.role,
-                        Order: data.subCategory.order
-                    });
-
-                    $.ajax({
-                        url: '/Management/DeleteSubCategory',
-                        type: 'POST',
-                        headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
-                        dataType: 'json',
-                        data: paramValue,
-                        contentType: 'application/json; charset=utf-8',
-                        //async: false,
-                        //cache: false,
-                        success: function (data) {
-                            if (data.result) {
-                                $('#confirmDeleteMenuDialogModal').modal('hide'); // hide Modal
-
-                                const grid = new MvcGrid(document.querySelector(".mvc-grid")); //reload grid
-                                grid.reload(); //reload grid
-
-                                toastr.success('Successfully deleted the subCategory');
-                            }
-                            else {
-                                toastr.error(data.error);
-                            }
+                        else {
+                            toastr.error(data.error);
                         }
-                    });
-                }
-                else {
-                    toastr.error(data.error);
-                }
+                    }
+                });
             }
-        });
-    } // SubCategory
+            else {
+                toastr.error(data.error);
+            }
+        }
+    });
 }
 
 function ExportExcelMenu() {

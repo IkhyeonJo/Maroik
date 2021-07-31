@@ -467,6 +467,34 @@ namespace MyLaboratory.Site.Controllers
         }
         #endregion
 
+        #region Delete
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [RequiredHttpPostAccess(Role = Role.Admin)]
+        public async Task<IActionResult> DeleteAccount([FromBody] AccountInputViewModel accountInputViewModel)
+        {
+            try
+            {
+                var tempAccount = await accountRepository.GetAccountAsync(accountInputViewModel.Email);
+
+                if (tempAccount == null)
+                {
+                    return Json(new { result = false, error = "Fail to find the account by given email address" });
+                }
+                else
+                {
+                    tempAccount.Deleted = true;
+                    await accountRepository.UpdateAccountAsync(tempAccount);
+                    return Json(new { result = true, account = tempAccount });
+                }
+            }
+            catch (Exception e)
+            {
+                return Json(new { result = false, error = e.ToString() });
+            }
+        }
+        #endregion
+
         #endregion
 
         #region Menu
