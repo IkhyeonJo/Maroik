@@ -136,6 +136,12 @@ namespace MyLaboratory.Site.Controllers
                     return View();
                 }
 
+                if (tempAccount.Deleted)
+                {
+                    TempData["Error"] = localizer["Your Account is Deleted, Please create your new account by clicking Sign up Button"].Value;
+                    return View();
+                }
+
                 if (tempAccount.Locked)
                 {
                     TempData["Error"] = localizer["Your Account is Locked, Please reset your password by clicking Forgot password Button"].Value;
