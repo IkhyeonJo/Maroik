@@ -369,6 +369,10 @@ namespace MyLaboratory.Site.Controllers
                             #region 메일 전송
                             Mail mail = new Mail();
                             mail.Subject = localizer["MyLaboratory Email Confirmation"].Value;
+                            if (string.IsNullOrEmpty(account.RegistrationToken))
+                            {
+                                account.RegistrationToken = GUIDToken.Generate();
+                            }
                             mail.Body = mailRepository.GetMailConfirmationBody(new LoginInputViewModel() { RegistrationToken = new RSA(RSAType.RSA2, Encoding.UTF8, RSA.privateKey, RSA.publicKey).Sign(account.RegistrationToken) }, localizer["Welcome to MyLaboratory Site"].Value, localizer["Click the link below to verify your Email"].Value, localizer["If this link does not work, please copy & paste this link to your Internet URL"].Value);
                             mail.ToMailIds = new List<string>
                             {
