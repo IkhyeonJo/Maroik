@@ -197,85 +197,7 @@ namespace MyLaboratory.Site.Controllers
 
         #region Account
 
-        #region Read
-        [HttpGet]
-        public async Task<IActionResult> Account(string wholeSearch)
-        {
-            if (HttpContext.Request.Headers["X-Requested-With"] == "XMLHttpRequest") // ajax
-            {
-                List<AccountOutputViewModel> accountOutputViewModels = new List<AccountOutputViewModel>();
-
-                #region Accounts
-                foreach (var item in await accountRepository.GetAllAsync())
-                {
-                    if (string.IsNullOrEmpty(wholeSearch))
-                    {
-                        accountOutputViewModels.Add(new AccountOutputViewModel()
-                        {
-                            Email = item.Email,
-                            HashedPassword = item.HashedPassword,
-                            FullName = item.FullName,
-                            AvatarImagePath = item.AvatarImagePath,
-                            Role = item.Role,
-                            Locked = item.Locked,
-                            LoginAttempt = item.LoginAttempt,
-                            EmailConfirmed = item.EmailConfirmed,
-                            AgreedServiceTerms = item.AgreedServiceTerms,
-                            RegistrationToken = item.RegistrationToken,
-                            ResetPasswordToken = item.ResetPasswordToken,
-                            Created = item.Created,
-                            Updated = item.Updated,
-                            Message = item.Message,
-                            Deleted = item.Deleted
-                        });
-                    }
-                    else
-                    {
-                        if (item.Email.ToString().Contains(wholeSearch) ||
-                            (item.HashedPassword?.ToString() ?? "").Contains(wholeSearch) ||
-                            (item.FullName?.ToString() ?? "").Contains(wholeSearch) ||
-                            (item.AvatarImagePath?.ToString() ?? "").Contains(wholeSearch) ||
-                            (item.Role?.ToString() ?? "").Contains(wholeSearch) ||
-                            (item.Locked.ToString() ?? "").Contains(wholeSearch) ||
-                            (item.LoginAttempt.ToString() ?? "").Contains(wholeSearch) ||
-                            (item.EmailConfirmed.ToString() ?? "").Contains(wholeSearch) ||
-                            (item.AgreedServiceTerms.ToString() ?? "").Contains(wholeSearch) ||
-                            (item.RegistrationToken?.ToString() ?? "").Contains(wholeSearch) ||
-                            (item.ResetPasswordToken?.ToString() ?? "").Contains(wholeSearch) ||
-                            (item.Created.ToString() ?? "").Contains(wholeSearch) ||
-                            (item.Updated.ToString() ?? "").Contains(wholeSearch) ||
-                            (item.Message?.ToString() ?? "").Contains(wholeSearch) ||
-                            item.Deleted.ToString().Contains(wholeSearch))
-                        {
-                            accountOutputViewModels.Add(new AccountOutputViewModel()
-                            {
-                                Email = item.Email,
-                                HashedPassword = item.HashedPassword,
-                                FullName = item.FullName,
-                                AvatarImagePath = item.AvatarImagePath,
-                                Role = item.Role,
-                                Locked = item.Locked,
-                                LoginAttempt = item.LoginAttempt,
-                                EmailConfirmed = item.EmailConfirmed,
-                                AgreedServiceTerms = item.AgreedServiceTerms,
-                                RegistrationToken = item.RegistrationToken,
-                                ResetPasswordToken = item.ResetPasswordToken,
-                                Created = item.Created,
-                                Updated = item.Updated,
-                                Message = item.Message,
-                                Deleted = item.Deleted
-                            });
-                        }
-                    }
-                }
-                #endregion
-
-                var result = accountOutputViewModels.AsQueryable();
-                return PartialView("_AccountGrid", result);
-            }
-            return View();
-        }
-
+        #region Create
         [HttpPost]
         [ValidateAntiForgeryToken]
         [RequiredHttpPostAccess(Role = Role.Admin)]
@@ -385,6 +307,86 @@ namespace MyLaboratory.Site.Controllers
             {
                 return Json(new { result = false, error = e.ToString() });
             }
+        }
+        #endregion
+
+        #region Read
+        [HttpGet]
+        public async Task<IActionResult> Account(string wholeSearch)
+        {
+            if (HttpContext.Request.Headers["X-Requested-With"] == "XMLHttpRequest") // ajax
+            {
+                List<AccountOutputViewModel> accountOutputViewModels = new List<AccountOutputViewModel>();
+
+                #region Accounts
+                foreach (var item in await accountRepository.GetAllAsync())
+                {
+                    if (string.IsNullOrEmpty(wholeSearch))
+                    {
+                        accountOutputViewModels.Add(new AccountOutputViewModel()
+                        {
+                            Email = item.Email,
+                            HashedPassword = item.HashedPassword,
+                            FullName = item.FullName,
+                            AvatarImagePath = item.AvatarImagePath,
+                            Role = item.Role,
+                            Locked = item.Locked,
+                            LoginAttempt = item.LoginAttempt,
+                            EmailConfirmed = item.EmailConfirmed,
+                            AgreedServiceTerms = item.AgreedServiceTerms,
+                            RegistrationToken = item.RegistrationToken,
+                            ResetPasswordToken = item.ResetPasswordToken,
+                            Created = item.Created,
+                            Updated = item.Updated,
+                            Message = item.Message,
+                            Deleted = item.Deleted
+                        });
+                    }
+                    else
+                    {
+                        if (item.Email.ToString().Contains(wholeSearch) ||
+                            (item.HashedPassword?.ToString() ?? "").Contains(wholeSearch) ||
+                            (item.FullName?.ToString() ?? "").Contains(wholeSearch) ||
+                            (item.AvatarImagePath?.ToString() ?? "").Contains(wholeSearch) ||
+                            (item.Role?.ToString() ?? "").Contains(wholeSearch) ||
+                            (item.Locked.ToString() ?? "").Contains(wholeSearch) ||
+                            (item.LoginAttempt.ToString() ?? "").Contains(wholeSearch) ||
+                            (item.EmailConfirmed.ToString() ?? "").Contains(wholeSearch) ||
+                            (item.AgreedServiceTerms.ToString() ?? "").Contains(wholeSearch) ||
+                            (item.RegistrationToken?.ToString() ?? "").Contains(wholeSearch) ||
+                            (item.ResetPasswordToken?.ToString() ?? "").Contains(wholeSearch) ||
+                            (item.Created.ToString() ?? "").Contains(wholeSearch) ||
+                            (item.Updated.ToString() ?? "").Contains(wholeSearch) ||
+                            (item.Message?.ToString() ?? "").Contains(wholeSearch) ||
+                            item.Deleted.ToString().Contains(wholeSearch))
+                        {
+                            accountOutputViewModels.Add(new AccountOutputViewModel()
+                            {
+                                Email = item.Email,
+                                HashedPassword = item.HashedPassword,
+                                FullName = item.FullName,
+                                AvatarImagePath = item.AvatarImagePath,
+                                Role = item.Role,
+                                Locked = item.Locked,
+                                LoginAttempt = item.LoginAttempt,
+                                EmailConfirmed = item.EmailConfirmed,
+                                AgreedServiceTerms = item.AgreedServiceTerms,
+                                RegistrationToken = item.RegistrationToken,
+                                ResetPasswordToken = item.ResetPasswordToken,
+                                Created = item.Created,
+                                Updated = item.Updated,
+                                Message = item.Message,
+                                Deleted = item.Deleted
+                            });
+                        }
+                    }
+                }
+                #endregion
+
+                var result = accountOutputViewModels.AsQueryable();
+                return PartialView("_AccountGrid", result);
+            }
+            return View();
         }
         #endregion
 
