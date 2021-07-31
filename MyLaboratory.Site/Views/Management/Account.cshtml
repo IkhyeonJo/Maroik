@@ -41,7 +41,7 @@
                 </ul>
                 @*Tabs-1: Create Account Modal*@
                 <div id="createAccountTabs-1">
-                    <form id="formCreateAccount">
+                    <form id="formCreateAccount" onsubmit="return CreateAccount()">
                         <div class="form-row">
                             <div class="form-group col-md-6 mb-3">
                                 <label for="createAccountEmail">Email</label>
@@ -50,7 +50,7 @@
                             </div>
                             <div class="form-group col-md-6 mb-3">
                                 <label for="createAccountPassword">Password</label>
-                                <input class="form-control form-control-sm" type="text" data-val="true" data-val-required="Please enter password" id="createAccountPassword" name="createAccountPassword" value="">
+                                <input class="form-control form-control-sm" type="password" data-val="true" data-val-required="Please enter password" id="createAccountPassword" name="createAccountPassword" value="">
                                 <span class="field-validation-valid text-danger" data-valmsg-for="createAccountPassword" data-valmsg-replace="true"></span>
                             </div>
                         </div>
@@ -69,11 +69,11 @@
                                 </select>
                             </div>
                         </div>
+                        <div class="modal-footer justify-content-between">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                            <input type="submit" class="btn btn-primary" value="Save"/>
+                        </div>
                     </form>
-                    <div class="modal-footer justify-content-between">
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                        <button type="button" class="btn btn-primary" onclick="CreateCategory()">Save</button>
-                    </div>
                 </div>
             </div>
         </div>
