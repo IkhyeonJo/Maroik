@@ -54,7 +54,7 @@ DB 테이블이나 Migarion시, 모든 것은 DB에 근거해서 모델이나 Mi
 
 [Package Manager Console] 창 띄우고 [cd .\MyLaboratory.Site] 명령어를 통해 MyLaboratory.Site로 이동 (ApplicationDbContext가 거기 있으므로) 
 
-dotnet ef dbcontext scaffold "server=localhost;port=3306;userid=root;password=***REMOVED***;database=ikhyeondb;" "Pomelo.EntityFrameworkCore.MySql" -o ./Models11 -f
+dotnet ef dbcontext scaffold "server=localhost;port=3306;userid=root;password=***REMOVED***;database=mylaboratory;" "Pomelo.EntityFrameworkCore.MySql" -o ./Models11 -f
 
 이 명령어를 통해 기존 모델, ApplicationDbContext것과 새롭게 생성된 모델, ApplicationDbContext 것을 비교하여 모델, ApplicationDbContext 다시 새롭게 덮어씌움
 
@@ -106,7 +106,7 @@ https://www.youtube.com/watch?v=N10QW_AIOnI
 MySql Table의 모든 종류를 자동으로 C# 모든 Model로 변환하는 방법 (Init.sql을 MariaDB에 넣고... 이 방법을 쓰면 알아서 DB 테이블들이 다 C# 모델 클래스로 다 변환됨...)
 Package Manager Console 열고
 cd .\MyLaboratory.Site
-dotnet ef dbcontext scaffold "server=localhost;port=3306;userid=root;password=***REMOVED***;database=ikhyeondb;" "Pomelo.EntityFrameworkCore.MySql" -o ./Models11 -f
+dotnet ef dbcontext scaffold "server=localhost;port=3306;userid=root;password=***REMOVED***;database=mylaboratory;" "Pomelo.EntityFrameworkCore.MySql" -o ./Models11 -f
 이러면 DB 테이블이 알아서 다 C# 모델로 변형된다.
 
 https://docs.microsoft.com/en-us/aspnet/core/data/ef-mvc/migrations?view=aspnetcore-5.0#pmc
@@ -209,7 +209,7 @@ https://reddb.tistory.com/126
 DELIMITER $$
 CREATE PROCEDURE LockAccount(IN Email VARCHAR(255))
 BEGIN
-UPDATE ikhyeondb.Account
+UPDATE mylaboratory.Account
 SET IsLocked=1
 WHERE Email=Email;
 END $$
