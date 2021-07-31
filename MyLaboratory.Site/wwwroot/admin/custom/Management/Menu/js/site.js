@@ -326,6 +326,7 @@ function UpdateCategory() {
             }
         }
     });
+    return false;
 }
 
 function UpdateSubCategory() {
