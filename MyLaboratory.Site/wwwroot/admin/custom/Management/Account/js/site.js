@@ -90,21 +90,15 @@ function CreateAccount() {
     var fullName = createForm.find('input[id="createAccountFullName"]').val();
     var role = createForm.find('select[id="createAccountRole"]').val();
 
-    var aa = '';
-    return false;
-
     var paramValue = JSON.stringify({
-        Name: name,
-        DisplayName: displayName,
-        IconPath: iconPath,
-        Controller: controller,
-        Action: action,
-        Role: role,
-        Order: order
+        Email: email,
+        Password: password,
+        FullName: fullName,
+        Role: role
     });
 
     $.ajax({
-        url: '/Management/CreateCategory',
+        url: '/Management/CreateAccount',
         type: 'POST',
         headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
         dataType: 'json',
@@ -114,18 +108,20 @@ function CreateAccount() {
         //cache: false,
         success: function (data) {
             if (data.result) {
-                $('#createMenuDialogModal').modal('hide'); // hide Modal
+                $('#createAccountDialogModal').modal('hide'); // hide Modal
 
                 const grid = new MvcGrid(document.querySelector(".mvc-grid")); //reload grid
                 grid.reload(); //reload grid
 
-                toastr.success('Successfully created the category');
+                toastr.success(data.message);
             }
             else {
                 toastr.error(data.error);
             }
         }
     });
+
+    return false;
 }
 
 function CreateSubCategory() {

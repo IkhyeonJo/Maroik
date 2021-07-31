@@ -25,6 +25,7 @@ using MyLaboratory.Site.Helpers;
 using Newtonsoft.Json;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Net.Mail;
 
 namespace MyLaboratory.Site.Controllers
 {
@@ -273,6 +274,117 @@ namespace MyLaboratory.Site.Controllers
                 return PartialView("_AccountGrid", result);
             }
             return View();
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [RequiredHttpPostAccess(Role = Role.Admin)]
+        public async Task<IActionResult> CreateAccount([FromBody] AccountInputViewModel accountInputViewModel)
+        {
+            try
+            {
+                ModelState.Remove(nameof(accountInputViewModel.AvatarImagePath));
+                ModelState.Remove(nameof(accountInputViewModel.RegistrationToken));
+                ModelState.Remove(nameof(accountInputViewModel.ResetPasswordToken));
+                ModelState.Remove(nameof(accountInputViewModel.Message));
+
+                if (ModelState.IsValid)
+                {
+                    #region Email 형식 체크
+                    bool IsValidEmail(string email)
+                    {
+                        if (!MailAddress.TryCreate(email, out var mailAddress))
+                            return false;
+
+                        // And if you want to be more strict:
+                        var hostParts = mailAddress.Host.Split('.');
+                        if (hostParts.Length == 1)
+                            return false; // No dot.
+                        if (hostParts.Any(p => p == string.Empty))
+                            return false; // Double dot.
+                        if (hostParts[^1].Length < 2)
+                            return false; // TLD only one letter.
+
+                        if (mailAddress.User.Contains(' '))
+                            return false;
+                        if (mailAddress.User.Split('.').Any(p => p == string.Empty))
+                            return false; // Double dot or dot at end of user part.
+
+                        return true;
+                    }
+                    if (!IsValidEmail(accountInputViewModel.Email)) // 유효하지 않은 메일 형식
+                    {
+                        return Json(new { result = false, error = "Invalid email form" });
+                    }
+                    #endregion
+
+                    #region Password 형식 체크
+                    if (!new Regex("^((?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])|(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[^a-zA-Z0-9])|(?=.*?[A-Z])(?=.*?[0-9])(?=.*?[^a-zA-Z0-9])|(?=.*?[a-z])(?=.*?[0-9])(?=.*?[^a-zA-Z0-9])).{8,}$").IsMatch(accountInputViewModel.Password)) // 유효하지 않은 비밀번호 형식
+                    {
+                        return Json(new { result = false, error = "Password must be at least 8 characters and contain at 3 of 4 of the following: upper case (A-Z), lower case (a-z), number (0-9) and special character (e.g. !@#$%^&*)" });
+                    }
+                    #endregion
+
+                    #region FullName 형식 체크
+                    if (string.IsNullOrEmpty(accountInputViewModel.FullName))
+                    {
+                        return Json(new { result = false, error = "Please enter FullName" });
+                    }
+                    else if (!(accountInputViewModel.FullName.Length >= 1 && accountInputViewModel.FullName.Length <= 255))
+                    {
+                        return Json(new { result = false, error = "FullName is must be between 1 and 255 characters" });
+                    }
+                    #endregion
+
+                    #region Role 체크
+                    if (!(accountInputViewModel.Role == Role.Admin || accountInputViewModel.Role == Role.User))
+                    {
+                        accountInputViewModel.Role = Role.User;
+                    }
+                    #endregion
+
+                    #region 이미 입력된 이메일로 계정이 있는 지 확인
+                    if (await accountRepository.GetAccountAsync(accountInputViewModel.Email) != null)
+                    {
+                        return Json(new { result = false, error = "This account has already been created." });
+                    }
+                    #endregion
+
+                    #region 계정 생성
+                    await accountRepository.CreateAccountAsync
+                    (
+                    new Account()
+                    {
+                        Email = accountInputViewModel.Email,
+                        HashedPassword = new RSA(RSAType.RSA2, Encoding.UTF8, RSA.privateKey, RSA.publicKey).Sign(accountInputViewModel.Password), // 암호화
+                        FullName = accountInputViewModel.FullName,
+                        AvatarImagePath = "/upload/Management/Profile/default-avatar.jpg",
+                        Role = accountInputViewModel.Role,
+                        Locked = false,
+                        LoginAttempt = 0,
+                        EmailConfirmed = true,
+                        AgreedServiceTerms = true,
+                        RegistrationToken = null,
+                        ResetPasswordToken = null,
+                        Created = DateTime.UtcNow,
+                        Updated = DateTime.UtcNow,
+                        Message = AccountMessage.Success,
+                        Deleted = false
+                    }
+                    );
+                    return Json(new { result = true, message = "Account create successfully done." });
+                    #endregion
+                }
+                else
+                {
+                    return Json(new { result = false, error = "Input is invalid" });
+
+                }
+            }
+            catch (Exception e)
+            {
+                return Json(new { result = false, error = e.ToString() });
+            }
         }
         #endregion
 

@@ -13,9 +13,9 @@ namespace MyLaboratory.Site.Models.ViewModels.Management
         [Required(ErrorMessage = "Please enter Email")]
         [Display(Name = "Email")]
         public string Email { get; set; }
-        [Required(ErrorMessage = "Please enter HashedPassword")]
-        [Display(Name = "HashedPassword")]
-        public string HashedPassword { get; set; }
+        [Required(ErrorMessage = "Please enter Password")]
+        [Display(Name = "Password")]
+        public string Password { get; set; }
         [Required(ErrorMessage = "Please enter FullName")]
         [Display(Name = "FullName")]
         public string FullName { get; set; }
