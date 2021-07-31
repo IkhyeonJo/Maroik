@@ -536,7 +536,46 @@ namespace MyLaboratory.Site.Controllers
             using (var package = new ExcelPackage(stream))
             {
                 var workSheetMenuOutputViewModels = package.Workbook.Worksheets.Add("Sheet1");
-                workSheetMenuOutputViewModels.Cells.LoadFromCollection(accountOutputViewModels, true);
+
+                workSheetMenuOutputViewModels.Row(1).Height = 20;
+                workSheetMenuOutputViewModels.Row(1).Style.HorizontalAlignment = OfficeOpenXml.Style.ExcelHorizontalAlignment.Center;
+                workSheetMenuOutputViewModels.Row(1).Style.Font.Bold = true;
+                workSheetMenuOutputViewModels.Cells[1, 1].Value = nameof(AccountOutputViewModel.Email).ToString();
+                workSheetMenuOutputViewModels.Cells[1, 2].Value = nameof(AccountOutputViewModel.HashedPassword).ToString();
+                workSheetMenuOutputViewModels.Cells[1, 3].Value = nameof(AccountOutputViewModel.FullName).ToString();
+                workSheetMenuOutputViewModels.Cells[1, 4].Value = nameof(AccountOutputViewModel.AvatarImagePath).ToString();
+                workSheetMenuOutputViewModels.Cells[1, 5].Value = nameof(AccountOutputViewModel.Role).ToString();
+                workSheetMenuOutputViewModels.Cells[1, 6].Value = nameof(AccountOutputViewModel.Locked).ToString();
+                workSheetMenuOutputViewModels.Cells[1, 7].Value = nameof(AccountOutputViewModel.LoginAttempt).ToString();
+                workSheetMenuOutputViewModels.Cells[1, 8].Value = nameof(AccountOutputViewModel.EmailConfirmed).ToString();
+                workSheetMenuOutputViewModels.Cells[1, 9].Value = nameof(AccountOutputViewModel.AgreedServiceTerms).ToString();
+                workSheetMenuOutputViewModels.Cells[1, 10].Value = nameof(AccountOutputViewModel.RegistrationToken).ToString();
+                workSheetMenuOutputViewModels.Cells[1, 11].Value = nameof(AccountOutputViewModel.ResetPasswordToken).ToString();
+                workSheetMenuOutputViewModels.Cells[1, 12].Value = nameof(AccountOutputViewModel.Created).ToString();
+                workSheetMenuOutputViewModels.Cells[1, 13].Value = nameof(AccountOutputViewModel.Updated).ToString();
+                workSheetMenuOutputViewModels.Cells[1, 14].Value = nameof(AccountOutputViewModel.Message).ToString();
+                workSheetMenuOutputViewModels.Cells[1, 15].Value = nameof(AccountOutputViewModel.Deleted).ToString();
+
+                int recordIndex = 2;
+                foreach (var item in accountOutputViewModels)
+                {
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 1].Value = item.Email;
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 2].Value = item.HashedPassword;
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 3].Value = item.FullName;
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 4].Value = item.AvatarImagePath;
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 5].Value = item.Role;
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 6].Value = item.Locked;
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 7].Value = item.LoginAttempt;
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 8].Value = item.EmailConfirmed;
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 9].Value = item.AgreedServiceTerms;
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 10].Value = item.RegistrationToken;
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 11].Value = item.ResetPasswordToken;
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 12].Value = item.Created.ToString("d");
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 13].Value = item.Updated.ToString("d");
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 14].Value = item.Message;
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 15].Value = item.Deleted;
+                    recordIndex++;
+                }
 
                 package.Save();
             }
