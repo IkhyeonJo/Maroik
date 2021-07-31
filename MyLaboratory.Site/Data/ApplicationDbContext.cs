@@ -146,7 +146,6 @@ namespace MyLaboratory.Site.Data
                 entity.HasOne(d => d.Category)
                     .WithMany(p => p.SubCategories)
                     .HasForeignKey(d => d.CategoryId)
-                    .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("SubCategories_FK");
             });
 

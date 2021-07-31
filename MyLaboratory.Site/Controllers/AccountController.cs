@@ -46,7 +46,7 @@ namespace MyLaboratory.Site.Controllers
         #region 언어 변경
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult CultureManagement([FromBody]LoginInputViewModel loginInputViewModel)
+        public IActionResult CultureManagement([FromBody] LoginInputViewModel loginInputViewModel)
         {
             Response.Cookies.Append(CookieRequestCultureProvider.DefaultCookieName, CookieRequestCultureProvider.MakeCookieValue(new RequestCulture(loginInputViewModel.Culture)),
                 new CookieOptions { Expires = DateTimeOffset.Now.AddDays(30), Secure = true, HttpOnly = true, SameSite = SameSiteMode.Strict });
@@ -271,13 +271,15 @@ namespace MyLaboratory.Site.Controllers
                                     AvatarImagePath = "/upload/Management/Profile/default-avatar.jpg",
                                     Role = Role.User,
                                     Locked = false,
+                                    LoginAttempt = 0,
                                     EmailConfirmed = false,
                                     AgreedServiceTerms = true,
                                     RegistrationToken = loginInputViewModel.RegistrationToken,
                                     ResetPasswordToken = null,
                                     Created = DateTime.UtcNow,
                                     Updated = DateTime.UtcNow,
-                                    Message = AccountMessage.UserCreatedVerifyEmail
+                                    Message = AccountMessage.UserCreatedVerifyEmail,
+                                    Deleted = false
                                 }
                                 );
                         }
@@ -313,13 +315,15 @@ namespace MyLaboratory.Site.Controllers
                                         AvatarImagePath = "/upload/Management/Profile/default-avatar.jpg",
                                         Role = Role.User,
                                         Locked = false,
+                                        LoginAttempt = 0,
                                         EmailConfirmed = false,
                                         AgreedServiceTerms = true,
                                         RegistrationToken = loginInputViewModel.RegistrationToken,
                                         ResetPasswordToken = null,
                                         Created = DateTime.UtcNow,
                                         Updated = DateTime.UtcNow,
-                                        Message = AccountMessage.FailToMailSent
+                                        Message = AccountMessage.FailToMailSent,
+                                        Deleted = false
                                     });
                             }
                             catch
