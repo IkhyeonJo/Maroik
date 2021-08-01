@@ -118,7 +118,7 @@ function CreateAccount() {
     return false;
 }
 
-function EditAccountGridRow() {
+function EditAccountGridRow(errorMessageSelectGridRow) {
 
     var selectedRowEmail = "";
 
@@ -129,7 +129,7 @@ function EditAccountGridRow() {
     }); // Search Selected Row
 
     if (selectedRowEmail === "") {
-        toastr.error("Please select grid row");
+        toastr.error(errorMessageSelectGridRow);
         return false;
     } // check whether selected row exist or not
 
