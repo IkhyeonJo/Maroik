@@ -594,7 +594,7 @@ namespace MyLaboratory.Site.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         [RequiredHttpPostAccess(Role = Role.Admin)]
-        public IActionResult CreateCategory([FromBody] MenuInputViewModel menuInputViewModel)
+        public async Task<IActionResult> CreateCategory([FromBody] MenuInputViewModel menuInputViewModel)
         {
             try
             {
@@ -612,7 +612,7 @@ namespace MyLaboratory.Site.Controllers
                         Role = menuInputViewModel.Role,
                         Order = menuInputViewModel.Order
                     };
-                    categoryRepository.CreateCategory(category);
+                    await categoryRepository.CreateCategoryAsync(category);
 
                     return Json(new { result = true });
                 }

@@ -26,10 +26,10 @@ namespace MyLaboratory.Site.Services
                     .ToListAsync();
         }
 
-        public void CreateCategory(Category category)
+        public async Task CreateCategoryAsync(Category category)
         {
-            context.Categories.Add(category);
-            context.SaveChanges();
+            await context.Categories.AddAsync(category);
+            await context.SaveChangesAsync();
         }
 
         public void UpdateCategory(Category category)
