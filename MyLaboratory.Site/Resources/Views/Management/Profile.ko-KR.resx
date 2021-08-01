@@ -117,13 +117,55 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="Avatar Image" xml:space="preserve">
+    <value>아바타 사진</value>
+  </data>
+  <data name="Browse" xml:space="preserve">
+    <value>검색</value>
+  </data>
+  <data name="Change Password" xml:space="preserve">
+    <value>비밀번호 변경</value>
+  </data>
+  <data name="Confirm new password" xml:space="preserve">
+    <value>확인 새로운 비밀번호</value>
+  </data>
+  <data name="Create" xml:space="preserve">
+    <value>생성일</value>
+  </data>
+  <data name="Email" xml:space="preserve">
+    <value>이메일</value>
+  </data>
   <data name="File Size must be smaller than 10MB." xml:space="preserve">
     <value>파일 크기는 10MB 이하만 가능합니다.</value>
+  </data>
+  <data name="Full name" xml:space="preserve">
+    <value>성명</value>
+  </data>
+  <data name="Modify" xml:space="preserve">
+    <value>수정</value>
+  </data>
+  <data name="New Password" xml:space="preserve">
+    <value>새로운 비밀번호</value>
   </data>
   <data name="Only .jpg or .png file allowed." xml:space="preserve">
     <value>확장자 jpg 또는 png 파일만 가능합니다.</value>
   </data>
+  <data name="Password" xml:space="preserve">
+    <value>비밀번호</value>
+  </data>
   <data name="Please attach a file." xml:space="preserve">
     <value>파일 첨부하여 주십시오.</value>
+  </data>
+  <data name="Profile Information" xml:space="preserve">
+    <value>프로필 정보</value>
+  </data>
+  <data name="Profile picture" xml:space="preserve">
+    <value>프로필 사진</value>
+  </data>
+  <data name="Settings" xml:space="preserve">
+    <value>설정</value>
+  </data>
+  <data name="User profile picture" xml:space="preserve">
+    <value>사용자 프로필 사진</value>
   </data>
 </root>

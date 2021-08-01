@@ -117,13 +117,55 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="Avatar Image" xml:space="preserve">
+    <value>Avatar Image</value>
+  </data>
+  <data name="Browse" xml:space="preserve">
+    <value>Browse</value>
+  </data>
+  <data name="Change Password" xml:space="preserve">
+    <value>Change Password</value>
+  </data>
+  <data name="Confirm new password" xml:space="preserve">
+    <value>Confirm new password</value>
+  </data>
+  <data name="Create" xml:space="preserve">
+    <value>Create</value>
+  </data>
+  <data name="Email" xml:space="preserve">
+    <value>Email</value>
+  </data>
   <data name="File Size must be smaller than 10MB." xml:space="preserve">
     <value>File Size must be smaller than 10MB.</value>
+  </data>
+  <data name="Full name" xml:space="preserve">
+    <value>Full name</value>
+  </data>
+  <data name="Modify" xml:space="preserve">
+    <value>Modify</value>
+  </data>
+  <data name="New Password" xml:space="preserve">
+    <value>New Password</value>
   </data>
   <data name="Only .jpg or .png file allowed." xml:space="preserve">
     <value>Only .jpg or .png file allowed</value>
   </data>
+  <data name="Password" xml:space="preserve">
+    <value>Password</value>
+  </data>
   <data name="Please attach a file." xml:space="preserve">
     <value>Please attach a file.</value>
+  </data>
+  <data name="Profile Information" xml:space="preserve">
+    <value>Profile Information</value>
+  </data>
+  <data name="Profile picture" xml:space="preserve">
+    <value>Profile picture</value>
+  </data>
+  <data name="Settings" xml:space="preserve">
+    <value>Settings</value>
+  </data>
+  <data name="User profile picture" xml:space="preserve">
+    <value>User profile picture</value>
   </data>
 </root>
