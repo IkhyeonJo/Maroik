@@ -38,10 +38,10 @@ namespace MyLaboratory.Site.Services
             await context.SaveChangesAsync();
         }
 
-        public void DeleteCategory(Category category)
+        public async Task DeleteCategoryAsync(Category category)
         {
             context.Categories.Remove(category);
-            context.SaveChanges();
+            await context.SaveChangesAsync();
         }
     }
 }

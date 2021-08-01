@@ -1058,7 +1058,7 @@ namespace MyLaboratory.Site.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         [RequiredHttpPostAccess(Role = Role.Admin)]
-        public IActionResult DeleteCategory([FromBody] MenuInputViewModel menuInputViewModel)
+        public async Task<IActionResult> DeleteCategory([FromBody] MenuInputViewModel menuInputViewModel)
         {
             try
             {
@@ -1077,7 +1077,7 @@ namespace MyLaboratory.Site.Controllers
                         Role = menuInputViewModel.Role,
                         Order = menuInputViewModel.Order
                     };
-                    categoryRepository.DeleteCategory(category);
+                    await categoryRepository.DeleteCategoryAsync(category);
 
                     return Json(new { result = true });
                 }
