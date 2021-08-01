@@ -1111,7 +1111,7 @@ namespace MyLaboratory.Site.Controllers
                     };
                     await subCategoryRepository.DeleteSubCategoryAsync(subCategory);
 
-                    return Json(new { result = true });
+                    return Json(new { result = true, message = "Successfully deleted the subCategory" });
                 }
                 else
                 {
