@@ -184,7 +184,7 @@ namespace MyLaboratory.Site.Controllers
                     }
                     else if (tempAccount.Role == Role.User) // 로그인 권한이 User인 경우
                     {
-                        DbCache.UserCategories = categoryRepository.UserCategories;
+                        DbCache.UserCategories = await categoryRepository.GetCategoryByRoleAsync(Role.User);
                         DbCache.UserSubCategories = subCategoryRepository.UserSubCategories;
                         return RedirectToAction("UserIndex", "DashBoard");
                     }

@@ -719,7 +719,7 @@ namespace MyLaboratory.Site.Controllers
                 #endregion
 
                 #region UserCategories
-                foreach (var item in categoryRepository.UserCategories)
+                foreach (var item in await categoryRepository.GetCategoryByRoleAsync(Role.User))
                 {
                     if (string.IsNullOrEmpty(wholeSearch))
                     {
@@ -891,7 +891,7 @@ namespace MyLaboratory.Site.Controllers
                 #endregion
 
                 #region UserCategories
-                foreach (var item in categoryRepository.UserCategories)
+                foreach (var item in await categoryRepository.GetCategoryByRoleAsync(Role.User))
                 {
                     menuOutputViewModels.Add(new MenuOutputViewModel()
                     {
@@ -1160,7 +1160,7 @@ namespace MyLaboratory.Site.Controllers
             #endregion
 
             #region UserCategories
-            foreach (var item in categoryRepository.UserCategories)
+            foreach (var item in await categoryRepository.GetCategoryByRoleAsync(Role.User))
             {
                 menuOutputViewModels.Add(new MenuOutputViewModel()
                 {

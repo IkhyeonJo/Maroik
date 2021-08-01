@@ -18,17 +18,6 @@ namespace MyLaboratory.Site.Services
             this.context = context;
         }
 
-        public IEnumerable<Category> UserCategories
-        {
-            get
-            {
-                return context.Categories
-                        .Where(a => a.Role == Role.User)
-                        .OrderBy(a => a.Order)
-                        .ToList();
-            }
-        }
-
         public async Task<IEnumerable<Category>> GetCategoryByRoleAsync(string role)
         {
             return await context.Categories
