@@ -180,7 +180,7 @@ function CreateSubCategory() {
     return false;
 }
 
-function EditMenuGridRow() {
+function EditMenuGridRow(errorMessageSelectGridRow) {
 
     var selectedRowId = "-1";
     var selectedRowCategoryId = "-1";
@@ -193,7 +193,7 @@ function EditMenuGridRow() {
     }); // Search Selected Row
 
     if (selectedRowId === "-1") {
-        toastr.error("Please select grid row");
+        toastr.error(errorMessageSelectGridRow);
         return false;
     } // check whether selected row exist or not
 
