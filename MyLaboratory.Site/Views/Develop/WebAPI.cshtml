@@ -1,0 +1,14 @@
+﻿@{ 
+    string webAPIUrl = $"{MyLaboratory.Site.Common.ServerSetting.DomainName.Remove(MyLaboratory.Site.Common.ServerSetting.DomainName.Length - 1)}:5001";
+}
+<section class="content">
+    <div class="card card-primary">
+        <div class="card-header">
+            <h3 class="card-title">Develop WebAPI</h3>
+        </div>
+
+        <div class="card-body">
+            <a href='@webAPIUrl' target='_blank' rel='noopener noreferrer'>MyLaboratory.WebAPI</a>
+        </div>
+    </div>
+</section>
