@@ -666,14 +666,14 @@ namespace MyLaboratory.Site.Controllers
 
         #region Read
         [HttpGet]
-        public IActionResult Menu(string wholeSearch)
+        public async Task<IActionResult> Menu(string wholeSearch)
         {
             if (HttpContext.Request.Headers["X-Requested-With"] == "XMLHttpRequest") // ajax
             {
                 List<MenuOutputViewModel> menuOutputViewModels = new List<MenuOutputViewModel>();
 
                 #region AdminCategories
-                foreach (var item in categoryRepository.AdminCategories)
+                foreach (var item in await categoryRepository.GetCategoryByRoleAsync(Role.Admin))
                 {
                     if (string.IsNullOrEmpty(wholeSearch))
                     {
@@ -866,14 +866,14 @@ namespace MyLaboratory.Site.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         [RequiredHttpPostAccess(Role = Role.Admin)]
-        public IActionResult IsCategoryExists(int id)
+        public async Task<IActionResult> IsCategoryExists(int id)
         {
             try
             {
                 List<MenuOutputViewModel> menuOutputViewModels = new List<MenuOutputViewModel>();
 
                 #region AdminCategories
-                foreach (var item in categoryRepository.AdminCategories)
+                foreach (var item in await categoryRepository.GetCategoryByRoleAsync(Role.Admin))
                 {
                     menuOutputViewModels.Add(new MenuOutputViewModel()
                     {
@@ -1142,7 +1142,7 @@ namespace MyLaboratory.Site.Controllers
             List<MenuOutputViewModel> menuOutputViewModels = new List<MenuOutputViewModel>();
 
             #region AdminCategories
-            foreach (var item in categoryRepository.AdminCategories)
+            foreach (var item in await categoryRepository.GetCategoryByRoleAsync(Role.Admin))
             {
                 menuOutputViewModels.Add(new MenuOutputViewModel()
                 {

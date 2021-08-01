@@ -5,6 +5,7 @@ using MyLaboratory.Site.Data;
 using MyLaboratory.Site.Common;
 using MyLaboratory.Site.Models;
 using MyLaboratory.Site.Contracts;
+using System.Threading.Tasks;
 
 namespace MyLaboratory.Site.Services
 {
@@ -17,17 +18,6 @@ namespace MyLaboratory.Site.Services
             this.context = context;
         }
 
-        public IEnumerable<Category> AdminCategories
-        {
-            get
-            {
-                return context.Categories
-                        .Where(a => a.Role == Role.Admin)
-                        .OrderBy(a => a.Order)
-                        .ToList();
-            }
-        }
-
         public IEnumerable<Category> UserCategories
         {
             get
@@ -37,6 +27,14 @@ namespace MyLaboratory.Site.Services
                         .OrderBy(a => a.Order)
                         .ToList();
             }
+        }
+
+        public async Task<IEnumerable<Category>> GetCategoryByRoleAsync(string role)
+        {
+            return await context.Categories
+                    .Where(a => a.Role == role)
+                    .OrderBy(a => a.Order)
+                    .ToListAsync();
         }
 
         public void CreateCategory(Category category)

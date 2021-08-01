@@ -178,7 +178,7 @@ namespace MyLaboratory.Site.Controllers
                     #region DB Cache
                     if (tempAccount.Role == Role.Admin) // 로그인 권한이 Admin인 경우
                     {
-                        DbCache.AdminCategories = categoryRepository.AdminCategories;
+                        DbCache.AdminCategories = await categoryRepository.GetCategoryByRoleAsync(Role.Admin);
                         DbCache.AdminSubCategories = subCategoryRepository.AdminSubCategories;
                         return RedirectToAction("AdminIndex", "DashBoard");
                     }
