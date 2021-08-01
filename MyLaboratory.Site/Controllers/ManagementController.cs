@@ -646,7 +646,7 @@ namespace MyLaboratory.Site.Controllers
                     };
                     await subCategoryRepository.CreateSubCategoryAsync(subCategory);
 
-                    return Json(new { result = true });
+                    return Json(new { result = true, message = "Successfully created the subCategory" });
                 }
                 else
                 {
