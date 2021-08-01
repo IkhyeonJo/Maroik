@@ -382,7 +382,7 @@ function UpdateSubCategory() {
     return false;
 }
 
-function ConfirmDeleteMenu() {
+function ConfirmDeleteMenu(errorMessageSelectGridRow) {
 
     var selectedRowId = "-1";
 
@@ -393,7 +393,7 @@ function ConfirmDeleteMenu() {
     }); // Search Selected Row
 
     if (selectedRowId === "-1") {
-        toastr.error("Please select grid row");
+        toastr.error(errorMessageSelectGridRow);
         return false;
     } // check whether selected row exist or not
 
