@@ -168,7 +168,7 @@ namespace MyLaboratory.Site.Controllers
                     {
                         tempAccount.HashedPassword = new RSA(RSAType.RSA2, Encoding.UTF8, RSA.privateKey, RSA.publicKey).Sign(profileInputViewModel.NewPassword);
                         await accountRepository.UpdateAccountAsync(tempAccount);
-                        return Json(new { result = true, error = "Password change successfully done." });
+                        return Json(new { result = true, message = "Password change successfully done." });
                     }
                     else // wrong password
                     {

@@ -76,7 +76,7 @@ function UpdateProfilePassword() {
         //cache: false,
         success: function (data) {
             if (data.result) {
-                toastr.success(data.error);
+                toastr.success(data.message);
             }
             else {
                 toastr.error(data.error);
