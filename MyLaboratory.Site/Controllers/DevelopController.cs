@@ -26,7 +26,7 @@ namespace MyLaboratory.Site.Controllers
 
         #region Read
         [HttpGet]
-        public IActionResult WebAPI()
+        public IActionResult API()
         {
             return View();
         }
