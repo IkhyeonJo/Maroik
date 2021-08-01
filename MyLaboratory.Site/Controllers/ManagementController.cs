@@ -171,11 +171,11 @@ namespace MyLaboratory.Site.Controllers
                     {
                         tempAccount.HashedPassword = new RSA(RSAType.RSA2, Encoding.UTF8, RSA.privateKey, RSA.publicKey).Sign(profileInputViewModel.NewPassword);
                         await accountRepository.UpdateAccountAsync(tempAccount);
-                        return Json(new { result = true, message = "Password change successfully done." });
+                        return Json(new { result = true, message = localizer["Password change successfully done."].Value });
                     }
                     else // wrong password
                     {
-                        return Json(new { result = false, error = "Invalid password. Please check again." });
+                        return Json(new { result = false, error = localizer["Invalid password. Please check again."].Value });
                     }
                 }
                 catch (Exception e)
@@ -185,7 +185,7 @@ namespace MyLaboratory.Site.Controllers
             }
             else
             {
-                return Json(new { result = false, error = "Input is invalid" });
+                return Json(new { result = false, error = localizer["Input is invalid"].Value });
             }
         }
         #endregion
