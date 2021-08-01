@@ -478,13 +478,13 @@ namespace MyLaboratory.Site.Controllers
 
                 if (tempAccount == null)
                 {
-                    return Json(new { result = false, error = "Fail to find the account by given email address" });
+                    return Json(new { result = false, error = localizer["Fail to find the account by given email address"].Value });
                 }
                 else
                 {
                     tempAccount.Deleted = true;
                     await accountRepository.UpdateAccountAsync(tempAccount);
-                    return Json(new { result = true, account = tempAccount, message = "Successfully deleted the account" });
+                    return Json(new { result = true, account = tempAccount, message = localizer["Successfully deleted the account"].Value });
                 }
             }
             catch (Exception e)

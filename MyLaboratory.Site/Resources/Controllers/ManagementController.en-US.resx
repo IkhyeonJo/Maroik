@@ -156,6 +156,9 @@
   <data name="Please enter FullName" xml:space="preserve">
     <value>Please enter FullName</value>
   </data>
+  <data name="Successfully deleted the account" xml:space="preserve">
+    <value>Successfully deleted the account</value>
+  </data>
   <data name="Successfully updated the account" xml:space="preserve">
     <value>Successfully updated the account</value>
   </data>

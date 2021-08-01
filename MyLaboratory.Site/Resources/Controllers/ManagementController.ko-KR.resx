@@ -156,6 +156,9 @@
   <data name="Please enter FullName" xml:space="preserve">
     <value>성명을 입력해주세요.</value>
   </data>
+  <data name="Successfully deleted the account" xml:space="preserve">
+    <value>계정 삭제가 성공적으로 완료되었습니다.</value>
+  </data>
   <data name="Successfully updated the account" xml:space="preserve">
     <value>계정이 성공적으로 업데이트 되었습니다.</value>
   </data>
