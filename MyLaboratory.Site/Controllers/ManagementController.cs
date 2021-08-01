@@ -1075,7 +1075,7 @@ namespace MyLaboratory.Site.Controllers
                     };
                     await categoryRepository.DeleteCategoryAsync(category);
 
-                    return Json(new { result = true });
+                    return Json(new { result = true, message = "Successfully deleted the category" });
                 }
                 else
                 {
