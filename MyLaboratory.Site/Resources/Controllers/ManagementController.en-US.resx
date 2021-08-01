@@ -168,6 +168,9 @@
   <data name="Successfully deleted the category" xml:space="preserve">
     <value>Successfully deleted the category</value>
   </data>
+  <data name="Successfully deleted the subCategory" xml:space="preserve">
+    <value>Successfully deleted the subCategory</value>
+  </data>
   <data name="Successfully updated the account" xml:space="preserve">
     <value>Successfully updated the account</value>
   </data>

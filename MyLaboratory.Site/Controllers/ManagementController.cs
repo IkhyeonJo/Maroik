@@ -1114,11 +1114,11 @@ namespace MyLaboratory.Site.Controllers
                     };
                     await subCategoryRepository.DeleteSubCategoryAsync(subCategory);
 
-                    return Json(new { result = true, message = "Successfully deleted the subCategory" });
+                    return Json(new { result = true, message = localizer["Successfully deleted the subCategory"].Value });
                 }
                 else
                 {
-                    return Json(new { result = false, error = "Input is invalid" });
+                    return Json(new { result = false, error = localizer["Input is invalid"].Value });
                 }
             }
             catch (Exception e)

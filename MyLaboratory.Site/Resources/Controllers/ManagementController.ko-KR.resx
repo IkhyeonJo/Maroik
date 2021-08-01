@@ -168,6 +168,9 @@
   <data name="Successfully deleted the category" xml:space="preserve">
     <value>카테고리가 성공적으로 삭제되었습니다.</value>
   </data>
+  <data name="Successfully deleted the subCategory" xml:space="preserve">
+    <value>서브카테고리가 성공적으로 삭제되었습니다.</value>
+  </data>
   <data name="Successfully updated the account" xml:space="preserve">
     <value>계정이 성공적으로 업데이트되었습니다.</value>
   </data>
