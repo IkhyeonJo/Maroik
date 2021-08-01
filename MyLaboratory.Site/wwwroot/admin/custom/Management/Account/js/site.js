@@ -250,7 +250,7 @@ function ConfirmDeleteAccount(errorMessageSelectGridRow) {
     $('#confirmDeleteAccountDialogModal').modal('show');
 }
 
-function DeleteAccount() {
+function DeleteAccount(errorMessageSelectGridRow) {
 
     var selectedRowEmail = "";
 
@@ -261,7 +261,7 @@ function DeleteAccount() {
     }); // Search Selected Row
 
     if (selectedRowEmail === "") {
-        toastr.error("Please select grid row");
+        toastr.error(errorMessageSelectGridRow);
         return false;
     } // check whether selected row exist or not
 
