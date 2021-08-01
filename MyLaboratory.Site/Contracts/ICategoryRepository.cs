@@ -8,7 +8,7 @@ namespace MyLaboratory.Site.Contracts
     {
         Task<IEnumerable<Category>> GetCategoryByRoleAsync(string role);
         Task CreateCategoryAsync(Category category);
-        void UpdateCategory(Category category);
+        Task UpdateCategoryAsync(Category category);
         void DeleteCategory(Category category);
     }
 }
