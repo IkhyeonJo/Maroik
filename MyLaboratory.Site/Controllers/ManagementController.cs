@@ -235,25 +235,25 @@ namespace MyLaboratory.Site.Controllers
                     }
                     if (!IsValidEmail(accountInputViewModel.Email)) // 유효하지 않은 메일 형식
                     {
-                        return Json(new { result = false, error = "Invalid email form" });
+                        return Json(new { result = false, error = localizer["Invalid email form"].Value });
                     }
                     #endregion
 
                     #region Password 형식 체크
                     if (!new Regex("^((?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])|(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[^a-zA-Z0-9])|(?=.*?[A-Z])(?=.*?[0-9])(?=.*?[^a-zA-Z0-9])|(?=.*?[a-z])(?=.*?[0-9])(?=.*?[^a-zA-Z0-9])).{8,}$").IsMatch(accountInputViewModel.Password)) // 유효하지 않은 비밀번호 형식
                     {
-                        return Json(new { result = false, error = "Password must be at least 8 characters and contain at 3 of 4 of the following: upper case (A-Z), lower case (a-z), number (0-9) and special character (e.g. !@#$%^&*)" });
+                        return Json(new { result = false, error = localizer["Password must be at least 8 characters and contain at 3 of 4 of the following: upper case (A-Z), lower case (a-z), number (0-9) and special character (e.g. !@#$%^&*)"].Value });
                     }
                     #endregion
 
                     #region FullName 형식 체크
                     if (string.IsNullOrEmpty(accountInputViewModel.FullName))
                     {
-                        return Json(new { result = false, error = "Please enter FullName" });
+                        return Json(new { result = false, error = localizer["Please enter FullName"].Value });
                     }
                     else if (!(accountInputViewModel.FullName.Length >= 1 && accountInputViewModel.FullName.Length <= 255))
                     {
-                        return Json(new { result = false, error = "FullName is must be between 1 and 255 characters" });
+                        return Json(new { result = false, error = localizer["FullName is must be between 1 and 255 characters"].Value });
                     }
                     #endregion
 
@@ -267,7 +267,7 @@ namespace MyLaboratory.Site.Controllers
                     #region 이미 입력된 이메일로 계정이 있는 지 확인
                     if (await accountRepository.GetAccountAsync(accountInputViewModel.Email) != null)
                     {
-                        return Json(new { result = false, error = "This account has already been created." });
+                        return Json(new { result = false, error = localizer["This account has already been created."].Value });
                     }
                     #endregion
 
@@ -293,12 +293,12 @@ namespace MyLaboratory.Site.Controllers
                         Deleted = false
                     }
                     );
-                    return Json(new { result = true, message = "Account create successfully done." });
+                    return Json(new { result = true, message = localizer["Account create successfully done."].Value });
                     #endregion
                 }
                 else
                 {
-                    return Json(new { result = false, error = "Input is invalid" });
+                    return Json(new { result = false, error = localizer["Input is invalid"].Value });
 
                 }
             }

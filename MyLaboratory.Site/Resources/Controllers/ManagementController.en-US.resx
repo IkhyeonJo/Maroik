@@ -117,11 +117,20 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="Account create successfully done." xml:space="preserve">
+    <value>Account create successfully done.</value>
+  </data>
   <data name="File Size must be smaller than 10MB." xml:space="preserve">
     <value>File Size must be smaller than 10MB.</value>
   </data>
+  <data name="FullName is must be between 1 and 255 characters" xml:space="preserve">
+    <value>FullName is must be between 1 and 255 characters</value>
+  </data>
   <data name="Input is invalid" xml:space="preserve">
     <value>Input is invalid</value>
+  </data>
+  <data name="Invalid email form" xml:space="preserve">
+    <value>Invalid email form</value>
   </data>
   <data name="Invalid password. Please check again." xml:space="preserve">
     <value>Invalid password. Please check again.</value>
@@ -132,7 +141,16 @@
   <data name="Password change successfully done." xml:space="preserve">
     <value>Password change successfully done.</value>
   </data>
+  <data name="Password must be at least 8 characters and contain at 3 of 4 of the following: upper case (A-Z), lower case (a-z), number (0-9) and special character (e.g. !@#$%^&amp;*)" xml:space="preserve">
+    <value>Password must be at least 8 characters and contain at 3 of 4 of the following: upper case (A-Z), lower case (a-z), number (0-9) and special character (e.g. !@#$%^&amp;*)</value>
+  </data>
   <data name="Please attach a file" xml:space="preserve">
     <value>Please attach a file</value>
+  </data>
+  <data name="Please enter FullName" xml:space="preserve">
+    <value>Please enter FullName</value>
+  </data>
+  <data name="This account has already been created." xml:space="preserve">
+    <value>This account has already been created.</value>
   </data>
 </root>
