@@ -399,7 +399,7 @@ namespace MyLaboratory.Site.Controllers
 
                 if (tempAccount == null)
                 {
-                    return Json(new { result = false, error = "Fail to find the account by given email address" });
+                    return Json(new { result = false, error = localizer["Fail to find the account by given email address"].Value });
                 }
                 else
                 {
@@ -432,7 +432,7 @@ namespace MyLaboratory.Site.Controllers
 
                     if (tempAccount == null)
                     {
-                        return Json(new { result = false, error = "Email address is wrong" });
+                        return Json(new { result = false, error = localizer["Email address is wrong"].Value });
                     }
 
                     tempAccount.Email = accountInputViewModel.Email;
@@ -452,11 +452,11 @@ namespace MyLaboratory.Site.Controllers
 
                     await accountRepository.UpdateAccountAsync(tempAccount);
 
-                    return Json(new { result = true, message = "Successfully updated the account" });
+                    return Json(new { result = true, message = localizer["Successfully updated the account"].Value });
                 }
                 else
                 {
-                    return Json(new { result = false, error = "Input is invalid" });
+                    return Json(new { result = false, error = localizer["Input is invalid"].Value });
                 }
             }
             catch (Exception e)

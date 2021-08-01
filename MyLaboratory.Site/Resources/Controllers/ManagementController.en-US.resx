@@ -120,6 +120,12 @@
   <data name="Account create successfully done." xml:space="preserve">
     <value>Account create successfully done.</value>
   </data>
+  <data name="Email address is wrong" xml:space="preserve">
+    <value>Email address is wrong</value>
+  </data>
+  <data name="Fail to find the account by given email address" xml:space="preserve">
+    <value>Fail to find the account by given email address</value>
+  </data>
   <data name="File Size must be smaller than 10MB." xml:space="preserve">
     <value>File Size must be smaller than 10MB.</value>
   </data>
@@ -149,6 +155,9 @@
   </data>
   <data name="Please enter FullName" xml:space="preserve">
     <value>Please enter FullName</value>
+  </data>
+  <data name="Successfully updated the account" xml:space="preserve">
+    <value>Successfully updated the account</value>
   </data>
   <data name="This account has already been created." xml:space="preserve">
     <value>This account has already been created.</value>

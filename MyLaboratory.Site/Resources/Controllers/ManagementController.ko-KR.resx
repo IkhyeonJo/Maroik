@@ -120,6 +120,12 @@
   <data name="Account create successfully done." xml:space="preserve">
     <value>계정 생성이 성공적으로 완료되었습니다.</value>
   </data>
+  <data name="Email address is wrong" xml:space="preserve">
+    <value>이메일 주소가 잘못됐습니다.</value>
+  </data>
+  <data name="Fail to find the account by given email address" xml:space="preserve">
+    <value>주어진 이메일 주소로 계정을 찾는데 실패하였습니다.</value>
+  </data>
   <data name="File Size must be smaller than 10MB." xml:space="preserve">
     <value>파일 사이즈는 10MB 미만이여야 합니다.</value>
   </data>
@@ -149,6 +155,9 @@
   </data>
   <data name="Please enter FullName" xml:space="preserve">
     <value>성명을 입력해주세요.</value>
+  </data>
+  <data name="Successfully updated the account" xml:space="preserve">
+    <value>계정이 성공적으로 업데이트 되었습니다.</value>
   </data>
   <data name="This account has already been created." xml:space="preserve">
     <value>이미 생성된 계정입니다.</value>
