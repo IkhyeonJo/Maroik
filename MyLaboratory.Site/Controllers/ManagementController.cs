@@ -1094,7 +1094,7 @@ namespace MyLaboratory.Site.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         [RequiredHttpPostAccess(Role = Role.Admin)]
-        public IActionResult DeleteSubCategory([FromBody] MenuInputViewModel menuInputViewModel)
+        public async Task<IActionResult> DeleteSubCategory([FromBody] MenuInputViewModel menuInputViewModel)
         {
             try
             {
@@ -1113,7 +1113,7 @@ namespace MyLaboratory.Site.Controllers
                         Role = menuInputViewModel.Role,
                         Order = menuInputViewModel.Order
                     };
-                    subCategoryRepository.DeleteSubCategory(subCategory);
+                    await subCategoryRepository.DeleteSubCategoryAsync(subCategory);
 
                     return Json(new { result = true });
                 }

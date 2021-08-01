@@ -36,10 +36,10 @@ namespace MyLaboratory.Site.Services
             context.SubCategories.Update(subCategory);
             await context.SaveChangesAsync();
         }
-        public void DeleteSubCategory(SubCategory subCategory)
+        public async Task DeleteSubCategoryAsync(SubCategory subCategory)
         {
             context.SubCategories.Remove(subCategory);
-            context.SaveChanges();
+            await context.SaveChangesAsync();
         }
     }
 }
