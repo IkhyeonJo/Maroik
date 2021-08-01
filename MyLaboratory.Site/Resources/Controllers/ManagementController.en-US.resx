@@ -171,6 +171,9 @@
   <data name="Successfully updated the category" xml:space="preserve">
     <value>Successfully updated the category</value>
   </data>
+  <data name="Successfully updated the subCategory" xml:space="preserve">
+    <value>Successfully updated the subCategory</value>
+  </data>
   <data name="This account has already been created." xml:space="preserve">
     <value>This account has already been created.</value>
   </data>

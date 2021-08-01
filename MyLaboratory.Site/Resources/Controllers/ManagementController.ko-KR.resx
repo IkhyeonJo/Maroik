@@ -171,6 +171,9 @@
   <data name="Successfully updated the category" xml:space="preserve">
     <value>카테고리가 성공적으로 업데이트되었습니다.</value>
   </data>
+  <data name="Successfully updated the subCategory" xml:space="preserve">
+    <value>서브카테고리가 성공적으로 업데이트되었습니다.</value>
+  </data>
   <data name="This account has already been created." xml:space="preserve">
     <value>이미 생성된 계정입니다.</value>
   </data>

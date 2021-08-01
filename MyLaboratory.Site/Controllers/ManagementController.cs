@@ -1039,11 +1039,11 @@ namespace MyLaboratory.Site.Controllers
                     };
                     await subCategoryRepository.UpdateSubCategoryAsync(subCategory);
 
-                    return Json(new { result = true, message = "Successfully updated the subCategory" });
+                    return Json(new { result = true, message = localizer["Successfully updated the subCategory"].Value });
                 }
                 else
                 {
-                    return Json(new { result = false, error = "Input is invalid" });
+                    return Json(new { result = false, error = localizer["Input is invalid"].Value });
                 }
             }
             catch (Exception e)
