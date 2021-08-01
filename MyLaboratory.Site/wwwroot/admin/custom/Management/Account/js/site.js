@@ -226,7 +226,7 @@ function UpdateAccount() {
     return false;
 }
 
-function ConfirmDeleteAccount() {
+function ConfirmDeleteAccount(errorMessageSelectGridRow) {
 
     var selectedRowEmail = "";
 
@@ -237,7 +237,7 @@ function ConfirmDeleteAccount() {
     }); // Search Selected Row
 
     if (selectedRowEmail === "") {
-        toastr.error("Please select grid row");
+        toastr.error(errorMessageSelectGridRow);
         return false;
     } // check whether selected row exist or not
 
