@@ -120,11 +120,17 @@
   <data name="Account" xml:space="preserve">
     <value>Account</value>
   </data>
+  <data name="API" xml:space="preserve">
+    <value>API</value>
+  </data>
   <data name="Chart" xml:space="preserve">
     <value>Chart</value>
   </data>
   <data name="DashBoard" xml:space="preserve">
     <value>DashBoard</value>
+  </data>
+  <data name="Develop" xml:space="preserve">
+    <value>Develop</value>
   </data>
   <data name="Home" xml:space="preserve">
     <value>Home</value>

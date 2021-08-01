@@ -120,11 +120,17 @@
   <data name="Account" xml:space="preserve">
     <value>계정</value>
   </data>
+  <data name="API" xml:space="preserve">
+    <value>API</value>
+  </data>
   <data name="Chart" xml:space="preserve">
     <value>차트</value>
   </data>
   <data name="DashBoard" xml:space="preserve">
     <value>대시보드</value>
+  </data>
+  <data name="Develop" xml:space="preserve">
+    <value>개발</value>
   </data>
   <data name="Home" xml:space="preserve">
     <value>홈</value>
