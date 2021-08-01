@@ -319,7 +319,7 @@ function UpdateCategory() {
                 const grid = new MvcGrid(document.querySelector(".mvc-grid")); //reload grid
                 grid.reload(); //reload grid
 
-                toastr.success('Successfully updated the category');
+                toastr.success(data.message);
             }
             else {
                 toastr.error(data.error);

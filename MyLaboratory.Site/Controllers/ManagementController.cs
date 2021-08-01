@@ -999,7 +999,7 @@ namespace MyLaboratory.Site.Controllers
                     };
                     await categoryRepository.UpdateCategoryAsync(category);
 
-                    return Json(new { result = true });
+                    return Json(new { result = true, message = "Successfully updated the category" });
                 }
                 else
                 {
