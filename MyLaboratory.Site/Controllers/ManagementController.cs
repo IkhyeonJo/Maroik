@@ -630,7 +630,7 @@ namespace MyLaboratory.Site.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         [RequiredHttpPostAccess(Role = Role.Admin)]
-        public IActionResult CreateSubCategory([FromBody] MenuInputViewModel menuInputViewModel)
+        public async Task<IActionResult> CreateSubCategory([FromBody] MenuInputViewModel menuInputViewModel)
         {
             try
             {
@@ -648,7 +648,7 @@ namespace MyLaboratory.Site.Controllers
                         Role = menuInputViewModel.Role,
                         Order = menuInputViewModel.Order
                     };
-                    subCategoryRepository.CreateSubCategoryAsync(subCategory);
+                    await subCategoryRepository.CreateSubCategoryAsync(subCategory);
 
                     return Json(new { result = true });
                 }
