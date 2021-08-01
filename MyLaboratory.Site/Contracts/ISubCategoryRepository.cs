@@ -7,7 +7,7 @@ namespace MyLaboratory.Site.Contracts
     public interface ISubCategoryRepository
     {
         Task<IEnumerable<SubCategory>> GetSubCategoryByRoleAsync(string role);
-        void CreateSubCategory(SubCategory subCategory);
+        Task CreateSubCategoryAsync(SubCategory subCategory);
         void UpdateSubCategory(SubCategory subCategory);
         void DeleteSubCategory(SubCategory subCategory);
     }

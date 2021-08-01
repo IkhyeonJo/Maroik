@@ -648,7 +648,7 @@ namespace MyLaboratory.Site.Controllers
                         Role = menuInputViewModel.Role,
                         Order = menuInputViewModel.Order
                     };
-                    subCategoryRepository.CreateSubCategory(subCategory);
+                    subCategoryRepository.CreateSubCategoryAsync(subCategory);
 
                     return Json(new { result = true });
                 }
