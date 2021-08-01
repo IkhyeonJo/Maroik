@@ -33,17 +33,13 @@ namespace MyLaboratory.Site.Controllers
     {
         private readonly ILogger<ManagementController> logger;
         private readonly IAccountRepository accountRepository;
-        private readonly IProductRepository productRepository;
-        private readonly IWorkerRepository workerRepository;
         private readonly IHostEnvironment hostEnvironment;
         private readonly ICategoryRepository categoryRepository;
         private readonly ISubCategoryRepository subCategoryRepository;
-        public ManagementController(ILogger<ManagementController> logger, IAccountRepository accountRepository, IProductRepository productRepository, IWorkerRepository workerRepository, IHostEnvironment hostEnvironment, ICategoryRepository categoryRepository, ISubCategoryRepository subCategoryRepository)
+        public ManagementController(ILogger<ManagementController> logger, IAccountRepository accountRepository, IHostEnvironment hostEnvironment, ICategoryRepository categoryRepository, ISubCategoryRepository subCategoryRepository)
         {
             this.logger = logger;
             this.accountRepository = accountRepository;
-            this.productRepository = productRepository;
-            this.workerRepository = workerRepository;
             this.hostEnvironment = hostEnvironment;
             this.categoryRepository = categoryRepository;
             this.subCategoryRepository = subCategoryRepository;

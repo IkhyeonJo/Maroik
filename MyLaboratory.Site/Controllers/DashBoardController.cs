@@ -16,14 +16,10 @@ namespace MyLaboratory.Site.Controllers
     public class DashBoardController : Controller
     {
         private readonly ILogger<DashBoardController> logger;
-        private readonly IProductRepository productRepository;
-        private readonly IWorkerRepository workerRepository;
 
-        public DashBoardController(ILogger<DashBoardController> logger, IProductRepository productRepository, IWorkerRepository workerRepository)
+        public DashBoardController(ILogger<DashBoardController> logger)
         {
             this.logger = logger;
-            this.productRepository = productRepository;
-            this.workerRepository = workerRepository;
         }
         #region Admin
         [HttpGet]

@@ -16,14 +16,10 @@ namespace MyLaboratory.Site.Controllers
     public class AccountBookController : Controller
     {
         private readonly ILogger<AccountBookController> logger;
-        private readonly IProductRepository productRepository;
-        private readonly IWorkerRepository workerRepository;
 
-        public AccountBookController(ILogger<AccountBookController> logger, IProductRepository productRepository, IWorkerRepository workerRepository)
+        public AccountBookController(ILogger<AccountBookController> logger)
         {
             this.logger = logger;
-            this.productRepository = productRepository;
-            this.workerRepository = workerRepository;
         }
 
         [HttpGet]
