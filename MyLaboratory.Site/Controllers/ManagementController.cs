@@ -26,18 +26,21 @@ using Newtonsoft.Json;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Net.Mail;
+using Microsoft.AspNetCore.Mvc.Localization;
 
 namespace MyLaboratory.Site.Controllers
 {
     public class ManagementController : Controller
     {
+        private readonly IHtmlLocalizer<AccountController> localizer;
         private readonly ILogger<ManagementController> logger;
         private readonly IAccountRepository accountRepository;
         private readonly IHostEnvironment hostEnvironment;
         private readonly ICategoryRepository categoryRepository;
         private readonly ISubCategoryRepository subCategoryRepository;
-        public ManagementController(ILogger<ManagementController> logger, IAccountRepository accountRepository, IHostEnvironment hostEnvironment, ICategoryRepository categoryRepository, ISubCategoryRepository subCategoryRepository)
+        public ManagementController(IHtmlLocalizer<AccountController> localizer, ILogger<ManagementController> logger, IAccountRepository accountRepository, IHostEnvironment hostEnvironment, ICategoryRepository categoryRepository, ISubCategoryRepository subCategoryRepository)
         {
+            this.localizer = localizer;
             this.logger = logger;
             this.accountRepository = accountRepository;
             this.hostEnvironment = hostEnvironment;
@@ -69,7 +72,7 @@ namespace MyLaboratory.Site.Controllers
         {
             if (profileInputViewModel.ProfileAvatarFiles == null) // 파일 없을 시
             {
-                return Ok(new { result = false, errorMessage = "파일 첨부하여 주십시오. (Please attach a file)" });
+                return Ok(new { result = false, errorMessage = localizer["Please attach a file"].Value });
             }
             else
             {
@@ -107,12 +110,12 @@ namespace MyLaboratory.Site.Controllers
                     }
                     else // 이미지 png 또는 jpg 외 확장자는 거절
                     {
-                        return Ok(new { result = false, errorMessage = "Only .jpg or .png file allowed" });
+                        return Ok(new { result = false, errorMessage = localizer["Only .jpg or .png file allowed"].Value });
                     }
                 }
                 else // fileSizeLimitationErrorMessage
                 {
-                    return Ok(new { result = false, errorMessage = "파일 크기는 10MB 이하만 가능합니다. (File Size must be smaller than 10MB.)" });
+                    return Ok(new { result = false, errorMessage = localizer["File Size must be smaller than 10MB."].Value });
                 }
                 // process uploaded files 
                 // Don't rely on or trust the FileName property without validation.
