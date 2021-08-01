@@ -179,13 +179,13 @@ namespace MyLaboratory.Site.Controllers
                     if (tempAccount.Role == Role.Admin) // 로그인 권한이 Admin인 경우
                     {
                         DbCache.AdminCategories = await categoryRepository.GetCategoryByRoleAsync(Role.Admin);
-                        DbCache.AdminSubCategories = subCategoryRepository.AdminSubCategories;
+                        DbCache.AdminSubCategories = await subCategoryRepository.GetSubCategoryByRoleAsync(Role.Admin);
                         return RedirectToAction("AdminIndex", "DashBoard");
                     }
                     else if (tempAccount.Role == Role.User) // 로그인 권한이 User인 경우
                     {
                         DbCache.UserCategories = await categoryRepository.GetCategoryByRoleAsync(Role.User);
-                        DbCache.UserSubCategories = subCategoryRepository.UserSubCategories;
+                        DbCache.UserSubCategories = await subCategoryRepository.GetSubCategoryByRoleAsync(Role.User);
                         return RedirectToAction("UserIndex", "DashBoard");
                     }
                     else // 로그인 권한은 Admin 또는 User만 있음 이 경우는 버그 발생한 것임

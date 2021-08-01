@@ -5,6 +5,7 @@ using MyLaboratory.Site.Data;
 using MyLaboratory.Site.Common;
 using MyLaboratory.Site.Models;
 using MyLaboratory.Site.Contracts;
+using System.Threading.Tasks;
 
 namespace MyLaboratory.Site.Services
 {
@@ -16,29 +17,12 @@ namespace MyLaboratory.Site.Services
         {
             this.context = context;
         }
-
-        public IEnumerable<SubCategory> AdminSubCategories
+        public async Task<IEnumerable<SubCategory>> GetSubCategoryByRoleAsync(string role)
         {
-            get
-            {
-                return context.SubCategories
-                        .Where(a => a.Role == Role.Admin)
-                        .OrderBy(a => a.CategoryId)
-                        .ThenBy(a => a.Order)
-                        .ToList();
-            }
-        }
-
-        public IEnumerable<SubCategory> UserSubCategories
-        {
-            get
-            {
-                return context.SubCategories
-                        .Where(a => a.Role == Role.User)
-                        .OrderBy(a => a.CategoryId)
-                        .ThenBy(a => a.Order)
-                        .ToList();
-            }
+            return await context.SubCategories
+                    .Where(a => a.Role == role)
+                    .OrderBy(a => a.Order)
+                    .ToListAsync();
         }
 
         public void CreateSubCategory(SubCategory subCategory)

@@ -765,7 +765,7 @@ namespace MyLaboratory.Site.Controllers
                 #endregion
 
                 #region AdminSubCategories
-                foreach (var item in subCategoryRepository.AdminSubCategories)
+                foreach (var item in await subCategoryRepository.GetSubCategoryByRoleAsync(Role.Admin))
                 {
                     if (string.IsNullOrEmpty(wholeSearch))
                     {
@@ -811,7 +811,7 @@ namespace MyLaboratory.Site.Controllers
                 #endregion
 
                 #region UserSubCategories
-                foreach (var item in subCategoryRepository.UserSubCategories)
+                foreach (var item in await subCategoryRepository.GetSubCategoryByRoleAsync(Role.User))
                 {
                     if (string.IsNullOrEmpty(wholeSearch))
                     {
@@ -923,14 +923,14 @@ namespace MyLaboratory.Site.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         [RequiredHttpPostAccess(Role = Role.Admin)]
-        public IActionResult IsSubCategoryExists(int id)
+        public async Task<IActionResult> IsSubCategoryExists(int id)
         {
             try
             {
                 List<MenuOutputViewModel> menuOutputViewModels = new List<MenuOutputViewModel>();
 
                 #region AdminCategories
-                foreach (var item in subCategoryRepository.AdminSubCategories)
+                foreach (var item in await subCategoryRepository.GetSubCategoryByRoleAsync(Role.Admin))
                 {
                     menuOutputViewModels.Add(new MenuOutputViewModel()
                     {
@@ -948,7 +948,7 @@ namespace MyLaboratory.Site.Controllers
                 #endregion
 
                 #region UserCategories
-                foreach (var item in subCategoryRepository.UserSubCategories)
+                foreach (var item in await subCategoryRepository.GetSubCategoryByRoleAsync(Role.User))
                 {
                     menuOutputViewModels.Add(new MenuOutputViewModel()
                     {
@@ -1178,7 +1178,7 @@ namespace MyLaboratory.Site.Controllers
             #endregion
 
             #region AdminSubCategories
-            foreach (var item in subCategoryRepository.AdminSubCategories)
+            foreach (var item in await subCategoryRepository.GetSubCategoryByRoleAsync(Role.Admin))
             {
                 menuOutputViewModels.Add(new MenuOutputViewModel()
                 {
@@ -1196,7 +1196,7 @@ namespace MyLaboratory.Site.Controllers
             #endregion
 
             #region UserSubCategories
-            foreach (var item in subCategoryRepository.UserSubCategories)
+            foreach (var item in await subCategoryRepository.GetSubCategoryByRoleAsync(Role.User))
             {
                 menuOutputViewModels.Add(new MenuOutputViewModel()
                 {
