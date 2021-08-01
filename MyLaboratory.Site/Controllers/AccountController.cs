@@ -317,7 +317,7 @@ namespace MyLaboratory.Site.Controllers
                         {
                             loginInputViewModel.Email
                         };
-                        string result = await mailRepository.SendMail(mail);
+                        string result = await mailRepository.SendMailAsync(mail);
                         if (result != AccountMessage.MailSent) // 메일 전송 오류 발생 했을 시..
                         {
                             Console.WriteLine(result); // ActivityLog 등으로 로그 남겨야 한다..
@@ -378,7 +378,7 @@ namespace MyLaboratory.Site.Controllers
                             {
                                 account.Email
                             };
-                            string result = await mailRepository.SendMail(mail);
+                            string result = await mailRepository.SendMailAsync(mail);
                             if (result != AccountMessage.MailSent) // 메일 전송 오류 발생 했을 시..
                             {
                                 Console.WriteLine(result); // ActivityLog 등으로 로그 남겨야 한다..
@@ -474,7 +474,7 @@ namespace MyLaboratory.Site.Controllers
                             {
                                 account.Email
                             };
-                            string result = await mailRepository.SendMail(mail);
+                            string result = await mailRepository.SendMailAsync(mail);
                             if (result != AccountMessage.MailSent) // 메일 전송 오류 발생 했을 시..
                             {
                                 Console.WriteLine(result); // ActivityLog 등으로 로그 남겨야 한다..
@@ -721,7 +721,7 @@ namespace MyLaboratory.Site.Controllers
                             {
                                 account.Email
                             };
-                        string result = await mailRepository.SendMail(mail);
+                        string result = await mailRepository.SendMailAsync(mail);
                         if (result != AccountMessage.MailSent) // 메일 전송 오류 발생 했을 시..
                         {
                             Console.WriteLine(result); // ActivityLog 등으로 로그 남겨야 한다..

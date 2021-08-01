@@ -33,7 +33,7 @@ namespace MyLaboratory.Site.Services
                       </div>";
         }
 
-        public async Task<string> SendMail(Mail mail)
+        public async Task<string> SendMailAsync(Mail mail)
         {
             try
             {
