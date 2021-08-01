@@ -1078,11 +1078,11 @@ namespace MyLaboratory.Site.Controllers
                     };
                     await categoryRepository.DeleteCategoryAsync(category);
 
-                    return Json(new { result = true, message = "Successfully deleted the category" });
+                    return Json(new { result = true, message = localizer["Successfully deleted the category"].Value });
                 }
                 else
                 {
-                    return Json(new { result = false, error = "Input is invalid" });
+                    return Json(new { result = false, error = localizer["Input is invalid"].Value });
                 }
             }
             catch (Exception e)
