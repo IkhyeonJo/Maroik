@@ -613,11 +613,11 @@ namespace MyLaboratory.Site.Controllers
                     };
                     await categoryRepository.CreateCategoryAsync(category);
 
-                    return Json(new { result = true, message = "Successfully created the category" });
+                    return Json(new { result = true, message = localizer["Successfully created the category"].Value });
                 }
                 else
                 {
-                    return Json(new { result = false, error = "Input is invalid" });
+                    return Json(new { result = false, error = localizer["Input is invalid"].Value });
                 }
             }
             catch (Exception e)
@@ -649,11 +649,11 @@ namespace MyLaboratory.Site.Controllers
                     };
                     await subCategoryRepository.CreateSubCategoryAsync(subCategory);
 
-                    return Json(new { result = true, message = "Successfully created the subCategory" });
+                    return Json(new { result = true, message = localizer["Successfully created the subCategory"].Value });
                 }
                 else
                 {
-                    return Json(new { result = false, error = "Input is invalid" });
+                    return Json(new { result = false, error = localizer["Input is invalid"].Value });
                 }
             }
             catch (Exception e)
@@ -1002,11 +1002,11 @@ namespace MyLaboratory.Site.Controllers
                     };
                     await categoryRepository.UpdateCategoryAsync(category);
 
-                    return Json(new { result = true, message = "Successfully updated the category" });
+                    return Json(new { result = true, message = localizer["Successfully updated the category"].Value });
                 }
                 else
                 {
-                    return Json(new { result = false, error = "Input is invalid" });
+                    return Json(new { result = false, error = localizer["Input is invalid"].Value });
                 }
             }
             catch (Exception e)

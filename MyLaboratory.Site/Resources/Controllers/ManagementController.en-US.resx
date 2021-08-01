@@ -156,11 +156,20 @@
   <data name="Please enter FullName" xml:space="preserve">
     <value>Please enter FullName</value>
   </data>
+  <data name="Successfully created the category" xml:space="preserve">
+    <value>Successfully created the category</value>
+  </data>
+  <data name="Successfully created the subCategory" xml:space="preserve">
+    <value>Successfully created the subCategory</value>
+  </data>
   <data name="Successfully deleted the account" xml:space="preserve">
     <value>Successfully deleted the account</value>
   </data>
   <data name="Successfully updated the account" xml:space="preserve">
     <value>Successfully updated the account</value>
+  </data>
+  <data name="Successfully updated the category" xml:space="preserve">
+    <value>Successfully updated the category</value>
   </data>
   <data name="This account has already been created." xml:space="preserve">
     <value>This account has already been created.</value>
