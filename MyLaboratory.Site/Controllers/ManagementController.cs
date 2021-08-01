@@ -610,7 +610,7 @@ namespace MyLaboratory.Site.Controllers
                     };
                     await categoryRepository.CreateCategoryAsync(category);
 
-                    return Json(new { result = true });
+                    return Json(new { result = true, message = "Successfully created the category" });
                 }
                 else
                 {
