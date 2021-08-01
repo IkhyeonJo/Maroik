@@ -32,13 +32,13 @@ namespace MyLaboratory.Site.Controllers
 {
     public class ManagementController : Controller
     {
-        private readonly IHtmlLocalizer<AccountController> localizer;
+        private readonly IHtmlLocalizer<ManagementController> localizer;
         private readonly ILogger<ManagementController> logger;
         private readonly IAccountRepository accountRepository;
         private readonly IHostEnvironment hostEnvironment;
         private readonly ICategoryRepository categoryRepository;
         private readonly ISubCategoryRepository subCategoryRepository;
-        public ManagementController(IHtmlLocalizer<AccountController> localizer, ILogger<ManagementController> logger, IAccountRepository accountRepository, IHostEnvironment hostEnvironment, ICategoryRepository categoryRepository, ISubCategoryRepository subCategoryRepository)
+        public ManagementController(IHtmlLocalizer<ManagementController> localizer, ILogger<ManagementController> logger, IAccountRepository accountRepository, IHostEnvironment hostEnvironment, ICategoryRepository categoryRepository, ISubCategoryRepository subCategoryRepository)
         {
             this.localizer = localizer;
             this.logger = logger;
