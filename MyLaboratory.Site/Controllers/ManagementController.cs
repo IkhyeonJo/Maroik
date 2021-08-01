@@ -1019,7 +1019,7 @@ namespace MyLaboratory.Site.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         [RequiredHttpPostAccess(Role = Role.Admin)]
-        public IActionResult UpdateSubCategory([FromBody] MenuInputViewModel menuInputViewModel)
+        public async Task<IActionResult> UpdateSubCategory([FromBody] MenuInputViewModel menuInputViewModel)
         {
             try
             {
@@ -1038,7 +1038,7 @@ namespace MyLaboratory.Site.Controllers
                         Role = menuInputViewModel.Role,
                         Order = menuInputViewModel.Order
                     };
-                    subCategoryRepository.UpdateSubCategory(subCategory);
+                    await subCategoryRepository.UpdateSubCategoryAsync(subCategory);
 
                     return Json(new { result = true });
                 }
