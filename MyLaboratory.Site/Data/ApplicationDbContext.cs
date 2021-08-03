@@ -17,9 +17,7 @@ namespace MyLaboratory.Site.Data
         #region (For Migration) DbSet<T>'s T is table type.
         public virtual DbSet<Account> Accounts { get; set; }
         public virtual DbSet<Category> Categories { get; set; }
-        public virtual DbSet<Product> Products { get; set; }
         public virtual DbSet<SubCategory> SubCategories { get; set; }
-        public virtual DbSet<Worker> Workers { get; set; }
         #endregion
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -100,16 +98,6 @@ namespace MyLaboratory.Site.Data
                     .HasDefaultValueSql("'Admin'");
             });
 
-            modelBuilder.Entity<Product>(entity =>
-            {
-                entity.ToTable("Product");
-
-                entity.HasCharSet("utf8mb4")
-                    .UseCollation("utf8mb4_general_ci");
-
-                entity.Property(e => e.Id).HasColumnType("int(11)");
-            });
-
             modelBuilder.Entity<SubCategory>(entity =>
             {
                 entity.ToTable("SubCategory");
@@ -147,16 +135,6 @@ namespace MyLaboratory.Site.Data
                     .WithMany(p => p.SubCategories)
                     .HasForeignKey(d => d.CategoryId)
                     .HasConstraintName("SubCategories_FK");
-            });
-
-            modelBuilder.Entity<Worker>(entity =>
-            {
-                entity.ToTable("Worker");
-
-                entity.HasCharSet("utf8mb4")
-                    .UseCollation("utf8mb4_general_ci");
-
-                entity.Property(e => e.Id).HasColumnType("int(11)");
             });
 
             OnModelCreatingPartial(modelBuilder);
