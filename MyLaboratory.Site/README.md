@@ -722,3 +722,6 @@ ROLLBACK;
 
 [mysqld]
 autocommit=0   --> autocommit 해제
+
+# MariaDB Table Column Comment
+https://jhnyang.tistory.com/309
