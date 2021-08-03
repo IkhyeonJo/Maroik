@@ -9,7 +9,7 @@ using MyLaboratory.Site.Data;
 namespace MyLaboratory.Site.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20210721163602_InitialCreate")]
+    [Migration("20210803112423_InitialCreate")]
     partial class InitialCreate
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -24,63 +24,81 @@ namespace MyLaboratory.Site.Migrations
             modelBuilder.Entity("MyLaboratory.Site.Models.Account", b =>
                 {
                     b.Property<string>("Email")
-                        .HasColumnType("varchar(255)");
+                        .HasColumnType("varchar(255)")
+                        .HasComment("계정 이메일 (ID)");
 
                     b.Property<bool>("AgreedServiceTerms")
-                        .HasColumnType("tinyint(1)");
+                        .HasColumnType("tinyint(1)")
+                        .HasComment("약관 동의 여부");
 
                     b.Property<string>("AvatarImagePath")
                         .IsRequired()
                         .ValueGeneratedOnAdd()
                         .HasMaxLength(255)
                         .HasColumnType("varchar(255)")
-                        .HasDefaultValueSql("'/upload/Management/Profile/default-avatar.jpg'");
+                        .HasDefaultValueSql("'/upload/Management/Profile/default-avatar.jpg'")
+                        .HasComment("계정 아바타 이미지 경로");
 
                     b.Property<DateTime>("Created")
                         .ValueGeneratedOnAdd()
                         .HasMaxLength(6)
                         .HasColumnType("datetime(6)")
-                        .HasDefaultValueSql("'1900-01-01 00:00:00.000000'");
+                        .HasDefaultValueSql("'1900-01-01 00:00:00.000000'")
+                        .HasComment("계정 생성일");
+
+                    b.Property<bool>("Deleted")
+                        .HasColumnType("tinyint(1)")
+                        .HasComment("계정 삭제 여부");
 
                     b.Property<bool>("EmailConfirmed")
-                        .HasColumnType("tinyint(1)");
+                        .HasColumnType("tinyint(1)")
+                        .HasComment("이메일 확인 여부");
 
                     b.Property<string>("FullName")
                         .IsRequired()
                         .HasMaxLength(255)
-                        .HasColumnType("varchar(255)");
+                        .HasColumnType("varchar(255)")
+                        .HasComment("계정 성명");
 
                     b.Property<string>("HashedPassword")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasColumnType("longtext")
+                        .HasComment("계정 암호화 된 비밀번호");
 
                     b.Property<bool>("Locked")
-                        .HasColumnType("tinyint(1)");
+                        .HasColumnType("tinyint(1)")
+                        .HasComment("계정 잠금");
 
                     b.Property<int>("LoginAttempt")
-                        .HasColumnType("int(11)");
+                        .HasColumnType("int(11)")
+                        .HasComment("로그인 시도 횟수");
 
                     b.Property<string>("Message")
-                        .HasColumnType("longtext");
+                        .HasColumnType("longtext")
+                        .HasComment("계정 상태 메시지");
 
                     b.Property<string>("RegistrationToken")
-                        .HasColumnType("longtext");
+                        .HasColumnType("longtext")
+                        .HasComment("회원가입 인증 토큰");
 
                     b.Property<string>("ResetPasswordToken")
-                        .HasColumnType("longtext");
+                        .HasColumnType("longtext")
+                        .HasComment("비밀번호 찾기 인증 토큰");
 
                     b.Property<string>("Role")
                         .IsRequired()
                         .ValueGeneratedOnAdd()
                         .HasMaxLength(255)
                         .HasColumnType("varchar(255)")
-                        .HasDefaultValueSql("'User'");
+                        .HasDefaultValueSql("'User'")
+                        .HasComment("계정 역할 (Admin 또는 User)");
 
                     b.Property<DateTime>("Updated")
                         .ValueGeneratedOnAdd()
                         .HasMaxLength(6)
                         .HasColumnType("datetime(6)")
-                        .HasDefaultValueSql("'1900-01-01 00:00:00.000000'");
+                        .HasDefaultValueSql("'1900-01-01 00:00:00.000000'")
+                        .HasComment("계정 업데이트일");
 
                     b.HasKey("Email")
                         .HasName("PRIMARY");
@@ -88,6 +106,7 @@ namespace MyLaboratory.Site.Migrations
                     b.ToTable("Account");
 
                     b
+                        .HasComment("MyLaboratory.Site 계정")
                         .HasCharSet("utf8mb4")
                         .UseCollation("utf8mb4_general_ci");
                 });
@@ -96,139 +115,113 @@ namespace MyLaboratory.Site.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int(11)");
+                        .HasColumnType("int(11)")
+                        .HasComment("ID");
 
                     b.Property<string>("Action")
                         .HasMaxLength(256)
-                        .HasColumnType("varchar(256)");
+                        .HasColumnType("varchar(256)")
+                        .HasComment("접근 MVC Action 명 /*이 값이 없으면 하위 카테고리 존재*/");
 
                     b.Property<string>("Controller")
                         .IsRequired()
                         .HasMaxLength(256)
-                        .HasColumnType("varchar(256)");
+                        .HasColumnType("varchar(256)")
+                        .HasComment("접근 MVC Controller 명");
 
                     b.Property<string>("DisplayName")
                         .IsRequired()
                         .HasMaxLength(256)
-                        .HasColumnType("varchar(256)");
+                        .HasColumnType("varchar(256)")
+                        .HasComment("표시이름");
 
                     b.Property<string>("IconPath")
                         .IsRequired()
                         .HasMaxLength(256)
-                        .HasColumnType("varchar(256)");
+                        .HasColumnType("varchar(256)")
+                        .HasComment("표시 아이콘 경로 /*FontAwesome 사용*/");
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(256)
-                        .HasColumnType("varchar(256)");
+                        .HasColumnType("varchar(256)")
+                        .HasComment("이름");
 
                     b.Property<int>("Order")
-                        .HasColumnType("int(11)");
+                        .HasColumnType("int(11)")
+                        .HasComment("출력 순서");
 
                     b.Property<string>("Role")
                         .IsRequired()
                         .ValueGeneratedOnAdd()
                         .HasMaxLength(256)
                         .HasColumnType("varchar(256)")
-                        .HasDefaultValueSql("'Admin'");
+                        .HasDefaultValueSql("'Admin'")
+                        .HasComment("접근 권한 설정");
 
                     b.HasKey("Id");
 
                     b.ToTable("Category");
-                });
-
-            modelBuilder.Entity("MyLaboratory.Site.Models.Product", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int(11)");
-
-                    b.Property<string>("Categoria")
-                        .HasColumnType("longtext");
-
-                    b.Property<string>("Nome")
-                        .HasColumnType("longtext");
-
-                    b.Property<decimal>("Valor")
-                        .HasColumnType("decimal(65,30)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Product");
 
                     b
-                        .HasCharSet("utf8mb4")
-                        .UseCollation("utf8mb4_general_ci");
+                        .HasComment("카테고리 /*MyLaboratory.Site의 로그인 후 접근 가능한 좌측 SideBar 설정 시 사용*/");
                 });
 
             modelBuilder.Entity("MyLaboratory.Site.Models.SubCategory", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int(11)");
+                        .HasColumnType("int(11)")
+                        .HasComment("ID");
 
                     b.Property<string>("Action")
                         .IsRequired()
                         .HasMaxLength(256)
-                        .HasColumnType("varchar(256)");
+                        .HasColumnType("varchar(256)")
+                        .HasComment("접근 MVC Action 명 /*이 값이 없으면 하위 카테고리 존재*/");
 
                     b.Property<int>("CategoryId")
-                        .HasColumnType("int(11)");
+                        .HasColumnType("int(11)")
+                        .HasComment("부모 카테고리 ID");
 
                     b.Property<string>("DisplayName")
                         .IsRequired()
                         .HasMaxLength(256)
-                        .HasColumnType("varchar(256)");
+                        .HasColumnType("varchar(256)")
+                        .HasComment("표시이름");
 
                     b.Property<string>("IconPath")
                         .IsRequired()
                         .HasMaxLength(256)
-                        .HasColumnType("varchar(256)");
+                        .HasColumnType("varchar(256)")
+                        .HasComment("표시 아이콘 경로 /*FontAwesome 사용*/");
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(256)
-                        .HasColumnType("varchar(256)");
+                        .HasColumnType("varchar(256)")
+                        .HasComment("이름");
 
                     b.Property<int>("Order")
-                        .HasColumnType("int(11)");
+                        .HasColumnType("int(11)")
+                        .HasComment("출력 순서");
 
                     b.Property<string>("Role")
                         .IsRequired()
                         .ValueGeneratedOnAdd()
                         .HasMaxLength(256)
                         .HasColumnType("varchar(256)")
-                        .HasDefaultValueSql("'Admin'");
+                        .HasDefaultValueSql("'Admin'")
+                        .HasComment("접근 권한 설정");
 
                     b.HasKey("Id");
 
                     b.HasIndex(new[] { "CategoryId" }, "SubCategories_FK");
 
                     b.ToTable("SubCategory");
-                });
-
-            modelBuilder.Entity("MyLaboratory.Site.Models.Worker", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int(11)");
-
-                    b.Property<string>("Job")
-                        .HasColumnType("longtext");
-
-                    b.Property<decimal>("Wage")
-                        .HasColumnType("decimal(65,30)");
-
-                    b.Property<string>("WorkerName")
-                        .HasColumnType("longtext");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Worker");
 
                     b
-                        .HasCharSet("utf8mb4")
-                        .UseCollation("utf8mb4_general_ci");
+                        .HasComment("서브 카테고리 /*MyLaboratory.Site의 로그인 후 접근 가능한 좌측 SideBar 설정 시 사용*/");
                 });
 
             modelBuilder.Entity("MyLaboratory.Site.Models.SubCategory", b =>
@@ -237,6 +230,7 @@ namespace MyLaboratory.Site.Migrations
                         .WithMany("SubCategories")
                         .HasForeignKey("CategoryId")
                         .HasConstraintName("SubCategories_FK")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Category");
