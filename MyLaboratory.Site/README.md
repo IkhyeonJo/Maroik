@@ -725,3 +725,31 @@ autocommit=0   --> autocommit 해제
 
 # MariaDB Table Column Comment
 https://jhnyang.tistory.com/309
+https://arjunphp.com/how-to-get-mysql-table-comments/
+
+# MariaDB Table Comment Example
+CREATE TABLE `Account` (
+  `Email` varchar(255) NOT NULL COMMENT '계정 이메일 (ID)',
+  `HashedPassword` longtext NOT NULL COMMENT '계정 암호화 된 비밀번호',
+  `FullName` varchar(255) NOT NULL COMMENT '계정 성명',
+  `AvatarImagePath` varchar(255) NOT NULL DEFAULT '/upload/Management/Profile/default-avatar.jpg' COMMENT '계정 아바타 이미지 경로',
+  `Role` varchar(255) NOT NULL DEFAULT 'User' COMMENT '계정 역할 (Admin 또는 User)',
+  `Locked` tinyint(1) NOT NULL COMMENT '계정 잠금',
+  `LoginAttempt` int(11) NOT NULL COMMENT '로그인 시도 횟수',
+  `EmailConfirmed` tinyint(1) NOT NULL COMMENT '이메일 확인 여부',
+  `AgreedServiceTerms` tinyint(1) NOT NULL COMMENT '약관 동의 여부',
+  `RegistrationToken` longtext DEFAULT NULL COMMENT '회원가입 인증 토큰',
+  `ResetPasswordToken` longtext DEFAULT NULL COMMENT '비밀번호 찾기 인증 토큰',
+  `Created` datetime(6) NOT NULL DEFAULT '1900-01-01 00:00:00.000000' COMMENT '계정 생성일',
+  `Updated` datetime(6) NOT NULL DEFAULT '1900-01-01 00:00:00.000000' COMMENT '계정 업데이트일',
+  `Message` longtext DEFAULT NULL COMMENT '계정 상태 메시지',
+  `Deleted` tinyint(1) NOT NULL COMMENT '계정 삭제 여부',
+  PRIMARY KEY (`Email`),
+  CONSTRAINT `Accounts_check` CHECK (`Role` = 'Admin' or `Role` = 'User')
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT '계정';
+
+SHOW FULL COLUMNS FROM Account; // Account 테이블의 컬럼 COMMENT 전부 출력
+
+SELECT table_comment
+FROM INFORMATION_SCHEMA.TABLES
+WHERE table_name='Account'; // Account 테이블의 COMMENT 출력
