@@ -109,6 +109,85 @@ namespace MyLaboratory.Site.Migrations
                         .UseCollation("utf8mb4_general_ci");
                 });
 
+            modelBuilder.Entity("MyLaboratory.Site.Models.Asset", b =>
+                {
+                    b.Property<string>("ProductName")
+                        .HasColumnType("varchar(255)")
+                        .HasComment("상품명 (은행 계좌명, 증권 계좌명, 현금 등)");
+
+                    b.Property<string>("AccountEmail")
+                        .HasColumnType("varchar(255)")
+                        .HasComment("계정 이메일 (ID)");
+
+                    b.Property<long>("Amount")
+                        .HasColumnType("bigint(255)")
+                        .HasComment("금액");
+
+                    b.Property<DateTime>("Created")
+                        .HasMaxLength(6)
+                        .HasColumnType("datetime(6)")
+                        .HasComment("생성일");
+
+                    b.Property<bool>("Deleted")
+                        .HasColumnType("tinyint(1)")
+                        .HasComment("삭제여부");
+
+                    b.Property<string>("Item")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)")
+                        .HasComment("항목 (자유입출금 자산, 신탁 자산, 현금 자산, 저축성 자산, 투자성 자산, 부동산, 동산, 기타 실물 자산, 보험 자산)");
+
+                    b.Property<string>("MonetaryUnit")
+                        .IsRequired()
+                        .HasMaxLength(45)
+                        .HasColumnType("varchar(45)")
+                        .HasComment("화폐 단위 (KRW, USD, ETC)");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(45)
+                        .HasColumnType("varchar(45)")
+                        .HasComment("비고");
+
+                    b.Property<string>("Reserved0")
+                        .HasMaxLength(45)
+                        .HasColumnType("varchar(45)");
+
+                    b.Property<string>("Reserved1")
+                        .HasMaxLength(45)
+                        .HasColumnType("varchar(45)");
+
+                    b.Property<string>("Reserved2")
+                        .HasMaxLength(45)
+                        .HasColumnType("varchar(45)");
+
+                    b.Property<string>("Reserved3")
+                        .HasMaxLength(45)
+                        .HasColumnType("varchar(45)");
+
+                    b.Property<string>("Reserved4")
+                        .HasMaxLength(45)
+                        .HasColumnType("varchar(45)");
+
+                    b.Property<DateTime>("Updated")
+                        .HasMaxLength(6)
+                        .HasColumnType("datetime(6)")
+                        .HasComment("업데이트일");
+
+                    b.HasKey("ProductName", "AccountEmail")
+                        .HasName("PRIMARY")
+                        .HasAnnotation("MySql:IndexPrefixLength", new[] { 0, 0 });
+
+                    b.HasIndex(new[] { "AccountEmail" }, "Asset_FK");
+
+                    b.ToTable("Asset");
+
+                    b
+                        .HasComment("MyLaboratory Site 자산")
+                        .HasCharSet("utf8mb4")
+                        .UseCollation("utf8mb4_general_ci");
+                });
+
             modelBuilder.Entity("MyLaboratory.Site.Models.Category", b =>
                 {
                     b.Property<int>("Id")
@@ -163,6 +242,301 @@ namespace MyLaboratory.Site.Migrations
 
                     b
                         .HasComment("카테고리 /*MyLaboratory.Site의 로그인 후 접근 가능한 좌측 SideBar 설정 시 사용*/");
+                });
+
+            modelBuilder.Entity("MyLaboratory.Site.Models.Expenditure", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int(11)")
+                        .HasComment("PK");
+
+                    b.Property<string>("AccountEmail")
+                        .IsRequired()
+                        .HasColumnType("varchar(255)")
+                        .HasComment("계정 이메일 (ID)");
+
+                    b.Property<long>("Amount")
+                        .HasColumnType("bigint(255)")
+                        .HasComment("금액");
+
+                    b.Property<string>("Contents")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)")
+                        .HasComment("내용 (하계할인마트/신한카드/남원추어탕/교보문고)");
+
+                    b.Property<DateTime>("Created")
+                        .HasMaxLength(6)
+                        .HasColumnType("datetime(6)")
+                        .HasComment("생성일");
+
+                    b.Property<string>("MainClass")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)")
+                        .HasComment("대분류 (정기저축/비소비지출/소비지출)");
+
+                    b.Property<string>("MonetaryUnit")
+                        .IsRequired()
+                        .HasMaxLength(45)
+                        .HasColumnType("varchar(45)")
+                        .HasComment("화폐 단위 (KRW, USD, ETC)");
+
+                    b.Property<string>("MyAsset")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)")
+                        .HasComment("내자산 (지출 중 정기저축일 때 사용)");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(45)
+                        .HasColumnType("varchar(45)")
+                        .HasComment("비고");
+
+                    b.Property<string>("PaymentMethod")
+                        .IsRequired()
+                        .HasColumnType("varchar(255)")
+                        .HasComment("결제수단 (자산 상품명/현금)");
+
+                    b.Property<string>("Reserved0")
+                        .HasMaxLength(45)
+                        .HasColumnType("varchar(45)");
+
+                    b.Property<string>("Reserved1")
+                        .HasMaxLength(45)
+                        .HasColumnType("varchar(45)");
+
+                    b.Property<string>("Reserved2")
+                        .HasMaxLength(45)
+                        .HasColumnType("varchar(45)");
+
+                    b.Property<string>("Reserved3")
+                        .HasMaxLength(45)
+                        .HasColumnType("varchar(45)");
+
+                    b.Property<string>("Reserved4")
+                        .HasMaxLength(45)
+                        .HasColumnType("varchar(45)");
+
+                    b.Property<string>("SubClass")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)")
+                        .HasComment("소분류 (예적금/투자/(내계좌이체/인출) | 세금/공적연금/사회보험/가구간 이전지출/비영리단체 이전/부채상환 | (식비/외식비)/(주거/용품비)/교육비/의료비/교통비/통신비/(여가/문화)/(의류/신발)/용돈/보장성보험/기타기출/미파악지출)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex(new[] { "PaymentMethod", "AccountEmail" }, "Expenditure_FK");
+
+                    b.ToTable("Expenditure");
+
+                    b
+                        .HasComment("MyLaboratory Site 지출")
+                        .HasCharSet("utf8mb4")
+                        .UseCollation("utf8mb4_general_ci");
+                });
+
+            modelBuilder.Entity("MyLaboratory.Site.Models.Income", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int(11)")
+                        .HasComment("PK");
+
+                    b.Property<string>("AccountEmail")
+                        .IsRequired()
+                        .HasColumnType("varchar(255)")
+                        .HasComment("계정 이메일 (ID)");
+
+                    b.Property<long>("Amount")
+                        .HasColumnType("bigint(255)")
+                        .HasComment("금액");
+
+                    b.Property<string>("Contents")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)")
+                        .HasComment("내용 (회사명/사업명)");
+
+                    b.Property<DateTime>("Created")
+                        .HasMaxLength(6)
+                        .HasColumnType("datetime(6)")
+                        .HasComment("생성일");
+
+                    b.Property<string>("MainClass")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)")
+                        .HasComment("대분류 (정기수입/비정기수입)");
+
+                    b.Property<string>("MonetaryUnit")
+                        .IsRequired()
+                        .HasMaxLength(45)
+                        .HasColumnType("varchar(45)")
+                        .HasComment("화폐 단위 (KRW, USD, ETC)");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(45)
+                        .HasColumnType("varchar(45)")
+                        .HasComment("비고");
+
+                    b.Property<string>("PaymentMethod")
+                        .IsRequired()
+                        .HasColumnType("varchar(255)")
+                        .HasComment("결제수단 (자산 상품명/현금)");
+
+                    b.Property<string>("Reserved0")
+                        .HasMaxLength(45)
+                        .HasColumnType("varchar(45)");
+
+                    b.Property<string>("Reserved1")
+                        .HasMaxLength(45)
+                        .HasColumnType("varchar(45)");
+
+                    b.Property<string>("Reserved2")
+                        .HasMaxLength(45)
+                        .HasColumnType("varchar(45)");
+
+                    b.Property<string>("Reserved3")
+                        .HasMaxLength(45)
+                        .HasColumnType("varchar(45)");
+
+                    b.Property<string>("Reserved4")
+                        .HasMaxLength(45)
+                        .HasColumnType("varchar(45)");
+
+                    b.Property<string>("SubClass")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)")
+                        .HasComment("소분류 (근로수입/사업수입/연금수입/금융소득/임대수입/기타수입)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex(new[] { "PaymentMethod", "AccountEmail" }, "Income_FK");
+
+                    b.ToTable("Income");
+
+                    b
+                        .HasComment("MyLaboratory Site 수입")
+                        .HasCharSet("utf8mb4")
+                        .UseCollation("utf8mb4_general_ci");
+                });
+
+            modelBuilder.Entity("MyLaboratory.Site.Models.Liability", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int(11)")
+                        .HasComment("PK");
+
+                    b.Property<string>("AccountEmail")
+                        .IsRequired()
+                        .HasColumnType("varchar(255)")
+                        .HasComment("계정 이메일 (ID)");
+
+                    b.Property<long>("Amount")
+                        .HasColumnType("bigint(255)")
+                        .HasComment("금액");
+
+                    b.Property<DateTime>("Created")
+                        .HasMaxLength(6)
+                        .HasColumnType("datetime(6)")
+                        .HasComment("생성일");
+
+                    b.Property<string>("Creditor")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)")
+                        .HasComment("금융사/채권인");
+
+                    b.Property<bool>("Deleted")
+                        .HasColumnType("tinyint(1)")
+                        .HasComment("삭제여부");
+
+                    b.Property<float>("InterestRate")
+                        .HasColumnType("float")
+                        .HasComment("이자율");
+
+                    b.Property<string>("MainClass")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)")
+                        .HasComment("대분류 (단기대출/장기대출)");
+
+                    b.Property<DateTime>("MaturityDate")
+                        .HasMaxLength(6)
+                        .HasColumnType("datetime(6)")
+                        .HasComment("만기일");
+
+                    b.Property<string>("MonetaryUnit")
+                        .IsRequired()
+                        .HasMaxLength(45)
+                        .HasColumnType("varchar(45)")
+                        .HasComment("화폐 단위 (KRW, USD, ETC)");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(45)
+                        .HasColumnType("varchar(45)")
+                        .HasComment("비고");
+
+                    b.Property<string>("ProductName")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)")
+                        .HasComment("상품명");
+
+                    b.Property<string>("Reserved0")
+                        .HasMaxLength(45)
+                        .HasColumnType("varchar(45)");
+
+                    b.Property<string>("Reserved1")
+                        .HasMaxLength(45)
+                        .HasColumnType("varchar(45)");
+
+                    b.Property<string>("Reserved2")
+                        .HasMaxLength(45)
+                        .HasColumnType("varchar(45)");
+
+                    b.Property<string>("Reserved3")
+                        .HasMaxLength(45)
+                        .HasColumnType("varchar(45)");
+
+                    b.Property<string>("Reserved4")
+                        .HasMaxLength(45)
+                        .HasColumnType("varchar(45)");
+
+                    b.Property<string>("SubClass")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)")
+                        .HasComment("소분류 (소비생활부채/부동산관련부채)");
+
+                    b.Property<DateTime>("Updated")
+                        .HasMaxLength(6)
+                        .HasColumnType("datetime(6)")
+                        .HasComment("업데이트일");
+
+                    b.Property<string>("WithdrawalAccount")
+                        .IsRequired()
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<DateTime>("WithdrawalDate")
+                        .HasMaxLength(6)
+                        .HasColumnType("datetime(6)")
+                        .HasComment("출금일");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex(new[] { "WithdrawalAccount", "AccountEmail" }, "Liability_FK");
+
+                    b.ToTable("Liability");
+
+                    b
+                        .HasComment("MyLaboratory Site 부채")
+                        .HasCharSet("utf8mb4")
+                        .UseCollation("utf8mb4_general_ci");
                 });
 
             modelBuilder.Entity("MyLaboratory.Site.Models.SubCategory", b =>
@@ -222,6 +596,50 @@ namespace MyLaboratory.Site.Migrations
                         .HasComment("서브 카테고리 /*MyLaboratory.Site의 로그인 후 접근 가능한 좌측 SideBar 설정 시 사용*/");
                 });
 
+            modelBuilder.Entity("MyLaboratory.Site.Models.Asset", b =>
+                {
+                    b.HasOne("MyLaboratory.Site.Models.Account", "AccountEmailNavigation")
+                        .WithMany("Assets")
+                        .HasForeignKey("AccountEmail")
+                        .HasConstraintName("Asset_FK")
+                        .IsRequired();
+
+                    b.Navigation("AccountEmailNavigation");
+                });
+
+            modelBuilder.Entity("MyLaboratory.Site.Models.Expenditure", b =>
+                {
+                    b.HasOne("MyLaboratory.Site.Models.Asset", "Asset")
+                        .WithMany("Expenditures")
+                        .HasForeignKey("PaymentMethod", "AccountEmail")
+                        .HasConstraintName("Expenditure_FK")
+                        .IsRequired();
+
+                    b.Navigation("Asset");
+                });
+
+            modelBuilder.Entity("MyLaboratory.Site.Models.Income", b =>
+                {
+                    b.HasOne("MyLaboratory.Site.Models.Asset", "Asset")
+                        .WithMany("Incomes")
+                        .HasForeignKey("PaymentMethod", "AccountEmail")
+                        .HasConstraintName("Income_FK")
+                        .IsRequired();
+
+                    b.Navigation("Asset");
+                });
+
+            modelBuilder.Entity("MyLaboratory.Site.Models.Liability", b =>
+                {
+                    b.HasOne("MyLaboratory.Site.Models.Asset", "Asset")
+                        .WithMany("Liabilities")
+                        .HasForeignKey("WithdrawalAccount", "AccountEmail")
+                        .HasConstraintName("Liability_FK")
+                        .IsRequired();
+
+                    b.Navigation("Asset");
+                });
+
             modelBuilder.Entity("MyLaboratory.Site.Models.SubCategory", b =>
                 {
                     b.HasOne("MyLaboratory.Site.Models.Category", "Category")
@@ -232,6 +650,20 @@ namespace MyLaboratory.Site.Migrations
                         .IsRequired();
 
                     b.Navigation("Category");
+                });
+
+            modelBuilder.Entity("MyLaboratory.Site.Models.Account", b =>
+                {
+                    b.Navigation("Assets");
+                });
+
+            modelBuilder.Entity("MyLaboratory.Site.Models.Asset", b =>
+                {
+                    b.Navigation("Expenditures");
+
+                    b.Navigation("Incomes");
+
+                    b.Navigation("Liabilities");
                 });
 
             modelBuilder.Entity("MyLaboratory.Site.Models.Category", b =>

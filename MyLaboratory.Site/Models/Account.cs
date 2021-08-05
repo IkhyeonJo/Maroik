@@ -10,6 +10,11 @@ namespace MyLaboratory.Site.Models
 {
     public partial class Account
     {
+        public Account()
+        {
+            Assets = new HashSet<Asset>();
+        }
+
         public string Email { get; set; }
         public string HashedPassword { get; set; }
         public string FullName { get; set; }
@@ -25,5 +30,7 @@ namespace MyLaboratory.Site.Models
         public DateTime Updated { get; set; }
         public string Message { get; set; }
         public bool Deleted { get; set; }
+
+        public virtual ICollection<Asset> Assets { get; set; }
     }
 }
