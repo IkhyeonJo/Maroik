@@ -756,3 +756,6 @@ SHOW FULL COLUMNS FROM Account; // Account 테이블의 컬럼 COMMENT 전부 �
 SELECT table_comment
 FROM INFORMATION_SCHEMA.TABLES
 WHERE table_name='Account'; // Account 테이블의 COMMENT 출력
+
+#MySQL Trigger의 활용
+https://blog.naver.com/PostView.nhn?blogId=alcmskfl17&logNo=221859839012
