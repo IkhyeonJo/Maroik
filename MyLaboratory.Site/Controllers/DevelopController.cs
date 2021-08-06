@@ -22,6 +22,8 @@ namespace MyLaboratory.Site.Controllers
             this.logger = logger;
         }
 
+        #region Admin
+
         #region WebAPI
 
         #region Read
@@ -30,6 +32,8 @@ namespace MyLaboratory.Site.Controllers
         {
             return View();
         }
+        #endregion
+
         #endregion
 
         #endregion
