@@ -3,7 +3,7 @@
 
 // Write your JavaScript code.
 $(function () {
-    $("#createAccountTabs").tabs();
+    $("#createAssetTabs").tabs();
     $("#editAccountTabs").tabs();
 });
 
@@ -71,28 +71,30 @@ $('#gridSearch').on('input', function () {
     grid.reload();
 });
 
-function CreateAccount() {
+function CreateAsset() {
 
-    if (!$('#formCreateAccount').valid()) {
+    if (!$('#formCreateAsset').valid()) {
         return false;
     }
 
-    var createForm = $('#formCreateAccount');
+    var createForm = $('#formCreateAsset');
 
-    var email = createForm.find('input[id="createAccountEmail"]').val();
-    var password = createForm.find('input[id="createAccountPassword"]').val();
-    var fullName = createForm.find('input[id="createAccountFullName"]').val();
-    var role = createForm.find('select[id="createAccountRole"]').val();
+    var productName = createForm.find('input[id="createAssetProductName"]').val();
+    var item = createForm.find('select[id="createAssetItem"]').val();
+    var amount = createForm.find('input[id="createAssetAmount"]').val();
+    var monetaryUnit = createForm.find('input[id="createAssetMonetaryUnit"]').val();
+    var note = createForm.find('input[id="createAssetNote"]').val();
 
     var paramValue = JSON.stringify({
-        Email: email,
-        Password: password,
-        FullName: fullName,
-        Role: role
+        ProductName: productName,
+        Item: item,
+        Amount: amount,
+        MonetaryUnit: monetaryUnit,
+        Note: note
     });
 
     $.ajax({
-        url: '/Management/CreateAccount',
+        url: '/AccountBook/CreateAsset',
         type: 'POST',
         headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
         dataType: 'json',
@@ -102,7 +104,7 @@ function CreateAccount() {
         //cache: false,
         success: function (data) {
             if (data.result) {
-                $('#createAccountDialogModal').modal('hide'); // hide Modal
+                $('#createAssetDialogModal').modal('hide'); // hide Modal
 
                 const grid = new MvcGrid(document.querySelector(".mvc-grid")); //reload grid
                 grid.reload(); //reload grid

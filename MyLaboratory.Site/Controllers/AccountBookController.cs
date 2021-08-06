@@ -53,6 +53,65 @@ namespace MyLaboratory.Site.Controllers
 
         #region 자산
 
+        #region Create
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [RequiredHttpPostAccess(Role = Role.User)]
+        public async Task<IActionResult> CreateAsset([FromBody] AssetInputViewModel assetInputViewModel)
+        {
+            try
+            {
+                if (ModelState.IsValid)
+                {
+                    HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+
+                    if (await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, assetInputViewModel.ProductName) != null)
+                    {
+                        return Json(new { result = false, error = "The asset already exists." });
+                    }
+
+                    try
+                    {
+                        await assetRepository.CreateAccountAsync
+                            (
+                            new Asset()
+                            {
+                                ProductName = assetInputViewModel.ProductName,
+                                AccountEmail = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email,
+                                Item = assetInputViewModel.Item,
+                                Amount = assetInputViewModel.Amount,
+                                MonetaryUnit = assetInputViewModel.MonetaryUnit,
+                                Created = DateTime.UtcNow,
+                                Updated = DateTime.UtcNow,
+                                Note = assetInputViewModel.Note,
+                                Deleted = false,
+                                Reserved0 = null,
+                                Reserved1 = null,
+                                Reserved2 = null,
+                                Reserved3 = null,
+                                Reserved4 = null
+                            }
+                            );
+                    }
+                    catch (Exception e)
+                    {
+                        return Json(new { result = false, error = e.ToString() });
+                    }
+
+                    return Json(new { result = true, message = "The asset has been successfully created." });
+                }
+                else
+                {
+                    return Json(new { result = false, error = "Input is invalid" });
+                }
+            }
+            catch (Exception e)
+            {
+                return Json(new { result = false, error = e.ToString() });
+            }
+        }
+        #endregion
+
         #region Read
         [HttpGet]
         public async Task<IActionResult> Asset(string wholeSearch)

@@ -17,6 +17,7 @@ namespace MyLaboratory.Site.Services
         {
             this.context = context;
         }
+
         /// <summary>
         /// 로그인 계정에 해당하는 모든 자산을 구합니다.
         /// </summary>
@@ -25,6 +26,28 @@ namespace MyLaboratory.Site.Services
         public async Task<List<Asset>> GetAssetsAsync(string email)
         {
             return await context.Assets.Where(x => x.AccountEmail == email).ToListAsync();
+        }
+
+        /// <summary>
+        /// 로그인 계정에 해당하는 특정 자산을 구합니다.
+        /// </summary>
+        /// <param name="email"></param>
+        /// <param name="productName"></param>
+        /// <returns></returns>
+        public async Task<Asset> GetAssetAsync(string email, string productName)
+        {
+            return await context.Assets.FirstOrDefaultAsync(a => a.AccountEmail == email && a.ProductName == productName);
+        }
+
+        /// <summary>
+        /// 자산을 생성합니다.
+        /// </summary>
+        /// <param name="asset"></param>
+        /// <returns></returns>
+        public async Task CreateAccountAsync(Asset asset)
+        {
+            await context.Assets.AddAsync(asset);
+            await context.SaveChangesAsync();
         }
     }
 }
