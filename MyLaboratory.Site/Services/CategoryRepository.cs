@@ -18,7 +18,7 @@ namespace MyLaboratory.Site.Services
             this.context = context;
         }
         /// <summary>
-        /// 권한에 따른 Category들을 구합니다.
+        /// 권한에 따른 카테고리들을 구합니다.
         /// </summary>
         /// <param name="role"></param>
         /// <returns></returns>
