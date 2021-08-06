@@ -27,6 +27,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Net.Mail;
 using Microsoft.AspNetCore.Mvc.Localization;
+using MyLaboratory.Site.Models.ViewModels.AccountBook;
 
 namespace MyLaboratory.Site.Controllers
 {
@@ -38,7 +39,8 @@ namespace MyLaboratory.Site.Controllers
         private readonly IHostEnvironment hostEnvironment;
         private readonly ICategoryRepository categoryRepository;
         private readonly ISubCategoryRepository subCategoryRepository;
-        public AccountBookController(IHtmlLocalizer<AccountBookController> localizer, ILogger<AccountBookController> logger, IAccountRepository accountRepository, IHostEnvironment hostEnvironment, ICategoryRepository categoryRepository, ISubCategoryRepository subCategoryRepository)
+        private readonly IAssetRepository assetRepository;
+        public AccountBookController(IHtmlLocalizer<AccountBookController> localizer, ILogger<AccountBookController> logger, IAccountRepository accountRepository, IHostEnvironment hostEnvironment, ICategoryRepository categoryRepository, ISubCategoryRepository subCategoryRepository, IAssetRepository assetRepository)
         {
             this.localizer = localizer;
             this.logger = logger;
@@ -46,14 +48,19 @@ namespace MyLaboratory.Site.Controllers
             this.hostEnvironment = hostEnvironment;
             this.categoryRepository = categoryRepository;
             this.subCategoryRepository = subCategoryRepository;
+            this.assetRepository = assetRepository;
         }
 
         #region 자산
 
         #region Read
         [HttpGet]
-        public IActionResult Asset()
+        public async Task<IActionResult> Asset()
         {
+            List<AssetOutputViewModel> assetOutputViewModels = new List<AssetOutputViewModel>();
+
+            var aa = await assetRepository.GetAssetsAsync("***REMOVED***");
+
             return View();
         }
         #endregion
