@@ -357,7 +357,7 @@ namespace MyLaboratory.Site.Controllers
                             (item.Created.ToString() ?? "").Contains(wholeSearch) ||
                             (item.Updated.ToString() ?? "").Contains(wholeSearch) ||
                             (item.Message?.ToString() ?? "").Contains(wholeSearch) ||
-                            item.Deleted.ToString().Contains(wholeSearch))
+                            (item.Deleted.ToString() ?? "").Contains(wholeSearch))
                         {
                             accountOutputViewModels.Add(new AccountOutputViewModel()
                             {
