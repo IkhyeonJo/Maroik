@@ -288,7 +288,7 @@ namespace MyLaboratory.Site.Data
                     .HasCharSet("utf8mb4")
                     .UseCollation("utf8mb4_general_ci");
 
-                entity.HasIndex(e => new { e.PaymentMethod, e.AccountEmail }, "Income_FK");
+                entity.HasIndex(e => new { e.DepositAccount, e.AccountEmail }, "Income_FK");
 
                 entity.Property(e => e.Id)
                     .HasColumnType("int(11)")
@@ -311,6 +311,10 @@ namespace MyLaboratory.Site.Data
                     .HasMaxLength(6)
                     .HasComment("생성일");
 
+                entity.Property(e => e.DepositAccount)
+                    .IsRequired()
+                    .HasComment("입금계좌 (자산 상품명/현금)");
+
                 entity.Property(e => e.MainClass)
                     .IsRequired()
                     .HasMaxLength(255)
@@ -325,9 +329,9 @@ namespace MyLaboratory.Site.Data
                     .HasMaxLength(45)
                     .HasComment("비고");
 
-                entity.Property(e => e.PaymentMethod)
-                    .IsRequired()
-                    .HasComment("결제수단 (자산 상품명/현금)");
+                entity.Property(e => e.PayDay)
+                    .HasMaxLength(6)
+                    .HasComment("지급일 (배당 같은 거)");
 
                 entity.Property(e => e.Reserved0).HasMaxLength(45);
 
@@ -346,7 +350,7 @@ namespace MyLaboratory.Site.Data
 
                 entity.HasOne(d => d.Asset)
                     .WithMany(p => p.Incomes)
-                    .HasForeignKey(d => new { d.PaymentMethod, d.AccountEmail })
+                    .HasForeignKey(d => new { d.DepositAccount, d.AccountEmail })
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("Income_FK");
             });
@@ -432,7 +436,7 @@ namespace MyLaboratory.Site.Data
 
                 entity.Property(e => e.WithdrawalDate)
                     .HasMaxLength(6)
-                    .HasComment("출금일");
+                    .HasComment("출금일 (만일 매월 넷째주 이렇게 출금일이 결정되었으면 만기일까지 출금일 몇 번 되는지 하나씩 전부 등록할 것 예:(년도/1월/11일,년도/2월11일/,년도3월11일))");
 
                 entity.HasOne(d => d.Asset)
                     .WithMany(p => p.Liabilities)

@@ -9,7 +9,7 @@ using MyLaboratory.Site.Data;
 namespace MyLaboratory.Site.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20210805175220_InitialCreate")]
+    [Migration("20210806050955_InitialCreate")]
     partial class InitialCreate
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -366,6 +366,11 @@ namespace MyLaboratory.Site.Migrations
                         .HasColumnType("datetime(6)")
                         .HasComment("생성일");
 
+                    b.Property<string>("DepositAccount")
+                        .IsRequired()
+                        .HasColumnType("varchar(255)")
+                        .HasComment("입금계좌 (자산 상품명/현금)");
+
                     b.Property<string>("MainClass")
                         .IsRequired()
                         .HasMaxLength(255)
@@ -383,10 +388,10 @@ namespace MyLaboratory.Site.Migrations
                         .HasColumnType("varchar(45)")
                         .HasComment("비고");
 
-                    b.Property<string>("PaymentMethod")
-                        .IsRequired()
-                        .HasColumnType("varchar(255)")
-                        .HasComment("결제수단 (자산 상품명/현금)");
+                    b.Property<DateTime>("PayDay")
+                        .HasMaxLength(6)
+                        .HasColumnType("datetime(6)")
+                        .HasComment("지급일 (배당 같은 거)");
 
                     b.Property<string>("Reserved0")
                         .HasMaxLength(45)
@@ -416,7 +421,7 @@ namespace MyLaboratory.Site.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex(new[] { "PaymentMethod", "AccountEmail" }, "Income_FK");
+                    b.HasIndex(new[] { "DepositAccount", "AccountEmail" }, "Income_FK");
 
                     b.ToTable("Income");
 
@@ -527,7 +532,7 @@ namespace MyLaboratory.Site.Migrations
                     b.Property<DateTime>("WithdrawalDate")
                         .HasMaxLength(6)
                         .HasColumnType("datetime(6)")
-                        .HasComment("출금일");
+                        .HasComment("출금일 (만일 매월 넷째주 이렇게 출금일이 결정되었으면 만기일까지 출금일 몇 번 되는지 하나씩 전부 등록할 것 예:(년도/1월/11일,년도/2월11일/,년도3월11일))");
 
                     b.HasKey("Id");
 
@@ -624,7 +629,7 @@ namespace MyLaboratory.Site.Migrations
                 {
                     b.HasOne("MyLaboratory.Site.Models.Asset", "Asset")
                         .WithMany("Incomes")
-                        .HasForeignKey("PaymentMethod", "AccountEmail")
+                        .HasForeignKey("DepositAccount", "AccountEmail")
                         .HasConstraintName("Income_FK")
                         .IsRequired();
 

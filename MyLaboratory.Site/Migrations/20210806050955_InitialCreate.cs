@@ -218,8 +218,9 @@ namespace MyLaboratory.Site.Migrations
                     Amount = table.Column<long>(type: "bigint(255)", nullable: false, comment: "금액"),
                     MonetaryUnit = table.Column<string>(type: "varchar(45)", maxLength: 45, nullable: false, comment: "화폐 단위 (KRW, USD, ETC)", collation: "utf8mb4_general_ci")
                         .Annotation("MySql:CharSet", "utf8mb4"),
-                    PaymentMethod = table.Column<string>(type: "varchar(255)", nullable: false, comment: "결제수단 (자산 상품명/현금)", collation: "utf8mb4_general_ci")
+                    DepositAccount = table.Column<string>(type: "varchar(255)", nullable: false, comment: "입금계좌 (자산 상품명/현금)", collation: "utf8mb4_general_ci")
                         .Annotation("MySql:CharSet", "utf8mb4"),
+                    PayDay = table.Column<DateTime>(type: "datetime(6)", maxLength: 6, nullable: false, comment: "지급일 (배당 같은 거)"),
                     Created = table.Column<DateTime>(type: "datetime(6)", maxLength: 6, nullable: false, comment: "생성일"),
                     Note = table.Column<string>(type: "varchar(45)", maxLength: 45, nullable: true, comment: "비고", collation: "utf8mb4_general_ci")
                         .Annotation("MySql:CharSet", "utf8mb4"),
@@ -239,7 +240,7 @@ namespace MyLaboratory.Site.Migrations
                     table.PrimaryKey("PK_Income", x => x.Id);
                     table.ForeignKey(
                         name: "Income_FK",
-                        columns: x => new { x.PaymentMethod, x.AccountEmail },
+                        columns: x => new { x.DepositAccount, x.AccountEmail },
                         principalTable: "Asset",
                         principalColumns: new[] { "ProductName", "AccountEmail" },
                         onDelete: ReferentialAction.Restrict);
@@ -270,7 +271,7 @@ namespace MyLaboratory.Site.Migrations
                     MonetaryUnit = table.Column<string>(type: "varchar(45)", maxLength: 45, nullable: false, comment: "화폐 단위 (KRW, USD, ETC)", collation: "utf8mb4_general_ci")
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     InterestRate = table.Column<float>(type: "float", nullable: false, comment: "이자율"),
-                    WithdrawalDate = table.Column<DateTime>(type: "datetime(6)", maxLength: 6, nullable: false, comment: "출금일"),
+                    WithdrawalDate = table.Column<DateTime>(type: "datetime(6)", maxLength: 6, nullable: false, comment: "출금일 (만일 매월 넷째주 이렇게 출금일이 결정되었으면 만기일까지 출금일 몇 번 되는지 하나씩 전부 등록할 것 예:(년도/1월/11일,년도/2월11일/,년도3월11일))"),
                     MaturityDate = table.Column<DateTime>(type: "datetime(6)", maxLength: 6, nullable: false, comment: "만기일"),
                     Created = table.Column<DateTime>(type: "datetime(6)", maxLength: 6, nullable: false, comment: "생성일"),
                     Updated = table.Column<DateTime>(type: "datetime(6)", maxLength: 6, nullable: false, comment: "업데이트일"),
@@ -315,7 +316,7 @@ namespace MyLaboratory.Site.Migrations
             migrationBuilder.CreateIndex(
                 name: "Income_FK",
                 table: "Income",
-                columns: new[] { "PaymentMethod", "AccountEmail" });
+                columns: new[] { "DepositAccount", "AccountEmail" });
 
             migrationBuilder.CreateIndex(
                 name: "Liability_FK",
