@@ -120,8 +120,14 @@
   <data name="Account" xml:space="preserve">
     <value>계정</value>
   </data>
+  <data name="AccountBook" xml:space="preserve">
+    <value>가계부</value>
+  </data>
   <data name="API" xml:space="preserve">
     <value>API</value>
+  </data>
+  <data name="Asset" xml:space="preserve">
+    <value>자산</value>
   </data>
   <data name="Chart" xml:space="preserve">
     <value>차트</value>
@@ -132,8 +138,17 @@
   <data name="Develop" xml:space="preserve">
     <value>개발</value>
   </data>
+  <data name="Expenditure" xml:space="preserve">
+    <value>지출</value>
+  </data>
   <data name="Home" xml:space="preserve">
     <value>홈</value>
+  </data>
+  <data name="Income" xml:space="preserve">
+    <value>수입</value>
+  </data>
+  <data name="Liability" xml:space="preserve">
+    <value>부채</value>
   </data>
   <data name="Management" xml:space="preserve">
     <value>관리</value>

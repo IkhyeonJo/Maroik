@@ -120,8 +120,14 @@
   <data name="Account" xml:space="preserve">
     <value>Account</value>
   </data>
+  <data name="AccountBook" xml:space="preserve">
+    <value>AccountBook</value>
+  </data>
   <data name="API" xml:space="preserve">
     <value>API</value>
+  </data>
+  <data name="Asset" xml:space="preserve">
+    <value>Asset</value>
   </data>
   <data name="Chart" xml:space="preserve">
     <value>Chart</value>
@@ -132,8 +138,17 @@
   <data name="Develop" xml:space="preserve">
     <value>Develop</value>
   </data>
+  <data name="Expenditure" xml:space="preserve">
+    <value>Expenditure</value>
+  </data>
   <data name="Home" xml:space="preserve">
     <value>Home</value>
+  </data>
+  <data name="Income" xml:space="preserve">
+    <value>Income</value>
+  </data>
+  <data name="Liability" xml:space="preserve">
+    <value>Liability</value>
   </data>
   <data name="Management" xml:space="preserve">
     <value>Management</value>
