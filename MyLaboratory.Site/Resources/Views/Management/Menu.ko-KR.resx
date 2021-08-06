@@ -132,9 +132,6 @@
   <data name="Are you sure to delete?" xml:space="preserve">
     <value>정말로 삭제하시겠습니까?</value>
   </data>
-  <data name="Category Management" xml:space="preserve">
-    <value>카테고리 관리</value>
-  </data>
   <data name="CategoryId" xml:space="preserve">
     <value>카테고리ID</value>
   </data>
@@ -167,6 +164,9 @@
   </data>
   <data name="IconPath" xml:space="preserve">
     <value>아이콘 경로</value>
+  </data>
+  <data name="Menu Management" xml:space="preserve">
+    <value>메뉴 관리</value>
   </data>
   <data name="Name" xml:space="preserve">
     <value>이름</value>

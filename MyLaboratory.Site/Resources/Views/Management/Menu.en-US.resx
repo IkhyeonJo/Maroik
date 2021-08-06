@@ -132,9 +132,6 @@
   <data name="Are you sure to delete?" xml:space="preserve">
     <value>Are you sure to delete?</value>
   </data>
-  <data name="Category Management" xml:space="preserve">
-    <value>Category Management</value>
-  </data>
   <data name="CategoryId" xml:space="preserve">
     <value>CategoryId</value>
   </data>
@@ -167,6 +164,9 @@
   </data>
   <data name="IconPath" xml:space="preserve">
     <value>IconPath</value>
+  </data>
+  <data name="Menu Management" xml:space="preserve">
+    <value>Menu Management</value>
   </data>
   <data name="Name" xml:space="preserve">
     <value>Name</value>
