@@ -10,8 +10,9 @@ namespace MyLaboratory.Site.Models
         public Asset()
         {
             Expenditures = new HashSet<Expenditure>();
+            FixedExpenditures = new HashSet<FixedExpenditure>();
+            FixedIncomes = new HashSet<FixedIncome>();
             Incomes = new HashSet<Income>();
-            Liabilities = new HashSet<Liability>();
         }
 
         public string ProductName { get; set; }
@@ -31,7 +32,8 @@ namespace MyLaboratory.Site.Models
 
         public virtual Account AccountEmailNavigation { get; set; }
         public virtual ICollection<Expenditure> Expenditures { get; set; }
+        public virtual ICollection<FixedExpenditure> FixedExpenditures { get; set; }
+        public virtual ICollection<FixedIncome> FixedIncomes { get; set; }
         public virtual ICollection<Income> Incomes { get; set; }
-        public virtual ICollection<Liability> Liabilities { get; set; }
     }
 }

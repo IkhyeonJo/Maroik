@@ -147,9 +147,6 @@
   <data name="Income" xml:space="preserve">
     <value>Income</value>
   </data>
-  <data name="Liability" xml:space="preserve">
-    <value>Liability</value>
-  </data>
   <data name="Management" xml:space="preserve">
     <value>Management</value>
   </data>

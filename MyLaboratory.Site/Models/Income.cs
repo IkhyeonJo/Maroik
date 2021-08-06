@@ -15,8 +15,8 @@ namespace MyLaboratory.Site.Models
         public long Amount { get; set; }
         public string MonetaryUnit { get; set; }
         public string DepositAccount { get; set; }
-        public DateTime PayDay { get; set; }
         public DateTime Created { get; set; }
+        public DateTime Updated { get; set; }
         public string Note { get; set; }
         public string Reserved0 { get; set; }
         public string Reserved1 { get; set; }

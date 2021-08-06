@@ -325,6 +325,11 @@ namespace MyLaboratory.Site.Migrations
                         .HasColumnType("varchar(255)")
                         .HasComment("소분류 (예적금/투자/(내계좌이체/인출) | 세금/공적연금/사회보험/가구간 이전지출/비영리단체 이전/부채상환 | (식비/외식비)/(주거/용품비)/교육비/의료비/교통비/통신비/(여가/문화)/(의류/신발)/용돈/보장성보험/기타기출/미파악지출)");
 
+                    b.Property<DateTime>("Updated")
+                        .HasMaxLength(6)
+                        .HasColumnType("datetime(6)")
+                        .HasComment("업데이트일");
+
                     b.HasKey("Id");
 
                     b.HasIndex(new[] { "PaymentMethod", "AccountEmail" }, "Expenditure_FK");
@@ -333,6 +338,250 @@ namespace MyLaboratory.Site.Migrations
 
                     b
                         .HasComment("MyLaboratory Site 지출")
+                        .HasCharSet("utf8mb4")
+                        .UseCollation("utf8mb4_general_ci");
+                });
+
+            modelBuilder.Entity("MyLaboratory.Site.Models.FixedExpenditure", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int(11)")
+                        .HasComment("PK");
+
+                    b.Property<string>("AccountEmail")
+                        .IsRequired()
+                        .HasColumnType("varchar(255)")
+                        .HasComment("계정 이메일 (ID)");
+
+                    b.Property<long>("Amount")
+                        .HasColumnType("bigint(255)")
+                        .HasComment("금액");
+
+                    b.Property<string>("Contents")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)")
+                        .HasComment("내용 (하계할인마트/신한카드/남원추어탕/교보문고)");
+
+                    b.Property<DateTime>("Created")
+                        .HasMaxLength(6)
+                        .HasColumnType("datetime(6)")
+                        .HasComment("생성일");
+
+                    b.Property<string>("Creditor")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)")
+                        .HasComment("금융사/채권인");
+
+                    b.Property<bool>("Deleted")
+                        .HasColumnType("tinyint(1)")
+                        .HasComment("삭제여부");
+
+                    b.Property<float>("InterestRate")
+                        .HasColumnType("float")
+                        .HasComment("이자율");
+
+                    b.Property<string>("MainClass")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)")
+                        .HasComment("대분류 (정기저축/비소비지출/소비지출)");
+
+                    b.Property<DateTime>("MaturityDate")
+                        .HasMaxLength(6)
+                        .HasColumnType("datetime(6)")
+                        .HasComment("만기일 (만기일 없으면 9999-12-31 되도록 Checkbox 할 것)");
+
+                    b.Property<string>("MonetaryUnit")
+                        .IsRequired()
+                        .HasMaxLength(45)
+                        .HasColumnType("varchar(45)")
+                        .HasComment("화폐 단위 (KRW, USD, ETC)");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(45)
+                        .HasColumnType("varchar(45)")
+                        .HasComment("비고");
+
+                    b.Property<string>("PaymentMethod")
+                        .IsRequired()
+                        .HasColumnType("varchar(255)")
+                        .HasComment("결제수단 (자산 상품명/현금)");
+
+                    b.Property<string>("ProductName")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)")
+                        .HasComment("상품명");
+
+                    b.Property<string>("Reserved0")
+                        .HasMaxLength(45)
+                        .HasColumnType("varchar(45)");
+
+                    b.Property<string>("Reserved1")
+                        .HasMaxLength(45)
+                        .HasColumnType("varchar(45)");
+
+                    b.Property<string>("Reserved2")
+                        .HasMaxLength(45)
+                        .HasColumnType("varchar(45)");
+
+                    b.Property<string>("Reserved3")
+                        .HasMaxLength(45)
+                        .HasColumnType("varchar(45)");
+
+                    b.Property<string>("Reserved4")
+                        .HasMaxLength(45)
+                        .HasColumnType("varchar(45)");
+
+                    b.Property<string>("SubClass")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)")
+                        .HasComment("소분류 (예적금/투자/(내계좌이체/인출) | 세금/공적연금/사회보험/가구간 이전지출/비영리단체 이전/부채상환 | (식비/외식비)/(주거/용품비)/교육비/의료비/교통비/통신비/(여가/문화)/(의류/신발)/용돈/보장성보험/기타기출/미파악지출)");
+
+                    b.Property<DateTime>("Updated")
+                        .HasMaxLength(6)
+                        .HasColumnType("datetime(6)")
+                        .HasComment("업데이트일");
+
+                    b.Property<DateTime>("WithdrawalDate")
+                        .HasMaxLength(6)
+                        .HasColumnType("datetime(6)")
+                        .HasComment("출금일 (매월 며칠)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex(new[] { "PaymentMethod", "AccountEmail" }, "FixedExpenditure_FK");
+
+                    b.ToTable("FixedExpenditure");
+
+                    b
+                        .HasComment("MyLaboratory Site 고정지출")
+                        .HasCharSet("utf8mb4")
+                        .UseCollation("utf8mb4_general_ci");
+                });
+
+            modelBuilder.Entity("MyLaboratory.Site.Models.FixedIncome", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int(11)")
+                        .HasComment("PK");
+
+                    b.Property<string>("AccountEmail")
+                        .IsRequired()
+                        .HasColumnType("varchar(255)")
+                        .HasComment("계정 이메일 (ID)");
+
+                    b.Property<long>("Amount")
+                        .HasColumnType("bigint(255)")
+                        .HasComment("금액");
+
+                    b.Property<string>("Contents")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)")
+                        .HasComment("내용 (회사명/사업명)");
+
+                    b.Property<DateTime>("Created")
+                        .HasMaxLength(6)
+                        .HasColumnType("datetime(6)")
+                        .HasComment("생성일");
+
+                    b.Property<string>("Debtor")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)")
+                        .HasComment("금융사/채무인");
+
+                    b.Property<bool>("Deleted")
+                        .HasColumnType("tinyint(1)")
+                        .HasComment("삭제여부");
+
+                    b.Property<DateTime>("DepositDate")
+                        .HasMaxLength(6)
+                        .HasColumnType("datetime(6)")
+                        .HasComment("입금일 (매월 며칠)");
+
+                    b.Property<string>("DepositMethod")
+                        .IsRequired()
+                        .HasColumnType("varchar(255)")
+                        .HasComment("결제수단 (자산 상품명/현금)");
+
+                    b.Property<float>("InterestRate")
+                        .HasColumnType("float")
+                        .HasComment("이자율");
+
+                    b.Property<string>("MainClass")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)")
+                        .HasComment("대분류 (정기수입/비정기수입)");
+
+                    b.Property<DateTime>("MaturityDate")
+                        .HasMaxLength(6)
+                        .HasColumnType("datetime(6)")
+                        .HasComment("만기일 (만기일 없으면 9999-12-31 되도록 Checkbox 할 것)");
+
+                    b.Property<string>("MonetaryUnit")
+                        .IsRequired()
+                        .HasMaxLength(45)
+                        .HasColumnType("varchar(45)")
+                        .HasComment("화폐 단위 (KRW, USD, ETC)");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(45)
+                        .HasColumnType("varchar(45)")
+                        .HasComment("비고");
+
+                    b.Property<string>("ProductName")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)")
+                        .HasComment("상품명");
+
+                    b.Property<string>("Reserved0")
+                        .HasMaxLength(45)
+                        .HasColumnType("varchar(45)");
+
+                    b.Property<string>("Reserved1")
+                        .HasMaxLength(45)
+                        .HasColumnType("varchar(45)");
+
+                    b.Property<string>("Reserved2")
+                        .HasMaxLength(45)
+                        .HasColumnType("varchar(45)");
+
+                    b.Property<string>("Reserved3")
+                        .HasMaxLength(45)
+                        .HasColumnType("varchar(45)");
+
+                    b.Property<string>("Reserved4")
+                        .HasMaxLength(45)
+                        .HasColumnType("varchar(45)");
+
+                    b.Property<string>("SubClass")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)")
+                        .HasComment("소분류 (근로수입/사업수입/연금수입/금융소득/임대수입/기타수입)");
+
+                    b.Property<DateTime>("Updated")
+                        .HasMaxLength(6)
+                        .HasColumnType("datetime(6)")
+                        .HasComment("업데이트일");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex(new[] { "DepositMethod", "AccountEmail" }, "FixedIncome_FK");
+
+                    b.ToTable("FixedIncome");
+
+                    b
+                        .HasComment("MyLaboratory Site 고정수입")
                         .HasCharSet("utf8mb4")
                         .UseCollation("utf8mb4_general_ci");
                 });
@@ -386,11 +635,6 @@ namespace MyLaboratory.Site.Migrations
                         .HasColumnType("varchar(45)")
                         .HasComment("비고");
 
-                    b.Property<DateTime>("PayDay")
-                        .HasMaxLength(6)
-                        .HasColumnType("datetime(6)")
-                        .HasComment("지급일 (배당 같은 거)");
-
                     b.Property<string>("Reserved0")
                         .HasMaxLength(45)
                         .HasColumnType("varchar(45)");
@@ -417,6 +661,11 @@ namespace MyLaboratory.Site.Migrations
                         .HasColumnType("varchar(255)")
                         .HasComment("소분류 (근로수입/사업수입/연금수입/금융소득/임대수입/기타수입)");
 
+                    b.Property<DateTime>("Updated")
+                        .HasMaxLength(6)
+                        .HasColumnType("datetime(6)")
+                        .HasComment("업데이트일");
+
                     b.HasKey("Id");
 
                     b.HasIndex(new[] { "DepositAccount", "AccountEmail" }, "Income_FK");
@@ -425,121 +674,6 @@ namespace MyLaboratory.Site.Migrations
 
                     b
                         .HasComment("MyLaboratory Site 수입")
-                        .HasCharSet("utf8mb4")
-                        .UseCollation("utf8mb4_general_ci");
-                });
-
-            modelBuilder.Entity("MyLaboratory.Site.Models.Liability", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int(11)")
-                        .HasComment("PK");
-
-                    b.Property<string>("AccountEmail")
-                        .IsRequired()
-                        .HasColumnType("varchar(255)")
-                        .HasComment("계정 이메일 (ID)");
-
-                    b.Property<long>("Amount")
-                        .HasColumnType("bigint(255)")
-                        .HasComment("금액");
-
-                    b.Property<DateTime>("Created")
-                        .HasMaxLength(6)
-                        .HasColumnType("datetime(6)")
-                        .HasComment("생성일");
-
-                    b.Property<string>("Creditor")
-                        .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("varchar(255)")
-                        .HasComment("금융사/채권인");
-
-                    b.Property<bool>("Deleted")
-                        .HasColumnType("tinyint(1)")
-                        .HasComment("삭제여부");
-
-                    b.Property<float>("InterestRate")
-                        .HasColumnType("float")
-                        .HasComment("이자율");
-
-                    b.Property<string>("MainClass")
-                        .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("varchar(255)")
-                        .HasComment("대분류 (단기대출/장기대출)");
-
-                    b.Property<DateTime>("MaturityDate")
-                        .HasMaxLength(6)
-                        .HasColumnType("datetime(6)")
-                        .HasComment("만기일");
-
-                    b.Property<string>("MonetaryUnit")
-                        .IsRequired()
-                        .HasMaxLength(45)
-                        .HasColumnType("varchar(45)")
-                        .HasComment("화폐 단위 (KRW, USD, ETC)");
-
-                    b.Property<string>("Note")
-                        .HasMaxLength(45)
-                        .HasColumnType("varchar(45)")
-                        .HasComment("비고");
-
-                    b.Property<string>("ProductName")
-                        .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("varchar(255)")
-                        .HasComment("상품명");
-
-                    b.Property<string>("Reserved0")
-                        .HasMaxLength(45)
-                        .HasColumnType("varchar(45)");
-
-                    b.Property<string>("Reserved1")
-                        .HasMaxLength(45)
-                        .HasColumnType("varchar(45)");
-
-                    b.Property<string>("Reserved2")
-                        .HasMaxLength(45)
-                        .HasColumnType("varchar(45)");
-
-                    b.Property<string>("Reserved3")
-                        .HasMaxLength(45)
-                        .HasColumnType("varchar(45)");
-
-                    b.Property<string>("Reserved4")
-                        .HasMaxLength(45)
-                        .HasColumnType("varchar(45)");
-
-                    b.Property<string>("SubClass")
-                        .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("varchar(255)")
-                        .HasComment("소분류 (소비생활부채/부동산관련부채)");
-
-                    b.Property<DateTime>("Updated")
-                        .HasMaxLength(6)
-                        .HasColumnType("datetime(6)")
-                        .HasComment("업데이트일");
-
-                    b.Property<string>("WithdrawalAccount")
-                        .IsRequired()
-                        .HasColumnType("varchar(255)");
-
-                    b.Property<DateTime>("WithdrawalDate")
-                        .HasMaxLength(6)
-                        .HasColumnType("datetime(6)")
-                        .HasComment("출금일 (만일 매월 넷째주 이렇게 출금일이 결정되었으면 만기일까지 출금일 몇 번 되는지 하나씩 전부 등록할 것 예:(년도/1월/11일,년도/2월11일/,년도3월11일))");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex(new[] { "WithdrawalAccount", "AccountEmail" }, "Liability_FK");
-
-                    b.ToTable("Liability");
-
-                    b
-                        .HasComment("MyLaboratory Site 부채")
                         .HasCharSet("utf8mb4")
                         .UseCollation("utf8mb4_general_ci");
                 });
@@ -623,23 +757,34 @@ namespace MyLaboratory.Site.Migrations
                     b.Navigation("Asset");
                 });
 
+            modelBuilder.Entity("MyLaboratory.Site.Models.FixedExpenditure", b =>
+                {
+                    b.HasOne("MyLaboratory.Site.Models.Asset", "Asset")
+                        .WithMany("FixedExpenditures")
+                        .HasForeignKey("PaymentMethod", "AccountEmail")
+                        .HasConstraintName("FixedExpenditure_FK")
+                        .IsRequired();
+
+                    b.Navigation("Asset");
+                });
+
+            modelBuilder.Entity("MyLaboratory.Site.Models.FixedIncome", b =>
+                {
+                    b.HasOne("MyLaboratory.Site.Models.Asset", "Asset")
+                        .WithMany("FixedIncomes")
+                        .HasForeignKey("DepositMethod", "AccountEmail")
+                        .HasConstraintName("FixedIncome_FK")
+                        .IsRequired();
+
+                    b.Navigation("Asset");
+                });
+
             modelBuilder.Entity("MyLaboratory.Site.Models.Income", b =>
                 {
                     b.HasOne("MyLaboratory.Site.Models.Asset", "Asset")
                         .WithMany("Incomes")
                         .HasForeignKey("DepositAccount", "AccountEmail")
                         .HasConstraintName("Income_FK")
-                        .IsRequired();
-
-                    b.Navigation("Asset");
-                });
-
-            modelBuilder.Entity("MyLaboratory.Site.Models.Liability", b =>
-                {
-                    b.HasOne("MyLaboratory.Site.Models.Asset", "Asset")
-                        .WithMany("Liabilities")
-                        .HasForeignKey("WithdrawalAccount", "AccountEmail")
-                        .HasConstraintName("Liability_FK")
                         .IsRequired();
 
                     b.Navigation("Asset");
@@ -666,9 +811,11 @@ namespace MyLaboratory.Site.Migrations
                 {
                     b.Navigation("Expenditures");
 
-                    b.Navigation("Incomes");
+                    b.Navigation("FixedExpenditures");
 
-                    b.Navigation("Liabilities");
+                    b.Navigation("FixedIncomes");
+
+                    b.Navigation("Incomes");
                 });
 
             modelBuilder.Entity("MyLaboratory.Site.Models.Category", b =>

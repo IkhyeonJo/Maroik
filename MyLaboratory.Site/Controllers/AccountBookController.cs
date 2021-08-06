@@ -60,18 +60,6 @@ namespace MyLaboratory.Site.Controllers
 
         #endregion
 
-        #region 부채
-
-        #region Read
-        [HttpGet]
-        public IActionResult Liability()
-        {
-            return View();
-        }
-        #endregion
-
-        #endregion
-
         #region 수입
 
         #region Read

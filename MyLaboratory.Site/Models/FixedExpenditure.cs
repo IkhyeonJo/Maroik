@@ -5,15 +5,16 @@ using System.Collections.Generic;
 
 namespace MyLaboratory.Site.Models
 {
-    public partial class Liability
+    public partial class FixedExpenditure
     {
         public int Id { get; set; }
         public string AccountEmail { get; set; }
         public string MainClass { get; set; }
         public string SubClass { get; set; }
+        public string Contents { get; set; }
         public string Creditor { get; set; }
         public string ProductName { get; set; }
-        public string WithdrawalAccount { get; set; }
+        public string PaymentMethod { get; set; }
         public long Amount { get; set; }
         public string MonetaryUnit { get; set; }
         public float InterestRate { get; set; }

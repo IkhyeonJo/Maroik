@@ -17,6 +17,7 @@ namespace MyLaboratory.Site.Models
         public string PaymentMethod { get; set; }
         public string MyAsset { get; set; }
         public DateTime Created { get; set; }
+        public DateTime Updated { get; set; }
         public string Note { get; set; }
         public string Reserved0 { get; set; }
         public string Reserved1 { get; set; }

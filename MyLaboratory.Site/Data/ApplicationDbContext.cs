@@ -19,8 +19,9 @@ namespace MyLaboratory.Site.Data
         public virtual DbSet<Asset> Assets { get; set; }
         public virtual DbSet<Category> Categories { get; set; }
         public virtual DbSet<Expenditure> Expenditures { get; set; }
+        public virtual DbSet<FixedExpenditure> FixedExpenditures { get; set; }
+        public virtual DbSet<FixedIncome> FixedIncomes { get; set; }
         public virtual DbSet<Income> Incomes { get; set; }
-        public virtual DbSet<Liability> Liabilities { get; set; }
         public virtual DbSet<SubCategory> SubCategories { get; set; }
         #endregion
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
@@ -273,11 +274,209 @@ namespace MyLaboratory.Site.Data
                     .HasMaxLength(255)
                     .HasComment("소분류 (예적금/투자/(내계좌이체/인출) | 세금/공적연금/사회보험/가구간 이전지출/비영리단체 이전/부채상환 | (식비/외식비)/(주거/용품비)/교육비/의료비/교통비/통신비/(여가/문화)/(의류/신발)/용돈/보장성보험/기타기출/미파악지출)");
 
+                entity.Property(e => e.Updated)
+                    .HasMaxLength(6)
+                    .HasComment("업데이트일");
+
                 entity.HasOne(d => d.Asset)
                     .WithMany(p => p.Expenditures)
                     .HasForeignKey(d => new { d.PaymentMethod, d.AccountEmail })
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("Expenditure_FK");
+            });
+
+            modelBuilder.Entity<FixedExpenditure>(entity =>
+            {
+                entity.ToTable("FixedExpenditure");
+
+                entity.HasComment("MyLaboratory Site 고정지출")
+                    .HasCharSet("utf8mb4")
+                    .UseCollation("utf8mb4_general_ci");
+
+                entity.HasIndex(e => new { e.PaymentMethod, e.AccountEmail }, "FixedExpenditure_FK");
+
+                entity.Property(e => e.Id)
+                    .HasColumnType("int(11)")
+                    .HasComment("PK");
+
+                entity.Property(e => e.AccountEmail)
+                    .IsRequired()
+                    .HasComment("계정 이메일 (ID)");
+
+                entity.Property(e => e.Amount)
+                    .HasColumnType("bigint(255)")
+                    .HasComment("금액");
+
+                entity.Property(e => e.Contents)
+                    .IsRequired()
+                    .HasMaxLength(255)
+                    .HasComment("내용 (하계할인마트/신한카드/남원추어탕/교보문고)");
+
+                entity.Property(e => e.Created)
+                    .HasMaxLength(6)
+                    .HasComment("생성일");
+
+                entity.Property(e => e.Creditor)
+                    .IsRequired()
+                    .HasMaxLength(255)
+                    .HasComment("금융사/채권인");
+
+                entity.Property(e => e.Deleted).HasComment("삭제여부");
+
+                entity.Property(e => e.InterestRate).HasComment("이자율");
+
+                entity.Property(e => e.MainClass)
+                    .IsRequired()
+                    .HasMaxLength(255)
+                    .HasComment("대분류 (정기저축/비소비지출/소비지출)");
+
+                entity.Property(e => e.MaturityDate)
+                    .HasMaxLength(6)
+                    .HasComment("만기일 (만기일 없으면 9999-12-31 되도록 Checkbox 할 것)");
+
+                entity.Property(e => e.MonetaryUnit)
+                    .IsRequired()
+                    .HasMaxLength(45)
+                    .HasComment("화폐 단위 (KRW, USD, ETC)");
+
+                entity.Property(e => e.Note)
+                    .HasMaxLength(45)
+                    .HasComment("비고");
+
+                entity.Property(e => e.PaymentMethod)
+                    .IsRequired()
+                    .HasComment("결제수단 (자산 상품명/현금)");
+
+                entity.Property(e => e.ProductName)
+                    .IsRequired()
+                    .HasMaxLength(255)
+                    .HasComment("상품명");
+
+                entity.Property(e => e.Reserved0).HasMaxLength(45);
+
+                entity.Property(e => e.Reserved1).HasMaxLength(45);
+
+                entity.Property(e => e.Reserved2).HasMaxLength(45);
+
+                entity.Property(e => e.Reserved3).HasMaxLength(45);
+
+                entity.Property(e => e.Reserved4).HasMaxLength(45);
+
+                entity.Property(e => e.SubClass)
+                    .IsRequired()
+                    .HasMaxLength(255)
+                    .HasComment("소분류 (예적금/투자/(내계좌이체/인출) | 세금/공적연금/사회보험/가구간 이전지출/비영리단체 이전/부채상환 | (식비/외식비)/(주거/용품비)/교육비/의료비/교통비/통신비/(여가/문화)/(의류/신발)/용돈/보장성보험/기타기출/미파악지출)");
+
+                entity.Property(e => e.Updated)
+                    .HasMaxLength(6)
+                    .HasComment("업데이트일");
+
+                entity.Property(e => e.WithdrawalDate)
+                    .HasMaxLength(6)
+                    .HasComment("출금일 (매월 며칠)");
+
+                entity.HasOne(d => d.Asset)
+                    .WithMany(p => p.FixedExpenditures)
+                    .HasForeignKey(d => new { d.PaymentMethod, d.AccountEmail })
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FixedExpenditure_FK");
+            });
+
+            modelBuilder.Entity<FixedIncome>(entity =>
+            {
+                entity.ToTable("FixedIncome");
+
+                entity.HasComment("MyLaboratory Site 고정수입")
+                    .HasCharSet("utf8mb4")
+                    .UseCollation("utf8mb4_general_ci");
+
+                entity.HasIndex(e => new { e.DepositMethod, e.AccountEmail }, "FixedIncome_FK");
+
+                entity.Property(e => e.Id)
+                    .HasColumnType("int(11)")
+                    .HasComment("PK");
+
+                entity.Property(e => e.AccountEmail)
+                    .IsRequired()
+                    .HasComment("계정 이메일 (ID)");
+
+                entity.Property(e => e.Amount)
+                    .HasColumnType("bigint(255)")
+                    .HasComment("금액");
+
+                entity.Property(e => e.Contents)
+                    .IsRequired()
+                    .HasMaxLength(255)
+                    .HasComment("내용 (회사명/사업명)");
+
+                entity.Property(e => e.Created)
+                    .HasMaxLength(6)
+                    .HasComment("생성일");
+
+                entity.Property(e => e.Debtor)
+                    .IsRequired()
+                    .HasMaxLength(255)
+                    .HasComment("금융사/채무인");
+
+                entity.Property(e => e.Deleted).HasComment("삭제여부");
+
+                entity.Property(e => e.DepositDate)
+                    .HasMaxLength(6)
+                    .HasComment("입금일 (매월 며칠)");
+
+                entity.Property(e => e.DepositMethod)
+                    .IsRequired()
+                    .HasComment("결제수단 (자산 상품명/현금)");
+
+                entity.Property(e => e.InterestRate).HasComment("이자율");
+
+                entity.Property(e => e.MainClass)
+                    .IsRequired()
+                    .HasMaxLength(255)
+                    .HasComment("대분류 (정기수입/비정기수입)");
+
+                entity.Property(e => e.MaturityDate)
+                    .HasMaxLength(6)
+                    .HasComment("만기일 (만기일 없으면 9999-12-31 되도록 Checkbox 할 것)");
+
+                entity.Property(e => e.MonetaryUnit)
+                    .IsRequired()
+                    .HasMaxLength(45)
+                    .HasComment("화폐 단위 (KRW, USD, ETC)");
+
+                entity.Property(e => e.Note)
+                    .HasMaxLength(45)
+                    .HasComment("비고");
+
+                entity.Property(e => e.ProductName)
+                    .IsRequired()
+                    .HasMaxLength(255)
+                    .HasComment("상품명");
+
+                entity.Property(e => e.Reserved0).HasMaxLength(45);
+
+                entity.Property(e => e.Reserved1).HasMaxLength(45);
+
+                entity.Property(e => e.Reserved2).HasMaxLength(45);
+
+                entity.Property(e => e.Reserved3).HasMaxLength(45);
+
+                entity.Property(e => e.Reserved4).HasMaxLength(45);
+
+                entity.Property(e => e.SubClass)
+                    .IsRequired()
+                    .HasMaxLength(255)
+                    .HasComment("소분류 (근로수입/사업수입/연금수입/금융소득/임대수입/기타수입)");
+
+                entity.Property(e => e.Updated)
+                    .HasMaxLength(6)
+                    .HasComment("업데이트일");
+
+                entity.HasOne(d => d.Asset)
+                    .WithMany(p => p.FixedIncomes)
+                    .HasForeignKey(d => new { d.DepositMethod, d.AccountEmail })
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FixedIncome_FK");
             });
 
             modelBuilder.Entity<Income>(entity =>
@@ -329,10 +528,6 @@ namespace MyLaboratory.Site.Data
                     .HasMaxLength(45)
                     .HasComment("비고");
 
-                entity.Property(e => e.PayDay)
-                    .HasMaxLength(6)
-                    .HasComment("지급일 (배당 같은 거)");
-
                 entity.Property(e => e.Reserved0).HasMaxLength(45);
 
                 entity.Property(e => e.Reserved1).HasMaxLength(45);
@@ -348,101 +543,15 @@ namespace MyLaboratory.Site.Data
                     .HasMaxLength(255)
                     .HasComment("소분류 (근로수입/사업수입/연금수입/금융소득/임대수입/기타수입)");
 
+                entity.Property(e => e.Updated)
+                    .HasMaxLength(6)
+                    .HasComment("업데이트일");
+
                 entity.HasOne(d => d.Asset)
                     .WithMany(p => p.Incomes)
                     .HasForeignKey(d => new { d.DepositAccount, d.AccountEmail })
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("Income_FK");
-            });
-
-            modelBuilder.Entity<Liability>(entity =>
-            {
-                entity.ToTable("Liability");
-
-                entity.HasComment("MyLaboratory Site 부채")
-                    .HasCharSet("utf8mb4")
-                    .UseCollation("utf8mb4_general_ci");
-
-                entity.HasIndex(e => new { e.WithdrawalAccount, e.AccountEmail }, "Liability_FK");
-
-                entity.Property(e => e.Id)
-                    .HasColumnType("int(11)")
-                    .HasComment("PK");
-
-                entity.Property(e => e.AccountEmail)
-                    .IsRequired()
-                    .HasComment("계정 이메일 (ID)");
-
-                entity.Property(e => e.Amount)
-                    .HasColumnType("bigint(255)")
-                    .HasComment("금액");
-
-                entity.Property(e => e.Created)
-                    .HasMaxLength(6)
-                    .HasComment("생성일");
-
-                entity.Property(e => e.Creditor)
-                    .IsRequired()
-                    .HasMaxLength(255)
-                    .HasComment("금융사/채권인");
-
-                entity.Property(e => e.Deleted).HasComment("삭제여부");
-
-                entity.Property(e => e.InterestRate).HasComment("이자율");
-
-                entity.Property(e => e.MainClass)
-                    .IsRequired()
-                    .HasMaxLength(255)
-                    .HasComment("대분류 (단기대출/장기대출)");
-
-                entity.Property(e => e.MaturityDate)
-                    .HasMaxLength(6)
-                    .HasComment("만기일");
-
-                entity.Property(e => e.MonetaryUnit)
-                    .IsRequired()
-                    .HasMaxLength(45)
-                    .HasComment("화폐 단위 (KRW, USD, ETC)");
-
-                entity.Property(e => e.Note)
-                    .HasMaxLength(45)
-                    .HasComment("비고");
-
-                entity.Property(e => e.ProductName)
-                    .IsRequired()
-                    .HasMaxLength(255)
-                    .HasComment("상품명");
-
-                entity.Property(e => e.Reserved0).HasMaxLength(45);
-
-                entity.Property(e => e.Reserved1).HasMaxLength(45);
-
-                entity.Property(e => e.Reserved2).HasMaxLength(45);
-
-                entity.Property(e => e.Reserved3).HasMaxLength(45);
-
-                entity.Property(e => e.Reserved4).HasMaxLength(45);
-
-                entity.Property(e => e.SubClass)
-                    .IsRequired()
-                    .HasMaxLength(255)
-                    .HasComment("소분류 (소비생활부채/부동산관련부채)");
-
-                entity.Property(e => e.Updated)
-                    .HasMaxLength(6)
-                    .HasComment("업데이트일");
-
-                entity.Property(e => e.WithdrawalAccount).IsRequired();
-
-                entity.Property(e => e.WithdrawalDate)
-                    .HasMaxLength(6)
-                    .HasComment("출금일 (만일 매월 넷째주 이렇게 출금일이 결정되었으면 만기일까지 출금일 몇 번 되는지 하나씩 전부 등록할 것 예:(년도/1월/11일,년도/2월11일/,년도3월11일))");
-
-                entity.HasOne(d => d.Asset)
-                    .WithMany(p => p.Liabilities)
-                    .HasForeignKey(d => new { d.WithdrawalAccount, d.AccountEmail })
-                    .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("Liability_FK");
             });
 
             modelBuilder.Entity<SubCategory>(entity =>
