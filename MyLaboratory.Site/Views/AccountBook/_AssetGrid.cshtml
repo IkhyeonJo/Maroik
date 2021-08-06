@@ -7,7 +7,6 @@
     .Build(columns =>
     {
         columns.Add(model => model.ProductName).Titled(localizer[nameof(MyLaboratory.Site.Models.ViewModels.AccountBook.AssetOutputViewModel.ProductName)]);
-        columns.Add(model => model.AccountEmail).Titled(localizer[nameof(MyLaboratory.Site.Models.ViewModels.AccountBook.AssetOutputViewModel.AccountEmail)]);
         columns.Add(model => model.Item).Titled(localizer[nameof(MyLaboratory.Site.Models.ViewModels.AccountBook.AssetOutputViewModel.Item)]);
         columns.Add(model => model.Amount).Titled(localizer[nameof(MyLaboratory.Site.Models.ViewModels.AccountBook.AssetOutputViewModel.Amount)]);
         columns.Add(model => model.MonetaryUnit).Titled(localizer[nameof(MyLaboratory.Site.Models.ViewModels.AccountBook.AssetOutputViewModel.MonetaryUnit)]);
@@ -21,7 +20,7 @@
     .AppendCss("table-hover")
     //.Attributed(new { data_type = "individuals" })
     //.RowAttributed(model => new { @class = model.IsWorking == true ? "working" : null, data_id = model.Id })
-    .RowAttributed(model => new { @class = "table-inactive", data_productName = model.ProductName, data_accountEmail = model.AccountEmail})
+    .RowAttributed(model => new { @class = "table-inactive", data_productName = model.ProductName })
     .Using(GridFilterMode.Row)
     .Empty("No data found")
     .Filterable()

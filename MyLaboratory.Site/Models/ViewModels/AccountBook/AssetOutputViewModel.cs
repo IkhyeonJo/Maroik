@@ -13,9 +13,6 @@ namespace MyLaboratory.Site.Models.ViewModels.AccountBook
         [Required(ErrorMessage = "Please enter ProductName")]
         [Display(Name = "ProductName")]
         public string ProductName { get; set; }
-        [Required(ErrorMessage = "Please enter AccountEmail")]
-        [Display(Name = "AccountEmail")]
-        public string AccountEmail { get; set; }
         [Required(ErrorMessage = "Please enter Item")]
         [Display(Name = "Item")]
         public string Item { get; set; }

@@ -71,7 +71,6 @@ namespace MyLaboratory.Site.Controllers
                         assetOutputViewModels.Add(new AssetOutputViewModel()
                         {
                             ProductName = item.ProductName,
-                            AccountEmail = item.AccountEmail,
                             Item = item.Item,
                             Amount = item.Amount,
                             MonetaryUnit = item.MonetaryUnit,
@@ -96,7 +95,6 @@ namespace MyLaboratory.Site.Controllers
                             assetOutputViewModels.Add(new AssetOutputViewModel()
                             {
                                 ProductName = item.ProductName,
-                                AccountEmail = item.AccountEmail,
                                 Item = item.Item,
                                 Amount = item.Amount,
                                 MonetaryUnit = item.MonetaryUnit,
