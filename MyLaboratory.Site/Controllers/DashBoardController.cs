@@ -21,6 +21,7 @@ namespace MyLaboratory.Site.Controllers
         {
             this.logger = logger;
         }
+
         #region Admin
         [HttpGet]
         public IActionResult AdminIndex()
