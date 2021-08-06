@@ -11,6 +11,14 @@ namespace MyLaboratory.Site.Services
 {
     public class MailRepository : IMailRepository
     {
+        /// <summary>
+        /// 계정 비밀번호 초기화 메일의 HttpBody 부분을 구합니다.
+        /// </summary>
+        /// <param name="loginInputViewModel"></param>
+        /// <param name="title"></param>
+        /// <param name="content0"></param>
+        /// <param name="content1"></param>
+        /// <returns></returns>
         public string GetMailConfirmationBody(LoginInputViewModel loginInputViewModel, string title, string content0, string content1)
         {
             string url = $"{ServerSetting.DomainName}Account/ConfirmEmail?registrationToken={Uri.EscapeDataString(loginInputViewModel.RegistrationToken)}";
@@ -21,7 +29,14 @@ namespace MyLaboratory.Site.Services
                         <a href='{url}' target='_blank' rel='noopener noreferrer'>{url}</a>
                       </div>";
         }
-
+        /// <summary>
+        /// 계정 확인 메일의 HttpBody 부분을 구합니다.
+        /// </summary>
+        /// <param name="loginInputViewModel"></param>
+        /// <param name="title"></param>
+        /// <param name="content0"></param>
+        /// <param name="content1"></param>
+        /// <returns></returns>
         public string GetMailResetPasswordBody(LoginInputViewModel loginInputViewModel, string title, string content0, string content1)
         {
             string url = $"{ServerSetting.DomainName}Account/ResetPassword?resetPasswordToken={Uri.EscapeDataString(loginInputViewModel.ResetPasswordToken)}";
@@ -32,7 +47,11 @@ namespace MyLaboratory.Site.Services
                         <a href='{url}' target='_blank' rel='noopener noreferrer'>{url}</a>
                       </div>";
         }
-
+        /// <summary>
+        /// 메일 전송
+        /// </summary>
+        /// <param name="mail"></param>
+        /// <returns></returns>
         public async Task<string> SendMailAsync(Mail mail)
         {
             try
