@@ -48,6 +48,8 @@ namespace MyLaboratory.Site.Controllers
             this.subCategoryRepository = subCategoryRepository;
         }
 
+        #region Admin
+
         #region Profile
 
         #region Read
@@ -1226,6 +1228,8 @@ namespace MyLaboratory.Site.Controllers
 
             return File(stream, "application/octet-stream", excelName);
         }
+        #endregion
+
         #endregion
 
         #endregion
