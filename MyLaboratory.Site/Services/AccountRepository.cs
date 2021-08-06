@@ -17,19 +17,38 @@ namespace MyLaboratory.Site.Services
         {
             this.context = context;
         }
+        /// <summary>
+        /// 등록된 모든 계정을 구합니다.
+        /// </summary>
+        /// <returns></returns>
         public async Task<List<Account>> GetAllAsync()
         {
             return await context.Accounts.ToListAsync();
         }
+        /// <summary>
+        /// 한 계정을 구합니다.
+        /// </summary>
+        /// <param name="email"></param>
+        /// <returns></returns>
         public async Task<Account> GetAccountAsync(string email)
         {
             return await context.Accounts.FirstOrDefaultAsync(x => x.Email == email);
         }
+        /// <summary>
+        /// 계정을 생성합니다.
+        /// </summary>
+        /// <param name="account"></param>
+        /// <returns></returns>
         public async Task CreateAccountAsync(Account account)
         {
             await context.Accounts.AddAsync(account);
             await context.SaveChangesAsync();
         }
+        /// <summary>
+        /// 계정을 업데이트합니다.
+        /// </summary>
+        /// <param name="account"></param>
+        /// <returns></returns>
         public async Task UpdateAccountAsync(Account account)
         {
             context.Accounts.Update(account);
