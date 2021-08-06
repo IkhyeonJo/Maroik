@@ -67,6 +67,7 @@ namespace MyLaboratory.Site
             services.AddScoped<IMailRepository, MailRepository>();
             services.AddScoped<ICategoryRepository, CategoryRepository>();
             services.AddScoped<ISubCategoryRepository, SubCategoryRepository>();
+            services.AddScoped<IAssetRepository, AssetRepository>();
             #endregion
 
             #region AddSession
