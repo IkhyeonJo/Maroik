@@ -1,8 +1,10 @@
-﻿<section class="content">
+﻿@Html.AntiForgeryToken()
+<section class="content">
     <div class="card card-primary">
         <div class="card-header">
-            <h3 class="card-title">AccountBook Asset</h3>
+            <h3 class="card-title">@localizer["AccountBook Asset"].Value</h3>
         </div>
+
         <div class="card-body">
             <nav class="navbar-expand navbar-dark" style="position: relative; display: block !important; overflow-x: auto; overflow-y:hidden; align-items: center ">
                 <ul class="navbar-nav">
