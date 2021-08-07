@@ -130,7 +130,7 @@ namespace MyLaboratory.Site.Controllers
                         assetOutputViewModels.Add(new AssetOutputViewModel()
                         {
                             ProductName = item.ProductName,
-                            Item = item.Item,
+                            Item = localizer[item.Item.ToString()].Value,
                             Amount = item.Amount,
                             MonetaryUnit = item.MonetaryUnit,
                             Created = item.Created,
@@ -153,7 +153,7 @@ namespace MyLaboratory.Site.Controllers
                             assetOutputViewModels.Add(new AssetOutputViewModel()
                             {
                                 ProductName = item.ProductName,
-                                Item = item.Item,
+                                Item = localizer[item.Item.ToString()].Value,
                                 Amount = item.Amount,
                                 MonetaryUnit = item.MonetaryUnit,
                                 Created = item.Created,

@@ -120,6 +120,9 @@
   <data name="Amount" xml:space="preserve">
     <value>Amount</value>
   </data>
+  <data name="CashAsset" xml:space="preserve">
+    <value>Cash asset</value>
+  </data>
   <data name="Created" xml:space="preserve">
     <value>Created</value>
   </data>
@@ -129,8 +132,17 @@
   <data name="Fail to find the asset by given product name" xml:space="preserve">
     <value>Fail to find the asset by given product name</value>
   </data>
+  <data name="FreeDepositAndWithdrawal" xml:space="preserve">
+    <value>Free deposit and withdrawal</value>
+  </data>
   <data name="Input is invalid" xml:space="preserve">
     <value>Input is invalid</value>
+  </data>
+  <data name="InsuranceAsset" xml:space="preserve">
+    <value>Insurance asset</value>
+  </data>
+  <data name="InvestmentAsset" xml:space="preserve">
+    <value>Investment asset</value>
   </data>
   <data name="Item" xml:space="preserve">
     <value>Item</value>
@@ -138,11 +150,23 @@
   <data name="MonetaryUnit" xml:space="preserve">
     <value>MonetaryUnit</value>
   </data>
+  <data name="Movables" xml:space="preserve">
+    <value>Movables</value>
+  </data>
   <data name="Note" xml:space="preserve">
     <value>Note</value>
   </data>
+  <data name="OtherPhysicalAsset" xml:space="preserve">
+    <value>Other physical asset</value>
+  </data>
   <data name="ProductName" xml:space="preserve">
     <value>ProductName</value>
+  </data>
+  <data name="RealEstate" xml:space="preserve">
+    <value>Real estate</value>
+  </data>
+  <data name="SavingsAsset" xml:space="preserve">
+    <value>Savings asset</value>
   </data>
   <data name="Successfully deleted the asset" xml:space="preserve">
     <value>Successfully deleted the asset</value>
@@ -155,6 +179,9 @@
   </data>
   <data name="The asset has been successfully updated." xml:space="preserve">
     <value>The asset has been successfully updated.</value>
+  </data>
+  <data name="TrustAsset" xml:space="preserve">
+    <value>Trust asset</value>
   </data>
   <data name="Updated" xml:space="preserve">
     <value>Updated</value>

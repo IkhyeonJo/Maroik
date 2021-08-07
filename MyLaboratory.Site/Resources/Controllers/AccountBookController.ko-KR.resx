@@ -120,6 +120,9 @@
   <data name="Amount" xml:space="preserve">
     <value>금액</value>
   </data>
+  <data name="CashAsset" xml:space="preserve">
+    <value>현금 자산</value>
+  </data>
   <data name="Created" xml:space="preserve">
     <value>생성일</value>
   </data>
@@ -129,8 +132,17 @@
   <data name="Fail to find the asset by given product name" xml:space="preserve">
     <value>주어진 상품명으로 자산을 찾는데 실패하였습니다.</value>
   </data>
+  <data name="FreeDepositAndWithdrawal" xml:space="preserve">
+    <value>자유입출금 자산</value>
+  </data>
   <data name="Input is invalid" xml:space="preserve">
     <value>유효하지 않은 입력값입니다.</value>
+  </data>
+  <data name="InsuranceAsset" xml:space="preserve">
+    <value>보험 자산</value>
+  </data>
+  <data name="InvestmentAsset" xml:space="preserve">
+    <value>투자성 자산</value>
   </data>
   <data name="Item" xml:space="preserve">
     <value>항목</value>
@@ -138,11 +150,23 @@
   <data name="MonetaryUnit" xml:space="preserve">
     <value>화폐 단위</value>
   </data>
+  <data name="Movables" xml:space="preserve">
+    <value>동산</value>
+  </data>
   <data name="Note" xml:space="preserve">
     <value>주석</value>
   </data>
+  <data name="OtherPhysicalAsset" xml:space="preserve">
+    <value>기타 실물 자산</value>
+  </data>
   <data name="ProductName" xml:space="preserve">
     <value>상품명</value>
+  </data>
+  <data name="RealEstate" xml:space="preserve">
+    <value>부동산</value>
+  </data>
+  <data name="SavingsAsset" xml:space="preserve">
+    <value>저축성 자산</value>
   </data>
   <data name="Successfully deleted the asset" xml:space="preserve">
     <value>자산을 성공적으로 삭제하였습니다.</value>
@@ -155,6 +179,9 @@
   </data>
   <data name="The asset has been successfully updated." xml:space="preserve">
     <value>자산이 성공적으로 업데이트되었습니다.</value>
+  </data>
+  <data name="TrustAsset" xml:space="preserve">
+    <value>신탁 자산</value>
   </data>
   <data name="Updated" xml:space="preserve">
     <value>업데이트일</value>
