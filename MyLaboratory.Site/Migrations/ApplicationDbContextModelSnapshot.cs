@@ -283,11 +283,11 @@ namespace MyLaboratory.Site.Migrations
                         .HasColumnType("varchar(45)")
                         .HasComment("화폐 단위 (KRW, USD, ETC)");
 
-                    b.Property<string>("MyAsset")
+                    b.Property<string>("MyAssetProductName")
                         .IsRequired()
                         .HasMaxLength(255)
                         .HasColumnType("varchar(255)")
-                        .HasComment("내자산 (지출 중 정기저축일 때 사용)");
+                        .HasComment("내자산상품명 (지출 중 정기저축일 때 사용)");
 
                     b.Property<string>("Note")
                         .HasMaxLength(45)

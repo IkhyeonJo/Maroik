@@ -15,7 +15,7 @@ namespace MyLaboratory.Site.Models
         public long Amount { get; set; }
         public string MonetaryUnit { get; set; }
         public string PaymentMethod { get; set; }
-        public string MyAsset { get; set; }
+        public string MyAssetProductName { get; set; }
         public DateTime Created { get; set; }
         public DateTime Updated { get; set; }
         public string Note { get; set; }

@@ -9,7 +9,7 @@ using MyLaboratory.Site.Data;
 namespace MyLaboratory.Site.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20210807183522_InitialCreate")]
+    [Migration("20210807193114_InitialCreate")]
     partial class InitialCreate
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -285,11 +285,11 @@ namespace MyLaboratory.Site.Migrations
                         .HasColumnType("varchar(45)")
                         .HasComment("화폐 단위 (KRW, USD, ETC)");
 
-                    b.Property<string>("MyAsset")
+                    b.Property<string>("MyAssetProductName")
                         .IsRequired()
                         .HasMaxLength(255)
                         .HasColumnType("varchar(255)")
-                        .HasComment("내자산 (지출 중 정기저축일 때 사용)");
+                        .HasComment("내자산상품명 (지출 중 정기저축일 때 사용)");
 
                     b.Property<string>("Note")
                         .HasMaxLength(45)

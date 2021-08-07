@@ -171,7 +171,7 @@ namespace MyLaboratory.Site.Migrations
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     PaymentMethod = table.Column<string>(type: "varchar(255)", nullable: false, comment: "결제수단 (자산 상품명/현금)", collation: "utf8mb4_general_ci")
                         .Annotation("MySql:CharSet", "utf8mb4"),
-                    MyAsset = table.Column<string>(type: "varchar(255)", maxLength: 255, nullable: false, comment: "내자산 (지출 중 정기저축일 때 사용)", collation: "utf8mb4_general_ci")
+                    MyAssetProductName = table.Column<string>(type: "varchar(255)", maxLength: 255, nullable: false, comment: "내자산상품명 (지출 중 정기저축일 때 사용)", collation: "utf8mb4_general_ci")
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     Created = table.Column<DateTime>(type: "datetime(6)", maxLength: 6, nullable: false, comment: "생성일"),
                     Updated = table.Column<DateTime>(type: "datetime(6)", maxLength: 6, nullable: false, comment: "업데이트일"),

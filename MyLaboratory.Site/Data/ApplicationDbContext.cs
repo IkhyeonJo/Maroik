@@ -32,7 +32,7 @@ namespace MyLaboratory.Site.Data
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.HasCharSet("utf8")
-                            .UseCollation("utf8_general_ci");
+                .UseCollation("utf8_general_ci");
 
             modelBuilder.Entity<Account>(entity =>
             {
@@ -246,10 +246,10 @@ namespace MyLaboratory.Site.Data
                     .HasMaxLength(45)
                     .HasComment("화폐 단위 (KRW, USD, ETC)");
 
-                entity.Property(e => e.MyAsset)
+                entity.Property(e => e.MyAssetProductName)
                     .IsRequired()
                     .HasMaxLength(255)
-                    .HasComment("내자산 (지출 중 정기저축일 때 사용)");
+                    .HasComment("내자산상품명 (지출 중 정기저축일 때 사용)");
 
                 entity.Property(e => e.Note)
                     .HasMaxLength(45)
