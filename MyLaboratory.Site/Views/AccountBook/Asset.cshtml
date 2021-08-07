@@ -15,7 +15,7 @@
                         <button type="button" class="btn btn-success btn-block btn-sm" onclick="EditAssetGridRow('@localizer["Please select grid row"].Value')" style="width: 100px !important;"><i class="fas fa-edit" style="padding-right:3px;"></i> @localizer["EDIT"].Value</button>
                     </li>
                     <li class="nav-item" style="padding-bottom: 10px; padding-right: 7px;">
-                        <button type="button" class="btn btn-danger btn-block btn-sm" onclick="ConfirmDeleteAccount('@localizer["Please select grid row"].Value')" style="width: 100px !important;"><i class="fa fa-trash" style="padding-right:3px;"></i> @localizer["DELETE"].Value</button>
+                        <button type="button" class="btn btn-danger btn-block btn-sm" onclick="ConfirmDeleteAsset('@localizer["Please select grid row"].Value')" style="width: 100px !important;"><i class="fa fa-trash" style="padding-right:3px;"></i> @localizer["DELETE"].Value</button>
                     </li>
                     <li class="nav-item" style="padding-bottom: 10px; padding-right: 7px;">
                         <button type="button" class="btn btn-secondary btn-block btn-sm" onclick="ExportExcelAccount()" style="width: 100px !important;"><i class="fas fa-file-excel" style="padding-right:3px;"></i> @localizer["EXCEL"].Value</button>
@@ -136,14 +136,14 @@
 </div>
 
 @*<!--ConfirmDeleteDialogModal-->*@
-<div class="modal" tabindex="-1" role="dialog" id="confirmDeleteAccountDialogModal">
+<div class="modal" tabindex="-1" role="dialog" id="confirmDeleteAssetDialogModal">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-body">
                 @localizer["Are you sure to delete?"].Value
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-danger" onclick="DeleteAccount('@localizer["Please select grid row"].Value')">@localizer["Delete"].Value</button>
+                <button type="button" class="btn btn-danger" onclick="DeleteAsset('@localizer["Please select grid row"].Value')">@localizer["Delete"].Value</button>
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">@localizer["Close"].Value</button>
             </div>
         </div>

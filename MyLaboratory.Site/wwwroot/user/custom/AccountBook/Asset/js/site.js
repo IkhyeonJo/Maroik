@@ -215,47 +215,47 @@ function UpdateAsset() {
     return false;
 }
 
-function ConfirmDeleteAccount(errorMessageSelectGridRow) {
+function ConfirmDeleteAsset(errorMessageSelectGridRow) {
 
-    var selectedRowEmail = "";
+    var selectedRowProductName = "";
 
-    $('#accountGrid > table > tbody  > tr').each(function (index, tr) {
+    $('#assetGrid > table > tbody  > tr').each(function (index, tr) {
         if ($(this).attr("class").includes(selectedRowColor)) { // Get SelectedRow by Color
-            selectedRowEmail = $(this).attr("data-email");
+            selectedRowProductName = $(this).attr("data-productName");
         }
     }); // Search Selected Row
 
-    if (selectedRowEmail === "") {
+    if (selectedRowProductName === "") {
         toastr.error(errorMessageSelectGridRow);
         return false;
     } // check whether selected row exist or not
 
-    $('#confirmDeleteAccountDialogModal').modal({
+    $('#confirmDeleteAssetDialogModal').modal({
         keyboard: false,
         backdrop: "static"
     });
 
-    $('#confirmDeleteAccountDialogModal').modal('toggle');
-    $('#confirmDeleteAccountDialogModal').modal('show');
+    $('#confirmDeleteAssetDialogModal').modal('toggle');
+    $('#confirmDeleteAssetDialogModal').modal('show');
 }
 
-function DeleteAccount(errorMessageSelectGridRow) {
+function DeleteAsset(errorMessageSelectGridRow) {
 
-    var selectedRowEmail = "";
+    var selectedRowProductName = "";
 
-    $('#accountGrid > table > tbody  > tr').each(function (index, tr) {
+    $('#assetGrid > table > tbody  > tr').each(function (index, tr) {
         if ($(this).attr("class").includes(selectedRowColor)) { // Get SelectedRow by Color
-            selectedRowEmail = $(this).attr("data-email");
+            selectedRowProductName = $(this).attr("data-productName");
         }
     }); // Search Selected Row
 
-    if (selectedRowEmail === "") {
+    if (selectedRowProductName === "") {
         toastr.error(errorMessageSelectGridRow);
         return false;
     } // check whether selected row exist or not
 
     $.ajax({
-        url: '/Management/IsAccountExists' + '?email=' + selectedRowEmail,
+        url: '/AccountBook/IsAssetExists' + '?productName=' + selectedRowProductName,
         type: 'POST',
         headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
         dataType: 'json',
@@ -267,11 +267,11 @@ function DeleteAccount(errorMessageSelectGridRow) {
             if (data.result) {
 
                 var paramValue = JSON.stringify({
-                    Email: data.account.email
+                    ProductName: data.asset.productName
                 });
 
                 $.ajax({
-                    url: '/Management/DeleteAccount',
+                    url: '/AccountBook/DeleteAsset',
                     type: 'POST',
                     headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
                     dataType: 'json',
@@ -281,7 +281,7 @@ function DeleteAccount(errorMessageSelectGridRow) {
                     //cache: false,
                     success: function (data) {
                         if (data.result) {
-                            $('#confirmDeleteAccountDialogModal').modal('hide'); // hide Modal
+                            $('#confirmDeleteAssetDialogModal').modal('hide'); // hide Modal
 
                             const grid = new MvcGrid(document.querySelector(".mvc-grid")); //reload grid
                             grid.reload(); //reload grid

@@ -250,6 +250,36 @@ namespace MyLaboratory.Site.Controllers
         }
         #endregion
 
+        #region Delete
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [RequiredHttpPostAccess(Role = Role.User)]
+        public async Task<IActionResult> DeleteAsset([FromBody] AssetInputViewModel assetInputViewModel)
+        {
+            try
+            {
+                HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+
+                var tempAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, assetInputViewModel.ProductName);
+
+                if (tempAsset == null)
+                {
+                    return Json(new { result = false, error = localizer["Fail to find the asset by given product name"].Value });
+                }
+                else
+                {
+                    tempAsset.Deleted = true;
+                    await assetRepository.UpdateAssetAsync(tempAsset);
+                    return Json(new { result = true, message = localizer["Successfully deleted the asset"].Value });
+                }
+            }
+            catch (Exception e)
+            {
+                return Json(new { result = false, error = e.ToString() });
+            }
+        }
+        #endregion
+
         #endregion
 
         #region 수입
