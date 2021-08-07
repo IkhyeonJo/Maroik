@@ -484,7 +484,7 @@ namespace MyLaboratory.Site.Controllers
                 {
                     tempAccount.Deleted = true;
                     await accountRepository.UpdateAccountAsync(tempAccount);
-                    return Json(new { result = true, account = tempAccount, message = localizer["Successfully deleted the account"].Value });
+                    return Json(new { result = true, message = localizer["Successfully deleted the account"].Value });
                 }
             }
             catch (Exception e)
