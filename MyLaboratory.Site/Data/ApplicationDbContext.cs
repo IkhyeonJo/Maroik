@@ -139,16 +139,6 @@ namespace MyLaboratory.Site.Data
                     .HasMaxLength(45)
                     .HasComment("비고");
 
-                entity.Property(e => e.Reserved0).HasMaxLength(45);
-
-                entity.Property(e => e.Reserved1).HasMaxLength(45);
-
-                entity.Property(e => e.Reserved2).HasMaxLength(45);
-
-                entity.Property(e => e.Reserved3).HasMaxLength(45);
-
-                entity.Property(e => e.Reserved4).HasMaxLength(45);
-
                 entity.Property(e => e.Updated)
                     .HasMaxLength(6)
                     .HasComment("업데이트일");

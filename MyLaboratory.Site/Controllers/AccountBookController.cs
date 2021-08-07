@@ -84,12 +84,7 @@ namespace MyLaboratory.Site.Controllers
                                 Created = DateTime.UtcNow,
                                 Updated = DateTime.UtcNow,
                                 Note = assetInputViewModel.Note,
-                                Deleted = false,
-                                Reserved0 = null,
-                                Reserved1 = null,
-                                Reserved2 = null,
-                                Reserved3 = null,
-                                Reserved4 = null
+                                Deleted = false
                             }
                             );
                     }

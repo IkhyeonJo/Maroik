@@ -9,7 +9,7 @@ using MyLaboratory.Site.Data;
 namespace MyLaboratory.Site.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20210807193114_InitialCreate")]
+    [Migration("20210807220251_InitialCreate")]
     partial class InitialCreate
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -150,26 +150,6 @@ namespace MyLaboratory.Site.Migrations
                         .HasMaxLength(45)
                         .HasColumnType("varchar(45)")
                         .HasComment("비고");
-
-                    b.Property<string>("Reserved0")
-                        .HasMaxLength(45)
-                        .HasColumnType("varchar(45)");
-
-                    b.Property<string>("Reserved1")
-                        .HasMaxLength(45)
-                        .HasColumnType("varchar(45)");
-
-                    b.Property<string>("Reserved2")
-                        .HasMaxLength(45)
-                        .HasColumnType("varchar(45)");
-
-                    b.Property<string>("Reserved3")
-                        .HasMaxLength(45)
-                        .HasColumnType("varchar(45)");
-
-                    b.Property<string>("Reserved4")
-                        .HasMaxLength(45)
-                        .HasColumnType("varchar(45)");
 
                     b.Property<DateTime>("Updated")
                         .HasMaxLength(6)

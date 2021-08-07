@@ -24,11 +24,6 @@ namespace MyLaboratory.Site.Models
         public DateTime Updated { get; set; }
         public string Note { get; set; }
         public bool Deleted { get; set; }
-        public string Reserved0 { get; set; }
-        public string Reserved1 { get; set; }
-        public string Reserved2 { get; set; }
-        public string Reserved3 { get; set; }
-        public string Reserved4 { get; set; }
 
         public virtual Account AccountEmailNavigation { get; set; }
         public virtual ICollection<Expenditure> Expenditures { get; set; }
