@@ -762,6 +762,8 @@ https://blog.naver.com/PostView.nhn?blogId=alcmskfl17&logNo=221859839012
 
 MyLaboratory.Site 가계부
 
-자산[CRUD 완료 (EXCEL) & (다국어 필요)], 수입, 지출..
+수입 [CRUD & EXCEL & Multi-Language], 지출..
 
 고정지출, 고정수입은 알림 항목 따로 만들어서 지정일에 알림 자동으로 뜨도록 설정할 것..
+
+([Expenditure] Table) MyAsset -> MyAssetProduct 컬럼 이름 변경할 것...
