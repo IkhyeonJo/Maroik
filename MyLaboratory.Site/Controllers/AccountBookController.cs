@@ -67,7 +67,7 @@ namespace MyLaboratory.Site.Controllers
 
                     if (await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, assetInputViewModel.ProductName) != null)
                     {
-                        return Json(new { result = false, error = "The asset already exists." });
+                        return Json(new { result = false, error = localizer["The asset already exists."].Value });
                     }
 
                     try
@@ -98,11 +98,11 @@ namespace MyLaboratory.Site.Controllers
                         return Json(new { result = false, error = e.ToString() });
                     }
 
-                    return Json(new { result = true, message = "The asset has been successfully created." });
+                    return Json(new { result = true, message = localizer["The asset has been successfully created."].Value });
                 }
                 else
                 {
-                    return Json(new { result = false, error = "Input is invalid" });
+                    return Json(new { result = false, error = localizer["Input is invalid"].Value });
                 }
             }
             catch (Exception e)
@@ -230,7 +230,7 @@ namespace MyLaboratory.Site.Controllers
 
                             await assetRepository.UpdateAssetAsync(tempAsset);
 
-                            return Json(new { result = true, message = "The asset has been successfully updated." });
+                            return Json(new { result = true, message = localizer["The asset has been successfully updated."].Value });
                         }
                     }
                     catch (Exception e)
