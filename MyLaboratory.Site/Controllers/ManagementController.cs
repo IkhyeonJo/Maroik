@@ -506,7 +506,7 @@ namespace MyLaboratory.Site.Controllers
 
             List<AccountOutputViewModel> accountOutputViewModels = new List<AccountOutputViewModel>();
 
-            #region AdminCategories
+            #region Accounts
             foreach (var item in await accountRepository.GetAllAsync())
             {
                 accountOutputViewModels.Add(new AccountOutputViewModel()
