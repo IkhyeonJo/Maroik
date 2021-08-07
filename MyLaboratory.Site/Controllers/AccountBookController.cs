@@ -280,6 +280,78 @@ namespace MyLaboratory.Site.Controllers
         }
         #endregion
 
+        #region Excel
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [RequiredHttpPostAccess(Role = Role.User)]
+        public async Task<IActionResult> ExportExcelAsset(string fileName = "")
+        {
+            // query data from database
+            await Task.Yield();
+
+            List<AssetOutputViewModel> assetOutputViewModels = new List<AssetOutputViewModel>();
+
+            #region Assets
+
+            HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+
+            foreach (var item in await assetRepository.GetAssetsAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email))
+            {
+                assetOutputViewModels.Add(new AssetOutputViewModel()
+                {
+                    ProductName = item.ProductName,
+                    Item = item.Item,
+                    Amount = item.Amount,
+                    MonetaryUnit = item.MonetaryUnit,
+                    Created = item.Created,
+                    Updated = item.Updated,
+                    Note = item.Note,
+                    Deleted = item.Deleted
+                });
+            }
+            #endregion
+
+            var stream = new MemoryStream();
+
+            using (var package = new ExcelPackage(stream))
+            {
+                var workSheetMenuOutputViewModels = package.Workbook.Worksheets.Add("Sheet1");
+
+                workSheetMenuOutputViewModels.Row(1).Height = 20;
+                workSheetMenuOutputViewModels.Row(1).Style.HorizontalAlignment = OfficeOpenXml.Style.ExcelHorizontalAlignment.Center;
+                workSheetMenuOutputViewModels.Row(1).Style.Font.Bold = true;
+                workSheetMenuOutputViewModels.Cells[1, 1].Value = localizer[nameof(AssetOutputViewModel.ProductName).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 2].Value = localizer[nameof(AssetOutputViewModel.Item).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 3].Value = localizer[nameof(AssetOutputViewModel.Amount).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 4].Value = localizer[nameof(AssetOutputViewModel.MonetaryUnit).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 5].Value = localizer[nameof(AssetOutputViewModel.Created).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 6].Value = localizer[nameof(AssetOutputViewModel.Updated).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 7].Value = localizer[nameof(AssetOutputViewModel.Note).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 8].Value = localizer[nameof(AssetOutputViewModel.Deleted).ToString()].Value;
+
+                int recordIndex = 2;
+                foreach (var item in assetOutputViewModels)
+                {
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 1].Value = item.ProductName;
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 2].Value = item.Item;
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 3].Value = item.Amount;
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 4].Value = item.MonetaryUnit;
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 5].Value = item.Created.ToString("d");
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 6].Value = item.Updated.ToString("d");
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 7].Value = item.Note;
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 8].Value = item.Deleted;
+                    recordIndex++;
+                }
+
+                package.Save();
+            }
+            stream.Position = 0;
+            string excelName = $"{fileName}-{DateTime.UtcNow.ToString("yyyyMMddHHmmssfff")}.xlsx";
+
+            return File(stream, "application/octet-stream", excelName);
+        }
+        #endregion
+
         #endregion
 
         #region 수입

@@ -301,20 +301,20 @@ function DeleteAsset(errorMessageSelectGridRow) {
     });
 }
 
-function ExportExcelAccount() {
+function ExportExcelAsset() {
     var form = document.createElement("form");
     var element1 = document.createElement("input");
     var element2 = document.createElement("input");
 
     form.method = "POST";
-    form.action = "/Management/ExportExcelAccount";
+    form.action = "/AccountBook/ExportExcelAsset";
 
     element1.name = "__RequestVerificationToken";
     element1.value = $('input[name="__RequestVerificationToken"]').val();
     form.appendChild(element1);
 
     element2.name = "fileName";
-    element2.value = "Account";
+    element2.value = "Asset";
     form.appendChild(element2);
 
     document.body.appendChild(form);
