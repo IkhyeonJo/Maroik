@@ -509,24 +509,9 @@ namespace MyLaboratory.Site.Data
                     .HasMaxLength(255)
                     .HasComment("대분류 (정기수입/비정기수입)");
 
-                entity.Property(e => e.MonetaryUnit)
-                    .IsRequired()
-                    .HasMaxLength(45)
-                    .HasComment("화폐 단위 (KRW, USD, ETC)");
-
                 entity.Property(e => e.Note)
                     .HasMaxLength(45)
                     .HasComment("비고");
-
-                entity.Property(e => e.Reserved0).HasMaxLength(45);
-
-                entity.Property(e => e.Reserved1).HasMaxLength(45);
-
-                entity.Property(e => e.Reserved2).HasMaxLength(45);
-
-                entity.Property(e => e.Reserved3).HasMaxLength(45);
-
-                entity.Property(e => e.Reserved4).HasMaxLength(45);
 
                 entity.Property(e => e.SubClass)
                     .IsRequired()

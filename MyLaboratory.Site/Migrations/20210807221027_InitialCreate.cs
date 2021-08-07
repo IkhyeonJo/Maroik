@@ -319,23 +319,11 @@ namespace MyLaboratory.Site.Migrations
                     Contents = table.Column<string>(type: "varchar(255)", maxLength: 255, nullable: false, comment: "내용 (회사명/사업명)", collation: "utf8mb4_general_ci")
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     Amount = table.Column<long>(type: "bigint(255)", nullable: false, comment: "금액"),
-                    MonetaryUnit = table.Column<string>(type: "varchar(45)", maxLength: 45, nullable: false, comment: "화폐 단위 (KRW, USD, ETC)", collation: "utf8mb4_general_ci")
-                        .Annotation("MySql:CharSet", "utf8mb4"),
                     DepositAccount = table.Column<string>(type: "varchar(255)", nullable: false, comment: "입금계좌 (자산 상품명/현금)", collation: "utf8mb4_general_ci")
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     Created = table.Column<DateTime>(type: "datetime(6)", maxLength: 6, nullable: false, comment: "생성일"),
                     Updated = table.Column<DateTime>(type: "datetime(6)", maxLength: 6, nullable: false, comment: "업데이트일"),
                     Note = table.Column<string>(type: "varchar(45)", maxLength: 45, nullable: true, comment: "비고", collation: "utf8mb4_general_ci")
-                        .Annotation("MySql:CharSet", "utf8mb4"),
-                    Reserved0 = table.Column<string>(type: "varchar(45)", maxLength: 45, nullable: true, collation: "utf8mb4_general_ci")
-                        .Annotation("MySql:CharSet", "utf8mb4"),
-                    Reserved1 = table.Column<string>(type: "varchar(45)", maxLength: 45, nullable: true, collation: "utf8mb4_general_ci")
-                        .Annotation("MySql:CharSet", "utf8mb4"),
-                    Reserved2 = table.Column<string>(type: "varchar(45)", maxLength: 45, nullable: true, collation: "utf8mb4_general_ci")
-                        .Annotation("MySql:CharSet", "utf8mb4"),
-                    Reserved3 = table.Column<string>(type: "varchar(45)", maxLength: 45, nullable: true, collation: "utf8mb4_general_ci")
-                        .Annotation("MySql:CharSet", "utf8mb4"),
-                    Reserved4 = table.Column<string>(type: "varchar(45)", maxLength: 45, nullable: true, collation: "utf8mb4_general_ci")
                         .Annotation("MySql:CharSet", "utf8mb4")
                 },
                 constraints: table =>

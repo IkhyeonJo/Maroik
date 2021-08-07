@@ -604,36 +604,10 @@ namespace MyLaboratory.Site.Migrations
                         .HasColumnType("varchar(255)")
                         .HasComment("대분류 (정기수입/비정기수입)");
 
-                    b.Property<string>("MonetaryUnit")
-                        .IsRequired()
-                        .HasMaxLength(45)
-                        .HasColumnType("varchar(45)")
-                        .HasComment("화폐 단위 (KRW, USD, ETC)");
-
                     b.Property<string>("Note")
                         .HasMaxLength(45)
                         .HasColumnType("varchar(45)")
                         .HasComment("비고");
-
-                    b.Property<string>("Reserved0")
-                        .HasMaxLength(45)
-                        .HasColumnType("varchar(45)");
-
-                    b.Property<string>("Reserved1")
-                        .HasMaxLength(45)
-                        .HasColumnType("varchar(45)");
-
-                    b.Property<string>("Reserved2")
-                        .HasMaxLength(45)
-                        .HasColumnType("varchar(45)");
-
-                    b.Property<string>("Reserved3")
-                        .HasMaxLength(45)
-                        .HasColumnType("varchar(45)");
-
-                    b.Property<string>("Reserved4")
-                        .HasMaxLength(45)
-                        .HasColumnType("varchar(45)");
 
                     b.Property<string>("SubClass")
                         .IsRequired()
