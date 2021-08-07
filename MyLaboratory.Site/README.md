@@ -755,7 +755,7 @@ SELECT table_comment
 FROM INFORMATION_SCHEMA.TABLES
 WHERE table_name='Account'; // Account 테이블의 COMMENT 출력
 
-#MySQL Trigger의 활용
+#MySQL Trigger의 활용 [그러나 사용 금지 (디버깅 난해)]
 https://blog.naver.com/PostView.nhn?blogId=alcmskfl17&logNo=221859839012
 
 MyLaboratory.Site 가계부
