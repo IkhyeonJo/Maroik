@@ -58,16 +58,14 @@ https://code-maze.com/asynchronous-programming-with-async-and-await-in-asp-net-c
 OutputModel: Frontend에 쓰는 모델
 InputModel: Backend에 쓰는 모델
 
-OutputModel과 InputModel의 Attribute는 항상 같아야한다. (ModelState.IsValid 때문... Request 값이 적절한지 서버단에서 받는 Model의 Attribute를 보고 다시 판단함!!)
-
 ModelState.IsValid (받는 모델의 Property들의 Attribute를 조사해 전달 받은 값이 유효한 값인지 판단.)
 ModelState.Remove (ModelState.IsValid에서 Property 조사할 때, 조사 내용에서 제외함.)
 https://www.freecodecamp.org/news/how-to-use-html-to-open-link-in-new-tab/ // tabnapping
 #--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 https://whitekeyboard.tistory.com/630
-디버깅 MariaDB Windows 로컬에 설치 시, 
+(디버깅 & Data Migration 용) MariaDB Windows 로컬에 설치 시, 
 
-환경 MariaDB 10.3  ( x64, windows )
+환경 MariaDB 10.2.38  ( x64, windows )
 
 Windows에서 mysqldum를 하고 linux에 DB를 넣으면 테이블명이 소문자로 들어가는 문제를 종종 본 적이 있을 것이다.
 
@@ -84,7 +82,7 @@ lower_case_table_names = 2  :  윈도우에서 대·소문자를 구분해서 �
 윈도우 : 1
 맥키토시 : 2
 
-C:\Program Files\MariaDB 10.5\data\my.ini에서
+C:\Program Files\MariaDB 10.2\data\my.ini에서
 [mysqld] 항목의 [Port] 아래에 lower_case_table_names = 2로 넣어주고
 
 3) 작업관리자 - 서비스를 열어 MariaDB를 재시작 해준다. 
