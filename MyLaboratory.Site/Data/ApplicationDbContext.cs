@@ -32,7 +32,7 @@ namespace MyLaboratory.Site.Data
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.HasCharSet("utf8")
-                .UseCollation("utf8_general_ci");
+                            .UseCollation("utf8_general_ci");
 
             modelBuilder.Entity<Account>(entity =>
             {
@@ -426,7 +426,7 @@ namespace MyLaboratory.Site.Data
 
                 entity.Property(e => e.DepositMethod)
                     .IsRequired()
-                    .HasComment("결제수단 (자산 상품명/현금)");
+                    .HasComment("입금 방법 (자산 상품명/현금)");
 
                 entity.Property(e => e.InterestRate).HasComment("이자율");
 

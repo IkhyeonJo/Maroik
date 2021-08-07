@@ -509,7 +509,7 @@ namespace MyLaboratory.Site.Migrations
                     b.Property<string>("DepositMethod")
                         .IsRequired()
                         .HasColumnType("varchar(255)")
-                        .HasComment("결제수단 (자산 상품명/현금)");
+                        .HasComment("입금 방법 (자산 상품명/현금)");
 
                     b.Property<float>("InterestRate")
                         .HasColumnType("float")

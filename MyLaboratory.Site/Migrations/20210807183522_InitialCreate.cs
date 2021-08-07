@@ -276,7 +276,7 @@ namespace MyLaboratory.Site.Migrations
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     ProductName = table.Column<string>(type: "varchar(255)", maxLength: 255, nullable: false, comment: "상품명", collation: "utf8mb4_general_ci")
                         .Annotation("MySql:CharSet", "utf8mb4"),
-                    DepositMethod = table.Column<string>(type: "varchar(255)", nullable: false, comment: "결제수단 (자산 상품명/현금)", collation: "utf8mb4_general_ci")
+                    DepositMethod = table.Column<string>(type: "varchar(255)", nullable: false, comment: "입금 방법 (자산 상품명/현금)", collation: "utf8mb4_general_ci")
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     Amount = table.Column<long>(type: "bigint(255)", nullable: false, comment: "금액"),
                     MonetaryUnit = table.Column<string>(type: "varchar(45)", maxLength: 45, nullable: false, comment: "화폐 단위 (KRW, USD, ETC)", collation: "utf8mb4_general_ci")
