@@ -539,21 +539,21 @@ namespace MyLaboratory.Site.Controllers
                 workSheetMenuOutputViewModels.Row(1).Height = 20;
                 workSheetMenuOutputViewModels.Row(1).Style.HorizontalAlignment = OfficeOpenXml.Style.ExcelHorizontalAlignment.Center;
                 workSheetMenuOutputViewModels.Row(1).Style.Font.Bold = true;
-                workSheetMenuOutputViewModels.Cells[1, 1].Value = nameof(AccountOutputViewModel.Email).ToString();
-                workSheetMenuOutputViewModels.Cells[1, 2].Value = nameof(AccountOutputViewModel.HashedPassword).ToString();
-                workSheetMenuOutputViewModels.Cells[1, 3].Value = nameof(AccountOutputViewModel.FullName).ToString();
-                workSheetMenuOutputViewModels.Cells[1, 4].Value = nameof(AccountOutputViewModel.AvatarImagePath).ToString();
-                workSheetMenuOutputViewModels.Cells[1, 5].Value = nameof(AccountOutputViewModel.Role).ToString();
-                workSheetMenuOutputViewModels.Cells[1, 6].Value = nameof(AccountOutputViewModel.Locked).ToString();
-                workSheetMenuOutputViewModels.Cells[1, 7].Value = nameof(AccountOutputViewModel.LoginAttempt).ToString();
-                workSheetMenuOutputViewModels.Cells[1, 8].Value = nameof(AccountOutputViewModel.EmailConfirmed).ToString();
-                workSheetMenuOutputViewModels.Cells[1, 9].Value = nameof(AccountOutputViewModel.AgreedServiceTerms).ToString();
-                workSheetMenuOutputViewModels.Cells[1, 10].Value = nameof(AccountOutputViewModel.RegistrationToken).ToString();
-                workSheetMenuOutputViewModels.Cells[1, 11].Value = nameof(AccountOutputViewModel.ResetPasswordToken).ToString();
-                workSheetMenuOutputViewModels.Cells[1, 12].Value = nameof(AccountOutputViewModel.Created).ToString();
-                workSheetMenuOutputViewModels.Cells[1, 13].Value = nameof(AccountOutputViewModel.Updated).ToString();
-                workSheetMenuOutputViewModels.Cells[1, 14].Value = nameof(AccountOutputViewModel.Message).ToString();
-                workSheetMenuOutputViewModels.Cells[1, 15].Value = nameof(AccountOutputViewModel.Deleted).ToString();
+                workSheetMenuOutputViewModels.Cells[1, 1].Value = localizer[nameof(AccountOutputViewModel.Email).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 2].Value = localizer[nameof(AccountOutputViewModel.HashedPassword).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 3].Value = localizer[nameof(AccountOutputViewModel.FullName).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 4].Value = localizer[nameof(AccountOutputViewModel.AvatarImagePath).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 5].Value = localizer[nameof(AccountOutputViewModel.Role).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 6].Value = localizer[nameof(AccountOutputViewModel.Locked).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 7].Value = localizer[nameof(AccountOutputViewModel.LoginAttempt).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 8].Value = localizer[nameof(AccountOutputViewModel.EmailConfirmed).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 9].Value = localizer[nameof(AccountOutputViewModel.AgreedServiceTerms).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 10].Value = localizer[nameof(AccountOutputViewModel.RegistrationToken).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 11].Value = localizer[nameof(AccountOutputViewModel.ResetPasswordToken).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 12].Value = localizer[nameof(AccountOutputViewModel.Created).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 13].Value = localizer[nameof(AccountOutputViewModel.Updated).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 14].Value = localizer[nameof(AccountOutputViewModel.Message).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 15].Value = localizer[nameof(AccountOutputViewModel.Deleted).ToString()].Value;
 
                 int recordIndex = 2;
                 foreach (var item in accountOutputViewModels)

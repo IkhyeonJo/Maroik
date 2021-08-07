@@ -120,8 +120,26 @@
   <data name="Account create successfully done." xml:space="preserve">
     <value>Account create successfully done.</value>
   </data>
+  <data name="AgreedServiceTerms" xml:space="preserve">
+    <value>AgreedServiceTerms</value>
+  </data>
+  <data name="AvatarImagePath" xml:space="preserve">
+    <value>AvatarImagePath</value>
+  </data>
+  <data name="Created" xml:space="preserve">
+    <value>Created</value>
+  </data>
+  <data name="Deleted" xml:space="preserve">
+    <value>Deleted</value>
+  </data>
+  <data name="Email" xml:space="preserve">
+    <value>Email</value>
+  </data>
   <data name="Email address is wrong" xml:space="preserve">
     <value>Email address is wrong</value>
+  </data>
+  <data name="EmailConfirmed" xml:space="preserve">
+    <value>EmailConfirmed</value>
   </data>
   <data name="Fail to find the account by given email address" xml:space="preserve">
     <value>Fail to find the account by given email address</value>
@@ -129,8 +147,14 @@
   <data name="File Size must be smaller than 10MB." xml:space="preserve">
     <value>File Size must be smaller than 10MB.</value>
   </data>
+  <data name="FullName" xml:space="preserve">
+    <value>FullName</value>
+  </data>
   <data name="FullName is must be between 1 and 255 characters" xml:space="preserve">
     <value>FullName is must be between 1 and 255 characters</value>
+  </data>
+  <data name="HashedPassword" xml:space="preserve">
+    <value>HashedPassword</value>
   </data>
   <data name="Input is invalid" xml:space="preserve">
     <value>Input is invalid</value>
@@ -140,6 +164,15 @@
   </data>
   <data name="Invalid password. Please check again." xml:space="preserve">
     <value>Invalid password. Please check again.</value>
+  </data>
+  <data name="Locked" xml:space="preserve">
+    <value>Locked</value>
+  </data>
+  <data name="LoginAttempt" xml:space="preserve">
+    <value>LoginAttempt</value>
+  </data>
+  <data name="Message" xml:space="preserve">
+    <value>Message</value>
   </data>
   <data name="Only .jpg or .png file allowed" xml:space="preserve">
     <value>Only .jpg or .png file allowed</value>
@@ -155,6 +188,15 @@
   </data>
   <data name="Please enter FullName" xml:space="preserve">
     <value>Please enter FullName</value>
+  </data>
+  <data name="RegistrationToken" xml:space="preserve">
+    <value>RegistrationToken</value>
+  </data>
+  <data name="ResetPasswordToken" xml:space="preserve">
+    <value>ResetPasswordToken</value>
+  </data>
+  <data name="Role" xml:space="preserve">
+    <value>Role</value>
   </data>
   <data name="Successfully created the category" xml:space="preserve">
     <value>Successfully created the category</value>
@@ -182,5 +224,8 @@
   </data>
   <data name="This account has already been created." xml:space="preserve">
     <value>This account has already been created.</value>
+  </data>
+  <data name="Updated" xml:space="preserve">
+    <value>Updated</value>
   </data>
 </root>
