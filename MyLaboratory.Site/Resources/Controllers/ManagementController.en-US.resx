@@ -120,17 +120,29 @@
   <data name="Account create successfully done." xml:space="preserve">
     <value>Account create successfully done.</value>
   </data>
+  <data name="Action" xml:space="preserve">
+    <value>Action</value>
+  </data>
   <data name="AgreedServiceTerms" xml:space="preserve">
     <value>AgreedServiceTerms</value>
   </data>
   <data name="AvatarImagePath" xml:space="preserve">
     <value>AvatarImagePath</value>
   </data>
+  <data name="CategoryId" xml:space="preserve">
+    <value>CategoryId</value>
+  </data>
+  <data name="Controller" xml:space="preserve">
+    <value>Controller</value>
+  </data>
   <data name="Created" xml:space="preserve">
     <value>Created</value>
   </data>
   <data name="Deleted" xml:space="preserve">
     <value>Deleted</value>
+  </data>
+  <data name="DisplayName" xml:space="preserve">
+    <value>DisplayName</value>
   </data>
   <data name="Email" xml:space="preserve">
     <value>Email</value>
@@ -156,6 +168,12 @@
   <data name="HashedPassword" xml:space="preserve">
     <value>HashedPassword</value>
   </data>
+  <data name="IconPath" xml:space="preserve">
+    <value>IconPath</value>
+  </data>
+  <data name="Id" xml:space="preserve">
+    <value>Id</value>
+  </data>
   <data name="Input is invalid" xml:space="preserve">
     <value>Input is invalid</value>
   </data>
@@ -174,8 +192,14 @@
   <data name="Message" xml:space="preserve">
     <value>Message</value>
   </data>
+  <data name="Name" xml:space="preserve">
+    <value>Name</value>
+  </data>
   <data name="Only .jpg or .png file allowed" xml:space="preserve">
     <value>Only .jpg or .png file allowed</value>
+  </data>
+  <data name="Order" xml:space="preserve">
+    <value>Order</value>
   </data>
   <data name="Password change successfully done." xml:space="preserve">
     <value>Password change successfully done.</value>
@@ -196,6 +220,9 @@
     <value>ResetPasswordToken</value>
   </data>
   <data name="Role" xml:space="preserve">
+    <value>Role</value>
+  </data>
+  <data name="Role1" xml:space="preserve">
     <value>Role</value>
   </data>
   <data name="Successfully created the category" xml:space="preserve">

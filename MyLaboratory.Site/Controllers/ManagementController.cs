@@ -1217,7 +1217,34 @@ namespace MyLaboratory.Site.Controllers
             using (var package = new ExcelPackage(stream))
             {
                 var workSheetMenuOutputViewModels = package.Workbook.Worksheets.Add("Sheet1");
-                workSheetMenuOutputViewModels.Cells.LoadFromCollection(menuOutputViewModels, true);
+
+                workSheetMenuOutputViewModels.Row(1).Height = 20;
+                workSheetMenuOutputViewModels.Row(1).Style.HorizontalAlignment = OfficeOpenXml.Style.ExcelHorizontalAlignment.Center;
+                workSheetMenuOutputViewModels.Row(1).Style.Font.Bold = true;
+                workSheetMenuOutputViewModels.Cells[1, 1].Value = localizer[nameof(MenuOutputViewModel.Id).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 2].Value = localizer[nameof(MenuOutputViewModel.CategoryId).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 3].Value = localizer[nameof(MenuOutputViewModel.Name).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 4].Value = localizer[nameof(MenuOutputViewModel.DisplayName).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 5].Value = localizer[nameof(MenuOutputViewModel.IconPath).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 6].Value = localizer[nameof(MenuOutputViewModel.Controller).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 7].Value = localizer[nameof(MenuOutputViewModel.Action).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 8].Value = localizer[nameof(MenuOutputViewModel.Role).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 9].Value = localizer[nameof(MenuOutputViewModel.Order).ToString()].Value;
+
+                int recordIndex = 2;
+                foreach (var item in menuOutputViewModels)
+                {
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 1].Value = item.Id;
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 2].Value = item.CategoryId;
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 3].Value = item.Name;
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 4].Value = item.DisplayName;
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 5].Value = item.IconPath;
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 6].Value = item.Controller;
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 7].Value = item.Action;
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 8].Value = item.Role;
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 9].Value = item.Order;
+                    recordIndex++;
+                }
 
                 package.Save();
             }

@@ -120,17 +120,29 @@
   <data name="Account create successfully done." xml:space="preserve">
     <value>계정 생성이 성공적으로 완료되었습니다.</value>
   </data>
+  <data name="Action" xml:space="preserve">
+    <value>액션</value>
+  </data>
   <data name="AgreedServiceTerms" xml:space="preserve">
     <value>약관동의</value>
   </data>
   <data name="AvatarImagePath" xml:space="preserve">
     <value>아바타 이미지 경로</value>
   </data>
+  <data name="CategoryId" xml:space="preserve">
+    <value>카테고리ID</value>
+  </data>
+  <data name="Controller" xml:space="preserve">
+    <value>컨트롤러</value>
+  </data>
   <data name="Created" xml:space="preserve">
     <value>생성일</value>
   </data>
   <data name="Deleted" xml:space="preserve">
     <value>삭제</value>
+  </data>
+  <data name="DisplayName" xml:space="preserve">
+    <value>표시이름</value>
   </data>
   <data name="Email" xml:space="preserve">
     <value>이메일</value>
@@ -156,6 +168,12 @@
   <data name="HashedPassword" xml:space="preserve">
     <value>해쉬 비밀번호</value>
   </data>
+  <data name="IconPath" xml:space="preserve">
+    <value>아이콘경로</value>
+  </data>
+  <data name="Id" xml:space="preserve">
+    <value>아이디</value>
+  </data>
   <data name="Input is invalid" xml:space="preserve">
     <value>유효하지 않은 입력값입니다.</value>
   </data>
@@ -174,8 +192,14 @@
   <data name="Message" xml:space="preserve">
     <value>메시지</value>
   </data>
+  <data name="Name" xml:space="preserve">
+    <value>이름</value>
+  </data>
   <data name="Only .jpg or .png file allowed" xml:space="preserve">
     <value>파일 확장자 jpg 또는 png 만 허용됩니다.</value>
+  </data>
+  <data name="Order" xml:space="preserve">
+    <value>순서</value>
   </data>
   <data name="Password change successfully done." xml:space="preserve">
     <value>비밀번호 변경이 성공적으로 완료되었습니다.</value>
@@ -196,6 +220,9 @@
     <value>비밀번호 초기화 토큰</value>
   </data>
   <data name="Role" xml:space="preserve">
+    <value>역할</value>
+  </data>
+  <data name="Role1" xml:space="preserve">
     <value>역할</value>
   </data>
   <data name="Successfully created the category" xml:space="preserve">
