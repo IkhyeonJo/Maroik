@@ -72,7 +72,7 @@ namespace MyLaboratory.Site.Controllers
 
                     try
                     {
-                        await assetRepository.CreateAccountAsync
+                        await assetRepository.CreateAssetAsync
                             (
                             new Asset()
                             {
@@ -171,6 +171,83 @@ namespace MyLaboratory.Site.Controllers
                 return PartialView("_AssetGrid", result);
             }
             return View();
+        }
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [RequiredHttpPostAccess(Role = Role.User)]
+        public async Task<IActionResult> IsAssetExists(string productName)
+        {
+            try
+            {
+                HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+
+                var tempAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, productName);
+
+                if (tempAsset == null)
+                {
+                    return Json(new { result = false, error = localizer["Fail to find the asset by given product name"].Value });
+                }
+                else
+                {
+                    return Json(new { result = true, asset = tempAsset });
+                }
+            }
+            catch (Exception e)
+            {
+                return Json(new { result = false, error = e.ToString() });
+            }
+        }
+        #endregion
+
+        #region Update
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [RequiredHttpPostAccess(Role = Role.User)]
+        public async Task<IActionResult> UpdateAsset([FromBody] AssetInputViewModel assetInputViewModel)
+        {
+            try
+            {
+                ModelState.Remove(nameof(assetInputViewModel.Item));
+                ModelState.Remove(nameof(assetInputViewModel.MonetaryUnit));
+
+                if (ModelState.IsValid)
+                {
+                    try
+                    {
+                        HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+
+                        var tempAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, assetInputViewModel.ProductName);
+
+                        if (tempAsset == null)
+                        {
+                            return Json(new { result = false, error = localizer["Fail to find the asset by given product name"].Value });
+                        }
+                        else
+                        {
+                            tempAsset.Amount = assetInputViewModel.Amount;
+                            tempAsset.Note = assetInputViewModel.Note;
+                            tempAsset.Deleted = assetInputViewModel.Deleted;
+                            tempAsset.Updated = DateTime.UtcNow;
+
+                            await assetRepository.UpdateAssetAsync(tempAsset);
+
+                            return Json(new { result = true, message = "The asset has been successfully updated." });
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        return Json(new { result = false, error = e.ToString() });
+                    }
+                }
+                else
+                {
+                    return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                }
+            }
+            catch (Exception e)
+            {
+                return Json(new { result = false, error = e.ToString() });
+            }
         }
         #endregion
 

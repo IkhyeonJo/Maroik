@@ -12,7 +12,7 @@
                         <button type="button" class="btn btn-primary btn-block btn-sm" data-toggle="modal" data-target="#createAssetDialogModal" data-backdrop="static" data-keyboard="false" style="width: 100px !important;"><i class="fa fa-plus" style="padding-right:3px;"></i> @localizer["CREATE"].Value</button>
                     </li>
                     <li class="nav-item" style="padding-bottom: 10px; padding-right: 7px;">
-                        <button type="button" class="btn btn-success btn-block btn-sm" onclick="EditAccountGridRow('@localizer["Please select grid row"].Value')" style="width: 100px !important;"><i class="fas fa-edit" style="padding-right:3px;"></i> @localizer["EDIT"].Value</button>
+                        <button type="button" class="btn btn-success btn-block btn-sm" onclick="EditAssetGridRow('@localizer["Please select grid row"].Value')" style="width: 100px !important;"><i class="fas fa-edit" style="padding-right:3px;"></i> @localizer["EDIT"].Value</button>
                     </li>
                     <li class="nav-item" style="padding-bottom: 10px; padding-right: 7px;">
                         <button type="button" class="btn btn-danger btn-block btn-sm" onclick="ConfirmDeleteAccount('@localizer["Please select grid row"].Value')" style="width: 100px !important;"><i class="fa fa-trash" style="padding-right:3px;"></i> @localizer["DELETE"].Value</button>
@@ -93,69 +93,38 @@
     </div>
 </div>
 
-@*<!--EditAccountDialogModal-->*@
-<div class="modal fade" tabindex="-1" role="dialog" id="editAccountDialogModal">
+@*<!--EditAssetDialogModal-->*@
+<div class="modal fade" tabindex="-1" role="dialog" id="editAssetDialogModal">
     <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
-            <div id="editAccountTabs">
+            <div id="editAssetTabs">
                 @*<!--Tab Menu-->*@
                 <ul>
-                    <li><a href="#editAccountTabs-1">@localizer["Edit Account"].Value</a></li>
+                    <li><a href="#editAssetTabs-1">@localizer["Edit Asset"].Value</a></li>
                 </ul>
-                @*Tabs-1: Edit Account Modal*@
-                <div id="editAccountTabs-1">
-                    <form id="formEditAccount" onsubmit="return UpdateAccount()">
+                @*Tabs-1: Edit Asset Modal*@
+                <div id="editAssetTabs-1">
+                    <form id="formEditAsset" onsubmit="return UpdateAsset()">
                         <div class="form-row">
                             <div class="form-group col-md-6 mb-3">
-                                <label for="editAccountEmail">@localizer["Email"].Value</label>
-                                <input class="form-control form-control-sm" type="text" id="editAccountEmail" name="editAccountEmail" readonly />
+                                <label for="editAssetProductName">@localizer["ProductName"].Value</label>
+                                <input class="form-control form-control-sm" type="text" data-val="true" data-val-required="@localizer["Please enter ProductName"].Value" id="editAssetProductName" name="editAssetProductName" value="" readonly>
+                                <span class="field-validation-valid text-danger" data-valmsg-for="editAssetProductName" data-valmsg-replace="true"></span>
                             </div>
                             <div class="form-group col-md-6 mb-3">
-                                <label for="editAccountPassword">@localizer["Password"].Value</label>
-                                <input class="form-control form-control-sm" type="password" data-val="true" data-val-required="@localizer["Please enter Password"].Value" id="editAccountPassword" name="editAccountPassword" value="">
-                                <span class="field-validation-valid text-danger" data-valmsg-for="editAccountPassword" data-valmsg-replace="true"></span>
+                                <label for="editAssetAmount">@localizer["Amount"].Value</label>
+                                <input class="form-control form-control-sm" type="number" id="editAssetAmount" name="editAssetAmount" value="0">
                             </div>
                         </div>
                         <div class="form-row">
                             <div class="form-group col-md-6 mb-3">
-                                <label for="editAccountFullName">@localizer["FullName"].Value</label>
-                                <input class="form-control form-control-sm" type="text" data-val="true" data-val-required="@localizer["Please enter FullName"].Value" id="editAccountFullName" name="editAccountFullName" value="">
-                                <span class="field-validation-valid text-danger" data-valmsg-for="editAccountFullName" data-valmsg-replace="true"></span>
+                                <label for="editAssetNote">@localizer["Note"].Value</label>
+                                <input class="form-control form-control-sm" type="text" data-val="true" data-val-required="@localizer["Please enter Note"].Value" id="editAssetNote" name="editAssetNote" value="">
+                                <span class="field-validation-valid text-danger" data-valmsg-for="editAssetNote" data-valmsg-replace="true"></span>
                             </div>
                             <div class="form-group col-md-6 mb-3">
-                                <label for="editAccountRole">@localizer["Role"].Value</label>
-                                <br />
-                                <select id="editAccountRole" name="editAccountRole">
-                                    <option value="Admin">@localizer["Admin"].Value</option>
-                                    <option value="User">@localizer["User"].Value</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group col-md-6 mb-3">
-                                <label for="editAccountLocked">@localizer["Locked"].Value</label>
-                                <input class="form-control form-control-sm" type="checkbox" id="editAccountLocked" name="editAccountLocked" />
-                            </div>
-                            <div class="form-group col-md-6 mb-3">
-                                <label for="editAccountEmailConfirmed">@localizer["EmailConfirmed"].Value</label>
-                                <input class="form-control form-control-sm" type="checkbox" id="editAccountEmailConfirmed" name="editAccountEmailConfirmed" />
-                            </div>
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group col-md-6 mb-3">
-                                <label for="editAccountAgreedServiceTerms">@localizer["AgreedServiceTerms"].Value</label>
-                                <input class="form-control form-control-sm" type="checkbox" id="editAccountAgreedServiceTerms" name="editAccountAgreedServiceTerms" />
-                            </div>
-                            <div class="form-group col-md-6 mb-3">
-                                <label for="editMessage">@localizer["Message"].Value</label>
-                                <input class="form-control form-control-sm" type="text" data-val="true" data-val-required="@localizer["Please enter message"].Value" id="editMessage" name="editMessage" value="">
-                                <span class="field-validation-valid text-danger" data-valmsg-for="editMessage" data-valmsg-replace="true"></span>
-                            </div>
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group col-md-6 mb-3">
-                                <label for="editAccountDeleted">@localizer["Deleted"].Value</label>
-                                <input class="form-control form-control-sm" type="checkbox" id="editAccountDeleted" name="editAccountDeleted" />
+                                <label for="editAssetDeleted">@localizer["Deleted"].Value</label>
+                                <input class="form-control form-control-sm" type="checkbox" id="editAssetDeleted" name="editAssetDeleted" />
                             </div>
                         </div>
                         <div class="modal-footer justify-content-between">

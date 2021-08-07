@@ -44,9 +44,20 @@ namespace MyLaboratory.Site.Services
         /// </summary>
         /// <param name="asset"></param>
         /// <returns></returns>
-        public async Task CreateAccountAsync(Asset asset)
+        public async Task CreateAssetAsync(Asset asset)
         {
             await context.Assets.AddAsync(asset);
+            await context.SaveChangesAsync();
+        }
+
+        /// <summary>
+        /// 자산을 업데이트합니다.
+        /// </summary>
+        /// <param name="asset"></param>
+        /// <returns></returns>
+        public async Task UpdateAssetAsync(Asset asset)
+        {
+            context.Assets.Update(asset);
             await context.SaveChangesAsync();
         }
     }

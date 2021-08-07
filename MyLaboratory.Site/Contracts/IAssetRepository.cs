@@ -27,7 +27,13 @@ namespace MyLaboratory.Site.Contracts
         /// </summary>
         /// <param name="asset"></param>
         /// <returns></returns>
-        public Task CreateAccountAsync(Asset asset);
+        public Task CreateAssetAsync(Asset asset);
 
+        /// <summary>
+        /// 자산을 업데이트합니다.
+        /// </summary>
+        /// <param name="asset"></param>
+        /// <returns></returns>
+        public Task UpdateAssetAsync(Asset asset);
     }
 }

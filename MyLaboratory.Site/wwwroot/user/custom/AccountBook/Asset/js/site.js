@@ -4,7 +4,7 @@
 // Write your JavaScript code.
 $(function () {
     $("#createAssetTabs").tabs();
-    $("#editAccountTabs").tabs();
+    $("#editAssetTabs").tabs();
 });
 
 var selectedRowColor = "table-primary";
@@ -16,14 +16,14 @@ document.addEventListener("rowclick", e => {
     //e.detail.originalEvent - original tr click event which triggered the rowclick.
 
     var selectedRow = e.detail;
-    var selectedRowEmail = selectedRow.data.Email;
+    var selectedRowProductName = selectedRow.data.ProductName;
 
-    $('#accountGrid > table > tbody  > tr').each(function (index, tr) {
+    $('#assetGrid > table > tbody  > tr').each(function (index, tr) {
         $(this).removeClass(selectedRowColor);
     }); // remove all selected row color
 
-    $('#accountGrid > table > tbody  > tr').each(function (index, tr) {
-        if ((new String(selectedRowEmail).valueOf() === new String($(this).attr('data-email')).valueOf())) {
+    $('#assetGrid > table > tbody  > tr').each(function (index, tr) {
+        if ((new String(selectedRowProductName).valueOf() === new String($(this).attr('data-productName')).valueOf())) {
             $(this).addClass(selectedRowColor);
         }
     }); // set selected row color class
@@ -53,12 +53,12 @@ document.addEventListener("gridconfigure", e => {
 });
 
 
-$(document).on("dblclick", "#accountGrid > table > tbody  > tr", function () {
+$(document).on("dblclick", "#assetGrid > table > tbody  > tr", function () {
     //console.log('dblclick-start');
-    $('#accountGrid > table > tbody  > tr').each(function (index, tr) {
+    $('#assetGrid > table > tbody  > tr').each(function (index, tr) {
 
         if ($(this).attr("class").includes(selectedRowColor)) { // Get SelectedRow by Color
-            EditAccountGridRow();
+            EditAssetGridRow();
         }
     });
     //console.log('dblclick-end');
@@ -120,23 +120,23 @@ function CreateAsset() {
     return false;
 }
 
-function EditAccountGridRow(errorMessageSelectGridRow) {
+function EditAssetGridRow(errorMessageSelectGridRow) {
 
-    var selectedRowEmail = "";
+    var selectedRowProductName = "";
 
-    $('#accountGrid > table > tbody  > tr').each(function (index, tr) {
+    $('#assetGrid > table > tbody  > tr').each(function (index, tr) {
         if ($(this).attr("class").includes(selectedRowColor)) { // Get SelectedRow by Color
-            selectedRowEmail = $(this).attr("data-email");
+            selectedRowProductName = $(this).attr("data-productName");
         }
     }); // Search Selected Row
 
-    if (selectedRowEmail === "") {
+    if (selectedRowProductName === "") {
         toastr.error(errorMessageSelectGridRow);
         return false;
     } // check whether selected row exist or not
 
     $.ajax({
-        url: '/Management/IsAccountExists' + '?email=' + selectedRowEmail,
+        url: '/AccountBook/IsAssetExists' + '?productName=' + selectedRowProductName,
         type: 'POST',
         headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
         dataType: 'json',
@@ -147,24 +147,20 @@ function EditAccountGridRow(errorMessageSelectGridRow) {
         success: function (data) {
             if (data.result) {
 
-                var formEditAccount = $('#formEditAccount');
+                var formEditAsset = $('#formEditAsset');
 
-                formEditAccount.find('input[id="editAccountEmail"]').val(data.account.email);
-                formEditAccount.find('input[id="editAccountFullName"]').val(data.account.fullName);
-                formEditAccount.find('select[id="editAccountRole"]').val(data.account.role).change();
-                formEditAccount.find('input[id="editAccountLocked"]').prop("checked", data.account.locked);
-                formEditAccount.find('input[id="editAccountEmailConfirmed"]').prop("checked", data.account.emailConfirmed);
-                formEditAccount.find('input[id="editAccountAgreedServiceTerms"]').prop("checked", data.account.agreedServiceTerms);
-                formEditAccount.find('input[id="editMessage"]').val(data.account.message);
-                formEditAccount.find('input[id="editAccountDeleted"]').prop("checked", data.account.deleted);
+                formEditAsset.find('input[id="editAssetProductName"]').val(data.asset.productName);
+                formEditAsset.find('input[id="editAssetAmount"]').val(data.asset.amount);
+                formEditAsset.find('input[id="editAssetNote"]').val(data.asset.note);
+                formEditAsset.find('input[id="editAssetDeleted"]').prop("checked", data.asset.deleted);
 
-                $('#editAccountDialogModal').modal({
+                $('#editAssetDialogModal').modal({
                     keyboard: false,
                     backdrop: "static"
                 });
 
-                $('#editAccountDialogModal').modal('toggle');
-                $('#editAccountDialogModal').modal('show');
+                $('#editAssetDialogModal').modal('toggle');
+                $('#editAssetDialogModal').modal('show');
             }
             else {
                 toastr.error(data.error);
@@ -173,37 +169,28 @@ function EditAccountGridRow(errorMessageSelectGridRow) {
     });
 }
 
-function UpdateAccount() {
-    if (!$('#formEditAccount').valid()) {
+function UpdateAsset() {
+
+    if (!$('#formEditAsset').valid()) {
         return false;
     }
 
-    var createForm = $('#formEditAccount');
+    var createForm = $('#formEditAsset');
 
-    var email = createForm.find('input[id="editAccountEmail"]').val();
-    var password = createForm.find('input[id="editAccountPassword"]').val();
-    var fullName = createForm.find('input[id="editAccountFullName"]').val();
-    var role = createForm.find('select[id="editAccountRole"]').val();
-    var locked = createForm.find('input[id="editAccountLocked"]').is(":checked");
-    var emailConfirmed = createForm.find('input[id="editAccountEmailConfirmed"]').is(":checked");
-    var agreedServiceTerms = createForm.find('input[id="editAccountAgreedServiceTerms"]').is(":checked");
-    var message = createForm.find('input[id="editMessage"]').val();
-    var deleted = createForm.find('input[id="editAccountDeleted"]').is(":checked");
+    var productName = createForm.find('input[id="editAssetProductName"]').val();
+    var amount = createForm.find('input[id="editAssetAmount"]').val();
+    var note = createForm.find('input[id="editAssetNote"]').val();
+    var deleted = createForm.find('input[id="editAssetDeleted"]').is(":checked");
 
     var paramValue = JSON.stringify({
-        Email: email,
-        Password: password,
-        FullName: fullName,
-        Role: role,
-        Locked: locked,
-        EmailConfirmed: emailConfirmed,
-        AgreedServiceTerms: agreedServiceTerms,
-        Message: message,
+        ProductName: productName,
+        Amount: amount,
+        Note: note,
         Deleted: deleted
     });
 
     $.ajax({
-        url: '/Management/UpdateAccount',
+        url: '/AccountBook/UpdateAsset',
         type: 'POST',
         headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
         dataType: 'json',
@@ -213,7 +200,7 @@ function UpdateAccount() {
         //cache: false,
         success: function (data) {
             if (data.result) {
-                $('#editAccountDialogModal').modal('hide'); // hide Modal
+                $('#editAssetDialogModal').modal('hide'); // hide Modal
 
                 const grid = new MvcGrid(document.querySelector(".mvc-grid")); //reload grid
                 grid.reload(); //reload grid
