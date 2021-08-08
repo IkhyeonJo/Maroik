@@ -758,8 +758,8 @@ namespace MyLaboratory.Site.Controllers
                     workSheetMenuOutputViewModels.Cells[recordIndex, 4].Value = item.Contents;
                     workSheetMenuOutputViewModels.Cells[recordIndex, 5].Value = item.Amount;
                     workSheetMenuOutputViewModels.Cells[recordIndex, 6].Value = item.DepositMyAssetProductName;
-                    workSheetMenuOutputViewModels.Cells[recordIndex, 7].Value = item.Created.ToString("d");
-                    workSheetMenuOutputViewModels.Cells[recordIndex, 8].Value = item.Updated.ToString("d");
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 7].Value = item.Created.ToString();
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 8].Value = item.Updated.ToString();
                     workSheetMenuOutputViewModels.Cells[recordIndex, 9].Value = item.Note;
                     recordIndex++;
                 }
