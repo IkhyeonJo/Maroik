@@ -68,6 +68,7 @@ namespace MyLaboratory.Site
             services.AddScoped<ICategoryRepository, CategoryRepository>();
             services.AddScoped<ISubCategoryRepository, SubCategoryRepository>();
             services.AddScoped<IAssetRepository, AssetRepository>();
+            services.AddScoped<IIncomeRepository, IncomeRepository>();
             #endregion
 
             #region AddSession

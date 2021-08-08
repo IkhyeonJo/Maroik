@@ -40,7 +40,8 @@ namespace MyLaboratory.Site.Controllers
         private readonly ICategoryRepository categoryRepository;
         private readonly ISubCategoryRepository subCategoryRepository;
         private readonly IAssetRepository assetRepository;
-        public AccountBookController(IHtmlLocalizer<AccountBookController> localizer, ILogger<AccountBookController> logger, IAccountRepository accountRepository, IHostEnvironment hostEnvironment, ICategoryRepository categoryRepository, ISubCategoryRepository subCategoryRepository, IAssetRepository assetRepository)
+        private readonly IIncomeRepository incomeRepository;
+        public AccountBookController(IHtmlLocalizer<AccountBookController> localizer, ILogger<AccountBookController> logger, IAccountRepository accountRepository, IHostEnvironment hostEnvironment, ICategoryRepository categoryRepository, ISubCategoryRepository subCategoryRepository, IAssetRepository assetRepository, IIncomeRepository incomeRepository)
         {
             this.localizer = localizer;
             this.logger = logger;
@@ -49,6 +50,7 @@ namespace MyLaboratory.Site.Controllers
             this.categoryRepository = categoryRepository;
             this.subCategoryRepository = subCategoryRepository;
             this.assetRepository = assetRepository;
+            this.incomeRepository = incomeRepository;
         }
 
         #region 자산
@@ -353,8 +355,64 @@ namespace MyLaboratory.Site.Controllers
 
         #region Read
         [HttpGet]
-        public IActionResult Income()
+        public async Task<IActionResult> Income(string wholeSearch)
         {
+            if (HttpContext.Request.Headers["X-Requested-With"] == "XMLHttpRequest") // ajax
+            {
+                List<IncomeOutputViewModel> incomeOutputViewModels= new List<IncomeOutputViewModel>();
+
+                #region Incomes
+                HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+
+                foreach (var item in await incomeRepository.GetIncomesAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email))
+                {
+                    if (string.IsNullOrEmpty(wholeSearch))
+                    {
+                        incomeOutputViewModels.Add(new IncomeOutputViewModel()
+                        {
+                            Id = item.Id,
+                            MainClass = item.MainClass,
+                            SubClass = item.SubClass,
+                            Contents = item.Contents,
+                            Amount = item.Amount,
+                            DepositAccount = item.DepositAccount,
+                            Created = item.Created,
+                            Updated = item.Updated,
+                            Note = item.Note
+                        });
+                    }
+                    else
+                    {
+                        if ((item.Id.ToString() ?? "").Contains(wholeSearch) ||
+                            (item.MainClass?.ToString() ?? "").Contains(wholeSearch) ||
+                            (item.SubClass?.ToString() ?? "").Contains(wholeSearch) ||
+                            (item.Contents?.ToString() ?? "").Contains(wholeSearch) ||
+                            (item.Amount.ToString() ?? "").Contains(wholeSearch) ||
+                            (item.DepositAccount?.ToString() ?? "").Contains(wholeSearch) ||
+                            (item.Created.ToString() ?? "").Contains(wholeSearch) ||
+                            (item.Updated.ToString() ?? "").Contains(wholeSearch) ||
+                            (item.Note?.ToString() ?? "").Contains(wholeSearch))
+                        {
+                            incomeOutputViewModels.Add(new IncomeOutputViewModel()
+                            {
+                                Id = item.Id,
+                                MainClass = item.MainClass,
+                                SubClass = item.SubClass,
+                                Contents = item.Contents,
+                                Amount = item.Amount,
+                                DepositAccount = item.DepositAccount,
+                                Created = item.Created,
+                                Updated = item.Updated,
+                                Note = item.Note
+                            });
+                        }
+                    }
+                }
+                #endregion
+
+                var result = incomeOutputViewModels.AsQueryable();
+                return PartialView("_IncomeGrid", result);
+            }
             return View();
         }
         #endregion
