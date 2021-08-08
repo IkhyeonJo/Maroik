@@ -337,47 +337,47 @@ function UpdateIncome() {
     return false;
 }
 
-function ConfirmDeleteAsset(errorMessageSelectGridRow) {
+function ConfirmDeleteIncome(errorMessageSelectGridRow) {
 
-    var selectedRowProductName = "";
+    var selectedRowId = "";
 
-    $('#assetGrid > table > tbody  > tr').each(function (index, tr) {
+    $('#incomeGrid > table > tbody  > tr').each(function (index, tr) {
         if ($(this).attr("class").includes(selectedRowColor)) { // Get SelectedRow by Color
-            selectedRowProductName = $(this).attr("data-productName");
+            selectedRowId = $(this).attr("data-id");
         }
     }); // Search Selected Row
 
-    if (selectedRowProductName === "") {
+    if (selectedRowId === "") {
         toastr.error(errorMessageSelectGridRow);
         return false;
     } // check whether selected row exist or not
 
-    $('#confirmDeleteAssetDialogModal').modal({
+    $('#confirmDeleteIncomeDialogModal').modal({
         keyboard: false,
         backdrop: "static"
     });
 
-    $('#confirmDeleteAssetDialogModal').modal('toggle');
-    $('#confirmDeleteAssetDialogModal').modal('show');
+    $('#confirmDeleteIncomeDialogModal').modal('toggle');
+    $('#confirmDeleteIncomeDialogModal').modal('show');
 }
 
-function DeleteAsset(errorMessageSelectGridRow) {
+function DeleteIncome(errorMessageSelectGridRow) {
 
-    var selectedRowProductName = "";
+    var selectedRowId = "";
 
-    $('#assetGrid > table > tbody  > tr').each(function (index, tr) {
+    $('#incomeGrid > table > tbody  > tr').each(function (index, tr) {
         if ($(this).attr("class").includes(selectedRowColor)) { // Get SelectedRow by Color
-            selectedRowProductName = $(this).attr("data-productName");
+            selectedRowId = $(this).attr("data-id");
         }
     }); // Search Selected Row
 
-    if (selectedRowProductName === "") {
+    if (selectedRowId === "") {
         toastr.error(errorMessageSelectGridRow);
         return false;
     } // check whether selected row exist or not
 
     $.ajax({
-        url: '/AccountBook/IsAssetExists' + '?productName=' + selectedRowProductName,
+        url: '/AccountBook/IsIncomeExists' + '?id=' + selectedRowId,
         type: 'POST',
         headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
         dataType: 'json',
@@ -389,11 +389,11 @@ function DeleteAsset(errorMessageSelectGridRow) {
             if (data.result) {
 
                 var paramValue = JSON.stringify({
-                    ProductName: data.asset.productName
+                    Id: data.income.id
                 });
 
                 $.ajax({
-                    url: '/AccountBook/DeleteAsset',
+                    url: '/AccountBook/DeleteIncome',
                     type: 'POST',
                     headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
                     dataType: 'json',
@@ -403,7 +403,7 @@ function DeleteAsset(errorMessageSelectGridRow) {
                     //cache: false,
                     success: function (data) {
                         if (data.result) {
-                            $('#confirmDeleteAssetDialogModal').modal('hide'); // hide Modal
+                            $('#confirmDeleteIncomeDialogModal').modal('hide'); // hide Modal
 
                             const grid = new MvcGrid(document.querySelector(".mvc-grid")); //reload grid
                             grid.reload(); //reload grid

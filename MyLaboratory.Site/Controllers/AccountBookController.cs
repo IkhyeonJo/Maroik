@@ -650,6 +650,54 @@ namespace MyLaboratory.Site.Controllers
         }
         #endregion
 
+        #region Delete
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [RequiredHttpPostAccess(Role = Role.User)]
+        public async Task<IActionResult> DeleteIncome([FromBody] IncomeInputViewModel incomeInputViewModel)
+        {
+            try
+            {
+                HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+
+                var tempIncomes = await incomeRepository.GetIncomesAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+
+                if (tempIncomes == null)
+                {
+                    return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                }
+                else
+                {
+                    var tempIncome = tempIncomes.Where(a => a.Id == incomeInputViewModel.Id).FirstOrDefault();
+
+                    if (tempIncome == null)
+                    {
+                        return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                    }
+                    else
+                    {
+                        #region 자산 업데이트
+                        var tempAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, tempIncome.DepositMyAssetProductName);
+                        tempAsset.Amount -= Math.Abs(tempIncome.Amount);
+                        tempAsset.Updated = DateTime.UtcNow;
+                        await assetRepository.UpdateAssetAsync(tempAsset);
+                        #endregion
+
+                        #region 수입 삭제
+                        await incomeRepository.DeleteIncomeAsync(tempIncome);
+                        #endregion
+
+                        return Json(new { result = true, message = localizer["Successfully deleted the income"].Value });
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                return Json(new { result = false, error = e.ToString() });
+            }
+        }
+        #endregion
+
         #endregion
 
         #region 지출

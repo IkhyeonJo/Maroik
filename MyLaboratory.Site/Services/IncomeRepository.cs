@@ -49,5 +49,16 @@ namespace MyLaboratory.Site.Services
             context.Incomes.Update(income);
             await context.SaveChangesAsync();
         }
+
+        /// <summary>
+        /// 수입을 제거합니다.
+        /// </summary>
+        /// <param name="income"></param>
+        /// <returns></returns>
+        public async Task DeleteIncomeAsync(Income income)
+        {
+            context.Incomes.Remove(income);
+            await context.SaveChangesAsync();
+        }
     }
 }
