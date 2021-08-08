@@ -333,8 +333,8 @@ namespace MyLaboratory.Site.Controllers
                     workSheetMenuOutputViewModels.Cells[recordIndex, 2].Value = item.Item;
                     workSheetMenuOutputViewModels.Cells[recordIndex, 3].Value = item.Amount;
                     workSheetMenuOutputViewModels.Cells[recordIndex, 4].Value = item.MonetaryUnit;
-                    workSheetMenuOutputViewModels.Cells[recordIndex, 5].Value = item.Created.ToString("d");
-                    workSheetMenuOutputViewModels.Cells[recordIndex, 6].Value = item.Updated.ToString("d");
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 5].Value = item.Created.ToString();
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 6].Value = item.Updated.ToString();
                     workSheetMenuOutputViewModels.Cells[recordIndex, 7].Value = item.Note;
                     workSheetMenuOutputViewModels.Cells[recordIndex, 8].Value = item.Deleted;
                     recordIndex++;

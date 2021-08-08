@@ -569,8 +569,8 @@ namespace MyLaboratory.Site.Controllers
                     workSheetMenuOutputViewModels.Cells[recordIndex, 9].Value = item.AgreedServiceTerms;
                     workSheetMenuOutputViewModels.Cells[recordIndex, 10].Value = item.RegistrationToken;
                     workSheetMenuOutputViewModels.Cells[recordIndex, 11].Value = item.ResetPasswordToken;
-                    workSheetMenuOutputViewModels.Cells[recordIndex, 12].Value = item.Created.ToString("d");
-                    workSheetMenuOutputViewModels.Cells[recordIndex, 13].Value = item.Updated.ToString("d");
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 12].Value = item.Created.ToString();
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 13].Value = item.Updated.ToString();
                     workSheetMenuOutputViewModels.Cells[recordIndex, 14].Value = item.Message;
                     workSheetMenuOutputViewModels.Cells[recordIndex, 15].Value = item.Deleted;
                     recordIndex++;
