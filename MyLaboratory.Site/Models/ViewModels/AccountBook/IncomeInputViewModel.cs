@@ -25,9 +25,9 @@ namespace MyLaboratory.Site.Models.ViewModels.AccountBook
         [Required(ErrorMessage = "Please enter Amount")]
         [Display(Name = "Amount")]
         public long Amount { get; set; }
-        [Required(ErrorMessage = "Please enter DepositAccount")]
-        [Display(Name = "DepositAccount")]
-        public string DepositAccount { get; set; }
+        [Required(ErrorMessage = "Please enter DepositMyAssetProductName")]
+        [Display(Name = "DepositMyAssetProductName")]
+        public string DepositMyAssetProductName { get; set; }
         [Required(ErrorMessage = "Please enter Created")]
         [Display(Name = "Created")]
         public DateTime Created { get; set; }

@@ -83,7 +83,7 @@ function CreateIncome() {
     var subClass = createForm.find('select[id="createIncomeSubClass"]').val();
     var contents = createForm.find('input[id="createIncomeContents"]').val();
     var amount = createForm.find('input[id="createIncomeAmount"]').val();
-    var depositAccount = createForm.find('select[id="createIncomeDepositAccount"]').val();
+    var depositMyAssetProductName = createForm.find('select[id="createIncomeDepositMyAssetProductName"]').val();
     var note = createForm.find('input[id="createIncomeNote"]').val();
 
     var paramValue = JSON.stringify({
@@ -91,7 +91,7 @@ function CreateIncome() {
         SubClass: subClass,
         Contents: contents,
         Amount: amount,
-        DepositAccount: depositAccount,
+        DepositMyAssetProductName: depositMyAssetProductName,
         Note: note
     });
 
