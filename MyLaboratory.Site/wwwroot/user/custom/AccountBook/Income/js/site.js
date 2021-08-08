@@ -423,20 +423,20 @@ function DeleteIncome(errorMessageSelectGridRow) {
     });
 }
 
-function ExportExcelAsset() {
+function ExportExcelIncome() {
     var form = document.createElement("form");
     var element1 = document.createElement("input");
     var element2 = document.createElement("input");
 
     form.method = "POST";
-    form.action = "/AccountBook/ExportExcelAsset";
+    form.action = "/AccountBook/ExportExcelIncome";
 
     element1.name = "__RequestVerificationToken";
     element1.value = $('input[name="__RequestVerificationToken"]').val();
     form.appendChild(element1);
 
     element2.name = "fileName";
-    element2.value = "Asset";
+    element2.value = "Income";
     form.appendChild(element2);
 
     document.body.appendChild(form);

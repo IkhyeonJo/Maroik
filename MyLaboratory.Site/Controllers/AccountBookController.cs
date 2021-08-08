@@ -698,6 +698,81 @@ namespace MyLaboratory.Site.Controllers
         }
         #endregion
 
+        #region Excel
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [RequiredHttpPostAccess(Role = Role.User)]
+        public async Task<IActionResult> ExportExcelIncome(string fileName = "")
+        {
+            // query data from database
+            await Task.Yield();
+
+            List<IncomeOutputViewModel> incomeOutputViewModels = new List<IncomeOutputViewModel>();
+
+            #region Assets
+
+            HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+
+            foreach (var item in await incomeRepository.GetIncomesAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email))
+            {
+                incomeOutputViewModels.Add(new IncomeOutputViewModel()
+                {
+                    Id = item.Id,
+                    MainClass = item.MainClass,
+                    SubClass = item.SubClass,
+                    Contents = item.Contents,
+                    Amount = item.Amount,
+                    DepositMyAssetProductName = item.DepositMyAssetProductName,
+                    Created = item.Created,
+                    Updated = item.Updated,
+                    Note = item.Note
+                });
+            }
+            #endregion
+
+            var stream = new MemoryStream();
+
+            using (var package = new ExcelPackage(stream))
+            {
+                var workSheetMenuOutputViewModels = package.Workbook.Worksheets.Add("Sheet1");
+
+                workSheetMenuOutputViewModels.Row(1).Height = 20;
+                workSheetMenuOutputViewModels.Row(1).Style.HorizontalAlignment = OfficeOpenXml.Style.ExcelHorizontalAlignment.Center;
+                workSheetMenuOutputViewModels.Row(1).Style.Font.Bold = true;
+                workSheetMenuOutputViewModels.Cells[1, 1].Value = localizer[nameof(IncomeOutputViewModel.Id).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 2].Value = localizer[nameof(IncomeOutputViewModel.MainClass).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 3].Value = localizer[nameof(IncomeOutputViewModel.SubClass).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 4].Value = localizer[nameof(IncomeOutputViewModel.Contents).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 5].Value = localizer[nameof(IncomeOutputViewModel.Amount).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 6].Value = localizer[nameof(IncomeOutputViewModel.DepositMyAssetProductName).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 7].Value = localizer[nameof(IncomeOutputViewModel.Created).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 8].Value = localizer[nameof(IncomeOutputViewModel.Updated).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 9].Value = localizer[nameof(IncomeOutputViewModel.Note).ToString()].Value;
+
+                int recordIndex = 2;
+                foreach (var item in incomeOutputViewModels)
+                {
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 1].Value = item.Id;
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 2].Value = item.MainClass;
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 3].Value = item.SubClass;
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 4].Value = item.Contents;
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 5].Value = item.Amount;
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 6].Value = item.DepositMyAssetProductName;
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 7].Value = item.Created.ToString("d");
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 8].Value = item.Updated.ToString("d");
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 9].Value = item.Note;
+                    recordIndex++;
+                }
+
+                package.Save();
+            }
+            stream.Position = 0;
+            string excelName = $"{fileName}-{DateTime.UtcNow.ToString("yyyyMMddHHmmssfff")}.xlsx";
+
+            return File(stream, "application/octet-stream", excelName);
+        }
+        #endregion
+
         #endregion
 
         #region 지출
