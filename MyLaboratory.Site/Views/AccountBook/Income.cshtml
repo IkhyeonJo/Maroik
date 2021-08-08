@@ -88,12 +88,9 @@
                                 <label for="createIncomeDepositMyAssetProductName">@localizer["DepositMyAssetProductName"].Value</label>
                                 <br />
                                 <select id="createIncomeDepositMyAssetProductName" name="createIncomeDepositMyAssetProductName">
-                                    @{
-                                        Context.Session.TryGetValue("AccountSession", out byte[] resultByte);
-                                        foreach (var item in await assetRepository.GetAssetsAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email))
-                                        {
-                                            <option value="@item.ProductName">@localizer[item.ProductName.ToString()].Value</option>
-                                        }
+                                    @foreach (var item in await assetRepository.GetAssetsAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email))
+                                    {
+                                        <option value="@item.ProductName">@localizer[item.ProductName.ToString()].Value</option>
                                     }
                                 </select>
                             </div>
