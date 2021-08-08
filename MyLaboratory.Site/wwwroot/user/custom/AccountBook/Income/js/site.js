@@ -74,36 +74,36 @@ $('#gridSearch').on('input', function () {
 function ShowIncomeSubClassBySelectedIncomeMainClass(createIncomeMainClass) {
     
     if (createIncomeMainClass.value == "RegularIncome") {
-        $('option[value=LaborIncome]').prop('disabled', true).prop('hidden', true);
-        $('option[value=BusinessIncome]').prop('disabled', true).prop('hidden', true);
-        $('option[value=PensionIncome]').prop('disabled', true).prop('hidden', true);
-        $('option[value=FinancialIncome]').prop('disabled', true).prop('hidden', true);
-        $('option[value=RentalIncome]').prop('disabled', true).prop('hidden', true);
-        $('option[value=OtherIncome]').prop('disabled', true).prop('hidden', true);
+        $('#createIncomeSubClass option[value=LaborIncome]').prop('disabled', true).prop('hidden', true);
+        $('#createIncomeSubClass option[value=BusinessIncome]').prop('disabled', true).prop('hidden', true);
+        $('#createIncomeSubClass option[value=PensionIncome]').prop('disabled', true).prop('hidden', true);
+        $('#createIncomeSubClass option[value=FinancialIncome]').prop('disabled', true).prop('hidden', true);
+        $('#createIncomeSubClass option[value=RentalIncome]').prop('disabled', true).prop('hidden', true);
+        $('#createIncomeSubClass option[value=OtherIncome]').prop('disabled', true).prop('hidden', true);
 
-        $("option:selected").removeAttr("selected");
+        $("#createIncomeSubClass option:selected").removeAttr("selected");
 
-        $('option[value=LaborIncome]').prop('disabled', false).prop('hidden', false).attr('selected', 'selected');
-        $('option[value=BusinessIncome]').prop('disabled', false).prop('hidden', false);
-        $('option[value=PensionIncome]').prop('disabled', false).prop('hidden', false);
-        $('option[value=FinancialIncome]').prop('disabled', false).prop('hidden', false);
-        $('option[value=RentalIncome]').prop('disabled', false).prop('hidden', false);
-        $('option[value=OtherIncome]').prop('disabled', false).prop('hidden', false);
+        $('#createIncomeSubClass option[value=LaborIncome]').prop('disabled', false).prop('hidden', false).attr('selected', 'selected');
+        $('#createIncomeSubClass option[value=BusinessIncome]').prop('disabled', false).prop('hidden', false);
+        $('#createIncomeSubClass option[value=PensionIncome]').prop('disabled', false).prop('hidden', false);
+        $('#createIncomeSubClass option[value=FinancialIncome]').prop('disabled', false).prop('hidden', false);
+        $('#createIncomeSubClass option[value=RentalIncome]').prop('disabled', false).prop('hidden', false);
+        $('#createIncomeSubClass option[value=OtherIncome]').prop('disabled', false).prop('hidden', false);
 
         $("#createIncomeSubClass").val("LaborIncome").change();
     }
     else if (createIncomeMainClass.value == "IrregularIncome") {
-        $('option[value=LaborIncome]').prop('disabled', true).prop('hidden', true);
-        $('option[value=BusinessIncome]').prop('disabled', true).prop('hidden', true);
-        $('option[value=PensionIncome]').prop('disabled', true).prop('hidden', true);
-        $('option[value=FinancialIncome]').prop('disabled', true).prop('hidden', true);
-        $('option[value=RentalIncome]').prop('disabled', true).prop('hidden', true);
-        $('option[value=OtherIncome]').prop('disabled', true).prop('hidden', true);
+        $('#createIncomeSubClass option[value=LaborIncome]').prop('disabled', true).prop('hidden', true);
+        $('#createIncomeSubClass option[value=BusinessIncome]').prop('disabled', true).prop('hidden', true);
+        $('#createIncomeSubClass option[value=PensionIncome]').prop('disabled', true).prop('hidden', true);
+        $('#createIncomeSubClass option[value=FinancialIncome]').prop('disabled', true).prop('hidden', true);
+        $('#createIncomeSubClass option[value=RentalIncome]').prop('disabled', true).prop('hidden', true);
+        $('#createIncomeSubClass option[value=OtherIncome]').prop('disabled', true).prop('hidden', true);
 
-        $("option:selected").removeAttr("selected");
+        $("#createIncomeSubClass option:selected").removeAttr("selected");
 
-        $('option[value=LaborIncome]').prop('disabled', false).prop('hidden', false).attr('selected', 'selected');
-        $('option[value=OtherIncome]').prop('disabled', false).prop('hidden', false);
+        $('#createIncomeSubClass option[value=LaborIncome]').prop('disabled', false).prop('hidden', false).attr('selected', 'selected');
+        $('#createIncomeSubClass option[value=OtherIncome]').prop('disabled', false).prop('hidden', false);
 
         $("#createIncomeSubClass").val("LaborIncome").change();
     }
