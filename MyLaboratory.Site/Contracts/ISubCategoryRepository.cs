@@ -11,24 +11,24 @@ namespace MyLaboratory.Site.Contracts
         /// </summary>
         /// <param name="role"></param>
         /// <returns></returns>
-        Task<IEnumerable<SubCategory>> GetSubCategoryByRoleAsync(string role);
+        public Task<IEnumerable<SubCategory>> GetSubCategoryByRoleAsync(string role);
         /// <summary>
         /// 서브카테고리를 생성합니다.
         /// </summary>
         /// <param name="subCategory"></param>
         /// <returns></returns>
-        Task CreateSubCategoryAsync(SubCategory subCategory);
+        public Task CreateSubCategoryAsync(SubCategory subCategory);
         /// <summary>
         /// 서브카테고리를 업데이트합니다.
         /// </summary>
         /// <param name="category"></param>
         /// <returns></returns>
-        Task UpdateSubCategoryAsync(SubCategory subCategory);
+        public Task UpdateSubCategoryAsync(SubCategory subCategory);
         /// <summary>
         /// 서브카테고리를 제거합니다.
         /// </summary>
         /// <param name="category"></param>
         /// <returns></returns>
-        Task DeleteSubCategoryAsync(SubCategory subCategory);
+        public Task DeleteSubCategoryAsync(SubCategory subCategory);
     }
 }
