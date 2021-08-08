@@ -413,13 +413,13 @@ namespace MyLaboratory.Site.Controllers
                         tempAsset.Amount += Math.Abs(incomeInputViewModel.Amount);
                         await assetRepository.UpdateAssetAsync(tempAsset);
                         #endregion
+
+                        return Json(new { result = true, message = localizer["The income has been successfully created."].Value });
                     }
                     catch (Exception e)
                     {
                         return Json(new { result = false, error = e.ToString() });
                     }
-
-                    return Json(new { result = true, message = localizer["The income has been successfully created."].Value });
                 }
                 else
                 {
