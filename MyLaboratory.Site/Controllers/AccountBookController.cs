@@ -365,9 +365,32 @@ namespace MyLaboratory.Site.Controllers
                 {
                     try
                     {
-                        HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+                        #region Validation of MainClass & SubClass Value
+                        if (incomeInputViewModel.MainClass == "RegularIncome")
+                        {
+                            if (!(incomeInputViewModel.SubClass == "LaborIncome" ||
+                                incomeInputViewModel.SubClass == "BusinessIncome" ||
+                                incomeInputViewModel.SubClass == "PensionIncome" ||
+                                incomeInputViewModel.SubClass == "FinancialIncome" ||
+                                incomeInputViewModel.SubClass == "RentalIncome" ||
+                                incomeInputViewModel.SubClass == "OtherIncome"))
+                            {
+                                return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                            }
+                        }
+                        else if (incomeInputViewModel.MainClass == "IrregularIncome")
+                        {
+                            if (!(incomeInputViewModel.SubClass == "LaborIncome" ||
+                                incomeInputViewModel.SubClass == "OtherIncome"))
+                            {
+                                return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                            }
+                        }
+                        #endregion
 
                         #region 수입 생성
+                        HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+
                         await incomeRepository.CreateIncomeAsync
                             (
                             new Income()
@@ -416,7 +439,7 @@ namespace MyLaboratory.Site.Controllers
         {
             if (HttpContext.Request.Headers["X-Requested-With"] == "XMLHttpRequest") // ajax
             {
-                List<IncomeOutputViewModel> incomeOutputViewModels= new List<IncomeOutputViewModel>();
+                List<IncomeOutputViewModel> incomeOutputViewModels = new List<IncomeOutputViewModel>();
 
                 #region Incomes
                 HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);

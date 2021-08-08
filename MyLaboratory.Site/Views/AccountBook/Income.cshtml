@@ -50,8 +50,8 @@
                             <div class="form-group col-md-6 mb-3">
                                 <label for="createIncomeMainClass">@localizer["MainClass"].Value</label>
                                 <br />
-                                <select id="createIncomeMainClass" name="createIncomeMainClass">
-                                    <option value="RegularIncome">@localizer["정기수입"].Value</option>
+                                <select id="createIncomeMainClass" name="createIncomeMainClass" onchange="ShowIncomeSubClassBySelectedIncomeMainClass(this)">
+                                    <option value="RegularIncome" selected="selected">@localizer["정기수입"].Value</option>
                                     <option value="IrregularIncome">@localizer["비정기수입"].Value</option>
                                 </select>
                             </div>
@@ -59,7 +59,7 @@
                                 <label for="createIncomeSubClass">@localizer["SubClass"].Value</label>
                                 <br />
                                 <select id="createIncomeSubClass" name="createIncomeSubClass">
-                                    <option value="LaborIncome">@localizer["근로수입"].Value</option>
+                                    <option value="LaborIncome" selected="selected">@localizer["근로수입"].Value</option>
                                     <option value="BusinessIncome">@localizer["사업수입"].Value</option>
                                     <option value="PensionIncome">@localizer["연금수입"].Value</option>
                                     <option value="FinancialIncome">@localizer["금융소득"].Value</option>
