@@ -2,6 +2,10 @@
 @using System.Text
 @inject MyLaboratory.Site.Contracts.IAssetRepository assetRepository
 
+@{
+    Context.Session.TryGetValue("AccountSession", out byte[] resultByte);
+}
+
 @Html.AntiForgeryToken()
 <section class="content">
     <div class="card card-primary">
