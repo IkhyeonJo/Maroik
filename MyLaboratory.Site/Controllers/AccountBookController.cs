@@ -139,7 +139,7 @@ namespace MyLaboratory.Site.Controllers
                     else
                     {
                         if ((item.ProductName?.ToString() ?? "").Contains(wholeSearch) ||
-                            (item.Item?.ToString() ?? "").Contains(wholeSearch) ||
+                            localizer[item.Item?.ToString() ?? ""].Value.Contains(wholeSearch) ||
                             (item.Amount.ToString() ?? "").Contains(wholeSearch) ||
                             (item.MonetaryUnit?.ToString() ?? "").Contains(wholeSearch) ||
                             (item.Created.ToString() ?? "").Contains(wholeSearch) ||
