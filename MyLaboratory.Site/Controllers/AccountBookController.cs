@@ -579,15 +579,15 @@ namespace MyLaboratory.Site.Controllers
                         {
                             var tempIncome = tempIncomes.Where(a => a.Id == incomeInputViewModel.Id).FirstOrDefault();
 
-                            var previousTempIncomeDepositMyAssetProductName = tempIncome.DepositMyAssetProductName;
-                            var previousTempIncomeAmount = tempIncome.Amount;
-
                             if (tempIncome == null)
                             {
                                 return Json(new { result = false, error = localizer["Input is invalid"].Value });
                             }
                             else
                             {
+                                var previousTempIncomeDepositMyAssetProductName = tempIncome.DepositMyAssetProductName;
+                                var previousTempIncomeAmount = tempIncome.Amount;
+
                                 #region 수입 업데이트
                                 tempIncome.MainClass = incomeInputViewModel.MainClass;
                                 tempIncome.SubClass = incomeInputViewModel.SubClass;
