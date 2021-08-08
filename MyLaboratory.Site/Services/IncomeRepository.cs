@@ -38,5 +38,16 @@ namespace MyLaboratory.Site.Services
             await context.Incomes.AddAsync(income);
             await context.SaveChangesAsync();
         }
+
+        /// <summary>
+        /// 수입을 업데이트합니다.
+        /// </summary>
+        /// <param name="income"></param>
+        /// <returns></returns>
+        public async Task UpdateIncomeAsync(Income income)
+        {
+            context.Incomes.Update(income);
+            await context.SaveChangesAsync();
+        }
     }
 }

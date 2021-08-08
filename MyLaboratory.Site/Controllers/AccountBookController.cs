@@ -495,6 +495,159 @@ namespace MyLaboratory.Site.Controllers
             }
             return View();
         }
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [RequiredHttpPostAccess(Role = Role.User)]
+        public async Task<IActionResult> IsIncomeExists(int id)
+        {
+            try
+            {
+                HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+
+                var tempIncomes = await incomeRepository.GetIncomesAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+
+                if (tempIncomes == null)
+                {
+                    return Json(new { result = false, error = localizer["No income exists"].Value });
+                }
+                else
+                {
+                    var tempIncome = tempIncomes.Where(a => a.Id == id).FirstOrDefault();
+
+                    if (tempIncome == null)
+                    {
+                        return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                    }
+                    else
+                    {
+                        return Json(new { result = true, income = tempIncome });
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                return Json(new { result = false, error = e.ToString() });
+            }
+        }
+        #endregion
+
+        #region Update
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [RequiredHttpPostAccess(Role = Role.User)]
+        public async Task<IActionResult> UpdateIncome([FromBody] IncomeInputViewModel incomeInputViewModel)
+        {
+            try
+            {
+                if (ModelState.IsValid)
+                {
+                    try
+                    {
+                        #region Validation of MainClass & SubClass Value
+                        if (incomeInputViewModel.MainClass == "RegularIncome")
+                        {
+                            if (!(incomeInputViewModel.SubClass == "LaborIncome" ||
+                                incomeInputViewModel.SubClass == "BusinessIncome" ||
+                                incomeInputViewModel.SubClass == "PensionIncome" ||
+                                incomeInputViewModel.SubClass == "FinancialIncome" ||
+                                incomeInputViewModel.SubClass == "RentalIncome" ||
+                                incomeInputViewModel.SubClass == "OtherIncome"))
+                            {
+                                return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                            }
+                        }
+                        else if (incomeInputViewModel.MainClass == "IrregularIncome")
+                        {
+                            if (!(incomeInputViewModel.SubClass == "LaborIncome" ||
+                                incomeInputViewModel.SubClass == "OtherIncome"))
+                            {
+                                return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                            }
+                        }
+                        #endregion
+
+                        #region 수입 & 자산 업데이트
+                        HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+
+                        var tempIncomes = await incomeRepository.GetIncomesAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+
+                        if (tempIncomes == null)
+                        {
+                            return Json(new { result = false, error = localizer["No income exists"].Value });
+                        }
+                        else
+                        {
+                            var tempIncome = tempIncomes.Where(a => a.Id == incomeInputViewModel.Id).FirstOrDefault();
+
+                            var previousTempIncomeDepositMyAssetProductName = tempIncome.DepositMyAssetProductName;
+                            var previousTempIncomeAmount = tempIncome.Amount;
+
+                            if (tempIncome == null)
+                            {
+                                return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                            }
+                            else
+                            {
+                                #region 수입 업데이트
+                                tempIncome.MainClass = incomeInputViewModel.MainClass;
+                                tempIncome.SubClass = incomeInputViewModel.SubClass;
+                                tempIncome.Contents = incomeInputViewModel.Contents;
+                                tempIncome.Amount = incomeInputViewModel.Amount;
+                                tempIncome.DepositMyAssetProductName = incomeInputViewModel.DepositMyAssetProductName;
+                                tempIncome.Note = incomeInputViewModel.Note;
+                                tempIncome.Updated = DateTime.UtcNow;
+
+                                await incomeRepository.UpdateIncomeAsync(tempIncome);
+                                #endregion
+
+                                #region 자산 업데이트
+                                if (tempIncome.DepositMyAssetProductName == previousTempIncomeDepositMyAssetProductName) // 같은 경우
+                                {
+                                    #region 자산 업데이트
+                                    var tempAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, tempIncome.DepositMyAssetProductName);
+                                    tempAsset.Amount = tempAsset.Amount - Math.Abs(previousTempIncomeAmount) + Math.Abs(tempIncome.Amount);
+                                    tempAsset.Updated = DateTime.UtcNow;
+                                    await assetRepository.UpdateAssetAsync(tempAsset);
+                                    #endregion
+                                }
+                                else // 다른 경우
+                                {
+                                    #region 기존 자산 업데이트
+                                    var tempAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempIncomeDepositMyAssetProductName);
+                                    tempAsset.Amount -= Math.Abs(previousTempIncomeAmount);
+                                    tempAsset.Updated = DateTime.UtcNow;
+                                    await assetRepository.UpdateAssetAsync(tempAsset);
+                                    #endregion
+
+                                    #region 신 자산 업데이트
+                                    tempAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, tempIncome.DepositMyAssetProductName);
+                                    tempAsset.Amount += Math.Abs(tempIncome.Amount);
+                                    tempAsset.Updated = DateTime.UtcNow;
+                                    await assetRepository.UpdateAssetAsync(tempAsset);
+                                    #endregion
+                                }
+                                #endregion
+
+                                return Json(new { result = true, message = localizer["Successfully updated the income"].Value });
+                            }
+                        }
+                        #endregion
+                    }
+                    catch (Exception e)
+                    {
+                        return Json(new { result = false, error = e.ToString() });
+                    }
+                }
+                else
+                {
+                    return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                }
+            }
+            catch (Exception e)
+            {
+                return Json(new { result = false, error = e.ToString() });
+            }
+        }
         #endregion
 
         #endregion

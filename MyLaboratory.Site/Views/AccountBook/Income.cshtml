@@ -20,7 +20,7 @@
                         <button type="button" class="btn btn-primary btn-block btn-sm" data-toggle="modal" data-target="#createIncomeDialogModal" data-backdrop="static" data-keyboard="false" style="width: 100px !important;"><i class="fa fa-plus" style="padding-right:3px;"></i> @localizer["CREATE"].Value</button>
                     </li>
                     <li class="nav-item" style="padding-bottom: 10px; padding-right: 7px;">
-                        <button type="button" class="btn btn-success btn-block btn-sm" onclick="EditAssetGridRow('@localizer["Please select grid row"].Value')" style="width: 100px !important;"><i class="fas fa-edit" style="padding-right:3px;"></i> @localizer["EDIT"].Value</button>
+                        <button type="button" class="btn btn-success btn-block btn-sm" onclick="EditIncomeGridRow('@localizer["Please select grid row"].Value')" style="width: 100px !important;"><i class="fas fa-edit" style="padding-right:3px;"></i> @localizer["EDIT"].Value</button>
                     </li>
                     <li class="nav-item" style="padding-bottom: 10px; padding-right: 7px;">
                         <button type="button" class="btn btn-danger btn-block btn-sm" onclick="ConfirmDeleteAsset('@localizer["Please select grid row"].Value')" style="width: 100px !important;"><i class="fa fa-trash" style="padding-right:3px;"></i> @localizer["DELETE"].Value</button>
@@ -54,7 +54,7 @@
                             <div class="form-group col-md-6 mb-3">
                                 <label for="createIncomeMainClass">@localizer["MainClass"].Value</label>
                                 <br />
-                                <select id="createIncomeMainClass" name="createIncomeMainClass" onchange="ShowIncomeSubClassBySelectedIncomeMainClass(this)">
+                                <select id="createIncomeMainClass" name="createIncomeMainClass" onchange="CreateFormShowIncomeSubClassBySelectedIncomeMainClass(this)">
                                     <option value="RegularIncome" selected="selected">@localizer["정기수입"].Value</option>
                                     <option value="IrregularIncome">@localizer["비정기수입"].Value</option>
                                 </select>
@@ -110,36 +110,66 @@
     </div>
 </div>
 
-@*<!--EditAssetDialogModal-->*@
-<div class="modal fade" tabindex="-1" role="dialog" id="editAssetDialogModal">
+@*<!--EditIncomeDialogModal-->*@
+<div class="modal fade" tabindex="-1" role="dialog" id="editIncomeDialogModal">
     <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
-            <div id="editAssetTabs">
+            <div id="editIncomeTabs">
                 @*<!--Tab Menu-->*@
                 <ul>
-                    <li><a href="#editAssetTabs-1">@localizer["Edit Asset"].Value</a></li>
+                    <li><a href="#editIncomeTabs-1">@localizer["Edit Income"].Value</a></li>
                 </ul>
-                @*Tabs-1: Edit Asset Modal*@
-                <div id="editAssetTabs-1">
-                    <form id="formEditAsset" onsubmit="return UpdateAsset()">
+                @*Tabs-1: Edit Income Modal*@
+                <div id="editIncomeTabs-1">
+                    <form id="formEditIncome" onsubmit="return UpdateIncome()">
+                        <input type="hidden" id="editIncomeId" />
                         <div class="form-row">
                             <div class="form-group col-md-6 mb-3">
-                                <label for="editAssetProductName">@localizer["ProductName"].Value</label>
-                                <input class="form-control form-control-sm" type="text" data-val="false" id="editAssetProductName" name="editAssetProductName" value="" readonly>
+                                <label for="editIncomeMainClass">@localizer["MainClass"].Value</label>
+                                <br />
+                                <select id="editIncomeMainClass" name="editIncomeMainClass" onchange="EditFormShowIncomeSubClassBySelectedIncomeMainClass(this)">
+                                    <option value="RegularIncome">@localizer["정기수입"].Value</option>
+                                    <option value="IrregularIncome">@localizer["비정기수입"].Value</option>
+                                </select>
                             </div>
                             <div class="form-group col-md-6 mb-3">
-                                <label for="editAssetAmount">@localizer["Amount"].Value</label>
-                                <input class="form-control form-control-sm" type="number" id="editAssetAmount" name="editAssetAmount" value="0">
+                                <label for="editIncomeSubClass">@localizer["SubClass"].Value</label>
+                                <br />
+                                <select id="editIncomeSubClass" name="editIncomeSubClass">
+                                    <option value="LaborIncome">@localizer["근로수입"].Value</option>
+                                    <option value="BusinessIncome">@localizer["사업수입"].Value</option>
+                                    <option value="PensionIncome">@localizer["연금수입"].Value</option>
+                                    <option value="FinancialIncome">@localizer["금융소득"].Value</option>
+                                    <option value="RentalIncome">@localizer["임대수입"].Value</option>
+                                    <option value="OtherIncome">@localizer["기타수입"].Value</option>
+                                </select>
                             </div>
                         </div>
                         <div class="form-row">
                             <div class="form-group col-md-6 mb-3">
-                                <label for="editAssetNote">@localizer["Note"].Value</label>
-                                <input class="form-control form-control-sm" type="text" data-val="false" id="editAssetNote" name="editAssetNote" value="">
+                                <label for="editIncomeContents">@localizer["Contents"].Value</label>
+                                <input class="form-control form-control-sm" type="text" data-val="true" data-val-required="@localizer["Please enter Contents"].Value" id="editIncomeContents" name="editIncomeContents" value="">
+                                <span class="field-validation-valid text-danger" data-valmsg-for="editIncomeContents" data-valmsg-replace="true"></span>
                             </div>
                             <div class="form-group col-md-6 mb-3">
-                                <label for="editAssetDeleted">@localizer["Deleted"].Value</label>
-                                <input class="form-control form-control-sm" type="checkbox" id="editAssetDeleted" name="editAssetDeleted" />
+                                <label for="editIncomeAmount">@localizer["Amount"].Value</label>
+                                <input class="form-control form-control-sm" min="0" type="number" id="editIncomeAmount" name="editIncomeAmount" value="0">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group col-md-6 mb-3">
+                                <label for="editIncomeDepositMyAssetProductName">@localizer["DepositMyAssetProductName"].Value</label>
+                                <br />
+                                <select id="editIncomeDepositMyAssetProductName" name="editIncomeDepositMyAssetProductName">
+                                    @foreach (var item in await assetRepository.GetAssetsAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email))
+                                    {
+                                        <option value="@item.ProductName">@localizer[item.ProductName.ToString()].Value</option>
+                                    }
+                                </select>
+                            </div>
+                            <div class="form-group col-md-6 mb-3">
+                                <label for="editIncomeNote">@localizer["Note"].Value</label>
+                                <input class="form-control form-control-sm" type="text" data-val="false" id="editIncomeNote" name="editIncomeNote" value="">
                             </div>
                         </div>
                         <div class="modal-footer justify-content-between">

@@ -4,7 +4,7 @@
 // Write your JavaScript code.
 $(function () {
     $("#createIncomeTabs").tabs();
-    $("#editAssetTabs").tabs();
+    $("#editIncomeTabs").tabs();
 });
 
 var selectedRowColor = "table-primary";
@@ -16,14 +16,14 @@ document.addEventListener("rowclick", e => {
     //e.detail.originalEvent - original tr click event which triggered the rowclick.
 
     var selectedRow = e.detail;
-    var selectedRowProductName = selectedRow.data.ProductName;
+    var selectedRowId = selectedRow.data.Id;
 
-    $('#assetGrid > table > tbody  > tr').each(function (index, tr) {
+    $('#incomeGrid > table > tbody  > tr').each(function (index, tr) {
         $(this).removeClass(selectedRowColor);
     }); // remove all selected row color
 
-    $('#assetGrid > table > tbody  > tr').each(function (index, tr) {
-        if ((new String(selectedRowProductName).valueOf() === new String($(this).attr('data-productName')).valueOf())) {
+    $('#incomeGrid > table > tbody  > tr').each(function (index, tr) {
+        if ((new String(selectedRowId).valueOf() === new String($(this).attr('data-id')).valueOf())) {
             $(this).addClass(selectedRowColor);
         }
     }); // set selected row color class
@@ -53,12 +53,12 @@ document.addEventListener("gridconfigure", e => {
 });
 
 
-$(document).on("dblclick", "#assetGrid > table > tbody  > tr", function () {
+$(document).on("dblclick", "#incomeGrid > table > tbody  > tr", function () {
     //console.log('dblclick-start');
-    $('#assetGrid > table > tbody  > tr').each(function (index, tr) {
+    $('#incomeGrid > table > tbody  > tr').each(function (index, tr) {
 
         if ($(this).attr("class").includes(selectedRowColor)) { // Get SelectedRow by Color
-            EditAssetGridRow();
+            EditIncomeGridRow();
         }
     });
     //console.log('dblclick-end');
@@ -71,7 +71,7 @@ $('#gridSearch').on('input', function () {
     grid.reload();
 });
 
-function ShowIncomeSubClassBySelectedIncomeMainClass(createIncomeMainClass) {
+function CreateFormShowIncomeSubClassBySelectedIncomeMainClass(createIncomeMainClass) {
     
     if (createIncomeMainClass.value == "RegularIncome") {
         $('#createIncomeSubClass option[value=LaborIncome]').prop('disabled', true).prop('hidden', true);
@@ -106,6 +106,44 @@ function ShowIncomeSubClassBySelectedIncomeMainClass(createIncomeMainClass) {
         $('#createIncomeSubClass option[value=OtherIncome]').prop('disabled', false).prop('hidden', false);
 
         $("#createIncomeSubClass").val("LaborIncome").change();
+    }
+}
+
+function EditFormShowIncomeSubClassBySelectedIncomeMainClass(createIncomeMainClass) {
+
+    if (createIncomeMainClass.value == "RegularIncome") {
+        $('#editIncomeSubClass option[value=LaborIncome]').prop('disabled', true).prop('hidden', true);
+        $('#editIncomeSubClass option[value=BusinessIncome]').prop('disabled', true).prop('hidden', true);
+        $('#editIncomeSubClass option[value=PensionIncome]').prop('disabled', true).prop('hidden', true);
+        $('#editIncomeSubClass option[value=FinancialIncome]').prop('disabled', true).prop('hidden', true);
+        $('#editIncomeSubClass option[value=RentalIncome]').prop('disabled', true).prop('hidden', true);
+        $('#editIncomeSubClass option[value=OtherIncome]').prop('disabled', true).prop('hidden', true);
+
+        $("#editIncomeSubClass option:selected").removeAttr("selected");
+
+        $('#editIncomeSubClass option[value=LaborIncome]').prop('disabled', false).prop('hidden', false).attr('selected', 'selected');
+        $('#editIncomeSubClass option[value=BusinessIncome]').prop('disabled', false).prop('hidden', false);
+        $('#editIncomeSubClass option[value=PensionIncome]').prop('disabled', false).prop('hidden', false);
+        $('#editIncomeSubClass option[value=FinancialIncome]').prop('disabled', false).prop('hidden', false);
+        $('#editIncomeSubClass option[value=RentalIncome]').prop('disabled', false).prop('hidden', false);
+        $('#editIncomeSubClass option[value=OtherIncome]').prop('disabled', false).prop('hidden', false);
+
+        $("#editIncomeSubClass").val("LaborIncome").change();
+    }
+    else if (createIncomeMainClass.value == "IrregularIncome") {
+        $('#editIncomeSubClass option[value=LaborIncome]').prop('disabled', true).prop('hidden', true);
+        $('#editIncomeSubClass option[value=BusinessIncome]').prop('disabled', true).prop('hidden', true);
+        $('#editIncomeSubClass option[value=PensionIncome]').prop('disabled', true).prop('hidden', true);
+        $('#editIncomeSubClass option[value=FinancialIncome]').prop('disabled', true).prop('hidden', true);
+        $('#editIncomeSubClass option[value=RentalIncome]').prop('disabled', true).prop('hidden', true);
+        $('#editIncomeSubClass option[value=OtherIncome]').prop('disabled', true).prop('hidden', true);
+
+        $("#editIncomeSubClass option:selected").removeAttr("selected");
+
+        $('#editIncomeSubClass option[value=LaborIncome]').prop('disabled', false).prop('hidden', false).attr('selected', 'selected');
+        $('#editIncomeSubClass option[value=OtherIncome]').prop('disabled', false).prop('hidden', false);
+
+        $("#editIncomeSubClass").val("LaborIncome").change();
     }
 }
 
@@ -160,23 +198,23 @@ function CreateIncome() {
     return false;
 }
 
-function EditAssetGridRow(errorMessageSelectGridRow) {
+function EditIncomeGridRow(errorMessageSelectGridRow) {
 
-    var selectedRowProductName = "";
+    var selectedRowId = "";
 
-    $('#assetGrid > table > tbody  > tr').each(function (index, tr) {
+    $('#incomeGrid > table > tbody  > tr').each(function (index, tr) {
         if ($(this).attr("class").includes(selectedRowColor)) { // Get SelectedRow by Color
-            selectedRowProductName = $(this).attr("data-productName");
+            selectedRowId = $(this).attr("data-id");
         }
     }); // Search Selected Row
 
-    if (selectedRowProductName === "") {
+    if (selectedRowId === "") {
         toastr.error(errorMessageSelectGridRow);
         return false;
     } // check whether selected row exist or not
 
     $.ajax({
-        url: '/AccountBook/IsAssetExists' + '?productName=' + selectedRowProductName,
+        url: '/AccountBook/IsIncomeExists' + '?id=' + selectedRowId,
         type: 'POST',
         headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
         dataType: 'json',
@@ -187,20 +225,58 @@ function EditAssetGridRow(errorMessageSelectGridRow) {
         success: function (data) {
             if (data.result) {
 
-                var formEditAsset = $('#formEditAsset');
+                var formEditIncome = $('#formEditIncome');
 
-                formEditAsset.find('input[id="editAssetProductName"]').val(data.asset.productName);
-                formEditAsset.find('input[id="editAssetAmount"]').val(data.asset.amount);
-                formEditAsset.find('input[id="editAssetNote"]').val(data.asset.note);
-                formEditAsset.find('input[id="editAssetDeleted"]').prop("checked", data.asset.deleted);
+                formEditIncome.find('input[id="editIncomeId"]').val(data.income.id);
+                formEditIncome.find('select[id="editIncomeMainClass"]').val(data.income.mainClass).change();
 
-                $('#editAssetDialogModal').modal({
+                if (data.income.mainClass == "RegularIncome") {
+                    $('#editIncomeSubClass option[value=LaborIncome]').prop('disabled', true).prop('hidden', true);
+                    $('#editIncomeSubClass option[value=BusinessIncome]').prop('disabled', true).prop('hidden', true);
+                    $('#editIncomeSubClass option[value=PensionIncome]').prop('disabled', true).prop('hidden', true);
+                    $('#editIncomeSubClass option[value=FinancialIncome]').prop('disabled', true).prop('hidden', true);
+                    $('#editIncomeSubClass option[value=RentalIncome]').prop('disabled', true).prop('hidden', true);
+                    $('#editIncomeSubClass option[value=OtherIncome]').prop('disabled', true).prop('hidden', true);
+
+                    $("#editIncomeSubClass option:selected").removeAttr("selected");
+
+                    $('#editIncomeSubClass option[value=LaborIncome]').prop('disabled', false).prop('hidden', false);
+                    $('#editIncomeSubClass option[value=BusinessIncome]').prop('disabled', false).prop('hidden', false);
+                    $('#editIncomeSubClass option[value=PensionIncome]').prop('disabled', false).prop('hidden', false);
+                    $('#editIncomeSubClass option[value=FinancialIncome]').prop('disabled', false).prop('hidden', false);
+                    $('#editIncomeSubClass option[value=RentalIncome]').prop('disabled', false).prop('hidden', false);
+                    $('#editIncomeSubClass option[value=OtherIncome]').prop('disabled', false).prop('hidden', false);
+
+                    formEditIncome.find('select[id="editIncomeSubClass"]').val(data.income.subClass).change();
+                }
+                else if (data.income.mainClass == "IrregularIncome") {
+                    $('#editIncomeSubClass option[value=LaborIncome]').prop('disabled', true).prop('hidden', true);
+                    $('#editIncomeSubClass option[value=BusinessIncome]').prop('disabled', true).prop('hidden', true);
+                    $('#editIncomeSubClass option[value=PensionIncome]').prop('disabled', true).prop('hidden', true);
+                    $('#editIncomeSubClass option[value=FinancialIncome]').prop('disabled', true).prop('hidden', true);
+                    $('#editIncomeSubClass option[value=RentalIncome]').prop('disabled', true).prop('hidden', true);
+                    $('#editIncomeSubClass option[value=OtherIncome]').prop('disabled', true).prop('hidden', true);
+
+                    $("#editIncomeSubClass option:selected").removeAttr("selected");
+
+                    $('#editIncomeSubClass option[value=LaborIncome]').prop('disabled', false).prop('hidden', false);
+                    $('#editIncomeSubClass option[value=OtherIncome]').prop('disabled', false).prop('hidden', false);
+
+                    formEditIncome.find('select[id="editIncomeSubClass"]').val(data.income.subClass).change();
+                }
+
+                formEditIncome.find('input[id="editIncomeContents"]').val(data.income.contents);
+                formEditIncome.find('input[id="editIncomeAmount"]').val(data.income.amount);
+                formEditIncome.find('select[id="editIncomeDepositMyAssetProductName"]').val(data.income.depositMyAssetProductName).change();
+                formEditIncome.find('input[id="editIncomeNote"]').val(data.income.note);
+
+                $('#editIncomeDialogModal').modal({
                     keyboard: false,
                     backdrop: "static"
                 });
 
-                $('#editAssetDialogModal').modal('toggle');
-                $('#editAssetDialogModal').modal('show');
+                $('#editIncomeDialogModal').modal('toggle');
+                $('#editIncomeDialogModal').modal('show');
             }
             else {
                 toastr.error(data.error);
@@ -209,28 +285,34 @@ function EditAssetGridRow(errorMessageSelectGridRow) {
     });
 }
 
-function UpdateAsset() {
+function UpdateIncome() {
 
-    if (!$('#formEditAsset').valid()) {
+    if (!$('#formEditIncome').valid()) {
         return false;
     }
 
-    var createForm = $('#formEditAsset');
+    var createForm = $('#formEditIncome');
 
-    var productName = createForm.find('input[id="editAssetProductName"]').val();
-    var amount = createForm.find('input[id="editAssetAmount"]').val();
-    var note = createForm.find('input[id="editAssetNote"]').val();
-    var deleted = createForm.find('input[id="editAssetDeleted"]').is(":checked");
+    var id = createForm.find('input[id="editIncomeId"]').val();
+    var mainClass = createForm.find('select[id="editIncomeMainClass"]').val();
+    var subClass = createForm.find('select[id="editIncomeSubClass"]').val();
+    var contents = createForm.find('input[id="editIncomeContents"]').val();
+    var amount = createForm.find('input[id="editIncomeAmount"]').val();
+    var depositMyAssetProductName = createForm.find('select[id="editIncomeDepositMyAssetProductName"]').val();
+    var note = createForm.find('input[id="editIncomeNote"]').val();
 
     var paramValue = JSON.stringify({
-        ProductName: productName,
+        Id: id,
+        MainClass: mainClass,
+        SubClass: subClass,
+        Contents: contents,
         Amount: amount,
-        Note: note,
-        Deleted: deleted
+        DepositMyAssetProductName: depositMyAssetProductName,
+        Note: note
     });
 
     $.ajax({
-        url: '/AccountBook/UpdateAsset',
+        url: '/AccountBook/UpdateIncome',
         type: 'POST',
         headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
         dataType: 'json',
@@ -240,7 +322,7 @@ function UpdateAsset() {
         //cache: false,
         success: function (data) {
             if (data.result) {
-                $('#editAssetDialogModal').modal('hide'); // hide Modal
+                $('#editIncomeDialogModal').modal('hide'); // hide Modal
 
                 const grid = new MvcGrid(document.querySelector(".mvc-grid")); //reload grid
                 grid.reload(); //reload grid
