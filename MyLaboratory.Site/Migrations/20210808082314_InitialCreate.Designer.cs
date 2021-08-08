@@ -9,7 +9,7 @@ using MyLaboratory.Site.Data;
 namespace MyLaboratory.Site.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20210808064526_InitialCreate")]
+    [Migration("20210808082314_InitialCreate")]
     partial class InitialCreate
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -595,7 +595,7 @@ namespace MyLaboratory.Site.Migrations
                         .HasColumnType("datetime(6)")
                         .HasComment("생성일");
 
-                    b.Property<string>("DepositAccount")
+                    b.Property<string>("DepositMyAssetProductName")
                         .IsRequired()
                         .HasColumnType("varchar(255)")
                         .HasComment("입금계좌 (자산 상품명/현금)");
@@ -624,7 +624,7 @@ namespace MyLaboratory.Site.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex(new[] { "DepositAccount", "AccountEmail" }, "Income_FK");
+                    b.HasIndex(new[] { "DepositMyAssetProductName", "AccountEmail" }, "Income_FK");
 
                     b.ToTable("Income");
 
@@ -739,7 +739,7 @@ namespace MyLaboratory.Site.Migrations
                 {
                     b.HasOne("MyLaboratory.Site.Models.Asset", "Asset")
                         .WithMany("Incomes")
-                        .HasForeignKey("DepositAccount", "AccountEmail")
+                        .HasForeignKey("DepositMyAssetProductName", "AccountEmail")
                         .HasConstraintName("Income_FK")
                         .IsRequired();
 

@@ -377,7 +377,7 @@ namespace MyLaboratory.Site.Controllers
                                 SubClass = incomeInputViewModel.SubClass,
                                 Contents = incomeInputViewModel.Contents ?? "",
                                 Amount = Math.Abs(incomeInputViewModel.Amount),
-                                DepositAccount = incomeInputViewModel.DepositAccount,
+                                DepositMyAssetProductName = incomeInputViewModel.DepositAccount,
                                 Created = DateTime.UtcNow,
                                 Updated = DateTime.UtcNow,
                                 Note = incomeInputViewModel.Note ?? ""
@@ -432,7 +432,7 @@ namespace MyLaboratory.Site.Controllers
                             SubClass = item.SubClass,
                             Contents = item.Contents,
                             Amount = item.Amount,
-                            DepositAccount = item.DepositAccount,
+                            DepositAccount = item.DepositMyAssetProductName,
                             Created = item.Created,
                             Updated = item.Updated,
                             Note = item.Note
@@ -445,7 +445,7 @@ namespace MyLaboratory.Site.Controllers
                             (item.SubClass?.ToString() ?? "").Contains(wholeSearch) ||
                             (item.Contents?.ToString() ?? "").Contains(wholeSearch) ||
                             (item.Amount.ToString() ?? "").Contains(wholeSearch) ||
-                            (item.DepositAccount?.ToString() ?? "").Contains(wholeSearch) ||
+                            (item.DepositMyAssetProductName?.ToString() ?? "").Contains(wholeSearch) ||
                             (item.Created.ToString() ?? "").Contains(wholeSearch) ||
                             (item.Updated.ToString() ?? "").Contains(wholeSearch) ||
                             (item.Note?.ToString() ?? "").Contains(wholeSearch))
@@ -457,7 +457,7 @@ namespace MyLaboratory.Site.Controllers
                                 SubClass = item.SubClass,
                                 Contents = item.Contents,
                                 Amount = item.Amount,
-                                DepositAccount = item.DepositAccount,
+                                DepositAccount = item.DepositMyAssetProductName,
                                 Created = item.Created,
                                 Updated = item.Updated,
                                 Note = item.Note

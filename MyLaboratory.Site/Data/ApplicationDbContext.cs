@@ -477,7 +477,7 @@ namespace MyLaboratory.Site.Data
                     .HasCharSet("utf8mb4")
                     .UseCollation("utf8mb4_general_ci");
 
-                entity.HasIndex(e => new { e.DepositAccount, e.AccountEmail }, "Income_FK");
+                entity.HasIndex(e => new { e.DepositMyAssetProductName, e.AccountEmail }, "Income_FK");
 
                 entity.Property(e => e.Id)
                     .HasColumnType("int(11)")
@@ -500,7 +500,7 @@ namespace MyLaboratory.Site.Data
                     .HasMaxLength(6)
                     .HasComment("생성일");
 
-                entity.Property(e => e.DepositAccount)
+                entity.Property(e => e.DepositMyAssetProductName)
                     .IsRequired()
                     .HasComment("입금계좌 (자산 상품명/현금)");
 
@@ -524,7 +524,7 @@ namespace MyLaboratory.Site.Data
 
                 entity.HasOne(d => d.Asset)
                     .WithMany(p => p.Incomes)
-                    .HasForeignKey(d => new { d.DepositAccount, d.AccountEmail })
+                    .HasForeignKey(d => new { d.DepositMyAssetProductName, d.AccountEmail })
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("Income_FK");
             });

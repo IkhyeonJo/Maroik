@@ -13,7 +13,7 @@ namespace MyLaboratory.Site.Models
         public string SubClass { get; set; }
         public string Contents { get; set; }
         public long Amount { get; set; }
-        public string DepositAccount { get; set; }
+        public string DepositMyAssetProductName { get; set; }
         public DateTime Created { get; set; }
         public DateTime Updated { get; set; }
         public string Note { get; set; }

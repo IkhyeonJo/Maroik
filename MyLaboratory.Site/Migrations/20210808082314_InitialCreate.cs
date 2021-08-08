@@ -319,7 +319,7 @@ namespace MyLaboratory.Site.Migrations
                     Contents = table.Column<string>(type: "varchar(255)", maxLength: 255, nullable: false, comment: "내용 (회사명/사업명)", collation: "utf8mb4_general_ci")
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     Amount = table.Column<long>(type: "bigint(255)", nullable: false, comment: "금액"),
-                    DepositAccount = table.Column<string>(type: "varchar(255)", nullable: false, comment: "입금계좌 (자산 상품명/현금)", collation: "utf8mb4_general_ci")
+                    DepositMyAssetProductName = table.Column<string>(type: "varchar(255)", nullable: false, comment: "입금계좌 (자산 상품명/현금)", collation: "utf8mb4_general_ci")
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     Created = table.Column<DateTime>(type: "datetime(6)", maxLength: 6, nullable: false, comment: "생성일"),
                     Updated = table.Column<DateTime>(type: "datetime(6)", maxLength: 6, nullable: false, comment: "업데이트일"),
@@ -331,7 +331,7 @@ namespace MyLaboratory.Site.Migrations
                     table.PrimaryKey("PK_Income", x => x.Id);
                     table.ForeignKey(
                         name: "Income_FK",
-                        columns: x => new { x.DepositAccount, x.AccountEmail },
+                        columns: x => new { x.DepositMyAssetProductName, x.AccountEmail },
                         principalTable: "Asset",
                         principalColumns: new[] { "ProductName", "AccountEmail" },
                         onDelete: ReferentialAction.Restrict);
@@ -363,7 +363,7 @@ namespace MyLaboratory.Site.Migrations
             migrationBuilder.CreateIndex(
                 name: "Income_FK",
                 table: "Income",
-                columns: new[] { "DepositAccount", "AccountEmail" });
+                columns: new[] { "DepositMyAssetProductName", "AccountEmail" });
 
             migrationBuilder.CreateIndex(
                 name: "SubCategories_FK",
