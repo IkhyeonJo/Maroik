@@ -612,7 +612,7 @@ namespace MyLaboratory.Site.Controllers
                                 }
                                 else // 다른 경우
                                 {
-                                    #region 기존 자산 업데이트
+                                    #region 구 자산 업데이트
                                     var tempAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempIncomeDepositMyAssetProductName);
                                     tempAsset.Amount -= Math.Abs(previousTempIncomeAmount);
                                     tempAsset.Updated = DateTime.UtcNow;
