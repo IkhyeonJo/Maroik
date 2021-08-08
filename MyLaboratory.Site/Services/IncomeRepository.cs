@@ -27,5 +27,16 @@ namespace MyLaboratory.Site.Services
         {
             return await context.Incomes.Where(x => x.AccountEmail == email).ToListAsync();
         }
+
+        /// <summary>
+        /// 수입을 생성합니다.
+        /// </summary>
+        /// <param name="income"></param>
+        /// <returns></returns>
+        public async Task CreateIncomeAsync(Income income)
+        {
+            await context.Incomes.AddAsync(income);
+            await context.SaveChangesAsync();
+        }
     }
 }

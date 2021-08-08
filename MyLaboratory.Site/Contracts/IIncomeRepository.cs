@@ -13,5 +13,12 @@ namespace MyLaboratory.Site.Contracts
         /// <param name="email"></param>
         /// <returns></returns>
         public Task<List<Income>> GetIncomesAsync(string email);
+
+        /// <summary>
+        /// 수입을 생성합니다.
+        /// </summary>
+        /// <param name="income"></param>
+        /// <returns></returns>
+        public Task CreateIncomeAsync(Income income);
     }
 }

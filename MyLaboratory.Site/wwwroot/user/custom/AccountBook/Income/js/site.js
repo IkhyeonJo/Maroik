@@ -3,7 +3,7 @@
 
 // Write your JavaScript code.
 $(function () {
-    $("#createAssetTabs").tabs();
+    $("#createIncomeTabs").tabs();
     $("#editAssetTabs").tabs();
 });
 
@@ -71,30 +71,32 @@ $('#gridSearch').on('input', function () {
     grid.reload();
 });
 
-function CreateAsset() {
+function CreateIncome() {
 
-    if (!$('#formCreateAsset').valid()) {
+    if (!$('#formCreateIncome').valid()) {
         return false;
     }
 
-    var createForm = $('#formCreateAsset');
+    var createForm = $('#formCreateIncome');
 
-    var productName = createForm.find('input[id="createAssetProductName"]').val();
-    var item = createForm.find('select[id="createAssetItem"]').val();
-    var amount = createForm.find('input[id="createAssetAmount"]').val();
-    var monetaryUnit = createForm.find('input[id="createAssetMonetaryUnit"]').val();
-    var note = createForm.find('input[id="createAssetNote"]').val();
+    var mainClass = createForm.find('select[id="createIncomeMainClass"]').val();
+    var subClass = createForm.find('select[id="createIncomeSubClass"]').val();
+    var contents = createForm.find('input[id="createIncomeContents"]').val();
+    var amount = createForm.find('input[id="createIncomeAmount"]').val();
+    var depositAccount = createForm.find('select[id="createIncomeDepositAccount"]').val();
+    var note = createForm.find('input[id="createIncomeNote"]').val();
 
     var paramValue = JSON.stringify({
-        ProductName: productName,
-        Item: item,
+        MainClass: mainClass,
+        SubClass: subClass,
+        Contents: contents,
         Amount: amount,
-        MonetaryUnit: monetaryUnit,
+        DepositAccount: depositAccount,
         Note: note
     });
 
     $.ajax({
-        url: '/AccountBook/CreateAsset',
+        url: '/AccountBook/CreateIncome',
         type: 'POST',
         headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
         dataType: 'json',
@@ -104,7 +106,7 @@ function CreateAsset() {
         //cache: false,
         success: function (data) {
             if (data.result) {
-                $('#createAssetDialogModal').modal('hide'); // hide Modal
+                $('#createIncomeDialogModal').modal('hide'); // hide Modal
 
                 const grid = new MvcGrid(document.querySelector(".mvc-grid")); //reload grid
                 grid.reload(); //reload grid

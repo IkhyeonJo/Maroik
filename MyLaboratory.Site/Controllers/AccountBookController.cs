@@ -353,6 +353,63 @@ namespace MyLaboratory.Site.Controllers
 
         #region 수입
 
+        #region Create
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [RequiredHttpPostAccess(Role = Role.User)]
+        public async Task<IActionResult> CreateIncome([FromBody] IncomeInputViewModel incomeInputViewModel)
+        {
+            try
+            {
+                if (ModelState.IsValid)
+                {
+                    try
+                    {
+                        HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+
+                        #region 수입 생성
+                        await incomeRepository.CreateIncomeAsync
+                            (
+                            new Income()
+                            {
+                                AccountEmail = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email,
+                                MainClass = incomeInputViewModel.MainClass,
+                                SubClass = incomeInputViewModel.SubClass,
+                                Contents = incomeInputViewModel.Contents ?? "",
+                                Amount = Math.Abs(incomeInputViewModel.Amount),
+                                DepositAccount = incomeInputViewModel.DepositAccount,
+                                Created = DateTime.UtcNow,
+                                Updated = DateTime.UtcNow,
+                                Note = incomeInputViewModel.Note ?? ""
+                            }
+                            );
+                        #endregion
+
+                        #region 자산 업데이트
+                        var tempAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, incomeInputViewModel.DepositAccount);
+                        tempAsset.Amount += Math.Abs(incomeInputViewModel.Amount);
+                        await assetRepository.UpdateAssetAsync(tempAsset);
+                        #endregion
+                    }
+                    catch (Exception e)
+                    {
+                        return Json(new { result = false, error = e.ToString() });
+                    }
+
+                    return Json(new { result = true, message = localizer["The income has been successfully created."].Value });
+                }
+                else
+                {
+                    return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                }
+            }
+            catch (Exception e)
+            {
+                return Json(new { result = false, error = e.ToString() });
+            }
+        }
+        #endregion
+
         #region Read
         [HttpGet]
         public async Task<IActionResult> Income(string wholeSearch)
