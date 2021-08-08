@@ -760,6 +760,8 @@ https://blog.naver.com/PostView.nhn?blogId=alcmskfl17&logNo=221859839012
 
 MyLaboratory.Site 가계부
 
-수입 [CRUD & EXCEL & Multi-Language], 지출..
+수입 [Multi-Language], 지출..
 
 고정지출, 고정수입은 알림 항목 따로 만들어서 지정일에 알림 자동으로 뜨도록 설정할 것..
+
+#Select Multiple Row by shilt + LeftClick nonfactor grid... rowclick event 랑 색칠 되어 있는 지 확인해서 논리로 구현할 수 있다.
