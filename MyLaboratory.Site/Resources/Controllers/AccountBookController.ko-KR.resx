@@ -195,26 +195,26 @@
   <data name="SavingsAsset" xml:space="preserve">
     <value>저축성 자산</value>
   </data>
-  <data name="Successfully deleted the asset" xml:space="preserve">
-    <value>자산을 성공적으로 삭제하였습니다.</value>
-  </data>
-  <data name="Successfully deleted the income" xml:space="preserve">
-    <value>수입이 성공적으로 삭제되었습니다.</value>
-  </data>
-  <data name="Successfully updated the income" xml:space="preserve">
-    <value>수입이 성공적으로 업데이트되었습니다.</value>
-  </data>
   <data name="The asset already exists." xml:space="preserve">
     <value>이미 존재하는 자산입니다.</value>
   </data>
   <data name="The asset has been successfully created." xml:space="preserve">
     <value>자산이 성공적으로 생성되었습니다.</value>
   </data>
+  <data name="The asset has been successfully deleted." xml:space="preserve">
+    <value>자산을 성공적으로 삭제하였습니다.</value>
+  </data>
   <data name="The asset has been successfully updated." xml:space="preserve">
     <value>자산이 성공적으로 업데이트되었습니다.</value>
   </data>
   <data name="The income has been successfully created." xml:space="preserve">
     <value>수입이 성공적으로 생성되었습니다.</value>
+  </data>
+  <data name="The income has been successfully deleted." xml:space="preserve">
+    <value>수입이 성공적으로 삭제되었습니다.</value>
+  </data>
+  <data name="The income has been successfully updated." xml:space="preserve">
+    <value>수입이 성공적으로 업데이트되었습니다.</value>
   </data>
   <data name="TrustAsset" xml:space="preserve">
     <value>신탁 자산</value>

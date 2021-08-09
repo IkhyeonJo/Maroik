@@ -195,26 +195,26 @@
   <data name="SavingsAsset" xml:space="preserve">
     <value>Savings asset</value>
   </data>
-  <data name="Successfully deleted the asset" xml:space="preserve">
-    <value>Successfully deleted the asset</value>
-  </data>
-  <data name="Successfully deleted the income" xml:space="preserve">
-    <value>Successfully deleted the income</value>
-  </data>
-  <data name="Successfully updated the income" xml:space="preserve">
-    <value>Successfully updated the income</value>
-  </data>
   <data name="The asset already exists." xml:space="preserve">
     <value>The asset already exists.</value>
   </data>
   <data name="The asset has been successfully created." xml:space="preserve">
     <value>The asset has been successfully created.</value>
   </data>
+  <data name="The asset has been successfully deleted." xml:space="preserve">
+    <value>The asset has been successfully deleted.</value>
+  </data>
   <data name="The asset has been successfully updated." xml:space="preserve">
     <value>The asset has been successfully updated.</value>
   </data>
   <data name="The income has been successfully created." xml:space="preserve">
     <value>The income has been successfully created.</value>
+  </data>
+  <data name="The income has been successfully deleted." xml:space="preserve">
+    <value>The income has been successfully deleted.</value>
+  </data>
+  <data name="The income has been successfully updated." xml:space="preserve">
+    <value>The income has been successfully updated.</value>
   </data>
   <data name="TrustAsset" xml:space="preserve">
     <value>Trust asset</value>

@@ -267,7 +267,7 @@ namespace MyLaboratory.Site.Controllers
                 {
                     tempAsset.Deleted = true;
                     await assetRepository.UpdateAssetAsync(tempAsset);
-                    return Json(new { result = true, message = localizer["Successfully deleted the asset"].Value });
+                    return Json(new { result = true, message = localizer["The asset has been successfully deleted."].Value });
                 }
             }
             catch (Exception e)
@@ -628,7 +628,7 @@ namespace MyLaboratory.Site.Controllers
                                 }
                                 #endregion
 
-                                return Json(new { result = true, message = localizer["Successfully updated the income"].Value });
+                                return Json(new { result = true, message = localizer["The income has been successfully updated."].Value });
                             }
                         }
                         #endregion
@@ -687,7 +687,7 @@ namespace MyLaboratory.Site.Controllers
                         await incomeRepository.DeleteIncomeAsync(tempIncome);
                         #endregion
 
-                        return Json(new { result = true, message = localizer["Successfully deleted the income"].Value });
+                        return Json(new { result = true, message = localizer["The income has been successfully deleted."].Value });
                     }
                 }
             }
