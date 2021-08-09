@@ -203,7 +203,6 @@ namespace MyLaboratory.Site.Controllers
         {
             try
             {
-                ModelState.Remove(nameof(assetInputViewModel.Item));
                 ModelState.Remove(nameof(assetInputViewModel.MonetaryUnit));
 
                 if (ModelState.IsValid)
@@ -220,6 +219,7 @@ namespace MyLaboratory.Site.Controllers
                         }
                         else
                         {
+                            tempAsset.Item = assetInputViewModel.Item;
                             tempAsset.Amount = assetInputViewModel.Amount;
                             tempAsset.Note = assetInputViewModel.Note;
                             tempAsset.Deleted = assetInputViewModel.Deleted;

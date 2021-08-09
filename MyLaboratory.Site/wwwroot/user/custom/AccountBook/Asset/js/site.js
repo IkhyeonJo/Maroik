@@ -150,6 +150,7 @@ function EditAssetGridRow(errorMessageSelectGridRow) {
                 var formEditAsset = $('#formEditAsset');
 
                 formEditAsset.find('input[id="editAssetProductName"]').val(data.asset.productName);
+                formEditAsset.find('select[id="editAssetItem"]').val(data.asset.item).change();
                 formEditAsset.find('input[id="editAssetAmount"]').val(data.asset.amount);
                 formEditAsset.find('input[id="editAssetNote"]').val(data.asset.note);
                 formEditAsset.find('input[id="editAssetDeleted"]').prop("checked", data.asset.deleted);
@@ -178,12 +179,14 @@ function UpdateAsset() {
     var createForm = $('#formEditAsset');
 
     var productName = createForm.find('input[id="editAssetProductName"]').val();
+    var item = createForm.find('select[id="editAssetItem"]').val();
     var amount = createForm.find('input[id="editAssetAmount"]').val();
     var note = createForm.find('input[id="editAssetNote"]').val();
     var deleted = createForm.find('input[id="editAssetDeleted"]').is(":checked");
 
     var paramValue = JSON.stringify({
         ProductName: productName,
+        Item: item,
         Amount: amount,
         Note: note,
         Deleted: deleted

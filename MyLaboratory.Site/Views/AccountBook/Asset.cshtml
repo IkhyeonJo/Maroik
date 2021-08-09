@@ -110,15 +110,32 @@
                                 <input class="form-control form-control-sm" type="text" data-val="false" id="editAssetProductName" name="editAssetProductName" value="" readonly>
                             </div>
                             <div class="form-group col-md-6 mb-3">
-                                <label for="editAssetAmount">@localizer["Amount"].Value</label>
-                                <input class="form-control form-control-sm" type="number" id="editAssetAmount" name="editAssetAmount" value="0">
+                                <label for="editAssetItem">@localizer["Item"].Value</label>
+                                <br />
+                                <select id="editAssetItem" name="editAssetItem">
+                                    <option value="FreeDepositAndWithdrawal">@localizer["자유입출금 자산"].Value</option>
+                                    <option value="TrustAsset">@localizer["신탁 자산"].Value</option>
+                                    <option value="CashAsset">@localizer["현금 자산"].Value</option>
+                                    <option value="SavingsAsset">@localizer["저축성 자산"].Value</option>
+                                    <option value="InvestmentAsset">@localizer["투자성 자산"].Value</option>
+                                    <option value="RealEstate">@localizer["부동산"].Value</option>
+                                    <option value="Movables">@localizer["동산"].Value</option>
+                                    <option value="OtherPhysicalAsset">@localizer["기타 실물 자산"].Value</option>
+                                    <option value="InsuranceAsset">@localizer["보험 자산"].Value</option>
+                                </select>
                             </div>
                         </div>
                         <div class="form-row">
                             <div class="form-group col-md-6 mb-3">
+                                <label for="editAssetAmount">@localizer["Amount"].Value</label>
+                                <input class="form-control form-control-sm" type="number" id="editAssetAmount" name="editAssetAmount" value="0">
+                            </div>
+                            <div class="form-group col-md-6 mb-3">
                                 <label for="editAssetNote">@localizer["Note"].Value</label>
                                 <input class="form-control form-control-sm" type="text" data-val="false" id="editAssetNote" name="editAssetNote" value="">
                             </div>
+                        </div>
+                        <div class="form-row">
                             <div class="form-group col-md-6 mb-3">
                                 <label for="editAssetDeleted">@localizer["Deleted"].Value</label>
                                 <input class="form-control form-control-sm" type="checkbox" id="editAssetDeleted" name="editAssetDeleted" />
