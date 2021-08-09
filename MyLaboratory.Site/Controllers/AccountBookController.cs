@@ -74,6 +74,21 @@ namespace MyLaboratory.Site.Controllers
 
                     try
                     {
+                        #region Validation of item Value
+                        if (!(assetInputViewModel.Item == "FreeDepositAndWithdrawal" ||
+                            assetInputViewModel.Item == "TrustAsset" ||
+                            assetInputViewModel.Item == "CashAsset" ||
+                            assetInputViewModel.Item == "SavingsAsset" ||
+                            assetInputViewModel.Item == "InvestmentAsset" ||
+                            assetInputViewModel.Item == "RealEstate" ||
+                            assetInputViewModel.Item == "Movables" ||
+                            assetInputViewModel.Item == "OtherPhysicalAsset" ||
+                            assetInputViewModel.Item == "InsuranceAsset"))
+                        {
+                            return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                        }
+                        #endregion
+
                         await assetRepository.CreateAssetAsync
                             (
                             new Asset()
@@ -209,6 +224,21 @@ namespace MyLaboratory.Site.Controllers
                 {
                     try
                     {
+                        #region Validation of item Value
+                        if (!(assetInputViewModel.Item == "FreeDepositAndWithdrawal" ||
+                            assetInputViewModel.Item == "TrustAsset" ||
+                            assetInputViewModel.Item == "CashAsset" ||
+                            assetInputViewModel.Item == "SavingsAsset" ||
+                            assetInputViewModel.Item == "InvestmentAsset" ||
+                            assetInputViewModel.Item == "RealEstate" ||
+                            assetInputViewModel.Item == "Movables" ||
+                            assetInputViewModel.Item == "OtherPhysicalAsset" ||
+                            assetInputViewModel.Item == "InsuranceAsset"))
+                        {
+                            return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                        }
+                        #endregion
+
                         HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
 
                         var tempAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, assetInputViewModel.ProductName);
