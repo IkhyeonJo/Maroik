@@ -783,8 +783,8 @@ namespace MyLaboratory.Site.Controllers
                 foreach (var item in incomeOutputViewModels)
                 {
                     workSheetMenuOutputViewModels.Cells[recordIndex, 1].Value = item.Id;
-                    workSheetMenuOutputViewModels.Cells[recordIndex, 2].Value = item.MainClass;
-                    workSheetMenuOutputViewModels.Cells[recordIndex, 3].Value = item.SubClass;
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 2].Value = localizer[item?.MainClass?.ToString() ?? ""].Value;
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 3].Value = localizer[item?.SubClass?.ToString() ?? ""].Value;
                     workSheetMenuOutputViewModels.Cells[recordIndex, 4].Value = item.Contents;
                     workSheetMenuOutputViewModels.Cells[recordIndex, 5].Value = item.Amount;
                     workSheetMenuOutputViewModels.Cells[recordIndex, 6].Value = item.DepositMyAssetProductName;

@@ -126,11 +126,17 @@
   <data name="CashAsset" xml:space="preserve">
     <value>Cash asset</value>
   </data>
+  <data name="Contents" xml:space="preserve">
+    <value>Contents</value>
+  </data>
   <data name="Created" xml:space="preserve">
     <value>Created</value>
   </data>
   <data name="Deleted" xml:space="preserve">
     <value>Deleted</value>
+  </data>
+  <data name="DepositMyAssetProductName" xml:space="preserve">
+    <value>DepositMyAssetProductName</value>
   </data>
   <data name="Fail to find the asset by given product name" xml:space="preserve">
     <value>Fail to find the asset by given product name</value>
@@ -140,6 +146,9 @@
   </data>
   <data name="FreeDepositAndWithdrawal" xml:space="preserve">
     <value>Free deposit and withdrawal</value>
+  </data>
+  <data name="Id" xml:space="preserve">
+    <value>ID</value>
   </data>
   <data name="Input is invalid" xml:space="preserve">
     <value>Input is invalid</value>
@@ -158,6 +167,9 @@
   </data>
   <data name="LaborIncome" xml:space="preserve">
     <value>Labor income</value>
+  </data>
+  <data name="MainClass" xml:space="preserve">
+    <value>MainClass</value>
   </data>
   <data name="MonetaryUnit" xml:space="preserve">
     <value>MonetaryUnit</value>
@@ -194,6 +206,9 @@
   </data>
   <data name="SavingsAsset" xml:space="preserve">
     <value>Savings asset</value>
+  </data>
+  <data name="SubClass" xml:space="preserve">
+    <value>SubClass</value>
   </data>
   <data name="The asset already exists." xml:space="preserve">
     <value>The asset already exists.</value>

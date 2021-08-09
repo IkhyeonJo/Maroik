@@ -126,11 +126,17 @@
   <data name="CashAsset" xml:space="preserve">
     <value>현금 자산</value>
   </data>
+  <data name="Contents" xml:space="preserve">
+    <value>내용</value>
+  </data>
   <data name="Created" xml:space="preserve">
     <value>생성일</value>
   </data>
   <data name="Deleted" xml:space="preserve">
     <value>삭제여부</value>
+  </data>
+  <data name="DepositMyAssetProductName" xml:space="preserve">
+    <value>입금 자산</value>
   </data>
   <data name="Fail to find the asset by given product name" xml:space="preserve">
     <value>주어진 상품명으로 자산을 찾는데 실패하였습니다.</value>
@@ -140,6 +146,9 @@
   </data>
   <data name="FreeDepositAndWithdrawal" xml:space="preserve">
     <value>자유입출금 자산</value>
+  </data>
+  <data name="Id" xml:space="preserve">
+    <value>ID</value>
   </data>
   <data name="Input is invalid" xml:space="preserve">
     <value>유효하지 않은 입력값입니다.</value>
@@ -158,6 +167,9 @@
   </data>
   <data name="LaborIncome" xml:space="preserve">
     <value>근로수입</value>
+  </data>
+  <data name="MainClass" xml:space="preserve">
+    <value>대분류</value>
   </data>
   <data name="MonetaryUnit" xml:space="preserve">
     <value>화폐 단위</value>
@@ -194,6 +206,9 @@
   </data>
   <data name="SavingsAsset" xml:space="preserve">
     <value>저축성 자산</value>
+  </data>
+  <data name="SubClass" xml:space="preserve">
+    <value>소분류</value>
   </data>
   <data name="The asset already exists." xml:space="preserve">
     <value>이미 존재하는 자산입니다.</value>
