@@ -360,7 +360,7 @@ namespace MyLaboratory.Site.Controllers
                 foreach (var item in assetOutputViewModels)
                 {
                     workSheetMenuOutputViewModels.Cells[recordIndex, 1].Value = item.ProductName;
-                    workSheetMenuOutputViewModels.Cells[recordIndex, 2].Value = item.Item;
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 2].Value = localizer[item?.Item?.ToString() ?? ""].Value;
                     workSheetMenuOutputViewModels.Cells[recordIndex, 3].Value = item.Amount;
                     workSheetMenuOutputViewModels.Cells[recordIndex, 4].Value = item.MonetaryUnit;
                     workSheetMenuOutputViewModels.Cells[recordIndex, 5].Value = item.Created.ToString();
