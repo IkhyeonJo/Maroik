@@ -90,7 +90,7 @@
                                 <select id="createIncomeDepositMyAssetProductName" name="createIncomeDepositMyAssetProductName">
                                     @foreach (var item in await assetRepository.GetAssetsAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email))
                                     {
-                                        <option value="@item.ProductName">@localizer[item.ProductName.ToString()].Value</option>
+                                        <option value="@item.ProductName">@item.ProductName</option>
                                     }
                                 </select>
                             </div>
@@ -163,7 +163,7 @@
                                 <select id="editIncomeDepositMyAssetProductName" name="editIncomeDepositMyAssetProductName">
                                     @foreach (var item in await assetRepository.GetAssetsAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email))
                                     {
-                                        <option value="@item.ProductName">@localizer[item.ProductName.ToString()].Value</option>
+                                        <option value="@item.ProductName">@item.ProductName</option>
                                     }
                                 </select>
                             </div>
