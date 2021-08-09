@@ -120,6 +120,9 @@
   <data name="Amount" xml:space="preserve">
     <value>Amount</value>
   </data>
+  <data name="BusinessIncome" xml:space="preserve">
+    <value>Business income</value>
+  </data>
   <data name="CashAsset" xml:space="preserve">
     <value>Cash asset</value>
   </data>
@@ -131,6 +134,9 @@
   </data>
   <data name="Fail to find the asset by given product name" xml:space="preserve">
     <value>Fail to find the asset by given product name</value>
+  </data>
+  <data name="FinancialIncome" xml:space="preserve">
+    <value>Financial income</value>
   </data>
   <data name="FreeDepositAndWithdrawal" xml:space="preserve">
     <value>Free deposit and withdrawal</value>
@@ -144,8 +150,14 @@
   <data name="InvestmentAsset" xml:space="preserve">
     <value>Investment asset</value>
   </data>
+  <data name="IrregularIncome" xml:space="preserve">
+    <value>Irregular income</value>
+  </data>
   <data name="Item" xml:space="preserve">
     <value>Item</value>
+  </data>
+  <data name="LaborIncome" xml:space="preserve">
+    <value>Labor income</value>
   </data>
   <data name="MonetaryUnit" xml:space="preserve">
     <value>MonetaryUnit</value>
@@ -156,14 +168,26 @@
   <data name="Note" xml:space="preserve">
     <value>Note</value>
   </data>
+  <data name="OtherIncome" xml:space="preserve">
+    <value>Other income</value>
+  </data>
   <data name="OtherPhysicalAsset" xml:space="preserve">
     <value>Other physical asset</value>
+  </data>
+  <data name="PensionIncome" xml:space="preserve">
+    <value>Pension income</value>
   </data>
   <data name="ProductName" xml:space="preserve">
     <value>ProductName</value>
   </data>
   <data name="RealEstate" xml:space="preserve">
     <value>Real estate</value>
+  </data>
+  <data name="RegularIncome" xml:space="preserve">
+    <value>Regular income</value>
+  </data>
+  <data name="RentalIncome" xml:space="preserve">
+    <value>Rental income</value>
   </data>
   <data name="SavingsAsset" xml:space="preserve">
     <value>Savings asset</value>

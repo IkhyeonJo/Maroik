@@ -451,8 +451,8 @@ namespace MyLaboratory.Site.Controllers
                         incomeOutputViewModels.Add(new IncomeOutputViewModel()
                         {
                             Id = item.Id,
-                            MainClass = item.MainClass,
-                            SubClass = item.SubClass,
+                            MainClass = localizer[item.MainClass.ToString()].Value,
+                            SubClass = localizer[item.SubClass.ToString()].Value,
                             Contents = item.Contents,
                             Amount = item.Amount,
                             DepositMyAssetProductName = item.DepositMyAssetProductName,
@@ -464,8 +464,8 @@ namespace MyLaboratory.Site.Controllers
                     else
                     {
                         if ((item.Id.ToString() ?? "").Contains(wholeSearch) ||
-                            (item.MainClass?.ToString() ?? "").Contains(wholeSearch) ||
-                            (item.SubClass?.ToString() ?? "").Contains(wholeSearch) ||
+                            localizer[item.MainClass?.ToString() ?? ""].Value.Contains(wholeSearch) ||
+                            localizer[item.SubClass?.ToString() ?? ""].Value.Contains(wholeSearch) ||
                             (item.Contents?.ToString() ?? "").Contains(wholeSearch) ||
                             (item.Amount.ToString() ?? "").Contains(wholeSearch) ||
                             (item.DepositMyAssetProductName?.ToString() ?? "").Contains(wholeSearch) ||
@@ -476,8 +476,8 @@ namespace MyLaboratory.Site.Controllers
                             incomeOutputViewModels.Add(new IncomeOutputViewModel()
                             {
                                 Id = item.Id,
-                                MainClass = item.MainClass,
-                                SubClass = item.SubClass,
+                                MainClass = localizer[item.MainClass.ToString()].Value,
+                                SubClass = localizer[item.SubClass.ToString()].Value,
                                 Contents = item.Contents,
                                 Amount = item.Amount,
                                 DepositMyAssetProductName = item.DepositMyAssetProductName,

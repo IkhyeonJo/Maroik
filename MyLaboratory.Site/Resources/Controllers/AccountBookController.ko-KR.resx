@@ -120,6 +120,9 @@
   <data name="Amount" xml:space="preserve">
     <value>금액</value>
   </data>
+  <data name="BusinessIncome" xml:space="preserve">
+    <value>사업수입</value>
+  </data>
   <data name="CashAsset" xml:space="preserve">
     <value>현금 자산</value>
   </data>
@@ -131,6 +134,9 @@
   </data>
   <data name="Fail to find the asset by given product name" xml:space="preserve">
     <value>주어진 상품명으로 자산을 찾는데 실패하였습니다.</value>
+  </data>
+  <data name="FinancialIncome" xml:space="preserve">
+    <value>금융소득</value>
   </data>
   <data name="FreeDepositAndWithdrawal" xml:space="preserve">
     <value>자유입출금 자산</value>
@@ -144,8 +150,14 @@
   <data name="InvestmentAsset" xml:space="preserve">
     <value>투자성 자산</value>
   </data>
+  <data name="IrregularIncome" xml:space="preserve">
+    <value>비정기수입</value>
+  </data>
   <data name="Item" xml:space="preserve">
     <value>항목</value>
+  </data>
+  <data name="LaborIncome" xml:space="preserve">
+    <value>근로수입</value>
   </data>
   <data name="MonetaryUnit" xml:space="preserve">
     <value>화폐 단위</value>
@@ -156,14 +168,26 @@
   <data name="Note" xml:space="preserve">
     <value>주석</value>
   </data>
+  <data name="OtherIncome" xml:space="preserve">
+    <value>기타수입</value>
+  </data>
   <data name="OtherPhysicalAsset" xml:space="preserve">
     <value>기타 실물 자산</value>
+  </data>
+  <data name="PensionIncome" xml:space="preserve">
+    <value>연금수입</value>
   </data>
   <data name="ProductName" xml:space="preserve">
     <value>상품명</value>
   </data>
   <data name="RealEstate" xml:space="preserve">
     <value>부동산</value>
+  </data>
+  <data name="RegularIncome" xml:space="preserve">
+    <value>정기수입</value>
+  </data>
+  <data name="RentalIncome" xml:space="preserve">
+    <value>임대수입</value>
   </data>
   <data name="SavingsAsset" xml:space="preserve">
     <value>저축성 자산</value>
