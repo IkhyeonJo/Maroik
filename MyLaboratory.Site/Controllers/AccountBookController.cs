@@ -100,7 +100,7 @@ namespace MyLaboratory.Site.Controllers
                                 MonetaryUnit = assetInputViewModel.MonetaryUnit,
                                 Created = DateTime.UtcNow,
                                 Updated = DateTime.UtcNow,
-                                Note = assetInputViewModel.Note,
+                                Note = assetInputViewModel.Note ?? "",
                                 Deleted = false
                             }
                             );
