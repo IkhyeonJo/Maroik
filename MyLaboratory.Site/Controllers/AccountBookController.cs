@@ -41,7 +41,8 @@ namespace MyLaboratory.Site.Controllers
         private readonly ISubCategoryRepository subCategoryRepository;
         private readonly IAssetRepository assetRepository;
         private readonly IIncomeRepository incomeRepository;
-        public AccountBookController(IHtmlLocalizer<AccountBookController> localizer, ILogger<AccountBookController> logger, IAccountRepository accountRepository, IHostEnvironment hostEnvironment, ICategoryRepository categoryRepository, ISubCategoryRepository subCategoryRepository, IAssetRepository assetRepository, IIncomeRepository incomeRepository)
+        private readonly IExpenditureRepository expenditureRepository;
+        public AccountBookController(IHtmlLocalizer<AccountBookController> localizer, ILogger<AccountBookController> logger, IAccountRepository accountRepository, IHostEnvironment hostEnvironment, ICategoryRepository categoryRepository, ISubCategoryRepository subCategoryRepository, IAssetRepository assetRepository, IIncomeRepository incomeRepository, IExpenditureRepository expenditureRepository)
         {
             this.localizer = localizer;
             this.logger = logger;
@@ -51,6 +52,7 @@ namespace MyLaboratory.Site.Controllers
             this.subCategoryRepository = subCategoryRepository;
             this.assetRepository = assetRepository;
             this.incomeRepository = incomeRepository;
+            this.expenditureRepository = expenditureRepository;
         }
 
         #region 자산
