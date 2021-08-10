@@ -237,7 +237,7 @@ function CreateExpenditure() {
     return;
 
     $.ajax({
-        url: '/AccountBook/CreateIncome',
+        url: '/AccountBook/CreateExpenditure',
         type: 'POST',
         headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
         dataType: 'json',
@@ -247,7 +247,7 @@ function CreateExpenditure() {
         //cache: false,
         success: function (data) {
             if (data.result) {
-                $('#createIncomeDialogModal').modal('hide'); // hide Modal
+                $('#createExpenditureDialogModal').modal('hide'); // hide Modal
 
                 const grid = new MvcGrid(document.querySelector(".mvc-grid")); //reload grid
                 grid.reload(); //reload grid
