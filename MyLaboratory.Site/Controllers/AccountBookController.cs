@@ -443,6 +443,7 @@ namespace MyLaboratory.Site.Controllers
                         #region 자산 업데이트
                         var tempAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, incomeInputViewModel.DepositMyAssetProductName);
                         tempAsset.Amount += Math.Abs(incomeInputViewModel.Amount);
+                        tempAsset.Updated = DateTime.UtcNow;
                         await assetRepository.UpdateAssetAsync(tempAsset);
                         #endregion
 
