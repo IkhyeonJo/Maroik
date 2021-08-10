@@ -810,6 +810,276 @@ namespace MyLaboratory.Site.Controllers
 
         #region 지출
 
+        #region Create
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [RequiredHttpPostAccess(Role = Role.User)]
+        public async Task<IActionResult> CreateExpenditure([FromBody] ExpenditureInputViewModel expenditureInputViewModel)
+        {
+            try
+            {
+                if (ModelState.IsValid)
+                {
+                    HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+
+                    #region 대분류 = '정기저축'
+                    if (expenditureInputViewModel.MainClass == "RegularSavings")
+                    {
+                        if (expenditureInputViewModel.SubClass == "Deposit" || expenditureInputViewModel.SubClass == "MyAssetTransfer" || expenditureInputViewModel.SubClass == "Investment")
+                        {
+                            try
+                            {
+                                if (expenditureInputViewModel.PaymentMethod == expenditureInputViewModel.MyDepositAsset)
+                                {
+                                    return Json(new { result = false, error = localizer["The PaymentMethod and MyDepositAsset value cannot be the same."].Value });
+                                }
+
+                                var expenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, expenditureInputViewModel.PaymentMethod);
+                                var incomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, expenditureInputViewModel.MyDepositAsset);
+
+                                if (expenditureAsset == null || incomeAsset == null)
+                                {
+                                    return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                                }
+
+                                #region 지출 생성
+                                await expenditureRepository.CreateExpenditureAsync
+                                    (
+                                    new Expenditure()
+                                    {
+                                        AccountEmail = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email,
+                                        MainClass = expenditureInputViewModel.MainClass,
+                                        SubClass = expenditureInputViewModel.SubClass,
+                                        Contents = expenditureInputViewModel.Contents ?? "",
+                                        Amount = Math.Abs(expenditureInputViewModel.Amount),
+                                        PaymentMethod = expenditureInputViewModel.PaymentMethod,
+                                        MyDepositAsset = expenditureInputViewModel.MyDepositAsset,
+                                        Created = DateTime.UtcNow,
+                                        Updated = DateTime.UtcNow,
+                                        Note = expenditureInputViewModel.Note ?? ""
+                                    }
+                                    );
+                                #endregion
+
+                                #region 지출 자산 업데이트
+                                expenditureAsset.Amount -= Math.Abs(expenditureInputViewModel.Amount);
+                                expenditureAsset.Updated = DateTime.UtcNow;
+                                await assetRepository.UpdateAssetAsync(expenditureAsset);
+                                #endregion
+
+                                #region 수입 자산 업데이트
+                                incomeAsset.Amount += Math.Abs(expenditureInputViewModel.Amount);
+                                incomeAsset.Updated = DateTime.UtcNow;
+                                await assetRepository.UpdateAssetAsync(incomeAsset);
+                                #endregion
+
+                                return Json(new { result = true, message = localizer["The expenditure has been successfully created."].Value });
+                            }
+                            catch (Exception e)
+                            {
+                                return Json(new { result = false, error = e.ToString() });
+                            }
+                        }
+                        else
+                        {
+                            return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                        }
+                    }
+                    #endregion
+
+                    #region 대분류 = '비소비지출'
+                    else if (expenditureInputViewModel.MainClass == "NonConsumerSpending")
+                    {
+                        if (expenditureInputViewModel.SubClass == "PublicPension" || expenditureInputViewModel.SubClass == "DebtRepayment")
+                        {
+                            try
+                            {
+                                if (expenditureInputViewModel.PaymentMethod == expenditureInputViewModel.MyDepositAsset)
+                                {
+                                    return Json(new { result = false, error = localizer["The PaymentMethod and MyDepositAsset value cannot be the same."].Value });
+                                }
+
+                                var expenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, expenditureInputViewModel.PaymentMethod);
+                                var incomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, expenditureInputViewModel.MyDepositAsset);
+
+                                if (expenditureAsset == null || incomeAsset == null)
+                                {
+                                    return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                                }
+
+                                #region 지출 생성
+                                await expenditureRepository.CreateExpenditureAsync
+                                    (
+                                    new Expenditure()
+                                    {
+                                        AccountEmail = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email,
+                                        MainClass = expenditureInputViewModel.MainClass,
+                                        SubClass = expenditureInputViewModel.SubClass,
+                                        Contents = expenditureInputViewModel.Contents ?? "",
+                                        Amount = Math.Abs(expenditureInputViewModel.Amount),
+                                        PaymentMethod = expenditureInputViewModel.PaymentMethod,
+                                        MyDepositAsset = expenditureInputViewModel.MyDepositAsset,
+                                        Created = DateTime.UtcNow,
+                                        Updated = DateTime.UtcNow,
+                                        Note = expenditureInputViewModel.Note ?? ""
+                                    }
+                                    );
+                                #endregion
+
+                                #region 지출 자산 업데이트
+                                expenditureAsset.Amount -= Math.Abs(expenditureInputViewModel.Amount);
+                                expenditureAsset.Updated = DateTime.UtcNow;
+                                await assetRepository.UpdateAssetAsync(expenditureAsset);
+                                #endregion
+
+                                #region 수입 자산 업데이트
+                                incomeAsset.Amount += Math.Abs(expenditureInputViewModel.Amount);
+                                incomeAsset.Updated = DateTime.UtcNow;
+                                await assetRepository.UpdateAssetAsync(incomeAsset);
+                                #endregion
+
+                                return Json(new { result = true, message = localizer["The expenditure has been successfully created."].Value });
+                            }
+                            catch (Exception e)
+                            {
+                                return Json(new { result = false, error = e.ToString() });
+                            }
+                        }
+                        else if (expenditureInputViewModel.SubClass == "Tax" ||
+                            expenditureInputViewModel.SubClass == "SocialInsurance" ||
+                            expenditureInputViewModel.SubClass == "InterHouseholdTranserExpenses" ||
+                            expenditureInputViewModel.SubClass == "NonProfitOrganizationTransfer")
+                        {
+                            try
+                            {
+                                var expenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, expenditureInputViewModel.PaymentMethod);
+
+                                if (expenditureAsset == null)
+                                {
+                                    return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                                }
+
+                                #region 지출 생성
+                                await expenditureRepository.CreateExpenditureAsync
+                                    (
+                                    new Expenditure()
+                                    {
+                                        AccountEmail = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email,
+                                        MainClass = expenditureInputViewModel.MainClass,
+                                        SubClass = expenditureInputViewModel.SubClass,
+                                        Contents = expenditureInputViewModel.Contents ?? "",
+                                        Amount = Math.Abs(expenditureInputViewModel.Amount),
+                                        PaymentMethod = expenditureInputViewModel.PaymentMethod,
+                                        MyDepositAsset = "",
+                                        Created = DateTime.UtcNow,
+                                        Updated = DateTime.UtcNow,
+                                        Note = expenditureInputViewModel.Note ?? ""
+                                    }
+                                    );
+                                #endregion
+
+                                #region 지출 자산 업데이트
+                                expenditureAsset.Amount -= Math.Abs(expenditureInputViewModel.Amount);
+                                expenditureAsset.Updated = DateTime.UtcNow;
+                                await assetRepository.UpdateAssetAsync(expenditureAsset);
+                                #endregion
+
+                                return Json(new { result = true, message = localizer["The expenditure has been successfully created."].Value });
+                            }
+                            catch (Exception e)
+                            {
+                                return Json(new { result = false, error = e.ToString() });
+                            }
+                        }
+                        else
+                        {
+                            return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                        }
+                    }
+                    #endregion
+
+                    #region 대분류 = '소비지출'
+                    else if (expenditureInputViewModel.MainClass == "ConsumerSpending")
+                    {
+                        if (expenditureInputViewModel.SubClass == "MealOrEatOutExpenses" ||
+                            expenditureInputViewModel.SubClass == "HousingOrSuppliesCost" ||
+                            expenditureInputViewModel.SubClass == "EducationExpenses" ||
+                            expenditureInputViewModel.SubClass == "MedicalExpenses" ||
+                            expenditureInputViewModel.SubClass == "TransportationCost" ||
+                            expenditureInputViewModel.SubClass == "CommunicationCost" ||
+                            expenditureInputViewModel.SubClass == "ClothingOrShoes" ||
+                            expenditureInputViewModel.SubClass == "PinMoney" ||
+                            expenditureInputViewModel.SubClass == "ProtectionTypeInsurance" ||
+                            expenditureInputViewModel.SubClass == "OtherExpenses" ||
+                            expenditureInputViewModel.SubClass == "UnknownExpenditure")
+                        {
+                            try
+                            {
+                                var expenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, expenditureInputViewModel.PaymentMethod);
+
+                                if (expenditureAsset == null)
+                                {
+                                    return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                                }
+
+                                #region 지출 생성
+                                await expenditureRepository.CreateExpenditureAsync
+                                    (
+                                    new Expenditure()
+                                    {
+                                        AccountEmail = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email,
+                                        MainClass = expenditureInputViewModel.MainClass,
+                                        SubClass = expenditureInputViewModel.SubClass,
+                                        Contents = expenditureInputViewModel.Contents ?? "",
+                                        Amount = Math.Abs(expenditureInputViewModel.Amount),
+                                        PaymentMethod = expenditureInputViewModel.PaymentMethod,
+                                        MyDepositAsset = "",
+                                        Created = DateTime.UtcNow,
+                                        Updated = DateTime.UtcNow,
+                                        Note = expenditureInputViewModel.Note ?? ""
+                                    }
+                                    );
+                                #endregion
+
+                                #region 지출 자산 업데이트
+                                expenditureAsset.Amount -= Math.Abs(expenditureInputViewModel.Amount);
+                                expenditureAsset.Updated = DateTime.UtcNow;
+                                await assetRepository.UpdateAssetAsync(expenditureAsset);
+                                #endregion
+
+                                return Json(new { result = true, message = localizer["The expenditure has been successfully created."].Value });
+                            }
+                            catch (Exception e)
+                            {
+                                return Json(new { result = false, error = e.ToString() });
+                            }
+                        }
+                        else
+                        {
+                            return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                        }
+                    }
+                    #endregion
+
+                    #region 대분류에 없는 값
+                    else
+                    {
+                        return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                    }
+                    #endregion
+                }
+                else
+                {
+                    return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                }
+            }
+            catch (Exception e)
+            {
+                return Json(new { result = false, error = e.ToString() });
+            }
+        }
+        #endregion
+
         #region Read
         [HttpGet]
         public IActionResult Expenditure()
