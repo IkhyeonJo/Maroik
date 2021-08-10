@@ -231,15 +231,9 @@ namespace MyLaboratory.Site.Data
                     .HasMaxLength(255)
                     .HasComment("대분류 (정기저축/비소비지출/소비지출)");
 
-                entity.Property(e => e.MonetaryUnit)
-                    .IsRequired()
-                    .HasMaxLength(45)
-                    .HasComment("화폐 단위 (KRW, USD, ETC)");
-
-                entity.Property(e => e.MyAssetProductName)
-                    .IsRequired()
+                entity.Property(e => e.MyDepositAsset)
                     .HasMaxLength(255)
-                    .HasComment("내자산상품명 (지출 중 정기저축일 때 사용)");
+                    .HasComment("(자산 상품명/현금) (지출 중 [예적금, 내자산이체, 투자, 공적연금, 부채상환]일 때 사용)");
 
                 entity.Property(e => e.Note)
                     .HasMaxLength(45)
@@ -249,20 +243,10 @@ namespace MyLaboratory.Site.Data
                     .IsRequired()
                     .HasComment("결제수단 (자산 상품명/현금)");
 
-                entity.Property(e => e.Reserved0).HasMaxLength(45);
-
-                entity.Property(e => e.Reserved1).HasMaxLength(45);
-
-                entity.Property(e => e.Reserved2).HasMaxLength(45);
-
-                entity.Property(e => e.Reserved3).HasMaxLength(45);
-
-                entity.Property(e => e.Reserved4).HasMaxLength(45);
-
                 entity.Property(e => e.SubClass)
                     .IsRequired()
                     .HasMaxLength(255)
-                    .HasComment("소분류 (예적금/투자/(내계좌이체/인출) | 세금/공적연금/사회보험/가구간 이전지출/비영리단체 이전/부채상환 | (식비/외식비)/(주거/용품비)/교육비/의료비/교통비/통신비/(여가/문화)/(의류/신발)/용돈/보장성보험/기타기출/미파악지출)");
+                    .HasComment("소분류 (예적금/내자산이체/투자 | 공적연금/부채상환/세금/사회보험/가구간 이전지출/비영리단체 이전 | (식비/외식비)/(주거/용품비)/교육비/의료비/교통비/통신비/(여가/문화)/(의류/신발)/용돈/보장성보험/기타지출/미파악지출)");
 
                 entity.Property(e => e.Updated)
                     .HasMaxLength(6)
