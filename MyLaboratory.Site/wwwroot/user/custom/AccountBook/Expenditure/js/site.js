@@ -232,10 +232,6 @@ function CreateExpenditure() {
         MyDepositAsset: myDepositAsset
     });
 
-    var aa = "";
-
-    return;
-
     $.ajax({
         url: '/AccountBook/CreateExpenditure',
         type: 'POST',
