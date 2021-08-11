@@ -419,7 +419,13 @@ function EditExpenditureGridRow(errorMessageSelectGridRow) {
                 formEditExpenditure.find('input[id="editExpenditureAmount"]').val(data.expenditure.amount);
                 formEditExpenditure.find('select[id="editExpenditurePaymentMethod"]').val(data.expenditure.paymentMethod).change();
                 formEditExpenditure.find('input[id="editExpenditureNote"]').val(data.expenditure.note);
-                formEditExpenditure.find('select[id="editExpenditureMyDepositAsset"]').val(data.expenditure.myDepositAsset).change();
+                if (data.expenditure.myDepositAsset) {
+                    formEditExpenditure.find('select[id="editExpenditureMyDepositAsset"]').val(data.expenditure.myDepositAsset).change();
+                }
+                else {
+                    formEditExpenditure.find('select[id="editExpenditureMyDepositAsset"]').val(data.expenditure.paymentMethod).change();
+                }
+                
 
                 $('#editExpenditureDialogModal').modal({
                     keyboard: false,
