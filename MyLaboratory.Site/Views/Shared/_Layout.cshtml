@@ -186,14 +186,14 @@
         <div class="content-wrapper">
             @(await Html.PartialAsync("_BodyPageHeader", loginedAccount))
             @RenderBody()
-            @if (loginedAccount.Role == Role.Admin)
+            @if (loginedAccount.Role == Role.Admin)@*nonfactors.grid.mvc6\6.2.4*@
             {
                 <script src="~/admin/js/mvc-grid/mvc-grid.js" asp-append-version="true"></script>
                 <script>
                     document.querySelectorAll(".mvc-grid").forEach(element => new MvcGrid(element));
                 </script>
             }
-            else if (loginedAccount.Role == Role.User)
+            else if (loginedAccount.Role == Role.User) @*nonfactors.grid.mvc6\6.2.4*@
             {
                 <script src="~/user/js/mvc-grid/mvc-grid.js" asp-append-version="true"></script>
                 <script>
