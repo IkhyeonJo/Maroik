@@ -1082,8 +1082,67 @@ namespace MyLaboratory.Site.Controllers
 
         #region Read
         [HttpGet]
-        public IActionResult Expenditure()
+        public async Task<IActionResult> Expenditure(string wholeSearch)
         {
+            if (HttpContext.Request.Headers["X-Requested-With"] == "XMLHttpRequest") // ajax
+            {
+                List<ExpenditureOutputViewModel> expenditureOutputViewModels = new List<ExpenditureOutputViewModel>();
+
+                #region Expenditures
+                HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+
+                foreach (var item in await expenditureRepository.GetExpendituresAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email))
+                {
+                    if (string.IsNullOrEmpty(wholeSearch))
+                    {
+                        expenditureOutputViewModels.Add(new ExpenditureOutputViewModel()
+                        {
+                            Id = item.Id,
+                            MainClass = localizer[item.MainClass.ToString()].Value,
+                            SubClass = localizer[item.SubClass.ToString()].Value,
+                            Contents = item.Contents,
+                            Amount = item.Amount,
+                            PaymentMethod = item.PaymentMethod,
+                            Note = item.Note,
+                            MyDepositAsset = item.MyDepositAsset,
+                            Created = item.Created,
+                            Updated = item.Updated
+                        });
+                    }
+                    else
+                    {
+                        if ((item.Id.ToString() ?? "").Contains(wholeSearch) ||
+                            localizer[item.MainClass?.ToString() ?? ""].Value.Contains(wholeSearch) ||
+                            localizer[item.SubClass?.ToString() ?? ""].Value.Contains(wholeSearch) ||
+                            (item.Contents?.ToString() ?? "").Contains(wholeSearch) ||
+                            (item.Amount.ToString() ?? "").Contains(wholeSearch) ||
+                            (item.PaymentMethod?.ToString() ?? "").Contains(wholeSearch) ||
+                            (item.Note?.ToString() ?? "").Contains(wholeSearch) ||
+                            (item.MyDepositAsset?.ToString() ?? "").Contains(wholeSearch) ||
+                            (item.Created.ToString() ?? "").Contains(wholeSearch) ||
+                            (item.Updated.ToString() ?? "").Contains(wholeSearch))
+                        {
+                            expenditureOutputViewModels.Add(new ExpenditureOutputViewModel()
+                            {
+                                Id = item.Id,
+                                MainClass = localizer[item.MainClass.ToString()].Value,
+                                SubClass = localizer[item.SubClass.ToString()].Value,
+                                Contents = item.Contents,
+                                Amount = item.Amount,
+                                PaymentMethod = item.PaymentMethod,
+                                Note = item.Note,
+                                MyDepositAsset = item.MyDepositAsset,
+                                Created = item.Created,
+                                Updated = item.Updated
+                            });
+                        }
+                    }
+                }
+                #endregion
+
+                var result = expenditureOutputViewModels.AsQueryable();
+                return PartialView("_ExpenditureGrid", result);
+            }
             return View();
         }
         #endregion
