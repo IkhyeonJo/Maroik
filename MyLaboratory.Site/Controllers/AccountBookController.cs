@@ -1007,6 +1007,7 @@ namespace MyLaboratory.Site.Controllers
                             expenditureInputViewModel.SubClass == "MedicalExpenses" ||
                             expenditureInputViewModel.SubClass == "TransportationCost" ||
                             expenditureInputViewModel.SubClass == "CommunicationCost" ||
+                            expenditureInputViewModel.SubClass == "LeisureOrCulture" ||
                             expenditureInputViewModel.SubClass == "ClothingOrShoes" ||
                             expenditureInputViewModel.SubClass == "PinMoney" ||
                             expenditureInputViewModel.SubClass == "ProtectionTypeInsurance" ||
