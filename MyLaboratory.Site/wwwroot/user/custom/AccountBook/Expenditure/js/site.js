@@ -573,19 +573,20 @@ function EditFormShowExpenditureDivCreateExpenditureMyDepositAssetBySelectedExpe
 
 function UpdateExpenditure() {
 
-    if (!$('#formEditIncome').valid()) {
+    if (!$('#formEditExpenditure').valid()) {
         return false;
     }
 
-    var createForm = $('#formEditIncome');
+    var createForm = $('#formEditExpenditure');
 
-    var id = createForm.find('input[id="editIncomeId"]').val();
-    var mainClass = createForm.find('select[id="editIncomeMainClass"]').val();
-    var subClass = createForm.find('select[id="editIncomeSubClass"]').val();
-    var contents = createForm.find('input[id="editIncomeContents"]').val();
-    var amount = createForm.find('input[id="editIncomeAmount"]').val();
-    var depositMyAssetProductName = createForm.find('select[id="editIncomeDepositMyAssetProductName"]').val();
-    var note = createForm.find('input[id="editIncomeNote"]').val();
+    var id = createForm.find('input[id="editExpenditureId"]').val();
+    var mainClass = createForm.find('select[id="editExpenditureMainClass"]').val();
+    var subClass = createForm.find('select[id="editExpenditureSubClass"]').val();
+    var contents = createForm.find('input[id="editExpenditureContents"]').val();
+    var amount = createForm.find('input[id="editExpenditureAmount"]').val();
+    var paymentMethod = createForm.find('select[id="editExpenditurePaymentMethod"]').val();
+    var note = createForm.find('input[id="editExpenditureNote"]').val();
+    var myDepositAsset = createForm.find('select[id="editExpenditureMyDepositAsset"]').val();
 
     var paramValue = JSON.stringify({
         Id: id,
@@ -593,12 +594,13 @@ function UpdateExpenditure() {
         SubClass: subClass,
         Contents: contents,
         Amount: amount,
-        DepositMyAssetProductName: depositMyAssetProductName,
-        Note: note
+        PaymentMethod: paymentMethod,
+        Note: note,
+        MyDepositAsset: myDepositAsset
     });
 
     $.ajax({
-        url: '/AccountBook/UpdateIncome',
+        url: '/AccountBook/UpdateExpenditure',
         type: 'POST',
         headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
         dataType: 'json',
@@ -608,7 +610,7 @@ function UpdateExpenditure() {
         //cache: false,
         success: function (data) {
             if (data.result) {
-                $('#editIncomeDialogModal').modal('hide'); // hide Modal
+                $('#editExpenditureDialogModal').modal('hide'); // hide Modal
 
                 const grid = new MvcGrid(document.querySelector(".mvc-grid")); //reload grid
                 grid.reload(); //reload grid
