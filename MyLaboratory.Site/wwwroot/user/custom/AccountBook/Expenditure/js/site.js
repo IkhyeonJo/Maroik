@@ -18,11 +18,11 @@ document.addEventListener("rowclick", e => {
     var selectedRow = e.detail;
     var selectedRowId = selectedRow.data.Id;
 
-    $('#incomeGrid > table > tbody  > tr').each(function (index, tr) {
+    $('#expenditureGrid > table > tbody  > tr').each(function (index, tr) {
         $(this).removeClass(selectedRowColor);
     }); // remove all selected row color
 
-    $('#incomeGrid > table > tbody  > tr').each(function (index, tr) {
+    $('#expenditureGrid > table > tbody  > tr').each(function (index, tr) {
         if ((new String(selectedRowId).valueOf() === new String($(this).attr('data-id')).valueOf())) {
             $(this).addClass(selectedRowColor);
         }
@@ -53,12 +53,12 @@ document.addEventListener("gridconfigure", e => {
 });
 
 
-$(document).on("dblclick", "#incomeGrid > table > tbody  > tr", function () {
+$(document).on("dblclick", "#expenditureGrid > table > tbody  > tr", function () {
     //console.log('dblclick-start');
-    $('#incomeGrid > table > tbody  > tr').each(function (index, tr) {
+    $('#expenditureGrid > table > tbody  > tr').each(function (index, tr) {
 
         if ($(this).attr("class").includes(selectedRowColor)) { // Get SelectedRow by Color
-            EditIncomeGridRow();
+            EditExpenditureGridRow();
         }
     });
     //console.log('dblclick-end');
@@ -259,49 +259,11 @@ function CreateExpenditure() {
     return false;
 }
 
-function EditFormShowIncomeSubClassBySelectedIncomeMainClass(createIncomeMainClass) {
-
-    if (createIncomeMainClass.value == "RegularIncome") {
-        $('#editIncomeSubClass option[value=LaborIncome]').prop('disabled', true).prop('hidden', true);
-        $('#editIncomeSubClass option[value=BusinessIncome]').prop('disabled', true).prop('hidden', true);
-        $('#editIncomeSubClass option[value=PensionIncome]').prop('disabled', true).prop('hidden', true);
-        $('#editIncomeSubClass option[value=FinancialIncome]').prop('disabled', true).prop('hidden', true);
-        $('#editIncomeSubClass option[value=RentalIncome]').prop('disabled', true).prop('hidden', true);
-        $('#editIncomeSubClass option[value=OtherIncome]').prop('disabled', true).prop('hidden', true);
-
-        $("#editIncomeSubClass option:selected").removeAttr("selected");
-
-        $('#editIncomeSubClass option[value=LaborIncome]').prop('disabled', false).prop('hidden', false).attr('selected', 'selected');
-        $('#editIncomeSubClass option[value=BusinessIncome]').prop('disabled', false).prop('hidden', false);
-        $('#editIncomeSubClass option[value=PensionIncome]').prop('disabled', false).prop('hidden', false);
-        $('#editIncomeSubClass option[value=FinancialIncome]').prop('disabled', false).prop('hidden', false);
-        $('#editIncomeSubClass option[value=RentalIncome]').prop('disabled', false).prop('hidden', false);
-        $('#editIncomeSubClass option[value=OtherIncome]').prop('disabled', false).prop('hidden', false);
-
-        $("#editIncomeSubClass").val("LaborIncome").change();
-    }
-    else if (createIncomeMainClass.value == "IrregularIncome") {
-        $('#editIncomeSubClass option[value=LaborIncome]').prop('disabled', true).prop('hidden', true);
-        $('#editIncomeSubClass option[value=BusinessIncome]').prop('disabled', true).prop('hidden', true);
-        $('#editIncomeSubClass option[value=PensionIncome]').prop('disabled', true).prop('hidden', true);
-        $('#editIncomeSubClass option[value=FinancialIncome]').prop('disabled', true).prop('hidden', true);
-        $('#editIncomeSubClass option[value=RentalIncome]').prop('disabled', true).prop('hidden', true);
-        $('#editIncomeSubClass option[value=OtherIncome]').prop('disabled', true).prop('hidden', true);
-
-        $("#editIncomeSubClass option:selected").removeAttr("selected");
-
-        $('#editIncomeSubClass option[value=LaborIncome]').prop('disabled', false).prop('hidden', false).attr('selected', 'selected');
-        $('#editIncomeSubClass option[value=OtherIncome]').prop('disabled', false).prop('hidden', false);
-
-        $("#editIncomeSubClass").val("LaborIncome").change();
-    }
-}
-
-function EditIncomeGridRow(errorMessageSelectGridRow) {
+function EditExpenditureGridRow(errorMessageSelectGridRow) {
 
     var selectedRowId = "";
 
-    $('#incomeGrid > table > tbody  > tr').each(function (index, tr) {
+    $('#expenditureGrid > table > tbody  > tr').each(function (index, tr) {
         if ($(this).attr("class").includes(selectedRowColor)) { // Get SelectedRow by Color
             selectedRowId = $(this).attr("data-id");
         }
@@ -313,7 +275,7 @@ function EditIncomeGridRow(errorMessageSelectGridRow) {
     } // check whether selected row exist or not
 
     $.ajax({
-        url: '/AccountBook/IsIncomeExists' + '?id=' + selectedRowId,
+        url: '/AccountBook/IsExpenditureExists' + '?id=' + selectedRowId,
         type: 'POST',
         headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
         dataType: 'json',
@@ -324,58 +286,148 @@ function EditIncomeGridRow(errorMessageSelectGridRow) {
         success: function (data) {
             if (data.result) {
 
-                var formEditIncome = $('#formEditIncome');
+                var formEditExpenditure = $('#formEditExpenditure');
 
-                formEditIncome.find('input[id="editIncomeId"]').val(data.income.id);
-                formEditIncome.find('select[id="editIncomeMainClass"]').val(data.income.mainClass).change();
+                formEditExpenditure.find('input[id="editExpenditureId"]').val(data.expenditure.id);
+                formEditExpenditure.find('select[id="editExpenditureMainClass"]').val(data.expenditure.mainClass).change();
 
-                if (data.income.mainClass == "RegularIncome") {
-                    $('#editIncomeSubClass option[value=LaborIncome]').prop('disabled', true).prop('hidden', true);
-                    $('#editIncomeSubClass option[value=BusinessIncome]').prop('disabled', true).prop('hidden', true);
-                    $('#editIncomeSubClass option[value=PensionIncome]').prop('disabled', true).prop('hidden', true);
-                    $('#editIncomeSubClass option[value=FinancialIncome]').prop('disabled', true).prop('hidden', true);
-                    $('#editIncomeSubClass option[value=RentalIncome]').prop('disabled', true).prop('hidden', true);
-                    $('#editIncomeSubClass option[value=OtherIncome]').prop('disabled', true).prop('hidden', true);
+                if (data.expenditure.mainClass == "RegularSavings") {
+                    $('#editExpenditureSubClass option[value=Deposit]').prop('disabled', true).prop('hidden', true);
+                    $('#editExpenditureSubClass option[value=MyAssetTransfer]').prop('disabled', true).prop('hidden', true);
+                    $('#editExpenditureSubClass option[value=Investment]').prop('disabled', true).prop('hidden', true);
 
-                    $("#editIncomeSubClass option:selected").removeAttr("selected");
+                    $('#editExpenditureSubClass option[value=PublicPension]').prop('disabled', true).prop('hidden', true);
+                    $('#editExpenditureSubClass option[value=DebtRepayment]').prop('disabled', true).prop('hidden', true);
+                    $('#editExpenditureSubClass option[value=Tax]').prop('disabled', true).prop('hidden', true);
+                    $('#editExpenditureSubClass option[value=SocialInsurance]').prop('disabled', true).prop('hidden', true);
+                    $('#editExpenditureSubClass option[value=InterHouseholdTranserExpenses]').prop('disabled', true).prop('hidden', true);
+                    $('#editExpenditureSubClass option[value=NonProfitOrganizationTransfer]').prop('disabled', true).prop('hidden', true);
 
-                    $('#editIncomeSubClass option[value=LaborIncome]').prop('disabled', false).prop('hidden', false);
-                    $('#editIncomeSubClass option[value=BusinessIncome]').prop('disabled', false).prop('hidden', false);
-                    $('#editIncomeSubClass option[value=PensionIncome]').prop('disabled', false).prop('hidden', false);
-                    $('#editIncomeSubClass option[value=FinancialIncome]').prop('disabled', false).prop('hidden', false);
-                    $('#editIncomeSubClass option[value=RentalIncome]').prop('disabled', false).prop('hidden', false);
-                    $('#editIncomeSubClass option[value=OtherIncome]').prop('disabled', false).prop('hidden', false);
+                    $('#editExpenditureSubClass option[value=MealOrEatOutExpenses]').prop('disabled', true).prop('hidden', true);
+                    $('#editExpenditureSubClass option[value=HousingOrSuppliesCost]').prop('disabled', true).prop('hidden', true);
+                    $('#editExpenditureSubClass option[value=EducationExpenses]').prop('disabled', true).prop('hidden', true);
+                    $('#editExpenditureSubClass option[value=MedicalExpenses]').prop('disabled', true).prop('hidden', true);
+                    $('#editExpenditureSubClass option[value=TransportationCost]').prop('disabled', true).prop('hidden', true);
+                    $('#editExpenditureSubClass option[value=CommunicationCost]').prop('disabled', true).prop('hidden', true);
+                    $('#editExpenditureSubClass option[value=LeisureOrCulture]').prop('disabled', true).prop('hidden', true);
+                    $('#editExpenditureSubClass option[value=ClothingOrShoes]').prop('disabled', true).prop('hidden', true);
+                    $('#editExpenditureSubClass option[value=PinMoney]').prop('disabled', true).prop('hidden', true);
+                    $('#editExpenditureSubClass option[value=ProtectionTypeInsurance]').prop('disabled', true).prop('hidden', true);
+                    $('#editExpenditureSubClass option[value=OtherExpenses]').prop('disabled', true).prop('hidden', true);
+                    $('#editExpenditureSubClass option[value=UnknownExpenditure]').prop('disabled', true).prop('hidden', true);
 
-                    formEditIncome.find('select[id="editIncomeSubClass"]').val(data.income.subClass).change();
+                    $("#editExpenditureSubClass option:selected").removeAttr("selected");
+
+                    $('#editExpenditureSubClass option[value=Deposit]').prop('disabled', false).prop('hidden', false);
+                    $('#editExpenditureSubClass option[value=MyAssetTransfer]').prop('disabled', false).prop('hidden', false);
+                    $('#editExpenditureSubClass option[value=Investment]').prop('disabled', false).prop('hidden', false);
+
+                    formEditExpenditure.find('select[id="editExpenditureSubClass"]').val(data.expenditure.subClass).change();
                 }
-                else if (data.income.mainClass == "IrregularIncome") {
-                    $('#editIncomeSubClass option[value=LaborIncome]').prop('disabled', true).prop('hidden', true);
-                    $('#editIncomeSubClass option[value=BusinessIncome]').prop('disabled', true).prop('hidden', true);
-                    $('#editIncomeSubClass option[value=PensionIncome]').prop('disabled', true).prop('hidden', true);
-                    $('#editIncomeSubClass option[value=FinancialIncome]').prop('disabled', true).prop('hidden', true);
-                    $('#editIncomeSubClass option[value=RentalIncome]').prop('disabled', true).prop('hidden', true);
-                    $('#editIncomeSubClass option[value=OtherIncome]').prop('disabled', true).prop('hidden', true);
+                else if (data.expenditure.mainClass == "NonConsumerSpending") {
+                    $('#editExpenditureSubClass option[value=Deposit]').prop('disabled', true).prop('hidden', true);
+                    $('#editExpenditureSubClass option[value=MyAssetTransfer]').prop('disabled', true).prop('hidden', true);
+                    $('#editExpenditureSubClass option[value=Investment]').prop('disabled', true).prop('hidden', true);
 
-                    $("#editIncomeSubClass option:selected").removeAttr("selected");
+                    $('#editExpenditureSubClass option[value=PublicPension]').prop('disabled', true).prop('hidden', true);
+                    $('#editExpenditureSubClass option[value=DebtRepayment]').prop('disabled', true).prop('hidden', true);
+                    $('#editExpenditureSubClass option[value=Tax]').prop('disabled', true).prop('hidden', true);
+                    $('#editExpenditureSubClass option[value=SocialInsurance]').prop('disabled', true).prop('hidden', true);
+                    $('#editExpenditureSubClass option[value=InterHouseholdTranserExpenses]').prop('disabled', true).prop('hidden', true);
+                    $('#editExpenditureSubClass option[value=NonProfitOrganizationTransfer]').prop('disabled', true).prop('hidden', true);
 
-                    $('#editIncomeSubClass option[value=LaborIncome]').prop('disabled', false).prop('hidden', false);
-                    $('#editIncomeSubClass option[value=OtherIncome]').prop('disabled', false).prop('hidden', false);
+                    $('#editExpenditureSubClass option[value=MealOrEatOutExpenses]').prop('disabled', true).prop('hidden', true);
+                    $('#editExpenditureSubClass option[value=HousingOrSuppliesCost]').prop('disabled', true).prop('hidden', true);
+                    $('#editExpenditureSubClass option[value=EducationExpenses]').prop('disabled', true).prop('hidden', true);
+                    $('#editExpenditureSubClass option[value=MedicalExpenses]').prop('disabled', true).prop('hidden', true);
+                    $('#editExpenditureSubClass option[value=TransportationCost]').prop('disabled', true).prop('hidden', true);
+                    $('#editExpenditureSubClass option[value=CommunicationCost]').prop('disabled', true).prop('hidden', true);
+                    $('#editExpenditureSubClass option[value=LeisureOrCulture]').prop('disabled', true).prop('hidden', true);
+                    $('#editExpenditureSubClass option[value=ClothingOrShoes]').prop('disabled', true).prop('hidden', true);
+                    $('#editExpenditureSubClass option[value=PinMoney]').prop('disabled', true).prop('hidden', true);
+                    $('#editExpenditureSubClass option[value=ProtectionTypeInsurance]').prop('disabled', true).prop('hidden', true);
+                    $('#editExpenditureSubClass option[value=OtherExpenses]').prop('disabled', true).prop('hidden', true);
+                    $('#editExpenditureSubClass option[value=UnknownExpenditure]').prop('disabled', true).prop('hidden', true);
 
-                    formEditIncome.find('select[id="editIncomeSubClass"]').val(data.income.subClass).change();
+                    $("#editExpenditureSubClass option:selected").removeAttr("selected");
+
+                    $('#editExpenditureSubClass option[value=PublicPension]').prop('disabled', false).prop('hidden', false);
+                    $('#editExpenditureSubClass option[value=DebtRepayment]').prop('disabled', false).prop('hidden', false);
+                    $('#editExpenditureSubClass option[value=Tax]').prop('disabled', false).prop('hidden', false);
+                    $('#editExpenditureSubClass option[value=SocialInsurance]').prop('disabled', false).prop('hidden', false);
+                    $('#editExpenditureSubClass option[value=InterHouseholdTranserExpenses]').prop('disabled', false).prop('hidden', false);
+                    $('#editExpenditureSubClass option[value=NonProfitOrganizationTransfer]').prop('disabled', false).prop('hidden', false);
+
+                    formEditExpenditure.find('select[id="editExpenditureSubClass"]').val(data.expenditure.subClass).change();
+                }
+                else if (data.expenditure.mainClass == "ConsumerSpending") {
+                    $('#editExpenditureSubClass option[value=Deposit]').prop('disabled', true).prop('hidden', true);
+                    $('#editExpenditureSubClass option[value=MyAssetTransfer]').prop('disabled', true).prop('hidden', true);
+                    $('#editExpenditureSubClass option[value=Investment]').prop('disabled', true).prop('hidden', true);
+
+                    $('#editExpenditureSubClass option[value=PublicPension]').prop('disabled', true).prop('hidden', true);
+                    $('#editExpenditureSubClass option[value=DebtRepayment]').prop('disabled', true).prop('hidden', true);
+                    $('#editExpenditureSubClass option[value=Tax]').prop('disabled', true).prop('hidden', true);
+                    $('#editExpenditureSubClass option[value=SocialInsurance]').prop('disabled', true).prop('hidden', true);
+                    $('#editExpenditureSubClass option[value=InterHouseholdTranserExpenses]').prop('disabled', true).prop('hidden', true);
+                    $('#editExpenditureSubClass option[value=NonProfitOrganizationTransfer]').prop('disabled', true).prop('hidden', true);
+
+                    $('#editExpenditureSubClass option[value=MealOrEatOutExpenses]').prop('disabled', true).prop('hidden', true);
+                    $('#editExpenditureSubClass option[value=HousingOrSuppliesCost]').prop('disabled', true).prop('hidden', true);
+                    $('#editExpenditureSubClass option[value=EducationExpenses]').prop('disabled', true).prop('hidden', true);
+                    $('#editExpenditureSubClass option[value=MedicalExpenses]').prop('disabled', true).prop('hidden', true);
+                    $('#editExpenditureSubClass option[value=TransportationCost]').prop('disabled', true).prop('hidden', true);
+                    $('#editExpenditureSubClass option[value=CommunicationCost]').prop('disabled', true).prop('hidden', true);
+                    $('#editExpenditureSubClass option[value=LeisureOrCulture]').prop('disabled', true).prop('hidden', true);
+                    $('#editExpenditureSubClass option[value=ClothingOrShoes]').prop('disabled', true).prop('hidden', true);
+                    $('#editExpenditureSubClass option[value=PinMoney]').prop('disabled', true).prop('hidden', true);
+                    $('#editExpenditureSubClass option[value=ProtectionTypeInsurance]').prop('disabled', true).prop('hidden', true);
+                    $('#editExpenditureSubClass option[value=OtherExpenses]').prop('disabled', true).prop('hidden', true);
+                    $('#editExpenditureSubClass option[value=UnknownExpenditure]').prop('disabled', true).prop('hidden', true);
+
+                    $("#editExpenditureSubClass option:selected").removeAttr("selected");
+
+                    $('#editExpenditureSubClass option[value=MealOrEatOutExpenses]').prop('disabled', false).prop('hidden', false);
+                    $('#editExpenditureSubClass option[value=HousingOrSuppliesCost]').prop('disabled', false).prop('hidden', false);
+                    $('#editExpenditureSubClass option[value=EducationExpenses]').prop('disabled', false).prop('hidden', false);
+                    $('#editExpenditureSubClass option[value=MedicalExpenses]').prop('disabled', false).prop('hidden', false);
+                    $('#editExpenditureSubClass option[value=TransportationCost]').prop('disabled', false).prop('hidden', false);
+                    $('#editExpenditureSubClass option[value=CommunicationCost]').prop('disabled', false).prop('hidden', false);
+                    $('#editExpenditureSubClass option[value=LeisureOrCulture]').prop('disabled', false).prop('hidden', false);
+                    $('#editExpenditureSubClass option[value=ClothingOrShoes]').prop('disabled', false).prop('hidden', false);
+                    $('#editExpenditureSubClass option[value=PinMoney]').prop('disabled', false).prop('hidden', false);
+                    $('#editExpenditureSubClass option[value=ProtectionTypeInsurance]').prop('disabled', false).prop('hidden', false);
+                    $('#editExpenditureSubClass option[value=OtherExpenses]').prop('disabled', false).prop('hidden', false);
+                    $('#editExpenditureSubClass option[value=UnknownExpenditure]').prop('disabled', false).prop('hidden', false);
+
+                    formEditExpenditure.find('select[id="editExpenditureSubClass"]').val(data.expenditure.subClass).change();
                 }
 
-                formEditIncome.find('input[id="editIncomeContents"]').val(data.income.contents);
-                formEditIncome.find('input[id="editIncomeAmount"]').val(data.income.amount);
-                formEditIncome.find('select[id="editIncomeDepositMyAssetProductName"]').val(data.income.depositMyAssetProductName).change();
-                formEditIncome.find('input[id="editIncomeNote"]').val(data.income.note);
+                if (data.expenditure.subClass == "Deposit" ||
+                    data.expenditure.subClass == "MyAssetTransfer" ||
+                    data.expenditure.subClass == "Investment" ||
+                    data.expenditure.subClass == "PublicPension" ||
+                    data.expenditure.subClass == "DebtRepayment") {
+                    $("#divEditExpenditureMyDepositAsset").show();
+                }
+                else {
+                    $("#divEditExpenditureMyDepositAsset").hide();
+                }
 
-                $('#editIncomeDialogModal').modal({
+
+                formEditExpenditure.find('input[id="editExpenditureContents"]').val(data.expenditure.contents);
+                formEditExpenditure.find('input[id="editExpenditureAmount"]').val(data.expenditure.amount);
+                formEditExpenditure.find('select[id="editExpenditurePaymentMethod"]').val(data.expenditure.paymentMethod).change();
+                formEditExpenditure.find('input[id="editExpenditureNote"]').val(data.expenditure.note);
+                formEditExpenditure.find('select[id="editExpenditureMyDepositAsset"]').val(data.expenditure.myDepositAsset).change();
+
+                $('#editExpenditureDialogModal').modal({
                     keyboard: false,
                     backdrop: "static"
                 });
 
-                $('#editIncomeDialogModal').modal('toggle');
-                $('#editIncomeDialogModal').modal('show');
+                $('#editExpenditureDialogModal').modal('toggle');
+                $('#editExpenditureDialogModal').modal('show');
             }
             else {
                 toastr.error(data.error);
@@ -384,7 +436,142 @@ function EditIncomeGridRow(errorMessageSelectGridRow) {
     });
 }
 
-function UpdateIncome() {
+function EditFormShowExpenditureSubClassBySelectedExpenditureMainClass(editExpenditureMainClass) {
+
+    if (editExpenditureMainClass.value == "RegularSavings") {
+        $('#editExpenditureSubClass option[value=Deposit]').prop('disabled', true).prop('hidden', true);
+        $('#editExpenditureSubClass option[value=MyAssetTransfer]').prop('disabled', true).prop('hidden', true);
+        $('#editExpenditureSubClass option[value=Investment]').prop('disabled', true).prop('hidden', true);
+
+        $('#editExpenditureSubClass option[value=PublicPension]').prop('disabled', true).prop('hidden', true);
+        $('#editExpenditureSubClass option[value=DebtRepayment]').prop('disabled', true).prop('hidden', true);
+        $('#editExpenditureSubClass option[value=Tax]').prop('disabled', true).prop('hidden', true);
+        $('#editExpenditureSubClass option[value=SocialInsurance]').prop('disabled', true).prop('hidden', true);
+        $('#editExpenditureSubClass option[value=InterHouseholdTranserExpenses]').prop('disabled', true).prop('hidden', true);
+        $('#editExpenditureSubClass option[value=NonProfitOrganizationTransfer]').prop('disabled', true).prop('hidden', true);
+
+        $('#editExpenditureSubClass option[value=MealOrEatOutExpenses]').prop('disabled', true).prop('hidden', true);
+        $('#editExpenditureSubClass option[value=HousingOrSuppliesCost]').prop('disabled', true).prop('hidden', true);
+        $('#editExpenditureSubClass option[value=EducationExpenses]').prop('disabled', true).prop('hidden', true);
+        $('#editExpenditureSubClass option[value=MedicalExpenses]').prop('disabled', true).prop('hidden', true);
+        $('#editExpenditureSubClass option[value=TransportationCost]').prop('disabled', true).prop('hidden', true);
+        $('#editExpenditureSubClass option[value=CommunicationCost]').prop('disabled', true).prop('hidden', true);
+        $('#editExpenditureSubClass option[value=LeisureOrCulture]').prop('disabled', true).prop('hidden', true);
+        $('#editExpenditureSubClass option[value=ClothingOrShoes]').prop('disabled', true).prop('hidden', true);
+        $('#editExpenditureSubClass option[value=PinMoney]').prop('disabled', true).prop('hidden', true);
+        $('#editExpenditureSubClass option[value=ProtectionTypeInsurance]').prop('disabled', true).prop('hidden', true);
+        $('#editExpenditureSubClass option[value=OtherExpenses]').prop('disabled', true).prop('hidden', true);
+        $('#editExpenditureSubClass option[value=UnknownExpenditure]').prop('disabled', true).prop('hidden', true);
+
+        $("#editExpenditureSubClass option:selected").removeAttr("selected");
+
+        $('#editExpenditureSubClass option[value=Deposit]').prop('disabled', false).prop('hidden', false).attr('selected', 'selected');
+        $('#editExpenditureSubClass option[value=MyAssetTransfer]').prop('disabled', false).prop('hidden', false);
+        $('#editExpenditureSubClass option[value=Investment]').prop('disabled', false).prop('hidden', false);
+
+        $("#editExpenditureSubClass").val("Deposit").change();
+
+        $("#divEditExpenditureMyDepositAsset").show();
+    }
+    else if (editExpenditureMainClass.value == "NonConsumerSpending") {
+        $('#editExpenditureSubClass option[value=Deposit]').prop('disabled', true).prop('hidden', true);
+        $('#editExpenditureSubClass option[value=MyAssetTransfer]').prop('disabled', true).prop('hidden', true);
+        $('#editExpenditureSubClass option[value=Investment]').prop('disabled', true).prop('hidden', true);
+
+        $('#editExpenditureSubClass option[value=PublicPension]').prop('disabled', true).prop('hidden', true);
+        $('#editExpenditureSubClass option[value=DebtRepayment]').prop('disabled', true).prop('hidden', true);
+        $('#editExpenditureSubClass option[value=Tax]').prop('disabled', true).prop('hidden', true);
+        $('#editExpenditureSubClass option[value=SocialInsurance]').prop('disabled', true).prop('hidden', true);
+        $('#editExpenditureSubClass option[value=InterHouseholdTranserExpenses]').prop('disabled', true).prop('hidden', true);
+        $('#editExpenditureSubClass option[value=NonProfitOrganizationTransfer]').prop('disabled', true).prop('hidden', true);
+
+        $('#editExpenditureSubClass option[value=MealOrEatOutExpenses]').prop('disabled', true).prop('hidden', true);
+        $('#editExpenditureSubClass option[value=HousingOrSuppliesCost]').prop('disabled', true).prop('hidden', true);
+        $('#editExpenditureSubClass option[value=EducationExpenses]').prop('disabled', true).prop('hidden', true);
+        $('#editExpenditureSubClass option[value=MedicalExpenses]').prop('disabled', true).prop('hidden', true);
+        $('#editExpenditureSubClass option[value=TransportationCost]').prop('disabled', true).prop('hidden', true);
+        $('#editExpenditureSubClass option[value=CommunicationCost]').prop('disabled', true).prop('hidden', true);
+        $('#editExpenditureSubClass option[value=LeisureOrCulture]').prop('disabled', true).prop('hidden', true);
+        $('#editExpenditureSubClass option[value=ClothingOrShoes]').prop('disabled', true).prop('hidden', true);
+        $('#editExpenditureSubClass option[value=PinMoney]').prop('disabled', true).prop('hidden', true);
+        $('#editExpenditureSubClass option[value=ProtectionTypeInsurance]').prop('disabled', true).prop('hidden', true);
+        $('#editExpenditureSubClass option[value=OtherExpenses]').prop('disabled', true).prop('hidden', true);
+        $('#editExpenditureSubClass option[value=UnknownExpenditure]').prop('disabled', true).prop('hidden', true);
+
+        $("#editExpenditureSubClass option:selected").removeAttr("selected");
+
+        $('#editExpenditureSubClass option[value=PublicPension]').prop('disabled', false).prop('hidden', false).attr('selected', 'selected');
+        $('#editExpenditureSubClass option[value=DebtRepayment]').prop('disabled', false).prop('hidden', false);
+        $('#editExpenditureSubClass option[value=Tax]').prop('disabled', false).prop('hidden', false);
+        $('#editExpenditureSubClass option[value=SocialInsurance]').prop('disabled', false).prop('hidden', false);
+        $('#editExpenditureSubClass option[value=InterHouseholdTranserExpenses]').prop('disabled', false).prop('hidden', false);
+        $('#editExpenditureSubClass option[value=NonProfitOrganizationTransfer]').prop('disabled', false).prop('hidden', false);
+
+        $("#editExpenditureSubClass").val("PublicPension").change();
+
+        $("#divEditExpenditureMyDepositAsset").show();
+    }
+    else if (editExpenditureMainClass.value == "ConsumerSpending") {
+        $('#editExpenditureSubClass option[value=Deposit]').prop('disabled', true).prop('hidden', true);
+        $('#editExpenditureSubClass option[value=MyAssetTransfer]').prop('disabled', true).prop('hidden', true);
+        $('#editExpenditureSubClass option[value=Investment]').prop('disabled', true).prop('hidden', true);
+
+        $('#editExpenditureSubClass option[value=PublicPension]').prop('disabled', true).prop('hidden', true);
+        $('#editExpenditureSubClass option[value=DebtRepayment]').prop('disabled', true).prop('hidden', true);
+        $('#editExpenditureSubClass option[value=Tax]').prop('disabled', true).prop('hidden', true);
+        $('#editExpenditureSubClass option[value=SocialInsurance]').prop('disabled', true).prop('hidden', true);
+        $('#editExpenditureSubClass option[value=InterHouseholdTranserExpenses]').prop('disabled', true).prop('hidden', true);
+        $('#editExpenditureSubClass option[value=NonProfitOrganizationTransfer]').prop('disabled', true).prop('hidden', true);
+
+        $('#editExpenditureSubClass option[value=MealOrEatOutExpenses]').prop('disabled', true).prop('hidden', true);
+        $('#editExpenditureSubClass option[value=HousingOrSuppliesCost]').prop('disabled', true).prop('hidden', true);
+        $('#editExpenditureSubClass option[value=EducationExpenses]').prop('disabled', true).prop('hidden', true);
+        $('#editExpenditureSubClass option[value=MedicalExpenses]').prop('disabled', true).prop('hidden', true);
+        $('#editExpenditureSubClass option[value=TransportationCost]').prop('disabled', true).prop('hidden', true);
+        $('#editExpenditureSubClass option[value=CommunicationCost]').prop('disabled', true).prop('hidden', true);
+        $('#editExpenditureSubClass option[value=LeisureOrCulture]').prop('disabled', true).prop('hidden', true);
+        $('#editExpenditureSubClass option[value=ClothingOrShoes]').prop('disabled', true).prop('hidden', true);
+        $('#editExpenditureSubClass option[value=PinMoney]').prop('disabled', true).prop('hidden', true);
+        $('#editExpenditureSubClass option[value=ProtectionTypeInsurance]').prop('disabled', true).prop('hidden', true);
+        $('#editExpenditureSubClass option[value=OtherExpenses]').prop('disabled', true).prop('hidden', true);
+        $('#editExpenditureSubClass option[value=UnknownExpenditure]').prop('disabled', true).prop('hidden', true);
+
+        $("#editExpenditureSubClass option:selected").removeAttr("selected");
+
+        $('#editExpenditureSubClass option[value=MealOrEatOutExpenses]').prop('disabled', false).prop('hidden', false).attr('selected', 'selected');
+        $('#editExpenditureSubClass option[value=HousingOrSuppliesCost]').prop('disabled', false).prop('hidden', false);
+        $('#editExpenditureSubClass option[value=EducationExpenses]').prop('disabled', false).prop('hidden', false);
+        $('#editExpenditureSubClass option[value=MedicalExpenses]').prop('disabled', false).prop('hidden', false);
+        $('#editExpenditureSubClass option[value=TransportationCost]').prop('disabled', false).prop('hidden', false);
+        $('#editExpenditureSubClass option[value=CommunicationCost]').prop('disabled', false).prop('hidden', false);
+        $('#editExpenditureSubClass option[value=LeisureOrCulture]').prop('disabled', false).prop('hidden', false);
+        $('#editExpenditureSubClass option[value=ClothingOrShoes]').prop('disabled', false).prop('hidden', false);
+        $('#editExpenditureSubClass option[value=PinMoney]').prop('disabled', false).prop('hidden', false);
+        $('#editExpenditureSubClass option[value=ProtectionTypeInsurance]').prop('disabled', false).prop('hidden', false);
+        $('#editExpenditureSubClass option[value=OtherExpenses]').prop('disabled', false).prop('hidden', false);
+        $('#editExpenditureSubClass option[value=UnknownExpenditure]').prop('disabled', false).prop('hidden', false);
+
+        $("#editExpenditureSubClass").val("MealOrEatOutExpenses").change();
+
+        $("#divEditExpenditureMyDepositAsset").hide();
+    }
+}
+
+function EditFormShowExpenditureDivCreateExpenditureMyDepositAssetBySelectedExpenditureSubClass(editExpenditureSubClass) {
+
+    if (editExpenditureSubClass.value == "Deposit" ||
+        editExpenditureSubClass.value == "MyAssetTransfer" ||
+        editExpenditureSubClass.value == "Investment" ||
+        editExpenditureSubClass.value == "PublicPension" ||
+        editExpenditureSubClass.value == "DebtRepayment") {
+        $("#divEditExpenditureMyDepositAsset").show();
+    }
+    else {
+        $("#divEditExpenditureMyDepositAsset").hide();
+    }
+}
+
+function UpdateExpenditure() {
 
     if (!$('#formEditIncome').valid()) {
         return false;

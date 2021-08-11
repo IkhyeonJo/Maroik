@@ -140,6 +140,110 @@
         </div>
     </div>
 </div>
+
+@*<!--editExpenditureDialogModal-->*@
+<div class="modal fade" tabindex="-1" role="dialog" id="editExpenditureDialogModal">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div id="editExpenditureTabs">
+                @*<!--Tab Menu-->*@
+                <ul>
+                    <li><a href="#editExpenditureTabs-1">@localizer["Edit Expenditure"].Value</a></li>
+                </ul>
+                @*Tabs-1: Edit Expenditure Modal*@
+                <div id="editExpenditureTabs-1">
+                    <form id="formEditExpenditure" onsubmit="return UpdateExpenditure()">
+                        <input type="hidden" id="editExpenditureId" />
+                        <div class="form-row">
+                            <div class="form-group col-md-6 mb-3">
+                                <label for="editExpenditureMainClass">@localizer["MainClass"].Value</label>
+                                <br />
+                                <select id="editExpenditureMainClass" name="editExpenditureMainClass" onchange="EditFormShowExpenditureSubClassBySelectedExpenditureMainClass(this)">
+                                    <option value="RegularSavings" selected="selected">@localizer["정기저축"].Value</option>
+                                    <option value="NonConsumerSpending">@localizer["비소비지출"].Value</option>
+                                    <option value="ConsumerSpending">@localizer["소비지출"].Value</option>
+                                </select>
+                            </div>
+                            <div class="form-group col-md-6 mb-3">
+                                <label for="editExpenditureSubClass">@localizer["SubClass"].Value</label>
+                                <br />
+                                <select id="editExpenditureSubClass" name="editExpenditureSubClass" onchange="EditFormShowExpenditureDivCreateExpenditureMyDepositAssetBySelectedExpenditureSubClass(this)">
+                                    @*정기저축*@
+                                    <option value="Deposit" selected="selected">@localizer["예적금"].Value</option>
+                                    <option value="MyAssetTransfer">@localizer["내자산이체"].Value</option>
+                                    <option value="Investment">@localizer["투자"].Value</option>
+                                    @*비소비지출*@
+                                    <option value="PublicPension" hidden="hidden">@localizer["공적연금"].Value</option>
+                                    <option value="DebtRepayment" hidden="hidden">@localizer["부채상환"].Value</option>
+                                    <option value="Tax" hidden="hidden">@localizer["세금"].Value</option>
+                                    <option value="SocialInsurance" hidden="hidden">@localizer["사회보험"].Value</option>
+                                    <option value="InterHouseholdTranserExpenses" hidden="hidden">@localizer["가구간 이전지출"].Value</option>
+                                    <option value="NonProfitOrganizationTransfer" hidden="hidden">@localizer["비영리단체 이전"].Value</option>
+                                    @*소비지출*@
+                                    <option value="MealOrEatOutExpenses" hidden="hidden">@localizer["식비/외식비"].Value</option>
+                                    <option value="HousingOrSuppliesCost" hidden="hidden">@localizer["주거/용품비"].Value</option>
+                                    <option value="EducationExpenses" hidden="hidden">@localizer["교육비"].Value</option>
+                                    <option value="MedicalExpenses" hidden="hidden">@localizer["의료비"].Value</option>
+                                    <option value="TransportationCost" hidden="hidden">@localizer["교통비"].Value</option>
+                                    <option value="CommunicationCost" hidden="hidden">@localizer["통신비"].Value</option>
+                                    <option value="LeisureOrCulture" hidden="hidden">@localizer["여가/문화"].Value</option>
+                                    <option value="ClothingOrShoes" hidden="hidden">@localizer["의류/신발"].Value</option>
+                                    <option value="PinMoney" hidden="hidden">@localizer["용돈"].Value</option>
+                                    <option value="ProtectionTypeInsurance" hidden="hidden">@localizer["보장성보험"].Value</option>
+                                    <option value="OtherExpenses" hidden="hidden">@localizer["기타지출"].Value</option>
+                                    <option value="UnknownExpenditure" hidden="hidden">@localizer["미파악지출"].Value</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group col-md-6 mb-3">
+                                <label for="editExpenditureContents">@localizer["Contents"].Value</label>
+                                <input class="form-control form-control-sm" type="text" data-val="true" data-val-required="@localizer["Please enter Contents"].Value" id="editExpenditureContents" name="editExpenditureContents" value="">
+                                <span class="field-validation-valid text-danger" data-valmsg-for="editExpenditureContents" data-valmsg-replace="true"></span>
+                            </div>
+                            <div class="form-group col-md-6 mb-3">
+                                <label for="editExpenditureAmount">@localizer["Amount"].Value</label>
+                                <input class="form-control form-control-sm" min="0" type="number" id="editExpenditureAmount" name="editExpenditureAmount" value="0">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group col-md-6 mb-3">
+                                <label for="editExpenditurePaymentMethod">@localizer["PaymentMethod"].Value</label>
+                                <br />
+                                <select id="editExpenditurePaymentMethod" name="editExpenditurePaymentMethod">
+                                    @foreach (var item in await assetRepository.GetAssetsAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email))
+                                    {
+                                        <option value="@item.ProductName">@item.ProductName</option>
+                                    }
+                                </select>
+                            </div>
+                            <div class="form-group col-md-6 mb-3">
+                                <label for="editExpenditureNote">@localizer["Note"].Value</label>
+                                <input class="form-control form-control-sm" type="text" data-val="false" id="editExpenditureNote" name="editExpenditureNote" value="">
+                            </div>
+                        </div>
+                        <div id="divEditExpenditureMyDepositAsset" class="form-row">
+                            <div class="form-group col-md-6 mb-3">
+                                <label for="editExpenditureMyDepositAsset">@localizer["MyDepositAsset"].Value</label>
+                                <br />
+                                <select id="editExpenditureMyDepositAsset" name="editExpenditureMyDepositAsset">
+                                    @foreach (var item in await assetRepository.GetAssetsAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email))
+                                    {
+                                        <option value="@item.ProductName">@item.ProductName</option>
+                                    }
+                                </select>
+                            </div>
+                        </div>
+                        <div class="modal-footer justify-content-between">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">@localizer["Close"].Value</button>
+                            <input type="submit" class="btn btn-primary" value="@localizer["Save"].Value" />
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 @section Scripts{
     <script src="~/user/custom/AccountBook/Expenditure/js/site.js" asp-append-version="true"></script>
 }

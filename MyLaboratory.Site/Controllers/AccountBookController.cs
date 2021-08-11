@@ -1146,6 +1146,40 @@ namespace MyLaboratory.Site.Controllers
             }
             return View();
         }
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [RequiredHttpPostAccess(Role = Role.User)]
+        public async Task<IActionResult> IsExpenditureExists(int id)
+        {
+            try
+            {
+                HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+
+                var tempExpenditures = await expenditureRepository.GetExpendituresAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+
+                if (tempExpenditures == null)
+                {
+                    return Json(new { result = false, error = localizer["No expenditure exists"].Value });
+                }
+                else
+                {
+                    var tempExpenditure = tempExpenditures.Where(a => a.Id == id).FirstOrDefault();
+
+                    if (tempExpenditure == null)
+                    {
+                        return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                    }
+                    else
+                    {
+                        return Json(new { result = true, expenditure = tempExpenditure });
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                return Json(new { result = false, error = e.ToString() });
+            }
+        }
         #endregion
 
         #endregion
