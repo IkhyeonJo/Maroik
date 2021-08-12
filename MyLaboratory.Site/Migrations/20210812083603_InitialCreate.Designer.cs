@@ -9,7 +9,7 @@ using MyLaboratory.Site.Data;
 namespace MyLaboratory.Site.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20210810080836_InitialCreate")]
+    [Migration("20210812083603_InitialCreate")]
     partial class InitialCreate
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -262,7 +262,7 @@ namespace MyLaboratory.Site.Migrations
                     b.Property<string>("MyDepositAsset")
                         .HasMaxLength(255)
                         .HasColumnType("varchar(255)")
-                        .HasComment("(자산 상품명/현금) (지출 중 [예적금, 내자산이체, 투자, 공적연금, 부채상환]일 때 사용)");
+                        .HasComment("내 입금 자산 (자산 상품명/현금) (지출 중 [예적금, 내자산이체, 투자, 공적연금, 부채상환]일 때 사용)");
 
                     b.Property<string>("Note")
                         .HasMaxLength(45)
@@ -272,7 +272,7 @@ namespace MyLaboratory.Site.Migrations
                     b.Property<string>("PaymentMethod")
                         .IsRequired()
                         .HasColumnType("varchar(255)")
-                        .HasComment("결제수단 (자산 상품명/현금)");
+                        .HasComment("결제 수단 (자산 상품명/현금)");
 
                     b.Property<string>("SubClass")
                         .IsRequired()
@@ -571,7 +571,7 @@ namespace MyLaboratory.Site.Migrations
                     b.Property<string>("DepositMyAssetProductName")
                         .IsRequired()
                         .HasColumnType("varchar(255)")
-                        .HasComment("입금계좌 (자산 상품명/현금)");
+                        .HasComment("입금 자산 (자산 상품명/현금)");
 
                     b.Property<string>("MainClass")
                         .IsRequired()

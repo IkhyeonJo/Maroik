@@ -233,7 +233,7 @@ namespace MyLaboratory.Site.Data
 
                 entity.Property(e => e.MyDepositAsset)
                     .HasMaxLength(255)
-                    .HasComment("(자산 상품명/현금) (지출 중 [예적금, 내자산이체, 투자, 공적연금, 부채상환]일 때 사용)");
+                    .HasComment("내 입금 자산 (자산 상품명/현금) (지출 중 [예적금, 내자산이체, 투자, 공적연금, 부채상환]일 때 사용)");
 
                 entity.Property(e => e.Note)
                     .HasMaxLength(45)
@@ -241,7 +241,7 @@ namespace MyLaboratory.Site.Data
 
                 entity.Property(e => e.PaymentMethod)
                     .IsRequired()
-                    .HasComment("결제수단 (자산 상품명/현금)");
+                    .HasComment("결제 수단 (자산 상품명/현금)");
 
                 entity.Property(e => e.SubClass)
                     .IsRequired()
@@ -486,7 +486,7 @@ namespace MyLaboratory.Site.Data
 
                 entity.Property(e => e.DepositMyAssetProductName)
                     .IsRequired()
-                    .HasComment("입금계좌 (자산 상품명/현금)");
+                    .HasComment("입금 자산 (자산 상품명/현금)");
 
                 entity.Property(e => e.MainClass)
                     .IsRequired()

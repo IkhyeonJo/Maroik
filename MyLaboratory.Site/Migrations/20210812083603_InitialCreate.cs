@@ -157,9 +157,9 @@ namespace MyLaboratory.Site.Migrations
                     Contents = table.Column<string>(type: "varchar(255)", maxLength: 255, nullable: false, comment: "내용 (하계할인마트/신한카드/남원추어탕/교보문고)", collation: "utf8mb4_general_ci")
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     Amount = table.Column<long>(type: "bigint(255)", nullable: false, comment: "금액"),
-                    PaymentMethod = table.Column<string>(type: "varchar(255)", nullable: false, comment: "결제수단 (자산 상품명/현금)", collation: "utf8mb4_general_ci")
+                    PaymentMethod = table.Column<string>(type: "varchar(255)", nullable: false, comment: "결제 수단 (자산 상품명/현금)", collation: "utf8mb4_general_ci")
                         .Annotation("MySql:CharSet", "utf8mb4"),
-                    MyDepositAsset = table.Column<string>(type: "varchar(255)", maxLength: 255, nullable: true, comment: "(자산 상품명/현금) (지출 중 [예적금, 내자산이체, 투자, 공적연금, 부채상환]일 때 사용)", collation: "utf8mb4_general_ci")
+                    MyDepositAsset = table.Column<string>(type: "varchar(255)", maxLength: 255, nullable: true, comment: "내 입금 자산 (자산 상품명/현금) (지출 중 [예적금, 내자산이체, 투자, 공적연금, 부채상환]일 때 사용)", collation: "utf8mb4_general_ci")
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     Created = table.Column<DateTime>(type: "datetime(6)", maxLength: 6, nullable: false, comment: "생성일"),
                     Updated = table.Column<DateTime>(type: "datetime(6)", maxLength: 6, nullable: false, comment: "업데이트일"),
@@ -307,7 +307,7 @@ namespace MyLaboratory.Site.Migrations
                     Contents = table.Column<string>(type: "varchar(255)", maxLength: 255, nullable: false, comment: "내용 (회사명/사업명)", collation: "utf8mb4_general_ci")
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     Amount = table.Column<long>(type: "bigint(255)", nullable: false, comment: "금액"),
-                    DepositMyAssetProductName = table.Column<string>(type: "varchar(255)", nullable: false, comment: "입금계좌 (자산 상품명/현금)", collation: "utf8mb4_general_ci")
+                    DepositMyAssetProductName = table.Column<string>(type: "varchar(255)", nullable: false, comment: "입금 자산 (자산 상품명/현금)", collation: "utf8mb4_general_ci")
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     Created = table.Column<DateTime>(type: "datetime(6)", maxLength: 6, nullable: false, comment: "생성일"),
                     Updated = table.Column<DateTime>(type: "datetime(6)", maxLength: 6, nullable: false, comment: "업데이트일"),
