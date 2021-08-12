@@ -154,7 +154,7 @@
     <value>대분류</value>
   </data>
   <data name="MyDepositAsset" xml:space="preserve">
-    <value>내결제수단</value>
+    <value>내입금자산</value>
   </data>
   <data name="Note" xml:space="preserve">
     <value>주석</value>
