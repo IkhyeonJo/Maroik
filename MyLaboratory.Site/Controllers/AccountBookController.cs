@@ -397,8 +397,9 @@ namespace MyLaboratory.Site.Controllers
                 {
                     try
                     {
-                        #region Validate ProductName's Deletion
                         HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+
+                        #region Validate ProductName's Deletion
                         var tempAssetToValidate = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, incomeInputViewModel.DepositMyAssetProductName);
                         if (tempAssetToValidate.Deleted)
                         {
