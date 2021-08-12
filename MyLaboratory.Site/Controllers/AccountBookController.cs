@@ -397,6 +397,15 @@ namespace MyLaboratory.Site.Controllers
                 {
                     try
                     {
+                        #region Validate ProductName's Deletion
+                        HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+                        var tempAssetToValidate = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, incomeInputViewModel.DepositMyAssetProductName);
+                        if (tempAssetToValidate.Deleted)
+                        {
+                            return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                        }
+                        #endregion
+
                         #region Validation of MainClass & SubClass Value
                         if (incomeInputViewModel.MainClass == "RegularIncome")
                         {
@@ -421,8 +430,6 @@ namespace MyLaboratory.Site.Controllers
                         #endregion
 
                         #region 수입 생성
-                        HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
-
                         await incomeRepository.CreateIncomeAsync
                             (
                             new Income()
@@ -576,6 +583,15 @@ namespace MyLaboratory.Site.Controllers
                 {
                     try
                     {
+                        #region Validate ProductName's Deletion
+                        HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+                        var tempAssetToValidate = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, incomeInputViewModel.DepositMyAssetProductName);
+                        if (tempAssetToValidate.Deleted)
+                        {
+                            return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                        }
+                        #endregion
+
                         #region Validation of MainClass & SubClass Value
                         if (incomeInputViewModel.MainClass == "RegularIncome")
                         {
@@ -600,8 +616,6 @@ namespace MyLaboratory.Site.Controllers
                         #endregion
 
                         #region 수입 & 자산 업데이트
-                        HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
-
                         var tempIncomes = await incomeRepository.GetIncomesAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
 
                         if (tempIncomes == null)
@@ -709,6 +723,14 @@ namespace MyLaboratory.Site.Controllers
                     }
                     else
                     {
+                        #region Validate ProductName's Deletion
+                        var tempAssetToValidate = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, tempIncome.DepositMyAssetProductName);
+                        if (tempAssetToValidate.Deleted)
+                        {
+                            return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                        }
+                        #endregion
+
                         #region 자산 업데이트
                         var tempAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, tempIncome.DepositMyAssetProductName);
                         tempAsset.Amount -= Math.Abs(tempIncome.Amount);
@@ -820,7 +842,22 @@ namespace MyLaboratory.Site.Controllers
             {
                 if (ModelState.IsValid)
                 {
+                    #region Validate ProductName's Deletion
                     HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+                    var tempExpenditureAssetToValidate = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, expenditureInputViewModel.PaymentMethod);
+                    if (tempExpenditureAssetToValidate.Deleted)
+                    {
+                        return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                    }
+                    if (!string.IsNullOrEmpty(expenditureInputViewModel.MyDepositAsset))
+                    {
+                        var tempIncomeAssetToValidate = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, expenditureInputViewModel.MyDepositAsset);
+                        if (tempIncomeAssetToValidate.Deleted)
+                        {
+                            return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                        }
+                    }
+                    #endregion
 
                     #region 대분류 = '정기저축'
                     if (expenditureInputViewModel.MainClass == "RegularSavings")
@@ -1192,7 +1229,23 @@ namespace MyLaboratory.Site.Controllers
             {
                 if (ModelState.IsValid)
                 {
+                    #region Validate ProductName's Deletion
                     HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+                    var tempExpenditureAssetToValidate = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, expenditureInputViewModel.PaymentMethod);
+                    if (tempExpenditureAssetToValidate.Deleted)
+                    {
+                        return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                    }
+                    if (!string.IsNullOrEmpty(expenditureInputViewModel.MyDepositAsset))
+                    {
+                        var tempIncomeAssetToValidate = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, expenditureInputViewModel.MyDepositAsset);
+                        if (tempIncomeAssetToValidate.Deleted)
+                        {
+                            return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                        }
+                    }
+                    #endregion
+
                     expenditureInputViewModel.Amount = Math.Abs(expenditureInputViewModel.Amount);
 
                     #region 대분류 = '정기저축'
@@ -2890,6 +2943,22 @@ namespace MyLaboratory.Site.Controllers
                     }
                     else
                     {
+                        #region Validate ProductName's Deletion
+                        var tempExpenditureAssetToValidate = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, tempExpenditure.PaymentMethod);
+                        if (tempExpenditureAssetToValidate.Deleted)
+                        {
+                            return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                        }
+                        if (!string.IsNullOrEmpty(tempExpenditure.MyDepositAsset))
+                        {
+                            var tempIncomeAssetToValidate = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, tempExpenditure.MyDepositAsset);
+                            if (tempIncomeAssetToValidate.Deleted)
+                            {
+                                return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                            }
+                        }
+                        #endregion
+
                         if (!string.IsNullOrEmpty(tempExpenditure.MyDepositAsset))
                         {
                             #region 지출 삭제

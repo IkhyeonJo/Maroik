@@ -109,7 +109,10 @@
                                 <select id="createExpenditurePaymentMethod" name="createExpenditurePaymentMethod">
                                     @foreach (var item in await assetRepository.GetAssetsAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email))
                                     {
-                                        <option value="@item.ProductName">@item.ProductName</option>
+                                        if (!item.Deleted)
+                                        {
+                                            <option value="@item.ProductName">@item.ProductName</option>
+                                        }
                                     }
                                 </select>
                             </div>
@@ -125,7 +128,10 @@
                                 <select id="createExpenditureMyDepositAsset" name="createExpenditureMyDepositAsset">
                                     @foreach (var item in await assetRepository.GetAssetsAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email))
                                     {
-                                        <option value="@item.ProductName">@item.ProductName</option>
+                                        if (!item.Deleted)
+                                        {
+                                            <option value="@item.ProductName">@item.ProductName</option>
+                                        }
                                     }
                                 </select>
                             </div>
@@ -213,7 +219,10 @@
                                 <select id="editExpenditurePaymentMethod" name="editExpenditurePaymentMethod">
                                     @foreach (var item in await assetRepository.GetAssetsAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email))
                                     {
-                                        <option value="@item.ProductName">@item.ProductName</option>
+                                        if (!item.Deleted)
+                                        {
+                                            <option value="@item.ProductName">@item.ProductName</option>
+                                        }
                                     }
                                 </select>
                             </div>
@@ -229,7 +238,10 @@
                                 <select id="editExpenditureMyDepositAsset" name="editExpenditureMyDepositAsset">
                                     @foreach (var item in await assetRepository.GetAssetsAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email))
                                     {
-                                        <option value="@item.ProductName">@item.ProductName</option>
+                                        if (!item.Deleted)
+                                        {
+                                            <option value="@item.ProductName">@item.ProductName</option>
+                                        }
                                     }
                                 </select>
                             </div>
