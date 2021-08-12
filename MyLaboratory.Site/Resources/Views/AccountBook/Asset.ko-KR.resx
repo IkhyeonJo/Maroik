@@ -178,30 +178,30 @@
     <value>검색...</value>
   </data>
   <data name="기타 실물 자산" xml:space="preserve">
-    <value>기타 실물 자산</value>
+    <value>기타실물자산</value>
   </data>
   <data name="동산" xml:space="preserve">
     <value>동산</value>
   </data>
   <data name="보험 자산" xml:space="preserve">
-    <value>보험 자산</value>
+    <value>보험자산</value>
   </data>
   <data name="부동산" xml:space="preserve">
     <value>부동산</value>
   </data>
   <data name="신탁 자산" xml:space="preserve">
-    <value>신탁 자산</value>
+    <value>신탁자산</value>
   </data>
   <data name="자유입출금 자산" xml:space="preserve">
-    <value>자유입출금 자산</value>
+    <value>자유입출금자산</value>
   </data>
   <data name="저축성 자산" xml:space="preserve">
-    <value>저축성 자산</value>
+    <value>저축성자산</value>
   </data>
   <data name="투자성 자산" xml:space="preserve">
-    <value>투자성 자산</value>
+    <value>투자성자산</value>
   </data>
   <data name="현금 자산" xml:space="preserve">
-    <value>현금 자산</value>
+    <value>현금자산</value>
   </data>
 </root>
