@@ -772,3 +772,6 @@ https://k-garage.tistory.com/entry/C-%EC%84%B8%EA%B3%84-%EC%8B%9C%EA%B0%84-%EB%B
 
 # Windows & linux Timezone setting
 https://dejanstojanovic.net/aspnet/2018/july/differences-in-time-zones-in-net-core-on-windows-and-linux-host-os/
+
+# C# Get Time By Time Zone
+https://www.eugenechiang.com/2021/05/25/c-get-time-by-time-zone/
