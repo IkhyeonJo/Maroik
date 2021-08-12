@@ -130,19 +130,19 @@
     <value>Id</value>
   </data>
   <data name="MainClass" xml:space="preserve">
-    <value>Main class</value>
+    <value>MainClass</value>
   </data>
   <data name="MyDepositAsset" xml:space="preserve">
-    <value>My deposit asset</value>
+    <value>MyDepositAsset</value>
   </data>
   <data name="Note" xml:space="preserve">
     <value>Note</value>
   </data>
   <data name="PaymentMethod" xml:space="preserve">
-    <value>Payment method</value>
+    <value>PaymentMethod</value>
   </data>
   <data name="SubClass" xml:space="preserve">
-    <value>Sub class</value>
+    <value>SubClass</value>
   </data>
   <data name="Updated" xml:space="preserve">
     <value>Updated</value>
