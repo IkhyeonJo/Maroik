@@ -126,17 +126,35 @@
   <data name="CashAsset" xml:space="preserve">
     <value>현금 자산</value>
   </data>
+  <data name="ClothingOrShoes" xml:space="preserve">
+    <value>의류/신발</value>
+  </data>
+  <data name="CommunicationCost" xml:space="preserve">
+    <value>통신비</value>
+  </data>
+  <data name="ConsumerSpending" xml:space="preserve">
+    <value>소비지출</value>
+  </data>
   <data name="Contents" xml:space="preserve">
     <value>내용</value>
   </data>
   <data name="Created" xml:space="preserve">
     <value>생성일</value>
   </data>
+  <data name="DebtRepayment" xml:space="preserve">
+    <value>부채상환</value>
+  </data>
   <data name="Deleted" xml:space="preserve">
     <value>삭제여부</value>
   </data>
+  <data name="Deposit" xml:space="preserve">
+    <value>예적금</value>
+  </data>
   <data name="DepositMyAssetProductName" xml:space="preserve">
     <value>입금 자산</value>
+  </data>
+  <data name="EducationExpenses" xml:space="preserve">
+    <value>교육비</value>
   </data>
   <data name="Fail to find the asset by given product name" xml:space="preserve">
     <value>주어진 상품명으로 자산을 찾는데 실패하였습니다.</value>
@@ -147,6 +165,9 @@
   <data name="FreeDepositAndWithdrawal" xml:space="preserve">
     <value>자유입출금 자산</value>
   </data>
+  <data name="HousingOrSuppliesCost" xml:space="preserve">
+    <value>주거/용품비</value>
+  </data>
   <data name="Id" xml:space="preserve">
     <value>ID</value>
   </data>
@@ -155,6 +176,12 @@
   </data>
   <data name="InsuranceAsset" xml:space="preserve">
     <value>보험 자산</value>
+  </data>
+  <data name="InterHouseholdTranserExpenses" xml:space="preserve">
+    <value>가구간 이전지출</value>
+  </data>
+  <data name="Investment" xml:space="preserve">
+    <value>투자</value>
   </data>
   <data name="InvestmentAsset" xml:space="preserve">
     <value>투자성 자산</value>
@@ -168,8 +195,17 @@
   <data name="LaborIncome" xml:space="preserve">
     <value>근로수입</value>
   </data>
+  <data name="LeisureOrCulture" xml:space="preserve">
+    <value>여가/문화</value>
+  </data>
   <data name="MainClass" xml:space="preserve">
     <value>대분류</value>
+  </data>
+  <data name="MealOrEatOutExpenses" xml:space="preserve">
+    <value>식비/외식비</value>
+  </data>
+  <data name="MedicalExpenses" xml:space="preserve">
+    <value>의료비</value>
   </data>
   <data name="MonetaryUnit" xml:space="preserve">
     <value>화폐 단위</value>
@@ -177,11 +213,26 @@
   <data name="Movables" xml:space="preserve">
     <value>동산</value>
   </data>
+  <data name="MyAssetTransfer" xml:space="preserve">
+    <value>내자산이체</value>
+  </data>
+  <data name="No expenditure exists" xml:space="preserve">
+    <value>지출이 없습니다.</value>
+  </data>
   <data name="No income exists" xml:space="preserve">
     <value>수입이 없습니다.</value>
   </data>
+  <data name="NonConsumerSpending" xml:space="preserve">
+    <value>비소비지출</value>
+  </data>
+  <data name="NonProfitOrganizationTransfer" xml:space="preserve">
+    <value>비영리단체 이전</value>
+  </data>
   <data name="Note" xml:space="preserve">
     <value>주석</value>
+  </data>
+  <data name="OtherExpenses" xml:space="preserve">
+    <value>기타지출</value>
   </data>
   <data name="OtherIncome" xml:space="preserve">
     <value>기타수입</value>
@@ -192,8 +243,17 @@
   <data name="PensionIncome" xml:space="preserve">
     <value>연금수입</value>
   </data>
+  <data name="PinMoney" xml:space="preserve">
+    <value>용돈</value>
+  </data>
   <data name="ProductName" xml:space="preserve">
     <value>상품명</value>
+  </data>
+  <data name="ProtectionTypeInsurance" xml:space="preserve">
+    <value>보장성보험</value>
+  </data>
+  <data name="PublicPension" xml:space="preserve">
+    <value>공적연금</value>
   </data>
   <data name="RealEstate" xml:space="preserve">
     <value>부동산</value>
@@ -201,14 +261,23 @@
   <data name="RegularIncome" xml:space="preserve">
     <value>정기수입</value>
   </data>
+  <data name="RegularSavings" xml:space="preserve">
+    <value>정기저축</value>
+  </data>
   <data name="RentalIncome" xml:space="preserve">
     <value>임대수입</value>
   </data>
   <data name="SavingsAsset" xml:space="preserve">
     <value>저축성 자산</value>
   </data>
+  <data name="SocialInsurance" xml:space="preserve">
+    <value>사회보험</value>
+  </data>
   <data name="SubClass" xml:space="preserve">
     <value>소분류</value>
+  </data>
+  <data name="Tax" xml:space="preserve">
+    <value>세금</value>
   </data>
   <data name="The asset already exists." xml:space="preserve">
     <value>이미 존재하는 자산입니다.</value>
@@ -222,6 +291,15 @@
   <data name="The asset has been successfully updated." xml:space="preserve">
     <value>자산이 성공적으로 업데이트되었습니다.</value>
   </data>
+  <data name="The expenditure has been successfully created." xml:space="preserve">
+    <value>지출이 성공적으로 생성되었습니다.</value>
+  </data>
+  <data name="The expenditure has been successfully deleted." xml:space="preserve">
+    <value>지출이 성공적으로 삭제되었습니다.</value>
+  </data>
+  <data name="The expenditure has been successfully updated." xml:space="preserve">
+    <value>지출이 성공적으로 생성되었습니다.</value>
+  </data>
   <data name="The income has been successfully created." xml:space="preserve">
     <value>수입이 성공적으로 생성되었습니다.</value>
   </data>
@@ -231,8 +309,17 @@
   <data name="The income has been successfully updated." xml:space="preserve">
     <value>수입이 성공적으로 업데이트되었습니다.</value>
   </data>
+  <data name="The PaymentMethod and MyDepositAsset value cannot be the same." xml:space="preserve">
+    <value>결제 수단과 내 입금 자산이 같을 수 없습니다.</value>
+  </data>
+  <data name="TransportationCost" xml:space="preserve">
+    <value>교통비</value>
+  </data>
   <data name="TrustAsset" xml:space="preserve">
     <value>신탁 자산</value>
+  </data>
+  <data name="UnknownExpenditure" xml:space="preserve">
+    <value>미파악지출</value>
   </data>
   <data name="Updated" xml:space="preserve">
     <value>업데이트일</value>
