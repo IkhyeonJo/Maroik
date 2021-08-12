@@ -310,7 +310,7 @@
     <value>수입이 성공적으로 업데이트되었습니다.</value>
   </data>
   <data name="The PaymentMethod and MyDepositAsset value cannot be the same." xml:space="preserve">
-    <value>결제 수단과 내 입금 자산이 같을 수 없습니다.</value>
+    <value>결제수단과 내입금자산이 같을 수 없습니다.</value>
   </data>
   <data name="TransportationCost" xml:space="preserve">
     <value>교통비</value>
