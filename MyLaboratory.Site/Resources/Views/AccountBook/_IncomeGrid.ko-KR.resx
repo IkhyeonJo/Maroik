@@ -127,7 +127,7 @@
     <value>생성일</value>
   </data>
   <data name="DepositMyAssetProductName" xml:space="preserve">
-    <value>입금 자산</value>
+    <value>입금자산</value>
   </data>
   <data name="Id" xml:space="preserve">
     <value>ID</value>
