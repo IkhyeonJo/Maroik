@@ -742,7 +742,7 @@ namespace MyLaboratory.Site.Controllers
 
             List<IncomeOutputViewModel> incomeOutputViewModels = new List<IncomeOutputViewModel>();
 
-            #region Assets
+            #region Incomes
 
             HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
 
