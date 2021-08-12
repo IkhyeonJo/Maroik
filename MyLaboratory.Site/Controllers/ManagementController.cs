@@ -57,7 +57,7 @@ namespace MyLaboratory.Site.Controllers
             HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
             var tempAccount = await accountRepository.GetAccountAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
 
-            return View(new ProfileOutputViewModel() { Email = tempAccount.Email, AvatarImagePath = tempAccount.AvatarImagePath, FullName = tempAccount.FullName, Created = tempAccount.Created.ToLocalTime() });
+            return View(new ProfileOutputViewModel() { Email = tempAccount.Email, AvatarImagePath = tempAccount.AvatarImagePath, FullName = tempAccount.FullName, Created = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(tempAccount.Created, OSTimeZone.DestinationTimeZoneId) });
         }
         #endregion
 
@@ -335,8 +335,8 @@ namespace MyLaboratory.Site.Controllers
                             AgreedServiceTerms = item.AgreedServiceTerms,
                             RegistrationToken = item.RegistrationToken,
                             ResetPasswordToken = item.ResetPasswordToken,
-                            Created = item.Created.ToLocalTime(),
-                            Updated = item.Updated.ToLocalTime(),
+                            Created = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Created, OSTimeZone.DestinationTimeZoneId),
+                            Updated = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Updated, OSTimeZone.DestinationTimeZoneId),
                             Message = item.Message,
                             Deleted = item.Deleted
                         });
@@ -354,8 +354,8 @@ namespace MyLaboratory.Site.Controllers
                             (item.AgreedServiceTerms.ToString() ?? "").Contains(wholeSearch) ||
                             (item.RegistrationToken?.ToString() ?? "").Contains(wholeSearch) ||
                             (item.ResetPasswordToken?.ToString() ?? "").Contains(wholeSearch) ||
-                            (item.Created.ToLocalTime().ToString() ?? "").Contains(wholeSearch) ||
-                            (item.Updated.ToLocalTime().ToString() ?? "").Contains(wholeSearch) ||
+                            (TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Created, OSTimeZone.DestinationTimeZoneId).ToString() ?? "").Contains(wholeSearch) ||
+                            (TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Updated, OSTimeZone.DestinationTimeZoneId).ToString() ?? "").Contains(wholeSearch) ||
                             (item.Message?.ToString() ?? "").Contains(wholeSearch) ||
                             (item.Deleted.ToString() ?? "").Contains(wholeSearch))
                         {
@@ -372,8 +372,8 @@ namespace MyLaboratory.Site.Controllers
                                 AgreedServiceTerms = item.AgreedServiceTerms,
                                 RegistrationToken = item.RegistrationToken,
                                 ResetPasswordToken = item.ResetPasswordToken,
-                                Created = item.Created.ToLocalTime(),
-                                Updated = item.Updated.ToLocalTime(),
+                                Created = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Created, OSTimeZone.DestinationTimeZoneId),
+                                Updated = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Updated, OSTimeZone.DestinationTimeZoneId),
                                 Message = item.Message,
                                 Deleted = item.Deleted
                             });
@@ -522,8 +522,8 @@ namespace MyLaboratory.Site.Controllers
                     AgreedServiceTerms = item.AgreedServiceTerms,
                     RegistrationToken = item.RegistrationToken,
                     ResetPasswordToken = item.ResetPasswordToken,
-                    Created = item.Created.ToLocalTime(),
-                    Updated = item.Updated.ToLocalTime(),
+                    Created = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Created, OSTimeZone.DestinationTimeZoneId),
+                    Updated = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Updated, OSTimeZone.DestinationTimeZoneId),
                     Message = item.Message,
                     Deleted = item.Deleted
                 });
@@ -579,7 +579,7 @@ namespace MyLaboratory.Site.Controllers
                 package.Save();
             }
             stream.Position = 0;
-            string excelName = $"{fileName}-{DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd-HH-mm-ss-fff")}.xlsx";
+            string excelName = $"{fileName}-{TimeZoneInfo.ConvertTimeBySystemTimeZoneId(DateTime.UtcNow, OSTimeZone.DestinationTimeZoneId).ToString("yyyy-MM-dd-HH-mm-ss-fff")}.xlsx";
 
             return File(stream, "application/octet-stream", excelName);
         }
@@ -1249,7 +1249,7 @@ namespace MyLaboratory.Site.Controllers
                 package.Save();
             }
             stream.Position = 0;
-            string excelName = $"{fileName}-{DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd-HH-mm-ss-fff")}.xlsx";
+            string excelName = $"{fileName}-{TimeZoneInfo.ConvertTimeBySystemTimeZoneId(DateTime.UtcNow, OSTimeZone.DestinationTimeZoneId).ToString("yyyy-MM-dd-HH-mm-ss-fff")}.xlsx";
 
             return File(stream, "application/octet-stream", excelName);
         }

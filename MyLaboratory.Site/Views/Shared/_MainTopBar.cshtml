@@ -181,7 +181,7 @@
                     <img src="@Model.AvatarImagePath" class="img-circle elevation-2" alt="User Image">
                     <p>
                         @Model.FullName
-                        <small>@localizer["Member since"] @Model.Created.ToLocalTime().ToString("d")</small>
+                        <small>@localizer["Member since"] @TimeZoneInfo.ConvertTimeBySystemTimeZoneId(Model.Created, MyLaboratory.Site.Common.OSTimeZone.DestinationTimeZoneId).ToString("d")</small>
                     </p>
                 </li>
                 @*
