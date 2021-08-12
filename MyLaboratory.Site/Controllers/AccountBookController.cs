@@ -375,7 +375,7 @@ namespace MyLaboratory.Site.Controllers
                 package.Save();
             }
             stream.Position = 0;
-            string excelName = $"{fileName}-{DateTime.UtcNow.ToLocalTime().ToString("yyyyMMddHHmmssfff")}.xlsx";
+            string excelName = $"{fileName}-{DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd-HH-mm-ss-fff")}.xlsx";
 
             return File(stream, "application/octet-stream", excelName);
         }
@@ -800,7 +800,7 @@ namespace MyLaboratory.Site.Controllers
                 package.Save();
             }
             stream.Position = 0;
-            string excelName = $"{fileName}-{DateTime.UtcNow.ToLocalTime().ToString("yyyyMMddHHmmssfff")}.xlsx";
+            string excelName = $"{fileName}-{DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd-HH-mm-ss-fff")}.xlsx";
 
             return File(stream, "application/octet-stream", excelName);
         }
@@ -3010,7 +3010,7 @@ namespace MyLaboratory.Site.Controllers
                 package.Save();
             }
             stream.Position = 0;
-            string excelName = $"{fileName}-{DateTime.UtcNow.ToLocalTime().ToString("yyyyMMddHHmmssfff")}.xlsx";
+            string excelName = $"{fileName}-{DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd-HH-mm-ss-fff")}.xlsx";
 
             return File(stream, "application/octet-stream", excelName);
         }
