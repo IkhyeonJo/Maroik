@@ -766,3 +766,9 @@ MyLaboratory.Site 가계부
 
 ##사용 그리드:nonfactor grid
 #Select Multiple Row by shilt + LeftClick nonfactor grid... rowclick event 랑 색칠 되어 있는 지 확인해서 논리로 구현할 수 있다.
+
+# DateTime.utc 에서 한국 시간 설정
+https://k-garage.tistory.com/entry/C-%EC%84%B8%EA%B3%84-%EC%8B%9C%EA%B0%84-%EB%B3%84-%EA%B3%A0%EC%A0%95-%EA%B0%92-%EA%B0%80%EC%A0%B8%EC%98%A4%EA%B8%B0
+
+# Windows & linux Timezone setting
+https://dejanstojanovic.net/aspnet/2018/july/differences-in-time-zones-in-net-core-on-windows-and-linux-host-os/
