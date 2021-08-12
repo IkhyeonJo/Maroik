@@ -842,8 +842,9 @@ namespace MyLaboratory.Site.Controllers
             {
                 if (ModelState.IsValid)
                 {
-                    #region Validate ProductName's Deletion
                     HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+
+                    #region Validate ProductName's Deletion
                     var tempExpenditureAssetToValidate = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, expenditureInputViewModel.PaymentMethod);
                     if (tempExpenditureAssetToValidate.Deleted)
                     {
