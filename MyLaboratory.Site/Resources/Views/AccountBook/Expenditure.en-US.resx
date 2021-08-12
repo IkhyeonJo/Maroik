@@ -151,7 +151,7 @@
     <value>EXCEL</value>
   </data>
   <data name="MainClass" xml:space="preserve">
-    <value>Main class</value>
+    <value>MainClass</value>
   </data>
   <data name="MyDepositAsset" xml:space="preserve">
     <value>MyDepositAsset</value>
@@ -175,7 +175,7 @@
     <value>Search...</value>
   </data>
   <data name="SubClass" xml:space="preserve">
-    <value>Sub class</value>
+    <value>SubClass</value>
   </data>
   <data name="가구간 이전지출" xml:space="preserve">
     <value>InterHouseholdTranserExpenses</value>
@@ -193,7 +193,7 @@
     <value>OtherExpenses</value>
   </data>
   <data name="내자산이체" xml:space="preserve">
-    <value>My asset transfer</value>
+    <value>MyAssetTransfer</value>
   </data>
   <data name="미파악지출" xml:space="preserve">
     <value>UnknownExpenditure</value>
