@@ -33,11 +33,5 @@ namespace MyLaboratory.Site.Models.ViewModels.AccountBook
         [Required(ErrorMessage = "Please enter MyDepositAsset")]
         [Display(Name = "MyDepositAsset")]
         public string MyDepositAsset { get; set; }
-        [Required(ErrorMessage = "Please enter Created")]
-        [Display(Name = "Created")]
-        public DateTime Created { get; set; }
-        [Required(ErrorMessage = "Please enter Updated")]
-        [Display(Name = "Updated")]
-        public DateTime Updated { get; set; }
     }
 }
