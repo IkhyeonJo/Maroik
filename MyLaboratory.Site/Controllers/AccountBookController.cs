@@ -583,14 +583,7 @@ namespace MyLaboratory.Site.Controllers
                 {
                     try
                     {
-                        #region Validate ProductName's Deletion
                         HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
-                        var tempAssetToValidate = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, incomeInputViewModel.DepositMyAssetProductName);
-                        if (tempAssetToValidate.Deleted)
-                        {
-                            return Json(new { result = false, error = localizer["Input is invalid"].Value });
-                        }
-                        #endregion
 
                         #region Validation of MainClass & SubClass Value
                         if (incomeInputViewModel.MainClass == "RegularIncome")
@@ -632,6 +625,13 @@ namespace MyLaboratory.Site.Controllers
                             }
                             else
                             {
+                                #region Validate ProductName's Deletion
+                                var tempAssetToValidate = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, tempIncome.DepositMyAssetProductName);
+                                if (tempAssetToValidate.Deleted)
+                                {
+                                    return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                                }
+                                #endregion
                                 var previousTempIncomeDepositMyAssetProductName = tempIncome.DepositMyAssetProductName;
                                 var previousTempIncomeAmount = tempIncome.Amount;
 
