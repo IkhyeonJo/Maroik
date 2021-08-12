@@ -121,10 +121,10 @@
     <value>Amount</value>
   </data>
   <data name="BusinessIncome" xml:space="preserve">
-    <value>Business income</value>
+    <value>BusinessIncome</value>
   </data>
   <data name="CashAsset" xml:space="preserve">
-    <value>Cash asset</value>
+    <value>CashAsset</value>
   </data>
   <data name="ClothingOrShoes" xml:space="preserve">
     <value>ClothingOrShoes</value>
@@ -160,16 +160,16 @@
     <value>Fail to find the asset by given product name</value>
   </data>
   <data name="FinancialIncome" xml:space="preserve">
-    <value>Financial income</value>
+    <value>FinancialIncome</value>
   </data>
   <data name="FreeDepositAndWithdrawal" xml:space="preserve">
-    <value>Free deposit and withdrawal</value>
+    <value>FreeDepositAndWithdrawal</value>
   </data>
   <data name="HousingOrSuppliesCost" xml:space="preserve">
     <value>HousingOrSuppliesCost</value>
   </data>
   <data name="Id" xml:space="preserve">
-    <value>ID</value>
+    <value>Id</value>
   </data>
   <data name="Input is invalid" xml:space="preserve">
     <value>Input is invalid</value>
@@ -184,16 +184,16 @@
     <value>Investment</value>
   </data>
   <data name="InvestmentAsset" xml:space="preserve">
-    <value>Investment asset</value>
+    <value>InvestmentAsset</value>
   </data>
   <data name="IrregularIncome" xml:space="preserve">
-    <value>Irregular income</value>
+    <value>IrregularIncome</value>
   </data>
   <data name="Item" xml:space="preserve">
     <value>Item</value>
   </data>
   <data name="LaborIncome" xml:space="preserve">
-    <value>Labor income</value>
+    <value>LaborIncome</value>
   </data>
   <data name="LeisureOrCulture" xml:space="preserve">
     <value>LeisureOrCulture</value>
@@ -238,10 +238,10 @@
     <value>Other income</value>
   </data>
   <data name="OtherPhysicalAsset" xml:space="preserve">
-    <value>Other physical asset</value>
+    <value>OtherPhysicalAsset</value>
   </data>
   <data name="PensionIncome" xml:space="preserve">
-    <value>Pension income</value>
+    <value>PensionIncome</value>
   </data>
   <data name="PinMoney" xml:space="preserve">
     <value>PinMoney</value>
@@ -256,19 +256,19 @@
     <value>PublicPension</value>
   </data>
   <data name="RealEstate" xml:space="preserve">
-    <value>Real estate</value>
+    <value>RealEstate</value>
   </data>
   <data name="RegularIncome" xml:space="preserve">
-    <value>Regular income</value>
+    <value>RegularIncome</value>
   </data>
   <data name="RegularSavings" xml:space="preserve">
     <value>RegularSavings</value>
   </data>
   <data name="RentalIncome" xml:space="preserve">
-    <value>Rental income</value>
+    <value>RentalIncome</value>
   </data>
   <data name="SavingsAsset" xml:space="preserve">
-    <value>Savings asset</value>
+    <value>SavingsAsset</value>
   </data>
   <data name="SocialInsurance" xml:space="preserve">
     <value>SocialInsurance</value>
