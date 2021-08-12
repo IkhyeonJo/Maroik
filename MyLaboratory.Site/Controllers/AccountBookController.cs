@@ -1229,22 +1229,7 @@ namespace MyLaboratory.Site.Controllers
             {
                 if (ModelState.IsValid)
                 {
-                    #region Validate ProductName's Deletion
                     HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
-                    var tempExpenditureAssetToValidate = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, expenditureInputViewModel.PaymentMethod);
-                    if (tempExpenditureAssetToValidate.Deleted)
-                    {
-                        return Json(new { result = false, error = localizer["Input is invalid"].Value });
-                    }
-                    if (!string.IsNullOrEmpty(expenditureInputViewModel.MyDepositAsset))
-                    {
-                        var tempIncomeAssetToValidate = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, expenditureInputViewModel.MyDepositAsset);
-                        if (tempIncomeAssetToValidate.Deleted)
-                        {
-                            return Json(new { result = false, error = localizer["Input is invalid"].Value });
-                        }
-                    }
-                    #endregion
 
                     expenditureInputViewModel.Amount = Math.Abs(expenditureInputViewModel.Amount);
 
@@ -1277,6 +1262,22 @@ namespace MyLaboratory.Site.Controllers
                                     Note = expenditureInputViewModel?.Note ?? "",
                                     Asset = previousTempExpenditure.Asset
                                 };
+
+                                #region Validate ProductName's Deletion
+                                var tempExpenditureAssetToValidate = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
+                                if (tempExpenditureAssetToValidate.Deleted)
+                                {
+                                    return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                                }
+                                if (!string.IsNullOrEmpty(previousTempExpenditure.MyDepositAsset))
+                                {
+                                    var tempIncomeAssetToValidate = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
+                                    if (tempIncomeAssetToValidate.Deleted)
+                                    {
+                                        return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                                    }
+                                }
+                                #endregion
 
                                 #region 과거 지출 값 [(결제수단(O)), (내입금자산(X))], 현재 지출 값 [(결제수단(O)), (내입금자산(O))]
                                 if (!string.IsNullOrEmpty(previousTempExpenditure.PaymentMethod) && string.IsNullOrEmpty(previousTempExpenditure.MyDepositAsset) &&
@@ -1862,6 +1863,22 @@ namespace MyLaboratory.Site.Controllers
                                     Note = expenditureInputViewModel?.Note ?? "",
                                     Asset = previousTempExpenditure.Asset
                                 };
+
+                                #region Validate ProductName's Deletion
+                                var tempExpenditureAssetToValidate = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
+                                if (tempExpenditureAssetToValidate.Deleted)
+                                {
+                                    return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                                }
+                                if (!string.IsNullOrEmpty(previousTempExpenditure.MyDepositAsset))
+                                {
+                                    var tempIncomeAssetToValidate = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
+                                    if (tempIncomeAssetToValidate.Deleted)
+                                    {
+                                        return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                                    }
+                                }
+                                #endregion
 
                                 #region 과거 지출 값 [(결제수단(O)), (내입금자산(X))], 현재 지출 값 [(결제수단(O)), (내입금자산(O))]
                                 if (!string.IsNullOrEmpty(previousTempExpenditure.PaymentMethod) && string.IsNullOrEmpty(previousTempExpenditure.MyDepositAsset) &&
@@ -2695,6 +2712,22 @@ namespace MyLaboratory.Site.Controllers
                                     Note = expenditureInputViewModel?.Note ?? "",
                                     Asset = previousTempExpenditure.Asset
                                 };
+
+                                #region Validate ProductName's Deletion
+                                var tempExpenditureAssetToValidate = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
+                                if (tempExpenditureAssetToValidate.Deleted)
+                                {
+                                    return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                                }
+                                if (!string.IsNullOrEmpty(previousTempExpenditure.MyDepositAsset))
+                                {
+                                    var tempIncomeAssetToValidate = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
+                                    if (tempIncomeAssetToValidate.Deleted)
+                                    {
+                                        return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                                    }
+                                }
+                                #endregion
 
                                 #region 과거 지출 값 [(결제수단(O)), (내입금자산(X))], 현재 지출 값 [(결제수단(O)), (내입금자산(X))]
                                 if (!string.IsNullOrEmpty(previousTempExpenditure.PaymentMethod) && string.IsNullOrEmpty(previousTempExpenditure.MyDepositAsset) &&
