@@ -124,7 +124,7 @@
     <value>사업수입</value>
   </data>
   <data name="CashAsset" xml:space="preserve">
-    <value>현금 자산</value>
+    <value>현금자산</value>
   </data>
   <data name="ClothingOrShoes" xml:space="preserve">
     <value>의류/신발</value>
@@ -151,7 +151,7 @@
     <value>예적금</value>
   </data>
   <data name="DepositMyAssetProductName" xml:space="preserve">
-    <value>입금 자산</value>
+    <value>입금자산</value>
   </data>
   <data name="EducationExpenses" xml:space="preserve">
     <value>교육비</value>
@@ -163,7 +163,7 @@
     <value>금융소득</value>
   </data>
   <data name="FreeDepositAndWithdrawal" xml:space="preserve">
-    <value>자유입출금 자산</value>
+    <value>자유입출금자산</value>
   </data>
   <data name="HousingOrSuppliesCost" xml:space="preserve">
     <value>주거/용품비</value>
@@ -175,10 +175,10 @@
     <value>유효하지 않은 입력값입니다.</value>
   </data>
   <data name="InsuranceAsset" xml:space="preserve">
-    <value>보험 자산</value>
+    <value>보험자산</value>
   </data>
   <data name="InterHouseholdTranserExpenses" xml:space="preserve">
-    <value>가구간 이전지출</value>
+    <value>가구간이전지출</value>
   </data>
   <data name="Investment" xml:space="preserve">
     <value>투자</value>
@@ -226,7 +226,7 @@
     <value>비소비지출</value>
   </data>
   <data name="NonProfitOrganizationTransfer" xml:space="preserve">
-    <value>비영리단체 이전</value>
+    <value>비영리단체이전</value>
   </data>
   <data name="Note" xml:space="preserve">
     <value>주석</value>
@@ -238,7 +238,7 @@
     <value>기타수입</value>
   </data>
   <data name="OtherPhysicalAsset" xml:space="preserve">
-    <value>기타 실물 자산</value>
+    <value>기타실물자산</value>
   </data>
   <data name="PensionIncome" xml:space="preserve">
     <value>연금수입</value>
@@ -268,7 +268,7 @@
     <value>임대수입</value>
   </data>
   <data name="SavingsAsset" xml:space="preserve">
-    <value>저축성 자산</value>
+    <value>저축성자산</value>
   </data>
   <data name="SocialInsurance" xml:space="preserve">
     <value>사회보험</value>
