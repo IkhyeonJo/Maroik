@@ -147,8 +147,8 @@ namespace MyLaboratory.Site.Controllers
                             Item = localizer[item.Item.ToString()].Value,
                             Amount = item.Amount,
                             MonetaryUnit = item.MonetaryUnit,
-                            Created = item.Created,
-                            Updated = item.Updated,
+                            Created = item.Created.ToLocalTime(),
+                            Updated = item.Updated.ToLocalTime(),
                             Note = item.Note,
                             Deleted = item.Deleted
                         });
@@ -159,8 +159,8 @@ namespace MyLaboratory.Site.Controllers
                             localizer[item.Item?.ToString() ?? ""].Value.Contains(wholeSearch) ||
                             (item.Amount.ToString() ?? "").Contains(wholeSearch) ||
                             (item.MonetaryUnit?.ToString() ?? "").Contains(wholeSearch) ||
-                            (item.Created.ToString() ?? "").Contains(wholeSearch) ||
-                            (item.Updated.ToString() ?? "").Contains(wholeSearch) ||
+                            (item.Created.ToLocalTime().ToString() ?? "").Contains(wholeSearch) ||
+                            (item.Updated.ToLocalTime().ToString() ?? "").Contains(wholeSearch) ||
                             (item.Note?.ToString() ?? "").Contains(wholeSearch) ||
                             (item.Deleted.ToString() ?? "").Contains(wholeSearch))
                         {
@@ -170,8 +170,8 @@ namespace MyLaboratory.Site.Controllers
                                 Item = localizer[item.Item.ToString()].Value,
                                 Amount = item.Amount,
                                 MonetaryUnit = item.MonetaryUnit,
-                                Created = item.Created,
-                                Updated = item.Updated,
+                                Created = item.Created.ToLocalTime(),
+                                Updated = item.Updated.ToLocalTime(),
                                 Note = item.Note,
                                 Deleted = item.Deleted
                             });
@@ -332,8 +332,8 @@ namespace MyLaboratory.Site.Controllers
                     Item = item.Item,
                     Amount = item.Amount,
                     MonetaryUnit = item.MonetaryUnit,
-                    Created = item.Created,
-                    Updated = item.Updated,
+                    Created = item.Created.ToLocalTime(),
+                    Updated = item.Updated.ToLocalTime(),
                     Note = item.Note,
                     Deleted = item.Deleted
                 });
@@ -489,8 +489,8 @@ namespace MyLaboratory.Site.Controllers
                             Contents = item.Contents,
                             Amount = item.Amount,
                             DepositMyAssetProductName = item.DepositMyAssetProductName,
-                            Created = item.Created,
-                            Updated = item.Updated,
+                            Created = item.Created.ToLocalTime(),
+                            Updated = item.Updated.ToLocalTime(),
                             Note = item.Note
                         });
                     }
@@ -502,8 +502,8 @@ namespace MyLaboratory.Site.Controllers
                             (item.Contents?.ToString() ?? "").Contains(wholeSearch) ||
                             (item.Amount.ToString() ?? "").Contains(wholeSearch) ||
                             (item.DepositMyAssetProductName?.ToString() ?? "").Contains(wholeSearch) ||
-                            (item.Created.ToString() ?? "").Contains(wholeSearch) ||
-                            (item.Updated.ToString() ?? "").Contains(wholeSearch) ||
+                            (item.Created.ToLocalTime().ToString() ?? "").Contains(wholeSearch) ||
+                            (item.Updated.ToLocalTime().ToString() ?? "").Contains(wholeSearch) ||
                             (item.Note?.ToString() ?? "").Contains(wholeSearch))
                         {
                             incomeOutputViewModels.Add(new IncomeOutputViewModel()
@@ -514,8 +514,8 @@ namespace MyLaboratory.Site.Controllers
                                 Contents = item.Contents,
                                 Amount = item.Amount,
                                 DepositMyAssetProductName = item.DepositMyAssetProductName,
-                                Created = item.Created,
-                                Updated = item.Updated,
+                                Created = item.Created.ToLocalTime(),
+                                Updated = item.Updated.ToLocalTime(),
                                 Note = item.Note
                             });
                         }
@@ -756,8 +756,8 @@ namespace MyLaboratory.Site.Controllers
                     Contents = item.Contents,
                     Amount = item.Amount,
                     DepositMyAssetProductName = item.DepositMyAssetProductName,
-                    Created = item.Created,
-                    Updated = item.Updated,
+                    Created = item.Created.ToLocalTime(),
+                    Updated = item.Updated.ToLocalTime(),
                     Note = item.Note
                 });
             }
@@ -1106,8 +1106,8 @@ namespace MyLaboratory.Site.Controllers
                             PaymentMethod = item.PaymentMethod,
                             Note = item.Note,
                             MyDepositAsset = item.MyDepositAsset,
-                            Created = item.Created,
-                            Updated = item.Updated
+                            Created = item.Created.ToLocalTime(),
+                            Updated = item.Updated.ToLocalTime()
                         });
                     }
                     else
@@ -1120,8 +1120,8 @@ namespace MyLaboratory.Site.Controllers
                             (item.PaymentMethod?.ToString() ?? "").Contains(wholeSearch) ||
                             (item.Note?.ToString() ?? "").Contains(wholeSearch) ||
                             (item.MyDepositAsset?.ToString() ?? "").Contains(wholeSearch) ||
-                            (item.Created.ToString() ?? "").Contains(wholeSearch) ||
-                            (item.Updated.ToString() ?? "").Contains(wholeSearch))
+                            (item.Created.ToLocalTime().ToString() ?? "").Contains(wholeSearch) ||
+                            (item.Updated.ToLocalTime().ToString() ?? "").Contains(wholeSearch))
                         {
                             expenditureOutputViewModels.Add(new ExpenditureOutputViewModel()
                             {
@@ -1133,8 +1133,8 @@ namespace MyLaboratory.Site.Controllers
                                 PaymentMethod = item.PaymentMethod,
                                 Note = item.Note,
                                 MyDepositAsset = item.MyDepositAsset,
-                                Created = item.Created,
-                                Updated = item.Updated
+                                Created = item.Created.ToLocalTime(),
+                                Updated = item.Updated.ToLocalTime()
                             });
                         }
                     }
@@ -2964,8 +2964,8 @@ namespace MyLaboratory.Site.Controllers
                     PaymentMethod = item.PaymentMethod,
                     Note = item.Note,
                     MyDepositAsset = item.MyDepositAsset,
-                    Created = item.Created,
-                    Updated = item.Updated
+                    Created = item.Created.ToLocalTime(),
+                    Updated = item.Updated.ToLocalTime()
                 });
             }
             #endregion

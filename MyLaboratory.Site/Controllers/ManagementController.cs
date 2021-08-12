@@ -57,7 +57,7 @@ namespace MyLaboratory.Site.Controllers
             HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
             var tempAccount = await accountRepository.GetAccountAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
 
-            return View(new ProfileOutputViewModel() { Email = tempAccount.Email, AvatarImagePath = tempAccount.AvatarImagePath, FullName = tempAccount.FullName, Created = tempAccount.Created });
+            return View(new ProfileOutputViewModel() { Email = tempAccount.Email, AvatarImagePath = tempAccount.AvatarImagePath, FullName = tempAccount.FullName, Created = tempAccount.Created.ToLocalTime() });
         }
         #endregion
 
@@ -335,8 +335,8 @@ namespace MyLaboratory.Site.Controllers
                             AgreedServiceTerms = item.AgreedServiceTerms,
                             RegistrationToken = item.RegistrationToken,
                             ResetPasswordToken = item.ResetPasswordToken,
-                            Created = item.Created,
-                            Updated = item.Updated,
+                            Created = item.Created.ToLocalTime(),
+                            Updated = item.Updated.ToLocalTime(),
                             Message = item.Message,
                             Deleted = item.Deleted
                         });
@@ -354,8 +354,8 @@ namespace MyLaboratory.Site.Controllers
                             (item.AgreedServiceTerms.ToString() ?? "").Contains(wholeSearch) ||
                             (item.RegistrationToken?.ToString() ?? "").Contains(wholeSearch) ||
                             (item.ResetPasswordToken?.ToString() ?? "").Contains(wholeSearch) ||
-                            (item.Created.ToString() ?? "").Contains(wholeSearch) ||
-                            (item.Updated.ToString() ?? "").Contains(wholeSearch) ||
+                            (item.Created.ToLocalTime().ToString() ?? "").Contains(wholeSearch) ||
+                            (item.Updated.ToLocalTime().ToString() ?? "").Contains(wholeSearch) ||
                             (item.Message?.ToString() ?? "").Contains(wholeSearch) ||
                             (item.Deleted.ToString() ?? "").Contains(wholeSearch))
                         {
@@ -372,8 +372,8 @@ namespace MyLaboratory.Site.Controllers
                                 AgreedServiceTerms = item.AgreedServiceTerms,
                                 RegistrationToken = item.RegistrationToken,
                                 ResetPasswordToken = item.ResetPasswordToken,
-                                Created = item.Created,
-                                Updated = item.Updated,
+                                Created = item.Created.ToLocalTime(),
+                                Updated = item.Updated.ToLocalTime(),
                                 Message = item.Message,
                                 Deleted = item.Deleted
                             });
@@ -522,8 +522,8 @@ namespace MyLaboratory.Site.Controllers
                     AgreedServiceTerms = item.AgreedServiceTerms,
                     RegistrationToken = item.RegistrationToken,
                     ResetPasswordToken = item.ResetPasswordToken,
-                    Created = item.Created,
-                    Updated = item.Updated,
+                    Created = item.Created.ToLocalTime(),
+                    Updated = item.Updated.ToLocalTime(),
                     Message = item.Message,
                     Deleted = item.Deleted
                 });
