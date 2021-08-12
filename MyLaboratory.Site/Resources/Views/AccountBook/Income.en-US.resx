@@ -142,7 +142,7 @@
     <value>DELETE</value>
   </data>
   <data name="DepositMyAssetProductName" xml:space="preserve">
-    <value>Deposit Asset</value>
+    <value>DepositMyAssetProductName</value>
   </data>
   <data name="EDIT" xml:space="preserve">
     <value>EDIT</value>
@@ -154,7 +154,7 @@
     <value>EXCEL</value>
   </data>
   <data name="MainClass" xml:space="preserve">
-    <value>Main class</value>
+    <value>MainClass</value>
   </data>
   <data name="Note" xml:space="preserve">
     <value>Note</value>
@@ -172,7 +172,7 @@
     <value>Search...</value>
   </data>
   <data name="SubClass" xml:space="preserve">
-    <value>Sub class</value>
+    <value>SubClass</value>
   </data>
   <data name="근로수입" xml:space="preserve">
     <value>Labor income</value>
