@@ -175,7 +175,7 @@
     <value>Input is invalid</value>
   </data>
   <data name="InsuranceAsset" xml:space="preserve">
-    <value>Insurance asset</value>
+    <value>InsuranceAsset</value>
   </data>
   <data name="InterHouseholdTranserExpenses" xml:space="preserve">
     <value>InterHouseholdTranserExpenses</value>
