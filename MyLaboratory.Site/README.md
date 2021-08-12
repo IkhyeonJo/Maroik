@@ -660,7 +660,7 @@ Uri.UnescapeDataString()
 #----------------------------------------------------------------------------------------------------
 
 
-다국어 처리
+다국어 처리 (Multi-Language)
 https://www.youtube.com/watch?v=Hy9G30nncMM
 
 Repository Pattern
