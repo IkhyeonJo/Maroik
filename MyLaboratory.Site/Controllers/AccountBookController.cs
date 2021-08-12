@@ -1182,6 +1182,1693 @@ namespace MyLaboratory.Site.Controllers
         }
         #endregion
 
+        #region Update
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [RequiredHttpPostAccess(Role = Role.User)]
+        public async Task<IActionResult> UpdateExpenditure([FromBody] ExpenditureInputViewModel expenditureInputViewModel)
+        {
+            try
+            {
+                if (ModelState.IsValid)
+                {
+                    HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+                    expenditureInputViewModel.Amount = Math.Abs(expenditureInputViewModel.Amount);
+
+                    #region 대분류 = '정기저축'
+                    if (expenditureInputViewModel.MainClass == "RegularSavings")
+                    {
+                        if (expenditureInputViewModel.SubClass == "Deposit" || expenditureInputViewModel.SubClass == "MyAssetTransfer" || expenditureInputViewModel.SubClass == "Investment")
+                        {
+                            try
+                            {
+                                if (expenditureInputViewModel.PaymentMethod == expenditureInputViewModel.MyDepositAsset)
+                                {
+                                    return Json(new { result = false, error = localizer["The PaymentMethod and MyDepositAsset value cannot be the same."].Value });
+                                }
+
+                                var tempExpenditures = await expenditureRepository.GetExpendituresAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+                                var previousTempExpenditure = tempExpenditures.Where(a => a.Id == expenditureInputViewModel.Id).FirstOrDefault();
+                                var currentTempExpenditure = new Expenditure()
+                                {
+                                    Id = expenditureInputViewModel.Id,
+                                    AccountEmail = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email,
+                                    MainClass = expenditureInputViewModel.MainClass,
+                                    SubClass = expenditureInputViewModel.SubClass,
+                                    Contents = expenditureInputViewModel?.Contents ?? "",
+                                    Amount = expenditureInputViewModel.Amount,
+                                    PaymentMethod = expenditureInputViewModel.PaymentMethod,
+                                    MyDepositAsset = expenditureInputViewModel?.MyDepositAsset ?? "",
+                                    Created = previousTempExpenditure.Created,
+                                    Updated = DateTime.UtcNow,
+                                    Note = expenditureInputViewModel?.Note ?? "",
+                                    Asset = previousTempExpenditure.Asset
+                                };
+
+                                #region 과거 지출 값 [(결제수단(O)), (내입금자산(X))], 현재 지출 값 [(결제수단(O)), (내입금자산(O))]
+                                if (!string.IsNullOrEmpty(previousTempExpenditure.PaymentMethod) && string.IsNullOrEmpty(previousTempExpenditure.MyDepositAsset) &&
+                                    !string.IsNullOrEmpty(currentTempExpenditure.PaymentMethod) && !string.IsNullOrEmpty(currentTempExpenditure.MyDepositAsset))
+                                {
+                                    #region 지출 업데이트
+                                    await expenditureRepository.UpdateExpenditureAsync(currentTempExpenditure);
+                                    #endregion
+
+                                    if (previousTempExpenditure.PaymentMethod == currentTempExpenditure.PaymentMethod) // else 보고 참조함.
+                                    {
+                                        var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
+                                        pastExpenditureAsset.Amount = pastExpenditureAsset.Amount + Math.Abs(previousTempExpenditure.Amount) - Math.Abs(currentTempExpenditure.Amount);
+                                        pastExpenditureAsset.Updated = DateTime.UtcNow;
+                                        await assetRepository.UpdateAssetAsync(pastExpenditureAsset);
+
+                                        var currentIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.MyDepositAsset);
+                                        currentIncomeAsset.Amount += Math.Abs(currentTempExpenditure.Amount);
+                                        currentIncomeAsset.Updated = DateTime.UtcNow;
+                                        await assetRepository.UpdateAssetAsync(currentIncomeAsset);
+                                    }
+                                    else if (previousTempExpenditure.PaymentMethod == currentTempExpenditure.MyDepositAsset) // else 보고 참조함.
+                                    {
+                                        var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
+                                        pastExpenditureAsset.Amount = pastExpenditureAsset.Amount + Math.Abs(previousTempExpenditure.Amount) + Math.Abs(currentTempExpenditure.Amount);
+                                        pastExpenditureAsset.Updated = DateTime.UtcNow;
+                                        await assetRepository.UpdateAssetAsync(pastExpenditureAsset);
+
+                                        var currentExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.PaymentMethod);
+                                        currentExpenditureAsset.Amount -= Math.Abs(currentTempExpenditure.Amount);
+                                        currentExpenditureAsset.Updated = DateTime.UtcNow;
+                                        await assetRepository.UpdateAssetAsync(currentExpenditureAsset);
+                                    }
+                                    else
+                                    {
+                                        #region 자산 업데이트
+
+                                        var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
+                                        //var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
+
+                                        var currentExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.PaymentMethod);
+                                        var currentIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.MyDepositAsset);
+                                        
+                                        #region 과거 자산
+                                        pastExpenditureAsset.Amount += Math.Abs(previousTempExpenditure.Amount);
+                                        pastExpenditureAsset.Updated = DateTime.UtcNow;
+                                        await assetRepository.UpdateAssetAsync(pastExpenditureAsset);
+
+                                        //pastIncomeAsset.Amount -= Math.Abs(previousTempExpenditure.Amount);
+                                        //pastIncomeAsset.Updated = DateTime.UtcNow;
+                                        //await assetRepository.UpdateAssetAsync(pastIncomeAsset);
+                                        #endregion
+
+                                        #region 현재 자산
+                                        currentExpenditureAsset.Amount -= Math.Abs(currentTempExpenditure.Amount);
+                                        currentExpenditureAsset.Updated = DateTime.UtcNow;
+                                        await assetRepository.UpdateAssetAsync(currentExpenditureAsset);
+
+                                        currentIncomeAsset.Amount += Math.Abs(currentTempExpenditure.Amount);
+                                        currentIncomeAsset.Updated = DateTime.UtcNow;
+                                        await assetRepository.UpdateAssetAsync(currentIncomeAsset);
+                                        #endregion
+
+                                        #endregion
+                                    }
+
+                                    return Json(new { result = true, message = localizer["The expenditure has been successfully updated."].Value });
+                                }
+                                #endregion
+                                #region 과거 지출 값 [(결제수단(O)), (내입금자산(O))], 현재 지출 값 [(결제수단(O)), (내입금자산(O))]
+                                else if (!string.IsNullOrEmpty(previousTempExpenditure.PaymentMethod) && !string.IsNullOrEmpty(previousTempExpenditure.MyDepositAsset) &&
+                                        !string.IsNullOrEmpty(currentTempExpenditure.PaymentMethod) && !string.IsNullOrEmpty(currentTempExpenditure.MyDepositAsset))
+                                {
+                                    #region 지출 업데이트
+                                    await expenditureRepository.UpdateExpenditureAsync(currentTempExpenditure);
+                                    #endregion
+
+                                    if (previousTempExpenditure.PaymentMethod == currentTempExpenditure.PaymentMethod)
+                                    {
+                                        if (previousTempExpenditure.MyDepositAsset == currentTempExpenditure.MyDepositAsset)
+                                        {
+                                            #region 자산 업데이트
+                                            var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
+                                            var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
+
+                                            pastExpenditureAsset.Amount = pastExpenditureAsset.Amount + Math.Abs(previousTempExpenditure.Amount) - Math.Abs(currentTempExpenditure.Amount);
+                                            pastExpenditureAsset.Updated = DateTime.UtcNow;
+                                            await assetRepository.UpdateAssetAsync(pastExpenditureAsset);
+
+                                            pastIncomeAsset.Amount = pastIncomeAsset.Amount - Math.Abs(previousTempExpenditure.Amount) + Math.Abs(currentTempExpenditure.Amount);
+                                            pastIncomeAsset.Updated = DateTime.UtcNow;
+                                            await assetRepository.UpdateAssetAsync(pastIncomeAsset);
+                                            #endregion
+
+                                            //#region 자산 업데이트
+
+                                            //#region 과거 자산
+                                            //var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
+                                            //var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
+
+                                            //var currentExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.PaymentMethod);
+                                            //var currentIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.MyDepositAsset);
+
+                                            //pastExpenditureAsset.Amount += Math.Abs(previousTempExpenditure.Amount);
+                                            //pastExpenditureAsset.Updated = DateTime.UtcNow;
+                                            //await assetRepository.UpdateAssetAsync(pastExpenditureAsset);
+
+                                            //pastIncomeAsset.Amount -= Math.Abs(previousTempExpenditure.Amount);
+                                            //pastIncomeAsset.Updated = DateTime.UtcNow;
+                                            //await assetRepository.UpdateAssetAsync(pastIncomeAsset);
+                                            //#endregion
+
+                                            //#region 현재 자산
+                                            //currentExpenditureAsset.Amount -= Math.Abs(currentTempExpenditure.Amount);
+                                            //currentExpenditureAsset.Updated = DateTime.UtcNow;
+                                            //await assetRepository.UpdateAssetAsync(currentExpenditureAsset);
+
+                                            //currentIncomeAsset.Amount += Math.Abs(currentTempExpenditure.Amount);
+                                            //currentIncomeAsset.Updated = DateTime.UtcNow;
+                                            //await assetRepository.UpdateAssetAsync(currentIncomeAsset);
+                                            //#endregion
+
+                                            //#endregion
+                                        }
+                                        else
+                                        {
+                                            #region 자산 업데이트
+                                            var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
+                                            var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
+
+                                            var currentIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.MyDepositAsset);
+
+                                            pastExpenditureAsset.Amount = pastExpenditureAsset.Amount + Math.Abs(previousTempExpenditure.Amount) - Math.Abs(currentTempExpenditure.Amount);
+                                            pastExpenditureAsset.Updated = DateTime.UtcNow;
+                                            await assetRepository.UpdateAssetAsync(pastExpenditureAsset);
+
+                                            pastIncomeAsset.Amount -= Math.Abs(previousTempExpenditure.Amount);
+                                            pastIncomeAsset.Updated = DateTime.UtcNow;
+                                            await assetRepository.UpdateAssetAsync(pastIncomeAsset);
+
+                                            currentIncomeAsset.Amount += Math.Abs(currentTempExpenditure.Amount);
+                                            currentIncomeAsset.Updated = DateTime.UtcNow;
+                                            await assetRepository.UpdateAssetAsync(currentIncomeAsset);
+                                            #endregion
+
+                                            //#region 자산 업데이트
+
+                                            //#region 과거 자산
+                                            //var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
+                                            //var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
+
+                                            //var currentExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.PaymentMethod);
+                                            //var currentIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.MyDepositAsset);
+
+                                            //pastExpenditureAsset.Amount += Math.Abs(previousTempExpenditure.Amount);
+                                            //pastExpenditureAsset.Updated = DateTime.UtcNow;
+                                            //await assetRepository.UpdateAssetAsync(pastExpenditureAsset);
+
+                                            //pastIncomeAsset.Amount -= Math.Abs(previousTempExpenditure.Amount);
+                                            //pastIncomeAsset.Updated = DateTime.UtcNow;
+                                            //await assetRepository.UpdateAssetAsync(pastIncomeAsset);
+                                            //#endregion
+
+                                            //#region 현재 자산
+                                            //currentExpenditureAsset.Amount -= Math.Abs(currentTempExpenditure.Amount);
+                                            //currentExpenditureAsset.Updated = DateTime.UtcNow;
+                                            //await assetRepository.UpdateAssetAsync(currentExpenditureAsset);
+
+                                            //currentIncomeAsset.Amount += Math.Abs(currentTempExpenditure.Amount);
+                                            //currentIncomeAsset.Updated = DateTime.UtcNow;
+                                            //await assetRepository.UpdateAssetAsync(currentIncomeAsset);
+                                            //#endregion
+
+                                            //#endregion
+                                        }
+                                    }
+                                    else if (previousTempExpenditure.PaymentMethod == currentTempExpenditure.MyDepositAsset)
+                                    {
+                                        if (previousTempExpenditure.MyDepositAsset == currentTempExpenditure.PaymentMethod)
+                                        {
+                                            #region 자산 업데이트
+                                            var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
+                                            var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
+
+                                            pastExpenditureAsset.Amount = pastExpenditureAsset.Amount + Math.Abs(previousTempExpenditure.Amount) + Math.Abs(currentTempExpenditure.Amount);
+                                            pastExpenditureAsset.Updated = DateTime.UtcNow;
+                                            await assetRepository.UpdateAssetAsync(pastExpenditureAsset);
+
+                                            pastIncomeAsset.Amount = pastIncomeAsset.Amount - Math.Abs(previousTempExpenditure.Amount) - Math.Abs(currentTempExpenditure.Amount);
+                                            pastIncomeAsset.Updated = DateTime.UtcNow;
+                                            await assetRepository.UpdateAssetAsync(pastIncomeAsset);
+                                            #endregion
+
+                                            //#region 자산 업데이트
+
+                                            //#region 과거 자산
+                                            //var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
+                                            //var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
+
+                                            //var currentExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.PaymentMethod);
+                                            //var currentIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.MyDepositAsset);
+
+                                            //pastExpenditureAsset.Amount += Math.Abs(previousTempExpenditure.Amount);
+                                            //pastExpenditureAsset.Updated = DateTime.UtcNow;
+                                            //await assetRepository.UpdateAssetAsync(pastExpenditureAsset);
+
+                                            //pastIncomeAsset.Amount -= Math.Abs(previousTempExpenditure.Amount);
+                                            //pastIncomeAsset.Updated = DateTime.UtcNow;
+                                            //await assetRepository.UpdateAssetAsync(pastIncomeAsset);
+                                            //#endregion
+
+                                            //#region 현재 자산
+                                            //currentExpenditureAsset.Amount -= Math.Abs(currentTempExpenditure.Amount);
+                                            //currentExpenditureAsset.Updated = DateTime.UtcNow;
+                                            //await assetRepository.UpdateAssetAsync(currentExpenditureAsset);
+
+                                            //currentIncomeAsset.Amount += Math.Abs(currentTempExpenditure.Amount);
+                                            //currentIncomeAsset.Updated = DateTime.UtcNow;
+                                            //await assetRepository.UpdateAssetAsync(currentIncomeAsset);
+                                            //#endregion
+
+                                            //#endregion
+                                        }
+                                        else
+                                        {
+                                            #region 자산 업데이트
+
+                                            #region 과거 자산
+                                            var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
+                                            var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
+
+                                            var currentExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.PaymentMethod);
+
+                                            pastExpenditureAsset.Amount = pastExpenditureAsset.Amount + Math.Abs(previousTempExpenditure.Amount) + Math.Abs(currentTempExpenditure.Amount);
+                                            pastExpenditureAsset.Updated = DateTime.UtcNow;
+                                            await assetRepository.UpdateAssetAsync(pastExpenditureAsset);
+
+                                            pastIncomeAsset.Amount -= Math.Abs(previousTempExpenditure.Amount);
+                                            pastIncomeAsset.Updated = DateTime.UtcNow;
+                                            await assetRepository.UpdateAssetAsync(pastIncomeAsset);
+                                            #endregion
+
+                                            #region 현재 자산
+                                            currentExpenditureAsset.Amount -= Math.Abs(currentTempExpenditure.Amount);
+                                            currentExpenditureAsset.Updated = DateTime.UtcNow;
+                                            await assetRepository.UpdateAssetAsync(currentExpenditureAsset);
+
+                                            #endregion
+
+                                            #endregion
+
+                                            //#region 자산 업데이트
+
+                                            //#region 과거 자산
+                                            //var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
+                                            //var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
+
+                                            //var currentExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.PaymentMethod);
+                                            //var currentIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.MyDepositAsset);
+
+                                            //pastExpenditureAsset.Amount += Math.Abs(previousTempExpenditure.Amount);
+                                            //pastExpenditureAsset.Updated = DateTime.UtcNow;
+                                            //await assetRepository.UpdateAssetAsync(pastExpenditureAsset);
+
+                                            //pastIncomeAsset.Amount -= Math.Abs(previousTempExpenditure.Amount);
+                                            //pastIncomeAsset.Updated = DateTime.UtcNow;
+                                            //await assetRepository.UpdateAssetAsync(pastIncomeAsset);
+                                            //#endregion
+
+                                            //#region 현재 자산
+                                            //currentExpenditureAsset.Amount -= Math.Abs(currentTempExpenditure.Amount);
+                                            //currentExpenditureAsset.Updated = DateTime.UtcNow;
+                                            //await assetRepository.UpdateAssetAsync(currentExpenditureAsset);
+
+                                            //currentIncomeAsset.Amount += Math.Abs(currentTempExpenditure.Amount);
+                                            //currentIncomeAsset.Updated = DateTime.UtcNow;
+                                            //await assetRepository.UpdateAssetAsync(currentIncomeAsset);
+                                            //#endregion
+
+                                            //#endregion
+                                        }
+                                    }
+                                    else if (previousTempExpenditure.MyDepositAsset == currentTempExpenditure.PaymentMethod)
+                                    {
+                                        if (previousTempExpenditure.PaymentMethod == currentTempExpenditure.MyDepositAsset)
+                                        {
+                                            #region 자산 업데이트
+
+                                            #region 과거 자산
+                                            var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
+                                            var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
+
+                                            pastExpenditureAsset.Amount = pastExpenditureAsset.Amount + Math.Abs(previousTempExpenditure.Amount) + Math.Abs(currentTempExpenditure.Amount);
+                                            pastExpenditureAsset.Updated = DateTime.UtcNow;
+                                            await assetRepository.UpdateAssetAsync(pastExpenditureAsset);
+
+                                            pastIncomeAsset.Amount = pastIncomeAsset.Amount - Math.Abs(previousTempExpenditure.Amount) - Math.Abs(currentTempExpenditure.Amount);
+                                            pastIncomeAsset.Updated = DateTime.UtcNow;
+                                            await assetRepository.UpdateAssetAsync(pastIncomeAsset);
+                                            #endregion
+
+                                            #endregion
+
+                                            //#region 자산 업데이트
+
+                                            //#region 과거 자산
+                                            //var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
+                                            //var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
+
+                                            //var currentExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.PaymentMethod);
+                                            //var currentIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.MyDepositAsset);
+
+                                            //pastExpenditureAsset.Amount += Math.Abs(previousTempExpenditure.Amount);
+                                            //pastExpenditureAsset.Updated = DateTime.UtcNow;
+                                            //await assetRepository.UpdateAssetAsync(pastExpenditureAsset);
+
+                                            //pastIncomeAsset.Amount -= Math.Abs(previousTempExpenditure.Amount);
+                                            //pastIncomeAsset.Updated = DateTime.UtcNow;
+                                            //await assetRepository.UpdateAssetAsync(pastIncomeAsset);
+                                            //#endregion
+
+                                            //#region 현재 자산
+                                            //currentExpenditureAsset.Amount -= Math.Abs(currentTempExpenditure.Amount);
+                                            //currentExpenditureAsset.Updated = DateTime.UtcNow;
+                                            //await assetRepository.UpdateAssetAsync(currentExpenditureAsset);
+
+                                            //currentIncomeAsset.Amount += Math.Abs(currentTempExpenditure.Amount);
+                                            //currentIncomeAsset.Updated = DateTime.UtcNow;
+                                            //await assetRepository.UpdateAssetAsync(currentIncomeAsset);
+                                            //#endregion
+
+                                            //#endregion
+                                        }
+                                        else
+                                        {
+                                            #region 자산 업데이트
+
+                                            #region 과거 자산
+                                            var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
+                                            var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
+
+                                            var currentIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.MyDepositAsset);
+
+                                            pastExpenditureAsset.Amount += Math.Abs(previousTempExpenditure.Amount);
+                                            pastExpenditureAsset.Updated = DateTime.UtcNow;
+                                            await assetRepository.UpdateAssetAsync(pastExpenditureAsset);
+
+                                            pastIncomeAsset.Amount = pastIncomeAsset.Amount - Math.Abs(previousTempExpenditure.Amount) - Math.Abs(currentTempExpenditure.Amount);
+                                            pastIncomeAsset.Updated = DateTime.UtcNow;
+                                            await assetRepository.UpdateAssetAsync(pastIncomeAsset);
+                                            #endregion
+
+                                            #region 현재 자산
+
+                                            currentIncomeAsset.Amount += Math.Abs(currentTempExpenditure.Amount);
+                                            currentIncomeAsset.Updated = DateTime.UtcNow;
+                                            await assetRepository.UpdateAssetAsync(currentIncomeAsset);
+                                            #endregion
+
+                                            #endregion
+
+                                            //#region 자산 업데이트
+
+                                            //#region 과거 자산
+                                            //var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
+                                            //var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
+
+                                            //var currentExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.PaymentMethod);
+                                            //var currentIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.MyDepositAsset);
+
+                                            //pastExpenditureAsset.Amount += Math.Abs(previousTempExpenditure.Amount);
+                                            //pastExpenditureAsset.Updated = DateTime.UtcNow;
+                                            //await assetRepository.UpdateAssetAsync(pastExpenditureAsset);
+
+                                            //pastIncomeAsset.Amount -= Math.Abs(previousTempExpenditure.Amount);
+                                            //pastIncomeAsset.Updated = DateTime.UtcNow;
+                                            //await assetRepository.UpdateAssetAsync(pastIncomeAsset);
+                                            //#endregion
+
+                                            //#region 현재 자산
+                                            //currentExpenditureAsset.Amount -= Math.Abs(currentTempExpenditure.Amount);
+                                            //currentExpenditureAsset.Updated = DateTime.UtcNow;
+                                            //await assetRepository.UpdateAssetAsync(currentExpenditureAsset);
+
+                                            //currentIncomeAsset.Amount += Math.Abs(currentTempExpenditure.Amount);
+                                            //currentIncomeAsset.Updated = DateTime.UtcNow;
+                                            //await assetRepository.UpdateAssetAsync(currentIncomeAsset);
+                                            //#endregion
+
+                                            //#endregion
+                                        }
+                                    }
+                                    else if (previousTempExpenditure.MyDepositAsset == currentTempExpenditure.MyDepositAsset)
+                                    {
+                                        if (previousTempExpenditure.PaymentMethod == currentTempExpenditure.PaymentMethod)
+                                        {
+                                            #region 자산 업데이트
+
+                                            #region 과거 자산
+                                            var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
+                                            var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
+
+                                            pastExpenditureAsset.Amount = pastExpenditureAsset.Amount + Math.Abs(previousTempExpenditure.Amount) - Math.Abs(currentTempExpenditure.Amount);
+                                            pastExpenditureAsset.Updated = DateTime.UtcNow;
+                                            await assetRepository.UpdateAssetAsync(pastExpenditureAsset);
+
+                                            pastIncomeAsset.Amount = pastIncomeAsset.Amount - Math.Abs(previousTempExpenditure.Amount) + Math.Abs(currentTempExpenditure.Amount);
+                                            pastIncomeAsset.Updated = DateTime.UtcNow;
+                                            await assetRepository.UpdateAssetAsync(pastIncomeAsset);
+                                            #endregion
+
+                                            #endregion
+
+                                            //#region 자산 업데이트
+
+                                            //#region 과거 자산
+                                            //var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
+                                            //var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
+
+                                            //var currentExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.PaymentMethod);
+                                            //var currentIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.MyDepositAsset);
+
+                                            //pastExpenditureAsset.Amount += Math.Abs(previousTempExpenditure.Amount);
+                                            //pastExpenditureAsset.Updated = DateTime.UtcNow;
+                                            //await assetRepository.UpdateAssetAsync(pastExpenditureAsset);
+
+                                            //pastIncomeAsset.Amount -= Math.Abs(previousTempExpenditure.Amount);
+                                            //pastIncomeAsset.Updated = DateTime.UtcNow;
+                                            //await assetRepository.UpdateAssetAsync(pastIncomeAsset);
+                                            //#endregion
+
+                                            //#region 현재 자산
+                                            //currentExpenditureAsset.Amount -= Math.Abs(currentTempExpenditure.Amount);
+                                            //currentExpenditureAsset.Updated = DateTime.UtcNow;
+                                            //await assetRepository.UpdateAssetAsync(currentExpenditureAsset);
+
+                                            //currentIncomeAsset.Amount += Math.Abs(currentTempExpenditure.Amount);
+                                            //currentIncomeAsset.Updated = DateTime.UtcNow;
+                                            //await assetRepository.UpdateAssetAsync(currentIncomeAsset);
+                                            //#endregion
+
+                                            //#endregion
+                                        }
+                                        else
+                                        {
+                                            #region 자산 업데이트
+
+                                            #region 과거 자산
+                                            var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
+                                            var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
+
+                                            var currentExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.PaymentMethod);
+
+                                            pastExpenditureAsset.Amount += Math.Abs(previousTempExpenditure.Amount);
+                                            pastExpenditureAsset.Updated = DateTime.UtcNow;
+                                            await assetRepository.UpdateAssetAsync(pastExpenditureAsset);
+
+                                            pastIncomeAsset.Amount = pastIncomeAsset.Amount - Math.Abs(previousTempExpenditure.Amount) + Math.Abs(currentTempExpenditure.Amount);
+                                            pastIncomeAsset.Updated = DateTime.UtcNow;
+                                            await assetRepository.UpdateAssetAsync(pastIncomeAsset);
+                                            #endregion
+
+                                            #region 현재 자산
+                                            currentExpenditureAsset.Amount -= Math.Abs(currentTempExpenditure.Amount);
+                                            currentExpenditureAsset.Updated = DateTime.UtcNow;
+                                            await assetRepository.UpdateAssetAsync(currentExpenditureAsset);
+                                            #endregion
+
+                                            #endregion
+
+                                            //#region 자산 업데이트
+
+                                            //#region 과거 자산
+                                            //var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
+                                            //var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
+
+                                            //var currentExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.PaymentMethod);
+                                            //var currentIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.MyDepositAsset);
+
+                                            //pastExpenditureAsset.Amount += Math.Abs(previousTempExpenditure.Amount);
+                                            //pastExpenditureAsset.Updated = DateTime.UtcNow;
+                                            //await assetRepository.UpdateAssetAsync(pastExpenditureAsset);
+
+                                            //pastIncomeAsset.Amount -= Math.Abs(previousTempExpenditure.Amount);
+                                            //pastIncomeAsset.Updated = DateTime.UtcNow;
+                                            //await assetRepository.UpdateAssetAsync(pastIncomeAsset);
+                                            //#endregion
+
+                                            //#region 현재 자산
+                                            //currentExpenditureAsset.Amount -= Math.Abs(currentTempExpenditure.Amount);
+                                            //currentExpenditureAsset.Updated = DateTime.UtcNow;
+                                            //await assetRepository.UpdateAssetAsync(currentExpenditureAsset);
+
+                                            //currentIncomeAsset.Amount += Math.Abs(currentTempExpenditure.Amount);
+                                            //currentIncomeAsset.Updated = DateTime.UtcNow;
+                                            //await assetRepository.UpdateAssetAsync(currentIncomeAsset);
+                                            //#endregion
+
+                                            //#endregion
+                                        }
+                                    }
+                                    else
+                                    {
+                                        #region 자산 업데이트
+
+                                        #region 과거 자산
+                                        var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
+                                        var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
+
+                                        var currentExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.PaymentMethod);
+                                        var currentIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.MyDepositAsset);
+
+                                        pastExpenditureAsset.Amount += Math.Abs(previousTempExpenditure.Amount);
+                                        pastExpenditureAsset.Updated = DateTime.UtcNow;
+                                        await assetRepository.UpdateAssetAsync(pastExpenditureAsset);
+
+                                        pastIncomeAsset.Amount -= Math.Abs(previousTempExpenditure.Amount);
+                                        pastIncomeAsset.Updated = DateTime.UtcNow;
+                                        await assetRepository.UpdateAssetAsync(pastIncomeAsset);
+                                        #endregion
+
+                                        #region 현재 자산
+                                        currentExpenditureAsset.Amount -= Math.Abs(currentTempExpenditure.Amount);
+                                        currentExpenditureAsset.Updated = DateTime.UtcNow;
+                                        await assetRepository.UpdateAssetAsync(currentExpenditureAsset);
+
+                                        currentIncomeAsset.Amount += Math.Abs(currentTempExpenditure.Amount);
+                                        currentIncomeAsset.Updated = DateTime.UtcNow;
+                                        await assetRepository.UpdateAssetAsync(currentIncomeAsset);
+                                        #endregion
+
+                                        #endregion
+                                    }
+
+                                    return Json(new { result = true, message = localizer["The expenditure has been successfully updated."].Value });
+                                }
+                                #endregion
+                                #region 잘못된 경우
+                                else
+                                {
+                                    return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                                }
+                                #endregion
+                            }
+                            catch (Exception e)
+                            {
+                                return Json(new { result = false, error = e.ToString() });
+                            }
+                        }
+                        else
+                        {
+                            return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                        }
+                    }
+                    #endregion
+
+                    #region 대분류 = '비소비지출'
+                    else if (expenditureInputViewModel.MainClass == "NonConsumerSpending")
+                    {
+                        if (expenditureInputViewModel.SubClass == "PublicPension" || expenditureInputViewModel.SubClass == "DebtRepayment")
+                        {
+                            try
+                            {
+                                if (expenditureInputViewModel.PaymentMethod == expenditureInputViewModel.MyDepositAsset)
+                                {
+                                    return Json(new { result = false, error = localizer["The PaymentMethod and MyDepositAsset value cannot be the same."].Value });
+                                }
+
+                                var tempExpenditures = await expenditureRepository.GetExpendituresAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+                                var previousTempExpenditure = tempExpenditures.Where(a => a.Id == expenditureInputViewModel.Id).FirstOrDefault();
+                                var currentTempExpenditure = new Expenditure()
+                                {
+                                    Id = expenditureInputViewModel.Id,
+                                    AccountEmail = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email,
+                                    MainClass = expenditureInputViewModel.MainClass,
+                                    SubClass = expenditureInputViewModel.SubClass,
+                                    Contents = expenditureInputViewModel?.Contents ?? "",
+                                    Amount = expenditureInputViewModel.Amount,
+                                    PaymentMethod = expenditureInputViewModel.PaymentMethod,
+                                    MyDepositAsset = expenditureInputViewModel?.MyDepositAsset ?? "",
+                                    Created = previousTempExpenditure.Created,
+                                    Updated = DateTime.UtcNow,
+                                    Note = expenditureInputViewModel?.Note ?? "",
+                                    Asset = previousTempExpenditure.Asset
+                                };
+
+                                #region 과거 지출 값 [(결제수단(O)), (내입금자산(X))], 현재 지출 값 [(결제수단(O)), (내입금자산(O))]
+                                if (!string.IsNullOrEmpty(previousTempExpenditure.PaymentMethod) && string.IsNullOrEmpty(previousTempExpenditure.MyDepositAsset) &&
+                                    !string.IsNullOrEmpty(currentTempExpenditure.PaymentMethod) && !string.IsNullOrEmpty(currentTempExpenditure.MyDepositAsset))
+                                {
+                                    #region 지출 업데이트
+                                    await expenditureRepository.UpdateExpenditureAsync(currentTempExpenditure);
+                                    #endregion
+
+                                    if (previousTempExpenditure.PaymentMethod == currentTempExpenditure.PaymentMethod)
+                                    {
+                                        #region 자산 업데이트
+                                        var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
+                                        var currentIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.MyDepositAsset);
+
+                                        pastExpenditureAsset.Amount = pastExpenditureAsset.Amount + Math.Abs(previousTempExpenditure.Amount) - Math.Abs(currentTempExpenditure.Amount);
+                                        pastExpenditureAsset.Updated = DateTime.UtcNow;
+                                        await assetRepository.UpdateAssetAsync(pastExpenditureAsset);
+
+                                        currentIncomeAsset.Amount += Math.Abs(currentTempExpenditure.Amount);
+                                        currentIncomeAsset.Updated = DateTime.UtcNow;
+                                        await assetRepository.UpdateAssetAsync(currentIncomeAsset);
+                                        #endregion
+                                        //#region 자산 업데이트
+
+                                        //#region 과거 자산
+                                        //var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
+                                        //var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
+
+                                        //var currentExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.PaymentMethod);
+                                        //var currentIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.MyDepositAsset);
+
+                                        //pastExpenditureAsset.Amount += Math.Abs(previousTempExpenditure.Amount);
+                                        //pastExpenditureAsset.Updated = DateTime.UtcNow;
+                                        //await assetRepository.UpdateAssetAsync(pastExpenditureAsset);
+
+                                        //pastIncomeAsset.Amount -= Math.Abs(previousTempExpenditure.Amount);
+                                        //pastIncomeAsset.Updated = DateTime.UtcNow;
+                                        //await assetRepository.UpdateAssetAsync(pastIncomeAsset);
+                                        //#endregion
+
+                                        //#region 현재 자산
+                                        //currentExpenditureAsset.Amount -= Math.Abs(currentTempExpenditure.Amount);
+                                        //currentExpenditureAsset.Updated = DateTime.UtcNow;
+                                        //await assetRepository.UpdateAssetAsync(currentExpenditureAsset);
+
+                                        //currentIncomeAsset.Amount += Math.Abs(currentTempExpenditure.Amount);
+                                        //currentIncomeAsset.Updated = DateTime.UtcNow;
+                                        //await assetRepository.UpdateAssetAsync(currentIncomeAsset);
+                                        //#endregion
+
+                                        //#endregion
+                                    }
+                                    else if (previousTempExpenditure.PaymentMethod == currentTempExpenditure.MyDepositAsset)
+                                    {
+                                        #region 자산 업데이트
+
+                                        #region 과거 자산
+                                        var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
+
+                                        var currentExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.PaymentMethod);
+
+                                        pastExpenditureAsset.Amount = pastExpenditureAsset.Amount + Math.Abs(previousTempExpenditure.Amount) + Math.Abs(currentTempExpenditure.Amount);
+                                        pastExpenditureAsset.Updated = DateTime.UtcNow;
+                                        await assetRepository.UpdateAssetAsync(pastExpenditureAsset);
+                                        #endregion
+
+                                        #region 현재 자산
+                                        currentExpenditureAsset.Amount -= Math.Abs(currentTempExpenditure.Amount);
+                                        currentExpenditureAsset.Updated = DateTime.UtcNow;
+                                        await assetRepository.UpdateAssetAsync(currentExpenditureAsset);
+                                        #endregion
+
+                                        #endregion
+                                        //#region 자산 업데이트
+
+                                        //#region 과거 자산
+                                        //var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
+                                        //var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
+
+                                        //var currentExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.PaymentMethod);
+                                        //var currentIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.MyDepositAsset);
+
+                                        //pastExpenditureAsset.Amount += Math.Abs(previousTempExpenditure.Amount);
+                                        //pastExpenditureAsset.Updated = DateTime.UtcNow;
+                                        //await assetRepository.UpdateAssetAsync(pastExpenditureAsset);
+
+                                        //pastIncomeAsset.Amount -= Math.Abs(previousTempExpenditure.Amount);
+                                        //pastIncomeAsset.Updated = DateTime.UtcNow;
+                                        //await assetRepository.UpdateAssetAsync(pastIncomeAsset);
+                                        //#endregion
+
+                                        //#region 현재 자산
+                                        //currentExpenditureAsset.Amount -= Math.Abs(currentTempExpenditure.Amount);
+                                        //currentExpenditureAsset.Updated = DateTime.UtcNow;
+                                        //await assetRepository.UpdateAssetAsync(currentExpenditureAsset);
+
+                                        //currentIncomeAsset.Amount += Math.Abs(currentTempExpenditure.Amount);
+                                        //currentIncomeAsset.Updated = DateTime.UtcNow;
+                                        //await assetRepository.UpdateAssetAsync(currentIncomeAsset);
+                                        //#endregion
+
+                                        //#endregion
+                                    }
+                                    else
+                                    {
+                                        #region 자산 업데이트
+
+                                        #region 과거 자산
+                                        var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
+                                        //var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
+
+                                        var currentExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.PaymentMethod);
+                                        var currentIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.MyDepositAsset);
+
+                                        pastExpenditureAsset.Amount += Math.Abs(previousTempExpenditure.Amount);
+                                        pastExpenditureAsset.Updated = DateTime.UtcNow;
+                                        await assetRepository.UpdateAssetAsync(pastExpenditureAsset);
+
+                                        //pastIncomeAsset.Amount -= Math.Abs(previousTempExpenditure.Amount);
+                                        //pastIncomeAsset.Updated = DateTime.UtcNow;
+                                        //await assetRepository.UpdateAssetAsync(pastIncomeAsset);
+                                        #endregion
+
+                                        #region 현재 자산
+                                        currentExpenditureAsset.Amount -= Math.Abs(currentTempExpenditure.Amount);
+                                        currentExpenditureAsset.Updated = DateTime.UtcNow;
+                                        await assetRepository.UpdateAssetAsync(currentExpenditureAsset);
+
+                                        currentIncomeAsset.Amount += Math.Abs(currentTempExpenditure.Amount);
+                                        currentIncomeAsset.Updated = DateTime.UtcNow;
+                                        await assetRepository.UpdateAssetAsync(currentIncomeAsset);
+                                        #endregion
+
+                                        #endregion
+                                    }
+
+                                    return Json(new { result = true, message = localizer["The expenditure has been successfully updated."].Value });
+                                }
+                                #endregion
+                                #region 과거 지출 값 [(결제수단(O)), (내입금자산(O))], 현재 지출 값 [(결제수단(O)), (내입금자산(O))]
+                                else if (!string.IsNullOrEmpty(previousTempExpenditure.PaymentMethod) && !string.IsNullOrEmpty(previousTempExpenditure.MyDepositAsset) &&
+                                        !string.IsNullOrEmpty(currentTempExpenditure.PaymentMethod) && !string.IsNullOrEmpty(currentTempExpenditure.MyDepositAsset))
+                                {
+                                    #region 지출 업데이트
+                                    await expenditureRepository.UpdateExpenditureAsync(currentTempExpenditure);
+                                    #endregion
+                                    
+                                    if (previousTempExpenditure.PaymentMethod == currentTempExpenditure.PaymentMethod)
+                                    {
+                                        if (previousTempExpenditure.MyDepositAsset == currentTempExpenditure.MyDepositAsset)
+                                        {
+                                            #region 자산 업데이트
+                                            var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
+                                            var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
+
+                                            pastExpenditureAsset.Amount = pastExpenditureAsset.Amount + Math.Abs(previousTempExpenditure.Amount) - Math.Abs(currentTempExpenditure.Amount);
+                                            pastExpenditureAsset.Updated = DateTime.UtcNow;
+                                            await assetRepository.UpdateAssetAsync(pastExpenditureAsset);
+
+                                            pastIncomeAsset.Amount = pastIncomeAsset.Amount - Math.Abs(previousTempExpenditure.Amount) + Math.Abs(currentTempExpenditure.Amount);
+                                            pastIncomeAsset.Updated = DateTime.UtcNow;
+                                            await assetRepository.UpdateAssetAsync(pastIncomeAsset);
+                                            #endregion
+
+                                            //#region 자산 업데이트
+
+                                            //#region 과거 자산
+                                            //var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
+                                            //var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
+
+                                            //var currentExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.PaymentMethod);
+                                            //var currentIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.MyDepositAsset);
+
+                                            //pastExpenditureAsset.Amount += Math.Abs(previousTempExpenditure.Amount);
+                                            //pastExpenditureAsset.Updated = DateTime.UtcNow;
+                                            //await assetRepository.UpdateAssetAsync(pastExpenditureAsset);
+
+                                            //pastIncomeAsset.Amount -= Math.Abs(previousTempExpenditure.Amount);
+                                            //pastIncomeAsset.Updated = DateTime.UtcNow;
+                                            //await assetRepository.UpdateAssetAsync(pastIncomeAsset);
+                                            //#endregion
+
+                                            //#region 현재 자산
+                                            //currentExpenditureAsset.Amount -= Math.Abs(currentTempExpenditure.Amount);
+                                            //currentExpenditureAsset.Updated = DateTime.UtcNow;
+                                            //await assetRepository.UpdateAssetAsync(currentExpenditureAsset);
+
+                                            //currentIncomeAsset.Amount += Math.Abs(currentTempExpenditure.Amount);
+                                            //currentIncomeAsset.Updated = DateTime.UtcNow;
+                                            //await assetRepository.UpdateAssetAsync(currentIncomeAsset);
+                                            //#endregion
+
+                                            //#endregion
+                                        }
+                                        else
+                                        {
+                                            #region 자산 업데이트
+                                            var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
+                                            var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
+
+                                            var currentIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.MyDepositAsset);
+
+                                            pastExpenditureAsset.Amount = pastExpenditureAsset.Amount + Math.Abs(previousTempExpenditure.Amount) - Math.Abs(currentTempExpenditure.Amount);
+                                            pastExpenditureAsset.Updated = DateTime.UtcNow;
+                                            await assetRepository.UpdateAssetAsync(pastExpenditureAsset);
+
+                                            pastIncomeAsset.Amount -= Math.Abs(previousTempExpenditure.Amount);
+                                            pastIncomeAsset.Updated = DateTime.UtcNow;
+                                            await assetRepository.UpdateAssetAsync(pastIncomeAsset);
+
+                                            currentIncomeAsset.Amount += Math.Abs(currentTempExpenditure.Amount);
+                                            currentIncomeAsset.Updated = DateTime.UtcNow;
+                                            await assetRepository.UpdateAssetAsync(currentIncomeAsset);
+                                            #endregion
+
+                                            //#region 자산 업데이트
+
+                                            //#region 과거 자산
+                                            //var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
+                                            //var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
+
+                                            //var currentExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.PaymentMethod);
+                                            //var currentIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.MyDepositAsset);
+
+                                            //pastExpenditureAsset.Amount += Math.Abs(previousTempExpenditure.Amount);
+                                            //pastExpenditureAsset.Updated = DateTime.UtcNow;
+                                            //await assetRepository.UpdateAssetAsync(pastExpenditureAsset);
+
+                                            //pastIncomeAsset.Amount -= Math.Abs(previousTempExpenditure.Amount);
+                                            //pastIncomeAsset.Updated = DateTime.UtcNow;
+                                            //await assetRepository.UpdateAssetAsync(pastIncomeAsset);
+                                            //#endregion
+
+                                            //#region 현재 자산
+                                            //currentExpenditureAsset.Amount -= Math.Abs(currentTempExpenditure.Amount);
+                                            //currentExpenditureAsset.Updated = DateTime.UtcNow;
+                                            //await assetRepository.UpdateAssetAsync(currentExpenditureAsset);
+
+                                            //currentIncomeAsset.Amount += Math.Abs(currentTempExpenditure.Amount);
+                                            //currentIncomeAsset.Updated = DateTime.UtcNow;
+                                            //await assetRepository.UpdateAssetAsync(currentIncomeAsset);
+                                            //#endregion
+
+                                            //#endregion
+                                        }
+                                    }
+                                    else if (previousTempExpenditure.PaymentMethod == currentTempExpenditure.MyDepositAsset)
+                                    {
+                                        if (previousTempExpenditure.MyDepositAsset == currentTempExpenditure.PaymentMethod)
+                                        {
+                                            #region 자산 업데이트
+                                            var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
+                                            var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
+
+                                            pastExpenditureAsset.Amount = pastExpenditureAsset.Amount + Math.Abs(previousTempExpenditure.Amount) + Math.Abs(currentTempExpenditure.Amount);
+                                            pastExpenditureAsset.Updated = DateTime.UtcNow;
+                                            await assetRepository.UpdateAssetAsync(pastExpenditureAsset);
+
+                                            pastIncomeAsset.Amount = pastIncomeAsset.Amount - Math.Abs(previousTempExpenditure.Amount) - Math.Abs(currentTempExpenditure.Amount);
+                                            pastIncomeAsset.Updated = DateTime.UtcNow;
+                                            await assetRepository.UpdateAssetAsync(pastIncomeAsset);
+                                            #endregion
+
+                                            //#region 자산 업데이트
+
+                                            //#region 과거 자산
+                                            //var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
+                                            //var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
+
+                                            //var currentExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.PaymentMethod);
+                                            //var currentIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.MyDepositAsset);
+
+                                            //pastExpenditureAsset.Amount += Math.Abs(previousTempExpenditure.Amount);
+                                            //pastExpenditureAsset.Updated = DateTime.UtcNow;
+                                            //await assetRepository.UpdateAssetAsync(pastExpenditureAsset);
+
+                                            //pastIncomeAsset.Amount -= Math.Abs(previousTempExpenditure.Amount);
+                                            //pastIncomeAsset.Updated = DateTime.UtcNow;
+                                            //await assetRepository.UpdateAssetAsync(pastIncomeAsset);
+                                            //#endregion
+
+                                            //#region 현재 자산
+                                            //currentExpenditureAsset.Amount -= Math.Abs(currentTempExpenditure.Amount);
+                                            //currentExpenditureAsset.Updated = DateTime.UtcNow;
+                                            //await assetRepository.UpdateAssetAsync(currentExpenditureAsset);
+
+                                            //currentIncomeAsset.Amount += Math.Abs(currentTempExpenditure.Amount);
+                                            //currentIncomeAsset.Updated = DateTime.UtcNow;
+                                            //await assetRepository.UpdateAssetAsync(currentIncomeAsset);
+                                            //#endregion
+
+                                            //#endregion
+                                        }
+                                        else
+                                        {
+                                            #region 자산 업데이트
+
+                                            #region 과거 자산
+                                            var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
+                                            var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
+
+                                            var currentExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.PaymentMethod);
+
+                                            pastExpenditureAsset.Amount = pastExpenditureAsset.Amount + Math.Abs(previousTempExpenditure.Amount) + Math.Abs(currentTempExpenditure.Amount);
+                                            pastExpenditureAsset.Updated = DateTime.UtcNow;
+                                            await assetRepository.UpdateAssetAsync(pastExpenditureAsset);
+
+                                            pastIncomeAsset.Amount -= Math.Abs(previousTempExpenditure.Amount);
+                                            pastIncomeAsset.Updated = DateTime.UtcNow;
+                                            await assetRepository.UpdateAssetAsync(pastIncomeAsset);
+                                            #endregion
+
+                                            #region 현재 자산
+                                            currentExpenditureAsset.Amount -= Math.Abs(currentTempExpenditure.Amount);
+                                            currentExpenditureAsset.Updated = DateTime.UtcNow;
+                                            await assetRepository.UpdateAssetAsync(currentExpenditureAsset);
+
+                                            #endregion
+
+                                            #endregion
+
+                                            //#region 자산 업데이트
+
+                                            //#region 과거 자산
+                                            //var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
+                                            //var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
+
+                                            //var currentExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.PaymentMethod);
+                                            //var currentIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.MyDepositAsset);
+
+                                            //pastExpenditureAsset.Amount += Math.Abs(previousTempExpenditure.Amount);
+                                            //pastExpenditureAsset.Updated = DateTime.UtcNow;
+                                            //await assetRepository.UpdateAssetAsync(pastExpenditureAsset);
+
+                                            //pastIncomeAsset.Amount -= Math.Abs(previousTempExpenditure.Amount);
+                                            //pastIncomeAsset.Updated = DateTime.UtcNow;
+                                            //await assetRepository.UpdateAssetAsync(pastIncomeAsset);
+                                            //#endregion
+
+                                            //#region 현재 자산
+                                            //currentExpenditureAsset.Amount -= Math.Abs(currentTempExpenditure.Amount);
+                                            //currentExpenditureAsset.Updated = DateTime.UtcNow;
+                                            //await assetRepository.UpdateAssetAsync(currentExpenditureAsset);
+
+                                            //currentIncomeAsset.Amount += Math.Abs(currentTempExpenditure.Amount);
+                                            //currentIncomeAsset.Updated = DateTime.UtcNow;
+                                            //await assetRepository.UpdateAssetAsync(currentIncomeAsset);
+                                            //#endregion
+
+                                            //#endregion
+                                        }
+                                    }
+                                    else if (previousTempExpenditure.MyDepositAsset == currentTempExpenditure.PaymentMethod)
+                                    {
+                                        if (previousTempExpenditure.PaymentMethod == currentTempExpenditure.MyDepositAsset)
+                                        {
+                                            #region 자산 업데이트
+
+                                            #region 과거 자산
+                                            var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
+                                            var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
+
+                                            pastExpenditureAsset.Amount = pastExpenditureAsset.Amount + Math.Abs(previousTempExpenditure.Amount) + Math.Abs(currentTempExpenditure.Amount);
+                                            pastExpenditureAsset.Updated = DateTime.UtcNow;
+                                            await assetRepository.UpdateAssetAsync(pastExpenditureAsset);
+
+                                            pastIncomeAsset.Amount = pastIncomeAsset.Amount - Math.Abs(previousTempExpenditure.Amount) - Math.Abs(currentTempExpenditure.Amount);
+                                            pastIncomeAsset.Updated = DateTime.UtcNow;
+                                            await assetRepository.UpdateAssetAsync(pastIncomeAsset);
+                                            #endregion
+
+                                            #endregion
+
+                                            //#region 자산 업데이트
+
+                                            //#region 과거 자산
+                                            //var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
+                                            //var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
+
+                                            //var currentExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.PaymentMethod);
+                                            //var currentIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.MyDepositAsset);
+
+                                            //pastExpenditureAsset.Amount += Math.Abs(previousTempExpenditure.Amount);
+                                            //pastExpenditureAsset.Updated = DateTime.UtcNow;
+                                            //await assetRepository.UpdateAssetAsync(pastExpenditureAsset);
+
+                                            //pastIncomeAsset.Amount -= Math.Abs(previousTempExpenditure.Amount);
+                                            //pastIncomeAsset.Updated = DateTime.UtcNow;
+                                            //await assetRepository.UpdateAssetAsync(pastIncomeAsset);
+                                            //#endregion
+
+                                            //#region 현재 자산
+                                            //currentExpenditureAsset.Amount -= Math.Abs(currentTempExpenditure.Amount);
+                                            //currentExpenditureAsset.Updated = DateTime.UtcNow;
+                                            //await assetRepository.UpdateAssetAsync(currentExpenditureAsset);
+
+                                            //currentIncomeAsset.Amount += Math.Abs(currentTempExpenditure.Amount);
+                                            //currentIncomeAsset.Updated = DateTime.UtcNow;
+                                            //await assetRepository.UpdateAssetAsync(currentIncomeAsset);
+                                            //#endregion
+
+                                            //#endregion
+                                        }
+                                        else
+                                        {
+                                            #region 자산 업데이트
+
+                                            #region 과거 자산
+                                            var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
+                                            var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
+
+                                            var currentIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.MyDepositAsset);
+
+                                            pastExpenditureAsset.Amount += Math.Abs(previousTempExpenditure.Amount);
+                                            pastExpenditureAsset.Updated = DateTime.UtcNow;
+                                            await assetRepository.UpdateAssetAsync(pastExpenditureAsset);
+
+                                            pastIncomeAsset.Amount = pastIncomeAsset.Amount - Math.Abs(previousTempExpenditure.Amount) - Math.Abs(currentTempExpenditure.Amount);
+                                            pastIncomeAsset.Updated = DateTime.UtcNow;
+                                            await assetRepository.UpdateAssetAsync(pastIncomeAsset);
+                                            #endregion
+
+                                            #region 현재 자산
+
+                                            currentIncomeAsset.Amount += Math.Abs(currentTempExpenditure.Amount);
+                                            currentIncomeAsset.Updated = DateTime.UtcNow;
+                                            await assetRepository.UpdateAssetAsync(currentIncomeAsset);
+                                            #endregion
+
+                                            #endregion
+
+                                            //#region 자산 업데이트
+
+                                            //#region 과거 자산
+                                            //var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
+                                            //var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
+
+                                            //var currentExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.PaymentMethod);
+                                            //var currentIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.MyDepositAsset);
+
+                                            //pastExpenditureAsset.Amount += Math.Abs(previousTempExpenditure.Amount);
+                                            //pastExpenditureAsset.Updated = DateTime.UtcNow;
+                                            //await assetRepository.UpdateAssetAsync(pastExpenditureAsset);
+
+                                            //pastIncomeAsset.Amount -= Math.Abs(previousTempExpenditure.Amount);
+                                            //pastIncomeAsset.Updated = DateTime.UtcNow;
+                                            //await assetRepository.UpdateAssetAsync(pastIncomeAsset);
+                                            //#endregion
+
+                                            //#region 현재 자산
+                                            //currentExpenditureAsset.Amount -= Math.Abs(currentTempExpenditure.Amount);
+                                            //currentExpenditureAsset.Updated = DateTime.UtcNow;
+                                            //await assetRepository.UpdateAssetAsync(currentExpenditureAsset);
+
+                                            //currentIncomeAsset.Amount += Math.Abs(currentTempExpenditure.Amount);
+                                            //currentIncomeAsset.Updated = DateTime.UtcNow;
+                                            //await assetRepository.UpdateAssetAsync(currentIncomeAsset);
+                                            //#endregion
+
+                                            //#endregion
+                                        }
+                                    }
+                                    else if (previousTempExpenditure.MyDepositAsset == currentTempExpenditure.MyDepositAsset)
+                                    {
+                                        if (previousTempExpenditure.PaymentMethod == currentTempExpenditure.PaymentMethod)
+                                        {
+                                            #region 자산 업데이트
+
+                                            #region 과거 자산
+                                            var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
+                                            var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
+
+                                            pastExpenditureAsset.Amount = pastExpenditureAsset.Amount + Math.Abs(previousTempExpenditure.Amount) - Math.Abs(currentTempExpenditure.Amount);
+                                            pastExpenditureAsset.Updated = DateTime.UtcNow;
+                                            await assetRepository.UpdateAssetAsync(pastExpenditureAsset);
+
+                                            pastIncomeAsset.Amount = pastIncomeAsset.Amount - Math.Abs(previousTempExpenditure.Amount) + Math.Abs(currentTempExpenditure.Amount);
+                                            pastIncomeAsset.Updated = DateTime.UtcNow;
+                                            await assetRepository.UpdateAssetAsync(pastIncomeAsset);
+                                            #endregion
+
+                                            #endregion
+
+                                            //#region 자산 업데이트
+
+                                            //#region 과거 자산
+                                            //var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
+                                            //var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
+
+                                            //var currentExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.PaymentMethod);
+                                            //var currentIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.MyDepositAsset);
+
+                                            //pastExpenditureAsset.Amount += Math.Abs(previousTempExpenditure.Amount);
+                                            //pastExpenditureAsset.Updated = DateTime.UtcNow;
+                                            //await assetRepository.UpdateAssetAsync(pastExpenditureAsset);
+
+                                            //pastIncomeAsset.Amount -= Math.Abs(previousTempExpenditure.Amount);
+                                            //pastIncomeAsset.Updated = DateTime.UtcNow;
+                                            //await assetRepository.UpdateAssetAsync(pastIncomeAsset);
+                                            //#endregion
+
+                                            //#region 현재 자산
+                                            //currentExpenditureAsset.Amount -= Math.Abs(currentTempExpenditure.Amount);
+                                            //currentExpenditureAsset.Updated = DateTime.UtcNow;
+                                            //await assetRepository.UpdateAssetAsync(currentExpenditureAsset);
+
+                                            //currentIncomeAsset.Amount += Math.Abs(currentTempExpenditure.Amount);
+                                            //currentIncomeAsset.Updated = DateTime.UtcNow;
+                                            //await assetRepository.UpdateAssetAsync(currentIncomeAsset);
+                                            //#endregion
+
+                                            //#endregion
+                                        }
+                                        else
+                                        {
+                                            #region 자산 업데이트
+
+                                            #region 과거 자산
+                                            var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
+                                            var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
+
+                                            var currentExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.PaymentMethod);
+
+                                            pastExpenditureAsset.Amount += Math.Abs(previousTempExpenditure.Amount);
+                                            pastExpenditureAsset.Updated = DateTime.UtcNow;
+                                            await assetRepository.UpdateAssetAsync(pastExpenditureAsset);
+
+                                            pastIncomeAsset.Amount = pastIncomeAsset.Amount - Math.Abs(previousTempExpenditure.Amount) + Math.Abs(currentTempExpenditure.Amount);
+                                            pastIncomeAsset.Updated = DateTime.UtcNow;
+                                            await assetRepository.UpdateAssetAsync(pastIncomeAsset);
+                                            #endregion
+
+                                            #region 현재 자산
+                                            currentExpenditureAsset.Amount -= Math.Abs(currentTempExpenditure.Amount);
+                                            currentExpenditureAsset.Updated = DateTime.UtcNow;
+                                            await assetRepository.UpdateAssetAsync(currentExpenditureAsset);
+                                            #endregion
+
+                                            #endregion
+
+                                            //#region 자산 업데이트
+
+                                            //#region 과거 자산
+                                            //var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
+                                            //var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
+
+                                            //var currentExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.PaymentMethod);
+                                            //var currentIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.MyDepositAsset);
+
+                                            //pastExpenditureAsset.Amount += Math.Abs(previousTempExpenditure.Amount);
+                                            //pastExpenditureAsset.Updated = DateTime.UtcNow;
+                                            //await assetRepository.UpdateAssetAsync(pastExpenditureAsset);
+
+                                            //pastIncomeAsset.Amount -= Math.Abs(previousTempExpenditure.Amount);
+                                            //pastIncomeAsset.Updated = DateTime.UtcNow;
+                                            //await assetRepository.UpdateAssetAsync(pastIncomeAsset);
+                                            //#endregion
+
+                                            //#region 현재 자산
+                                            //currentExpenditureAsset.Amount -= Math.Abs(currentTempExpenditure.Amount);
+                                            //currentExpenditureAsset.Updated = DateTime.UtcNow;
+                                            //await assetRepository.UpdateAssetAsync(currentExpenditureAsset);
+
+                                            //currentIncomeAsset.Amount += Math.Abs(currentTempExpenditure.Amount);
+                                            //currentIncomeAsset.Updated = DateTime.UtcNow;
+                                            //await assetRepository.UpdateAssetAsync(currentIncomeAsset);
+                                            //#endregion
+
+                                            //#endregion
+                                        }
+                                    }
+                                    else
+                                    {
+                                        #region 자산 업데이트
+
+                                        #region 과거 자산
+                                        var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
+                                        var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
+
+                                        var currentExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.PaymentMethod);
+                                        var currentIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.MyDepositAsset);
+
+                                        pastExpenditureAsset.Amount += Math.Abs(previousTempExpenditure.Amount);
+                                        pastExpenditureAsset.Updated = DateTime.UtcNow;
+                                        await assetRepository.UpdateAssetAsync(pastExpenditureAsset);
+
+                                        pastIncomeAsset.Amount -= Math.Abs(previousTempExpenditure.Amount);
+                                        pastIncomeAsset.Updated = DateTime.UtcNow;
+                                        await assetRepository.UpdateAssetAsync(pastIncomeAsset);
+                                        #endregion
+
+                                        #region 현재 자산
+                                        currentExpenditureAsset.Amount -= Math.Abs(currentTempExpenditure.Amount);
+                                        currentExpenditureAsset.Updated = DateTime.UtcNow;
+                                        await assetRepository.UpdateAssetAsync(currentExpenditureAsset);
+
+                                        currentIncomeAsset.Amount += Math.Abs(currentTempExpenditure.Amount);
+                                        currentIncomeAsset.Updated = DateTime.UtcNow;
+                                        await assetRepository.UpdateAssetAsync(currentIncomeAsset);
+                                        #endregion
+
+                                        #endregion
+                                    }
+
+                                    return Json(new { result = true, message = localizer["The expenditure has been successfully updated."].Value });
+                                }
+                                #endregion
+                                #region 잘못된 경우
+                                else
+                                {
+                                    return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                                }
+                                #endregion
+                            }
+                            catch (Exception e)
+                            {
+                                return Json(new { result = false, error = e.ToString() });
+                            }
+                        }
+                        else if (expenditureInputViewModel.SubClass == "Tax" ||
+                            expenditureInputViewModel.SubClass == "SocialInsurance" ||
+                            expenditureInputViewModel.SubClass == "InterHouseholdTranserExpenses" ||
+                            expenditureInputViewModel.SubClass == "NonProfitOrganizationTransfer")
+                        {
+                            try
+                            {
+                                var tempExpenditures = await expenditureRepository.GetExpendituresAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+                                var previousTempExpenditure = tempExpenditures.Where(a => a.Id == expenditureInputViewModel.Id).FirstOrDefault();
+                                var currentTempExpenditure = new Expenditure()
+                                {
+                                    Id = expenditureInputViewModel.Id,
+                                    AccountEmail = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email,
+                                    MainClass = expenditureInputViewModel.MainClass,
+                                    SubClass = expenditureInputViewModel.SubClass,
+                                    Contents = expenditureInputViewModel?.Contents ?? "",
+                                    Amount = expenditureInputViewModel.Amount,
+                                    PaymentMethod = expenditureInputViewModel.PaymentMethod,
+                                    MyDepositAsset = "",
+                                    Created = previousTempExpenditure.Created,
+                                    Updated = DateTime.UtcNow,
+                                    Note = expenditureInputViewModel?.Note ?? "",
+                                    Asset = previousTempExpenditure.Asset
+                                };
+
+                                #region 과거 지출 값 [(결제수단(O)), (내입금자산(X))], 현재 지출 값 [(결제수단(O)), (내입금자산(X))]
+                                if (!string.IsNullOrEmpty(previousTempExpenditure.PaymentMethod) && string.IsNullOrEmpty(previousTempExpenditure.MyDepositAsset) &&
+                                    !string.IsNullOrEmpty(currentTempExpenditure.PaymentMethod) && string.IsNullOrEmpty(currentTempExpenditure.MyDepositAsset))
+                                {
+                                    #region 지출 업데이트
+                                    await expenditureRepository.UpdateExpenditureAsync(currentTempExpenditure);
+                                    #endregion
+
+                                    if (previousTempExpenditure.PaymentMethod == currentTempExpenditure.PaymentMethod)
+                                    {
+                                        #region 자산 업데이트
+
+                                        #region 과거 자산
+                                        var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
+                                        pastExpenditureAsset.Amount = pastExpenditureAsset.Amount + Math.Abs(previousTempExpenditure.Amount) - Math.Abs(currentTempExpenditure.Amount);
+                                        pastExpenditureAsset.Updated = DateTime.UtcNow;
+                                        await assetRepository.UpdateAssetAsync(pastExpenditureAsset);
+                                        #endregion
+
+                                        #endregion
+                                    }
+                                    else
+                                    {
+                                        #region 자산 업데이트
+
+                                        #region 과거 자산
+                                        var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
+                                        //var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
+
+                                        var currentExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.PaymentMethod);
+                                        //var currentIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.MyDepositAsset);
+
+                                        pastExpenditureAsset.Amount += Math.Abs(previousTempExpenditure.Amount);
+                                        pastExpenditureAsset.Updated = DateTime.UtcNow;
+                                        await assetRepository.UpdateAssetAsync(pastExpenditureAsset);
+
+                                        //pastIncomeAsset.Amount -= Math.Abs(previousTempExpenditure.Amount);
+                                        //pastIncomeAsset.Updated = DateTime.UtcNow;
+                                        //await assetRepository.UpdateAssetAsync(pastIncomeAsset);
+                                        #endregion
+
+                                        #region 현재 자산
+                                        currentExpenditureAsset.Amount -= Math.Abs(currentTempExpenditure.Amount);
+                                        currentExpenditureAsset.Updated = DateTime.UtcNow;
+                                        await assetRepository.UpdateAssetAsync(currentExpenditureAsset);
+
+                                        //currentIncomeAsset.Amount += Math.Abs(currentTempExpenditure.Amount);
+                                        //currentIncomeAsset.Updated = DateTime.UtcNow;
+                                        //await assetRepository.UpdateAssetAsync(currentIncomeAsset);
+                                        #endregion
+
+                                        #endregion
+                                    }
+
+                                    return Json(new { result = true, message = localizer["The expenditure has been successfully updated."].Value });
+                                }
+                                #endregion
+                                #region 과거 지출 값 [(결제수단(O)), (내입금자산(O))], 현재 지출 값 [(결제수단(O)), (내입금자산(X))]
+                                else if (!string.IsNullOrEmpty(previousTempExpenditure.PaymentMethod) && !string.IsNullOrEmpty(previousTempExpenditure.MyDepositAsset) &&
+                                        !string.IsNullOrEmpty(currentTempExpenditure.PaymentMethod) && string.IsNullOrEmpty(currentTempExpenditure.MyDepositAsset))
+                                {
+                                    #region 지출 업데이트
+                                    await expenditureRepository.UpdateExpenditureAsync(currentTempExpenditure);
+                                    #endregion
+
+                                    if (previousTempExpenditure.PaymentMethod == currentTempExpenditure.PaymentMethod)
+                                    {
+                                        #region 자산 업데이트
+
+                                        #region 과거 자산
+                                        var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
+                                        var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
+
+                                        pastExpenditureAsset.Amount = pastExpenditureAsset.Amount + Math.Abs(previousTempExpenditure.Amount) - Math.Abs(currentTempExpenditure.Amount);
+                                        pastExpenditureAsset.Updated = DateTime.UtcNow;
+                                        await assetRepository.UpdateAssetAsync(pastExpenditureAsset);
+
+                                        pastIncomeAsset.Amount -= Math.Abs(previousTempExpenditure.Amount);
+                                        pastIncomeAsset.Updated = DateTime.UtcNow;
+                                        await assetRepository.UpdateAssetAsync(pastIncomeAsset);
+                                        #endregion
+
+                                        #endregion
+                                    }
+                                    else if (previousTempExpenditure.MyDepositAsset == currentTempExpenditure.PaymentMethod)
+                                    {
+                                        #region 자산 업데이트
+
+                                        #region 과거 자산
+                                        var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
+                                        var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
+
+                                        pastExpenditureAsset.Amount += Math.Abs(previousTempExpenditure.Amount);
+                                        pastExpenditureAsset.Updated = DateTime.UtcNow;
+                                        await assetRepository.UpdateAssetAsync(pastExpenditureAsset);
+
+                                        pastIncomeAsset.Amount = pastIncomeAsset.Amount - Math.Abs(previousTempExpenditure.Amount) - Math.Abs(currentTempExpenditure.Amount);
+                                        pastIncomeAsset.Updated = DateTime.UtcNow;
+                                        await assetRepository.UpdateAssetAsync(pastIncomeAsset);
+                                        #endregion
+
+                                        #endregion
+                                    }
+                                    else
+                                    {
+                                        #region 자산 업데이트
+
+                                        #region 과거 자산
+                                        var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
+                                        var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
+
+                                        var currentExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.PaymentMethod);
+
+                                        pastExpenditureAsset.Amount += Math.Abs(previousTempExpenditure.Amount);
+                                        pastExpenditureAsset.Updated = DateTime.UtcNow;
+                                        await assetRepository.UpdateAssetAsync(pastExpenditureAsset);
+
+                                        pastIncomeAsset.Amount -= Math.Abs(previousTempExpenditure.Amount);
+                                        pastIncomeAsset.Updated = DateTime.UtcNow;
+                                        await assetRepository.UpdateAssetAsync(pastIncomeAsset);
+                                        #endregion
+
+                                        #region 현재 자산
+                                        currentExpenditureAsset.Amount -= Math.Abs(currentTempExpenditure.Amount);
+                                        currentExpenditureAsset.Updated = DateTime.UtcNow;
+                                        await assetRepository.UpdateAssetAsync(currentExpenditureAsset);
+                                        #endregion
+
+                                        #endregion
+                                    }
+
+                                    return Json(new { result = true, message = localizer["The expenditure has been successfully updated."].Value });
+                                }
+                                #endregion
+                                #region 잘못된 경우
+                                else
+                                {
+                                    return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                                }
+                                #endregion
+                            }
+                            catch (Exception e)
+                            {
+                                return Json(new { result = false, error = e.ToString() });
+                            }
+                        }
+                        else
+                        {
+                            return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                        }
+                    }
+                    #endregion
+
+                    #region 대분류 = '소비지출'
+                    else if (expenditureInputViewModel.MainClass == "ConsumerSpending")
+                    {
+                        if (expenditureInputViewModel.SubClass == "MealOrEatOutExpenses" ||
+                            expenditureInputViewModel.SubClass == "HousingOrSuppliesCost" ||
+                            expenditureInputViewModel.SubClass == "EducationExpenses" ||
+                            expenditureInputViewModel.SubClass == "MedicalExpenses" ||
+                            expenditureInputViewModel.SubClass == "TransportationCost" ||
+                            expenditureInputViewModel.SubClass == "CommunicationCost" ||
+                            expenditureInputViewModel.SubClass == "LeisureOrCulture" ||
+                            expenditureInputViewModel.SubClass == "ClothingOrShoes" ||
+                            expenditureInputViewModel.SubClass == "PinMoney" ||
+                            expenditureInputViewModel.SubClass == "ProtectionTypeInsurance" ||
+                            expenditureInputViewModel.SubClass == "OtherExpenses" ||
+                            expenditureInputViewModel.SubClass == "UnknownExpenditure")
+                        {
+                            try
+                            {
+                                var tempExpenditures = await expenditureRepository.GetExpendituresAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+                                var previousTempExpenditure = tempExpenditures.Where(a => a.Id == expenditureInputViewModel.Id).FirstOrDefault();
+                                var currentTempExpenditure = new Expenditure()
+                                {
+                                    Id = expenditureInputViewModel.Id,
+                                    AccountEmail = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email,
+                                    MainClass = expenditureInputViewModel.MainClass,
+                                    SubClass = expenditureInputViewModel.SubClass,
+                                    Contents = expenditureInputViewModel?.Contents ?? "",
+                                    Amount = expenditureInputViewModel.Amount,
+                                    PaymentMethod = expenditureInputViewModel.PaymentMethod,
+                                    MyDepositAsset = "",
+                                    Created = previousTempExpenditure.Created,
+                                    Updated = DateTime.UtcNow,
+                                    Note = expenditureInputViewModel?.Note ?? "",
+                                    Asset = previousTempExpenditure.Asset
+                                };
+
+                                #region 과거 지출 값 [(결제수단(O)), (내입금자산(X))], 현재 지출 값 [(결제수단(O)), (내입금자산(X))]
+                                if (!string.IsNullOrEmpty(previousTempExpenditure.PaymentMethod) && string.IsNullOrEmpty(previousTempExpenditure.MyDepositAsset) &&
+                                    !string.IsNullOrEmpty(currentTempExpenditure.PaymentMethod) && string.IsNullOrEmpty(currentTempExpenditure.MyDepositAsset))
+                                {
+                                    #region 지출 업데이트
+                                    await expenditureRepository.UpdateExpenditureAsync(currentTempExpenditure);
+                                    #endregion
+
+                                    if (previousTempExpenditure.PaymentMethod == currentTempExpenditure.PaymentMethod)
+                                    {
+                                        #region 자산 업데이트
+
+                                        #region 과거 자산
+                                        var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
+                                        //var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
+
+                                        //var currentExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.PaymentMethod);
+                                        //var currentIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.MyDepositAsset);
+
+                                        pastExpenditureAsset.Amount = pastExpenditureAsset.Amount + Math.Abs(previousTempExpenditure.Amount) - Math.Abs(currentTempExpenditure.Amount);
+                                        pastExpenditureAsset.Updated = DateTime.UtcNow;
+                                        await assetRepository.UpdateAssetAsync(pastExpenditureAsset);
+
+                                        //pastIncomeAsset.Amount -= Math.Abs(previousTempExpenditure.Amount);
+                                        //pastIncomeAsset.Updated = DateTime.UtcNow;
+                                        //await assetRepository.UpdateAssetAsync(pastIncomeAsset);
+                                        #endregion
+
+                                        #region 현재 자산
+                                        //currentExpenditureAsset.Amount -= Math.Abs(currentTempExpenditure.Amount);
+                                        //currentExpenditureAsset.Updated = DateTime.UtcNow;
+                                        //await assetRepository.UpdateAssetAsync(currentExpenditureAsset);
+
+                                        //currentIncomeAsset.Amount += Math.Abs(currentTempExpenditure.Amount);
+                                        //currentIncomeAsset.Updated = DateTime.UtcNow;
+                                        //await assetRepository.UpdateAssetAsync(currentIncomeAsset);
+                                        #endregion
+
+                                        #endregion
+                                    }
+                                    else
+                                    {
+                                        #region 자산 업데이트
+
+                                        #region 과거 자산
+                                        var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
+                                        //var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
+
+                                        var currentExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.PaymentMethod);
+                                        //var currentIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.MyDepositAsset);
+
+                                        pastExpenditureAsset.Amount += Math.Abs(previousTempExpenditure.Amount);
+                                        pastExpenditureAsset.Updated = DateTime.UtcNow;
+                                        await assetRepository.UpdateAssetAsync(pastExpenditureAsset);
+
+                                        //pastIncomeAsset.Amount -= Math.Abs(previousTempExpenditure.Amount);
+                                        //pastIncomeAsset.Updated = DateTime.UtcNow;
+                                        //await assetRepository.UpdateAssetAsync(pastIncomeAsset);
+                                        #endregion
+
+                                        #region 현재 자산
+                                        currentExpenditureAsset.Amount -= Math.Abs(currentTempExpenditure.Amount);
+                                        currentExpenditureAsset.Updated = DateTime.UtcNow;
+                                        await assetRepository.UpdateAssetAsync(currentExpenditureAsset);
+
+                                        //currentIncomeAsset.Amount += Math.Abs(currentTempExpenditure.Amount);
+                                        //currentIncomeAsset.Updated = DateTime.UtcNow;
+                                        //await assetRepository.UpdateAssetAsync(currentIncomeAsset);
+                                        #endregion
+
+                                        #endregion
+                                    }
+
+                                    return Json(new { result = true, message = localizer["The expenditure has been successfully updated."].Value });
+                                }
+                                #endregion
+                                #region 과거 지출 값 [(결제수단(O)), (내입금자산(O))], 현재 지출 값 [(결제수단(O)), (내입금자산(X))]
+                                else if (!string.IsNullOrEmpty(previousTempExpenditure.PaymentMethod) && !string.IsNullOrEmpty(previousTempExpenditure.MyDepositAsset) &&
+                                        !string.IsNullOrEmpty(currentTempExpenditure.PaymentMethod) && string.IsNullOrEmpty(currentTempExpenditure.MyDepositAsset))
+                                {
+                                    #region 지출 업데이트
+                                    await expenditureRepository.UpdateExpenditureAsync(currentTempExpenditure);
+                                    #endregion
+
+                                    if (previousTempExpenditure.PaymentMethod == currentTempExpenditure.PaymentMethod)
+                                    {
+                                        #region 자산 업데이트
+
+                                        #region 과거 자산
+                                        var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
+                                        var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
+
+                                        //var currentExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.PaymentMethod);
+                                        //var currentIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.MyDepositAsset);
+
+                                        pastExpenditureAsset.Amount = pastExpenditureAsset.Amount + Math.Abs(previousTempExpenditure.Amount) - Math.Abs(currentTempExpenditure.Amount);
+                                        pastExpenditureAsset.Updated = DateTime.UtcNow;
+                                        await assetRepository.UpdateAssetAsync(pastExpenditureAsset);
+
+                                        pastIncomeAsset.Amount -= Math.Abs(previousTempExpenditure.Amount);
+                                        pastIncomeAsset.Updated = DateTime.UtcNow;
+                                        await assetRepository.UpdateAssetAsync(pastIncomeAsset);
+                                        #endregion
+
+                                        #region 현재 자산
+                                        //currentExpenditureAsset.Amount -= Math.Abs(currentTempExpenditure.Amount);
+                                        //currentExpenditureAsset.Updated = DateTime.UtcNow;
+                                        //await assetRepository.UpdateAssetAsync(currentExpenditureAsset);
+
+                                        //currentIncomeAsset.Amount += Math.Abs(currentTempExpenditure.Amount);
+                                        //currentIncomeAsset.Updated = DateTime.UtcNow;
+                                        //await assetRepository.UpdateAssetAsync(currentIncomeAsset);
+                                        #endregion
+
+                                        #endregion
+                                    }
+                                    else if (previousTempExpenditure.MyDepositAsset == currentTempExpenditure.PaymentMethod)
+                                    {
+                                        #region 자산 업데이트
+
+                                        #region 과거 자산
+                                        var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
+                                        var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
+
+                                        //var currentExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.PaymentMethod);
+                                        //var currentIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.MyDepositAsset);
+
+                                        pastExpenditureAsset.Amount += Math.Abs(previousTempExpenditure.Amount);
+                                        pastExpenditureAsset.Updated = DateTime.UtcNow;
+                                        await assetRepository.UpdateAssetAsync(pastExpenditureAsset);
+
+                                        pastIncomeAsset.Amount = pastIncomeAsset.Amount - Math.Abs(previousTempExpenditure.Amount) - Math.Abs(currentTempExpenditure.Amount);
+                                        pastIncomeAsset.Updated = DateTime.UtcNow;
+                                        await assetRepository.UpdateAssetAsync(pastIncomeAsset);
+                                        #endregion
+
+                                        #region 현재 자산
+                                        //currentExpenditureAsset.Amount -= Math.Abs(currentTempExpenditure.Amount);
+                                        //currentExpenditureAsset.Updated = DateTime.UtcNow;
+                                        //await assetRepository.UpdateAssetAsync(currentExpenditureAsset);
+
+                                        //currentIncomeAsset.Amount += Math.Abs(currentTempExpenditure.Amount);
+                                        //currentIncomeAsset.Updated = DateTime.UtcNow;
+                                        //await assetRepository.UpdateAssetAsync(currentIncomeAsset);
+                                        #endregion
+
+                                        #endregion
+                                    }
+                                    else
+                                    {
+                                        #region 자산 업데이트
+
+                                        #region 과거 자산
+                                        var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
+                                        var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
+
+                                        var currentExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.PaymentMethod);
+                                        //var currentIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.MyDepositAsset);
+
+                                        pastExpenditureAsset.Amount += Math.Abs(previousTempExpenditure.Amount);
+                                        pastExpenditureAsset.Updated = DateTime.UtcNow;
+                                        await assetRepository.UpdateAssetAsync(pastExpenditureAsset);
+
+                                        pastIncomeAsset.Amount -= Math.Abs(previousTempExpenditure.Amount);
+                                        pastIncomeAsset.Updated = DateTime.UtcNow;
+                                        await assetRepository.UpdateAssetAsync(pastIncomeAsset);
+                                        #endregion
+
+                                        #region 현재 자산
+                                        currentExpenditureAsset.Amount -= Math.Abs(currentTempExpenditure.Amount);
+                                        currentExpenditureAsset.Updated = DateTime.UtcNow;
+                                        await assetRepository.UpdateAssetAsync(currentExpenditureAsset);
+
+                                        //currentIncomeAsset.Amount += Math.Abs(currentTempExpenditure.Amount);
+                                        //currentIncomeAsset.Updated = DateTime.UtcNow;
+                                        //await assetRepository.UpdateAssetAsync(currentIncomeAsset);
+                                        #endregion
+
+                                        #endregion
+                                    }
+
+                                    return Json(new { result = true, message = localizer["The expenditure has been successfully updated."].Value });
+                                }
+                                #endregion
+                                #region 잘못된 경우
+                                else
+                                {
+                                    return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                                }
+                                #endregion
+                            }
+                            catch (Exception e)
+                            {
+                                return Json(new { result = false, error = e.ToString() });
+                            }
+                        }
+                        else
+                        {
+                            return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                        }
+                    }
+                    #endregion
+
+                    #region 대분류에 없는 값
+                    else
+                    {
+                        return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                    }
+                    #endregion
+                }
+                else
+                {
+                    return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                }
+            }
+            catch (Exception e)
+            {
+                return Json(new { result = false, error = e.ToString() });
+            }
+        }
+        #endregion
+
+        #region Delete
+
+        #endregion
+
         #endregion
     }
 }
