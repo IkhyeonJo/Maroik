@@ -178,7 +178,7 @@
     <value>SubClass</value>
   </data>
   <data name="가구간 이전지출" xml:space="preserve">
-    <value>InterHouseholdTranserExpenses</value>
+    <value>InterHouseholdTranser</value>
   </data>
   <data name="공적연금" xml:space="preserve">
     <value>PublicPension</value>
@@ -208,7 +208,7 @@
     <value>NonConsumerSpending</value>
   </data>
   <data name="비영리단체 이전" xml:space="preserve">
-    <value>NonProfitOrganizationTransfer</value>
+    <value>NonProfitOrganization</value>
   </data>
   <data name="사회보험" xml:space="preserve">
     <value>SocialInsurance</value>
