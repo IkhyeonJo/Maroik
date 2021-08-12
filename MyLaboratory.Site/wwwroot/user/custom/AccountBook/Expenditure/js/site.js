@@ -631,11 +631,11 @@ function UpdateExpenditure() {
     return false;
 }
 
-function ConfirmDeleteIncome(errorMessageSelectGridRow) {
+function ConfirmDeleteExpenditure(errorMessageSelectGridRow) {
 
     var selectedRowId = "";
 
-    $('#incomeGrid > table > tbody  > tr').each(function (index, tr) {
+    $('#expenditureGrid > table > tbody  > tr').each(function (index, tr) {
         if ($(this).attr("class").includes(selectedRowColor)) { // Get SelectedRow by Color
             selectedRowId = $(this).attr("data-id");
         }
@@ -646,20 +646,20 @@ function ConfirmDeleteIncome(errorMessageSelectGridRow) {
         return false;
     } // check whether selected row exist or not
 
-    $('#confirmDeleteIncomeDialogModal').modal({
+    $('#confirmDeleteExpenditureDialogModal').modal({
         keyboard: false,
         backdrop: "static"
     });
 
-    $('#confirmDeleteIncomeDialogModal').modal('toggle');
-    $('#confirmDeleteIncomeDialogModal').modal('show');
+    $('#confirmDeleteExpenditureDialogModal').modal('toggle');
+    $('#confirmDeleteExpenditureDialogModal').modal('show');
 }
 
-function DeleteIncome(errorMessageSelectGridRow) {
+function DeleteExpenditure(errorMessageSelectGridRow) {
 
     var selectedRowId = "";
 
-    $('#incomeGrid > table > tbody  > tr').each(function (index, tr) {
+    $('#expenditureGrid > table > tbody  > tr').each(function (index, tr) {
         if ($(this).attr("class").includes(selectedRowColor)) { // Get SelectedRow by Color
             selectedRowId = $(this).attr("data-id");
         }
@@ -671,7 +671,7 @@ function DeleteIncome(errorMessageSelectGridRow) {
     } // check whether selected row exist or not
 
     $.ajax({
-        url: '/AccountBook/IsIncomeExists' + '?id=' + selectedRowId,
+        url: '/AccountBook/IsExpenditureExists' + '?id=' + selectedRowId,
         type: 'POST',
         headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
         dataType: 'json',
@@ -683,11 +683,11 @@ function DeleteIncome(errorMessageSelectGridRow) {
             if (data.result) {
 
                 var paramValue = JSON.stringify({
-                    Id: data.income.id
+                    Id: data.expenditure.id
                 });
 
                 $.ajax({
-                    url: '/AccountBook/DeleteIncome',
+                    url: '/AccountBook/DeleteExpenditure',
                     type: 'POST',
                     headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
                     dataType: 'json',
@@ -697,7 +697,7 @@ function DeleteIncome(errorMessageSelectGridRow) {
                     //cache: false,
                     success: function (data) {
                         if (data.result) {
-                            $('#confirmDeleteIncomeDialogModal').modal('hide'); // hide Modal
+                            $('#confirmDeleteExpenditureDialogModal').modal('hide'); // hide Modal
 
                             const grid = new MvcGrid(document.querySelector(".mvc-grid")); //reload grid
                             grid.reload(); //reload grid

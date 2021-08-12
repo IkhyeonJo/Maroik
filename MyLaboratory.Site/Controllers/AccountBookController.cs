@@ -2866,7 +2866,75 @@ namespace MyLaboratory.Site.Controllers
         #endregion
 
         #region Delete
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [RequiredHttpPostAccess(Role = Role.User)]
+        public async Task<IActionResult> DeleteExpenditure([FromBody] ExpenditureInputViewModel expenditureInputViewModel)
+        {
+            try
+            {
+                HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
 
+                var tempExpenditures = await expenditureRepository.GetExpendituresAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+                
+                if (tempExpenditures == null)
+                {
+                    return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                }
+                else
+                {
+                    var tempExpenditure = tempExpenditures.Where(a => a.Id == expenditureInputViewModel.Id).FirstOrDefault();
+                    if (tempExpenditure == null)
+                    {
+                        return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                    }
+                    else
+                    {
+                        if (!string.IsNullOrEmpty(tempExpenditure.MyDepositAsset))
+                        {
+                            #region 지출 삭제
+                            await expenditureRepository.DeleteExpenditureAsync(tempExpenditure);
+                            #endregion
+
+                            #region 자산 업데이트
+                            var expenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, tempExpenditure.PaymentMethod);
+                            var incomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, tempExpenditure.MyDepositAsset);
+
+                            expenditureAsset.Amount += Math.Abs(tempExpenditure.Amount);
+                            expenditureAsset.Updated = DateTime.UtcNow;
+                            await assetRepository.UpdateAssetAsync(expenditureAsset);
+
+                            incomeAsset.Amount -= Math.Abs(tempExpenditure.Amount);
+                            incomeAsset.Updated = DateTime.UtcNow;
+                            await assetRepository.UpdateAssetAsync(incomeAsset);
+                            #endregion
+
+                            return Json(new { result = true, message = localizer["The expenditure has been successfully deleted."].Value });
+                        }
+                        else
+                        {
+                            #region 지출 삭제
+                            await expenditureRepository.DeleteExpenditureAsync(tempExpenditure);
+                            #endregion
+
+                            #region 자산 업데이트
+                            var expenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, tempExpenditure.PaymentMethod);
+
+                            expenditureAsset.Amount += Math.Abs(tempExpenditure.Amount);
+                            expenditureAsset.Updated = DateTime.UtcNow;
+                            await assetRepository.UpdateAssetAsync(expenditureAsset);
+                            #endregion
+
+                            return Json(new { result = true, message = localizer["The expenditure has been successfully deleted."].Value });
+                        }
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                return Json(new { result = false, error = e.ToString() });
+            }
+        }
         #endregion
 
         #endregion
