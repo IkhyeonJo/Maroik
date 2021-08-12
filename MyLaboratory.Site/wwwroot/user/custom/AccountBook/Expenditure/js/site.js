@@ -717,20 +717,20 @@ function DeleteExpenditure(errorMessageSelectGridRow) {
     });
 }
 
-function ExportExcelIncome() {
+function ExportExcelExpenditure() {
     var form = document.createElement("form");
     var element1 = document.createElement("input");
     var element2 = document.createElement("input");
 
     form.method = "POST";
-    form.action = "/AccountBook/ExportExcelIncome";
+    form.action = "/AccountBook/ExportExcelExpenditure";
 
     element1.name = "__RequestVerificationToken";
     element1.value = $('input[name="__RequestVerificationToken"]').val();
     form.appendChild(element1);
 
     element2.name = "fileName";
-    element2.value = "Income";
+    element2.value = "Expenditure";
     form.appendChild(element2);
 
     document.body.appendChild(form);

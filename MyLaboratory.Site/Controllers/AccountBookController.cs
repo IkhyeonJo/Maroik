@@ -2937,6 +2937,85 @@ namespace MyLaboratory.Site.Controllers
         }
         #endregion
 
+        #region Excel
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [RequiredHttpPostAccess(Role = Role.User)]
+        public async Task<IActionResult> ExportExcelExpenditure(string fileName = "")
+        {
+            // query data from database
+            await Task.Yield();
+
+            List<ExpenditureOutputViewModel> expenditureOutputViewModels = new List<ExpenditureOutputViewModel>();
+
+            #region Expenditures
+
+            HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+
+            foreach (var item in await expenditureRepository.GetExpendituresAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email))
+            {
+                expenditureOutputViewModels.Add(new ExpenditureOutputViewModel()
+                {
+                    Id = item.Id,
+                    MainClass = localizer[item.MainClass.ToString()].Value,
+                    SubClass = localizer[item.SubClass.ToString()].Value,
+                    Contents = item.Contents,
+                    Amount = item.Amount,
+                    PaymentMethod = item.PaymentMethod,
+                    Note = item.Note,
+                    MyDepositAsset = item.MyDepositAsset,
+                    Created = item.Created,
+                    Updated = item.Updated
+                });
+            }
+            #endregion
+
+            var stream = new MemoryStream();
+
+            using (var package = new ExcelPackage(stream))
+            {
+                var workSheetMenuOutputViewModels = package.Workbook.Worksheets.Add("Sheet1");
+
+                workSheetMenuOutputViewModels.Row(1).Height = 20;
+                workSheetMenuOutputViewModels.Row(1).Style.HorizontalAlignment = OfficeOpenXml.Style.ExcelHorizontalAlignment.Center;
+                workSheetMenuOutputViewModels.Row(1).Style.Font.Bold = true;
+                workSheetMenuOutputViewModels.Cells[1, 1].Value = localizer[nameof(ExpenditureOutputViewModel.Id).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 2].Value = localizer[nameof(ExpenditureOutputViewModel.MainClass).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 3].Value = localizer[nameof(ExpenditureOutputViewModel.SubClass).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 4].Value = localizer[nameof(ExpenditureOutputViewModel.Contents).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 5].Value = localizer[nameof(ExpenditureOutputViewModel.Amount).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 6].Value = localizer[nameof(ExpenditureOutputViewModel.PaymentMethod).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 7].Value = localizer[nameof(ExpenditureOutputViewModel.Note).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 8].Value = localizer[nameof(ExpenditureOutputViewModel.MyDepositAsset).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 9].Value = localizer[nameof(ExpenditureOutputViewModel.Created).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 10].Value = localizer[nameof(ExpenditureOutputViewModel.Updated).ToString()].Value;
+
+                int recordIndex = 2;
+                foreach (var item in expenditureOutputViewModels)
+                {
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 1].Value = item.Id;
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 2].Value = localizer[item?.MainClass?.ToString() ?? ""].Value;
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 3].Value = localizer[item?.SubClass?.ToString() ?? ""].Value;
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 4].Value = item.Contents;
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 5].Value = item.Amount;
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 6].Value = item.PaymentMethod;
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 7].Value = item.Note;
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 8].Value = item.MyDepositAsset;
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 9].Value = item.Created.ToString();
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 10].Value = item.Updated.ToString();
+                    
+                    recordIndex++;
+                }
+
+                package.Save();
+            }
+            stream.Position = 0;
+            string excelName = $"{fileName}-{DateTime.UtcNow.ToString("yyyyMMddHHmmssfff")}.xlsx";
+
+            return File(stream, "application/octet-stream", excelName);
+        }
+        #endregion
+
         #endregion
     }
 }
