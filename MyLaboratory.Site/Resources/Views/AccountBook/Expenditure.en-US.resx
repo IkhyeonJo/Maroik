@@ -178,73 +178,73 @@
     <value>SubClass</value>
   </data>
   <data name="가구간 이전지출" xml:space="preserve">
-    <value>InterHouseholdTranser</value>
+    <value>Inter household transer</value>
   </data>
   <data name="공적연금" xml:space="preserve">
-    <value>PublicPension</value>
+    <value>Public pension</value>
   </data>
   <data name="교육비" xml:space="preserve">
-    <value>EducationExpenses</value>
+    <value>Education expenses</value>
   </data>
   <data name="교통비" xml:space="preserve">
-    <value>TransportationCost</value>
+    <value>Transportation cost</value>
   </data>
   <data name="기타지출" xml:space="preserve">
-    <value>OtherExpenses</value>
+    <value>Other expenses</value>
   </data>
   <data name="내자산이체" xml:space="preserve">
-    <value>MyAssetTransfer</value>
+    <value>My asset transfer</value>
   </data>
   <data name="미파악지출" xml:space="preserve">
-    <value>UnknownExpenditure</value>
+    <value>Unknown expenditure</value>
   </data>
   <data name="보장성보험" xml:space="preserve">
-    <value>ProtectionTypeInsurance</value>
+    <value>Protection type insurance</value>
   </data>
   <data name="부채상환" xml:space="preserve">
-    <value>DebtRepayment</value>
+    <value>Debt repayment</value>
   </data>
   <data name="비소비지출" xml:space="preserve">
-    <value>NonConsumerSpending</value>
+    <value>NonConsumer spending</value>
   </data>
   <data name="비영리단체 이전" xml:space="preserve">
-    <value>NonProfitOrganization</value>
+    <value>NonProfit organization</value>
   </data>
   <data name="사회보험" xml:space="preserve">
-    <value>SocialInsurance</value>
+    <value>Social insurance</value>
   </data>
   <data name="세금" xml:space="preserve">
     <value>Tax</value>
   </data>
   <data name="소비지출" xml:space="preserve">
-    <value>ConsumerSpending</value>
+    <value>Consumer spending</value>
   </data>
   <data name="식비/외식비" xml:space="preserve">
-    <value>MealOrEatOutExpenses</value>
+    <value>Meal or eat out</value>
   </data>
   <data name="여가/문화" xml:space="preserve">
-    <value>LeisureOrCulture</value>
+    <value>Leisure or culture</value>
   </data>
   <data name="예적금" xml:space="preserve">
     <value>Deposit</value>
   </data>
   <data name="용돈" xml:space="preserve">
-    <value>PinMoney</value>
+    <value>Pin money</value>
   </data>
   <data name="의료비" xml:space="preserve">
-    <value>MedicalExpenses</value>
+    <value>Medical expenses</value>
   </data>
   <data name="의류/신발" xml:space="preserve">
-    <value>ClothingOrShoes</value>
+    <value>Clothing or shoes</value>
   </data>
   <data name="정기저축" xml:space="preserve">
-    <value>RegularSavings</value>
+    <value>Regular savings</value>
   </data>
   <data name="주거/용품비" xml:space="preserve">
-    <value>HousingOrSuppliesCost</value>
+    <value>Housing or suppliesCost</value>
   </data>
   <data name="통신비" xml:space="preserve">
-    <value>CommunicationCost</value>
+    <value>Communication cost</value>
   </data>
   <data name="투자" xml:space="preserve">
     <value>Investment</value>
