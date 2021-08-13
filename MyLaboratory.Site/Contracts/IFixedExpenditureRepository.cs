@@ -24,7 +24,7 @@ namespace MyLaboratory.Site.Contracts
         /// <summary>
         /// 고정지출을 구합니다.
         /// </summary>
-        /// <param name="email"></param>
+        /// <param name="id"></param>
         /// <returns></returns>
         public Task<FixedExpenditure> ReadFixedExpenditureAsync(int id);
 
