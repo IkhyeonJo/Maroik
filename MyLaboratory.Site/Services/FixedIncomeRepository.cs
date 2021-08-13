@@ -39,6 +39,11 @@ namespace MyLaboratory.Site.Services
             await context.SaveChangesAsync();
         }
 
+        public async Task<FixedIncome> ReadFixedIncomeAsync(int id)
+        {
+            return await context.FixedIncomes.FirstOrDefaultAsync(x => x.Id == id);
+        }
+
         /// <summary>
         /// 고정수입을 업데이트합니다.
         /// </summary>
