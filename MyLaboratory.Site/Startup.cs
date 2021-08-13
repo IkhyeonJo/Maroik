@@ -71,6 +71,7 @@ namespace MyLaboratory.Site
             services.AddScoped<IIncomeRepository, IncomeRepository>();
             services.AddScoped<IExpenditureRepository, ExpenditureRepository>();
             services.AddScoped<IFixedIncomeRepository, FixedIncomeRepository>();
+            services.AddScoped<IFixedExpenditureRepository, FixedExpenditureRepository>();
             #endregion
 
             #region AddSession
