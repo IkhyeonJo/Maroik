@@ -403,7 +403,7 @@ namespace MyLaboratory.Site.Controllers
                         var tempAssetToValidate = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, incomeInputViewModel.DepositMyAssetProductName);
                         if (tempAssetToValidate.Deleted)
                         {
-                            return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                            return Json(new { result = false, error = localizer["Actions cannot be executed with assets that have already been deleted."].Value });
                         }
                         #endregion
 
@@ -630,7 +630,7 @@ namespace MyLaboratory.Site.Controllers
                                 var tempAssetToValidate = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, tempIncome.DepositMyAssetProductName);
                                 if (tempAssetToValidate.Deleted)
                                 {
-                                    return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                                    return Json(new { result = false, error = localizer["Actions cannot be executed with assets that have already been deleted."].Value });
                                 }
                                 #endregion
                                 var previousTempIncomeDepositMyAssetProductName = tempIncome.DepositMyAssetProductName;
@@ -728,7 +728,7 @@ namespace MyLaboratory.Site.Controllers
                         var tempAssetToValidate = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, tempIncome.DepositMyAssetProductName);
                         if (tempAssetToValidate.Deleted)
                         {
-                            return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                            return Json(new { result = false, error = localizer["Actions cannot be executed with assets that have already been deleted."].Value });
                         }
                         #endregion
 
@@ -849,14 +849,14 @@ namespace MyLaboratory.Site.Controllers
                     var tempExpenditureAssetToValidate = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, expenditureInputViewModel.PaymentMethod);
                     if (tempExpenditureAssetToValidate.Deleted)
                     {
-                        return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                        return Json(new { result = false, error = localizer["Actions cannot be executed with assets that have already been deleted."].Value });
                     }
                     if (!string.IsNullOrEmpty(expenditureInputViewModel.MyDepositAsset))
                     {
                         var tempIncomeAssetToValidate = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, expenditureInputViewModel.MyDepositAsset);
                         if (tempIncomeAssetToValidate.Deleted)
                         {
-                            return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                            return Json(new { result = false, error = localizer["Actions cannot be executed with assets that have already been deleted."].Value });
                         }
                     }
                     #endregion
@@ -1269,14 +1269,14 @@ namespace MyLaboratory.Site.Controllers
                                 var tempExpenditureAssetToValidate = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
                                 if (tempExpenditureAssetToValidate.Deleted)
                                 {
-                                    return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                                    return Json(new { result = false, error = localizer["Actions cannot be executed with assets that have already been deleted."].Value });
                                 }
                                 if (!string.IsNullOrEmpty(previousTempExpenditure.MyDepositAsset))
                                 {
                                     var tempIncomeAssetToValidate = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
                                     if (tempIncomeAssetToValidate.Deleted)
                                     {
-                                        return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                                        return Json(new { result = false, error = localizer["Actions cannot be executed with assets that have already been deleted."].Value });
                                     }
                                 }
                                 #endregion
@@ -1870,14 +1870,14 @@ namespace MyLaboratory.Site.Controllers
                                 var tempExpenditureAssetToValidate = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
                                 if (tempExpenditureAssetToValidate.Deleted)
                                 {
-                                    return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                                    return Json(new { result = false, error = localizer["Actions cannot be executed with assets that have already been deleted."].Value });
                                 }
                                 if (!string.IsNullOrEmpty(previousTempExpenditure.MyDepositAsset))
                                 {
                                     var tempIncomeAssetToValidate = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
                                     if (tempIncomeAssetToValidate.Deleted)
                                     {
-                                        return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                                        return Json(new { result = false, error = localizer["Actions cannot be executed with assets that have already been deleted."].Value });
                                     }
                                 }
                                 #endregion
@@ -2526,6 +2526,22 @@ namespace MyLaboratory.Site.Controllers
                                     Asset = previousTempExpenditure.Asset
                                 };
 
+                                #region Validate ProductName's Deletion
+                                var tempExpenditureAssetToValidate = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
+                                if (tempExpenditureAssetToValidate.Deleted)
+                                {
+                                    return Json(new { result = false, error = localizer["Actions cannot be executed with assets that have already been deleted."].Value });
+                                }
+                                if (!string.IsNullOrEmpty(previousTempExpenditure.MyDepositAsset))
+                                {
+                                    var tempIncomeAssetToValidate = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
+                                    if (tempIncomeAssetToValidate.Deleted)
+                                    {
+                                        return Json(new { result = false, error = localizer["Actions cannot be executed with assets that have already been deleted."].Value });
+                                    }
+                                }
+                                #endregion
+
                                 #region 과거 지출 값 [(결제수단(O)), (내입금자산(X))], 현재 지출 값 [(결제수단(O)), (내입금자산(X))]
                                 if (!string.IsNullOrEmpty(previousTempExpenditure.PaymentMethod) && string.IsNullOrEmpty(previousTempExpenditure.MyDepositAsset) &&
                                     !string.IsNullOrEmpty(currentTempExpenditure.PaymentMethod) && string.IsNullOrEmpty(currentTempExpenditure.MyDepositAsset))
@@ -2719,14 +2735,14 @@ namespace MyLaboratory.Site.Controllers
                                 var tempExpenditureAssetToValidate = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
                                 if (tempExpenditureAssetToValidate.Deleted)
                                 {
-                                    return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                                    return Json(new { result = false, error = localizer["Actions cannot be executed with assets that have already been deleted."].Value });
                                 }
                                 if (!string.IsNullOrEmpty(previousTempExpenditure.MyDepositAsset))
                                 {
                                     var tempIncomeAssetToValidate = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
                                     if (tempIncomeAssetToValidate.Deleted)
                                     {
-                                        return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                                        return Json(new { result = false, error = localizer["Actions cannot be executed with assets that have already been deleted."].Value });
                                     }
                                 }
                                 #endregion
@@ -2982,14 +2998,14 @@ namespace MyLaboratory.Site.Controllers
                         var tempExpenditureAssetToValidate = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, tempExpenditure.PaymentMethod);
                         if (tempExpenditureAssetToValidate.Deleted)
                         {
-                            return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                            return Json(new { result = false, error = localizer["Actions cannot be executed with assets that have already been deleted."].Value });
                         }
                         if (!string.IsNullOrEmpty(tempExpenditure.MyDepositAsset))
                         {
                             var tempIncomeAssetToValidate = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, tempExpenditure.MyDepositAsset);
                             if (tempIncomeAssetToValidate.Deleted)
                             {
-                                return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                                return Json(new { result = false, error = localizer["Actions cannot be executed with assets that have already been deleted."].Value });
                             }
                         }
                         #endregion
