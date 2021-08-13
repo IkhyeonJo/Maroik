@@ -22,13 +22,6 @@ namespace MyLaboratory.Site.Contracts
         public Task CreateFixedExpenditureAsync(FixedExpenditure fixedExpenditure);
 
         /// <summary>
-        /// 고정지출을 구합니다.
-        /// </summary>
-        /// <param name="id"></param>
-        /// <returns></returns>
-        public Task<FixedExpenditure> ReadFixedExpenditureAsync(int id);
-
-        /// <summary>
         /// 고정지출을 업데이트합니다.
         /// </summary>
         /// <param name="fixedExpenditure"></param>

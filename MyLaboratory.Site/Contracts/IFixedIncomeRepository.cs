@@ -22,13 +22,6 @@ namespace MyLaboratory.Site.Contracts
         public Task CreateFixedIncomeAsync(FixedIncome fixedIncome);
 
         /// <summary>
-        /// 고정수입을 구합니다.
-        /// </summary>
-        /// <param name="id"></param>
-        /// <returns></returns>
-        public Task<FixedIncome> ReadFixedIncomeAsync(int id);
-
-        /// <summary>
         /// 고정수입을 업데이트합니다.
         /// </summary>
         /// <param name="fixedIncome"></param>

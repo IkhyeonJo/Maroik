@@ -40,16 +40,6 @@ namespace MyLaboratory.Site.Services
         }
 
         /// <summary>
-        /// 고정수입을 구합니다.
-        /// </summary>
-        /// <param name="id"></param>
-        /// <returns></returns>
-        public async Task<FixedIncome> ReadFixedIncomeAsync(int id)
-        {
-            return await context.FixedIncomes.FirstOrDefaultAsync(x => x.Id == id);
-        }
-
-        /// <summary>
         /// 고정수입을 업데이트합니다.
         /// </summary>
         /// <param name="fixedIncome"></param>

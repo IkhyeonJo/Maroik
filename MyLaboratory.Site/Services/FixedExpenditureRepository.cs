@@ -40,16 +40,6 @@ namespace MyLaboratory.Site.Services
         }
 
         /// <summary>
-        /// 고정지출을 구합니다.
-        /// </summary>
-        /// <param name="id"></param>
-        /// <returns></returns>
-        public async Task<FixedExpenditure> ReadFixedExpenditureAsync(int id)
-        {
-            return await context.FixedExpenditures.FirstOrDefaultAsync(x => x.Id == id);
-        }
-
-        /// <summary>
         /// 고정지출을 업데이트합니다.
         /// </summary>
         /// <param name="fixedExpenditure"></param>
