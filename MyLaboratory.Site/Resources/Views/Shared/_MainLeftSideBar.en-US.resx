@@ -141,6 +141,12 @@
   <data name="Expenditure" xml:space="preserve">
     <value>Expenditure</value>
   </data>
+  <data name="FixedExpenditure" xml:space="preserve">
+    <value>FixedExpenditure</value>
+  </data>
+  <data name="FixedIncome" xml:space="preserve">
+    <value>FixedIncome</value>
+  </data>
   <data name="Home" xml:space="preserve">
     <value>Home</value>
   </data>
@@ -152,6 +158,9 @@
   </data>
   <data name="Menu" xml:space="preserve">
     <value>Menu</value>
+  </data>
+  <data name="Notice" xml:space="preserve">
+    <value>Notice</value>
   </data>
   <data name="Profile" xml:space="preserve">
     <value>Profile</value>
