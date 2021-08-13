@@ -220,7 +220,7 @@ namespace MyLaboratory.Site.Data
                 entity.Property(e => e.Contents)
                     .IsRequired()
                     .HasMaxLength(255)
-                    .HasComment("내용 (하계할인마트/신한카드/남원추어탕/교보문고)");
+                    .HasComment("내용 (A마트/B카드/C음식점/D도서관)");
 
                 entity.Property(e => e.Created)
                     .HasMaxLength(6)
@@ -284,20 +284,19 @@ namespace MyLaboratory.Site.Data
                 entity.Property(e => e.Contents)
                     .IsRequired()
                     .HasMaxLength(255)
-                    .HasComment("내용 (하계할인마트/신한카드/남원추어탕/교보문고)");
+                    .HasComment("내용 (A마트/B카드/C음식점/D도서관)");
 
                 entity.Property(e => e.Created)
                     .HasMaxLength(6)
                     .HasComment("생성일");
 
-                entity.Property(e => e.Creditor)
-                    .IsRequired()
-                    .HasMaxLength(255)
-                    .HasComment("금융사/채권인");
+                entity.Property(e => e.DepositDay)
+                    .HasColumnType("tinyint(2) unsigned")
+                    .HasComment("입금일");
 
-                entity.Property(e => e.Deleted).HasComment("삭제여부");
-
-                entity.Property(e => e.InterestRate).HasComment("이자율");
+                entity.Property(e => e.DepositMonth)
+                    .HasColumnType("tinyint(2) unsigned")
+                    .HasComment("입금월");
 
                 entity.Property(e => e.MainClass)
                     .IsRequired()
@@ -306,12 +305,11 @@ namespace MyLaboratory.Site.Data
 
                 entity.Property(e => e.MaturityDate)
                     .HasMaxLength(6)
-                    .HasComment("만기일 (만기일 없으면 9999-12-31 되도록 Checkbox 할 것)");
+                    .HasComment("만기일");
 
-                entity.Property(e => e.MonetaryUnit)
-                    .IsRequired()
-                    .HasMaxLength(45)
-                    .HasComment("화폐 단위 (KRW, USD, ETC)");
+                entity.Property(e => e.MyDepositAsset)
+                    .HasMaxLength(255)
+                    .HasComment("내 입금 자산 (자산 상품명/현금) (지출 중 [예적금, 내자산이체, 투자, 공적연금, 부채상환]일 때 사용)");
 
                 entity.Property(e => e.Note)
                     .HasMaxLength(45)
@@ -319,35 +317,16 @@ namespace MyLaboratory.Site.Data
 
                 entity.Property(e => e.PaymentMethod)
                     .IsRequired()
-                    .HasComment("결제수단 (자산 상품명/현금)");
-
-                entity.Property(e => e.ProductName)
-                    .IsRequired()
-                    .HasMaxLength(255)
-                    .HasComment("상품명");
-
-                entity.Property(e => e.Reserved0).HasMaxLength(45);
-
-                entity.Property(e => e.Reserved1).HasMaxLength(45);
-
-                entity.Property(e => e.Reserved2).HasMaxLength(45);
-
-                entity.Property(e => e.Reserved3).HasMaxLength(45);
-
-                entity.Property(e => e.Reserved4).HasMaxLength(45);
+                    .HasComment("결제 수단 (자산 상품명/현금)");
 
                 entity.Property(e => e.SubClass)
                     .IsRequired()
                     .HasMaxLength(255)
-                    .HasComment("소분류 (예적금/투자/(내계좌이체/인출) | 세금/공적연금/사회보험/가구간 이전지출/비영리단체 이전/부채상환 | (식비/외식비)/(주거/용품비)/교육비/의료비/교통비/통신비/(여가/문화)/(의류/신발)/용돈/보장성보험/기타기출/미파악지출)");
+                    .HasComment("소분류 (예적금/내자산이체/투자 | 공적연금/부채상환/세금/사회보험/가구간 이전지출/비영리단체 이전 | (식비/외식비)/(주거/용품비)/교육비/의료비/교통비/통신비/(여가/문화)/(의류/신발)/용돈/보장성보험/기타지출/미파악지출)");
 
                 entity.Property(e => e.Updated)
                     .HasMaxLength(6)
                     .HasComment("업데이트일");
-
-                entity.Property(e => e.WithdrawalDate)
-                    .HasMaxLength(6)
-                    .HasComment("출금일 (매월 며칠)");
 
                 entity.HasOne(d => d.Asset)
                     .WithMany(p => p.FixedExpenditures)
@@ -364,7 +343,7 @@ namespace MyLaboratory.Site.Data
                     .HasCharSet("utf8mb4")
                     .UseCollation("utf8mb4_general_ci");
 
-                entity.HasIndex(e => new { e.DepositMethod, e.AccountEmail }, "FixedIncome_FK");
+                entity.HasIndex(e => new { e.DepositMyAssetProductName, e.AccountEmail }, "FixedIncome_FK");
 
                 entity.Property(e => e.Id)
                     .HasColumnType("int(11)")
@@ -387,22 +366,17 @@ namespace MyLaboratory.Site.Data
                     .HasMaxLength(6)
                     .HasComment("생성일");
 
-                entity.Property(e => e.Debtor)
+                entity.Property(e => e.DepositDay)
+                    .HasColumnType("tinyint(2) unsigned")
+                    .HasComment("입금일");
+
+                entity.Property(e => e.DepositMonth)
+                    .HasColumnType("tinyint(2) unsigned")
+                    .HasComment("입금월");
+
+                entity.Property(e => e.DepositMyAssetProductName)
                     .IsRequired()
-                    .HasMaxLength(255)
-                    .HasComment("금융사/채무인");
-
-                entity.Property(e => e.Deleted).HasComment("삭제여부");
-
-                entity.Property(e => e.DepositDate)
-                    .HasMaxLength(6)
-                    .HasComment("입금일 (매월 며칠)");
-
-                entity.Property(e => e.DepositMethod)
-                    .IsRequired()
-                    .HasComment("입금 방법 (자산 상품명/현금)");
-
-                entity.Property(e => e.InterestRate).HasComment("이자율");
+                    .HasComment("입금 자산 (자산 상품명/현금)");
 
                 entity.Property(e => e.MainClass)
                     .IsRequired()
@@ -411,31 +385,11 @@ namespace MyLaboratory.Site.Data
 
                 entity.Property(e => e.MaturityDate)
                     .HasMaxLength(6)
-                    .HasComment("만기일 (만기일 없으면 9999-12-31 되도록 Checkbox 할 것)");
-
-                entity.Property(e => e.MonetaryUnit)
-                    .IsRequired()
-                    .HasMaxLength(45)
-                    .HasComment("화폐 단위 (KRW, USD, ETC)");
+                    .HasComment("만기일");
 
                 entity.Property(e => e.Note)
                     .HasMaxLength(45)
                     .HasComment("비고");
-
-                entity.Property(e => e.ProductName)
-                    .IsRequired()
-                    .HasMaxLength(255)
-                    .HasComment("상품명");
-
-                entity.Property(e => e.Reserved0).HasMaxLength(45);
-
-                entity.Property(e => e.Reserved1).HasMaxLength(45);
-
-                entity.Property(e => e.Reserved2).HasMaxLength(45);
-
-                entity.Property(e => e.Reserved3).HasMaxLength(45);
-
-                entity.Property(e => e.Reserved4).HasMaxLength(45);
 
                 entity.Property(e => e.SubClass)
                     .IsRequired()
@@ -448,7 +402,7 @@ namespace MyLaboratory.Site.Data
 
                 entity.HasOne(d => d.Asset)
                     .WithMany(p => p.FixedIncomes)
-                    .HasForeignKey(d => new { d.DepositMethod, d.AccountEmail })
+                    .HasForeignKey(d => new { d.DepositMyAssetProductName, d.AccountEmail })
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FixedIncome_FK");
             });
@@ -519,7 +473,7 @@ namespace MyLaboratory.Site.Data
 
                 entity.HasComment("서브 카테고리 /*MyLaboratory.Site의 로그인 후 접근 가능한 좌측 SideBar 설정 시 사용*/");
 
-                entity.HasIndex(e => e.CategoryId, "SubCategories_FK");
+                entity.HasIndex(e => e.CategoryId, "SubCategory_FK");
 
                 entity.Property(e => e.Id)
                     .HasColumnType("int(11)")
@@ -562,7 +516,7 @@ namespace MyLaboratory.Site.Data
                 entity.HasOne(d => d.Category)
                     .WithMany(p => p.SubCategories)
                     .HasForeignKey(d => d.CategoryId)
-                    .HasConstraintName("SubCategories_FK");
+                    .HasConstraintName("SubCategory_FK");
             });
 
             OnModelCreatingPartial(modelBuilder);

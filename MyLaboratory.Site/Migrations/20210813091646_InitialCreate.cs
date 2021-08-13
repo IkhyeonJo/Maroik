@@ -132,7 +132,7 @@ namespace MyLaboratory.Site.Migrations
                 {
                     table.PrimaryKey("PK_SubCategory", x => x.Id);
                     table.ForeignKey(
-                        name: "SubCategories_FK",
+                        name: "SubCategory_FK",
                         column: x => x.CategoryId,
                         principalTable: "Category",
                         principalColumn: "Id",
@@ -154,7 +154,7 @@ namespace MyLaboratory.Site.Migrations
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     SubClass = table.Column<string>(type: "varchar(255)", maxLength: 255, nullable: false, comment: "소분류 (예적금/내자산이체/투자 | 공적연금/부채상환/세금/사회보험/가구간 이전지출/비영리단체 이전 | (식비/외식비)/(주거/용품비)/교육비/의료비/교통비/통신비/(여가/문화)/(의류/신발)/용돈/보장성보험/기타지출/미파악지출)", collation: "utf8mb4_general_ci")
                         .Annotation("MySql:CharSet", "utf8mb4"),
-                    Contents = table.Column<string>(type: "varchar(255)", maxLength: 255, nullable: false, comment: "내용 (하계할인마트/신한카드/남원추어탕/교보문고)", collation: "utf8mb4_general_ci")
+                    Contents = table.Column<string>(type: "varchar(255)", maxLength: 255, nullable: false, comment: "내용 (A마트/B카드/C음식점/D도서관)", collation: "utf8mb4_general_ci")
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     Amount = table.Column<long>(type: "bigint(255)", nullable: false, comment: "금액"),
                     PaymentMethod = table.Column<string>(type: "varchar(255)", nullable: false, comment: "결제 수단 (자산 상품명/현금)", collation: "utf8mb4_general_ci")
@@ -190,36 +190,21 @@ namespace MyLaboratory.Site.Migrations
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     MainClass = table.Column<string>(type: "varchar(255)", maxLength: 255, nullable: false, comment: "대분류 (정기저축/비소비지출/소비지출)", collation: "utf8mb4_general_ci")
                         .Annotation("MySql:CharSet", "utf8mb4"),
-                    SubClass = table.Column<string>(type: "varchar(255)", maxLength: 255, nullable: false, comment: "소분류 (예적금/투자/(내계좌이체/인출) | 세금/공적연금/사회보험/가구간 이전지출/비영리단체 이전/부채상환 | (식비/외식비)/(주거/용품비)/교육비/의료비/교통비/통신비/(여가/문화)/(의류/신발)/용돈/보장성보험/기타기출/미파악지출)", collation: "utf8mb4_general_ci")
+                    SubClass = table.Column<string>(type: "varchar(255)", maxLength: 255, nullable: false, comment: "소분류 (예적금/내자산이체/투자 | 공적연금/부채상환/세금/사회보험/가구간 이전지출/비영리단체 이전 | (식비/외식비)/(주거/용품비)/교육비/의료비/교통비/통신비/(여가/문화)/(의류/신발)/용돈/보장성보험/기타지출/미파악지출)", collation: "utf8mb4_general_ci")
                         .Annotation("MySql:CharSet", "utf8mb4"),
-                    Contents = table.Column<string>(type: "varchar(255)", maxLength: 255, nullable: false, comment: "내용 (하계할인마트/신한카드/남원추어탕/교보문고)", collation: "utf8mb4_general_ci")
-                        .Annotation("MySql:CharSet", "utf8mb4"),
-                    Creditor = table.Column<string>(type: "varchar(255)", maxLength: 255, nullable: false, comment: "금융사/채권인", collation: "utf8mb4_general_ci")
-                        .Annotation("MySql:CharSet", "utf8mb4"),
-                    ProductName = table.Column<string>(type: "varchar(255)", maxLength: 255, nullable: false, comment: "상품명", collation: "utf8mb4_general_ci")
-                        .Annotation("MySql:CharSet", "utf8mb4"),
-                    PaymentMethod = table.Column<string>(type: "varchar(255)", nullable: false, comment: "결제수단 (자산 상품명/현금)", collation: "utf8mb4_general_ci")
+                    Contents = table.Column<string>(type: "varchar(255)", maxLength: 255, nullable: false, comment: "내용 (A마트/B카드/C음식점/D도서관)", collation: "utf8mb4_general_ci")
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     Amount = table.Column<long>(type: "bigint(255)", nullable: false, comment: "금액"),
-                    MonetaryUnit = table.Column<string>(type: "varchar(45)", maxLength: 45, nullable: false, comment: "화폐 단위 (KRW, USD, ETC)", collation: "utf8mb4_general_ci")
+                    PaymentMethod = table.Column<string>(type: "varchar(255)", nullable: false, comment: "결제 수단 (자산 상품명/현금)", collation: "utf8mb4_general_ci")
                         .Annotation("MySql:CharSet", "utf8mb4"),
-                    InterestRate = table.Column<float>(type: "float", nullable: false, comment: "이자율"),
-                    WithdrawalDate = table.Column<DateTime>(type: "datetime(6)", maxLength: 6, nullable: false, comment: "출금일 (매월 며칠)"),
-                    MaturityDate = table.Column<DateTime>(type: "datetime(6)", maxLength: 6, nullable: false, comment: "만기일 (만기일 없으면 9999-12-31 되도록 Checkbox 할 것)"),
+                    MyDepositAsset = table.Column<string>(type: "varchar(255)", maxLength: 255, nullable: true, comment: "내 입금 자산 (자산 상품명/현금) (지출 중 [예적금, 내자산이체, 투자, 공적연금, 부채상환]일 때 사용)", collation: "utf8mb4_general_ci")
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    DepositMonth = table.Column<byte>(type: "tinyint(2) unsigned", nullable: false, comment: "입금월"),
+                    DepositDay = table.Column<byte>(type: "tinyint(2) unsigned", nullable: false, comment: "입금일"),
+                    MaturityDate = table.Column<DateTime>(type: "datetime(6)", maxLength: 6, nullable: false, comment: "만기일"),
                     Created = table.Column<DateTime>(type: "datetime(6)", maxLength: 6, nullable: false, comment: "생성일"),
                     Updated = table.Column<DateTime>(type: "datetime(6)", maxLength: 6, nullable: false, comment: "업데이트일"),
                     Note = table.Column<string>(type: "varchar(45)", maxLength: 45, nullable: true, comment: "비고", collation: "utf8mb4_general_ci")
-                        .Annotation("MySql:CharSet", "utf8mb4"),
-                    Deleted = table.Column<bool>(type: "tinyint(1)", nullable: false, comment: "삭제여부"),
-                    Reserved0 = table.Column<string>(type: "varchar(45)", maxLength: 45, nullable: true, collation: "utf8mb4_general_ci")
-                        .Annotation("MySql:CharSet", "utf8mb4"),
-                    Reserved1 = table.Column<string>(type: "varchar(45)", maxLength: 45, nullable: true, collation: "utf8mb4_general_ci")
-                        .Annotation("MySql:CharSet", "utf8mb4"),
-                    Reserved2 = table.Column<string>(type: "varchar(45)", maxLength: 45, nullable: true, collation: "utf8mb4_general_ci")
-                        .Annotation("MySql:CharSet", "utf8mb4"),
-                    Reserved3 = table.Column<string>(type: "varchar(45)", maxLength: 45, nullable: true, collation: "utf8mb4_general_ci")
-                        .Annotation("MySql:CharSet", "utf8mb4"),
-                    Reserved4 = table.Column<string>(type: "varchar(45)", maxLength: 45, nullable: true, collation: "utf8mb4_general_ci")
                         .Annotation("MySql:CharSet", "utf8mb4")
                 },
                 constraints: table =>
@@ -250,32 +235,15 @@ namespace MyLaboratory.Site.Migrations
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     Contents = table.Column<string>(type: "varchar(255)", maxLength: 255, nullable: false, comment: "내용 (회사명/사업명)", collation: "utf8mb4_general_ci")
                         .Annotation("MySql:CharSet", "utf8mb4"),
-                    Debtor = table.Column<string>(type: "varchar(255)", maxLength: 255, nullable: false, comment: "금융사/채무인", collation: "utf8mb4_general_ci")
-                        .Annotation("MySql:CharSet", "utf8mb4"),
-                    ProductName = table.Column<string>(type: "varchar(255)", maxLength: 255, nullable: false, comment: "상품명", collation: "utf8mb4_general_ci")
-                        .Annotation("MySql:CharSet", "utf8mb4"),
-                    DepositMethod = table.Column<string>(type: "varchar(255)", nullable: false, comment: "입금 방법 (자산 상품명/현금)", collation: "utf8mb4_general_ci")
-                        .Annotation("MySql:CharSet", "utf8mb4"),
                     Amount = table.Column<long>(type: "bigint(255)", nullable: false, comment: "금액"),
-                    MonetaryUnit = table.Column<string>(type: "varchar(45)", maxLength: 45, nullable: false, comment: "화폐 단위 (KRW, USD, ETC)", collation: "utf8mb4_general_ci")
+                    DepositMyAssetProductName = table.Column<string>(type: "varchar(255)", nullable: false, comment: "입금 자산 (자산 상품명/현금)", collation: "utf8mb4_general_ci")
                         .Annotation("MySql:CharSet", "utf8mb4"),
-                    InterestRate = table.Column<float>(type: "float", nullable: false, comment: "이자율"),
-                    DepositDate = table.Column<DateTime>(type: "datetime(6)", maxLength: 6, nullable: false, comment: "입금일 (매월 며칠)"),
-                    MaturityDate = table.Column<DateTime>(type: "datetime(6)", maxLength: 6, nullable: false, comment: "만기일 (만기일 없으면 9999-12-31 되도록 Checkbox 할 것)"),
+                    DepositMonth = table.Column<byte>(type: "tinyint(2) unsigned", nullable: false, comment: "입금월"),
+                    DepositDay = table.Column<byte>(type: "tinyint(2) unsigned", nullable: false, comment: "입금일"),
+                    MaturityDate = table.Column<DateTime>(type: "datetime(6)", maxLength: 6, nullable: false, comment: "만기일"),
                     Created = table.Column<DateTime>(type: "datetime(6)", maxLength: 6, nullable: false, comment: "생성일"),
                     Updated = table.Column<DateTime>(type: "datetime(6)", maxLength: 6, nullable: false, comment: "업데이트일"),
                     Note = table.Column<string>(type: "varchar(45)", maxLength: 45, nullable: true, comment: "비고", collation: "utf8mb4_general_ci")
-                        .Annotation("MySql:CharSet", "utf8mb4"),
-                    Deleted = table.Column<bool>(type: "tinyint(1)", nullable: false, comment: "삭제여부"),
-                    Reserved0 = table.Column<string>(type: "varchar(45)", maxLength: 45, nullable: true, collation: "utf8mb4_general_ci")
-                        .Annotation("MySql:CharSet", "utf8mb4"),
-                    Reserved1 = table.Column<string>(type: "varchar(45)", maxLength: 45, nullable: true, collation: "utf8mb4_general_ci")
-                        .Annotation("MySql:CharSet", "utf8mb4"),
-                    Reserved2 = table.Column<string>(type: "varchar(45)", maxLength: 45, nullable: true, collation: "utf8mb4_general_ci")
-                        .Annotation("MySql:CharSet", "utf8mb4"),
-                    Reserved3 = table.Column<string>(type: "varchar(45)", maxLength: 45, nullable: true, collation: "utf8mb4_general_ci")
-                        .Annotation("MySql:CharSet", "utf8mb4"),
-                    Reserved4 = table.Column<string>(type: "varchar(45)", maxLength: 45, nullable: true, collation: "utf8mb4_general_ci")
                         .Annotation("MySql:CharSet", "utf8mb4")
                 },
                 constraints: table =>
@@ -283,7 +251,7 @@ namespace MyLaboratory.Site.Migrations
                     table.PrimaryKey("PK_FixedIncome", x => x.Id);
                     table.ForeignKey(
                         name: "FixedIncome_FK",
-                        columns: x => new { x.DepositMethod, x.AccountEmail },
+                        columns: x => new { x.DepositMyAssetProductName, x.AccountEmail },
                         principalTable: "Asset",
                         principalColumns: new[] { "ProductName", "AccountEmail" },
                         onDelete: ReferentialAction.Restrict);
@@ -346,7 +314,7 @@ namespace MyLaboratory.Site.Migrations
             migrationBuilder.CreateIndex(
                 name: "FixedIncome_FK",
                 table: "FixedIncome",
-                columns: new[] { "DepositMethod", "AccountEmail" });
+                columns: new[] { "DepositMyAssetProductName", "AccountEmail" });
 
             migrationBuilder.CreateIndex(
                 name: "Income_FK",
@@ -354,7 +322,7 @@ namespace MyLaboratory.Site.Migrations
                 columns: new[] { "DepositMyAssetProductName", "AccountEmail" });
 
             migrationBuilder.CreateIndex(
-                name: "SubCategories_FK",
+                name: "SubCategory_FK",
                 table: "SubCategory",
                 column: "CategoryId");
         }
