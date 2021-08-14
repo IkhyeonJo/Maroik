@@ -196,8 +196,79 @@ namespace MyLaboratory.Site.Controllers
 
         #region Read
         [HttpGet]
-        public IActionResult FixedIncome()
+        public async Task<IActionResult> FixedIncome(string wholeSearch)
         {
+            if (HttpContext.Request.Headers["X-Requested-With"] == "XMLHttpRequest") // ajax
+            {
+                List<FixedIncomeOutputViewModel> fixedIncomeOutputViewModels = new List<FixedIncomeOutputViewModel>();
+
+                #region FixedIncomes
+                HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+
+                DateTime currentDate = new DateTime(Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[0]), Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[1]), Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[2]));
+
+                foreach (var item in await fixedIncomeRepository.GetFixedIncomesAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email))
+                {
+                    if (string.IsNullOrEmpty(wholeSearch))
+                    {
+                        fixedIncomeOutputViewModels.Add(new FixedIncomeOutputViewModel()
+                        {
+                            Id = item.Id,
+                            MainClass = localizer[item.MainClass.ToString()].Value,
+                            SubClass = localizer[item.SubClass.ToString()].Value,
+                            Contents = item.Contents,
+                            Amount = item.Amount,
+                            DepositMonth = item.DepositMonth,
+                            DepositDay = item.DepositDay,
+                            MaturityDate = item.MaturityDate.ToString("yyyy-MM-dd"),
+                            Note = item.Note,
+                            DepositMyAssetProductName = item.DepositMyAssetProductName,
+                            Created = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Created, OSTimeZone.DestinationTimeZoneId),
+                            Updated = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Updated, OSTimeZone.DestinationTimeZoneId),
+                            Noticed = currentDate.Subtract(new DateTime(Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[0]), item.DepositMonth, item.DepositDay)).TotalDays >= 0 && currentDate.Subtract(new DateTime(Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[0]), item.DepositMonth, item.DepositDay)).TotalDays <= ServerSetting.NoticeMaturityDateDay,
+                            Expired = item.MaturityDate.Subtract(currentDate).TotalDays < 0
+                        });
+                    }
+                    else
+                    {
+                        if ((item.Id.ToString() ?? "").Contains(wholeSearch) ||
+                            localizer[item.MainClass?.ToString() ?? ""].Value.Contains(wholeSearch) ||
+                            localizer[item.SubClass?.ToString() ?? ""].Value.Contains(wholeSearch) ||
+                            (item.Contents?.ToString() ?? "").Contains(wholeSearch) ||
+                            (item.Amount.ToString() ?? "").Contains(wholeSearch) ||
+                            (item.DepositMonth.ToString() ?? "").Contains(wholeSearch) ||
+                            (item.DepositDay.ToString() ?? "").Contains(wholeSearch) ||
+                            (item.MaturityDate.ToString("yyyy-MM-dd") ?? "").Contains(wholeSearch) ||
+                            (item.Note?.ToString() ?? "").Contains(wholeSearch) ||
+                            (item.DepositMyAssetProductName?.ToString() ?? "").Contains(wholeSearch) ||
+                            (TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Created, OSTimeZone.DestinationTimeZoneId).ToString() ?? "").Contains(wholeSearch) ||
+                            (TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Updated, OSTimeZone.DestinationTimeZoneId).ToString() ?? "").Contains(wholeSearch))
+                        {
+                            fixedIncomeOutputViewModels.Add(new FixedIncomeOutputViewModel()
+                            {
+                                Id = item.Id,
+                                MainClass = localizer[item.MainClass.ToString()].Value,
+                                SubClass = localizer[item.SubClass.ToString()].Value,
+                                Contents = item.Contents,
+                                Amount = item.Amount,
+                                DepositMonth = item.DepositMonth,
+                                DepositDay = item.DepositDay,
+                                MaturityDate = item.MaturityDate.ToString("yyyy-MM-dd"),
+                                Note = item.Note,
+                                DepositMyAssetProductName = item.DepositMyAssetProductName,
+                                Created = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Created, OSTimeZone.DestinationTimeZoneId),
+                                Updated = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Updated, OSTimeZone.DestinationTimeZoneId),
+                                Noticed = currentDate.Subtract(new DateTime(Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[0]), item.DepositMonth, item.DepositDay)).TotalDays >= 0 && currentDate.Subtract(new DateTime(Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[0]), item.DepositMonth, item.DepositDay)).TotalDays <= ServerSetting.NoticeMaturityDateDay,
+                                Expired = item.MaturityDate.Subtract(currentDate).TotalDays < 0
+                            });
+                        }
+                    }
+                }
+                #endregion
+
+                var result = fixedIncomeOutputViewModels.OrderByDescending(a => a.Expired).ThenByDescending(a => a.Noticed).AsQueryable();
+                return PartialView("_FixedIncomeGrid", result);
+            }
             return View();
         }
         #endregion
