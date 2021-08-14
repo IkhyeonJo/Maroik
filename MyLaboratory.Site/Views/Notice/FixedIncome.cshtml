@@ -3,6 +3,7 @@
 @inject MyLaboratory.Site.Contracts.IAssetRepository assetRepository
 
 @{
+    var currentCulture = Context.Features.Get<Microsoft.AspNetCore.Localization.IRequestCultureFeature>().RequestCulture.Culture.Name;
     Context.Session.TryGetValue("AccountSession", out byte[] resultByte);
 }
 
@@ -110,6 +111,17 @@
                         </div>
                         <div class="form-row">
                             <div class="form-group col-md-6 mb-3">
+                                <label for="createFixedIncomeMaturityDate">@localizer["MaturityDate"].Value</label>
+                                <input class="form-control form-control-sm" type="text" data-val="true" data-val-required="@localizer["Please enter MaturityDate"].Value" id="createFixedIncomeMaturityDate" name="createFixedIncomeMaturityDate" value="" readonly>
+                                <span class="field-validation-valid text-danger" data-valmsg-for="createFixedIncomeMaturityDate" data-valmsg-replace="true"></span>
+                            </div>
+                            <div class="form-group col-md-6 mb-3">
+                                <label for="createFixedIncomeNote">@localizer["Note"].Value</label>
+                                <input class="form-control form-control-sm" type="text" data-val="false" id="createFixedIncomeNote" name="createFixedIncomeNote" value="">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group col-md-6 mb-3">
                                 <label for="createFixedIncomeDepositMyAssetProductName">@localizer["DepositMyAssetProductName"].Value</label>
                                 <br />
                                 <select id="createFixedIncomeDepositMyAssetProductName" name="createFixedIncomeDepositMyAssetProductName">
@@ -122,10 +134,6 @@
                                         }
                                     }
                                 </select>
-                            </div>
-                            <div class="form-group col-md-6 mb-3">
-                                <label for="createFixedIncomeNote">@localizer["Note"].Value</label>
-                                <input class="form-control form-control-sm" type="text" data-val="false" id="createFixedIncomeNote" name="createFixedIncomeNote" value="">
                             </div>
                         </div>
                         <div class="modal-footer justify-content-between">
