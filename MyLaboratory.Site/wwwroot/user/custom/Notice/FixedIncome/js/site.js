@@ -68,7 +68,7 @@ $('#gridSearch').on('input', function () {
 });
 
 function CreateFormShowFixedIncomeSubClassBySelectedFixedIncomeMainClass(createFixedIncomeMainClass) {
-    
+
     if (createFixedIncomeMainClass.value == "RegularIncome") {
         $('#createFixedIncomeSubClass option[value=LaborIncome]').prop('disabled', true).prop('hidden', true);
         $('#createFixedIncomeSubClass option[value=BusinessIncome]').prop('disabled', true).prop('hidden', true);
@@ -102,6 +102,60 @@ function CreateFormShowFixedIncomeSubClassBySelectedFixedIncomeMainClass(createF
         $('#createFixedIncomeSubClass option[value=OtherIncome]').prop('disabled', false).prop('hidden', false);
 
         $("#createFixedIncomeSubClass").val("LaborIncome").change();
+    }
+}
+
+function CreateFormShowFixedIncomeDepositDayBySelectedFixedIncomeDepositMonth(createFixedIncomeDepositMonth) {
+
+    if (createFixedIncomeDepositMonth.value == "1" ||
+        createFixedIncomeDepositMonth.value == "3" ||
+        createFixedIncomeDepositMonth.value == "5" ||
+        createFixedIncomeDepositMonth.value == "7" ||
+        createFixedIncomeDepositMonth.value == "8" ||
+        createFixedIncomeDepositMonth.value == "10" ||
+        createFixedIncomeDepositMonth.value == "12"
+    ) {
+        $('#createFixedIncomeDepositDay option[value=29]').prop('disabled', true).prop('hidden', true);
+        $('#createFixedIncomeDepositDay option[value=30]').prop('disabled', true).prop('hidden', true);
+        $('#createFixedIncomeDepositDay option[value=31]').prop('disabled', true).prop('hidden', true);
+
+        $("#createFixedIncomeDepositDay option:selected").removeAttr("selected");
+
+        $('#createFixedIncomeDepositDay option[value=1]').attr('selected', 'selected');
+        $('#createFixedIncomeDepositDay option[value=29]').prop('disabled', false).prop('hidden', false);
+        $('#createFixedIncomeDepositDay option[value=30]').prop('disabled', false).prop('hidden', false);
+        $('#createFixedIncomeDepositDay option[value=31]').prop('disabled', false).prop('hidden', false);
+
+        $("#createFixedIncomeDepositDay").val("1").change();
+    }
+    else if (createFixedIncomeDepositMonth.value == "2") {
+        $('#createFixedIncomeDepositDay option[value=29]').prop('disabled', true).prop('hidden', true);
+        $('#createFixedIncomeDepositDay option[value=30]').prop('disabled', true).prop('hidden', true);
+        $('#createFixedIncomeDepositDay option[value=31]').prop('disabled', true).prop('hidden', true);
+
+        $("#createFixedIncomeDepositDay option:selected").removeAttr("selected");
+
+        $('#createFixedIncomeDepositDay option[value=1]').attr('selected', 'selected');
+        $('#createFixedIncomeDepositDay option[value=29]').prop('disabled', false).prop('hidden', false);
+
+        $("#createFixedIncomeDepositDay").val("1").change();
+    }
+    else if (createFixedIncomeDepositMonth.value == "4" ||
+        createFixedIncomeDepositMonth.value == "6" ||
+        createFixedIncomeDepositMonth.value == "9" ||
+        createFixedIncomeDepositMonth.value == "11"
+    ) {
+        $('#createFixedIncomeDepositDay option[value=29]').prop('disabled', true).prop('hidden', true);
+        $('#createFixedIncomeDepositDay option[value=30]').prop('disabled', true).prop('hidden', true);
+        $('#createFixedIncomeDepositDay option[value=31]').prop('disabled', true).prop('hidden', true);
+
+        $("#createFixedIncomeDepositDay option:selected").removeAttr("selected");
+
+        $('#createFixedIncomeDepositDay option[value=1]').attr('selected', 'selected');
+        $('#createFixedIncomeDepositDay option[value=29]').prop('disabled', false).prop('hidden', false);
+        $('#createFixedIncomeDepositDay option[value=30]').prop('disabled', false).prop('hidden', false);
+
+        $("#createFixedIncomeDepositDay").val("1").change();
     }
 }
 
