@@ -53,7 +53,7 @@ namespace MyLaboratory.Site
             ServerSetting.FromEmail = Configuration.GetSection("ServerSetting").GetSection("SmtpOptions")["fromEmail"];
             ServerSetting.FromFullName = Configuration.GetSection("ServerSetting").GetSection("SmtpOptions")["fromFullName"];
             ServerSetting.IsDefault = Convert.ToBoolean(Configuration.GetSection("ServerSetting").GetSection("SmtpOptions")["IsDefault"]);
-            ServerSetting.NoticeMaturityDateDay = Configuration.GetSection("ServerSetting")["NoticeMaturityDateDay"];
+            ServerSetting.NoticeMaturityDateDay = Convert.ToInt32(Configuration.GetSection("ServerSetting")["NoticeMaturityDateDay"]);
             #endregion
 
             #region AddMariaDbContext
