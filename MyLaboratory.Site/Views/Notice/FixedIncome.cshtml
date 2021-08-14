@@ -238,5 +238,13 @@
     </div>
 </div>
 @section Scripts{
+    @if (currentCulture == "ko-KR")
+    {
+        <script src="~/user/custom/Notice/FixedIncome/js/ko-KR-init.js" asp-append-version="true"></script>
+    }
+    else if (currentCulture == "en-US")
+    {
+        <script src="~/user/custom/Notice/FixedIncome/js/en-US-init.js" asp-append-version="true"></script>
+    }
     <script src="~/user/custom/Notice/FixedIncome/js/site.js" asp-append-version="true"></script>
 }
