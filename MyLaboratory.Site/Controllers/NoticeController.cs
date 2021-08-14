@@ -28,6 +28,7 @@ using System.Text.RegularExpressions;
 using System.Net.Mail;
 using Microsoft.AspNetCore.Mvc.Localization;
 using MyLaboratory.Site.Models.ViewModels.AccountBook;
+using MyLaboratory.Site.Models.ViewModels.Notice;
 
 namespace MyLaboratory.Site.Controllers
 {
@@ -60,6 +61,138 @@ namespace MyLaboratory.Site.Controllers
         }
 
         #region 고정 수입
+
+        #region Create
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [RequiredHttpPostAccess(Role = Role.User)]
+        public async Task<IActionResult> CreateFixedIncome([FromBody] FixedIncomeInputViewModel fixedIncomeInputViewModel)
+        {
+            try
+            {
+                if (ModelState.IsValid)
+                {
+                    try
+                    {
+                        HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+
+                        #region Validate ProductName's Deletion
+                        var tempAssetToValidate = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, fixedIncomeInputViewModel.DepositMyAssetProductName);
+                        if (tempAssetToValidate.Deleted)
+                        {
+                            return Json(new { result = false, error = localizer["Actions cannot be executed with assets that have already been deleted."].Value });
+                        }
+                        #endregion
+
+                        #region Validation of MainClass & SubClass Value
+                        if (fixedIncomeInputViewModel.MainClass == "RegularIncome")
+                        {
+                            if (!(fixedIncomeInputViewModel.SubClass == "LaborIncome" ||
+                                fixedIncomeInputViewModel.SubClass == "BusinessIncome" ||
+                                fixedIncomeInputViewModel.SubClass == "PensionIncome" ||
+                                fixedIncomeInputViewModel.SubClass == "FinancialIncome" ||
+                                fixedIncomeInputViewModel.SubClass == "RentalIncome" ||
+                                fixedIncomeInputViewModel.SubClass == "OtherIncome"))
+                            {
+                                return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                            }
+                        }
+                        else if (fixedIncomeInputViewModel.MainClass == "IrregularIncome")
+                        {
+                            if (!(fixedIncomeInputViewModel.SubClass == "LaborIncome" ||
+                                fixedIncomeInputViewModel.SubClass == "OtherIncome"))
+                            {
+                                return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                            }
+                        }
+                        #endregion
+
+                        #region Validate of DepositMonth
+                        if (!(fixedIncomeInputViewModel.DepositMonth >= 1 && fixedIncomeInputViewModel.DepositMonth <= 12))
+                        {
+                            return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                        }
+                        #endregion
+
+                        #region Validate of DepositDay
+                        if (fixedIncomeInputViewModel.DepositMonth == 1 ||
+                            fixedIncomeInputViewModel.DepositMonth == 3 ||
+                            fixedIncomeInputViewModel.DepositMonth == 5 ||
+                            fixedIncomeInputViewModel.DepositMonth == 7 ||
+                            fixedIncomeInputViewModel.DepositMonth == 8 ||
+                            fixedIncomeInputViewModel.DepositMonth == 10 ||
+                            fixedIncomeInputViewModel.DepositMonth == 12)
+                        {
+                            if (!(fixedIncomeInputViewModel.DepositDay >= 1 && fixedIncomeInputViewModel.DepositDay <= 31))
+                            {
+                                return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                            }
+                        }
+                        else if (fixedIncomeInputViewModel.DepositMonth == 2)
+                        {
+                            if (!(fixedIncomeInputViewModel.DepositDay >= 1 && fixedIncomeInputViewModel.DepositDay <= 29))
+                            {
+                                return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                            }
+                        }
+                        else if (fixedIncomeInputViewModel.DepositMonth == 4 ||
+                                fixedIncomeInputViewModel.DepositMonth == 6 ||
+                                fixedIncomeInputViewModel.DepositMonth == 9 ||
+                                fixedIncomeInputViewModel.DepositMonth == 11)
+                        {
+                            if (!(fixedIncomeInputViewModel.DepositDay >= 1 && fixedIncomeInputViewModel.DepositDay <= 30))
+                            {
+                                return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                            }
+                        }
+                        #endregion
+
+                        #region MaturityDate 형식 체크 (윤년 또는 월에 따른 일도 체크함)
+                        if (!new Regex(@"^\d{4}-((0[1-9])|(1[012]))-((0[1-9]|[12]\d)|3[01])$").IsMatch(fixedIncomeInputViewModel.MaturityDate)) // https://stackoverflow.com/questions/5247219/regular-expression-to-detect-yyyy-mm-dd/15233484
+                        {
+                            return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                        }
+                        #endregion
+
+                        #region 고정 수입 생성
+                        await fixedIncomeRepository.CreateFixedIncomeAsync
+                            (
+                            new FixedIncome()
+                            {
+                                AccountEmail = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email,
+                                MainClass = fixedIncomeInputViewModel.MainClass,
+                                SubClass = fixedIncomeInputViewModel.SubClass,
+                                Contents = fixedIncomeInputViewModel.Contents ?? "",
+                                Amount = Math.Abs(fixedIncomeInputViewModel.Amount),
+                                DepositMyAssetProductName = fixedIncomeInputViewModel.DepositMyAssetProductName,
+                                DepositMonth = fixedIncomeInputViewModel.DepositMonth,
+                                DepositDay = fixedIncomeInputViewModel.DepositDay,
+                                MaturityDate = new DateTime(Convert.ToInt32(Regex.Split(fixedIncomeInputViewModel.MaturityDate, "-")[0].ToString()), Convert.ToInt32(Regex.Split(fixedIncomeInputViewModel.MaturityDate, "-")[1].ToString()), Convert.ToInt32(Regex.Split(fixedIncomeInputViewModel.MaturityDate, "-")[2].ToString())),
+                                Created = DateTime.UtcNow,
+                                Updated = DateTime.UtcNow,
+                                Note = fixedIncomeInputViewModel.Note ?? ""
+                            }
+                            );
+                        #endregion
+
+                        return Json(new { result = true, message = localizer["The FixedIncome has been successfully created."].Value });
+                    }
+                    catch (Exception e)
+                    {
+                        return Json(new { result = false, error = e.ToString() });
+                    }
+                }
+                else
+                {
+                    return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                }
+            }
+            catch (Exception e)
+            {
+                return Json(new { result = false, error = e.ToString() });
+            }
+        }
+        #endregion
 
         #region Read
         [HttpGet]
