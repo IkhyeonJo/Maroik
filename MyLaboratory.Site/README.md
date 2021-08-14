@@ -775,3 +775,6 @@ https://dejanstojanovic.net/aspnet/2018/july/differences-in-time-zones-in-net-co
 
 # C# Get Time By Time Zone
 https://www.eugenechiang.com/2021/05/25/c-get-time-by-time-zone/
+
+# Jquery DatePicker Korean
+https://zetawiki.com/wiki/JQuery_UI_datepicker_%ED%95%9C%EA%B5%AD%EC%96%B4_%EC%A0%81%EC%9A%A9
