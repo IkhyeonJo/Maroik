@@ -13,5 +13,6 @@ namespace MyLaboratory.Site.Common
         public static bool IsDefault { get; set; }
         public static int MaxLoginAttempt { get; set; }
         public static int SessionExpireMinutes { get; set; }
+        public static string NoticeMaturityDateDay { get; set; }
     }
 }
