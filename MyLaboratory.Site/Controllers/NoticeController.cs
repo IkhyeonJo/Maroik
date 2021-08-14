@@ -211,6 +211,17 @@ namespace MyLaboratory.Site.Controllers
                 {
                     if (string.IsNullOrEmpty(wholeSearch))
                     {
+                        bool noticedResult = false;
+
+                        try
+                        {
+                            noticedResult = currentDate.Subtract(new DateTime(Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[0]), item.DepositMonth, item.DepositDay)).TotalDays >= 0 && currentDate.Subtract(new DateTime(Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[0]), item.DepositMonth, item.DepositDay)).TotalDays <= ServerSetting.NoticeMaturityDateDay;
+                        }
+                        catch // 윤년이 아닌데 2월 29일로 초기화 했을 때 예외 발생
+                        {
+                            noticedResult = false;
+                        }
+
                         fixedIncomeOutputViewModels.Add(new FixedIncomeOutputViewModel()
                         {
                             Id = item.Id,
@@ -225,7 +236,7 @@ namespace MyLaboratory.Site.Controllers
                             DepositMyAssetProductName = item.DepositMyAssetProductName,
                             Created = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Created, OSTimeZone.DestinationTimeZoneId),
                             Updated = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Updated, OSTimeZone.DestinationTimeZoneId),
-                            Noticed = currentDate.Subtract(new DateTime(Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[0]), item.DepositMonth, item.DepositDay)).TotalDays >= 0 && currentDate.Subtract(new DateTime(Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[0]), item.DepositMonth, item.DepositDay)).TotalDays <= ServerSetting.NoticeMaturityDateDay,
+                            Noticed = noticedResult,
                             Expired = item.MaturityDate.Subtract(currentDate).TotalDays < 0
                         });
                     }
@@ -244,6 +255,17 @@ namespace MyLaboratory.Site.Controllers
                             (TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Created, OSTimeZone.DestinationTimeZoneId).ToString() ?? "").Contains(wholeSearch) ||
                             (TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Updated, OSTimeZone.DestinationTimeZoneId).ToString() ?? "").Contains(wholeSearch))
                         {
+                            bool noticedResult = false;
+
+                            try
+                            {
+                                noticedResult = currentDate.Subtract(new DateTime(Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[0]), item.DepositMonth, item.DepositDay)).TotalDays >= 0 && currentDate.Subtract(new DateTime(Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[0]), item.DepositMonth, item.DepositDay)).TotalDays <= ServerSetting.NoticeMaturityDateDay;
+                            }
+                            catch // 윤년이 아닌데 2월 29일로 초기화 했을 때 예외 발생
+                            {
+                                noticedResult = false;
+                            }
+
                             fixedIncomeOutputViewModels.Add(new FixedIncomeOutputViewModel()
                             {
                                 Id = item.Id,
@@ -258,7 +280,7 @@ namespace MyLaboratory.Site.Controllers
                                 DepositMyAssetProductName = item.DepositMyAssetProductName,
                                 Created = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Created, OSTimeZone.DestinationTimeZoneId),
                                 Updated = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Updated, OSTimeZone.DestinationTimeZoneId),
-                                Noticed = currentDate.Subtract(new DateTime(Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[0]), item.DepositMonth, item.DepositDay)).TotalDays >= 0 && currentDate.Subtract(new DateTime(Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[0]), item.DepositMonth, item.DepositDay)).TotalDays <= ServerSetting.NoticeMaturityDateDay,
+                                Noticed = noticedResult,
                                 Expired = item.MaturityDate.Subtract(currentDate).TotalDays < 0
                             });
                         }
