@@ -142,10 +142,10 @@
     <value>Expenditure</value>
   </data>
   <data name="FixedExpenditure" xml:space="preserve">
-    <value>Fixed expenditure</value>
+    <value>FixedExpenditure</value>
   </data>
   <data name="FixedIncome" xml:space="preserve">
-    <value>Fixed income</value>
+    <value>FixedIncome</value>
   </data>
   <data name="Home" xml:space="preserve">
     <value>Home</value>
