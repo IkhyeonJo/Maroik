@@ -209,16 +209,22 @@ function CreateFixedIncome() {
     var subClass = createForm.find('select[id="createFixedIncomeSubClass"]').val();
     var contents = createForm.find('input[id="createFixedIncomeContents"]').val();
     var amount = createForm.find('input[id="createFixedIncomeAmount"]').val();
-    var depositMyAssetProductName = createForm.find('select[id="createFixedIncomeDepositMyAssetProductName"]').val();
+    var depositMonth = createForm.find('select[id="createFixedIncomeDepositMonth"]').val();
+    var depositDay = createForm.find('select[id="createFixedIncomeDepositDay"]').val();
+    var maturityDate = createForm.find('input[id="createFixedIncomeMaturityDate"]').val();
     var note = createForm.find('input[id="createFixedIncomeNote"]').val();
+    var depositMyAssetProductName = createForm.find('select[id="createFixedIncomeDepositMyAssetProductName"]').val();
 
     var paramValue = JSON.stringify({
         MainClass: mainClass,
         SubClass: subClass,
         Contents: contents,
         Amount: amount,
-        DepositMyAssetProductName: depositMyAssetProductName,
-        Note: note
+        DepositMonth: depositMonth,
+        DepositDay: depositDay,
+        MaturityDate: maturityDate,
+        Note: note,
+        DepositMyAssetProductName: depositMyAssetProductName
     });
 
     $.ajax({
