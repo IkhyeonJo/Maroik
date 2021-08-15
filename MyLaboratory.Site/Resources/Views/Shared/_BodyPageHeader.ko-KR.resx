@@ -141,6 +141,9 @@
   <data name="Expenditure" xml:space="preserve">
     <value>지출</value>
   </data>
+  <data name="FixedIncome" xml:space="preserve">
+    <value>고정 수입</value>
+  </data>
   <data name="Home" xml:space="preserve">
     <value>홈</value>
   </data>
@@ -152,6 +155,9 @@
   </data>
   <data name="Menu" xml:space="preserve">
     <value>메뉴</value>
+  </data>
+  <data name="Notice" xml:space="preserve">
+    <value>알림</value>
   </data>
   <data name="Profile" xml:space="preserve">
     <value>프로필</value>
