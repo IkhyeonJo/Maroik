@@ -76,14 +76,6 @@ namespace MyLaboratory.Site.Controllers
                     {
                         HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
 
-                        #region Validate ProductName's Deletion
-                        var tempAssetToValidate = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, fixedIncomeInputViewModel.DepositMyAssetProductName);
-                        if (tempAssetToValidate.Deleted)
-                        {
-                            return Json(new { result = false, error = localizer["Actions cannot be executed with assets that have already been deleted."].Value });
-                        }
-                        #endregion
-
                         #region Validation of MainClass & SubClass Value
                         if (fixedIncomeInputViewModel.MainClass == "RegularIncome")
                         {
