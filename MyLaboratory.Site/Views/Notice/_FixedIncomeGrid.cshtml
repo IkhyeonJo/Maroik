@@ -25,7 +25,7 @@
     //.RowAttributed(model => new { @class = model.IsWorking == true ? "working" : null, data_id = model.Id })
     .RowAttributed(model => new { @class = model.Expired == true ? "table-danger" : model.Noticed == true ? "table-warning" : "table-inactive", data_id = model.Id})
     .Using(GridFilterMode.Row)
-    .Empty("No data found")
+    .Empty(localizer["No data found"])
     .Filterable()
     .Sortable()
     .Pageable(pager => {

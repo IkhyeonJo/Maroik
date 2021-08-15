@@ -22,7 +22,7 @@
     //.RowAttributed(model => new { @class = model.IsWorking == true ? "working" : null, data_id = model.Id })
     .RowAttributed(model => new { @class = "table-inactive", data_productName = model.ProductName })
     .Using(GridFilterMode.Row)
-    .Empty("No data found")
+    .Empty(localizer["No data found"])
     .Filterable()
     .Sortable()
     .Pageable(pager => {
