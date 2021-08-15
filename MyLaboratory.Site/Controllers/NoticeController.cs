@@ -74,6 +74,7 @@ namespace MyLaboratory.Site.Controllers
                 {
                     try
                     {
+                        fixedIncomeInputViewModel.Amount = Math.Abs(fixedIncomeInputViewModel.Amount);
                         HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
 
                         #region Validation of MainClass & SubClass Value
@@ -346,6 +347,7 @@ namespace MyLaboratory.Site.Controllers
                 {
                     try
                     {
+                        fixedIncomeInputViewModel.Amount = Math.Abs(fixedIncomeInputViewModel.Amount);
                         HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
 
                         #region Validation of MainClass & SubClass Value
