@@ -334,6 +334,144 @@ namespace MyLaboratory.Site.Controllers
         }
         #endregion
 
+        #region Update
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [RequiredHttpPostAccess(Role = Role.User)]
+        public async Task<IActionResult> UpdateFixedIncome([FromBody] FixedIncomeInputViewModel fixedIncomeInputViewModel)
+        {
+            try
+            {
+                if (ModelState.IsValid)
+                {
+                    try
+                    {
+                        HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+
+                        #region Validation of MainClass & SubClass Value
+                        if (fixedIncomeInputViewModel.MainClass == "RegularIncome")
+                        {
+                            if (!(fixedIncomeInputViewModel.SubClass == "LaborIncome" ||
+                                fixedIncomeInputViewModel.SubClass == "BusinessIncome" ||
+                                fixedIncomeInputViewModel.SubClass == "PensionIncome" ||
+                                fixedIncomeInputViewModel.SubClass == "FinancialIncome" ||
+                                fixedIncomeInputViewModel.SubClass == "RentalIncome" ||
+                                fixedIncomeInputViewModel.SubClass == "OtherIncome"))
+                            {
+                                return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                            }
+                        }
+                        else if (fixedIncomeInputViewModel.MainClass == "IrregularIncome")
+                        {
+                            if (!(fixedIncomeInputViewModel.SubClass == "LaborIncome" ||
+                                fixedIncomeInputViewModel.SubClass == "OtherIncome"))
+                            {
+                                return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                            }
+                        }
+                        #endregion
+
+                        #region Validate of DepositMonth
+                        if (!(fixedIncomeInputViewModel.DepositMonth >= 1 && fixedIncomeInputViewModel.DepositMonth <= 12))
+                        {
+                            return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                        }
+                        #endregion
+
+                        #region Validate of DepositDay
+                        if (fixedIncomeInputViewModel.DepositMonth == 1 ||
+                            fixedIncomeInputViewModel.DepositMonth == 3 ||
+                            fixedIncomeInputViewModel.DepositMonth == 5 ||
+                            fixedIncomeInputViewModel.DepositMonth == 7 ||
+                            fixedIncomeInputViewModel.DepositMonth == 8 ||
+                            fixedIncomeInputViewModel.DepositMonth == 10 ||
+                            fixedIncomeInputViewModel.DepositMonth == 12)
+                        {
+                            if (!(fixedIncomeInputViewModel.DepositDay >= 1 && fixedIncomeInputViewModel.DepositDay <= 31))
+                            {
+                                return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                            }
+                        }
+                        else if (fixedIncomeInputViewModel.DepositMonth == 2)
+                        {
+                            if (!(fixedIncomeInputViewModel.DepositDay >= 1 && fixedIncomeInputViewModel.DepositDay <= 29))
+                            {
+                                return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                            }
+                        }
+                        else if (fixedIncomeInputViewModel.DepositMonth == 4 ||
+                                fixedIncomeInputViewModel.DepositMonth == 6 ||
+                                fixedIncomeInputViewModel.DepositMonth == 9 ||
+                                fixedIncomeInputViewModel.DepositMonth == 11)
+                        {
+                            if (!(fixedIncomeInputViewModel.DepositDay >= 1 && fixedIncomeInputViewModel.DepositDay <= 30))
+                            {
+                                return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                            }
+                        }
+                        #endregion
+
+                        #region MaturityDate 형식 체크 (윤년 또는 월에 따른 일도 체크함)
+                        if (!new Regex(@"^\d{4}-((0[1-9])|(1[012]))-((0[1-9]|[12]\d)|3[01])$").IsMatch(fixedIncomeInputViewModel.MaturityDate)) // https://stackoverflow.com/questions/5247219/regular-expression-to-detect-yyyy-mm-dd/15233484
+                        {
+                            return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                        }
+                        #endregion
+
+                        #region 고정수입 업데이트
+                        var tempFixedIncomes = await fixedIncomeRepository.GetFixedIncomesAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+
+                        if (tempFixedIncomes == null)
+                        {
+                            return Json(new { result = false, error = localizer["No income exists"].Value });
+                        }
+                        else
+                        {
+                            var tempFixedIncome = tempFixedIncomes.Where(a => a.Id == fixedIncomeInputViewModel.Id).FirstOrDefault();
+
+                            if (tempFixedIncome == null)
+                            {
+                                return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                            }
+                            else
+                            {
+                                #region 고정 수입 업데이트
+                                tempFixedIncome.MainClass = fixedIncomeInputViewModel.MainClass;
+                                tempFixedIncome.SubClass = fixedIncomeInputViewModel.SubClass;
+                                tempFixedIncome.Contents = fixedIncomeInputViewModel.Contents ?? "";
+                                tempFixedIncome.Amount = Math.Abs(fixedIncomeInputViewModel.Amount);
+                                tempFixedIncome.DepositMyAssetProductName = fixedIncomeInputViewModel.DepositMyAssetProductName;
+                                tempFixedIncome.DepositMonth = fixedIncomeInputViewModel.DepositMonth;
+                                tempFixedIncome.DepositDay = fixedIncomeInputViewModel.DepositDay;
+                                tempFixedIncome.MaturityDate = new DateTime(Convert.ToInt32(Regex.Split(fixedIncomeInputViewModel.MaturityDate, "-")[0].ToString()), Convert.ToInt32(Regex.Split(fixedIncomeInputViewModel.MaturityDate, "-")[1].ToString()), Convert.ToInt32(Regex.Split(fixedIncomeInputViewModel.MaturityDate, "-")[2].ToString()));
+                                tempFixedIncome.Updated = DateTime.UtcNow;
+                                tempFixedIncome.Note = fixedIncomeInputViewModel.Note ?? "";
+
+                                await fixedIncomeRepository.UpdateFixedIncomeAsync(tempFixedIncome);
+                                #endregion
+
+                                return Json(new { result = true, message = localizer["The income has been successfully updated."].Value });
+                            }
+                        }
+                        #endregion
+                    }
+                    catch (Exception e)
+                    {
+                        return Json(new { result = false, error = e.ToString() });
+                    }
+                }
+                else
+                {
+                    return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                }
+            }
+            catch (Exception e)
+            {
+                return Json(new { result = false, error = e.ToString() });
+            }
+        }
+        #endregion
+
         #endregion
 
         #region 고정 지출

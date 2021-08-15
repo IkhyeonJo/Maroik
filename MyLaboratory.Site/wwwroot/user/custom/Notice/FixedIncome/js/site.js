@@ -447,21 +447,24 @@ function EditFixedIncomeGridRow(errorMessageSelectGridRow) {
     });
 }
 
-function UpdateIncome() {
+function UpdateFixedIncome() {
 
-    if (!$('#formEditIncome').valid()) {
+    if (!$('#formEditFixedIncome').valid()) {
         return false;
     }
 
-    var createForm = $('#formEditIncome');
+    var createForm = $('#formEditFixedIncome');
 
-    var id = createForm.find('input[id="editIncomeId"]').val();
-    var mainClass = createForm.find('select[id="editIncomeMainClass"]').val();
-    var subClass = createForm.find('select[id="editIncomeSubClass"]').val();
-    var contents = createForm.find('input[id="editIncomeContents"]').val();
-    var amount = createForm.find('input[id="editIncomeAmount"]').val();
-    var depositMyAssetProductName = createForm.find('select[id="editIncomeDepositMyAssetProductName"]').val();
-    var note = createForm.find('input[id="editIncomeNote"]').val();
+    var id = createForm.find('input[id="editFixedIncomeId"]').val();
+    var mainClass = createForm.find('select[id="editFixedIncomeMainClass"]').val();
+    var subClass = createForm.find('select[id="editFixedIncomeSubClass"]').val();
+    var contents = createForm.find('input[id="editFixedIncomeContents"]').val();
+    var amount = createForm.find('input[id="editFixedIncomeAmount"]').val();
+    var depositMonth = createForm.find('select[id="editFixedIncomeDepositMonth"]').val();
+    var depositDay = createForm.find('select[id="editFixedIncomeDepositDay"]').val();
+    var maturityDate = createForm.find('input[id="editFixedIncomeMaturityDate"]').val();
+    var note = createForm.find('input[id="editFixedIncomeNote"]').val();
+    var depositMyAssetProductName = createForm.find('select[id="editFixedIncomeDepositMyAssetProductName"]').val();
 
     var paramValue = JSON.stringify({
         Id: id,
@@ -469,12 +472,15 @@ function UpdateIncome() {
         SubClass: subClass,
         Contents: contents,
         Amount: amount,
-        DepositMyAssetProductName: depositMyAssetProductName,
-        Note: note
+        DepositMonth: depositMonth,
+        DepositDay: depositDay,
+        MaturityDate: maturityDate,
+        Note: note,
+        DepositMyAssetProductName: depositMyAssetProductName
     });
 
     $.ajax({
-        url: '/AccountBook/UpdateIncome',
+        url: '/Notice/UpdateFixedIncome',
         type: 'POST',
         headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
         dataType: 'json',
@@ -484,7 +490,7 @@ function UpdateIncome() {
         //cache: false,
         success: function (data) {
             if (data.result) {
-                $('#editIncomeDialogModal').modal('hide'); // hide Modal
+                $('#editFixedIncomeDialogModal').modal('hide'); // hide Modal
 
                 const grid = new MvcGrid(document.querySelector(".mvc-grid")); //reload grid
                 grid.reload(); //reload grid
@@ -496,6 +502,7 @@ function UpdateIncome() {
             }
         }
     });
+
     return false;
 }
 
