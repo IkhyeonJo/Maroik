@@ -622,6 +622,224 @@ namespace MyLaboratory.Site.Controllers
 
         #region 고정 지출
 
+        #region Create
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [RequiredHttpPostAccess(Role = Role.User)]
+        public async Task<IActionResult> CreateFixedExpenditure([FromBody] FixedExpenditureInputViewModel fixedExpenditureInputViewModel)
+        {
+            try
+            {
+                if (ModelState.IsValid)
+                {
+                    fixedExpenditureInputViewModel.Amount = Math.Abs(fixedExpenditureInputViewModel.Amount);
+                    HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+
+                    #region 대분류 = '정기저축'
+                    if (fixedExpenditureInputViewModel.MainClass == "RegularSavings")
+                    {
+                        if (fixedExpenditureInputViewModel.SubClass == "Deposit" || fixedExpenditureInputViewModel.SubClass == "MyAssetTransfer" || fixedExpenditureInputViewModel.SubClass == "Investment")
+                        {
+                            try
+                            {
+                                if (fixedExpenditureInputViewModel.PaymentMethod == fixedExpenditureInputViewModel.MyDepositAsset)
+                                {
+                                    return Json(new { result = false, error = localizer["The PaymentMethod and MyDepositAsset value cannot be the same."].Value });
+                                }
+
+                                #region 고정 지출 생성
+                                await fixedExpenditureRepository.CreateFixedExpenditureAsync
+                                    (
+                                    new FixedExpenditure()
+                                    {
+                                        AccountEmail = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email,
+                                        MainClass = fixedExpenditureInputViewModel.MainClass,
+                                        SubClass = fixedExpenditureInputViewModel.SubClass,
+                                        Contents = fixedExpenditureInputViewModel.Contents ?? "",
+                                        Amount = Math.Abs(fixedExpenditureInputViewModel.Amount),
+                                        PaymentMethod = fixedExpenditureInputViewModel.PaymentMethod,
+                                        MyDepositAsset = fixedExpenditureInputViewModel.MyDepositAsset,
+                                        DepositMonth = fixedExpenditureInputViewModel.DepositMonth,
+                                        DepositDay = fixedExpenditureInputViewModel.DepositDay,
+                                        MaturityDate = new DateTime(Convert.ToInt32(Regex.Split(fixedExpenditureInputViewModel.MaturityDate, "-")[0].ToString()), Convert.ToInt32(Regex.Split(fixedExpenditureInputViewModel.MaturityDate, "-")[1].ToString()), Convert.ToInt32(Regex.Split(fixedExpenditureInputViewModel.MaturityDate, "-")[2].ToString())),
+                                        Created = DateTime.UtcNow,
+                                        Updated = DateTime.UtcNow,
+                                        Note = fixedExpenditureInputViewModel.Note ?? ""
+                                    }
+                                    );
+                                #endregion
+
+                                return Json(new { result = true, message = localizer["The fixedExpenditure has been successfully created."].Value });
+                            }
+                            catch (Exception e)
+                            {
+                                return Json(new { result = false, error = e.ToString() });
+                            }
+                        }
+                        else
+                        {
+                            return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                        }
+                    }
+                    #endregion
+
+                    #region 대분류 = '비소비지출'
+                    else if (fixedExpenditureInputViewModel.MainClass == "NonConsumerSpending")
+                    {
+                        if (fixedExpenditureInputViewModel.SubClass == "PublicPension" || fixedExpenditureInputViewModel.SubClass == "DebtRepayment")
+                        {
+                            try
+                            {
+                                if (fixedExpenditureInputViewModel.PaymentMethod == fixedExpenditureInputViewModel.MyDepositAsset)
+                                {
+                                    return Json(new { result = false, error = localizer["The PaymentMethod and MyDepositAsset value cannot be the same."].Value });
+                                }
+
+                                #region 고정 지출 생성
+                                await fixedExpenditureRepository.CreateFixedExpenditureAsync
+                                    (
+                                    new FixedExpenditure()
+                                    {
+                                        AccountEmail = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email,
+                                        MainClass = fixedExpenditureInputViewModel.MainClass,
+                                        SubClass = fixedExpenditureInputViewModel.SubClass,
+                                        Contents = fixedExpenditureInputViewModel.Contents ?? "",
+                                        Amount = Math.Abs(fixedExpenditureInputViewModel.Amount),
+                                        PaymentMethod = fixedExpenditureInputViewModel.PaymentMethod,
+                                        MyDepositAsset = fixedExpenditureInputViewModel.MyDepositAsset,
+                                        DepositMonth = fixedExpenditureInputViewModel.DepositMonth,
+                                        DepositDay = fixedExpenditureInputViewModel.DepositDay,
+                                        MaturityDate = new DateTime(Convert.ToInt32(Regex.Split(fixedExpenditureInputViewModel.MaturityDate, "-")[0].ToString()), Convert.ToInt32(Regex.Split(fixedExpenditureInputViewModel.MaturityDate, "-")[1].ToString()), Convert.ToInt32(Regex.Split(fixedExpenditureInputViewModel.MaturityDate, "-")[2].ToString())),
+                                        Created = DateTime.UtcNow,
+                                        Updated = DateTime.UtcNow,
+                                        Note = fixedExpenditureInputViewModel.Note ?? ""
+                                    }
+                                    );
+                                #endregion
+
+                                return Json(new { result = true, message = localizer["The fixedExpenditure has been successfully created."].Value });
+                            }
+                            catch (Exception e)
+                            {
+                                return Json(new { result = false, error = e.ToString() });
+                            }
+                        }
+                        else if (fixedExpenditureInputViewModel.SubClass == "Tax" ||
+                            fixedExpenditureInputViewModel.SubClass == "SocialInsurance" ||
+                            fixedExpenditureInputViewModel.SubClass == "InterHouseholdTranserExpenses" ||
+                            fixedExpenditureInputViewModel.SubClass == "NonProfitOrganizationTransfer")
+                        {
+                            try
+                            {
+                                #region 고정 지출 생성
+                                await fixedExpenditureRepository.CreateFixedExpenditureAsync
+                                    (
+                                    new FixedExpenditure()
+                                    {
+                                        AccountEmail = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email,
+                                        MainClass = fixedExpenditureInputViewModel.MainClass,
+                                        SubClass = fixedExpenditureInputViewModel.SubClass,
+                                        Contents = fixedExpenditureInputViewModel.Contents ?? "",
+                                        Amount = Math.Abs(fixedExpenditureInputViewModel.Amount),
+                                        PaymentMethod = fixedExpenditureInputViewModel.PaymentMethod,
+                                        MyDepositAsset = "",
+                                        DepositMonth = fixedExpenditureInputViewModel.DepositMonth,
+                                        DepositDay = fixedExpenditureInputViewModel.DepositDay,
+                                        MaturityDate = new DateTime(Convert.ToInt32(Regex.Split(fixedExpenditureInputViewModel.MaturityDate, "-")[0].ToString()), Convert.ToInt32(Regex.Split(fixedExpenditureInputViewModel.MaturityDate, "-")[1].ToString()), Convert.ToInt32(Regex.Split(fixedExpenditureInputViewModel.MaturityDate, "-")[2].ToString())),
+                                        Created = DateTime.UtcNow,
+                                        Updated = DateTime.UtcNow,
+                                        Note = fixedExpenditureInputViewModel.Note ?? ""
+                                    }
+                                    );
+                                #endregion
+
+                                return Json(new { result = true, message = localizer["The fixedExpenditure has been successfully created."].Value });
+                            }
+                            catch (Exception e)
+                            {
+                                return Json(new { result = false, error = e.ToString() });
+                            }
+                        }
+                        else
+                        {
+                            return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                        }
+                    }
+                    #endregion
+
+                    #region 대분류 = '소비지출'
+                    else if (fixedExpenditureInputViewModel.MainClass == "ConsumerSpending")
+                    {
+                        if (fixedExpenditureInputViewModel.SubClass == "MealOrEatOutExpenses" ||
+                            fixedExpenditureInputViewModel.SubClass == "HousingOrSuppliesCost" ||
+                            fixedExpenditureInputViewModel.SubClass == "EducationExpenses" ||
+                            fixedExpenditureInputViewModel.SubClass == "MedicalExpenses" ||
+                            fixedExpenditureInputViewModel.SubClass == "TransportationCost" ||
+                            fixedExpenditureInputViewModel.SubClass == "CommunicationCost" ||
+                            fixedExpenditureInputViewModel.SubClass == "LeisureOrCulture" ||
+                            fixedExpenditureInputViewModel.SubClass == "ClothingOrShoes" ||
+                            fixedExpenditureInputViewModel.SubClass == "PinMoney" ||
+                            fixedExpenditureInputViewModel.SubClass == "ProtectionTypeInsurance" ||
+                            fixedExpenditureInputViewModel.SubClass == "OtherExpenses" ||
+                            fixedExpenditureInputViewModel.SubClass == "UnknownExpenditure")
+                        {
+                            try
+                            {
+                                #region 고정 지출 생성
+                                await fixedExpenditureRepository.CreateFixedExpenditureAsync
+                                    (
+                                    new FixedExpenditure()
+                                    {
+                                        AccountEmail = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email,
+                                        MainClass = fixedExpenditureInputViewModel.MainClass,
+                                        SubClass = fixedExpenditureInputViewModel.SubClass,
+                                        Contents = fixedExpenditureInputViewModel.Contents ?? "",
+                                        Amount = Math.Abs(fixedExpenditureInputViewModel.Amount),
+                                        PaymentMethod = fixedExpenditureInputViewModel.PaymentMethod,
+                                        MyDepositAsset = "",
+                                        DepositMonth = fixedExpenditureInputViewModel.DepositMonth,
+                                        DepositDay = fixedExpenditureInputViewModel.DepositDay,
+                                        MaturityDate = new DateTime(Convert.ToInt32(Regex.Split(fixedExpenditureInputViewModel.MaturityDate, "-")[0].ToString()), Convert.ToInt32(Regex.Split(fixedExpenditureInputViewModel.MaturityDate, "-")[1].ToString()), Convert.ToInt32(Regex.Split(fixedExpenditureInputViewModel.MaturityDate, "-")[2].ToString())),
+                                        Created = DateTime.UtcNow,
+                                        Updated = DateTime.UtcNow,
+                                        Note = fixedExpenditureInputViewModel.Note ?? ""
+                                    }
+                                    );
+                                #endregion
+
+                                return Json(new { result = true, message = localizer["The fixedExpenditure has been successfully created."].Value });
+                            }
+                            catch (Exception e)
+                            {
+                                return Json(new { result = false, error = e.ToString() });
+                            }
+                        }
+                        else
+                        {
+                            return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                        }
+                    }
+                    #endregion
+
+                    #region 대분류에 없는 값
+                    else
+                    {
+                        return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                    }
+                    #endregion
+                }
+                else
+                {
+                    return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                }
+            }
+            catch (Exception e)
+            {
+                return Json(new { result = false, error = e.ToString() });
+            }
+        }
+        #endregion
+
         #region Read
         [HttpGet]
         public IActionResult FixedExpenditure()
