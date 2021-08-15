@@ -168,7 +168,7 @@ namespace MyLaboratory.Site.Controllers
                             );
                         #endregion
 
-                        return Json(new { result = true, message = localizer["The FixedIncome has been successfully created."].Value });
+                        return Json(new { result = true, message = localizer["The fixedIncome has been successfully created."].Value });
                     }
                     catch (Exception e)
                     {
@@ -299,7 +299,7 @@ namespace MyLaboratory.Site.Controllers
 
                 if (tempFixedIncomes == null)
                 {
-                    return Json(new { result = false, error = localizer["No income exists"].Value });
+                    return Json(new { result = false, error = localizer["No fixedIncome exists"].Value });
                 }
                 else
                 {
@@ -425,7 +425,7 @@ namespace MyLaboratory.Site.Controllers
 
                         if (tempFixedIncomes == null)
                         {
-                            return Json(new { result = false, error = localizer["No income exists"].Value });
+                            return Json(new { result = false, error = localizer["No fixedIncome exists"].Value });
                         }
                         else
                         {
@@ -452,7 +452,7 @@ namespace MyLaboratory.Site.Controllers
                                 await fixedIncomeRepository.UpdateFixedIncomeAsync(tempFixedIncome);
                                 #endregion
 
-                                return Json(new { result = true, message = localizer["The income has been successfully updated."].Value });
+                                return Json(new { result = true, message = localizer["The fixedIncome has been successfully updated."].Value });
                             }
                         }
                         #endregion
