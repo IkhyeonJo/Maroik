@@ -397,6 +397,7 @@ namespace MyLaboratory.Site.Controllers
                 {
                     try
                     {
+                        incomeInputViewModel.Amount = Math.Abs(incomeInputViewModel.Amount);
                         HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
 
                         #region Validate ProductName's Deletion
@@ -584,6 +585,7 @@ namespace MyLaboratory.Site.Controllers
                 {
                     try
                     {
+                        incomeInputViewModel.Amount = Math.Abs(incomeInputViewModel.Amount);
                         HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
 
                         #region Validation of MainClass & SubClass Value
@@ -843,6 +845,7 @@ namespace MyLaboratory.Site.Controllers
             {
                 if (ModelState.IsValid)
                 {
+                    expenditureInputViewModel.Amount = Math.Abs(expenditureInputViewModel.Amount);
                     HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
 
                     #region Validate ProductName's Deletion
@@ -1231,9 +1234,8 @@ namespace MyLaboratory.Site.Controllers
             {
                 if (ModelState.IsValid)
                 {
-                    HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
-
                     expenditureInputViewModel.Amount = Math.Abs(expenditureInputViewModel.Amount);
+                    HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
 
                     #region 대분류 = '정기저축'
                     if (expenditureInputViewModel.MainClass == "RegularSavings")
