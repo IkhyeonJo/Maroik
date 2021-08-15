@@ -138,6 +138,9 @@
   <data name="Name" xml:space="preserve">
     <value>이름</value>
   </data>
+  <data name="No data found" xml:space="preserve">
+    <value>자료를 찾을 수 없습니다.</value>
+  </data>
   <data name="Order" xml:space="preserve">
     <value>순서</value>
   </data>

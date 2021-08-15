@@ -144,6 +144,9 @@
   <data name="MaturityDate" xml:space="preserve">
     <value>만기일</value>
   </data>
+  <data name="No data found" xml:space="preserve">
+    <value>자료를 찾을 수 없습니다.</value>
+  </data>
   <data name="Note" xml:space="preserve">
     <value>주석</value>
   </data>

@@ -150,6 +150,9 @@
   <data name="Message" xml:space="preserve">
     <value>메시지</value>
   </data>
+  <data name="No data found" xml:space="preserve">
+    <value>자료를 찾을 수 없습니다.</value>
+  </data>
   <data name="RegistrationToken" xml:space="preserve">
     <value>등록토큰</value>
   </data>

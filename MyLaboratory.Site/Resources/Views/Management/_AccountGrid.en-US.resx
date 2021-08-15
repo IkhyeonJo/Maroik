@@ -150,6 +150,9 @@
   <data name="Message" xml:space="preserve">
     <value>Message</value>
   </data>
+  <data name="No data found" xml:space="preserve">
+    <value>No data found</value>
+  </data>
   <data name="RegistrationToken" xml:space="preserve">
     <value>RegistrationToken</value>
   </data>

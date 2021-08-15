@@ -135,6 +135,9 @@
   <data name="MainClass" xml:space="preserve">
     <value>MainClass</value>
   </data>
+  <data name="No data found" xml:space="preserve">
+    <value>No data found</value>
+  </data>
   <data name="Note" xml:space="preserve">
     <value>Note</value>
   </data>

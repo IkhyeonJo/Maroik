@@ -138,6 +138,9 @@
   <data name="Name" xml:space="preserve">
     <value>Name</value>
   </data>
+  <data name="No data found" xml:space="preserve">
+    <value>No data found</value>
+  </data>
   <data name="Order" xml:space="preserve">
     <value>Order</value>
   </data>
