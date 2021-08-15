@@ -14,11 +14,11 @@ document.addEventListener("rowclick", e => {
     var selectedRow = e.detail;
     var selectedRowId = selectedRow.data.Id;
 
-    $('#expenditureGrid > table > tbody  > tr').each(function (index, tr) {
+    $('#fixedExpenditureGrid > table > tbody  > tr').each(function (index, tr) {
         $(this).removeClass(selectedRowColor);
     }); // remove all selected row color
 
-    $('#expenditureGrid > table > tbody  > tr').each(function (index, tr) {
+    $('#fixedExpenditureGrid > table > tbody  > tr').each(function (index, tr) {
         if ((new String(selectedRowId).valueOf() === new String($(this).attr('data-id')).valueOf())) {
             $(this).addClass(selectedRowColor);
         }
@@ -49,9 +49,9 @@ document.addEventListener("gridconfigure", e => {
 });
 
 
-$(document).on("dblclick", "#expenditureGrid > table > tbody  > tr", function () {
+$(document).on("dblclick", "#fixedExpenditureGrid > table > tbody  > tr", function () {
     //console.log('dblclick-start');
-    $('#expenditureGrid > table > tbody  > tr').each(function (index, tr) {
+    $('#fixedExpenditureGrid > table > tbody  > tr').each(function (index, tr) {
 
         if ($(this).attr("class").includes(selectedRowColor)) { // Get SelectedRow by Color
             EditExpenditureGridRow();
@@ -319,7 +319,7 @@ function EditExpenditureGridRow(errorMessageSelectGridRow) {
 
     var selectedRowId = "";
 
-    $('#expenditureGrid > table > tbody  > tr').each(function (index, tr) {
+    $('#fixedExpenditureGrid > table > tbody  > tr').each(function (index, tr) {
         if ($(this).attr("class").includes(selectedRowColor)) { // Get SelectedRow by Color
             selectedRowId = $(this).attr("data-id");
         }
@@ -691,7 +691,7 @@ function ConfirmDeleteExpenditure(errorMessageSelectGridRow) {
 
     var selectedRowId = "";
 
-    $('#expenditureGrid > table > tbody  > tr').each(function (index, tr) {
+    $('#fixedExpenditureGrid > table > tbody  > tr').each(function (index, tr) {
         if ($(this).attr("class").includes(selectedRowColor)) { // Get SelectedRow by Color
             selectedRowId = $(this).attr("data-id");
         }
@@ -715,7 +715,7 @@ function DeleteExpenditure(errorMessageSelectGridRow) {
 
     var selectedRowId = "";
 
-    $('#expenditureGrid > table > tbody  > tr').each(function (index, tr) {
+    $('#fixedExpenditureGrid > table > tbody  > tr').each(function (index, tr) {
         if ($(this).attr("class").includes(selectedRowColor)) { // Get SelectedRow by Color
             selectedRowId = $(this).attr("data-id");
         }

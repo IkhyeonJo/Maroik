@@ -842,8 +842,104 @@ namespace MyLaboratory.Site.Controllers
 
         #region Read
         [HttpGet]
-        public IActionResult FixedExpenditure()
+        public async Task<IActionResult> FixedExpenditure(string wholeSearch)
         {
+            if (HttpContext.Request.Headers["X-Requested-With"] == "XMLHttpRequest") // ajax
+            {
+                List<FixedExpenditureOutputViewModel> fixedExpenditureOutputViewModels = new List<FixedExpenditureOutputViewModel>();
+
+                #region FixedExpenditures
+                HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+
+                DateTime currentDate = new DateTime(Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[0]), Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[1]), Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[2]));
+
+                foreach (var item in await fixedExpenditureRepository.GetFixedExpendituresAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email))
+                {
+                    if (string.IsNullOrEmpty(wholeSearch))
+                    {
+                        bool noticedResult = false;
+
+                        try
+                        {
+                            noticedResult = currentDate.Subtract(new DateTime(Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[0]), item.DepositMonth, item.DepositDay)).TotalDays >= 0 && currentDate.Subtract(new DateTime(Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[0]), item.DepositMonth, item.DepositDay)).TotalDays <= ServerSetting.NoticeMaturityDateDay;
+                        }
+                        catch // 윤년이 아닌데 2월 29일로 초기화 했을 때 예외 발생
+                        {
+                            noticedResult = false;
+                        }
+
+                        fixedExpenditureOutputViewModels.Add(new FixedExpenditureOutputViewModel()
+                        {
+                            Id = item.Id,
+                            MainClass = localizer[item.MainClass.ToString()].Value,
+                            SubClass = localizer[item.SubClass.ToString()].Value,
+                            Contents = item.Contents,
+                            Amount = item.Amount,
+                            PaymentMethod = item.PaymentMethod,
+                            MyDepositAsset = item.MyDepositAsset,
+                            DepositMonth = item.DepositMonth,
+                            DepositDay = item.DepositDay,
+                            MaturityDate = item.MaturityDate.ToString("yyyy-MM-dd"),
+                            Created = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Created, OSTimeZone.DestinationTimeZoneId),
+                            Updated = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Updated, OSTimeZone.DestinationTimeZoneId),
+                            Note = item.Note,
+                            Noticed = noticedResult,
+                            Expired = item.MaturityDate.Subtract(currentDate).TotalDays < 0
+                        });
+                    }
+                    else
+                    {
+                        if ((item.Id.ToString() ?? "").Contains(wholeSearch) ||
+                            localizer[item.MainClass?.ToString() ?? ""].Value.Contains(wholeSearch) ||
+                            localizer[item.SubClass?.ToString() ?? ""].Value.Contains(wholeSearch) ||
+                            (item.Contents?.ToString() ?? "").Contains(wholeSearch) ||
+                            (item.Amount.ToString() ?? "").Contains(wholeSearch) ||
+                            (item.PaymentMethod.ToString() ?? "").Contains(wholeSearch) ||
+                            (item.MyDepositAsset?.ToString() ?? "").Contains(wholeSearch) ||
+                            (item.DepositMonth.ToString() ?? "").Contains(wholeSearch) ||
+                            (item.DepositDay.ToString() ?? "").Contains(wholeSearch) ||
+                            (item.MaturityDate.ToString("yyyy-MM-dd") ?? "").Contains(wholeSearch) ||
+                            (TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Created, OSTimeZone.DestinationTimeZoneId).ToString() ?? "").Contains(wholeSearch) ||
+                            (TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Updated, OSTimeZone.DestinationTimeZoneId).ToString() ?? "").Contains(wholeSearch) ||
+                            (item.Note?.ToString() ?? "").Contains(wholeSearch))
+                        {
+                            bool noticedResult = false;
+
+                            try
+                            {
+                                noticedResult = currentDate.Subtract(new DateTime(Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[0]), item.DepositMonth, item.DepositDay)).TotalDays >= 0 && currentDate.Subtract(new DateTime(Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[0]), item.DepositMonth, item.DepositDay)).TotalDays <= ServerSetting.NoticeMaturityDateDay;
+                            }
+                            catch // 윤년이 아닌데 2월 29일로 초기화 했을 때 예외 발생
+                            {
+                                noticedResult = false;
+                            }
+
+                            fixedExpenditureOutputViewModels.Add(new FixedExpenditureOutputViewModel()
+                            {
+                                Id = item.Id,
+                                MainClass = localizer[item.MainClass.ToString()].Value,
+                                SubClass = localizer[item.SubClass.ToString()].Value,
+                                Contents = item.Contents,
+                                Amount = item.Amount,
+                                PaymentMethod = item.PaymentMethod,
+                                MyDepositAsset = item.MyDepositAsset,
+                                DepositMonth = item.DepositMonth,
+                                DepositDay = item.DepositDay,
+                                MaturityDate = item.MaturityDate.ToString("yyyy-MM-dd"),
+                                Created = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Created, OSTimeZone.DestinationTimeZoneId),
+                                Updated = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Updated, OSTimeZone.DestinationTimeZoneId),
+                                Note = item.Note,
+                                Noticed = noticedResult,
+                                Expired = item.MaturityDate.Subtract(currentDate).TotalDays < 0
+                            });
+                        }
+                    }
+                }
+                #endregion
+
+                var result = fixedExpenditureOutputViewModels.OrderByDescending(a => a.Expired).ThenByDescending(a => a.Noticed).AsQueryable();
+                return PartialView("_FixedExpenditureGrid", result);
+            }
             return View();
         }
         #endregion
