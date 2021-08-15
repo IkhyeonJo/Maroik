@@ -117,11 +117,35 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="Amount" xml:space="preserve">
+    <value>Amount</value>
+  </data>
   <data name="BusinessIncome" xml:space="preserve">
     <value>BusinessIncome</value>
   </data>
+  <data name="Contents" xml:space="preserve">
+    <value>Contents</value>
+  </data>
+  <data name="Created" xml:space="preserve">
+    <value>Created</value>
+  </data>
+  <data name="DepositDay" xml:space="preserve">
+    <value>DepositDay</value>
+  </data>
+  <data name="DepositMonth" xml:space="preserve">
+    <value>DepositMonth</value>
+  </data>
+  <data name="DepositMyAssetProductName" xml:space="preserve">
+    <value>DepositMyAssetProductName</value>
+  </data>
+  <data name="Expired" xml:space="preserve">
+    <value>Expired</value>
+  </data>
   <data name="FinancialIncome" xml:space="preserve">
     <value>FinancialIncome</value>
+  </data>
+  <data name="Id" xml:space="preserve">
+    <value>ID</value>
   </data>
   <data name="Input is invalid" xml:space="preserve">
     <value>Input is invalid</value>
@@ -132,8 +156,20 @@
   <data name="LaborIncome" xml:space="preserve">
     <value>LaborIncome</value>
   </data>
+  <data name="MainClass" xml:space="preserve">
+    <value>MainClass</value>
+  </data>
+  <data name="MaturityDate" xml:space="preserve">
+    <value>MaturityDate</value>
+  </data>
   <data name="No fixedIncome exists" xml:space="preserve">
     <value>No fixedIncome exists</value>
+  </data>
+  <data name="Note" xml:space="preserve">
+    <value>Note</value>
+  </data>
+  <data name="Noticed" xml:space="preserve">
+    <value>Noticed</value>
   </data>
   <data name="OtherIncome" xml:space="preserve">
     <value>OtherIncome</value>
@@ -147,6 +183,9 @@
   <data name="RentalIncome" xml:space="preserve">
     <value>RentalIncome</value>
   </data>
+  <data name="SubClass" xml:space="preserve">
+    <value>SubClass</value>
+  </data>
   <data name="The fixedIncome has been successfully created." xml:space="preserve">
     <value>The fixedIncome has been successfully created.</value>
   </data>
@@ -155,5 +194,8 @@
   </data>
   <data name="The fixedIncome has been successfully updated." xml:space="preserve">
     <value>The fixedIncome has been successfully updated.</value>
+  </data>
+  <data name="Updated" xml:space="preserve">
+    <value>Updated</value>
   </data>
 </root>

@@ -117,11 +117,35 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="Amount" xml:space="preserve">
+    <value>금액</value>
+  </data>
   <data name="BusinessIncome" xml:space="preserve">
     <value>사업수입</value>
   </data>
+  <data name="Contents" xml:space="preserve">
+    <value>내용</value>
+  </data>
+  <data name="Created" xml:space="preserve">
+    <value>생성일</value>
+  </data>
+  <data name="DepositDay" xml:space="preserve">
+    <value>입금일</value>
+  </data>
+  <data name="DepositMonth" xml:space="preserve">
+    <value>입금월</value>
+  </data>
+  <data name="DepositMyAssetProductName" xml:space="preserve">
+    <value>입금자산</value>
+  </data>
+  <data name="Expired" xml:space="preserve">
+    <value>만료여부</value>
+  </data>
   <data name="FinancialIncome" xml:space="preserve">
     <value>금융소득</value>
+  </data>
+  <data name="Id" xml:space="preserve">
+    <value>ID</value>
   </data>
   <data name="Input is invalid" xml:space="preserve">
     <value>유효하지 않은 입력값입니다.</value>
@@ -132,8 +156,20 @@
   <data name="LaborIncome" xml:space="preserve">
     <value>근로수입</value>
   </data>
+  <data name="MainClass" xml:space="preserve">
+    <value>대분류</value>
+  </data>
+  <data name="MaturityDate" xml:space="preserve">
+    <value>만기일</value>
+  </data>
   <data name="No fixedIncome exists" xml:space="preserve">
     <value>고정 수입이 없습니다.</value>
+  </data>
+  <data name="Note" xml:space="preserve">
+    <value>주석</value>
+  </data>
+  <data name="Noticed" xml:space="preserve">
+    <value>알림여부</value>
   </data>
   <data name="OtherIncome" xml:space="preserve">
     <value>기타수입</value>
@@ -147,6 +183,9 @@
   <data name="RentalIncome" xml:space="preserve">
     <value>임대수입</value>
   </data>
+  <data name="SubClass" xml:space="preserve">
+    <value>소분류</value>
+  </data>
   <data name="The fixedIncome has been successfully created." xml:space="preserve">
     <value>고정 수입이 성공적으로 생성되었습니다.</value>
   </data>
@@ -155,5 +194,8 @@
   </data>
   <data name="The fixedIncome has been successfully updated." xml:space="preserve">
     <value>고정 수입이 성공적으로 업데이트되었습니다.</value>
+  </data>
+  <data name="Updated" xml:space="preserve">
+    <value>업데이트일</value>
   </data>
 </root>
