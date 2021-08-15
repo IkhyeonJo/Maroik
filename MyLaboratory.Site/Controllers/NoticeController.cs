@@ -293,6 +293,53 @@ namespace MyLaboratory.Site.Controllers
             }
             return View();
         }
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [RequiredHttpPostAccess(Role = Role.User)]
+        public async Task<IActionResult> IsFixedIncomeExists(int id)
+        {
+            try
+            {
+                HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+
+                var tempFixedIncomes = await fixedIncomeRepository.GetFixedIncomesAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+
+                if (tempFixedIncomes == null)
+                {
+                    return Json(new { result = false, error = localizer["No income exists"].Value });
+                }
+                else
+                {
+                    var tempFixedIncome = tempFixedIncomes.Where(a => a.Id == id).FirstOrDefault();
+
+                    if (tempFixedIncome == null)
+                    {
+                        return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                    }
+                    else
+                    {
+                        var tempFixedIncomeOutputModel = new FixedIncomeOutputViewModel()
+                        {
+                            Id = tempFixedIncome.Id,
+                            MainClass = tempFixedIncome.MainClass,
+                            SubClass = tempFixedIncome.SubClass,
+                            Contents = tempFixedIncome.Contents,
+                            Amount = tempFixedIncome.Amount,
+                            DepositMonth = tempFixedIncome.DepositMonth,
+                            DepositDay = tempFixedIncome.DepositDay,
+                            MaturityDate = tempFixedIncome.MaturityDate.ToString("yyyy-MM-dd"),
+                            Note = tempFixedIncome.Note,
+                            DepositMyAssetProductName = tempFixedIncome.DepositMyAssetProductName
+                        };
+                        return Json(new { result = true, fixedIncome = tempFixedIncomeOutputModel });
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                return Json(new { result = false, error = e.ToString() });
+            }
+        }
         #endregion
 
         #endregion

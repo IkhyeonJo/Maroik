@@ -159,9 +159,9 @@ function CreateFormShowFixedIncomeDepositDayBySelectedFixedIncomeDepositMonth(cr
     }
 }
 
-function EditFormShowFixedIncomeSubClassBySelectedFixedIncomeMainClass(createFixedIncomeMainClass) {
+function EditFormShowFixedIncomeSubClassBySelectedFixedIncomeMainClass(editFixedIncomeMainClass) {
 
-    if (createFixedIncomeMainClass.value == "RegularIncome") {
+    if (editFixedIncomeMainClass.value == "RegularIncome") {
         $('#editFixedIncomeSubClass option[value=LaborIncome]').prop('disabled', true).prop('hidden', true);
         $('#editFixedIncomeSubClass option[value=BusinessIncome]').prop('disabled', true).prop('hidden', true);
         $('#editFixedIncomeSubClass option[value=PensionIncome]').prop('disabled', true).prop('hidden', true);
@@ -180,7 +180,7 @@ function EditFormShowFixedIncomeSubClassBySelectedFixedIncomeMainClass(createFix
 
         $("#editFixedIncomeSubClass").val("LaborIncome").change();
     }
-    else if (createFixedIncomeMainClass.value == "IrregularIncome") {
+    else if (editFixedIncomeMainClass.value == "IrregularIncome") {
         $('#editFixedIncomeSubClass option[value=LaborIncome]').prop('disabled', true).prop('hidden', true);
         $('#editFixedIncomeSubClass option[value=BusinessIncome]').prop('disabled', true).prop('hidden', true);
         $('#editFixedIncomeSubClass option[value=PensionIncome]').prop('disabled', true).prop('hidden', true);
@@ -194,6 +194,60 @@ function EditFormShowFixedIncomeSubClassBySelectedFixedIncomeMainClass(createFix
         $('#editFixedIncomeSubClass option[value=OtherIncome]').prop('disabled', false).prop('hidden', false);
 
         $("#editFixedIncomeSubClass").val("LaborIncome").change();
+    }
+}
+
+function EditFormShowFixedIncomeDepositDayBySelectedFixedIncomeDepositMonth(editFixedIncomeDepositMonth) {
+
+    if (editFixedIncomeDepositMonth.value == "1" ||
+        editFixedIncomeDepositMonth.value == "3" ||
+        editFixedIncomeDepositMonth.value == "5" ||
+        editFixedIncomeDepositMonth.value == "7" ||
+        editFixedIncomeDepositMonth.value == "8" ||
+        editFixedIncomeDepositMonth.value == "10" ||
+        editFixedIncomeDepositMonth.value == "12"
+    ) {
+        $('#editFixedIncomeDepositDay option[value=29]').prop('disabled', true).prop('hidden', true);
+        $('#editFixedIncomeDepositDay option[value=30]').prop('disabled', true).prop('hidden', true);
+        $('#editFixedIncomeDepositDay option[value=31]').prop('disabled', true).prop('hidden', true);
+
+        $("#editFixedIncomeDepositDay option:selected").removeAttr("selected");
+
+        $('#editFixedIncomeDepositDay option[value=1]').attr('selected', 'selected');
+        $('#editFixedIncomeDepositDay option[value=29]').prop('disabled', false).prop('hidden', false);
+        $('#editFixedIncomeDepositDay option[value=30]').prop('disabled', false).prop('hidden', false);
+        $('#editFixedIncomeDepositDay option[value=31]').prop('disabled', false).prop('hidden', false);
+
+        $("#editFixedIncomeDepositDay").val("1").change();
+    }
+    else if (editFixedIncomeDepositMonth.value == "2") {
+        $('#editFixedIncomeDepositDay option[value=29]').prop('disabled', true).prop('hidden', true);
+        $('#editFixedIncomeDepositDay option[value=30]').prop('disabled', true).prop('hidden', true);
+        $('#editFixedIncomeDepositDay option[value=31]').prop('disabled', true).prop('hidden', true);
+
+        $("#editFixedIncomeDepositDay option:selected").removeAttr("selected");
+
+        $('#editFixedIncomeDepositDay option[value=1]').attr('selected', 'selected');
+        $('#editFixedIncomeDepositDay option[value=29]').prop('disabled', false).prop('hidden', false);
+
+        $("#editFixedIncomeDepositDay").val("1").change();
+    }
+    else if (editFixedIncomeDepositMonth.value == "4" ||
+        editFixedIncomeDepositMonth.value == "6" ||
+        editFixedIncomeDepositMonth.value == "9" ||
+        editFixedIncomeDepositMonth.value == "11"
+    ) {
+        $('#editFixedIncomeDepositDay option[value=29]').prop('disabled', true).prop('hidden', true);
+        $('#editFixedIncomeDepositDay option[value=30]').prop('disabled', true).prop('hidden', true);
+        $('#editFixedIncomeDepositDay option[value=31]').prop('disabled', true).prop('hidden', true);
+
+        $("#editFixedIncomeDepositDay option:selected").removeAttr("selected");
+
+        $('#editFixedIncomeDepositDay option[value=1]').attr('selected', 'selected');
+        $('#editFixedIncomeDepositDay option[value=29]').prop('disabled', false).prop('hidden', false);
+        $('#editFixedIncomeDepositDay option[value=30]').prop('disabled', false).prop('hidden', false);
+
+        $("#editFixedIncomeDepositDay").val("1").change();
     }
 }
 
@@ -254,7 +308,7 @@ function CreateFixedIncome() {
     return false;
 }
 
-function EditIncomeGridRow(errorMessageSelectGridRow) {
+function EditFixedIncomeGridRow(errorMessageSelectGridRow) {
 
     var selectedRowId = "";
 
@@ -281,58 +335,110 @@ function EditIncomeGridRow(errorMessageSelectGridRow) {
         success: function (data) {
             if (data.result) {
 
-                var formEditIncome = $('#formEditFixedIncome');
+                var formEditFixedIncome = $('#formEditFixedIncome');
 
-                formEditIncome.find('input[id="editFixedIncomeId"]').val(data.income.id);
-                formEditIncome.find('select[id="editFixedIncomeMainClass"]').val(data.income.mainClass).change();
+                formEditFixedIncome.find('input[id="editFixedIncomeId"]').val(data.fixedIncome.id);
+                formEditFixedIncome.find('select[id="editFixedIncomeMainClass"]').val(data.fixedIncome.mainClass).change();
 
-                if (data.income.mainClass == "RegularIncome") {
-                    $('#editIncomeSubClass option[value=LaborIncome]').prop('disabled', true).prop('hidden', true);
-                    $('#editIncomeSubClass option[value=BusinessIncome]').prop('disabled', true).prop('hidden', true);
-                    $('#editIncomeSubClass option[value=PensionIncome]').prop('disabled', true).prop('hidden', true);
-                    $('#editIncomeSubClass option[value=FinancialIncome]').prop('disabled', true).prop('hidden', true);
-                    $('#editIncomeSubClass option[value=RentalIncome]').prop('disabled', true).prop('hidden', true);
-                    $('#editIncomeSubClass option[value=OtherIncome]').prop('disabled', true).prop('hidden', true);
+                if (data.fixedIncome.mainClass == "RegularIncome") {
+                    $('#editFixedIncomeSubClass option[value=LaborIncome]').prop('disabled', true).prop('hidden', true);
+                    $('#editFixedIncomeSubClass option[value=BusinessIncome]').prop('disabled', true).prop('hidden', true);
+                    $('#editFixedIncomeSubClass option[value=PensionIncome]').prop('disabled', true).prop('hidden', true);
+                    $('#editFixedIncomeSubClass option[value=FinancialIncome]').prop('disabled', true).prop('hidden', true);
+                    $('#editFixedIncomeSubClass option[value=RentalIncome]').prop('disabled', true).prop('hidden', true);
+                    $('#editFixedIncomeSubClass option[value=OtherIncome]').prop('disabled', true).prop('hidden', true);
 
-                    $("#editIncomeSubClass option:selected").removeAttr("selected");
+                    $("#editFixedIncomeSubClass option:selected").removeAttr("selected");
 
-                    $('#editIncomeSubClass option[value=LaborIncome]').prop('disabled', false).prop('hidden', false);
-                    $('#editIncomeSubClass option[value=BusinessIncome]').prop('disabled', false).prop('hidden', false);
-                    $('#editIncomeSubClass option[value=PensionIncome]').prop('disabled', false).prop('hidden', false);
-                    $('#editIncomeSubClass option[value=FinancialIncome]').prop('disabled', false).prop('hidden', false);
-                    $('#editIncomeSubClass option[value=RentalIncome]').prop('disabled', false).prop('hidden', false);
-                    $('#editIncomeSubClass option[value=OtherIncome]').prop('disabled', false).prop('hidden', false);
+                    $('#editFixedIncomeSubClass option[value=LaborIncome]').prop('disabled', false).prop('hidden', false);
+                    $('#editFixedIncomeSubClass option[value=BusinessIncome]').prop('disabled', false).prop('hidden', false);
+                    $('#editFixedIncomeSubClass option[value=PensionIncome]').prop('disabled', false).prop('hidden', false);
+                    $('#editFixedIncomeSubClass option[value=FinancialIncome]').prop('disabled', false).prop('hidden', false);
+                    $('#editFixedIncomeSubClass option[value=RentalIncome]').prop('disabled', false).prop('hidden', false);
+                    $('#editFixedIncomeSubClass option[value=OtherIncome]').prop('disabled', false).prop('hidden', false);
 
-                    formEditIncome.find('select[id="editIncomeSubClass"]').val(data.income.subClass).change();
+                    formEditFixedIncome.find('select[id="editFixedIncomeSubClass"]').val(data.fixedIncome.subClass).change();
                 }
-                else if (data.income.mainClass == "IrregularIncome") {
-                    $('#editIncomeSubClass option[value=LaborIncome]').prop('disabled', true).prop('hidden', true);
-                    $('#editIncomeSubClass option[value=BusinessIncome]').prop('disabled', true).prop('hidden', true);
-                    $('#editIncomeSubClass option[value=PensionIncome]').prop('disabled', true).prop('hidden', true);
-                    $('#editIncomeSubClass option[value=FinancialIncome]').prop('disabled', true).prop('hidden', true);
-                    $('#editIncomeSubClass option[value=RentalIncome]').prop('disabled', true).prop('hidden', true);
-                    $('#editIncomeSubClass option[value=OtherIncome]').prop('disabled', true).prop('hidden', true);
+                else if (data.fixedIncome.mainClass == "IrregularIncome") {
+                    $('#editFixedIncomeSubClass option[value=LaborIncome]').prop('disabled', true).prop('hidden', true);
+                    $('#editFixedIncomeSubClass option[value=BusinessIncome]').prop('disabled', true).prop('hidden', true);
+                    $('#editFixedIncomeSubClass option[value=PensionIncome]').prop('disabled', true).prop('hidden', true);
+                    $('#editFixedIncomeSubClass option[value=FinancialIncome]').prop('disabled', true).prop('hidden', true);
+                    $('#editFixedIncomeSubClass option[value=RentalIncome]').prop('disabled', true).prop('hidden', true);
+                    $('#editFixedIncomeSubClass option[value=OtherIncome]').prop('disabled', true).prop('hidden', true);
 
-                    $("#editIncomeSubClass option:selected").removeAttr("selected");
+                    $("#editFixedIncomeSubClass option:selected").removeAttr("selected");
 
-                    $('#editIncomeSubClass option[value=LaborIncome]').prop('disabled', false).prop('hidden', false);
-                    $('#editIncomeSubClass option[value=OtherIncome]').prop('disabled', false).prop('hidden', false);
+                    $('#editFixedIncomeSubClass option[value=LaborIncome]').prop('disabled', false).prop('hidden', false);
+                    $('#editFixedIncomeSubClass option[value=OtherIncome]').prop('disabled', false).prop('hidden', false);
 
-                    formEditIncome.find('select[id="editIncomeSubClass"]').val(data.income.subClass).change();
+                    formEditFixedIncome.find('select[id="editFixedIncomeSubClass"]').val(data.fixedIncome.subClass).change();
                 }
 
-                formEditIncome.find('input[id="editIncomeContents"]').val(data.income.contents);
-                formEditIncome.find('input[id="editIncomeAmount"]').val(data.income.amount);
-                formEditIncome.find('select[id="editIncomeDepositMyAssetProductName"]').val(data.income.depositMyAssetProductName).change();
-                formEditIncome.find('input[id="editIncomeNote"]').val(data.income.note);
+                formEditFixedIncome.find('input[id="editFixedIncomeContents"]').val(data.fixedIncome.contents);
+                formEditFixedIncome.find('input[id="editFixedIncomeAmount"]').val(data.fixedIncome.amount);
 
-                $('#editIncomeDialogModal').modal({
+                formEditFixedIncome.find('select[id="editFixedIncomeDepositMonth"]').val(data.fixedIncome.depositMonth.toString()).change();
+
+                if (data.fixedIncome.depositMonth.toString() == "1" ||
+                    data.fixedIncome.depositMonth.toString() == "3" ||
+                    data.fixedIncome.depositMonth.toString() == "5" ||
+                    data.fixedIncome.depositMonth.toString() == "7" ||
+                    data.fixedIncome.depositMonth.toString() == "8" ||
+                    data.fixedIncome.depositMonth.toString() == "10" ||
+                    data.fixedIncome.depositMonth.toString() == "12"
+                ) {
+                    $('#editFixedIncomeDepositDay option[value=29]').prop('disabled', true).prop('hidden', true);
+                    $('#editFixedIncomeDepositDay option[value=30]').prop('disabled', true).prop('hidden', true);
+                    $('#editFixedIncomeDepositDay option[value=31]').prop('disabled', true).prop('hidden', true);
+
+                    $("#editFixedIncomeDepositDay option:selected").removeAttr("selected");
+
+                    $('#editFixedIncomeDepositDay option[value=29]').prop('disabled', false).prop('hidden', false);
+                    $('#editFixedIncomeDepositDay option[value=30]').prop('disabled', false).prop('hidden', false);
+                    $('#editFixedIncomeDepositDay option[value=31]').prop('disabled', false).prop('hidden', false);
+
+                    formEditFixedIncome.find('select[id="editFixedIncomeDepositDay"]').val(data.fixedIncome.depositDay.toString()).change();
+                }
+                else if (data.fixedIncome.depositMonth.toString() == "2") {
+                    $('#editFixedIncomeDepositDay option[value=29]').prop('disabled', true).prop('hidden', true);
+                    $('#editFixedIncomeDepositDay option[value=30]').prop('disabled', true).prop('hidden', true);
+                    $('#editFixedIncomeDepositDay option[value=31]').prop('disabled', true).prop('hidden', true);
+
+                    $("#editFixedIncomeDepositDay option:selected").removeAttr("selected");
+
+                    $('#editFixedIncomeDepositDay option[value=29]').prop('disabled', false).prop('hidden', false);
+
+                    formEditFixedIncome.find('select[id="editFixedIncomeDepositDay"]').val(data.fixedIncome.depositDay.toString()).change();
+                }
+                else if (data.fixedIncome.depositMonth.toString() == "4" ||
+                    data.fixedIncome.depositMonth.toString() == "6" ||
+                    data.fixedIncome.depositMonth.toString() == "9" ||
+                    data.fixedIncome.depositMonth.toString() == "11"
+                ) {
+                    $('#editFixedIncomeDepositDay option[value=29]').prop('disabled', true).prop('hidden', true);
+                    $('#editFixedIncomeDepositDay option[value=30]').prop('disabled', true).prop('hidden', true);
+                    $('#editFixedIncomeDepositDay option[value=31]').prop('disabled', true).prop('hidden', true);
+
+                    $("#editFixedIncomeDepositDay option:selected").removeAttr("selected");
+
+                    $('#editFixedIncomeDepositDay option[value=29]').prop('disabled', false).prop('hidden', false);
+                    $('#editFixedIncomeDepositDay option[value=30]').prop('disabled', false).prop('hidden', false);
+
+                    formEditFixedIncome.find('select[id="editFixedIncomeDepositDay"]').val(data.fixedIncome.depositDay.toString()).change();
+                }
+
+                formEditFixedIncome.find('input[id="editFixedIncomeMaturityDate"]').val(data.fixedIncome.maturityDate);
+                formEditFixedIncome.find('input[id="editFixedIncomeNote"]').val(data.fixedIncome.note);
+                formEditFixedIncome.find('select[id="editFixedIncomeDepositMyAssetProductName"]').val(data.fixedIncome.depositMyAssetProductName).change();
+
+                $('#editFixedIncomeDialogModal').modal({
                     keyboard: false,
                     backdrop: "static"
                 });
 
-                $('#editIncomeDialogModal').modal('toggle');
-                $('#editIncomeDialogModal').modal('show');
+                $('#editFixedIncomeDialogModal').modal('toggle');
+                $('#editFixedIncomeDialogModal').modal('show');
             }
             else {
                 toastr.error(data.error);
