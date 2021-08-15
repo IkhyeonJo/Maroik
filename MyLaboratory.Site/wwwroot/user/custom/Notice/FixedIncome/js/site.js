@@ -592,20 +592,20 @@ function DeleteFixedIncome(errorMessageSelectGridRow) {
     });
 }
 
-function ExportExcelIncome() {
+function ExportExcelFixedIncome() {
     var form = document.createElement("form");
     var element1 = document.createElement("input");
     var element2 = document.createElement("input");
 
     form.method = "POST";
-    form.action = "/AccountBook/ExportExcelIncome";
+    form.action = "/Notice/ExportExcelFixedIncome";
 
     element1.name = "__RequestVerificationToken";
     element1.value = $('input[name="__RequestVerificationToken"]').val();
     form.appendChild(element1);
 
     element2.name = "fileName";
-    element2.value = "Income";
+    element2.value = "FixedIncome";
     form.appendChild(element2);
 
     document.body.appendChild(form);
