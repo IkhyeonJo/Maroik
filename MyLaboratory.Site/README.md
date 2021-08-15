@@ -761,8 +761,7 @@ https://blog.naver.com/PostView.nhn?blogId=alcmskfl17&logNo=221859839012
 
 MyLaboratory.Site 가계부
 
-TODO: 고정지출, 고정수입은 알림 항목 따로 만들어서 지정일에 알림 자동으로 뜨도록 설정할 것..
-
+TODO: 고정지출 [CREATE, READ, UPDATE, DELETE, EXCEL, MULTI-LANGUAGE], 알림 [NOTICE] 따로 만들어서 지정일에 알림 [NOTICE] 자동으로 뜨도록 설정할 것..
 
 ##사용 그리드:nonfactor grid
 #Select Multiple Row by shilt + LeftClick nonfactor grid... rowclick event 랑 색칠 되어 있는 지 확인해서 논리로 구현할 수 있다.
