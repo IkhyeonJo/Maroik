@@ -506,11 +506,11 @@ function UpdateFixedIncome() {
     return false;
 }
 
-function ConfirmDeleteIncome(errorMessageSelectGridRow) {
+function ConfirmDeleteFixedIncome(errorMessageSelectGridRow) {
 
     var selectedRowId = "";
 
-    $('#incomeGrid > table > tbody  > tr').each(function (index, tr) {
+    $('#fixedIncomeGrid > table > tbody  > tr').each(function (index, tr) {
         if ($(this).attr("class").includes(selectedRowColor)) { // Get SelectedRow by Color
             selectedRowId = $(this).attr("data-id");
         }
@@ -521,20 +521,20 @@ function ConfirmDeleteIncome(errorMessageSelectGridRow) {
         return false;
     } // check whether selected row exist or not
 
-    $('#confirmDeleteIncomeDialogModal').modal({
+    $('#confirmDeleteFixedIncomeDialogModal').modal({
         keyboard: false,
         backdrop: "static"
     });
 
-    $('#confirmDeleteIncomeDialogModal').modal('toggle');
-    $('#confirmDeleteIncomeDialogModal').modal('show');
+    $('#confirmDeleteFixedIncomeDialogModal').modal('toggle');
+    $('#confirmDeleteFixedIncomeDialogModal').modal('show');
 }
 
-function DeleteIncome(errorMessageSelectGridRow) {
+function DeleteFixedIncome(errorMessageSelectGridRow) {
 
     var selectedRowId = "";
 
-    $('#incomeGrid > table > tbody  > tr').each(function (index, tr) {
+    $('#fixedIncomeGrid > table > tbody  > tr').each(function (index, tr) {
         if ($(this).attr("class").includes(selectedRowColor)) { // Get SelectedRow by Color
             selectedRowId = $(this).attr("data-id");
         }
@@ -546,7 +546,7 @@ function DeleteIncome(errorMessageSelectGridRow) {
     } // check whether selected row exist or not
 
     $.ajax({
-        url: '/AccountBook/IsIncomeExists' + '?id=' + selectedRowId,
+        url: '/Notice/IsFixedIncomeExists' + '?id=' + selectedRowId,
         type: 'POST',
         headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
         dataType: 'json',
@@ -558,11 +558,11 @@ function DeleteIncome(errorMessageSelectGridRow) {
             if (data.result) {
 
                 var paramValue = JSON.stringify({
-                    Id: data.income.id
+                    Id: data.fixedIncome.id
                 });
 
                 $.ajax({
-                    url: '/AccountBook/DeleteIncome',
+                    url: '/Notice/DeleteFixedIncome',
                     type: 'POST',
                     headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
                     dataType: 'json',
@@ -572,7 +572,7 @@ function DeleteIncome(errorMessageSelectGridRow) {
                     //cache: false,
                     success: function (data) {
                         if (data.result) {
-                            $('#confirmDeleteIncomeDialogModal').modal('hide'); // hide Modal
+                            $('#confirmDeleteFixedIncomeDialogModal').modal('hide'); // hide Modal
 
                             const grid = new MvcGrid(document.querySelector(".mvc-grid")); //reload grid
                             grid.reload(); //reload grid

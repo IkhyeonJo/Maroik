@@ -420,7 +420,7 @@ namespace MyLaboratory.Site.Controllers
                         }
                         #endregion
 
-                        #region 고정수입 업데이트
+                        #region 고정 수입 업데이트
                         var tempFixedIncomes = await fixedIncomeRepository.GetFixedIncomesAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
 
                         if (tempFixedIncomes == null)
@@ -465,6 +465,47 @@ namespace MyLaboratory.Site.Controllers
                 else
                 {
                     return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                }
+            }
+            catch (Exception e)
+            {
+                return Json(new { result = false, error = e.ToString() });
+            }
+        }
+        #endregion
+
+        #region Delete
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [RequiredHttpPostAccess(Role = Role.User)]
+        public async Task<IActionResult> DeleteFixedIncome([FromBody] FixedIncomeInputViewModel fixedIncomeInputViewModel)
+        {
+            try
+            {
+                HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+
+                var tempFixedIncomes = await fixedIncomeRepository.GetFixedIncomesAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+
+                if (tempFixedIncomes == null)
+                {
+                    return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                }
+                else
+                {
+                    var tempFixedIncome = tempFixedIncomes.Where(a => a.Id == fixedIncomeInputViewModel.Id).FirstOrDefault();
+
+                    if (tempFixedIncome == null)
+                    {
+                        return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                    }
+                    else
+                    {
+                        #region 고정 수입 삭제
+                        await fixedIncomeRepository.DeleteFixedIncomeAsync(tempFixedIncome);
+                        #endregion
+
+                        return Json(new { result = true, message = localizer["The fixedIncome has been successfully deleted."].Value });
+                    }
                 }
             }
             catch (Exception e)
