@@ -117,8 +117,17 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="FixedExpenditure new message" xml:space="preserve">
+    <value>새로운 고정 지출 메세지</value>
+  </data>
+  <data name="FixedIncome new message" xml:space="preserve">
+    <value>새로운 고정 수입 메세지</value>
+  </data>
   <data name="Member since" xml:space="preserve">
     <value>회원 생성일</value>
+  </data>
+  <data name="Notifications" xml:space="preserve">
+    <value>알림</value>
   </data>
   <data name="Profile" xml:space="preserve">
     <value>프로필</value>

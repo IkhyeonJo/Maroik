@@ -235,11 +235,11 @@
                         <span class="dropdown-item dropdown-header">@(fixedIncomesNoticedCount + fixedIncomesExpiredCount + fixedExpenditureNoticedCount + fixedExpenditureExpiredCount) @localizer["Notifications"].Value</span>
                         <div class="dropdown-divider"></div>
                         <a href="@Url.Action("FixedIncome", "Notice")" class="dropdown-item">
-                            <i class="fas fa-file mr-2"></i>[@(fixedIncomesNoticedCount + fixedIncomesExpiredCount)] @localizer["FixedIncome"].Value @localizer["new message"].Value
+                            <i class="fas fa-file mr-2"></i>[@(fixedIncomesNoticedCount + fixedIncomesExpiredCount)] @localizer["FixedIncome new message"].Value
                         </a>
                         <div class="dropdown-divider"></div>
                         <a href="@Url.Action("FixedExpenditure", "Notice")" class="dropdown-item">
-                            <i class="fas fa-file mr-2"></i>[@(fixedExpenditureNoticedCount + fixedExpenditureExpiredCount)] @localizer["FixedExpenditure"].Value @localizer["new message"].Value
+                            <i class="fas fa-file mr-2"></i>[@(fixedExpenditureNoticedCount + fixedExpenditureExpiredCount)] @localizer["FixedExpenditure new message"].Value
                         </a>
                         <div class="dropdown-divider"></div>
                         <span class="dropdown-item dropdown-footer">@localizer["Notifications"].Value</span>
