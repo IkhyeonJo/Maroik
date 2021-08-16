@@ -141,6 +141,9 @@
   <data name="Expenditure" xml:space="preserve">
     <value>지출</value>
   </data>
+  <data name="FixedExpenditure" xml:space="preserve">
+    <value>고정 지출</value>
+  </data>
   <data name="FixedIncome" xml:space="preserve">
     <value>고정 수입</value>
   </data>
