@@ -27,6 +27,8 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Net.Mail;
 using Microsoft.AspNetCore.Mvc.Localization;
+using MyLaboratory.Common.DataAccess.Data;
+using MyLaboratory.Common.DataAccess.Models;
 
 namespace MyLaboratory.Site.Controllers
 {

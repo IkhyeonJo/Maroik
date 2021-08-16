@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
-using MyLaboratory.Site.Models;
+using MyLaboratory.Common.DataAccess.Models;
 
-namespace MyLaboratory.Site.Data
+namespace MyLaboratory.Common.DataAccess.Data
 {
     public partial class ApplicationDbContext : DbContext
     {

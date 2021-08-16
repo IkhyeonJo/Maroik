@@ -15,7 +15,7 @@ using MyLaboratory.Site.Services;
 using Newtonsoft.Json;
 using System.Text;
 using MyLaboratory.Site.Models;
-using MyLaboratory.Site.Data;
+using MyLaboratory.Common.DataAccess.Models;
 using MyLaboratory.Site.Contracts;
 using MyLaboratory.Site.Helpers;
 using Microsoft.AspNetCore.Mvc.Localization;

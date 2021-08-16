@@ -1,6 +1,7 @@
 using MyLaboratory.Site.Models;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using MyLaboratory.Common.DataAccess.Models;
 
 namespace MyLaboratory.Site.Contracts
 {

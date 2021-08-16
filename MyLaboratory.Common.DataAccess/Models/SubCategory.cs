@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 #nullable disable
 
-namespace MyLaboratory.Site.Models
+namespace MyLaboratory.Common.DataAccess.Models
 {
     public partial class SubCategory
     {

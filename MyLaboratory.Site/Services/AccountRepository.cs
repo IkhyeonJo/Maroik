@@ -2,8 +2,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
-using MyLaboratory.Site.Data;
-using MyLaboratory.Site.Models;
+using MyLaboratory.Common.DataAccess.Data;
+using MyLaboratory.Common.DataAccess.Models;
 using MyLaboratory.Site.Contracts;
 using MyLaboratory.Site.Models.ViewModels.Account;
 

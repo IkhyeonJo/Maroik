@@ -4,9 +4,8 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Identity;
 
-namespace MyLaboratory.Site.Models
+namespace MyLaboratory.Common.DataAccess.Models
 {
     public partial class Account
     {

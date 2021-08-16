@@ -1,7 +1,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.EntityFrameworkCore;
-using MyLaboratory.Site.Data;
+using MyLaboratory.Common.DataAccess.Data;
+using MyLaboratory.Common.DataAccess.Models;
 using MyLaboratory.Site.Common;
 using MyLaboratory.Site.Models;
 using MyLaboratory.Site.Contracts;

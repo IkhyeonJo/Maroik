@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 #nullable disable
 
-namespace MyLaboratory.Site.Models
+namespace MyLaboratory.Common.DataAccess.Models
 {
     public partial class Asset
     {

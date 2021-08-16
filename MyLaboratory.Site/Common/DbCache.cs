@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using MyLaboratory.Site.Models;
 using System.Collections.Generic;
+using MyLaboratory.Common.DataAccess.Models;
 
 namespace MyLaboratory.Site.Common
 {

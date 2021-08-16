@@ -8,7 +8,7 @@ using Microsoft.Extensions.Logging;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using MyLaboratory.Site.Data;
+using MyLaboratory.Common.DataAccess.Data;
 using MyLaboratory.Site.Models;
 using Microsoft.Extensions.Hosting;
 

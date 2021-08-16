@@ -29,6 +29,8 @@ using System.Net.Mail;
 using Microsoft.AspNetCore.Mvc.Localization;
 using MyLaboratory.Site.Models.ViewModels.AccountBook;
 using MyLaboratory.Site.Models.ViewModels.Notice;
+using MyLaboratory.Common.DataAccess.Data;
+using MyLaboratory.Common.DataAccess.Models;
 
 namespace MyLaboratory.Site.Controllers
 {
