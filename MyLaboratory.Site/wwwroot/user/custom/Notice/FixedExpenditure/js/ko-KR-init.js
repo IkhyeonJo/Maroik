@@ -17,7 +17,7 @@ $.datepicker.setDefaults({
 
 $(function () {
     $("#createFixedExpenditureTabs").tabs();
-    //$("#editFixedIncomeTabs").tabs();
+    $("#editFixedExpenditureTabs").tabs();
     $("#createFixedExpenditureMaturityDate").datepicker({
         showButtonPanel: true,
         beforeShow: function (input) {
@@ -88,78 +88,78 @@ $(function () {
         }
     });
 
-    //$("#editFixedIncomeMaturityDate").datepicker({
-    //    showButtonPanel: true,
-    //    beforeShow: function (input) {
-    //        setTimeout(function () {
-    //            var buttonPane = $(input)
-    //                .datepicker("widget")
-    //                .find(".ui-datepicker-buttonpane");
+    $("#editFixedExpenditureMaturityDate").datepicker({
+        showButtonPanel: true,
+        beforeShow: function (input) {
+            setTimeout(function () {
+                var buttonPane = $(input)
+                    .datepicker("widget")
+                    .find(".ui-datepicker-buttonpane");
 
-    //            $("<button>", {
-    //                text: "만기일 없음",
-    //                click: function () {
-    //                    $.datepicker._clearDate(input);
-    //                    $("#editFixedIncomeMaturityDate").datepicker("setDate", new Date('9999', '11', '31'));
-    //                }
-    //            }).appendTo(buttonPane).addClass("ui-datepicker-clear ui-state-default ui-priority-primary ui-corner-all");
+                $("<button>", {
+                    text: "만기일 없음",
+                    click: function () {
+                        $.datepicker._clearDate(input);
+                        $("#editFixedExpenditureMaturityDate").datepicker("setDate", new Date('9999', '11', '31'));
+                    }
+                }).appendTo(buttonPane).addClass("ui-datepicker-clear ui-state-default ui-priority-primary ui-corner-all");
 
-    //            $("<button>", {
-    //                text: "오늘",
-    //                click: function () {
-    //                    $.datepicker._clearDate(input);
-    //                    $("#editFixedIncomeMaturityDate").datepicker("setDate", new Date());
-    //                }
-    //            }).appendTo(buttonPane).addClass("ui-datepicker-clear ui-state-default ui-priority-primary ui-corner-all");
+                $("<button>", {
+                    text: "오늘",
+                    click: function () {
+                        $.datepicker._clearDate(input);
+                        $("#editFixedExpenditureMaturityDate").datepicker("setDate", new Date());
+                    }
+                }).appendTo(buttonPane).addClass("ui-datepicker-clear ui-state-default ui-priority-primary ui-corner-all");
 
-    //        }, 1);
-    //    },
-    //    onChangeMonthYear: function (year, month, instance) {
-    //        setTimeout(function () {
-    //            var buttonPane = $(instance)
-    //                .datepicker("widget")
-    //                .find(".ui-datepicker-buttonpane");
+            }, 1);
+        },
+        onChangeMonthYear: function (year, month, instance) {
+            setTimeout(function () {
+                var buttonPane = $(instance)
+                    .datepicker("widget")
+                    .find(".ui-datepicker-buttonpane");
 
-    //            $("<button>", {
-    //                text: "만기일 없음",
-    //                click: function () {
-    //                    $.datepicker._clearDate(instance.input);
-    //                    $("#editFixedIncomeMaturityDate").datepicker("setDate", new Date('9999', '11', '31'));
-    //                }
-    //            }).appendTo(buttonPane).addClass("ui-datepicker-clear ui-state-default ui-priority-primary ui-corner-all");
+                $("<button>", {
+                    text: "만기일 없음",
+                    click: function () {
+                        $.datepicker._clearDate(instance.input);
+                        $("#editFixedExpenditureMaturityDate").datepicker("setDate", new Date('9999', '11', '31'));
+                    }
+                }).appendTo(buttonPane).addClass("ui-datepicker-clear ui-state-default ui-priority-primary ui-corner-all");
 
-    //            $("<button>", {
-    //                text: "오늘",
-    //                click: function () {
-    //                    $.datepicker._clearDate(instance.input);
-    //                    $("#editFixedIncomeMaturityDate").datepicker("setDate", new Date());
-    //                }
-    //            }).appendTo(buttonPane).addClass("ui-datepicker-clear ui-state-default ui-priority-primary ui-corner-all");
+                $("<button>", {
+                    text: "오늘",
+                    click: function () {
+                        $.datepicker._clearDate(instance.input);
+                        $("#editFixedExpenditureMaturityDate").datepicker("setDate", new Date());
+                    }
+                }).appendTo(buttonPane).addClass("ui-datepicker-clear ui-state-default ui-priority-primary ui-corner-all");
 
-    //        }, 1);
-    //    },
-    //    onSelect: function (date) {
-    //        if (!date) {
-    //            date = '9999-12-31';
-    //        }
-    //        let tempCurrentDate = new Date();
-    //        let month = tempCurrentDate.getMonth() + 1;
-    //        let day = tempCurrentDate.getDate();
+            }, 1);
+        },
+        onSelect: function (date) {
+            if (!date) {
+                date = '9999-12-31';
+            }
+            let tempCurrentDate = new Date();
+            let month = tempCurrentDate.getMonth() + 1;
+            let day = tempCurrentDate.getDate();
 
-    //        month = month >= 10 ? month : '0' + month;
-    //        day = day >= 0 ? day : '0' + day;
+            month = month >= 10 ? month : '0' + month;
+            day = day >= 0 ? day : '0' + day;
 
-    //        let currentDate = tempCurrentDate.getFullYear() + '-' + month + '-' + day;
+            let currentDate = tempCurrentDate.getFullYear() + '-' + month + '-' + day;
 
-    //        if (date < currentDate) {
-    //            alert('만기일이 현재 날짜보다 앞설 수 없습니다.');
-    //            $("#editFixedIncomeMaturityDate").datepicker("setDate", new Date());
-    //        }
-    //    }
-    //});
+            if (date < currentDate) {
+                alert('만기일이 현재 날짜보다 앞설 수 없습니다.');
+                $("#editFixedExpenditureMaturityDate").datepicker("setDate", new Date());
+            }
+        }
+    });
 
     $("#createFixedExpenditureMaturityDate").datepicker("setDate", new Date());
-    //$("#editFixedIncomeMaturityDate").datepicker("setDate", new Date());
+    $("#editFixedExpenditureMaturityDate").datepicker("setDate", new Date());
 
     $('<style type="text/css"> .ui-datepicker-close { display: none; } </style>').appendTo("head");
     $('<style type="text/css"> .ui-datepicker-current { display: none; } </style>').appendTo("head");

@@ -942,6 +942,280 @@ namespace MyLaboratory.Site.Controllers
             }
             return View();
         }
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [RequiredHttpPostAccess(Role = Role.User)]
+        public async Task<IActionResult> IsFixedExpenditureExists(int id)
+        {
+            try
+            {
+                HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+
+                var tempFixedExpenditures = await fixedExpenditureRepository.GetFixedExpendituresAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+
+                if (tempFixedExpenditures == null)
+                {
+                    return Json(new { result = false, error = localizer["No fixedExpenditure exists"].Value });
+                }
+                else
+                {
+                    var tempFixedExpenditure = tempFixedExpenditures.Where(a => a.Id == id).FirstOrDefault();
+
+                    if (tempFixedExpenditure == null)
+                    {
+                        return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                    }
+                    else
+                    {
+                        var tempFixedIncomeOutputModel = new FixedExpenditureOutputViewModel()
+                        {
+                            Id = tempFixedExpenditure.Id,
+                            MainClass = tempFixedExpenditure.MainClass,
+                            SubClass = tempFixedExpenditure.SubClass,
+                            Contents = tempFixedExpenditure.Contents,
+                            Amount = tempFixedExpenditure.Amount,
+                            DepositMonth = tempFixedExpenditure.DepositMonth,
+                            DepositDay = tempFixedExpenditure.DepositDay,
+                            MaturityDate = tempFixedExpenditure.MaturityDate.ToString("yyyy-MM-dd"),
+                            Note = tempFixedExpenditure.Note,
+                            PaymentMethod = tempFixedExpenditure.PaymentMethod,
+                            MyDepositAsset = tempFixedExpenditure.MyDepositAsset ?? ""
+                        };
+                        return Json(new { result = true, fixedExpenditure = tempFixedIncomeOutputModel });
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                return Json(new { result = false, error = e.ToString() });
+            }
+        }
+        #endregion
+
+        #region Update
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [RequiredHttpPostAccess(Role = Role.User)]
+        public async Task<IActionResult> UpdateFixedExpenditure([FromBody] FixedExpenditureInputViewModel fixedExpenditureInputViewModel)
+        {
+            try
+            {
+                if (ModelState.IsValid)
+                {
+                    fixedExpenditureInputViewModel.Amount = Math.Abs(fixedExpenditureInputViewModel.Amount);
+                    HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+
+                    #region 대분류 = '정기저축'
+                    if (fixedExpenditureInputViewModel.MainClass == "RegularSavings")
+                    {
+                        if (fixedExpenditureInputViewModel.SubClass == "Deposit" || fixedExpenditureInputViewModel.SubClass == "MyAssetTransfer" || fixedExpenditureInputViewModel.SubClass == "Investment")
+                        {
+                            try
+                            {
+                                if (fixedExpenditureInputViewModel.PaymentMethod == fixedExpenditureInputViewModel.MyDepositAsset)
+                                {
+                                    return Json(new { result = false, error = localizer["The PaymentMethod and MyDepositAsset value cannot be the same."].Value });
+                                }
+
+                                var tempFixedExpenditures = await fixedExpenditureRepository.GetFixedExpendituresAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+                                var tempFixedExpenditure = tempFixedExpenditures.Where(a => a.Id == fixedExpenditureInputViewModel.Id).FirstOrDefault();
+
+                                if (tempFixedExpenditure == null)
+                                {
+                                    return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                                }
+
+                                tempFixedExpenditure.Id = fixedExpenditureInputViewModel.Id;
+                                tempFixedExpenditure.AccountEmail = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email;
+                                tempFixedExpenditure.MainClass = fixedExpenditureInputViewModel.MainClass;
+                                tempFixedExpenditure.SubClass = fixedExpenditureInputViewModel.SubClass;
+                                tempFixedExpenditure.Contents = fixedExpenditureInputViewModel.Contents ?? "";
+                                tempFixedExpenditure.Amount = fixedExpenditureInputViewModel.Amount;
+                                tempFixedExpenditure.DepositMonth = fixedExpenditureInputViewModel.DepositMonth;
+                                tempFixedExpenditure.DepositDay = fixedExpenditureInputViewModel.DepositDay;
+                                tempFixedExpenditure.MaturityDate = new DateTime(Convert.ToInt32(Regex.Split(fixedExpenditureInputViewModel.MaturityDate, "-")[0].ToString()), Convert.ToInt32(Regex.Split(fixedExpenditureInputViewModel.MaturityDate, "-")[1].ToString()), Convert.ToInt32(Regex.Split(fixedExpenditureInputViewModel.MaturityDate, "-")[2].ToString()));
+                                tempFixedExpenditure.Note = fixedExpenditureInputViewModel?.Note ?? "";
+                                tempFixedExpenditure.PaymentMethod = fixedExpenditureInputViewModel.PaymentMethod;
+                                tempFixedExpenditure.MyDepositAsset = fixedExpenditureInputViewModel.MyDepositAsset ?? "";
+                                tempFixedExpenditure.Updated = DateTime.UtcNow;
+
+                                await fixedExpenditureRepository.UpdateFixedExpenditureAsync(tempFixedExpenditure);
+
+                                return Json(new { result = true, message = localizer["The fixedExpenditure has been successfully updated."].Value });
+                            }
+                            catch (Exception e)
+                            {
+                                return Json(new { result = false, error = e.ToString() });
+                            }
+                        }
+                        else
+                        {
+                            return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                        }
+                    }
+                    #endregion
+
+                    #region 대분류 = '비소비지출'
+                    else if (fixedExpenditureInputViewModel.MainClass == "NonConsumerSpending")
+                    {
+                        if (fixedExpenditureInputViewModel.SubClass == "PublicPension" || fixedExpenditureInputViewModel.SubClass == "DebtRepayment")
+                        {
+                            try
+                            {
+                                if (fixedExpenditureInputViewModel.PaymentMethod == fixedExpenditureInputViewModel.MyDepositAsset)
+                                {
+                                    return Json(new { result = false, error = localizer["The PaymentMethod and MyDepositAsset value cannot be the same."].Value });
+                                }
+
+                                var tempFixedExpenditures = await fixedExpenditureRepository.GetFixedExpendituresAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+                                var tempFixedExpenditure = tempFixedExpenditures.Where(a => a.Id == fixedExpenditureInputViewModel.Id).FirstOrDefault();
+
+                                if (tempFixedExpenditure == null)
+                                {
+                                    return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                                }
+
+                                tempFixedExpenditure.Id = fixedExpenditureInputViewModel.Id;
+                                tempFixedExpenditure.AccountEmail = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email;
+                                tempFixedExpenditure.MainClass = fixedExpenditureInputViewModel.MainClass;
+                                tempFixedExpenditure.SubClass = fixedExpenditureInputViewModel.SubClass;
+                                tempFixedExpenditure.Contents = fixedExpenditureInputViewModel.Contents ?? "";
+                                tempFixedExpenditure.Amount = fixedExpenditureInputViewModel.Amount;
+                                tempFixedExpenditure.DepositMonth = fixedExpenditureInputViewModel.DepositMonth;
+                                tempFixedExpenditure.DepositDay = fixedExpenditureInputViewModel.DepositDay;
+                                tempFixedExpenditure.MaturityDate = new DateTime(Convert.ToInt32(Regex.Split(fixedExpenditureInputViewModel.MaturityDate, "-")[0].ToString()), Convert.ToInt32(Regex.Split(fixedExpenditureInputViewModel.MaturityDate, "-")[1].ToString()), Convert.ToInt32(Regex.Split(fixedExpenditureInputViewModel.MaturityDate, "-")[2].ToString()));
+                                tempFixedExpenditure.Note = fixedExpenditureInputViewModel?.Note ?? "";
+                                tempFixedExpenditure.PaymentMethod = fixedExpenditureInputViewModel.PaymentMethod;
+                                tempFixedExpenditure.MyDepositAsset = fixedExpenditureInputViewModel.MyDepositAsset ?? "";
+                                tempFixedExpenditure.Updated = DateTime.UtcNow;
+
+                                await fixedExpenditureRepository.UpdateFixedExpenditureAsync(tempFixedExpenditure);
+
+                                return Json(new { result = true, message = localizer["The fixedExpenditure has been successfully updated."].Value });
+                            }
+                            catch (Exception e)
+                            {
+                                return Json(new { result = false, error = e.ToString() });
+                            }
+                        }
+                        else if (fixedExpenditureInputViewModel.SubClass == "Tax" ||
+                            fixedExpenditureInputViewModel.SubClass == "SocialInsurance" ||
+                            fixedExpenditureInputViewModel.SubClass == "InterHouseholdTranserExpenses" ||
+                            fixedExpenditureInputViewModel.SubClass == "NonProfitOrganizationTransfer")
+                        {
+                            try
+                            {
+                                var tempFixedExpenditures = await fixedExpenditureRepository.GetFixedExpendituresAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+                                var tempFixedExpenditure = tempFixedExpenditures.Where(a => a.Id == fixedExpenditureInputViewModel.Id).FirstOrDefault();
+
+                                if (tempFixedExpenditure == null)
+                                {
+                                    return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                                }
+
+                                tempFixedExpenditure.Id = fixedExpenditureInputViewModel.Id;
+                                tempFixedExpenditure.AccountEmail = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email;
+                                tempFixedExpenditure.MainClass = fixedExpenditureInputViewModel.MainClass;
+                                tempFixedExpenditure.SubClass = fixedExpenditureInputViewModel.SubClass;
+                                tempFixedExpenditure.Contents = fixedExpenditureInputViewModel.Contents ?? "";
+                                tempFixedExpenditure.Amount = fixedExpenditureInputViewModel.Amount;
+                                tempFixedExpenditure.DepositMonth = fixedExpenditureInputViewModel.DepositMonth;
+                                tempFixedExpenditure.DepositDay = fixedExpenditureInputViewModel.DepositDay;
+                                tempFixedExpenditure.MaturityDate = new DateTime(Convert.ToInt32(Regex.Split(fixedExpenditureInputViewModel.MaturityDate, "-")[0].ToString()), Convert.ToInt32(Regex.Split(fixedExpenditureInputViewModel.MaturityDate, "-")[1].ToString()), Convert.ToInt32(Regex.Split(fixedExpenditureInputViewModel.MaturityDate, "-")[2].ToString()));
+                                tempFixedExpenditure.Note = fixedExpenditureInputViewModel?.Note ?? "";
+                                tempFixedExpenditure.PaymentMethod = fixedExpenditureInputViewModel.PaymentMethod;
+                                tempFixedExpenditure.MyDepositAsset = "";
+                                tempFixedExpenditure.Updated = DateTime.UtcNow;
+
+                                await fixedExpenditureRepository.UpdateFixedExpenditureAsync(tempFixedExpenditure);
+
+                                return Json(new { result = true, message = localizer["The fixedExpenditure has been successfully updated."].Value });
+                            }
+                            catch (Exception e)
+                            {
+                                return Json(new { result = false, error = e.ToString() });
+                            }
+                        }
+                        else
+                        {
+                            return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                        }
+                    }
+                    #endregion
+
+                    #region 대분류 = '소비지출'
+                    else if (fixedExpenditureInputViewModel.MainClass == "ConsumerSpending")
+                    {
+                        if (fixedExpenditureInputViewModel.SubClass == "MealOrEatOutExpenses" ||
+                            fixedExpenditureInputViewModel.SubClass == "HousingOrSuppliesCost" ||
+                            fixedExpenditureInputViewModel.SubClass == "EducationExpenses" ||
+                            fixedExpenditureInputViewModel.SubClass == "MedicalExpenses" ||
+                            fixedExpenditureInputViewModel.SubClass == "TransportationCost" ||
+                            fixedExpenditureInputViewModel.SubClass == "CommunicationCost" ||
+                            fixedExpenditureInputViewModel.SubClass == "LeisureOrCulture" ||
+                            fixedExpenditureInputViewModel.SubClass == "ClothingOrShoes" ||
+                            fixedExpenditureInputViewModel.SubClass == "PinMoney" ||
+                            fixedExpenditureInputViewModel.SubClass == "ProtectionTypeInsurance" ||
+                            fixedExpenditureInputViewModel.SubClass == "OtherExpenses" ||
+                            fixedExpenditureInputViewModel.SubClass == "UnknownExpenditure")
+                        {
+                            try
+                            {
+                                var tempFixedExpenditures = await fixedExpenditureRepository.GetFixedExpendituresAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+                                var tempFixedExpenditure = tempFixedExpenditures.Where(a => a.Id == fixedExpenditureInputViewModel.Id).FirstOrDefault();
+
+                                if (tempFixedExpenditure == null)
+                                {
+                                    return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                                }
+
+                                tempFixedExpenditure.Id = fixedExpenditureInputViewModel.Id;
+                                tempFixedExpenditure.AccountEmail = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email;
+                                tempFixedExpenditure.MainClass = fixedExpenditureInputViewModel.MainClass;
+                                tempFixedExpenditure.SubClass = fixedExpenditureInputViewModel.SubClass;
+                                tempFixedExpenditure.Contents = fixedExpenditureInputViewModel.Contents ?? "";
+                                tempFixedExpenditure.Amount = fixedExpenditureInputViewModel.Amount;
+                                tempFixedExpenditure.DepositMonth = fixedExpenditureInputViewModel.DepositMonth;
+                                tempFixedExpenditure.DepositDay = fixedExpenditureInputViewModel.DepositDay;
+                                tempFixedExpenditure.MaturityDate = new DateTime(Convert.ToInt32(Regex.Split(fixedExpenditureInputViewModel.MaturityDate, "-")[0].ToString()), Convert.ToInt32(Regex.Split(fixedExpenditureInputViewModel.MaturityDate, "-")[1].ToString()), Convert.ToInt32(Regex.Split(fixedExpenditureInputViewModel.MaturityDate, "-")[2].ToString()));
+                                tempFixedExpenditure.Note = fixedExpenditureInputViewModel?.Note ?? "";
+                                tempFixedExpenditure.PaymentMethod = fixedExpenditureInputViewModel.PaymentMethod;
+                                tempFixedExpenditure.MyDepositAsset = "";
+                                tempFixedExpenditure.Updated = DateTime.UtcNow;
+
+                                await fixedExpenditureRepository.UpdateFixedExpenditureAsync(tempFixedExpenditure);
+
+                                return Json(new { result = true, message = localizer["The fixedExpenditure has been successfully updated."].Value });
+                            }
+                            catch (Exception e)
+                            {
+                                return Json(new { result = false, error = e.ToString() });
+                            }
+                        }
+                        else
+                        {
+                            return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                        }
+                    }
+                    #endregion
+
+                    #region 대분류에 없는 값
+                    else
+                    {
+                        return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                    }
+                    #endregion
+                }
+                else
+                {
+                    return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                }
+            }
+            catch (Exception e)
+            {
+                return Json(new { result = false, error = e.ToString() });
+            }
+        }
         #endregion
 
         #endregion
