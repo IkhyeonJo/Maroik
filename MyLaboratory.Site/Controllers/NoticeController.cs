@@ -590,7 +590,7 @@ namespace MyLaboratory.Site.Controllers
                 workSheetMenuOutputViewModels.Cells[1, 14].Value = localizer[nameof(FixedIncomeOutputViewModel.Expired).ToString()].Value;
 
                 int recordIndex = 2;
-                foreach (var item in fixedIncomeOutputViewModels)
+                foreach (var item in fixedIncomeOutputViewModels.OrderByDescending(a => a.Expired).ThenByDescending(a => a.Noticed))
                 {
                     workSheetMenuOutputViewModels.Cells[recordIndex, 1].Value = item.Id;
                     workSheetMenuOutputViewModels.Cells[recordIndex, 2].Value = localizer[item?.MainClass?.ToString() ?? ""].Value;
@@ -1332,7 +1332,7 @@ namespace MyLaboratory.Site.Controllers
                 workSheetMenuOutputViewModels.Cells[1, 15].Value = localizer[nameof(FixedExpenditureOutputViewModel.Expired).ToString()].Value;
 
                 int recordIndex = 2;
-                foreach (var item in fixedExpenditureOutputViewModels)
+                foreach (var item in fixedExpenditureOutputViewModels.OrderByDescending(a => a.Expired).ThenByDescending(a => a.Noticed))
                 {
                     workSheetMenuOutputViewModels.Cells[recordIndex, 1].Value = item.Id;
                     workSheetMenuOutputViewModels.Cells[recordIndex, 2].Value = localizer[item?.MainClass?.ToString() ?? ""].Value;
