@@ -1255,6 +1255,112 @@ namespace MyLaboratory.Site.Controllers
         }
         #endregion
 
+        #region Excel
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [RequiredHttpPostAccess(Role = Role.User)]
+        public async Task<IActionResult> ExportExcelFixedExpenditure(string fileName = "")
+        {
+            // query data from database
+            await Task.Yield();
+
+            List<FixedExpenditureOutputViewModel> fixedExpenditureOutputViewModels = new List<FixedExpenditureOutputViewModel>();
+
+            #region FixedExpenditures
+
+            HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+
+            DateTime currentDate = new DateTime(Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[0]), Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[1]), Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[2]));
+
+            foreach (var item in await fixedExpenditureRepository.GetFixedExpendituresAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email))
+            {
+                bool noticedResult = false;
+
+                try
+                {
+                    noticedResult = currentDate.Subtract(new DateTime(Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[0]), item.DepositMonth, item.DepositDay)).TotalDays >= 0 && currentDate.Subtract(new DateTime(Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[0]), item.DepositMonth, item.DepositDay)).TotalDays <= ServerSetting.NoticeMaturityDateDay;
+                }
+                catch // 윤년이 아닌데 2월 29일로 초기화 했을 때 예외 발생
+                {
+                    noticedResult = false;
+                }
+
+                fixedExpenditureOutputViewModels.Add(new FixedExpenditureOutputViewModel()
+                {
+                    Id = item.Id,
+                    MainClass = localizer[item.MainClass.ToString()].Value,
+                    SubClass = localizer[item.SubClass.ToString()].Value,
+                    Contents = item.Contents,
+                    Amount = item.Amount,
+                    PaymentMethod = item.PaymentMethod,
+                    MyDepositAsset = item.MyDepositAsset,
+                    DepositMonth = item.DepositMonth,
+                    DepositDay = item.DepositDay,
+                    MaturityDate = item.MaturityDate.ToString("yyyy-MM-dd"),
+                    Created = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Created, OSTimeZone.DestinationTimeZoneId),
+                    Updated = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Updated, OSTimeZone.DestinationTimeZoneId),
+                    Note = item.Note,
+                    Noticed = noticedResult,
+                    Expired = item.MaturityDate.Subtract(currentDate).TotalDays < 0
+                });
+            }
+            #endregion
+
+            var stream = new MemoryStream();
+
+            using (var package = new ExcelPackage(stream))
+            {
+                var workSheetMenuOutputViewModels = package.Workbook.Worksheets.Add("Sheet1");
+
+                workSheetMenuOutputViewModels.Row(1).Height = 20;
+                workSheetMenuOutputViewModels.Row(1).Style.HorizontalAlignment = OfficeOpenXml.Style.ExcelHorizontalAlignment.Center;
+                workSheetMenuOutputViewModels.Row(1).Style.Font.Bold = true;
+                workSheetMenuOutputViewModels.Cells[1, 1].Value = localizer[nameof(FixedExpenditureOutputViewModel.Id).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 2].Value = localizer[nameof(FixedExpenditureOutputViewModel.MainClass).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 3].Value = localizer[nameof(FixedExpenditureOutputViewModel.SubClass).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 4].Value = localizer[nameof(FixedExpenditureOutputViewModel.Contents).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 5].Value = localizer[nameof(FixedExpenditureOutputViewModel.Amount).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 6].Value = localizer[nameof(FixedExpenditureOutputViewModel.PaymentMethod).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 7].Value = localizer[nameof(FixedExpenditureOutputViewModel.MyDepositAsset).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 8].Value = localizer[nameof(FixedExpenditureOutputViewModel.DepositMonth).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 9].Value = localizer[nameof(FixedExpenditureOutputViewModel.DepositDay).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 10].Value = localizer[nameof(FixedExpenditureOutputViewModel.MaturityDate).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 11].Value = localizer[nameof(FixedExpenditureOutputViewModel.Created).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 12].Value = localizer[nameof(FixedExpenditureOutputViewModel.Updated).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 13].Value = localizer[nameof(FixedExpenditureOutputViewModel.Note).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 14].Value = localizer[nameof(FixedExpenditureOutputViewModel.Noticed).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 15].Value = localizer[nameof(FixedExpenditureOutputViewModel.Expired).ToString()].Value;
+
+                int recordIndex = 2;
+                foreach (var item in fixedExpenditureOutputViewModels)
+                {
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 1].Value = item.Id;
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 2].Value = localizer[item?.MainClass?.ToString() ?? ""].Value;
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 3].Value = localizer[item?.SubClass?.ToString() ?? ""].Value;
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 4].Value = item.Contents;
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 5].Value = item.Amount;
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 6].Value = item.PaymentMethod;
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 7].Value = item.MyDepositAsset;
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 8].Value = item.DepositMonth;
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 9].Value = item.DepositDay;
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 10].Value = item.MaturityDate;
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 11].Value = item.Created.ToString();
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 12].Value = item.Updated.ToString();
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 13].Value = item.Note;
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 14].Value = item.Noticed.ToString();
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 15].Value = item.Expired.ToString();
+                    recordIndex++;
+                }
+
+                package.Save();
+            }
+            stream.Position = 0;
+            string excelName = $"{fileName}-{TimeZoneInfo.ConvertTimeBySystemTimeZoneId(DateTime.UtcNow, OSTimeZone.DestinationTimeZoneId).ToString("yyyy-MM-dd-HH-mm-ss-fff")}.xlsx";
+
+            return File(stream, "application/octet-stream", excelName);
+        }
+        #endregion
+
         #endregion
     }
 }
