@@ -9,7 +9,7 @@ namespace MyLaboratory.RequestWebAPI
 {
     class Program
     {
-        readonly static string url = "https://***REMOVED***:5001";
+        readonly static string url = "https://localhost:5001";
         static async Task Main(string[] args)
         {
             try
