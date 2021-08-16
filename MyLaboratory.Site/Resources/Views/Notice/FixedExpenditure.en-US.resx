@@ -138,6 +138,9 @@
   <data name="DELETE" xml:space="preserve">
     <value>DELETE</value>
   </data>
+  <data name="Deposit date is near." xml:space="preserve">
+    <value>Deposit date is near.</value>
+  </data>
   <data name="DepositDay" xml:space="preserve">
     <value>DepositDay</value>
   </data>
@@ -155,6 +158,9 @@
   </data>
   <data name="MainClass" xml:space="preserve">
     <value>MainClass</value>
+  </data>
+  <data name="Maturity date has been passed." xml:space="preserve">
+    <value>Maturity date has been passed.</value>
   </data>
   <data name="MaturityDate" xml:space="preserve">
     <value>MaturityDate</value>
@@ -180,6 +186,9 @@
   <data name="Please select grid row" xml:space="preserve">
     <value>Please select grid row</value>
   </data>
+  <data name="Red row" xml:space="preserve">
+    <value>Red row</value>
+  </data>
   <data name="Save" xml:space="preserve">
     <value>Save</value>
   </data>
@@ -188,6 +197,9 @@
   </data>
   <data name="SubClass" xml:space="preserve">
     <value>SubClass</value>
+  </data>
+  <data name="Yellow Row" xml:space="preserve">
+    <value>Yellow Row</value>
   </data>
   <data name="가구간 이전지출" xml:space="preserve">
     <value>Inter household transer</value>

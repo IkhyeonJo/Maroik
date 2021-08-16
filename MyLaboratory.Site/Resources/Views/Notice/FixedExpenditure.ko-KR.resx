@@ -138,6 +138,9 @@
   <data name="DELETE" xml:space="preserve">
     <value>삭제</value>
   </data>
+  <data name="Deposit date is near." xml:space="preserve">
+    <value>입금일이 임박했습니다.</value>
+  </data>
   <data name="DepositDay" xml:space="preserve">
     <value>입금일</value>
   </data>
@@ -155,6 +158,9 @@
   </data>
   <data name="MainClass" xml:space="preserve">
     <value>대분류</value>
+  </data>
+  <data name="Maturity date has been passed." xml:space="preserve">
+    <value>만기일이 지났습니다.</value>
   </data>
   <data name="MaturityDate" xml:space="preserve">
     <value>만기일</value>
@@ -180,6 +186,9 @@
   <data name="Please select grid row" xml:space="preserve">
     <value>행을 선택해주세요.</value>
   </data>
+  <data name="Red row" xml:space="preserve">
+    <value>적색 행</value>
+  </data>
   <data name="Save" xml:space="preserve">
     <value>저장</value>
   </data>
@@ -188,6 +197,9 @@
   </data>
   <data name="SubClass" xml:space="preserve">
     <value>소분류</value>
+  </data>
+  <data name="Yellow Row" xml:space="preserve">
+    <value>황색 행</value>
   </data>
   <data name="가구간 이전지출" xml:space="preserve">
     <value>가구간 이전지출</value>
