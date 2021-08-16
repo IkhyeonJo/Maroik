@@ -8,6 +8,7 @@ EXPOSE 5001
 FROM mcr.microsoft.com/dotnet/sdk:5.0 AS build
 WORKDIR /src
 COPY ["MyLaboratory.WebAPI/MyLaboratory.WebAPI.csproj", "MyLaboratory.WebAPI/"]
+COPY ["MyLaboratory.Common.DataAccess/MyLaboratory.Common.DataAccess.csproj", "MyLaboratory.Common.DataAccess/"]
 RUN dotnet restore "MyLaboratory.WebAPI/MyLaboratory.WebAPI.csproj"
 COPY . .
 WORKDIR "/src/MyLaboratory.WebAPI"

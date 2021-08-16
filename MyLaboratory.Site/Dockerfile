@@ -8,6 +8,7 @@ EXPOSE 443
 FROM mcr.microsoft.com/dotnet/sdk:5.0 AS build
 WORKDIR /src
 COPY ["MyLaboratory.Site/MyLaboratory.Site.csproj", "MyLaboratory.Site/"]
+COPY ["MyLaboratory.Common.DataAccess/MyLaboratory.Common.DataAccess.csproj", "MyLaboratory.Common.DataAccess/"]
 RUN dotnet restore "MyLaboratory.Site/MyLaboratory.Site.csproj"
 COPY . .
 WORKDIR "/src/MyLaboratory.Site"
