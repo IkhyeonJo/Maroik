@@ -1,7 +1,7 @@
 ﻿@using Newtonsoft.Json
 @using System.Text
 @using MyLaboratory.Site.Common
-@inject MyLaboratory.Site.Contracts.IAccountRepository accountRepository
+@inject MyLaboratory.Common.DataAccess.Contracts.IAccountRepository accountRepository
 
 @{
     Context.Session.TryGetValue("AccountSession", out byte[] resultByte);

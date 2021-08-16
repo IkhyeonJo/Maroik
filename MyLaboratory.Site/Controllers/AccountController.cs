@@ -21,6 +21,8 @@ using MyLaboratory.Site.Helpers;
 using Microsoft.AspNetCore.Mvc.Localization;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Http;
+using MyLaboratory.Common.DataAccess.Contracts;
+using MyLaboratory.Common.DataAccess.Services;
 
 namespace MyLaboratory.Site.Controllers
 {

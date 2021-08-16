@@ -3,11 +3,10 @@ using System.Linq;
 using Microsoft.EntityFrameworkCore;
 using MyLaboratory.Common.DataAccess.Data;
 using MyLaboratory.Common.DataAccess.Models;
-using MyLaboratory.Site.Models;
-using MyLaboratory.Site.Contracts;
+using MyLaboratory.Common.DataAccess.Contracts;
 using System.Threading.Tasks;
 
-namespace MyLaboratory.Site.Services
+namespace MyLaboratory.Common.DataAccess.Services
 {
     public class SubCategoryRepository : ISubCategoryRepository
     {

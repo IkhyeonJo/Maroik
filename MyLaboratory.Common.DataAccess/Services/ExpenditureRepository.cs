@@ -4,11 +4,9 @@ using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using MyLaboratory.Common.DataAccess.Data;
 using MyLaboratory.Common.DataAccess.Models;
-using MyLaboratory.Site.Models;
-using MyLaboratory.Site.Contracts;
-using MyLaboratory.Site.Models.ViewModels.Account;
+using MyLaboratory.Common.DataAccess.Contracts;
 
-namespace MyLaboratory.Site.Services
+namespace MyLaboratory.Common.DataAccess.Services
 {
     public class ExpenditureRepository : IExpenditureRepository
     {

@@ -27,6 +27,8 @@ using System.Globalization;
 using Microsoft.AspNetCore.Mvc.Razor;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.Extensions.Options;
+using MyLaboratory.Common.DataAccess.Contracts;
+using MyLaboratory.Common.DataAccess.Services;
 
 namespace MyLaboratory.Site
 {

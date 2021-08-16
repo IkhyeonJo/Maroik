@@ -1,10 +1,8 @@
-using MyLaboratory.Site.Models;
-using MyLaboratory.Site.Models.ViewModels.Account;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using MyLaboratory.Common.DataAccess.Models;
 
-namespace MyLaboratory.Site.Contracts
+namespace MyLaboratory.Common.DataAccess.Contracts
 {
     public interface IAssetRepository
     {

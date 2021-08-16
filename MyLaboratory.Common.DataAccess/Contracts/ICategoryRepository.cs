@@ -1,9 +1,8 @@
-using MyLaboratory.Site.Models;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using MyLaboratory.Common.DataAccess.Models;
 
-namespace MyLaboratory.Site.Contracts
+namespace MyLaboratory.Common.DataAccess.Contracts
 {
     public interface ICategoryRepository
     {

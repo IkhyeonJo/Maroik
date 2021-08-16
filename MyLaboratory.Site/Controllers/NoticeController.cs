@@ -31,6 +31,8 @@ using MyLaboratory.Site.Models.ViewModels.AccountBook;
 using MyLaboratory.Site.Models.ViewModels.Notice;
 using MyLaboratory.Common.DataAccess.Data;
 using MyLaboratory.Common.DataAccess.Models;
+using MyLaboratory.Common.DataAccess.Contracts;
+using MyLaboratory.Common.DataAccess.Services;
 
 namespace MyLaboratory.Site.Controllers
 {

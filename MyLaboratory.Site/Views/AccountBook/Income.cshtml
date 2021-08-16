@@ -1,6 +1,6 @@
 ﻿@using Newtonsoft.Json
 @using System.Text
-@inject MyLaboratory.Site.Contracts.IAssetRepository assetRepository
+@inject MyLaboratory.Common.DataAccess.Contracts.IAssetRepository assetRepository
 
 @{
     Context.Session.TryGetValue("AccountSession", out byte[] resultByte);
