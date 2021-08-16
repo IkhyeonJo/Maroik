@@ -67,8 +67,9 @@ namespace MyLaboratory.Site
             #endregion
 
             #region AddRepositories
+
+            #region DB
             services.AddScoped<IAccountRepository, AccountRepository>();
-            services.AddScoped<IMailRepository, MailRepository>();
             services.AddScoped<ICategoryRepository, CategoryRepository>();
             services.AddScoped<ISubCategoryRepository, SubCategoryRepository>();
             services.AddScoped<IAssetRepository, AssetRepository>();
@@ -76,6 +77,12 @@ namespace MyLaboratory.Site
             services.AddScoped<IExpenditureRepository, ExpenditureRepository>();
             services.AddScoped<IFixedIncomeRepository, FixedIncomeRepository>();
             services.AddScoped<IFixedExpenditureRepository, FixedExpenditureRepository>();
+            #endregion
+
+            #region LOCAL
+            services.AddScoped<IMailRepository, MailRepository>();
+            #endregion
+
             #endregion
 
             #region AddSession
