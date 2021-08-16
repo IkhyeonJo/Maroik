@@ -933,7 +933,7 @@ function UpdateFixedExpenditure() {
     return false;
 }
 
-function ConfirmDeleteExpenditure(errorMessageSelectGridRow) {
+function ConfirmDeleteFixedExpenditure(errorMessageSelectGridRow) {
 
     var selectedRowId = "";
 
@@ -948,16 +948,16 @@ function ConfirmDeleteExpenditure(errorMessageSelectGridRow) {
         return false;
     } // check whether selected row exist or not
 
-    $('#confirmDeleteExpenditureDialogModal').modal({
+    $('#confirmDeleteFixedExpenditureDialogModal').modal({
         keyboard: false,
         backdrop: "static"
     });
 
-    $('#confirmDeleteExpenditureDialogModal').modal('toggle');
-    $('#confirmDeleteExpenditureDialogModal').modal('show');
+    $('#confirmDeleteFixedExpenditureDialogModal').modal('toggle');
+    $('#confirmDeleteFixedExpenditureDialogModal').modal('show');
 }
 
-function DeleteExpenditure(errorMessageSelectGridRow) {
+function DeleteFixedExpenditure(errorMessageSelectGridRow) {
 
     var selectedRowId = "";
 
@@ -973,7 +973,7 @@ function DeleteExpenditure(errorMessageSelectGridRow) {
     } // check whether selected row exist or not
 
     $.ajax({
-        url: '/AccountBook/IsExpenditureExists' + '?id=' + selectedRowId,
+        url: '/Notice/IsFixedExpenditureExists' + '?id=' + selectedRowId,
         type: 'POST',
         headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
         dataType: 'json',
@@ -985,11 +985,11 @@ function DeleteExpenditure(errorMessageSelectGridRow) {
             if (data.result) {
 
                 var paramValue = JSON.stringify({
-                    Id: data.expenditure.id
+                    Id: data.fixedExpenditure.id
                 });
 
                 $.ajax({
-                    url: '/AccountBook/DeleteExpenditure',
+                    url: '/Notice/DeleteFixedExpenditure',
                     type: 'POST',
                     headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
                     dataType: 'json',
@@ -999,7 +999,7 @@ function DeleteExpenditure(errorMessageSelectGridRow) {
                     //cache: false,
                     success: function (data) {
                         if (data.result) {
-                            $('#confirmDeleteExpenditureDialogModal').modal('hide'); // hide Modal
+                            $('#confirmDeleteFixedExpenditureDialogModal').modal('hide'); // hide Modal
 
                             const grid = new MvcGrid(document.querySelector(".mvc-grid")); //reload grid
                             grid.reload(); //reload grid

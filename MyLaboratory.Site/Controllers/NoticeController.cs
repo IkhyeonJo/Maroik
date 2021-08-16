@@ -1218,6 +1218,43 @@ namespace MyLaboratory.Site.Controllers
         }
         #endregion
 
+        #region Delete
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [RequiredHttpPostAccess(Role = Role.User)]
+        public async Task<IActionResult> DeleteFixedExpenditure([FromBody] FixedExpenditureInputViewModel fixedExpenditureInputViewModel)
+        {
+            try
+            {
+                HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+
+                var tempFixedExpenditures = await fixedExpenditureRepository.GetFixedExpendituresAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+
+                if (tempFixedExpenditures == null)
+                {
+                    return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                }
+                else
+                {
+                    var tempFixedExpenditure = tempFixedExpenditures.Where(a => a.Id == fixedExpenditureInputViewModel.Id).FirstOrDefault();
+                    if (tempFixedExpenditure == null)
+                    {
+                        return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                    }
+                    else
+                    {
+                        await fixedExpenditureRepository.DeleteFixedExpenditureAsync(tempFixedExpenditure);
+                        return Json(new { result = true, message = localizer["The fixedExpenditure has been successfully deleted."].Value });
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                return Json(new { result = false, error = e.ToString() });
+            }
+        }
+        #endregion
+
         #endregion
     }
 }
