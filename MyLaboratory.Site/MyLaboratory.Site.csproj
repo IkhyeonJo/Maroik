@@ -28,4 +28,8 @@
     </PackageReference>
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\MyLaboratory.Common.DataAccess\MyLaboratory.Common.DataAccess.csproj" />
+  </ItemGroup>
+
 </Project>
