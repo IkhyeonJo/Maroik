@@ -10,18 +10,18 @@ namespace MyLaboratory.WebAPI.Controllers
     [Authorize]
     public class ValuesController : ControllerBase
     {
-        private readonly ILogger<ValuesController> _logger;
+        private readonly ILogger<ValuesController> logger;
 
         public ValuesController(ILogger<ValuesController> logger)
         {
-            _logger = logger;
+            this.logger = logger;
         }
 
         [HttpGet]
         public IEnumerable<string> Get()
         {
             var userName = User.Identity?.Name;
-            _logger.LogInformation($"User [{userName}] is viewing values.");
+            logger.LogInformation($"User [{userName}] is viewing values.");
             return new[] { "value1", "value2" };
         }
     }

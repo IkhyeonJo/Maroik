@@ -10,6 +10,10 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using MyLaboratory.Common.DataAccess.Contracts;
+using MyLaboratory.Common.DataAccess.Services;
+using MyLaboratory.Common.DataAccess.Data;
+using Microsoft.EntityFrameworkCore;
 
 namespace MyLaboratory.WebAPI
 {
@@ -51,7 +55,32 @@ namespace MyLaboratory.WebAPI
             });
             services.AddSingleton<IJwtAuthManager, JwtAuthManager>();
             services.AddHostedService<JwtRefreshTokenCache>();
+
+            #region AddMariaDbContext
+            string connectionString = Configuration.GetConnectionString("DefaultConnection");
+            services.AddDbContext<ApplicationDbContext>(options =>
+                  //options.UseLazyLoadingProxies().UseMySql(connectionString, ServerVersion.AutoDetect(connectionString), providerOptions => providerOptions.EnableRetryOnFailure())); // 이거하니 Excel Export 안 됨
+                  options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString), providerOptions => providerOptions.EnableRetryOnFailure()).EnableSensitiveDataLogging());
+            #endregion
+
+            #region AddRepositories
+
+            #region DB
+            services.AddScoped<IAccountRepository, AccountRepository>();
+            services.AddScoped<ICategoryRepository, CategoryRepository>();
+            services.AddScoped<ISubCategoryRepository, SubCategoryRepository>();
+            services.AddScoped<IAssetRepository, AssetRepository>();
+            services.AddScoped<IIncomeRepository, IncomeRepository>();
+            services.AddScoped<IExpenditureRepository, ExpenditureRepository>();
+            services.AddScoped<IFixedIncomeRepository, FixedIncomeRepository>();
+            services.AddScoped<IFixedExpenditureRepository, FixedExpenditureRepository>();
+            #endregion
+
+            #region LOCAL
             services.AddScoped<IUserService, UserService>();
+            #endregion
+
+            #endregion
 
             services.AddSwaggerGen(c =>
             {
