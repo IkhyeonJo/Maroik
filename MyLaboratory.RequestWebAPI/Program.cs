@@ -3,6 +3,7 @@ using System.Dynamic;
 using System.Net;
 using System.Net.Http;
 using System.Text;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace MyLaboratory.RequestWebAPI
@@ -38,11 +39,11 @@ namespace MyLaboratory.RequestWebAPI
         {
             HttpClientHandler clientHandler = new HttpClientHandler();
             clientHandler.ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) => { return true; };
-            dynamic dynamicJson = new ExpandoObject();
-            dynamicJson.username = "admin".ToString();
-            dynamicJson.password = "securePassword";
+            var loginRequest = new LoginRequest();
+            loginRequest.UserName = "admin".ToString();
+            loginRequest.Password = "securePassword";
             string json = "";
-            json = Newtonsoft.Json.JsonConvert.SerializeObject(dynamicJson);
+            json = Newtonsoft.Json.JsonConvert.SerializeObject(loginRequest);
 
 
             HttpClient client = new HttpClient(clientHandler);
@@ -74,5 +75,13 @@ namespace MyLaboratory.RequestWebAPI
             string response = await responseGet.Content.ReadAsStringAsync();
             Console.WriteLine(response);
         }
+    }
+
+    public class LoginRequest
+    {
+        [JsonPropertyName("username")]
+        public string UserName { get; set; }
+        [JsonPropertyName("password")]
+        public string Password { get; set; }
     }
 }
