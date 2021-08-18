@@ -1,7 +1,7 @@
 #https://docs.microsoft.com/en-us/visualstudio/containers/docker-compose-properties?view=vs-2019
 
 ### ------------------------------------------README !IMPORTANT---------------------------------------------------------
-#Before start this project, Set Server settings in appsettings.json [MyLaboratory.Site] (for registration & password recovery & Login) [Especially DomainName]
+#Before start this project, Set Server settings in appsettings.json [MyLaboratory.WebSite] (for registration & password recovery & Login) [Especially DomainName]
 ### ------------------------------------------README !IMPORTANT---------------------------------------------------------
 
 ##AWS step
@@ -75,10 +75,10 @@ services:
           - --collation-server=utf8mb4_unicode_ci
           - --default-time-zone=+09:00
 
-    mylaboratory.site:
+    mylaboratory.website:
         build :
          context : .
-         dockerfile : MyLaboratory.Site/Dockerfile
+         dockerfile : MyLaboratory.WebSite/Dockerfile
         networks :
           - backend          
         ports:
@@ -91,7 +91,7 @@ services:
           - ASPNETCORE_Kestrel__Certificates__Default__Password=Passw0rd # must be equal to .pfx file's' password
           - ASPNETCORE_Kestrel__Certificates__Default__Path=/https/testhttps.pfx
         volumes:
-          - ./MyLaboratory.Site/:/https:ro
+          - ./MyLaboratory.WebSite/:/https:ro
         depends_on :
           - mariadb  
 

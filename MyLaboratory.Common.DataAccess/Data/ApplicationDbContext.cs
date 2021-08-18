@@ -41,7 +41,7 @@ namespace MyLaboratory.Common.DataAccess.Data
 
                 entity.ToTable("Account");
 
-                entity.HasComment("MyLaboratory.Site 계정")
+                entity.HasComment("MyLaboratory.WebSite 계정")
                     .HasCharSet("utf8mb4")
                     .UseCollation("utf8mb4_general_ci");
 
@@ -105,7 +105,7 @@ namespace MyLaboratory.Common.DataAccess.Data
 
                 entity.ToTable("Asset");
 
-                entity.HasComment("MyLaboratory Site 자산")
+                entity.HasComment("MyLaboratory WebSite 자산")
                     .HasCharSet("utf8mb4")
                     .UseCollation("utf8mb4_general_ci");
 
@@ -154,7 +154,7 @@ namespace MyLaboratory.Common.DataAccess.Data
             {
                 entity.ToTable("Category");
 
-                entity.HasComment("카테고리 /*MyLaboratory.Site의 로그인 후 접근 가능한 좌측 SideBar 설정 시 사용*/");
+                entity.HasComment("카테고리 /*MyLaboratory.WebSite의 로그인 후 접근 가능한 좌측 SideBar 설정 시 사용*/");
 
                 entity.Property(e => e.Id)
                     .HasColumnType("int(11)")
@@ -199,7 +199,7 @@ namespace MyLaboratory.Common.DataAccess.Data
             {
                 entity.ToTable("Expenditure");
 
-                entity.HasComment("MyLaboratory Site 지출")
+                entity.HasComment("MyLaboratory WebSite 지출")
                     .HasCharSet("utf8mb4")
                     .UseCollation("utf8mb4_general_ci");
 
@@ -263,7 +263,7 @@ namespace MyLaboratory.Common.DataAccess.Data
             {
                 entity.ToTable("FixedExpenditure");
 
-                entity.HasComment("MyLaboratory Site 고정지출")
+                entity.HasComment("MyLaboratory WebSite 고정지출")
                     .HasCharSet("utf8mb4")
                     .UseCollation("utf8mb4_general_ci");
 
@@ -339,7 +339,7 @@ namespace MyLaboratory.Common.DataAccess.Data
             {
                 entity.ToTable("FixedIncome");
 
-                entity.HasComment("MyLaboratory Site 고정수입")
+                entity.HasComment("MyLaboratory WebSite 고정수입")
                     .HasCharSet("utf8mb4")
                     .UseCollation("utf8mb4_general_ci");
 
@@ -411,7 +411,7 @@ namespace MyLaboratory.Common.DataAccess.Data
             {
                 entity.ToTable("Income");
 
-                entity.HasComment("MyLaboratory Site 수입")
+                entity.HasComment("MyLaboratory WebSite 수입")
                     .HasCharSet("utf8mb4")
                     .UseCollation("utf8mb4_general_ci");
 
@@ -471,7 +471,7 @@ namespace MyLaboratory.Common.DataAccess.Data
             {
                 entity.ToTable("SubCategory");
 
-                entity.HasComment("서브 카테고리 /*MyLaboratory.Site의 로그인 후 접근 가능한 좌측 SideBar 설정 시 사용*/");
+                entity.HasComment("서브 카테고리 /*MyLaboratory.WebSite의 로그인 후 접근 가능한 좌측 SideBar 설정 시 사용*/");
 
                 entity.HasIndex(e => e.CategoryId, "SubCategory_FK");
 
