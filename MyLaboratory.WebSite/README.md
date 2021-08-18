@@ -95,36 +95,22 @@ C:\Program Files\MariaDB 10.2\data\my.ini에서
 
 #Docker DB 설정 자동화 작업
 
-DB 테이블이나 Migarion시, 모든 것은 DB에 근거해서 모델이나 Migration이 만들어진다는 것을 명심할 것... (최우선)
-
-먼저 DB 깨끗이 다 지우고 새롭게 짜여진 DB Script (_MariaDBSql_Init_Script)로 다 복원 후 [로컬 DB에 할 것!!] [그 appsettings.json도 로컬로 맞추고]
+먼저 DB 깨끗이 다 지우고 [MyLaboratory.Common.DataAccess]에 있는 새롭게 짜여진 DB Script (_MariaDBSql_Init_Script)로 다 복원 후 [로컬 DB에 할 것!!] [그 appsettings.json도 로컬로 맞추고]
 
 [Package Manager Console] 창 띄우고 [cd .\MyLaboratory.WebSite] 명령어를 통해 MyLaboratory.WebSite로 이동 (ApplicationDbContext가 거기 있으므로) 
 
 dotnet ef dbcontext scaffold "server=localhost;port=3306;userid=root;password=***REMOVED***;database=mylaboratory;" "Pomelo.EntityFrameworkCore.MySql" -o ./Models11 -f
 
-이 명령어를 통해 기존 모델, ApplicationDbContext것과 새롭게 생성된 모델, ApplicationDbContext 것을 비교하여 모델, ApplicationDbContext 다시 새롭게 덮어씌움
-
-그리고 기존 Migarion 폴더 다 지우고
-
-[Package Manager Console] 창 띄우고 [cd .\MyLaboratory.WebSite] 명령어를 통해 MyLaboratory.WebSite로 이동 (ApplicationDbContext가 거기 있으므로) 
-
-dotnet ef migrations add InitialCreate
-
-이 명령어를 통해 새로운 Migration 생성
+이 명령어를 통해 기존 모델, ApplicationDbContext것과 새롭게 생성된 모델, ApplicationDbContext 것을 비교하여 [MyLaboratory.Common.DataAccess]에 있는 모델, ApplicationDbContext 다시 새롭게 덮어씌움
 
 안 되면 
 https://docs.microsoft.com/en-us/aspnet/core/data/ef-mvc/migrations?view=aspnetcore-5.0#pmc
-Data Migration 방법: (테이블 자동 생성) (AppDbContext에 따름...) (C# Migration 내용으로 생성)
+Data Migration 방법: (테이블 자동 생성) (AppDbContext에 따름...)
 dotnet tool install --global dotnet-ef
 dotnet tool update --global dotnet-ef
 dotnet add package Microsoft.EntityFrameworkCore.Design
-dotnet ef migrations add InitialCreate // ApplicationDbContext에 있는 프로젝트에 가서 해당 명령 실행
 
-(Migration 폴더 내용 다 지울 것)
 (dotnet ef migrations add InitialCreate) 명령 실행 시, 카피할 DB string 맞추고 할 것... 나같은 경우는 로컬 MariaDB...
-
-dotnet ef database update // 로컬에 데이터 마이그레이션 시작 명령어 // ApplicationDbContext에 있는 프로젝트에 가서 해당 명령 실행
 
 이런 거 해서 어떻게든 되도록 할 것
 #--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
