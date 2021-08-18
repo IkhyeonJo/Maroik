@@ -143,7 +143,7 @@ dotnet ef dbcontext scaffold "server=localhost;port=3306;userid=root;password=**
 이러면 DB 테이블이 알아서 다 C# 모델로 변형된다.
 
 https://docs.microsoft.com/en-us/aspnet/core/data/ef-mvc/migrations?view=aspnetcore-5.0#pmc
-Data Migration 방법: (테이블 자동 생성) (AppDbContext에 따름...) (C# Migration 내용으로 생성)
+(테이블 자동 생성) (AppDbContext에 따름...) (C# Migration 내용으로 생성)
 dotnet tool install --global dotnet-ef
 dotnet tool update --global dotnet-ef
 dotnet add package Microsoft.EntityFrameworkCore.Design
