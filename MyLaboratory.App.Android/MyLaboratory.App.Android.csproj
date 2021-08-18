@@ -3,7 +3,7 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{0F117096-E7CD-4A5C-8362-24AAEDD06E2D}</ProjectGuid>
+    <ProjectGuid>{396CD8EF-6384-4403-B279-AA133DC21015}</ProjectGuid>
     <ProjectTypeGuids>{EFBA0AD7-5A72-4C68-AF49-83D382785DCF};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
     <TemplateGuid>{6968b3a4-1835-46a3-ac5c-1ae33b475983}</TemplateGuid>
     <OutputType>Library</OutputType>
@@ -43,11 +43,6 @@
     <WarningLevel>4</WarningLevel>
     <AndroidManagedSymbols>true</AndroidManagedSymbols>
     <AndroidUseSharedRuntime>false</AndroidUseSharedRuntime>
-    <AotAssemblies>false</AotAssemblies>
-    <EnableLLVM>false</EnableLLVM>
-    <AndroidEnableProfiledAot>false</AndroidEnableProfiledAot>
-    <BundleAssemblies>false</BundleAssemblies>
-    <AndroidLinkMode>None</AndroidLinkMode>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Mono.Android" />
@@ -93,7 +88,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\MyLaboratory.App\MyLaboratory.App.csproj">
-      <Project>{10CF9087-0C9B-4313-92D6-B92423D2A935}</Project>
+      <Project>{5C2FB96E-3D17-47B9-AE8A-F9FBE10C8C3B}</Project>
       <Name>MyLaboratory.App</Name>
     </ProjectReference>
   </ItemGroup>

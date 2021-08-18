@@ -109,7 +109,7 @@ namespace MyLaboratory.App.ViewModels
             clientHandler.ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) => { return true; };
             var loginRequest = new { refreshToken = refreshToken };
             string json = "";
-            json = Newtonsoft.Json.JsonConvert.SerializeObject(loginRequest);
+            json = JsonConvert.SerializeObject(loginRequest);
 
 
             HttpClient client = new HttpClient(clientHandler);
