@@ -105,7 +105,7 @@ namespace MyLaboratory.Common.DataAccess.Data
 
                 entity.ToTable("Asset");
 
-                entity.HasComment("MyLaboratory WebSite 자산")
+                entity.HasComment("MyLaboratory.WebSite 자산")
                     .HasCharSet("utf8mb4")
                     .UseCollation("utf8mb4_general_ci");
 
@@ -199,7 +199,7 @@ namespace MyLaboratory.Common.DataAccess.Data
             {
                 entity.ToTable("Expenditure");
 
-                entity.HasComment("MyLaboratory WebSite 지출")
+                entity.HasComment("MyLaboratory.WebSite 지출")
                     .HasCharSet("utf8mb4")
                     .UseCollation("utf8mb4_general_ci");
 
@@ -263,7 +263,7 @@ namespace MyLaboratory.Common.DataAccess.Data
             {
                 entity.ToTable("FixedExpenditure");
 
-                entity.HasComment("MyLaboratory WebSite 고정지출")
+                entity.HasComment("MyLaboratory.WebSite 고정지출")
                     .HasCharSet("utf8mb4")
                     .UseCollation("utf8mb4_general_ci");
 
@@ -339,7 +339,7 @@ namespace MyLaboratory.Common.DataAccess.Data
             {
                 entity.ToTable("FixedIncome");
 
-                entity.HasComment("MyLaboratory WebSite 고정수입")
+                entity.HasComment("MyLaboratory.WebSite 고정수입")
                     .HasCharSet("utf8mb4")
                     .UseCollation("utf8mb4_general_ci");
 
@@ -411,7 +411,7 @@ namespace MyLaboratory.Common.DataAccess.Data
             {
                 entity.ToTable("Income");
 
-                entity.HasComment("MyLaboratory WebSite 수입")
+                entity.HasComment("MyLaboratory.WebSite 수입")
                     .HasCharSet("utf8mb4")
                     .UseCollation("utf8mb4_general_ci");
 
