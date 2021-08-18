@@ -105,7 +105,7 @@ dotnet ef dbcontext scaffold "server=localhost;port=3306;userid=root;password=**
 
 안 되면 
 https://docs.microsoft.com/en-us/aspnet/core/data/ef-mvc/migrations?view=aspnetcore-5.0#pmc
-Data Migration 방법: (테이블 자동 생성) (AppDbContext에 따름...)
+(테이블 자동 생성) (AppDbContext에 따름...)
 dotnet tool install --global dotnet-ef
 dotnet tool update --global dotnet-ef
 dotnet add package Microsoft.EntityFrameworkCore.Design
