@@ -12,3 +12,5 @@ https://www.youtube.com/watch?v=Y6O_nRHZ5Ck // Login UI
 https://m.blog.naver.com/PostView.naver?blogId=goldrushing&logNo=221354242768&targetKeyword=&targetRecommendationCode=1 // Xamarin code
 
 https://mallibone.com/post/xamarin-forms-shell-login // xamarin login flow
+
+https://stackoverflow.com/questions/5806220/how-to-connect-to-my-http-localhost-web-server-from-android-emulator

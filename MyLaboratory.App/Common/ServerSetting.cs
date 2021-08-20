@@ -2,7 +2,7 @@ namespace MyLaboratory.App.Common
 {
     public static class ServerSetting
     {
-        public static string DomainName { get; set; } = "https://localhost:5001";
+        public static string DomainName { get; set; } = "https://10.0.2.2:5001";
         public static string SmtpUserName { get; set; }
         public static string SmtpPassword { get; set; }
         public static string SmtpHost { get; set; }
