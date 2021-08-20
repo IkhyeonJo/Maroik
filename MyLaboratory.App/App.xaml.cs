@@ -1,4 +1,5 @@
-﻿using MyLaboratory.App.Services;
+﻿using MyLaboratory.App.Common;
+using MyLaboratory.App.Services;
 using MyLaboratory.App.Views;
 using System;
 using Xamarin.Forms;
@@ -14,12 +15,15 @@ namespace MyLaboratory.App
             InitializeComponent();
 
             DependencyService.Register<MockDataStore>();
-            //MainPage = new AppShell();
-            MainPage = new LoginPage();
+            MainPage = new AppShell();
         }
 
-        protected override void OnStart()
+        protected async override void OnStart()
         {
+            if (!string.IsNullOrEmpty(JWTManager.AccessToken))
+            {
+                await Shell.Current.GoToAsync($"//{nameof(AboutPage)}");
+            }
         }
 
         protected override void OnSleep()

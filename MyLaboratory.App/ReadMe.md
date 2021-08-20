@@ -8,3 +8,7 @@ Create APK to release Android
 https://www.youtube.com/watch?v=0jCVQ7JaNws&list=PLsVdRN_cc4gvNpIRmn10GSlvXixQOGsLz // Good UI
 
 https://www.youtube.com/watch?v=Y6O_nRHZ5Ck // Login UI
+
+https://m.blog.naver.com/PostView.naver?blogId=goldrushing&logNo=221354242768&targetKeyword=&targetRecommendationCode=1 // Xamarin code
+
+https://mallibone.com/post/xamarin-forms-shell-login // xamarin login flow

@@ -1,4 +1,5 @@
-﻿using MyLaboratory.App.Views;
+﻿using MyLaboratory.App.Common;
+using MyLaboratory.App.Views;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
@@ -13,7 +14,6 @@ namespace MyLaboratory.App.ViewModels
 {
     public class LoginViewModel : BaseViewModel
     {
-        #region Entry
         private string email;
         private string password;
         public string Email
@@ -27,86 +27,54 @@ namespace MyLaboratory.App.ViewModels
             set => SetProperty(ref password, value);
         }
 
-        #endregion
-
-        #region Command
         public Command LoginCommand { get; }
-        #endregion
 
-        public LoginViewModel()
+        public INavigation Navigation { get; set; }
+
+        public LoginViewModel(INavigation navigation)
         {
+            Navigation = navigation;
             LoginCommand = new Command(OnLoginClicked);
         }
 
         private async void OnLoginClicked(object obj)
         {
-            var aa = Email;
-            var bb = Password;
-            //// Prefixing with `//` switches to a different navigation stack instead of pushing to the active one
-            ////await Shell.Current.GoToAsync($"//{nameof(AboutPage)}");
-            //try
-            //{
-            //    await PostRequest();
-            //}
-            //catch (Exception e)
-            //{
-            //    Console.WriteLine(e);
-            //}
+            try
+            {
+                HttpClientHandler clientHandler = new HttpClientHandler
+                {
+                    ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) => { return true; }
+                };
+                string json = JsonConvert.SerializeObject(new { username = Email, password = Password });
 
-            //Console.WriteLine();
 
-            //try
-            //{
-            //    await GetRequest();
-            //}
-            //catch (Exception e)
-            //{
-            //    Console.WriteLine(e);
-            //}
-
-            //Console.WriteLine();
-
-            //try
-            //{
-            //    await AuthorizationPostRequest();
-            //}
-            //catch (Exception e)
-            //{
-            //    Console.WriteLine(e);
-            //}
-
-            //Console.ReadLine();
+                HttpClient client = new HttpClient(clientHandler);
+                client.BaseAddress = new Uri($"{ServerSetting.DomainName}"); // MyLaboratory.WebAPI Server
+                HttpResponseMessage response = await client.PostAsync("/api/Account/login", new StringContent(json, Encoding.UTF8, "application/json"));
+                if (response != null)
+                {
+                    try
+                    {
+                        string responJsonText = await response.Content.ReadAsStringAsync();
+                        JWTManager.AccessToken = JObject.Parse(responJsonText)["accessToken"].ToString();
+                        JWTManager.RefreshToken = JObject.Parse(responJsonText)["refreshToken"].ToString();
+                        await Shell.Current.GoToAsync($"//{nameof(AboutPage)}");
+                    }
+                    catch (Exception e)
+                    {
+                        await Application.Current.MainPage.DisplayAlert("Exception occured", e.ToString(), "CANCEL");
+                    }
+                }
+                else
+                {
+                    await Application.Current.MainPage.DisplayAlert("Fail to login", "please check Email or Password", "CANCEL");
+                }
+            }
+            catch (Exception e)
+            {
+                await Application.Current.MainPage.DisplayAlert("Exception occured", e.ToString(), "CANCEL");
+            }
         }
-        //public static async Task PostRequest()
-        //{
-        //    HttpClientHandler clientHandler = new HttpClientHandler();
-        //    clientHandler.ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) => { return true; };
-        //    var loginRequest = new LoginRequest();
-        //    loginRequest.UserName = "admin".ToString();
-        //    loginRequest.Password = "securePassword";
-        //    string json = "";
-        //    json = JsonConvert.SerializeObject(loginRequest);
-
-
-        //    HttpClient client = new HttpClient(clientHandler);
-        //    client.BaseAddress = new Uri($"{url}"); // MyLaboratory.WebAPI Server
-        //    var response = await client.PostAsync("/api/Account/login", new StringContent(json, Encoding.UTF8, "application/json"));
-        //    if (response != null)
-        //    {
-        //        Console.WriteLine(response.ToString());
-        //        try
-        //        {
-        //            string responJsonText = await response.Content.ReadAsStringAsync();
-        //            accessToken = JObject.Parse(responJsonText)["accessToken"].ToString();
-        //            refreshToken = JObject.Parse(responJsonText)["refreshToken"].ToString();
-        //            Console.WriteLine(responJsonText);
-        //        }
-        //        catch (Exception e)
-        //        {
-        //            Console.WriteLine(e);
-        //        }
-        //    }
-        //}
 
         //public static async Task GetRequest()
         //{
@@ -145,13 +113,6 @@ namespace MyLaboratory.App.ViewModels
         //            Console.WriteLine(e);
         //        }
         //    }
-        //}
-        //public class LoginRequest
-        //{
-        //    [JsonPropertyName("username")]
-        //    public string UserName { get; set; }
-        //    [JsonPropertyName("password")]
-        //    public string Password { get; set; }
         //}
     }
 }

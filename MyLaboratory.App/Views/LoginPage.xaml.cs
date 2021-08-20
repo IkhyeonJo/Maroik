@@ -1,4 +1,5 @@
-﻿using MyLaboratory.App.ViewModels;
+﻿using MyLaboratory.App.Common;
+using MyLaboratory.App.ViewModels;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,7 +16,7 @@ namespace MyLaboratory.App.Views
         public LoginPage()
         {
             InitializeComponent();
-            this.BindingContext = new LoginViewModel();
+            this.BindingContext = new LoginViewModel(Navigation);
         }
     }
 }

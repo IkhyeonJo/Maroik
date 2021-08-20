@@ -104,9 +104,6 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <None Include="ReadMe.md" />
-  </ItemGroup>
-  <ItemGroup>
     <AndroidResource Include="Resources\drawable\my_laboratory_app_logo.png" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Xamarin\Android\Xamarin.Android.CSharp.targets" />
