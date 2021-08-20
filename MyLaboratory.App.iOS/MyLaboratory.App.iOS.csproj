@@ -143,6 +143,6 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <BundleResource Include="Resources\ProfileImage.png" />
+    <BundleResource Include="Resources\my_laboratory_app_logo.png" />
   </ItemGroup>
 </Project>
