@@ -14,3 +14,5 @@ https://m.blog.naver.com/PostView.naver?blogId=goldrushing&logNo=221354242768&ta
 https://mallibone.com/post/xamarin-forms-shell-login // xamarin login flow
 
 https://stackoverflow.com/questions/5806220/how-to-connect-to-my-http-localhost-web-server-from-android-emulator
+
+https://onthefencedevelopment.com/2019/10/16/appsettings-in-xamarin-forms/

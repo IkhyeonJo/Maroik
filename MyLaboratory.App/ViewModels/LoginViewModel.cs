@@ -49,7 +49,7 @@ namespace MyLaboratory.App.ViewModels
 
 
                 HttpClient client = new HttpClient(clientHandler);
-                client.BaseAddress = new Uri($"{ServerSetting.DomainName}"); // MyLaboratory.WebAPI Server
+                client.BaseAddress = new Uri($"{App.AppSettings.DomainName}"); // MyLaboratory.WebAPI Server
                 HttpResponseMessage response = await client.PostAsync("/api/Account/login", new StringContent(json, Encoding.UTF8, "application/json"));
                 if (response != null)
                 {
