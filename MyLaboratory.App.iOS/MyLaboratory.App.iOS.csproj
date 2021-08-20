@@ -142,4 +142,7 @@
       <Name>MyLaboratory.App</Name>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup>
+    <BundleResource Include="Resources\ProfileImage.png" />
+  </ItemGroup>
 </Project>
