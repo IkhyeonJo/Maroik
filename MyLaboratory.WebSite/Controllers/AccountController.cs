@@ -194,6 +194,7 @@ namespace MyLaboratory.WebSite.Controllers
                     {
                         return null;
                     }
+                    #endregion
                 }
                 else
                 {
@@ -213,7 +214,6 @@ namespace MyLaboratory.WebSite.Controllers
                         return View();
                     }
                 }
-                #endregion
             }
             else
             {
