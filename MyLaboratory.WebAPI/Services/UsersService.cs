@@ -1,36 +1,33 @@
 ﻿using System.Collections.Generic;
+using System.Text;
+using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
+using MyLaboratory.Common.DataAccess.Contracts;
+using MyLaboratory.WebAPI.Common;
+using MyLaboratory.WebAPI.Helpers;
 
 namespace MyLaboratory.WebAPI.Services
 {
     public interface IUserService
     {
-        bool IsAnExistingUser(string userName);
-        bool IsValidUserCredentials(string userName, string password);
-        string GetUserRole(string userName);
+        Task<bool> IsValidUserCredentials(string email, string password);
     }
 
     public class UserService : IUserService
     {
-        private readonly ILogger<UserService> _logger;
+        private readonly ILogger<UserService> logger;
+        private readonly IAccountRepository accountRepository;
 
-
-        private readonly IDictionary<string, string> _users = new Dictionary<string, string>
+        public UserService(ILogger<UserService> logger, IAccountRepository accountRepository)
         {
-            { "test1", "password1" },
-            { "test2", "password2" },
-            { "admin", "securePassword" }
-        };
-        // inject your database here for user validation
-        public UserService(ILogger<UserService> logger)
-        {
-            _logger = logger;
+            this.logger = logger;
+            this.accountRepository = accountRepository;
         }
 
-        public bool IsValidUserCredentials(string userName, string password)
+        public async Task<bool> IsValidUserCredentials(string email, string password)
         {
-            _logger.LogInformation($"Validating user [{userName}]");
-            if (string.IsNullOrWhiteSpace(userName))
+            logger.LogInformation($"Validating user [{email}]");
+            if (string.IsNullOrWhiteSpace(email))
             {
                 return false;
             }
@@ -40,33 +37,51 @@ namespace MyLaboratory.WebAPI.Services
                 return false;
             }
 
-            return _users.TryGetValue(userName, out var p) && p == password;
-        }
+            var tempAccount = await accountRepository.GetAccountAsync(email);
 
-        public bool IsAnExistingUser(string userName)
-        {
-            return _users.ContainsKey(userName);
-        }
-
-        public string GetUserRole(string userName)
-        {
-            if (!IsAnExistingUser(userName))
+            if (tempAccount == null)
             {
-                return string.Empty;
+                return false;
             }
 
-            if (userName == "admin")
+            if (tempAccount.Deleted)
             {
-                return UserRoles.Admin;
+                return false;
             }
 
-            return UserRoles.BasicUser;
-        }
-    }
+            if (tempAccount.Locked)
+            {
+                return false;
+            }
 
-    public static class UserRoles
-    {
-        public const string Admin = nameof(Admin);
-        public const string BasicUser = nameof(BasicUser);
+            if (!new RSA(RSAType.RSA2, Encoding.UTF8, RSA.privateKey, RSA.publicKey).Verify(password ?? "", tempAccount.HashedPassword)) // wrong password
+            {
+                tempAccount.LoginAttempt++;
+
+                if (tempAccount.LoginAttempt == ServerSetting.MaxLoginAttempt)
+                {
+                    tempAccount.Locked = true;
+                    tempAccount.Message = AccountMessage.AccountLocked;
+                    await accountRepository.UpdateAccountAsync(tempAccount);
+                    return false;
+                }
+                else
+                {
+                    await accountRepository.UpdateAccountAsync(tempAccount);
+                    return false;
+                }
+            }
+
+            if (tempAccount.EmailConfirmed == true && tempAccount.AgreedServiceTerms == true)
+            {
+                tempAccount.LoginAttempt = 0;
+                await accountRepository.UpdateAccountAsync(tempAccount);
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
     }
 }

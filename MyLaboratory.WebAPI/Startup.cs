@@ -14,6 +14,7 @@ using MyLaboratory.Common.DataAccess.Contracts;
 using MyLaboratory.Common.DataAccess.Services;
 using MyLaboratory.Common.DataAccess.Data;
 using Microsoft.EntityFrameworkCore;
+using MyLaboratory.WebAPI.Common;
 
 namespace MyLaboratory.WebAPI
 {
@@ -29,6 +30,10 @@ namespace MyLaboratory.WebAPI
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            #region ServerSettings
+            ServerSetting.MaxLoginAttempt = Convert.ToInt32(Configuration.GetSection("ServerSetting")["MaxLoginAttempt"]);
+            #endregion
+
             services.AddControllers();
 
             var jwtTokenConfig = Configuration.GetSection("jwtTokenConfig").Get<JwtTokenConfig>();

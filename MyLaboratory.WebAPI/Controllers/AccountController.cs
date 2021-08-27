@@ -12,6 +12,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using MyLaboratory.Common.DataAccess.Contracts;
 using MyLaboratory.Common.DataAccess.Services;
+using MyLaboratory.WebAPI.Common;
 
 namespace MyLaboratory.WebAPI.Controllers
 {
@@ -35,32 +36,32 @@ namespace MyLaboratory.WebAPI.Controllers
 
         [AllowAnonymous]
         [HttpPost("login")]
-        public async Task<ActionResult> Login([FromBody] LoginRequest request)
+        public async Task<IActionResult> Login([FromBody] LoginRequest request)
         {
-            var accounts = await accountRepository.GetAllAsync();
             if (!ModelState.IsValid)
             {
                 return BadRequest();
             }
 
-            if (!userService.IsValidUserCredentials(request.UserName, request.Password))
+            if (!await userService.IsValidUserCredentials(request.Email, request.Password))
             {
                 return Unauthorized();
             }
 
-            var role = userService.GetUserRole(request.UserName);
+            var tempAccount = await accountRepository.GetAccountAsync(request.Email);
             var claims = new[]
             {
-                new Claim(ClaimTypes.Name,request.UserName),
-                new Claim(ClaimTypes.Role, role)
+                new Claim(ClaimTypes.Email, tempAccount.Email),
+                new Claim(ClaimTypes.Name, tempAccount.FullName),
+                new Claim(ClaimTypes.Role, tempAccount.Role)
             };
 
-            var jwtResult = jwtAuthManager.GenerateTokens(request.UserName, claims, DateTime.Now);
-            logger.LogInformation($"User [{request.UserName}] logged in the system.");
+            var jwtResult = jwtAuthManager.GenerateTokens(tempAccount.FullName, claims, DateTime.Now);
+            logger.LogInformation($"User [{tempAccount.Email}] logged in the system.");
             return Ok(new LoginResult
             {
-                UserName = request.UserName,
-                Role = role,
+                UserName = tempAccount.FullName,
+                Role = tempAccount.Role,
                 AccessToken = jwtResult.AccessToken,
                 RefreshToken = jwtResult.RefreshToken.TokenString
             });
@@ -68,7 +69,7 @@ namespace MyLaboratory.WebAPI.Controllers
 
         [HttpGet("user")]
         [Authorize]
-        public ActionResult GetCurrentUser()
+        public IActionResult GetCurrentUser()
         {
             return Ok(new LoginResult
             {
@@ -80,7 +81,7 @@ namespace MyLaboratory.WebAPI.Controllers
 
         [HttpPost("logout")]
         [Authorize]
-        public ActionResult Logout()
+        public IActionResult Logout()
         {
             // optionally "revoke" JWT token on the server side --> add the current token to a block-list
             // https://github.com/auth0/node-jsonwebtoken/issues/375
@@ -122,83 +123,85 @@ namespace MyLaboratory.WebAPI.Controllers
             }
         }
 
-        [HttpPost("impersonation")]
-        [Authorize(Roles = UserRoles.Admin)]
-        public ActionResult Impersonate([FromBody] ImpersonationRequest request)
-        {
-            var userName = User.Identity?.Name;
-            logger.LogInformation($"User [{userName}] is trying to impersonate [{request.UserName}].");
+        //[HttpPost("impersonation")]
+        //[Authorize(Roles = Role.Admin)]
+        //public ActionResult Impersonate([FromBody] ImpersonationRequest request)
+        //{
+        //    var userName = User.Identity?.Name;
+        //    logger.LogInformation($"User [{userName}] is trying to impersonate [{request.UserName}].");
 
-            var impersonatedRole = userService.GetUserRole(request.UserName);
-            if (string.IsNullOrWhiteSpace(impersonatedRole))
-            {
-                logger.LogInformation($"User [{userName}] failed to impersonate [{request.UserName}] due to the target user not found.");
-                return BadRequest($"The target user [{request.UserName}] is not found.");
-            }
-            if (impersonatedRole == UserRoles.Admin)
-            {
-                logger.LogInformation($"User [{userName}] is not allowed to impersonate another Admin.");
-                return BadRequest("This action is not supported.");
-            }
+        //    var impersonatedRole = userService.GetUserRole(request.UserName);
+        //    if (string.IsNullOrWhiteSpace(impersonatedRole))
+        //    {
+        //        logger.LogInformation($"User [{userName}] failed to impersonate [{request.UserName}] due to the target user not found.");
+        //        return BadRequest($"The target user [{request.UserName}] is not found.");
+        //    }
+        //    if (impersonatedRole == UserRoles.Admin)
+        //    {
+        //        logger.LogInformation($"User [{userName}] is not allowed to impersonate another Admin.");
+        //        return BadRequest("This action is not supported.");
+        //    }
 
-            var claims = new[]
-            {
-                new Claim(ClaimTypes.Name,request.UserName),
-                new Claim(ClaimTypes.Role, impersonatedRole),
-                new Claim("OriginalUserName", userName ?? string.Empty)
-            };
+        //    var claims = new[]
+        //    {
+        //        new Claim(ClaimTypes.Name,request.UserName),
+        //        new Claim(ClaimTypes.Role, impersonatedRole),
+        //        new Claim("OriginalUserName", userName ?? string.Empty)
+        //    };
 
-            var jwtResult = jwtAuthManager.GenerateTokens(request.UserName, claims, DateTime.Now);
-            logger.LogInformation($"User [{request.UserName}] is impersonating [{request.UserName}] in the system.");
-            return Ok(new LoginResult
-            {
-                UserName = request.UserName,
-                Role = impersonatedRole,
-                OriginalUserName = userName,
-                AccessToken = jwtResult.AccessToken,
-                RefreshToken = jwtResult.RefreshToken.TokenString
-            });
-        }
+        //    var jwtResult = jwtAuthManager.GenerateTokens(request.UserName, claims, DateTime.Now);
+        //    logger.LogInformation($"User [{request.UserName}] is impersonating [{request.UserName}] in the system.");
+        //    return Ok(new LoginResult
+        //    {
+        //        UserName = request.UserName,
+        //        Role = impersonatedRole,
+        //        OriginalUserName = userName,
+        //        AccessToken = jwtResult.AccessToken,
+        //        RefreshToken = jwtResult.RefreshToken.TokenString
+        //    });
+        //}
 
-        [HttpPost("stop-impersonation")]
-        public ActionResult StopImpersonation()
-        {
-            var userName = User.Identity?.Name;
-            var originalUserName = User.FindFirst("OriginalUserName")?.Value;
-            if (string.IsNullOrWhiteSpace(originalUserName))
-            {
-                return BadRequest("You are not impersonating anyone.");
-            }
-            logger.LogInformation($"User [{originalUserName}] is trying to stop impersonate [{userName}].");
+        //[HttpPost("stop-impersonation")]
+        //public ActionResult StopImpersonation()
+        //{
+        //    var userName = User.Identity?.Name;
+        //    var originalUserName = User.FindFirst("OriginalUserName")?.Value;
+        //    if (string.IsNullOrWhiteSpace(originalUserName))
+        //    {
+        //        return BadRequest("You are not impersonating anyone.");
+        //    }
+        //    logger.LogInformation($"User [{originalUserName}] is trying to stop impersonate [{userName}].");
 
-            var role = userService.GetUserRole(originalUserName);
-            var claims = new[]
-            {
-                new Claim(ClaimTypes.Name,originalUserName),
-                new Claim(ClaimTypes.Role, role)
-            };
+        //    var role = userService.GetUserRole(originalUserName);
+        //    var claims = new[]
+        //    {
+        //        new Claim(ClaimTypes.Name,originalUserName),
+        //        new Claim(ClaimTypes.Role, role)
+        //    };
 
-            var jwtResult = jwtAuthManager.GenerateTokens(originalUserName, claims, DateTime.Now);
-            logger.LogInformation($"User [{originalUserName}] has stopped impersonation.");
-            return Ok(new LoginResult
-            {
-                UserName = originalUserName,
-                Role = role,
-                OriginalUserName = null,
-                AccessToken = jwtResult.AccessToken,
-                RefreshToken = jwtResult.RefreshToken.TokenString
-            });
-        }
+        //    var jwtResult = jwtAuthManager.GenerateTokens(originalUserName, claims, DateTime.Now);
+        //    logger.LogInformation($"User [{originalUserName}] has stopped impersonation.");
+        //    return Ok(new LoginResult
+        //    {
+        //        UserName = originalUserName,
+        //        Role = role,
+        //        OriginalUserName = null,
+        //        AccessToken = jwtResult.AccessToken,
+        //        RefreshToken = jwtResult.RefreshToken.TokenString
+        //    });
+        //}
     }
 
     public class LoginRequest
     {
         [Required]
-        [JsonPropertyName("username")]
-        public string UserName { get; set; }
+        [DataType(DataType.EmailAddress)]
+        [EmailAddress(ErrorMessage = "Invalid Email Address")]
+        [JsonPropertyName("Email")]
+        public string Email { get; set; }
 
         [Required]
-        [JsonPropertyName("password")]
+        [JsonPropertyName("Password")]
         public string Password { get; set; }
     }
 
