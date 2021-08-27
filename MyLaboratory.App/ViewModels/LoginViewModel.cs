@@ -45,7 +45,7 @@ namespace MyLaboratory.App.ViewModels
                 {
                     ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) => { return true; }
                 };
-                string json = JsonConvert.SerializeObject(new { username = Email, password = Password });
+                string json = JsonConvert.SerializeObject(new { Email = Email, Password = Password });
 
 
                 HttpClient client = new HttpClient(clientHandler);
