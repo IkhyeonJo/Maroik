@@ -5,7 +5,7 @@
 
 @{
     Context.Session.TryGetValue("AccountSession", out byte[] resultByte);
-
+    var currentCulture = Context.Features.Get<Microsoft.AspNetCore.Localization.IRequestCultureFeature>().RequestCulture.Culture.Name;
     var loginedAccount = await accountRepository.GetAccountAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
 }
 
@@ -188,14 +188,36 @@
             @RenderBody()
             @if (loginedAccount.Role == Role.Admin)@*nonfactors.grid.mvc6\6.2.4*@
             {
-                <script src="~/admin/js/mvc-grid/mvc-grid.js" asp-append-version="true"></script>
+                if (currentCulture == "ko-KR")
+                {
+                    <script src="~/admin/js/mvc-grid/mvc-grid-ko-KR.js" asp-append-version="true"></script>
+                    <script src="~/admin/js/mvc-grid/mvc-grid-ko-KR-lang.js" asp-append-version="true"></script>
+                }
+                else if (currentCulture == "en-US")
+                {
+                    <script src="~/admin/js/mvc-grid/mvc-grid-en-US.js" asp-append-version="true"></script>
+                    <script src="~/admin/js/mvc-grid/mvc-grid-en-US-lang.js" asp-append-version="true"></script>
+                }
+                <script src="~/admin/js/mvc-grid/mvc-grid-attribute.js" asp-append-version="true"></script>
+
                 <script>
                     document.querySelectorAll(".mvc-grid").forEach(element => new MvcGrid(element));
                 </script>
             }
             else if (loginedAccount.Role == Role.User) @*nonfactors.grid.mvc6\6.2.4*@
             {
-                <script src="~/user/js/mvc-grid/mvc-grid.js" asp-append-version="true"></script>
+                if (currentCulture == "ko-KR")
+                {
+                    <script src="~/user/js/mvc-grid/mvc-grid-ko-KR.js" asp-append-version="true"></script>
+                    <script src="~/user/js/mvc-grid/mvc-grid-ko-KR-lang.js" asp-append-version="true"></script>
+                }
+                else if (currentCulture == "en-US")
+                {
+                    <script src="~/user/js/mvc-grid/mvc-grid-en-US.js" asp-append-version="true"></script>
+                    <script src="~/user/js/mvc-grid/mvc-grid-en-US-lang.js" asp-append-version="true"></script>
+                }
+                <script src="~/user/js/mvc-grid/mvc-grid-attribute.js" asp-append-version="true"></script>
+
                 <script>
                     document.querySelectorAll(".mvc-grid").forEach(element => new MvcGrid(element));
                 </script>
