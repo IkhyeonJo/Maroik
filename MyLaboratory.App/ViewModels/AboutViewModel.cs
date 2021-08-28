@@ -1,5 +1,8 @@
 ﻿using MyLaboratory.App.Common;
+using MyLaboratory.App.Views;
 using System;
+using System.Diagnostics;
+using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Windows.Input;
@@ -36,15 +39,23 @@ namespace MyLaboratory.App.ViewModels
                 var response = await client.PostAsync("/api/Account/refresh-token", new StringContent(json, Encoding.UTF8, "application/json"));
                 if (response != null)
                 {
-                    Console.WriteLine(response.ToString());
-                    try
+                    if (response.StatusCode == HttpStatusCode.OK)
                     {
-                        string responJsonText = await response.Content.ReadAsStringAsync();
-                        Console.WriteLine(responJsonText);
+                        Console.WriteLine(response.ToString());
+                        try
+                        {
+                            string responJsonText = await response.Content.ReadAsStringAsync();
+                            Console.WriteLine(responJsonText);
+                        }
+                        catch (Exception e)
+                        {
+                            Console.WriteLine(e);
+                        }
                     }
-                    catch (Exception e)
+                    else
                     {
-                        Console.WriteLine(e);
+                        await Application.Current.MainPage.DisplayAlert("Expired", "Login Token is expired, please restart app.", "OK");
+                        Environment.Exit(0);
                     }
                 }
             }

@@ -4,6 +4,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Text.Json.Serialization;
@@ -53,16 +54,23 @@ namespace MyLaboratory.App.ViewModels
                 HttpResponseMessage response = await client.PostAsync("/api/Account/login", new StringContent(json, Encoding.UTF8, "application/json"));
                 if (response != null)
                 {
-                    try
+                    if (response.StatusCode == HttpStatusCode.OK)
                     {
-                        string responJsonText = await response.Content.ReadAsStringAsync();
-                        JWTManager.AccessToken = JObject.Parse(responJsonText)["accessToken"].ToString();
-                        JWTManager.RefreshToken = JObject.Parse(responJsonText)["refreshToken"].ToString();
-                        await Shell.Current.GoToAsync($"//{nameof(AboutPage)}");
+                        try
+                        {
+                            string responJsonText = await response.Content.ReadAsStringAsync();
+                            JWTManager.AccessToken = JObject.Parse(responJsonText)["accessToken"].ToString();
+                            JWTManager.RefreshToken = JObject.Parse(responJsonText)["refreshToken"].ToString();
+                            await Shell.Current.GoToAsync($"//{nameof(AboutPage)}");
+                        }
+                        catch (Exception e)
+                        {
+                            await Application.Current.MainPage.DisplayAlert("Exception occured", e.ToString(), "CANCEL");
+                        }
                     }
-                    catch (Exception e)
+                    else
                     {
-                        await Application.Current.MainPage.DisplayAlert("Exception occured", e.ToString(), "CANCEL");
+                        await Application.Current.MainPage.DisplayAlert("Fail to login", "please check Email or Password", "CANCEL");
                     }
                 }
                 else
