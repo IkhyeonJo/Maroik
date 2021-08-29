@@ -16,3 +16,5 @@ https://mallibone.com/post/xamarin-forms-shell-login // xamarin login flow
 https://stackoverflow.com/questions/5806220/how-to-connect-to-my-http-localhost-web-server-from-android-emulator
 
 https://onthefencedevelopment.com/2019/10/16/appsettings-in-xamarin-forms/
+
+찬영이가 할 작업!!
