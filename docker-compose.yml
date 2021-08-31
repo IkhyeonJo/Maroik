@@ -60,6 +60,7 @@ networks:
 services:
     mariadb:
         image: "mariadb:10.2.38"
+        container_name: mariadb-10.2.38
         volumes:
           - datasource:/var/lib/mysql
           - ./MyLaboratory.Common.DataAccess/_MariaDBSql_Init_Script:/docker-entrypoint-initdb.d
