@@ -60,7 +60,7 @@ networks:
 services:
     mariadb:
         image: "mariadb:10.2.38"
-        container_name: mariadb-10.2.38
+        container_name: MyLaboratory.MariaDB
         volumes:
           - datasource:/var/lib/mysql
           - ./MyLaboratory.Common.DataAccess/_MariaDBSql_Init_Script:/docker-entrypoint-initdb.d
@@ -80,6 +80,7 @@ services:
         build :
          context : .
          dockerfile : MyLaboratory.WebSite/Dockerfile
+        container_name: MyLaboratory.WebSite
         networks :
           - backend          
         ports:
@@ -100,6 +101,7 @@ services:
         build :
          context : .
          dockerfile : MyLaboratory.WebAPI/Dockerfile
+        container_name: MyLaboratory.WebAPI
         networks :
           - backend          
         ports:
