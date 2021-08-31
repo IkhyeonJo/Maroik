@@ -755,3 +755,6 @@ https://www.eugenechiang.com/2021/05/25/c-get-time-by-time-zone/
 
 # Jquery DatePicker Korean
 https://zetawiki.com/wiki/JQuery_UI_datepicker_%ED%95%9C%EA%B5%AD%EC%96%B4_%EC%A0%81%EC%9A%A9
+
+#[Docker] [Mysql] Docker에서 .sql파일을 마이그레이션 할때 한글 깨지는 현상 막기
+https://ink1234.tistory.com/14
