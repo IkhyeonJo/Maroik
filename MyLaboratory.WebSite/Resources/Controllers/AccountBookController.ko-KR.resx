@@ -301,7 +301,7 @@
     <value>지출이 성공적으로 삭제되었습니다.</value>
   </data>
   <data name="The expenditure has been successfully updated." xml:space="preserve">
-    <value>지출이 성공적으로 생성되었습니다.</value>
+    <value>지출이 성공적으로 업데이트되었습니다.</value>
   </data>
   <data name="The income has been successfully created." xml:space="preserve">
     <value>수입이 성공적으로 생성되었습니다.</value>
