@@ -761,3 +761,16 @@ https://ink1234.tistory.com/14
 
 # How to Do a Clean Restart of a Docker Instance
 https://docs.tibco.com/pub/mash-local/4.3.0/doc/html/docker/GUID-BD850566-5B79-4915-987E-430FC38DAAE4.html
+##How to Do a Clean Restart of a Docker Instance
+#If you are using Docker-Machine, make sure your are talking to the right one. Execute the command docker-machine ls to find which one is currently active. It is also recommended to always redo the command:
+#eval "$(docker-machine env <docker machine name>)"
+#Note: Deleting volumes will wipe out their data. Back up any data that you need before deleting a container.
+#Procedure
+#Stop the container(s) using the following command:
+#1. docker-compose down
+#Delete all containers using the following command:
+#2. docker rm -f $(docker ps -a -q)
+#Delete all volumes using the following command:
+#3. docker volume rm $(docker volume ls -q)
+#Restart the containers using the following command:
+#4. docker-compose up -d
