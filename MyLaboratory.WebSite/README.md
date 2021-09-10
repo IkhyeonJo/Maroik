@@ -758,3 +758,6 @@ https://zetawiki.com/wiki/JQuery_UI_datepicker_%ED%95%9C%EA%B5%AD%EC%96%B4_%EC%A
 
 #[Docker] [Mysql] Docker에서 .sql파일을 마이그레이션 할때 한글 깨지는 현상 막기
 https://ink1234.tistory.com/14
+
+# How to Do a Clean Restart of a Docker Instance
+https://docs.tibco.com/pub/mash-local/4.3.0/doc/html/docker/GUID-BD850566-5B79-4915-987E-430FC38DAAE4.html
