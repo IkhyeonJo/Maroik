@@ -19,14 +19,20 @@
 
 ## Clean Restart of a Docker Instance command
 #-----------------------------------------------------------------------------------
-#sudo docker-compose down && sudo docker rm -vf $(docker ps -a -q) && docker rmi -f $(docker images -a -q) && sudo docker-compose up -d
+#sudo docker-compose down && sudo docker rm -f $(docker ps -a -q) && sudo docker volume rm $(docker volume ls -q) && docker rmi -f $(docker images -a -q) && sudo docker-compose up -d
 #-----------------------------------------------------------------------------------
 
-## To delete all containers including its volumes use,
-#docker rm -vf $(docker ps -a -q)
+## To delete all containers
+#sudo docker rm -f $(docker ps -a -q)
+
+## To delete all volumes
+#sudo docker volume rm $(docker volume ls -q)
 
 ## To delete all the images,
 #docker rmi -f $(docker images -a -q)
+
+## To delete all containers including its volumes use,
+#docker rm -vf $(docker ps -a -q)
 
 ###stop docker-compose
 #docker-compose down
