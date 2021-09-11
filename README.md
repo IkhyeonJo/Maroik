@@ -5,13 +5,25 @@ I'm currently interested in make asp.net core mvc 5 WebServer!
 
 Docker, AdminLTE, MariaDB, Session Login, RESTful API, HTTPS etc.
 
-# IMPORTANT!! MUST Set this value [MyLaboratory.Site -> appsettings.json -> DomainName (According to Server Hostname)] & Docker-compose file's comment!!
+# IMPORTANT!! MUST Set this value [MyLaboratory.Site -> appsettings.json -> DomainName (According to Server Hostname)] & Mail Account & Docker-compose file's comment!!
+
+# How to run this project
+
+## execute [MyLaboratory.sln] -> Open [1.Web] folder -> right-click [docker-compose] -> click "Set as Startup Project" -> Press F5 Button
 
 ☞ 프로젝트명 : 스마트 홈 IoT & 가계부
 
 ☞ OS 및 사용 기술 : AWS, Amazon Linux, C#, .NET 5, Docker, Docker-Compose, HTTPS, HTML, CSS (Bootstrap), 
 　　　　　　　　　　　JS (JQeury), AdminLTE, ASP.NET Core MVC Pattern, MariaDB, MySQL WorkBrench(ERD), 
 　　　　　　　　　　　nonfactor-grid, EntityFrameWork Core, Xamarin Forms, REST API, GitHub Desktop, GitHub
+
+# Login Account
+
+## Admin Account ID: admin@gmail.com
+## Admin Account Password: Pa$$w0rd
+
+## User Account ID: user@gmail.com
+## User Account Password: Pa$$w0rd
 
 # Login
 ![Login](https://user-images.githubusercontent.com/20404991/132020270-488a1ab7-448c-44d9-938a-40ce32d6d364.jpg)
