@@ -9,6 +9,7 @@ using System.Net.Http;
 using System.Text;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
+using Xamarin.Essentials;
 using Xamarin.Forms;
 
 namespace MyLaboratory.App.ViewModels
@@ -29,6 +30,7 @@ namespace MyLaboratory.App.ViewModels
         }
 
         public Command LoginCommand { get; }
+        public Command OpenWebSiteCommand { get; }
 
         public INavigation Navigation { get; set; }
 
@@ -36,6 +38,7 @@ namespace MyLaboratory.App.ViewModels
         {
             Navigation = navigation;
             LoginCommand = new Command(OnLoginClicked);
+            OpenWebSiteCommand = new Command(async () => await Browser.OpenAsync($"{App.AppSettings.WebSite}"));
         }
 
         private async void OnLoginClicked(object obj)
