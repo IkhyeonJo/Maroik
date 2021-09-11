@@ -19,10 +19,10 @@ Docker, AdminLTE, MariaDB, Session Login, RESTful API, HTTPS etc.
 
 # Login Account
 
-## Admin Account ID: admin@gmail.com
+## Admin Account ID: ***REMOVED***m
 ## Admin Account Password: Pa$$w0rd
 
-## User Account ID: user@gmail.com
+## User Account ID: ***REMOVED***
 ## User Account Password: Pa$$w0rd
 
 # Login
