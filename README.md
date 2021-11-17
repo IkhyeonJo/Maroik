@@ -11,6 +11,8 @@ Docker, AdminLTE, MariaDB, Session Login, RESTful API, HTTPS etc.
 
 ## execute [MyLaboratory.sln] -> Open [1.Web] folder -> right-click [docker-compose] -> click "Set as Startup Project" -> Press F5 Button
 
+## For more detail information, please see each project's README.md file
+
 ☞ 프로젝트명 : 스마트 홈 IoT & 가계부
 
 ☞ OS 및 사용 기술 : AWS, Amazon Linux, C#, .NET 5, Docker, Docker-Compose, HTTPS, HTML, CSS (Bootstrap), 
