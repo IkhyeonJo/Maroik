@@ -51,7 +51,7 @@
 #docker ps
 
 ###Access docker container
-#docker exec -it <containerID> /bin/bash/
+#docker exec -it <containerID> /bin/bash
 
 ###In order to copy a file from a container to the host, you can use the command
 #docker cp <containerId>:/file/path/within/container /host/path/target
