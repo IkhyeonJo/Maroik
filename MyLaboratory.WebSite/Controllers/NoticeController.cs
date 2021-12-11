@@ -212,7 +212,7 @@ namespace MyLaboratory.WebSite.Controllers
 
                         try
                         {
-                            noticedResult = currentDate.Subtract(new DateTime(Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[0]), item.DepositMonth, item.DepositDay)).TotalDays >= 0 && currentDate.Subtract(new DateTime(Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[0]), item.DepositMonth, item.DepositDay)).TotalDays <= ServerSetting.NoticeMaturityDateDay;
+                            noticedResult = currentDate.Subtract(new DateTime(Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[0]), item.DepositMonth, item.DepositDay)).TotalDays <= 0 && Math.Abs(currentDate.Subtract(new DateTime(Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[0]), item.DepositMonth, item.DepositDay)).TotalDays) <= ServerSetting.NoticeMaturityDateDay;
                         }
                         catch // 윤년이 아닌데 2월 29일로 초기화 했을 때 예외 발생
                         {
@@ -256,7 +256,7 @@ namespace MyLaboratory.WebSite.Controllers
 
                             try
                             {
-                                noticedResult = currentDate.Subtract(new DateTime(Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[0]), item.DepositMonth, item.DepositDay)).TotalDays >= 0 && currentDate.Subtract(new DateTime(Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[0]), item.DepositMonth, item.DepositDay)).TotalDays <= ServerSetting.NoticeMaturityDateDay;
+                                noticedResult = currentDate.Subtract(new DateTime(Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[0]), item.DepositMonth, item.DepositDay)).TotalDays <= 0 && Math.Abs(currentDate.Subtract(new DateTime(Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[0]), item.DepositMonth, item.DepositDay)).TotalDays) <= ServerSetting.NoticeMaturityDateDay;
                             }
                             catch // 윤년이 아닌데 2월 29일로 초기화 했을 때 예외 발생
                             {
@@ -542,7 +542,7 @@ namespace MyLaboratory.WebSite.Controllers
 
                 try
                 {
-                    noticedResult = currentDate.Subtract(new DateTime(Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[0]), item.DepositMonth, item.DepositDay)).TotalDays >= 0 && currentDate.Subtract(new DateTime(Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[0]), item.DepositMonth, item.DepositDay)).TotalDays <= ServerSetting.NoticeMaturityDateDay;
+                    noticedResult = currentDate.Subtract(new DateTime(Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[0]), item.DepositMonth, item.DepositDay)).TotalDays <= 0 && Math.Abs(currentDate.Subtract(new DateTime(Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[0]), item.DepositMonth, item.DepositDay)).TotalDays) <= ServerSetting.NoticeMaturityDateDay;
                 }
                 catch // 윤년이 아닌데 2월 29일로 초기화 했을 때 예외 발생
                 {
@@ -865,7 +865,7 @@ namespace MyLaboratory.WebSite.Controllers
 
                         try
                         {
-                            noticedResult = currentDate.Subtract(new DateTime(Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[0]), item.DepositMonth, item.DepositDay)).TotalDays >= 0 && currentDate.Subtract(new DateTime(Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[0]), item.DepositMonth, item.DepositDay)).TotalDays <= ServerSetting.NoticeMaturityDateDay;
+                            noticedResult = currentDate.Subtract(new DateTime(Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[0]), item.DepositMonth, item.DepositDay)).TotalDays <= 0 && Math.Abs(currentDate.Subtract(new DateTime(Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[0]), item.DepositMonth, item.DepositDay)).TotalDays) <= ServerSetting.NoticeMaturityDateDay;
                         }
                         catch // 윤년이 아닌데 2월 29일로 초기화 했을 때 예외 발생
                         {
@@ -911,7 +911,7 @@ namespace MyLaboratory.WebSite.Controllers
 
                             try
                             {
-                                noticedResult = currentDate.Subtract(new DateTime(Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[0]), item.DepositMonth, item.DepositDay)).TotalDays >= 0 && currentDate.Subtract(new DateTime(Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[0]), item.DepositMonth, item.DepositDay)).TotalDays <= ServerSetting.NoticeMaturityDateDay;
+                                noticedResult = currentDate.Subtract(new DateTime(Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[0]), item.DepositMonth, item.DepositDay)).TotalDays <= 0 && Math.Abs(currentDate.Subtract(new DateTime(Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[0]), item.DepositMonth, item.DepositDay)).TotalDays) <= ServerSetting.NoticeMaturityDateDay;
                             }
                             catch // 윤년이 아닌데 2월 29일로 초기화 했을 때 예외 발생
                             {
@@ -1282,7 +1282,7 @@ namespace MyLaboratory.WebSite.Controllers
 
                 try
                 {
-                    noticedResult = currentDate.Subtract(new DateTime(Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[0]), item.DepositMonth, item.DepositDay)).TotalDays >= 0 && currentDate.Subtract(new DateTime(Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[0]), item.DepositMonth, item.DepositDay)).TotalDays <= ServerSetting.NoticeMaturityDateDay;
+                    noticedResult = currentDate.Subtract(new DateTime(Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[0]), item.DepositMonth, item.DepositDay)).TotalDays <= 0 && Math.Abs(currentDate.Subtract(new DateTime(Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[0]), item.DepositMonth, item.DepositDay)).TotalDays) <= ServerSetting.NoticeMaturityDateDay;
                 }
                 catch // 윤년이 아닌데 2월 29일로 초기화 했을 때 예외 발생
                 {
