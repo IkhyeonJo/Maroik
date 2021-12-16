@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.31321.278
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31912.275
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MyLaboratory.WebAPI", "MyLaboratory.WebAPI\MyLaboratory.WebAPI.csproj", "{0EDD05C6-1658-4B86-B173-827533A1C4DC}"
 EndProject
@@ -24,6 +24,10 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MyLaboratory.WebSite", "MyLaboratory.WebSite\MyLaboratory.WebSite.csproj", "{1196131F-B750-4FF7-8EC5-0B9D0A598AAA}"
 EndProject
 Project("{E53339B2-1760-4266-BCC7-CA923CBCF16C}") = "docker-compose", "docker-compose.dcproj", "{16950BFB-9A7B-4326-B6E9-873B22449DF3}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "3.Example", "3.Example", "{E40D9B8F-9C6B-4656-A72A-6DD5C83DA7F2}"
+EndProject
+Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "MyLaboratory.Python", "MyLaboratory.Python\MyLaboratory.Python.pyproj", "{0AA7FC81-1683-4633-AF53-7CECD7DF5AD8}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -237,6 +241,18 @@ Global
 		{16950BFB-9A7B-4326-B6E9-873B22449DF3}.Release|x64.Build.0 = Release|Any CPU
 		{16950BFB-9A7B-4326-B6E9-873B22449DF3}.Release|x86.ActiveCfg = Release|Any CPU
 		{16950BFB-9A7B-4326-B6E9-873B22449DF3}.Release|x86.Build.0 = Release|Any CPU
+		{0AA7FC81-1683-4633-AF53-7CECD7DF5AD8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0AA7FC81-1683-4633-AF53-7CECD7DF5AD8}.Debug|ARM.ActiveCfg = Debug|Any CPU
+		{0AA7FC81-1683-4633-AF53-7CECD7DF5AD8}.Debug|iPhone.ActiveCfg = Debug|Any CPU
+		{0AA7FC81-1683-4633-AF53-7CECD7DF5AD8}.Debug|iPhoneSimulator.ActiveCfg = Debug|Any CPU
+		{0AA7FC81-1683-4633-AF53-7CECD7DF5AD8}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{0AA7FC81-1683-4633-AF53-7CECD7DF5AD8}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{0AA7FC81-1683-4633-AF53-7CECD7DF5AD8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0AA7FC81-1683-4633-AF53-7CECD7DF5AD8}.Release|ARM.ActiveCfg = Release|Any CPU
+		{0AA7FC81-1683-4633-AF53-7CECD7DF5AD8}.Release|iPhone.ActiveCfg = Release|Any CPU
+		{0AA7FC81-1683-4633-AF53-7CECD7DF5AD8}.Release|iPhoneSimulator.ActiveCfg = Release|Any CPU
+		{0AA7FC81-1683-4633-AF53-7CECD7DF5AD8}.Release|x64.ActiveCfg = Release|Any CPU
+		{0AA7FC81-1683-4633-AF53-7CECD7DF5AD8}.Release|x86.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -250,6 +266,7 @@ Global
 		{C91A55FE-4285-459D-B7B4-C6ECC967C51E} = {F55937F3-386E-46AB-801C-6DDC26AE957F}
 		{1196131F-B750-4FF7-8EC5-0B9D0A598AAA} = {02764078-45D4-4634-95B1-CF053BD2EA45}
 		{16950BFB-9A7B-4326-B6E9-873B22449DF3} = {02764078-45D4-4634-95B1-CF053BD2EA45}
+		{0AA7FC81-1683-4633-AF53-7CECD7DF5AD8} = {E40D9B8F-9C6B-4656-A72A-6DD5C83DA7F2}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {AF88D563-ED64-4D2E-8F76-E82455462128}
