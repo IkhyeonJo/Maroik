@@ -31,8 +31,8 @@ namespace MyLaboratory.Common.DataAccess.Data
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            modelBuilder.HasCharSet("utf8")
-                .UseCollation("utf8_general_ci");
+            modelBuilder.UseCollation("utf8mb4_unicode_ci")
+                .HasCharSet("utf8mb4");
 
             modelBuilder.Entity<Account>(entity =>
             {
@@ -42,7 +42,6 @@ namespace MyLaboratory.Common.DataAccess.Data
                 entity.ToTable("Account");
 
                 entity.HasComment("MyLaboratory.WebSite 계정")
-                    .HasCharSet("utf8mb4")
                     .UseCollation("utf8mb4_general_ci");
 
                 entity.Property(e => e.Email).HasComment("계정 이메일 (ID)");
@@ -106,7 +105,6 @@ namespace MyLaboratory.Common.DataAccess.Data
                 entity.ToTable("Asset");
 
                 entity.HasComment("MyLaboratory.WebSite 자산")
-                    .HasCharSet("utf8mb4")
                     .UseCollation("utf8mb4_general_ci");
 
                 entity.HasIndex(e => e.AccountEmail, "Asset_FK");
@@ -136,7 +134,7 @@ namespace MyLaboratory.Common.DataAccess.Data
                     .HasComment("화폐 단위 (KRW, USD, ETC)");
 
                 entity.Property(e => e.Note)
-                    .HasMaxLength(45)
+                    .HasMaxLength(255)
                     .HasComment("비고");
 
                 entity.Property(e => e.Updated)
@@ -154,34 +152,36 @@ namespace MyLaboratory.Common.DataAccess.Data
             {
                 entity.ToTable("Category");
 
-                entity.HasComment("카테고리 /*MyLaboratory.WebSite의 로그인 후 접근 가능한 좌측 SideBar 설정 시 사용*/");
+                entity.HasComment("카테고리 /*MyLaboratory.WebSite의 로그인 후 접근 가능한 좌측 SideBar 설정 시 사용*/")
+                    .HasCharSet("utf8mb3")
+                    .UseCollation("utf8mb3_general_ci");
 
                 entity.Property(e => e.Id)
                     .HasColumnType("int(11)")
                     .HasComment("ID");
 
                 entity.Property(e => e.Action)
-                    .HasMaxLength(256)
+                    .HasMaxLength(255)
                     .HasComment("접근 MVC Action 명 /*이 값이 없으면 하위 카테고리 존재*/");
 
                 entity.Property(e => e.Controller)
                     .IsRequired()
-                    .HasMaxLength(256)
+                    .HasMaxLength(255)
                     .HasComment("접근 MVC Controller 명");
 
                 entity.Property(e => e.DisplayName)
                     .IsRequired()
-                    .HasMaxLength(256)
+                    .HasMaxLength(255)
                     .HasComment("표시이름");
 
                 entity.Property(e => e.IconPath)
                     .IsRequired()
-                    .HasMaxLength(256)
+                    .HasMaxLength(255)
                     .HasComment("표시 아이콘 경로 /*FontAwesome 사용*/");
 
                 entity.Property(e => e.Name)
                     .IsRequired()
-                    .HasMaxLength(256)
+                    .HasMaxLength(255)
                     .HasComment("이름");
 
                 entity.Property(e => e.Order)
@@ -190,7 +190,7 @@ namespace MyLaboratory.Common.DataAccess.Data
 
                 entity.Property(e => e.Role)
                     .IsRequired()
-                    .HasMaxLength(256)
+                    .HasMaxLength(255)
                     .HasDefaultValueSql("'Admin'")
                     .HasComment("접근 권한 설정");
             });
@@ -200,7 +200,6 @@ namespace MyLaboratory.Common.DataAccess.Data
                 entity.ToTable("Expenditure");
 
                 entity.HasComment("MyLaboratory.WebSite 지출")
-                    .HasCharSet("utf8mb4")
                     .UseCollation("utf8mb4_general_ci");
 
                 entity.HasIndex(e => new { e.PaymentMethod, e.AccountEmail }, "Expenditure_FK");
@@ -236,7 +235,7 @@ namespace MyLaboratory.Common.DataAccess.Data
                     .HasComment("내 입금 자산 (자산 상품명/현금) (지출 중 [예적금, 내자산이체, 투자, 공적연금, 부채상환]일 때 사용)");
 
                 entity.Property(e => e.Note)
-                    .HasMaxLength(45)
+                    .HasMaxLength(255)
                     .HasComment("비고");
 
                 entity.Property(e => e.PaymentMethod)
@@ -264,7 +263,6 @@ namespace MyLaboratory.Common.DataAccess.Data
                 entity.ToTable("FixedExpenditure");
 
                 entity.HasComment("MyLaboratory.WebSite 고정지출")
-                    .HasCharSet("utf8mb4")
                     .UseCollation("utf8mb4_general_ci");
 
                 entity.HasIndex(e => new { e.PaymentMethod, e.AccountEmail }, "FixedExpenditure_FK");
@@ -312,7 +310,7 @@ namespace MyLaboratory.Common.DataAccess.Data
                     .HasComment("내 입금 자산 (자산 상품명/현금) (지출 중 [예적금, 내자산이체, 투자, 공적연금, 부채상환]일 때 사용)");
 
                 entity.Property(e => e.Note)
-                    .HasMaxLength(45)
+                    .HasMaxLength(255)
                     .HasComment("비고");
 
                 entity.Property(e => e.PaymentMethod)
@@ -340,7 +338,6 @@ namespace MyLaboratory.Common.DataAccess.Data
                 entity.ToTable("FixedIncome");
 
                 entity.HasComment("MyLaboratory.WebSite 고정수입")
-                    .HasCharSet("utf8mb4")
                     .UseCollation("utf8mb4_general_ci");
 
                 entity.HasIndex(e => new { e.DepositMyAssetProductName, e.AccountEmail }, "FixedIncome_FK");
@@ -388,7 +385,7 @@ namespace MyLaboratory.Common.DataAccess.Data
                     .HasComment("만기일");
 
                 entity.Property(e => e.Note)
-                    .HasMaxLength(45)
+                    .HasMaxLength(255)
                     .HasComment("비고");
 
                 entity.Property(e => e.SubClass)
@@ -412,7 +409,6 @@ namespace MyLaboratory.Common.DataAccess.Data
                 entity.ToTable("Income");
 
                 entity.HasComment("MyLaboratory.WebSite 수입")
-                    .HasCharSet("utf8mb4")
                     .UseCollation("utf8mb4_general_ci");
 
                 entity.HasIndex(e => new { e.DepositMyAssetProductName, e.AccountEmail }, "Income_FK");
@@ -448,7 +444,7 @@ namespace MyLaboratory.Common.DataAccess.Data
                     .HasComment("대분류 (정기수입/비정기수입)");
 
                 entity.Property(e => e.Note)
-                    .HasMaxLength(45)
+                    .HasMaxLength(255)
                     .HasComment("비고");
 
                 entity.Property(e => e.SubClass)
@@ -471,7 +467,9 @@ namespace MyLaboratory.Common.DataAccess.Data
             {
                 entity.ToTable("SubCategory");
 
-                entity.HasComment("서브 카테고리 /*MyLaboratory.WebSite의 로그인 후 접근 가능한 좌측 SideBar 설정 시 사용*/");
+                entity.HasComment("서브 카테고리 /*MyLaboratory.WebSite의 로그인 후 접근 가능한 좌측 SideBar 설정 시 사용*/")
+                    .HasCharSet("utf8mb3")
+                    .UseCollation("utf8mb3_general_ci");
 
                 entity.HasIndex(e => e.CategoryId, "SubCategory_FK");
 
@@ -481,7 +479,7 @@ namespace MyLaboratory.Common.DataAccess.Data
 
                 entity.Property(e => e.Action)
                     .IsRequired()
-                    .HasMaxLength(256)
+                    .HasMaxLength(255)
                     .HasComment("접근 MVC Action 명 /*이 값이 없으면 하위 카테고리 존재*/");
 
                 entity.Property(e => e.CategoryId)
@@ -490,17 +488,17 @@ namespace MyLaboratory.Common.DataAccess.Data
 
                 entity.Property(e => e.DisplayName)
                     .IsRequired()
-                    .HasMaxLength(256)
+                    .HasMaxLength(255)
                     .HasComment("표시이름");
 
                 entity.Property(e => e.IconPath)
                     .IsRequired()
-                    .HasMaxLength(256)
+                    .HasMaxLength(255)
                     .HasComment("표시 아이콘 경로 /*FontAwesome 사용*/");
 
                 entity.Property(e => e.Name)
                     .IsRequired()
-                    .HasMaxLength(256)
+                    .HasMaxLength(255)
                     .HasComment("이름");
 
                 entity.Property(e => e.Order)
@@ -509,7 +507,7 @@ namespace MyLaboratory.Common.DataAccess.Data
 
                 entity.Property(e => e.Role)
                     .IsRequired()
-                    .HasMaxLength(256)
+                    .HasMaxLength(255)
                     .HasDefaultValueSql("'Admin'")
                     .HasComment("접근 권한 설정");
 
