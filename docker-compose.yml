@@ -38,8 +38,14 @@
 ###stop docker-compose
 #docker-compose down
 
+###check docker containers
+#docker ps
+
 ###check docker images
 #docker images
+
+###check docker volume
+#docker volume ls
 
 ###remove docker images
 #docker rmi [Image ID]
