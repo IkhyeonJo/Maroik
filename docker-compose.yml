@@ -44,7 +44,7 @@
 ###remove docker images
 #docker rmi [Image ID]
 
-#when you should go debugging mode , change DB location (appsettings.json, DatabaseConfig.cs) and install (mariadb 10.5.10) and use IIS Express debugging mode
+#when you should go debugging mode , change DB location (appsettings.json, DatabaseConfig.cs) and install (mariadb 10.6.5) and use IIS Express debugging mode
 
 #----------------------------------------------------------------------------------------------------
 ### Tip: To see [CONTAINER ID], execute below this command
@@ -77,7 +77,7 @@ networks:
 
 services:
     mariadb:
-        image: "mariadb:10.2.38"
+        image: "mariadb:10.6.5"
         container_name: MyLaboratory.MariaDB
         volumes:
           - datasource:/var/lib/mysql

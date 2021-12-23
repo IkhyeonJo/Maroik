@@ -26,7 +26,7 @@
 ###remove docker images
 #docker rmi [Image ID]
 
-#when you should go debugging mode , change DB location (appsettings.json, DatabaseConfig.cs) and install (mariadb 10.5.10) and use IIS Express debugging mode
+#when you should go debugging mode , change DB location (appsettings.json, DatabaseConfig.cs) and install (mariadb 10.6.5) and use IIS Express debugging mode
 
 #----------------------------------------------------------------------------------------------------
 ### Tip: To see [CONTAINER ID], execute below this command
@@ -65,7 +65,7 @@ https://www.freecodecamp.org/news/how-to-use-html-to-open-link-in-new-tab/ // ta
 https://whitekeyboard.tistory.com/630
 (디버깅 & Data Migration 용) MariaDB Windows 로컬에 설치 시, 
 
-환경 MariaDB 10.2.38  ( x64, windows )
+환경 MariaDB 10.6.5  ( x64, windows )
 
 Windows에서 mysqldum를 하고 linux에 DB를 넣으면 테이블명이 소문자로 들어가는 문제를 종종 본 적이 있을 것이다.
 
@@ -82,7 +82,7 @@ lower_case_table_names = 2  :  윈도우에서 대·소문자를 구분해서 �
 윈도우 : 1
 맥키토시 : 2
 
-C:\Program Files\MariaDB 10.2\data\my.ini에서
+C:\Program Files\MariaDB 10.6\data\my.ini에서
 [mysqld] 항목의 [Port] 아래에 lower_case_table_names = 2로 넣어주고
 
 3) 작업관리자 - 서비스를 열어 MariaDB를 재시작 해준다. 
@@ -204,7 +204,7 @@ dotnet dev-certs https -ep $env:USERPROFILE/.aspnet/https/haha.pfx -p Passw0rd
 - ASPNETCORE_Kestrel__Certificates__Default__Password=Passw0rd 와 인증서 패스워드가 같아야함
 #-------------------------------------------------------------------------------
 
-### MYSQL DB 백업하기 (procedure, function, trigger 포함) (Windows에서는 관리자 권한으로 C:\Program Files\MariaDB 10.2\bin cmd 가서 할 것)
+### MYSQL DB 백업하기 (procedure, function, trigger 포함) (Windows에서는 관리자 권한으로 C:\Program Files\MariaDB 10.6\bin cmd 가서 할 것)
 mysqldump --routines --triggers --events -u [사용자 계정] -p [원본 데이터베이스명] > [생성할 백업 DB명].sql
 또는
 DBeaver에서 DB 클릭하고 Dump 할 것
@@ -212,7 +212,7 @@ DBeaver에서 DB 클릭하고 Dump 할 것
 #백업 시... 트리거 부분 조심해서 볼 것;;
 
 
-### MYSQL DB 복원하기 (Windows에서는 관리자 권한으로 C:\Program Files\MariaDB 10.2\bin cmd 가서 할 것)
+### MYSQL DB 복원하기 (Windows에서는 관리자 권한으로 C:\Program Files\MariaDB 10.6\bin cmd 가서 할 것)
 mysql -u [사용자 계정] -p [복원할 DB] < [백업된 DB].sql
 또는
 DBeaver에서 복원할 것
@@ -618,7 +618,7 @@ Uri.UnescapeDataString()
 #sudo yum update -y && sudo amazon-linux-extras install docker -y && sudo service docker start && sudo curl -L https://github.com/docker/compose/releases/download/1.21.0/docker-compose-`uname -s`-`uname -m` | sudo tee /usr/local/bin/docker-compose > /dev/null && sudo chmod +x /usr/local/bin/docker-compose && sudo ln -s /usr/local/bin/docker-compose /usr/bin/docker-compose && sudo docker-compose up -d
 #-----------------------------------------------------------------------------------
 
-#when you should go debugging mode , change DB location (appsettings.json, DatabaseConfig.cs) and install (mariadb 10.5.10) and use IIS Express debugging mode
+#when you should go debugging mode , change DB location (appsettings.json, DatabaseConfig.cs) and install (mariadb 10.6.5) and use IIS Express debugging mode
 
 #----------------------------------------------------------------------------------------------------
 ### Tip: To see [CONTAINER ID], execute below this command
