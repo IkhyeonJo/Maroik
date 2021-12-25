@@ -219,6 +219,11 @@ namespace MyLaboratory.WebSite.Controllers
                             noticedResult = false;
                         }
 
+                        if (item.Unpunctuality) // 시간 미엄수 체크 시, 알림 뜨도록 설정
+                        {
+                            noticedResult = true;
+                        }
+
                         fixedIncomeOutputViewModels.Add(new FixedIncomeOutputViewModel()
                         {
                             Id = item.Id,
@@ -261,6 +266,11 @@ namespace MyLaboratory.WebSite.Controllers
                             catch // 윤년이 아닌데 2월 29일로 초기화 했을 때 예외 발생
                             {
                                 noticedResult = false;
+                            }
+
+                            if (item.Unpunctuality) // 시간 미엄수 체크 시, 알림 뜨도록 설정
+                            {
+                                noticedResult = true;
                             }
 
                             fixedIncomeOutputViewModels.Add(new FixedIncomeOutputViewModel()
@@ -326,7 +336,8 @@ namespace MyLaboratory.WebSite.Controllers
                             DepositDay = tempFixedIncome.DepositDay,
                             MaturityDate = tempFixedIncome.MaturityDate.ToString("yyyy-MM-dd"),
                             Note = tempFixedIncome.Note,
-                            DepositMyAssetProductName = tempFixedIncome.DepositMyAssetProductName
+                            DepositMyAssetProductName = tempFixedIncome.DepositMyAssetProductName,
+                            Unpunctuality = tempFixedIncome.Unpunctuality
                         };
                         return Json(new { result = true, fixedIncome = tempFixedIncomeOutputModel });
                     }
@@ -452,6 +463,7 @@ namespace MyLaboratory.WebSite.Controllers
                                 tempFixedIncome.MaturityDate = new DateTime(Convert.ToInt32(Regex.Split(fixedIncomeInputViewModel.MaturityDate, "-")[0].ToString()), Convert.ToInt32(Regex.Split(fixedIncomeInputViewModel.MaturityDate, "-")[1].ToString()), Convert.ToInt32(Regex.Split(fixedIncomeInputViewModel.MaturityDate, "-")[2].ToString()));
                                 tempFixedIncome.Updated = DateTime.UtcNow;
                                 tempFixedIncome.Note = fixedIncomeInputViewModel.Note ?? "";
+                                tempFixedIncome.Unpunctuality = fixedIncomeInputViewModel.Unpunctuality;
 
                                 await fixedIncomeRepository.UpdateFixedIncomeAsync(tempFixedIncome);
                                 #endregion
@@ -547,6 +559,11 @@ namespace MyLaboratory.WebSite.Controllers
                 catch // 윤년이 아닌데 2월 29일로 초기화 했을 때 예외 발생
                 {
                     noticedResult = false;
+                }
+
+                if (item.Unpunctuality) // 시간 미엄수 체크 시, 알림 뜨도록 설정
+                {
+                    noticedResult = true;
                 }
 
                 fixedIncomeOutputViewModels.Add(new FixedIncomeOutputViewModel()

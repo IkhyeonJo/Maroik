@@ -24,6 +24,11 @@
             noticedResult = false;
         }
 
+        if (item.Unpunctuality) // 시간 미엄수 체크 시, 알림 뜨도록 설정
+        {
+            noticedResult = true;
+        }
+
         fixedIncomeOutputViewModels.Add(new FixedIncomeOutputViewModel()
         {
             Id = item.Id,
