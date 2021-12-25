@@ -66,6 +66,10 @@ namespace MyLaboratory.Common.DataAccess.Models
         /// 비고
         /// </summary>
         public string Note { get; set; }
+        /// <summary>
+        /// 시간 미엄수 (고정 지출 시간 약속을 지키지 않았을 때 계속 알림에 표시하는 용도)
+        /// </summary>
+        public bool Unpunctuality { get; set; }
 
         public virtual Asset Asset { get; set; }
     }

@@ -322,6 +322,8 @@ namespace MyLaboratory.Common.DataAccess.Data
                     .HasMaxLength(255)
                     .HasComment("소분류 (예적금/내자산이체/투자 | 공적연금/부채상환/세금/사회보험/가구간 이전지출/비영리단체 이전 | (식비/외식비)/(주거/용품비)/교육비/의료비/교통비/통신비/(여가/문화)/(의류/신발)/용돈/보장성보험/기타지출/미파악지출)");
 
+                entity.Property(e => e.Unpunctuality).HasComment("시간 미엄수 (고정 지출 시간 약속을 지키지 않았을 때 계속 알림에 표시하는 용도)");
+
                 entity.Property(e => e.Updated)
                     .HasMaxLength(6)
                     .HasComment("업데이트일");
@@ -392,6 +394,8 @@ namespace MyLaboratory.Common.DataAccess.Data
                     .IsRequired()
                     .HasMaxLength(255)
                     .HasComment("소분류 (근로수입/사업수입/연금수입/금융소득/임대수입/기타수입)");
+
+                entity.Property(e => e.Unpunctuality).HasComment("시간 미엄수 (고정 수입 시간 약속을 지키지 않았을 때 계속 알림에 표시하는 용도)");
 
                 entity.Property(e => e.Updated)
                     .HasMaxLength(6)
