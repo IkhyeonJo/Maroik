@@ -889,6 +889,11 @@ namespace MyLaboratory.WebSite.Controllers
                             noticedResult = false;
                         }
 
+                        if (item.Unpunctuality) // 시간 미엄수 체크 시, 알림 뜨도록 설정
+                        {
+                            noticedResult = true;
+                        }
+
                         fixedExpenditureOutputViewModels.Add(new FixedExpenditureOutputViewModel()
                         {
                             Id = item.Id,
@@ -933,6 +938,11 @@ namespace MyLaboratory.WebSite.Controllers
                             catch // 윤년이 아닌데 2월 29일로 초기화 했을 때 예외 발생
                             {
                                 noticedResult = false;
+                            }
+
+                            if (item.Unpunctuality) // 시간 미엄수 체크 시, 알림 뜨도록 설정
+                            {
+                                noticedResult = true;
                             }
 
                             fixedExpenditureOutputViewModels.Add(new FixedExpenditureOutputViewModel()
@@ -1000,7 +1010,8 @@ namespace MyLaboratory.WebSite.Controllers
                             MaturityDate = tempFixedExpenditure.MaturityDate.ToString("yyyy-MM-dd"),
                             Note = tempFixedExpenditure.Note,
                             PaymentMethod = tempFixedExpenditure.PaymentMethod,
-                            MyDepositAsset = tempFixedExpenditure.MyDepositAsset ?? ""
+                            MyDepositAsset = tempFixedExpenditure.MyDepositAsset ?? "",
+                            Unpunctuality = tempFixedExpenditure.Unpunctuality
                         };
                         return Json(new { result = true, fixedExpenditure = tempFixedIncomeOutputModel });
                     }
@@ -1059,6 +1070,7 @@ namespace MyLaboratory.WebSite.Controllers
                                 tempFixedExpenditure.PaymentMethod = fixedExpenditureInputViewModel.PaymentMethod;
                                 tempFixedExpenditure.MyDepositAsset = fixedExpenditureInputViewModel.MyDepositAsset ?? "";
                                 tempFixedExpenditure.Updated = DateTime.UtcNow;
+                                tempFixedExpenditure.Unpunctuality = fixedExpenditureInputViewModel.Unpunctuality;
 
                                 await fixedExpenditureRepository.UpdateFixedExpenditureAsync(tempFixedExpenditure);
 
@@ -1109,6 +1121,7 @@ namespace MyLaboratory.WebSite.Controllers
                                 tempFixedExpenditure.PaymentMethod = fixedExpenditureInputViewModel.PaymentMethod;
                                 tempFixedExpenditure.MyDepositAsset = fixedExpenditureInputViewModel.MyDepositAsset ?? "";
                                 tempFixedExpenditure.Updated = DateTime.UtcNow;
+                                tempFixedExpenditure.Unpunctuality = fixedExpenditureInputViewModel.Unpunctuality;
 
                                 await fixedExpenditureRepository.UpdateFixedExpenditureAsync(tempFixedExpenditure);
 
@@ -1147,6 +1160,7 @@ namespace MyLaboratory.WebSite.Controllers
                                 tempFixedExpenditure.PaymentMethod = fixedExpenditureInputViewModel.PaymentMethod;
                                 tempFixedExpenditure.MyDepositAsset = "";
                                 tempFixedExpenditure.Updated = DateTime.UtcNow;
+                                tempFixedExpenditure.Unpunctuality = fixedExpenditureInputViewModel.Unpunctuality;
 
                                 await fixedExpenditureRepository.UpdateFixedExpenditureAsync(tempFixedExpenditure);
 
@@ -1203,6 +1217,7 @@ namespace MyLaboratory.WebSite.Controllers
                                 tempFixedExpenditure.PaymentMethod = fixedExpenditureInputViewModel.PaymentMethod;
                                 tempFixedExpenditure.MyDepositAsset = "";
                                 tempFixedExpenditure.Updated = DateTime.UtcNow;
+                                tempFixedExpenditure.Unpunctuality = fixedExpenditureInputViewModel.Unpunctuality;
 
                                 await fixedExpenditureRepository.UpdateFixedExpenditureAsync(tempFixedExpenditure);
 
@@ -1304,6 +1319,11 @@ namespace MyLaboratory.WebSite.Controllers
                 catch // 윤년이 아닌데 2월 29일로 초기화 했을 때 예외 발생
                 {
                     noticedResult = false;
+                }
+
+                if (item.Unpunctuality) // 시간 미엄수 체크 시, 알림 뜨도록 설정
+                {
+                    noticedResult = true;
                 }
 
                 fixedExpenditureOutputViewModels.Add(new FixedExpenditureOutputViewModel()

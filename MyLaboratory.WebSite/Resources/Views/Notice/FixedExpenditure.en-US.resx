@@ -192,6 +192,9 @@
   <data name="SubClass" xml:space="preserve">
     <value>SubClass</value>
   </data>
+  <data name="Unpunctuality" xml:space="preserve">
+    <value>Unpunctuality</value>
+  </data>
   <data name="WithdrawalDay" xml:space="preserve">
     <value>WithdrawalDay</value>
   </data>
