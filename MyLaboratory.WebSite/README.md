@@ -777,3 +777,4 @@ DashBoard Donut Chart
 
 https://www.chartjs.org/
 https://stackoverflow.com/questions/20966817/how-to-add-text-inside-the-doughnut-chart-using-chart-js
+https://quickchart.io/documentation/chart-js/custom-pie-doughnut-chart-labels/
