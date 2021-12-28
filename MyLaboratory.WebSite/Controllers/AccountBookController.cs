@@ -874,17 +874,43 @@ namespace MyLaboratory.WebSite.Controllers
                         {
                             try
                             {
-                                if (expenditureInputViewModel.PaymentMethod == expenditureInputViewModel.MyDepositAsset)
-                                {
-                                    return Json(new { result = false, error = localizer["The PaymentMethod and MyDepositAsset value cannot be the same."].Value });
-                                }
-
                                 var expenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, expenditureInputViewModel.PaymentMethod);
                                 var incomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, expenditureInputViewModel.MyDepositAsset);
 
                                 if (expenditureAsset == null || incomeAsset == null)
                                 {
                                     return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                                }
+
+                                if (expenditureInputViewModel.PaymentMethod == expenditureInputViewModel.MyDepositAsset)
+                                {
+                                    if (expenditureInputViewModel.SubClass == "Investment") // 지출 -> 정기저축 -> 투자일 때 결제수단과 내입금자산이 같을 수 있는 경우가 있기 때문에 이렇게 분리함 [수입/지출 자산 업데이트할 필요 없음]
+                                    {
+                                        #region 지출 생성
+                                        await expenditureRepository.CreateExpenditureAsync
+                                            (
+                                            new Expenditure()
+                                            {
+                                                AccountEmail = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email,
+                                                MainClass = expenditureInputViewModel.MainClass,
+                                                SubClass = expenditureInputViewModel.SubClass,
+                                                Contents = expenditureInputViewModel.Contents ?? "",
+                                                Amount = Math.Abs(expenditureInputViewModel.Amount),
+                                                PaymentMethod = expenditureInputViewModel.PaymentMethod,
+                                                MyDepositAsset = expenditureInputViewModel.MyDepositAsset,
+                                                Created = DateTime.UtcNow,
+                                                Updated = DateTime.UtcNow,
+                                                Note = expenditureInputViewModel.Note ?? ""
+                                            }
+                                            );
+                                        #endregion
+
+                                        return Json(new { result = true, message = localizer["The expenditure has been successfully created."].Value });
+                                    }
+                                    else
+                                    {
+                                        return Json(new { result = false, error = localizer["The PaymentMethod and MyDepositAsset value cannot be the same."].Value });
+                                    }
                                 }
 
                                 #region 지출 생성
