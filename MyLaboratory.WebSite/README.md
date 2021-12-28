@@ -772,3 +772,8 @@ https://ink1234.tistory.com/14
 #3. docker volume rm $(docker volume ls -q)
 #Restart the containers using the following command:
 #4. docker-compose up -d
+
+DashBoard Donut Chart
+
+https://www.chartjs.org/
+https://stackoverflow.com/questions/20966817/how-to-add-text-inside-the-doughnut-chart-using-chart-js
