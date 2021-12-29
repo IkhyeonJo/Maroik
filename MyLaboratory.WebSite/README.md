@@ -778,3 +778,6 @@ DashBoard Donut Chart
 https://www.chartjs.org/
 https://stackoverflow.com/questions/20966817/how-to-add-text-inside-the-doughnut-chart-using-chart-js
 https://quickchart.io/documentation/chart-js/custom-pie-doughnut-chart-labels/
+
+How to control the width of select tag?
+https://stackoverflow.com/questions/10671614/how-to-control-the-width-of-select-tag/10671666#10671666
