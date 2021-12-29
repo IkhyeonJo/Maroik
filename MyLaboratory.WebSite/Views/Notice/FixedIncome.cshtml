@@ -128,7 +128,7 @@
                             <div class="form-group col-md-6 mb-3">
                                 <label for="createFixedIncomeDepositMyAssetProductName">@localizer["DepositMyAssetProductName"].Value</label>
                                 <br />
-                                <select id="createFixedIncomeDepositMyAssetProductName" name="createFixedIncomeDepositMyAssetProductName" style="max-width:90%;">
+                                <select id="createFixedIncomeDepositMyAssetProductName" name="createFixedIncomeDepositMyAssetProductName" style="max-width:90%;width:210px;text-overflow:ellipsis;">
                                     @foreach (var item in await assetRepository.GetAssetsAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email))
                                     {
                                         if (!item.Deleted)
@@ -237,7 +237,7 @@
                             <div class="form-group col-md-6 mb-3">
                                 <label for="editFixedIncomeDepositMyAssetProductName">@localizer["DepositMyAssetProductName"].Value</label>
                                 <br />
-                                <select id="editFixedIncomeDepositMyAssetProductName" name="editFixedIncomeDepositMyAssetProductName" style="max-width:90%;">
+                                <select id="editFixedIncomeDepositMyAssetProductName" name="editFixedIncomeDepositMyAssetProductName" style="max-width:90%;width:210px;text-overflow:ellipsis;">
                                     @foreach (var item in await assetRepository.GetAssetsAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email))
                                     {
                                         if (!item.Deleted)

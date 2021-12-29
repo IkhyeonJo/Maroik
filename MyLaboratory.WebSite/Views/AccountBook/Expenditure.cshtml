@@ -106,7 +106,7 @@
                             <div class="form-group col-md-6 mb-3">
                                 <label for="createExpenditurePaymentMethod">@localizer["PaymentMethod"].Value</label>
                                 <br />
-                                <select id="createExpenditurePaymentMethod" name="createExpenditurePaymentMethod" style="max-width:90%;">
+                                <select id="createExpenditurePaymentMethod" name="createExpenditurePaymentMethod" style="max-width:90%;width:210px;text-overflow:ellipsis;">
                                     @foreach (var item in await assetRepository.GetAssetsAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email))
                                     {
                                         if (!item.Deleted)
@@ -125,7 +125,7 @@
                             <div class="form-group col-md-6 mb-3">
                                 <label for="createExpenditureMyDepositAsset">@localizer["MyDepositAsset"].Value</label>
                                 <br />
-                                <select id="createExpenditureMyDepositAsset" name="createExpenditureMyDepositAsset" style="max-width:90%;">
+                                <select id="createExpenditureMyDepositAsset" name="createExpenditureMyDepositAsset" style="max-width:90%;width:210px;text-overflow:ellipsis;">
                                     @foreach (var item in await assetRepository.GetAssetsAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email))
                                     {
                                         if (!item.Deleted)
@@ -216,7 +216,7 @@
                             <div class="form-group col-md-6 mb-3">
                                 <label for="editExpenditurePaymentMethod">@localizer["PaymentMethod"].Value</label>
                                 <br />
-                                <select id="editExpenditurePaymentMethod" name="editExpenditurePaymentMethod" style="max-width:90%;">
+                                <select id="editExpenditurePaymentMethod" name="editExpenditurePaymentMethod" style="max-width:90%;width:210px;text-overflow:ellipsis;">
                                     @foreach (var item in await assetRepository.GetAssetsAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email))
                                     {
                                         if (!item.Deleted)
@@ -235,7 +235,7 @@
                             <div class="form-group col-md-6 mb-3">
                                 <label for="editExpenditureMyDepositAsset">@localizer["MyDepositAsset"].Value</label>
                                 <br />
-                                <select id="editExpenditureMyDepositAsset" name="editExpenditureMyDepositAsset" style="max-width:90%;">
+                                <select id="editExpenditureMyDepositAsset" name="editExpenditureMyDepositAsset" style="max-width:90%;width:210px;text-overflow:ellipsis;">
                                     @foreach (var item in await assetRepository.GetAssetsAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email))
                                     {
                                         if (!item.Deleted)
