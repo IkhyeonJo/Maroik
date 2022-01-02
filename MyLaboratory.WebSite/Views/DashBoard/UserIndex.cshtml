@@ -1,4 +1,6 @@
-﻿<section class="content">
+﻿@Html.Hidden("MyValue",123)
+
+<section class="content">
     <div class="container-fluid">
         <div class="row">
 
@@ -23,8 +25,7 @@
                     <div class="card-body">
                         <div class="tab-content p-0">
                             <div class="chart tab-pane active" id="dashboardIncomeTabs-1" style="position: relative; height: 300px;">
-                                 금월 정기 수입 Donut
-                                @*<canvas id="revenue-chart-canvas" height="300" style="height: 300px;"></canvas>*@
+                                <canvas id="regularIncome" style="min-height: 300px; height: 300px; max-height: 300px; max-width: 100%;"></canvas>
                             </div>
                             <div class="chart tab-pane" id="dashboardIncomeTabs-2" style="position: relative; height: 300px;">
                                 금월 비정기 수입 Donut
@@ -59,15 +60,15 @@
                     <div class="card-body">
                         <div class="tab-content p-0">
                             <div class="chart tab-pane active" id="dashboardExpenditureTabs-1" style="position: relative; height: 300px;">
-                                 금월 정기저축 Donut
+                                금월 정기저축 Donut
                                 @*<canvas id="revenue-chart-canvas" height="300" style="height: 300px;"></canvas>*@
                             </div>
                             <div class="chart tab-pane" id="dashboardExpenditureTabs-2" style="position: relative; height: 300px;">
-                                 금월 비소비지출 Donut
+                                금월 비소비지출 Donut
                                 @*<canvas id="sales-chart-canvas" height="300" style="height: 300px;"></canvas>*@
                             </div>
                             <div class="chart tab-pane" id="dashboardExpenditureTabs-3" style="position: relative; height: 300px;">
-                                 금월 소비지출 Donut
+                                금월 소비지출 Donut
                                 @*<canvas id="sales-chart-canvas" height="300" style="height: 300px;"></canvas>*@
                             </div>
                         </div>
@@ -79,10 +80,5 @@
     </div>
 </section>
 @section Scripts{
-    @*<!-- OPTIONAL SCRIPTS -->*@
-<script src="~/user/plugins/chart.js/Chart.min.js"></script>
-    @*<!-- AdminLTE for demo purposes -->*@
-    @*<script src="~/dist/js/demo.js"></script>*@
-    @*<!-- AdminLTE dashboard demo (This is only for demo purposes) -->*@
-<script src="~/user/dist/js/pages/dashboard3.js"></script>
+<script src="~/user/custom/DashBoard/UserIndex/js/site.js" asp-append-version="true"></script>
 }
