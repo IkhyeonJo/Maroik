@@ -50,13 +50,29 @@ namespace MyLaboratory.WebSite.Controllers
             var forecasts = forecastingEngine.Predict();
             #endregion
 
+            #region diaper_panty_stocks
+            var contextStock = new MLContext();
 
-            //foreach (var forecast in forecasts.Forecast)
-            //{
-            //    Console.WriteLine(forecast);
-            //}
+            var dataStock = contextStock.Data.LoadFromTextFile<AdminIndexStockDataOutputViewModel>("./wwwroot/admin/custom/DashBoard/AdminIndex/data/diaper_panty_stocks.csv",
+                hasHeader: true, separatorChar: ',');
+
+            var pipelineStock = contextStock.Forecasting.ForecastBySsa(
+                nameof(AdminIndexStockForecastOutputViewModel.Forecast),
+                nameof(AdminIndexStockDataOutputViewModel.TotalStock),
+                windowSize: 5,
+                seriesLength: 10,
+                trainSize: 578,
+                horizon: 7); // 모든 데이터 학습 후 1주일 치 예측
+
+            var modelStock = pipelineStock.Fit(dataStock);
+
+            var forecastingEngineStock = modelStock.CreateTimeSeriesEngine<AdminIndexStockDataOutputViewModel, AdminIndexStockForecastOutputViewModel>(contextStock);
+
+            var forecastsStock = forecastingEngineStock.Predict();
+            #endregion
 
             ViewBag.ForecastResult = forecasts.Forecast;
+            ViewBag.ForecastStockResult = forecastsStock.Forecast;
 
             return View();
         }

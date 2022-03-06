@@ -9,7 +9,7 @@ using Microsoft.ML.Data;
 
 namespace MyLaboratory.WebSite.Models.ViewModels.DashBoard
 {
-    public class AdminIndexForecastOutputViewModel
+    public class AdminIndexStockForecastOutputViewModel
     {
         public float[] Forecast { get; set; }
     }
