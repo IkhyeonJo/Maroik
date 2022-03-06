@@ -29,6 +29,7 @@ namespace MyLaboratory.WebSite.Controllers
         [HttpGet]
         public IActionResult AdminIndex()
         {
+            #region diaper_panty_sales
             var context = new MLContext();
 
             var data = context.Data.LoadFromTextFile<AdminIndexDataOutputViewModel>("./wwwroot/admin/custom/DashBoard/AdminIndex/data/diaper_panty_sales.csv",
@@ -47,6 +48,8 @@ namespace MyLaboratory.WebSite.Controllers
             var forecastingEngine = model.CreateTimeSeriesEngine<AdminIndexDataOutputViewModel, AdminIndexForecastOutputViewModel>(context);
 
             var forecasts = forecastingEngine.Predict();
+            #endregion
+
 
             //foreach (var forecast in forecasts.Forecast)
             //{
