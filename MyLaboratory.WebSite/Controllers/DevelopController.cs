@@ -33,5 +33,17 @@ namespace MyLaboratory.WebSite.Controllers
         #endregion
 
         #endregion
+
+        #region MachineLearning
+
+        #region Read
+        [HttpGet]
+        public IActionResult MachineLearning()
+        {
+            return View();
+        }
+        #endregion
+
+        #endregion
     }
 }
