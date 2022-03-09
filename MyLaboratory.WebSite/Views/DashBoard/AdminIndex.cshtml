@@ -1,106 +1,25 @@
-﻿@{
-    #region Sales
-    float[] forecastResult = ViewBag.ForecastResult ?? null;
-    List<int> intForecastResult = new List<int>();
-
-    foreach(float item in forecastResult)
-    {
-        intForecastResult.Add((int)item);
-    }
-
-    int thisWeekTotalForecastResult = 0;
-
-    foreach(int item in intForecastResult)
-    {
-        thisWeekTotalForecastResult += item;
-    }
-
-    int pastWeekTotalForecastResult = 4924500 + 4158400 + 5254290 + 6519700 + 5140370 + 4109500 + 2471600;
-
-    var percentage = (double)(((double)(thisWeekTotalForecastResult - pastWeekTotalForecastResult) / (double)(pastWeekTotalForecastResult)) * 100);
-
-    Int64 lastYearDiaperPantySales = 1005816920;
-    Int64 currentYearDiaperPantySales = 1509708210;
-    Int64 totalDiaperPantySales = lastYearDiaperPantySales + currentYearDiaperPantySales;
-
-    var percentageOfSales = (double)(((double)(currentYearDiaperPantySales - lastYearDiaperPantySales) / (double)(lastYearDiaperPantySales)) * 100);
-    #endregion
-
-    #region Stocks
-    float[] forecastStockResult = ViewBag.ForecastStockResult ?? null;
-    List<int> intForecastStockResult = new List<int>();
-
-    foreach(float item in forecastStockResult)
-    {
-        intForecastStockResult.Add((int)item);
-    }
-
-    int thisWeekTotalForecastStockResult = 0;
-
-    foreach(int item in intForecastStockResult)
-    {
-        thisWeekTotalForecastStockResult += item;
-    }
-
-    int pastWeekTotalForecastStockResult = 89 + 75 + 95 + 123 + 93 + 76 + 51;
-
-    var percentageStock = (double)(((double)(thisWeekTotalForecastStockResult - pastWeekTotalForecastStockResult) / (double)(pastWeekTotalForecastStockResult)) * 100);
-
-    Int64 lastYearDiaperPantyStock = 912+1271+1585+2082+2890+3191+4114;
-    Int64 currentYearDiaperPantyStock = 4560+41110+3105+3442+3128+2177+3185;
-    Int64 totalDiaperPantyStock = lastYearDiaperPantyStock + currentYearDiaperPantyStock;
-
-    var percentageOfStocks = (double)(((double)(currentYearDiaperPantyStock - lastYearDiaperPantyStock) / (double)(lastYearDiaperPantyStock)) * 100);
-    #endregion
-}
-@Html.Hidden("intForecastResult0",intForecastResult[0])
-@Html.Hidden("intForecastResult1",intForecastResult[1])
-@Html.Hidden("intForecastResult2",intForecastResult[2])
-@Html.Hidden("intForecastResult3",intForecastResult[3])
-@Html.Hidden("intForecastResult4",intForecastResult[4])
-@Html.Hidden("intForecastResult5",intForecastResult[5])
-@Html.Hidden("intForecastResult6",intForecastResult[6])
-
-@Html.Hidden("intForecastStockResult0",intForecastStockResult[0])
-@Html.Hidden("intForecastStockResult1",intForecastStockResult[1])
-@Html.Hidden("intForecastStockResult2",intForecastStockResult[2])
-@Html.Hidden("intForecastStockResult3",intForecastStockResult[3])
-@Html.Hidden("intForecastStockResult4",intForecastStockResult[4])
-@Html.Hidden("intForecastStockResult5",intForecastStockResult[5])
-@Html.Hidden("intForecastStockResult6",intForecastStockResult[6])
-
-<div class="content">
+﻿<div class="content">
     <div class="container-fluid">
         <div class="row">
             <div class="col-lg-6">
                 <div class="card">
                     <div class="card-header border-0">
                         <div class="d-flex justify-content-between">
-                            <h3 class="card-title">이번 주 기저귀/팬티 예상 매출</h3>
-                            @*<h3 class="card-title">@localizer["Online Store Visitors"]</h3>*@
-                            @*<a href="javascript:void(0);">View Report</a>*@
+                            <h3 class="card-title">@localizer["Online Store Visitors"]</h3>
+                            <a href="javascript:void(0);">View Report</a>
                         </div>
                     </div>
                     <div class="card-body">
                         <div class="d-flex">
                             <p class="d-flex flex-column">
-                                <span class="text-bold text-lg">@(thisWeekTotalForecastResult.ToString("C0"))</span>
-                                <span>이번 주 기저귀/팬티 예상 매출</span>
+                                <span class="text-bold text-lg">820</span>
+                                <span>Visitors Over Time</span>
                             </p>
                             <p class="ml-auto d-flex flex-column text-right">
-                                @if (percentage >= 0)
-                                {
-                                    <span class="text-success">
-                                        <i class="fas fa-arrow-up"></i>@String.Format("{0:0.0}", percentage)%
-                                    </span>
-                                }
-                                else
-                                {
-                                    <span class="text-danger">
-                                        <i class="fas fa-arrow-down"></i>@String.Format("{0:0.0}", percentage)%
-                                    </span>
-                                }
-                                <span class="text-muted">저번 주 대비 이번 주 예상 매출</span>
+                                <span class="text-success">
+                                    <i class="fas fa-arrow-up"></i> 12.5%
+                                </span>
+                                <span class="text-muted">Since last week</span>
                             </p>
                         </div>
 
@@ -110,64 +29,17 @@
 
                         <div class="d-flex flex-row justify-content-end">
                             <span class="mr-2">
-                                <i class="fas fa-square text-primary"></i> 이번 주 예상 매출
+                                <i class="fas fa-square text-primary"></i> This Week
                             </span>
 
                             <span>
-                                <i class="fas fa-square text-gray"></i> 저번 주 매출
+                                <i class="fas fa-square text-gray"></i> Last Week
                             </span>
                         </div>
                     </div>
                 </div>
 
                 <div class="card">
-                    <div class="card-header border-0">
-                        <div class="d-flex justify-content-between">
-                            <h3 class="card-title">이번 주 기저귀/팬티 예상 판매량</h3>
-                            @*<h3 class="card-title">@localizer["Online Store Visitors"]</h3>*@
-                            @*<a href="javascript:void(0);">View Report</a>*@
-                        </div>
-                    </div>
-                    <div class="card-body">
-                        <div class="d-flex">
-                            <p class="d-flex flex-column">
-                                <span class="text-bold text-lg">@(String.Format("{0:#,0}", thisWeekTotalForecastStockResult))개</span>
-                                <span>이번 주 기저귀/팬티 예상 판매량</span>
-                            </p>
-                            <p class="ml-auto d-flex flex-column text-right">
-                                @if (percentageStock >= 0)
-                                {
-                                    <span class="text-success">
-                                        <i class="fas fa-arrow-up"></i>@String.Format("{0:0.0}", percentageStock)%
-                                    </span>
-                                }
-                                else
-                                {
-                                    <span class="text-danger">
-                                        <i class="fas fa-arrow-down"></i>@String.Format("{0:0.0}", percentageStock)%
-                                    </span>
-                                }
-                                <span class="text-muted">저번 주 대비 이번 주 예상 판매량</span>
-                            </p>
-                        </div>
-
-                        <div class="position-relative mb-4">
-                            <canvas id="visitors-stock-chart" height="200"></canvas>
-                        </div>
-
-                        <div class="d-flex flex-row justify-content-end">
-                            <span class="mr-2">
-                                <i class="fas fa-square text-primary"></i> 이번 주 예상 판매량
-                            </span>
-
-                            <span>
-                                <i class="fas fa-square text-gray"></i> 저번 주 판매량
-                            </span>
-                        </div>
-                    </div>
-                </div>
-
-@*                <div class="card">
                     <div class="card-header border-0">
                         <h3 class="card-title">Products</h3>
                         <div class="card-tools">
@@ -193,7 +65,7 @@
                                 <tr>
                                     <td>
                                         <img src="~/admin/dist/img/default-150x150.png" alt="Product 1" class="img-circle img-size-32 mr-2">
-                                        기저귀
+                                        Some Product
                                     </td>
                                     <td>$13 USD</td>
                                     <td>
@@ -212,7 +84,7 @@
                                 <tr>
                                     <td>
                                         <img src="~/admin/dist/img/default-150x150.png" alt="Product 1" class="img-circle img-size-32 mr-2">
-                                        팬티
+                                        Another Product
                                     </td>
                                     <td>$29 USD</td>
                                     <td>
@@ -228,40 +100,69 @@
                                         </a>
                                     </td>
                                 </tr>
+                                <tr>
+                                    <td>
+                                        <img src="~/admin/dist/img/default-150x150.png" alt="Product 1" class="img-circle img-size-32 mr-2">
+                                        Amazing Product
+                                    </td>
+                                    <td>$1,230 USD</td>
+                                    <td>
+                                        <small class="text-danger mr-1">
+                                            <i class="fas fa-arrow-down"></i>
+                                            3%
+                                        </small>
+                                        198 Sold
+                                    </td>
+                                    <td>
+                                        <a href="#" class="text-muted">
+                                            <i class="fas fa-search"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <img src="~/admin/dist/img/default-150x150.png" alt="Product 1" class="img-circle img-size-32 mr-2">
+                                        Perfect Item
+                                        <span class="badge bg-danger">NEW</span>
+                                    </td>
+                                    <td>$199 USD</td>
+                                    <td>
+                                        <small class="text-success mr-1">
+                                            <i class="fas fa-arrow-up"></i>
+                                            63%
+                                        </small>
+                                        87 Sold
+                                    </td>
+                                    <td>
+                                        <a href="#" class="text-muted">
+                                            <i class="fas fa-search"></i>
+                                        </a>
+                                    </td>
+                                </tr>
                             </tbody>
                         </table>
                     </div>
                 </div>
-                *@
             </div>
             <div class="col-lg-6">
                 <div class="card">
                     <div class="card-header border-0">
                         <div class="d-flex justify-content-between">
-                            <h3 class="card-title">기저귀/팬티 매출</h3>
-                            @*<a href="javascript:void(0);">View Report</a>*@
+                            <h3 class="card-title">Sales</h3>
+                            <a href="javascript:void(0);">View Report</a>
                         </div>
                     </div>
                     <div class="card-body">
                         <div class="d-flex">
                             <p class="d-flex flex-column">
-                                <span class="text-bold text-lg">@(totalDiaperPantySales.ToString("C0"))</span>
-                                <span>총 기저귀/팬티 매출</span>
+                                <span class="text-bold text-lg">$18,230.00</span>
+                                <span>Sales Over Time</span>
                             </p>
                             <p class="ml-auto d-flex flex-column text-right">
-                                @if (percentageOfSales >= 0)
-                                {
-                                    <span class="text-success">
-                                        <i class="fas fa-arrow-up"></i>@String.Format("{0:0.0}", percentageOfSales)%
-                                    </span>
-                                }
-                                else
-                                {
-                                    <span class="text-danger">
-                                        <i class="fas fa-arrow-down"></i>@String.Format("{0:0.0}", percentageOfSales)%
-                                    </span>
-                                }
-                                <span class="text-muted">작년 대비 금년 매출</span>
+                                <span class="text-success">
+                                    <i class="fas fa-arrow-up"></i> 33.1%
+                                </span>
+                                <span class="text-muted">Since last month</span>
                             </p>
                         </div>
 
@@ -271,63 +172,17 @@
 
                         <div class="d-flex flex-row justify-content-end">
                             <span class="mr-2">
-                                <i class="fas fa-square text-primary"></i> 금년
+                                <i class="fas fa-square text-primary"></i> This year
                             </span>
 
                             <span>
-                                <i class="fas fa-square text-gray"></i> 작년
+                                <i class="fas fa-square text-gray"></i> Last year
                             </span>
                         </div>
                     </div>
                 </div>
 
                 <div class="card">
-                    <div class="card-header border-0">
-                        <div class="d-flex justify-content-between">
-                            <h3 class="card-title">기저귀/팬티 판매량</h3>
-                            @*<a href="javascript:void(0);">View Report</a>*@
-                        </div>
-                    </div>
-                    <div class="card-body">
-                        <div class="d-flex">
-                            <p class="d-flex flex-column">
-                                <span class="text-bold text-lg">@(String.Format("{0:#,0}", totalDiaperPantyStock))개</span>
-                                <span>총 기저귀/팬티 판매량</span>
-                            </p>
-                            <p class="ml-auto d-flex flex-column text-right">
-                                @if (percentageOfStocks >= 0)
-                                {
-                                    <span class="text-success">
-                                        <i class="fas fa-arrow-up"></i>@String.Format("{0:0.0}", percentageOfStocks)%
-                                    </span>
-                                }
-                                else
-                                {
-                                    <span class="text-danger">
-                                        <i class="fas fa-arrow-down"></i>@String.Format("{0:0.0}", percentageOfStocks)%
-                                    </span>
-                                }
-                                <span class="text-muted">작년 대비 금년 판매량</span>
-                            </p>
-                        </div>
-
-                        <div class="position-relative mb-4">
-                            <canvas id="sales-stock-chart" height="200"></canvas>
-                        </div>
-
-                        <div class="d-flex flex-row justify-content-end">
-                            <span class="mr-2">
-                                <i class="fas fa-square text-primary"></i> 금년
-                            </span>
-
-                            <span>
-                                <i class="fas fa-square text-gray"></i> 작년
-                            </span>
-                        </div>
-                    </div>
-                </div>
-
-@*                <div class="card">
                     <div class="card-header border-0">
                         <h3 class="card-title">Online Store Overview</h3>
                         <div class="card-tools">
@@ -374,7 +229,7 @@
                             </p>
                         </div>
                     </div>
-                </div>*@
+                </div>
             </div>
         </div>
     </div>
@@ -386,5 +241,5 @@
     @*<!-- AdminLTE for demo purposes -->*@
     @*<script src="~/admin/dist/js/demo.js"></script>*@
     @*<!-- AdminLTE dashboard demo (This is only for demo purposes) -->*@
-    <script src="~/admin/custom/DashBoard/AdminIndex/js/dashboard3.js"></script>
+    <script src="~/admin/dist/js/pages/dashboard3.js"></script>
 }

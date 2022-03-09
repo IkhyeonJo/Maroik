@@ -10,9 +10,6 @@ using MyLaboratory.WebSite.Services;
 using Microsoft.AspNetCore.Authorization;
 using MyLaboratory.WebSite.Common;
 using MyLaboratory.WebSite.Contracts;
-using Microsoft.ML;
-using MyLaboratory.WebSite.Models.ViewModels.DashBoard;
-using Microsoft.ML.Transforms.TimeSeries;
 
 namespace MyLaboratory.WebSite.Controllers
 {
@@ -29,51 +26,6 @@ namespace MyLaboratory.WebSite.Controllers
         [HttpGet]
         public IActionResult AdminIndex()
         {
-            #region diaper_panty_sales
-            var context = new MLContext();
-
-            var data = context.Data.LoadFromTextFile<AdminIndexDataOutputViewModel>("./wwwroot/admin/custom/DashBoard/AdminIndex/data/diaper_panty_sales.csv",
-                hasHeader: true, separatorChar: ',');
-
-            var pipeline = context.Forecasting.ForecastBySsa(
-                nameof(AdminIndexForecastOutputViewModel.Forecast),
-                nameof(AdminIndexDataOutputViewModel.TotalSales),
-                windowSize: 5,
-                seriesLength: 10,
-                trainSize: 578,
-                horizon: 7); // 모든 데이터 학습 후 1주일 치 예측
-
-            var model = pipeline.Fit(data);
-
-            var forecastingEngine = model.CreateTimeSeriesEngine<AdminIndexDataOutputViewModel, AdminIndexForecastOutputViewModel>(context);
-
-            var forecasts = forecastingEngine.Predict();
-            #endregion
-
-            #region diaper_panty_stocks
-            var contextStock = new MLContext();
-
-            var dataStock = contextStock.Data.LoadFromTextFile<AdminIndexStockDataOutputViewModel>("./wwwroot/admin/custom/DashBoard/AdminIndex/data/diaper_panty_stocks.csv",
-                hasHeader: true, separatorChar: ',');
-
-            var pipelineStock = contextStock.Forecasting.ForecastBySsa(
-                nameof(AdminIndexStockForecastOutputViewModel.Forecast),
-                nameof(AdminIndexStockDataOutputViewModel.TotalStock),
-                windowSize: 5,
-                seriesLength: 10,
-                trainSize: 578,
-                horizon: 7); // 모든 데이터 학습 후 1주일 치 예측
-
-            var modelStock = pipelineStock.Fit(dataStock);
-
-            var forecastingEngineStock = modelStock.CreateTimeSeriesEngine<AdminIndexStockDataOutputViewModel, AdminIndexStockForecastOutputViewModel>(contextStock);
-
-            var forecastsStock = forecastingEngineStock.Predict();
-            #endregion
-
-            ViewBag.ForecastResult = forecasts.Forecast;
-            ViewBag.ForecastStockResult = forecastsStock.Forecast;
-
             return View();
         }
         #endregion
