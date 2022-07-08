@@ -244,8 +244,7 @@ namespace MyLaboratory.WebSite.Controllers
                     }
                     else
                     {
-                        if ((item.Id.ToString() ?? "").Contains(wholeSearch) ||
-                            localizer[item.MainClass?.ToString() ?? ""].Value.Contains(wholeSearch) ||
+                        if (localizer[item.MainClass?.ToString() ?? ""].Value.Contains(wholeSearch) ||
                             localizer[item.SubClass?.ToString() ?? ""].Value.Contains(wholeSearch) ||
                             (item.Contents?.ToString() ?? "").Contains(wholeSearch) ||
                             (item.Amount.ToString() ?? "").Contains(wholeSearch) ||
@@ -915,8 +914,7 @@ namespace MyLaboratory.WebSite.Controllers
                     }
                     else
                     {
-                        if ((item.Id.ToString() ?? "").Contains(wholeSearch) ||
-                            localizer[item.MainClass?.ToString() ?? ""].Value.Contains(wholeSearch) ||
+                        if (localizer[item.MainClass?.ToString() ?? ""].Value.Contains(wholeSearch) ||
                             localizer[item.SubClass?.ToString() ?? ""].Value.Contains(wholeSearch) ||
                             (item.Contents?.ToString() ?? "").Contains(wholeSearch) ||
                             (item.Amount.ToString() ?? "").Contains(wholeSearch) ||
