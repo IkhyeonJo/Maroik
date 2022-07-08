@@ -567,7 +567,6 @@ namespace MyLaboratory.WebSite.Controllers
 
                 fixedIncomeOutputViewModels.Add(new FixedIncomeOutputViewModel()
                 {
-                    Id = item.Id,
                     MainClass = localizer[item.MainClass.ToString()].Value,
                     SubClass = localizer[item.SubClass.ToString()].Value,
                     Contents = item.Contents,
@@ -594,38 +593,36 @@ namespace MyLaboratory.WebSite.Controllers
                 workSheetMenuOutputViewModels.Row(1).Height = 20;
                 workSheetMenuOutputViewModels.Row(1).Style.HorizontalAlignment = OfficeOpenXml.Style.ExcelHorizontalAlignment.Center;
                 workSheetMenuOutputViewModels.Row(1).Style.Font.Bold = true;
-                workSheetMenuOutputViewModels.Cells[1, 1].Value = localizer[nameof(FixedIncomeOutputViewModel.Id).ToString()].Value;
-                workSheetMenuOutputViewModels.Cells[1, 2].Value = localizer[nameof(FixedIncomeOutputViewModel.MainClass).ToString()].Value;
-                workSheetMenuOutputViewModels.Cells[1, 3].Value = localizer[nameof(FixedIncomeOutputViewModel.SubClass).ToString()].Value;
-                workSheetMenuOutputViewModels.Cells[1, 4].Value = localizer[nameof(FixedIncomeOutputViewModel.Contents).ToString()].Value;
-                workSheetMenuOutputViewModels.Cells[1, 5].Value = localizer[nameof(FixedIncomeOutputViewModel.Amount).ToString()].Value;
-                workSheetMenuOutputViewModels.Cells[1, 6].Value = localizer[nameof(FixedIncomeOutputViewModel.DepositMonth).ToString()].Value;
-                workSheetMenuOutputViewModels.Cells[1, 7].Value = localizer[nameof(FixedIncomeOutputViewModel.DepositDay).ToString()].Value;
-                workSheetMenuOutputViewModels.Cells[1, 8].Value = localizer[nameof(FixedIncomeOutputViewModel.MaturityDate).ToString()].Value;
-                workSheetMenuOutputViewModels.Cells[1, 9].Value = localizer[nameof(FixedIncomeOutputViewModel.Note).ToString()].Value;
-                workSheetMenuOutputViewModels.Cells[1, 10].Value = localizer[nameof(FixedIncomeOutputViewModel.DepositMyAssetProductName).ToString()].Value;
-                workSheetMenuOutputViewModels.Cells[1, 11].Value = localizer[nameof(FixedIncomeOutputViewModel.Created).ToString()].Value;
-                workSheetMenuOutputViewModels.Cells[1, 12].Value = localizer[nameof(FixedIncomeOutputViewModel.Updated).ToString()].Value;
-                workSheetMenuOutputViewModels.Cells[1, 13].Value = localizer[nameof(FixedIncomeOutputViewModel.Noticed).ToString()].Value;
-                workSheetMenuOutputViewModels.Cells[1, 14].Value = localizer[nameof(FixedIncomeOutputViewModel.Expired).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 1].Value = localizer[nameof(FixedIncomeOutputViewModel.MainClass).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 2].Value = localizer[nameof(FixedIncomeOutputViewModel.SubClass).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 3].Value = localizer[nameof(FixedIncomeOutputViewModel.Contents).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 4].Value = localizer[nameof(FixedIncomeOutputViewModel.Amount).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 5].Value = localizer[nameof(FixedIncomeOutputViewModel.DepositMonth).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 6].Value = localizer[nameof(FixedIncomeOutputViewModel.DepositDay).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 7].Value = localizer[nameof(FixedIncomeOutputViewModel.MaturityDate).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 8].Value = localizer[nameof(FixedIncomeOutputViewModel.Note).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 9].Value = localizer[nameof(FixedIncomeOutputViewModel.DepositMyAssetProductName).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 10].Value = localizer[nameof(FixedIncomeOutputViewModel.Created).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 11].Value = localizer[nameof(FixedIncomeOutputViewModel.Updated).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 12].Value = localizer[nameof(FixedIncomeOutputViewModel.Noticed).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 13].Value = localizer[nameof(FixedIncomeOutputViewModel.Expired).ToString()].Value;
 
                 int recordIndex = 2;
                 foreach (var item in fixedIncomeOutputViewModels.OrderByDescending(a => a.Expired).ThenByDescending(a => a.Noticed))
                 {
-                    workSheetMenuOutputViewModels.Cells[recordIndex, 1].Value = item.Id;
-                    workSheetMenuOutputViewModels.Cells[recordIndex, 2].Value = localizer[item?.MainClass?.ToString() ?? ""].Value;
-                    workSheetMenuOutputViewModels.Cells[recordIndex, 3].Value = localizer[item?.SubClass?.ToString() ?? ""].Value;
-                    workSheetMenuOutputViewModels.Cells[recordIndex, 4].Value = item.Contents;
-                    workSheetMenuOutputViewModels.Cells[recordIndex, 5].Value = item.Amount;
-                    workSheetMenuOutputViewModels.Cells[recordIndex, 6].Value = item.DepositMonth;
-                    workSheetMenuOutputViewModels.Cells[recordIndex, 7].Value = item.DepositDay;
-                    workSheetMenuOutputViewModels.Cells[recordIndex, 8].Value = item.MaturityDate;
-                    workSheetMenuOutputViewModels.Cells[recordIndex, 9].Value = item.Note;
-                    workSheetMenuOutputViewModels.Cells[recordIndex, 10].Value = item.DepositMyAssetProductName;
-                    workSheetMenuOutputViewModels.Cells[recordIndex, 11].Value = item.Created.ToString();
-                    workSheetMenuOutputViewModels.Cells[recordIndex, 12].Value = item.Updated.ToString();
-                    workSheetMenuOutputViewModels.Cells[recordIndex, 13].Value = item.Noticed.ToString();
-                    workSheetMenuOutputViewModels.Cells[recordIndex, 14].Value = item.Expired.ToString();
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 1].Value = localizer[item?.MainClass?.ToString() ?? ""].Value;
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 2].Value = localizer[item?.SubClass?.ToString() ?? ""].Value;
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 3].Value = item.Contents;
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 4].Value = item.Amount;
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 5].Value = item.DepositMonth;
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 6].Value = item.DepositDay;
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 7].Value = item.MaturityDate;
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 8].Value = item.Note;
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 9].Value = item.DepositMyAssetProductName;
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 10].Value = item.Created.ToString();
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 11].Value = item.Updated.ToString();
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 12].Value = item.Noticed.ToString();
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 13].Value = item.Expired.ToString();
                     recordIndex++;
                 }
 
@@ -1326,7 +1323,6 @@ namespace MyLaboratory.WebSite.Controllers
 
                 fixedExpenditureOutputViewModels.Add(new FixedExpenditureOutputViewModel()
                 {
-                    Id = item.Id,
                     MainClass = localizer[item.MainClass.ToString()].Value,
                     SubClass = localizer[item.SubClass.ToString()].Value,
                     Contents = item.Contents,
@@ -1354,40 +1350,38 @@ namespace MyLaboratory.WebSite.Controllers
                 workSheetMenuOutputViewModels.Row(1).Height = 20;
                 workSheetMenuOutputViewModels.Row(1).Style.HorizontalAlignment = OfficeOpenXml.Style.ExcelHorizontalAlignment.Center;
                 workSheetMenuOutputViewModels.Row(1).Style.Font.Bold = true;
-                workSheetMenuOutputViewModels.Cells[1, 1].Value = localizer[nameof(FixedExpenditureOutputViewModel.Id).ToString()].Value;
-                workSheetMenuOutputViewModels.Cells[1, 2].Value = localizer[nameof(FixedExpenditureOutputViewModel.MainClass).ToString()].Value;
-                workSheetMenuOutputViewModels.Cells[1, 3].Value = localizer[nameof(FixedExpenditureOutputViewModel.SubClass).ToString()].Value;
-                workSheetMenuOutputViewModels.Cells[1, 4].Value = localizer[nameof(FixedExpenditureOutputViewModel.Contents).ToString()].Value;
-                workSheetMenuOutputViewModels.Cells[1, 5].Value = localizer[nameof(FixedExpenditureOutputViewModel.Amount).ToString()].Value;
-                workSheetMenuOutputViewModels.Cells[1, 6].Value = localizer[nameof(FixedExpenditureOutputViewModel.PaymentMethod).ToString()].Value;
-                workSheetMenuOutputViewModels.Cells[1, 7].Value = localizer[nameof(FixedExpenditureOutputViewModel.MyDepositAsset).ToString()].Value;
-                workSheetMenuOutputViewModels.Cells[1, 8].Value = localizer[nameof(FixedExpenditureOutputViewModel.DepositMonth).ToString()].Value;
-                workSheetMenuOutputViewModels.Cells[1, 9].Value = localizer[nameof(FixedExpenditureOutputViewModel.DepositDay).ToString()].Value;
-                workSheetMenuOutputViewModels.Cells[1, 10].Value = localizer[nameof(FixedExpenditureOutputViewModel.MaturityDate).ToString()].Value;
-                workSheetMenuOutputViewModels.Cells[1, 11].Value = localizer[nameof(FixedExpenditureOutputViewModel.Created).ToString()].Value;
-                workSheetMenuOutputViewModels.Cells[1, 12].Value = localizer[nameof(FixedExpenditureOutputViewModel.Updated).ToString()].Value;
-                workSheetMenuOutputViewModels.Cells[1, 13].Value = localizer[nameof(FixedExpenditureOutputViewModel.Note).ToString()].Value;
-                workSheetMenuOutputViewModels.Cells[1, 14].Value = localizer[nameof(FixedExpenditureOutputViewModel.Noticed).ToString()].Value;
-                workSheetMenuOutputViewModels.Cells[1, 15].Value = localizer[nameof(FixedExpenditureOutputViewModel.Expired).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 1].Value = localizer[nameof(FixedExpenditureOutputViewModel.MainClass).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 2].Value = localizer[nameof(FixedExpenditureOutputViewModel.SubClass).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 3].Value = localizer[nameof(FixedExpenditureOutputViewModel.Contents).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 4].Value = localizer[nameof(FixedExpenditureOutputViewModel.Amount).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 5].Value = localizer[nameof(FixedExpenditureOutputViewModel.PaymentMethod).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 6].Value = localizer[nameof(FixedExpenditureOutputViewModel.MyDepositAsset).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 7].Value = localizer[nameof(FixedExpenditureOutputViewModel.DepositMonth).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 8].Value = localizer[nameof(FixedExpenditureOutputViewModel.DepositDay).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 9].Value = localizer[nameof(FixedExpenditureOutputViewModel.MaturityDate).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 10].Value = localizer[nameof(FixedExpenditureOutputViewModel.Created).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 11].Value = localizer[nameof(FixedExpenditureOutputViewModel.Updated).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 12].Value = localizer[nameof(FixedExpenditureOutputViewModel.Note).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 13].Value = localizer[nameof(FixedExpenditureOutputViewModel.Noticed).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 14].Value = localizer[nameof(FixedExpenditureOutputViewModel.Expired).ToString()].Value;
 
                 int recordIndex = 2;
                 foreach (var item in fixedExpenditureOutputViewModels.OrderByDescending(a => a.Expired).ThenByDescending(a => a.Noticed))
                 {
-                    workSheetMenuOutputViewModels.Cells[recordIndex, 1].Value = item.Id;
-                    workSheetMenuOutputViewModels.Cells[recordIndex, 2].Value = localizer[item?.MainClass?.ToString() ?? ""].Value;
-                    workSheetMenuOutputViewModels.Cells[recordIndex, 3].Value = localizer[item?.SubClass?.ToString() ?? ""].Value;
-                    workSheetMenuOutputViewModels.Cells[recordIndex, 4].Value = item.Contents;
-                    workSheetMenuOutputViewModels.Cells[recordIndex, 5].Value = item.Amount;
-                    workSheetMenuOutputViewModels.Cells[recordIndex, 6].Value = item.PaymentMethod;
-                    workSheetMenuOutputViewModels.Cells[recordIndex, 7].Value = item.MyDepositAsset;
-                    workSheetMenuOutputViewModels.Cells[recordIndex, 8].Value = item.DepositMonth;
-                    workSheetMenuOutputViewModels.Cells[recordIndex, 9].Value = item.DepositDay;
-                    workSheetMenuOutputViewModels.Cells[recordIndex, 10].Value = item.MaturityDate;
-                    workSheetMenuOutputViewModels.Cells[recordIndex, 11].Value = item.Created.ToString();
-                    workSheetMenuOutputViewModels.Cells[recordIndex, 12].Value = item.Updated.ToString();
-                    workSheetMenuOutputViewModels.Cells[recordIndex, 13].Value = item.Note;
-                    workSheetMenuOutputViewModels.Cells[recordIndex, 14].Value = item.Noticed.ToString();
-                    workSheetMenuOutputViewModels.Cells[recordIndex, 15].Value = item.Expired.ToString();
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 1].Value = localizer[item?.MainClass?.ToString() ?? ""].Value;
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 2].Value = localizer[item?.SubClass?.ToString() ?? ""].Value;
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 3].Value = item.Contents;
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 4].Value = item.Amount;
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 5].Value = item.PaymentMethod;
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 6].Value = item.MyDepositAsset;
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 7].Value = item.DepositMonth;
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 8].Value = item.DepositDay;
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 9].Value = item.MaturityDate;
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 10].Value = item.Created.ToString();
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 11].Value = item.Updated.ToString();
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 12].Value = item.Note;
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 13].Value = item.Noticed.ToString();
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 14].Value = item.Expired.ToString();
                     recordIndex++;
                 }
 
