@@ -3,6 +3,7 @@
 @model UserIndexOutputViewModel
 
 @{
+    #region 수입
     var regularIncome = Model.Incomes.Where(x=>x.MainClass == "RegularIncome").ToList();
     var irregularIncome = Model.Incomes.Where(x=>x.MainClass == "IrregularIncome").ToList();
 
@@ -25,6 +26,7 @@
 
     irregularIncomeLaborIncome = irregularIncome.Where(x => x.SubClass == "LaborIncome").Sum(v => v.Amount);
     irregularIncomeOtherIncome = irregularIncome.Where(x => x.SubClass == "OtherIncome").Sum(v => v.Amount);
+    #endregion
 
 }
 
