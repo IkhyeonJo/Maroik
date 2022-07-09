@@ -28,6 +28,24 @@ namespace MyLaboratory.Common.DataAccess.Services
         }
 
         /// <summary>
+        /// 로그인 계정에 해당하는 금년월 수입을 구합니다.
+        /// </summary>
+        /// <param name="email"></param>
+        /// <param name="yearMonth"></param>
+        /// <returns></returns>
+        public async Task<List<Income>> GetCurrentYearMonthIncomesAsync(string email, string yearMonth)
+        {
+            return await context.Incomes.FromSqlInterpolated<Income>
+                    (
+                        @$"SELECT *
+                            FROM Income
+                            WHERE 
+                            DATE_FORMAT(Created, '%Y-%m') = {yearMonth}
+                            AND AccountEmail = {email}"
+                    ).ToListAsync();
+        }
+
+        /// <summary>
         /// 수입을 생성합니다.
         /// </summary>
         /// <param name="income"></param>
