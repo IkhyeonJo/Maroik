@@ -792,6 +792,8 @@ Executing Dynamically Generated SQL in EF Core
 https://www.pmichaels.net/2020/10/10/executing-dynamically-generated-sql-in-ef-core/
 How to handle dynamic sql parameters
 https://stackoverflow.com/questions/8482028/how-to-handle-dynamic-sql-parameters
+C# / SqlServer : Dynamic SqlParameter creation
+https://www.techpowerup.com/forums/threads/c-sqlserver-dynamic-sqlparameter-creation.101663/
 
 SQL Operators
 https://www.w3schools.com/mysql/mysql_operators.asp
