@@ -785,3 +785,6 @@ https://stackoverflow.com/questions/10671614/how-to-control-the-width-of-select-
 
 Entity Framework Core - FromSqlRaw Vs FromSqlInterpolated
 https://www.c-sharpcorner.com/blogs/fromsqlraw-vs-fromsqlinterpolated
+
+How to pass a dynamic/variable list of values as SqlParameters with FromSqlRaw in EF Core
+https://erikej.github.io/efcore/sqlserver/2020/04/20/use-dynamic-sqlparameters-with-fromsql.html
