@@ -788,3 +788,4 @@ https://www.c-sharpcorner.com/blogs/fromsqlraw-vs-fromsqlinterpolated
 
 How to pass a dynamic/variable list of values as SqlParameters with FromSqlRaw in EF Core
 https://erikej.github.io/efcore/sqlserver/2020/04/20/use-dynamic-sqlparameters-with-fromsql.html
+https://stackoverflow.com/questions/8482028/how-to-handle-dynamic-sql-parameters
