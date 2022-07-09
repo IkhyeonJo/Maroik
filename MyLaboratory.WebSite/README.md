@@ -781,3 +781,7 @@ https://quickchart.io/documentation/chart-js/custom-pie-doughnut-chart-labels/
 
 How to control the width of select tag?
 https://stackoverflow.com/questions/10671614/how-to-control-the-width-of-select-tag/10671666#10671666
+
+
+Entity Framework Core - FromSqlRaw Vs FromSqlInterpolated
+https://www.c-sharpcorner.com/blogs/fromsqlraw-vs-fromsqlinterpolated
