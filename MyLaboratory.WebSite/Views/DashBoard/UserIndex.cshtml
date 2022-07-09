@@ -28,6 +28,12 @@
     irregularIncomeOtherIncome = irregularIncome.Where(x => x.SubClass == "OtherIncome").Sum(v => v.Amount);
     #endregion
 
+    #region 지출
+    var regularSavings = Model.Expenditures.Where(x=>x.MainClass == "RegularSavings").ToList();
+    var nonConsumerSpending = Model.Expenditures.Where(x=>x.MainClass == "NonConsumerSpending").ToList();
+    var consumerSpending = Model.Expenditures.Where(x=>x.MainClass == "ConsumerSpending").ToList();
+
+    #endregion
 }
 
 @Html.Hidden("MyValue",123)
