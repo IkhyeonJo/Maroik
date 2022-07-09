@@ -1,4 +1,34 @@
-﻿@Html.Hidden("MyValue",123)
+﻿@using MyLaboratory.WebSite.Models.ViewModels.DashBoard
+
+@model UserIndexOutputViewModel
+
+@{
+    var regularIncome = Model.Incomes.Where(x=>x.MainClass == "RegularIncome").ToList();
+    var irregularIncome = Model.Incomes.Where(x=>x.MainClass == "IrregularIncome").ToList();
+
+    long regularIncomeLaborIncome = 0;
+    long regularIncomeBusinessIncome = 0;
+    long regularIncomePensionIncome = 0;
+    long regularIncomeFinancialIncome = 0;
+    long regularIncomeRentalIncome = 0;
+    long regularIncomeOtherIncome = 0;
+
+    regularIncomeLaborIncome = regularIncome.Where(x => x.SubClass == "LaborIncome").Sum(v => v.Amount);
+    regularIncomeBusinessIncome = regularIncome.Where(x => x.SubClass == "BusinessIncome").Sum(v => v.Amount);
+    regularIncomePensionIncome = regularIncome.Where(x => x.SubClass == "PensionIncome").Sum(v => v.Amount);
+    regularIncomeFinancialIncome = regularIncome.Where(x => x.SubClass == "FinancialIncome").Sum(v => v.Amount);
+    regularIncomeRentalIncome = regularIncome.Where(x => x.SubClass == "RentalIncome").Sum(v => v.Amount);
+    regularIncomeOtherIncome = regularIncome.Where(x => x.SubClass == "OtherIncome").Sum(v => v.Amount);
+
+    long irregularIncomeLaborIncome = 0;
+    long irregularIncomeOtherIncome = 0;
+
+    irregularIncomeLaborIncome = irregularIncome.Where(x => x.SubClass == "LaborIncome").Sum(v => v.Amount);
+    irregularIncomeOtherIncome = irregularIncome.Where(x => x.SubClass == "OtherIncome").Sum(v => v.Amount);
+
+}
+
+@Html.Hidden("MyValue",123)
 
 <section class="content">
     <div class="container-fluid">
