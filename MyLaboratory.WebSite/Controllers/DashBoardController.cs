@@ -15,6 +15,7 @@ using System.Threading.Tasks;
 using Newtonsoft.Json;
 using MyLaboratory.Common.DataAccess.Models;
 using System.Text;
+using MyLaboratory.WebSite.Models.ViewModels.DashBoard;
 
 namespace MyLaboratory.WebSite.Controllers
 {
@@ -22,11 +23,13 @@ namespace MyLaboratory.WebSite.Controllers
     {
         private readonly ILogger<DashBoardController> logger;
         private readonly IIncomeRepository incomeRepository;
+        private readonly IExpenditureRepository expenditureRepository;
 
-        public DashBoardController(ILogger<DashBoardController> logger, IIncomeRepository incomeRepository)
+        public DashBoardController(ILogger<DashBoardController> logger, IIncomeRepository incomeRepository, IExpenditureRepository expenditureRepository)
         {
             this.logger = logger;
             this.incomeRepository = incomeRepository;
+            this.expenditureRepository = expenditureRepository;
         }
 
         #region Admin
@@ -41,14 +44,20 @@ namespace MyLaboratory.WebSite.Controllers
         [HttpGet]
         public async Task<IActionResult> UserIndex()
         {
+            #region Current Year & Month Income/Expenditure
             HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
-            #region Current Year & Month Income
             var currentYearMonth = DateTime.Now.ToString("yyyy-MM");
             var currentLoginUserEmail = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email;
 
-            var tempCurrentYearMonthIncomes = await incomeRepository.GetCurrentYearMonthIncomesAsync(currentLoginUserEmail, currentYearMonth);
+            var incomes = await incomeRepository.GetCurrentYearMonthIncomesAsync(currentLoginUserEmail, currentYearMonth);
+            var expenditures = await expenditureRepository.GetCurrentYearMonthExpendituresAsync(currentLoginUserEmail, currentYearMonth);
+
+            var userIndexOutputViewModel = new UserIndexOutputViewModel();
+            userIndexOutputViewModel.Incomes = incomes;
+            userIndexOutputViewModel.Expenditures = expenditures;
             #endregion
-            return View();
+
+            return View(userIndexOutputViewModel);
         }
         #endregion
 
