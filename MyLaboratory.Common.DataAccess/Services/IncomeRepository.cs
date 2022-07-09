@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using MyLaboratory.Common.DataAccess.Data;
 using MyLaboratory.Common.DataAccess.Models;
 using MyLaboratory.Common.DataAccess.Contracts;
+using MySqlConnector;
 
 namespace MyLaboratory.Common.DataAccess.Services
 {
@@ -35,6 +36,23 @@ namespace MyLaboratory.Common.DataAccess.Services
         /// <returns></returns>
         public async Task<List<Income>> GetCurrentYearMonthIncomesAsync(string email, string yearMonth)
         {
+            //var items = new int[] { 72, 73, 74 };
+
+            //var parameters = new string[items.Length];
+            //var sqlParameters = new List<MySqlParameter>();
+            //for (var i = 0; i < items.Length; i++)
+            //{
+            //    // Key Value 해서 넣으면 될 듯
+            //    parameters[i] = string.Format("@p{0}", i);
+            //    sqlParameters.Add(new MySqlParameter(parameters[i], items[i]));
+            //}
+
+            //var rawCommand = string.Format("SELECT * from Income WHERE Id IN ({0})", string.Join(", ", parameters));
+
+            //var shipperList = await context.Incomes
+            //    .FromSqlRaw(rawCommand, sqlParameters.ToArray())
+            //    .ToListAsync();
+
             return await context.Incomes.FromSqlInterpolated<Income>
                     (
                         @$"SELECT *
