@@ -11,7 +11,7 @@ namespace MyLaboratory.WebSite.Models.ViewModels.DashBoard
 {
     public class UserIndexOutputViewModel
     {
-        public IEnumerable<Income> Incomes { get; set; }
-        public IEnumerable<Expenditure> Expenditures { get; set; }
+        public IEnumerable<Income> Incomes { get; set; } = new List<Income>();
+        public IEnumerable<Expenditure> Expenditures { get; set; } = new List<Expenditure>();
     }
 }
