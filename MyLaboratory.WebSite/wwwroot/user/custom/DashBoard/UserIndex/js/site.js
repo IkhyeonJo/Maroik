@@ -27,8 +27,7 @@
         maintainAspectRatio: false,
         responsive: true,
     }
-    //Create pie or douhnut chart
-    // You can switch between pie and douhnut using the method below.
+
     new Chart(donutChartCanvasRegularIncome, {
         type: 'doughnut',
         data: donutDataRegularIncome,
@@ -57,8 +56,7 @@
         maintainAspectRatio: false,
         responsive: true,
     }
-    //Create pie or douhnut chart
-    // You can switch between pie and douhnut using the method below.
+
     new Chart(donutChartCanvasIrregularIncome, {
         type: 'doughnut',
         data: donutDataIrregularIncome,
