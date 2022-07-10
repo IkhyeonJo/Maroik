@@ -797,6 +797,3 @@ https://www.techpowerup.com/forums/threads/c-sqlserver-dynamic-sqlparameter-crea
 
 SQL Operators
 https://www.w3schools.com/mysql/mysql_operators.asp
-
-Pie / Donut
-https://apexcharts.com/docs/chart-types/pie-donut/
