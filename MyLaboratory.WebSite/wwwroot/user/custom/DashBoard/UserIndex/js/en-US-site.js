@@ -108,7 +108,7 @@
             'DebtRepayment',
             'Tax',
             'SocialInsurance',
-            'InterHouseholdTranserExpenses',
+            'InterHouseholdTransferExpenses',
             'NonProfitOrganizationTransfer',
         ],
         datasets: [
