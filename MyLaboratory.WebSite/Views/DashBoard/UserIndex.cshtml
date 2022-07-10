@@ -3,6 +3,8 @@
 @model UserIndexOutputViewModel
 
 @{
+    var currentCulture = Context.Features.Get<Microsoft.AspNetCore.Localization.IRequestCultureFeature>().RequestCulture.Culture.Name;
+
     #region 수입
 
     #region 대분류 = '정기수입'
@@ -99,7 +101,7 @@
 }
 
 @*수입*@
-@*정규 수입*@
+@*정기수입*@
 @Html.Hidden($"{nameof(regularIncomeLaborIncome)}",regularIncomeLaborIncome)
 @Html.Hidden($"{nameof(regularIncomeBusinessIncome)}",regularIncomeBusinessIncome)
 @Html.Hidden($"{nameof(regularIncomePensionIncome)}",regularIncomePensionIncome)
@@ -107,7 +109,7 @@
 @Html.Hidden($"{nameof(regularIncomeRentalIncome)}",regularIncomeRentalIncome)
 @Html.Hidden($"{nameof(regularIncomeOtherIncome)}",regularIncomeOtherIncome)
 
-@*비정규 수입*@
+@*비정기수입*@
 @Html.Hidden($"{nameof(irregularIncomeLaborIncome)}",irregularIncomeLaborIncome)
 @Html.Hidden($"{nameof(irregularIncomeOtherIncome)}",irregularIncomeOtherIncome)
 
@@ -147,15 +149,15 @@
                     <div class="card-header">
                         <h3 class="card-title">
                             <i class="fas fa-chart-pie mr-1"></i>
-                            금월 수입
+                            @localizer["Income this month"].Value
                         </h3>
                         <div class="card-tools">
                             <ul class="nav nav-pills ml-auto">
                                 <li class="nav-item">
-                                    <a class="nav-link active" href="#dashboardIncomeTabs-1" data-toggle="tab">Regular income</a>
+                                    <a class="nav-link active" href="#dashboardIncomeTabs-1" data-toggle="tab">@localizer["Regular income"].Value</a>
                                 </li>
                                 <li class="nav-item">
-                                    <a class="nav-link" href="#dashboardIncomeTabs-2" data-toggle="tab">Irregular income</a>
+                                    <a class="nav-link" href="#dashboardIncomeTabs-2" data-toggle="tab">@localizer["Irregular income"].Value</a>
                                 </li>
                             </ul>
                         </div>
@@ -178,18 +180,18 @@
                     <div class="card-header">
                         <h3 class="card-title">
                             <i class="fas fa-chart-pie mr-1"></i>
-                            금월 지출
+                            @localizer["Expenditure this month"].Value
                         </h3>
                         <div class="card-tools">
                             <ul class="nav nav-pills ml-auto">
                                 <li class="nav-item">
-                                    <a class="nav-link active" href="#dashboardExpenditureTabs-1" data-toggle="tab">Regular savings</a>
+                                    <a class="nav-link active" href="#dashboardExpenditureTabs-1" data-toggle="tab">@localizer["Regular savings"].Value</a>
                                 </li>
                                 <li class="nav-item">
-                                    <a class="nav-link" href="#dashboardExpenditureTabs-2" data-toggle="tab">NonConsumer spending</a>
+                                    <a class="nav-link" href="#dashboardExpenditureTabs-2" data-toggle="tab">@localizer["NonConsumer spending"].Value</a>
                                 </li>
                                 <li class="nav-item">
-                                    <a class="nav-link" href="#dashboardExpenditureTabs-3" data-toggle="tab">Consumer spending</a>
+                                    <a class="nav-link" href="#dashboardExpenditureTabs-3" data-toggle="tab">@localizer["Consumer spending"].Value</a>
                                 </li>
                             </ul>
                         </div>
@@ -214,5 +216,12 @@
     </div>
 </section>
 @section Scripts{
-    <script src="~/user/custom/DashBoard/UserIndex/js/site.js" asp-append-version="true"></script>
+    @if (currentCulture == "ko-KR")
+    {
+        <script src="~/user/custom/DashBoard/UserIndex/js/ko-KR-site.js" asp-append-version="true"></script>
+    }
+    else if (currentCulture == "en-US")
+    {
+        <script src="~/user/custom/DashBoard/UserIndex/js/en-US-site.js" asp-append-version="true"></script>
+    }
 }
