@@ -36,7 +36,17 @@
     #endregion
 }
 
-@Html.Hidden("MyValue",123)
+@*정규 수입*@
+@Html.Hidden($"{nameof(regularIncomeLaborIncome)}",regularIncomeLaborIncome)
+@Html.Hidden($"{nameof(regularIncomeBusinessIncome)}",regularIncomeBusinessIncome)
+@Html.Hidden($"{nameof(regularIncomePensionIncome)}",regularIncomePensionIncome)
+@Html.Hidden($"{nameof(regularIncomeFinancialIncome)}",regularIncomeFinancialIncome)
+@Html.Hidden($"{nameof(regularIncomeRentalIncome)}",regularIncomeRentalIncome)
+@Html.Hidden($"{nameof(regularIncomeOtherIncome)}",regularIncomeOtherIncome)
+
+@*비정규 수입*@
+@Html.Hidden($"{nameof(irregularIncomeLaborIncome)}",irregularIncomeLaborIncome)
+@Html.Hidden($"{nameof(irregularIncomeOtherIncome)}",irregularIncomeOtherIncome)
 
 <section class="content">
     <div class="container-fluid">

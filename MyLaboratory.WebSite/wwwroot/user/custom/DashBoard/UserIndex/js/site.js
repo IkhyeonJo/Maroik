@@ -1,37 +1,40 @@
 ﻿$(function () {
-    //-------------
-  //- DONUT CHART -
-  //-------------
-  // Get context with jQuery - using jQuery's .get() method.
-  var aa = $("#MyValue").val(); // load data from body
+    var regularIncomeLaborIncome = parseInt($("#regularIncomeLaborIncome").val());
+    var regularIncomeBusinessIncome = parseInt($("#regularIncomeBusinessIncome").val());
+    var regularIncomePensionIncome = parseInt($("#regularIncomePensionIncome").val());
+    var regularIncomeFinancialIncome = parseInt($("#regularIncomeFinancialIncome").val());
+    var regularIncomeRentalIncome = parseInt($("#regularIncomeRentalIncome").val());
+    var regularIncomeOtherIncome = parseInt($("#regularIncomeOtherIncome").val());
 
-  var donutChartCanvas = $('#regularIncome').get(0).getContext('2d')
-  var donutData        = {
-    labels: [
-        'Chrome',
-        'IE',
-        'FireFox',
-        'Safari',
-        'Opera',
-        'Navigator',
-    ],
-    datasets: [
-      {
-        /*data: [700, 500, 400, 600, 300, 100],*/
-        data: [aa, 500, 400, 600, 300, 100],
-        backgroundColor : ['#f56954', '#00a65a', '#f39c12', '#00c0ef', '#3c8dbc', '#d2d6de'],
-      }
-    ]
-  }
-  var donutOptions     = {
-    maintainAspectRatio : false,
-    responsive : true,
-  }
-  //Create pie or douhnut chart
-  // You can switch between pie and douhnut using the method below.
-  new Chart(donutChartCanvas, {
-    type: 'doughnut',
-    data: donutData,
-    options: donutOptions
-  })
+    var irregularIncomeLaborIncome = parseInt($("#irregularIncomeLaborIncome").val());
+    var irregularIncomeOtherIncome = parseInt($("#irregularIncomeOtherIncome").val());
+
+    var donutChartCanvasRegularIncome = $('#regularIncome').get(0).getContext('2d')
+    var donutDataRegularIncome = {
+        labels: [
+            'LaborIncome',
+            'BusinessIncome',
+            'PensionIncome',
+            'FinancialIncome',
+            'RentalIncome',
+            'OtherIncome',
+        ],
+        datasets: [
+            {
+                data: [regularIncomeLaborIncome, regularIncomeBusinessIncome, regularIncomePensionIncome, regularIncomeFinancialIncome, regularIncomeRentalIncome, regularIncomeOtherIncome],
+                backgroundColor: ['#f56954', '#00a65a', '#f39c12', '#00c0ef', '#3c8dbc', '#d2d6de'],
+            }
+        ]
+    }
+    var donutOptions = {
+        maintainAspectRatio: false,
+        responsive: true,
+    }
+    //Create pie or douhnut chart
+    // You can switch between pie and douhnut using the method below.
+    new Chart(donutChartCanvasRegularIncome, {
+        type: 'doughnut',
+        data: donutDataRegularIncome,
+        options: donutOptions
+    })
 })
