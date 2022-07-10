@@ -4,8 +4,8 @@
 
 @{
     #region 수입
-    var regularIncome = Model.Incomes.Where(x=>x.MainClass == "RegularIncome").ToList();
-    var irregularIncome = Model.Incomes.Where(x=>x.MainClass == "IrregularIncome").ToList();
+    var regularIncome = Model.Incomes.Where(x => x.MainClass == "RegularIncome").ToList();
+    var irregularIncome = Model.Incomes.Where(x => x.MainClass == "IrregularIncome").ToList();
 
     long regularIncomeLaborIncome = 0;
     long regularIncomeBusinessIncome = 0;
@@ -29,9 +29,9 @@
     #endregion
 
     #region 지출
-    var regularSavings = Model.Expenditures.Where(x=>x.MainClass == "RegularSavings").ToList();
-    var nonConsumerSpending = Model.Expenditures.Where(x=>x.MainClass == "NonConsumerSpending").ToList();
-    var consumerSpending = Model.Expenditures.Where(x=>x.MainClass == "ConsumerSpending").ToList();
+    var regularSavings = Model.Expenditures.Where(x => x.MainClass == "RegularSavings").ToList();
+    var nonConsumerSpending = Model.Expenditures.Where(x => x.MainClass == "NonConsumerSpending").ToList();
+    var consumerSpending = Model.Expenditures.Where(x => x.MainClass == "ConsumerSpending").ToList();
 
     #endregion
 }
@@ -118,5 +118,5 @@
     </div>
 </section>
 @section Scripts{
-<script src="~/user/custom/DashBoard/UserIndex/js/site.js" asp-append-version="true"></script>
+    <script src="~/user/custom/DashBoard/UserIndex/js/site.js" asp-append-version="true"></script>
 }
