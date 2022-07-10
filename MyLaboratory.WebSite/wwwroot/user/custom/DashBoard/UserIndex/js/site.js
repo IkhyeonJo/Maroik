@@ -4,18 +4,18 @@
     //-------------
     // Get context with jQuery - using jQuery's .get() method.
 
-    var regularIncomeLaborIncome = $("#regularIncomeLaborIncome").val();
-    var regularIncomeBusinessIncome = $("#regularIncomeBusinessIncome").val();
-    var regularIncomePensionIncome = $("#regularIncomePensionIncome").val();
-    var regularIncomeFinancialIncome = $("#regularIncomeFinancialIncome").val();
-    var regularIncomeRentalIncome = $("#regularIncomeRentalIncome").val();
-    var regularIncomeOtherIncome = $("#regularIncomeOtherIncome").val();
+    var regularIncomeLaborIncome = parseInt($("#regularIncomeLaborIncome").val());
+    var regularIncomeBusinessIncome = parseInt($("#regularIncomeBusinessIncome").val());
+    var regularIncomePensionIncome = parseInt($("#regularIncomePensionIncome").val());
+    var regularIncomeFinancialIncome = parseInt($("#regularIncomeFinancialIncome").val());
+    var regularIncomeRentalIncome = parseInt($("#regularIncomeRentalIncome").val());
+    var regularIncomeOtherIncome = parseInt($("#regularIncomeOtherIncome").val());
 
     var irregularIncomeLaborIncome = $("#irregularIncomeLaborIncome").val();
     var irregularIncomeOtherIncome = $("#irregularIncomeOtherIncome").val();
 
     var regularIncomeDonutChartOptions = {
-        series: [44, 55, 41, 17, 15],
+        series: [regularIncomeLaborIncome, regularIncomeBusinessIncome, regularIncomePensionIncome, regularIncomeFinancialIncome, regularIncomeRentalIncome, regularIncomeOtherIncome],
         chart: {
             width: 380,
             type: 'donut',
@@ -44,7 +44,8 @@
                 }
             }
         },
-        labels: ["Comedy", "Action", "SciFi", "Drama", "Horror"],
+
+        labels: ["LaborIncome", "BusinessIncome", "PensionIncome", "FinancialIncome", "RentalIncome", "OtherIncome"],
         legend: {
             labels: {
                 colors: 'white',
