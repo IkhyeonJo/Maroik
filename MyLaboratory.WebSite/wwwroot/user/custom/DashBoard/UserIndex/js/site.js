@@ -6,9 +6,6 @@
     var regularIncomeRentalIncome = parseInt($("#regularIncomeRentalIncome").val());
     var regularIncomeOtherIncome = parseInt($("#regularIncomeOtherIncome").val());
 
-    var irregularIncomeLaborIncome = parseInt($("#irregularIncomeLaborIncome").val());
-    var irregularIncomeOtherIncome = parseInt($("#irregularIncomeOtherIncome").val());
-
     var donutChartCanvasRegularIncome = $('#regularIncome').get(0).getContext('2d')
     var donutDataRegularIncome = {
         labels: [
@@ -26,7 +23,7 @@
             }
         ]
     }
-    var donutOptions = {
+    var donutOptionsRegularIncome = {
         maintainAspectRatio: false,
         responsive: true,
     }
@@ -35,6 +32,36 @@
     new Chart(donutChartCanvasRegularIncome, {
         type: 'doughnut',
         data: donutDataRegularIncome,
-        options: donutOptions
+        options: donutOptionsRegularIncome
+    })
+
+
+
+    var irregularIncomeLaborIncome = parseInt($("#irregularIncomeLaborIncome").val());
+    var irregularIncomeOtherIncome = parseInt($("#irregularIncomeOtherIncome").val());
+
+    var donutChartCanvasIrregularIncome = $('#irregularIncome').get(0).getContext('2d')
+    var donutDataIrregularIncome = {
+        labels: [
+            'LaborIncome',
+            'OtherIncome',
+        ],
+        datasets: [
+            {
+                data: [irregularIncomeLaborIncome, irregularIncomeOtherIncome],
+                backgroundColor: ['#f56954', '#00a65a', '#f39c12', '#00c0ef', '#3c8dbc', '#d2d6de'],
+            }
+        ]
+    }
+    var donutOptionsIrregularIncome = {
+        maintainAspectRatio: false,
+        responsive: true,
+    }
+    //Create pie or douhnut chart
+    // You can switch between pie and douhnut using the method below.
+    new Chart(donutChartCanvasIrregularIncome, {
+        type: 'doughnut',
+        data: donutDataIrregularIncome,
+        options: donutOptionsIrregularIncome
     })
 })
