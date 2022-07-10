@@ -4,8 +4,8 @@
 
 @{
     #region 수입
-    var regularIncome = Model.Incomes.Where(x=>x.MainClass == "RegularIncome").ToList();
-    var irregularIncome = Model.Incomes.Where(x=>x.MainClass == "IrregularIncome").ToList();
+    var regularIncome = Model.Incomes.Where(x => x.MainClass == "RegularIncome").ToList();
+    var irregularIncome = Model.Incomes.Where(x => x.MainClass == "IrregularIncome").ToList();
 
     long regularIncomeLaborIncome = 0;
     long regularIncomeBusinessIncome = 0;
@@ -29,14 +29,24 @@
     #endregion
 
     #region 지출
-    var regularSavings = Model.Expenditures.Where(x=>x.MainClass == "RegularSavings").ToList();
-    var nonConsumerSpending = Model.Expenditures.Where(x=>x.MainClass == "NonConsumerSpending").ToList();
-    var consumerSpending = Model.Expenditures.Where(x=>x.MainClass == "ConsumerSpending").ToList();
+    var regularSavings = Model.Expenditures.Where(x => x.MainClass == "RegularSavings").ToList();
+    var nonConsumerSpending = Model.Expenditures.Where(x => x.MainClass == "NonConsumerSpending").ToList();
+    var consumerSpending = Model.Expenditures.Where(x => x.MainClass == "ConsumerSpending").ToList();
 
     #endregion
 }
 
-@Html.Hidden("MyValue",123)
+@*정규 수입*@
+@Html.Hidden($"{nameof(regularIncomeLaborIncome)}",regularIncomeLaborIncome)
+@Html.Hidden($"{nameof(regularIncomeBusinessIncome)}",regularIncomeBusinessIncome)
+@Html.Hidden($"{nameof(regularIncomePensionIncome)}",regularIncomePensionIncome)
+@Html.Hidden($"{nameof(regularIncomeFinancialIncome)}",regularIncomeFinancialIncome)
+@Html.Hidden($"{nameof(regularIncomeRentalIncome)}",regularIncomeRentalIncome)
+@Html.Hidden($"{nameof(regularIncomeOtherIncome)}",regularIncomeOtherIncome)
+
+@*비정규 수입*@
+@Html.Hidden($"{nameof(irregularIncomeLaborIncome)}",irregularIncomeLaborIncome)
+@Html.Hidden($"{nameof(irregularIncomeOtherIncome)}",irregularIncomeOtherIncome)
 
 <section class="content">
     <div class="container-fluid">
@@ -63,7 +73,7 @@
                     <div class="card-body">
                         <div class="tab-content p-0">
                             <div class="chart tab-pane active" id="dashboardIncomeTabs-1" style="position: relative; height: 300px;">
-                                <canvas id="regularIncome" style="min-height: 300px; height: 300px; max-height: 300px; max-width: 100%;"></canvas>
+                                <div id="regularIncomeDonutChart"></div>
                             </div>
                             <div class="chart tab-pane" id="dashboardIncomeTabs-2" style="position: relative; height: 300px;">
                                 금월 비정기 수입 Donut
@@ -118,5 +128,5 @@
     </div>
 </section>
 @section Scripts{
-<script src="~/user/custom/DashBoard/UserIndex/js/site.js" asp-append-version="true"></script>
+    <script src="~/user/custom/DashBoard/UserIndex/js/site.js" asp-append-version="true"></script>
 }

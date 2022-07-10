@@ -1,0 +1,9 @@
+g > text {
+    fill: white;
+}
+
+#regularIncomeDonutChart {
+    padding: 0;
+    max-width: 300px;
+    margin: auto;
+}
