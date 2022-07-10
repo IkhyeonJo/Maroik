@@ -4,8 +4,9 @@
 
 @{
     #region 수입
+
+    #region 대분류 = '정기수입'
     var regularIncome = Model.Incomes.Where(x => x.MainClass == "RegularIncome").ToList();
-    var irregularIncome = Model.Incomes.Where(x => x.MainClass == "IrregularIncome").ToList();
 
     long regularIncomeLaborIncome = 0;
     long regularIncomeBusinessIncome = 0;
@@ -20,6 +21,10 @@
     regularIncomeFinancialIncome = regularIncome.Where(x => x.SubClass == "FinancialIncome").Sum(v => v.Amount);
     regularIncomeRentalIncome = regularIncome.Where(x => x.SubClass == "RentalIncome").Sum(v => v.Amount);
     regularIncomeOtherIncome = regularIncome.Where(x => x.SubClass == "OtherIncome").Sum(v => v.Amount);
+    #endregion
+
+    #region 대분류 = '비정기수입'
+    var irregularIncome = Model.Incomes.Where(x => x.MainClass == "IrregularIncome").ToList();
 
     long irregularIncomeLaborIncome = 0;
     long irregularIncomeOtherIncome = 0;
@@ -28,14 +33,72 @@
     irregularIncomeOtherIncome = irregularIncome.Where(x => x.SubClass == "OtherIncome").Sum(v => v.Amount);
     #endregion
 
+    #endregion
+
     #region 지출
+
+    #region 대분류 = '정기저축'
     var regularSavings = Model.Expenditures.Where(x => x.MainClass == "RegularSavings").ToList();
+
+    long regularSavingsDeposit = 0;
+    long regularSavingsInvestment = 0;
+
+    regularSavingsDeposit = regularSavings.Where(x => x.SubClass == "Deposit").Sum(v => v.Amount);
+    regularSavingsInvestment = regularSavings.Where(x => x.SubClass == "Investment").Sum(v => v.Amount);
+    #endregion
+
+    #region 대분류 = '비소비지출'
     var nonConsumerSpending = Model.Expenditures.Where(x => x.MainClass == "NonConsumerSpending").ToList();
+
+    long nonConsumerSpendingPublicPension = 0;
+    long nonConsumerSpendingDebtRepayment = 0;
+    long nonConsumerSpendingTax = 0;
+    long nonConsumerSpendingSocialInsurance = 0;
+    long nonConsumerSpendingInterHouseholdTranserExpenses = 0;
+    long nonConsumerSpendingNonProfitOrganizationTransfer = 0;
+
+    nonConsumerSpendingPublicPension = nonConsumerSpending.Where(x => x.SubClass == "PublicPension").Sum(v => v.Amount);
+    nonConsumerSpendingDebtRepayment = nonConsumerSpending.Where(x => x.SubClass == "DebtRepayment").Sum(v => v.Amount);
+    nonConsumerSpendingTax = nonConsumerSpending.Where(x => x.SubClass == "Tax").Sum(v => v.Amount);
+    nonConsumerSpendingSocialInsurance = nonConsumerSpending.Where(x => x.SubClass == "SocialInsurance").Sum(v => v.Amount);
+    nonConsumerSpendingInterHouseholdTranserExpenses = nonConsumerSpending.Where(x => x.SubClass == "InterHouseholdTranserExpenses").Sum(v => v.Amount);
+    nonConsumerSpendingNonProfitOrganizationTransfer = nonConsumerSpending.Where(x => x.SubClass == "NonProfitOrganizationTransfer").Sum(v => v.Amount);
+    #endregion
+    
+    #region 대분류 = '소비지출'
     var consumerSpending = Model.Expenditures.Where(x => x.MainClass == "ConsumerSpending").ToList();
+
+    long consumerSpendingMealOrEatOutExpenses = 0;
+    long consumerSpendingHousingOrSuppliesCost = 0;
+    long consumerSpendingEducationExpenses = 0;
+    long consumerSpendingMedicalExpenses = 0;
+    long consumerSpendingTransportationCost = 0;
+    long consumerSpendingCommunicationCost = 0;
+    long consumerSpendingLeisureOrCulture = 0;
+    long consumerSpendingClothingOrShoes = 0;
+    long consumerSpendingPinMoney = 0;
+    long consumerSpendingProtectionTypeInsurance = 0;
+    long consumerSpendingOtherExpenses = 0;
+    long consumerSpendingUnknownExpenditure = 0;
+
+    consumerSpendingMealOrEatOutExpenses = consumerSpending.Where(x => x.SubClass == "MealOrEatOutExpenses").Sum(v => v.Amount);
+    consumerSpendingHousingOrSuppliesCost = consumerSpending.Where(x => x.SubClass == "HousingOrSuppliesCost").Sum(v => v.Amount);
+    consumerSpendingEducationExpenses = consumerSpending.Where(x => x.SubClass == "EducationExpenses").Sum(v => v.Amount);
+    consumerSpendingMedicalExpenses = consumerSpending.Where(x => x.SubClass == "MedicalExpenses").Sum(v => v.Amount);
+    consumerSpendingTransportationCost = consumerSpending.Where(x => x.SubClass == "TransportationCost").Sum(v => v.Amount);
+    consumerSpendingCommunicationCost = consumerSpending.Where(x => x.SubClass == "CommunicationCost").Sum(v => v.Amount);
+    consumerSpendingLeisureOrCulture = consumerSpending.Where(x => x.SubClass == "LeisureOrCulture").Sum(v => v.Amount);
+    consumerSpendingClothingOrShoes = consumerSpending.Where(x => x.SubClass == "ClothingOrShoes").Sum(v => v.Amount);
+    consumerSpendingPinMoney = consumerSpending.Where(x => x.SubClass == "PinMoney").Sum(v => v.Amount);
+    consumerSpendingProtectionTypeInsurance = consumerSpending.Where(x => x.SubClass == "ProtectionTypeInsurance").Sum(v => v.Amount);
+    consumerSpendingOtherExpenses = consumerSpending.Where(x => x.SubClass == "OtherExpenses").Sum(v => v.Amount);
+    consumerSpendingUnknownExpenditure = consumerSpending.Where(x => x.SubClass == "UnknownExpenditure").Sum(v => v.Amount);
+    #endregion
 
     #endregion
 }
 
+@*수입*@
 @*정규 수입*@
 @Html.Hidden($"{nameof(regularIncomeLaborIncome)}",regularIncomeLaborIncome)
 @Html.Hidden($"{nameof(regularIncomeBusinessIncome)}",regularIncomeBusinessIncome)
@@ -47,6 +110,33 @@
 @*비정규 수입*@
 @Html.Hidden($"{nameof(irregularIncomeLaborIncome)}",irregularIncomeLaborIncome)
 @Html.Hidden($"{nameof(irregularIncomeOtherIncome)}",irregularIncomeOtherIncome)
+
+@*지출*@
+@*정기저축*@
+@Html.Hidden($"{nameof(regularSavingsDeposit)}",regularSavingsDeposit)
+@Html.Hidden($"{nameof(regularSavingsInvestment)}",regularSavingsInvestment)
+
+@*비소비지출*@
+@Html.Hidden($"{nameof(nonConsumerSpendingPublicPension)}",nonConsumerSpendingPublicPension)
+@Html.Hidden($"{nameof(nonConsumerSpendingDebtRepayment)}",nonConsumerSpendingDebtRepayment)
+@Html.Hidden($"{nameof(nonConsumerSpendingTax)}",nonConsumerSpendingTax)
+@Html.Hidden($"{nameof(nonConsumerSpendingSocialInsurance)}",nonConsumerSpendingSocialInsurance)
+@Html.Hidden($"{nameof(nonConsumerSpendingInterHouseholdTranserExpenses)}",nonConsumerSpendingInterHouseholdTranserExpenses)
+@Html.Hidden($"{nameof(nonConsumerSpendingNonProfitOrganizationTransfer)}",nonConsumerSpendingNonProfitOrganizationTransfer)
+
+@*소비지출*@
+@Html.Hidden($"{nameof(consumerSpendingMealOrEatOutExpenses)}",nonConsumerSpendingPublicPension)
+@Html.Hidden($"{nameof(consumerSpendingHousingOrSuppliesCost)}",consumerSpendingHousingOrSuppliesCost)
+@Html.Hidden($"{nameof(consumerSpendingEducationExpenses)}",consumerSpendingEducationExpenses)
+@Html.Hidden($"{nameof(consumerSpendingMedicalExpenses)}",consumerSpendingMedicalExpenses)
+@Html.Hidden($"{nameof(consumerSpendingTransportationCost)}",consumerSpendingTransportationCost)
+@Html.Hidden($"{nameof(consumerSpendingCommunicationCost)}",consumerSpendingCommunicationCost)
+@Html.Hidden($"{nameof(consumerSpendingLeisureOrCulture)}",consumerSpendingLeisureOrCulture)
+@Html.Hidden($"{nameof(consumerSpendingClothingOrShoes)}",consumerSpendingClothingOrShoes)
+@Html.Hidden($"{nameof(consumerSpendingPinMoney)}",consumerSpendingPinMoney)
+@Html.Hidden($"{nameof(consumerSpendingProtectionTypeInsurance)}",consumerSpendingProtectionTypeInsurance)
+@Html.Hidden($"{nameof(consumerSpendingOtherExpenses)}",consumerSpendingOtherExpenses)
+@Html.Hidden($"{nameof(consumerSpendingUnknownExpenditure)}",consumerSpendingUnknownExpenditure)
 
 <section class="content">
     <div class="container-fluid">
@@ -107,16 +197,13 @@
                     <div class="card-body">
                         <div class="tab-content p-0">
                             <div class="chart tab-pane active" id="dashboardExpenditureTabs-1" style="position: relative; height: 300px;">
-                                금월 정기저축 Donut
-                                @*<canvas id="revenue-chart-canvas" height="300" style="height: 300px;"></canvas>*@
+                                <canvas id="regularSavings" style="min-height: 300px; height: 300px; max-height: 300px; max-width: 100%;"></canvas>
                             </div>
                             <div class="chart tab-pane" id="dashboardExpenditureTabs-2" style="position: relative; height: 300px;">
-                                금월 비소비지출 Donut
-                                @*<canvas id="sales-chart-canvas" height="300" style="height: 300px;"></canvas>*@
+                                <canvas id="nonConsumerSpending" style="min-height: 300px; height: 300px; max-height: 300px; max-width: 100%;"></canvas>
                             </div>
                             <div class="chart tab-pane" id="dashboardExpenditureTabs-3" style="position: relative; height: 300px;">
-                                금월 소비지출 Donut
-                                @*<canvas id="sales-chart-canvas" height="300" style="height: 300px;"></canvas>*@
+                                <canvas id="consumerSpending" style="min-height: 300px; height: 300px; max-height: 300px; max-width: 100%;"></canvas>
                             </div>
                         </div>
                     </div>
