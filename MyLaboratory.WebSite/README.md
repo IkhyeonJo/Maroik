@@ -800,3 +800,12 @@ https://www.w3schools.com/mysql/mysql_operators.asp
 
 Pie / Donut
 https://apexcharts.com/docs/chart-types/pie-donut/
+
+리눅스 크론탭(Linux Crontab) 사용법
+https://jdm.kr/blog/2
+
+[Linux crontab 스케쥴러 실행 안 될 때 / 크론 탭 실행 안 됨]
+https://bigphu.tistory.com/92
+
+Docker Mysql Server 주기적으로 백업하기(Crontab 활용하기)
+https://backkom-blog.tistory.com/entry/Docker-Mysql-Server-%EC%A3%BC%EA%B8%B0%EC%A0%81%EC%9C%BC%EB%A1%9C-%EB%B0%B1%EC%97%85%ED%95%98%EA%B8%B0crontab-%ED%99%9C%EC%9A%A9%ED%95%98%EA%B8%B0?category=294180
