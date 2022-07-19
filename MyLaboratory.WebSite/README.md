@@ -813,4 +813,7 @@ https://backkom-blog.tistory.com/entry/Docker-Mysql-Server-%EC%A3%BC%EA%B8%B0%EC
 Step by Step: Backup MySQL Databases Daily in Docker Container Using Docker Compose
 https://thedotenv.com/t/step-by-step-backup-mysql-data-daily-in-docker-container-using-docker-compose/1
 
+[Docker]Mysql.InitSql : Mysql동작시 sql읽고 db초기화하기
+https://kamang-it.tistory.com/entry/DockerMysqlInitSql
+
 * * * * * docker exec MyLaboratory.MariaDB /usr/bin/mysqldump -u root --password=***REMOVED*** MyLaboratory > backup.sql > /home/ec2-user/SQLBackup.sql
