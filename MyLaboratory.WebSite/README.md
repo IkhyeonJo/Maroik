@@ -816,4 +816,7 @@ https://thedotenv.com/t/step-by-step-backup-mysql-data-daily-in-docker-container
 [Docker]Mysql.InitSql : Mysql동작시 sql읽고 db초기화하기
 https://kamang-it.tistory.com/entry/DockerMysqlInitSql
 
+How to cron job setup in Amazon ec2
+https://stackoverflow.com/questions/30806318/how-to-cron-job-setup-in-amazon-ec2
+
 * * * * * docker exec MyLaboratory.MariaDB /usr/bin/mysqldump -u root --password=***REMOVED*** MyLaboratory > backup.sql > /home/ec2-user/SQLBackup.sql
