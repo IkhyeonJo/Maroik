@@ -5,7 +5,7 @@ I'm currently interested in make asp.net core mvc 5 WebServer!
 
 Docker, AdminLTE, MariaDB, Session Login, RESTful API, HTTPS etc.
 
-# IMPORTANT!! MUST Set this value [MyLaboratory.WebSite -> appsettings.json -> DomainName (According to Server Hostname)] & Mail Account & Docker-compose file's comment!!
+# IMPORTANT!! MUST Set this value [MyLaboratory.WebSite -> appsettings.json -> DomainName (According to Server Hostname)] & Mail Account & READ docker-compose file's comment!!
 
 # and if you wanna backup your .sql frequently, please set [DBBackup.sh] file's email address & password
 
