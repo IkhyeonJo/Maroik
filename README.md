@@ -27,7 +27,7 @@ Docker, AdminLTE, MariaDB, Session Login, RESTful API, HTTPS etc.
 ## Admin Account Password: Pa$$w0rd
 
 ## User Account ID: ***REMOVED***
-## User Account Password: Pa$$w0rd
+## User Account Password: Pa$$w0rd12!
 
 # Login
 ![Login](https://user-images.githubusercontent.com/20404991/132020270-488a1ab7-448c-44d9-938a-40ce32d6d364.jpg)
