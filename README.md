@@ -7,6 +7,8 @@ Docker, AdminLTE, MariaDB, Session Login, RESTful API, HTTPS etc.
 
 # IMPORTANT!! MUST Set this value [MyLaboratory.WebSite -> appsettings.json -> DomainName (According to Server Hostname)] & Mail Account & Docker-compose file's comment!!
 
+# and if you wanna backup your .sql frequently, please set DBBackup.sh file's email address & password
+
 # How to run this project
 
 ## execute [MyLaboratory.sln] -> Open [1.Web] folder -> right-click [docker-compose] -> click "Set as Startup Project" -> Press F5 Button
