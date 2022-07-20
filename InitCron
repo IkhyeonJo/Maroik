@@ -1,1 +1,1 @@
-0 * * * * /bin/bash /home/ec2-user/MyLaboratory/DBBackup.sh
+0 * * * * /bin/bash /home/ec2-user/MyLaboratory/DBBackup.shs
