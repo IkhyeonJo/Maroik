@@ -15,7 +15,7 @@
 #Move to [MyLaboratory] folder (which exists docker-compose.yml file) and execute below this command
 
 #-----------------------------------------------------------------------------------
-#sudo yum update -y && sudo amazon-linux-extras install docker -y && sudo service docker start && sudo curl -L https://github.com/docker/compose/releases/download/1.21.0/docker-compose-`uname -s`-`uname -m` | sudo tee /usr/local/bin/docker-compose > /dev/null && sudo chmod +x /usr/local/bin/docker-compose && sudo ln -s /usr/local/bin/docker-compose /usr/bin/docker-compose && sudo docker-compose up -d
+#sudo yum update -y && sudo amazon-linux-extras install docker -y && sudo service docker start && sudo curl -L https://github.com/docker/compose/releases/download/1.21.0/docker-compose-`uname -s`-`uname -m` | sudo tee /usr/local/bin/docker-compose > /dev/null && sudo chmod +x /usr/local/bin/docker-compose && sudo ln -s /usr/local/bin/docker-compose /usr/bin/docker-compose && sudo docker-compose up -d && sudo yum install -y python3 && sudo yum install -y cronie && chmod 755 DBBackup.sh && crontab InitCron && sudo service crond restart
 #-----------------------------------------------------------------------------------
 
 ## Clean Restart of a Docker Instance command

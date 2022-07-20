@@ -25,9 +25,15 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MyLaboratory.WebSite", "MyL
 EndProject
 Project("{E53339B2-1760-4266-BCC7-CA923CBCF16C}") = "docker-compose", "docker-compose.dcproj", "{16950BFB-9A7B-4326-B6E9-873B22449DF3}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "3.Example", "3.Example", "{E40D9B8F-9C6B-4656-A72A-6DD5C83DA7F2}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "4.Example", "4.Example", "{E40D9B8F-9C6B-4656-A72A-6DD5C83DA7F2}"
 EndProject
 Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "MyLaboratory.Python", "MyLaboratory.Python\MyLaboratory.Python.pyproj", "{0AA7FC81-1683-4633-AF53-7CECD7DF5AD8}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "3.Crontab", "3.Crontab", "{8DA628A8-E6AC-41CA-917C-FDFEF4283CE8}"
+	ProjectSection(SolutionItems) = preProject
+		DBBackup.sh = DBBackup.sh
+		InitCron. = InitCron.
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
