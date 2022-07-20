@@ -1,4 +1,4 @@
-#! /bin/bash
+#! /bin/bash1
 
 python3 - << 'EOF'
 
