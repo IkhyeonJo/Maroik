@@ -819,4 +819,7 @@ https://kamang-it.tistory.com/entry/DockerMysqlInitSql
 How to cron job setup in Amazon ec2
 https://stackoverflow.com/questions/30806318/how-to-cron-job-setup-in-amazon-ec2
 
+How to create a cron job using Bash automatically without the interactive editor?
+https://stackoverflow.com/questions/878600/how-to-create-a-cron-job-using-bash-automatically-without-the-interactive-editor?rq=1
+
 * * * * * docker exec MyLaboratory.MariaDB /usr/bin/mysqldump -u root --password=***REMOVED*** MyLaboratory > backup.sql > /home/ec2-user/SQLBackup.sql
