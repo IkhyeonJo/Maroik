@@ -1,3 +1,6 @@
+스프링 부트 설치
+https://velog.io/@light/%EC%8A%A4%ED%94%84%EB%A7%81-%EB%B6%80%ED%8A%B8SpringBoot-1.%EC%8B%9C%EC%9E%91%ED%95%98%EA%B8%B0
+
 Error: Spring Application Cannot be resolved
 https://stackoverflow.com/questions/43228616/error-spring-application-cannot-be-resolved
 https://www.vogella.com/tutorials/EclipseGradle/article.html#updating-classpath-with-the-latest-changes-in-the-build-file
