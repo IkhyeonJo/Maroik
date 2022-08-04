@@ -87,7 +87,7 @@ services:
         container_name: MyLaboratory.MariaDB
         volumes:
           - datasource:/var/lib/mysql
-          - ./MyLaboratory.Common.DataAccess/_MariaDBSql_Init_Script:/docker-entrypoint-initdb.d
+          - ./MyLaboratory.MariaDB/SQL_Init_Script:/docker-entrypoint-initdb.d
         networks:
           - backend
         environment:

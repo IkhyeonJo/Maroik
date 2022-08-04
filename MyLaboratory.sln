@@ -11,11 +11,11 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MyLaboratory.App.Android", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MyLaboratory.App.iOS", "MyLaboratory.App.iOS\MyLaboratory.App.iOS.csproj", "{76012EBD-53EB-4217-B8FA-5F78170DBE43}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "1.Web", "1.Web", "{02764078-45D4-4634-95B1-CF053BD2EA45}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "2.Web", "2.Web", "{02764078-45D4-4634-95B1-CF053BD2EA45}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "2.App", "2.App", "{F55937F3-386E-46AB-801C-6DDC26AE957F}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "3.App", "3.App", "{F55937F3-386E-46AB-801C-6DDC26AE957F}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "0.Common", "0.Common", "{4A48DCC0-ABF7-42EF-ABA4-9F490564CA1A}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "1.Common", "1.Common", "{4A48DCC0-ABF7-42EF-ABA4-9F490564CA1A}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MyLaboratory.Common.DataAccess", "MyLaboratory.Common.DataAccess\MyLaboratory.Common.DataAccess.csproj", "{D345F067-D04A-41EB-8441-1D5211D3001A}"
 EndProject
@@ -25,14 +25,43 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MyLaboratory.WebSite", "MyL
 EndProject
 Project("{E53339B2-1760-4266-BCC7-CA923CBCF16C}") = "docker-compose", "docker-compose.dcproj", "{16950BFB-9A7B-4326-B6E9-873B22449DF3}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "4.Example", "4.Example", "{E40D9B8F-9C6B-4656-A72A-6DD5C83DA7F2}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "5.Example", "5.Example", "{E40D9B8F-9C6B-4656-A72A-6DD5C83DA7F2}"
 EndProject
 Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "MyLaboratory.Python", "MyLaboratory.Python\MyLaboratory.Python.pyproj", "{0AA7FC81-1683-4633-AF53-7CECD7DF5AD8}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "3.Crontab", "3.Crontab", "{8DA628A8-E6AC-41CA-917C-FDFEF4283CE8}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "4.Crontab", "4.Crontab", "{8DA628A8-E6AC-41CA-917C-FDFEF4283CE8}"
 	ProjectSection(SolutionItems) = preProject
 		DBBackup.sh = DBBackup.sh
-		InitCron. = InitCron.
+		InitCron = InitCron
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "0.DB", "0.DB", "{CD016BBE-CCB8-48AF-B586-330D23431A8A}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "MyLaboratory.MariaDB", "MyLaboratory.MariaDB", "{7C69DFF9-F5C8-4CF0-8C70-72C39B83A3FA}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SQL_Init_Script", "SQL_Init_Script", "{B434A880-3CFD-4253-A50D-5DE1FB7907E6}"
+	ProjectSection(SolutionItems) = preProject
+		MyLaboratory.MariaDB\SQL_Init_Script\Init.sql = MyLaboratory.MariaDB\SQL_Init_Script\Init.sql
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SQL_Init_Script_Backups", "SQL_Init_Script_Backups", "{8392B9F5-419D-4032-A10B-C4FF639157A1}"
+	ProjectSection(SolutionItems) = preProject
+		MyLaboratory.MariaDB\SQL_Init_Script_Backups\Init-20210819.sql = MyLaboratory.MariaDB\SQL_Init_Script_Backups\Init-20210819.sql
+		MyLaboratory.MariaDB\SQL_Init_Script_Backups\Init-20210831.sql = MyLaboratory.MariaDB\SQL_Init_Script_Backups\Init-20210831.sql
+		MyLaboratory.MariaDB\SQL_Init_Script_Backups\Init-20210908.sql = MyLaboratory.MariaDB\SQL_Init_Script_Backups\Init-20210908.sql
+		MyLaboratory.MariaDB\SQL_Init_Script_Backups\Init-20211101.sql = MyLaboratory.MariaDB\SQL_Init_Script_Backups\Init-20211101.sql
+		MyLaboratory.MariaDB\SQL_Init_Script_Backups\Init-20211212.sql = MyLaboratory.MariaDB\SQL_Init_Script_Backups\Init-20211212.sql
+		MyLaboratory.MariaDB\SQL_Init_Script_Backups\Init-20211223.sql = MyLaboratory.MariaDB\SQL_Init_Script_Backups\Init-20211223.sql
+		MyLaboratory.MariaDB\SQL_Init_Script_Backups\Init-20211225.sql = MyLaboratory.MariaDB\SQL_Init_Script_Backups\Init-20211225.sql
+		MyLaboratory.MariaDB\SQL_Init_Script_Backups\Init-20211228.sql = MyLaboratory.MariaDB\SQL_Init_Script_Backups\Init-20211228.sql
+		MyLaboratory.MariaDB\SQL_Init_Script_Backups\Init-20211229.sql = MyLaboratory.MariaDB\SQL_Init_Script_Backups\Init-20211229.sql
+		MyLaboratory.MariaDB\SQL_Init_Script_Backups\Init-20220202.sql = MyLaboratory.MariaDB\SQL_Init_Script_Backups\Init-20220202.sql
+		MyLaboratory.MariaDB\SQL_Init_Script_Backups\Init-20220309.sql = MyLaboratory.MariaDB\SQL_Init_Script_Backups\Init-20220309.sql
+		MyLaboratory.MariaDB\SQL_Init_Script_Backups\Init-20220702.sql = MyLaboratory.MariaDB\SQL_Init_Script_Backups\Init-20220702.sql
+		MyLaboratory.MariaDB\SQL_Init_Script_Backups\Init-20220710.sql = MyLaboratory.MariaDB\SQL_Init_Script_Backups\Init-20220710.sql
+		MyLaboratory.MariaDB\SQL_Init_Script_Backups\Init-20220711.sql = MyLaboratory.MariaDB\SQL_Init_Script_Backups\Init-20220711.sql
+		MyLaboratory.MariaDB\SQL_Init_Script_Backups\Init-20220720.sql = MyLaboratory.MariaDB\SQL_Init_Script_Backups\Init-20220720.sql
+		MyLaboratory.MariaDB\SQL_Init_Script_Backups\Init-20220804.sql = MyLaboratory.MariaDB\SQL_Init_Script_Backups\Init-20220804.sql
 	EndProjectSection
 EndProject
 Global
@@ -273,6 +302,9 @@ Global
 		{1196131F-B750-4FF7-8EC5-0B9D0A598AAA} = {02764078-45D4-4634-95B1-CF053BD2EA45}
 		{16950BFB-9A7B-4326-B6E9-873B22449DF3} = {02764078-45D4-4634-95B1-CF053BD2EA45}
 		{0AA7FC81-1683-4633-AF53-7CECD7DF5AD8} = {E40D9B8F-9C6B-4656-A72A-6DD5C83DA7F2}
+		{7C69DFF9-F5C8-4CF0-8C70-72C39B83A3FA} = {CD016BBE-CCB8-48AF-B586-330D23431A8A}
+		{B434A880-3CFD-4253-A50D-5DE1FB7907E6} = {7C69DFF9-F5C8-4CF0-8C70-72C39B83A3FA}
+		{8392B9F5-419D-4032-A10B-C4FF639157A1} = {7C69DFF9-F5C8-4CF0-8C70-72C39B83A3FA}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {AF88D563-ED64-4D2E-8F76-E82455462128}
