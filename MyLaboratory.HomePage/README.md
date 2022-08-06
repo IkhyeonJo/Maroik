@@ -10,3 +10,6 @@ https://error-nono.tistory.com/entry/%EC%9D%B4%ED%81%B4%EB%A6%BD%EC%8A%A4-%EC%BD
 
 [Spring Boot] MariaDB + JPA 연동하기
 https://wecandev.tistory.com/71
+
+Spring Boot 패키지 구조 @Controller @Service - (2)
+https://gofnrk.tistory.com/16?category=763542
