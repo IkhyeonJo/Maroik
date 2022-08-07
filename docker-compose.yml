@@ -100,11 +100,11 @@ services:
           - --collation-server=utf8mb4_unicode_ci
           - --default-time-zone=+09:00
 
-    mylaboratory.website:
+    mylaboratory.blog:
         build :
          context : .
-         dockerfile : MyLaboratory.WebSite/Dockerfile
-        container_name: MyLaboratory.WebSite
+         dockerfile : MyLaboratory.Blog/Dockerfile
+        container_name: MyLaboratory.Blog
         networks :
           - backend          
         ports:
@@ -114,6 +114,26 @@ services:
           - DBHOST=mariadb
           - ASPNETCORE_ENVIRONMENT=Development
           - ASPNETCORE_URLS=https://+:443;http://+:80
+          - ASPNETCORE_Kestrel__Certificates__Default__Password=Passw0rd # must be equal to .pfx file's' password
+          - ASPNETCORE_Kestrel__Certificates__Default__Path=/https/testhttps.pfx
+        volumes:
+          - ./MyLaboratory.Blog/:/https:ro
+        depends_on :
+          - mariadb  
+
+    mylaboratory.website:
+        build :
+         context : .
+         dockerfile : MyLaboratory.WebSite/Dockerfile
+        container_name: MyLaboratory.WebSite
+        networks :
+          - backend          
+        ports:
+          - 8080:8080
+        environment :
+          - DBHOST=mariadb
+          - ASPNETCORE_ENVIRONMENT=Development
+          - ASPNETCORE_URLS=https://+:8080
           - ASPNETCORE_Kestrel__Certificates__Default__Password=Passw0rd # must be equal to .pfx file's' password
           - ASPNETCORE_Kestrel__Certificates__Default__Path=/https/testhttps.pfx
         volumes:
