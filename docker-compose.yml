@@ -7,8 +7,8 @@
 ##AWS step
 #step 1: Create AWS instance (in my case, AWS Linux)
 #step 2: Open PORT
-#80, 443, 5000, 5001 (DevelopmentMode)
-#80, 443, 5001 (Deploy)
+#80, 8080, 443, 5000, 5001 (DevelopmentMode)
+#80, 8080, 443, 5001 (Deploy)
 #step 3: Copy the entire [MyLaboratory] folder to your AWS Instance.
 
 #AWS Command (docker and docker-compose install)
