@@ -24,6 +24,7 @@ namespace MyLaboratory.Common.DataAccess.Data
         public virtual DbSet<Income> Incomes { get; set; }
         public virtual DbSet<SubCategory> SubCategories { get; set; }
         #endregion
+
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             base.OnConfiguring(optionsBuilder);
