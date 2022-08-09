@@ -1,13 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations.Schema;
-
-#nullable disable
 
 namespace MyLaboratory.Common.DataAccess.Models
 {
     /// <summary>
-    /// 카테고리 /*MyLaboratory.WebSite의 로그인 후 접근 가능한 좌측 SideBar 설정 시 사용*/
+    /// 카테고리 /*MyLaboratory의 로그인 후 접근 가능한 좌측 SideBar 설정 시 사용*/
     /// </summary>
     public partial class Category
     {
@@ -48,6 +45,10 @@ namespace MyLaboratory.Common.DataAccess.Models
         /// 출력 순서
         /// </summary>
         public int Order { get; set; }
+        /// <summary>
+        /// 사이트 타입
+        /// </summary>
+        public string SiteType { get; set; }
 
         public virtual ICollection<SubCategory> SubCategories { get; set; }
     }

@@ -153,7 +153,7 @@ namespace MyLaboratory.Common.DataAccess.Data
             {
                 entity.ToTable("Category");
 
-                entity.HasComment("카테고리 /*MyLaboratory.WebSite의 로그인 후 접근 가능한 좌측 SideBar 설정 시 사용*/")
+                entity.HasComment("카테고리 /*MyLaboratory의 로그인 후 접근 가능한 좌측 SideBar 설정 시 사용*/")
                     .HasCharSet("utf8mb3")
                     .UseCollation("utf8mb3_general_ci");
 
@@ -194,6 +194,12 @@ namespace MyLaboratory.Common.DataAccess.Data
                     .HasMaxLength(255)
                     .HasDefaultValueSql("'Admin'")
                     .HasComment("접근 권한 설정");
+
+                entity.Property(e => e.SiteType)
+                    .IsRequired()
+                    .HasMaxLength(255)
+                    .HasDefaultValueSql("'WebSite'")
+                    .HasComment("사이트 타입");
             });
 
             modelBuilder.Entity<Expenditure>(entity =>
@@ -472,7 +478,7 @@ namespace MyLaboratory.Common.DataAccess.Data
             {
                 entity.ToTable("SubCategory");
 
-                entity.HasComment("서브 카테고리 /*MyLaboratory.WebSite의 로그인 후 접근 가능한 좌측 SideBar 설정 시 사용*/")
+                entity.HasComment("서브 카테고리 /*MyLaboratory의 로그인 후 접근 가능한 좌측 SideBar 설정 시 사용*/")
                     .HasCharSet("utf8mb3")
                     .UseCollation("utf8mb3_general_ci");
 
@@ -515,6 +521,12 @@ namespace MyLaboratory.Common.DataAccess.Data
                     .HasMaxLength(255)
                     .HasDefaultValueSql("'Admin'")
                     .HasComment("접근 권한 설정");
+
+                entity.Property(e => e.SiteType)
+                    .IsRequired()
+                    .HasMaxLength(255)
+                    .HasDefaultValueSql("'WebSite'")
+                    .HasComment("사이트 타입");
 
                 entity.HasOne(d => d.Category)
                     .WithMany(p => p.SubCategories)
