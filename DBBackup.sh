@@ -13,15 +13,15 @@ from email.mime.text import MIMEText
 from email.utils import formatdate
 from datetime import datetime
 
-garbage_sql_files = glob.glob('/home/ubuntu/MyLaboratory/*.sql')
+garbage_sql_files = glob.glob('/home/ec2-user/MyLaboratory/*.sql')
 for garbage_sql_file in garbage_sql_files:
      os.remove(garbage_sql_file)
 
 current_date = str(datetime.today().strftime("%Y%m%d"))
 backup_sql_file_name = f'Init-{current_date}.sql'
-os.system(f'sudo docker exec MyLaboratory.MariaDB /usr/bin/mysqldump -u root --password=***REMOVED*** MyLaboratory > /home/ubuntu/MyLaboratory/{backup_sql_file_name}')
+os.system(f'sudo docker exec MyLaboratory.MariaDB /usr/bin/mysqldump -u root --password=***REMOVED*** MyLaboratory > /home/ec2-user/MyLaboratory/{backup_sql_file_name}')
 
-with open(f'/home/ubuntu/MyLaboratory/{backup_sql_file_name}', 'r', encoding='utf-8') as original: data = original.read()
+with open(f'/home/ec2-user/MyLaboratory/{backup_sql_file_name}', 'r', encoding='utf-8') as original: data = original.read()
 new_add_line = '''DROP DATABASE IF EXISTS MyLaboratory;
 
 CREATE DATABASE MyLaboratory default charset=utf8mb4 collate utf8mb4_unicode_ci;
@@ -29,7 +29,7 @@ CREATE DATABASE MyLaboratory default charset=utf8mb4 collate utf8mb4_unicode_ci;
 USE MyLaboratory;
 
 '''
-with open(f'/home/ubuntu/MyLaboratory/{backup_sql_file_name}', 'w', encoding='utf-8') as modified: modified.write(new_add_line + data)
+with open(f'/home/ec2-user/MyLaboratory/{backup_sql_file_name}', 'w', encoding='utf-8') as modified: modified.write(new_add_line + data)
 
 msg = MIMEMultipart()
 
@@ -41,7 +41,7 @@ body = MIMEText(f'MyLaboratory MariaDB SQL Backup ({current_date})', _charset='u
 msg.attach(body)
 
 files = list()
-files.append(f'/home/ubuntu/MyLaboratory/{backup_sql_file_name}')
+files.append(f'/home/ec2-user/MyLaboratory/{backup_sql_file_name}')
 
 for f in files:
     part = MIMEBase('application', "octet-stream")
