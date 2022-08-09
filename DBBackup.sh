@@ -13,9 +13,9 @@ from email.mime.text import MIMEText
 from email.utils import formatdate
 from datetime import datetime
 
-garbage_sql_files = glob.glob('*.sql')
+garbage_sql_files = glob.glob('/home/ec2-user/MyLaboratory/*.sql')
 for garbage_sql_file in garbage_sql_files:
-    os.remove(f'/home/ec2-user/MyLaboratory/{garbage_sql_file}')
+     os.remove(garbage_sql_file)
 
 current_date = str(datetime.today().strftime("%Y%m%d"))
 backup_sql_file_name = f'Init-{current_date}.sql'
