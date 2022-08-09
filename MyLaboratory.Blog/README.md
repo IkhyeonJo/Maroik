@@ -826,4 +826,4 @@ crontab automation problem in amazon linux
 https://stackoverflow.com/questions/73045218/crontab-automation-problem-in-amazon-linux
 https://stackoverflow.com/questions/39527571/are-shell-scripts-sensitive-to-encoding-and-line-endings
 
-* * * * * docker exec MyLaboratory.MariaDB /usr/bin/mysqldump -u root --password=***REMOVED*** MyLaboratory > backup.sql > /home/ec2-user/SQLBackup.sql
+* * * * * docker exec MyLaboratory.MariaDB /usr/bin/mysqldump -u root --password=***REMOVED*** MyLaboratory > backup.sql > /home/ubuntu/SQLBackup.sql
