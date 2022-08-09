@@ -613,8 +613,7 @@ namespace MyLaboratory.Blog.Controllers
                         Controller = menuInputViewModel.Controller,
                         Action = menuInputViewModel.Action,
                         Role = menuInputViewModel.Role,
-                        Order = menuInputViewModel.Order,
-                        SiteType = "Blog"
+                        Order = menuInputViewModel.Order
                     };
                     await categoryRepository.CreateCategoryAsync(category);
 
@@ -650,8 +649,7 @@ namespace MyLaboratory.Blog.Controllers
                         IconPath = menuInputViewModel.IconPath,
                         Action = menuInputViewModel.Action,
                         Role = menuInputViewModel.Role,
-                        Order = menuInputViewModel.Order,
-                        SiteType = "Blog"
+                        Order = menuInputViewModel.Order
                     };
                     await subCategoryRepository.CreateSubCategoryAsync(subCategory);
 
@@ -912,7 +910,6 @@ namespace MyLaboratory.Blog.Controllers
                     });
                 }
                 #endregion
-
                 var selectedCategory = menuOutputViewModels.Where(a => a.Id == id).FirstOrDefault();
                 if (selectedCategory == null)
                 {
@@ -970,7 +967,6 @@ namespace MyLaboratory.Blog.Controllers
                     });
                 }
                 #endregion
-
                 var selectedCategory = menuOutputViewModels.Where(a => a.Id == id).FirstOrDefault();
                 if (selectedCategory == null)
                 {
@@ -1006,8 +1002,7 @@ namespace MyLaboratory.Blog.Controllers
                         Controller = menuInputViewModel.Controller,
                         Action = menuInputViewModel.Action,
                         Role = menuInputViewModel.Role,
-                        Order = menuInputViewModel.Order,
-                        SiteType = "Blog"
+                        Order = menuInputViewModel.Order
                     };
                     await categoryRepository.UpdateCategoryAsync(category);
 
@@ -1044,8 +1039,7 @@ namespace MyLaboratory.Blog.Controllers
                         IconPath = menuInputViewModel.IconPath,
                         Action = menuInputViewModel.Action,
                         Role = menuInputViewModel.Role,
-                        Order = menuInputViewModel.Order,
-                        SiteType = "Blog"
+                        Order = menuInputViewModel.Order
                     };
                     await subCategoryRepository.UpdateSubCategoryAsync(subCategory);
 
