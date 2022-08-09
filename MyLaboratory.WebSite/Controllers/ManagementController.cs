@@ -912,7 +912,6 @@ namespace MyLaboratory.WebSite.Controllers
                     });
                 }
                 #endregion
-
                 var selectedCategory = menuOutputViewModels.Where(a => a.Id == id).FirstOrDefault();
                 if (selectedCategory == null)
                 {
@@ -970,7 +969,6 @@ namespace MyLaboratory.WebSite.Controllers
                     });
                 }
                 #endregion
-
                 var selectedCategory = menuOutputViewModels.Where(a => a.Id == id).FirstOrDefault();
                 if (selectedCategory == null)
                 {
