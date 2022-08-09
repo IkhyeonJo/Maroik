@@ -182,12 +182,38 @@ namespace MyLaboratory.Blog.Controllers
                     {
                         DbCache.AdminCategories = await categoryRepository.GetCategoryByRoleAsync(Role.Admin);
                         DbCache.AdminSubCategories = await subCategoryRepository.GetSubCategoryByRoleAsync(Role.Admin);
+
+                        DbCache.AdminCategories = from adminCategory in DbCache.AdminCategories
+                                                  where adminCategory.SiteType == "Blog"
+                                                  select adminCategory;
+                        DbCache.AdminSubCategories = from adminSubCategory in DbCache.AdminSubCategories
+                                                     where adminSubCategory.SiteType == "Blog"
+                                                     select adminSubCategory;
+
+                        DbCache.UserCategories = await categoryRepository.GetCategoryByRoleAsync(Role.User);
+                        DbCache.UserSubCategories = await subCategoryRepository.GetSubCategoryByRoleAsync(Role.User);
+
+                        DbCache.UserCategories = from userCategory in DbCache.UserCategories
+                                                 where userCategory.SiteType == "Blog"
+                                                 select userCategory;
+                        DbCache.UserSubCategories = from userSubCategory in DbCache.UserSubCategories
+                                                    where userSubCategory.SiteType == "Blog"
+                                                    select userSubCategory;
+
                         return RedirectToAction("AdminIndex", "DashBoard");
                     }
                     else if (tempAccount.Role == Role.User) // 로그인 권한이 User인 경우
                     {
                         DbCache.UserCategories = await categoryRepository.GetCategoryByRoleAsync(Role.User);
                         DbCache.UserSubCategories = await subCategoryRepository.GetSubCategoryByRoleAsync(Role.User);
+
+                        DbCache.UserCategories = from userCategory in DbCache.UserCategories
+                                                  where userCategory.SiteType == "Blog"
+                                                  select userCategory;
+                        DbCache.UserSubCategories = from userSubCategory in DbCache.UserSubCategories
+                                                     where userSubCategory.SiteType == "Blog"
+                                                     select userSubCategory;
+
                         return RedirectToAction("UserIndex", "DashBoard");
                     }
                     else // 로그인 권한은 Admin 또는 User만 있음 이 경우는 버그 발생한 것임
