@@ -1006,8 +1006,7 @@ namespace MyLaboratory.WebSite.Controllers
                         Controller = menuInputViewModel.Controller,
                         Action = menuInputViewModel.Action,
                         Role = menuInputViewModel.Role,
-                        Order = menuInputViewModel.Order,
-                        SiteType = "WebSite"
+                        Order = menuInputViewModel.Order
                     };
                     await categoryRepository.UpdateCategoryAsync(category);
 
@@ -1044,8 +1043,7 @@ namespace MyLaboratory.WebSite.Controllers
                         IconPath = menuInputViewModel.IconPath,
                         Action = menuInputViewModel.Action,
                         Role = menuInputViewModel.Role,
-                        Order = menuInputViewModel.Order,
-                        SiteType = "WebSite"
+                        Order = menuInputViewModel.Order
                     };
                     await subCategoryRepository.UpdateSubCategoryAsync(subCategory);
 
