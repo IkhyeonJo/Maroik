@@ -671,14 +671,14 @@ namespace MyLaboratory.WebSite.Controllers
 
         #region Read
         [HttpGet]
-        public IActionResult Menu(string wholeSearch)
+        public async Task<IActionResult> Menu(string wholeSearch)
         {
             if (HttpContext.Request.Headers["X-Requested-With"] == "XMLHttpRequest") // ajax
             {
                 List<MenuOutputViewModel> menuOutputViewModels = new List<MenuOutputViewModel>();
 
                 #region AdminCategories
-                foreach (var item in DbCache.AdminCategories)
+                foreach (var item in await categoryRepository.GetCategoryByRoleAsync(Role.Admin))
                 {
                     if (string.IsNullOrEmpty(wholeSearch))
                     {
@@ -724,7 +724,7 @@ namespace MyLaboratory.WebSite.Controllers
                 #endregion
 
                 #region UserCategories
-                foreach (var item in DbCache.UserCategories)
+                foreach (var item in await categoryRepository.GetCategoryByRoleAsync(Role.User))
                 {
                     if (string.IsNullOrEmpty(wholeSearch))
                     {
@@ -770,7 +770,7 @@ namespace MyLaboratory.WebSite.Controllers
                 #endregion
 
                 #region AdminSubCategories
-                foreach (var item in DbCache.AdminSubCategories)
+                foreach (var item in await subCategoryRepository.GetSubCategoryByRoleAsync(Role.Admin))
                 {
                     if (string.IsNullOrEmpty(wholeSearch))
                     {
@@ -816,7 +816,7 @@ namespace MyLaboratory.WebSite.Controllers
                 #endregion
 
                 #region UserSubCategories
-                foreach (var item in DbCache.UserSubCategories)
+                foreach (var item in await subCategoryRepository.GetSubCategoryByRoleAsync(Role.User))
                 {
                     if (string.IsNullOrEmpty(wholeSearch))
                     {
@@ -871,14 +871,14 @@ namespace MyLaboratory.WebSite.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         [RequiredHttpPostAccess(Role = Role.Admin)]
-        public IActionResult IsCategoryExists(int id)
+        public async Task<IActionResult> IsCategoryExists(int id)
         {
             try
             {
                 List<MenuOutputViewModel> menuOutputViewModels = new List<MenuOutputViewModel>();
 
                 #region AdminCategories
-                foreach (var item in DbCache.AdminCategories)
+                foreach (var item in await categoryRepository.GetCategoryByRoleAsync(Role.Admin))
                 {
                     menuOutputViewModels.Add(new MenuOutputViewModel()
                     {
@@ -896,7 +896,7 @@ namespace MyLaboratory.WebSite.Controllers
                 #endregion
 
                 #region UserCategories
-                foreach (var item in DbCache.UserCategories)
+                foreach (var item in await categoryRepository.GetCategoryByRoleAsync(Role.User))
                 {
                     menuOutputViewModels.Add(new MenuOutputViewModel()
                     {
@@ -929,14 +929,14 @@ namespace MyLaboratory.WebSite.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         [RequiredHttpPostAccess(Role = Role.Admin)]
-        public IActionResult IsSubCategoryExists(int id)
+        public async Task<IActionResult> IsSubCategoryExists(int id)
         {
             try
             {
                 List<MenuOutputViewModel> menuOutputViewModels = new List<MenuOutputViewModel>();
 
                 #region AdminCategories
-                foreach (var item in DbCache.AdminSubCategories)
+                foreach (var item in await subCategoryRepository.GetSubCategoryByRoleAsync(Role.Admin))
                 {
                     menuOutputViewModels.Add(new MenuOutputViewModel()
                     {
@@ -954,7 +954,7 @@ namespace MyLaboratory.WebSite.Controllers
                 #endregion
 
                 #region UserCategories
-                foreach (var item in DbCache.UserSubCategories)
+                foreach (var item in await subCategoryRepository.GetSubCategoryByRoleAsync(Role.User))
                 {
                     menuOutputViewModels.Add(new MenuOutputViewModel()
                     {
@@ -1151,7 +1151,7 @@ namespace MyLaboratory.WebSite.Controllers
             List<MenuOutputViewModel> menuOutputViewModels = new List<MenuOutputViewModel>();
 
             #region AdminCategories
-            foreach (var item in DbCache.AdminCategories)
+            foreach (var item in await categoryRepository.GetCategoryByRoleAsync(Role.Admin))
             {
                 menuOutputViewModels.Add(new MenuOutputViewModel()
                 {
@@ -1169,7 +1169,7 @@ namespace MyLaboratory.WebSite.Controllers
             #endregion
 
             #region UserCategories
-            foreach (var item in DbCache.UserCategories)
+            foreach (var item in await categoryRepository.GetCategoryByRoleAsync(Role.User))
             {
                 menuOutputViewModels.Add(new MenuOutputViewModel()
                 {
@@ -1187,7 +1187,7 @@ namespace MyLaboratory.WebSite.Controllers
             #endregion
 
             #region AdminSubCategories
-            foreach (var item in DbCache.AdminSubCategories)
+            foreach (var item in await subCategoryRepository.GetSubCategoryByRoleAsync(Role.Admin))
             {
                 menuOutputViewModels.Add(new MenuOutputViewModel()
                 {
@@ -1205,7 +1205,7 @@ namespace MyLaboratory.WebSite.Controllers
             #endregion
 
             #region UserSubCategories
-            foreach (var item in DbCache.UserSubCategories)
+            foreach (var item in await subCategoryRepository.GetSubCategoryByRoleAsync(Role.User))
             {
                 menuOutputViewModels.Add(new MenuOutputViewModel()
                 {
