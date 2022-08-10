@@ -65,7 +65,28 @@ namespace MyLaboratory.WebSite.Controllers
         [HttpGet]
         public IActionResult AnonymousIndex()
         {
-            return View();
+            bool isAccountSessionExist = HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+
+            if (isAccountSessionExist) // 로그인 된 상태라면
+            {
+                var loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)); // Get Session
+                if (loginedAccount.Role == Role.Admin) // 로그인한 사용자 권한이 Admin일 경우
+                {
+                    return RedirectToAction("AdminIndex", "DashBoard");
+                }
+                else if (loginedAccount.Role == Role.User) // 로그인한 사용자 권한이 User일 경우
+                {
+                    return RedirectToAction("UserIndex", "DashBoard");
+                }
+                else // 로그인한 사용자 권한이 Admin도 아니고 User도 아니면 DB Insert 오류임
+                {
+                    return null; // 잘못된 값을 넣으면 잘못된 값이 나옴
+                }
+            }
+            else
+            {
+                return View();
+            }
         }
         #endregion
     }

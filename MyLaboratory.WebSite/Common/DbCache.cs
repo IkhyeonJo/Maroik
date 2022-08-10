@@ -12,5 +12,8 @@ namespace MyLaboratory.WebSite.Common
 
         public static IEnumerable<Category> UserCategories = null;
         public static IEnumerable<SubCategory> UserSubCategories = null;
+
+        public static IEnumerable<Category> AnonymousCategories = null;
+        public static IEnumerable<SubCategory> AnonymousSubCategories = null;
     }
 }
