@@ -315,7 +315,120 @@
                         }
                     }
                 }
-                else // 버그임. 로그인한 사용자는 Admin 또는 User 밖에 없음.
+                else if (Model.Role == Role.Anonymous) // 비 로그인 사용자인 경우
+                {
+                    var tempAnonymousCategories = from anonymousCategory in DbCache.AnonymousCategories
+                                                  orderby anonymousCategory.Order ascending
+                                                  select anonymousCategory;
+                    var tempAnonymousSubCategories = DbCache.AnonymousSubCategories;
+
+                    foreach (var tempAnonymousCategory in tempAnonymousCategories)
+                    {
+                        if (!string.IsNullOrEmpty(tempAnonymousCategory.Action)) // 단일 카테고리
+                        {
+                            if (tempAnonymousCategory.Controller == currentControllerName && tempAnonymousCategory.Action == currentActionName) // 선택된 것이라면
+                            {
+                                <li class="nav-item">
+                                    <a asp-controller="@tempAnonymousCategory.Controller" asp-action="@tempAnonymousCategory.Action" class="nav-link active">
+                                        <i class="@tempAnonymousCategory.IconPath"></i>
+                                        <p>
+                                            @localizer[tempAnonymousCategory.DisplayName]
+                                        </p>
+                                    </a>
+                                </li>
+                            }
+                            else // 선택되지 않았다면
+                            {
+                                <li class="nav-item">
+                                    <a asp-controller="@tempAnonymousCategory.Controller" asp-action="@tempAnonymousCategory.Action" class="nav-link">
+                                        <i class="@tempAnonymousCategory.IconPath"></i>
+                                        <p>
+                                            @localizer[tempAnonymousCategory.DisplayName]
+                                        </p>
+                                    </a>
+                                </li>
+                            }
+                        }
+                        else if (string.IsNullOrEmpty(tempAnonymousCategory.Action)) // 다중 카테고리
+                        {
+                            var tempAnonymousSelectedSubCategories = from tempAnonymousSubCategory in tempAnonymousSubCategories
+                                                                     where tempAnonymousCategory.Id == tempAnonymousSubCategory.CategoryId
+                                                                     orderby tempAnonymousSubCategory.Order ascending
+                                                                     select tempAnonymousSubCategory;
+
+                            bool isExistSelectedSubCategoryInCategory = false;
+
+                            foreach (var tempUserSelectedSubCategory in tempAnonymousSelectedSubCategories)
+                            {
+                                if (tempAnonymousCategory.Controller == currentControllerName && tempUserSelectedSubCategory.Action == currentActionName)
+                                {
+                                    isExistSelectedSubCategoryInCategory = true;
+                                    break;
+                                }
+                            }
+
+                            if (isExistSelectedSubCategoryInCategory == true)
+                            {
+                                <li class="nav-item menu-open">
+                                    <a href="#" class="nav-link active">
+                                        <i class="@tempAnonymousCategory.IconPath"></i>
+                                        <p>
+                                            @localizer[tempAnonymousCategory.DisplayName]
+                                            <i class="right fas fa-angle-left"></i>
+                                        </p>
+                                    </a>
+                                    <ul class="nav nav-treeview">
+                                        @foreach (var tempAnonymousSelectedSubCategory in tempAnonymousSelectedSubCategories)
+                                        {
+                                            if (tempAnonymousSelectedSubCategory.Action == currentActionName)
+                                            {
+                                                <li class="nav-item">
+                                                    <a asp-controller="@tempAnonymousCategory.Controller" asp-action="@tempAnonymousSelectedSubCategory.Action" class="nav-link active">
+                                                        <i class="@tempAnonymousSelectedSubCategory.IconPath"></i>
+                                                        <p>@localizer[tempAnonymousSelectedSubCategory.DisplayName]</p>
+                                                    </a>
+                                                </li>
+                                            }
+                                            else
+                                            {
+                                                <li class="nav-item">
+                                                    <a asp-controller="@tempAnonymousCategory.Controller" asp-action="@tempAnonymousSelectedSubCategory.Action" class="nav-link">
+                                                        <i class="@tempAnonymousSelectedSubCategory.IconPath"></i>
+                                                        <p>@localizer[tempAnonymousSelectedSubCategory.DisplayName]</p>
+                                                    </a>
+                                                </li>
+                                            }
+                                        }
+                                    </ul>
+                                </li>
+                            }
+                            else if (isExistSelectedSubCategoryInCategory == false)
+                            {
+                                <li class="nav-item">
+                                    <a href="#" class="nav-link">
+                                        <i class="@tempAnonymousCategory.IconPath"></i>
+                                        <p>
+                                            @localizer[tempAnonymousCategory.DisplayName]
+                                            <i class="fas fa-angle-left right"></i>
+                                        </p>
+                                    </a>
+                                    <ul class="nav nav-treeview">
+                                        @foreach (var tempAnonymousSelectedSubCategory in tempAnonymousSelectedSubCategories)
+                                        {
+                                            <li class="nav-item">
+                                                <a asp-controller="@tempAnonymousCategory.Controller" asp-action="@tempAnonymousSelectedSubCategory.Action" class="nav-link">
+                                                    <i class="@tempAnonymousSelectedSubCategory.IconPath"></i>
+                                                    <p>@localizer[tempAnonymousSelectedSubCategory.DisplayName]</p>
+                                                </a>
+                                            </li>
+                                        }
+                                    </ul>
+                                </li>
+                            }
+                        }
+                    }
+                }
+                else // 버그임.
                 {
 
                 }
