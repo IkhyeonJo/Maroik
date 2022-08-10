@@ -61,5 +61,12 @@ namespace MyLaboratory.WebSite.Controllers
         }
         #endregion
 
+        #region Anonymous
+        [HttpGet]
+        public IActionResult AnonymousIndex()
+        {
+            return View();
+        }
+        #endregion
     }
 }

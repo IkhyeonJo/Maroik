@@ -68,6 +68,11 @@ namespace MyLaboratory.WebSite.Filters
                         base.OnActionExecuting(context); // Do Action!!
                         return;
                     }
+                    else if (currentControllerName == "DashBoard" && currentActionName == "AnonymousIndex")
+                    {
+                        base.OnActionExecuting(context); // Do Action!!
+                        return;
+                    }
                     else // 그 외 페이지는 전부 접근 불가!!
                     {
                         //context.Result = new UnauthorizedObjectResult("User is unauthorized");
