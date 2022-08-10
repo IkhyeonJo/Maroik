@@ -397,17 +397,10 @@
         }
         else if (Model.Role == Role.Anonymous)
         {
-            @*<!-- Language Dropdown Menu -->*@ @*이미 로그인 화면에서 언어 설정하기 때문에 문제 없음*@
-
-            <li class="nav-item dropdown">
-                <a class="nav-link" data-toggle="dropdown" href="#">
-                    <i class="fas fa-globe"></i>
+            <li class="nav-item">
+                <a asp-controller="Account" asp-action="Login" class="nav-link">
+                    <i class="fas fa-sign-in-alt"></i>
                 </a>
-                <div class="dropdown-menu dropdown-menu-right p-0">
-                    <a asp-controller="Account" asp-action="Login" class="dropdown-item active">
-                        Login
-                    </a>
-                </div>
             </li>
 
         }
