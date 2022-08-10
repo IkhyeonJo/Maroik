@@ -129,9 +129,6 @@
   <data name="Admin" xml:space="preserve">
     <value>Admin</value>
   </data>
-  <data name="Anonymous" xml:space="preserve">
-    <value>Anonymous</value>
-  </data>
   <data name="Are you sure to delete?" xml:space="preserve">
     <value>Are you sure to delete?</value>
   </data>
