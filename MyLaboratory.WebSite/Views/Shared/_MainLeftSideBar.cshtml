@@ -22,9 +22,12 @@
             <span class="brand-text font-weight-light">MyLaboratory</span>
         </a>
     }
-    else
+    else if (Model.Role == Role.Anonymous)
     {
-
+        <a asp-controller="DashBoard" asp-action="AnonymousIndex" class="brand-link">
+            <img src="~/anonymous/dist/img/AdminLTELogo.png" alt="AdminLTE Logo" class="brand-image img-circle elevation-3" style="opacity: .8">
+            <span class="brand-text font-weight-light">MyLaboratory</span>
+        </a>
     }
 
     @*<!-- Sidebar -->*@
