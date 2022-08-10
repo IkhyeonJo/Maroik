@@ -7,6 +7,11 @@ namespace MyLaboratory.Common.DataAccess.Contracts
     public interface ISubCategoryRepository
     {
         /// <summary>
+        /// 모든 서브카테고리들을 구합니다.
+        /// </summary>
+        /// <returns></returns>
+        public IEnumerable<SubCategory> GetSubCategory();
+        /// <summary>
         /// 권한에 따른 서브카테고리들을 구합니다.
         /// </summary>
         /// <param name="role"></param>
