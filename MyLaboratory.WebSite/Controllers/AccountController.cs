@@ -90,28 +90,7 @@ namespace MyLaboratory.WebSite.Controllers
         [HttpGet]
         public IActionResult Login()
         {
-            bool isAccountSessionExist = HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
-
-            if (isAccountSessionExist) // 로그인 된 상태라면
-            {
-                var loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)); // Get Session
-                if (loginedAccount.Role == Role.Admin) // 로그인한 사용자 권한이 Admin일 경우
-                {
-                    return RedirectToAction("AdminIndex", "DashBoard");
-                }
-                else if (loginedAccount.Role == Role.User) // 로그인한 사용자 권한이 User일 경우
-                {
-                    return RedirectToAction("UserIndex", "DashBoard");
-                }
-                else // 로그인한 사용자 권한이 Admin도 아니고 User도 아니면 DB Insert 오류임
-                {
-                    return null; // 잘못된 값을 넣으면 잘못된 값이 나옴
-                }
-            }
-            else // 로그인 안 된 상태라면
-            {
-                return View();
-            }
+            return View();
         }
 
         [HttpPost]
@@ -180,14 +159,10 @@ namespace MyLaboratory.WebSite.Controllers
                     #region DB Cache
                     if (tempAccount.Role == Role.Admin) // 로그인 권한이 Admin인 경우
                     {
-                        DbCache.AdminCategories = await categoryRepository.GetCategoryByRoleAsync(Role.Admin);
-                        DbCache.AdminSubCategories = await subCategoryRepository.GetSubCategoryByRoleAsync(Role.Admin);
                         return RedirectToAction("AdminIndex", "DashBoard");
                     }
                     else if (tempAccount.Role == Role.User) // 로그인 권한이 User인 경우
                     {
-                        DbCache.UserCategories = await categoryRepository.GetCategoryByRoleAsync(Role.User);
-                        DbCache.UserSubCategories = await subCategoryRepository.GetSubCategoryByRoleAsync(Role.User);
                         return RedirectToAction("UserIndex", "DashBoard");
                     }
                     else // 로그인 권한은 Admin 또는 User만 있음 이 경우는 버그 발생한 것임
@@ -227,7 +202,7 @@ namespace MyLaboratory.WebSite.Controllers
         public IActionResult Logout()
         {
             HttpContext.Session.Remove("AccountSession");
-            return RedirectToAction("Login", "Account");
+            return RedirectToAction("AnonymousIndex", "DashBoard");
         }
         #endregion
 
