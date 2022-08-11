@@ -14,7 +14,6 @@
         <div class="card-body">
             <p class="login-box-msg">@localizer["Sign in to start your session"]</p>
             <form id="loginForm" class="form-horizontal" method="post" asp-controller="Account" asp-action="Login">
-                @Html.AntiForgeryToken()
                 <div class="form-group has-feedback">
                     <input asp-for="Email" type="email" class="form-control" placeholder="@localizer["Email"]" />
                     <span asp-validation-for="Email" class="text-danger"></span>
