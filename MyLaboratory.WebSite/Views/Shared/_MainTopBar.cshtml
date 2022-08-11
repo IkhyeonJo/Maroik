@@ -7,6 +7,7 @@
 @inject MyLaboratory.Common.DataAccess.Contracts.IFixedIncomeRepository fixedIncomeRepository
 @inject MyLaboratory.Common.DataAccess.Contracts.IFixedExpenditureRepository fixedExpenditureRepository
 @{
+    var currentCulture = Context.Features.Get<Microsoft.AspNetCore.Localization.IRequestCultureFeature>().RequestCulture.Culture.Name;
     Context.Session.TryGetValue("AccountSession", out byte[] resultByte);
     DateTime currentDate = new DateTime(Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[0]), Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[1]), Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[2]));
     List<FixedIncomeOutputViewModel> fixedIncomeOutputViewModels = new List<FixedIncomeOutputViewModel>();
@@ -397,6 +398,34 @@
         }
         else if (Model.Role == Role.Anonymous)
         {
+            @*<!-- Language Dropdown Menu -->*@
+
+            <li class="nav-item dropdown">
+                <a class="nav-link" data-toggle="dropdown" href="#">
+                    <i class="fas fa-globe"></i>
+                </a>
+                <div class="dropdown-menu dropdown-menu-right p-0">
+                    @if (currentCulture == "en-US")
+                    {
+                        <a onclick="ChangeCulture('en-US')" style="cursor: pointer;" class="dropdown-item active">
+                            @localizer["English"]
+                        </a>
+                        <a onclick="ChangeCulture('ko-KR')" style="cursor: pointer;" class="dropdown-item">
+                            @localizer["Korean"]
+                        </a>
+                    }
+                    else if (currentCulture == "ko-KR")
+                    {
+                        <a onclick="ChangeCulture('en-US')" style="cursor: pointer;" class="dropdown-item">
+                            @localizer["English"]
+                        </a>
+                        <a onclick="ChangeCulture('ko-KR')" style="cursor: pointer;" class="dropdown-item active">
+                            @localizer["Korean"]
+                        </a>
+                    }
+                </div>
+            </li>
+
             <li class="nav-item">
                 <a asp-controller="Account" asp-action="Login" class="nav-link">
                     <i class="fas fa-sign-in-alt"></i>

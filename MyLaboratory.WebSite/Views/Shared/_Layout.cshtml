@@ -172,6 +172,8 @@
             <!-- AdminLTE dashboard demo (This is only for demo purposes) -->
             <script src="~/dist/js/pages/dashboard3.js"></script>
         *@
+        @*<!-- ChangeCulture.js -->*@
+        <script src="~/admin/custom/_Layout/js/site.js"></script>
     }
     else if (loginedAccount.Role == Role.User)
     {
@@ -189,6 +191,8 @@
         <script src="~/user/plugins/toastr/toastr.min.js" asp-append-version="true"></script>
         @*<!-- Chart.js -->*@
         <script src="~/user/plugins/chart.js/Chart.min.js" asp-append-version="true"></script>
+        @*<!-- ChangeCulture.js -->*@
+        <script src="~/user/custom/_Layout/js/site.js"></script>
     }
     else if (loginedAccount.Role == Role.Anonymous)
     {
@@ -206,6 +210,8 @@
         <script src="~/anonymous/plugins/toastr/toastr.min.js" asp-append-version="true"></script>
         @*<!-- Chart.js -->*@
         <script src="~/anonymous/plugins/chart.js/Chart.min.js" asp-append-version="true"></script>
+        @*<!-- ChangeCulture.js -->*@
+        <script src="~/anonymous/custom/_Layout/js/site.js"></script>
     }
     <div class="wrapper">
 
