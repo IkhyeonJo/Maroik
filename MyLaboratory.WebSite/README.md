@@ -659,6 +659,9 @@ https://godffs.tistory.com/m/484?category=126912
 ASP.NET Core 5.0 게시판 소스 다운로드 및 실행 데모
 https://www.youtube.com/watch?v=7lC6sYRh1fg
 
+# PHP 게시판
+https://blog.naver.com/bgpoilkj/220708456525
+
 #Custom Attribute
 CustomAttribute 만들어서 POST할 시 그 자동으로 로그인 권한 체크하기...!!
 
