@@ -14,7 +14,10 @@
     }
     else // 로그인이 되지 않은 상태라면
     {
+        loginedAccount.FullName = @localizer["Anonymous"].Value;
         loginedAccount.Role = Role.Anonymous;
+        loginedAccount.Created = DateTime.Today;
+        loginedAccount.AvatarImagePath = "/anonymous/images/bg1.jpg";
     }
 }
 
