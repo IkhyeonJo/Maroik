@@ -11,52 +11,14 @@ using System;
 using System.Reflection;
 using MyLaboratory.WebSite.Helpers;
 using MyLaboratory.Common.DataAccess.Models;
-using MyLaboratory.Common.DataAccess.Contracts;
 
 namespace MyLaboratory.WebSite.Filters
 {
     public class AuthorizationFilter : ActionFilterAttribute
     {
-        private readonly ICategoryRepository categoryRepository;
-        private readonly ISubCategoryRepository subCategoryRepository;
-
-        public AuthorizationFilter(ICategoryRepository categoryRepository, ISubCategoryRepository subCategoryRepository)
-        {
-            this.categoryRepository = categoryRepository;
-            this.subCategoryRepository = subCategoryRepository;
-        }
-
         // Do something before the action executes.
         public override void OnActionExecuting(ActionExecutingContext context)
         {
-            var categories = categoryRepository.GetCategory();
-            var subCategories = subCategoryRepository.GetSubCategory();
-
-            DbCache.AdminCategories = from adminCategory in categories
-                                      where adminCategory.Role == Role.Admin
-                                      select adminCategory;
-
-            DbCache.AdminSubCategories = from adminSubCategory in subCategories
-                                         where adminSubCategory.Role == Role.Admin
-                                         select adminSubCategory;
-
-            DbCache.UserCategories = from userCategory in categories
-                                     where userCategory.Role == Role.User
-                                     select userCategory;
-
-            DbCache.UserSubCategories = from userSubCategory in subCategories
-                                        where userSubCategory.Role == Role.User
-                                        select userSubCategory;
-
-            DbCache.AnonymousCategories = from anonymousCategory in categories
-                                          where anonymousCategory.Role == Role.Anonymous
-                                          select anonymousCategory;
-
-            DbCache.AnonymousSubCategories = from anonymousSubCategory in subCategories
-                                             where anonymousSubCategory.Role == Role.Anonymous
-                                             select anonymousSubCategory;
-
-
             string currentControllerName = context.ActionDescriptor.RouteValues["controller"].ToString(); // 실행 전 Controller 이름
             string currentActionName = context.ActionDescriptor.RouteValues["action"].ToString(); // 실행 전 Action 이름
             string currentRequestMethod = context.HttpContext.Request.Method; // GET HTTP METHOD
@@ -106,48 +68,12 @@ namespace MyLaboratory.WebSite.Filters
                         base.OnActionExecuting(context); // Do Action!!
                         return;
                     }
-
-                    var anonymousCategories = DbCache.AnonymousCategories;
-                    var anonymousSubCategories = DbCache.AnonymousSubCategories;
-
-                    #region SubCategory가 없는 Category일 경우
-                    var singleCategories = from anonymousCategory in anonymousCategories
-                                           where !string.IsNullOrEmpty(anonymousCategory.Action)
-                                           select anonymousCategory; // 서브 카테고리 없는 카테고리 모음.
-
-                    foreach (var singleCategory in singleCategories)
+                    else // 그 외 페이지는 전부 접근 불가!!
                     {
-                        if (singleCategory.Controller == currentControllerName && singleCategory.Action == currentActionName)
-                        {
-                            base.OnActionExecuting(context); // Do Action!!
-                            return;
-                        }
+                        //context.Result = new UnauthorizedObjectResult("User is unauthorized");
+                        context.Result = new RedirectResult("/Account/Login");
+                        return;
                     }
-                    #endregion
-
-                    #region SubCategory가 있는 Category일 경우
-                    var nonSingleCategories = from anonymousCategory in anonymousCategories
-                                              where string.IsNullOrEmpty(anonymousCategory.Action)
-                                              select anonymousCategory; // 서브 카테고리 있는 카테고리 모음.
-
-                    foreach (var nonSingleCategory in nonSingleCategories)
-                    {
-                        var nonSingleCategorysSubCategories = from anonymousSubCategory in anonymousSubCategories
-                                                              where anonymousSubCategory.CategoryId == nonSingleCategory.Id
-                                                              select anonymousSubCategory;
-                        foreach (var nonSingleCategorysSubCategory in nonSingleCategorysSubCategories)
-                        {
-                            if (nonSingleCategory.Controller == currentControllerName && nonSingleCategorysSubCategory.Action == currentActionName)
-                            {
-                                base.OnActionExecuting(context); // Do Action!!
-                                return;
-                            }
-                        }
-                    }
-                    #endregion
-                    //context.Result = new UnauthorizedObjectResult("User is unauthorized");
-                    context.Result = new RedirectResult("/DashBoard/AnonymousIndex");
-                    return;
                 }
                 else if (isAccountSessionExist == true) // 로그인이 된 상태라면
                 {
@@ -156,12 +82,12 @@ namespace MyLaboratory.WebSite.Filters
                         base.OnActionExecuting(context); // Do Action!!
                         return;
                     }
-                    else if (currentControllerName == "Account" && currentActionName == "Logout") // 로그아웃
+                    else if (currentControllerName == "Account" && currentActionName == "Login") // (로그인 된 상태에서 뒤로가기로 로그인 페이지에 갈 수 있음)
                     {
                         base.OnActionExecuting(context); // Do Action!!
                         return;
                     }
-                    else if (currentControllerName == "DashBoard" && currentActionName == "AnonymousIndex") // 초기 화면
+                    else if (currentControllerName == "Account" && currentActionName == "Logout") // 로그아웃
                     {
                         base.OnActionExecuting(context); // Do Action!!
                         return;
@@ -211,7 +137,7 @@ namespace MyLaboratory.WebSite.Filters
                         }
                         #endregion
                         //context.Result = new UnauthorizedObjectResult("User is unauthorized"); // 다 검사했는데도 나오지 않은 경우는 DB에 없는 경우이다.
-                        context.Result = new RedirectResult("/DashBoard/AnonymousIndex");
+                        context.Result = new RedirectResult("/Account/Login");
                         return;
                         //DB Category & SubCategory 다 뽑아 현재 Access한 Controller & Action과 다 맞는지 비교하고 맞으면 넘어가고 아니면 UnAuthroizedObjectReslut 출력 (Action 취소!!)
                     }
@@ -256,7 +182,7 @@ namespace MyLaboratory.WebSite.Filters
                         }
                         #endregion
                         //context.Result = new UnauthorizedObjectResult("User is unauthorized"); // 다 검사했는데도 나오지 않은 경우는 DB에 없는 경우이다.
-                        context.Result = new RedirectResult("/DashBoard/AnonymousIndex");
+                        context.Result = new RedirectResult("/Account/Login");
                         return;
                         //DB Category & SubCategory 다 뽑아 현재 Access한 Controller & Action과 다 맞는지 비교하고 맞으면 넘어가고 아니면 UnAuthroizedObjectReslut 출력 (Action 취소!!)
                     }
@@ -283,7 +209,7 @@ namespace MyLaboratory.WebSite.Filters
                         }
                     }
                     //context.Result = new UnauthorizedObjectResult("Access is not allowed"); // 다 검사 했는데도 없으면 실행 불가!
-                    context.Result = new RedirectResult("/DashBoard/AnonymousIndex");
+                    context.Result = new RedirectResult("/Account/Login");
                     return;
                 }
                 else if (isAccountSessionExist == true) // 로그인이 된 상태라면
@@ -323,7 +249,7 @@ namespace MyLaboratory.WebSite.Filters
                             }
                         }
                         //context.Result = new UnauthorizedObjectResult("Access is not allowed"); // 다 검사 했는데도 없으면 실행 불가!
-                        context.Result = new RedirectResult("/DashBoard/AnonymousIndex");
+                        context.Result = new RedirectResult("/Account/Login");
                         return;
                     }
                     else if (loginedAccount.Role == Role.User) // 로그인한 사용자 권한이 User일 경우
@@ -358,7 +284,7 @@ namespace MyLaboratory.WebSite.Filters
                             }
                         }
                         //context.Result = new UnauthorizedObjectResult("Access is not allowed"); // 다 검사 했는데도 없으면 실행 불가!
-                        context.Result = new RedirectResult("/DashBoard/AnonymousIndex");
+                        context.Result = new RedirectResult("/Account/Login");
                         return;
                     }
                 }
@@ -367,7 +293,7 @@ namespace MyLaboratory.WebSite.Filters
             {
                 //base.OnActionExecuting(context); // Do Action!!
                 //context.Result = new UnauthorizedObjectResult("Access is not allowed [Only Allowed GET/POST Method]");
-                context.Result = new RedirectResult("/DashBoard/AnonymousIndex");
+                context.Result = new RedirectResult("/Account/Login");
                 return;
             }
             // Do something before the action executes.

@@ -117,23 +117,11 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <data name="DashBoard" xml:space="preserve">
-    <value>대시보드</value>
-  </data>
-  <data name="English" xml:space="preserve">
-    <value>영어</value>
-  </data>
   <data name="FixedExpenditure new message" xml:space="preserve">
     <value>새로운 고정 지출 메세지</value>
   </data>
   <data name="FixedIncome new message" xml:space="preserve">
     <value>새로운 고정 수입 메세지</value>
-  </data>
-  <data name="Korean" xml:space="preserve">
-    <value>한글</value>
-  </data>
-  <data name="Login" xml:space="preserve">
-    <value>로그인</value>
   </data>
   <data name="Member since" xml:space="preserve">
     <value>회원 생성일</value>

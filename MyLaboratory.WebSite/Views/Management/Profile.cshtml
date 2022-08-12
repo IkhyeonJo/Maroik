@@ -9,6 +9,7 @@
 
     var loginedAccount = await accountRepository.GetAccountAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
 }
+@Html.AntiForgeryToken()
 <section class="content">
     <div class="container-fluid">
         <div class="row">

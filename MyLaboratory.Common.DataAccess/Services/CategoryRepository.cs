@@ -16,15 +16,6 @@ namespace MyLaboratory.Common.DataAccess.Services
         {
             this.context = context;
         }
-
-        /// <summary>
-        /// 모든 카테고리들을 구합니다.
-        /// </summary>
-        /// <returns></returns>
-        public IEnumerable<Category> GetCategory()
-        {
-            return context.Categories.ToList();
-        }
         /// <summary>
         /// 권한에 따른 카테고리들을 구합니다.
         /// </summary>

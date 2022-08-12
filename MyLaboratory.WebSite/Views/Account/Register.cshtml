@@ -20,6 +20,7 @@
                 <p class="login-box-msg">@localizer["Register a new membership"]</p>
 
                 <form id="registerForm" class="form-horizontal" method="post" asp-controller="Account" asp-action="Register">
+                    @Html.AntiForgeryToken()
                     <div class="form-group has-feedback">
                         <input asp-for="FullName" type="text" class="form-control" placeholder="@localizer["Full Name"]" />
                         <span asp-validation-for="FullName" class="text-danger"></span>
@@ -73,6 +74,7 @@ else
                     <p class="login-box-msg">@localizer["Authentication Email has been sent"]</p>
 
                     <form id="registerForm" class="form-horizontal" method="post" asp-controller="Account" asp-action="Register">
+                        @Html.AntiForgeryToken()
                         <div class="form-group has-feedback">
                             <input asp-for="Email" type="hidden" class="form-control" />
                         </div>
@@ -99,6 +101,7 @@ else
                     <p class="login-box-msg">@localizer["Authentication Email has been sent again"]</p>
 
                     <form id="registerForm" class="form-horizontal" method="post" asp-controller="Account" asp-action="Register">
+                        @Html.AntiForgeryToken()
                         <div class="form-group has-feedback">
                             <input asp-for="Email" type="hidden" class="form-control" />
                         </div>

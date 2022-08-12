@@ -16,15 +16,6 @@ namespace MyLaboratory.Common.DataAccess.Services
         {
             this.context = context;
         }
-
-        /// <summary>
-        /// 모든 서브카테고리들을 구합니다.
-        /// </summary>
-        /// <returns></returns>
-        public IEnumerable<SubCategory> GetSubCategory()
-        {
-            return context.SubCategories.ToList();
-        }
         /// <summary>
         /// 권한에 따른 서브카테고리들을 구합니다.
         /// </summary>
