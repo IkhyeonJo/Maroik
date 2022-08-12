@@ -427,42 +427,9 @@
             </li>
 
             <li class="nav-item dropdown user-menu">
-                <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown">
-                    <img src="@Model.AvatarImagePath" class="user-image img-circle elevation-2" alt="User Image">
-                    <span class="d-none d-md-inline">@Model.FullName</span>
+                <a asp-controller="Account" asp-action="Login" class="nav-link">
+                    <span class="d-none d-md-inline">@localizer["Login"]</span>
                 </a>
-                <ul class="dropdown-menu dropdown-menu-lg dropdown-menu-right">
-                    <!-- User image -->
-                    <li class="user-header bg-primary">
-                        <img src="@Model.AvatarImagePath" class="img-circle elevation-2" alt="User Image">
-                        <p>
-                            @Model.FullName
-                            <small>@localizer["Member since"] @TimeZoneInfo.ConvertTimeBySystemTimeZoneId(Model.Created, MyLaboratory.WebSite.Common.OSTimeZone.DestinationTimeZoneId).ToString("d")</small>
-                        </p>
-                    </li>
-                    @*
-                <!-- Menu Body -->
-                <li class="user-body">
-                <div class="row">
-                <div class="col-4 text-center">
-                <a href="#">Followers</a>
-                </div>
-                <div class="col-4 text-center">
-                <a href="#">Sales</a>
-                </div>
-                <div class="col-4 text-center">
-                <a href="#">Friends</a>
-                </div>
-                </div>
-                <!-- /.row -->
-                </li>
-                *@
-                    <!-- Menu Footer-->
-                    <li class="user-footer">
-                        <a asp-controller="DashBoard" asp-action="AnonymousIndex" class="btn btn-default btn-flat">@localizer["DashBoard"]</a>
-                        <a asp-controller="Account" asp-action="Login" class="btn btn-default btn-flat float-right">@localizer["Login"]</a>
-                    </li>
-                </ul>
             </li>
 
         }
