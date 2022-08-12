@@ -173,7 +173,7 @@ Cookies, when used correctly, are a safe option. The key is to
 Using these and other techniques such as CSRF tokens to prevent cross site scripting attacks will further improve the security of your site while using cookies.
 Alternatives to using cookies include using JWT tokens added to the Authorization header, but they are really not any safer thank a cookie. Like a cookie, the JWT token is passed in the header, but the JWT token is usually readable by the client side, whereas a cookie can be encrypted so that it is not readable by the client side or browser (httponly). 
 If you need store JWT tokens in the browser, don't store them in localstorage (which is a common practice, but not a good idea). Store tokens in sessionstorage or in memory (like in a react state object, or Angular state object) or .... in a cookie (lol).
-https://wonpaper.tistory.com/239
+https://wonpaper.tistory.com/239 ## 20220813 작성: 여기부터 티스토리에 작성해야함 ##
 PBKDF2 
 
 
