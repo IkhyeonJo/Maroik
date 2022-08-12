@@ -428,7 +428,8 @@
 
             <li class="nav-item dropdown user-menu">
                 <a asp-controller="Account" asp-action="Login" class="nav-link">
-                    <i class="fas fa-sign-in-alt"></i>
+                    <img src="@Model.AvatarImagePath" class="user-image img-circle elevation-2" alt="User Image">
+                    <span class="d-none d-md-inline">@Model.FullName</span>
                 </a>
             </li>
 
