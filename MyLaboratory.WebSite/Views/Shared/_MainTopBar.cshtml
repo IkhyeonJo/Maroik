@@ -398,16 +398,7 @@
         }
         else if (Model.Role == Role.Anonymous)
         {
-            @*
-            <li class="nav-item dropdown user-menu">
-                <a asp-controller="Account" asp-action="Login" class="nav-link">
-                    <img src="~/anonymous/images/Login-ko-KR.jpg" class="user-image img-square elevation-2" alt="User Image">
-                    <span class="d-none d-md-inline">@Model.FullName</span>
-                </a>
-            </li>
-            *@
             @*<!-- Language Dropdown Menu -->*@
-
             <li class="nav-item dropdown">
                 <div class="btn-group" style="padding-right:10px;">
                     <button type="button" class="btn btn-info">
@@ -433,6 +424,7 @@
                 </div>
             </li>
 
+            @*<!-- Login Button -->*@
             <li class="nav-item dropdown">
                 <button class="btn btn-primary btn-block" onclick="location.href='/Account/Login';">
                     <i class="fas fa-sign-in-alt" style="padding-right:6px;"></i>@localizer["Login"]
