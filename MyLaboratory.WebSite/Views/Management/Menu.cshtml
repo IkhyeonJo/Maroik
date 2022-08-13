@@ -1,5 +1,4 @@
-﻿@Html.AntiForgeryToken()
-<section class="content">
+﻿<section class="content">
     <div class="card card-primary">
         <div class="card-header">
             <h3 class="card-title">@localizer["Menu Management"].Value</h3>
@@ -78,6 +77,7 @@
                                 <select id="createCategoryRole" name="createCategoryRole" style="max-width:90%;">
                                     <option value="Admin">@localizer["Admin"].Value</option>
                                     <option value="User">@localizer["User"].Value</option>
+                                    <option value="Anonymous">@localizer["Anonymous"].Value</option>
                                 </select>
                             </div>
                         </div>
@@ -131,6 +131,7 @@
                                 <select id="createSubcategoryRole" name="createSubcategoryRole" style="max-width:90%;">
                                     <option value="Admin">@localizer["Admin"].Value</option>
                                     <option value="User">@localizer["User"].Value</option>
+                                    <option value="Anonymous">@localizer["Anonymous"].Value</option>
                                 </select>
                             </div>
                         </div>
@@ -199,6 +200,7 @@
                                 <select id="editCategoryRole" name="editCategoryRole" style="max-width:90%;">
                                     <option value="Admin">@localizer["Admin"].Value</option>
                                     <option value="User">@localizer["User"].Value</option>
+                                    <option value="Anonymous">@localizer["Anonymous"].Value</option>
                                 </select>
                             </div>
                         </div>
@@ -267,6 +269,7 @@
                                 <select id="editSubCategoryRole" name="editSubCategoryRole" style="max-width:90%;">
                                     <option value="Admin">@localizer["Admin"].Value</option>
                                     <option value="User">@localizer["User"].Value</option>
+                                    <option value="Anonymous">@localizer["Anonymous"].Value</option>
                                 </select>
                             </div>
                         </div>

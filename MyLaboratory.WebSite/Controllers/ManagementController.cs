@@ -767,6 +767,52 @@ namespace MyLaboratory.WebSite.Controllers
                 }
                 #endregion
 
+                #region AnonymousCategories
+                foreach (var item in await categoryRepository.GetCategoryByRoleAsync(Role.Anonymous))
+                {
+                    if (string.IsNullOrEmpty(wholeSearch))
+                    {
+                        menuOutputViewModels.Add(new MenuOutputViewModel()
+                        {
+                            Id = item.Id,
+                            CategoryId = null,
+                            Name = item.Name,
+                            DisplayName = item.DisplayName,
+                            IconPath = item.IconPath,
+                            Controller = item.Controller,
+                            Action = item.Action,
+                            Role = item.Role,
+                            Order = item.Order
+                        });
+                    }
+                    else
+                    {
+                        if (item.Id.ToString().Contains(wholeSearch) ||
+                            (item.Name?.ToString() ?? "").Contains(wholeSearch) ||
+                            (item.DisplayName?.ToString() ?? "").Contains(wholeSearch) ||
+                            (item.IconPath?.ToString() ?? "").Contains(wholeSearch) ||
+                            (item.Controller?.ToString() ?? "").Contains(wholeSearch) ||
+                            (item.Action?.ToString() ?? "").Contains(wholeSearch) ||
+                            (item.Role?.ToString() ?? "").Contains(wholeSearch) ||
+                            item.Order.ToString().Contains(wholeSearch))
+                        {
+                            menuOutputViewModels.Add(new MenuOutputViewModel()
+                            {
+                                Id = item.Id,
+                                CategoryId = null,
+                                Name = item.Name,
+                                DisplayName = item.DisplayName,
+                                IconPath = item.IconPath,
+                                Controller = item.Controller,
+                                Action = item.Action,
+                                Role = item.Role,
+                                Order = item.Order
+                            });
+                        }
+                    }
+                }
+                #endregion
+
                 #region AdminSubCategories
                 foreach (var item in await subCategoryRepository.GetSubCategoryByRoleAsync(Role.Admin))
                 {
@@ -815,6 +861,52 @@ namespace MyLaboratory.WebSite.Controllers
 
                 #region UserSubCategories
                 foreach (var item in await subCategoryRepository.GetSubCategoryByRoleAsync(Role.User))
+                {
+                    if (string.IsNullOrEmpty(wholeSearch))
+                    {
+                        menuOutputViewModels.Add(new MenuOutputViewModel()
+                        {
+                            Id = item.Id,
+                            CategoryId = item.CategoryId,
+                            Name = item.Name,
+                            DisplayName = item.DisplayName,
+                            IconPath = item.IconPath,
+                            Controller = null,
+                            Action = item.Action,
+                            Role = item.Role,
+                            Order = item.Order
+                        });
+                    }
+                    else
+                    {
+                        if (item.Id.ToString().Contains(wholeSearch) ||
+                            item.CategoryId.ToString().Contains(wholeSearch) ||
+                            (item.Name?.ToString() ?? "").Contains(wholeSearch) ||
+                            (item.DisplayName?.ToString() ?? "").Contains(wholeSearch) ||
+                            (item.IconPath?.ToString() ?? "").Contains(wholeSearch) ||
+                            (item.Action?.ToString() ?? "").Contains(wholeSearch) ||
+                            (item.Role?.ToString() ?? "").Contains(wholeSearch) ||
+                            item.Order.ToString().Contains(wholeSearch))
+                        {
+                            menuOutputViewModels.Add(new MenuOutputViewModel()
+                            {
+                                Id = item.Id,
+                                CategoryId = item.CategoryId,
+                                Name = item.Name,
+                                DisplayName = item.DisplayName,
+                                IconPath = item.IconPath,
+                                Controller = null,
+                                Action = item.Action,
+                                Role = item.Role,
+                                Order = item.Order
+                            });
+                        }
+                    }
+                }
+                #endregion
+
+                #region AnonymousSubCategories
+                foreach (var item in await subCategoryRepository.GetSubCategoryByRoleAsync(Role.Anonymous))
                 {
                     if (string.IsNullOrEmpty(wholeSearch))
                     {
@@ -910,6 +1002,25 @@ namespace MyLaboratory.WebSite.Controllers
                     });
                 }
                 #endregion
+
+                #region AnonymousCategories
+                foreach (var item in await categoryRepository.GetCategoryByRoleAsync(Role.Anonymous))
+                {
+                    menuOutputViewModels.Add(new MenuOutputViewModel()
+                    {
+                        Id = item.Id,
+                        CategoryId = null,
+                        Name = item.Name,
+                        DisplayName = item.DisplayName,
+                        IconPath = item.IconPath,
+                        Controller = item.Controller,
+                        Action = item.Action,
+                        Role = item.Role,
+                        Order = item.Order
+                    });
+                }
+                #endregion
+
                 var selectedCategory = menuOutputViewModels.Where(a => a.Id == id).FirstOrDefault();
                 if (selectedCategory == null)
                 {
@@ -932,7 +1043,7 @@ namespace MyLaboratory.WebSite.Controllers
             {
                 List<MenuOutputViewModel> menuOutputViewModels = new List<MenuOutputViewModel>();
 
-                #region AdminCategories
+                #region AdminSubCategories
                 foreach (var item in await subCategoryRepository.GetSubCategoryByRoleAsync(Role.Admin))
                 {
                     menuOutputViewModels.Add(new MenuOutputViewModel()
@@ -950,7 +1061,7 @@ namespace MyLaboratory.WebSite.Controllers
                 }
                 #endregion
 
-                #region UserCategories
+                #region UserSubCategories
                 foreach (var item in await subCategoryRepository.GetSubCategoryByRoleAsync(Role.User))
                 {
                     menuOutputViewModels.Add(new MenuOutputViewModel()
@@ -967,6 +1078,25 @@ namespace MyLaboratory.WebSite.Controllers
                     });
                 }
                 #endregion
+
+                #region AnonymousSubCategories
+                foreach (var item in await subCategoryRepository.GetSubCategoryByRoleAsync(Role.Anonymous))
+                {
+                    menuOutputViewModels.Add(new MenuOutputViewModel()
+                    {
+                        Id = item.Id,
+                        CategoryId = item.CategoryId,
+                        Name = item.Name,
+                        DisplayName = item.DisplayName,
+                        IconPath = item.IconPath,
+                        Controller = null,
+                        Action = item.Action,
+                        Role = item.Role,
+                        Order = item.Order
+                    });
+                }
+                #endregion
+
                 var selectedCategory = menuOutputViewModels.Where(a => a.Id == id).FirstOrDefault();
                 if (selectedCategory == null)
                 {
@@ -1180,6 +1310,24 @@ namespace MyLaboratory.WebSite.Controllers
             }
             #endregion
 
+            #region AnonymousCategories
+            foreach (var item in await categoryRepository.GetCategoryByRoleAsync(Role.Anonymous))
+            {
+                menuOutputViewModels.Add(new MenuOutputViewModel()
+                {
+                    Id = item.Id,
+                    CategoryId = null,
+                    Name = item.Name,
+                    DisplayName = item.DisplayName,
+                    IconPath = item.IconPath,
+                    Controller = item.Controller,
+                    Action = item.Action,
+                    Role = item.Role,
+                    Order = item.Order
+                });
+            }
+            #endregion
+
             #region AdminSubCategories
             foreach (var item in await subCategoryRepository.GetSubCategoryByRoleAsync(Role.Admin))
             {
@@ -1200,6 +1348,24 @@ namespace MyLaboratory.WebSite.Controllers
 
             #region UserSubCategories
             foreach (var item in await subCategoryRepository.GetSubCategoryByRoleAsync(Role.User))
+            {
+                menuOutputViewModels.Add(new MenuOutputViewModel()
+                {
+                    Id = item.Id,
+                    CategoryId = item.CategoryId,
+                    Name = item.Name,
+                    DisplayName = item.DisplayName,
+                    IconPath = item.IconPath,
+                    Controller = null,
+                    Action = item.Action,
+                    Role = item.Role,
+                    Order = item.Order
+                });
+            }
+            #endregion
+
+            #region AnonymousSubCategories
+            foreach (var item in await subCategoryRepository.GetSubCategoryByRoleAsync(Role.Anonymous))
             {
                 menuOutputViewModels.Add(new MenuOutputViewModel()
                 {

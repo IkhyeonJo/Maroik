@@ -129,6 +129,9 @@
   <data name="Admin" xml:space="preserve">
     <value>관리자</value>
   </data>
+  <data name="Anonymous" xml:space="preserve">
+    <value>익명</value>
+  </data>
   <data name="Are you sure to delete?" xml:space="preserve">
     <value>정말로 삭제하시겠습니까?</value>
   </data>

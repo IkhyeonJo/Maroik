@@ -273,7 +273,7 @@ namespace MyLaboratory.WebSite
 
             app.UseEndpoints(endpoints =>
             {
-                endpoints.MapControllerRoute(name: "default", pattern: "{controller=Account}/{action=Login}/{id?}");
+                endpoints.MapControllerRoute(name: "default", pattern: "{controller=DashBoard}/{action=AnonymousIndex}/{id?}");
             });
         }
     }
