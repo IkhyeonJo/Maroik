@@ -398,32 +398,45 @@
         }
         else if (Model.Role == Role.Anonymous)
         {
+            @*
+            <li class="nav-item dropdown user-menu">
+                <a asp-controller="Account" asp-action="Login" class="nav-link">
+                    <img src="~/anonymous/images/Login-ko-KR.jpg" class="user-image img-square elevation-2" alt="User Image">
+                    <span class="d-none d-md-inline">@Model.FullName</span>
+                </a>
+            </li>
+            *@
             @*<!-- Language Dropdown Menu -->*@
 
             <li class="nav-item dropdown">
-                <a class="nav-link" data-toggle="dropdown" href="#">
-                    <i class="fas fa-globe"></i>
-                </a>
-                <div class="dropdown-menu dropdown-menu-right p-0">
+                <div class="btn-group" style="padding-right:10px;">
+                    <button type="button" class="btn btn-info">
+                        <i class="fas fa-globe" style="padding-right:6px;"></i>@localizer["Language"]
+                    </button>
+                    <button type="button" class="btn btn-info dropdown-toggle dropdown-icon" data-toggle="dropdown">
+                        <span class="sr-only">Toggle Dropdown</span>
+                    </button>
                     @if (currentCulture == "en-US")
                     {
-                        <a onclick="ChangeCulture('en-US')" style="cursor: pointer;" class="dropdown-item active">
-                            @localizer["English"]
-                        </a>
-                        <a onclick="ChangeCulture('ko-KR')" style="cursor: pointer;" class="dropdown-item">
-                            @localizer["Korean"]
-                        </a>
+                        <div class="dropdown-menu" role="menu">
+                            <a class="dropdown-item active" onclick="ChangeCulture('en-US')" style="cursor: pointer;">@localizer["English"]</a>
+                            <a class="dropdown-item" onclick="ChangeCulture('ko-KR')" style="cursor: pointer;">@localizer["Korean"]</a>
+                        </div>
                     }
                     else if (currentCulture == "ko-KR")
                     {
-                        <a onclick="ChangeCulture('en-US')" style="cursor: pointer;" class="dropdown-item">
-                            @localizer["English"]
-                        </a>
-                        <a onclick="ChangeCulture('ko-KR')" style="cursor: pointer;" class="dropdown-item active">
-                            @localizer["Korean"]
-                        </a>
+                        <div class="dropdown-menu" role="menu">
+                            <a class="dropdown-item" onclick="ChangeCulture('en-US')" style="cursor: pointer;">@localizer["English"]</a>
+                            <a class="dropdown-item active" onclick="ChangeCulture('ko-KR')" style="cursor: pointer;">@localizer["Korean"]</a>
+                        </div>
                     }
                 </div>
+            </li>
+
+            <li class="nav-item dropdown">
+                <button class="btn btn-primary btn-block" onclick="location.href='/Account/Login';">
+                    <i class="fas fa-sign-in-alt" style="padding-right:6px;"></i>@localizer["Login"]
+                </button>
             </li>
         }
     </ul>

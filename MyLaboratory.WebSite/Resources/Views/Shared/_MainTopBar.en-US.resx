@@ -132,6 +132,9 @@
   <data name="Korean" xml:space="preserve">
     <value>Korean</value>
   </data>
+  <data name="Language" xml:space="preserve">
+    <value>Language</value>
+  </data>
   <data name="Login" xml:space="preserve">
     <value>Login</value>
   </data>

@@ -33,22 +33,20 @@
     @*<!-- Sidebar -->*@
     <div class="sidebar">
         @*<!-- Sidebar user panel (optional) -->*@
-
+        @*
         <div class="user-panel mt-3 pb-3 mb-3 d-flex">
             <div class="image">
                 @if (Model.Role == Role.Admin)
                 {
-                    @*<img src="@Model.AvatarImagePath" class="img-circle elevation-2" alt="User Image">*@
+                    <img src="@Model.AvatarImagePath" class="img-circle elevation-2" alt="User Image">
                 }
                 else if (Model.Role == Role.User)
                 {
-                    @*<img src="@Model.AvatarImagePath" class="img-circle elevation-2" alt="User Image">*@
+                    <img src="@Model.AvatarImagePath" class="img-circle elevation-2" alt="User Image">
                 }
                 else if (Model.Role == Role.Anonymous)
                 {
-                    <a asp-controller="Account" asp-action="Login">
-                        <img src="@Model.AvatarImagePath" class="img-circle elevation-2" alt="User Image">
-                    </a>
+                    <img src="@Model.AvatarImagePath" class="img-circle elevation-2" alt="User Image">
                 }
                 else
                 {
@@ -58,15 +56,15 @@
             <div class="info">
                 @if (Model.Role == Role.Admin)
                 {
-                    @*<a href="#" class="d-block">@Model.FullName</a>*@
+                    <a href="#" class="d-block">@Model.FullName</a>
                 }
                 else if (Model.Role == Role.User)
                 {
-                    @*<a href="#" class="d-block">@Model.FullName</a>*@
+                    <a href="#" class="d-block">@Model.FullName</a>
                 }
                 else if (Model.Role == Role.Anonymous)
                 {
-                    <a asp-controller="Account" asp-action="Login" class="d-block">@Model.FullName</a>
+                    <a href="#" class="d-block">@Model.FullName</a>
                 }
                 else
                 {
@@ -74,6 +72,7 @@
                 }
             </div>
         </div>
+        *@
 
         @*<!-- SidebarSearch Form -->*@
 
