@@ -132,6 +132,9 @@
   <data name="Korean" xml:space="preserve">
     <value>한글</value>
   </data>
+  <data name="Language" xml:space="preserve">
+    <value>언어</value>
+  </data>
   <data name="Login" xml:space="preserve">
     <value>로그인</value>
   </data>
