@@ -83,7 +83,7 @@ networks:
 
 services:
     mariadb:
-        image: "mariadb:10.6.5"
+        image: "mariadb:10.9.2"
         container_name: MyLaboratory.MariaDB
         volumes:
           - datasource:/var/lib/mysql
