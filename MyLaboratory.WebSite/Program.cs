@@ -246,6 +246,6 @@ app.UseRequestLocalization(localizationOptions);
 
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Account}/{action=Login}/{id?}");
+    pattern: "{controller=DashBoard}/{action=AnonymousIndex}/{id?}");
 
 app.Run();
