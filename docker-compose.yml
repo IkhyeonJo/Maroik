@@ -18,10 +18,13 @@
 #sudo yum update -y && sudo amazon-linux-extras install docker -y && sudo service docker start && sudo curl -L https://github.com/docker/compose/releases/download/1.21.0/docker-compose-`uname -s`-`uname -m` | sudo tee /usr/local/bin/docker-compose > /dev/null && sudo chmod +x /usr/local/bin/docker-compose && sudo ln -s /usr/local/bin/docker-compose /usr/bin/docker-compose && sudo docker-compose up -d && sudo yum install -y python3 && sudo yum install -y cronie && chmod 755 DBBackup.sh && crontab InitCron && sudo service crond restart
 #-----------------------------------------------------------------------------------
 
-## Clean Restart of a Docker Instance command
+## Delete all of Docker instance and crontab
 #-----------------------------------------------------------------------------------
-#sudo docker-compose down && sudo docker volume rm $(sudo docker volume ls -q) && sudo docker rmi -f $(sudo docker images -a -q) --force && sudo docker-compose up -d
+#sudo docker-compose down && sudo docker rm -f $(docker ps -a -q) && sudo docker volume rm $(docker volume ls -q) && docker rmi -f $(docker images -a -q) && crontab -r
 #-----------------------------------------------------------------------------------
+
+###stop docker-compose
+#docker-compose down
 
 ## To delete all containers
 #sudo docker rm -f $(docker ps -a -q)
@@ -35,8 +38,8 @@
 ## To delete all containers including its volumes use,
 #docker rm -vf $(docker ps -a -q)
 
-###stop docker-compose
-#docker-compose down
+## To clear crontab list
+#crontab -r
 
 ###check docker containers
 #docker ps
@@ -46,6 +49,9 @@
 
 ###check docker volume
 #docker volume ls
+
+###check crontab
+#crontab -l
 
 ###remove docker images
 #docker rmi [Image ID]
