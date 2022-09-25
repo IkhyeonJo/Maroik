@@ -1,5 +1,6 @@
 ﻿@{
     Layout = null;
+    var returnUri = string.IsNullOrWhiteSpace(Context.Request.Path) ? "/" : $"{Context.Request.Path.Value}{Context.Request.QueryString}";
 }
 <!DOCTYPE html>
 <html lang="en">
@@ -22,6 +23,12 @@
 
 </head>
 <body class="hold-transition login-page" style="background-image: url('/anonymous/images/bg1.jpg'); background-size: cover;">
+    
+    @*Validation of form*@
+    @Html.AntiForgeryToken()
+    @*Language change return URI*@
+    @Html.Hidden($"{nameof(returnUri)}",returnUri)
+
     @RenderBody()
     @*<!-- jQuery -->*@
     <script src="~/anonymous/plugins/jquery/jquery.min.js" asp-append-version="true"></script>

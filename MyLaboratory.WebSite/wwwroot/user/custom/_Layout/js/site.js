@@ -19,10 +19,10 @@ function ChangeCulture(culture) {
         //cache: false,
         success: function (data) {
             if (data.result) {
-                window.location.href = "/DashBoard/AnonymousIndex/";
+                window.location.href = $("#returnUri").val();
             }
             else {
-                window.location.href = "/DashBoard/AnonymousIndex/";
+                window.location.href = $("#returnUri").val();
             }
         }
     });

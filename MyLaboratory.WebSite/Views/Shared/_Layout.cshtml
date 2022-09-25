@@ -4,6 +4,7 @@
 @inject MyLaboratory.Common.DataAccess.Contracts.IAccountRepository accountRepository
 
 @{
+    var returnUri = string.IsNullOrWhiteSpace(Context.Request.Path) ? "/" : $"{Context.Request.Path.Value}{Context.Request.QueryString}";
     Context.Session.TryGetValue("AccountSession", out byte[] resultByte);
     var currentCulture = Context.Features.Get<Microsoft.AspNetCore.Localization.IRequestCultureFeature>().RequestCulture.Culture.Name;
     Account loginedAccount = new Account();
@@ -150,7 +151,12 @@
 *@
 @*<body class="hold-transition dark-mode sidebar-mini layout-fixed layout-navbar-fixed layout-footer-fixed">*@
 <body class="hold-transition dark-mode sidebar-mini">
+
+    @*Validation of form*@
     @Html.AntiForgeryToken()
+    @*Language change return URI*@
+    @Html.Hidden($"{nameof(returnUri)}",returnUri)
+
     @if (loginedAccount.Role == Role.Admin)
     {
 
