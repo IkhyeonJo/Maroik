@@ -833,3 +833,6 @@ https://stackoverflow.com/questions/39527571/are-shell-scripts-sensitive-to-enco
 
 MS SQL Server 2019 및 SSMS 설치 방법 - 윈도우 11
 https://blueshare.tistory.com/42
+
+게시판 HTML, CSS 코드
+https://www.youtube.com/watch?v=aFaclBn8iPc
