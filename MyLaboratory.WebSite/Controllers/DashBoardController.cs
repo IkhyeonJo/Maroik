@@ -16,6 +16,9 @@ using Newtonsoft.Json;
 using MyLaboratory.Common.DataAccess.Models;
 using System.Text;
 using MyLaboratory.WebSite.Models.ViewModels.DashBoard;
+using MyLaboratory.WebSite.Models.ViewModels.Account;
+using Microsoft.AspNetCore.Localization;
+using MyLaboratory.WebSite.Helpers;
 
 namespace MyLaboratory.WebSite.Controllers
 {
@@ -31,6 +34,21 @@ namespace MyLaboratory.WebSite.Controllers
             this.incomeRepository = incomeRepository;
             this.expenditureRepository = expenditureRepository;
         }
+
+        #region 언어 변경
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [RequiredHttpPostAccess(Role = Role.Admin)]
+        [RequiredHttpPostAccess(Role = Role.User)]
+        [RequiredHttpPostAccess(Role = Role.Anonymous)]
+        public IActionResult CultureManagement([FromBody] LoginInputViewModel loginInputViewModel)
+        {
+            Response.Cookies.Append(CookieRequestCultureProvider.DefaultCookieName, CookieRequestCultureProvider.MakeCookieValue(new RequestCulture(loginInputViewModel.Culture)),
+                new CookieOptions { Expires = DateTimeOffset.Now.AddDays(30), Secure = true, HttpOnly = true, SameSite = SameSiteMode.Strict });
+
+            return Json(new { result = true });
+        }
+        #endregion
 
         #region Admin
         [HttpGet]

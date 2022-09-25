@@ -45,18 +45,6 @@ namespace MyLaboratory.WebSite.Controllers
             this.mailRepository = mailRepository;
         }
 
-        #region 언어 변경
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public IActionResult CultureManagement([FromBody] LoginInputViewModel loginInputViewModel)
-        {
-            Response.Cookies.Append(CookieRequestCultureProvider.DefaultCookieName, CookieRequestCultureProvider.MakeCookieValue(new RequestCulture(loginInputViewModel.Culture)),
-                new CookieOptions { Expires = DateTimeOffset.Now.AddDays(30), Secure = true, HttpOnly = true, SameSite = SameSiteMode.Strict });
-
-            return Json(new { result = true });
-        }
-        #endregion
-
         #region 동의서
         [HttpGet]
         public IActionResult ConsentForm()
