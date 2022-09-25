@@ -123,6 +123,9 @@
   <data name="Forgot password" xml:space="preserve">
     <value>Forgot password</value>
   </data>
+  <data name="Go to main page" xml:space="preserve">
+    <value>Go to main page</value>
+  </data>
   <data name="Password" xml:space="preserve">
     <value>Password</value>
   </data>

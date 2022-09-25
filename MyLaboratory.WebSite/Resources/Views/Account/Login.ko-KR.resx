@@ -123,6 +123,9 @@
   <data name="Forgot password" xml:space="preserve">
     <value>비밀번호 찾기</value>
   </data>
+  <data name="Go to main page" xml:space="preserve">
+    <value>본 화면으로 이동</value>
+  </data>
   <data name="Password" xml:space="preserve">
     <value>비밀번호</value>
   </data>
