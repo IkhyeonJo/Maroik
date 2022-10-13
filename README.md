@@ -1,7 +1,7 @@
 # JomaroLab
 Welcome to JomaroLab!
 
-----------CSharpVersion----------
+----------CSharp----------
 
 I'm currently interested in make asp.net core mvc 5 WebServer!
 
@@ -46,7 +46,7 @@ Docker, AdminLTE, MariaDB, Session Login, RESTful API, HTTPS etc.
 # WebAPI
 ![WebAPI](https://user-images.githubusercontent.com/20404991/132020514-13951172-3bcd-48a5-bfe0-a8328cdb766a.jpg)
 
-----------JavaVersion----------
+----------Java----------
 
 I'm currently interested in make Spring Boot WebServer!
 
