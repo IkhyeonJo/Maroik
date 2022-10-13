@@ -68,6 +68,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SQL_Init_Script_Backups", "
 		MyLaboratory.MariaDB\SQL_Init_Script_Backups\Init-20220812.sql = MyLaboratory.MariaDB\SQL_Init_Script_Backups\Init-20220812.sql
 		MyLaboratory.MariaDB\SQL_Init_Script_Backups\Init-20220924.sql = MyLaboratory.MariaDB\SQL_Init_Script_Backups\Init-20220924.sql
 		MyLaboratory.MariaDB\SQL_Init_Script_Backups\Init-20220925.sql = MyLaboratory.MariaDB\SQL_Init_Script_Backups\Init-20220925.sql
+		MyLaboratory.MariaDB\SQL_Init_Script_Backups\Init-20221013.sql = MyLaboratory.MariaDB\SQL_Init_Script_Backups\Init-20221013.sql
 	EndProjectSection
 EndProject
 Global
