@@ -1,17 +1,17 @@
-# MyLaboratory
-Welcome to MyLaboratory!
+# Maroik
+Welcome to Maroik!
 
 I'm currently interested in make asp.net core mvc WebServer!
 
 Docker, AdminLTE, MariaDB, Session Login, RESTful API, HTTPS etc.
 
-# IMPORTANT!! MUST Set this value [MyLaboratory.WebSite -> appsettings.json -> DomainName (According to Server Hostname)] & Mail Account & READ docker-compose file's comment!!
+# IMPORTANT!! MUST Set this value [Maroik.WebSite -> appsettings.json -> DomainName (According to Server Hostname)] & Mail Account & READ docker-compose file's comment!!
 
 # and if you wanna backup your .sql frequently, please set [DBBackup.sh] file's email address & password
 
 # How to run this project
 
-## execute [MyLaboratory.sln] -> Open [1.Web] folder -> right-click [docker-compose] -> click "Set as Startup Project" -> Press F5 Button
+## execute [Maroik.sln] -> Open [1.Web] folder -> right-click [docker-compose] -> click "Set as Startup Project" -> Press F5 Button
 
 ## For more detail information, please see each project's README.md file
 
