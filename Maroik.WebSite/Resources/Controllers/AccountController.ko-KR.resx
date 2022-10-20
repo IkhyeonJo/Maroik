@@ -165,6 +165,9 @@
   <data name="If this link does not work, please copy &amp; paste this link to your Internet URL" xml:space="preserve">
     <value>만일 이 링크가 동작하기 않는다면, 이 링크를 인터넷 URL에 복사 붙여넣기 해주십시오.</value>
   </data>
+  <data name="is a Full Name that already exists." xml:space="preserve">
+    <value>은(는) 이미 존재하는 성명입니다.</value>
+  </data>
   <data name="Maroik Email Confirmation" xml:space="preserve">
     <value>Maroik 이메일 확인</value>
   </data>
@@ -173,6 +176,9 @@
   </data>
   <data name="Please check the consent form" xml:space="preserve">
     <value>동의서에 체크해주세요.</value>
+  </data>
+  <data name="Please enter another Full Name." xml:space="preserve">
+    <value>다른 성명을 입력해주세요.</value>
   </data>
   <data name="User already created, please login" xml:space="preserve">
     <value>계정이 이미 생성되었습니다, 로그인 해주십시오.</value>

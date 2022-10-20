@@ -128,31 +128,31 @@ namespace Maroik.WebSite.Controllers
         #endregion
 
         #region ProfileInformation
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        [RequiredHttpPostAccess(Role = Role.Admin)]
-        [RequiredHttpPostAccess(Role = Role.User)]
-        public async Task<IActionResult> UpdateProfileInformation(ProfileInputViewModel profileInputViewModel)
-        {
-            ModelState.Remove(nameof(profileInputViewModel.Password));
-            ModelState.Remove(nameof(profileInputViewModel.NewPassword));
+        //[HttpPost]
+        //[ValidateAntiForgeryToken]
+        //[RequiredHttpPostAccess(Role = Role.Admin)]
+        //[RequiredHttpPostAccess(Role = Role.User)]
+        //public async Task<IActionResult> UpdateProfileInformation(ProfileInputViewModel profileInputViewModel)
+        //{
+        //    ModelState.Remove(nameof(profileInputViewModel.Password));
+        //    ModelState.Remove(nameof(profileInputViewModel.NewPassword));
 
-            if (ModelState.IsValid)
-            {
-                try
-                {
-                    HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
-                    var tempAccount = await accountRepository.GetAccountAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
-                    tempAccount.FullName = profileInputViewModel.FullName;
-                    await accountRepository.UpdateAccountAsync(tempAccount);
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine(e.ToString());
-                }
-            }
-            return RedirectToAction("Profile", "Management");
-        }
+        //    if (ModelState.IsValid)
+        //    {
+        //        try
+        //        {
+        //            HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+        //            var tempAccount = await accountRepository.GetAccountAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+        //            tempAccount.FullName = profileInputViewModel.FullName;
+        //            await accountRepository.UpdateAccountAsync(tempAccount);
+        //        }
+        //        catch (Exception e)
+        //        {
+        //            Console.WriteLine(e.ToString());
+        //        }
+        //    }
+        //    return RedirectToAction("Profile", "Management");
+        //}
         #endregion
 
         #region ProfilePassword

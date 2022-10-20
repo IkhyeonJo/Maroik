@@ -23,6 +23,7 @@ using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Http;
 using Maroik.Common.DataAccess.Contracts;
 using Maroik.Common.DataAccess.Services;
+using Microsoft.EntityFrameworkCore;
 
 namespace Maroik.WebSite.Controllers
 {
@@ -266,6 +267,12 @@ namespace Maroik.WebSite.Controllers
                                     Deleted = false
                                 }
                                 );
+                        }
+                        catch (DbUpdateException e)
+                        {
+                            Console.WriteLine(e.ToString()); // ActivityLog 등으로 로그 남겨야 한다..
+                            TempData["Error"] = $"'{loginInputViewModel.FullName}' {localizer["is a Full Name that already exists."].Value} {localizer["Please enter another Full Name."].Value}";
+                            return View();
                         }
                         catch (Exception e)
                         {
