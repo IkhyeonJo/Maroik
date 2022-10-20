@@ -180,7 +180,6 @@ function UpdateAccount() {
 
     var email = createForm.find('input[id="editAccountEmail"]').val();
     var password = createForm.find('input[id="editAccountPassword"]').val();
-    var nickname = createForm.find('input[id="editAccountNickname"]').val();
     var role = createForm.find('select[id="editAccountRole"]').val();
     var locked = createForm.find('input[id="editAccountLocked"]').is(":checked");
     var emailConfirmed = createForm.find('input[id="editAccountEmailConfirmed"]').is(":checked");
@@ -191,7 +190,6 @@ function UpdateAccount() {
     var paramValue = JSON.stringify({
         Email: email,
         Password: password,
-        Nickname: nickname,
         Role: role,
         Locked: locked,
         EmailConfirmed: emailConfirmed,

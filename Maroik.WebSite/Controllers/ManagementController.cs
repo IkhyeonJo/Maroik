@@ -426,6 +426,7 @@ namespace Maroik.WebSite.Controllers
         {
             try
             {
+                ModelState.Remove(nameof(accountInputViewModel.Nickname));
                 ModelState.Remove(nameof(accountInputViewModel.AvatarImagePath));
                 ModelState.Remove(nameof(accountInputViewModel.RegistrationToken));
                 ModelState.Remove(nameof(accountInputViewModel.ResetPasswordToken));
@@ -441,7 +442,6 @@ namespace Maroik.WebSite.Controllers
 
                     tempAccount.Email = accountInputViewModel.Email;
                     tempAccount.HashedPassword = new RSA(RSAType.RSA2, Encoding.UTF8, RSA.privateKey, RSA.publicKey).Sign(accountInputViewModel.Password); // 암호화
-                    tempAccount.Nickname = accountInputViewModel.Nickname;
                     tempAccount.Role = accountInputViewModel.Role;
                     tempAccount.Locked = accountInputViewModel.Locked;
                     if (accountInputViewModel.Locked == false)
