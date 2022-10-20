@@ -61,7 +61,7 @@ namespace Maroik.WebSite.Controllers
             HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
             var tempAccount = await accountRepository.GetAccountAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
 
-            return View(new ProfileOutputViewModel() { Email = tempAccount.Email, AvatarImagePath = tempAccount.AvatarImagePath, FullName = tempAccount.FullName, Created = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(tempAccount.Created, OSTimeZone.DestinationTimeZoneId) });
+            return View(new ProfileOutputViewModel() { Email = tempAccount.Email, AvatarImagePath = tempAccount.AvatarImagePath, Nickname = tempAccount.Nickname, Created = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(tempAccount.Created, OSTimeZone.DestinationTimeZoneId) });
         }
         #endregion
 
@@ -143,7 +143,7 @@ namespace Maroik.WebSite.Controllers
         //        {
         //            HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
         //            var tempAccount = await accountRepository.GetAccountAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
-        //            tempAccount.FullName = profileInputViewModel.FullName;
+        //            tempAccount.Nickname = profileInputViewModel.Nickname;
         //            await accountRepository.UpdateAccountAsync(tempAccount);
         //        }
         //        catch (Exception e)
@@ -162,7 +162,7 @@ namespace Maroik.WebSite.Controllers
         [RequiredHttpPostAccess(Role = Role.User)]
         public async Task<IActionResult> UpdateProfilePassword([FromBody] ProfileInputViewModel profileInputViewModel)
         {
-            ModelState.Remove(nameof(profileInputViewModel.FullName));
+            ModelState.Remove(nameof(profileInputViewModel.Nickname));
 
             if (ModelState.IsValid)
             {
@@ -250,14 +250,14 @@ namespace Maroik.WebSite.Controllers
                     }
                     #endregion
 
-                    #region FullName 형식 체크
-                    if (string.IsNullOrEmpty(accountInputViewModel.FullName))
+                    #region Nickname 형식 체크
+                    if (string.IsNullOrEmpty(accountInputViewModel.Nickname))
                     {
-                        return Json(new { result = false, error = localizer["Please enter FullName"].Value });
+                        return Json(new { result = false, error = localizer["Please enter Nickname"].Value });
                     }
-                    else if (!(accountInputViewModel.FullName.Length >= 1 && accountInputViewModel.FullName.Length <= 255))
+                    else if (!(accountInputViewModel.Nickname.Length >= 1 && accountInputViewModel.Nickname.Length <= 255))
                     {
-                        return Json(new { result = false, error = localizer["FullName is must be between 1 and 255 characters"].Value });
+                        return Json(new { result = false, error = localizer["Nickname is must be between 1 and 255 characters"].Value });
                     }
                     #endregion
 
@@ -282,7 +282,7 @@ namespace Maroik.WebSite.Controllers
                     {
                         Email = accountInputViewModel.Email,
                         HashedPassword = new RSA(RSAType.RSA2, Encoding.UTF8, RSA.privateKey, RSA.publicKey).Sign(accountInputViewModel.Password), // 암호화
-                        FullName = accountInputViewModel.FullName,
+                        Nickname = accountInputViewModel.Nickname,
                         AvatarImagePath = "/upload/Management/Profile/default-avatar.jpg",
                         Role = accountInputViewModel.Role,
                         Locked = false,
@@ -330,7 +330,7 @@ namespace Maroik.WebSite.Controllers
                         {
                             Email = item.Email,
                             HashedPassword = item.HashedPassword,
-                            FullName = item.FullName,
+                            Nickname = item.Nickname,
                             AvatarImagePath = item.AvatarImagePath,
                             Role = item.Role,
                             Locked = item.Locked,
@@ -349,7 +349,7 @@ namespace Maroik.WebSite.Controllers
                     {
                         if (item.Email.ToString().Contains(wholeSearch) ||
                             (item.HashedPassword?.ToString() ?? "").Contains(wholeSearch) ||
-                            (item.FullName?.ToString() ?? "").Contains(wholeSearch) ||
+                            (item.Nickname?.ToString() ?? "").Contains(wholeSearch) ||
                             (item.AvatarImagePath?.ToString() ?? "").Contains(wholeSearch) ||
                             (item.Role?.ToString() ?? "").Contains(wholeSearch) ||
                             (item.Locked.ToString() ?? "").Contains(wholeSearch) ||
@@ -367,7 +367,7 @@ namespace Maroik.WebSite.Controllers
                             {
                                 Email = item.Email,
                                 HashedPassword = item.HashedPassword,
-                                FullName = item.FullName,
+                                Nickname = item.Nickname,
                                 AvatarImagePath = item.AvatarImagePath,
                                 Role = item.Role,
                                 Locked = item.Locked,
@@ -441,7 +441,7 @@ namespace Maroik.WebSite.Controllers
 
                     tempAccount.Email = accountInputViewModel.Email;
                     tempAccount.HashedPassword = new RSA(RSAType.RSA2, Encoding.UTF8, RSA.privateKey, RSA.publicKey).Sign(accountInputViewModel.Password); // 암호화
-                    tempAccount.FullName = accountInputViewModel.FullName;
+                    tempAccount.Nickname = accountInputViewModel.Nickname;
                     tempAccount.Role = accountInputViewModel.Role;
                     tempAccount.Locked = accountInputViewModel.Locked;
                     if (accountInputViewModel.Locked == false)
@@ -517,7 +517,7 @@ namespace Maroik.WebSite.Controllers
                 {
                     Email = item.Email,
                     HashedPassword = item.HashedPassword,
-                    FullName = item.FullName,
+                    Nickname = item.Nickname,
                     AvatarImagePath = item.AvatarImagePath,
                     Role = item.Role,
                     Locked = item.Locked,
@@ -545,7 +545,7 @@ namespace Maroik.WebSite.Controllers
                 workSheetMenuOutputViewModels.Row(1).Style.Font.Bold = true;
                 workSheetMenuOutputViewModels.Cells[1, 1].Value = localizer[nameof(AccountOutputViewModel.Email).ToString()].Value;
                 workSheetMenuOutputViewModels.Cells[1, 2].Value = localizer[nameof(AccountOutputViewModel.HashedPassword).ToString()].Value;
-                workSheetMenuOutputViewModels.Cells[1, 3].Value = localizer[nameof(AccountOutputViewModel.FullName).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 3].Value = localizer[nameof(AccountOutputViewModel.Nickname).ToString()].Value;
                 workSheetMenuOutputViewModels.Cells[1, 4].Value = localizer[nameof(AccountOutputViewModel.AvatarImagePath).ToString()].Value;
                 workSheetMenuOutputViewModels.Cells[1, 5].Value = localizer[nameof(AccountOutputViewModel.Role).ToString()].Value;
                 workSheetMenuOutputViewModels.Cells[1, 6].Value = localizer[nameof(AccountOutputViewModel.Locked).ToString()].Value;
@@ -564,7 +564,7 @@ namespace Maroik.WebSite.Controllers
                 {
                     workSheetMenuOutputViewModels.Cells[recordIndex, 1].Value = item.Email;
                     workSheetMenuOutputViewModels.Cells[recordIndex, 2].Value = item.HashedPassword;
-                    workSheetMenuOutputViewModels.Cells[recordIndex, 3].Value = item.FullName;
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 3].Value = item.Nickname;
                     workSheetMenuOutputViewModels.Cells[recordIndex, 4].Value = item.AvatarImagePath;
                     workSheetMenuOutputViewModels.Cells[recordIndex, 5].Value = item.Role;
                     workSheetMenuOutputViewModels.Cells[recordIndex, 6].Value = item.Locked;

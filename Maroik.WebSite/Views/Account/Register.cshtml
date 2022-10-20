@@ -21,8 +21,8 @@
 
                 <form id="registerForm" class="form-horizontal" method="post" asp-controller="Account" asp-action="Register">
                     <div class="form-group has-feedback">
-                        <input asp-for="FullName" type="text" class="form-control" placeholder="@localizer["Full Name"]" />
-                        <span asp-validation-for="FullName" class="text-danger"></span>
+                        <input asp-for="Nickname" type="text" class="form-control" placeholder="@localizer["Nickname"]" />
+                        <span asp-validation-for="Nickname" class="text-danger"></span>
                     </div>
                     <div class="form-group has-feedback">
                         <input asp-for="Email" type="email" class="form-control" placeholder="@localizer["Email"]" />

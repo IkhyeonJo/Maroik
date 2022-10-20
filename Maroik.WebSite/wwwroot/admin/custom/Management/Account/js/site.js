@@ -81,13 +81,13 @@ function CreateAccount() {
 
     var email = createForm.find('input[id="createAccountEmail"]').val();
     var password = createForm.find('input[id="createAccountPassword"]').val();
-    var fullName = createForm.find('input[id="createAccountFullName"]').val();
+    var nickname = createForm.find('input[id="createAccountNickname"]').val();
     var role = createForm.find('select[id="createAccountRole"]').val();
 
     var paramValue = JSON.stringify({
         Email: email,
         Password: password,
-        FullName: fullName,
+        Nickname: nickname,
         Role: role
     });
 
@@ -148,7 +148,7 @@ function EditAccountGridRow(errorMessageSelectGridRow) {
                 var formEditAccount = $('#formEditAccount');
 
                 formEditAccount.find('input[id="editAccountEmail"]').val(data.account.email);
-                formEditAccount.find('input[id="editAccountFullName"]').val(data.account.fullName);
+                formEditAccount.find('input[id="editAccountNickname"]').val(data.account.nickname);
                 formEditAccount.find('select[id="editAccountRole"]').val(data.account.role).change();
                 formEditAccount.find('input[id="editAccountLocked"]').prop("checked", data.account.locked);
                 formEditAccount.find('input[id="editAccountEmailConfirmed"]').prop("checked", data.account.emailConfirmed);
@@ -180,7 +180,7 @@ function UpdateAccount() {
 
     var email = createForm.find('input[id="editAccountEmail"]').val();
     var password = createForm.find('input[id="editAccountPassword"]').val();
-    var fullName = createForm.find('input[id="editAccountFullName"]').val();
+    var nickname = createForm.find('input[id="editAccountNickname"]').val();
     var role = createForm.find('select[id="editAccountRole"]').val();
     var locked = createForm.find('input[id="editAccountLocked"]').is(":checked");
     var emailConfirmed = createForm.find('input[id="editAccountEmailConfirmed"]').is(":checked");
@@ -191,7 +191,7 @@ function UpdateAccount() {
     var paramValue = JSON.stringify({
         Email: email,
         Password: password,
-        FullName: fullName,
+        Nickname: nickname,
         Role: role,
         Locked: locked,
         EmailConfirmed: emailConfirmed,

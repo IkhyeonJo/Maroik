@@ -21,9 +21,9 @@ namespace Maroik.WebSite.Models.ViewModels.Account
         [RegularExpression("^((?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])|(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[^a-zA-Z0-9])|(?=.*?[A-Z])(?=.*?[0-9])(?=.*?[^a-zA-Z0-9])|(?=.*?[a-z])(?=.*?[0-9])(?=.*?[^a-zA-Z0-9])).{8,}$", ErrorMessage = "Password must be at least 8 characters and contain at 3 of 4 of the following: upper case (A-Z), lower case (a-z), number (0-9) and special character (e.g. !@#$%^&*)")]
         public string Password { get; set; }
 
-        [Required(ErrorMessage = "Full Name is required")]
+        [Required(ErrorMessage = "Nickname is required")]
         [StringLength(255, ErrorMessage = "Must be between 1 and 255 characters", MinimumLength = 1)]
-        public string FullName { get; set; }
+        public string Nickname { get; set; }
 
         public bool AgreedServiceTerms { get; set; }
 

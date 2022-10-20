@@ -11,9 +11,9 @@ namespace Maroik.WebSite.Models.ViewModels.Management
 {
     public class ProfileInputViewModel
     {
-        [Required(ErrorMessage = "Please enter Full name")]
-        [Display(Name = "FullName")]
-        public string FullName { get; set; }
+        [Required(ErrorMessage = "Please enter Nickname")]
+        [Display(Name = "Nickname")]
+        public string Nickname { get; set; }
         public List<IFormFile> ProfileAvatarFiles { get; set; }
 
         [Required(ErrorMessage = "Password is required")]

@@ -159,8 +159,8 @@
   <data name="EXCEL" xml:space="preserve">
     <value>EXCEL</value>
   </data>
-  <data name="FullName" xml:space="preserve">
-    <value>FullName</value>
+  <data name="Nickname" xml:space="preserve">
+    <value>Nickname</value>
   </data>
   <data name="Locked" xml:space="preserve">
     <value>Locked</value>
@@ -174,8 +174,8 @@
   <data name="Please enter email" xml:space="preserve">
     <value>Please enter email</value>
   </data>
-  <data name="Please enter FullName" xml:space="preserve">
-    <value>Please enter FullName</value>
+  <data name="Please enter Nickname" xml:space="preserve">
+    <value>Please enter Nickname</value>
   </data>
   <data name="Please enter message" xml:space="preserve">
     <value>Please enter message</value>

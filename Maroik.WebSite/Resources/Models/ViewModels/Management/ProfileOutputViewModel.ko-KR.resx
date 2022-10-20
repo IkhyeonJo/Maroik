@@ -129,8 +129,8 @@
   <data name="Email" xml:space="preserve">
     <value>이메일</value>
   </data>
-  <data name="FullName" xml:space="preserve">
-    <value>성명</value>
+  <data name="Nickname" xml:space="preserve">
+    <value>닉네임</value>
   </data>
   <data name="New password is required" xml:space="preserve">
     <value>새로운 비밀번호를 입력해주세요.</value>
@@ -150,8 +150,8 @@
   <data name="Please enter Email" xml:space="preserve">
     <value>이메일을 입력해주세요.</value>
   </data>
-  <data name="Please enter Full name" xml:space="preserve">
-    <value>성명을 입력해주세요.</value>
+  <data name="Please enter Nickname" xml:space="preserve">
+    <value>닉네임을 입력해주세요.</value>
   </data>
   <data name="The new password do not match" xml:space="preserve">
     <value>새로운 비밀번호가 맞지 않습니다.</value>

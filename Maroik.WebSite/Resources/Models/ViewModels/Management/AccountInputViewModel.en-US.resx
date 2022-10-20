@@ -135,8 +135,8 @@
   <data name="EmailConfirmed" xml:space="preserve">
     <value>EmailConfirmed</value>
   </data>
-  <data name="FullName" xml:space="preserve">
-    <value>FullName</value>
+  <data name="Nickname" xml:space="preserve">
+    <value>Nickname</value>
   </data>
   <data name="Locked" xml:space="preserve">
     <value>Locked</value>
@@ -168,8 +168,8 @@
   <data name="Please enter EmailConfirmed" xml:space="preserve">
     <value>Please enter EmailConfirmed</value>
   </data>
-  <data name="Please enter FullName" xml:space="preserve">
-    <value>Please enter FullName</value>
+  <data name="Please enter Nickname" xml:space="preserve">
+    <value>Please enter Nickname</value>
   </data>
   <data name="Please enter Locked" xml:space="preserve">
     <value>Please enter Locked</value>

@@ -132,8 +132,8 @@
   <data name="Email" xml:space="preserve">
     <value>Email</value>
   </data>
-  <data name="Full Name" xml:space="preserve">
-    <value>Full Name</value>
+  <data name="Nickname" xml:space="preserve">
+    <value>Nickname</value>
   </data>
   <data name="I agree to the" xml:space="preserve">
     <value>I agree to the</value>

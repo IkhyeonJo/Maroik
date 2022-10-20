@@ -26,9 +26,9 @@ namespace Maroik.Common.DataAccess.Models
         /// </summary>
         public string HashedPassword { get; set; }
         /// <summary>
-        /// 계정 성명
+        /// 계정 닉네임
         /// </summary>
-        public string FullName { get; set; }
+        public string Nickname { get; set; }
         /// <summary>
         /// 계정 아바타 이미지 경로
         /// </summary>

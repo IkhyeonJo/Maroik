@@ -165,8 +165,8 @@
   <data name="If this link does not work, please copy &amp; paste this link to your Internet URL" xml:space="preserve">
     <value>If this link does not work, please copy &amp; paste this link to your Internet URL</value>
   </data>
-  <data name="is a Full Name that already exists." xml:space="preserve">
-    <value>is a Full Name that already exists.</value>
+  <data name="is a Nickname that already exists." xml:space="preserve">
+    <value>is a Nickname that already exists.</value>
   </data>
   <data name="Maroik Email Confirmation" xml:space="preserve">
     <value>Maroik Email Confirmation</value>
@@ -177,8 +177,8 @@
   <data name="Please check the consent form" xml:space="preserve">
     <value>Please check the consent form</value>
   </data>
-  <data name="Please enter another Full Name." xml:space="preserve">
-    <value>Please enter another Full Name.</value>
+  <data name="Please enter another Nickname." xml:space="preserve">
+    <value>Please enter another Nickname.</value>
   </data>
   <data name="User already created, please login" xml:space="preserve">
     <value>User already created, please login</value>

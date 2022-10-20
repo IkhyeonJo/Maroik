@@ -135,8 +135,8 @@
   <data name="EmailConfirmed" xml:space="preserve">
     <value>이메일 확인</value>
   </data>
-  <data name="FullName" xml:space="preserve">
-    <value>성명</value>
+  <data name="Nickname" xml:space="preserve">
+    <value>닉네임</value>
   </data>
   <data name="HashedPassword" xml:space="preserve">
     <value>해쉬 비밀번호</value>

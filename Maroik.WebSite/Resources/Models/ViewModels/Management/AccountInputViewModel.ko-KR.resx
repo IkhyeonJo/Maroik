@@ -135,8 +135,8 @@
   <data name="EmailConfirmed" xml:space="preserve">
     <value>이메일 확인</value>
   </data>
-  <data name="FullName" xml:space="preserve">
-    <value>성명</value>
+  <data name="Nickname" xml:space="preserve">
+    <value>닉네임</value>
   </data>
   <data name="Locked" xml:space="preserve">
     <value>잠금</value>
@@ -168,8 +168,8 @@
   <data name="Please enter EmailConfirmed" xml:space="preserve">
     <value>이메일 확인을 입력해주세요.</value>
   </data>
-  <data name="Please enter FullName" xml:space="preserve">
-    <value>성명을 입력하여 주십시오.</value>
+  <data name="Please enter Nickname" xml:space="preserve">
+    <value>닉네임을 입력하여 주십시오.</value>
   </data>
   <data name="Please enter Locked" xml:space="preserve">
     <value>잠금을 입력해주세요.</value>

@@ -715,7 +715,7 @@ https://arjunphp.com/how-to-get-mysql-table-comments/
 CREATE TABLE `Account` (
   `Email` varchar(255) NOT NULL COMMENT '계정 이메일 (ID)',
   `HashedPassword` longtext NOT NULL COMMENT '계정 암호화 된 비밀번호',
-  `FullName` varchar(255) NOT NULL COMMENT '계정 성명',
+  `Nickname` varchar(255) NOT NULL COMMENT '계정 닉네임',
   `AvatarImagePath` varchar(255) NOT NULL DEFAULT '/upload/Management/Profile/default-avatar.jpg' COMMENT '계정 아바타 이미지 경로',
   `Role` varchar(255) NOT NULL DEFAULT 'User' COMMENT '계정 역할 (Admin 또는 User)',
   `Locked` tinyint(1) NOT NULL COMMENT '계정 잠금',

@@ -24,6 +24,8 @@ using Microsoft.AspNetCore.Http;
 using Maroik.Common.DataAccess.Contracts;
 using Maroik.Common.DataAccess.Services;
 using Microsoft.EntityFrameworkCore;
+using System.ComponentModel;
+using MySqlConnector;
 
 namespace Maroik.WebSite.Controllers
 {
@@ -94,7 +96,7 @@ namespace Maroik.WebSite.Controllers
             }
 
             ModelState.Remove(nameof(loginInputViewModel.Password));
-            ModelState.Remove(nameof(loginInputViewModel.FullName));
+            ModelState.Remove(nameof(loginInputViewModel.Nickname));
 
             if (ModelState.IsValid)
             {
@@ -252,7 +254,7 @@ namespace Maroik.WebSite.Controllers
                                 {
                                     Email = loginInputViewModel.Email,
                                     HashedPassword = new RSA(RSAType.RSA2, Encoding.UTF8, RSA.privateKey, RSA.publicKey).Sign(loginInputViewModel.Password), // 암호화
-                                    FullName = loginInputViewModel.FullName,
+                                    Nickname = loginInputViewModel.Nickname,
                                     AvatarImagePath = "/upload/Management/Profile/default-avatar.jpg",
                                     Role = Role.User,
                                     Locked = false,
@@ -270,9 +272,18 @@ namespace Maroik.WebSite.Controllers
                         }
                         catch (DbUpdateException e)
                         {
-                            Console.WriteLine(e.ToString()); // ActivityLog 등으로 로그 남겨야 한다..
-                            TempData["Error"] = $"'{loginInputViewModel.FullName}' {localizer["is a Full Name that already exists."].Value} {localizer["Please enter another Full Name."].Value}";
-                            return View();
+                            if (((MySqlException)e.InnerException).ErrorCode == MySqlErrorCode.DuplicateKeyEntry)
+                            {
+                                Console.WriteLine(e.ToString()); // ActivityLog 등으로 로그 남겨야 한다..
+                                TempData["Error"] = $"'{loginInputViewModel.Nickname}' {localizer["is a Nickname that already exists."].Value} {localizer["Please enter another Nickname."].Value}";
+                                return View();
+                            }
+                            else
+                            {
+                                Console.WriteLine(e.ToString()); // ActivityLog 등으로 로그 남겨야 한다..
+                                TempData["Error"] = localizer["Error occurred while processing about account registration"].Value;
+                                return View();
+                            }
                         }
                         catch (Exception e)
                         {
@@ -302,7 +313,7 @@ namespace Maroik.WebSite.Controllers
                                     {
                                         Email = loginInputViewModel.Email,
                                         HashedPassword = new RSA(RSAType.RSA2, Encoding.UTF8, RSA.privateKey, RSA.publicKey).Sign(loginInputViewModel.Password), // 암호화
-                                        FullName = loginInputViewModel.FullName,
+                                        Nickname = loginInputViewModel.Nickname,
                                         AvatarImagePath = "/upload/Management/Profile/default-avatar.jpg",
                                         Role = Role.User,
                                         Locked = false,
@@ -417,7 +428,7 @@ namespace Maroik.WebSite.Controllers
             else // 이메일 재전송
             {
                 ModelState.Remove(nameof(loginInputViewModel.Password));
-                ModelState.Remove(nameof(loginInputViewModel.FullName));
+                ModelState.Remove(nameof(loginInputViewModel.Nickname));
 
                 if (ModelState.IsValid) // 입력 값 검증
                 {
@@ -659,7 +670,7 @@ namespace Maroik.WebSite.Controllers
         [ValidateAntiForgeryToken] //To Prevent CSRF attack
         public async Task<IActionResult> ForgotPassword(LoginInputViewModel loginInputViewModel)
         {
-            ModelState.Remove(nameof(loginInputViewModel.FullName));
+            ModelState.Remove(nameof(loginInputViewModel.Nickname));
             ModelState.Remove(nameof(loginInputViewModel.Password));
 
             if (ModelState.IsValid)
@@ -816,7 +827,7 @@ namespace Maroik.WebSite.Controllers
         public async Task<IActionResult> ResetPassword(LoginInputViewModel loginInputViewModel)
         {
             ModelState.Remove(nameof(loginInputViewModel.Email));
-            ModelState.Remove(nameof(loginInputViewModel.FullName));
+            ModelState.Remove(nameof(loginInputViewModel.Nickname));
             ModelState.Remove(nameof(loginInputViewModel.Password));
 
             if (ModelState.IsValid)

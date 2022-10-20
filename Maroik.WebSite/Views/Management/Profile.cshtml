@@ -21,7 +21,7 @@
                                  src="@Model.AvatarImagePath"
                                  alt="@localizer["User profile picture"]">
                         </div>
-                        <h3 class="profile-username text-center">@Model.FullName</h3>
+                        <h3 class="profile-username text-center">@Model.Nickname</h3>
                         @*<p class="text-muted text-center">Software Engineer</p>*@
                         @*
                             <ul class="list-group list-group-unbordered mb-3">
@@ -397,8 +397,8 @@
                                                                 <div class="col-lg-9"><input class="form-control" value="@Model.Email" disabled /></div>
                                                             </div>
                                                             <div class="form-group">
-                                                                <div class="col-lg-3">@localizer["Full name"]</div>
-                                                                <div class="col-lg-9"><input class="form-control" value="@Model.FullName" disabled /></div>
+                                                                <div class="col-lg-3">@localizer["Nickname"]</div>
+                                                                <div class="col-lg-9"><input class="form-control" value="@Model.Nickname" disabled /></div>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -420,10 +420,10 @@
                                                 <div class="card-body pad table-responsive">
                                                     <form id="formUpdateProfileInformation" class="form-horizontal" method="post" asp-controller="Management" asp-action="UpdateProfileInformation">
                                                         <div class="form-group row">
-                                                            <label asp-for="FullName" class="col-sm-2 col-form-label">@localizer["Full name"]</label>
+                                    <label asp-for="Nickname" class="col-sm-2 col-form-label">@localizer["Nickname"]</label>
                                                             <div class="col-sm-10">
-                                                                <input asp-for="FullName" type="text" class="form-control" placeholder="@localizer["Full name"]" />
-                                                                <span asp-validation-for="FullName" class="text-danger"></span>
+                                                                <input asp-for="Nickname" type="text" class="form-control" placeholder="@localizer["Nickname"]" />
+                                                                <span asp-validation-for="Nickname" class="text-danger"></span>
                                                             </div>
                                                         </div>
                                                         <div class="form-group row">

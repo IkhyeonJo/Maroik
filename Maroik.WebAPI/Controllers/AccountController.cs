@@ -52,15 +52,15 @@ namespace Maroik.WebAPI.Controllers
             var claims = new[]
             {
                 new Claim(ClaimTypes.Email, tempAccount.Email),
-                new Claim(ClaimTypes.Name, tempAccount.FullName),
+                new Claim(ClaimTypes.Name, tempAccount.Nickname),
                 new Claim(ClaimTypes.Role, tempAccount.Role)
             };
 
-            var jwtResult = jwtAuthManager.GenerateTokens(tempAccount.FullName, claims, DateTime.Now);
+            var jwtResult = jwtAuthManager.GenerateTokens(tempAccount.Nickname, claims, DateTime.Now);
             logger.LogInformation($"User [{tempAccount.Email}] logged in the system.");
             return Ok(new LoginResult
             {
-                UserName = tempAccount.FullName,
+                UserName = tempAccount.Nickname,
                 Role = tempAccount.Role,
                 AccessToken = jwtResult.AccessToken,
                 RefreshToken = jwtResult.RefreshToken.TokenString

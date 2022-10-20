@@ -159,11 +159,11 @@
   <data name="File Size must be smaller than 10MB." xml:space="preserve">
     <value>File Size must be smaller than 10MB.</value>
   </data>
-  <data name="FullName" xml:space="preserve">
-    <value>FullName</value>
+  <data name="Nickname" xml:space="preserve">
+    <value>Nickname</value>
   </data>
-  <data name="FullName is must be between 1 and 255 characters" xml:space="preserve">
-    <value>FullName is must be between 1 and 255 characters</value>
+  <data name="Nickname is must be between 1 and 255 characters" xml:space="preserve">
+    <value>Nickname is must be between 1 and 255 characters</value>
   </data>
   <data name="HashedPassword" xml:space="preserve">
     <value>HashedPassword</value>
@@ -210,8 +210,8 @@
   <data name="Please attach a file" xml:space="preserve">
     <value>Please attach a file</value>
   </data>
-  <data name="Please enter FullName" xml:space="preserve">
-    <value>Please enter FullName</value>
+  <data name="Please enter Nickname" xml:space="preserve">
+    <value>Please enter Nickname</value>
   </data>
   <data name="RegistrationToken" xml:space="preserve">
     <value>RegistrationToken</value>

@@ -16,9 +16,9 @@ namespace Maroik.WebSite.Models.ViewModels.Management
         [Required(ErrorMessage = "Please enter AvatarImagePath")]
         [Display(Name = "AvatarImagePath")]
         public string AvatarImagePath { get; set; }
-        [Required(ErrorMessage = "Please enter Full name")]
-        [Display(Name = "FullName")]
-        public string FullName { get; set; }
+        [Required(ErrorMessage = "Please enter Nickname")]
+        [Display(Name = "Nickname")]
+        public string Nickname { get; set; }
         [Required(ErrorMessage = "Please enter Created")]
         [Display(Name = "Created")]
         public DateTime Created { get; set; }

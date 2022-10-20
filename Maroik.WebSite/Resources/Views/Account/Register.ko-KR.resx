@@ -132,8 +132,8 @@
   <data name="Email" xml:space="preserve">
     <value>이메일</value>
   </data>
-  <data name="Full Name" xml:space="preserve">
-    <value>성명</value>
+  <data name="Nickname" xml:space="preserve">
+    <value>닉네임</value>
   </data>
   <data name="I agree to the" xml:space="preserve">
     <value>이 계약에</value>

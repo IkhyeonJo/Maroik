@@ -138,8 +138,8 @@
   <data name="File Size must be smaller than 10MB." xml:space="preserve">
     <value>File Size must be smaller than 10MB.</value>
   </data>
-  <data name="Full name" xml:space="preserve">
-    <value>Full name</value>
+  <data name="Nickname" xml:space="preserve">
+    <value>Nickname</value>
   </data>
   <data name="Modify" xml:space="preserve">
     <value>Modify</value>

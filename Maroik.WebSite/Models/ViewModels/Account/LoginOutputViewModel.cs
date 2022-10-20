@@ -28,9 +28,9 @@ namespace Maroik.WebSite.Models.ViewModels.Account
         [Compare(nameof(Password), ErrorMessage = "The password do not match")]
         public string ConfirmPassword { get; set; }
         
-        [Required(ErrorMessage = "Full Name is required")]
+        [Required(ErrorMessage = "Nickname is required")]
         [StringLength(255, ErrorMessage = "Must be between 1 and 255 characters", MinimumLength = 1)]
-        public string FullName { get; set; }
+        public string Nickname { get; set; }
 
         public bool AgreedServiceTerms { get; set; }
     }

@@ -120,8 +120,8 @@
   <data name="Email is required" xml:space="preserve">
     <value>Email is required</value>
   </data>
-  <data name="Full Name is required" xml:space="preserve">
-    <value>Full Name is required</value>
+  <data name="Nickname is required" xml:space="preserve">
+    <value>Nickname is required</value>
   </data>
   <data name="Invalid Email Address" xml:space="preserve">
     <value>Invalid Email Address</value>

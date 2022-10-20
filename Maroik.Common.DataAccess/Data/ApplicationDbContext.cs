@@ -45,6 +45,9 @@ namespace Maroik.Common.DataAccess.Data
                 entity.HasComment("Maroik.WebSite 계정")
                     .UseCollation("utf8mb4_general_ci");
 
+                entity.HasIndex(e => e.Nickname, "Nickname")
+                    .IsUnique();
+
                 entity.Property(e => e.Email).HasComment("계정 이메일 (ID)");
 
                 entity.Property(e => e.AgreedServiceTerms).HasComment("약관 동의 여부");
@@ -64,11 +67,6 @@ namespace Maroik.Common.DataAccess.Data
 
                 entity.Property(e => e.EmailConfirmed).HasComment("이메일 확인 여부");
 
-                entity.Property(e => e.FullName)
-                    .IsRequired()
-                    .HasMaxLength(255)
-                    .HasComment("계정 성명");
-
                 entity.Property(e => e.HashedPassword)
                     .IsRequired()
                     .HasComment("계정 암호화 된 비밀번호");
@@ -80,6 +78,10 @@ namespace Maroik.Common.DataAccess.Data
                     .HasComment("로그인 시도 횟수");
 
                 entity.Property(e => e.Message).HasComment("계정 상태 메시지");
+
+                entity.Property(e => e.Nickname)
+                    .IsRequired()
+                    .HasComment("계정 닉네임");
 
                 entity.Property(e => e.RegistrationToken).HasComment("회원가입 인증 토큰");
 

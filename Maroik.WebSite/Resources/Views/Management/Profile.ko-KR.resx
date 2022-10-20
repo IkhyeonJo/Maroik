@@ -138,8 +138,8 @@
   <data name="File Size must be smaller than 10MB." xml:space="preserve">
     <value>파일 크기는 10MB 이하만 가능합니다.</value>
   </data>
-  <data name="Full name" xml:space="preserve">
-    <value>성명</value>
+  <data name="Nickname" xml:space="preserve">
+    <value>닉네임</value>
   </data>
   <data name="Modify" xml:space="preserve">
     <value>수정</value>
