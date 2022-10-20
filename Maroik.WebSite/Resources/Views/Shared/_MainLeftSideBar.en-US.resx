@@ -147,6 +147,12 @@
   <data name="FixedIncome" xml:space="preserve">
     <value>FixedIncome</value>
   </data>
+  <data name="Forum" xml:space="preserve">
+    <value>Forum</value>
+  </data>
+  <data name="Free" xml:space="preserve">
+    <value>Free</value>
+  </data>
   <data name="Home" xml:space="preserve">
     <value>Home</value>
   </data>

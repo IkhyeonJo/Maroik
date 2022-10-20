@@ -2,9 +2,9 @@
 
 namespace Maroik.WebSite.Controllers
 {
-    public class ITController : Controller
+    public class ForumController : Controller
     {
-        public IActionResult CSharp()
+        public IActionResult Free()
         {
             return View();
         }
