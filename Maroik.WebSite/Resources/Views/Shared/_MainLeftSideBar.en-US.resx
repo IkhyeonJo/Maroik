@@ -150,8 +150,8 @@
   <data name="Forum" xml:space="preserve">
     <value>Forum</value>
   </data>
-  <data name="Free" xml:space="preserve">
-    <value>Free</value>
+  <data name="Free Forum" xml:space="preserve">
+    <value>Free Forum</value>
   </data>
   <data name="Home" xml:space="preserve">
     <value>Home</value>
