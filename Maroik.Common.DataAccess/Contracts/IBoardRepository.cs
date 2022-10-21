@@ -1,0 +1,15 @@
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using Maroik.Common.DataAccess.Models;
+
+namespace Maroik.Common.DataAccess.Contracts
+{
+    public interface IBoardRepository
+    {
+        /// <summary>
+        /// 한 종류의 모든 게시물을 구합니다.
+        /// </summary>
+        /// <returns></returns>
+        public Task<IEnumerable<Board>> GetOneTypeBoards(string type);
+    }
+}

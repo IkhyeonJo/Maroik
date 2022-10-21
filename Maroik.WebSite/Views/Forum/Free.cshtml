@@ -1,10 +1,29 @@
-﻿<section class="content">
+﻿@using Maroik.WebSite.Models.ViewModels.Forum
+
+@model FreeOutputViewModel
+
+@{
+    #region 자유게시판
+
+    var freeBoards = Model.FreeBoards;
+
+    #endregion
+}
+
+<section class="content">
     <div class="card card-primary">
         <div class="card-header">
             <h3 class="card-title">Free Forum</h3>
         </div>
         <div class="card-body">
-            Hello World
+            @foreach(var freeBoard in freeBoards)
+            {
+                <div>@freeBoard.Id</div>
+                <div>@freeBoard.Title</div>
+                <div>@freeBoard.Writer</div>
+                <div>@freeBoard.Created</div>
+                <div>@freeBoard.Updated</div>
+            }
         </div>
     </div>
 </section>
