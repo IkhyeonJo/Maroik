@@ -233,6 +233,10 @@ namespace Maroik.Common.DataAccess.Data
                     .HasMaxLength(6)
                     .HasComment("업데이트일");
 
+                entity.Property(e => e.Views)
+                    .HasColumnType("int(11)")
+                    .HasComment("조회수");
+
                 entity.Property(e => e.Writer)
                     .IsRequired()
                     .HasMaxLength(255)

@@ -43,6 +43,10 @@ namespace Maroik.Common.DataAccess.Models
         /// </summary>
         public DateTime Updated { get; set; }
         /// <summary>
+        /// 조회수
+        /// </summary>
+        public int Views { get; set; }
+        /// <summary>
         /// 삭제 여부
         /// </summary>
         public bool Deleted { get; set; }
