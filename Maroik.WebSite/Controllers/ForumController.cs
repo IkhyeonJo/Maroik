@@ -19,13 +19,13 @@ namespace Maroik.WebSite.Controllers
             this.boardRepository = boardRepository;
         }
 
-        public async Task<IActionResult> FreeBoard()
+        public async Task<IActionResult> FreeForum()
         {
-            var freeBoards = await boardRepository.GetOneTypeBoards("Free");
+            var freeForums = await boardRepository.GetOneTypeBoards("Free");
             
-            var freeBoardOutputViewModel = new FreeBoardOutputViewModel();
-            freeBoardOutputViewModel.Boards = freeBoards;
-            return View(freeBoardOutputViewModel);
+            var freeForumOutputViewModel = new FreeForumOutputViewModel();
+            freeForumOutputViewModel.Boards = freeForums;
+            return View(freeForumOutputViewModel);
         }
     }
 }
