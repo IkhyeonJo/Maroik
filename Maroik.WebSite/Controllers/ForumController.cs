@@ -21,10 +21,10 @@ namespace Maroik.WebSite.Controllers
 
         public async Task<IActionResult> FreeForum()
         {
-            var freeForums = await boardRepository.GetOneTypeBoards("Free");
+            var freeBoards = await boardRepository.GetOneTypeBoards("Free");
             
             var freeForumOutputViewModel = new FreeForumOutputViewModel();
-            freeForumOutputViewModel.Boards = freeForums;
+            freeForumOutputViewModel.Boards = freeBoards;
             return View(freeForumOutputViewModel);
         }
     }
