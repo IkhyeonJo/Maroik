@@ -9,8 +9,8 @@ using Maroik.Common.DataAccess.Models;
 
 namespace Maroik.WebSite.Models.ViewModels.Forum
 {
-    public class FreeOutputViewModel
+    public class FreeBoardOutputViewModel
     {
-        public IEnumerable<Board> FreeBoards { get; set; } = new List<Board>();
+        public IEnumerable<Board> Boards { get; set; } = new List<Board>();
     }
 }

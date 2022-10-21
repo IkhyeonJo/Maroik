@@ -1,11 +1,11 @@
 ﻿@using Maroik.WebSite.Models.ViewModels.Forum
 
-@model FreeOutputViewModel
+@model FreeBoardOutputViewModel
 
 @{
     #region 자유게시판
 
-    var freeBoards = Model.FreeBoards;
+    var boards = Model.Boards;
 
     #endregion
 }
@@ -16,13 +16,13 @@
             <h3 class="card-title">Free Forum</h3>
         </div>
         <div class="card-body">
-            @foreach(var freeBoard in freeBoards)
+            @foreach (var board in boards)
             {
-                <div>@freeBoard.Id</div>
-                <div>@freeBoard.Title</div>
-                <div>@freeBoard.Writer</div>
-                <div>@freeBoard.Created</div>
-                <div>@freeBoard.Updated</div>
+                <div>@board.Id</div>
+                <div>@board.Title</div>
+                <div>@board.Writer</div>
+                <div>@board.Created</div>
+                <div>@board.Updated</div>
             }
         </div>
     </div>
