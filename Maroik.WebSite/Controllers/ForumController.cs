@@ -20,28 +20,29 @@ namespace Maroik.WebSite.Controllers
             this.boardRepository = boardRepository;
         }
 
-        public async Task<IActionResult> FreeForum(int pg=1)
+        public async Task<IActionResult> FreeForum(int page=1)
         {
-            var freeForumOutputViewModel = new FreeForumOutputViewModel();
-            freeForumOutputViewModel.Boards = await boardRepository.GetOneTypeBoards("Free");
-
+            #region 게시판 기본 페이징 로직
             const int pageSize = 5;
-            if (pg < 1)
-                pg = 1;
+            if (page < 1)
+                page = 1;
+            #endregion
 
-            int recsCount = freeForumOutputViewModel.Boards.Count();
+            #region 관련된 모든 게시판 데이터 가져오는 로직
+            var freeBoards = await boardRepository.GetOneTypeBoards("Free");
+            #endregion
 
-            var pager = new Pager(recsCount, pg, pageSize);
+            var freeForumOutputViewModel = new FreeForumOutputViewModel();
 
-            int recSkip = (pg - 1) * pageSize;
+            #region 게시판 페이징 로직
+            freeForumOutputViewModel.Pager = new Pager(freeBoards.Count(), page, pageSize);
+            #endregion
 
-            var data = freeForumOutputViewModel.Boards.Skip(recSkip).Take(pager.PageSize).ToList();
+            #region 게시판 데이터 로직
+            freeForumOutputViewModel.Boards = freeBoards.Skip((page - 1) * pageSize).Take(freeForumOutputViewModel.Pager.PageSize).ToList();
+            #endregion
 
-            ViewBag.Pager = pager;
-
-
-
-            return View(data);
+            return View(freeForumOutputViewModel);
         }
     }
 }

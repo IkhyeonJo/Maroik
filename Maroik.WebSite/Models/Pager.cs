@@ -10,15 +10,15 @@
         public int EndPage { get; private set; }
 
         public Pager()
-        {
+        {    
         }
 
         public Pager(int totalItems, int page, int pageSize = 10)
         {
             int totalPages = (int)Math.Ceiling((decimal)totalItems / (decimal)pageSize);
             int currentPage = page;
-            int startPage = currentPage - 5;
-            int endPage = currentPage + 4;
+            int startPage = currentPage - 2;
+            int endPage = currentPage + 2;
 
             if (startPage <= 0)
             {
@@ -30,9 +30,9 @@
             {
                 endPage = totalPages;
 
-                if (endPage > 10)
+                if (endPage > 5)
                 {
-                    startPage = endPage - 9;
+                    startPage = endPage - 4;
                 }
             }
 

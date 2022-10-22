@@ -11,6 +11,8 @@ namespace Maroik.WebSite.Models.ViewModels.Forum
 {
     public class FreeForumOutputViewModel
     {
+        public Pager Pager { get; set; }
+
         public IEnumerable<Board> Boards { get; set; } = new List<Board>();
     }
 }

@@ -223,7 +223,9 @@
     }
     <div class="wrapper">
 
+        
         @*<!-- Preloader -->*@
+        @*
         <div class="preloader flex-column justify-content-center align-items-center">
             @if (loginedAccount.Role == Role.Admin)
             {
@@ -238,7 +240,7 @@
                 <img class="animation__wobble" src="~/anonymous/dist/img/AdminLTELogo.png" alt="AdminLTELogo" height="60" width="60">
             }
         </div>
-
+        *@
 
         @(await Html.PartialAsync("_MainTopBar", loginedAccount))
         @(await Html.PartialAsync("_MainLeftSideBar", loginedAccount))

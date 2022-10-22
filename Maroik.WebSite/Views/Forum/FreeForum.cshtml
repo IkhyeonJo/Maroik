@@ -1,19 +1,7 @@
 ﻿@using Maroik.WebSite.Models
 @using Maroik.WebSite.Models.ViewModels.Forum
 
-@model IEnumerable<Board>
-
-@{
-    Pager pager = new Pager();
-
-    int pageNo = 0;
-
-    if (ViewBag.Pager != null)
-    {
-        pager = ViewBag.Pager;
-        pageNo = pager.CurrentPage;
-    }
-}
+@model FreeForumOutputViewModel
 
 <section class="content">
     <div class="card card-primary">
@@ -32,7 +20,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach (var board in Model)
+                    @foreach (var board in Model.Boards)
                     {
                         <tr>
                             <td>@board.Id</td>
@@ -44,44 +32,42 @@
                     }
                 </tbody>
             </table>
-            <hr/>
-            
+            <hr />
 
-            <div class="container">
-                @if(pager.TotalPages > 0)
+            <nav aria-label="Page navigation example">
+                @if (Model.Pager.TotalPages > 0)
                 {
-                    <ul class="pagination justify-content-end">
+                    <ul class="pagination justify-content-center">
 
-                        @if (pager.CurrentPage > 1)
+                        @if (Model.Pager.CurrentPage > 1)
                         {
                             <li class="page-item">
-                                <a class="page-link" asp-controller="Forum" asp-action="FreeForum" asp-route-pg="1">First</a>
+                                <a class="page-link" asp-controller="Forum" asp-action="FreeForum" asp-route-page="1">&lt;&lt;</a>
                             </li>
                             <li class="page-item">
-                                <a class="page-link" asp-controller="Forum" asp-action="FreeForum" asp-route-pg="@(pager.CurrentPage-1)">Previous</a>
+                                <a class="page-link" asp-controller="Forum" asp-action="FreeForum" asp-route-page="@(Model.Pager.CurrentPage-1)">&lt;</a>
                             </li>
                         }
 
-
-                        @for(var pge = pager.StartPage; pge <= pager.EndPage; pge++)
+                        @for (var pge = Model.Pager.StartPage; pge <= Model.Pager.EndPage; pge++)
                         {
-                            <li class="page-item @(pge == pager.CurrentPage ? "active" : "")">
-                                <a class="page-link" asp-controller="Forum" asp-action="FreeForum" asp-route-pg="@pge">@pge</a>
+                            <li class="page-item @(pge == Model.Pager.CurrentPage ? "active" : "")">
+                                <a class="page-link" asp-controller="Forum" asp-action="FreeForum" asp-route-page="@pge">@pge</a>
                             </li>
                         }
 
-                        @if (pager.CurrentPage < pager.TotalPages)
+                        @if (Model.Pager.CurrentPage < Model.Pager.TotalPages)
                         {
                             <li class="page-item">
-                                <a class="page-link" asp-controller="Forum" asp-action="FreeForum" asp-route-pg="@(pager.CurrentPage + 1)">Next</a>
+                                <a class="page-link" asp-controller="Forum" asp-action="FreeForum" asp-route-page="@(Model.Pager.CurrentPage + 1)">&gt;</a>
                             </li>
                             <li class="page-item">
-                                <a class="page-link" asp-controller="Forum" asp-action="FreeForum" asp-route-pg="@(pager.TotalPages)">Last</a>
+                                <a class="page-link" asp-controller="Forum" asp-action="FreeForum" asp-route-page="@(Model.Pager.TotalPages)">&gt;&gt;</a>
                             </li>
                         }
                     </ul>
                 }
-            </div>
+            </nav>
 
         </div>
     </div>
