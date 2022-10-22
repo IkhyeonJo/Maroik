@@ -16,14 +16,52 @@
             <h3 class="card-title">Free Forum</h3>
         </div>
         <div class="card-body">
-            @foreach (var board in boards)
-            {
-                <div>@board.Id</div>
-                <div>@board.Title</div>
-                <div>@board.Writer</div>
-                <div>@board.Created</div>
-                <div>@board.Updated</div>
-            }
+            <table class="table table-striped table-bordered table-hover">
+                <thead>
+                    <tr>
+                        <th>번호</th>
+                        <th>제목</th>
+                        <th>작성자</th>
+                        <th>날짜</th>
+                        <th>조회수</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var board in boards)
+                    {
+                        <tr>
+                            <td>@board.Id</td>
+                            <td>@board.Title</td>
+                            <td>@board.Writer</td>
+                            <td>@board.Created</td>
+                            <td>@board.Views</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+            <hr/>
+            <nav aria-label="Page navigation example">
+                <ul class="pagination justify-content-center">
+                    <li class="page-item disabled">
+                        <a class="page-link" href="#" tabindex="-1"><<</a>
+                    </li>
+                    <li class="page-item disabled">
+                        <a class="page-link" href="#" tabindex="-1"><</a>
+                    </li>
+                    <li class="page-item"><a class="page-link" href="#">1</a></li>
+                    <li class="page-item"><a class="page-link" href="#">2</a></li>
+                    <li class="page-item"><a class="page-link" href="#">3</a></li>
+                    <li class="page-item"><a class="page-link" href="#">4</a></li>
+                    <li class="page-item"><a class="page-link" href="#">5</a></li>
+                    <li class="page-item">
+                        <a class="page-link" href="#">></a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="#">>></a>
+                    </li>
+                </ul>
+            </nav>
+
         </div>
     </div>
 </section>
