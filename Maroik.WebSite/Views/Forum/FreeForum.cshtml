@@ -49,10 +49,10 @@
                             </li>
                         }
 
-                        @for (var pge = Model.Pager.StartPage; pge <= Model.Pager.EndPage; pge++)
+                        @for (var pageNumber = Model.Pager.StartPage; pageNumber <= Model.Pager.EndPage; pageNumber++)
                         {
-                            <li class="page-item @(pge == Model.Pager.CurrentPage ? "active" : "")">
-                                <a class="page-link" asp-controller="Forum" asp-action="FreeForum" asp-route-page="@pge">@pge</a>
+                            <li class="page-item @(pageNumber == Model.Pager.CurrentPage ? "active" : "")">
+                                <a class="page-link" asp-controller="Forum" asp-action="FreeForum" asp-route-page="@pageNumber">@pageNumber</a>
                             </li>
                         }
 
