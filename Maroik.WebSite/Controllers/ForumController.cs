@@ -20,29 +20,55 @@ namespace Maroik.WebSite.Controllers
             this.boardRepository = boardRepository;
         }
 
-        public async Task<IActionResult> FreeForum(int page=1)
+        public async Task<IActionResult> FreeForum(string method = "list", int page = 1)
         {
-            #region 게시판 기본 페이징 로직
-            const int pageSize = 5;
-            if (page < 1)
-                page = 1;
-            #endregion
+            if (method == "write") // 글쓰기 (write)
+            {
+                var freeForumOutputViewModel = new FreeForumOutputViewModel();
 
-            #region 관련된 모든 게시판 데이터 가져오는 로직
-            var freeBoards = await boardRepository.GetOneTypeBoards("Free");
-            #endregion
+                #region 게시판 글쓰기
+                freeForumOutputViewModel.Method = method;
+                #endregion
 
-            var freeForumOutputViewModel = new FreeForumOutputViewModel();
+                bool isAccountSessionExist = HttpContext.Session.TryGetValue("AccountSession", out _); // 로그인이 되어 계정 세션이 생겼는지 확인
 
-            #region 게시판 페이징 로직
-            freeForumOutputViewModel.Pager = new Pager(freeBoards.Count(), page, pageSize);
-            #endregion
+                if (isAccountSessionExist) // Role: Admin or User
+                {
+                    return View(freeForumOutputViewModel);
+                }
+                else // Role: Anonymous
+                {
+                    return RedirectToAction("Login", "Account");
+                }
+            }
+            else // 목록 (list)
+            {
+                #region 게시판 기본 페이징 로직
+                const int pageSize = 5;
+                if (page < 1)
+                    page = 1;
+                #endregion
 
-            #region 게시판 데이터 로직
-            freeForumOutputViewModel.Boards = freeBoards.Skip((page - 1) * pageSize).Take(freeForumOutputViewModel.Pager.PageSize).ToList();
-            #endregion
+                #region 관련된 모든 게시판 데이터 가져오는 로직
+                var freeBoards = await boardRepository.GetOneTypeBoards("Free");
+                #endregion
 
-            return View(freeForumOutputViewModel);
+                var freeForumOutputViewModel = new FreeForumOutputViewModel();
+
+                #region 게시판 목록
+                freeForumOutputViewModel.Method = "list";
+                #endregion
+
+                #region 게시판 페이징 로직
+                freeForumOutputViewModel.Pager = new Pager(freeBoards.Count(), page, pageSize);
+                #endregion
+
+                #region 게시판 데이터 로직
+                freeForumOutputViewModel.Boards = freeBoards.Skip((page - 1) * pageSize).Take(freeForumOutputViewModel.Pager.PageSize).ToList();
+                #endregion
+
+                return View(freeForumOutputViewModel);
+            }
         }
     }
 }
