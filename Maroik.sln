@@ -53,6 +53,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SQL_Init_Script_Backups", "
 		Maroik.MariaDB\SQL_Init_Script_Backups\Init-20221013.sql = Maroik.MariaDB\SQL_Init_Script_Backups\Init-20221013.sql
 		Maroik.MariaDB\SQL_Init_Script_Backups\Init-20221018.sql = Maroik.MariaDB\SQL_Init_Script_Backups\Init-20221018.sql
 		Maroik.MariaDB\SQL_Init_Script_Backups\Init-20221019.sql = Maroik.MariaDB\SQL_Init_Script_Backups\Init-20221019.sql
+		Maroik.MariaDB\SQL_Init_Script_Backups\Init-20221025.sql = Maroik.MariaDB\SQL_Init_Script_Backups\Init-20221025.sql
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Maroik.Common.DataAccess", "Maroik.Common.DataAccess\Maroik.Common.DataAccess.csproj", "{47E2E041-9EAD-4A0B-8536-8075B8B8D8D1}"
