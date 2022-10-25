@@ -17,6 +17,6 @@ namespace Maroik.WebSite.Models.ViewModels.Forum
 
         public IEnumerable<Board> Boards { get; set; } = new List<Board>();
 
-        public BoardOutputViewModel Board { get; set; }
+        public BoardOutputViewModel BoardOutputViewModel { get; set; }
     }
 }
