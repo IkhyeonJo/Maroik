@@ -20,6 +20,7 @@ namespace Maroik.WebSite.Controllers
             this.boardRepository = boardRepository;
         }
 
+        #region 자유게시판
         public async Task<IActionResult> FreeForum(string method = "list", int page = 1)
         {
             if (method == "write") // 글쓰기 (write)
@@ -70,5 +71,6 @@ namespace Maroik.WebSite.Controllers
                 return View(freeForumOutputViewModel);
             }
         }
+        #endregion
     }
 }
