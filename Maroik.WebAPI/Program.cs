@@ -17,7 +17,7 @@ using Maroik.WebAPI.Common;
 using Maroik.WebAPI.Infrastructure;
 using Maroik.WebAPI.Services;
 using Microsoft.OpenApi.Models;
-
+using Microsoft.AspNetCore.Rewrite;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -136,7 +136,10 @@ if (app.Environment.IsDevelopment())
     app.UseDeveloperExceptionPage();
 }
 
-app.UseHttpsRedirection();
+app.UseRewriter(new RewriteOptions()
+   .AddRedirectToWwwPermanent()
+   .AddRedirectToHttpsPermanent()
+);
 
 app.UseSwagger();
 app.UseSwaggerUI(c =>
