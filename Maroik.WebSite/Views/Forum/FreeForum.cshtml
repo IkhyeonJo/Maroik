@@ -124,7 +124,42 @@
         $('#summernote').summernote({
             //placeholder: 'Post Something....',
             //tabsize: 10,
-            height: 300
+            height: 300,
+            callbacks: {
+                onImageUpload: function (files) {
+                    for (let i = 0; i < files.length; i++) {
+                        UploadImageFile(files[i]);
+                    }
+                }
+            }
         });
+
+        function UploadImageFile(file) {
+
+            formData = new FormData();
+            formData.append("summernoteImageFile", file);
+
+            $.ajax({
+                url: "/Forum/UploadImageFile",
+                data: formData,
+                headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
+                type: 'POST',
+                enctype: 'multipart/form-data',
+                processData: false,
+                contentType: false,
+                dataType: 'json',
+                cache: false,
+                success: function (data) {
+                    if (data.result) {
+                        var imgNode = document.createElement('img');
+                        imgNode.src = data.filePath;
+                        $('#summernote').summernote('insertNode', imgNode);
+                    }
+                    else {
+                        alert(data.errorMessage);
+                    }
+                }
+            });
+        }
     </script>
 }
