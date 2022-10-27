@@ -9,7 +9,9 @@ namespace Maroik.WebSite.Models.ViewModels.Forum
         [Required(ErrorMessage = "Title is required")]
         [StringLength(255, ErrorMessage = "Must be between 1 and 255 characters", MinimumLength = 1)]
         public string Title { get; set; }
-        
+
         public string Content { get; set; }
+
+        public IFormFile UploadedFile { get; set; }
     }
 }

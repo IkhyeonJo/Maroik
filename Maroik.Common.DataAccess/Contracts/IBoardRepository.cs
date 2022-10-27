@@ -19,5 +19,12 @@ namespace Maroik.Common.DataAccess.Contracts
         /// <returns></returns>
         public Task WriteBoardAsync(Board board);
 
+        /// <summary>
+        /// 첨부파일을 저장합니다.
+        /// </summary>
+        /// <param name="attachedFile"></param>
+        /// <returns></returns>
+        public Task SaveAttachedFileAsync(AttachedFile attachedFile);
+
     }
 }

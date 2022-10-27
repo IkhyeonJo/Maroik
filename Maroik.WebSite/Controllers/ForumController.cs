@@ -35,20 +35,35 @@ namespace Maroik.WebSite.Controllers
         [ValidateAntiForgeryToken]
         [RequiredHttpPostAccess(Role = Role.Admin)]
         [RequiredHttpPostAccess(Role = Role.User)]
-        public async Task<IActionResult> WriteFreeBoard([FromBody] BoardInputViewModel boardInputViewModel)
+        public async Task<IActionResult> WriteFreeBoard(BoardInputViewModel boardInputViewModel)
         {
             try
             {
                 if (ModelState.IsValid)
                 {
-                    if (!(boardInputViewModel.Title.Length > 0 && boardInputViewModel.Title.Length <= 30))
+                    boardInputViewModel.Content ??= ""; // 내용이 아무것도 입력되지 않았다면
+
+                    if (!(boardInputViewModel.Title.Length > 0 && boardInputViewModel.Title.Length <= 30)) // 제목 길이
                     {
                         return Json(new { result = false, error = "Title length is must be between 1 and 30 characters" });
                     }
 
-                    if (boardInputViewModel.Content.Length > 16384) // Maxlength: 16KB
+                    if (boardInputViewModel.Content.Length > 16384) // Content Maxlength: 16KB
                     {
                         return Json(new { result = false, error = "content length is must be between 0 and 16384 characters" });
+                    }
+
+                    if (boardInputViewModel.UploadedFile != null) // 파일 첨부가 되었다면
+                    {
+                        if (!(boardInputViewModel.UploadedFile.ContentType.ToUpper() == "application/x-zip-compressed".ToUpper())) // zip 확장자만 가능
+                        {
+                            return Json(new { result = false, error = "Only zip extension allowed." });
+                        }
+
+                        if (!(boardInputViewModel.UploadedFile.Length > 0 && boardInputViewModel.UploadedFile.Length <= 10485760)) // 10MB 이하만 가능
+                        {
+                            return Json(new { result = false, error = "uploaded file size must be smaller than 10MB." });
+                        }
                     }
 
                     try
@@ -71,7 +86,51 @@ namespace Maroik.WebSite.Controllers
                             };
                             await boardRepository.WriteBoardAsync(board);
 
-                            var createdBoardId = board.Id; // 첨부파일 FK 해서 로직 추가할 것
+                            #region 첨부 파일 저장
+                            if (boardInputViewModel.UploadedFile != null) // 첨부 파일 존재 시,
+                            {
+                                if (boardInputViewModel.UploadedFile.Length > 0 && boardInputViewModel.UploadedFile.Length <= 10485760) // boardInputViewModel.UploadedFile Length : 파일 크기 0MB 이상, 10MB 이하
+                                {
+                                    if (boardInputViewModel.UploadedFile.ContentType.ToUpper() == "application/x-zip-compressed".ToUpper())
+                                    {
+                                        var createdBoardId = board.Id; // 첨부파일 FK 해서 로직 추가할 것
+
+                                        string attachedFilePath = Path.Combine(hostEnvironment.ContentRootPath, "wwwroot", "upload", "Forum", "attachedFiles", $"{createdBoardId}");
+                                        if (!Directory.Exists(attachedFilePath))
+                                            Directory.CreateDirectory(attachedFilePath);
+                                        string attachedFile = $"{boardInputViewModel.UploadedFile.FileName}";
+                                        string filePath = Path.Combine(attachedFilePath, attachedFile);
+
+#pragma warning disable SCS0018 // Potential Path Traversal vulnerability was found where '{0}' in '{1}' may be tainted by user-controlled data from '{2}' in method '{3}'.
+                                        using (FileStream stream = new FileStream(filePath, FileMode.Create))
+#pragma warning restore SCS0018 // Potential Path Traversal vulnerability was found where '{0}' in '{1}' may be tainted by user-controlled data from '{2}' in method '{3}'.
+                                        {
+                                            await boardInputViewModel.UploadedFile.CopyToAsync(stream);
+                                            await stream.FlushAsync();
+                                        }
+
+                                        await boardRepository.SaveAttachedFileAsync(new AttachedFile()
+                                        {
+                                            BoardId = createdBoardId,
+                                            Order = 0,
+                                            Name = Path.GetFileNameWithoutExtension(boardInputViewModel.UploadedFile.FileName),
+                                            Extension = Path.GetExtension(boardInputViewModel.UploadedFile.FileName),
+                                            Path = $"/upload/Forum/attachedFiles/{createdBoardId}/"
+                                        });
+
+                                    }
+                                    else // 이미지 png 또는 jpg 외 확장자는 거절
+                                    {
+                                        return Ok(new { result = false, errorMessage = "Only .zip file allowed" });
+                                    }
+                                }
+                                else
+                                {
+                                    return Ok(new { result = false, errorMessage = "File Size must be smaller than 10MB." });
+                                }
+
+                            }
+                            #endregion
 
                             return Json(new { result = true, message = "The board has been successfully created." });
                         }
