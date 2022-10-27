@@ -58,21 +58,20 @@ namespace Maroik.WebSite.Controllers
                         if (isAccountSessionExist)
                         {
                             var loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)); // Get Session
+                            var board = new Board()
+                            {
+                                Type = "Free", // 자유게시판
+                                Title = boardInputViewModel.Title,
+                                Content = boardInputViewModel.Content,
+                                Writer = loginedAccount.Nickname,
+                                Created = DateTime.UtcNow,
+                                Updated = DateTime.UtcNow,
+                                Views = 0,
+                                Deleted = false
+                            };
+                            await boardRepository.WriteBoardAsync(board);
 
-                            await boardRepository.WriteBoardAsync
-                                (
-                                new Board()
-                                {
-                                    Type = "Free", // 자유게시판
-                                    Title = boardInputViewModel.Title,
-                                    Content = boardInputViewModel.Content,
-                                    Writer = loginedAccount.Nickname,
-                                    Created = DateTime.UtcNow,
-                                    Updated = DateTime.UtcNow,
-                                    Views = 0,
-                                    Deleted = false
-                                }
-                                );
+                            var createdBoardId = board.Id; // 첨부파일 FK 해서 로직 추가할 것
 
                             return Json(new { result = true, message = "The board has been successfully created." });
                         }
