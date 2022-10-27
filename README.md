@@ -15,6 +15,8 @@ Docker, AdminLTE, MariaDB, Session Login, RESTful API, HTTPS etc.
 
 ## For more detail information, please see each project's README.md file
 
+# if you want publish this website, you must register your specific domain!! [www.[domain] & [domain]]
+
 ☞ 프로젝트명 : 스마트 홈 IoT & 가계부
 
 ☞ OS 및 사용 기술 : AWS, Amazon Linux, C#, .NET 6, Docker, Docker-Compose, HTTPS, HTML, CSS (Bootstrap), 
