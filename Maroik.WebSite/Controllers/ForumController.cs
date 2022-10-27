@@ -156,7 +156,7 @@ namespace Maroik.WebSite.Controllers
         }
         #endregion
 
-        public async Task<IActionResult> FreeForum(string method = "list", int page = 1)
+        public async Task<IActionResult> FreeForum(string method = "list", int? boardId = null, int page = 1)
         {
             if (method == "write") // 글쓰기 (write)
             {
@@ -175,6 +175,36 @@ namespace Maroik.WebSite.Controllers
                 else // Role: Anonymous
                 {
                     return RedirectToAction("Login", "Account");
+                }
+            }
+            else if (method == "detail") // 상세보기 (detail)
+            {
+                if(boardId == null)
+                {
+                    return RedirectToAction("FreeForum", "Forum");
+                }
+
+                var freeForumOutputViewModel = new FreeForumOutputViewModel();
+
+                freeForumOutputViewModel.Method = method;
+
+                var freeBoards = await boardRepository.GetOneTypeBoards("Free");
+                
+                try
+                {
+                    var freeBoard = freeBoards.FirstOrDefault(m => m.Id == boardId);
+
+                    freeForumOutputViewModel.BoardOutputViewModel = new BoardOutputViewModel()
+                    {
+                        Title = freeBoard.Title,
+                        Content = freeBoard.Content
+                    };
+
+                    return View(freeForumOutputViewModel);
+                }
+                catch
+                {
+                    return RedirectToAction("FreeForum", "Forum");
                 }
             }
             else // 목록 (list)

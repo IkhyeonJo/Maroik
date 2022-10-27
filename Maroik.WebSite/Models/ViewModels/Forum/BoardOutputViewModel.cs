@@ -11,5 +11,7 @@ namespace Maroik.WebSite.Models.ViewModels.Forum
         public string Title { get; set; }
         
         public string Content { get; set; }
+
+        public string AttachedFilePath { get; set; }
     }
 }
