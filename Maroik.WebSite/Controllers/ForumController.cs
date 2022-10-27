@@ -4,12 +4,14 @@ using Maroik.Common.DataAccess.Services;
 using Maroik.WebSite.Common;
 using Maroik.WebSite.Helpers;
 using Maroik.WebSite.Models;
+using Maroik.WebSite.Models.ViewModels.AccountBook;
 using Maroik.WebSite.Models.ViewModels.DashBoard;
 using Maroik.WebSite.Models.ViewModels.Forum;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Hosting;
 using Newtonsoft.Json;
 using System.Reflection;
+using System.Text;
 
 namespace Maroik.WebSite.Controllers
 {
@@ -27,6 +29,75 @@ namespace Maroik.WebSite.Controllers
         }
 
         #region 자유게시판
+
+        #region Write
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [RequiredHttpPostAccess(Role = Role.Admin)]
+        [RequiredHttpPostAccess(Role = Role.User)]
+        public async Task<IActionResult> WriteFreeBoard([FromBody] BoardInputViewModel boardInputViewModel)
+        {
+            try
+            {
+                if (ModelState.IsValid)
+                {
+                    if (!(boardInputViewModel.Title.Length > 0 && boardInputViewModel.Title.Length <= 30))
+                    {
+                        return Json(new { result = false, error = "Title length is must be between 1 and 30 characters" });
+                    }
+
+                    if (boardInputViewModel.Content.Length > 16384) // Maxlength: 16KB
+                    {
+                        return Json(new { result = false, error = "content length is must be between 0 and 16384 characters" });
+                    }
+
+                    try
+                    {
+                        bool isAccountSessionExist = HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+
+                        if (isAccountSessionExist)
+                        {
+                            var loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)); // Get Session
+
+                            await boardRepository.WriteBoardAsync
+                                (
+                                new Board()
+                                {
+                                    Type = "Free", // 자유게시판
+                                    Title = boardInputViewModel.Title,
+                                    Content = boardInputViewModel.Content,
+                                    Writer = loginedAccount.Nickname,
+                                    Created = DateTime.UtcNow,
+                                    Updated = DateTime.UtcNow,
+                                    Views = 0,
+                                    Deleted = false
+                                }
+                                );
+
+                            return Json(new { result = true, message = "The board has been successfully created." });
+                        }
+                        else
+                        {
+                            return Json(new { result = false, error = "Please Login to write board" });
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        return Json(new { result = false, error = e.ToString() });
+                    }
+                }
+                else
+                {
+                    return Json(new { result = false, error = "Input is invalid" });
+                }
+            }
+            catch (Exception e)
+            {
+                return Json(new { result = false, error = e.ToString() });
+            }
+        }
+        #endregion
+
         public async Task<IActionResult> FreeForum(string method = "list", int page = 1)
         {
             if (method == "write") // 글쓰기 (write)
@@ -84,9 +155,9 @@ namespace Maroik.WebSite.Controllers
         [RequiredHttpPostAccess(Role = Role.User)]
         public async Task<IActionResult> UploadImageFile(IFormFile summernoteImageFile)
         {
-            if(summernoteImageFile == null) // 파일 없을 시
+            if (summernoteImageFile == null) // 파일 없을 시
             {
-                return Ok( new { result = false, errorMessage = "Please attach a file" });
+                return Ok(new { result = false, errorMessage = "Please attach a file" });
             }
             else
             {
@@ -95,7 +166,7 @@ namespace Maroik.WebSite.Controllers
                     if (summernoteImageFile.ContentType.ToUpper() == "image/png".ToUpper() || summernoteImageFile.ContentType.ToUpper() == "image/jpeg".ToUpper())
                     {
 
-                        string summernoteImagePath = Path.Combine(hostEnvironment.ContentRootPath, "wwwroot", "upload", "Forum", "FreeForum", "summernote", "images");
+                        string summernoteImagePath = Path.Combine(hostEnvironment.ContentRootPath, "wwwroot", "upload", "Forum", "summernote", "images");
                         if (!Directory.Exists(summernoteImagePath))
                             Directory.CreateDirectory(summernoteImagePath);
                         string imageFile = $"{Guid.NewGuid().ToString().ToUpper()}{Path.GetExtension(summernoteImageFile.FileName)}";
@@ -108,7 +179,7 @@ namespace Maroik.WebSite.Controllers
                             await summernoteImageFile.CopyToAsync(stream);
                             await stream.FlushAsync();
                         }
-                        return Ok(new { result = true, filePath = $"/upload/Forum/FreeForum/summernote/images/{imageFile}" });
+                        return Ok(new { result = true, filePath = $"/upload/Forum/summernote/images/{imageFile}" });
                     }
                     else // 이미지 png 또는 jpg 외 확장자는 거절
                     {

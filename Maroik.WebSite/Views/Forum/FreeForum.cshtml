@@ -1,4 +1,5 @@
-﻿@using Maroik.WebSite.Models
+﻿@using Maroik.WebSite.Common
+@using Maroik.WebSite.Models
 @using Maroik.WebSite.Models.ViewModels.Forum
 
 @model FreeForumOutputViewModel
@@ -11,33 +12,31 @@
         <div class="card-body">
             @if (Model.Method == "write")
             {
-                <form asp-controller="Forum" asp-action="WriteBoard" enctype="multipart/form-data" method="post">
+                <form id="formWriteBoard" onsubmit="return WriteBoard()">
                     <div asp-validation-summary="ModelOnly" class="text-danger"></div>
                     <div class="form-group">
-                        <label asp-for="BoardOutputViewModel.Title" class="control-label"></label>
-                        <input asp-for="BoardOutputViewModel.Title" type="text" class="form-control" required/>
-                        <span asp-validation-for="BoardOutputViewModel.Title" class="text-danger"></span>
+                        <label for="writeBoardTitle">Title</label>
+                        <input class="form-control" type="text" data-val="true" data-val-required="Title is required" id="writeBoardTitle" name="writeBoardTitle" value="" required maxlength="30">
+                        <span class="field-validation-valid text-danger" data-valmsg-for="writeBoardTitle" data-valmsg-replace="true"></span>
                     </div>
                     <div class="form-group">
-                        <label asp-for="BoardOutputViewModel.Content" class="control-label"></label>
-                        <textarea asp-for="BoardOutputViewModel.Content" id="summernote"></textarea>
-                        <span asp-validation-for="BoardOutputViewModel.Content" class="text-danger"></span>
+                        <label for="writeBoardContent" class="control-label"></label>
+                        <textarea name="writeBoardContent" id="writeBoardContent" maxlength="16384"></textarea> @*maxlength: 16KB*@
                     </div>
 
-                    @*                    
-                    <div class="form-group">
-                        <div class="btn btn-default btn-file">
-                            <i class="fas fa-paperclip"></i> Attachment
-                            <input type="file" name="attachment">
-                        </div>
-                        <p class="help-block">Max. 32MB</p>
-                    </div>
-                    *@
+                    @*
+                <div class="form-group">
+                <div class="btn btn-default btn-file">
+                <i class="fas fa-paperclip"></i> Attachment
+                <input type="file" name="attachment">
+                </div>
+                <p class="help-block">Max. 32MB</p>
+                </div>
+                *@
                     <div class="form-group">
                         <div class="float-right">
                             <button type="submit" class="btn btn-primary">등록</button>
                         </div>
-                        @*<button type="reset" class="btn btn-default"><i class="fas fa-times"></i> Discard</button>*@
                         <a asp-controller="Forum" asp-action="FreeForum" class="btn btn-default">목록</a>
                     </div>
                 </form>
@@ -70,9 +69,18 @@
                         {
                             <tr>
                                 <td>@board.Id</td>
-                                <td>@board.Title</td>
+
+                                @if (board.Title.Length > 10)
+                                {
+                                    <td>@($"{board.Title.Substring(0, 10)}...")</td>
+                                }
+                                else
+                                {
+                                    <td>@board.Title</td>
+                                }
+
                                 <td>@board.Writer</td>
-                                <td>@board.Created</td>
+                                <td>@TimeZoneInfo.ConvertTimeBySystemTimeZoneId(board.Created, OSTimeZone.DestinationTimeZoneId)</td>
                                 <td>@board.Views</td>
                             </tr>
                         }
@@ -121,7 +129,7 @@
 
 @section Scripts {
     <script>
-        $('#summernote').summernote({
+        $('#writeBoardContent').summernote({
             //placeholder: 'Post Something....',
             //tabsize: 10,
             height: 300,
@@ -153,13 +161,52 @@
                     if (data.result) {
                         var imgNode = document.createElement('img');
                         imgNode.src = data.filePath;
-                        $('#summernote').summernote('insertNode', imgNode);
+                        $('#writeBoardContent').summernote('insertNode', imgNode);
                     }
                     else {
                         alert(data.errorMessage);
                     }
                 }
             });
+        }
+
+        function WriteBoard() {
+
+            if (!$('#formWriteBoard').valid()) {
+                return false;
+            }
+
+            var createForm = $('#formWriteBoard');
+
+            var title = createForm.find('input[id="writeBoardTitle"]').val();
+            var content = createForm.find('textarea[id="writeBoardContent"]').val();
+
+            var paramValue = JSON.stringify({
+                Title: title,
+                Content: content
+            });
+
+            $.ajax({
+                url: '/Forum/WriteFreeBoard',
+                type: 'POST',
+                headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
+                dataType: 'json',
+                data: paramValue,
+                contentType: 'application/json; charset=utf-8',
+                //async: false,
+                //cache: false,
+                success: function (data) {
+                    if (data.result) {
+                        alert(data.message);
+                        window.location.href = "/Forum/FreeForum";
+                    }
+                    else {
+                        toastr.error(data.error);
+                    }
+                }
+            });
+
+            return false;
         }
     </script>
 }

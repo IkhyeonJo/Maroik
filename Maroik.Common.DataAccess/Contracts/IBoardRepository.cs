@@ -11,5 +11,13 @@ namespace Maroik.Common.DataAccess.Contracts
         /// </summary>
         /// <returns></returns>
         public Task<IEnumerable<Board>> GetOneTypeBoards(string type);
+
+        /// <summary>
+        /// 게시물을 생성합니다.
+        /// </summary>
+        /// <param name="board"></param>
+        /// <returns></returns>
+        public Task WriteBoardAsync(Board board);
+
     }
 }

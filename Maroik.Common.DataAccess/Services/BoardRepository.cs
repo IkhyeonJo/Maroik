@@ -25,5 +25,17 @@ namespace Maroik.Common.DataAccess.Services
         {
             return await context.Boards.Where(x => x.Type == type).ToListAsync();
         }
+
+        /// <summary>
+        /// 게시물을 생성합니다.
+        /// </summary>
+        /// <param name="board"></param>
+        /// <returns></returns>
+        public async Task WriteBoardAsync(Board board)
+        {
+            await context.Boards.AddAsync(board);
+            await context.SaveChangesAsync();
+        }
+
     }
 }
