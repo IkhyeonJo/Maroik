@@ -20,7 +20,7 @@
 
 #Ubuntu Command
 #-----------------------------------------------------------------------------------
-#sudo apt-get update -y && sudo apt-get upgrade -y && sudo apt-get install docker-compose -y && sudo docker-compose up -d && sudo apt-get install python3 && chmod 755 DBBackup.sh && sudo crontab InitCron && sudo service cron reload
+#sudo apt-get update -y && sudo apt-get upgrade -y && sudo apt-get install docker-compose -y && sudo docker-compose up -d && sudo apt-get install python3 && chmod 755 DBBackup.sh && chmod 755 RebootDockerCompose.sh && sudo crontab InitCron && sudo service cron reload
 #-----------------------------------------------------------------------------------
 
 ###stop docker-compose
