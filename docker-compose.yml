@@ -11,11 +11,16 @@
 #80, 443, 5001 (Deploy)
 #step 3: Copy the entire [Maroik] folder to your AWS Instance.
 
-#AWS Command (docker and docker-compose install)
 #Move to [Maroik] folder (which exists docker-compose.yml file) and execute below this command
 
+#AWS Command
 #-----------------------------------------------------------------------------------
 #sudo yum update -y && sudo amazon-linux-extras install docker -y && sudo service docker start && sudo curl -L https://github.com/docker/compose/releases/download/1.21.0/docker-compose-`uname -s`-`uname -m` | sudo tee /usr/local/bin/docker-compose > /dev/null && sudo chmod +x /usr/local/bin/docker-compose && sudo ln -s /usr/local/bin/docker-compose /usr/bin/docker-compose && sudo docker-compose up -d && sudo yum install -y python3 && sudo yum install -y cronie && chmod 755 DBBackup.sh && crontab InitCron && sudo service crond restart
+#-----------------------------------------------------------------------------------
+
+#Ubuntu Command
+#-----------------------------------------------------------------------------------
+#sudo apt-get update -y && sudo apt-get upgrade -y && sudo apt-get install docker-compose -y && sudo docker-compose up -d && sudo apt-get install python3 && chmod 755 DBBackup.sh && crontab InitCron && sudo service cron reload
 #-----------------------------------------------------------------------------------
 
 ###stop docker-compose
