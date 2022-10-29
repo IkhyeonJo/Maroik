@@ -205,7 +205,10 @@ namespace Maroik.WebSite.Controllers
                     freeForumOutputViewModel.BoardOutputViewModel = new BoardOutputViewModel()
                     {
                         Title = freeBoard.Title,
-                        Content = freeBoard.Content
+                        Writer = freeBoard.Writer,
+                        Views = freeBoard.Views,
+                        Content = freeBoard.Content,
+                        Updated = freeBoard.Updated
                     };
 
                     return View(freeForumOutputViewModel);

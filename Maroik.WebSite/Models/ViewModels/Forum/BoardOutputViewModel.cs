@@ -12,6 +12,14 @@ namespace Maroik.WebSite.Models.ViewModels.Forum
         
         public string Content { get; set; }
 
+        public string Writer { get; set; }
+
+        public DateTime Created { get; set; }
+
+        public DateTime Updated { get; set; }
+
+        public int Views { get; set; }
+
         public string AttachedFilePath { get; set; }
     }
 }

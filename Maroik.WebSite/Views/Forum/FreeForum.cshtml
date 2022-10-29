@@ -39,10 +39,17 @@
             }
             else if (Model.Method == "detail")
             {
-                <h5 class="card-title" >@Model.BoardOutputViewModel.Title</h5>
-                <br/>
-                <br/>
-                <div class="card-text">
+                <div class="mailbox-read-info">
+                    <h5>제목: @Model.BoardOutputViewModel.Title</h5>
+                    <h6>
+                        작성자: @Model.BoardOutputViewModel.Writer
+                    </h6>
+                    <span class="mailbox-read-time float-left">조회수: @Model.BoardOutputViewModel.Views</span>
+                    <span class="mailbox-read-time float-right">수정일: @Model.BoardOutputViewModel.Updated</span>
+                    <br />
+                </div>
+
+                <div class="mailbox-read-message">
                     @Html.Raw(Model.BoardOutputViewModel.Content)
                 </div>
             }
@@ -65,7 +72,7 @@
                             <th>번호</th>
                             <th>제목</th>
                             <th>작성자</th>
-                            <th>날짜</th>
+                            <th>생성일</th>
                             <th>조회수</th>
                         </tr>
                     </thead>
