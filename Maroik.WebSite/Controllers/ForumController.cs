@@ -166,6 +166,7 @@ namespace Maroik.WebSite.Controllers
         }
         #endregion
 
+        #region Edit, List, Detail, Write
         public async Task<IActionResult> FreeForum(string method = "list", int? boardId = null, int page = 1)
         {
             if (method == "write") // 글쓰기 (write)
@@ -198,6 +199,7 @@ namespace Maroik.WebSite.Controllers
 
                 freeForumOutputViewModel.Method = method;
                 freeForumOutputViewModel.DetailCurrentPage = page;
+                freeForumOutputViewModel.DetailBoardId = boardId ?? default;
 
                 var freeBoards = await boardRepository.GetOneTypeBoards("Free");
                 var attachedFiles = await attachedFileRepository.GetAllAsync();
@@ -259,7 +261,9 @@ namespace Maroik.WebSite.Controllers
                 return View(freeForumOutputViewModel);
             }
         }
+        #endregion
 
+        #region Summernote Image File Upload
         [HttpPost]
         [ValidateAntiForgeryToken]
         [RequiredHttpPostAccess(Role = Role.Admin)]
@@ -303,6 +307,7 @@ namespace Maroik.WebSite.Controllers
                 }
             }
         }
+        #endregion
 
         #endregion
     }
