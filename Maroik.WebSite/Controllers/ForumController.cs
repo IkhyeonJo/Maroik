@@ -33,6 +33,8 @@ namespace Maroik.WebSite.Controllers
 
         #region 자유게시판
 
+        #region Create
+
         #region Write
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -166,6 +168,56 @@ namespace Maroik.WebSite.Controllers
         }
         #endregion
 
+        #region Summernote Image File Upload
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [RequiredHttpPostAccess(Role = Role.Admin)]
+        [RequiredHttpPostAccess(Role = Role.User)]
+        public async Task<IActionResult> UploadImageFile(IFormFile summernoteImageFile)
+        {
+            if (summernoteImageFile == null) // 파일 없을 시
+            {
+                return Ok(new { result = false, errorMessage = "Please attach a file" });
+            }
+            else
+            {
+                if (summernoteImageFile.Length > 0 && summernoteImageFile.Length <= 10485760) // imageFile Length : 파일 크기 0MB 이상, 10MB 이하
+                {
+                    if (summernoteImageFile.ContentType.ToUpper() == "image/png".ToUpper() || summernoteImageFile.ContentType.ToUpper() == "image/jpeg".ToUpper())
+                    {
+
+                        string summernoteImagePath = Path.Combine(hostEnvironment.ContentRootPath, "wwwroot", "upload", "Forum", "summernote", "images");
+                        if (!Directory.Exists(summernoteImagePath))
+                            Directory.CreateDirectory(summernoteImagePath);
+                        string imageFile = $"{Guid.NewGuid().ToString().ToUpper()}{Path.GetExtension(summernoteImageFile.FileName)}";
+                        string filePath = Path.Combine(summernoteImagePath, imageFile);
+
+#pragma warning disable SCS0018 // Potential Path Traversal vulnerability was found where '{0}' in '{1}' may be tainted by user-controlled data from '{2}' in method '{3}'.
+                        using (FileStream stream = new FileStream(filePath, FileMode.Create))
+#pragma warning restore SCS0018 // Potential Path Traversal vulnerability was found where '{0}' in '{1}' may be tainted by user-controlled data from '{2}' in method '{3}'.
+                        {
+                            await summernoteImageFile.CopyToAsync(stream);
+                            await stream.FlushAsync();
+                        }
+                        return Ok(new { result = true, filePath = $"/upload/Forum/summernote/images/{imageFile}" });
+                    }
+                    else // 이미지 png 또는 jpg 외 확장자는 거절
+                    {
+                        return Ok(new { result = false, errorMessage = "Only .jpg or .png file allowed" });
+                    }
+                }
+                else
+                {
+                    return Ok(new { result = false, errorMessage = "File Size must be smaller than 10MB." });
+                }
+            }
+        }
+        #endregion
+
+        #endregion
+
+        #region Read
+
         #region Edit, List, Detail, Write
         public async Task<IActionResult> FreeForum(string method = "list", int? boardId = null, int page = 1)
         {
@@ -263,51 +315,13 @@ namespace Maroik.WebSite.Controllers
         }
         #endregion
 
-        #region Summernote Image File Upload
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        [RequiredHttpPostAccess(Role = Role.Admin)]
-        [RequiredHttpPostAccess(Role = Role.User)]
-        public async Task<IActionResult> UploadImageFile(IFormFile summernoteImageFile)
-        {
-            if (summernoteImageFile == null) // 파일 없을 시
-            {
-                return Ok(new { result = false, errorMessage = "Please attach a file" });
-            }
-            else
-            {
-                if (summernoteImageFile.Length > 0 && summernoteImageFile.Length <= 10485760) // imageFile Length : 파일 크기 0MB 이상, 10MB 이하
-                {
-                    if (summernoteImageFile.ContentType.ToUpper() == "image/png".ToUpper() || summernoteImageFile.ContentType.ToUpper() == "image/jpeg".ToUpper())
-                    {
+        #region IsBoardExists
 
-                        string summernoteImagePath = Path.Combine(hostEnvironment.ContentRootPath, "wwwroot", "upload", "Forum", "summernote", "images");
-                        if (!Directory.Exists(summernoteImagePath))
-                            Directory.CreateDirectory(summernoteImagePath);
-                        string imageFile = $"{Guid.NewGuid().ToString().ToUpper()}{Path.GetExtension(summernoteImageFile.FileName)}";
-                        string filePath = Path.Combine(summernoteImagePath, imageFile);
-
-#pragma warning disable SCS0018 // Potential Path Traversal vulnerability was found where '{0}' in '{1}' may be tainted by user-controlled data from '{2}' in method '{3}'.
-                        using (FileStream stream = new FileStream(filePath, FileMode.Create))
-#pragma warning restore SCS0018 // Potential Path Traversal vulnerability was found where '{0}' in '{1}' may be tainted by user-controlled data from '{2}' in method '{3}'.
-                        {
-                            await summernoteImageFile.CopyToAsync(stream);
-                            await stream.FlushAsync();
-                        }
-                        return Ok(new { result = true, filePath = $"/upload/Forum/summernote/images/{imageFile}" });
-                    }
-                    else // 이미지 png 또는 jpg 외 확장자는 거절
-                    {
-                        return Ok(new { result = false, errorMessage = "Only .jpg or .png file allowed" });
-                    }
-                }
-                else
-                {
-                    return Ok(new { result = false, errorMessage = "File Size must be smaller than 10MB." });
-                }
-            }
-        }
         #endregion
+
+        #endregion
+
+        
 
         #endregion
     }
