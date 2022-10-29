@@ -254,6 +254,7 @@ namespace Maroik.WebSite.Controllers
                 freeForumOutputViewModel.DetailBoardId = boardId ?? default;
 
                 var freeBoards = await boardRepository.GetOneTypeBoards("Free");
+                freeBoards = freeBoards.Where(m => m.Deleted == false);
                 var attachedFiles = await attachedFileRepository.GetAllAsync();
 
                 try
@@ -294,6 +295,7 @@ namespace Maroik.WebSite.Controllers
 
                 #region 관련된 모든 게시판 데이터 가져오는 로직
                 var freeBoards = await boardRepository.GetOneTypeBoards("Free");
+                freeBoards = freeBoards.Where(m => m.Deleted == false);
                 #endregion
 
                 var freeForumOutputViewModel = new FreeForumOutputViewModel();
