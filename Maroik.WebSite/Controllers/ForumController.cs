@@ -120,7 +120,7 @@ namespace Maroik.WebSite.Controllers
                                         await boardRepository.SaveAttachedFileAsync(new AttachedFile()
                                         {
                                             BoardId = createdBoardId,
-                                            Order = 0,
+                                            Size = Convert.ToInt32(boardInputViewModel.UploadedFile.Length),
                                             Name = Path.GetFileNameWithoutExtension(boardInputViewModel.UploadedFile.FileName),
                                             Extension = Path.GetExtension(boardInputViewModel.UploadedFile.FileName),
                                             Path = $"/upload/Forum/attachedFiles/{createdBoardId}/"

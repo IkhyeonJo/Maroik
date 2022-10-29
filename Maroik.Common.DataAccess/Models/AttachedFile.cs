@@ -17,9 +17,9 @@ namespace Maroik.Common.DataAccess.Models
         /// </summary>
         public int BoardId { get; set; }
         /// <summary>
-        /// 순번
+        /// 크기 (Byte)
         /// </summary>
-        public int Order { get; set; }
+        public int Size { get; set; }
         /// <summary>
         /// 이름
         /// </summary>

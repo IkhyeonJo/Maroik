@@ -181,14 +181,14 @@ namespace Maroik.Common.DataAccess.Data
                     .HasMaxLength(255)
                     .HasComment("이름");
 
-                entity.Property(e => e.Order)
-                    .HasColumnType("int(11)")
-                    .HasComment("순번");
-
                 entity.Property(e => e.Path)
                     .IsRequired()
                     .HasMaxLength(255)
                     .HasComment("부모 댓글 번호");
+
+                entity.Property(e => e.Size)
+                    .HasColumnType("int(11)")
+                    .HasComment("크기 (Byte)");
 
                 entity.HasOne(d => d.Board)
                     .WithMany(p => p.AttachedFiles)
