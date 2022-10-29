@@ -1,4 +1,5 @@
-﻿using Maroik.Common.DataAccess.Contracts;
+﻿using Ganss.Xss;
+using Maroik.Common.DataAccess.Contracts;
 using Maroik.Common.DataAccess.Models;
 using Maroik.Common.DataAccess.Services;
 using Maroik.WebSite.Common;
@@ -42,6 +43,13 @@ namespace Maroik.WebSite.Controllers
                 if (ModelState.IsValid)
                 {
                     boardInputViewModel.Content ??= ""; // 내용이 아무것도 입력되지 않았다면
+
+                    #region HtmlSanitizer
+                    var sanitizer = new HtmlSanitizer();
+                    sanitizer.AllowedAttributes.Add("class");
+                    var sanitized = sanitizer.Sanitize(boardInputViewModel.Content);
+                    boardInputViewModel.Content = sanitized;
+                    #endregion
 
                     if (!(boardInputViewModel.Title.Length > 0 && boardInputViewModel.Title.Length <= 30)) // 제목 길이
                     {
