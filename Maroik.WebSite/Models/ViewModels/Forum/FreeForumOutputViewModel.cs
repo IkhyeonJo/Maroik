@@ -19,6 +19,8 @@ namespace Maroik.WebSite.Models.ViewModels.Forum
 
         public BoardOutputViewModel BoardOutputViewModel { get; set; }
 
+        public int DetailBoardId { get; set; }
+
         public int DetailCurrentPage { get; set; }
     }
 }
