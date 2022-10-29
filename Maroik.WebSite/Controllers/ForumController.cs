@@ -204,6 +204,8 @@ namespace Maroik.WebSite.Controllers
                 try
                 {
                     var freeBoard = freeBoards.FirstOrDefault(m => m.Id == boardId);
+                    freeBoard.Views++;
+                    await boardRepository.UpdateBoardAsync(freeBoard);
                     var attachedFile = attachedFiles.FirstOrDefault(m => m.BoardId == boardId);
 
 

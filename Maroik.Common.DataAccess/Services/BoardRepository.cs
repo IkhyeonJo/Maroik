@@ -38,6 +38,17 @@ namespace Maroik.Common.DataAccess.Services
         }
 
         /// <summary>
+        /// 계시물을 업데이트합니다.
+        /// </summary>
+        /// <param name="board"></param>
+        /// <returns></returns>
+        public async Task UpdateBoardAsync(Board board)
+        {
+            context.Boards.Update(board);
+            await context.SaveChangesAsync();
+        }
+
+        /// <summary>
         /// 첨부파일을 저장합니다.
         /// </summary>
         /// <param name="attachedFile"></param>
