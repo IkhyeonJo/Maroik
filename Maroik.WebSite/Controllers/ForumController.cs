@@ -187,7 +187,7 @@ namespace Maroik.WebSite.Controllers
             }
             else if (method == "detail") // 상세보기 (detail)
             {
-                if(boardId == null)
+                if (boardId == null)
                 {
                     return RedirectToAction("FreeForum", "Forum");
                 }
@@ -197,7 +197,7 @@ namespace Maroik.WebSite.Controllers
                 freeForumOutputViewModel.Method = method;
 
                 var freeBoards = await boardRepository.GetOneTypeBoards("Free");
-                
+
                 try
                 {
                     var freeBoard = freeBoards.FirstOrDefault(m => m.Id == boardId);
