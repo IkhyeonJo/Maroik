@@ -53,20 +53,23 @@
                     @Html.Raw(Model.BoardOutputViewModel.Content)
                 </div>
 
-                <div class="card-footer bg-dark">
-                    <ul class="mailbox-attachments d-flex align-items-stretch clearfix">
-                        <li>
-                            <span class="mailbox-attachment-icon"><i class="far fa-file"></i></span>
+                @if (!string.IsNullOrEmpty(Model.BoardOutputViewModel.AttachedFileName))
+                {
+                    <div class="card-footer bg-dark">
+                        <ul class="mailbox-attachments d-flex align-items-stretch clearfix">
+                            <li>
+                                <span class="mailbox-attachment-icon"><i class="far fa-file"></i></span>
 
-                            <div class="mailbox-attachment-info">
-                                <a href="@Model.BoardOutputViewModel.AttachedFilePath" class="mailbox-attachment-name"><i class="fas fa-paperclip"></i>@Model.BoardOutputViewModel.AttachedFileName@Model.BoardOutputViewModel.AttachedFileExtension</a>
-                                <span class="mailbox-attachment-size clearfix mt-1">
-                                    <span>@(string.Format("{0:#,###0.#}", (int)(Model.BoardOutputViewModel.AttachedFileSize / 1024)))KB</span>
-                                </span>
-                            </div>
-                        </li>
-                    </ul>
-                </div>
+                                <div class="mailbox-attachment-info">
+                                    <a href="@Model.BoardOutputViewModel.AttachedFilePath" class="mailbox-attachment-name"><i class="fas fa-paperclip"></i>@Model.BoardOutputViewModel.AttachedFileName@Model.BoardOutputViewModel.AttachedFileExtension</a>
+                                    <span class="mailbox-attachment-size clearfix mt-1">
+                                        <span>@(string.Format("{0:#,###0.#}", (int)(Model.BoardOutputViewModel.AttachedFileSize / 1024)))KB</span>
+                                    </span>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                }
             }
             else
             {

@@ -214,10 +214,10 @@ namespace Maroik.WebSite.Controllers
                         Views = freeBoard.Views,
                         Content = freeBoard.Content,
                         Updated = freeBoard.Updated,
-                        AttachedFileName = attachedFile.Name,
-                        AttachedFileExtension = attachedFile.Extension,
-                        AttachedFileSize = attachedFile.Size,
-                        AttachedFilePath = attachedFile.Path
+                        AttachedFileName = attachedFile?.Name ?? "",
+                        AttachedFileExtension = attachedFile?.Extension ?? "",
+                        AttachedFileSize = attachedFile?.Size ?? 0,
+                        AttachedFilePath = attachedFile?.Path ?? ""
                     };
 
                     return View(freeForumOutputViewModel);
