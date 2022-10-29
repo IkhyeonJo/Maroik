@@ -22,13 +22,15 @@ namespace Maroik.WebSite.Controllers
         private readonly IHostEnvironment hostEnvironment;
         private readonly IBoardRepository boardRepository;
         private readonly IAttachedFileRepository attachedFileRepository;
+        private readonly IAccountRepository accountRepository;
 
-        public ForumController(ILogger<ForumController> logger, IBoardRepository boardRepository, IHostEnvironment hostEnvironment, IAttachedFileRepository attachedFileRepository)
+        public ForumController(ILogger<ForumController> logger, IBoardRepository boardRepository, IHostEnvironment hostEnvironment, IAttachedFileRepository attachedFileRepository, IAccountRepository accountRepository)
         {
             this.logger = logger;
             this.boardRepository = boardRepository;
             this.hostEnvironment = hostEnvironment;
             this.attachedFileRepository = attachedFileRepository;
+            this.accountRepository = accountRepository;
         }
 
         #region 자유게시판
@@ -318,13 +320,97 @@ namespace Maroik.WebSite.Controllers
         #endregion
 
         #region IsBoardExists
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [RequiredHttpPostAccess(Role = Role.Admin)]
+        [RequiredHttpPostAccess(Role = Role.User)]
+        public async Task<IActionResult> IsBoardExists(int id)
+        {
+            try
+            {
+                var freeBoards = await boardRepository.GetOneTypeBoards("Free");
+                freeBoards = freeBoards.Where(m => m.Deleted == false);
 
+                if (freeBoards == null)
+                {
+                    return Json(new { result = false, error = "No freeBoard exists" });
+                }
+                else
+                {
+                    var tempFreeBoard = freeBoards.Where(a => a.Id == id).FirstOrDefault();
+
+                    if (tempFreeBoard == null)
+                    {
+                        return Json(new { result = false, error = "Input is invalid" });
+                    }
+                    else
+                    {
+                        return Json(new { result = true, freeBoard = tempFreeBoard });
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                return Json(new { result = false, error = e.ToString() });
+            }
+        }
         #endregion
 
         #endregion
 
-        
+        #region Delete
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [RequiredHttpPostAccess(Role = Role.Admin)]
+        [RequiredHttpPostAccess(Role = Role.User)]
+        public async Task<IActionResult> DeleteBoard([FromBody] BoardInputViewModel boardInputViewModel)
+        {
+            try
+            {
+                var freeBoards = await boardRepository.GetOneTypeBoards("Free");
+                freeBoards = freeBoards.Where(m => m.Deleted == false);
+
+                if (freeBoards == null)
+                {
+                    return Json(new { result = false, error = "Input is invalid" });
+                }
+                else
+                {
+                    var tempFreeBoard = freeBoards.Where(a => a.Id == boardInputViewModel.Id).FirstOrDefault();
+
+                    if (tempFreeBoard == null)
+                    {
+                        return Json(new { result = false, error = "Input is invalid" });
+                    }
+                    else
+                    {
+                        HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+                        var loginedAccount = await accountRepository.GetAccountAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+
+                        if ((loginedAccount.Nickname == boardInputViewModel.Writer) || loginedAccount.Role == Role.Admin) // 방문한 사람이 작성자 또는 관리자인 경우
+                        {
+                            #region 게시물 삭제
+                            tempFreeBoard.Deleted = true;
+                            await boardRepository.DeleteBoardAsync(tempFreeBoard);
+                            #endregion
+
+                            return Json(new { result = true, message = "The board has been successfully deleted." });
+                        }
+                        else
+                        {
+                            return Json(new { result = true, message = "You do not have permission to delete." });
+                        }
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                return Json(new { result = false, error = e.ToString() });
+            }
+        }
+        #endregion
 
         #endregion
+
     }
 }

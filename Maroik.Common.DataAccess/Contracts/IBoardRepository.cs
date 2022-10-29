@@ -27,6 +27,13 @@ namespace Maroik.Common.DataAccess.Contracts
         public Task UpdateBoardAsync(Board board);
 
         /// <summary>
+        /// 계시물을 삭제합니다.
+        /// </summary>
+        /// <param name="board"></param>
+        /// <returns></returns>
+        public Task DeleteBoardAsync(Board board);
+
+        /// <summary>
         /// 첨부파일을 저장합니다.
         /// </summary>
         /// <param name="attachedFile"></param>

@@ -1,8 +1,25 @@
 ﻿@using Maroik.WebSite.Common
 @using Maroik.WebSite.Models
 @using Maroik.WebSite.Models.ViewModels.Forum
+@using Newtonsoft.Json
+@using System.Text
+@inject Maroik.Common.DataAccess.Contracts.IAccountRepository accountRepository
 
 @model FreeForumOutputViewModel
+
+@{
+    Context.Session.TryGetValue("AccountSession", out byte[] resultByte);
+    Account loginedAccount = new Account();
+
+    if (resultByte != null) // 로그인이 된 상태라면
+    {
+        loginedAccount = await accountRepository.GetAccountAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+    }
+    else // 로그인이 되지 않은 상태라면
+    {
+        loginedAccount.Role = Role.Anonymous;
+    }
+}
 
 <section class="content">
     <div class="card card-primary">
@@ -74,8 +91,11 @@
                 </div>
                 <div class="card-footer bg-dark">
                     <div class="float-right">
-                        <button type="button" class="btn btn-danger">삭제</button>
-                        <button type="button" class="btn btn-primary">수정</button>
+                        @if ((loginedAccount.Nickname == Model.BoardOutputViewModel.Writer) || loginedAccount.Role == Role.Admin) @*방문한 사람이 작성자 또는 관리자인 경우*@
+                        {
+                            <button type="button" class="btn btn-danger" onclick="ConfirmDeleteBoard()">삭제</button>
+                            <button type="button" class="btn btn-primary">수정</button>
+                        }
                     </div>
                     <button type="button" class="btn btn-default" onclick="location.href='@Url.Action("FreeForum", "Forum", new {page = Model.DetailCurrentPage})'">목록</button>
                 </div>
@@ -168,6 +188,21 @@
 
 <div class="modal" id="loading">
     <img src="~/upload/Forum/ajax-loader.gif" />
+</div>
+
+@*<!--ConfirmDeleteDialogModal-->*@
+<div class="modal" tabindex="-1" role="dialog" id="confirmDeleteBoardDialogModal">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-body">
+                Are you sure to delete?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-danger" onclick="DeleteBoard('@Model.DetailBoardId')">DELETE</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
 </div>
 
 @section Scripts {
@@ -272,6 +307,63 @@
             });
 
             return false;
+        }
+
+        function ConfirmDeleteBoard() {
+            $('#confirmDeleteBoardDialogModal').modal({
+                keyboard: false,
+                backdrop: "static"
+            });
+
+            $('#confirmDeleteBoardDialogModal').modal('toggle');
+            $('#confirmDeleteBoardDialogModal').modal('show');
+        }
+
+        function DeleteBoard(detailBoardId) {
+
+            $.ajax({
+                url: '/Forum/IsBoardExists' + '?id=' + detailBoardId,
+                type: 'POST',
+                headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
+                dataType: 'json',
+                data: null,
+                contentType: 'application/json; charset=utf-8',
+                //async: false,
+                //cache: false,
+                success: function (data) {
+                    if (data.result) {
+
+                        var paramValue = JSON.stringify({
+                            Id: data.freeBoard.id,
+                            Writer: data.freeBoard.writer
+                        });
+
+                        $.ajax({
+                            url: '/Forum/DeleteBoard',
+                            type: 'POST',
+                            headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
+                            dataType: 'json',
+                            data: paramValue,
+                            contentType: 'application/json; charset=utf-8',
+                            //async: false,
+                            //cache: false,
+                            success: function (data) {
+                                if (data.result) {
+                                    $('#confirmDeleteBoardDialogModal').modal('hide');
+                                    alert(data.message);
+                                    window.location.href = "/Forum/FreeForum";
+                                }
+                                else {
+                                    toastr.error(data.error);
+                                }
+                            }
+                        });
+                    }
+                    else {
+                        toastr.error(data.error);
+                    }
+                }
+            });
         }
     </script>
 }
