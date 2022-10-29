@@ -843,3 +843,7 @@ https://github.com/mganss/HtmlSanitizer
 [2022/10/19 작성]
 도메인은 AWS Route 53을 통하여 www.maroik.com으로 등록하였으며 (1년 갱신비 2만원) (자동 갱신 상태)
 인증서는 https://www.sslforfree.com을 통해 발급 후 pfx로 변환하였음
+
+https://kenfavors.com/code/mounting-an-external-drive-on-ubuntu-server/ // Mounting An External Drive On Ubuntu Server
+https://askubuntu.com/questions/164926/how-to-make-partitions-mount-at-startup
+https://unix.stackexchange.com/questions/349118/how-to-mount-by-uuid-without-using-etc-fstab
