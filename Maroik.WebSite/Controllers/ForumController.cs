@@ -197,6 +197,7 @@ namespace Maroik.WebSite.Controllers
                 var freeForumOutputViewModel = new FreeForumOutputViewModel();
 
                 freeForumOutputViewModel.Method = method;
+                freeForumOutputViewModel.DetailCurrentPage = page;
 
                 var freeBoards = await boardRepository.GetOneTypeBoards("Free");
                 var attachedFiles = await attachedFileRepository.GetAllAsync();

@@ -53,9 +53,10 @@
                     @Html.Raw(Model.BoardOutputViewModel.Content)
                 </div>
 
-                @if (!string.IsNullOrEmpty(Model.BoardOutputViewModel.AttachedFileName))
-                {
-                    <div class="card-footer bg-dark">
+                <div class="card-footer bg-dark">
+                    @if (!string.IsNullOrEmpty(Model.BoardOutputViewModel.AttachedFileName))
+                    {
+
                         <ul class="mailbox-attachments d-flex align-items-stretch clearfix">
                             <li>
                                 <span class="mailbox-attachment-icon"><i class="far fa-file"></i></span>
@@ -68,8 +69,16 @@
                                 </div>
                             </li>
                         </ul>
+
+                    }
+                </div>
+                <div class="card-footer bg-dark">
+                    <div class="float-right">
+                        <button type="button" class="btn btn-danger">삭제</button>
+                        <button type="button" class="btn btn-primary">수정</button>
                     </div>
-                }
+                    <button type="button" class="btn btn-default" onclick="location.href='@Url.Action("FreeForum", "Forum", new {page = Model.DetailCurrentPage})'">목록</button>
+                </div>
             }
             else
             {
@@ -102,11 +111,11 @@
 
                                 @if (board.Title.Length > 10)
                                 {
-                                    <td>@Html.ActionLink(($"{board.Title.Substring(0, 10)}..."), "FreeForum", new {method = "detail", boardId = board.Id})</td>
+                                    <td>@Html.ActionLink(($"{board.Title.Substring(0, 10)}..."), "FreeForum", new {method = "detail", boardId = board.Id, page = Model.Pager.CurrentPage})</td>
                                 }
                                 else
                                 {
-                                    <td>@Html.ActionLink(@board.Title, "FreeForum", new {method = "detail", boardId = board.Id})</td>
+                                    <td>@Html.ActionLink(@board.Title, "FreeForum", new {method = "detail", boardId = board.Id, page = Model.Pager.CurrentPage})</td>
                                 }
 
                                 <td>@board.Writer</td>
