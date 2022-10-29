@@ -20,6 +20,12 @@ namespace Maroik.WebSite.Models.ViewModels.Forum
 
         public int Views { get; set; }
 
+        public string AttachedFileName { get; set; }
+
+        public string AttachedFileExtension { get; set; }
+
+        public int AttachedFileSize { get; set; }
+
         public string AttachedFilePath { get; set; }
     }
 }

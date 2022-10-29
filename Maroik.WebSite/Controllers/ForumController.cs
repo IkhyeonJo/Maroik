@@ -21,12 +21,14 @@ namespace Maroik.WebSite.Controllers
         private readonly ILogger<ForumController> logger;
         private readonly IHostEnvironment hostEnvironment;
         private readonly IBoardRepository boardRepository;
+        private readonly IAttachedFileRepository attachedFileRepository;
 
-        public ForumController(ILogger<ForumController> logger, IBoardRepository boardRepository, IHostEnvironment hostEnvironment)
+        public ForumController(ILogger<ForumController> logger, IBoardRepository boardRepository, IHostEnvironment hostEnvironment, IAttachedFileRepository attachedFileRepository)
         {
             this.logger = logger;
             this.boardRepository = boardRepository;
             this.hostEnvironment = hostEnvironment;
+            this.attachedFileRepository = attachedFileRepository;
         }
 
         #region 자유게시판
@@ -123,7 +125,7 @@ namespace Maroik.WebSite.Controllers
                                             Size = Convert.ToInt32(boardInputViewModel.UploadedFile.Length),
                                             Name = Path.GetFileNameWithoutExtension(boardInputViewModel.UploadedFile.FileName),
                                             Extension = Path.GetExtension(boardInputViewModel.UploadedFile.FileName),
-                                            Path = $"/upload/Forum/attachedFiles/{createdBoardId}/"
+                                            Path = $"/upload/Forum/attachedFiles/{createdBoardId}/{Path.GetFileNameWithoutExtension(boardInputViewModel.UploadedFile.FileName)}{Path.GetExtension(boardInputViewModel.UploadedFile.FileName)}"
                                         });
 
                                     }
@@ -197,10 +199,13 @@ namespace Maroik.WebSite.Controllers
                 freeForumOutputViewModel.Method = method;
 
                 var freeBoards = await boardRepository.GetOneTypeBoards("Free");
+                var attachedFiles = await attachedFileRepository.GetAllAsync();
 
                 try
                 {
                     var freeBoard = freeBoards.FirstOrDefault(m => m.Id == boardId);
+                    var attachedFile = attachedFiles.FirstOrDefault(m => m.BoardId == boardId);
+
 
                     freeForumOutputViewModel.BoardOutputViewModel = new BoardOutputViewModel()
                     {
@@ -208,7 +213,11 @@ namespace Maroik.WebSite.Controllers
                         Writer = freeBoard.Writer,
                         Views = freeBoard.Views,
                         Content = freeBoard.Content,
-                        Updated = freeBoard.Updated
+                        Updated = freeBoard.Updated,
+                        AttachedFileName = attachedFile.Name,
+                        AttachedFileExtension = attachedFile.Extension,
+                        AttachedFileSize = attachedFile.Size,
+                        AttachedFilePath = attachedFile.Path
                     };
 
                     return View(freeForumOutputViewModel);
