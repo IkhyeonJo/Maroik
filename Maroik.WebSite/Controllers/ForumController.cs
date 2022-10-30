@@ -124,7 +124,7 @@ namespace Maroik.WebSite.Controllers
                                             await stream.FlushAsync();
                                         }
 
-                                        await boardRepository.SaveAttachedFileAsync(new AttachedFile()
+                                        await attachedFileRepository.SaveAttachedFileAsync(new AttachedFile()
                                         {
                                             BoardId = createdBoardId,
                                             Size = Convert.ToInt32(boardInputViewModel.UploadedFile.Length),

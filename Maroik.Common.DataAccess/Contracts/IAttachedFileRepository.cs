@@ -11,5 +11,12 @@ namespace Maroik.Common.DataAccess.Contracts
         /// </summary>
         /// <returns></returns>
         public Task<List<AttachedFile>> GetAllAsync();
+
+        /// <summary>
+        /// 첨부파일을 저장합니다.
+        /// </summary>
+        /// <param name="attachedFile"></param>
+        /// <returns></returns>
+        public Task SaveAttachedFileAsync(AttachedFile attachedFile);
     }
 }
