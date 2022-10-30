@@ -287,6 +287,54 @@
 
 @section Scripts {
     <script>
+        $('#writeBoardContent').summernote({
+            height: 300,
+            callbacks: {
+                onImageUpload: function (files) {
+                    for (let i = 0; i < files.length; i++) {
+                        WriteUploadImageFile(files[i]);
+                    }
+                }
+            }
+        });
+
+        $('#editBoardContent').summernote({
+            height: 300,
+            callbacks: {
+                onImageUpload: function (files) {
+                    for (let i = 0; i < files.length; i++) {
+                        EditUploadImageFile(files[i]);
+                    }
+                }
+            }
+        });
+
+        $("#writeUploadedFile").on("change", function (event) {
+            if (event.target.files[0].size > 10485760) {
+                alert('File size must be smaller than 10MB');
+                document.getElementById("writeUploadedFile").value = "";
+                return false;
+            }
+            else {
+                writeUploadedFile = event.target.files[0];
+            }
+        });
+
+        $("#editUploadedFile").on("change", function (event) {
+            if (event.target.files[0].size > 10485760) {
+                alert('File size must be smaller than 10MB');
+                document.getElementById("editUploadedFile").value = "";
+                return false;
+            }
+            else {
+                editUploadedFile = event.target.files[0];
+            }
+        });
+
+        var writeUploadedFile;
+
+        var editUploadedFile;
+
         var input = document.getElementById("searchText");
         input.addEventListener("keypress", function (event) {
             if (event.key === "Enter") {
@@ -321,54 +369,6 @@
                 return true;
             }
         }
-
-        var writeUploadedFile;
-
-        $("#writeUploadedFile").on("change", function (event) {
-            if (event.target.files[0].size > 10485760) {
-                alert('File size must be smaller than 10MB');
-                document.getElementById("writeUploadedFile").value = "";
-                return false;
-            }
-            else {
-                writeUploadedFile = event.target.files[0];
-            }
-        });
-
-        var editUploadedFile;
-
-        $("#editUploadedFile").on("change", function (event) {
-            if (event.target.files[0].size > 10485760) {
-                alert('File size must be smaller than 10MB');
-                document.getElementById("editUploadedFile").value = "";
-                return false;
-            }
-            else {
-                editUploadedFile = event.target.files[0];
-            }
-        });
-
-        $('#writeBoardContent').summernote({
-            height: 300,
-            callbacks: {
-                onImageUpload: function (files) {
-                    for (let i = 0; i < files.length; i++) {
-                        WriteUploadImageFile(files[i]);
-                    }
-                }
-            }
-        });
-
-        $('#editBoardContent').summernote({
-            height: 300,
-            callbacks: {
-                onImageUpload: function (files) {
-                    for (let i = 0; i < files.length; i++) {
-                        EditUploadImageFile(files[i]);
-                    }
-                }
-            }
-        });
 
         function WriteUploadImageFile(file) {
 
