@@ -79,7 +79,7 @@
                                 <span class="mailbox-attachment-icon"><i class="far fa-file"></i></span>
 
                                 <div class="mailbox-attachment-info">
-                                    <a href="@Model.BoardOutputViewModel.AttachedFilePath" class="mailbox-attachment-name"><i class="fas fa-paperclip"></i>@Model.BoardOutputViewModel.AttachedFileName@Model.BoardOutputViewModel.AttachedFileExtension</a>
+                                    <a href="@Model.BoardOutputViewModel.AttachedFilePath" class="mailbox-attachment-name" download="@($"{Model.BoardOutputViewModel.AttachedFileName}{Model.BoardOutputViewModel.AttachedFileExtension}")"><i class="fas fa-paperclip"></i>@Model.BoardOutputViewModel.AttachedFileName@Model.BoardOutputViewModel.AttachedFileExtension</a>
                                     <span class="mailbox-attachment-size clearfix mt-1">
                                         <span>@(string.Format("{0:#,###0.#}", (int)(Model.BoardOutputViewModel.AttachedFileSize / 1024)))KB</span>
                                     </span>

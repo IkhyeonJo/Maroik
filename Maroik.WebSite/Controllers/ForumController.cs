@@ -112,7 +112,8 @@ namespace Maroik.WebSite.Controllers
                                         string attachedFilePath = Path.Combine(hostEnvironment.ContentRootPath, "wwwroot", "upload", "Forum", "attachedFiles", $"{createdBoardId}");
                                         if (!Directory.Exists(attachedFilePath))
                                             Directory.CreateDirectory(attachedFilePath);
-                                        string attachedFile = $"{boardInputViewModel.UploadedFile.FileName}";
+                                        string guid = Guid.NewGuid().ToString().ToUpper();
+                                        string attachedFile = $"{Path.GetFileNameWithoutExtension(boardInputViewModel.UploadedFile.FileName)}-{guid}{Path.GetExtension(boardInputViewModel.UploadedFile.FileName)}";
                                         string filePath = Path.Combine(attachedFilePath, attachedFile);
 
 #pragma warning disable SCS0018 // Potential Path Traversal vulnerability was found where '{0}' in '{1}' may be tainted by user-controlled data from '{2}' in method '{3}'.
@@ -129,7 +130,7 @@ namespace Maroik.WebSite.Controllers
                                             Size = Convert.ToInt32(boardInputViewModel.UploadedFile.Length),
                                             Name = Path.GetFileNameWithoutExtension(boardInputViewModel.UploadedFile.FileName),
                                             Extension = Path.GetExtension(boardInputViewModel.UploadedFile.FileName),
-                                            Path = $"/upload/Forum/attachedFiles/{createdBoardId}/{Path.GetFileNameWithoutExtension(boardInputViewModel.UploadedFile.FileName)}{Path.GetExtension(boardInputViewModel.UploadedFile.FileName)}"
+                                            Path = $"/upload/Forum/attachedFiles/{createdBoardId}/{Path.GetFileNameWithoutExtension(boardInputViewModel.UploadedFile.FileName)}-{guid}{Path.GetExtension(boardInputViewModel.UploadedFile.FileName)}"
                                         });
 
                                     }
