@@ -48,7 +48,7 @@
 
                     <div class="form-group">
                         <div class="float-right">
-                            <button type="submit" class="btn btn-primary" onclick="return ShowLoginLoading()">등록</button>
+                            <button type="submit" class="btn btn-primary" onclick="return ShowWriteBoardLoading()">등록</button>
                         </div>
                         <a asp-controller="Forum" asp-action="FreeForum" class="btn btn-default">목록</a>
                     </div>
@@ -81,7 +81,11 @@
                                 <div class="mailbox-attachment-info">
                                     <a href="@Model.BoardOutputViewModel.AttachedFilePath" class="mailbox-attachment-name" download="@($"{Model.BoardOutputViewModel.AttachedFileName}{Model.BoardOutputViewModel.AttachedFileExtension}")"><i class="fas fa-paperclip"></i>@Model.BoardOutputViewModel.AttachedFileName@Model.BoardOutputViewModel.AttachedFileExtension</a>
                                     <span class="mailbox-attachment-size clearfix mt-1">
-                                        <span>@(string.Format("{0:#,###0.#}", (int)(Model.BoardOutputViewModel.AttachedFileSize / 1024)))KB</span>
+                                        <span>
+                                            @(
+                                                string.Format("{0:#,###0.#}", (int)(Model.BoardOutputViewModel.AttachedFileSize / 1024))
+                                                )KB
+                                        </span>
                                     </span>
                                 </div>
                             </li>
@@ -91,14 +95,67 @@
                 </div>
                 <div class="card-footer bg-dark">
                     <div class="float-right">
-                        @if ((loginedAccount.Nickname == Model.BoardOutputViewModel.Writer) || loginedAccount.Role == Role.Admin) @*방문한 사람이 작성자 또는 관리자인 경우*@
+                        @if ((loginedAccount.Nickname == Model.BoardOutputViewModel.Writer) || loginedAccount.Role == Role.Admin)@*방문한 사람이 작성자 또는 관리자인 경우*@
                         {
                             <button type="button" class="btn btn-danger" onclick="ConfirmDeleteBoard()">삭제</button>
-                            <button type="button" class="btn btn-primary">수정</button>
+                        }
+                        @if (loginedAccount.Nickname == Model.BoardOutputViewModel.Writer)@*방문한 사람이 작성자인 경우*@
+                        {
+                            <button type="button" class="btn btn-primary" onclick="location.href='@Url.Action("FreeForum", "Forum", new {method = "edit", boardId = Model.DetailBoardId})'">수정</button>
                         }
                     </div>
                     <button type="button" class="btn btn-default" onclick="location.href='@Url.Action("FreeForum", "Forum", new {page = Model.DetailCurrentPage})'">목록</button>
                 </div>
+            }
+            else if (Model.Method == "edit")
+            {
+                <form id="formEditBoard" onsubmit="return EditBoard('@(Model.EditBoardId)')">
+                    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                    <div class="form-group">
+                        <label for="editBoardTitle">Title</label>
+                        <input class="form-control" type="text" data-val="true" data-val-required="Title is required" id="editBoardTitle" name="editBoardTitle" value="@Model.BoardOutputViewModel.Title" required maxlength="30">
+                        <span class="field-validation-valid text-danger" data-valmsg-for="editBoardTitle" data-valmsg-replace="true"></span>
+                    </div>
+                    <div class="form-group">
+                        <label for="editBoardContent" class="control-label"></label>
+                        <textarea name="editBoardContent" id="editBoardContent" maxlength="16384">@Html.Raw(Model.BoardOutputViewModel.Content)</textarea> @*maxlength: 16KB*@
+                    </div>
+
+                    <div class="card-footer bg-dark">
+                        @if (!string.IsNullOrEmpty(Model.BoardOutputViewModel.AttachedFileName))
+                        {
+
+                            <ul class="mailbox-attachments d-flex align-items-stretch clearfix">
+                                <li>
+                                    <span class="mailbox-attachment-icon"><i class="far fa-file"></i></span>
+
+                                    <div class="mailbox-attachment-info">
+                                        <a href="@Model.BoardOutputViewModel.AttachedFilePath" class="mailbox-attachment-name" download="@($"{Model.BoardOutputViewModel.AttachedFileName}{Model.BoardOutputViewModel.AttachedFileExtension}")"><i class="fas fa-paperclip"></i>@Model.BoardOutputViewModel.AttachedFileName@Model.BoardOutputViewModel.AttachedFileExtension</a>
+                                        <span class="mailbox-attachment-size clearfix mt-1">
+                                            <span>
+                                                @(
+                                                    string.Format("{0:#,###0.#}", (int)(Model.BoardOutputViewModel.AttachedFileSize / 1024))
+                                                    )KB
+                                            </span>
+                                        </span>
+                                    </div>
+                                </li>
+                            </ul>
+                        }
+                    </div>
+
+                    <div class="form-group">
+                        <input type="file" id="editUploadedFile" name="editUploadedFile" accept=".zip">
+                        <p class="help-block">Only zip extension allowed.</p>
+                    </div>
+
+                    <div class="form-group">
+                        <div class="float-right">
+                            <button type="submit" class="btn btn-primary" onclick="return ShowEditBoardLoading()">수정</button>
+                        </div>
+                        <a asp-controller="Forum" asp-action="FreeForum" class="btn btn-default">목록</a>
+                    </div>
+                </form>
             }
             else
             {
@@ -207,8 +264,19 @@
 
 @section Scripts {
     <script>
-        function ShowLoginLoading() {
+        function ShowWriteBoardLoading() {
             if (!$('#formWriteBoard').valid()) {
+                $('#loading').hide();
+                return false;
+            }
+            else {
+                $('#loading').show();
+                return true;
+            }
+        }
+
+        function ShowEditBoardLoading() {
+            if (!$('#formEditBoard').valid()) {
                 $('#loading').hide();
                 return false;
             }
@@ -231,18 +299,42 @@
             }
         });
 
+        var editUploadedFile;
+
+        $("#editUploadedFile").on("change", function (event) {
+            if (event.target.files[0].size > 10485760) {
+                alert('File size must be smaller than 10MB');
+                document.getElementById("editUploadedFile").value = "";
+                return false;
+            }
+            else {
+                editUploadedFile = event.target.files[0];
+            }
+        });
+
         $('#writeBoardContent').summernote({
             height: 300,
             callbacks: {
                 onImageUpload: function (files) {
                     for (let i = 0; i < files.length; i++) {
-                        UploadImageFile(files[i]);
+                        WriteUploadImageFile(files[i]);
                     }
                 }
             }
         });
 
-        function UploadImageFile(file) {
+        $('#editBoardContent').summernote({
+            height: 300,
+            callbacks: {
+                onImageUpload: function (files) {
+                    for (let i = 0; i < files.length; i++) {
+                        EditUploadImageFile(files[i]);
+                    }
+                }
+            }
+        });
+
+        function WriteUploadImageFile(file) {
 
             formData = new FormData();
             formData.append("summernoteImageFile", file);
@@ -270,6 +362,34 @@
             });
         }
 
+        function EditUploadImageFile(file) {
+
+            formData = new FormData();
+            formData.append("summernoteImageFile", file);
+
+            $.ajax({
+                url: "/Forum/UploadImageFile",
+                data: formData,
+                headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
+                type: 'POST',
+                enctype: 'multipart/form-data',
+                processData: false,
+                contentType: false,
+                dataType: 'json',
+                cache: false,
+                success: function (data) {
+                    if (data.result) {
+                        var imgNode = document.createElement('img');
+                        imgNode.src = data.filePath;
+                        $('#editBoardContent').summernote('insertNode', imgNode);
+                    }
+                    else {
+                        alert(data.errorMessage);
+                    }
+                }
+            });
+        }
+
         function WriteBoard() {
 
             if (!$('#formWriteBoard').valid()) {
@@ -289,6 +409,46 @@
 
             $.ajax({
                 url: '/Forum/WriteFreeBoard',
+                type: 'POST',
+                headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
+                dataType: 'json',
+                data: formData,
+                contentType: false,
+                processData: false,
+                success: function (data) {
+                    if (data.result) {
+                        alert(data.message);
+                        window.location.href = "/Forum/FreeForum";
+                    }
+                    else {
+                        toastr.error(data.error);
+                    }
+                }
+            });
+
+            return false;
+        }
+
+        function EditBoard(editBoardId) {
+
+            if (!$('#formEditBoard').valid()) {
+                return false;
+            }
+
+            var createForm = $('#formEditBoard');
+
+            var title = createForm.find('input[id="editBoardTitle"]').val();
+            var content = createForm.find('textarea[id="editBoardContent"]').val();
+
+            var formData = new FormData();
+            formData.append('Id', editBoardId);
+            formData.append('Title', title);
+            formData.append('Content', content);
+            formData.append('UploadedFile', editUploadedFile);
+
+
+            $.ajax({
+                url: '/Forum/EditFreeBoard',
                 type: 'POST',
                 headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
                 dataType: 'json',

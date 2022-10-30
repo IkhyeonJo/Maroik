@@ -22,5 +22,7 @@ namespace Maroik.WebSite.Models.ViewModels.Forum
         public int DetailBoardId { get; set; }
 
         public int DetailCurrentPage { get; set; }
+
+        public int EditBoardId { get; set; }
     }
 }

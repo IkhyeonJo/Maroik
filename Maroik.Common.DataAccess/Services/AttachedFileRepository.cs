@@ -35,5 +35,16 @@ namespace Maroik.Common.DataAccess.Services
             await context.AttachedFiles.AddAsync(attachedFile);
             await context.SaveChangesAsync();
         }
+
+        /// <summary>
+        /// 첨부파일을 업데이트합니다.
+        /// </summary>
+        /// <param name="attachedFile"></param>
+        /// <returns></returns>
+        public async Task UpdateAttachedFileAsync(AttachedFile attachedFile)
+        {
+            context.AttachedFiles.Update(attachedFile);
+            await context.SaveChangesAsync();
+        }
     }
 }
