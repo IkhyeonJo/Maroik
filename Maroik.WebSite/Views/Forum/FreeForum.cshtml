@@ -19,6 +19,9 @@
     {
         loginedAccount.Role = Role.Anonymous;
     }
+
+    string selectedSearchType = (ViewBag.SelectedSearchType as string) ?? "";
+    string typedSearchText = (ViewBag.TypedSearchText as string) ?? "";
 }
 
 <section class="content">
@@ -166,10 +169,23 @@
                         </li>
                         <li class="nav-item ml-auto">
                             <select id="searchType" name="searchType" style="max-width:90%; font-size:19px; margin: 0px 3px 0px 0px; padding: 0px 0px 4px 0px;">
-                                <option value="Title">제목</option>
-                                <option value="Writer">작성자</option>
+                                @if (selectedSearchType == "Title")
+                                {
+                                    <option value="Title" selected>제목</option>
+                                    <option value="Writer">작성자</option>
+                                }
+                                else if (selectedSearchType == "Writer")
+                                {
+                                    <option value="Title">제목</option>
+                                    <option value="Writer" selected>작성자</option>
+                                }
+                                else
+                                {
+                                    <option value="Title">제목</option>
+                                    <option value="Writer">작성자</option>
+                                }
                             </select>
-                            <input type="text" id="searchText" />
+                            <input type="text" id="searchText" value="@typedSearchText"/>
                             <button id=searchButton onclick="SearchBoard()">
                                 <i class="fas fa-search fa-fw"></i>
                             </button>
@@ -219,27 +235,27 @@
                             @if (Model.Pager.CurrentPage > 1)
                             {
                                 <li class="page-item">
-                                    <a class="page-link" asp-controller="Forum" asp-action="FreeForum" asp-route-page="1">&lt;&lt;</a>
+                                    <a class="page-link" asp-controller="Forum" asp-action="FreeForum" asp-route-page="1" asp-route-searchType="@selectedSearchType" asp-route-searchText="@typedSearchText">&lt;&lt;</a>
                                 </li>
                                 <li class="page-item">
-                                    <a class="page-link" asp-controller="Forum" asp-action="FreeForum" asp-route-page="@(Model.Pager.CurrentPage-1)">&lt;</a>
+                                    <a class="page-link" asp-controller="Forum" asp-action="FreeForum" asp-route-page="@(Model.Pager.CurrentPage-1)" asp-route-searchType="@selectedSearchType" asp-route-searchText="@typedSearchText">&lt;</a>
                                 </li>
                             }
 
                             @for (var pageNumber = Model.Pager.StartPage; pageNumber <= Model.Pager.EndPage; pageNumber++)
                             {
                                 <li class="page-item @(pageNumber == Model.Pager.CurrentPage ? "active" : "")">
-                                    <a class="page-link" asp-controller="Forum" asp-action="FreeForum" asp-route-page="@pageNumber">@pageNumber</a>
+                                    <a class="page-link" asp-controller="Forum" asp-action="FreeForum" asp-route-page="@pageNumber" asp-route-searchType="@selectedSearchType" asp-route-searchText="@typedSearchText">@pageNumber</a>
                                 </li>
                             }
 
                             @if (Model.Pager.CurrentPage < Model.Pager.TotalPages)
                             {
                                 <li class="page-item">
-                                    <a class="page-link" asp-controller="Forum" asp-action="FreeForum" asp-route-page="@(Model.Pager.CurrentPage + 1)">&gt;</a>
+                                    <a class="page-link" asp-controller="Forum" asp-action="FreeForum" asp-route-page="@(Model.Pager.CurrentPage + 1)" asp-route-searchType="@selectedSearchType" asp-route-searchText="@typedSearchText">&gt;</a>
                                 </li>
                                 <li class="page-item">
-                                    <a class="page-link" asp-controller="Forum" asp-action="FreeForum" asp-route-page="@(Model.Pager.TotalPages)">&gt;&gt;</a>
+                                    <a class="page-link" asp-controller="Forum" asp-action="FreeForum" asp-route-page="@(Model.Pager.TotalPages)" asp-route-searchType="@selectedSearchType" asp-route-searchText="@typedSearchText">&gt;&gt;</a>
                                 </li>
                             }
                         </ul>

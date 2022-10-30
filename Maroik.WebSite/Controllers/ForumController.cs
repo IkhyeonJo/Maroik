@@ -378,6 +378,8 @@ namespace Maroik.WebSite.Controllers
                 freeForumOutputViewModel.Boards = freeBoards.Skip((page - 1) * pageSize).Take(freeForumOutputViewModel.Pager.PageSize).ToList();
                 #endregion
 
+                ViewBag.SelectedSearchType = searchType;
+                ViewBag.TypedSearchText = searchText;
                 return View(freeForumOutputViewModel);
             }
         }
