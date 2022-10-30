@@ -222,7 +222,7 @@ namespace Maroik.WebSite.Controllers
         #region Read
 
         #region Edit, List, Detail, Write
-        public async Task<IActionResult> FreeForum(string method = "list", int? boardId = null, int page = 1)
+        public async Task<IActionResult> FreeForum(string method = "list", int? boardId = null, int page = 1, string searchType = "", string searchText = "")
         {
             if (method == "write") // 글쓰기 (write)
             {
@@ -351,6 +351,17 @@ namespace Maroik.WebSite.Controllers
                 #region 관련된 모든 게시판 데이터 가져오는 로직
                 var freeBoards = await boardRepository.GetOneTypeBoards("Free");
                 freeBoards = freeBoards.Where(m => m.Deleted == false).OrderByDescending(a => a.Id);
+                #endregion
+
+                #region 검색어 로직
+                if (searchType == "Title" && !string.IsNullOrEmpty(searchText))
+                {
+                    freeBoards = freeBoards.Where(a => a.Title.Contains(searchText));
+                }
+                else if (searchType == "Writer" && !string.IsNullOrEmpty(searchText))
+                {
+                    freeBoards = freeBoards.Where(a => a.Writer.Contains(searchText));
+                }
                 #endregion
 
                 var freeForumOutputViewModel = new FreeForumOutputViewModel();

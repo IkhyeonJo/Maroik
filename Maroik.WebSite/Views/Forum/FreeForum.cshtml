@@ -165,7 +165,14 @@
                             <button type="button" class="btn btn-success btn-block btn-sm" onclick="location.href='/Forum/FreeForum?method=write'" style="width: 100px !important;"><i class="fas fa-edit" style="padding-right:3px;"></i> 글쓰기</button>
                         </li>
                         <li class="nav-item ml-auto">
-                            <input type="text" id="gridSearch" placeholder="검색..." style="margin-bottom: 7px; text-align: center; font-size: .7em; padding: 5px 0; color: #000; border: none; " />
+                            <select id="searchType" name="searchType" style="max-width:90%; font-size:19px; margin: 0px 3px 0px 0px; padding: 0px 0px 4px 0px;">
+                                <option value="Title">제목</option>
+                                <option value="Writer">작성자</option>
+                            </select>
+                            <input type="text" id="searchText" />
+                            <button id=searchButton onclick="SearchBoard()">
+                                <i class="fas fa-search fa-fw"></i>
+                            </button>
                         </li>
                     </ul>
                 </nav>
@@ -264,6 +271,19 @@
 
 @section Scripts {
     <script>
+        var input = document.getElementById("searchText");
+        input.addEventListener("keypress", function (event) {
+            if (event.key === "Enter") {
+                event.preventDefault();
+                document.getElementById("searchButton").click();
+            }
+        });
+
+        function SearchBoard() {
+            window.location.href = "/Forum/FreeForum?searchType=" + $('#searchType').val() + "&searchText=" + $('#searchText').val();
+        }
+
+
         function ShowWriteBoardLoading() {
             if (!$('#formWriteBoard').valid()) {
                 $('#loading').hide();
