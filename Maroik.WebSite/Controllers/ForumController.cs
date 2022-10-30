@@ -257,7 +257,7 @@ namespace Maroik.WebSite.Controllers
                 freeForumOutputViewModel.DetailBoardId = boardId ?? default;
 
                 var freeBoards = await boardRepository.GetOneTypeBoards("Free");
-                freeBoards = freeBoards.Where(m => m.Deleted == false);
+                freeBoards = freeBoards.Where(m => m.Deleted == false).OrderByDescending(a => a.Id);
                 var attachedFiles = await attachedFileRepository.GetAllAsync();
 
                 try
@@ -301,7 +301,7 @@ namespace Maroik.WebSite.Controllers
                 freeForumOutputViewModel.EditBoardId = boardId ?? default;
 
                 var freeBoards = await boardRepository.GetOneTypeBoards("Free");
-                freeBoards = freeBoards.Where(m => m.Deleted == false);
+                freeBoards = freeBoards.Where(m => m.Deleted == false).OrderByDescending(a => a.Id);
                 var attachedFiles = await attachedFileRepository.GetAllAsync();
 
                 try
@@ -350,7 +350,7 @@ namespace Maroik.WebSite.Controllers
 
                 #region 관련된 모든 게시판 데이터 가져오는 로직
                 var freeBoards = await boardRepository.GetOneTypeBoards("Free");
-                freeBoards = freeBoards.Where(m => m.Deleted == false);
+                freeBoards = freeBoards.Where(m => m.Deleted == false).OrderByDescending(a => a.Id);
                 #endregion
 
                 var freeForumOutputViewModel = new FreeForumOutputViewModel();
@@ -382,7 +382,7 @@ namespace Maroik.WebSite.Controllers
             try
             {
                 var freeBoards = await boardRepository.GetOneTypeBoards("Free");
-                freeBoards = freeBoards.Where(m => m.Deleted == false);
+                freeBoards = freeBoards.Where(m => m.Deleted == false).OrderByDescending(a => a.Id);
 
                 if (freeBoards == null)
                 {
@@ -465,7 +465,7 @@ namespace Maroik.WebSite.Controllers
                             var loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)); // Get Session
                             
                             var freeBoards = await boardRepository.GetOneTypeBoards("Free");
-                            freeBoards = freeBoards.Where(m => m.Deleted == false);
+                            freeBoards = freeBoards.Where(m => m.Deleted == false).OrderByDescending(a => a.Id);
 
                             var tempFreeBoard = freeBoards.Where(a => a.Id == boardInputViewModel.Id).FirstOrDefault();
 
@@ -630,7 +630,7 @@ namespace Maroik.WebSite.Controllers
             try
             {
                 var freeBoards = await boardRepository.GetOneTypeBoards("Free");
-                freeBoards = freeBoards.Where(m => m.Deleted == false);
+                freeBoards = freeBoards.Where(m => m.Deleted == false).OrderByDescending(a => a.Id);
 
                 if (freeBoards == null)
                 {
