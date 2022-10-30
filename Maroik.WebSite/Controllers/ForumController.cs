@@ -388,7 +388,7 @@ namespace Maroik.WebSite.Controllers
                         HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
                         var loginedAccount = await accountRepository.GetAccountAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
 
-                        if ((loginedAccount.Nickname == boardInputViewModel.Writer) || loginedAccount.Role == Role.Admin) // 방문한 사람이 작성자 또는 관리자인 경우
+                        if ((loginedAccount.Nickname == tempFreeBoard.Writer) || loginedAccount.Role == Role.Admin) // 방문한 사람이 작성자 또는 관리자인 경우
                         {
                             #region 게시물 삭제
                             tempFreeBoard.Deleted = true;

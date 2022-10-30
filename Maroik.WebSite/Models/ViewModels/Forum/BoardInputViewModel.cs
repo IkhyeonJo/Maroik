@@ -14,8 +14,6 @@ namespace Maroik.WebSite.Models.ViewModels.Forum
 
         public string Content { get; set; }
 
-        public string Writer { get; set; }
-
         public IFormFile UploadedFile { get; set; }
     }
 }
