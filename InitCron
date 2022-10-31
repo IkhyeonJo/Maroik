@@ -1,3 +1,4 @@
 0 * * * * /bin/bash /home/ec2-user/Maroik/DBBackup.sh
+0 * * * * /bin/bash /home/ec2-user/Maroik/UploadFileBackUp.sh
 @reboot /home/ec2-user/Maroik/RebootDockerCompose.sh
 @reboot /home/ec2-user/Maroik/AutoMountExternalStorages.sh
