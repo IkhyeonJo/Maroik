@@ -13,7 +13,7 @@ Docker, AdminLTE, MariaDB, Session Login, RESTful API, HTTPS etc.
 
 # IMPORTANT!! MUST Set this value [Maroik.WebSite -> appsettings.json -> DomainName (According to Server Domain)] & Mail Account & READ docker-compose file's comment!!
 
-# and if you wanna backup your .sql frequently, please set [DBBackup.sh] file's email address & password
+# and if you wanna backup your .sql & Upload file frequently, please set [DBBackup.sh] [UploadFileBackup.sh] file's email address & password
 
 # How to run this project
 
