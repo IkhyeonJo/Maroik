@@ -69,11 +69,7 @@ namespace Maroik.WebSite.Controllers
 
                     if (boardInputViewModel.UploadedFile != null) // 파일 첨부가 되었다면
                     {
-                        if (!(boardInputViewModel.UploadedFile.ContentType.ToUpper() == "application/x-zip-compressed".ToUpper()) ||
-                        !(boardInputViewModel.UploadedFile.ContentType.ToUpper() == "application/zip".ToUpper()) ||
-                        !(boardInputViewModel.UploadedFile.ContentType.ToUpper() == "application/octet-stream".ToUpper()) ||
-                        !(boardInputViewModel.UploadedFile.ContentType.ToUpper() == "multipart/x-zip".ToUpper())
-                            ) // zip 확장자만 가능
+                        if (!(Path.GetExtension(boardInputViewModel.UploadedFile.FileName) == ".zip")) // zip 확장자만 가능
                         {
                             return Json(new { result = false, error = "Only zip extension allowed." });
                         }
@@ -109,43 +105,31 @@ namespace Maroik.WebSite.Controllers
                             {
                                 if (boardInputViewModel.UploadedFile.Length > 0 && boardInputViewModel.UploadedFile.Length <= 10485760) // boardInputViewModel.UploadedFile Length : 파일 크기 0MB 이상, 10MB 이하
                                 {
-                                    if (boardInputViewModel.UploadedFile.ContentType.ToUpper() == "application/x-zip-compressed".ToUpper() ||
-                                        boardInputViewModel.UploadedFile.ContentType.ToUpper() == "application/zip".ToUpper() ||
-                                        boardInputViewModel.UploadedFile.ContentType.ToUpper() == "application/octet-stream".ToUpper() ||
-                                        boardInputViewModel.UploadedFile.ContentType.ToUpper() == "multipart/x-zip".ToUpper()
-                                        )
-                                    {
-                                        var createdBoardId = board.Id; // 첨부파일 FK 해서 로직 추가할 것
+                                    var createdBoardId = board.Id; // 첨부파일 FK 해서 로직 추가할 것
 
-                                        string attachedFilePath = Path.Combine(hostEnvironment.ContentRootPath, "wwwroot", "upload", "Forum", "attachedFiles", $"{createdBoardId}");
-                                        if (!Directory.Exists(attachedFilePath))
-                                            Directory.CreateDirectory(attachedFilePath);
-                                        string guid = Guid.NewGuid().ToString().ToUpper();
-                                        string attachedFile = $"{Path.GetFileNameWithoutExtension(boardInputViewModel.UploadedFile.FileName)}-{guid}{Path.GetExtension(boardInputViewModel.UploadedFile.FileName)}";
-                                        string filePath = Path.Combine(attachedFilePath, attachedFile);
+                                    string attachedFilePath = Path.Combine(hostEnvironment.ContentRootPath, "wwwroot", "upload", "Forum", "attachedFiles", $"{createdBoardId}");
+                                    if (!Directory.Exists(attachedFilePath))
+                                        Directory.CreateDirectory(attachedFilePath);
+                                    string guid = Guid.NewGuid().ToString().ToUpper();
+                                    string attachedFile = $"{Path.GetFileNameWithoutExtension(boardInputViewModel.UploadedFile.FileName)}-{guid}{Path.GetExtension(boardInputViewModel.UploadedFile.FileName)}";
+                                    string filePath = Path.Combine(attachedFilePath, attachedFile);
 
 #pragma warning disable SCS0018 // Potential Path Traversal vulnerability was found where '{0}' in '{1}' may be tainted by user-controlled data from '{2}' in method '{3}'.
-                                        using (FileStream stream = new FileStream(filePath, FileMode.Create))
+                                    using (FileStream stream = new FileStream(filePath, FileMode.Create))
 #pragma warning restore SCS0018 // Potential Path Traversal vulnerability was found where '{0}' in '{1}' may be tainted by user-controlled data from '{2}' in method '{3}'.
-                                        {
-                                            await boardInputViewModel.UploadedFile.CopyToAsync(stream);
-                                            await stream.FlushAsync();
-                                        }
-
-                                        await attachedFileRepository.SaveAttachedFileAsync(new AttachedFile()
-                                        {
-                                            BoardId = createdBoardId,
-                                            Size = Convert.ToInt32(boardInputViewModel.UploadedFile.Length),
-                                            Name = Path.GetFileNameWithoutExtension(boardInputViewModel.UploadedFile.FileName),
-                                            Extension = Path.GetExtension(boardInputViewModel.UploadedFile.FileName),
-                                            Path = $"/upload/Forum/attachedFiles/{createdBoardId}/{Path.GetFileNameWithoutExtension(boardInputViewModel.UploadedFile.FileName)}-{guid}{Path.GetExtension(boardInputViewModel.UploadedFile.FileName)}"
-                                        });
-
-                                    }
-                                    else // 이미지 png 또는 jpg 외 확장자는 거절
                                     {
-                                        return Ok(new { result = false, errorMessage = "Only .zip file allowed" });
+                                        await boardInputViewModel.UploadedFile.CopyToAsync(stream);
+                                        await stream.FlushAsync();
                                     }
+
+                                    await attachedFileRepository.SaveAttachedFileAsync(new AttachedFile()
+                                    {
+                                        BoardId = createdBoardId,
+                                        Size = Convert.ToInt32(boardInputViewModel.UploadedFile.Length),
+                                        Name = Path.GetFileNameWithoutExtension(boardInputViewModel.UploadedFile.FileName),
+                                        Extension = Path.GetExtension(boardInputViewModel.UploadedFile.FileName),
+                                        Path = $"/upload/Forum/attachedFiles/{createdBoardId}/{Path.GetFileNameWithoutExtension(boardInputViewModel.UploadedFile.FileName)}-{guid}{Path.GetExtension(boardInputViewModel.UploadedFile.FileName)}"
+                                    });
                                 }
                                 else
                                 {
@@ -194,7 +178,7 @@ namespace Maroik.WebSite.Controllers
             {
                 if (summernoteImageFile.Length > 0 && summernoteImageFile.Length <= 10485760) // imageFile Length : 파일 크기 0MB 이상, 10MB 이하
                 {
-                    if (summernoteImageFile.ContentType.ToUpper() == "image/png".ToUpper() || summernoteImageFile.ContentType.ToUpper() == "image/jpeg".ToUpper())
+                    if ((Path.GetExtension(summernoteImageFile.FileName) == ".png") || (Path.GetExtension(summernoteImageFile.FileName) == ".jpg") || (Path.GetExtension(summernoteImageFile.FileName) == ".jpeg"))
                     {
 
                         string summernoteImagePath = Path.Combine(hostEnvironment.ContentRootPath, "wwwroot", "upload", "Forum", "summernote", "images");
@@ -212,9 +196,9 @@ namespace Maroik.WebSite.Controllers
                         }
                         return Ok(new { result = true, filePath = $"/upload/Forum/summernote/images/{imageFile}" });
                     }
-                    else // 이미지 png 또는 jpg 외 확장자는 거절
+                    else // 이미지 png 또는 jpg 또는 jpeg 외 확장자는 거절
                     {
-                        return Ok(new { result = false, errorMessage = "Only .jpg or .png file allowed" });
+                        return Ok(new { result = false, errorMessage = "Only .jpg or jpeg or .png file allowed" });
                     }
                 }
                 else
@@ -466,11 +450,7 @@ namespace Maroik.WebSite.Controllers
 
                     if (boardInputViewModel.UploadedFile != null) // 파일 첨부가 되었다면
                     {
-                        if (!(boardInputViewModel.UploadedFile.ContentType.ToUpper() == "application/x-zip-compressed".ToUpper()) ||
-                        !(boardInputViewModel.UploadedFile.ContentType.ToUpper() == "application/zip".ToUpper()) ||
-                        !(boardInputViewModel.UploadedFile.ContentType.ToUpper() == "application/octet-stream".ToUpper()) ||
-                        !(boardInputViewModel.UploadedFile.ContentType.ToUpper() == "multipart/x-zip".ToUpper())
-                            ) // zip 확장자만 가능
+                        if (!(Path.GetExtension(boardInputViewModel.UploadedFile.FileName) == ".zip")) // zip 확장자만 가능
                         {
                             return Json(new { result = false, error = "Only zip extension allowed." });
                         }
@@ -515,42 +495,31 @@ namespace Maroik.WebSite.Controllers
                             {
                                 if (boardInputViewModel.UploadedFile.Length > 0 && boardInputViewModel.UploadedFile.Length <= 10485760) // boardInputViewModel.UploadedFile Length : 파일 크기 0MB 이상, 10MB 이하
                                 {
-                                    if (boardInputViewModel.UploadedFile.ContentType.ToUpper() == "application/x-zip-compressed".ToUpper() ||
-                                        boardInputViewModel.UploadedFile.ContentType.ToUpper() == "application/zip".ToUpper() ||
-                                        boardInputViewModel.UploadedFile.ContentType.ToUpper() == "application/octet-stream".ToUpper() ||
-                                        boardInputViewModel.UploadedFile.ContentType.ToUpper() == "multipart/x-zip".ToUpper()
-                                        )
-                                    {
-                                        var createdBoardId = boardInputViewModel.Id; // 첨부파일 FK 해서 로직 추가할 것
+                                    var createdBoardId = boardInputViewModel.Id; // 첨부파일 FK 해서 로직 추가할 것
 
-                                        string attachedFilePath = Path.Combine(hostEnvironment.ContentRootPath, "wwwroot", "upload", "Forum", "attachedFiles", $"{createdBoardId}");
-                                        if (!Directory.Exists(attachedFilePath))
-                                            Directory.CreateDirectory(attachedFilePath);
-                                        string guid = Guid.NewGuid().ToString().ToUpper();
-                                        string attachedFile = $"{Path.GetFileNameWithoutExtension(boardInputViewModel.UploadedFile.FileName)}-{guid}{Path.GetExtension(boardInputViewModel.UploadedFile.FileName)}";
-                                        string filePath = Path.Combine(attachedFilePath, attachedFile);
+                                    string attachedFilePath = Path.Combine(hostEnvironment.ContentRootPath, "wwwroot", "upload", "Forum", "attachedFiles", $"{createdBoardId}");
+                                    if (!Directory.Exists(attachedFilePath))
+                                        Directory.CreateDirectory(attachedFilePath);
+                                    string guid = Guid.NewGuid().ToString().ToUpper();
+                                    string attachedFile = $"{Path.GetFileNameWithoutExtension(boardInputViewModel.UploadedFile.FileName)}-{guid}{Path.GetExtension(boardInputViewModel.UploadedFile.FileName)}";
+                                    string filePath = Path.Combine(attachedFilePath, attachedFile);
 
 #pragma warning disable SCS0018 // Potential Path Traversal vulnerability was found where '{0}' in '{1}' may be tainted by user-controlled data from '{2}' in method '{3}'.
-                                        using (FileStream stream = new FileStream(filePath, FileMode.Create))
+                                    using (FileStream stream = new FileStream(filePath, FileMode.Create))
 #pragma warning restore SCS0018 // Potential Path Traversal vulnerability was found where '{0}' in '{1}' may be tainted by user-controlled data from '{2}' in method '{3}'.
-                                        {
-                                            await boardInputViewModel.UploadedFile.CopyToAsync(stream);
-                                            await stream.FlushAsync();
-                                        }
-
-                                        previousAttachedFile.Size = Convert.ToInt32(boardInputViewModel.UploadedFile.Length);
-                                        previousAttachedFile.Name = Path.GetFileNameWithoutExtension(boardInputViewModel.UploadedFile.FileName);
-                                        previousAttachedFile.Extension = Path.GetExtension(boardInputViewModel.UploadedFile.FileName);
-                                        previousAttachedFile.Path = $"/upload/Forum/attachedFiles/{createdBoardId}/{Path.GetFileNameWithoutExtension(boardInputViewModel.UploadedFile.FileName)}-{guid}{Path.GetExtension(boardInputViewModel.UploadedFile.FileName)}";
-
-                                        await attachedFileRepository.UpdateAttachedFileAsync(previousAttachedFile);
-
-                                        return Json(new { result = true, message = "The board has been successfully updated." });
-                                    }
-                                    else // 이미지 png 또는 jpg 외 확장자는 거절
                                     {
-                                        return Ok(new { result = false, errorMessage = "Only .zip file allowed" });
+                                        await boardInputViewModel.UploadedFile.CopyToAsync(stream);
+                                        await stream.FlushAsync();
                                     }
+
+                                    previousAttachedFile.Size = Convert.ToInt32(boardInputViewModel.UploadedFile.Length);
+                                    previousAttachedFile.Name = Path.GetFileNameWithoutExtension(boardInputViewModel.UploadedFile.FileName);
+                                    previousAttachedFile.Extension = Path.GetExtension(boardInputViewModel.UploadedFile.FileName);
+                                    previousAttachedFile.Path = $"/upload/Forum/attachedFiles/{createdBoardId}/{Path.GetFileNameWithoutExtension(boardInputViewModel.UploadedFile.FileName)}-{guid}{Path.GetExtension(boardInputViewModel.UploadedFile.FileName)}";
+
+                                    await attachedFileRepository.UpdateAttachedFileAsync(previousAttachedFile);
+
+                                    return Json(new { result = true, message = "The board has been successfully updated." });
                                 }
                                 else
                                 {
@@ -571,44 +540,33 @@ namespace Maroik.WebSite.Controllers
                             {
                                 if (boardInputViewModel.UploadedFile.Length > 0 && boardInputViewModel.UploadedFile.Length <= 10485760) // boardInputViewModel.UploadedFile Length : 파일 크기 0MB 이상, 10MB 이하
                                 {
-                                    if (boardInputViewModel.UploadedFile.ContentType.ToUpper() == "application/x-zip-compressed".ToUpper() ||
-                                        boardInputViewModel.UploadedFile.ContentType.ToUpper() == "application/zip".ToUpper() ||
-                                        boardInputViewModel.UploadedFile.ContentType.ToUpper() == "application/octet-stream".ToUpper() ||
-                                        boardInputViewModel.UploadedFile.ContentType.ToUpper() == "multipart/x-zip".ToUpper()
-                                        )
-                                    {
-                                        var createdBoardId = boardInputViewModel.Id; // 첨부파일 FK 해서 로직 추가할 것
+                                    var createdBoardId = boardInputViewModel.Id; // 첨부파일 FK 해서 로직 추가할 것
 
-                                        string attachedFilePath = Path.Combine(hostEnvironment.ContentRootPath, "wwwroot", "upload", "Forum", "attachedFiles", $"{createdBoardId}");
-                                        if (!Directory.Exists(attachedFilePath))
-                                            Directory.CreateDirectory(attachedFilePath);
-                                        string guid = Guid.NewGuid().ToString().ToUpper();
-                                        string attachedFile = $"{Path.GetFileNameWithoutExtension(boardInputViewModel.UploadedFile.FileName)}-{guid}{Path.GetExtension(boardInputViewModel.UploadedFile.FileName)}";
-                                        string filePath = Path.Combine(attachedFilePath, attachedFile);
+                                    string attachedFilePath = Path.Combine(hostEnvironment.ContentRootPath, "wwwroot", "upload", "Forum", "attachedFiles", $"{createdBoardId}");
+                                    if (!Directory.Exists(attachedFilePath))
+                                        Directory.CreateDirectory(attachedFilePath);
+                                    string guid = Guid.NewGuid().ToString().ToUpper();
+                                    string attachedFile = $"{Path.GetFileNameWithoutExtension(boardInputViewModel.UploadedFile.FileName)}-{guid}{Path.GetExtension(boardInputViewModel.UploadedFile.FileName)}";
+                                    string filePath = Path.Combine(attachedFilePath, attachedFile);
 
 #pragma warning disable SCS0018 // Potential Path Traversal vulnerability was found where '{0}' in '{1}' may be tainted by user-controlled data from '{2}' in method '{3}'.
-                                        using (FileStream stream = new FileStream(filePath, FileMode.Create))
+                                    using (FileStream stream = new FileStream(filePath, FileMode.Create))
 #pragma warning restore SCS0018 // Potential Path Traversal vulnerability was found where '{0}' in '{1}' may be tainted by user-controlled data from '{2}' in method '{3}'.
-                                        {
-                                            await boardInputViewModel.UploadedFile.CopyToAsync(stream);
-                                            await stream.FlushAsync();
-                                        }
-
-                                        await attachedFileRepository.SaveAttachedFileAsync(new AttachedFile()
-                                        {
-                                            BoardId = createdBoardId,
-                                            Size = Convert.ToInt32(boardInputViewModel.UploadedFile.Length),
-                                            Name = Path.GetFileNameWithoutExtension(boardInputViewModel.UploadedFile.FileName),
-                                            Extension = Path.GetExtension(boardInputViewModel.UploadedFile.FileName),
-                                            Path = $"/upload/Forum/attachedFiles/{createdBoardId}/{Path.GetFileNameWithoutExtension(boardInputViewModel.UploadedFile.FileName)}-{guid}{Path.GetExtension(boardInputViewModel.UploadedFile.FileName)}"
-                                        });
-
-                                        return Json(new { result = true, message = "The board has been successfully updated." });
-                                    }
-                                    else // 이미지 png 또는 jpg 외 확장자는 거절
                                     {
-                                        return Ok(new { result = false, errorMessage = "Only .zip file allowed" });
+                                        await boardInputViewModel.UploadedFile.CopyToAsync(stream);
+                                        await stream.FlushAsync();
                                     }
+
+                                    await attachedFileRepository.SaveAttachedFileAsync(new AttachedFile()
+                                    {
+                                        BoardId = createdBoardId,
+                                        Size = Convert.ToInt32(boardInputViewModel.UploadedFile.Length),
+                                        Name = Path.GetFileNameWithoutExtension(boardInputViewModel.UploadedFile.FileName),
+                                        Extension = Path.GetExtension(boardInputViewModel.UploadedFile.FileName),
+                                        Path = $"/upload/Forum/attachedFiles/{createdBoardId}/{Path.GetFileNameWithoutExtension(boardInputViewModel.UploadedFile.FileName)}-{guid}{Path.GetExtension(boardInputViewModel.UploadedFile.FileName)}"
+                                    });
+
+                                    return Json(new { result = true, message = "The board has been successfully updated." });
                                 }
                                 else
                                 {
