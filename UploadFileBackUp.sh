@@ -20,7 +20,7 @@ for garbage_tar_xz_file in garbage_tar_xz_files:
 current_date = str(datetime.today().strftime("%Y%m%d"))
 backup_upload_file_name = f'upload-{current_date}'
 os.system(f'sudo docker cp Maroik.WebSite:/app/wwwroot/upload /home/ec2-user/Maroik/{backup_upload_file_name}')
-os.system(f'sudo tar cfJ {backup_upload_file_name}.tar.xz {backup_upload_file_name}')
+os.system(f'sudo tar cfJ /home/ec2-user/Maroik/{backup_upload_file_name}.tar.xz /home/ec2-user/Maroik/{backup_upload_file_name}')
 os.system(f'sudo rm -rf /home/ec2-user/Maroik/{backup_upload_file_name}')
 
 msg = MIMEMultipart()
