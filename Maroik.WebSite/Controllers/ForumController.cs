@@ -69,7 +69,11 @@ namespace Maroik.WebSite.Controllers
 
                     if (boardInputViewModel.UploadedFile != null) // 파일 첨부가 되었다면
                     {
-                        if (!(boardInputViewModel.UploadedFile.ContentType.ToUpper() == "application/x-zip-compressed".ToUpper())) // zip 확장자만 가능
+                        if (!(boardInputViewModel.UploadedFile.ContentType.ToUpper() == "application/x-zip-compressed".ToUpper()) ||
+                        !(boardInputViewModel.UploadedFile.ContentType.ToUpper() == "application/zip".ToUpper()) ||
+                        !(boardInputViewModel.UploadedFile.ContentType.ToUpper() == "application/octet-stream".ToUpper()) ||
+                        !(boardInputViewModel.UploadedFile.ContentType.ToUpper() == "multipart/x-zip".ToUpper())
+                            ) // zip 확장자만 가능
                         {
                             return Json(new { result = false, error = "Only zip extension allowed." });
                         }
@@ -311,7 +315,7 @@ namespace Maroik.WebSite.Controllers
                 try
                 {
                     var freeBoard = freeBoards.FirstOrDefault(m => m.Id == boardId);
-                    
+
                     HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
                     var loginedAccount = await accountRepository.GetAccountAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
 
@@ -462,7 +466,11 @@ namespace Maroik.WebSite.Controllers
 
                     if (boardInputViewModel.UploadedFile != null) // 파일 첨부가 되었다면
                     {
-                        if (!(boardInputViewModel.UploadedFile.ContentType.ToUpper() == "application/x-zip-compressed".ToUpper())) // zip 확장자만 가능
+                        if (!(boardInputViewModel.UploadedFile.ContentType.ToUpper() == "application/x-zip-compressed".ToUpper()) ||
+                        !(boardInputViewModel.UploadedFile.ContentType.ToUpper() == "application/zip".ToUpper()) ||
+                        !(boardInputViewModel.UploadedFile.ContentType.ToUpper() == "application/octet-stream".ToUpper()) ||
+                        !(boardInputViewModel.UploadedFile.ContentType.ToUpper() == "multipart/x-zip".ToUpper())
+                            ) // zip 확장자만 가능
                         {
                             return Json(new { result = false, error = "Only zip extension allowed." });
                         }
@@ -480,7 +488,7 @@ namespace Maroik.WebSite.Controllers
                         if (isAccountSessionExist)
                         {
                             var loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)); // Get Session
-                            
+
                             var freeBoards = await boardRepository.GetOneTypeBoards("Free");
                             freeBoards = freeBoards.Where(m => m.Deleted == false).OrderByDescending(a => a.Id);
 
@@ -507,7 +515,11 @@ namespace Maroik.WebSite.Controllers
                             {
                                 if (boardInputViewModel.UploadedFile.Length > 0 && boardInputViewModel.UploadedFile.Length <= 10485760) // boardInputViewModel.UploadedFile Length : 파일 크기 0MB 이상, 10MB 이하
                                 {
-                                    if (boardInputViewModel.UploadedFile.ContentType.ToUpper() == "application/x-zip-compressed".ToUpper())
+                                    if (boardInputViewModel.UploadedFile.ContentType.ToUpper() == "application/x-zip-compressed".ToUpper() ||
+                                        boardInputViewModel.UploadedFile.ContentType.ToUpper() == "application/zip".ToUpper() ||
+                                        boardInputViewModel.UploadedFile.ContentType.ToUpper() == "application/octet-stream".ToUpper() ||
+                                        boardInputViewModel.UploadedFile.ContentType.ToUpper() == "multipart/x-zip".ToUpper()
+                                        )
                                     {
                                         var createdBoardId = boardInputViewModel.Id; // 첨부파일 FK 해서 로직 추가할 것
 
@@ -559,7 +571,11 @@ namespace Maroik.WebSite.Controllers
                             {
                                 if (boardInputViewModel.UploadedFile.Length > 0 && boardInputViewModel.UploadedFile.Length <= 10485760) // boardInputViewModel.UploadedFile Length : 파일 크기 0MB 이상, 10MB 이하
                                 {
-                                    if (boardInputViewModel.UploadedFile.ContentType.ToUpper() == "application/x-zip-compressed".ToUpper())
+                                    if (boardInputViewModel.UploadedFile.ContentType.ToUpper() == "application/x-zip-compressed".ToUpper() ||
+                                        boardInputViewModel.UploadedFile.ContentType.ToUpper() == "application/zip".ToUpper() ||
+                                        boardInputViewModel.UploadedFile.ContentType.ToUpper() == "application/octet-stream".ToUpper() ||
+                                        boardInputViewModel.UploadedFile.ContentType.ToUpper() == "multipart/x-zip".ToUpper()
+                                        )
                                     {
                                         var createdBoardId = boardInputViewModel.Id; // 첨부파일 FK 해서 로직 추가할 것
 
