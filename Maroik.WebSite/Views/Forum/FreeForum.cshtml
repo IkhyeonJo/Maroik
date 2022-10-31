@@ -45,7 +45,7 @@
                     </div>
 
                     <div class="form-group">
-                        <input type="file" id="writeUploadedFile" name="writeUploadedFile" accept=".zip">
+                        <input type="file" id="writeUploadedFile" name="writeUploadedFile" accept=".zip" onchange="WriteUploadFile(this, 'File size must be smaller than 10MB');">
                         <p class="help-block">Only zip extension allowed.</p>
                     </div>
 
@@ -148,7 +148,7 @@
                     </div>
 
                     <div class="form-group">
-                        <input type="file" id="editUploadedFile" name="editUploadedFile" accept=".zip">
+                        <input type="file" id="editUploadedFile" name="editUploadedFile" accept=".zip" onchange="EditUploadFile(this, 'File size must be smaller than 10MB');">
                         <p class="help-block">Only zip extension allowed.</p>
                     </div>
 
@@ -309,28 +309,6 @@
             }
         });
 
-        $("#writeUploadedFile").on("change", function (event) {
-            if (event.target.files[0].size > 10485760) {
-                alert('File size must be smaller than 10MB');
-                document.getElementById("writeUploadedFile").value = "";
-                return false;
-            }
-            else {
-                writeUploadedFile = event.target.files[0];
-            }
-        });
-
-        $("#editUploadedFile").on("change", function (event) {
-            if (event.target.files[0].size > 10485760) {
-                alert('File size must be smaller than 10MB');
-                document.getElementById("editUploadedFile").value = "";
-                return false;
-            }
-            else {
-                editUploadedFile = event.target.files[0];
-            }
-        });
-
         var writeUploadedFile;
 
         var editUploadedFile;
@@ -342,6 +320,28 @@
                 document.getElementById("searchButton").click();
             }
         });
+
+        function WriteUploadFile(obj, errorMessage) {
+            if (obj.files[0].size > 10485760) {
+                alert(errorMessage);
+                document.getElementById("writeUploadedFile").value = "";
+                return false;
+            }
+            else {
+                writeUploadedFile = obj.files[0];
+            }
+        }
+
+        function EditUploadFile(obj, errorMessage) {
+            if (obj.files[0].size > 10485760) {
+                alert(errorMessage);
+                document.getElementById("editUploadedFile").value = "";
+                return false;
+            }
+            else {
+                editUploadedFile = obj.files[0];
+            }
+        }
 
         function SearchBoard() {
             window.location.href = "/Forum/FreeForum?searchType=" + $('#searchType').val() + "&searchText=" + $('#searchText').val();
