@@ -5,7 +5,7 @@ I'm currently interested in make asp.net core mvc WebServer!
 
 Docker, AdminLTE, MariaDB, Session Login, RESTful API, HTTPS etc.
 
-# How to deploy to ubuntu Server
+# How to deploy to ubuntu Server [You must read 홈서버 구축.pptx]
 
 ## 1. Move all files to your ubuntu server
 ## 2. Go to Maroik folder
