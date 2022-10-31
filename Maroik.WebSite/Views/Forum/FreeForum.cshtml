@@ -185,8 +185,8 @@
                                     <option value="Writer">작성자</option>
                                 }
                             </select>
-                            <input type="text" id="searchText" value="@typedSearchText" onkeypress="if(window.event.keyCode==13){SearchBoard()}" style="margin-bottom: 7px; text-align: center; font-size: .7em; padding: 5px 0; color: #000; border: none; " />@*Enter key 누르면 검색됨*@
-                            <button>
+                            <input type="text" id="searchText" value="@typedSearchText" onkeypress="if(window.event.keyCode==13){SearchBoard()}" style="max-width:30%; margin-bottom: 7px; text-align: center; font-size: .7em; padding: 5px 0; color: #000; border: none; " />@*Enter key 누르면 검색됨*@
+                            <button style="padding 0px 0px 0px 0px;">
                                 <i class="fas fa-search fa-fw"></i>
                             </button>
                         </li>
@@ -209,9 +209,9 @@
                             <tr>
                                 <td>@board.Id</td>
 
-                                @if (board.Title.Length > 10)
+                                @if (board.Title.Length > 7)
                                 {
-                                    <td>@Html.ActionLink(($"{board.Title.Substring(0, 10)}..."), "FreeForum", new {method = "detail", boardId = board.Id, page = Model.Pager.CurrentPage})</td>
+                                    <td>@Html.ActionLink(($"{board.Title.Substring(0, 7)}..."), "FreeForum", new {method = "detail", boardId = board.Id, page = Model.Pager.CurrentPage})</td>
                                 }
                                 else
                                 {
