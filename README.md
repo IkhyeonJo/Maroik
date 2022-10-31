@@ -5,6 +5,10 @@ I'm currently interested in make asp.net core mvc WebServer!
 
 Docker, AdminLTE, MariaDB, Session Login, RESTful API, HTTPS etc.
 
+#How to deploy
+
+##chmod 755 Deploy.sh && ./Deploy.sh
+
 # IMPORTANT!! MUST Set this value [Maroik.WebSite -> appsettings.json -> DomainName (According to Server Domain)] & Mail Account & READ docker-compose file's comment!!
 
 # and if you wanna backup your .sql frequently, please set [DBBackup.sh] file's email address & password
