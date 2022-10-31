@@ -51,7 +51,7 @@
 
                     <div class="form-group">
                         <div class="float-right">
-                            <button type="submit" class="btn btn-primary" onclick="return ShowWriteBoardLoading()">등록</button>
+                            <button type="submit" class="btn btn-primary">등록</button>
                         </div>
                         <a asp-controller="Forum" asp-action="FreeForum" class="btn btn-default">목록</a>
                     </div>
@@ -154,7 +154,7 @@
 
                     <div class="form-group">
                         <div class="float-right">
-                            <button type="submit" class="btn btn-primary" onclick="return ShowEditBoardLoading()">수정</button>
+                            <button type="submit" class="btn btn-primary">수정</button>
                         </div>
                         <a asp-controller="Forum" asp-action="FreeForum" class="btn btn-default">목록</a>
                     </div>
@@ -266,10 +266,6 @@
     </div>
 </section>
 
-<div class="modal" id="loading">
-    <img src="~/upload/Forum/ajax-loader.gif" />
-</div>
-
 @*<!--ConfirmDeleteDialogModal-->*@
 <div class="modal" tabindex="-1" role="dialog" id="confirmDeleteBoardDialogModal">
     <div class="modal-dialog" role="document">
@@ -337,29 +333,6 @@
 
         function SearchBoard() {
             window.location.href = "/Forum/FreeForum?searchType=" + $('#searchType').val() + "&searchText=" + $('#searchText').val();
-        }
-
-
-        function ShowWriteBoardLoading() {
-            if (!$('#formWriteBoard').valid()) {
-                $('#loading').hide();
-                return false;
-            }
-            else {
-                $('#loading').show();
-                return true;
-            }
-        }
-
-        function ShowEditBoardLoading() {
-            if (!$('#formEditBoard').valid()) {
-                $('#loading').hide();
-                return false;
-            }
-            else {
-                $('#loading').show();
-                return true;
-            }
         }
 
         function WriteUploadImageFile(file) {
