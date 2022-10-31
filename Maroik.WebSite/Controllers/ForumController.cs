@@ -105,7 +105,11 @@ namespace Maroik.WebSite.Controllers
                             {
                                 if (boardInputViewModel.UploadedFile.Length > 0 && boardInputViewModel.UploadedFile.Length <= 10485760) // boardInputViewModel.UploadedFile Length : 파일 크기 0MB 이상, 10MB 이하
                                 {
-                                    if (boardInputViewModel.UploadedFile.ContentType.ToUpper() == "application/x-zip-compressed".ToUpper())
+                                    if (boardInputViewModel.UploadedFile.ContentType.ToUpper() == "application/x-zip-compressed".ToUpper() ||
+                                        boardInputViewModel.UploadedFile.ContentType.ToUpper() == "application/zip".ToUpper() ||
+                                        boardInputViewModel.UploadedFile.ContentType.ToUpper() == "application/octet-stream".ToUpper() ||
+                                        boardInputViewModel.UploadedFile.ContentType.ToUpper() == "multipart/x-zip".ToUpper()
+                                        )
                                     {
                                         var createdBoardId = board.Id; // 첨부파일 FK 해서 로직 추가할 것
 
