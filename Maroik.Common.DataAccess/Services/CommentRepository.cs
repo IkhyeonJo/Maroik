@@ -23,7 +23,7 @@ namespace Maroik.Common.DataAccess.Services
         /// <returns></returns>
         public async Task<IEnumerable<Comment>> GetOneBoardComments(int boardId)
         {
-            return await context.Comments.Where(x => x.BoardId == boardId).ToListAsync();
+            return await context.Comments.Where(x => x.BoardId == boardId).OrderBy(m => m.Order).ToListAsync();
         }
 
         /// <summary>
