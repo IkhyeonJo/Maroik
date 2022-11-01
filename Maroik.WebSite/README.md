@@ -854,5 +854,3 @@ https://tragramming.tistory.com/86 // Linux log 명령어
 이 때  <form> 태그 내 <input text>가 1개인 경우
 
 엔터키를 누르면 submit 된다고 하네요 (input  text 2개 이상이면 X)]
-
-게시물 댓글 기능 구현할 것 && 브라우저 체크 디도스 방지 설정도 하기
