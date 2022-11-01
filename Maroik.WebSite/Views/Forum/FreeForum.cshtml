@@ -98,13 +98,13 @@
                 </div>
                 <div class="card-footer bg-dark">
                     <div class="float-right">
-                        @if ((loginedAccount.Nickname == Model.BoardOutputViewModel.Writer) || loginedAccount.Role == Role.Admin)@*방문한 사람이 작성자 또는 관리자인 경우*@
-                        {
-                            <button type="button" class="btn btn-danger" onclick="ConfirmDeleteBoard()">삭제</button>
-                        }
                         @if (loginedAccount.Nickname == Model.BoardOutputViewModel.Writer)@*방문한 사람이 작성자인 경우*@
                         {
                             <button type="button" class="btn btn-primary" onclick="location.href='@Url.Action("FreeForum", "Forum", new {method = "edit", boardId = Model.DetailBoardId})'">수정</button>
+                        }
+                        @if ((loginedAccount.Nickname == Model.BoardOutputViewModel.Writer) || loginedAccount.Role == Role.Admin)@*방문한 사람이 작성자 또는 관리자인 경우*@
+                        {
+                            <button type="button" class="btn btn-danger" onclick="ConfirmDeleteBoard()">삭제</button>
                         }
                     </div>
                     <button type="button" class="btn btn-default" onclick="location.href='@Url.Action("FreeForum", "Forum", new {page = Model.DetailCurrentPage})'">목록</button>
