@@ -51,6 +51,7 @@ builder.Services.AddScoped<IFixedIncomeRepository, FixedIncomeRepository>();
 builder.Services.AddScoped<IFixedExpenditureRepository, FixedExpenditureRepository>();
 builder.Services.AddScoped<IBoardRepository, BoardRepository>();
 builder.Services.AddScoped<IAttachedFileRepository, AttachedFileRepository>();
+builder.Services.AddScoped<ICommentRepository, CommentRepository>();
 #endregion
 
 #region LOCAL
