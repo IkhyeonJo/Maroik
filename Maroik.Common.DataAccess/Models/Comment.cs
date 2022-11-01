@@ -13,9 +13,17 @@ namespace Maroik.Common.DataAccess.Models
         /// </summary>
         public int Id { get; set; }
         /// <summary>
-        /// 부모 게시판 Id
+        /// 게시물 Id
         /// </summary>
         public int BoardId { get; set; }
+        /// <summary>
+        /// 순서
+        /// </summary>
+        public int Order { get; set; }
+        /// <summary>
+        /// 계정 아바타 이미지 경로
+        /// </summary>
+        public string AvatarImagePath { get; set; }
         /// <summary>
         /// 작성자
         /// </summary>
@@ -36,10 +44,6 @@ namespace Maroik.Common.DataAccess.Models
         /// 삭제 여부
         /// </summary>
         public bool Deleted { get; set; }
-        /// <summary>
-        /// 부모 댓글 번호
-        /// </summary>
-        public int? ParentCommentId { get; set; }
 
         public virtual Board Board { get; set; }
     }

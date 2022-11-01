@@ -304,9 +304,14 @@ namespace Maroik.Common.DataAccess.Data
                     .HasColumnType("int(11)")
                     .HasComment("PK");
 
+                entity.Property(e => e.AvatarImagePath)
+                    .IsRequired()
+                    .HasMaxLength(255)
+                    .HasComment("계정 아바타 이미지 경로");
+
                 entity.Property(e => e.BoardId)
                     .HasColumnType("int(11)")
-                    .HasComment("부모 게시판 Id");
+                    .HasComment("게시물 Id");
 
                 entity.Property(e => e.Content)
                     .IsRequired()
@@ -318,9 +323,9 @@ namespace Maroik.Common.DataAccess.Data
 
                 entity.Property(e => e.Deleted).HasComment("삭제 여부");
 
-                entity.Property(e => e.ParentCommentId)
+                entity.Property(e => e.Order)
                     .HasColumnType("int(11)")
-                    .HasComment("부모 댓글 번호");
+                    .HasComment("순서");
 
                 entity.Property(e => e.Updated)
                     .HasMaxLength(6)
