@@ -131,8 +131,11 @@
                                         {
                                             <span class="text-muted float-middle">수정일: [@TimeZoneInfo.ConvertTimeBySystemTimeZoneId(comment.Updated, OSTimeZone.DestinationTimeZoneId)] </span>
                                         }
-                                        <span class="text-muted float-right" style="margin: 0px 0px 0px 3px"><a class="hover">삭제</a></span>
-                                        <span class="text-muted float-right" style="margin: 0px 0px 0px 3px"><a class="hover">수정</a></span>
+
+                                        @if (loginedAccount.Nickname == comment.Writer || loginedAccount.Role == Role.Admin)@*작성자 또는 관리자인 경우*@
+                                        {
+                                            <span class="text-muted float-right" style="margin: 0px 0px 0px 3px"><a class="hover" href="javascript:DeleteComment('@(comment.Id)', '@(Model.DetailBoardId)', '@(Model.DetailCurrentPage)');">삭제</a></span>
+                                        }
                                     </span>
                                     @comment.Content
                                 </div>
@@ -647,6 +650,26 @@
             });
 
             return false;
+        }
+        function DeleteComment(commentId, boardId, page) {
+            $.ajax({
+                url: '/Forum/DeleteComment' + '?id=' + commentId,
+                type: 'POST',
+                headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
+                dataType: 'json',
+                data: null,
+                contentType: 'application/json; charset=utf-8',
+                //async: false,
+                //cache: false,
+                success: function (data) {
+                    if (data.result) {
+                        window.location.href = "/Forum/FreeForum?method=detail" + "&boardId=" + boardId + "&page=" + page;
+                    }
+                    else {
+                        toastr.error(data.error);
+                    }
+                }
+            });
         }
     </script>
 }

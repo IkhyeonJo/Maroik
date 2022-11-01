@@ -695,6 +695,8 @@ namespace Maroik.WebSite.Controllers
         #endregion
 
         #region Delete
+
+        #region Board
         [HttpPost]
         [ValidateAntiForgeryToken]
         [RequiredHttpPostAccess(Role = Role.Admin)]
@@ -744,6 +746,51 @@ namespace Maroik.WebSite.Controllers
                 return Json(new { result = false, error = e.ToString() });
             }
         }
+        #endregion
+
+        #region Comment
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [RequiredHttpPostAccess(Role = Role.Admin)]
+        [RequiredHttpPostAccess(Role = Role.User)]
+        public async Task<IActionResult> DeleteComment(int id)
+        {
+            try
+            {
+                var comment = await commentRepository.GetComment(id);
+
+                if (comment == null)
+                {
+                    return Json(new { result = false, error = "Input is invalid" });
+                }
+                else
+                {
+                    HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+                    var loginedAccount = await accountRepository.GetAccountAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+
+                    if ((loginedAccount.Nickname == comment.Writer) || loginedAccount.Role == Role.Admin) // 삭제하는 사람이 작성자 또는 관리자인 경우
+                    {
+                        #region 게시물 삭제
+                        comment.Deleted = true;
+                        await commentRepository.DeleteCommentAsync(comment);
+                        #endregion
+
+                        return Json(new { result = true });
+                    }
+                    else
+                    {
+                        return Json(new { result = true, message = "You do not have permission to delete." });
+                    }
+                    
+                }
+            }
+            catch (Exception e)
+            {
+                return Json(new { result = false, error = e.ToString() });
+            }
+        }
+        #endregion
+
         #endregion
 
         #endregion
