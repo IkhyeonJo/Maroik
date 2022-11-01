@@ -167,8 +167,8 @@ app.UseStaticFiles(new StaticFileOptions
 
             if (loginedAccount.Role == Role.Admin && !context.Context.Request.Path.StartsWithSegments("/admin")) // 로그인이 되었고 권한이 Admin인가? 그렇다면 ~/admin 자원에만 접근 허용
             {
-                #region Profile Image 이거나, Profile 개인 업로드 아바타 파일 접근 허용
-                if (context.Context.Request.Path.ToString().Contains("/upload/Management/Profile/default-avatar.jpg") || context.Context.Request.Path.ToString().Contains($"/upload/Management/Profile/{loginedAccount.Email}/"))
+                #region Profile Image 이거나, Profile 아바타 파일 접근 허용
+                if (context.Context.Request.Path.ToString().Contains("/upload/Management/Profile/default-avatar.jpg") || context.Context.Request.Path.ToString().Contains($"/upload/Management/Profile/Avatar/"))
                 {
 
                 }
@@ -187,8 +187,8 @@ app.UseStaticFiles(new StaticFileOptions
             }
             else if (loginedAccount.Role == Role.User && !context.Context.Request.Path.StartsWithSegments("/user")) // 로그인이 되었고 권한이 User인가? 그렇다면 ~/user 자원에만 접근 허용
             {
-                #region Profile Image 이거나, Profile 개인 업로드 아바타 파일 접근 허용
-                if (context.Context.Request.Path.ToString().Contains("/upload/Management/Profile/default-avatar.jpg") || context.Context.Request.Path.ToString().Contains($"/upload/Management/Profile/{loginedAccount.Email}/"))
+                #region Profile Image 이거나, Profile 아바타 파일 접근 허용
+                if (context.Context.Request.Path.ToString().Contains("/upload/Management/Profile/default-avatar.jpg") || context.Context.Request.Path.ToString().Contains($"/upload/Management/Profile/Avatar/"))
                 {
 
                 }

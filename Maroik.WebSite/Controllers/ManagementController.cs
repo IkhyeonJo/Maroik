@@ -86,10 +86,11 @@ namespace Maroik.WebSite.Controllers
                     if ((Path.GetExtension(profileAvatarFile.FileName) == ".png") || (Path.GetExtension(profileAvatarFile.FileName) == ".jpg") || (Path.GetExtension(profileAvatarFile.FileName) == ".jpeg"))
                     {
                         HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
-                        string avatarPath = Path.Combine(hostEnvironment.ContentRootPath, "wwwroot", "upload", "Management", "Profile", Regex.Replace($"{JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email}", string.Format(@"([{0}]*\.+$)|([{0}]+)", Regex.Escape(new string(Path.GetInvalidFileNameChars()))), "_"));
+                        string avatarPath = Path.Combine(hostEnvironment.ContentRootPath, "wwwroot", "upload", "Management", "Profile", "Avatar");
                         if (!Directory.Exists(avatarPath))
                             Directory.CreateDirectory(avatarPath);
-                        string avatarFile = Regex.Replace($"{JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email}{Path.GetExtension(profileAvatarFile.FileName)}", string.Format(@"([{0}]*\.+$)|([{0}]+)", Regex.Escape(new string(Path.GetInvalidFileNameChars()))), "_");
+                        string guid = Guid.NewGuid().ToString().ToUpper();
+                        string avatarFile = $"{guid}{Path.GetExtension(profileAvatarFile.FileName)}";
                         string filePath = Path.Combine(avatarPath, avatarFile);
 
 #pragma warning disable SCS0018 // Potential Path Traversal vulnerability was found where '{0}' in '{1}' may be tainted by user-controlled data from '{2}' in method '{3}'.
@@ -103,7 +104,7 @@ namespace Maroik.WebSite.Controllers
                         try
                         {
                             var tempAccount = await accountRepository.GetAccountAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
-                            tempAccount.AvatarImagePath = $"/upload/Management/Profile/{JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email}/{avatarFile}";
+                            tempAccount.AvatarImagePath = $"/upload/Management/Profile/Avatar/{avatarFile}";
                             await accountRepository.UpdateAccountAsync(tempAccount);
                             return Ok(new { result = true });
                         }
