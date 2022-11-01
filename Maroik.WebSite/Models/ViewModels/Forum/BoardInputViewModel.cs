@@ -9,7 +9,7 @@ namespace Maroik.WebSite.Models.ViewModels.Forum
         public int Id { get; set; }
 
         [Required(ErrorMessage = "Title is required.")]
-        [StringLength(30, ErrorMessage = "Must be between 1 and 30 characters.", MinimumLength = 1)]
+        [StringLength(100, ErrorMessage = "Must be between 1 and 100 characters.", MinimumLength = 1)]
         public string Title { get; set; }
 
         public string Content { get; set; }
