@@ -83,7 +83,7 @@ namespace Maroik.WebSite.Controllers
                 var profileAvatarFile = profileInputViewModel.ProfileAvatarFiles[0];
                 if (profileAvatarFile.Length > 0 && profileAvatarFile.Length <= 10485760) // profileAvatarFile Length : 파일 크기 0MB 이상, 10MB 이하)
                 {
-                    if (profileAvatarFile.ContentType.ToUpper() == "image/png".ToUpper() || profileAvatarFile.ContentType.ToUpper() == "image/jpeg".ToUpper())
+                    if ((Path.GetExtension(profileAvatarFile.FileName) == ".png") || (Path.GetExtension(profileAvatarFile.FileName) == ".jpg") || (Path.GetExtension(profileAvatarFile.FileName) == ".jpeg"))
                     {
                         HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
                         string avatarPath = Path.Combine(hostEnvironment.ContentRootPath, "wwwroot", "upload", "Management", "Profile", Regex.Replace($"{JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email}", string.Format(@"([{0}]*\.+$)|([{0}]+)", Regex.Escape(new string(Path.GetInvalidFileNameChars()))), "_"));
@@ -114,7 +114,7 @@ namespace Maroik.WebSite.Controllers
                     }
                     else // 이미지 png 또는 jpg 외 확장자는 거절
                     {
-                        return Ok(new { result = false, errorMessage = localizer["Only .jpg or .png file allowed"].Value });
+                        return Ok(new { result = false, errorMessage = localizer["Only .jpg or jpeg or .png file allowed"].Value });
                     }
                 }
                 else // fileSizeLimitationErrorMessage

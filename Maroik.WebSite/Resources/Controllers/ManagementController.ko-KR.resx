@@ -195,8 +195,8 @@
   <data name="Name" xml:space="preserve">
     <value>이름</value>
   </data>
-  <data name="Only .jpg or .png file allowed" xml:space="preserve">
-    <value>파일 확장자 jpg 또는 png 만 허용됩니다.</value>
+  <data name="Only .jpg or jpeg or .png file allowed" xml:space="preserve">
+    <value>파일 확장자 jpg 또는 jpeg 또는 png 만 허용됩니다.</value>
   </data>
   <data name="Order" xml:space="preserve">
     <value>순서</value>

@@ -147,8 +147,8 @@
   <data name="New Password" xml:space="preserve">
     <value>새로운 비밀번호</value>
   </data>
-  <data name="Only .jpg or .png file allowed." xml:space="preserve">
-    <value>확장자 jpg 또는 png 파일만 가능합니다.</value>
+  <data name="Only .jpg or jpeg or .png file allowed." xml:space="preserve">
+    <value>확장자 jpg 또는 또는 jpeg 또는 png 파일만 가능합니다.</value>
   </data>
   <data name="Password" xml:space="preserve">
     <value>비밀번호</value>

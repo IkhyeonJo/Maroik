@@ -195,8 +195,8 @@
   <data name="Name" xml:space="preserve">
     <value>Name</value>
   </data>
-  <data name="Only .jpg or .png file allowed" xml:space="preserve">
-    <value>Only .jpg or .png file allowed</value>
+  <data name="Only .jpg or jpeg or .png file allowed" xml:space="preserve">
+    <value>Only .jpg or jpeg or .png file allowed</value>
   </data>
   <data name="Order" xml:space="preserve">
     <value>Order</value>

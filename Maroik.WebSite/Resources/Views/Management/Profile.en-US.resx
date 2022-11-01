@@ -147,8 +147,8 @@
   <data name="New Password" xml:space="preserve">
     <value>New Password</value>
   </data>
-  <data name="Only .jpg or .png file allowed." xml:space="preserve">
-    <value>Only .jpg or .png file allowed</value>
+  <data name="Only .jpg or jpeg or .png file allowed." xml:space="preserve">
+    <value>Only .jpg or jpeg or .png file allowed.</value>
   </data>
   <data name="Password" xml:space="preserve">
     <value>Password</value>
