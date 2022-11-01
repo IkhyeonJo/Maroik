@@ -16,7 +16,7 @@ namespace Maroik.Common.DataAccess.Contracts
         /// 한 댓글을 구합니다.
         /// </summary>
         /// <returns></returns>
-        public Task<IEnumerable<Comment>> GetComment(int id);
+        public Task<Comment> GetComment(int id);
 
         /// <summary>
         /// 댓글을 생성합니다.
