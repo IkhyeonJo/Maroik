@@ -201,8 +201,6 @@ namespace Maroik.WebSite.Controllers
 
                             var totalCommentsInSelectedBoard = await commentRepository.GetOneBoardComments(commentInputViewModel.BoardId);
 
-                            var currentTime = DateTime.UtcNow;
-
                             var comment = new Comment()
                             {
                                 BoardId = commentInputViewModel.BoardId,
@@ -210,8 +208,7 @@ namespace Maroik.WebSite.Controllers
                                 AvatarImagePath = loginedAccount.AvatarImagePath,
                                 Writer = loginedAccount.Nickname,
                                 Content = commentInputViewModel.Content,
-                                Created = currentTime,
-                                Updated = currentTime,
+                                Created = DateTime.UtcNow,
                                 Deleted = false
                             };
                             await commentRepository.WriteCommentAsync(comment);

@@ -37,10 +37,6 @@ namespace Maroik.Common.DataAccess.Models
         /// </summary>
         public DateTime Created { get; set; }
         /// <summary>
-        /// 업데이트일
-        /// </summary>
-        public DateTime Updated { get; set; }
-        /// <summary>
         /// 삭제 여부
         /// </summary>
         public bool Deleted { get; set; }

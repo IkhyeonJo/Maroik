@@ -123,14 +123,7 @@
                                     <span class="username">
                                         @comment.Writer
 
-                                        @if (DateTime.Compare(comment.Created, comment.Updated) == 0) @*작성일과 수정일이 같다면*@
-                                        {
-                                            <span class="text-muted float-middle">작성일: [@TimeZoneInfo.ConvertTimeBySystemTimeZoneId(comment.Created, OSTimeZone.DestinationTimeZoneId)] </span>
-                                        }
-                                        else
-                                        {
-                                            <span class="text-muted float-middle">수정일: [@TimeZoneInfo.ConvertTimeBySystemTimeZoneId(comment.Updated, OSTimeZone.DestinationTimeZoneId)] </span>
-                                        }
+                                        <span class="text-muted float-middle">작성일: [@TimeZoneInfo.ConvertTimeBySystemTimeZoneId(comment.Created, OSTimeZone.DestinationTimeZoneId)] </span>
 
                                         @if (loginedAccount.Nickname == comment.Writer || loginedAccount.Role == Role.Admin)@*작성자 또는 관리자인 경우*@
                                         {
