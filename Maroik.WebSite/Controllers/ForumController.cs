@@ -9,6 +9,7 @@ using Maroik.WebSite.Models.ViewModels.AccountBook;
 using Maroik.WebSite.Models.ViewModels.DashBoard;
 using Maroik.WebSite.Models.ViewModels.Forum;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Localization;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Hosting;
 using Newtonsoft.Json;
@@ -19,6 +20,7 @@ namespace Maroik.WebSite.Controllers
 {
     public class ForumController : Controller
     {
+        private readonly IHtmlLocalizer<ForumController> localizer;
         private readonly ILogger<ForumController> logger;
         private readonly IHostEnvironment hostEnvironment;
         private readonly IBoardRepository boardRepository;
@@ -26,8 +28,9 @@ namespace Maroik.WebSite.Controllers
         private readonly IAccountRepository accountRepository;
         private readonly ICommentRepository commentRepository;
 
-        public ForumController(ILogger<ForumController> logger, IBoardRepository boardRepository, IHostEnvironment hostEnvironment, IAttachedFileRepository attachedFileRepository, IAccountRepository accountRepository, ICommentRepository commentRepository)
+        public ForumController(IHtmlLocalizer<ForumController> localizer, ILogger<ForumController> logger, IBoardRepository boardRepository, IHostEnvironment hostEnvironment, IAttachedFileRepository attachedFileRepository, IAccountRepository accountRepository, ICommentRepository commentRepository)
         {
+            this.localizer = localizer;
             this.logger = logger;
             this.boardRepository = boardRepository;
             this.hostEnvironment = hostEnvironment;
