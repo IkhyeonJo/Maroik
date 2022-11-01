@@ -847,5 +847,5 @@ https://github.com/mganss/HtmlSanitizer
 https://kenfavors.com/code/mounting-an-external-drive-on-ubuntu-server/ // Mounting An External Drive On Ubuntu Server
 https://askubuntu.com/questions/164926/how-to-make-partitions-mount-at-startup
 https://unix.stackexchange.com/questions/349118/how-to-mount-by-uuid-without-using-etc-fstab
-
+https://tragramming.tistory.com/86 // Linux log 명령어
 게시물 댓글 기능 구현할 것
