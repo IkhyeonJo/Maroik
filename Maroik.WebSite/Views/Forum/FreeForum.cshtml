@@ -109,6 +109,56 @@
                     </div>
                     <button type="button" class="btn btn-default" onclick="location.href='@Url.Action("FreeForum", "Forum", new {page = Model.DetailCurrentPage})'">목록</button>
                 </div>
+
+                <div class="card-footer card-comments">
+                    <div class="card-comment">
+                        <img class="img-circle img-sm" src="@(loginedAccount.AvatarImagePath)" alt="User Image">
+
+                        <div class="comment-text">
+                            <span class="username">
+                                Maria Gonzales
+                                <span class="text-muted float-middle">8:03 PM Today</span>
+                                <span class="text-muted float-right" style="margin: 0px 0px 0px 3px"><a class="hover">삭제</a></span>
+                                <span class="text-muted float-right" style="margin: 0px 0px 0px 3px"><a class="hover">수정</a></span>
+                            </span>
+                            It is a long established fact that a reader will be distracted
+                            by the readable content of a page when looking at its layout.
+                    </div>
+                    </div>
+                    <div class="card-comment">
+                        <img class="img-circle img-sm" src="../dist/img/user4-128x128.jpg" alt="User Image">
+
+                        <div class="comment-text">
+                            <span class="username">
+                                Luna Stark
+                                <span class="text-muted float-right">8:03 PM Today</span>
+                            </span>
+                            It is a long established fact that a reader will be distracted
+                            by the readable content of a page when looking at its layout.
+                    </div>
+                    </div>
+                </div>
+
+                <div class="card-footer">
+                    @if (loginedAccount.Role == Role.Anonymous)
+                    {
+                        <form id="formWriteFreeComment" onkeydown="return event.key != 'Enter';">
+                            <img class="img-fluid img-circle img-sm" src="../dist/img/user4-128x128.jpg" alt="Alt Text">
+                            <div class="img-push">
+                                <input id="writeFreeCommentContent" type="text" class="form-control form-control-sm" placeholder="Only logged in users can write comments.">
+                            </div>
+                        </form>
+                    }
+                    else
+                    {
+                        <form id="formWriteFreeComment" onsubmit="return WriteFreeComment('@(Model.DetailBoardId)', '@(Model.DetailCurrentPage)', '내용을 입력해주세요.')">
+                            <img class="img-fluid img-circle img-sm" src="../dist/img/user4-128x128.jpg" alt="Alt Text">
+                            <div class="img-push">
+                                <input id="writeFreeCommentContent" type="text" class="form-control form-control-sm" placeholder="Press enter to post comment.">
+                            </div>
+                        </form>
+                    }
+                </div>
             }
             else if (Model.Method == "edit")
             {
@@ -557,6 +607,44 @@
                     }
                 }
             });
+        }
+
+        function WriteFreeComment(detailBoardId, detailCurrentPage, errorMessage) {
+
+            var createForm = $('#formWriteFreeComment');
+            var content = createForm.find('input[id="writeFreeCommentContent"]').val();
+
+            if (!content) {
+                alert(errorMessage);
+                return false;
+            }
+
+            var paramValue = JSON.stringify({
+                BoardId: detailBoardId,
+                Content: content,
+                DetailCurrentPage: detailCurrentPage
+            });
+
+            $.ajax({
+                url: '/Forum/WriteFreeComment',
+                type: 'POST',
+                headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
+                dataType: 'json',
+                data: paramValue,
+                contentType: 'application/json; charset=utf-8',
+                //async: false,
+                //cache: false,
+                success: function (data) {
+                    if (data.result) {
+                        window.location.href = "/Forum/FreeForum?method=detail" + "&boardId=" + data.boardId + "&page=" + data.page;
+                    }
+                    else {
+                        toastr.error(data.error);
+                    }
+                }
+            });
+
+            return false;
         }
     </script>
 }

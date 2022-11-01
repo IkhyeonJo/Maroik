@@ -9,6 +9,7 @@ using Maroik.WebSite.Models.ViewModels.AccountBook;
 using Maroik.WebSite.Models.ViewModels.DashBoard;
 using Maroik.WebSite.Models.ViewModels.Forum;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Hosting;
 using Newtonsoft.Json;
 using System.Reflection;
@@ -23,14 +24,16 @@ namespace Maroik.WebSite.Controllers
         private readonly IBoardRepository boardRepository;
         private readonly IAttachedFileRepository attachedFileRepository;
         private readonly IAccountRepository accountRepository;
+        private readonly ICommentRepository commentRepository;
 
-        public ForumController(ILogger<ForumController> logger, IBoardRepository boardRepository, IHostEnvironment hostEnvironment, IAttachedFileRepository attachedFileRepository, IAccountRepository accountRepository)
+        public ForumController(ILogger<ForumController> logger, IBoardRepository boardRepository, IHostEnvironment hostEnvironment, IAttachedFileRepository attachedFileRepository, IAccountRepository accountRepository, ICommentRepository commentRepository)
         {
             this.logger = logger;
             this.boardRepository = boardRepository;
             this.hostEnvironment = hostEnvironment;
             this.attachedFileRepository = attachedFileRepository;
             this.accountRepository = accountRepository;
+            this.commentRepository = commentRepository;
         }
 
         #region 자유게시판
@@ -38,6 +41,8 @@ namespace Maroik.WebSite.Controllers
         #region Create
 
         #region Write
+
+        #region FreeBoard
         [HttpPost]
         [ValidateAntiForgeryToken]
         [RequiredHttpPostAccess(Role = Role.Admin)]
@@ -161,6 +166,79 @@ namespace Maroik.WebSite.Controllers
                 return Json(new { result = false, error = e.ToString() });
             }
         }
+        #endregion
+
+        #region FreeComment
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [RequiredHttpPostAccess(Role = Role.Admin)]
+        [RequiredHttpPostAccess(Role = Role.User)]
+        public async Task<IActionResult> WriteFreeComment([FromBody] CommentInputViewModel commentInputViewModel)
+        {
+            try
+            {
+                if (ModelState.IsValid)
+                {
+                    if (string.IsNullOrEmpty(commentInputViewModel.Content))
+                    {
+                        return Json(new { result = false, error = "Please enter a comment." });
+                    }
+
+                    #region HtmlSanitizer
+                    var sanitizer = new HtmlSanitizer();
+                    sanitizer.AllowedAttributes.Add("class");
+                    var sanitized = sanitizer.Sanitize(commentInputViewModel.Content);
+                    commentInputViewModel.Content = sanitized;
+                    #endregion
+
+                    try
+                    {
+                        bool isAccountSessionExist = HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+
+                        if (isAccountSessionExist)
+                        {
+                            var loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)); // Get Session
+
+                            var totalCommentsInSelectedBoard = await commentRepository.GetOneBoardComments(commentInputViewModel.BoardId);
+
+
+                            var comment = new Comment()
+                            {
+                                BoardId = commentInputViewModel.BoardId,
+                                Order = totalCommentsInSelectedBoard?.Count() ?? default,
+                                AvatarImagePath = loginedAccount.AvatarImagePath,
+                                Writer = loginedAccount.Nickname,
+                                Content = commentInputViewModel.Content,
+                                Created = DateTime.UtcNow,
+                                Updated = DateTime.UtcNow,
+                                Deleted = false
+                            };
+                            await commentRepository.WriteCommentAsync(comment);
+
+                            return Json(new { result = true, boardId = commentInputViewModel.BoardId, page = commentInputViewModel.DetailCurrentPage });
+                        }
+                        else
+                        {
+                            return Json(new { result = false, error = "Please Login to write comment" });
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        return Json(new { result = false, error = e.ToString() });
+                    }
+                }
+                else
+                {
+                    return Json(new { result = false, error = "Input is invalid" });
+                }
+            }
+            catch (Exception e)
+            {
+                return Json(new { result = false, error = e.ToString() });
+            }
+        }
+        #endregion
+
         #endregion
 
         #region Summernote Image File Upload
