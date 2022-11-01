@@ -4,6 +4,7 @@
 @using Newtonsoft.Json
 @using System.Text
 @inject Maroik.Common.DataAccess.Contracts.IAccountRepository accountRepository
+@inject Maroik.Common.DataAccess.Contracts.ICommentRepository commentRepository
 
 @model FreeForumOutputViewModel
 
@@ -111,39 +112,40 @@
                 </div>
 
                 <div class="card-footer card-comments">
-                    <div class="card-comment">
-                        <img class="img-circle img-sm" src="@(loginedAccount.AvatarImagePath)" alt="User Image">
+                    @foreach (var comment in await commentRepository.GetOneBoardComments(Model.DetailBoardId))
+                    {
+                        if (!comment.Deleted)
+                        {
+                            <div class="card-comment">
+                                <img class="img-circle img-sm" src="@(comment.AvatarImagePath)" alt="">
 
-                        <div class="comment-text">
-                            <span class="username">
-                                Maria Gonzales
-                                <span class="text-muted float-middle">8:03 PM Today</span>
-                                <span class="text-muted float-right" style="margin: 0px 0px 0px 3px"><a class="hover">삭제</a></span>
-                                <span class="text-muted float-right" style="margin: 0px 0px 0px 3px"><a class="hover">수정</a></span>
-                            </span>
-                            It is a long established fact that a reader will be distracted
-                            by the readable content of a page when looking at its layout.
-                    </div>
-                    </div>
-                    <div class="card-comment">
-                        <img class="img-circle img-sm" src="../dist/img/user4-128x128.jpg" alt="User Image">
+                                <div class="comment-text">
+                                    <span class="username">
+                                        @comment.Writer
 
-                        <div class="comment-text">
-                            <span class="username">
-                                Luna Stark
-                                <span class="text-muted float-right">8:03 PM Today</span>
-                            </span>
-                            It is a long established fact that a reader will be distracted
-                            by the readable content of a page when looking at its layout.
-                    </div>
-                    </div>
+                                        @if (DateTime.Compare(comment.Created, comment.Updated) == 0) @*작성일과 수정일이 같다면*@
+                                        {
+                                            <span class="text-muted float-middle">작성일: [@TimeZoneInfo.ConvertTimeBySystemTimeZoneId(comment.Created, OSTimeZone.DestinationTimeZoneId)] </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted float-middle">수정일: [@TimeZoneInfo.ConvertTimeBySystemTimeZoneId(comment.Updated, OSTimeZone.DestinationTimeZoneId)] </span>
+                                        }
+                                        <span class="text-muted float-right" style="margin: 0px 0px 0px 3px"><a class="hover">삭제</a></span>
+                                        <span class="text-muted float-right" style="margin: 0px 0px 0px 3px"><a class="hover">수정</a></span>
+                                    </span>
+                                    @comment.Content
+                                </div>
+                            </div>
+                        }
+                    }
                 </div>
 
                 <div class="card-footer">
                     @if (loginedAccount.Role == Role.Anonymous)
                     {
                         <form id="formWriteFreeComment" onkeydown="return event.key != 'Enter';">
-                            <img class="img-fluid img-circle img-sm" src="../dist/img/user4-128x128.jpg" alt="Alt Text">
+                            <img class="img-fluid img-circle img-sm" src="/upload/Management/Profile/default-avatar.jpg">
                             <div class="img-push">
                                 <input id="writeFreeCommentContent" type="text" class="form-control form-control-sm" placeholder="Only logged in users can write comments.">
                             </div>
@@ -152,7 +154,7 @@
                     else
                     {
                         <form id="formWriteFreeComment" onsubmit="return WriteFreeComment('@(Model.DetailBoardId)', '@(Model.DetailCurrentPage)', '내용을 입력해주세요.')">
-                            <img class="img-fluid img-circle img-sm" src="../dist/img/user4-128x128.jpg" alt="Alt Text">
+                            <img class="img-fluid img-circle img-sm" src="@loginedAccount.AvatarImagePath">
                             <div class="img-push">
                                 <input id="writeFreeCommentContent" type="text" class="form-control form-control-sm" placeholder="Press enter to post comment.">
                             </div>
