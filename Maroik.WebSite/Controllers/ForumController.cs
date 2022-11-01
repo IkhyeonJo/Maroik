@@ -67,24 +67,24 @@ namespace Maroik.WebSite.Controllers
 
                     if (!(boardInputViewModel.Title.Length > 0 && boardInputViewModel.Title.Length <= 30)) // 제목 길이
                     {
-                        return Json(new { result = false, error = "Title length is must be between 1 and 30 characters" });
+                        return Json(new { result = false, error = localizer["Title length is must be between 1 and 30 characters."].Value });
                     }
 
                     if (boardInputViewModel.Content.Length > 16384) // Content Maxlength: 16KB
                     {
-                        return Json(new { result = false, error = "content length is must be between 0 and 16384 characters" });
+                        return Json(new { result = false, error = localizer["content length is must be between 0 and 16384 characters."].Value });
                     }
 
                     if (boardInputViewModel.UploadedFile != null) // 파일 첨부가 되었다면
                     {
                         if (!(Path.GetExtension(boardInputViewModel.UploadedFile.FileName) == ".zip")) // zip 확장자만 가능
                         {
-                            return Json(new { result = false, error = "Only zip extension allowed." });
+                            return Json(new { result = false, error = localizer["Only zip extension allowed."].Value });
                         }
 
                         if (!(boardInputViewModel.UploadedFile.Length > 0 && boardInputViewModel.UploadedFile.Length <= 10485760)) // 10MB 이하만 가능
                         {
-                            return Json(new { result = false, error = "uploaded file size must be smaller than 10MB." });
+                            return Json(new { result = false, error = localizer["uploaded file size must be smaller than 10MB."].Value });
                         }
                     }
 
@@ -141,17 +141,17 @@ namespace Maroik.WebSite.Controllers
                                 }
                                 else
                                 {
-                                    return Ok(new { result = false, errorMessage = "File Size must be smaller than 10MB." });
+                                    return Ok(new { result = false, errorMessage = localizer["File Size must be smaller than 10MB."].Value });
                                 }
 
                             }
                             #endregion
 
-                            return Json(new { result = true, message = "The board has been successfully created." });
+                            return Json(new { result = true, message = localizer["The board has been successfully created."].Value });
                         }
                         else
                         {
-                            return Json(new { result = false, error = "Please Login to write board" });
+                            return Json(new { result = false, error = localizer["Please Login to write board"].Value });
                         }
                     }
                     catch (Exception e)
@@ -161,7 +161,7 @@ namespace Maroik.WebSite.Controllers
                 }
                 else
                 {
-                    return Json(new { result = false, error = "Input is invalid" });
+                    return Json(new { result = false, error = localizer["Input is invalid"].Value });
                 }
             }
             catch (Exception e)
@@ -184,7 +184,7 @@ namespace Maroik.WebSite.Controllers
                 {
                     if (string.IsNullOrEmpty(commentInputViewModel.Content))
                     {
-                        return Json(new { result = false, error = "Please enter a comment." });
+                        return Json(new { result = false, error = localizer["Please enter a comment."].Value });
                     }
 
                     #region HtmlSanitizer
@@ -220,7 +220,7 @@ namespace Maroik.WebSite.Controllers
                         }
                         else
                         {
-                            return Json(new { result = false, error = "Please Login to write comment" });
+                            return Json(new { result = false, error = localizer["Please Login to write comment."].Value });
                         }
                     }
                     catch (Exception e)
@@ -230,7 +230,7 @@ namespace Maroik.WebSite.Controllers
                 }
                 else
                 {
-                    return Json(new { result = false, error = "Input is invalid" });
+                    return Json(new { result = false, error = localizer["Input is invalid"].Value });
                 }
             }
             catch (Exception e)
@@ -251,7 +251,7 @@ namespace Maroik.WebSite.Controllers
         {
             if (summernoteImageFile == null) // 파일 없을 시
             {
-                return Ok(new { result = false, errorMessage = "Please attach a file" });
+                return Ok(new { result = false, errorMessage = localizer["Please attach a file."].Value });
             }
             else
             {
@@ -277,12 +277,12 @@ namespace Maroik.WebSite.Controllers
                     }
                     else // 이미지 png 또는 jpg 또는 jpeg 외 확장자는 거절
                     {
-                        return Ok(new { result = false, errorMessage = "Only .jpg or jpeg or .png file allowed" });
+                        return Ok(new { result = false, errorMessage = localizer["Only .jpg or jpeg or .png file allowed."].Value });
                     }
                 }
                 else
                 {
-                    return Ok(new { result = false, errorMessage = "File Size must be smaller than 10MB." });
+                    return Ok(new { result = false, errorMessage = localizer["File Size must be smaller than 10MB."].Value });
                 }
             }
         }
@@ -470,7 +470,7 @@ namespace Maroik.WebSite.Controllers
 
                 if (freeBoards == null)
                 {
-                    return Json(new { result = false, error = "No freeBoard exists" });
+                    return Json(new { result = false, error = localizer["No freeBoard exists"].Value });
                 }
                 else
                 {
@@ -478,7 +478,7 @@ namespace Maroik.WebSite.Controllers
 
                     if (tempFreeBoard == null)
                     {
-                        return Json(new { result = false, error = "Input is invalid" });
+                        return Json(new { result = false, error = localizer["Input is invalid"].Value });
                     }
                     else
                     {
@@ -519,24 +519,24 @@ namespace Maroik.WebSite.Controllers
 
                     if (!(boardInputViewModel.Title.Length > 0 && boardInputViewModel.Title.Length <= 30)) // 제목 길이
                     {
-                        return Json(new { result = false, error = "Title length is must be between 1 and 30 characters" });
+                        return Json(new { result = false, error = localizer["Title length is must be between 1 and 30 characters."].Value });
                     }
 
                     if (boardInputViewModel.Content.Length > 16384) // Content Maxlength: 16KB
                     {
-                        return Json(new { result = false, error = "content length is must be between 0 and 16384 characters" });
+                        return Json(new { result = false, error = localizer["content length is must be between 0 and 16384 characters."].Value });
                     }
 
                     if (boardInputViewModel.UploadedFile != null) // 파일 첨부가 되었다면
                     {
                         if (!(Path.GetExtension(boardInputViewModel.UploadedFile.FileName) == ".zip")) // zip 확장자만 가능
                         {
-                            return Json(new { result = false, error = "Only zip extension allowed." });
+                            return Json(new { result = false, error = localizer["Only zip extension allowed."].Value });
                         }
 
                         if (!(boardInputViewModel.UploadedFile.Length > 0 && boardInputViewModel.UploadedFile.Length <= 10485760)) // 10MB 이하만 가능
                         {
-                            return Json(new { result = false, error = "uploaded file size must be smaller than 10MB." });
+                            return Json(new { result = false, error = localizer["uploaded file size must be smaller than 10MB."].Value });
                         }
                     }
 
@@ -555,7 +555,7 @@ namespace Maroik.WebSite.Controllers
 
                             if (tempFreeBoard.Writer != loginedAccount.Nickname)
                             {
-                                return Json(new { result = false, error = "Input is invalid" });
+                                return Json(new { result = false, error = localizer["Input is invalid"].Value });
                             }
 
                             tempFreeBoard.Title = boardInputViewModel.Title;
@@ -598,11 +598,11 @@ namespace Maroik.WebSite.Controllers
 
                                     await attachedFileRepository.UpdateAttachedFileAsync(previousAttachedFile);
 
-                                    return Json(new { result = true, message = "The board has been successfully updated." });
+                                    return Json(new { result = true, message = localizer["The board has been successfully updated."].Value });
                                 }
                                 else
                                 {
-                                    return Ok(new { result = false, errorMessage = "File Size must be smaller than 10MB." });
+                                    return Ok(new { result = false, errorMessage = localizer["File Size must be smaller than 10MB."].Value });
                                 }
                             }
                             #endregion
@@ -617,7 +617,7 @@ namespace Maroik.WebSite.Controllers
 
                                 await attachedFileRepository.UpdateAttachedFileAsync(previousAttachedFile);
 
-                                return Json(new { result = true, message = "The board has been successfully updated." });
+                                return Json(new { result = true, message = localizer["The board has been successfully updated."].Value });
                             }
                             #endregion
 
@@ -652,11 +652,11 @@ namespace Maroik.WebSite.Controllers
                                         Path = $"/upload/Forum/attachedFiles/{createdBoardId}/{attachedFile}"
                                     });
 
-                                    return Json(new { result = true, message = "The board has been successfully updated." });
+                                    return Json(new { result = true, message = localizer["The board has been successfully updated."].Value });
                                 }
                                 else
                                 {
-                                    return Ok(new { result = false, errorMessage = "File Size must be smaller than 10MB." });
+                                    return Ok(new { result = false, errorMessage = localizer["File Size must be smaller than 10MB."].Value });
                                 }
                             }
                             #endregion
@@ -664,7 +664,7 @@ namespace Maroik.WebSite.Controllers
                             #region 기존 첨부 파일 X && 신 첨부 파일 X
                             else
                             {
-                                return Json(new { result = true, message = "The board has been successfully updated." });
+                                return Json(new { result = true, message = localizer["The board has been successfully updated."].Value });
                             }
                             #endregion
 
@@ -672,7 +672,7 @@ namespace Maroik.WebSite.Controllers
                         }
                         else
                         {
-                            return Json(new { result = false, error = "Please Login to edit board" });
+                            return Json(new { result = false, error = localizer["Please Login to edit board"].Value });
                         }
                     }
                     catch (Exception e)
@@ -682,7 +682,7 @@ namespace Maroik.WebSite.Controllers
                 }
                 else
                 {
-                    return Json(new { result = false, error = "Input is invalid" });
+                    return Json(new { result = false, error = localizer["Input is invalid"].Value });
                 }
             }
             catch (Exception e)
@@ -710,7 +710,7 @@ namespace Maroik.WebSite.Controllers
 
                 if (freeBoards == null)
                 {
-                    return Json(new { result = false, error = "Input is invalid" });
+                    return Json(new { result = false, error = localizer["Input is invalid"].Value });
                 }
                 else
                 {
@@ -718,7 +718,7 @@ namespace Maroik.WebSite.Controllers
 
                     if (tempFreeBoard == null)
                     {
-                        return Json(new { result = false, error = "Input is invalid" });
+                        return Json(new { result = false, error = localizer["Input is invalid"].Value });
                     }
                     else
                     {
@@ -732,11 +732,11 @@ namespace Maroik.WebSite.Controllers
                             await boardRepository.DeleteBoardAsync(tempFreeBoard);
                             #endregion
 
-                            return Json(new { result = true, message = "The board has been successfully deleted." });
+                            return Json(new { result = true, message = localizer["The board has been successfully deleted."].Value });
                         }
                         else
                         {
-                            return Json(new { result = true, message = "You do not have permission to delete." });
+                            return Json(new { result = true, message = localizer["You do not have permission to delete."].Value });
                         }
                     }
                 }
@@ -761,7 +761,7 @@ namespace Maroik.WebSite.Controllers
 
                 if (comment == null)
                 {
-                    return Json(new { result = false, error = "Input is invalid" });
+                    return Json(new { result = false, error = localizer["Input is invalid"].Value });
                 }
                 else
                 {
@@ -779,7 +779,7 @@ namespace Maroik.WebSite.Controllers
                     }
                     else
                     {
-                        return Json(new { result = true, message = "You do not have permission to delete." });
+                        return Json(new { result = true, message = localizer["You do not have permission to delete."].Value });
                     }
                     
                 }
