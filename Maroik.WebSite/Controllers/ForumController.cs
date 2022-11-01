@@ -65,9 +65,9 @@ namespace Maroik.WebSite.Controllers
                     boardInputViewModel.Content = sanitized;
                     #endregion
 
-                    if (!(boardInputViewModel.Title.Length > 0 && boardInputViewModel.Title.Length <= 30)) // 제목 길이
+                    if (!(boardInputViewModel.Title.Length > 0 && boardInputViewModel.Title.Length <= 100)) // 제목 길이
                     {
-                        return Json(new { result = false, error = localizer["Title length is must be between 1 and 30 characters."].Value });
+                        return Json(new { result = false, error = localizer["Title length is must be between 1 and 100 characters."].Value });
                     }
 
                     if (boardInputViewModel.Content.Length > 16384) // Content Maxlength: 16KB
@@ -517,9 +517,9 @@ namespace Maroik.WebSite.Controllers
                     boardInputViewModel.Content = sanitized;
                     #endregion
 
-                    if (!(boardInputViewModel.Title.Length > 0 && boardInputViewModel.Title.Length <= 30)) // 제목 길이
+                    if (!(boardInputViewModel.Title.Length > 0 && boardInputViewModel.Title.Length <= 100)) // 제목 길이
                     {
-                        return Json(new { result = false, error = localizer["Title length is must be between 1 and 30 characters."].Value });
+                        return Json(new { result = false, error = localizer["Title length is must be between 1 and 100 characters."].Value });
                     }
 
                     if (boardInputViewModel.Content.Length > 16384) // Content Maxlength: 16KB

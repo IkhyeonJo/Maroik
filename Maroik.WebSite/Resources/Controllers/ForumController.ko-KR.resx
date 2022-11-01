@@ -159,8 +159,8 @@
   <data name="The board has been successfully updated." xml:space="preserve">
     <value>게시물이 성공적으로 수정되었습니다.</value>
   </data>
-  <data name="Title length is must be between 1 and 30 characters." xml:space="preserve">
-    <value>제목 길이는 1~30 글자이여야 합니다.</value>
+  <data name="Title length is must be between 1 and 100 characters." xml:space="preserve">
+    <value>제목 길이는 1~100 글자이여야 합니다.</value>
   </data>
   <data name="uploaded file size must be smaller than 10MB." xml:space="preserve">
     <value>업로드 파일 크기는 10MB 보다 작아야 합니다.</value>
