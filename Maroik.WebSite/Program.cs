@@ -150,7 +150,7 @@ app.UseStaticFiles(new StaticFileOptions
     {
         bool isAccountSessionExist = context.Context.Session.TryGetValue("AccountSession", out _); // 로그인이 되어 계정 세션이 생겼는지 확인
 
-        if (context.Context.Request.Path.StartsWithSegments("/upload/Forum") || context.Context.Request.Path.StartsWithSegments("/upload/Management/Profile/Avatar")) // (~/upload/Forum) [게시물] (~/upload/Management/Profile/Avatar) [댓글 게시판 이미지] 게시판 파일들은 모두 접근 허용
+        if (context.Context.Request.Path.StartsWithSegments("/upload/Forum") || context.Context.Request.Path.StartsWithSegments("/upload/Management/Profile/Avatar") || context.Context.Request.Path.ToString().Contains("/upload/Management/Profile/default-avatar.jpg")) // (~/upload/Forum) [게시물] (~/upload/Management/Profile/Avatar) [댓글 게시판 이미지] 게시판 파일들은 모두 접근 허용
         {
 
         }
