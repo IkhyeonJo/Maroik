@@ -6,8 +6,8 @@ namespace Maroik.WebSite.Models.ViewModels.Forum
 {
     public class BoardOutputViewModel
     {
-        [Required(ErrorMessage = "Title is required")]
-        [StringLength(255, ErrorMessage = "Must be between 1 and 255 characters", MinimumLength = 1)]
+        [Required(ErrorMessage = "Title is required.")]
+        [StringLength(30, ErrorMessage = "Must be between 1 and 30 characters.", MinimumLength = 1)]
         public string Title { get; set; }
         
         public string Content { get; set; }
