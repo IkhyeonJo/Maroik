@@ -848,4 +848,5 @@ https://kenfavors.com/code/mounting-an-external-drive-on-ubuntu-server/ // Mount
 https://askubuntu.com/questions/164926/how-to-make-partitions-mount-at-startup
 https://unix.stackexchange.com/questions/349118/how-to-mount-by-uuid-without-using-etc-fstab
 https://tragramming.tistory.com/86 // Linux log 명령어
-게시물 댓글 기능 구현할 것
+
+게시물 댓글 기능 구현할 것 && 브라우저 체크 디도스 방지 설정도 하기
