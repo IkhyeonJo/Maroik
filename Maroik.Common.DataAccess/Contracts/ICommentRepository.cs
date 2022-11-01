@@ -13,6 +13,12 @@ namespace Maroik.Common.DataAccess.Contracts
         public Task<IEnumerable<Comment>> GetOneBoardComments(int boardId);
 
         /// <summary>
+        /// 한 댓글을 구합니다.
+        /// </summary>
+        /// <returns></returns>
+        public Task<IEnumerable<Comment>> GetComment(int id);
+
+        /// <summary>
         /// 댓글을 생성합니다.
         /// </summary>
         /// <param name="comment"></param>

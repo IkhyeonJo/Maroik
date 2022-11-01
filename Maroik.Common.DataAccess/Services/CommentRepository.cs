@@ -27,6 +27,15 @@ namespace Maroik.Common.DataAccess.Services
         }
 
         /// <summary>
+        /// 한 댓글을 구합니다.
+        /// </summary>
+        /// <returns></returns>
+        public async Task<Comment> GetComment(int id)
+        {
+            return await context.Comments.Where(x => x.Id == id).FirstOrDefaultAsync();
+        }
+
+        /// <summary>
         /// 댓글을 생성합니다.
         /// </summary>
         /// <param name="comment"></param>
