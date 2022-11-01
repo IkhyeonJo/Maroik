@@ -47,17 +47,6 @@ namespace Maroik.Common.DataAccess.Services
         }
 
         /// <summary>
-        /// 댓글을 업데이트합니다.
-        /// </summary>
-        /// <param name="comment"></param>
-        /// <returns></returns>
-        public async Task UpdateCommentAsync(Comment comment)
-        {
-            context.Comments.Update(comment);
-            await context.SaveChangesAsync();
-        }
-
-        /// <summary>
         /// 계시물을 삭제합니다.
         /// </summary>
         /// <param name="board"></param>

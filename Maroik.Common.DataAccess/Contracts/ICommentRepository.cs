@@ -26,13 +26,6 @@ namespace Maroik.Common.DataAccess.Contracts
         public Task WriteCommentAsync(Comment comment);
 
         /// <summary>
-        /// 댓글을 업데이트합니다.
-        /// </summary>
-        /// <param name="comment"></param>
-        /// <returns></returns>
-        public Task UpdateCommentAsync(Comment comment);
-
-        /// <summary>
         /// 댓글을 삭제합니다.
         /// </summary>
         /// <param name="comment"></param>
