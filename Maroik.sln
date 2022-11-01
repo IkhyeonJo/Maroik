@@ -71,6 +71,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "4.Deploy", "4.Deploy", "{F558CB38-4FF2-4371-8F2E-7F3189E920B7}"
 	ProjectSection(SolutionItems) = preProject
 		Deploy.sh = Deploy.sh
+		UnDeploy.sh = UnDeploy.sh
 	EndProjectSection
 EndProject
 Global
