@@ -585,13 +585,6 @@ namespace Maroik.WebSite.Controllers
                             #region 기존 첨부 파일 X && 신 첨부 파일 X
                             else
                             {
-                                previousAttachedFile.Size = 0;
-                                previousAttachedFile.Name = "";
-                                previousAttachedFile.Extension = "";
-                                previousAttachedFile.Path = "";
-
-                                await attachedFileRepository.UpdateAttachedFileAsync(previousAttachedFile);
-
                                 return Json(new { result = true, message = "The board has been successfully updated." });
                             }
                             #endregion
