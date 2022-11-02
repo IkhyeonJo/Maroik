@@ -254,16 +254,18 @@
                     <tbody>
                         @foreach (var board in Model.Boards)
                         {
+                            var commentsOfSelectedBoard = await commentRepository.GetOneBoardComments(board.Id);
+                            board.Comments = commentsOfSelectedBoard.ToList();
                             <tr>
                                 <td>@board.Id</td>
 
                                 @if (board.Title.Length > 7)
                                 {
-                                    <td>@Html.ActionLink(($"{board.Title.Substring(0, 7)}..."), "FreeForum", new {method = "detail", boardId = board.Id, page = Model.Pager.CurrentPage})</td>
+                                    <td>@Html.ActionLink(($"{board.Title.Substring(0, 7)}... [{board.Comments.Count}]"), "FreeForum", new {method = "detail", boardId = board.Id, page = Model.Pager.CurrentPage})</td>
                                 }
                                 else
                                 {
-                                    <td>@Html.ActionLink(@board.Title, "FreeForum", new {method = "detail", boardId = board.Id, page = Model.Pager.CurrentPage})</td>
+                                    <td>@Html.ActionLink($"{board.Title} [{board.Comments.Count}]", "FreeForum", new {method = "detail", boardId = board.Id, page = Model.Pager.CurrentPage})</td>
                                 }
 
                                 <td>@board.Writer</td>
