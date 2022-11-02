@@ -255,7 +255,7 @@
                             @foreach (var board in Model.Boards)
                             {
                                 var commentsOfSelectedBoard = await commentRepository.GetOneBoardComments(board.Id);
-                                board.Comments = commentsOfSelectedBoard.ToList();
+                                board.Comments = commentsOfSelectedBoard.Where(m => m.Deleted == false).ToList();
                                 <tr>
                                     <td>@board.Id</td>
                                     <td>@Html.ActionLink($"{board.Title} [{board.Comments.Count}]", "FreeForum", new {method = "detail", boardId = board.Id, page = Model.Pager.CurrentPage})</td>
