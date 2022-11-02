@@ -29,37 +29,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SQL_Init_Script", "SQL_Init
 		Maroik.MariaDB\SQL_Init_Script\Init.sql = Maroik.MariaDB\SQL_Init_Script\Init.sql
 	EndProjectSection
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SQL_Init_Script_Backups", "SQL_Init_Script_Backups", "{8392B9F5-419D-4032-A10B-C4FF639157A1}"
-	ProjectSection(SolutionItems) = preProject
-		Maroik.MariaDB\SQL_Init_Script_Backups\Init-20210819.sql = Maroik.MariaDB\SQL_Init_Script_Backups\Init-20210819.sql
-		Maroik.MariaDB\SQL_Init_Script_Backups\Init-20210831.sql = Maroik.MariaDB\SQL_Init_Script_Backups\Init-20210831.sql
-		Maroik.MariaDB\SQL_Init_Script_Backups\Init-20210908.sql = Maroik.MariaDB\SQL_Init_Script_Backups\Init-20210908.sql
-		Maroik.MariaDB\SQL_Init_Script_Backups\Init-20211101.sql = Maroik.MariaDB\SQL_Init_Script_Backups\Init-20211101.sql
-		Maroik.MariaDB\SQL_Init_Script_Backups\Init-20211212.sql = Maroik.MariaDB\SQL_Init_Script_Backups\Init-20211212.sql
-		Maroik.MariaDB\SQL_Init_Script_Backups\Init-20211223.sql = Maroik.MariaDB\SQL_Init_Script_Backups\Init-20211223.sql
-		Maroik.MariaDB\SQL_Init_Script_Backups\Init-20211225.sql = Maroik.MariaDB\SQL_Init_Script_Backups\Init-20211225.sql
-		Maroik.MariaDB\SQL_Init_Script_Backups\Init-20211228.sql = Maroik.MariaDB\SQL_Init_Script_Backups\Init-20211228.sql
-		Maroik.MariaDB\SQL_Init_Script_Backups\Init-20211229.sql = Maroik.MariaDB\SQL_Init_Script_Backups\Init-20211229.sql
-		Maroik.MariaDB\SQL_Init_Script_Backups\Init-20220202.sql = Maroik.MariaDB\SQL_Init_Script_Backups\Init-20220202.sql
-		Maroik.MariaDB\SQL_Init_Script_Backups\Init-20220309.sql = Maroik.MariaDB\SQL_Init_Script_Backups\Init-20220309.sql
-		Maroik.MariaDB\SQL_Init_Script_Backups\Init-20220702.sql = Maroik.MariaDB\SQL_Init_Script_Backups\Init-20220702.sql
-		Maroik.MariaDB\SQL_Init_Script_Backups\Init-20220710.sql = Maroik.MariaDB\SQL_Init_Script_Backups\Init-20220710.sql
-		Maroik.MariaDB\SQL_Init_Script_Backups\Init-20220711.sql = Maroik.MariaDB\SQL_Init_Script_Backups\Init-20220711.sql
-		Maroik.MariaDB\SQL_Init_Script_Backups\Init-20220720.sql = Maroik.MariaDB\SQL_Init_Script_Backups\Init-20220720.sql
-		Maroik.MariaDB\SQL_Init_Script_Backups\Init-20220804.sql = Maroik.MariaDB\SQL_Init_Script_Backups\Init-20220804.sql
-		Maroik.MariaDB\SQL_Init_Script_Backups\Init-20220807.sql = Maroik.MariaDB\SQL_Init_Script_Backups\Init-20220807.sql
-		Maroik.MariaDB\SQL_Init_Script_Backups\Init-20220809.sql = Maroik.MariaDB\SQL_Init_Script_Backups\Init-20220809.sql
-		Maroik.MariaDB\SQL_Init_Script_Backups\Init-20220811.sql = Maroik.MariaDB\SQL_Init_Script_Backups\Init-20220811.sql
-		Maroik.MariaDB\SQL_Init_Script_Backups\Init-20220812.sql = Maroik.MariaDB\SQL_Init_Script_Backups\Init-20220812.sql
-		Maroik.MariaDB\SQL_Init_Script_Backups\Init-20220924.sql = Maroik.MariaDB\SQL_Init_Script_Backups\Init-20220924.sql
-		Maroik.MariaDB\SQL_Init_Script_Backups\Init-20220925.sql = Maroik.MariaDB\SQL_Init_Script_Backups\Init-20220925.sql
-		Maroik.MariaDB\SQL_Init_Script_Backups\Init-20221013.sql = Maroik.MariaDB\SQL_Init_Script_Backups\Init-20221013.sql
-		Maroik.MariaDB\SQL_Init_Script_Backups\Init-20221018.sql = Maroik.MariaDB\SQL_Init_Script_Backups\Init-20221018.sql
-		Maroik.MariaDB\SQL_Init_Script_Backups\Init-20221019.sql = Maroik.MariaDB\SQL_Init_Script_Backups\Init-20221019.sql
-		Maroik.MariaDB\SQL_Init_Script_Backups\Init-20221025.sql = Maroik.MariaDB\SQL_Init_Script_Backups\Init-20221025.sql
-		Maroik.MariaDB\SQL_Init_Script_Backups\Init-20221026.sql = Maroik.MariaDB\SQL_Init_Script_Backups\Init-20221026.sql
-	EndProjectSection
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Maroik.Common.DataAccess", "Maroik.Common.DataAccess\Maroik.Common.DataAccess.csproj", "{47E2E041-9EAD-4A0B-8536-8075B8B8D8D1}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Maroik.WebAPI", "Maroik.WebAPI\Maroik.WebAPI.csproj", "{3B95D223-B964-4CFA-8EDD-D19226FEEC66}"
@@ -206,7 +175,6 @@ Global
 		{16950BFB-9A7B-4326-B6E9-873B22449DF3} = {02764078-45D4-4634-95B1-CF053BD2EA45}
 		{7C69DFF9-F5C8-4CF0-8C70-72C39B83A3FA} = {CD016BBE-CCB8-48AF-B586-330D23431A8A}
 		{B434A880-3CFD-4253-A50D-5DE1FB7907E6} = {7C69DFF9-F5C8-4CF0-8C70-72C39B83A3FA}
-		{8392B9F5-419D-4032-A10B-C4FF639157A1} = {7C69DFF9-F5C8-4CF0-8C70-72C39B83A3FA}
 		{47E2E041-9EAD-4A0B-8536-8075B8B8D8D1} = {4A48DCC0-ABF7-42EF-ABA4-9F490564CA1A}
 		{3B95D223-B964-4CFA-8EDD-D19226FEEC66} = {02764078-45D4-4634-95B1-CF053BD2EA45}
 		{33AA9A81-0AE5-4E8D-A271-14E060D054F9} = {02764078-45D4-4634-95B1-CF053BD2EA45}
