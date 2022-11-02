@@ -216,27 +216,31 @@
                             <button type="button" class="btn btn-success btn-block btn-sm" onclick="location.href='/Forum/FreeForum?method=write'" style="width: 100px !important;"><i class="fas fa-edit" style="padding-right:3px;"></i> @localizer["Write"].Value</button>
                         </li>
                         <li class="nav-item ml-auto">
-                            <select id="searchType" name="searchType" style="max-width:90%; font-size:19px; margin: 0px 3px 0px 0px; padding: 0px 0px 4px 0px;">
-                                @if (selectedSearchType == "Title")
-                                {
-                                    <option value="Title" selected>@localizer["Title"].Value</option>
-                                    <option value="Writer">@localizer["Writer"]</option>
-                                }
-                                else if (selectedSearchType == "Writer")
-                                {
-                                    <option value="Title">@localizer["Title"].Value</option>
-                                    <option value="Writer" selected>@localizer["Writer"]</option>
-                                }
-                                else
-                                {
-                                    <option value="Title">@localizer["Title"].Value</option>
-                                    <option value="Writer">@localizer["Writer"]</option>
-                                }
-                            </select>
-                            <input type="text" id="searchText" value="@typedSearchText" onkeypress="if(window.event.keyCode==13){SearchBoard()}" style="max-width:30%; margin-bottom: 7px; text-align: center; font-size: .7em; padding: 5px 0; color: #000; border: none; " />@*Enter key 누르면 검색됨*@
-                            <button style="padding: 0px 0px 0px 0px;" onclick="SearchBoard()">
-                                <i class="fas fa-search fa-fw"></i>
-                            </button>
+                            <div class="input-group input-group-sm">
+                                <select id="searchType" name="searchType" style="margin: 0px 3px 0px 0px;">
+                                    @if (selectedSearchType == "Title")
+                                    {
+                                        <option value="Title" selected>@localizer["Title"].Value</option>
+                                        <option value="Writer">@localizer["Writer"]</option>
+                                    }
+                                    else if (selectedSearchType == "Writer")
+                                    {
+                                        <option value="Title">@localizer["Title"].Value</option>
+                                        <option value="Writer" selected>@localizer["Writer"]</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="Title">@localizer["Title"].Value</option>
+                                        <option value="Writer">@localizer["Writer"]</option>
+                                    }
+                                </select>
+                                <input class="form-control" type="text" id="searchText" value="@typedSearchText" onkeypress="if(window.event.keyCode==13){SearchBoard()}">
+                                <div class="input-group-append">
+                                    <button class="btn btn-primary" onclick="SearchBoard()">
+                                        <i class="fas fa-search"></i>
+                                    </button>
+                                </div>
+                            </div>
                         </li>
                     </ul>
                 </nav>
