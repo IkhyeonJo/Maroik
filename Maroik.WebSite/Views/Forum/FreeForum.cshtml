@@ -240,41 +240,33 @@
                         </li>
                     </ul>
                 </nav>
-
-                <table class="table table-striped table-bordered table-hover">
-                    <thead>
-                        <tr>
-                            <th>@localizer["Number"].Value</th>
-                            <th>@localizer["Title"].Value</th>
-                            <th>@localizer["Writer"].Value</th>
-                            <th>@localizer["Created"].Value</th>
-                            <th>@localizer["Views"].Value</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var board in Model.Boards)
-                        {
-                            var commentsOfSelectedBoard = await commentRepository.GetOneBoardComments(board.Id);
-                            board.Comments = commentsOfSelectedBoard.ToList();
+                <div style="overflow:auto;">
+                    <table class="table table-striped table-bordered table-hover">
+                        <thead>
                             <tr>
-                                <td>@board.Id</td>
-
-                                @if (board.Title.Length > 7)
-                                {
-                                    <td>@Html.ActionLink(($"{board.Title.Substring(0, 7)}... [{board.Comments.Count}]"), "FreeForum", new {method = "detail", boardId = board.Id, page = Model.Pager.CurrentPage})</td>
-                                }
-                                else
-                                {
-                                    <td>@Html.ActionLink($"{board.Title} [{board.Comments.Count}]", "FreeForum", new {method = "detail", boardId = board.Id, page = Model.Pager.CurrentPage})</td>
-                                }
-
-                                <td>@board.Writer</td>
-                                <td>@TimeZoneInfo.ConvertTimeBySystemTimeZoneId(board.Created, OSTimeZone.DestinationTimeZoneId)</td>
-                                <td>@board.Views</td>
+                                <th>@localizer["Number"].Value</th>
+                                <th>@localizer["Title"].Value</th>
+                                <th>@localizer["Writer"].Value</th>
+                                <th>@localizer["Created"].Value</th>
+                                <th>@localizer["Views"].Value</th>
                             </tr>
-                        }
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            @foreach (var board in Model.Boards)
+                            {
+                                var commentsOfSelectedBoard = await commentRepository.GetOneBoardComments(board.Id);
+                                board.Comments = commentsOfSelectedBoard.ToList();
+                                <tr>
+                                    <td>@board.Id</td>
+                                    <td>@Html.ActionLink($"{board.Title} [{board.Comments.Count}]", "FreeForum", new {method = "detail", boardId = board.Id, page = Model.Pager.CurrentPage})</td>
+                                    <td>@board.Writer</td>
+                                    <td>@TimeZoneInfo.ConvertTimeBySystemTimeZoneId(board.Created, OSTimeZone.DestinationTimeZoneId)</td>
+                                    <td>@board.Views</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
                 <hr />
 
                 <nav aria-label="Page navigation example">
