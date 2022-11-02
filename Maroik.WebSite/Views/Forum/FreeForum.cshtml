@@ -5,6 +5,7 @@
 @using System.Text
 @inject Maroik.Common.DataAccess.Contracts.IAccountRepository accountRepository
 @inject Maroik.Common.DataAccess.Contracts.ICommentRepository commentRepository
+@inject Maroik.Common.DataAccess.Contracts.IAttachedFileRepository attachedFileRepository
 
 @model FreeForumOutputViewModel
 
@@ -253,6 +254,7 @@
                                 <th>@localizer["Writer"].Value</th>
                                 <th>@localizer["Created"].Value</th>
                                 <th>@localizer["Views"].Value</th>
+                                <th>@localizer["Attachment"].Value</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -260,12 +262,24 @@
                             {
                                 var commentsOfSelectedBoard = await commentRepository.GetOneBoardComments(board.Id);
                                 board.Comments = commentsOfSelectedBoard.Where(m => m.Deleted == false).ToList();
+
+                                var attachedFiles = await attachedFileRepository.GetAllAsync();
+                                board.AttachedFiles = attachedFiles.Where(m => m.BoardId == board.Id).Where(m => !string.IsNullOrEmpty(m.Name)).ToList();
+
                                 <tr>
                                     <td>@board.Id</td>
                                     <td>@Html.ActionLink($"{board.Title} [{board.Comments.Count}]", "FreeForum", new {method = "detail", boardId = board.Id, page = Model.Pager.CurrentPage})</td>
                                     <td>@board.Writer</td>
                                     <td>@TimeZoneInfo.ConvertTimeBySystemTimeZoneId(board.Created, OSTimeZone.DestinationTimeZoneId)</td>
                                     <td>@board.Views</td>
+                                    @if (board.AttachedFiles.Count != 0)
+                                    {
+                                        <td><i class="fas fa-paperclip"></i></td>
+                                    }
+                                    else
+                                    {
+                                        <td></td>
+                                    }
                                 </tr>
                             }
                         </tbody>

@@ -120,6 +120,9 @@
   <data name="Are you sure to delete?" xml:space="preserve">
     <value>삭제하시겠습니까?</value>
   </data>
+  <data name="Attachment" xml:space="preserve">
+    <value>첨부 파일</value>
+  </data>
   <data name="Close" xml:space="preserve">
     <value>취소</value>
   </data>

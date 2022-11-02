@@ -120,6 +120,9 @@
   <data name="Are you sure to delete?" xml:space="preserve">
     <value>Are you sure to delete?</value>
   </data>
+  <data name="Attachment" xml:space="preserve">
+    <value>Attachment</value>
+  </data>
   <data name="Close" xml:space="preserve">
     <value>Close</value>
   </data>
