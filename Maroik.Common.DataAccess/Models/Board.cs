@@ -50,6 +50,10 @@ namespace Maroik.Common.DataAccess.Models
         /// 삭제 여부
         /// </summary>
         public bool Deleted { get; set; }
+        /// <summary>
+        /// 잠금 여부
+        /// </summary>
+        public bool Locked { get; set; }
 
         public virtual ICollection<AttachedFile> AttachedFiles { get; set; }
         public virtual ICollection<Comment> Comments { get; set; }
