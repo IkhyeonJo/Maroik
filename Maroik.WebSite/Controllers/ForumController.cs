@@ -335,6 +335,18 @@ namespace Maroik.WebSite.Controllers
                 try
                 {
                     var freeBoard = freeBoards.FirstOrDefault(m => m.Id == boardId);
+
+                    if (freeBoard.Locked)
+                    {
+                        HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte); // 작성자 또는 관리자인 경우
+                        var loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)); // Get Session
+
+                        if (!(loginedAccount.Nickname == freeBoard.Writer || loginedAccount.Role == Role.Admin))
+                        {
+                            return RedirectToAction("FreeForum", "Forum");
+                        }
+                    }
+
                     freeBoard.Views++;
                     await boardRepository.UpdateBoardAsync(freeBoard);
                     var attachedFile = attachedFiles.FirstOrDefault(m => m.BoardId == boardId);

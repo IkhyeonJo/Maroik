@@ -275,7 +275,22 @@
 
                                 <tr>
                                     <td>@board.Id</td>
-                                    <td>@Html.ActionLink($"{board.Title} [{board.Comments.Count}]", "FreeForum", new {method = "detail", boardId = board.Id, page = Model.Pager.CurrentPage})</td>
+                                    @if (board.Locked)
+                                    {
+                                        @if (loginedAccount.Nickname == board.Writer || loginedAccount.Role == Role.Admin)@*작성자 또는 관리자인 경우*@
+                                        {
+                                            <td><i class="fa fa-lock-open" aria-hidden="true"></i> @Html.ActionLink($"{board.Title} [{board.Comments.Count}]", "FreeForum", new {method = "detail", boardId = board.Id, page = Model.Pager.CurrentPage})</td>
+                                        }
+                                        else
+                                        {
+                                            <td><i class="fa fa-lock" aria-hidden="true"></i> Only a writer and admin can see it.</td>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <td>@Html.ActionLink($"{board.Title} [{board.Comments.Count}]", "FreeForum", new {method = "detail", boardId = board.Id, page = Model.Pager.CurrentPage})</td>
+                                    }
+
                                     <td>@board.Writer</td>
                                     <td>@TimeZoneInfo.ConvertTimeBySystemTimeZoneId(board.Created, OSTimeZone.DestinationTimeZoneId)</td>
                                     <td>@board.Views</td>
