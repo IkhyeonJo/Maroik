@@ -188,10 +188,12 @@ function EditBoard(editBoardId) {
 
     var title = createForm.find('input[id="editBoardTitle"]').val();
     var content = createForm.find('textarea[id="editBoardContent"]').val();
+    var locked = createForm.find('input[id="editBoardLocked"]').is(":checked");
 
     var formData = new FormData();
     formData.append('Id', editBoardId);
     formData.append('Title', title);
+    formData.append('Locked', locked);
     formData.append('Content', content);
     formData.append('UploadedFile', editUploadedFile);
 

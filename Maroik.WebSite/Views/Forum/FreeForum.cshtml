@@ -180,6 +180,20 @@
                         <textarea name="editBoardContent" id="editBoardContent" maxlength="16384">@Html.Raw(Model.BoardOutputViewModel.Content)</textarea> @*maxlength: 16KB*@
                     </div>
 
+                    <div class="form-group">
+                        <div class="custom-control custom-checkbox">
+                            @if (Model.BoardOutputViewModel.Locked)
+                            {
+                                <input class="custom-control-input" type="checkbox" id="editBoardLocked" checked/>
+                            }
+                            else
+                            {
+                                <input class="custom-control-input" type="checkbox" id="editBoardLocked" />
+                            }
+                            <label for="editBoardLocked" class="custom-control-label">@localizer["Locked"].Value</label>
+                        </div>
+                    </div>
+
                     <div class="card-footer bg-dark">
                         @if (!string.IsNullOrEmpty(Model.BoardOutputViewModel.AttachedFileName))
                         {

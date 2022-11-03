@@ -409,6 +409,7 @@ namespace Maroik.WebSite.Controllers
                         Writer = freeBoard.Writer,
                         Views = freeBoard.Views,
                         Content = freeBoard.Content,
+                        Locked = freeBoard.Locked,
                         Updated = freeBoard.Updated,
                         AttachedFileName = attachedFile?.Name ?? "",
                         AttachedFileExtension = attachedFile?.Extension ?? "",
@@ -573,6 +574,7 @@ namespace Maroik.WebSite.Controllers
 
                             tempFreeBoard.Title = boardInputViewModel.Title;
                             tempFreeBoard.Content = boardInputViewModel.Content;
+                            tempFreeBoard.Locked = boardInputViewModel.Locked;
                             tempFreeBoard.Updated = DateTime.UtcNow;
 
                             await boardRepository.UpdateBoardAsync(tempFreeBoard);
