@@ -25,6 +25,7 @@
     var currentCulture = Context.Features.Get<Microsoft.AspNetCore.Localization.IRequestCultureFeature>().RequestCulture.Culture.Name;
     string selectedSearchType = (ViewBag.SelectedSearchType as string) ?? "";
     string typedSearchText = (ViewBag.TypedSearchText as string) ?? "";
+    var accounts = await accountRepository.GetAllAsync(); // 게시물에서 특별 계정 찾기 위한 용도
 }
 
 <section class="content">
@@ -130,7 +131,15 @@
 
                                 <div class="comment-text">
                                     <span class="username">
-                                        @comment.Writer
+
+                                        @if (accounts.Where(m => m.Role == Role.Admin).Where(m => m.Nickname == comment.Writer).FirstOrDefault() != null) @*관리자가 쓴 댓글인 경우*@
+                                        {
+                                            <span style="font-weight:bold; color:green;">@comment.Writer</span>
+                                        }
+                                        else
+                                        {
+                                            <span>@comment.Writer</span>
+                                        }
 
                                         <span class="text-muted float-middle">@localizer["Created"].Value: [@TimeZoneInfo.ConvertTimeBySystemTimeZoneId(comment.Created, OSTimeZone.DestinationTimeZoneId)] </span>
 
@@ -306,7 +315,16 @@
                                         <td>@Html.ActionLink($"{board.Title} [{board.Comments.Count}]", "FreeForum", new {method = "detail", boardId = board.Id, page = Model.Pager.CurrentPage})</td>
                                     }
 
-                                    <td>@board.Writer</td>
+                                    @if (accounts.Where(m => m.Role == Role.Admin).Where(m => m.Nickname == board.Writer).FirstOrDefault() != null) @*관리자가 쓴 게시물인 경우*@
+                                    {
+                                        <td><span style="font-weight:bold; color:green;">@board.Writer</span></td>
+                                    }
+                                    else
+                                    {
+                                        <td><span>@board.Writer</span></td>
+                                    }
+
+
                                     <td>@TimeZoneInfo.ConvertTimeBySystemTimeZoneId(board.Created, OSTimeZone.DestinationTimeZoneId)</td>
                                     <td>@board.Views</td>
                                     @if (board.AttachedFiles.Count != 0)
