@@ -76,7 +76,7 @@
                         @localizer["Writer"].Value: @Model.BoardOutputViewModel.Writer
                     </h6>
                     <span class="mailbox-read-time float-left">@localizer["Views"].Value: @Model.BoardOutputViewModel.Views</span>
-                    <span class="mailbox-read-time float-right">@localizer["Updated"].Value: @Model.BoardOutputViewModel.Updated</span>
+                    <span class="mailbox-read-time float-right">@localizer["Updated"].Value: [@TimeZoneInfo.ConvertTimeBySystemTimeZoneId(Model.BoardOutputViewModel.Updated, OSTimeZone.DestinationTimeZoneId)]</span>
                     <br />
                 </div>
 
