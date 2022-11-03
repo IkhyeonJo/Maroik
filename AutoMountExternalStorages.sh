@@ -20,7 +20,7 @@ except:
     pass
 
 try:
-    os.system('sudo mount -U 08767C7F767C6F76 /home/ec2-user/32GB/') # To check each device's UUID, please type [sudo blkid] command in linux terminal.
+    os.system('sudo mount -U 6E98950E9894D5C5 /home/ec2-user/32GB/') # To check each device's UUID, please type [sudo blkid] command in linux terminal.
 except:
     pass
 
