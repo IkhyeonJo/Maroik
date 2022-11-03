@@ -22,6 +22,7 @@
         loginedAccount.Role = Role.Anonymous;
     }
 
+    var currentCulture = Context.Features.Get<Microsoft.AspNetCore.Localization.IRequestCultureFeature>().RequestCulture.Culture.Name;
     string selectedSearchType = (ViewBag.SelectedSearchType as string) ?? "";
     string typedSearchText = (ViewBag.TypedSearchText as string) ?? "";
 }
@@ -184,7 +185,7 @@
                         <div class="custom-control custom-checkbox">
                             @if (Model.BoardOutputViewModel.Locked)
                             {
-                                <input class="custom-control-input" type="checkbox" id="editBoardLocked" checked/>
+                                <input class="custom-control-input" type="checkbox" id="editBoardLocked" checked />
                             }
                             else
                             {
@@ -383,14 +384,48 @@
 @section Scripts{
     @if (loginedAccount.Role == Role.Admin)
     {
-        <script src="~/admin/custom/Forum/FreeForum/js/site.js" asp-append-version="true"></script>
+
+        if (currentCulture == "ko-KR")
+        {
+            <script src="~/admin/custom/Forum/FreeForum/js/ko-KR-site.js" asp-append-version="true"></script>
+        }
+        else if (currentCulture == "en-US")
+        {
+            <script src="~/admin/custom/Forum/FreeForum/js/en-US-site.js" asp-append-version="true"></script>
+        }
+        else
+        {
+
+        }
     }
     else if (loginedAccount.Role == Role.User)
     {
-        <script src="~/user/custom/Forum/FreeForum/js/site.js" asp-append-version="true"></script>
+        if (currentCulture == "ko-KR")
+        {
+            <script src="~/user/custom/Forum/FreeForum/js/ko-KR-site.js" asp-append-version="true"></script>
+        }
+        else if (currentCulture == "en-US")
+        {
+            <script src="~/user/custom/Forum/FreeForum/js/en-US-site.js" asp-append-version="true"></script>
+        }
+        else
+        {
+
+        }
     }
     else
     {
-        <script src="~/anonymous/custom/Forum/FreeForum/js/site.js" asp-append-version="true"></script>
+        if (currentCulture == "ko-KR")
+        {
+            <script src="~/anonymous/custom/Forum/FreeForum/js/ko-KR-site.js" asp-append-version="true"></script>
+        }
+        else if (currentCulture == "en-US")
+        {
+            <script src="~/anonymous/custom/Forum/FreeForum/js/en-US-site.js" asp-append-version="true"></script>
+        }
+        else
+        {
+
+        }
     }
 }

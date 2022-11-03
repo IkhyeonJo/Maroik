@@ -184,6 +184,7 @@
         <script src="~/admin/custom/_Layout/js/site.js" asp-append-version="true"></script>
         @*<!-- summernote.js -->*@
         <script src="~/admin/plugins/summernote/summernote-bs4.js" asp-append-version="true"></script>
+        <script src="~/admin/plugins/summernote/lang/summernote-ko-KR.min.js" asp-append-version="true"></script>
     }
     else if (loginedAccount.Role == Role.User)
     {
@@ -205,6 +206,7 @@
         <script src="~/user/custom/_Layout/js/site.js" asp-append-version="true"></script>
         @*<!-- summernote.js -->*@
         <script src="~/user/plugins/summernote/summernote-bs4.js" asp-append-version="true"></script>
+        <script src="~/user/plugins/summernote/lang/summernote-ko-KR.min.js" asp-append-version="true"></script>
 
     }
     else if (loginedAccount.Role == Role.Anonymous)
@@ -225,6 +227,8 @@
         <script src="~/anonymous/plugins/chart.js/Chart.min.js" asp-append-version="true"></script>
         @*<!-- ChangeCulture.js -->*@
         <script src="~/anonymous/custom/_Layout/js/site.js" asp-append-version="true"></script>
+        @*<!-- summernote.js -->*@
+        <script src="~/anonymous/plugins/summernote/lang/summernote-ko-KR.min.js" asp-append-version="true"></script>
     }
     <div class="wrapper">
 
