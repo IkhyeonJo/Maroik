@@ -104,7 +104,8 @@ namespace Maroik.WebSite.Controllers
                                 Created = DateTime.UtcNow,
                                 Updated = DateTime.UtcNow,
                                 Views = 0,
-                                Deleted = false
+                                Deleted = false,
+                                Locked = boardInputViewModel.Locked,
                             };
                             await boardRepository.WriteBoardAsync(board);
 

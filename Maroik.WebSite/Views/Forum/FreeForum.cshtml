@@ -47,6 +47,13 @@
                     </div>
 
                     <div class="form-group">
+                        <div class="custom-control custom-checkbox">
+                          <input class="custom-control-input" type="checkbox" id="writeBoardLocked" />
+                          <label for="writeBoardLocked" class="custom-control-label">Locked</label>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
                         <input type="file" id="writeUploadedFile" name="writeUploadedFile" accept=".zip" onchange="WriteUploadFile(this, '@localizer["File size must be smaller than 10MB."].Value');">
                         <p class="help-block">@localizer["Only zip extension allowed."].Value</p>
                     </div>
@@ -492,12 +499,13 @@
 
             var title = createForm.find('input[id="writeBoardTitle"]').val();
             var content = createForm.find('textarea[id="writeBoardContent"]').val();
+            var locked = createForm.find('input[id="writeBoardLocked"]').is(":checked");
 
             var formData = new FormData();
             formData.append('Title', title);
             formData.append('Content', content);
+            formData.append('Locked', locked);
             formData.append('UploadedFile', writeUploadedFile);
-
 
             $.ajax({
                 url: '/Forum/WriteFreeBoard',
