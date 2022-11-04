@@ -19,7 +19,7 @@ namespace Maroik.Common.DataAccess.Models
         /// </summary>
         public int Id { get; set; }
         /// <summary>
-        /// 형태
+        /// 형태 (자유)
         /// </summary>
         public string Type { get; set; }
         /// <summary>

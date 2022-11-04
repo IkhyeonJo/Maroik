@@ -36,7 +36,7 @@ namespace Maroik.Common.DataAccess.Data
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.UseCollation("utf8mb4_unicode_ci")
-                            .HasCharSet("utf8mb4");
+                .HasCharSet("utf8mb4");
 
             modelBuilder.Entity<Account>(entity =>
             {
@@ -229,7 +229,7 @@ namespace Maroik.Common.DataAccess.Data
                 entity.Property(e => e.Type)
                     .IsRequired()
                     .HasMaxLength(255)
-                    .HasComment("형태");
+                    .HasComment("형태 (자유)");
 
                 entity.Property(e => e.Updated)
                     .HasMaxLength(6)
