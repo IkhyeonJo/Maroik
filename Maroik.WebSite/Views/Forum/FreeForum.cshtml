@@ -48,28 +48,12 @@
                         <textarea name="writeBoardContent" id="writeBoardContent" maxlength="16384"></textarea> @*maxlength: 16KB*@
                     </div>
 
-                    @if (loginedAccount.Role == Role.Admin)
-                    {
-                        <div class="form-group">
-                            <div class="custom-control custom-checkbox">
-                                <input class="custom-control-input" type="checkbox" id="writeBoardNoticed" />
-                                <label for="writeBoardNoticed" class="custom-control-label">@localizer["Noticed"].Value</label>
-                            </div>
+                    <div class="form-group">
+                        <div class="custom-control custom-checkbox">
+                            <input class="custom-control-input" type="checkbox" id="writeBoardLocked" />
+                            <label for="writeBoardLocked" class="custom-control-label">@localizer["Locked"].Value</label>
                         </div>
-                    }
-                    else if (loginedAccount.Role == Role.User)
-                    {
-                        <div class="form-group">
-                            <div class="custom-control custom-checkbox">
-                                <input class="custom-control-input" type="checkbox" id="writeBoardLocked" />
-                                <label for="writeBoardLocked" class="custom-control-label">@localizer["Locked"].Value</label>
-                            </div>
-                        </div>
-                    }
-                    else@*로그인 되지 않은 사용자가 글을 작성하는 경우는 없음 (버그)*@
-                    {
-
-                    }
+                    </div>
 
                     <div class="form-group">
                         <input type="file" id="writeUploadedFile" name="writeUploadedFile" accept=".zip" onchange="WriteUploadFile(this, '@localizer["File size must be smaller than 10MB."].Value');">
