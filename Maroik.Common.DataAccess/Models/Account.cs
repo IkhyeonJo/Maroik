@@ -38,7 +38,7 @@ namespace Maroik.Common.DataAccess.Models
         /// </summary>
         public string Role { get; set; }
         /// <summary>
-        /// 잠금
+        /// 잠금 여부
         /// </summary>
         public bool Locked { get; set; }
         /// <summary>

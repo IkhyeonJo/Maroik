@@ -74,7 +74,7 @@ namespace Maroik.Common.DataAccess.Data
                     .IsRequired()
                     .HasComment("해시화 된 비밀번호");
 
-                entity.Property(e => e.Locked).HasComment("잠금");
+                entity.Property(e => e.Locked).HasComment("잠금 여부");
 
                 entity.Property(e => e.LoginAttempt)
                     .HasColumnType("int(11)")
