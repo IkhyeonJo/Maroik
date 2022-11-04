@@ -184,7 +184,7 @@ namespace Maroik.Common.DataAccess.Data
                 entity.Property(e => e.Path)
                     .IsRequired()
                     .HasMaxLength(255)
-                    .HasComment("경로");
+                    .HasComment("부모 댓글 번호");
 
                 entity.Property(e => e.Size)
                     .HasColumnType("int(11)")
@@ -211,7 +211,7 @@ namespace Maroik.Common.DataAccess.Data
 
                 entity.Property(e => e.Content)
                     .IsRequired()
-                    .HasComment("내용");
+                    .HasComment("표시이름");
 
                 entity.Property(e => e.Created)
                     .HasMaxLength(6)
@@ -221,8 +221,6 @@ namespace Maroik.Common.DataAccess.Data
 
                 entity.Property(e => e.Locked).HasComment("잠금 여부");
 
-                entity.Property(e => e.Noticed).HasComment("공지 여부");
-
                 entity.Property(e => e.Title)
                     .IsRequired()
                     .HasMaxLength(255)
@@ -231,7 +229,7 @@ namespace Maroik.Common.DataAccess.Data
                 entity.Property(e => e.Type)
                     .IsRequired()
                     .HasMaxLength(255)
-                    .HasComment("형태");
+                    .HasComment("게시판 형태");
 
                 entity.Property(e => e.Updated)
                     .HasMaxLength(6)

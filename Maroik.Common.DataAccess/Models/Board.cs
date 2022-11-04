@@ -19,7 +19,7 @@ namespace Maroik.Common.DataAccess.Models
         /// </summary>
         public int Id { get; set; }
         /// <summary>
-        /// 형태
+        /// 게시판 형태
         /// </summary>
         public string Type { get; set; }
         /// <summary>
@@ -27,7 +27,7 @@ namespace Maroik.Common.DataAccess.Models
         /// </summary>
         public string Title { get; set; }
         /// <summary>
-        /// 내용
+        /// 표시이름
         /// </summary>
         public string Content { get; set; }
         /// <summary>
@@ -47,17 +47,13 @@ namespace Maroik.Common.DataAccess.Models
         /// </summary>
         public int Views { get; set; }
         /// <summary>
-        /// 잠금 여부
-        /// </summary>
-        public bool Locked { get; set; }
-        /// <summary>
-        /// 공지 여부
-        /// </summary>
-        public bool Noticed { get; set; }
-        /// <summary>
         /// 삭제 여부
         /// </summary>
         public bool Deleted { get; set; }
+        /// <summary>
+        /// 잠금 여부
+        /// </summary>
+        public bool Locked { get; set; }
 
         public virtual ICollection<AttachedFile> AttachedFiles { get; set; }
         public virtual ICollection<Comment> Comments { get; set; }
