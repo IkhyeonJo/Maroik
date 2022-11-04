@@ -19,7 +19,7 @@ namespace Maroik.Common.DataAccess.Models
         /// </summary>
         public int Id { get; set; }
         /// <summary>
-        /// 게시판 형태
+        /// 형태
         /// </summary>
         public string Type { get; set; }
         /// <summary>
@@ -27,7 +27,7 @@ namespace Maroik.Common.DataAccess.Models
         /// </summary>
         public string Title { get; set; }
         /// <summary>
-        /// 표시이름
+        /// 내용
         /// </summary>
         public string Content { get; set; }
         /// <summary>

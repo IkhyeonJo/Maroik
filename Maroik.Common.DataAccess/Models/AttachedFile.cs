@@ -29,7 +29,7 @@ namespace Maroik.Common.DataAccess.Models
         /// </summary>
         public string Extension { get; set; }
         /// <summary>
-        /// 부모 댓글 번호
+        /// 경로
         /// </summary>
         public string Path { get; set; }
 
