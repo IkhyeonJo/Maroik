@@ -148,12 +148,12 @@ function WriteBoard() {
 
     var title = createForm.find('input[id="writeBoardTitle"]').val();
     var content = createForm.find('textarea[id="writeBoardContent"]').val();
-    var locked = createForm.find('input[id="writeBoardLocked"]').is(":checked");
+    var noticed = createForm.find('input[id="writeBoardNoticed"]').is(":checked");
 
     var formData = new FormData();
     formData.append('Title', title);
     formData.append('Content', content);
-    formData.append('Locked', locked);
+    formData.append('Noticed', noticed);
     formData.append('UploadedFile', writeUploadedFile);
 
     $.ajax({

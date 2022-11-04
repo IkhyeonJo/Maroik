@@ -105,8 +105,21 @@ namespace Maroik.WebSite.Controllers
                                 Updated = DateTime.UtcNow,
                                 Views = 0,
                                 Deleted = false,
-                                Locked = boardInputViewModel.Locked,
                             };
+
+                            if (loginedAccount.Role == Role.Admin)
+                            {
+                                board.Noticed = boardInputViewModel.Noticed;
+                            }
+                            else if (loginedAccount.Role == Role.User)
+                            {
+                                board.Locked = boardInputViewModel.Locked;
+                            }
+                            else //로그인 되지 않은 사용자가 글을 작성하는 경우는 없음(버그)
+                            {
+
+                            }
+
                             await boardRepository.WriteBoardAsync(board);
 
                             #region 첨부 파일 저장
@@ -796,7 +809,7 @@ namespace Maroik.WebSite.Controllers
                     {
                         return Json(new { result = true, message = localizer["You do not have permission to delete."].Value });
                     }
-                    
+
                 }
             }
             catch (Exception e)

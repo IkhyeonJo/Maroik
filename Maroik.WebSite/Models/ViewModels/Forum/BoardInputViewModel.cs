@@ -16,6 +16,8 @@ namespace Maroik.WebSite.Models.ViewModels.Forum
 
         public bool Locked { get; set; }
 
+        public bool Noticed { get; set; }
+
         public IFormFile UploadedFile { get; set; }
     }
 }
