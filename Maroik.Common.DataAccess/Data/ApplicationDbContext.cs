@@ -36,7 +36,7 @@ namespace Maroik.Common.DataAccess.Data
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.UseCollation("utf8mb4_unicode_ci")
-                .HasCharSet("utf8mb4");
+                            .HasCharSet("utf8mb4");
 
             modelBuilder.Entity<Account>(entity =>
             {
@@ -51,7 +51,7 @@ namespace Maroik.Common.DataAccess.Data
                 entity.HasIndex(e => e.Nickname, "Nickname")
                     .IsUnique();
 
-                entity.Property(e => e.Email).HasComment("계정 이메일 (ID)");
+                entity.Property(e => e.Email).HasComment("이메일 (ID)");
 
                 entity.Property(e => e.AgreedServiceTerms).HasComment("약관 동의 여부");
 
@@ -59,32 +59,32 @@ namespace Maroik.Common.DataAccess.Data
                     .IsRequired()
                     .HasMaxLength(255)
                     .HasDefaultValueSql("'/upload/Management/Profile/default-avatar.jpg'")
-                    .HasComment("계정 아바타 이미지 경로");
+                    .HasComment("아바타 이미지 경로");
 
                 entity.Property(e => e.Created)
                     .HasMaxLength(6)
                     .HasDefaultValueSql("'1900-01-01 00:00:00.000000'")
-                    .HasComment("계정 생성일");
+                    .HasComment("생성일");
 
-                entity.Property(e => e.Deleted).HasComment("계정 삭제 여부");
+                entity.Property(e => e.Deleted).HasComment("삭제 여부");
 
                 entity.Property(e => e.EmailConfirmed).HasComment("이메일 확인 여부");
 
                 entity.Property(e => e.HashedPassword)
                     .IsRequired()
-                    .HasComment("계정 암호화 된 비밀번호");
+                    .HasComment("해시화 된 비밀번호");
 
-                entity.Property(e => e.Locked).HasComment("계정 잠금");
+                entity.Property(e => e.Locked).HasComment("잠금");
 
                 entity.Property(e => e.LoginAttempt)
                     .HasColumnType("int(11)")
                     .HasComment("로그인 시도 횟수");
 
-                entity.Property(e => e.Message).HasComment("계정 상태 메시지");
+                entity.Property(e => e.Message).HasComment("상태 메시지");
 
                 entity.Property(e => e.Nickname)
                     .IsRequired()
-                    .HasComment("계정 닉네임");
+                    .HasComment("닉네임");
 
                 entity.Property(e => e.RegistrationToken).HasComment("회원가입 인증 토큰");
 
@@ -94,12 +94,12 @@ namespace Maroik.Common.DataAccess.Data
                     .IsRequired()
                     .HasMaxLength(255)
                     .HasDefaultValueSql("'User'")
-                    .HasComment("계정 역할 (Admin 또는 User)");
+                    .HasComment("역할 (Admin 또는 User)");
 
                 entity.Property(e => e.Updated)
                     .HasMaxLength(6)
                     .HasDefaultValueSql("'1900-01-01 00:00:00.000000'")
-                    .HasComment("계정 업데이트일");
+                    .HasComment("업데이트일");
             });
 
             modelBuilder.Entity<Asset>(entity =>
