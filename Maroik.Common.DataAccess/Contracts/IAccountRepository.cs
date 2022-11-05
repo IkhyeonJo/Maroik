@@ -12,7 +12,7 @@ namespace Maroik.Common.DataAccess.Contracts
         /// <returns></returns>
         public Task<List<Account>> GetAllAsync();
         /// <summary>
-        /// 한 계정을 구합니다.
+        /// 한 계정을 이메일로 구합니다.
         /// </summary>
         /// <param name="email"></param>
         /// <returns></returns>
