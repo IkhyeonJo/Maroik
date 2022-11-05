@@ -16,7 +16,7 @@ namespace Maroik.Common.DataAccess.Contracts
         /// </summary>
         /// <param name="email"></param>
         /// <returns></returns>
-        public Task<Account> GetAccountAsync(string email);
+        public Task<Account> GetAccountByEmailAsync(string email);
         /// <summary>
         /// 계정을 생성합니다.
         /// </summary>

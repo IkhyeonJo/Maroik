@@ -48,7 +48,7 @@ namespace Maroik.WebAPI.Controllers
                 return Unauthorized();
             }
 
-            var tempAccount = await accountRepository.GetAccountAsync(request.Email);
+            var tempAccount = await accountRepository.GetAccountByEmailAsync(request.Email);
             var claims = new[]
             {
                 new Claim(ClaimTypes.Email, tempAccount.Email),

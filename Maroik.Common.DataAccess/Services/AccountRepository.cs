@@ -29,7 +29,7 @@ namespace Maroik.Common.DataAccess.Services
         /// </summary>
         /// <param name="email"></param>
         /// <returns></returns>
-        public async Task<Account> GetAccountAsync(string email)
+        public async Task<Account> GetAccountByEmailAsync(string email)
         {
             return await context.Accounts.FirstOrDefaultAsync(x => x.Email == email);
         }

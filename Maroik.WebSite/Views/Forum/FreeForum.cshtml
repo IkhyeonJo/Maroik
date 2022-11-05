@@ -15,7 +15,7 @@
 
     if (resultByte != null) // 로그인이 된 상태라면
     {
-        loginedAccount = await accountRepository.GetAccountAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+        loginedAccount = await accountRepository.GetAccountByEmailAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
     }
     else // 로그인이 되지 않은 상태라면
     {

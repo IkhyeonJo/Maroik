@@ -7,7 +7,7 @@
 @{
     Context.Session.TryGetValue("AccountSession", out byte[] resultByte);
 
-    var loginedAccount = await accountRepository.GetAccountAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+    var loginedAccount = await accountRepository.GetAccountByEmailAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
 }
 <section class="content">
     <div class="container-fluid">

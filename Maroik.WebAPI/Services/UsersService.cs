@@ -37,7 +37,7 @@ namespace Maroik.WebAPI.Services
                 return false;
             }
 
-            var tempAccount = await accountRepository.GetAccountAsync(email);
+            var tempAccount = await accountRepository.GetAccountByEmailAsync(email);
 
             if (tempAccount == null)
             {

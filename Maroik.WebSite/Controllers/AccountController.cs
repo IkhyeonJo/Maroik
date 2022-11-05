@@ -100,7 +100,7 @@ namespace Maroik.WebSite.Controllers
 
             if (ModelState.IsValid)
             {
-                var tempAccount = await accountRepository.GetAccountAsync(loginInputViewModel.Email);
+                var tempAccount = await accountRepository.GetAccountByEmailAsync(loginInputViewModel.Email);
 
                 if (tempAccount == null) // no account exist
                 {
@@ -239,7 +239,7 @@ namespace Maroik.WebSite.Controllers
                         return View();
                     }
 
-                    var account = await accountRepository.GetAccountAsync(loginInputViewModel.Email);
+                    var account = await accountRepository.GetAccountByEmailAsync(loginInputViewModel.Email);
 
                     #region 새롭게 회원가입을 진행하는 경우
                     if (account == null) // 입력된 ID로 생성된 Record가 없다.
@@ -432,7 +432,7 @@ namespace Maroik.WebSite.Controllers
 
                 if (ModelState.IsValid) // 입력 값 검증
                 {
-                    var account = await accountRepository.GetAccountAsync(loginInputViewModel.Email);
+                    var account = await accountRepository.GetAccountByEmailAsync(loginInputViewModel.Email);
 
                     #region 이메일 재전송 하는데 받은 Email로 DB 조회를 했는데 Record가 없다. (버그임)
                     if (account == null) // 입력된 ID로 생성된 Record 없다.
@@ -675,7 +675,7 @@ namespace Maroik.WebSite.Controllers
 
             if (ModelState.IsValid)
             {
-                var account = await accountRepository.GetAccountAsync(loginInputViewModel.Email);
+                var account = await accountRepository.GetAccountByEmailAsync(loginInputViewModel.Email);
 
                 if (account == null) // 입력 된 Email로 생성된 Record 없다.
                 {

@@ -59,7 +59,7 @@ namespace Maroik.WebSite.Controllers
         public async Task<IActionResult> Profile()
         {
             HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
-            var tempAccount = await accountRepository.GetAccountAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+            var tempAccount = await accountRepository.GetAccountByEmailAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
 
             return View(new ProfileOutputViewModel() { Email = tempAccount.Email, AvatarImagePath = tempAccount.AvatarImagePath, Nickname = tempAccount.Nickname, Created = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(tempAccount.Created, OSTimeZone.DestinationTimeZoneId) });
         }
@@ -103,7 +103,7 @@ namespace Maroik.WebSite.Controllers
 
                         try
                         {
-                            var tempAccount = await accountRepository.GetAccountAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+                            var tempAccount = await accountRepository.GetAccountByEmailAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
                             tempAccount.AvatarImagePath = $"/upload/Management/Profile/Avatar/{avatarFile}";
                             await accountRepository.UpdateAccountAsync(tempAccount);
                             return Ok(new { result = true });
@@ -170,7 +170,7 @@ namespace Maroik.WebSite.Controllers
                 try
                 {
                     HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
-                    var tempAccount = await accountRepository.GetAccountAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+                    var tempAccount = await accountRepository.GetAccountByEmailAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
 
                     if (new RSA(RSAType.RSA2, Encoding.UTF8, RSA.privateKey, RSA.publicKey).Verify(profileInputViewModel.Password ?? "", tempAccount.HashedPassword)) // right password
                     {
@@ -270,7 +270,7 @@ namespace Maroik.WebSite.Controllers
                     #endregion
 
                     #region 이미 입력된 이메일로 계정이 있는 지 확인
-                    if (await accountRepository.GetAccountAsync(accountInputViewModel.Email) != null)
+                    if (await accountRepository.GetAccountByEmailAsync(accountInputViewModel.Email) != null)
                     {
                         return Json(new { result = false, error = localizer["This account has already been created."].Value });
                     }
@@ -400,7 +400,7 @@ namespace Maroik.WebSite.Controllers
         {
             try
             {
-                var tempAccount = await accountRepository.GetAccountAsync(email);
+                var tempAccount = await accountRepository.GetAccountByEmailAsync(email);
 
                 if (tempAccount == null)
                 {
@@ -434,7 +434,7 @@ namespace Maroik.WebSite.Controllers
 
                 if (ModelState.IsValid)
                 {
-                    var tempAccount = await accountRepository.GetAccountAsync(accountInputViewModel.Email);
+                    var tempAccount = await accountRepository.GetAccountByEmailAsync(accountInputViewModel.Email);
 
                     if (tempAccount == null)
                     {
@@ -479,7 +479,7 @@ namespace Maroik.WebSite.Controllers
         {
             try
             {
-                var tempAccount = await accountRepository.GetAccountAsync(accountInputViewModel.Email);
+                var tempAccount = await accountRepository.GetAccountByEmailAsync(accountInputViewModel.Email);
 
                 if (tempAccount == null)
                 {

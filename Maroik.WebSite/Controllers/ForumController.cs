@@ -393,7 +393,7 @@ namespace Maroik.WebSite.Controllers
                     var freeBoard = freeBoards.FirstOrDefault(m => m.Id == boardId);
 
                     HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
-                    var loginedAccount = await accountRepository.GetAccountAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+                    var loginedAccount = await accountRepository.GetAccountByEmailAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
 
                     if (freeBoard.Writer != loginedAccount.Nickname) // 작성자와 로그인한 사용자가 같지 않으면
                     {
@@ -738,7 +738,7 @@ namespace Maroik.WebSite.Controllers
                     else
                     {
                         HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
-                        var loginedAccount = await accountRepository.GetAccountAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+                        var loginedAccount = await accountRepository.GetAccountByEmailAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
 
                         if ((loginedAccount.Nickname == tempFreeBoard.Writer) || loginedAccount.Role == Role.Admin) // 방문한 사람이 작성자 또는 관리자인 경우
                         {
@@ -781,7 +781,7 @@ namespace Maroik.WebSite.Controllers
                 else
                 {
                     HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
-                    var loginedAccount = await accountRepository.GetAccountAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+                    var loginedAccount = await accountRepository.GetAccountByEmailAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
 
                     if ((loginedAccount.Nickname == comment.Writer) || loginedAccount.Role == Role.Admin) // 삭제하는 사람이 작성자 또는 관리자인 경우
                     {
