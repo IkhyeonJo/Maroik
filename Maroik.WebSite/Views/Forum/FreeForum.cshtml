@@ -126,31 +126,62 @@
                     {
                         if (!comment.Deleted)
                         {
-                            <div class="card-comment">
-                                <img class="img-circle img-sm" src="@(comment.AvatarImagePath)" alt="">
+                            @if (Model.BoardOutputViewModel.Writer == comment.Writer) @*게시물 작성자와 댓글 작성자가 같으면 배경색 변경*@
+                            {
+                                <div class="card-comment" style="background-color:#003366;">
+                                    <img class="img-circle img-sm" src="@(comment.AvatarImagePath)" alt="">
 
-                                <div class="comment-text">
-                                    <span class="username">
+                                    <div class="comment-text">
+                                        <span class="username">
 
-                                        @if (accounts.Where(m => m.Role == Role.Admin).Where(m => m.Nickname == comment.Writer).FirstOrDefault() != null) @*관리자가 쓴 댓글인 경우*@
-                                        {
-                                            <span style="font-weight:bold; color:green;">@comment.Writer</span>
-                                        }
-                                        else
-                                        {
-                                            <span>@comment.Writer</span>
-                                        }
+                                            @if (accounts.Where(m => m.Role == Role.Admin).Where(m => m.Nickname == comment.Writer).FirstOrDefault() != null)@*관리자가 쓴 댓글인 경우*@
+                                            {
+                                                <span style="font-weight:bold; color:green;">@comment.Writer</span>
+                                            }
+                                            else
+                                            {
+                                                <span>@comment.Writer</span>
+                                            }
 
-                                        <span class="text-muted float-middle">@localizer["Created"].Value: [@TimeZoneInfo.ConvertTimeBySystemTimeZoneId(comment.Created, OSTimeZone.DestinationTimeZoneId)] </span>
+                                            <span class="text-muted float-middle">@localizer["Created"].Value: [@TimeZoneInfo.ConvertTimeBySystemTimeZoneId(comment.Created, OSTimeZone.DestinationTimeZoneId)] </span>
 
-                                        @if (loginedAccount.Nickname == comment.Writer || loginedAccount.Role == Role.Admin)@*작성자 또는 관리자인 경우*@
-                                        {
-                                            <span class="text-muted float-right" style="margin: 0px 0px 0px 3px"><a class="hover" href="javascript:DeleteComment('@(comment.Id)', '@(Model.DetailBoardId)', '@(Model.DetailCurrentPage)');">@localizer["Delete"].Value</a></span>
-                                        }
-                                    </span>
-                                    @comment.Content
+                                            @if (loginedAccount.Nickname == comment.Writer || loginedAccount.Role == Role.Admin)@*작성자 또는 관리자인 경우*@
+                                            {
+                                                <span class="text-muted float-right" style="margin: 0px 0px 0px 3px"><a class="hover" href="javascript:DeleteComment('@(comment.Id)', '@(Model.DetailBoardId)', '@(Model.DetailCurrentPage)');">@localizer["Delete"].Value</a></span>
+                                            }
+                                        </span>
+                                        @comment.Content
+                                    </div>
                                 </div>
-                            </div>
+                            }
+                            else
+                            {
+                                <div class="card-comment">
+                                    <img class="img-circle img-sm" src="@(comment.AvatarImagePath)" alt="">
+
+                                    <div class="comment-text">
+                                        <span class="username">
+
+                                            @if (accounts.Where(m => m.Role == Role.Admin).Where(m => m.Nickname == comment.Writer).FirstOrDefault() != null)@*관리자가 쓴 댓글인 경우*@
+                                            {
+                                                <span style="font-weight:bold; color:green;">@comment.Writer</span>
+                                            }
+                                            else
+                                            {
+                                                <span>@comment.Writer</span>
+                                            }
+
+                                            <span class="text-muted float-middle">@localizer["Created"].Value: [@TimeZoneInfo.ConvertTimeBySystemTimeZoneId(comment.Created, OSTimeZone.DestinationTimeZoneId)] </span>
+
+                                            @if (loginedAccount.Nickname == comment.Writer || loginedAccount.Role == Role.Admin)@*작성자 또는 관리자인 경우*@
+                                            {
+                                                <span class="text-muted float-right" style="margin: 0px 0px 0px 3px"><a class="hover" href="javascript:DeleteComment('@(comment.Id)', '@(Model.DetailBoardId)', '@(Model.DetailCurrentPage)');">@localizer["Delete"].Value</a></span>
+                                            }
+                                        </span>
+                                        @comment.Content
+                                    </div>
+                                </div>
+                            }
                         }
                     }
                 </div>
