@@ -451,16 +451,17 @@
     {
         if (currentCulture == "ko-KR")
         {
-            <script src="~/user/custom/Forum/FreeForum/js/ko-KR-site.js" asp-append-version="true"></script>
+            <script src="~/user/custom/Forum/FreeForum/js/ko-KR-init.js" asp-append-version="true"></script>
         }
         else if (currentCulture == "en-US")
         {
-            <script src="~/user/custom/Forum/FreeForum/js/en-US-site.js" asp-append-version="true"></script>
+            <script src="~/user/custom/Forum/FreeForum/js/en-US-init.js" asp-append-version="true"></script>
         }
         else
         {
 
         }
+        <script src="~/user/custom/Forum/FreeForum/js/site.js" asp-append-version="true"></script>
     }
     else if (loginedAccount.Role == Role.Anonymous)
     {
@@ -471,6 +472,10 @@
         else if (currentCulture == "en-US")
         {
             <script src="~/anonymous/custom/Forum/FreeForum/js/en-US-init.js" asp-append-version="true"></script>
+        }
+        else
+        {
+
         }
         <script src="~/anonymous/custom/Forum/FreeForum/js/site.js" asp-append-version="true"></script>
     }
