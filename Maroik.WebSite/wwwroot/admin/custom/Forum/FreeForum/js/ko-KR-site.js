@@ -16,6 +16,7 @@ $('#writeBoardContent').summernote({
 
 $('#editBoardContent').summernote({
     height: 300,
+    lang: 'ko-KR',
     callbacks: {
         onImageUpload: function (files) {
             for (let i = 0; i < files.length; i++) {
