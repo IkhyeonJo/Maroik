@@ -382,6 +382,7 @@ namespace Maroik.WebSite.Controllers
                 var freeForumOutputViewModel = new FreeForumOutputViewModel();
 
                 freeForumOutputViewModel.Method = method;
+                freeForumOutputViewModel.EditCurrentPage = page;
                 freeForumOutputViewModel.EditBoardId = boardId ?? default;
 
                 var freeBoards = await boardRepository.GetOneTypeBoards("Free");

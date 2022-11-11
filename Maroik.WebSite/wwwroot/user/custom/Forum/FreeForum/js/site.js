@@ -156,7 +156,7 @@ function WriteBoard() {
     return false;
 }
 
-function EditBoard(editBoardId) {
+function EditBoard(editBoardId, editCurrentPage) {
 
     if (!$('#formEditBoard').valid()) {
         return false;
@@ -187,7 +187,7 @@ function EditBoard(editBoardId) {
         success: function (data) {
             if (data.result) {
                 alert(data.message);
-                window.location.href = "/Forum/FreeForum";
+                window.location.href = "/Forum/FreeForum?method=detail" + "&boardId=" + editBoardId + "&page=" + editCurrentPage;
             }
             else {
                 toastr.error(data.error);
