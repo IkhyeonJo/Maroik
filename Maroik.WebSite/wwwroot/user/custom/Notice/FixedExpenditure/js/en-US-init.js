@@ -77,7 +77,7 @@ $(function () {
             let day = tempCurrentDate.getDate();
 
             month = month >= 10 ? month : '0' + month;
-            day = day >= 0 ? day : '0' + day;
+            day = day >= 10 ? day : '0' + day;
 
             let currentDate = tempCurrentDate.getFullYear() + '-' + month + '-' + day;
 
@@ -147,7 +147,7 @@ $(function () {
             let day = tempCurrentDate.getDate();
 
             month = month >= 10 ? month : '0' + month;
-            day = day >= 0 ? day : '0' + day;
+            day = day >= 10 ? day : '0' + day;
 
             let currentDate = tempCurrentDate.getFullYear() + '-' + month + '-' + day;
 
