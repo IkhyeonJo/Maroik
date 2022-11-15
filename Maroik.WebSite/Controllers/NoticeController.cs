@@ -294,7 +294,7 @@ namespace Maroik.WebSite.Controllers
                 }
                 #endregion
 
-                var result = fixedIncomeOutputViewModels.OrderByDescending(a => a.Created).OrderByDescending(a => a.Expired).ThenByDescending(a => a.Noticed).AsQueryable();
+                var result = fixedIncomeOutputViewModels.OrderByDescending(a => a.Created).OrderByDescending(m => m.Updated).OrderByDescending(a => a.Expired).ThenByDescending(a => a.Noticed).AsQueryable();
                 return PartialView("_FixedIncomeGrid", result);
             }
             return View();
@@ -963,7 +963,7 @@ namespace Maroik.WebSite.Controllers
                 }
                 #endregion
 
-                var result = fixedExpenditureOutputViewModels.OrderByDescending(a => a.Created).OrderByDescending(a => a.Expired).ThenByDescending(a => a.Noticed).AsQueryable();
+                var result = fixedExpenditureOutputViewModels.OrderByDescending(a => a.Created).OrderByDescending(m => m.Updated).OrderByDescending(a => a.Expired).ThenByDescending(a => a.Noticed).AsQueryable();
                 return PartialView("_FixedExpenditureGrid", result);
             }
             return View();
