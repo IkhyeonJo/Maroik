@@ -1181,7 +1181,7 @@ namespace Maroik.WebSite.Controllers
                 }
                 #endregion
 
-                var result = expenditureOutputViewModels.AsQueryable();
+                var result = expenditureOutputViewModels.OrderByDescending(m => m.Created).AsQueryable();
                 return PartialView("_ExpenditureGrid", result);
             }
             return View();
