@@ -294,7 +294,7 @@ namespace Maroik.WebSite.Controllers
                 }
                 #endregion
 
-                var result = fixedIncomeOutputViewModels.OrderByDescending(a => a.Expired).ThenByDescending(a => a.Noticed).AsQueryable();
+                var result = fixedIncomeOutputViewModels.OrderByDescending(a => a.Created).OrderByDescending(a => a.Expired).ThenByDescending(a => a.Noticed).AsQueryable();
                 return PartialView("_FixedIncomeGrid", result);
             }
             return View();
