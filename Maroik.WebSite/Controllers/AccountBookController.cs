@@ -183,7 +183,7 @@ namespace Maroik.WebSite.Controllers
                 }
                 #endregion
 
-                var result = assetOutputViewModels.AsQueryable();
+                var result = assetOutputViewModels.OrderBy(m => m.ProductName).AsQueryable();
                 return PartialView("_AssetGrid", result);
             }
             return View();
