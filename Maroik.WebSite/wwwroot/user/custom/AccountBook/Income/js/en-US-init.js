@@ -15,10 +15,6 @@ $.datepicker.setDefaults({
     yearSuffix: ''
 });
 
-const currentYear = $("#createIncomeDate").val().split('-')[0];
-const currentMonth = $("#createIncomeDate").val().split('-')[1];
-const currentDay = $("#createIncomeDate").val().split('-')[2];
-
 $(function () {
     $("#createIncomeTabs").tabs();
     $("#editIncomeTabs").tabs();
@@ -26,33 +22,11 @@ $(function () {
         showButtonPanel: true,
         beforeShow: function (input) {
             setTimeout(function () {
-                var buttonPane = $(input)
-                    .datepicker("widget")
-                    .find(".ui-datepicker-buttonpane");
-
-                $("<button>", {
-                    text: "Today",
-                    click: function () {
-                        $.datepicker._clearDate(input);
-                        $("#createIncomeDate").datepicker("setDate", new Date(currentYear, currentMonth - 1, currentDay));
-                    }
-                }).appendTo(buttonPane).addClass("ui-datepicker-clear ui-state-default ui-priority-primary ui-corner-all");
 
             }, 1);
         },
         onChangeMonthYear: function (year, month, instance) {
             setTimeout(function () {
-                var buttonPane = $(instance)
-                    .datepicker("widget")
-                    .find(".ui-datepicker-buttonpane");
-
-                $("<button>", {
-                    text: "Today",
-                    click: function () {
-                        $.datepicker._clearDate(instance.input);
-                        $("#createIncomeDate").datepicker("setDate", new Date(currentYear, currentMonth - 1, currentDay));
-                    }
-                }).appendTo(buttonPane).addClass("ui-datepicker-clear ui-state-default ui-priority-primary ui-corner-all");
 
             }, 1);
         }
