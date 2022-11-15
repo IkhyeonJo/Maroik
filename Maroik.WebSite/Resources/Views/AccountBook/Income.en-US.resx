@@ -138,6 +138,9 @@
   <data name="CREATE" xml:space="preserve">
     <value>CREATE</value>
   </data>
+  <data name="Date" xml:space="preserve">
+    <value>Date</value>
+  </data>
   <data name="DELETE" xml:space="preserve">
     <value>DELETE</value>
   </data>
@@ -153,14 +156,23 @@
   <data name="EXCEL" xml:space="preserve">
     <value>EXCEL</value>
   </data>
+  <data name="Hour" xml:space="preserve">
+    <value>Hour</value>
+  </data>
   <data name="MainClass" xml:space="preserve">
     <value>MainClass</value>
+  </data>
+  <data name="Minute" xml:space="preserve">
+    <value>Minute</value>
   </data>
   <data name="Note" xml:space="preserve">
     <value>Note</value>
   </data>
   <data name="Please enter Contents" xml:space="preserve">
     <value>Please enter Contents</value>
+  </data>
+  <data name="Please enter date" xml:space="preserve">
+    <value>Please enter date</value>
   </data>
   <data name="Please select grid row" xml:space="preserve">
     <value>Please select grid row</value>
@@ -170,6 +182,9 @@
   </data>
   <data name="Search..." xml:space="preserve">
     <value>Search...</value>
+  </data>
+  <data name="Second" xml:space="preserve">
+    <value>Second</value>
   </data>
   <data name="SubClass" xml:space="preserve">
     <value>SubClass</value>

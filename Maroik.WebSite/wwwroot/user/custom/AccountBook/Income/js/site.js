@@ -68,7 +68,7 @@ $('#gridSearch').on('input', function () {
 });
 
 function CreateFormShowIncomeSubClassBySelectedIncomeMainClass(createIncomeMainClass) {
-    
+
     if (createIncomeMainClass.value == "RegularIncome") {
         $('#createIncomeSubClass option[value=LaborIncome]').prop('disabled', true).prop('hidden', true);
         $('#createIncomeSubClass option[value=BusinessIncome]').prop('disabled', true).prop('hidden', true);
@@ -155,6 +155,15 @@ function CreateIncome() {
     var subClass = createForm.find('select[id="createIncomeSubClass"]').val();
     var contents = createForm.find('input[id="createIncomeContents"]').val();
     var amount = createForm.find('input[id="createIncomeAmount"]').val();
+
+    var year = parseInt(createForm.find('input[id="createIncomeDate"]').val().substring(0, 4));
+    var month = parseInt(createForm.find('input[id="createIncomeDate"]').val().substring(5, 7));
+    var day = parseInt(createForm.find('input[id="createIncomeDate"]').val().substring(8, 10));
+    var hour = parseInt(createForm.find('select[id="createIncomeHour"]').val());
+    var minute = parseInt(createForm.find('select[id="createIncomeMinute"]').val());
+    var second = parseInt(createForm.find('select[id="createIncomeSecond"]').val());
+
+    var created = new Date(year, month - 1, day, hour, minute, second).toISOString();
     var depositMyAssetProductName = createForm.find('select[id="createIncomeDepositMyAssetProductName"]').val();
     var note = createForm.find('input[id="createIncomeNote"]').val();
 
@@ -163,6 +172,7 @@ function CreateIncome() {
         SubClass: subClass,
         Contents: contents,
         Amount: amount,
+        Created: created,
         DepositMyAssetProductName: depositMyAssetProductName,
         Note: note
     });

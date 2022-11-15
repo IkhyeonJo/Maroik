@@ -445,7 +445,7 @@ namespace Maroik.WebSite.Controllers
                                 Contents = incomeInputViewModel.Contents ?? "",
                                 Amount = Math.Abs(incomeInputViewModel.Amount),
                                 DepositMyAssetProductName = incomeInputViewModel.DepositMyAssetProductName,
-                                Created = DateTime.UtcNow,
+                                Created = incomeInputViewModel.Created,
                                 Updated = DateTime.UtcNow,
                                 Note = incomeInputViewModel.Note ?? ""
                             }

@@ -1,10 +1,17 @@
-﻿@using Newtonsoft.Json
+﻿@using Maroik.WebSite.Common
+@using Newtonsoft.Json
 @using System.Text
 @inject Maroik.Common.DataAccess.Contracts.IAssetRepository assetRepository
 
 @{
-    var currentCulture = Context.Features.Get<Microsoft.AspNetCore.Localization.IRequestCultureFeature>().RequestCulture.Culture.Name;
+    string currentCulture = Context.Features.Get<Microsoft.AspNetCore.Localization.IRequestCultureFeature>().RequestCulture.Culture.Name;
     Context.Session.TryGetValue("AccountSession", out byte[] resultByte);
+
+    DateTime currentTime = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(DateTime.UtcNow, OSTimeZone.DestinationTimeZoneId);
+    string currentDate = currentTime.ToString("yyyy-MM-dd");
+    int currentHour = currentTime.Hour;
+    int currentMinute = currentTime.Minute;
+    int currentSecond = currentTime.Second;
 }
 
 <section class="content">
@@ -81,6 +88,66 @@
                             <div class="form-group col-md-6 mb-3">
                                 <label for="createIncomeAmount">@localizer["Amount"].Value</label>
                                 <input class="form-control form-control-sm" min="0" type="number" id="createIncomeAmount" name="createIncomeAmount" value="0">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group col-md-6 mb-3">
+                                <label for="createIncomeDate">@localizer["Date"].Value</label>
+                                <input class="form-control form-control-sm" type="text" data-val="true" data-val-required="@localizer["Please enter date"].Value" id="createIncomeDate" name="createIncomeDate" value="@(currentDate)" readonly>
+                                <span class="field-validation-valid text-danger" data-valmsg-for="createIncomeDate" data-valmsg-replace="true"></span>
+                            </div>
+                            <div class="form-group col-md-6 mb-3">
+                                <label for="createIncomeHour">@localizer["Hour"].Value</label>
+                                <br />
+                                <select id="createIncomeHour" name="createIncomeHour" style="max-width:90%;">
+                                    @for (int i = 1; i <= 24; i++)
+                                    {
+                                        if(i == currentHour)
+                                        {
+                                            <option value="@i" selected="selected">@i</option>
+                                        }
+                                        else
+                                        {
+                                            <option value="@i">@i</option>
+                                        }
+                                    }
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group col-md-6 mb-3">
+                                <label for="createIncomeMinute">@localizer["Minute"].Value</label>
+                                <br />
+                                <select id="createIncomeMinute" name="createIncomeMinute" style="max-width:90%;">
+                                    @for (int i = 1; i <= 60; i++)
+                                    {
+                                        if(i == currentMinute)
+                                        {
+                                            <option value="@i" selected="selected">@i</option>
+                                        }
+                                        else
+                                        {
+                                            <option value="@i">@i</option>
+                                        }
+                                    }
+                                </select>
+                            </div>
+                            <div class="form-group col-md-6 mb-3">
+                                <label for="createIncomeSecond">@localizer["Second"].Value</label>
+                                <br />
+                                <select id="createIncomeSecond" name="createIncomeSecond" style="max-width:90%;">
+                                    @for (int i = 1; i <= 60; i++)
+                                    {
+                                        if(i == currentSecond)
+                                        {
+                                            <option value="@i" selected="selected">@i</option>
+                                        }
+                                        else
+                                        {
+                                            <option value="@i">@i</option>
+                                        }
+                                    }
+                                </select>
                             </div>
                         </div>
                         <div class="form-row">
