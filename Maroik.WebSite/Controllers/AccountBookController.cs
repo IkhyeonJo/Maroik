@@ -534,7 +534,7 @@ namespace Maroik.WebSite.Controllers
                 }
                 #endregion
 
-                var result = incomeOutputViewModels.AsQueryable();
+                var result = incomeOutputViewModels.OrderByDescending(m => m.Created).AsQueryable();
                 return PartialView("_IncomeGrid", result);
             }
             return View();
