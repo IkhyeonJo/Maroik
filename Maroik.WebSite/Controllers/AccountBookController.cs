@@ -897,7 +897,7 @@ namespace Maroik.WebSite.Controllers
                                         Amount = Math.Abs(expenditureInputViewModel.Amount),
                                         PaymentMethod = expenditureInputViewModel.PaymentMethod,
                                         MyDepositAsset = expenditureInputViewModel.MyDepositAsset,
-                                        Created = DateTime.UtcNow,
+                                        Created = expenditureInputViewModel.Created,
                                         Updated = DateTime.UtcNow,
                                         Note = expenditureInputViewModel.Note ?? ""
                                     }
@@ -962,7 +962,7 @@ namespace Maroik.WebSite.Controllers
                                         Amount = Math.Abs(expenditureInputViewModel.Amount),
                                         PaymentMethod = expenditureInputViewModel.PaymentMethod,
                                         MyDepositAsset = expenditureInputViewModel.MyDepositAsset,
-                                        Created = DateTime.UtcNow,
+                                        Created = expenditureInputViewModel.Created,
                                         Updated = DateTime.UtcNow,
                                         Note = expenditureInputViewModel.Note ?? ""
                                     }
@@ -1014,7 +1014,7 @@ namespace Maroik.WebSite.Controllers
                                         Amount = Math.Abs(expenditureInputViewModel.Amount),
                                         PaymentMethod = expenditureInputViewModel.PaymentMethod,
                                         MyDepositAsset = "",
-                                        Created = DateTime.UtcNow,
+                                        Created = expenditureInputViewModel.Created,
                                         Updated = DateTime.UtcNow,
                                         Note = expenditureInputViewModel.Note ?? ""
                                     }
@@ -1078,7 +1078,7 @@ namespace Maroik.WebSite.Controllers
                                         Amount = Math.Abs(expenditureInputViewModel.Amount),
                                         PaymentMethod = expenditureInputViewModel.PaymentMethod,
                                         MyDepositAsset = "",
-                                        Created = DateTime.UtcNow,
+                                        Created = expenditureInputViewModel.Created,
                                         Updated = DateTime.UtcNow,
                                         Note = expenditureInputViewModel.Note ?? ""
                                     }

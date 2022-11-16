@@ -214,6 +214,16 @@ function CreateExpenditure() {
     var subClass = createForm.find('select[id="createExpenditureSubClass"]').val();
     var contents = createForm.find('input[id="createExpenditureContents"]').val();
     var amount = createForm.find('input[id="createExpenditureAmount"]').val();
+
+    var year = parseInt(createForm.find('input[id="createExpenditureDate"]').val().substring(0, 4));
+    var month = parseInt(createForm.find('input[id="createExpenditureDate"]').val().substring(5, 7));
+    var day = parseInt(createForm.find('input[id="createExpenditureDate"]').val().substring(8, 10));
+    var hour = parseInt(createForm.find('select[id="createExpenditureHour"]').val());
+    var minute = parseInt(createForm.find('select[id="createExpenditureMinute"]').val());
+    var second = parseInt(createForm.find('select[id="createExpenditureSecond"]').val());
+
+    var created = new Date(year, month - 1, day, hour, minute, second).toISOString();
+
     var paymentMethod = createForm.find('select[id="createExpenditurePaymentMethod"]').val();
     var note = createForm.find('input[id="createExpenditureNote"]').val();
     var myDepositAsset = createForm.find('select[id="createExpenditureMyDepositAsset"]').val();
@@ -223,6 +233,7 @@ function CreateExpenditure() {
         SubClass: subClass,
         Contents: contents,
         Amount: amount,
+        Created: created,
         PaymentMethod: paymentMethod,
         Note: note,
         MyDepositAsset: myDepositAsset
