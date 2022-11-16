@@ -564,6 +564,7 @@ namespace Maroik.WebSite.Controllers
                     }
                     else
                     {
+                        tempIncome.Created = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(tempIncome.Created, OSTimeZone.DestinationTimeZoneId);
                         return Json(new { result = true, income = tempIncome });
                     }
                 }
@@ -647,6 +648,7 @@ namespace Maroik.WebSite.Controllers
                                 tempIncome.Amount = incomeInputViewModel.Amount;
                                 tempIncome.DepositMyAssetProductName = incomeInputViewModel.DepositMyAssetProductName;
                                 tempIncome.Note = incomeInputViewModel.Note;
+                                tempIncome.Created = incomeInputViewModel.Created;
                                 tempIncome.Updated = DateTime.UtcNow;
 
                                 await incomeRepository.UpdateIncomeAsync(tempIncome);

@@ -273,6 +273,10 @@ function EditIncomeGridRow(errorMessageSelectGridRow) {
 
                 formEditIncome.find('input[id="editIncomeContents"]').val(data.income.contents);
                 formEditIncome.find('input[id="editIncomeAmount"]').val(data.income.amount);
+                formEditIncome.find('input[id="editIncomeDate"]').val(data.income.created.split('T')[0]);
+                formEditIncome.find('select[id="editIncomeHour"]').val(parseInt(data.income.created.split('T')[1].substring(0, 2))).change();
+                formEditIncome.find('select[id="editIncomeMinute"]').val(parseInt(data.income.created.split('T')[1].substring(3, 5))).change();
+                formEditIncome.find('select[id="editIncomeSecond"]').val(parseInt(data.income.created.split('T')[1].substring(6, 8))).change();
                 formEditIncome.find('select[id="editIncomeDepositMyAssetProductName"]').val(data.income.depositMyAssetProductName).change();
                 formEditIncome.find('input[id="editIncomeNote"]').val(data.income.note);
 
@@ -304,6 +308,15 @@ function UpdateIncome() {
     var subClass = createForm.find('select[id="editIncomeSubClass"]').val();
     var contents = createForm.find('input[id="editIncomeContents"]').val();
     var amount = createForm.find('input[id="editIncomeAmount"]').val();
+
+    var year = parseInt(createForm.find('input[id="editIncomeDate"]').val().substring(0, 4));
+    var month = parseInt(createForm.find('input[id="editIncomeDate"]').val().substring(5, 7));
+    var day = parseInt(createForm.find('input[id="editIncomeDate"]').val().substring(8, 10));
+    var hour = parseInt(createForm.find('select[id="editIncomeHour"]').val());
+    var minute = parseInt(createForm.find('select[id="editIncomeMinute"]').val());
+    var second = parseInt(createForm.find('select[id="editIncomeSecond"]').val());
+
+    var created = new Date(year, month - 1, day, hour, minute, second).toISOString();
     var depositMyAssetProductName = createForm.find('select[id="editIncomeDepositMyAssetProductName"]').val();
     var note = createForm.find('input[id="editIncomeNote"]').val();
 
@@ -313,6 +326,7 @@ function UpdateIncome() {
         SubClass: subClass,
         Contents: contents,
         Amount: amount,
+        Created: created,
         DepositMyAssetProductName: depositMyAssetProductName,
         Note: note
     });
