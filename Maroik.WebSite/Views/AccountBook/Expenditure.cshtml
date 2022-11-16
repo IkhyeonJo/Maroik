@@ -3,6 +3,8 @@
 @inject Maroik.Common.DataAccess.Contracts.IAssetRepository assetRepository
 
 @{
+    string currentCulture = Context.Features.Get<Microsoft.AspNetCore.Localization.IRequestCultureFeature>().RequestCulture.Culture.Name;
+
     Context.Session.TryGetValue("AccountSession", out byte[] resultByte);
 }
 
@@ -271,5 +273,13 @@
     </div>
 </div>
 @section Scripts{
+    @if (currentCulture == "ko-KR")
+    {
+        <script src="~/user/custom/AccountBook/Expenditure/js/ko-KR-init.js" asp-append-version="true"></script>
+    }
+    else if (currentCulture == "en-US")
+    {
+        <script src="~/user/custom/AccountBook/Expenditure/js/en-US-init.js" asp-append-version="true"></script>
+    }
     <script src="~/user/custom/AccountBook/Expenditure/js/site.js" asp-append-version="true"></script>
 }
