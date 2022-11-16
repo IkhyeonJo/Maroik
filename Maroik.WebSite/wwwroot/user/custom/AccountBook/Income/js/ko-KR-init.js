@@ -32,6 +32,20 @@ $(function () {
         }
     });
 
+    $("#editIncomeDate").datepicker({
+        showButtonPanel: true,
+        beforeShow: function (input) {
+            setTimeout(function () {
+
+            }, 1);
+        },
+        onChangeMonthYear: function (year, month, instance) {
+            setTimeout(function () {
+
+            }, 1);
+        }
+    });
+
     $('<style type="text/css"> .ui-datepicker-close { display: none; } </style>').appendTo("head");
     $('<style type="text/css"> .ui-datepicker-current { display: none; } </style>').appendTo("head");
 });
