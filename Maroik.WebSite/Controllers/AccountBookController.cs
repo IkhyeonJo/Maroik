@@ -534,7 +534,7 @@ namespace Maroik.WebSite.Controllers
                 }
                 #endregion
 
-                var result = incomeOutputViewModels.OrderByDescending(m => m.Updated).OrderByDescending(m => m.Created).AsQueryable();
+                var result = incomeOutputViewModels.OrderByDescending(m => m.Created).ThenByDescending(m => m.Updated).AsQueryable();
                 return PartialView("_IncomeGrid", result);
             }
             return View();
@@ -1183,7 +1183,7 @@ namespace Maroik.WebSite.Controllers
                 }
                 #endregion
 
-                var result = expenditureOutputViewModels.OrderByDescending(m => m.Updated).OrderByDescending(m => m.Created).AsQueryable();
+                var result = expenditureOutputViewModels.OrderByDescending(m => m.Created).ThenByDescending(m => m.Updated).AsQueryable();
                 return PartialView("_ExpenditureGrid", result);
             }
             return View();
