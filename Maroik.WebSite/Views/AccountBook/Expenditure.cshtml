@@ -120,7 +120,7 @@
                                 <label for="createExpenditureHour">@localizer["Hour"].Value</label>
                                 <br />
                                 <select id="createExpenditureHour" name="createExpenditureHour" style="max-width:90%;">
-                                    @for (int i = 1; i <= 24; i++)
+                                    @for (int i = 0; i < 24; i++)
                                     {
                                         if (i == currentHour)
                                         {
@@ -139,7 +139,7 @@
                                 <label for="createExpenditureMinute">@localizer["Minute"].Value</label>
                                 <br />
                                 <select id="createExpenditureMinute" name="createExpenditureMinute" style="max-width:90%;">
-                                    @for (int i = 1; i <= 60; i++)
+                                    @for (int i = 0; i < 60; i++)
                                     {
                                         if (i == currentMinute)
                                         {
@@ -156,7 +156,7 @@
                                 <label for="createExpenditureSecond">@localizer["Second"].Value</label>
                                 <br />
                                 <select id="createExpenditureSecond" name="createExpenditureSecond" style="max-width:90%;">
-                                    @for (int i = 1; i <= 60; i++)
+                                    @for (int i = 0; i < 60; i++)
                                     {
                                         if (i == currentSecond)
                                         {
@@ -290,8 +290,8 @@
                                 <label for="editExpenditureHour">@localizer["Hour"].Value</label>
                                 <br />
                                 <select id="editExpenditureHour" name="editExpenditureHour" style="max-width:90%;">
-                                    <option value="1" selected="selected">1</option>
-                                    @for (int i = 2; i <= 24; i++)
+                                    <option value="1" selected="selected">0</option>
+                                    @for (int i = 1; i < 24; i++)
                                     {
                                         <option value="@i">@i</option>
                                     }
@@ -303,8 +303,8 @@
                                 <label for="editExpenditureMinute">@localizer["Minute"].Value</label>
                                 <br />
                                 <select id="editExpenditureMinute" name="editExpenditureMinute" style="max-width:90%;">
-                                    <option value="1" selected="selected">1</option>
-                                    @for (int i = 2; i <= 60; i++)
+                                    <option value="1" selected="selected">0</option>
+                                    @for (int i = 1; i < 60; i++)
                                     {
                                         <option value="@i">@i</option>
                                     }
@@ -314,8 +314,8 @@
                                 <label for="editExpenditureSecond">@localizer["Second"].Value</label>
                                 <br />
                                 <select id="editExpenditureSecond" name="editExpenditureSecond" style="max-width:90%;">
-                                    <option value="1" selected="selected">1</option>
-                                    @for (int i = 2; i <= 60; i++)
+                                    <option value="1" selected="selected">0</option>
+                                    @for (int i = 1; i < 60; i++)
                                     {
                                         <option value="@i">@i</option>
                                     }
