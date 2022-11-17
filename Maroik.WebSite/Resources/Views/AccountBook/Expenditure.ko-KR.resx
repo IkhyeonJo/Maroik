@@ -138,6 +138,9 @@
   <data name="CREATE" xml:space="preserve">
     <value>생성</value>
   </data>
+  <data name="Date" xml:space="preserve">
+    <value>날짜</value>
+  </data>
   <data name="DELETE" xml:space="preserve">
     <value>삭제</value>
   </data>
@@ -150,8 +153,14 @@
   <data name="EXCEL" xml:space="preserve">
     <value>엑셀</value>
   </data>
+  <data name="Hour" xml:space="preserve">
+    <value>시</value>
+  </data>
   <data name="MainClass" xml:space="preserve">
     <value>대분류</value>
+  </data>
+  <data name="Minute" xml:space="preserve">
+    <value>분</value>
   </data>
   <data name="MyDepositAsset" xml:space="preserve">
     <value>내입금자산</value>
@@ -165,6 +174,9 @@
   <data name="Please enter Contents" xml:space="preserve">
     <value>내용을 입력해주세요.</value>
   </data>
+  <data name="Please enter date" xml:space="preserve">
+    <value>날짜를 입력해주세요</value>
+  </data>
   <data name="Please select grid row" xml:space="preserve">
     <value>행을 선택해주세요.</value>
   </data>
@@ -173,6 +185,9 @@
   </data>
   <data name="Search..." xml:space="preserve">
     <value>검색...</value>
+  </data>
+  <data name="Second" xml:space="preserve">
+    <value>초</value>
   </data>
   <data name="SubClass" xml:space="preserve">
     <value>소분류</value>

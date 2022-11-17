@@ -25,6 +25,7 @@ namespace Maroik.WebSite.Models.ViewModels.AccountBook
         [Required(ErrorMessage = "Please enter Amount")]
         [Display(Name = "Amount")]
         public long Amount { get; set; }
+        public DateTime Created { get; set; }
         [Required(ErrorMessage = "Please enter PaymentMethod")]
         [Display(Name = "PaymentMethod")]
         public string PaymentMethod { get; set; }

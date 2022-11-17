@@ -1,9 +1,17 @@
-﻿@using Newtonsoft.Json
+﻿@using Maroik.WebSite.Common
+@using Newtonsoft.Json
 @using System.Text
 @inject Maroik.Common.DataAccess.Contracts.IAssetRepository assetRepository
 
 @{
+    string currentCulture = Context.Features.Get<Microsoft.AspNetCore.Localization.IRequestCultureFeature>().RequestCulture.Culture.Name;
     Context.Session.TryGetValue("AccountSession", out byte[] resultByte);
+
+    DateTime currentTime = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(DateTime.UtcNow, OSTimeZone.DestinationTimeZoneId);
+    string currentDate = currentTime.ToString("yyyy-MM-dd");
+    int currentHour = currentTime.Hour;
+    int currentMinute = currentTime.Minute;
+    int currentSecond = currentTime.Second;
 }
 
 <section class="content">
@@ -80,6 +88,66 @@
                             <div class="form-group col-md-6 mb-3">
                                 <label for="createIncomeAmount">@localizer["Amount"].Value</label>
                                 <input class="form-control form-control-sm" min="0" type="number" id="createIncomeAmount" name="createIncomeAmount" value="0">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group col-md-6 mb-3">
+                                <label for="createIncomeDate">@localizer["Date"].Value</label>
+                                <input class="form-control form-control-sm" type="text" data-val="true" data-val-required="@localizer["Please enter date"].Value" id="createIncomeDate" name="createIncomeDate" value="@(currentDate)" readonly>
+                                <span class="field-validation-valid text-danger" data-valmsg-for="createIncomeDate" data-valmsg-replace="true"></span>
+                            </div>
+                            <div class="form-group col-md-6 mb-3">
+                                <label for="createIncomeHour">@localizer["Hour"].Value</label>
+                                <br />
+                                <select id="createIncomeHour" name="createIncomeHour" style="max-width:90%;">
+                                    @for (int i = 1; i <= 24; i++)
+                                    {
+                                        if (i == currentHour)
+                                        {
+                                            <option value="@i" selected="selected">@i</option>
+                                        }
+                                        else
+                                        {
+                                            <option value="@i">@i</option>
+                                        }
+                                    }
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group col-md-6 mb-3">
+                                <label for="createIncomeMinute">@localizer["Minute"].Value</label>
+                                <br />
+                                <select id="createIncomeMinute" name="createIncomeMinute" style="max-width:90%;">
+                                    @for (int i = 1; i <= 60; i++)
+                                    {
+                                        if (i == currentMinute)
+                                        {
+                                            <option value="@i" selected="selected">@i</option>
+                                        }
+                                        else
+                                        {
+                                            <option value="@i">@i</option>
+                                        }
+                                    }
+                                </select>
+                            </div>
+                            <div class="form-group col-md-6 mb-3">
+                                <label for="createIncomeSecond">@localizer["Second"].Value</label>
+                                <br />
+                                <select id="createIncomeSecond" name="createIncomeSecond" style="max-width:90%;">
+                                    @for (int i = 1; i <= 60; i++)
+                                    {
+                                        if (i == currentSecond)
+                                        {
+                                            <option value="@i" selected="selected">@i</option>
+                                        }
+                                        else
+                                        {
+                                            <option value="@i">@i</option>
+                                        }
+                                    }
+                                </select>
                             </div>
                         </div>
                         <div class="form-row">
@@ -161,6 +229,48 @@
                         </div>
                         <div class="form-row">
                             <div class="form-group col-md-6 mb-3">
+                                <label for="editIncomeDate">@localizer["Date"].Value</label>
+                                <input class="form-control form-control-sm" type="text" data-val="true" data-val-required="@localizer["Please enter date"].Value" id="editIncomeDate" name="editIncomeDate" value="" readonly>
+                                <span class="field-validation-valid text-danger" data-valmsg-for="editIncomeDate" data-valmsg-replace="true"></span>
+                            </div>
+                            <div class="form-group col-md-6 mb-3">
+                                <label for="editIncomeHour">@localizer["Hour"].Value</label>
+                                <br />
+                                <select id="editIncomeHour" name="editIncomeHour" style="max-width:90%;">
+                                    <option value="1" selected="selected">1</option>
+                                    @for (int i = 2; i <= 24; i++)
+                                    {
+                                        <option value="@i">@i</option>
+                                    }
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group col-md-6 mb-3">
+                                <label for="editIncomeMinute">@localizer["Minute"].Value</label>
+                                <br />
+                                <select id="editIncomeMinute" name="editIncomeMinute" style="max-width:90%;">
+                                    <option value="1" selected="selected">1</option>
+                                    @for (int i = 2; i <= 60; i++)
+                                    {
+                                        <option value="@i">@i</option>
+                                    }
+                                </select>
+                            </div>
+                            <div class="form-group col-md-6 mb-3">
+                                <label for="editIncomeSecond">@localizer["Second"].Value</label>
+                                <br />
+                                <select id="editIncomeSecond" name="editIncomeSecond" style="max-width:90%;">
+                                    <option value="1" selected="selected">1</option>
+                                    @for (int i = 1; i <= 60; i++)
+                                    {
+                                        <option value="@i">@i</option>
+                                    }
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group col-md-6 mb-3">
                                 <label for="editIncomeDepositMyAssetProductName">@localizer["DepositMyAssetProductName"].Value</label>
                                 <br />
                                 <select id="editIncomeDepositMyAssetProductName" name="editIncomeDepositMyAssetProductName" style="max-width:90%;width:210px;text-overflow:ellipsis;">
@@ -204,5 +314,13 @@
     </div>
 </div>
 @section Scripts{
+    @if (currentCulture == "ko-KR")
+    {
+        <script src="~/user/custom/AccountBook/Income/js/ko-KR-init.js" asp-append-version="true"></script>
+    }
+    else if (currentCulture == "en-US")
+    {
+        <script src="~/user/custom/AccountBook/Income/js/en-US-init.js" asp-append-version="true"></script>
+    }
     <script src="~/user/custom/AccountBook/Income/js/site.js" asp-append-version="true"></script>
 }
