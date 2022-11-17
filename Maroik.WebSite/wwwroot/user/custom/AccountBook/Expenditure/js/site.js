@@ -424,6 +424,10 @@ function EditExpenditureGridRow(errorMessageSelectGridRow) {
 
                 formEditExpenditure.find('input[id="editExpenditureContents"]').val(data.expenditure.contents);
                 formEditExpenditure.find('input[id="editExpenditureAmount"]').val(data.expenditure.amount);
+                formEditExpenditure.find('input[id="editExpenditureDate"]').val(data.expenditure.created.split('T')[0]);
+                formEditExpenditure.find('select[id="editExpenditureHour"]').val(parseInt(data.expenditure.created.split('T')[1].substring(0, 2))).change();
+                formEditExpenditure.find('select[id="editExpenditureMinute"]').val(parseInt(data.expenditure.created.split('T')[1].substring(3, 5))).change();
+                formEditExpenditure.find('select[id="editExpenditureSecond"]').val(parseInt(data.expenditure.created.split('T')[1].substring(6, 8))).change();
                 formEditExpenditure.find('select[id="editExpenditurePaymentMethod"]').val(data.expenditure.paymentMethod).change();
                 formEditExpenditure.find('input[id="editExpenditureNote"]').val(data.expenditure.note);
                 if (data.expenditure.myDepositAsset) {
@@ -597,6 +601,15 @@ function UpdateExpenditure() {
     var subClass = createForm.find('select[id="editExpenditureSubClass"]').val();
     var contents = createForm.find('input[id="editExpenditureContents"]').val();
     var amount = createForm.find('input[id="editExpenditureAmount"]').val();
+
+    var year = parseInt(createForm.find('input[id="editExpenditureDate"]').val().substring(0, 4));
+    var month = parseInt(createForm.find('input[id="editExpenditureDate"]').val().substring(5, 7));
+    var day = parseInt(createForm.find('input[id="editExpenditureDate"]').val().substring(8, 10));
+    var hour = parseInt(createForm.find('select[id="editExpenditureHour"]').val());
+    var minute = parseInt(createForm.find('select[id="editExpenditureMinute"]').val());
+    var second = parseInt(createForm.find('select[id="editExpenditureSecond"]').val());
+
+    var created = new Date(year, month - 1, day, hour, minute, second).toISOString();
     var paymentMethod = createForm.find('select[id="editExpenditurePaymentMethod"]').val();
     var note = createForm.find('input[id="editExpenditureNote"]').val();
     var myDepositAsset = createForm.find('select[id="editExpenditureMyDepositAsset"]').val();
@@ -607,6 +620,7 @@ function UpdateExpenditure() {
         SubClass: subClass,
         Contents: contents,
         Amount: amount,
+        Created: created,
         PaymentMethod: paymentMethod,
         Note: note,
         MyDepositAsset: myDepositAsset

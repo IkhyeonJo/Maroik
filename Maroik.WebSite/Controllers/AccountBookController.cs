@@ -1213,6 +1213,7 @@ namespace Maroik.WebSite.Controllers
                     }
                     else
                     {
+                        tempExpenditure.Created = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(tempExpenditure.Created, OSTimeZone.DestinationTimeZoneId);
                         return Json(new { result = true, expenditure = tempExpenditure });
                     }
                 }
@@ -1261,7 +1262,7 @@ namespace Maroik.WebSite.Controllers
                                     Amount = expenditureInputViewModel.Amount,
                                     PaymentMethod = expenditureInputViewModel.PaymentMethod,
                                     MyDepositAsset = expenditureInputViewModel?.MyDepositAsset ?? "",
-                                    Created = previousTempExpenditure.Created,
+                                    Created = expenditureInputViewModel.Created,
                                     Updated = DateTime.UtcNow,
                                     Note = expenditureInputViewModel?.Note ?? "",
                                     Asset = previousTempExpenditure.Asset
@@ -1862,7 +1863,7 @@ namespace Maroik.WebSite.Controllers
                                     Amount = expenditureInputViewModel.Amount,
                                     PaymentMethod = expenditureInputViewModel.PaymentMethod,
                                     MyDepositAsset = expenditureInputViewModel?.MyDepositAsset ?? "",
-                                    Created = previousTempExpenditure.Created,
+                                    Created = expenditureInputViewModel.Created,
                                     Updated = DateTime.UtcNow,
                                     Note = expenditureInputViewModel?.Note ?? "",
                                     Asset = previousTempExpenditure.Asset
@@ -2522,7 +2523,7 @@ namespace Maroik.WebSite.Controllers
                                     Amount = expenditureInputViewModel.Amount,
                                     PaymentMethod = expenditureInputViewModel.PaymentMethod,
                                     MyDepositAsset = "",
-                                    Created = previousTempExpenditure.Created,
+                                    Created = expenditureInputViewModel.Created,
                                     Updated = DateTime.UtcNow,
                                     Note = expenditureInputViewModel?.Note ?? "",
                                     Asset = previousTempExpenditure.Asset
@@ -2727,7 +2728,7 @@ namespace Maroik.WebSite.Controllers
                                     Amount = expenditureInputViewModel.Amount,
                                     PaymentMethod = expenditureInputViewModel.PaymentMethod,
                                     MyDepositAsset = "",
-                                    Created = previousTempExpenditure.Created,
+                                    Created = expenditureInputViewModel.Created,
                                     Updated = DateTime.UtcNow,
                                     Note = expenditureInputViewModel?.Note ?? "",
                                     Asset = previousTempExpenditure.Asset

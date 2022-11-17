@@ -282,6 +282,48 @@
                         </div>
                         <div class="form-row">
                             <div class="form-group col-md-6 mb-3">
+                                <label for="editExpenditureDate">@localizer["Date"].Value</label>
+                                <input class="form-control form-control-sm" type="text" data-val="true" data-val-required="@localizer["Please enter date"].Value" id="editExpenditureDate" name="editExpenditureDate" value="" readonly>
+                                <span class="field-validation-valid text-danger" data-valmsg-for="editExpenditureDate" data-valmsg-replace="true"></span>
+                            </div>
+                            <div class="form-group col-md-6 mb-3">
+                                <label for="editExpenditureHour">@localizer["Hour"].Value</label>
+                                <br />
+                                <select id="editExpenditureHour" name="editExpenditureHour" style="max-width:90%;">
+                                    <option value="1" selected="selected">1</option>
+                                    @for (int i = 2; i <= 24; i++)
+                                    {
+                                        <option value="@i">@i</option>
+                                    }
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group col-md-6 mb-3">
+                                <label for="editExpenditureMinute">@localizer["Minute"].Value</label>
+                                <br />
+                                <select id="editExpenditureMinute" name="editExpenditureMinute" style="max-width:90%;">
+                                    <option value="1" selected="selected">1</option>
+                                    @for (int i = 2; i <= 60; i++)
+                                    {
+                                        <option value="@i">@i</option>
+                                    }
+                                </select>
+                            </div>
+                            <div class="form-group col-md-6 mb-3">
+                                <label for="editExpenditureSecond">@localizer["Second"].Value</label>
+                                <br />
+                                <select id="editExpenditureSecond" name="editExpenditureSecond" style="max-width:90%;">
+                                    <option value="1" selected="selected">1</option>
+                                    @for (int i = 2; i <= 60; i++)
+                                    {
+                                        <option value="@i">@i</option>
+                                    }
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group col-md-6 mb-3">
                                 <label for="editExpenditurePaymentMethod">@localizer["PaymentMethod"].Value</label>
                                 <br />
                                 <select id="editExpenditurePaymentMethod" name="editExpenditurePaymentMethod" style="max-width:90%;width:210px;text-overflow:ellipsis;">
