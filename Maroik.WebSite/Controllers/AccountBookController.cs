@@ -789,6 +789,8 @@ namespace Maroik.WebSite.Controllers
                     Note = item.Note
                 });
             }
+            incomeOutputViewModels = incomeOutputViewModels.OrderByDescending(m => m.Created).ThenByDescending(m => m.Updated).ToList();
+
             #endregion
 
             var stream = new MemoryStream();
@@ -3090,6 +3092,8 @@ namespace Maroik.WebSite.Controllers
                     Updated = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Updated, OSTimeZone.DestinationTimeZoneId)
                 });
             }
+            expenditureOutputViewModels = expenditureOutputViewModels.OrderByDescending(m => m.Created).ThenByDescending(m => m.Updated).ToList();
+
             #endregion
 
             var stream = new MemoryStream();
