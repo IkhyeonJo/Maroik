@@ -533,6 +533,7 @@ namespace Maroik.WebSite.Controllers
                     Deleted = item.Deleted
                 });
             }
+            accountOutputViewModels = accountOutputViewModels.OrderBy(m => m.Email).ThenBy(m => m.Nickname).ThenByDescending(m => m.Created).ThenByDescending(m => m.Updated).ToList();
             #endregion
 
             var stream = new MemoryStream();
