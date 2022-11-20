@@ -341,6 +341,9 @@ namespace Maroik.WebSite.Controllers
                     Deleted = item.Deleted
                 });
             }
+
+            assetOutputViewModels = assetOutputViewModels.OrderBy(m => m.ProductName).ToList();
+
             #endregion
 
             var stream = new MemoryStream();
