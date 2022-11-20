@@ -1384,6 +1384,8 @@ namespace Maroik.WebSite.Controllers
             }
             #endregion
 
+            menuOutputViewModels = menuOutputViewModels.OrderByDescending(m => m.Id).ThenByDescending(m => m.CategoryId).ToList();
+
             var stream = new MemoryStream();
 
             using (var package = new ExcelPackage(stream))
