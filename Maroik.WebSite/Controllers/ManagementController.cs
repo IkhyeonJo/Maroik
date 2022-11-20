@@ -952,7 +952,7 @@ namespace Maroik.WebSite.Controllers
                 }
                 #endregion
 
-                var result = menuOutputViewModels.AsQueryable();
+                var result = menuOutputViewModels.OrderByDescending(m => m.Id).ThenByDescending(m => m.CategoryId).AsQueryable();
                 return PartialView("_MenuGrid", result);
             }
 
