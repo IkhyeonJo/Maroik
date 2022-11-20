@@ -387,7 +387,7 @@ namespace Maroik.WebSite.Controllers
                 }
                 #endregion
 
-                var result = accountOutputViewModels.AsQueryable();
+                var result = accountOutputViewModels.OrderBy(m => m.Email).ThenBy(m => m.Nickname).ThenByDescending(m => m.Created).ThenByDescending(m => m.Updated).AsQueryable();
                 return PartialView("_AccountGrid", result);
             }
             return View();
