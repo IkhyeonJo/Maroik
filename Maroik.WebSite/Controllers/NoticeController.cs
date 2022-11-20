@@ -582,6 +582,7 @@ namespace Maroik.WebSite.Controllers
                     Expired = item.MaturityDate.Subtract(currentDate).TotalDays < 0
                 });
             }
+            fixedIncomeOutputViewModels = fixedIncomeOutputViewModels.OrderByDescending(a => a.Expired).ThenByDescending(m => m.Noticed).ThenByDescending(a => a.Created).ThenByDescending(a => a.Updated).ToList();
             #endregion
 
             var stream = new MemoryStream();
@@ -1339,6 +1340,7 @@ namespace Maroik.WebSite.Controllers
                     Expired = item.MaturityDate.Subtract(currentDate).TotalDays < 0
                 });
             }
+            fixedExpenditureOutputViewModels = fixedExpenditureOutputViewModels.OrderByDescending(a => a.Expired).ThenByDescending(m => m.Noticed).ThenByDescending(a => a.Created).ThenByDescending(a => a.Updated).ToList();
             #endregion
 
             var stream = new MemoryStream();
