@@ -466,18 +466,6 @@
     }
     else if (loginedAccount.Role == Role.Anonymous)
     {
-        if (currentCulture == "ko-KR")
-        {
-            <script src="~/anonymous/custom/Forum/FreeForum/js/ko-KR-init.js" asp-append-version="true"></script>
-        }
-        else if (currentCulture == "en-US")
-        {
-            <script src="~/anonymous/custom/Forum/FreeForum/js/en-US-init.js" asp-append-version="true"></script>
-        }
-        else
-        {
-
-        }
         <script src="~/anonymous/custom/Forum/FreeForum/js/site.js" asp-append-version="true"></script>
     }
     else
