@@ -76,6 +76,11 @@ builder.Services.AddSession(options =>
 
 builder.Services.AddSingleton<IConfiguration>(builder.Configuration);
 builder.Services.AddResponseCaching(); // For HTTP Header Setting 
+builder.Services.AddHsts(options => // https://blog.elmah.io/the-asp-net-core-security-headers-guide/
+{
+    options.IncludeSubDomains = true;
+    options.MaxAge = TimeSpan.FromDays(365);
+});
 
 #region Multi-Language
 builder.Services.AddLocalization(opt => { opt.ResourcesPath = "Resources"; });
@@ -111,16 +116,20 @@ var app = builder.Build();
 //예외 처리기 미들웨어(UseExceptionHandler)는 다음 미들웨어에서 발생한 예외를 포착합니다.
 //HSTS(HTTP Strict Transport Security Protocol) 미들웨어(UseHsts)는 Strict-Transport - Security헤더를 추가합니다.
 
-if (!app.Environment.IsDevelopment())
-{
-    app.UseDeveloperExceptionPage();
-}
-else
-{
-    app.UseExceptionHandler("/Exception/Error");
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
-    app.UseHsts();
-}
+//if (!app.Environment.IsDevelopment())
+//{
+//    app.UseDeveloperExceptionPage();
+//}
+//else
+//{
+//    app.UseExceptionHandler("/Exception/Error");
+//    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
+//    app.UseHsts();
+//}
+
+app.UseExceptionHandler("/Exception/Error");
+// The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
+app.UseHsts();
 
 app.UseRewriter(new RewriteOptions()
    .AddRedirectToWwwPermanent()
@@ -240,6 +249,14 @@ app.Use(async (context, next) =>
     context.Response.Headers[Microsoft.Net.Http.Headers.HeaderNames.Vary] =
         new string[] { "Accept-Encoding" };
 
+    #region Security Headers [https://blog.elmah.io/the-asp-net-core-security-headers-guide/]
+    context.Response.Headers.Add("X-Frame-Options", "DENY");
+    context.Response.Headers.Add("X-Xss-Protection", "1; mode=block");
+    context.Response.Headers.Add("X-Content-Type-Options", "nosniff");
+    context.Response.Headers.Add("Referrer-Policy", "no-referrer");
+    context.Response.Headers.Add("X-Permitted-Cross-Domain-Policies", "none");
+    context.Response.Headers.Add("Permissions-Policy", "accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()");
+    #endregion
     await next();
 });
 #endregion
