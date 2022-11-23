@@ -29,8 +29,8 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     @*Prevent Web Cache*@
     @*<meta http-equiv="Expires" content="-1">
-        <meta http-equiv="Pragma" content="no-cache">
-        <meta http-equiv="Cache-Control" content="No-Cache">*@
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Cache-Control" content="No-Cache">*@
     @*Prevent Web Cache*@
     <title>Maroik WebSite</title>
 
@@ -173,13 +173,13 @@
         @*<!-- Toastr -->*@
         <script src="~/admin/plugins/toastr/toastr.min.js" asp-append-version="true"></script>
         @*
-            <!-- OPTIONAL SCRIPTS -->
-            <script src="~/plugins/chart.js/Chart.min.js"></script>
-            <!-- AdminLTE for demo purposes -->
-            <script src="~/dist/js/demo.js"></script>
-            <!-- AdminLTE dashboard demo (This is only for demo purposes) -->
-            <script src="~/dist/js/pages/dashboard3.js"></script>
-        *@
+    <!-- OPTIONAL SCRIPTS -->
+    <script src="~/plugins/chart.js/Chart.min.js"></script>
+    <!-- AdminLTE for demo purposes -->
+    <script src="~/dist/js/demo.js"></script>
+    <!-- AdminLTE dashboard demo (This is only for demo purposes) -->
+    <script src="~/dist/js/pages/dashboard3.js"></script>
+    *@
         @*<!-- ChangeCulture.js -->*@
         <script src="~/admin/custom/_Layout/js/site.js" asp-append-version="true"></script>
         @*<!-- summernote.js -->*@
@@ -230,22 +230,22 @@
     }
     <div class="wrapper">
 
-        
+
         @*<!-- Preloader -->*@
         @*
         <div class="preloader flex-column justify-content-center align-items-center">
-            @if (loginedAccount.Role == Role.Admin)
-            {
-                <img class="animation__wobble" src="~/admin/dist/img/AdminLTELogo.png" alt="AdminLTELogo" height="60" width="60">
-            }
-            else if (loginedAccount.Role == Role.User)
-            {
-                <img class="animation__wobble" src="~/user/dist/img/AdminLTELogo.png" alt="AdminLTELogo" height="60" width="60">
-            }
-            else if (loginedAccount.Role == Role.Anonymous)
-            {
-                <img class="animation__wobble" src="~/anonymous/dist/img/AdminLTELogo.png" alt="AdminLTELogo" height="60" width="60">
-            }
+        @if (loginedAccount.Role == Role.Admin)
+        {
+        <img class="animation__wobble" src="~/admin/dist/img/AdminLTELogo.png" alt="AdminLTELogo" height="60" width="60">
+        }
+        else if (loginedAccount.Role == Role.User)
+        {
+        <img class="animation__wobble" src="~/user/dist/img/AdminLTELogo.png" alt="AdminLTELogo" height="60" width="60">
+        }
+        else if (loginedAccount.Role == Role.Anonymous)
+        {
+        <img class="animation__wobble" src="~/anonymous/dist/img/AdminLTELogo.png" alt="AdminLTELogo" height="60" width="60">
+        }
         </div>
         *@
 
