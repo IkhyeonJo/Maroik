@@ -262,6 +262,7 @@ app.Use(async (context, next) =>
     context.Response.Headers.Add("Referrer-Policy", "no-referrer");
     context.Response.Headers.Add("X-Permitted-Cross-Domain-Policies", "none");
     context.Response.Headers.Add("Permissions-Policy", "accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()");
+    context.Response.Headers.Add("Content-Security-Policy", "default-src 'self' 'unsafe-inline'"); // unsafe-inline은 기존 코드 때문에 작성한 것. 기존 코드 전부 갈아 엎는 작업 하기 않는 이상 unsafe-inline을 써야 함. [https://csper.io/blog/no-more-unsafe-inline]
     #endregion
     await next();
 });
