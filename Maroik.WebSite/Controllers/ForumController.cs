@@ -442,7 +442,35 @@ namespace Maroik.WebSite.Controllers
                 #region 검색어 로직
                 if (searchType == "Title" && !string.IsNullOrEmpty(searchText))
                 {
-                    freeBoards = freeBoards.Where(a => a.Title.Contains(searchText));
+                    bool isAccountSessionExist = HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+
+                    if (isAccountSessionExist) // 로그인이 되어 있다면
+                    {
+                        var loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)); // Get Session
+
+                        if (loginedAccount.Role == Role.Admin) // 관리자는 모든 게시물을 볼 수 있음
+                        {
+                            freeBoards = freeBoards.Where(a => a.Title.Contains(searchText));
+                        }
+                        else if (loginedAccount.Role == Role.User) // 사용자는 보통 글 + 자신이 쓴 비밀글만 볼 수 있음
+                        {
+                            var searchFreeBoards = new List<Board>();
+                            var noLockedFreeBoards = freeBoards.Where(a => a.Title.Contains(searchText)).Where(a => !a.Locked).ToList();
+                            var myLockedFreeBoards = freeBoards.Where(a => a.Title.Contains(searchText)).Where(a => a.Locked && a.Writer == loginedAccount.Nickname).ToList();
+                            searchFreeBoards.AddRange(noLockedFreeBoards);
+                            searchFreeBoards.AddRange(myLockedFreeBoards);
+
+                            freeBoards = searchFreeBoards;
+                        }
+                        else // 로그인 시, Admin 또는 User 권한이 없다면 버그임
+                        {
+
+                        }
+                    }
+                    else // 로그인이 되지 않았다면
+                    {
+                        freeBoards = freeBoards.Where(a => a.Title.Contains(searchText)).Where(a => !a.Locked); // 비 로그인 시, 비밀글은 검색 되지 않도록 해야함
+                    }
                 }
                 else if (searchType == "Writer" && !string.IsNullOrEmpty(searchText))
                 {
