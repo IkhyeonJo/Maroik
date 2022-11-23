@@ -269,9 +269,7 @@
                 }
                 <script src="~/admin/js/mvc-grid/mvc-grid-attribute.js" asp-append-version="true"></script>
 
-                <script>
-                    document.querySelectorAll(".mvc-grid").forEach(element => new MvcGrid(element));
-                </script>
+                <script src="~/admin/js/mvc-grid/mvc-grid.js" asp-append-version="true"></script>
             }
             else if (loginedAccount.Role == Role.User) @*nonfactors.grid.mvc6\6.2.4*@
             {
@@ -287,9 +285,7 @@
                 }
                 <script src="~/user/js/mvc-grid/mvc-grid-attribute.js" asp-append-version="true"></script>
 
-                <script>
-                    document.querySelectorAll(".mvc-grid").forEach(element => new MvcGrid(element));
-                </script>
+                <script src="~/user/js/mvc-grid/mvc-grid.js" asp-append-version="true"></script>
             }
             else if (loginedAccount.Role == Role.Anonymous)
             {
@@ -305,9 +301,7 @@
                 }
                 <script src="~/anonymous/js/mvc-grid/mvc-grid-attribute.js" asp-append-version="true"></script>
 
-                <script>
-                    document.querySelectorAll(".mvc-grid").forEach(element => new MvcGrid(element));
-                </script>
+                <script src="~/anonymous/js/mvc-grid/mvc-grid.js" asp-append-version="true"></script>
             }
 
             @await RenderSectionAsync("Scripts", required: false) @* Model Only [Require] 이런거 모델 Model.IsValid 이런거 쓸 때 쓰는 자바스크립트임 aspnetcore를 위한 *@
