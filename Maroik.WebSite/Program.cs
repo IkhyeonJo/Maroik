@@ -14,6 +14,7 @@ using Maroik.Common.DataAccess.Models;
 using Newtonsoft.Json;
 using System.Text;
 using Microsoft.AspNetCore.Rewrite;
+using Microsoft.AspNetCore.CookiePolicy;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -106,7 +107,6 @@ builder.Services.AddControllersWithViews(options =>
 });
 
 var app = builder.Build();
-
 //1.Exception / error handling
 
 //앱이 개발환경에서 실행되는 경우
@@ -126,6 +126,12 @@ var app = builder.Build();
 //    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
 //    app.UseHsts();
 //}
+
+app.UseCookiePolicy(new CookiePolicyOptions
+{
+    HttpOnly = HttpOnlyPolicy.Always,
+    Secure = CookieSecurePolicy.Always,
+});
 
 app.UseExceptionHandler("/Exception/Error");
 // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
