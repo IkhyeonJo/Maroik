@@ -43,11 +43,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "4.Deploy", "4.Deploy", "{F5
 		UnDeploy.sh = UnDeploy.sh
 	EndProjectSection
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Maroik.Mail", "Maroik.Mail", "{F99440EB-0377-4BBF-9881-7C4F200DFE58}"
-	ProjectSection(SolutionItems) = preProject
-		Maroik.Mail\ReadMe.txt = Maroik.Mail\ReadMe.txt
-	EndProjectSection
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -184,7 +179,6 @@ Global
 		{3B95D223-B964-4CFA-8EDD-D19226FEEC66} = {02764078-45D4-4634-95B1-CF053BD2EA45}
 		{33AA9A81-0AE5-4E8D-A271-14E060D054F9} = {02764078-45D4-4634-95B1-CF053BD2EA45}
 		{0AA7FC81-1683-4633-AF53-7CECD7DF5AD8} = {E40D9B8F-9C6B-4656-A72A-6DD5C83DA7F2}
-		{F99440EB-0377-4BBF-9881-7C4F200DFE58} = {CD016BBE-CCB8-48AF-B586-330D23431A8A}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {AF88D563-ED64-4D2E-8F76-E82455462128}

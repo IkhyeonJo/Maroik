@@ -88,33 +88,6 @@ networks:
        backend:
 
 services:
-    mail:
-      image: mailhog/mailhog
-      container_name: Maroik.Mail
-      networks:
-        - backend
-      ports:
-        - 1025:1025 # SMTP
-        - 8025:8025 # MailHog web interface
-      environment:
-        - MH_STORAGE=maildir
-        - MH_UI_BIND_ADDR=0.0.0.0:8025
-        - MH_USERNAME=admin@maroik.com
-        - MH_PASSWORD=***REMOVED***
-        - MH_SMTP_TLS_AUTO=true
-        - MH_SMTP_AUTH_USERNAME=admin@maroik.com
-        - MH_SMTP_AUTH_PASSWORD=***REMOVED***
-        - MH_SMTP_FROM=maroik.com
-        - MH_SMTP_HOST=smtp.maroik.com
-        - MH_SMTP_PORT=1025
-        - MH_MAILDIR_PATH=/maildata/Maroik.Mail
-      hostname: smtp.maroik.com
-      domainname: maroik.com
-      volumes:
-        - ./Maroik.WebSite/:/https:ro
-        - ./maildata/Maroik.Mail:/maildata/Maroik.Mail
-      restart: always
-
     mariadb:
         image: "mariadb:10.9.2"
         container_name: Maroik.MariaDB
