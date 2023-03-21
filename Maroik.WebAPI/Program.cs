@@ -136,10 +136,16 @@ if (app.Environment.IsDevelopment())
     app.UseDeveloperExceptionPage();
 }
 
-app.UseRewriter(new RewriteOptions()
-   .AddRedirectToWwwPermanent()
-   .AddRedirectToHttpsPermanent()
-);
+#region 도메인 있을 때, 사용
+//app.UseRewriter(new RewriteOptions()
+//   .AddRedirectToWwwPermanent()
+//   .AddRedirectToHttpsPermanent()
+//);
+#endregion
+
+#region 도메인 없을 때, 사용
+app.UseHttpsRedirection();
+#endregion
 
 app.UseSwagger();
 app.UseSwaggerUI(c =>
