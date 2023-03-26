@@ -97,7 +97,9 @@ C:\Program Files\MariaDB 10.6\data\my.ini에서
 
 [cd .\Maroik.Common.DataAccess] 명령어를 통해 Maroik.Common.DataAccess로 이동
 
-[dotnet tool install --global dotnet-ef]
+밑 코드 실행
+
+dotnet tool install --global dotnet-ef
 
 밑 코드를 ApplicationDbContext.cs file에 복사 & 붙여넣기 할 것
 
@@ -106,19 +108,23 @@ protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
             => optionsBuilder.UseMySql("server=localhost;port=3306;userid=root;password=***REMOVED***;database=Maroik", Microsoft.EntityFrameworkCore.ServerVersion.Parse("10.9.2-mariadb"));
 
 
-Once installed we will code first approach and create a migration of our entities which will then be pushed to our database. 
+밑 코드 실행
 
-[dotnet ef migrations add InitialCreate]
+dotnet ef migrations add InitialCreate
 
-Migration 폴더 만들어진 거 확인하고
+Migration 폴더 만들어진 거 확인하고 밑 코드 실행
 
-[dotnet ef database update]
+dotnet ef database update
+
+그런 다음 DB 확인하면 테이블들이 형성되어 있는 것을 볼 수 있음
 
 # Docker DB 설정 자동화 작업 [DB First]
 
 먼저 DB 깨끗이 다 지우고 [Maroik.Common.DataAccess]에 있는 새롭게 짜여진 DB Script (_MariaDBSql_Init_Script)로 다 복원 후 [로컬 DB에 할 것!!] [그 appsettings.json도 로컬로 맞추고]
 
-[Package Manager Console] 창 띄우고 [cd .\Maroik.WebSite] 명령어를 통해 Maroik.WebSite로 이동
+[Package Manager Console] 창 띄우고 Default project를 [1.Common\Maroik.Common.DataAccess]로 맞추고
+
+[cd .\Maroik.Common.DataAccess] 명령어를 통해 Maroik.Common.DataAccess로 이동
 
 dotnet ef dbcontext scaffold "server=localhost;port=3306;userid=root;password=***REMOVED***;database=maroik;" "Pomelo.EntityFrameworkCore.MySql" -o ./Models11 -f
 
