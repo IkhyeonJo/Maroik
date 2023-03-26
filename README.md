@@ -23,6 +23,7 @@ Docker, AdminLTE, MariaDB, Session Login, RESTful API, HTTPS etc.
 
 # if you want publish this website, you must register your specific domain!! [www.[domain] & [domain]]
 
+# Depending on whether or not the domain exists, look at the comments in Program.cs and set it according to the environment.
 
 ☞ 프로젝트명 : 스마트 홈 IoT & 가계부
 
