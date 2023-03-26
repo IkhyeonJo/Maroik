@@ -23,13 +23,6 @@ Docker, AdminLTE, MariaDB, Session Login, RESTful API, HTTPS etc.
 
 # if you want publish this website, you must register your specific domain!! [www.[domain] & [domain]]
 
-# if you don't wanna register domain, please comment this code below.
-
-app.UseRewriter(new RewriteOptions()
-   .AddRedirectToWwwPermanent()
-   .AddRedirectToHttpsPermanent()
-);
-
 
 ☞ 프로젝트명 : 스마트 홈 IoT & 가계부
 
