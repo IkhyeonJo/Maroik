@@ -118,7 +118,7 @@ dotnet ef database update
 
 그런 다음 DB 확인하면 테이블들이 ApplicationDbContext.cs file에 따라 형성되어 있는 것을 볼 수 있음
 
-# Docker DB 설정 자동화 작업 [DB First]
+# [DB First]
 
 먼저 DB 깨끗이 다 지우고 [Maroik.Common.DataAccess]에 있는 새롭게 짜여진 DB Script (_MariaDBSql_Init_Script)로 다 복원 후 [로컬 DB에 할 것!!] [그 appsettings.json도 로컬로 맞추고]
 
