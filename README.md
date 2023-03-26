@@ -31,7 +31,7 @@ Docker, AdminLTE, MariaDB, Session Login, RESTful API, HTTPS etc.
 　　　　　　　　　　　nonfactor-grid, EntityFrameWork Core, Xamarin Forms, REST API, GitHub Desktop, GitHub
 
 # Note
-## 메일로 날라오는 Maroik.WebSite Upload File Backup, Maroik MariaDB SQL Backup은 서버 백업본아므로 해당 프로젝트의 각각 \Maroik\Maroik.WebSite\wwwroot\upload, \Maroik\Maroik.MariaDB\SQL_Init_Script 폴더에 덮어쓰기하면 된다.
+## 메일로 날라오는 Maroik.WebSite Upload File Backup, Maroik MariaDB SQL Backup은 서버 백업본이므로 해당 프로젝트의 각각 \Maroik\Maroik.WebSite\wwwroot\upload, \Maroik\Maroik.MariaDB\SQL_Init_Script 폴더에 덮어쓰기하면 된다.
 
 # Login Account
 
