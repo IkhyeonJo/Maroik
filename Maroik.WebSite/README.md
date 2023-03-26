@@ -91,10 +91,27 @@ C:\Program Files\MariaDB 10.6\data\my.ini에서
 
 4) 이렇게 설정이되면 mysqldump 할 때 대소문자 구분하여 백업 받을 수 있고, 백업 파일을 만들 수 있게 된다.
 
-[Code First]
+# [Code First Migration]
+
+.NET EF Tool 
+
+.NET’s Entity Framework Core provides a very convenient way to achieve it. First install the dotnet-ef cli tool by executing the below command. 
+
+[dotnet tool install --global dotnet-ef]
+
+add this code to ApplicationDbContext.cs file
+
+protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see http://go.microsoft.com/fwlink/?LinkId=723263.
+            => optionsBuilder.UseMySql("server=localhost;port=3306;userid=root;password=***REMOVED***;database=Maroik", Microsoft.EntityFrameworkCore.ServerVersion.Parse("10.9.2-mariadb"));
 
 
-#Docker DB 설정 자동화 작업 [DB First]
+Once installed we will code first approach and create a migration of our entities which will then be pushed to our database. 
+
+[dotnet ef migrations add InitialCreate]
+[dotnet ef database update]
+
+# Docker DB 설정 자동화 작업 [DB First]
 
 먼저 DB 깨끗이 다 지우고 [Maroik.Common.DataAccess]에 있는 새롭게 짜여진 DB Script (_MariaDBSql_Init_Script)로 다 복원 후 [로컬 DB에 할 것!!] [그 appsettings.json도 로컬로 맞추고]
 
