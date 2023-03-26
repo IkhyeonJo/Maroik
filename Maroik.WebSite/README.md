@@ -116,7 +116,7 @@ Migration 폴더 만들어진 거 확인하고 밑 코드 실행
 
 dotnet ef database update
 
-그런 다음 DB 확인하면 테이블들이 형성되어 있는 것을 볼 수 있음
+그런 다음 DB 확인하면 테이블들이 ApplicationDbContext.cs file에 따라 형성되어 있는 것을 볼 수 있음
 
 # Docker DB 설정 자동화 작업 [DB First]
 
