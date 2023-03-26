@@ -91,13 +91,14 @@ C:\Program Files\MariaDB 10.6\data\my.ini에서
 
 4) 이렇게 설정이되면 mysqldump 할 때 대소문자 구분하여 백업 받을 수 있고, 백업 파일을 만들 수 있게 된다.
 
+[Code First]
 
 
-#Docker DB 설정 자동화 작업
+#Docker DB 설정 자동화 작업 [DB First]
 
 먼저 DB 깨끗이 다 지우고 [Maroik.Common.DataAccess]에 있는 새롭게 짜여진 DB Script (_MariaDBSql_Init_Script)로 다 복원 후 [로컬 DB에 할 것!!] [그 appsettings.json도 로컬로 맞추고]
 
-[Package Manager Console] 창 띄우고 [cd .\Maroik.WebSite] 명령어를 통해 Maroik.WebSite로 이동 (ApplicationDbContext가 거기 있으므로) 
+[Package Manager Console] 창 띄우고 [cd .\Maroik.WebSite] 명령어를 통해 Maroik.WebSite로 이동
 
 dotnet ef dbcontext scaffold "server=localhost;port=3306;userid=root;password=***REMOVED***;database=maroik;" "Pomelo.EntityFrameworkCore.MySql" -o ./Models11 -f
 
