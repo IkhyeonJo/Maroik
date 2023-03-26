@@ -93,13 +93,13 @@ C:\Program Files\MariaDB 10.6\data\my.ini에서
 
 # [Code First Migration]
 
-.NET EF Tool 
+먼저 DB 깨끗이 다 지우고 [Package Manager Console] 창 띄우고 Default project를 [1.Common\Maroik.Common.DataAccess]로 맞추고 
 
-.NET’s Entity Framework Core provides a very convenient way to achieve it. First install the dotnet-ef cli tool by executing the below command. 
+[cd .\Maroik.Common.DataAccess] 명령어를 통해 Maroik.Common.DataAccess로 이동
 
 [dotnet tool install --global dotnet-ef]
 
-add this code to ApplicationDbContext.cs file
+밑 코드를 ApplicationDbContext.cs file에 복사 & 붙여넣기 할 것
 
 protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 #warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see http://go.microsoft.com/fwlink/?LinkId=723263.
@@ -109,6 +109,9 @@ protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 Once installed we will code first approach and create a migration of our entities which will then be pushed to our database. 
 
 [dotnet ef migrations add InitialCreate]
+
+Migration 폴더 만들어진 거 확인하고
+
 [dotnet ef database update]
 
 # Docker DB 설정 자동화 작업 [DB First]
