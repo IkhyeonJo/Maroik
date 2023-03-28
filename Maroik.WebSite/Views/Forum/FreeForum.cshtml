@@ -323,10 +323,10 @@
                             @foreach (var board in Model.Boards)
                             {
                                 var commentsOfSelectedBoard = await commentRepository.GetOneBoardComments(board.Id);
-                                board.Comments = commentsOfSelectedBoard.Where(m => m.Deleted == false).ToList();
+                                var commentsOfUndeletedSelectedBoard = commentsOfSelectedBoard.Where(m => m.Deleted == false).ToList();
 
                                 var attachedFiles = await attachedFileRepository.GetAllAsync();
-                                board.AttachedFiles = attachedFiles.Where(m => m.BoardId == board.Id).Where(m => !string.IsNullOrEmpty(m.Name)).ToList();
+                                var attachedFilesWithName = attachedFiles.Where(m => m.BoardId == board.Id).Where(m => !string.IsNullOrEmpty(m.Name)).ToList();
 
                                 <tr>
                                     <td>@board.Id</td>
@@ -334,7 +334,7 @@
                                     {
                                         @if (loginedAccount.Nickname == board.Writer || loginedAccount.Role == Role.Admin)@*작성자 또는 관리자인 경우*@
                                         {
-                                            <td><i class="fa fa-lock-open" aria-hidden="true"></i> @Html.ActionLink($"{board.Title} [{board.Comments.Count}]", "FreeForum", new {method = "detail", boardId = board.Id, page = Model.Pager.CurrentPage})</td>
+                                            <td><i class="fa fa-lock-open" aria-hidden="true"></i> @Html.ActionLink($"{board.Title} [{commentsOfUndeletedSelectedBoard.Count}]", "FreeForum", new {method = "detail", boardId = board.Id, page = Model.Pager.CurrentPage})</td>
                                         }
                                         else
                                         {
@@ -343,7 +343,7 @@
                                     }
                                     else
                                     {
-                                        <td>@Html.ActionLink($"{board.Title} [{board.Comments.Count}]", "FreeForum", new {method = "detail", boardId = board.Id, page = Model.Pager.CurrentPage})</td>
+                                        <td>@Html.ActionLink($"{board.Title} [{commentsOfUndeletedSelectedBoard.Count}]", "FreeForum", new {method = "detail", boardId = board.Id, page = Model.Pager.CurrentPage})</td>
                                     }
 
                                     @if (accounts.Where(m => m.Role == Role.Admin).Where(m => m.Nickname == board.Writer).FirstOrDefault() != null) @*관리자가 쓴 게시물인 경우*@
@@ -358,7 +358,7 @@
 
                                     <td>@TimeZoneInfo.ConvertTimeBySystemTimeZoneId(board.Created, OSTimeZone.DestinationTimeZoneId)</td>
                                     <td>@board.Views</td>
-                                    @if (board.AttachedFiles.Count != 0)
+                                    @if (attachedFilesWithName.Count != 0)
                                     {
                                         <td><i class="fas fa-paperclip"></i></td>
                                     }

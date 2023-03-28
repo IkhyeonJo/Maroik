@@ -186,6 +186,7 @@ namespace Maroik.Common.DataAccess.Data
                     .HasComment("생성일");
                 entity.Property(e => e.Deleted).HasComment("삭제 여부");
                 entity.Property(e => e.Locked).HasComment("잠금 여부");
+                entity.Property(e => e.Noticed).HasComment("공지 여부");
                 entity.Property(e => e.Title)
                     .IsRequired()
                     .HasMaxLength(255)
