@@ -48,6 +48,16 @@
                         <textarea name="writeBoardContent" id="writeBoardContent" maxlength="16384"></textarea> @*maxlength: 16KB*@
                     </div>
 
+                    @if (loginedAccount.Role == Role.Admin)
+                    {
+                        <div class="form-group">
+                            <div class="custom-control custom-checkbox">
+                                <input class="custom-control-input" type="checkbox" id="writeBoardNoticed" />
+                                <label for="writeBoardNoticed" class="custom-control-label">@localizer["Noticed"].Value</label>
+                            </div>
+                        </div>
+                    }
+                    
                     <div class="form-group">
                         <div class="custom-control custom-checkbox">
                             <input class="custom-control-input" type="checkbox" id="writeBoardLocked" />
