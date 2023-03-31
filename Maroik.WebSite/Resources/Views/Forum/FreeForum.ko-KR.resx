@@ -150,6 +150,9 @@
   <data name="Modify" xml:space="preserve">
     <value>수정</value>
   </data>
+  <data name="Notice" xml:space="preserve">
+    <value>공지</value>
+  </data>
   <data name="Noticed" xml:space="preserve">
     <value>공지</value>
   </data>

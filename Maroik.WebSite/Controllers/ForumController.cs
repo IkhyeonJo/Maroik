@@ -456,7 +456,7 @@ namespace Maroik.WebSite.Controllers
 
                 #region 관련된 모든 게시판 데이터 가져오는 로직
                 var freeBoards = await boardRepository.GetOneTypeBoards("Free");
-                freeBoards = freeBoards.Where(m => m.Deleted == false).OrderByDescending(a => a.Id);
+                freeBoards = freeBoards.Where(m => m.Deleted == false && m.Noticed == false).OrderByDescending(a => a.Id);
                 #endregion
 
                 #region 검색어 로직
@@ -499,6 +499,10 @@ namespace Maroik.WebSite.Controllers
                 #endregion
 
                 var freeForumOutputViewModel = new FreeForumOutputViewModel();
+
+                #region 공지사항
+                freeForumOutputViewModel.NoticeBoards = (await boardRepository.GetOneTypeBoards("Free")).Where(m => m.Deleted == false && m.Noticed == true).OrderByDescending(a => a.Id);
+                #endregion
 
                 #region 게시판 목록
                 freeForumOutputViewModel.Method = "list";

@@ -150,6 +150,9 @@
   <data name="Modify" xml:space="preserve">
     <value>Modify</value>
   </data>
+  <data name="Notice" xml:space="preserve">
+    <value>Notice</value>
+  </data>
   <data name="Noticed" xml:space="preserve">
     <value>Noticed</value>
   </data>

@@ -15,6 +15,8 @@ namespace Maroik.WebSite.Models.ViewModels.Forum
 
         public Pager Pager { get; set; }
 
+        public IEnumerable<Board> NoticeBoards { get; set; } = new List<Board>();
+
         public IEnumerable<Board> Boards { get; set; } = new List<Board>();
 
         public BoardOutputViewModel BoardOutputViewModel { get; set; }
