@@ -48,6 +48,16 @@
                         <textarea name="writeBoardContent" id="writeBoardContent" maxlength="16384"></textarea> @*maxlength: 16KB*@
                     </div>
 
+                    @if (loginedAccount.Role == Role.Admin)
+                    {
+                        <div class="form-group">
+                            <div class="custom-control custom-checkbox">
+                                <input class="custom-control-input" type="checkbox" id="writeBoardNoticed" />
+                                <label for="writeBoardNoticed" class="custom-control-label">@localizer["Noticed"].Value</label>
+                            </div>
+                        </div>
+                    }
+
                     <div class="form-group">
                         <div class="custom-control custom-checkbox">
                             <input class="custom-control-input" type="checkbox" id="writeBoardLocked" />
@@ -320,13 +330,46 @@
                             </tr>
                         </thead>
                         <tbody>
+                            @foreach (var noticeBoard in Model.NoticeBoards)
+                            {
+                                var commentsOfUndeletedSelectedBoard = (await commentRepository.GetOneBoardComments(noticeBoard.Id)).Where(m => m.Deleted == false).ToList();
+                                var attachedFilesWithName = (await attachedFileRepository.GetAllAsync()).Where(m => m.BoardId == noticeBoard.Id).Where(m => !string.IsNullOrEmpty(m.Name)).ToList();
+
+                                <tr style="background-color: lightgray;">
+                                    <td style="color:green;font-weight:bold;">@localizer["Notice"]</td>
+                                    @if (noticeBoard.Locked)
+                                    {
+                                        @if (loginedAccount.Nickname == noticeBoard.Writer || loginedAccount.Role == Role.Admin)@*작성자 또는 관리자인 경우*@
+                                        {
+                                            <td><i class="fa fa-lock-open" aria-hidden="true"></i>@Html.ActionLink($"{noticeBoard.Title} [{commentsOfUndeletedSelectedBoard.Count}]", "FreeForum", new {method = "detail", boardId = noticeBoard.Id, page = Model.Pager.CurrentPage}, new { style = "color: green; font-weight: bold;" })</td>
+                                        }
+                                        else
+                                        {
+                                            <td><i class="fa fa-lock" aria-hidden="true"></i><span style="font-weight:bold; color:green;"> @localizer["Only a writer and admin can see it."].Value</span></td>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <td>@Html.ActionLink($"{noticeBoard.Title} [{commentsOfUndeletedSelectedBoard.Count}]", "FreeForum", new {method = "detail", boardId = noticeBoard.Id, page = Model.Pager.CurrentPage}, new { style = "color: green; font-weight: bold;" })</td>
+                                    }
+
+                                    <td><span style="font-weight:bold; color:green;">@noticeBoard.Writer</span></td>
+                                    <td><span style="font-weight:bold; color:green;">@TimeZoneInfo.ConvertTimeBySystemTimeZoneId(noticeBoard.Created, OSTimeZone.DestinationTimeZoneId)</span></td>
+                                    <td><span style="font-weight:bold; color:green;">@noticeBoard.Views</span></td>
+                                    @if (attachedFilesWithName.Count != 0)
+                                    {
+                                        <td><span style="font-weight:bold; color:green;"><i class="fas fa-paperclip"></i></td>
+                                    }
+                                    else
+                                    {
+                                        <td></td>
+                                    }
+                                </tr>
+                            }
                             @foreach (var board in Model.Boards)
                             {
-                                var commentsOfSelectedBoard = await commentRepository.GetOneBoardComments(board.Id);
-                                var commentsOfUndeletedSelectedBoard = commentsOfSelectedBoard.Where(m => m.Deleted == false).ToList();
-
-                                var attachedFiles = await attachedFileRepository.GetAllAsync();
-                                var attachedFilesWithName = attachedFiles.Where(m => m.BoardId == board.Id).Where(m => !string.IsNullOrEmpty(m.Name)).ToList();
+                                var commentsOfUndeletedSelectedBoard = (await commentRepository.GetOneBoardComments(board.Id)).Where(m => m.Deleted == false).ToList();
+                                var attachedFilesWithName = (await attachedFileRepository.GetAllAsync()).Where(m => m.BoardId == board.Id).Where(m => !string.IsNullOrEmpty(m.Name)).ToList();
 
                                 <tr>
                                     <td>@board.Id</td>

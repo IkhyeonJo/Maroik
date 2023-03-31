@@ -95,18 +95,38 @@ namespace Maroik.WebSite.Controllers
                         if (isAccountSessionExist)
                         {
                             var loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)); // Get Session
-                            var board = new Board()
+                            var board = new Board();
+
+                            if (loginedAccount.Role == Role.Admin) // 관리자인 경우
                             {
-                                Type = "Free", // 자유게시판
-                                Title = boardInputViewModel.Title,
-                                Content = boardInputViewModel.Content,
-                                Writer = loginedAccount.Nickname,
-                                Created = DateTime.UtcNow,
-                                Updated = DateTime.UtcNow,
-                                Views = 0,
-                                Deleted = false,
-                                Locked = boardInputViewModel.Locked,
-                            };
+                                board.Type = "Free"; // 자유게시판
+                                board.Title = boardInputViewModel.Title;
+                                board.Content = boardInputViewModel.Content;
+                                board.Writer = loginedAccount.Nickname;
+                                board.Created = DateTime.UtcNow;
+                                board.Updated = DateTime.UtcNow;
+                                board.Views = 0;
+                                board.Deleted = false;
+                                board.Locked = boardInputViewModel.Locked;
+                                board.Noticed = boardInputViewModel.Noticed;
+                            }
+                            else if (loginedAccount.Role == Role.User) // 일반 사용자인 경우
+                            {
+                                board.Type = "Free"; // 자유게시판
+                                board.Title = boardInputViewModel.Title;
+                                board.Content = boardInputViewModel.Content;
+                                board.Writer = loginedAccount.Nickname;
+                                board.Created = DateTime.UtcNow;
+                                board.Updated = DateTime.UtcNow;
+                                board.Views = 0;
+                                board.Deleted = false;
+                                board.Locked = boardInputViewModel.Locked;
+                            }
+                            else // 비로그인 사용자인 경우
+                            {
+                                return Json(new { result = false, error = localizer["Please Login to write board"].Value });
+                            }
+
                             await boardRepository.WriteBoardAsync(board);
 
                             #region 첨부 파일 저장
@@ -436,7 +456,7 @@ namespace Maroik.WebSite.Controllers
 
                 #region 관련된 모든 게시판 데이터 가져오는 로직
                 var freeBoards = await boardRepository.GetOneTypeBoards("Free");
-                freeBoards = freeBoards.Where(m => m.Deleted == false).OrderByDescending(a => a.Id);
+                freeBoards = freeBoards.Where(m => m.Deleted == false && m.Noticed == false).OrderByDescending(a => a.Id);
                 #endregion
 
                 #region 검색어 로직
@@ -479,6 +499,10 @@ namespace Maroik.WebSite.Controllers
                 #endregion
 
                 var freeForumOutputViewModel = new FreeForumOutputViewModel();
+
+                #region 공지사항
+                freeForumOutputViewModel.NoticeBoards = (await boardRepository.GetOneTypeBoards("Free")).Where(m => m.Deleted == false && m.Noticed == true).OrderByDescending(a => a.Id);
+                #endregion
 
                 #region 게시판 목록
                 freeForumOutputViewModel.Method = "list";
