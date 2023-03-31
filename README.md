@@ -21,7 +21,7 @@ Docker, AdminLTE, MariaDB, Session Login, RESTful API, HTTPS etc.
 
 ## For more detail information, please see each project's README.md file
 
-# if you want publish this website, you must register your specific domain!! [www.[domain] & [domain]]
+# if you want publish this website, you must register your specific domain!! [www.[domain] & [domain]] in DNS Server!
 
 # Depending on whether or not the domain exists, look at the comments in Program.cs and set it according to the environment.
 
