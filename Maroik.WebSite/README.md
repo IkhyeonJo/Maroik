@@ -65,7 +65,7 @@ https://www.freecodecamp.org/news/how-to-use-html-to-open-link-in-new-tab/ // ta
 https://whitekeyboard.tistory.com/630
 (디버깅 & Data Migration 용) MariaDB Windows 로컬에 설치 시, 
 
-환경 MariaDB 10.6.5  ( x64, windows )
+환경 MariaDB 10.11.2  ( x64, windows )
 
 Windows에서 mysqldum를 하고 linux에 DB를 넣으면 테이블명이 소문자로 들어가는 문제를 종종 본 적이 있을 것이다.
 
