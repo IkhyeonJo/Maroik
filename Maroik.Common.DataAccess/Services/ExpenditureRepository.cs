@@ -40,7 +40,7 @@ namespace Maroik.Common.DataAccess.Services
                         @$"SELECT *
                             FROM Expenditure
                             WHERE 
-                            DATE_FORMAT(Created, '%Y-%m') = {yearMonth}
+                            DATE_FORMAT(DATE_ADD(Created, INTERVAL 9 HOUR), '%Y-%m') = {yearMonth}
                             AND AccountEmail = {email}"
                     ).ToListAsync();
         }
