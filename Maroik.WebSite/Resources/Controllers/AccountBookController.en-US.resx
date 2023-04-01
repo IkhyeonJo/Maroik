@@ -216,9 +216,6 @@
   <data name="Movables" xml:space="preserve">
     <value>Movables</value>
   </data>
-  <data name="MyAssetTransfer" xml:space="preserve">
-    <value>MyAssetTransfer</value>
-  </data>
   <data name="MyDepositAsset" xml:space="preserve">
     <value>MyDepositAsset</value>
   </data>

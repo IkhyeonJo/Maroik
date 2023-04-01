@@ -198,9 +198,6 @@
   <data name="MedicalExpenses" xml:space="preserve">
     <value>MedicalExpenses</value>
   </data>
-  <data name="MyAssetTransfer" xml:space="preserve">
-    <value>MyAssetTransfer</value>
-  </data>
   <data name="No fixedExpenditure exists" xml:space="preserve">
     <value>No fixedExpenditure exists</value>
   </data>

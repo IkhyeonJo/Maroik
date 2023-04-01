@@ -198,9 +198,6 @@
   <data name="MedicalExpenses" xml:space="preserve">
     <value>의료비</value>
   </data>
-  <data name="MyAssetTransfer" xml:space="preserve">
-    <value>내자산이체</value>
-  </data>
   <data name="No fixedExpenditure exists" xml:space="preserve">
     <value>고정 지출이 없습니다.</value>
   </data>

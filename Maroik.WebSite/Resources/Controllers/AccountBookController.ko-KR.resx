@@ -216,9 +216,6 @@
   <data name="Movables" xml:space="preserve">
     <value>동산</value>
   </data>
-  <data name="MyAssetTransfer" xml:space="preserve">
-    <value>내자산이체</value>
-  </data>
   <data name="MyDepositAsset" xml:space="preserve">
     <value>내입금자산</value>
   </data>
