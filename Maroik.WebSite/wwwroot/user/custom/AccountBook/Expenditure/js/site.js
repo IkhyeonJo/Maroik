@@ -71,7 +71,6 @@ function CreateFormShowExpenditureSubClassBySelectedExpenditureMainClass(createE
 
     if (createExpenditureMainClass.value == "RegularSavings") {
         $('#createExpenditureSubClass option[value=Deposit]').prop('disabled', true).prop('hidden', true);
-        $('#createExpenditureSubClass option[value=MyAssetTransfer]').prop('disabled', true).prop('hidden', true);
         $('#createExpenditureSubClass option[value=Investment]').prop('disabled', true).prop('hidden', true);
 
         $('#createExpenditureSubClass option[value=PublicPension]').prop('disabled', true).prop('hidden', true);
@@ -97,7 +96,6 @@ function CreateFormShowExpenditureSubClassBySelectedExpenditureMainClass(createE
         $("#createExpenditureSubClass option:selected").removeAttr("selected");
 
         $('#createExpenditureSubClass option[value=Deposit]').prop('disabled', false).prop('hidden', false).attr('selected', 'selected');
-        $('#createExpenditureSubClass option[value=MyAssetTransfer]').prop('disabled', false).prop('hidden', false);
         $('#createExpenditureSubClass option[value=Investment]').prop('disabled', false).prop('hidden', false);
 
         $("#createExpenditureSubClass").val("Deposit").change();
@@ -106,7 +104,6 @@ function CreateFormShowExpenditureSubClassBySelectedExpenditureMainClass(createE
     }
     else if (createExpenditureMainClass.value == "NonConsumerSpending") {
         $('#createExpenditureSubClass option[value=Deposit]').prop('disabled', true).prop('hidden', true);
-        $('#createExpenditureSubClass option[value=MyAssetTransfer]').prop('disabled', true).prop('hidden', true);
         $('#createExpenditureSubClass option[value=Investment]').prop('disabled', true).prop('hidden', true);
 
         $('#createExpenditureSubClass option[value=PublicPension]').prop('disabled', true).prop('hidden', true);
@@ -144,7 +141,6 @@ function CreateFormShowExpenditureSubClassBySelectedExpenditureMainClass(createE
     }
     else if (createExpenditureMainClass.value == "ConsumerSpending") {
         $('#createExpenditureSubClass option[value=Deposit]').prop('disabled', true).prop('hidden', true);
-        $('#createExpenditureSubClass option[value=MyAssetTransfer]').prop('disabled', true).prop('hidden', true);
         $('#createExpenditureSubClass option[value=Investment]').prop('disabled', true).prop('hidden', true);
 
         $('#createExpenditureSubClass option[value=PublicPension]').prop('disabled', true).prop('hidden', true);
@@ -191,7 +187,6 @@ function CreateFormShowExpenditureSubClassBySelectedExpenditureMainClass(createE
 function CreateFormShowExpenditureDivCreateExpenditureMyDepositAssetBySelectedExpenditureSubClass(createExpenditureSubClass) {
 
     if (createExpenditureSubClass.value == "Deposit" ||
-        createExpenditureSubClass.value == "MyAssetTransfer" ||
         createExpenditureSubClass.value == "Investment" ||
         createExpenditureSubClass.value == "PublicPension" ||
         createExpenditureSubClass.value == "DebtRepayment") {
@@ -300,7 +295,6 @@ function EditExpenditureGridRow(errorMessageSelectGridRow) {
 
                 if (data.expenditure.mainClass == "RegularSavings") {
                     $('#editExpenditureSubClass option[value=Deposit]').prop('disabled', true).prop('hidden', true);
-                    $('#editExpenditureSubClass option[value=MyAssetTransfer]').prop('disabled', true).prop('hidden', true);
                     $('#editExpenditureSubClass option[value=Investment]').prop('disabled', true).prop('hidden', true);
 
                     $('#editExpenditureSubClass option[value=PublicPension]').prop('disabled', true).prop('hidden', true);
@@ -326,14 +320,12 @@ function EditExpenditureGridRow(errorMessageSelectGridRow) {
                     $("#editExpenditureSubClass option:selected").removeAttr("selected");
 
                     $('#editExpenditureSubClass option[value=Deposit]').prop('disabled', false).prop('hidden', false);
-                    $('#editExpenditureSubClass option[value=MyAssetTransfer]').prop('disabled', false).prop('hidden', false);
                     $('#editExpenditureSubClass option[value=Investment]').prop('disabled', false).prop('hidden', false);
 
                     formEditExpenditure.find('select[id="editExpenditureSubClass"]').val(data.expenditure.subClass).change();
                 }
                 else if (data.expenditure.mainClass == "NonConsumerSpending") {
                     $('#editExpenditureSubClass option[value=Deposit]').prop('disabled', true).prop('hidden', true);
-                    $('#editExpenditureSubClass option[value=MyAssetTransfer]').prop('disabled', true).prop('hidden', true);
                     $('#editExpenditureSubClass option[value=Investment]').prop('disabled', true).prop('hidden', true);
 
                     $('#editExpenditureSubClass option[value=PublicPension]').prop('disabled', true).prop('hidden', true);
@@ -369,7 +361,6 @@ function EditExpenditureGridRow(errorMessageSelectGridRow) {
                 }
                 else if (data.expenditure.mainClass == "ConsumerSpending") {
                     $('#editExpenditureSubClass option[value=Deposit]').prop('disabled', true).prop('hidden', true);
-                    $('#editExpenditureSubClass option[value=MyAssetTransfer]').prop('disabled', true).prop('hidden', true);
                     $('#editExpenditureSubClass option[value=Investment]').prop('disabled', true).prop('hidden', true);
 
                     $('#editExpenditureSubClass option[value=PublicPension]').prop('disabled', true).prop('hidden', true);
@@ -411,7 +402,6 @@ function EditExpenditureGridRow(errorMessageSelectGridRow) {
                 }
 
                 if (data.expenditure.subClass == "Deposit" ||
-                    data.expenditure.subClass == "MyAssetTransfer" ||
                     data.expenditure.subClass == "Investment" ||
                     data.expenditure.subClass == "PublicPension" ||
                     data.expenditure.subClass == "DebtRepayment") {
@@ -457,7 +447,6 @@ function EditFormShowExpenditureSubClassBySelectedExpenditureMainClass(editExpen
 
     if (editExpenditureMainClass.value == "RegularSavings") {
         $('#editExpenditureSubClass option[value=Deposit]').prop('disabled', true).prop('hidden', true);
-        $('#editExpenditureSubClass option[value=MyAssetTransfer]').prop('disabled', true).prop('hidden', true);
         $('#editExpenditureSubClass option[value=Investment]').prop('disabled', true).prop('hidden', true);
 
         $('#editExpenditureSubClass option[value=PublicPension]').prop('disabled', true).prop('hidden', true);
@@ -483,7 +472,6 @@ function EditFormShowExpenditureSubClassBySelectedExpenditureMainClass(editExpen
         $("#editExpenditureSubClass option:selected").removeAttr("selected");
 
         $('#editExpenditureSubClass option[value=Deposit]').prop('disabled', false).prop('hidden', false).attr('selected', 'selected');
-        $('#editExpenditureSubClass option[value=MyAssetTransfer]').prop('disabled', false).prop('hidden', false);
         $('#editExpenditureSubClass option[value=Investment]').prop('disabled', false).prop('hidden', false);
 
         $("#editExpenditureSubClass").val("Deposit").change();
@@ -492,7 +480,6 @@ function EditFormShowExpenditureSubClassBySelectedExpenditureMainClass(editExpen
     }
     else if (editExpenditureMainClass.value == "NonConsumerSpending") {
         $('#editExpenditureSubClass option[value=Deposit]').prop('disabled', true).prop('hidden', true);
-        $('#editExpenditureSubClass option[value=MyAssetTransfer]').prop('disabled', true).prop('hidden', true);
         $('#editExpenditureSubClass option[value=Investment]').prop('disabled', true).prop('hidden', true);
 
         $('#editExpenditureSubClass option[value=PublicPension]').prop('disabled', true).prop('hidden', true);
@@ -530,7 +517,6 @@ function EditFormShowExpenditureSubClassBySelectedExpenditureMainClass(editExpen
     }
     else if (editExpenditureMainClass.value == "ConsumerSpending") {
         $('#editExpenditureSubClass option[value=Deposit]').prop('disabled', true).prop('hidden', true);
-        $('#editExpenditureSubClass option[value=MyAssetTransfer]').prop('disabled', true).prop('hidden', true);
         $('#editExpenditureSubClass option[value=Investment]').prop('disabled', true).prop('hidden', true);
 
         $('#editExpenditureSubClass option[value=PublicPension]').prop('disabled', true).prop('hidden', true);
@@ -577,7 +563,6 @@ function EditFormShowExpenditureSubClassBySelectedExpenditureMainClass(editExpen
 function EditFormShowExpenditureDivCreateExpenditureMyDepositAssetBySelectedExpenditureSubClass(editExpenditureSubClass) {
 
     if (editExpenditureSubClass.value == "Deposit" ||
-        editExpenditureSubClass.value == "MyAssetTransfer" ||
         editExpenditureSubClass.value == "Investment" ||
         editExpenditureSubClass.value == "PublicPension" ||
         editExpenditureSubClass.value == "DebtRepayment") {

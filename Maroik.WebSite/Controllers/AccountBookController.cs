@@ -873,7 +873,7 @@ namespace Maroik.WebSite.Controllers
                     #region 대분류 = '정기저축'
                     if (expenditureInputViewModel.MainClass == "RegularSavings")
                     {
-                        if (expenditureInputViewModel.SubClass == "Deposit" || expenditureInputViewModel.SubClass == "MyAssetTransfer" || expenditureInputViewModel.SubClass == "Investment")
+                        if (expenditureInputViewModel.SubClass == "Deposit" || expenditureInputViewModel.SubClass == "Investment")
                         {
                             try
                             {
@@ -1246,7 +1246,7 @@ namespace Maroik.WebSite.Controllers
                     #region 대분류 = '정기저축'
                     if (expenditureInputViewModel.MainClass == "RegularSavings")
                     {
-                        if (expenditureInputViewModel.SubClass == "Deposit" || expenditureInputViewModel.SubClass == "MyAssetTransfer" || expenditureInputViewModel.SubClass == "Investment")
+                        if (expenditureInputViewModel.SubClass == "Deposit" || expenditureInputViewModel.SubClass == "Investment")
                         {
                             try
                             {
