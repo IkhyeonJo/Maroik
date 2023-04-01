@@ -36,12 +36,12 @@ namespace Maroik.Common.DataAccess.Services
         /// <returns></returns>
         public async Task<List<Income>> GetCurrentYearMonthIncomesAsync(string email, string yearMonth)
         {
-            return await context.Incomes.FromSqlInterpolated<Income>
+            return await context.Incomes.FromSqlInterpolated
                     (
                         @$"SELECT *
                             FROM Income
                             WHERE 
-                            DATE_FORMAT(Created, '%Y-%m') = {yearMonth}
+                            DATE_FORMAT(DATE_ADD(Created, INTERVAL 9 HOUR), '%Y-%m') = {yearMonth}
                             AND AccountEmail = {email}"
                     ).ToListAsync();
         }
