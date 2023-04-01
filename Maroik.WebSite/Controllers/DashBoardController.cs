@@ -64,7 +64,7 @@ namespace Maroik.WebSite.Controllers
         {
             #region Current Year & Month Income/Expenditure
             HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
-            var currentYearMonth = DateTime.Now.ToString("yyyy-MM");
+            var currentYearMonth = DateTime.UtcNow.ToString("yyyy-MM");
             var currentLoginUserEmail = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email;
 
             var incomes = await incomeRepository.GetCurrentYearMonthIncomesAsync(currentLoginUserEmail, currentYearMonth);

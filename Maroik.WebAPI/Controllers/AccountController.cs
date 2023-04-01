@@ -56,7 +56,7 @@ namespace Maroik.WebAPI.Controllers
                 new Claim(ClaimTypes.Role, tempAccount.Role)
             };
 
-            var jwtResult = jwtAuthManager.GenerateTokens(tempAccount.Nickname, claims, DateTime.Now);
+            var jwtResult = jwtAuthManager.GenerateTokens(tempAccount.Nickname, claims, DateTime.UtcNow);
             logger.LogInformation($"User [{tempAccount.Email}] logged in the system.");
             return Ok(new LoginResult
             {
@@ -107,7 +107,7 @@ namespace Maroik.WebAPI.Controllers
                 }
 
                 var accessToken = await HttpContext.GetTokenAsync("Bearer", "access_token");
-                var jwtResult = jwtAuthManager.Refresh(request.RefreshToken, accessToken, DateTime.Now);
+                var jwtResult = jwtAuthManager.Refresh(request.RefreshToken, accessToken, DateTime.UtcNow);
                 logger.LogInformation($"User [{userName}] has refreshed JWT token.");
                 return Ok(new LoginResult
                 {

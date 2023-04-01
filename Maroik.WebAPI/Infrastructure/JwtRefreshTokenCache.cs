@@ -24,7 +24,7 @@ namespace Maroik.WebAPI.Infrastructure
 
         private void DoWork(object state)
         {
-            _jwtAuthManager.RemoveExpiredRefreshTokens(DateTime.Now);
+            _jwtAuthManager.RemoveExpiredRefreshTokens(DateTime.UtcNow);
         }
 
         public Task StopAsync(CancellationToken stoppingToken)
