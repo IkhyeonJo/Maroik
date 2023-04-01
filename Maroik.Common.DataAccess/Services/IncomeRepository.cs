@@ -36,7 +36,7 @@ namespace Maroik.Common.DataAccess.Services
         /// <returns></returns>
         public async Task<List<Income>> GetCurrentYearMonthIncomesAsync(string email, string yearMonth)
         {
-            return await context.Incomes.FromSqlInterpolated<Income>
+            return await context.Incomes.FromSqlInterpolated
                     (
                         @$"SELECT *
                             FROM Income
