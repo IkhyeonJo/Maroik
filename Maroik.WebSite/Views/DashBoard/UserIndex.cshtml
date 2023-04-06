@@ -205,10 +205,20 @@
                                 <canvas id="nonConsumerSpending" style="min-height: 300px; height: 300px; max-height: 300px; max-width: 100%;"></canvas>
                             </div>
                             <div class="chart tab-pane active" id="dashboardExpenditureTabs-3" style="position: relative; height: 300px;">
-                                <canvas id="consumerSpending" style="min-height: 300px; height: 300px; max-height: 300px; max-width: 100%;"></canvas>
+                                <canvas id="consumerSpending" style="min-height: 300px; height: 300px; max-height: 300px; max-width: 100%;">fff</canvas>
+                                dfgdfgdgf
                             </div>
                         </div>
                     </div>
+                    @if (Model.USP_Expenditure_MonthlyReport_Results.FirstOrDefault().OverConsumptionIndex == null)
+                    {
+                        <span>과소비 지수: 공식 계산을 위해 일정 수입이 필요합니다.</span>
+                    }
+                    else
+                    {
+                        <span>과소비 지수: @(Model.USP_Expenditure_MonthlyReport_Results.FirstOrDefault().OverConsumptionIndex)</span>
+                    }
+                    
                 </div>
             </div>
 

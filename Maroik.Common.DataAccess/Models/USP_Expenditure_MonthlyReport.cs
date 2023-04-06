@@ -24,5 +24,6 @@ namespace Maroik.Common.DataAccess.Models
         public double? Kurtosis { get; set; }
         public long? ModeValue { get; set; }
         public long? ModeCount { get; set; }
+        public decimal? OverConsumptionIndex { get; set; }
     }
 }
