@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Maroik.Common.DataAccess.Data;
 using Maroik.Common.DataAccess.Models;
 using Maroik.Common.DataAccess.Contracts;
+using MySqlConnector;
 
 namespace Maroik.Common.DataAccess.Services
 {
@@ -76,6 +77,20 @@ namespace Maroik.Common.DataAccess.Services
         {
             context.Expenditures.Remove(expenditure);
             await context.SaveChangesAsync();
+        }
+
+        /// <summary>
+        /// 로그인 계정에 해당하는 금년월 지출 통계를 구합니다.
+        /// </summary>
+        /// <param name="email"></param>
+        /// <param name="yearMonth"></param>
+        /// <returns></returns>
+        public async Task<List<USP_Expenditure_MonthlyReport>> GetCurrentYearMonthExpendituresMonthlyReport(string email, string yearMonth)
+        {
+            var param1 = new MySqlParameter("@Param1", yearMonth);
+            var param2 = new MySqlParameter("@Param2", email);
+            return await context.USP_Expenditure_MonthlyReports.FromSqlRaw("CALL USP_Expenditure_MonthlyReport(@Param1, @Param2)", param1, param2).ToListAsync();
+
         }
     }
 }
