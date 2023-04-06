@@ -19,12 +19,12 @@ for garbage_sql_file in garbage_sql_files:
 
 current_date = str(datetime.today().strftime("%Y%m%d"))
 backup_sql_file_name = f'Init-{current_date}.sql'
-os.system(f'sudo docker exec Maroik.MariaDB /usr/bin/mysqldump -u root --password=***REMOVED*** Maroik > /home/ec2-user/Maroik/{backup_sql_file_name}')
+os.system(f'sudo docker exec Maroik.MariaDB /usr/bin/mysqldump -u root --password=***REMOVED*** --routines Maroik > /home/ec2-user/Maroik/{backup_sql_file_name}')
 
 with open(f'/home/ec2-user/Maroik/{backup_sql_file_name}', 'r', encoding='utf-8') as original: data = original.read()
 new_add_line = '''DROP DATABASE IF EXISTS Maroik;
 
-CREATE DATABASE Maroik default charset=utf8mb4 collate utf8mb4_unicode_ci;
+CREATE DATABASE Maroik default charset=utf8mb4 collate utf8mb4_general_ci;
 
 USE Maroik;
 

@@ -70,9 +70,13 @@ namespace Maroik.WebSite.Controllers
             var incomes = await incomeRepository.GetCurrentYearMonthIncomesAsync(currentLoginUserEmail, currentYearMonth);
             var expenditures = await expenditureRepository.GetCurrentYearMonthExpendituresAsync(currentLoginUserEmail, currentYearMonth);
 
+            var uSP_Expenditure_MonthlyReport_Results = await expenditureRepository.GetCurrentYearMonthExpendituresMonthlyReport(currentLoginUserEmail, currentYearMonth);
+
             var userIndexOutputViewModel = new UserIndexOutputViewModel();
             userIndexOutputViewModel.Incomes = incomes;
             userIndexOutputViewModel.Expenditures = expenditures;
+
+            userIndexOutputViewModel.USP_Expenditure_MonthlyReport_Results = uSP_Expenditure_MonthlyReport_Results;
             #endregion
 
             return View(userIndexOutputViewModel);
