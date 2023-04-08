@@ -120,6 +120,9 @@
   <data name="Consumer spending" xml:space="preserve">
     <value>소비지출</value>
   </data>
+  <data name="Count" xml:space="preserve">
+    <value>개수</value>
+  </data>
   <data name="Expenditure this month" xml:space="preserve">
     <value>이번달 지출</value>
   </data>
@@ -129,13 +132,52 @@
   <data name="Irregular income" xml:space="preserve">
     <value>비정기수입</value>
   </data>
+  <data name="Kurtosis" xml:space="preserve">
+    <value>첨도</value>
+  </data>
+  <data name="Max" xml:space="preserve">
+    <value>최댓값</value>
+  </data>
+  <data name="Mean" xml:space="preserve">
+    <value>평균</value>
+  </data>
+  <data name="Min" xml:space="preserve">
+    <value>최솟값</value>
+  </data>
+  <data name="Mode" xml:space="preserve">
+    <value>최빈값</value>
+  </data>
+  <data name="Mode Count" xml:space="preserve">
+    <value>최빈값 개수</value>
+  </data>
   <data name="NonConsumer spending" xml:space="preserve">
     <value>비소비지출</value>
+  </data>
+  <data name="None" xml:space="preserve">
+    <value>없음</value>
+  </data>
+  <data name="Over Consumption Index" xml:space="preserve">
+    <value>과소비지수</value>
+  </data>
+  <data name="Range" xml:space="preserve">
+    <value>범위</value>
   </data>
   <data name="Regular income" xml:space="preserve">
     <value>정기수입</value>
   </data>
   <data name="Regular savings" xml:space="preserve">
     <value>정기저축</value>
+  </data>
+  <data name="Skewness" xml:space="preserve">
+    <value>왜도</value>
+  </data>
+  <data name="Standard Deviation" xml:space="preserve">
+    <value>표준편차</value>
+  </data>
+  <data name="Sum" xml:space="preserve">
+    <value>합계</value>
+  </data>
+  <data name="Variance" xml:space="preserve">
+    <value>분산</value>
   </data>
 </root>

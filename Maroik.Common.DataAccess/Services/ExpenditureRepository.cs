@@ -6,6 +6,7 @@ using Maroik.Common.DataAccess.Data;
 using Maroik.Common.DataAccess.Models;
 using Maroik.Common.DataAccess.Contracts;
 using MySqlConnector;
+using System;
 
 namespace Maroik.Common.DataAccess.Services
 {
@@ -87,10 +88,7 @@ namespace Maroik.Common.DataAccess.Services
         /// <returns></returns>
         public async Task<List<USP_Expenditure_MonthlyReport>> GetCurrentYearMonthExpendituresMonthlyReport(string email, string yearMonth)
         {
-            var param1 = new MySqlParameter("@Param1", yearMonth);
-            var param2 = new MySqlParameter("@Param2", email);
-            return await context.USP_Expenditure_MonthlyReports.FromSqlRaw("CALL USP_Expenditure_MonthlyReport(@Param1, @Param2)", param1, param2).ToListAsync();
-
+            return await context.USP_Expenditure_MonthlyReports.FromSqlRaw("CALL USP_Expenditure_MonthlyReport(@yearMonth, @email)", new MySqlParameter("@yearMonth", yearMonth), new MySqlParameter("@email", email)).ToListAsync();
         }
     }
 }
