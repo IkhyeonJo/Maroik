@@ -66,7 +66,7 @@
     nonConsumerSpendingInterHouseholdTranserExpenses = nonConsumerSpending.Where(x => x.SubClass == "InterHouseholdTranserExpenses").Sum(v => v.Amount);
     nonConsumerSpendingNonProfitOrganizationTransfer = nonConsumerSpending.Where(x => x.SubClass == "NonProfitOrganizationTransfer").Sum(v => v.Amount);
     #endregion
-    
+
     #region 대분류 = '소비지출'
     var consumerSpending = Model.Expenditures.Where(x => x.MainClass == "ConsumerSpending").ToList();
 
@@ -164,16 +164,325 @@
                     </div>
                     <div class="card-body">
                         <div class="tab-content p-0">
-                            <div class="chart tab-pane" id="dashboardIncomeTabs-1" style="position: relative; height: 300px;">
-                                <canvas id="regularIncome" style="min-height: 300px; height: 300px; max-height: 300px; max-width: 100%;"></canvas>
+                            <div class="chart tab-pane" id="dashboardIncomeTabs-1" style="position: relative; height: 380px;">
+                                <canvas id="regularIncome" style="min-height: 380px; height: 380px; max-height: 380px; max-width: 100%;"></canvas>
                             </div>
-                            <div class="chart tab-pane active" id="dashboardIncomeTabs-2" style="position: relative; height: 300px;">
-                                <canvas id="irregularIncome" style="min-height: 300px; height: 300px; max-height: 300px; max-width: 100%;"></canvas>
+                            <div class="chart tab-pane active" id="dashboardIncomeTabs-2" style="position: relative; height: 380px;">
+                                <canvas id="irregularIncome" style="min-height: 380px; height: 380px; max-height: 380px; max-width: 100%;"></canvas>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
+
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">
+                            <i class="fas fa-chart-pie mr-1"></i>
+
+                            @localizer["Income this month"].Value
+                        </h3>
+                        <div class="card-tools">
+                            <ul class="nav nav-pills ml-auto">
+                                <li class="nav-item">
+                                    <a class="nav-link" href="#dashboardIncomeStatisticsTabs-1" data-toggle="tab">@localizer["Regular income"].Value</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link active" href="#dashboardIncomeStatisticsTabs-2" data-toggle="tab">@localizer["Irregular income"].Value</a>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="tab-content p-0">
+                            <div class="chart tab-pane" id="dashboardIncomeStatisticsTabs-1" style="position: relative; height: 380px;">
+                                @foreach (USP_Income_MonthlyReport USP_Income_MonthlyReport_Result in Model.USP_Income_MonthlyReport_Results.Where(m => m.MainClass == "RegularIncome"))
+                                {
+                                    @if (USP_Income_MonthlyReport_Result.SumValue == null)
+                                    {
+                                        <span>@localizer["Sum"]: @localizer["None"]<br /></span>
+                                    }
+                                    else
+                                    {
+                                        <span>@localizer["Sum"]: @Math.Round((decimal)(USP_Income_MonthlyReport_Result.SumValue), 2, MidpointRounding.ToZero)<br /></span>
+                                    }
+
+                                    @if (USP_Income_MonthlyReport_Result.CountValue == null)
+                                    {
+                                        <span>@localizer["Count"]: @localizer["None"]<br /></span>
+                                    }
+                                    else
+                                    {
+                                        <span>@localizer["Count"]: @USP_Income_MonthlyReport_Result.CountValue<br /></span>
+                                    }
+
+                                    @if (USP_Income_MonthlyReport_Result.ModeValue == null)
+                                    {
+                                        <span>@localizer["Mode"]: @localizer["None"]<br /></span>
+                                    }
+                                    else
+                                    {
+                                        <span>@localizer["Mode"]: @USP_Income_MonthlyReport_Result.ModeValue<br /></span>
+                                    }
+
+                                    @if (USP_Income_MonthlyReport_Result.ModeCount == null)
+                                    {
+                                        <span>@localizer["Mode Count"]: @localizer["None"]<br /></span>
+                                    }
+                                    else
+                                    {
+                                        <span>@localizer["Mode Count"]: @USP_Income_MonthlyReport_Result.ModeCount<br /></span>
+                                    }
+
+                                    @if (USP_Income_MonthlyReport_Result.MinValue == null)
+                                    {
+                                        <span>@localizer["Min"]: @localizer["None"]<br /></span>
+                                    }
+                                    else
+                                    {
+                                        <span>@localizer["Min"]: @USP_Income_MonthlyReport_Result.MinValue<br /></span>
+                                    }
+
+                                    @if (USP_Income_MonthlyReport_Result.MaxValue == null)
+                                    {
+                                        <span>@localizer["Max"]: @localizer["None"]<br /></span>
+                                    }
+                                    else
+                                    {
+                                        <span>@localizer["Max"]: @USP_Income_MonthlyReport_Result.MaxValue<br /></span>
+                                    }
+
+                                    @if (USP_Income_MonthlyReport_Result.RangeValue == null)
+                                    {
+                                        <span>@localizer["Range"]: @localizer["None"]<br /></span>
+                                    }
+                                    else
+                                    {
+                                        <span>@localizer["Range"]: @USP_Income_MonthlyReport_Result.RangeValue<br /></span>
+                                    }
+
+                                    @if (USP_Income_MonthlyReport_Result.MeanValue == null)
+                                    {
+                                        <span>@localizer["Mean"]: @localizer["None"]<br /></span>
+                                    }
+                                    else
+                                    {
+                                        <span>@localizer["Mean"]: @Math.Round((decimal)(USP_Income_MonthlyReport_Result.MeanValue), 2, MidpointRounding.ToZero)<br /></span>
+                                    }
+
+                                    @if (USP_Income_MonthlyReport_Result.Variance == null)
+                                    {
+                                        <span>@localizer["Variance"]: @localizer["None"]<br /></span>
+                                    }
+                                    else
+                                    {
+                                        <span>@localizer["Variance"]: @Math.Round((double)(USP_Income_MonthlyReport_Result.Variance), 2, MidpointRounding.ToZero)<br /></span>
+                                    }
+
+                                    @if (USP_Income_MonthlyReport_Result.StandardDeviation == null)
+                                    {
+                                        <span>@localizer["Standard Deviation"]: @localizer["None"]<br /></span>
+                                    }
+                                    else
+                                    {
+                                        <span>@localizer["Standard Deviation"]: @Math.Round((double)(USP_Income_MonthlyReport_Result.StandardDeviation), 2, MidpointRounding.ToZero)<br /></span>
+                                    }
+
+                                    @if (USP_Income_MonthlyReport_Result.Q1 == null)
+                                    {
+                                        <span>Q1 (25%): None<br /></span>
+                                    }
+                                    else
+                                    {
+                                        <span>Q1 (25%): @Math.Round((double)(USP_Income_MonthlyReport_Result.Q1), 2, MidpointRounding.ToZero)<br /></span>
+                                    }
+
+                                    @if (USP_Income_MonthlyReport_Result.Q2 == null)
+                                    {
+                                        <span>Q2 (50%): None<br /></span>
+                                    }
+                                    else
+                                    {
+                                        <span>Q2 (50%): @Math.Round((double)(USP_Income_MonthlyReport_Result.Q2), 2, MidpointRounding.ToZero)<br /></span>
+                                    }
+
+                                    @if (USP_Income_MonthlyReport_Result.Q3 == null)
+                                    {
+                                        <span>Q3 (75%): None<br /></span>
+                                    }
+                                    else
+                                    {
+                                        <span>Q3 (75%): @Math.Round((double)(USP_Income_MonthlyReport_Result.Q3), 2, MidpointRounding.ToZero)<br /></span>
+                                    }
+
+                                    @if (USP_Income_MonthlyReport_Result.Skewness == null)
+                                    {
+                                        <span>@localizer["Skewness"]: @localizer["None"]<br /></span>
+                                    }
+                                    else
+                                    {
+                                        <span>@localizer["Skewness"]: @Math.Round((double)(USP_Income_MonthlyReport_Result.Skewness), 2, MidpointRounding.ToZero)<br /></span>
+                                    }
+
+                                    @if (USP_Income_MonthlyReport_Result.Kurtosis == null)
+                                    {
+                                        <span>@localizer["Kurtosis"]: @localizer["None"]<br /></span>
+                                    }
+                                    else
+                                    {
+                                        <span>@localizer["Kurtosis"]: @Math.Round((double)(USP_Income_MonthlyReport_Result.Kurtosis), 2, MidpointRounding.ToZero)<br /></span>
+                                    }
+                                }
+                            </div>
+                            <div class="chart tab-pane active" id="dashboardIncomeStatisticsTabs-2" style="position: relative; height: 380px;">
+                                @foreach (USP_Income_MonthlyReport USP_Income_MonthlyReport_Result in Model.USP_Income_MonthlyReport_Results.Where(m => m.MainClass == "IrregularIncome"))
+                                {
+                                    @if (USP_Income_MonthlyReport_Result.SumValue == null)
+                                    {
+                                        <span>@localizer["Sum"]: @localizer["None"]<br /></span>
+                                    }
+                                    else
+                                    {
+                                        <span>@localizer["Sum"]: @Math.Round((decimal)(USP_Income_MonthlyReport_Result.SumValue), 2, MidpointRounding.ToZero)<br /></span>
+                                    }
+
+                                    @if (USP_Income_MonthlyReport_Result.CountValue == null)
+                                    {
+                                        <span>@localizer["Count"]: @localizer["None"]<br /></span>
+                                    }
+                                    else
+                                    {
+                                        <span>@localizer["Count"]: @USP_Income_MonthlyReport_Result.CountValue<br /></span>
+                                    }
+
+                                    @if (USP_Income_MonthlyReport_Result.ModeValue == null)
+                                    {
+                                        <span>@localizer["Mode"]: @localizer["None"]<br /></span>
+                                    }
+                                    else
+                                    {
+                                        <span>@localizer["Mode"]: @USP_Income_MonthlyReport_Result.ModeValue<br /></span>
+                                    }
+
+                                    @if (USP_Income_MonthlyReport_Result.ModeCount == null)
+                                    {
+                                        <span>@localizer["Mode Count"]: @localizer["None"]<br /></span>
+                                    }
+                                    else
+                                    {
+                                        <span>@localizer["Mode Count"]: @USP_Income_MonthlyReport_Result.ModeCount<br /></span>
+                                    }
+
+                                    @if (USP_Income_MonthlyReport_Result.MinValue == null)
+                                    {
+                                        <span>@localizer["Min"]: @localizer["None"]<br /></span>
+                                    }
+                                    else
+                                    {
+                                        <span>@localizer["Min"]: @USP_Income_MonthlyReport_Result.MinValue<br /></span>
+                                    }
+
+                                    @if (USP_Income_MonthlyReport_Result.MaxValue == null)
+                                    {
+                                        <span>@localizer["Max"]: @localizer["None"]<br /></span>
+                                    }
+                                    else
+                                    {
+                                        <span>@localizer["Max"]: @USP_Income_MonthlyReport_Result.MaxValue<br /></span>
+                                    }
+
+                                    @if (USP_Income_MonthlyReport_Result.RangeValue == null)
+                                    {
+                                        <span>@localizer["Range"]: @localizer["None"]<br /></span>
+                                    }
+                                    else
+                                    {
+                                        <span>@localizer["Range"]: @USP_Income_MonthlyReport_Result.RangeValue<br /></span>
+                                    }
+
+                                    @if (USP_Income_MonthlyReport_Result.MeanValue == null)
+                                    {
+                                        <span>@localizer["Mean"]: @localizer["None"]<br /></span>
+                                    }
+                                    else
+                                    {
+                                        <span>@localizer["Mean"]: @Math.Round((decimal)(USP_Income_MonthlyReport_Result.MeanValue), 2, MidpointRounding.ToZero)<br /></span>
+                                    }
+
+                                    @if (USP_Income_MonthlyReport_Result.Variance == null)
+                                    {
+                                        <span>@localizer["Variance"]: @localizer["None"]<br /></span>
+                                    }
+                                    else
+                                    {
+                                        <span>@localizer["Variance"]: @Math.Round((double)(USP_Income_MonthlyReport_Result.Variance), 2, MidpointRounding.ToZero)<br /></span>
+                                    }
+
+                                    @if (USP_Income_MonthlyReport_Result.StandardDeviation == null)
+                                    {
+                                        <span>@localizer["Standard Deviation"]: @localizer["None"]<br /></span>
+                                    }
+                                    else
+                                    {
+                                        <span>@localizer["Standard Deviation"]: @Math.Round((double)(USP_Income_MonthlyReport_Result.StandardDeviation), 2, MidpointRounding.ToZero)<br /></span>
+                                    }
+
+                                    @if (USP_Income_MonthlyReport_Result.Q1 == null)
+                                    {
+                                        <span>Q1 (25%): None<br /></span>
+                                    }
+                                    else
+                                    {
+                                        <span>Q1 (25%): @Math.Round((double)(USP_Income_MonthlyReport_Result.Q1), 2, MidpointRounding.ToZero)<br /></span>
+                                    }
+
+                                    @if (USP_Income_MonthlyReport_Result.Q2 == null)
+                                    {
+                                        <span>Q2 (50%): None<br /></span>
+                                    }
+                                    else
+                                    {
+                                        <span>Q2 (50%): @Math.Round((double)(USP_Income_MonthlyReport_Result.Q2), 2, MidpointRounding.ToZero)<br /></span>
+                                    }
+
+                                    @if (USP_Income_MonthlyReport_Result.Q3 == null)
+                                    {
+                                        <span>Q3 (75%): None<br /></span>
+                                    }
+                                    else
+                                    {
+                                        <span>Q3 (75%): @Math.Round((double)(USP_Income_MonthlyReport_Result.Q3), 2, MidpointRounding.ToZero)<br /></span>
+                                    }
+
+                                    @if (USP_Income_MonthlyReport_Result.Skewness == null)
+                                    {
+                                        <span>@localizer["Skewness"]: @localizer["None"]<br /></span>
+                                    }
+                                    else
+                                    {
+                                        <span>@localizer["Skewness"]: @Math.Round((double)(USP_Income_MonthlyReport_Result.Skewness), 2, MidpointRounding.ToZero)<br /></span>
+                                    }
+
+                                    @if (USP_Income_MonthlyReport_Result.Kurtosis == null)
+                                    {
+                                        <span>@localizer["Kurtosis"]: @localizer["None"]<br /></span>
+                                    }
+                                    else
+                                    {
+                                        <span>@localizer["Kurtosis"]: @Math.Round((double)(USP_Income_MonthlyReport_Result.Kurtosis), 2, MidpointRounding.ToZero)<br /></span>
+                                    }
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+
+        <div class="row">
 
             <div class="col-md-6">
                 <div class="card">
@@ -198,27 +507,489 @@
                     </div>
                     <div class="card-body">
                         <div class="tab-content p-0">
-                            <div class="chart tab-pane" id="dashboardExpenditureTabs-1" style="position: relative; height: 300px;">
-                                <canvas id="regularSavings" style="min-height: 300px; height: 300px; max-height: 300px; max-width: 100%;"></canvas>
+                            <div class="chart tab-pane" id="dashboardExpenditureTabs-1" style="position: relative; height: 380px;">
+                                <canvas id="regularSavings" style="min-height: 380px; height: 380px; max-height: 380px; max-width: 100%;"></canvas>
                             </div>
-                            <div class="chart tab-pane" id="dashboardExpenditureTabs-2" style="position: relative; height: 300px;">
-                                <canvas id="nonConsumerSpending" style="min-height: 300px; height: 300px; max-height: 300px; max-width: 100%;"></canvas>
+                            <div class="chart tab-pane" id="dashboardExpenditureTabs-2" style="position: relative; height: 380px;">
+                                <canvas id="nonConsumerSpending" style="min-height: 380px; height: 380px; max-height: 380px; max-width: 100%;"></canvas>
                             </div>
-                            <div class="chart tab-pane active" id="dashboardExpenditureTabs-3" style="position: relative; height: 300px;">
-                                <canvas id="consumerSpending" style="min-height: 300px; height: 300px; max-height: 300px; max-width: 100%;">fff</canvas>
-                                dfgdfgdgf
+                            <div class="chart tab-pane active" id="dashboardExpenditureTabs-3" style="position: relative; height: 380px;">
+                                <canvas id="consumerSpending" style="min-height: 380px; height: 380px; max-height: 380px; max-width: 100%;"></canvas>
                             </div>
                         </div>
                     </div>
-                    @if (Model.USP_Expenditure_MonthlyReport_Results.FirstOrDefault().OverConsumptionIndex == null)
-                    {
-                        <span>과소비 지수: 공식 계산을 위해 일정 수입이 필요합니다.</span>
-                    }
-                    else
-                    {
-                        <span>과소비 지수: @(Model.USP_Expenditure_MonthlyReport_Results.FirstOrDefault().OverConsumptionIndex)</span>
-                    }
-                    
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">
+                            <i class="fas fa-chart-pie mr-1"></i>
+                            @localizer["Expenditure this month"].Value
+                        </h3>
+                        <div class="card-tools">
+                            <ul class="nav nav-pills ml-auto">
+                                <li class="nav-item">
+                                    <a class="nav-link" href="#dashboardExpenditureStatisticsTabs-1" data-toggle="tab">@localizer["Regular savings"].Value</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" href="#dashboardExpenditureStatisticsTabs-2" data-toggle="tab">@localizer["NonConsumer spending"].Value</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link active" href="#dashboardExpenditureStatisticsTabs-3" data-toggle="tab">@localizer["Consumer spending"].Value</a>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="tab-content p-0">
+                            <div class="chart tab-pane" id="dashboardExpenditureStatisticsTabs-1" style="position: relative; height: 380px;">
+                                @foreach (USP_Expenditure_MonthlyReport USP_Expenditure_MonthlyReport_Result in Model.USP_Expenditure_MonthlyReport_Results.Where(m => m.MainClass == "RegularSavings"))
+                                {
+                                    @if (USP_Expenditure_MonthlyReport_Result.SumValue == null)
+                                    {
+                                        <span>@localizer["Sum"]: @localizer["None"]<br /></span>
+                                    }
+                                    else
+                                    {
+                                        <span>@localizer["Sum"]: @Math.Round((decimal)(USP_Expenditure_MonthlyReport_Result.SumValue), 2, MidpointRounding.ToZero)<br /></span>
+                                    }
+
+                                    @if (USP_Expenditure_MonthlyReport_Result.CountValue == null)
+                                    {
+                                        <span>@localizer["Count"]: @localizer["None"]<br /></span>
+                                    }
+                                    else
+                                    {
+                                        <span>@localizer["Count"]: @USP_Expenditure_MonthlyReport_Result.CountValue<br /></span>
+                                    }
+
+                                    @if (USP_Expenditure_MonthlyReport_Result.ModeValue == null)
+                                    {
+                                        <span>@localizer["Mode"]: @localizer["None"]<br /></span>
+                                    }
+                                    else
+                                    {
+                                        <span>@localizer["Mode"]: @USP_Expenditure_MonthlyReport_Result.ModeValue<br /></span>
+                                    }
+
+                                    @if (USP_Expenditure_MonthlyReport_Result.ModeCount == null)
+                                    {
+                                        <span>@localizer["Mode Count"]: @localizer["None"]<br /></span>
+                                    }
+                                    else
+                                    {
+                                        <span>@localizer["Mode Count"]: @USP_Expenditure_MonthlyReport_Result.ModeCount<br /></span>
+                                    }
+
+                                    @if (USP_Expenditure_MonthlyReport_Result.MinValue == null)
+                                    {
+                                        <span>@localizer["Min"]: @localizer["None"]<br /></span>
+                                    }
+                                    else
+                                    {
+                                        <span>@localizer["Min"]: @USP_Expenditure_MonthlyReport_Result.MinValue<br /></span>
+                                    }
+
+                                    @if (USP_Expenditure_MonthlyReport_Result.MaxValue == null)
+                                    {
+                                        <span>@localizer["Max"]: @localizer["None"]<br /></span>
+                                    }
+                                    else
+                                    {
+                                        <span>@localizer["Max"]: @USP_Expenditure_MonthlyReport_Result.MaxValue<br /></span>
+                                    }
+
+                                    @if (USP_Expenditure_MonthlyReport_Result.RangeValue == null)
+                                    {
+                                        <span>@localizer["Range"]: @localizer["None"]<br /></span>
+                                    }
+                                    else
+                                    {
+                                        <span>@localizer["Range"]: @USP_Expenditure_MonthlyReport_Result.RangeValue<br /></span>
+                                    }
+
+                                    @if (USP_Expenditure_MonthlyReport_Result.MeanValue == null)
+                                    {
+                                        <span>@localizer["Mean"]: @localizer["None"]<br /></span>
+                                    }
+                                    else
+                                    {
+                                        <span>@localizer["Mean"]: @Math.Round((decimal)(USP_Expenditure_MonthlyReport_Result.MeanValue), 2, MidpointRounding.ToZero)<br /></span>
+                                    }
+
+                                    @if (USP_Expenditure_MonthlyReport_Result.Variance == null)
+                                    {
+                                        <span>@localizer["Variance"]: @localizer["None"]<br /></span>
+                                    }
+                                    else
+                                    {
+                                        <span>@localizer["Variance"]: @Math.Round((double)(USP_Expenditure_MonthlyReport_Result.Variance), 2, MidpointRounding.ToZero)<br /></span>
+                                    }
+
+                                    @if (USP_Expenditure_MonthlyReport_Result.StandardDeviation == null)
+                                    {
+                                        <span>@localizer["Standard Deviation"]: @localizer["None"]<br /></span>
+                                    }
+                                    else
+                                    {
+                                        <span>@localizer["Standard Deviation"]: @Math.Round((double)(USP_Expenditure_MonthlyReport_Result.StandardDeviation), 2, MidpointRounding.ToZero)<br /></span>
+                                    }
+
+                                    @if (USP_Expenditure_MonthlyReport_Result.Q1 == null)
+                                    {
+                                        <span>Q1 (25%): None<br /></span>
+                                    }
+                                    else
+                                    {
+                                        <span>Q1 (25%): @Math.Round((double)(USP_Expenditure_MonthlyReport_Result.Q1), 2, MidpointRounding.ToZero)<br /></span>
+                                    }
+
+                                    @if (USP_Expenditure_MonthlyReport_Result.Q2 == null)
+                                    {
+                                        <span>Q2 (50%): None<br /></span>
+                                    }
+                                    else
+                                    {
+                                        <span>Q2 (50%): @Math.Round((double)(USP_Expenditure_MonthlyReport_Result.Q2), 2, MidpointRounding.ToZero)<br /></span>
+                                    }
+
+                                    @if (USP_Expenditure_MonthlyReport_Result.Q3 == null)
+                                    {
+                                        <span>Q3 (75%): None<br /></span>
+                                    }
+                                    else
+                                    {
+                                        <span>Q3 (75%): @Math.Round((double)(USP_Expenditure_MonthlyReport_Result.Q3), 2, MidpointRounding.ToZero)<br /></span>
+                                    }
+
+                                    @if (USP_Expenditure_MonthlyReport_Result.Skewness == null)
+                                    {
+                                        <span>@localizer["Skewness"]: @localizer["None"]<br /></span>
+                                    }
+                                    else
+                                    {
+                                        <span>@localizer["Skewness"]: @Math.Round((double)(USP_Expenditure_MonthlyReport_Result.Skewness), 2, MidpointRounding.ToZero)<br /></span>
+                                    }
+
+                                    @if (USP_Expenditure_MonthlyReport_Result.Kurtosis == null)
+                                    {
+                                        <span>@localizer["Kurtosis"]: @localizer["None"]<br /></span>
+                                    }
+                                    else
+                                    {
+                                        <span>@localizer["Kurtosis"]: @Math.Round((double)(USP_Expenditure_MonthlyReport_Result.Kurtosis), 2, MidpointRounding.ToZero)<br /></span>
+                                    }
+
+                                    @if (USP_Expenditure_MonthlyReport_Result.OverConsumptionIndex == null)
+                                    {
+                                        <span>@localizer["Over Consumption Index"]: @localizer["None"]<br /></span>
+                                    }
+                                    else
+                                    {
+                                        <span>@localizer["Over Consumption Index"]: @Math.Round((decimal)(USP_Expenditure_MonthlyReport_Result.OverConsumptionIndex), 2, MidpointRounding.ToZero)<br /></span>
+                                    }
+                                }
+                            </div>
+                            <div class="chart tab-pane" id="dashboardExpenditureStatisticsTabs-2" style="position: relative; height: 380px;">
+                                @foreach (USP_Expenditure_MonthlyReport USP_Expenditure_MonthlyReport_Result in Model.USP_Expenditure_MonthlyReport_Results.Where(m => m.MainClass == "NonConsumerSpending"))
+                                {
+                                    @if (USP_Expenditure_MonthlyReport_Result.SumValue == null)
+                                    {
+                                        <span>@localizer["Sum"]: @localizer["None"]<br /></span>
+                                    }
+                                    else
+                                    {
+                                        <span>@localizer["Sum"]: @Math.Round((decimal)(USP_Expenditure_MonthlyReport_Result.SumValue), 2, MidpointRounding.ToZero)<br /></span>
+                                    }
+
+                                    @if (USP_Expenditure_MonthlyReport_Result.CountValue == null)
+                                    {
+                                        <span>@localizer["Count"]: @localizer["None"]<br /></span>
+                                    }
+                                    else
+                                    {
+                                        <span>@localizer["Count"]: @USP_Expenditure_MonthlyReport_Result.CountValue<br /></span>
+                                    }
+
+                                    @if (USP_Expenditure_MonthlyReport_Result.ModeValue == null)
+                                    {
+                                        <span>@localizer["Mode"]: @localizer["None"]<br /></span>
+                                    }
+                                    else
+                                    {
+                                        <span>@localizer["Mode"]: @USP_Expenditure_MonthlyReport_Result.ModeValue<br /></span>
+                                    }
+
+                                    @if (USP_Expenditure_MonthlyReport_Result.ModeCount == null)
+                                    {
+                                        <span>@localizer["Mode Count"]: @localizer["None"]<br /></span>
+                                    }
+                                    else
+                                    {
+                                        <span>@localizer["Mode Count"]: @USP_Expenditure_MonthlyReport_Result.ModeCount<br /></span>
+                                    }
+
+                                    @if (USP_Expenditure_MonthlyReport_Result.MinValue == null)
+                                    {
+                                        <span>@localizer["Min"]: @localizer["None"]<br /></span>
+                                    }
+                                    else
+                                    {
+                                        <span>@localizer["Min"]: @USP_Expenditure_MonthlyReport_Result.MinValue<br /></span>
+                                    }
+
+                                    @if (USP_Expenditure_MonthlyReport_Result.MaxValue == null)
+                                    {
+                                        <span>@localizer["Max"]: @localizer["None"]<br /></span>
+                                    }
+                                    else
+                                    {
+                                        <span>@localizer["Max"]: @USP_Expenditure_MonthlyReport_Result.MaxValue<br /></span>
+                                    }
+
+                                    @if (USP_Expenditure_MonthlyReport_Result.RangeValue == null)
+                                    {
+                                        <span>@localizer["Range"]: @localizer["None"]<br /></span>
+                                    }
+                                    else
+                                    {
+                                        <span>@localizer["Range"]: @USP_Expenditure_MonthlyReport_Result.RangeValue<br /></span>
+                                    }
+
+                                    @if (USP_Expenditure_MonthlyReport_Result.MeanValue == null)
+                                    {
+                                        <span>@localizer["Mean"]: @localizer["None"]<br /></span>
+                                    }
+                                    else
+                                    {
+                                        <span>@localizer["Mean"]: @Math.Round((decimal)(USP_Expenditure_MonthlyReport_Result.MeanValue), 2, MidpointRounding.ToZero)<br /></span>
+                                    }
+
+                                    @if (USP_Expenditure_MonthlyReport_Result.Variance == null)
+                                    {
+                                        <span>@localizer["Variance"]: @localizer["None"]<br /></span>
+                                    }
+                                    else
+                                    {
+                                        <span>@localizer["Variance"]: @Math.Round((double)(USP_Expenditure_MonthlyReport_Result.Variance), 2, MidpointRounding.ToZero)<br /></span>
+                                    }
+
+                                    @if (USP_Expenditure_MonthlyReport_Result.StandardDeviation == null)
+                                    {
+                                        <span>@localizer["Standard Deviation"]: @localizer["None"]<br /></span>
+                                    }
+                                    else
+                                    {
+                                        <span>@localizer["Standard Deviation"]: @Math.Round((double)(USP_Expenditure_MonthlyReport_Result.StandardDeviation), 2, MidpointRounding.ToZero)<br /></span>
+                                    }
+
+                                    @if (USP_Expenditure_MonthlyReport_Result.Q1 == null)
+                                    {
+                                        <span>Q1 (25%): None<br /></span>
+                                    }
+                                    else
+                                    {
+                                        <span>Q1 (25%): @Math.Round((double)(USP_Expenditure_MonthlyReport_Result.Q1), 2, MidpointRounding.ToZero)<br /></span>
+                                    }
+
+                                    @if (USP_Expenditure_MonthlyReport_Result.Q2 == null)
+                                    {
+                                        <span>Q2 (50%): None<br /></span>
+                                    }
+                                    else
+                                    {
+                                        <span>Q2 (50%): @Math.Round((double)(USP_Expenditure_MonthlyReport_Result.Q2), 2, MidpointRounding.ToZero)<br /></span>
+                                    }
+
+                                    @if (USP_Expenditure_MonthlyReport_Result.Q3 == null)
+                                    {
+                                        <span>Q3 (75%): None<br /></span>
+                                    }
+                                    else
+                                    {
+                                        <span>Q3 (75%): @Math.Round((double)(USP_Expenditure_MonthlyReport_Result.Q3), 2, MidpointRounding.ToZero)<br /></span>
+                                    }
+
+                                    @if (USP_Expenditure_MonthlyReport_Result.Skewness == null)
+                                    {
+                                        <span>@localizer["Skewness"]: @localizer["None"]<br /></span>
+                                    }
+                                    else
+                                    {
+                                        <span>@localizer["Skewness"]: @Math.Round((double)(USP_Expenditure_MonthlyReport_Result.Skewness), 2, MidpointRounding.ToZero)<br /></span>
+                                    }
+
+                                    @if (USP_Expenditure_MonthlyReport_Result.Kurtosis == null)
+                                    {
+                                        <span>@localizer["Kurtosis"]: @localizer["None"]<br /></span>
+                                    }
+                                    else
+                                    {
+                                        <span>@localizer["Kurtosis"]: @Math.Round((double)(USP_Expenditure_MonthlyReport_Result.Kurtosis), 2, MidpointRounding.ToZero)<br /></span>
+                                    }
+
+                                    @if (USP_Expenditure_MonthlyReport_Result.OverConsumptionIndex == null)
+                                    {
+                                        <span>@localizer["Over Consumption Index"]: @localizer["None"]<br /></span>
+                                    }
+                                    else
+                                    {
+                                        <span>@localizer["Over Consumption Index"]: @Math.Round((decimal)(USP_Expenditure_MonthlyReport_Result.OverConsumptionIndex), 2, MidpointRounding.ToZero)<br /></span>
+                                    }
+                                }
+                            </div>
+                            <div class="chart tab-pane active" id="dashboardExpenditureStatisticsTabs-3" style="position: relative; height: 380px;">
+                                @foreach (USP_Expenditure_MonthlyReport USP_Expenditure_MonthlyReport_Result in Model.USP_Expenditure_MonthlyReport_Results.Where(m => m.MainClass == "ConsumerSpending"))
+                                {
+                                    @if (USP_Expenditure_MonthlyReport_Result.SumValue == null)
+                                    {
+                                        <span>@localizer["Sum"]: @localizer["None"]<br /></span>
+                                    }
+                                    else
+                                    {
+                                        <span>@localizer["Sum"]: @Math.Round((decimal)(USP_Expenditure_MonthlyReport_Result.SumValue), 2, MidpointRounding.ToZero)<br /></span>
+                                    }
+
+                                    @if (USP_Expenditure_MonthlyReport_Result.CountValue == null)
+                                    {
+                                        <span>@localizer["Count"]: @localizer["None"]<br /></span>
+                                    }
+                                    else
+                                    {
+                                        <span>@localizer["Count"]: @USP_Expenditure_MonthlyReport_Result.CountValue<br /></span>
+                                    }
+
+                                    @if (USP_Expenditure_MonthlyReport_Result.ModeValue == null)
+                                    {
+                                        <span>@localizer["Mode"]: @localizer["None"]<br /></span>
+                                    }
+                                    else
+                                    {
+                                        <span>@localizer["Mode"]: @USP_Expenditure_MonthlyReport_Result.ModeValue<br /></span>
+                                    }
+
+                                    @if (USP_Expenditure_MonthlyReport_Result.ModeCount == null)
+                                    {
+                                        <span>@localizer["Mode Count"]: @localizer["None"]<br /></span>
+                                    }
+                                    else
+                                    {
+                                        <span>@localizer["Mode Count"]: @USP_Expenditure_MonthlyReport_Result.ModeCount<br /></span>
+                                    }
+
+                                    @if (USP_Expenditure_MonthlyReport_Result.MinValue == null)
+                                    {
+                                        <span>@localizer["Min"]: @localizer["None"]<br /></span>
+                                    }
+                                    else
+                                    {
+                                        <span>@localizer["Min"]: @USP_Expenditure_MonthlyReport_Result.MinValue<br /></span>
+                                    }
+
+                                    @if (USP_Expenditure_MonthlyReport_Result.MaxValue == null)
+                                    {
+                                        <span>@localizer["Max"]: @localizer["None"]<br /></span>
+                                    }
+                                    else
+                                    {
+                                        <span>@localizer["Max"]: @USP_Expenditure_MonthlyReport_Result.MaxValue<br /></span>
+                                    }
+
+                                    @if (USP_Expenditure_MonthlyReport_Result.RangeValue == null)
+                                    {
+                                        <span>@localizer["Range"]: @localizer["None"]<br /></span>
+                                    }
+                                    else
+                                    {
+                                        <span>@localizer["Range"]: @USP_Expenditure_MonthlyReport_Result.RangeValue<br /></span>
+                                    }
+
+                                    @if (USP_Expenditure_MonthlyReport_Result.MeanValue == null)
+                                    {
+                                        <span>@localizer["Mean"]: @localizer["None"]<br /></span>
+                                    }
+                                    else
+                                    {
+                                        <span>@localizer["Mean"]: @Math.Round((decimal)(USP_Expenditure_MonthlyReport_Result.MeanValue), 2, MidpointRounding.ToZero)<br /></span>
+                                    }
+
+                                    @if (USP_Expenditure_MonthlyReport_Result.Variance == null)
+                                    {
+                                        <span>@localizer["Variance"]: @localizer["None"]<br /></span>
+                                    }
+                                    else
+                                    {
+                                        <span>@localizer["Variance"]: @Math.Round((double)(USP_Expenditure_MonthlyReport_Result.Variance), 2, MidpointRounding.ToZero)<br /></span>
+                                    }
+
+                                    @if (USP_Expenditure_MonthlyReport_Result.StandardDeviation == null)
+                                    {
+                                        <span>@localizer["Standard Deviation"]: @localizer["None"]<br /></span>
+                                    }
+                                    else
+                                    {
+                                        <span>@localizer["Standard Deviation"]: @Math.Round((double)(USP_Expenditure_MonthlyReport_Result.StandardDeviation), 2, MidpointRounding.ToZero)<br /></span>
+                                    }
+
+                                    @if (USP_Expenditure_MonthlyReport_Result.Q1 == null)
+                                    {
+                                        <span>Q1 (25%): None<br /></span>
+                                    }
+                                    else
+                                    {
+                                        <span>Q1 (25%): @Math.Round((double)(USP_Expenditure_MonthlyReport_Result.Q1), 2, MidpointRounding.ToZero)<br /></span>
+                                    }
+
+                                    @if (USP_Expenditure_MonthlyReport_Result.Q2 == null)
+                                    {
+                                        <span>Q2 (50%): None<br /></span>
+                                    }
+                                    else
+                                    {
+                                        <span>Q2 (50%): @Math.Round((double)(USP_Expenditure_MonthlyReport_Result.Q2), 2, MidpointRounding.ToZero)<br /></span>
+                                    }
+
+                                    @if (USP_Expenditure_MonthlyReport_Result.Q3 == null)
+                                    {
+                                        <span>Q3 (75%): None<br /></span>
+                                    }
+                                    else
+                                    {
+                                        <span>Q3 (75%): @Math.Round((double)(USP_Expenditure_MonthlyReport_Result.Q3), 2, MidpointRounding.ToZero)<br /></span>
+                                    }
+
+                                    @if (USP_Expenditure_MonthlyReport_Result.Skewness == null)
+                                    {
+                                        <span>@localizer["Skewness"]: @localizer["None"]<br /></span>
+                                    }
+                                    else
+                                    {
+                                        <span>@localizer["Skewness"]: @Math.Round((double)(USP_Expenditure_MonthlyReport_Result.Skewness), 2, MidpointRounding.ToZero)<br /></span>
+                                    }
+
+                                    @if (USP_Expenditure_MonthlyReport_Result.Kurtosis == null)
+                                    {
+                                        <span>@localizer["Kurtosis"]: @localizer["None"]<br /></span>
+                                    }
+                                    else
+                                    {
+                                        <span>@localizer["Kurtosis"]: @Math.Round((double)(USP_Expenditure_MonthlyReport_Result.Kurtosis), 2, MidpointRounding.ToZero)<br /></span>
+                                    }
+
+                                    @if (USP_Expenditure_MonthlyReport_Result.OverConsumptionIndex == null)
+                                    {
+                                        <span>@localizer["Over Consumption Index"]: @localizer["None"]<br /></span>
+                                    }
+                                    else
+                                    {
+                                        <span>@localizer["Over Consumption Index"]: @Math.Round((decimal)(USP_Expenditure_MonthlyReport_Result.OverConsumptionIndex), 2, MidpointRounding.ToZero)<br /></span>
+                                    }
+                                }
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 

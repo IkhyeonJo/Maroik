@@ -78,5 +78,16 @@ namespace Maroik.Common.DataAccess.Services
             context.Incomes.Remove(income);
             await context.SaveChangesAsync();
         }
+
+        /// <summary>
+        /// 로그인 계정에 해당하는 금년월 수입 통계를 구합니다.
+        /// </summary>
+        /// <param name="email"></param>
+        /// <param name="yearMonth"></param>
+        /// <returns></returns>
+        public async Task<List<USP_Income_MonthlyReport>> GetCurrentYearMonthIncomesMonthlyReport(string email, string yearMonth)
+        {
+            return await context.USP_Income_MonthlyReports.FromSqlRaw("CALL USP_Income_MonthlyReport(@yearMonth, @email)", new MySqlParameter("@yearMonth", yearMonth), new MySqlParameter("@email", email)).ToListAsync();
+        }
     }
 }

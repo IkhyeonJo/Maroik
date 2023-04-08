@@ -32,6 +32,7 @@ namespace Maroik.Common.DataAccess.Data
 
         #region (For Migration) DbSet<T>'s T is Stored Procedure.
         public virtual DbSet<USP_Expenditure_MonthlyReport> USP_Expenditure_MonthlyReports { get; set; }
+        public virtual DbSet<USP_Income_MonthlyReport> USP_Income_MonthlyReports { get; set; }
         #endregion
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
@@ -43,6 +44,7 @@ namespace Maroik.Common.DataAccess.Data
         {
             #region (For Migration) Entity<T>'s T is Stored Procedure.
             modelBuilder.Entity<USP_Expenditure_MonthlyReport>().HasNoKey();
+            modelBuilder.Entity<USP_Income_MonthlyReport>().HasNoKey();
             #endregion
 
             #region (For Migration) Entity<T>'s T is Table.

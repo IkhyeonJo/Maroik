@@ -41,5 +41,13 @@ namespace Maroik.Common.DataAccess.Contracts
         /// <param name="income"></param>
         /// <returns></returns>
         public Task DeleteIncomeAsync(Income income);
+
+        /// <summary>
+        /// 로그인 계정에 해당하는 금년월 수입 통계를 구합니다.
+        /// </summary>
+        /// <param name="email"></param>
+        /// <param name="yearMonth"></param>
+        /// <returns></returns>
+        public Task<List<USP_Income_MonthlyReport>> GetCurrentYearMonthIncomesMonthlyReport(string email, string yearMonth);
     }
 }
