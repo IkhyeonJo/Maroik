@@ -1,0 +1,4 @@
+0 * * * * /bin/bash /home/peter-cho/Maroik/Maroik.Crontab/DBBackup.sh
+0 * * * * /bin/bash /home/peter-cho/Maroik/Maroik.Crontab/UploadFileBackUp.sh
+@reboot /home/peter-cho/Maroik/Maroik.Crontab/RebootDockerCompose.sh
+@reboot /home/peter-cho/Maroik/Maroik.Crontab/AutoMountExternalStorages.sh
