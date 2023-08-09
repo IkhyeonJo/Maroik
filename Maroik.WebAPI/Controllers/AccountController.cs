@@ -57,7 +57,7 @@ namespace Maroik.WebAPI.Controllers
             };
 
             var jwtResult = jwtAuthManager.GenerateTokens(tempAccount.Nickname, claims, DateTime.UtcNow);
-            logger.LogInformation($"User [{tempAccount.Email}] logged in the system.");
+            //logger.LogInformation($"User [{tempAccount.Email}] logged in the system.");
             return Ok(new LoginResult
             {
                 UserName = tempAccount.Nickname,
@@ -88,7 +88,7 @@ namespace Maroik.WebAPI.Controllers
 
             var userName = User.Identity?.Name;
             jwtAuthManager.RemoveRefreshTokenByUserName(userName);
-            logger.LogInformation($"User [{userName}] logged out the system.");
+            //logger.LogInformation($"User [{userName}] logged out the system.");
             return Ok();
         }
 
@@ -99,7 +99,7 @@ namespace Maroik.WebAPI.Controllers
             try
             {
                 var userName = User.Identity?.Name;
-                logger.LogInformation($"User [{userName}] is trying to refresh JWT token.");
+                //logger.LogInformation($"User [{userName}] is trying to refresh JWT token.");
 
                 if (string.IsNullOrWhiteSpace(request.RefreshToken))
                 {
@@ -108,7 +108,7 @@ namespace Maroik.WebAPI.Controllers
 
                 var accessToken = await HttpContext.GetTokenAsync("Bearer", "access_token");
                 var jwtResult = jwtAuthManager.Refresh(request.RefreshToken, accessToken, DateTime.UtcNow);
-                logger.LogInformation($"User [{userName}] has refreshed JWT token.");
+                //logger.LogInformation($"User [{userName}] has refreshed JWT token.");
                 return Ok(new LoginResult
                 {
                     UserName = userName,
