@@ -7,14 +7,14 @@ namespace Maroik.Common.DataAccess.Contracts
     public interface IIncomeRepository
     {
         /// <summary>
-        /// ·Î±×ÀÎ °èÁ¤¿¡ ÇØ´çÇÏ´Â ¸ğµç ¼öÀÔÀ» ±¸ÇÕ´Ï´Ù.
+        /// ë¡œê·¸ì¸ ê³„ì •ì— í•´ë‹¹í•˜ëŠ” ëª¨ë“  ìˆ˜ì…ì„ êµ¬í•©ë‹ˆë‹¤.
         /// </summary>
         /// <param name="email"></param>
         /// <returns></returns>
         public Task<List<Income>> GetIncomesAsync(string email);
 
         /// <summary>
-        /// ·Î±×ÀÎ °èÁ¤¿¡ ÇØ´çÇÏ´Â ±İ³â¿ù ¼öÀÔÀ» ±¸ÇÕ´Ï´Ù.
+        /// ë¡œê·¸ì¸ ê³„ì •ì— í•´ë‹¹í•˜ëŠ” ê¸ˆë…„ì›” ìˆ˜ì…ì„ êµ¬í•©ë‹ˆë‹¤.
         /// </summary>
         /// <param name="email"></param>
         /// <param name="yearMonth"></param>
@@ -22,28 +22,28 @@ namespace Maroik.Common.DataAccess.Contracts
         public Task<List<Income>> GetCurrentYearMonthIncomesAsync(string email, string yearMonth);
 
         /// <summary>
-        /// ¼öÀÔÀ» »ı¼ºÇÕ´Ï´Ù.
+        /// ìˆ˜ì…ì„ ìƒì„±í•©ë‹ˆë‹¤.
         /// </summary>
         /// <param name="income"></param>
         /// <returns></returns>
         public Task CreateIncomeAsync(Income income);
 
         /// <summary>
-        /// ¼öÀÔÀ» ¾÷µ¥ÀÌÆ®ÇÕ´Ï´Ù.
+        /// ìˆ˜ì…ì„ ì—…ë°ì´íŠ¸í•©ë‹ˆë‹¤.
         /// </summary>
         /// <param name="income"></param>
         /// <returns></returns>
         public Task UpdateIncomeAsync(Income income);
 
         /// <summary>
-        /// ¼öÀÔÀ» Á¦°ÅÇÕ´Ï´Ù.
+        /// ìˆ˜ì…ì„ ì œê±°í•©ë‹ˆë‹¤.
         /// </summary>
         /// <param name="income"></param>
         /// <returns></returns>
         public Task DeleteIncomeAsync(Income income);
 
         /// <summary>
-        /// ·Î±×ÀÎ °èÁ¤¿¡ ÇØ´çÇÏ´Â ±İ³â¿ù ¼öÀÔ Åë°è¸¦ ±¸ÇÕ´Ï´Ù.
+        /// ë¡œê·¸ì¸ ê³„ì •ì— í•´ë‹¹í•˜ëŠ” ê¸ˆë…„ì›” ìˆ˜ì… í†µê³„ë¥¼ êµ¬í•©ë‹ˆë‹¤.
         /// </summary>
         /// <param name="email"></param>
         /// <param name="yearMonth"></param>

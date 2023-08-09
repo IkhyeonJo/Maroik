@@ -7,30 +7,30 @@ namespace Maroik.Common.DataAccess.Contracts
     public interface ISubCategoryRepository
     {
         /// <summary>
-        /// ¸ğµç ¼­ºêÄ«Å×°í¸®µéÀ» ±¸ÇÕ´Ï´Ù.
+        /// ëª¨ë“  ì„œë¸Œì¹´í…Œê³ ë¦¬ë“¤ì„ êµ¬í•©ë‹ˆë‹¤.
         /// </summary>
         /// <returns></returns>
         public IEnumerable<SubCategory> GetSubCategory();
         /// <summary>
-        /// ±ÇÇÑ¿¡ µû¸¥ ¼­ºêÄ«Å×°í¸®µéÀ» ±¸ÇÕ´Ï´Ù.
+        /// ê¶Œí•œì— ë”°ë¥¸ ì„œë¸Œì¹´í…Œê³ ë¦¬ë“¤ì„ êµ¬í•©ë‹ˆë‹¤.
         /// </summary>
         /// <param name="role"></param>
         /// <returns></returns>
         public Task<IEnumerable<SubCategory>> GetSubCategoryByRoleAsync(string role);
         /// <summary>
-        /// ¼­ºêÄ«Å×°í¸®¸¦ »ı¼ºÇÕ´Ï´Ù.
+        /// ì„œë¸Œì¹´í…Œê³ ë¦¬ë¥¼ ìƒì„±í•©ë‹ˆë‹¤.
         /// </summary>
         /// <param name="subCategory"></param>
         /// <returns></returns>
         public Task CreateSubCategoryAsync(SubCategory subCategory);
         /// <summary>
-        /// ¼­ºêÄ«Å×°í¸®¸¦ ¾÷µ¥ÀÌÆ®ÇÕ´Ï´Ù.
+        /// ì„œë¸Œì¹´í…Œê³ ë¦¬ë¥¼ ì—…ë°ì´íŠ¸í•©ë‹ˆë‹¤.
         /// </summary>
         /// <param name="category"></param>
         /// <returns></returns>
         public Task UpdateSubCategoryAsync(SubCategory subCategory);
         /// <summary>
-        /// ¼­ºêÄ«Å×°í¸®¸¦ Á¦°ÅÇÕ´Ï´Ù.
+        /// ì„œë¸Œì¹´í…Œê³ ë¦¬ë¥¼ ì œê±°í•©ë‹ˆë‹¤.
         /// </summary>
         /// <param name="category"></param>
         /// <returns></returns>

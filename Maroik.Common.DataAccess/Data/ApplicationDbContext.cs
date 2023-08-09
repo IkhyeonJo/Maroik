@@ -57,46 +57,46 @@ namespace Maroik.Common.DataAccess.Data
                 entity.HasKey(e => e.Email).HasName("PRIMARY");
 
                 entity
-                    .ToTable("Account", tb => tb.HasComment("Maroik.WebSite °èÁ¤"))
+                    .ToTable("Account", tb => tb.HasComment("Maroik.WebSite ê³„ì •"))
                     .UseCollation("utf8mb4_general_ci");
 
                 entity.HasIndex(e => e.Nickname, "Nickname").IsUnique();
 
-                entity.Property(e => e.Email).HasComment("ÀÌ¸ŞÀÏ (ID)");
-                entity.Property(e => e.AgreedServiceTerms).HasComment("¾à°ü µ¿ÀÇ ¿©ºÎ");
+                entity.Property(e => e.Email).HasComment("ì´ë©”ì¼ (ID)");
+                entity.Property(e => e.AgreedServiceTerms).HasComment("ì•½ê´€ ë™ì˜ ì—¬ë¶€");
                 entity.Property(e => e.AvatarImagePath)
                     .IsRequired()
                     .HasMaxLength(255)
                     .HasDefaultValueSql("'/upload/Management/Profile/default-avatar.jpg'")
-                    .HasComment("¾Æ¹ÙÅ¸ ÀÌ¹ÌÁö °æ·Î");
+                    .HasComment("ì•„ë°”íƒ€ ì´ë¯¸ì§€ ê²½ë¡œ");
                 entity.Property(e => e.Created)
                     .HasMaxLength(6)
                     .HasDefaultValueSql("'1900-01-01 00:00:00.000000'")
-                    .HasComment("»ı¼ºÀÏ");
-                entity.Property(e => e.Deleted).HasComment("»èÁ¦ ¿©ºÎ");
-                entity.Property(e => e.EmailConfirmed).HasComment("ÀÌ¸ŞÀÏ È®ÀÎ ¿©ºÎ");
+                    .HasComment("ìƒì„±ì¼");
+                entity.Property(e => e.Deleted).HasComment("ì‚­ì œ ì—¬ë¶€");
+                entity.Property(e => e.EmailConfirmed).HasComment("ì´ë©”ì¼ í™•ì¸ ì—¬ë¶€");
                 entity.Property(e => e.HashedPassword)
                     .IsRequired()
-                    .HasComment("ÇØ½ÃÈ­ µÈ ºñ¹Ğ¹øÈ£");
-                entity.Property(e => e.Locked).HasComment("Àá±İ ¿©ºÎ");
+                    .HasComment("í•´ì‹œí™” ëœ ë¹„ë°€ë²ˆí˜¸");
+                entity.Property(e => e.Locked).HasComment("ì ê¸ˆ ì—¬ë¶€");
                 entity.Property(e => e.LoginAttempt)
-                    .HasComment("·Î±×ÀÎ ½Ãµµ È½¼ö")
+                    .HasComment("ë¡œê·¸ì¸ ì‹œë„ íšŸìˆ˜")
                     .HasColumnType("int(11)");
-                entity.Property(e => e.Message).HasComment("»óÅÂ ¸Ş½ÃÁö");
+                entity.Property(e => e.Message).HasComment("ìƒíƒœ ë©”ì‹œì§€");
                 entity.Property(e => e.Nickname)
                     .IsRequired()
-                    .HasComment("´Ğ³×ÀÓ");
-                entity.Property(e => e.RegistrationToken).HasComment("È¸¿ø°¡ÀÔ ÀÎÁõ ÅäÅ«");
-                entity.Property(e => e.ResetPasswordToken).HasComment("ºñ¹Ğ¹øÈ£ Ã£±â ÀÎÁõ ÅäÅ«");
+                    .HasComment("ë‹‰ë„¤ì„");
+                entity.Property(e => e.RegistrationToken).HasComment("íšŒì›ê°€ì… ì¸ì¦ í† í°");
+                entity.Property(e => e.ResetPasswordToken).HasComment("ë¹„ë°€ë²ˆí˜¸ ì°¾ê¸° ì¸ì¦ í† í°");
                 entity.Property(e => e.Role)
                     .IsRequired()
                     .HasMaxLength(255)
                     .HasDefaultValueSql("'User'")
-                    .HasComment("¿ªÇÒ (Admin ¶Ç´Â User)");
+                    .HasComment("ì—­í•  (Admin ë˜ëŠ” User)");
                 entity.Property(e => e.Updated)
                     .HasMaxLength(6)
                     .HasDefaultValueSql("'1900-01-01 00:00:00.000000'")
-                    .HasComment("¾÷µ¥ÀÌÆ®ÀÏ");
+                    .HasComment("ì—…ë°ì´íŠ¸ì¼");
             });
 
             modelBuilder.Entity<Asset>(entity =>
@@ -106,34 +106,34 @@ namespace Maroik.Common.DataAccess.Data
                     .HasAnnotation("MySql:IndexPrefixLength", new[] { 0, 0 });
 
                 entity
-                    .ToTable("Asset", tb => tb.HasComment("Maroik.WebSite ÀÚ»ê"))
+                    .ToTable("Asset", tb => tb.HasComment("Maroik.WebSite ìì‚°"))
                     .UseCollation("utf8mb4_general_ci");
 
                 entity.HasIndex(e => e.AccountEmail, "Asset_FK");
 
-                entity.Property(e => e.ProductName).HasComment("»óÇ°¸í (ÀºÇà °èÁÂ¸í, Áõ±Ç °èÁÂ¸í, Çö±İ µî)");
-                entity.Property(e => e.AccountEmail).HasComment("°èÁ¤ ÀÌ¸ŞÀÏ (ID)");
+                entity.Property(e => e.ProductName).HasComment("ìƒí’ˆëª… (ì€í–‰ ê³„ì¢Œëª…, ì¦ê¶Œ ê³„ì¢Œëª…, í˜„ê¸ˆ ë“±)");
+                entity.Property(e => e.AccountEmail).HasComment("ê³„ì • ì´ë©”ì¼ (ID)");
                 entity.Property(e => e.Amount)
-                    .HasComment("±İ¾×")
+                    .HasComment("ê¸ˆì•¡")
                     .HasColumnType("bigint(255)");
                 entity.Property(e => e.Created)
                     .HasMaxLength(6)
-                    .HasComment("»ı¼ºÀÏ");
-                entity.Property(e => e.Deleted).HasComment("»èÁ¦¿©ºÎ");
+                    .HasComment("ìƒì„±ì¼");
+                entity.Property(e => e.Deleted).HasComment("ì‚­ì œì—¬ë¶€");
                 entity.Property(e => e.Item)
                     .IsRequired()
                     .HasMaxLength(255)
-                    .HasComment("Ç×¸ñ (ÀÚÀ¯ÀÔÃâ±İ ÀÚ»ê, ½ÅÅ¹ ÀÚ»ê, Çö±İ ÀÚ»ê, ÀúÃà¼º ÀÚ»ê, ÅõÀÚ¼º ÀÚ»ê, ºÎµ¿»ê, µ¿»ê, ±âÅ¸ ½Ç¹° ÀÚ»ê, º¸Çè ÀÚ»ê)");
+                    .HasComment("í•­ëª© (ììœ ì…ì¶œê¸ˆ ìì‚°, ì‹ íƒ ìì‚°, í˜„ê¸ˆ ìì‚°, ì €ì¶•ì„± ìì‚°, íˆ¬ìì„± ìì‚°, ë¶€ë™ì‚°, ë™ì‚°, ê¸°íƒ€ ì‹¤ë¬¼ ìì‚°, ë³´í—˜ ìì‚°)");
                 entity.Property(e => e.MonetaryUnit)
                     .IsRequired()
                     .HasMaxLength(45)
-                    .HasComment("È­Æó ´ÜÀ§ (KRW, USD, ETC)");
+                    .HasComment("í™”í ë‹¨ìœ„ (KRW, USD, ETC)");
                 entity.Property(e => e.Note)
                     .HasMaxLength(255)
-                    .HasComment("ºñ°í");
+                    .HasComment("ë¹„ê³ ");
                 entity.Property(e => e.Updated)
                     .HasMaxLength(6)
-                    .HasComment("¾÷µ¥ÀÌÆ®ÀÏ");
+                    .HasComment("ì—…ë°ì´íŠ¸ì¼");
 
                 entity.HasOne(d => d.AccountEmailNavigation).WithMany(p => p.Assets)
                     .HasForeignKey(d => d.AccountEmail)
@@ -146,7 +146,7 @@ namespace Maroik.Common.DataAccess.Data
                 entity.HasKey(e => e.Id).HasName("PRIMARY");
 
                 entity
-                    .ToTable("AttachedFile", tb => tb.HasComment("Maroik.WebSite Ã·ºÎ ÆÄÀÏ"))
+                    .ToTable("AttachedFile", tb => tb.HasComment("Maroik.WebSite ì²¨ë¶€ íŒŒì¼"))
                     .HasCharSet("utf8mb3")
                     .UseCollation("utf8mb3_general_ci");
 
@@ -156,21 +156,21 @@ namespace Maroik.Common.DataAccess.Data
                     .HasComment("PK")
                     .HasColumnType("int(11)");
                 entity.Property(e => e.BoardId)
-                    .HasComment("ºÎ¸ğ °Ô½ÃÆÇ Id")
+                    .HasComment("ë¶€ëª¨ ê²Œì‹œíŒ Id")
                     .HasColumnType("int(11)");
                 entity.Property(e => e.Extension)
                     .HasMaxLength(255)
-                    .HasComment("È®ÀåÀÚ");
+                    .HasComment("í™•ì¥ì");
                 entity.Property(e => e.Name)
                     .IsRequired()
                     .HasMaxLength(255)
-                    .HasComment("ÀÌ¸§");
+                    .HasComment("ì´ë¦„");
                 entity.Property(e => e.Path)
                     .IsRequired()
                     .HasMaxLength(255)
-                    .HasComment("°æ·Î");
+                    .HasComment("ê²½ë¡œ");
                 entity.Property(e => e.Size)
-                    .HasComment("Å©±â (Byte)")
+                    .HasComment("í¬ê¸° (Byte)")
                     .HasColumnType("int(11)");
 
                 entity.HasOne(d => d.Board).WithMany(p => p.AttachedFiles)
@@ -184,7 +184,7 @@ namespace Maroik.Common.DataAccess.Data
                 entity.HasKey(e => e.Id).HasName("PRIMARY");
 
                 entity
-                    .ToTable("Board", tb => tb.HasComment("Maroik.WebSite °Ô½ÃÆÇ"))
+                    .ToTable("Board", tb => tb.HasComment("Maroik.WebSite ê²Œì‹œíŒ"))
                     .HasCharSet("utf8mb3")
                     .UseCollation("utf8mb3_general_ci");
 
@@ -193,31 +193,31 @@ namespace Maroik.Common.DataAccess.Data
                     .HasColumnType("int(11)");
                 entity.Property(e => e.Content)
                     .IsRequired()
-                    .HasComment("³»¿ë");
+                    .HasComment("ë‚´ìš©");
                 entity.Property(e => e.Created)
                     .HasMaxLength(6)
-                    .HasComment("»ı¼ºÀÏ");
-                entity.Property(e => e.Deleted).HasComment("»èÁ¦ ¿©ºÎ");
-                entity.Property(e => e.Locked).HasComment("Àá±İ ¿©ºÎ");
-                entity.Property(e => e.Noticed).HasComment("°øÁö ¿©ºÎ");
+                    .HasComment("ìƒì„±ì¼");
+                entity.Property(e => e.Deleted).HasComment("ì‚­ì œ ì—¬ë¶€");
+                entity.Property(e => e.Locked).HasComment("ì ê¸ˆ ì—¬ë¶€");
+                entity.Property(e => e.Noticed).HasComment("ê³µì§€ ì—¬ë¶€");
                 entity.Property(e => e.Title)
                     .IsRequired()
                     .HasMaxLength(255)
-                    .HasComment("Á¦¸ñ");
+                    .HasComment("ì œëª©");
                 entity.Property(e => e.Type)
                     .IsRequired()
                     .HasMaxLength(255)
-                    .HasComment("ÇüÅÂ (ÀÚÀ¯)");
+                    .HasComment("í˜•íƒœ (ììœ )");
                 entity.Property(e => e.Updated)
                     .HasMaxLength(6)
-                    .HasComment("¾÷µ¥ÀÌÆ®ÀÏ");
+                    .HasComment("ì—…ë°ì´íŠ¸ì¼");
                 entity.Property(e => e.Views)
-                    .HasComment("Á¶È¸¼ö")
+                    .HasComment("ì¡°íšŒìˆ˜")
                     .HasColumnType("int(11)");
                 entity.Property(e => e.Writer)
                     .IsRequired()
                     .HasMaxLength(255)
-                    .HasComment("ÀÛ¼ºÀÚ");
+                    .HasComment("ì‘ì„±ì");
             });
 
             modelBuilder.Entity<Category>(entity =>
@@ -225,7 +225,7 @@ namespace Maroik.Common.DataAccess.Data
                 entity.HasKey(e => e.Id).HasName("PRIMARY");
 
                 entity
-                    .ToTable("Category", tb => tb.HasComment("Ä«Å×°í¸® /*Maroik.WebSiteÀÇ ·Î±×ÀÎ ÈÄ Á¢±Ù °¡´ÉÇÑ ÁÂÃø SideBar ¼³Á¤ ½Ã »ç¿ë*/"))
+                    .ToTable("Category", tb => tb.HasComment("ì¹´í…Œê³ ë¦¬ /*Maroik.WebSiteì˜ ë¡œê·¸ì¸ í›„ ì ‘ê·¼ ê°€ëŠ¥í•œ ì¢Œì¸¡ SideBar ì„¤ì • ì‹œ ì‚¬ìš©*/"))
                     .HasCharSet("utf8mb3")
                     .UseCollation("utf8mb3_general_ci");
 
@@ -234,31 +234,31 @@ namespace Maroik.Common.DataAccess.Data
                     .HasColumnType("int(11)");
                 entity.Property(e => e.Action)
                     .HasMaxLength(255)
-                    .HasComment("Á¢±Ù MVC Action ¸í /*ÀÌ °ªÀÌ ¾øÀ¸¸é ÇÏÀ§ Ä«Å×°í¸® Á¸Àç*/");
+                    .HasComment("ì ‘ê·¼ MVC Action ëª… /*ì´ ê°’ì´ ì—†ìœ¼ë©´ í•˜ìœ„ ì¹´í…Œê³ ë¦¬ ì¡´ì¬*/");
                 entity.Property(e => e.Controller)
                     .IsRequired()
                     .HasMaxLength(255)
-                    .HasComment("Á¢±Ù MVC Controller ¸í");
+                    .HasComment("ì ‘ê·¼ MVC Controller ëª…");
                 entity.Property(e => e.DisplayName)
                     .IsRequired()
                     .HasMaxLength(255)
-                    .HasComment("Ç¥½ÃÀÌ¸§");
+                    .HasComment("í‘œì‹œì´ë¦„");
                 entity.Property(e => e.IconPath)
                     .IsRequired()
                     .HasMaxLength(255)
-                    .HasComment("Ç¥½Ã ¾ÆÀÌÄÜ °æ·Î /*FontAwesome »ç¿ë*/");
+                    .HasComment("í‘œì‹œ ì•„ì´ì½˜ ê²½ë¡œ /*FontAwesome ì‚¬ìš©*/");
                 entity.Property(e => e.Name)
                     .IsRequired()
                     .HasMaxLength(255)
-                    .HasComment("ÀÌ¸§");
+                    .HasComment("ì´ë¦„");
                 entity.Property(e => e.Order)
-                    .HasComment("Ãâ·Â ¼ø¼­")
+                    .HasComment("ì¶œë ¥ ìˆœì„œ")
                     .HasColumnType("int(11)");
                 entity.Property(e => e.Role)
                     .IsRequired()
                     .HasMaxLength(255)
                     .HasDefaultValueSql("'Admin'")
-                    .HasComment("Á¢±Ù ±ÇÇÑ ¼³Á¤");
+                    .HasComment("ì ‘ê·¼ ê¶Œí•œ ì„¤ì •");
             });
 
             modelBuilder.Entity<Comment>(entity =>
@@ -266,7 +266,7 @@ namespace Maroik.Common.DataAccess.Data
                 entity.HasKey(e => e.Id).HasName("PRIMARY");
 
                 entity
-                    .ToTable("Comment", tb => tb.HasComment("Maroik.WebSite ´ñ±Û"))
+                    .ToTable("Comment", tb => tb.HasComment("Maroik.WebSite ëŒ“ê¸€"))
                     .HasCharSet("utf8mb3")
                     .UseCollation("utf8mb3_general_ci");
 
@@ -278,24 +278,24 @@ namespace Maroik.Common.DataAccess.Data
                 entity.Property(e => e.AvatarImagePath)
                     .IsRequired()
                     .HasMaxLength(255)
-                    .HasComment("°èÁ¤ ¾Æ¹ÙÅ¸ ÀÌ¹ÌÁö °æ·Î");
+                    .HasComment("ê³„ì • ì•„ë°”íƒ€ ì´ë¯¸ì§€ ê²½ë¡œ");
                 entity.Property(e => e.BoardId)
-                    .HasComment("°Ô½Ã¹° Id")
+                    .HasComment("ê²Œì‹œë¬¼ Id")
                     .HasColumnType("int(11)");
                 entity.Property(e => e.Content)
                     .IsRequired()
-                    .HasComment("³»¿ë");
+                    .HasComment("ë‚´ìš©");
                 entity.Property(e => e.Created)
                     .HasMaxLength(6)
-                    .HasComment("»ı¼ºÀÏ");
-                entity.Property(e => e.Deleted).HasComment("»èÁ¦ ¿©ºÎ");
+                    .HasComment("ìƒì„±ì¼");
+                entity.Property(e => e.Deleted).HasComment("ì‚­ì œ ì—¬ë¶€");
                 entity.Property(e => e.Order)
-                    .HasComment("¼ø¼­")
+                    .HasComment("ìˆœì„œ")
                     .HasColumnType("int(11)");
                 entity.Property(e => e.Writer)
                     .IsRequired()
                     .HasMaxLength(255)
-                    .HasComment("ÀÛ¼ºÀÚ");
+                    .HasComment("ì‘ì„±ì");
 
                 entity.HasOne(d => d.Board).WithMany(p => p.Comments)
                     .HasForeignKey(d => d.BoardId)
@@ -308,7 +308,7 @@ namespace Maroik.Common.DataAccess.Data
                 entity.HasKey(e => e.Id).HasName("PRIMARY");
 
                 entity
-                    .ToTable("Expenditure", tb => tb.HasComment("Maroik.WebSite ÁöÃâ"))
+                    .ToTable("Expenditure", tb => tb.HasComment("Maroik.WebSite ì§€ì¶œ"))
                     .UseCollation("utf8mb4_general_ci");
 
                 entity.HasIndex(e => new { e.PaymentMethod, e.AccountEmail }, "Expenditure_FK");
@@ -318,37 +318,37 @@ namespace Maroik.Common.DataAccess.Data
                     .HasColumnType("int(11)");
                 entity.Property(e => e.AccountEmail)
                     .IsRequired()
-                    .HasComment("°èÁ¤ ÀÌ¸ŞÀÏ (ID)");
+                    .HasComment("ê³„ì • ì´ë©”ì¼ (ID)");
                 entity.Property(e => e.Amount)
-                    .HasComment("±İ¾×")
+                    .HasComment("ê¸ˆì•¡")
                     .HasColumnType("bigint(255)");
                 entity.Property(e => e.Contents)
                     .IsRequired()
                     .HasMaxLength(255)
-                    .HasComment("³»¿ë (A¸¶Æ®/BÄ«µå/CÀ½½ÄÁ¡/Dµµ¼­°ü)");
+                    .HasComment("ë‚´ìš© (Aë§ˆíŠ¸/Bì¹´ë“œ/CìŒì‹ì /Dë„ì„œê´€)");
                 entity.Property(e => e.Created)
                     .HasMaxLength(6)
-                    .HasComment("»ı¼ºÀÏ");
+                    .HasComment("ìƒì„±ì¼");
                 entity.Property(e => e.MainClass)
                     .IsRequired()
                     .HasMaxLength(255)
-                    .HasComment("´ëºĞ·ù (Á¤±âÀúÃà/ºñ¼ÒºñÁöÃâ/¼ÒºñÁöÃâ)");
+                    .HasComment("ëŒ€ë¶„ë¥˜ (ì •ê¸°ì €ì¶•/ë¹„ì†Œë¹„ì§€ì¶œ/ì†Œë¹„ì§€ì¶œ)");
                 entity.Property(e => e.MyDepositAsset)
                     .HasMaxLength(255)
-                    .HasComment("³» ÀÔ±İ ÀÚ»ê (ÀÚ»ê »óÇ°¸í/Çö±İ) (ÁöÃâ Áß [¿¹Àû±İ, ³»ÀÚ»êÀÌÃ¼, ÅõÀÚ, °øÀû¿¬±İ, ºÎÃ¤»óÈ¯]ÀÏ ¶§ »ç¿ë)");
+                    .HasComment("ë‚´ ì…ê¸ˆ ìì‚° (ìì‚° ìƒí’ˆëª…/í˜„ê¸ˆ) (ì§€ì¶œ ì¤‘ [ì˜ˆì ê¸ˆ, ë‚´ìì‚°ì´ì²´, íˆ¬ì, ê³µì ì—°ê¸ˆ, ë¶€ì±„ìƒí™˜]ì¼ ë•Œ ì‚¬ìš©)");
                 entity.Property(e => e.Note)
                     .HasMaxLength(255)
-                    .HasComment("ºñ°í");
+                    .HasComment("ë¹„ê³ ");
                 entity.Property(e => e.PaymentMethod)
                     .IsRequired()
-                    .HasComment("°áÁ¦ ¼ö´Ü (ÀÚ»ê »óÇ°¸í/Çö±İ)");
+                    .HasComment("ê²°ì œ ìˆ˜ë‹¨ (ìì‚° ìƒí’ˆëª…/í˜„ê¸ˆ)");
                 entity.Property(e => e.SubClass)
                     .IsRequired()
                     .HasMaxLength(255)
-                    .HasComment("¼ÒºĞ·ù (¿¹Àû±İ/³»ÀÚ»êÀÌÃ¼/ÅõÀÚ | °øÀû¿¬±İ/ºÎÃ¤»óÈ¯/¼¼±İ/»çÈ¸º¸Çè/°¡±¸°£ ÀÌÀüÁöÃâ/ºñ¿µ¸®´ÜÃ¼ ÀÌÀü | (½Äºñ/¿Ü½Äºñ)/(ÁÖ°Å/¿ëÇ°ºñ)/±³À°ºñ/ÀÇ·áºñ/±³Åëºñ/Åë½Åºñ/(¿©°¡/¹®È­)/(ÀÇ·ù/½Å¹ß)/¿ëµ·/º¸Àå¼ºº¸Çè/±âÅ¸ÁöÃâ/¹ÌÆÄ¾ÇÁöÃâ)");
+                    .HasComment("ì†Œë¶„ë¥˜ (ì˜ˆì ê¸ˆ/ë‚´ìì‚°ì´ì²´/íˆ¬ì | ê³µì ì—°ê¸ˆ/ë¶€ì±„ìƒí™˜/ì„¸ê¸ˆ/ì‚¬íšŒë³´í—˜/ê°€êµ¬ê°„ ì´ì „ì§€ì¶œ/ë¹„ì˜ë¦¬ë‹¨ì²´ ì´ì „ | (ì‹ë¹„/ì™¸ì‹ë¹„)/(ì£¼ê±°/ìš©í’ˆë¹„)/êµìœ¡ë¹„/ì˜ë£Œë¹„/êµí†µë¹„/í†µì‹ ë¹„/(ì—¬ê°€/ë¬¸í™”)/(ì˜ë¥˜/ì‹ ë°œ)/ìš©ëˆ/ë³´ì¥ì„±ë³´í—˜/ê¸°íƒ€ì§€ì¶œ/ë¯¸íŒŒì•…ì§€ì¶œ)");
                 entity.Property(e => e.Updated)
                     .HasMaxLength(6)
-                    .HasComment("¾÷µ¥ÀÌÆ®ÀÏ");
+                    .HasComment("ì—…ë°ì´íŠ¸ì¼");
 
                 entity.HasOne(d => d.Asset).WithMany(p => p.Expenditures)
                     .HasForeignKey(d => new { d.PaymentMethod, d.AccountEmail })
@@ -361,7 +361,7 @@ namespace Maroik.Common.DataAccess.Data
                 entity.HasKey(e => e.Id).HasName("PRIMARY");
 
                 entity
-                    .ToTable("FixedExpenditure", tb => tb.HasComment("Maroik.WebSite °íÁ¤ÁöÃâ"))
+                    .ToTable("FixedExpenditure", tb => tb.HasComment("Maroik.WebSite ê³ ì •ì§€ì¶œ"))
                     .UseCollation("utf8mb4_general_ci");
 
                 entity.HasIndex(e => new { e.PaymentMethod, e.AccountEmail }, "FixedExpenditure_FK");
@@ -371,47 +371,47 @@ namespace Maroik.Common.DataAccess.Data
                     .HasColumnType("int(11)");
                 entity.Property(e => e.AccountEmail)
                     .IsRequired()
-                    .HasComment("°èÁ¤ ÀÌ¸ŞÀÏ (ID)");
+                    .HasComment("ê³„ì • ì´ë©”ì¼ (ID)");
                 entity.Property(e => e.Amount)
-                    .HasComment("±İ¾×")
+                    .HasComment("ê¸ˆì•¡")
                     .HasColumnType("bigint(255)");
                 entity.Property(e => e.Contents)
                     .IsRequired()
                     .HasMaxLength(255)
-                    .HasComment("³»¿ë (A¸¶Æ®/BÄ«µå/CÀ½½ÄÁ¡/Dµµ¼­°ü)");
+                    .HasComment("ë‚´ìš© (Aë§ˆíŠ¸/Bì¹´ë“œ/CìŒì‹ì /Dë„ì„œê´€)");
                 entity.Property(e => e.Created)
                     .HasMaxLength(6)
-                    .HasComment("»ı¼ºÀÏ");
+                    .HasComment("ìƒì„±ì¼");
                 entity.Property(e => e.DepositDay)
-                    .HasComment("ÀÔ±İÀÏ")
+                    .HasComment("ì…ê¸ˆì¼")
                     .HasColumnType("tinyint(2) unsigned");
                 entity.Property(e => e.DepositMonth)
-                    .HasComment("ÀÔ±İ¿ù")
+                    .HasComment("ì…ê¸ˆì›”")
                     .HasColumnType("tinyint(2) unsigned");
                 entity.Property(e => e.MainClass)
                     .IsRequired()
                     .HasMaxLength(255)
-                    .HasComment("´ëºĞ·ù (Á¤±âÀúÃà/ºñ¼ÒºñÁöÃâ/¼ÒºñÁöÃâ)");
+                    .HasComment("ëŒ€ë¶„ë¥˜ (ì •ê¸°ì €ì¶•/ë¹„ì†Œë¹„ì§€ì¶œ/ì†Œë¹„ì§€ì¶œ)");
                 entity.Property(e => e.MaturityDate)
                     .HasMaxLength(6)
-                    .HasComment("¸¸±âÀÏ");
+                    .HasComment("ë§Œê¸°ì¼");
                 entity.Property(e => e.MyDepositAsset)
                     .HasMaxLength(255)
-                    .HasComment("³» ÀÔ±İ ÀÚ»ê (ÀÚ»ê »óÇ°¸í/Çö±İ) (ÁöÃâ Áß [¿¹Àû±İ, ³»ÀÚ»êÀÌÃ¼, ÅõÀÚ, °øÀû¿¬±İ, ºÎÃ¤»óÈ¯]ÀÏ ¶§ »ç¿ë)");
+                    .HasComment("ë‚´ ì…ê¸ˆ ìì‚° (ìì‚° ìƒí’ˆëª…/í˜„ê¸ˆ) (ì§€ì¶œ ì¤‘ [ì˜ˆì ê¸ˆ, ë‚´ìì‚°ì´ì²´, íˆ¬ì, ê³µì ì—°ê¸ˆ, ë¶€ì±„ìƒí™˜]ì¼ ë•Œ ì‚¬ìš©)");
                 entity.Property(e => e.Note)
                     .HasMaxLength(255)
-                    .HasComment("ºñ°í");
+                    .HasComment("ë¹„ê³ ");
                 entity.Property(e => e.PaymentMethod)
                     .IsRequired()
-                    .HasComment("°áÁ¦ ¼ö´Ü (ÀÚ»ê »óÇ°¸í/Çö±İ)");
+                    .HasComment("ê²°ì œ ìˆ˜ë‹¨ (ìì‚° ìƒí’ˆëª…/í˜„ê¸ˆ)");
                 entity.Property(e => e.SubClass)
                     .IsRequired()
                     .HasMaxLength(255)
-                    .HasComment("¼ÒºĞ·ù (¿¹Àû±İ/³»ÀÚ»êÀÌÃ¼/ÅõÀÚ | °øÀû¿¬±İ/ºÎÃ¤»óÈ¯/¼¼±İ/»çÈ¸º¸Çè/°¡±¸°£ ÀÌÀüÁöÃâ/ºñ¿µ¸®´ÜÃ¼ ÀÌÀü | (½Äºñ/¿Ü½Äºñ)/(ÁÖ°Å/¿ëÇ°ºñ)/±³À°ºñ/ÀÇ·áºñ/±³Åëºñ/Åë½Åºñ/(¿©°¡/¹®È­)/(ÀÇ·ù/½Å¹ß)/¿ëµ·/º¸Àå¼ºº¸Çè/±âÅ¸ÁöÃâ/¹ÌÆÄ¾ÇÁöÃâ)");
-                entity.Property(e => e.Unpunctuality).HasComment("½Ã°£ ¹Ì¾ö¼ö (°íÁ¤ ÁöÃâ ½Ã°£ ¾à¼ÓÀ» ÁöÅ°Áö ¾Ê¾ÒÀ» ¶§ °è¼Ó ¾Ë¸²¿¡ Ç¥½ÃÇÏ´Â ¿ëµµ)");
+                    .HasComment("ì†Œë¶„ë¥˜ (ì˜ˆì ê¸ˆ/ë‚´ìì‚°ì´ì²´/íˆ¬ì | ê³µì ì—°ê¸ˆ/ë¶€ì±„ìƒí™˜/ì„¸ê¸ˆ/ì‚¬íšŒë³´í—˜/ê°€êµ¬ê°„ ì´ì „ì§€ì¶œ/ë¹„ì˜ë¦¬ë‹¨ì²´ ì´ì „ | (ì‹ë¹„/ì™¸ì‹ë¹„)/(ì£¼ê±°/ìš©í’ˆë¹„)/êµìœ¡ë¹„/ì˜ë£Œë¹„/êµí†µë¹„/í†µì‹ ë¹„/(ì—¬ê°€/ë¬¸í™”)/(ì˜ë¥˜/ì‹ ë°œ)/ìš©ëˆ/ë³´ì¥ì„±ë³´í—˜/ê¸°íƒ€ì§€ì¶œ/ë¯¸íŒŒì•…ì§€ì¶œ)");
+                entity.Property(e => e.Unpunctuality).HasComment("ì‹œê°„ ë¯¸ì—„ìˆ˜ (ê³ ì • ì§€ì¶œ ì‹œê°„ ì•½ì†ì„ ì§€í‚¤ì§€ ì•Šì•˜ì„ ë•Œ ê³„ì† ì•Œë¦¼ì— í‘œì‹œí•˜ëŠ” ìš©ë„)");
                 entity.Property(e => e.Updated)
                     .HasMaxLength(6)
-                    .HasComment("¾÷µ¥ÀÌÆ®ÀÏ");
+                    .HasComment("ì—…ë°ì´íŠ¸ì¼");
 
                 entity.HasOne(d => d.Asset).WithMany(p => p.FixedExpenditures)
                     .HasForeignKey(d => new { d.PaymentMethod, d.AccountEmail })
@@ -424,7 +424,7 @@ namespace Maroik.Common.DataAccess.Data
                 entity.HasKey(e => e.Id).HasName("PRIMARY");
 
                 entity
-                    .ToTable("FixedIncome", tb => tb.HasComment("Maroik.WebSite °íÁ¤¼öÀÔ"))
+                    .ToTable("FixedIncome", tb => tb.HasComment("Maroik.WebSite ê³ ì •ìˆ˜ì…"))
                     .UseCollation("utf8mb4_general_ci");
 
                 entity.HasIndex(e => new { e.DepositMyAssetProductName, e.AccountEmail }, "FixedIncome_FK");
@@ -434,44 +434,44 @@ namespace Maroik.Common.DataAccess.Data
                     .HasColumnType("int(11)");
                 entity.Property(e => e.AccountEmail)
                     .IsRequired()
-                    .HasComment("°èÁ¤ ÀÌ¸ŞÀÏ (ID)");
+                    .HasComment("ê³„ì • ì´ë©”ì¼ (ID)");
                 entity.Property(e => e.Amount)
-                    .HasComment("±İ¾×")
+                    .HasComment("ê¸ˆì•¡")
                     .HasColumnType("bigint(255)");
                 entity.Property(e => e.Contents)
                     .IsRequired()
                     .HasMaxLength(255)
-                    .HasComment("³»¿ë (È¸»ç¸í/»ç¾÷¸í)");
+                    .HasComment("ë‚´ìš© (íšŒì‚¬ëª…/ì‚¬ì—…ëª…)");
                 entity.Property(e => e.Created)
                     .HasMaxLength(6)
-                    .HasComment("»ı¼ºÀÏ");
+                    .HasComment("ìƒì„±ì¼");
                 entity.Property(e => e.DepositDay)
-                    .HasComment("ÀÔ±İÀÏ")
+                    .HasComment("ì…ê¸ˆì¼")
                     .HasColumnType("tinyint(2) unsigned");
                 entity.Property(e => e.DepositMonth)
-                    .HasComment("ÀÔ±İ¿ù")
+                    .HasComment("ì…ê¸ˆì›”")
                     .HasColumnType("tinyint(2) unsigned");
                 entity.Property(e => e.DepositMyAssetProductName)
                     .IsRequired()
-                    .HasComment("ÀÔ±İ ÀÚ»ê (ÀÚ»ê »óÇ°¸í/Çö±İ)");
+                    .HasComment("ì…ê¸ˆ ìì‚° (ìì‚° ìƒí’ˆëª…/í˜„ê¸ˆ)");
                 entity.Property(e => e.MainClass)
                     .IsRequired()
                     .HasMaxLength(255)
-                    .HasComment("´ëºĞ·ù (Á¤±â¼öÀÔ/ºñÁ¤±â¼öÀÔ)");
+                    .HasComment("ëŒ€ë¶„ë¥˜ (ì •ê¸°ìˆ˜ì…/ë¹„ì •ê¸°ìˆ˜ì…)");
                 entity.Property(e => e.MaturityDate)
                     .HasMaxLength(6)
-                    .HasComment("¸¸±âÀÏ");
+                    .HasComment("ë§Œê¸°ì¼");
                 entity.Property(e => e.Note)
                     .HasMaxLength(255)
-                    .HasComment("ºñ°í");
+                    .HasComment("ë¹„ê³ ");
                 entity.Property(e => e.SubClass)
                     .IsRequired()
                     .HasMaxLength(255)
-                    .HasComment("¼ÒºĞ·ù (±Ù·Î¼öÀÔ/»ç¾÷¼öÀÔ/¿¬±İ¼öÀÔ/±İÀ¶¼Òµæ/ÀÓ´ë¼öÀÔ/±âÅ¸¼öÀÔ)");
-                entity.Property(e => e.Unpunctuality).HasComment("½Ã°£ ¹Ì¾ö¼ö (°íÁ¤ ¼öÀÔ ½Ã°£ ¾à¼ÓÀ» ÁöÅ°Áö ¾Ê¾ÒÀ» ¶§ °è¼Ó ¾Ë¸²¿¡ Ç¥½ÃÇÏ´Â ¿ëµµ)");
+                    .HasComment("ì†Œë¶„ë¥˜ (ê·¼ë¡œìˆ˜ì…/ì‚¬ì—…ìˆ˜ì…/ì—°ê¸ˆìˆ˜ì…/ê¸ˆìœµì†Œë“/ì„ëŒ€ìˆ˜ì…/ê¸°íƒ€ìˆ˜ì…)");
+                entity.Property(e => e.Unpunctuality).HasComment("ì‹œê°„ ë¯¸ì—„ìˆ˜ (ê³ ì • ìˆ˜ì… ì‹œê°„ ì•½ì†ì„ ì§€í‚¤ì§€ ì•Šì•˜ì„ ë•Œ ê³„ì† ì•Œë¦¼ì— í‘œì‹œí•˜ëŠ” ìš©ë„)");
                 entity.Property(e => e.Updated)
                     .HasMaxLength(6)
-                    .HasComment("¾÷µ¥ÀÌÆ®ÀÏ");
+                    .HasComment("ì—…ë°ì´íŠ¸ì¼");
 
                 entity.HasOne(d => d.Asset).WithMany(p => p.FixedIncomes)
                     .HasForeignKey(d => new { d.DepositMyAssetProductName, d.AccountEmail })
@@ -484,7 +484,7 @@ namespace Maroik.Common.DataAccess.Data
                 entity.HasKey(e => e.Id).HasName("PRIMARY");
 
                 entity
-                    .ToTable("Income", tb => tb.HasComment("Maroik.WebSite ¼öÀÔ"))
+                    .ToTable("Income", tb => tb.HasComment("Maroik.WebSite ìˆ˜ì…"))
                     .UseCollation("utf8mb4_general_ci");
 
                 entity.HasIndex(e => new { e.DepositMyAssetProductName, e.AccountEmail }, "Income_FK");
@@ -494,34 +494,34 @@ namespace Maroik.Common.DataAccess.Data
                     .HasColumnType("int(11)");
                 entity.Property(e => e.AccountEmail)
                     .IsRequired()
-                    .HasComment("°èÁ¤ ÀÌ¸ŞÀÏ (ID)");
+                    .HasComment("ê³„ì • ì´ë©”ì¼ (ID)");
                 entity.Property(e => e.Amount)
-                    .HasComment("±İ¾×")
+                    .HasComment("ê¸ˆì•¡")
                     .HasColumnType("bigint(255)");
                 entity.Property(e => e.Contents)
                     .IsRequired()
                     .HasMaxLength(255)
-                    .HasComment("³»¿ë (È¸»ç¸í/»ç¾÷¸í)");
+                    .HasComment("ë‚´ìš© (íšŒì‚¬ëª…/ì‚¬ì—…ëª…)");
                 entity.Property(e => e.Created)
                     .HasMaxLength(6)
-                    .HasComment("»ı¼ºÀÏ");
+                    .HasComment("ìƒì„±ì¼");
                 entity.Property(e => e.DepositMyAssetProductName)
                     .IsRequired()
-                    .HasComment("ÀÔ±İ ÀÚ»ê (ÀÚ»ê »óÇ°¸í/Çö±İ)");
+                    .HasComment("ì…ê¸ˆ ìì‚° (ìì‚° ìƒí’ˆëª…/í˜„ê¸ˆ)");
                 entity.Property(e => e.MainClass)
                     .IsRequired()
                     .HasMaxLength(255)
-                    .HasComment("´ëºĞ·ù (Á¤±â¼öÀÔ/ºñÁ¤±â¼öÀÔ)");
+                    .HasComment("ëŒ€ë¶„ë¥˜ (ì •ê¸°ìˆ˜ì…/ë¹„ì •ê¸°ìˆ˜ì…)");
                 entity.Property(e => e.Note)
                     .HasMaxLength(255)
-                    .HasComment("ºñ°í");
+                    .HasComment("ë¹„ê³ ");
                 entity.Property(e => e.SubClass)
                     .IsRequired()
                     .HasMaxLength(255)
-                    .HasComment("¼ÒºĞ·ù (±Ù·Î¼öÀÔ/»ç¾÷¼öÀÔ/¿¬±İ¼öÀÔ/±İÀ¶¼Òµæ/ÀÓ´ë¼öÀÔ/±âÅ¸¼öÀÔ)");
+                    .HasComment("ì†Œë¶„ë¥˜ (ê·¼ë¡œìˆ˜ì…/ì‚¬ì—…ìˆ˜ì…/ì—°ê¸ˆìˆ˜ì…/ê¸ˆìœµì†Œë“/ì„ëŒ€ìˆ˜ì…/ê¸°íƒ€ìˆ˜ì…)");
                 entity.Property(e => e.Updated)
                     .HasMaxLength(6)
-                    .HasComment("¾÷µ¥ÀÌÆ®ÀÏ");
+                    .HasComment("ì—…ë°ì´íŠ¸ì¼");
 
                 entity.HasOne(d => d.Asset).WithMany(p => p.Incomes)
                     .HasForeignKey(d => new { d.DepositMyAssetProductName, d.AccountEmail })
@@ -534,7 +534,7 @@ namespace Maroik.Common.DataAccess.Data
                 entity.HasKey(e => e.Id).HasName("PRIMARY");
 
                 entity
-                    .ToTable("SubCategory", tb => tb.HasComment("¼­ºê Ä«Å×°í¸® /*Maroik.WebSiteÀÇ ·Î±×ÀÎ ÈÄ Á¢±Ù °¡´ÉÇÑ ÁÂÃø SideBar ¼³Á¤ ½Ã »ç¿ë*/"))
+                    .ToTable("SubCategory", tb => tb.HasComment("ì„œë¸Œ ì¹´í…Œê³ ë¦¬ /*Maroik.WebSiteì˜ ë¡œê·¸ì¸ í›„ ì ‘ê·¼ ê°€ëŠ¥í•œ ì¢Œì¸¡ SideBar ì„¤ì • ì‹œ ì‚¬ìš©*/"))
                     .HasCharSet("utf8mb3")
                     .UseCollation("utf8mb3_general_ci");
 
@@ -546,30 +546,30 @@ namespace Maroik.Common.DataAccess.Data
                 entity.Property(e => e.Action)
                     .IsRequired()
                     .HasMaxLength(255)
-                    .HasComment("Á¢±Ù MVC Action ¸í /*ÀÌ °ªÀÌ ¾øÀ¸¸é ÇÏÀ§ Ä«Å×°í¸® Á¸Àç*/");
+                    .HasComment("ì ‘ê·¼ MVC Action ëª… /*ì´ ê°’ì´ ì—†ìœ¼ë©´ í•˜ìœ„ ì¹´í…Œê³ ë¦¬ ì¡´ì¬*/");
                 entity.Property(e => e.CategoryId)
-                    .HasComment("ºÎ¸ğ Ä«Å×°í¸® ID")
+                    .HasComment("ë¶€ëª¨ ì¹´í…Œê³ ë¦¬ ID")
                     .HasColumnType("int(11)");
                 entity.Property(e => e.DisplayName)
                     .IsRequired()
                     .HasMaxLength(255)
-                    .HasComment("Ç¥½ÃÀÌ¸§");
+                    .HasComment("í‘œì‹œì´ë¦„");
                 entity.Property(e => e.IconPath)
                     .IsRequired()
                     .HasMaxLength(255)
-                    .HasComment("Ç¥½Ã ¾ÆÀÌÄÜ °æ·Î /*FontAwesome »ç¿ë*/");
+                    .HasComment("í‘œì‹œ ì•„ì´ì½˜ ê²½ë¡œ /*FontAwesome ì‚¬ìš©*/");
                 entity.Property(e => e.Name)
                     .IsRequired()
                     .HasMaxLength(255)
-                    .HasComment("ÀÌ¸§");
+                    .HasComment("ì´ë¦„");
                 entity.Property(e => e.Order)
-                    .HasComment("Ãâ·Â ¼ø¼­")
+                    .HasComment("ì¶œë ¥ ìˆœì„œ")
                     .HasColumnType("int(11)");
                 entity.Property(e => e.Role)
                     .IsRequired()
                     .HasMaxLength(255)
                     .HasDefaultValueSql("'Admin'")
-                    .HasComment("Á¢±Ù ±ÇÇÑ ¼³Á¤");
+                    .HasComment("ì ‘ê·¼ ê¶Œí•œ ì„¤ì •");
 
                 entity.HasOne(d => d.Category).WithMany(p => p.SubCategories)
                     .HasForeignKey(d => d.CategoryId)

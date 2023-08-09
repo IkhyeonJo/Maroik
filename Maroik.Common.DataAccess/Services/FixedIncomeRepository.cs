@@ -18,7 +18,7 @@ namespace Maroik.Common.DataAccess.Services
         }
 
         /// <summary>
-        /// ╥н╠вюн ╟Ха╓©║ гь╢Гго╢б ╦П╣Г ╟Ма╓╪Жютю╩ ╠╦гу╢о╢ы.
+        /// К║°Й╥╦Л²╦ ЙЁ└Л═∙Л≈░ М∙╢К▀╧М∙≤К┼■ К╙╗К⌠═ ЙЁ═Л═∙Л┬≤Л·┘Л²└ Й╣╛М∙╘К▀┬К▀╓.
         /// </summary>
         /// <param name="email"></param>
         /// <returns></returns>
@@ -28,7 +28,7 @@ namespace Maroik.Common.DataAccess.Services
         }
 
         /// <summary>
-        /// ╟Ма╓╪Жютю╩ ╩Щ╪╨гу╢о╢ы.
+        /// ЙЁ═Л═∙Л┬≤Л·┘Л²└ Л┐²Л└╠М∙╘К▀┬К▀╓.
         /// </summary>
         /// <param name="fixedIncome"></param>
         /// <returns></returns>
@@ -39,7 +39,7 @@ namespace Maroik.Common.DataAccess.Services
         }
 
         /// <summary>
-        /// ╟Ма╓╪Жютю╩ ╬В╣╔юлф╝гу╢о╢ы.
+        /// ЙЁ═Л═∙Л┬≤Л·┘Л²└ Л≈┘К█╟Л²╢М┼╦М∙╘К▀┬К▀╓.
         /// </summary>
         /// <param name="fixedIncome"></param>
         /// <returns></returns>
@@ -50,7 +50,7 @@ namespace Maroik.Common.DataAccess.Services
         }
 
         /// <summary>
-        /// ╟Ма╓╪Жютю╩ а╕╟егу╢о╢ы.
+        /// ЙЁ═Л═∙Л┬≤Л·┘Л²└ Л═°Й╠╟М∙╘К▀┬К▀╓.
         /// </summary>
         /// <param name="fixedIncome"></param>
         /// <returns></returns>

@@ -7,30 +7,30 @@ namespace Maroik.Common.DataAccess.Contracts
     public interface ICategoryRepository
     {
         /// <summary>
-        /// ¸ğµç Ä«Å×°í¸®µéÀ» ±¸ÇÕ´Ï´Ù.
+        /// ëª¨ë“  ì¹´í…Œê³ ë¦¬ë“¤ì„ êµ¬í•©ë‹ˆë‹¤.
         /// </summary>
         /// <returns></returns>
         public IEnumerable<Category> GetCategory();
         /// <summary>
-        /// ±ÇÇÑ¿¡ µû¸¥ Ä«Å×°í¸®µéÀ» ±¸ÇÕ´Ï´Ù.
+        /// ê¶Œí•œì— ë”°ë¥¸ ì¹´í…Œê³ ë¦¬ë“¤ì„ êµ¬í•©ë‹ˆë‹¤.
         /// </summary>
         /// <param name="role"></param>
         /// <returns></returns>
         public Task<IEnumerable<Category>> GetCategoryByRoleAsync(string role);
         /// <summary>
-        /// Ä«Å×°í¸®¸¦ »ı¼ºÇÕ´Ï´Ù.
+        /// ì¹´í…Œê³ ë¦¬ë¥¼ ìƒì„±í•©ë‹ˆë‹¤.
         /// </summary>
         /// <param name="category"></param>
         /// <returns></returns>
         public Task CreateCategoryAsync(Category category);
         /// <summary>
-        /// Ä«Å×°í¸®¸¦ ¾÷µ¥ÀÌÆ®ÇÕ´Ï´Ù.
+        /// ì¹´í…Œê³ ë¦¬ë¥¼ ì—…ë°ì´íŠ¸í•©ë‹ˆë‹¤.
         /// </summary>
         /// <param name="category"></param>
         /// <returns></returns>
         public Task UpdateCategoryAsync(Category category);
         /// <summary>
-        /// Ä«Å×°í¸®¸¦ Á¦°ÅÇÕ´Ï´Ù.
+        /// ì¹´í…Œê³ ë¦¬ë¥¼ ì œê±°í•©ë‹ˆë‹¤.
         /// </summary>
         /// <param name="category"></param>
         /// <returns></returns>

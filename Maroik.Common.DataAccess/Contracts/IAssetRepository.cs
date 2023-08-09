@@ -7,14 +7,14 @@ namespace Maroik.Common.DataAccess.Contracts
     public interface IAssetRepository
     {
         /// <summary>
-        /// ·Î±×ÀÎ °èÁ¤¿¡ ÇØ´çÇÏ´Â ¸ğµç ÀÚ»êÀ» ±¸ÇÕ´Ï´Ù.
+        /// ë¡œê·¸ì¸ ê³„ì •ì— í•´ë‹¹í•˜ëŠ” ëª¨ë“  ìì‚°ì„ êµ¬í•©ë‹ˆë‹¤.
         /// </summary>
         /// <param name="email"></param>
         /// <returns></returns>
         public Task<List<Asset>> GetAssetsAsync(string email);
 
         /// <summary>
-        /// ·Î±×ÀÎ °èÁ¤¿¡ ÇØ´çÇÏ´Â Æ¯Á¤ ÀÚ»êÀ» ±¸ÇÕ´Ï´Ù.
+        /// ë¡œê·¸ì¸ ê³„ì •ì— í•´ë‹¹í•˜ëŠ” íŠ¹ì • ìì‚°ì„ êµ¬í•©ë‹ˆë‹¤.
         /// </summary>
         /// <param name="email"></param>
         /// <param name="productName"></param>
@@ -22,14 +22,14 @@ namespace Maroik.Common.DataAccess.Contracts
         public Task<Asset> GetAssetAsync(string email, string productName);
 
         /// <summary>
-        /// ÀÚ»êÀ» »ı¼ºÇÕ´Ï´Ù.
+        /// ìì‚°ì„ ìƒì„±í•©ë‹ˆë‹¤.
         /// </summary>
         /// <param name="asset"></param>
         /// <returns></returns>
         public Task CreateAssetAsync(Asset asset);
 
         /// <summary>
-        /// ÀÚ»êÀ» ¾÷µ¥ÀÌÆ®ÇÕ´Ï´Ù.
+        /// ìì‚°ì„ ì—…ë°ì´íŠ¸í•©ë‹ˆë‹¤.
         /// </summary>
         /// <param name="asset"></param>
         /// <returns></returns>

@@ -17,7 +17,7 @@ namespace Maroik.Common.DataAccess.Services
             this.context = context;
         }
         /// <summary>
-        /// µî·ÏµÈ ¸ğµç °èÁ¤À» ±¸ÇÕ´Ï´Ù.
+        /// ë“±ë¡ëœ ëª¨ë“  ê³„ì •ì„ êµ¬í•©ë‹ˆë‹¤.
         /// </summary>
         /// <returns></returns>
         public async Task<List<AttachedFile>> GetAllAsync()
@@ -26,7 +26,7 @@ namespace Maroik.Common.DataAccess.Services
         }
 
         /// <summary>
-        /// Ã·ºÎÆÄÀÏÀ» ÀúÀåÇÕ´Ï´Ù.
+        /// ì²¨ë¶€íŒŒì¼ì„ ì €ì¥í•©ë‹ˆë‹¤.
         /// </summary>
         /// <param name="attachedFile"></param>
         /// <returns></returns>
@@ -37,7 +37,7 @@ namespace Maroik.Common.DataAccess.Services
         }
 
         /// <summary>
-        /// Ã·ºÎÆÄÀÏÀ» ¾÷µ¥ÀÌÆ®ÇÕ´Ï´Ù.
+        /// ì²¨ë¶€íŒŒì¼ì„ ì—…ë°ì´íŠ¸í•©ë‹ˆë‹¤.
         /// </summary>
         /// <param name="attachedFile"></param>
         /// <returns></returns>

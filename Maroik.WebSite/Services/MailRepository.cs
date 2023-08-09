@@ -12,7 +12,7 @@ namespace Maroik.WebSite.Services
     public class MailRepository : IMailRepository
     {
         /// <summary>
-        /// °èÁ¤ ºñ¹Ğ¹øÈ£ ÃÊ±âÈ­ ¸ŞÀÏÀÇ HttpBody ºÎºĞÀ» ±¸ÇÕ´Ï´Ù.
+        /// ê³„ì • ë¹„ë°€ë²ˆí˜¸ ì´ˆê¸°í™” ë©”ì¼ì˜ HttpBody ë¶€ë¶„ì„ êµ¬í•©ë‹ˆë‹¤.
         /// </summary>
         /// <param name="loginInputViewModel"></param>
         /// <param name="title"></param>
@@ -30,7 +30,7 @@ namespace Maroik.WebSite.Services
                       </div>";
         }
         /// <summary>
-        /// °èÁ¤ È®ÀÎ ¸ŞÀÏÀÇ HttpBody ºÎºĞÀ» ±¸ÇÕ´Ï´Ù.
+        /// ê³„ì • í™•ì¸ ë©”ì¼ì˜ HttpBody ë¶€ë¶„ì„ êµ¬í•©ë‹ˆë‹¤.
         /// </summary>
         /// <param name="loginInputViewModel"></param>
         /// <param name="title"></param>
@@ -48,7 +48,7 @@ namespace Maroik.WebSite.Services
                       </div>";
         }
         /// <summary>
-        /// ¸ŞÀÏ Àü¼Û
+        /// ë©”ì¼ ì „ì†¡
         /// </summary>
         /// <param name="mail"></param>
         /// <returns></returns>

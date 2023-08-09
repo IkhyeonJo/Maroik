@@ -35,7 +35,7 @@ ServerSetting.NoticeMaturityDateDay = Convert.ToInt32(builder.Configuration.GetS
 
 #region AddMariaDbContext
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-      //options.UseLazyLoadingProxies().UseMySql(builder.Configuration.GetConnectionString("DefaultConnection"), ServerVersion.AutoDetect(builder.Configuration.GetConnectionString("DefaultConnection")), providerOptions => providerOptions.EnableRetryOnFailure())); // ÀÌ°ÅÇÏ´Ï Excel Export ¾È µÊ
+      //options.UseLazyLoadingProxies().UseMySql(builder.Configuration.GetConnectionString("DefaultConnection"), ServerVersion.AutoDetect(builder.Configuration.GetConnectionString("DefaultConnection")), providerOptions => providerOptions.EnableRetryOnFailure())); // ì´ê±°í•˜ë‹ˆ Excel Export ì•ˆ ë¨
       options.UseMySql(builder.Configuration.GetConnectionString("DefaultConnection"), ServerVersion.AutoDetect(builder.Configuration.GetConnectionString("DefaultConnection")), providerOptions => providerOptions.EnableRetryOnFailure()).EnableSensitiveDataLogging());
 #endregion
 
@@ -78,7 +78,7 @@ builder.Services.AddSession(options =>
 builder.Services.AddSingleton<IConfiguration>(builder.Configuration);
 builder.Services.AddResponseCaching(); // For HTTP Header Setting 
 
-#region µµ¸ŞÀÎ ÀÖÀ» ¶§, »ç¿ë
+#region ë„ë©”ì¸ ìˆì„ ë•Œ, ì‚¬ìš©
 //builder.Services.AddHsts(options => // https://blog.elmah.io/the-asp-net-core-security-headers-guide/
 //{
 //    options.IncludeSubDomains = true;
@@ -112,12 +112,12 @@ builder.Services.AddControllersWithViews(options =>
 var app = builder.Build();
 //1.Exception / error handling
 
-//¾ÛÀÌ °³¹ßÈ¯°æ¿¡¼­ ½ÇÇàµÇ´Â °æ¿ì
-//°³¹ßÀÚ ¿¹¿Ü ÆäÀÌÁö ¹Ìµé¿ş¾î°¡(UseDeveloperExceptionPage) °¡ ¾Û ·±Å¸ÀÓ ¿À·ù¸¦ º¸°íÇÕ´Ï´Ù.
-//µ¥ÀÌÅÍº£ÀÌ½º ¿À·ùÆäÀÌÁö ¹Ìµé¿ş¾î°¡ µ¥ÀÌÅÍº£ÀÌ½º ·±Å¸ÀÓ ¿À·ù¸¦ º¸°íÇÕ´Ï´Ù.
-//¾ÛÀÌ ÇÁ·Î´ö¼Ç È¯°æ¿¡¼­ ½ÇÇàµÇ´Â °æ¿ì
-//¿¹¿Ü Ã³¸®±â ¹Ìµé¿ş¾î(UseExceptionHandler)´Â ´ÙÀ½ ¹Ìµé¿ş¾î¿¡¼­ ¹ß»ıÇÑ ¿¹¿Ü¸¦ Æ÷ÂøÇÕ´Ï´Ù.
-//HSTS(HTTP Strict Transport Security Protocol) ¹Ìµé¿ş¾î(UseHsts)´Â Strict-Transport - SecurityÇì´õ¸¦ Ãß°¡ÇÕ´Ï´Ù.
+//ì•±ì´ ê°œë°œí™˜ê²½ì—ì„œ ì‹¤í–‰ë˜ëŠ” ê²½ìš°
+//ê°œë°œì ì˜ˆì™¸ í˜ì´ì§€ ë¯¸ë“¤ì›¨ì–´ê°€(UseDeveloperExceptionPage) ê°€ ì•± ëŸ°íƒ€ì„ ì˜¤ë¥˜ë¥¼ ë³´ê³ í•©ë‹ˆë‹¤.
+//ë°ì´í„°ë² ì´ìŠ¤ ì˜¤ë¥˜í˜ì´ì§€ ë¯¸ë“¤ì›¨ì–´ê°€ ë°ì´í„°ë² ì´ìŠ¤ ëŸ°íƒ€ì„ ì˜¤ë¥˜ë¥¼ ë³´ê³ í•©ë‹ˆë‹¤.
+//ì•±ì´ í”„ë¡œë•ì…˜ í™˜ê²½ì—ì„œ ì‹¤í–‰ë˜ëŠ” ê²½ìš°
+//ì˜ˆì™¸ ì²˜ë¦¬ê¸° ë¯¸ë“¤ì›¨ì–´(UseExceptionHandler)ëŠ” ë‹¤ìŒ ë¯¸ë“¤ì›¨ì–´ì—ì„œ ë°œìƒí•œ ì˜ˆì™¸ë¥¼ í¬ì°©í•©ë‹ˆë‹¤.
+//HSTS(HTTP Strict Transport Security Protocol) ë¯¸ë“¤ì›¨ì–´(UseHsts)ëŠ” Strict-Transport - Securityí—¤ë”ë¥¼ ì¶”ê°€í•©ë‹ˆë‹¤.
 
 //if (!app.Environment.IsDevelopment())
 //{
@@ -138,7 +138,7 @@ app.UseCookiePolicy(new CookiePolicyOptions
 
 app.UseExceptionHandler("/Exception/Error");
 
-#region µµ¸ŞÀÎ ÀÖÀ» ¶§, »ç¿ë
+#region ë„ë©”ì¸ ìˆì„ ë•Œ, ì‚¬ìš©
 // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
 //app.UseHsts();
 
@@ -148,83 +148,83 @@ app.UseExceptionHandler("/Exception/Error");
 //);
 #endregion
 
-#region µµ¸ŞÀÎ ¾øÀ» ¶§, »ç¿ë
-app.UseHttpsRedirection(); // 2. HTTPS ¸®µğ·º¼Ç ¹Ìµé¿ş¾î (UseHttpsRedirection)´Â HTTP ¿äÃ»À» HTTPS·Î ¸®µğ·º¼ÇÇÕ´Ï´Ù.
-                           //app.UseStaticFiles(); // 3. Á¤Àû ÆÄÀÏ ¹Ìµé¿ş¾î (UseStaticFiles)´Â Á¤Àû ÆÄÀÏÀ» ¸®ÅÏÇÏ°í Ãß°¡ ¿äÃ» Ã³¸®¸¦ ´Ü¶ô½ÃÅµ´Ï´Ù.
-                           // app.UseCookiePolicy(); 4. ÄíÅ° Á¤Ã¥ ¹Ìµé¿ş¾î (UseCookiePolicy)´Â ¾ÛÀ» EU ÀÏ¹İ µ¥ÀÌÅÍ º¸È£ ±ÔÁ¤ (GDPR) ±ÔÁ¤¿¡ µû¸¨´Ï´Ù.
+#region ë„ë©”ì¸ ì—†ì„ ë•Œ, ì‚¬ìš©
+app.UseHttpsRedirection(); // 2. HTTPS ë¦¬ë””ë ‰ì…˜ ë¯¸ë“¤ì›¨ì–´ (UseHttpsRedirection)ëŠ” HTTP ìš”ì²­ì„ HTTPSë¡œ ë¦¬ë””ë ‰ì…˜í•©ë‹ˆë‹¤.
+                           //app.UseStaticFiles(); // 3. ì •ì  íŒŒì¼ ë¯¸ë“¤ì›¨ì–´ (UseStaticFiles)ëŠ” ì •ì  íŒŒì¼ì„ ë¦¬í„´í•˜ê³  ì¶”ê°€ ìš”ì²­ ì²˜ë¦¬ë¥¼ ë‹¨ë½ì‹œí‚µë‹ˆë‹¤.
+                           // app.UseCookiePolicy(); 4. ì¿ í‚¤ ì •ì±… ë¯¸ë“¤ì›¨ì–´ (UseCookiePolicy)ëŠ” ì•±ì„ EU ì¼ë°˜ ë°ì´í„° ë³´í˜¸ ê·œì • (GDPR) ê·œì •ì— ë”°ë¦…ë‹ˆë‹¤.
 #endregion
 
-app.UseRouting(); // 5. ¿äÃ»À» ¶ó¿ìÆÃÇÏ±âÀ§ÇÑ ¹Ìµé¿ş¾î ¶ó¿ìÆÃ (UseRouting)
+app.UseRouting(); // 5. ìš”ì²­ì„ ë¼ìš°íŒ…í•˜ê¸°ìœ„í•œ ë¯¸ë“¤ì›¨ì–´ ë¼ìš°íŒ… (UseRouting)
 
 // app.UseRequestLocalization();
 // app.UseCors();
 
 
 #region Login
-app.UseAuthentication(); // 6.ÀÎÁõ ¹Ìµé¿ş¾î(UseAuthentication)´Â º¸¾È ÀÚ¿ø¿¡ ´ëÇÑ ¾×¼¼½º°¡ Çã¿ëµÇ±â Àü¿¡ »ç¿ëÀÚ ÀÎÁõÀ» ½ÃµµÇÕ´Ï´Ù.
-app.UseAuthorization(); // 7. ±ÇÇÑ ¹Ìµé¿ş¾î (UseAuthorization)´Â »ç¿ëÀÚ°¡ º¸¾È ÀÚ¿ø¿¡ ¾×¼¼½º ÇÒ ¼öÀÖ´Â ±ÇÇÑÀ» ºÎ¿©ÇÕ´Ï´Ù.
-app.UseSession(); // 8. ¼¼¼Ç ¹Ìµé¿ş¾î (UseSession)´Â ¼¼¼Ç »óÅÂ¸¦ ¼³Á¤ÇÏ°í À¯ÁöÇÕ´Ï´Ù. ¾ÛÀÌ ¼¼¼Ç »óÅÂ¸¦ »ç¿ëÇÏ´Â °æ¿ì ÄíÅ° Á¤Ã¥ ¹Ìµé¿ş¾î ÀÌÈÄ ¹× MVC ¹Ìµé¿ş¾î Àü¿¡ ¼¼¼Ç ¹Ìµé¿ş¾î¸¦ È£ÃâÇÏ½Ê½Ã¿À.
+app.UseAuthentication(); // 6.ì¸ì¦ ë¯¸ë“¤ì›¨ì–´(UseAuthentication)ëŠ” ë³´ì•ˆ ìì›ì— ëŒ€í•œ ì•¡ì„¸ìŠ¤ê°€ í—ˆìš©ë˜ê¸° ì „ì— ì‚¬ìš©ì ì¸ì¦ì„ ì‹œë„í•©ë‹ˆë‹¤.
+app.UseAuthorization(); // 7. ê¶Œí•œ ë¯¸ë“¤ì›¨ì–´ (UseAuthorization)ëŠ” ì‚¬ìš©ìê°€ ë³´ì•ˆ ìì›ì— ì•¡ì„¸ìŠ¤ í•  ìˆ˜ìˆëŠ” ê¶Œí•œì„ ë¶€ì—¬í•©ë‹ˆë‹¤.
+app.UseSession(); // 8. ì„¸ì…˜ ë¯¸ë“¤ì›¨ì–´ (UseSession)ëŠ” ì„¸ì…˜ ìƒíƒœë¥¼ ì„¤ì •í•˜ê³  ìœ ì§€í•©ë‹ˆë‹¤. ì•±ì´ ì„¸ì…˜ ìƒíƒœë¥¼ ì‚¬ìš©í•˜ëŠ” ê²½ìš° ì¿ í‚¤ ì •ì±… ë¯¸ë“¤ì›¨ì–´ ì´í›„ ë° MVC ë¯¸ë“¤ì›¨ì–´ ì „ì— ì„¸ì…˜ ë¯¸ë“¤ì›¨ì–´ë¥¼ í˜¸ì¶œí•˜ì‹­ì‹œì˜¤.
 #endregion
 
-#region ±ÇÇÑ ¾øÀÌ wwwroot¿¡ Á¢±ÙÇÏ·Á°í ÇÏ¸é ÃÊ±â È­¸éÀ¸·Î µ¹·Áº¸³¿
+#region ê¶Œí•œ ì—†ì´ wwwrootì— ì ‘ê·¼í•˜ë ¤ê³  í•˜ë©´ ì´ˆê¸° í™”ë©´ìœ¼ë¡œ ëŒë ¤ë³´ëƒ„
 app.UseStaticFiles(new StaticFileOptions
 {
     OnPrepareResponse = context =>
     {
-        bool isAccountSessionExist = context.Context.Session.TryGetValue("AccountSession", out _); // ·Î±×ÀÎÀÌ µÇ¾î °èÁ¤ ¼¼¼ÇÀÌ »ı°å´ÂÁö È®ÀÎ
+        bool isAccountSessionExist = context.Context.Session.TryGetValue("AccountSession", out _); // ë¡œê·¸ì¸ì´ ë˜ì–´ ê³„ì • ì„¸ì…˜ì´ ìƒê²¼ëŠ”ì§€ í™•ì¸
 
-        if (context.Context.Request.Path.StartsWithSegments("/upload/Forum") || context.Context.Request.Path.StartsWithSegments("/upload/Management/Profile/Avatar") || context.Context.Request.Path.ToString().Contains("/upload/Management/Profile/default-avatar.jpg")) // (~/upload/Forum) [°Ô½Ã¹°] (~/upload/Management/Profile/Avatar) [´ñ±Û °Ô½ÃÆÇ ÀÌ¹ÌÁö] °Ô½ÃÆÇ ÆÄÀÏµéÀº ¸ğµÎ Á¢±Ù Çã¿ë
+        if (context.Context.Request.Path.StartsWithSegments("/upload/Forum") || context.Context.Request.Path.StartsWithSegments("/upload/Management/Profile/Avatar") || context.Context.Request.Path.ToString().Contains("/upload/Management/Profile/default-avatar.jpg")) // (~/upload/Forum) [ê²Œì‹œë¬¼] (~/upload/Management/Profile/Avatar) [ëŒ“ê¸€ ê²Œì‹œíŒ ì´ë¯¸ì§€] ê²Œì‹œíŒ íŒŒì¼ë“¤ì€ ëª¨ë‘ ì ‘ê·¼ í—ˆìš©
         {
 
         }
-        else if (isAccountSessionExist == false && !context.Context.Request.Path.StartsWithSegments("/anonymous")) // ·Î±×ÀÎÀÌ ¾È µÈ »óÅÂÀÎ°¡? ±×·¸´Ù¸é ~/anonymous ÀÚ¿ø¿¡¸¸ Á¢±Ù Çã¿ë
+        else if (isAccountSessionExist == false && !context.Context.Request.Path.StartsWithSegments("/anonymous")) // ë¡œê·¸ì¸ì´ ì•ˆ ëœ ìƒíƒœì¸ê°€? ê·¸ë ‡ë‹¤ë©´ ~/anonymous ìì›ì—ë§Œ ì ‘ê·¼ í—ˆìš©
         {
-            context.Context.Response.StatusCode = (int)HttpStatusCode.Unauthorized; // ±ÇÇÑ ¾øÀ½ 
-            context.Context.Response.ContentLength = 0; // ³»¿ë ±æÀÌ ¾øÀ½
-            context.Context.Response.Body = Stream.Null; // ³»¿ë ¾øÀ½
-            context.Context.Response.Redirect("/"); // ·Î±×ÀÎ È­¸éÀ¸·Î
+            context.Context.Response.StatusCode = (int)HttpStatusCode.Unauthorized; // ê¶Œí•œ ì—†ìŒ 
+            context.Context.Response.ContentLength = 0; // ë‚´ìš© ê¸¸ì´ ì—†ìŒ
+            context.Context.Response.Body = Stream.Null; // ë‚´ìš© ì—†ìŒ
+            context.Context.Response.Redirect("/"); // ë¡œê·¸ì¸ í™”ë©´ìœ¼ë¡œ
         }
         else if (isAccountSessionExist == true)
         {
             context.Context.Session.TryGetValue("AccountSession", out byte[] resultByte);
             var loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)); // Get Session
 
-            if (loginedAccount.Role == Role.Admin && !context.Context.Request.Path.StartsWithSegments("/admin")) // ·Î±×ÀÎÀÌ µÇ¾ú°í ±ÇÇÑÀÌ AdminÀÎ°¡? ±×·¸´Ù¸é ~/admin ÀÚ¿ø¿¡¸¸ Á¢±Ù Çã¿ë
+            if (loginedAccount.Role == Role.Admin && !context.Context.Request.Path.StartsWithSegments("/admin")) // ë¡œê·¸ì¸ì´ ë˜ì—ˆê³  ê¶Œí•œì´ Adminì¸ê°€? ê·¸ë ‡ë‹¤ë©´ ~/admin ìì›ì—ë§Œ ì ‘ê·¼ í—ˆìš©
             {
-                #region Profile Image ÀÌ°Å³ª, Profile ¾Æ¹ÙÅ¸ ÆÄÀÏ Á¢±Ù Çã¿ë
+                #region Profile Image ì´ê±°ë‚˜, Profile ì•„ë°”íƒ€ íŒŒì¼ ì ‘ê·¼ í—ˆìš©
                 if (context.Context.Request.Path.ToString().Contains("/upload/Management/Profile/default-avatar.jpg") || context.Context.Request.Path.ToString().Contains($"/upload/Management/Profile/Avatar/"))
                 {
 
                 }
                 #endregion
 
-                #region ±× ¿Ü Á¢±Ù Â÷´Ü
+                #region ê·¸ ì™¸ ì ‘ê·¼ ì°¨ë‹¨
                 else
                 {
-                    context.Context.Response.StatusCode = (int)HttpStatusCode.Unauthorized; // ±ÇÇÑ ¾øÀ½ 
-                    context.Context.Response.ContentLength = 0; // ³»¿ë ±æÀÌ ¾øÀ½
-                    context.Context.Response.Body = Stream.Null; // ³»¿ë ¾øÀ½
-                    context.Context.Response.Redirect("/"); // ·Î±×ÀÎ È­¸éÀ¸·Î
+                    context.Context.Response.StatusCode = (int)HttpStatusCode.Unauthorized; // ê¶Œí•œ ì—†ìŒ 
+                    context.Context.Response.ContentLength = 0; // ë‚´ìš© ê¸¸ì´ ì—†ìŒ
+                    context.Context.Response.Body = Stream.Null; // ë‚´ìš© ì—†ìŒ
+                    context.Context.Response.Redirect("/"); // ë¡œê·¸ì¸ í™”ë©´ìœ¼ë¡œ
                 }
                 #endregion
 
             }
-            else if (loginedAccount.Role == Role.User && !context.Context.Request.Path.StartsWithSegments("/user")) // ·Î±×ÀÎÀÌ µÇ¾ú°í ±ÇÇÑÀÌ UserÀÎ°¡? ±×·¸´Ù¸é ~/user ÀÚ¿ø¿¡¸¸ Á¢±Ù Çã¿ë
+            else if (loginedAccount.Role == Role.User && !context.Context.Request.Path.StartsWithSegments("/user")) // ë¡œê·¸ì¸ì´ ë˜ì—ˆê³  ê¶Œí•œì´ Userì¸ê°€? ê·¸ë ‡ë‹¤ë©´ ~/user ìì›ì—ë§Œ ì ‘ê·¼ í—ˆìš©
             {
-                #region Profile Image ÀÌ°Å³ª, Profile ¾Æ¹ÙÅ¸ ÆÄÀÏ Á¢±Ù Çã¿ë
+                #region Profile Image ì´ê±°ë‚˜, Profile ì•„ë°”íƒ€ íŒŒì¼ ì ‘ê·¼ í—ˆìš©
                 if (context.Context.Request.Path.ToString().Contains("/upload/Management/Profile/default-avatar.jpg") || context.Context.Request.Path.ToString().Contains($"/upload/Management/Profile/Avatar/"))
                 {
 
                 }
                 #endregion
 
-                #region ±× ¿Ü Á¢±Ù Â÷´Ü
+                #region ê·¸ ì™¸ ì ‘ê·¼ ì°¨ë‹¨
                 else
                 {
-                    context.Context.Response.StatusCode = (int)HttpStatusCode.Unauthorized; // ±ÇÇÑ ¾øÀ½ 
-                    context.Context.Response.ContentLength = 0; // ³»¿ë ±æÀÌ ¾øÀ½
-                    context.Context.Response.Body = Stream.Null; // ³»¿ë ¾øÀ½
-                    context.Context.Response.Redirect("/"); // ·Î±×ÀÎ È­¸éÀ¸·Î
+                    context.Context.Response.StatusCode = (int)HttpStatusCode.Unauthorized; // ê¶Œí•œ ì—†ìŒ 
+                    context.Context.Response.ContentLength = 0; // ë‚´ìš© ê¸¸ì´ ì—†ìŒ
+                    context.Context.Response.Body = Stream.Null; // ë‚´ìš© ì—†ìŒ
+                    context.Context.Response.Redirect("/"); // ë¡œê·¸ì¸ í™”ë©´ìœ¼ë¡œ
                 }
                 #endregion
             }
@@ -242,13 +242,13 @@ app.UseStaticFiles(new StaticFileOptions
 //https://docs.microsoft.com/en-us/aspnet/core/performance/caching/middleware?view=aspnetcore-5.0
 app.UseResponseCaching();
 
-#region ¸ğµç ÆäÀÌÁö¿¡ ´ÙÀ½°ú °°Àº ÄÚµå¸¦ Àû¿ëÇÑ´Ù. ·Î±×¾Æ¿ô ÈÄ µÚ·Î°¡±âÇÏ¸é ·Î±×ÀÎ Çß´ø ÆäÀÌÁö°¡ ³ª¿À±â ¶§¹®¿¡ Ä³½¬ Disable Àû¿ë
+#region ëª¨ë“  í˜ì´ì§€ì— ë‹¤ìŒê³¼ ê°™ì€ ì½”ë“œë¥¼ ì ìš©í•œë‹¤. ë¡œê·¸ì•„ì›ƒ í›„ ë’¤ë¡œê°€ê¸°í•˜ë©´ ë¡œê·¸ì¸ í–ˆë˜ í˜ì´ì§€ê°€ ë‚˜ì˜¤ê¸° ë•Œë¬¸ì— ìºì‰¬ Disable ì ìš©
 
 //<META http-equiv="Expires" content="-1">
 //<META http-equiv="Pragma" content="no-cache">
 //<META http-equiv="Cache-Control" content="No-Cache">
 
-//¾Æ·¡ ÄÚµå´Â À§ÀÇ Html Header¿¡ µé¾î°¡´Â META µ¥ÀÌÅÍ ³»¿ë°ú °°´Ù.
+//ì•„ë˜ ì½”ë“œëŠ” ìœ„ì˜ Html Headerì— ë“¤ì–´ê°€ëŠ” META ë°ì´í„° ë‚´ìš©ê³¼ ê°™ë‹¤.
 
 app.Use(async (context, next) =>
 {
@@ -270,14 +270,14 @@ app.Use(async (context, next) =>
     context.Response.Headers.Add("Referrer-Policy", "no-referrer");
     context.Response.Headers.Add("X-Permitted-Cross-Domain-Policies", "none");
     context.Response.Headers.Add("Permissions-Policy", "accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()");
-    context.Response.Headers.Add("Content-Security-Policy", "default-src 'self' 'unsafe-inline'"); // unsafe-inlineÀº ±âÁ¸ ÄÚµå ¶§¹®¿¡ ÀÛ¼ºÇÑ °Í. ±âÁ¸ ÄÚµå ÀüºÎ °¥¾Æ ¾ş´Â ÀÛ¾÷ ÇÏ±â ¾Ê´Â ÀÌ»ó unsafe-inlineÀ» ½á¾ß ÇÔ. [https://csper.io/blog/no-more-unsafe-inline]
+    context.Response.Headers.Add("Content-Security-Policy", "default-src 'self' 'unsafe-inline'"); // unsafe-inlineì€ ê¸°ì¡´ ì½”ë“œ ë•Œë¬¸ì— ì‘ì„±í•œ ê²ƒ. ê¸°ì¡´ ì½”ë“œ ì „ë¶€ ê°ˆì•„ ì—ëŠ” ì‘ì—… í•˜ê¸° ì•ŠëŠ” ì´ìƒ unsafe-inlineì„ ì¨ì•¼ í•¨. [https://csper.io/blog/no-more-unsafe-inline]
     #endregion
     await next();
 });
 #endregion
 #endregion
 
-//app.UseEndpoints(endpoints => { endpoints.MapRazorPages(); endpoints.MapControllerRoute(name: "default", pattern: "{controller=Home}/{action=Index}/{id?}"); }); //9.¿£µå Æ÷ÀÎÆ® ¶ó¿ìÆÃ ¹Ìµé¿ş¾î(MapRazorPages ¸¦ Æ÷ÇÔÇÏ´Â UseEndPoints)¸¦ »ç¿ëÇÏ¿© ¿äÃ» ÆÄÀÌÇÁ¶óÀÎ¿¡ Razor Pages ¿£µåÆ÷ÀÎÆ®¸¦ Ãß°¡ÇÕ´Ï´Ù.
+//app.UseEndpoints(endpoints => { endpoints.MapRazorPages(); endpoints.MapControllerRoute(name: "default", pattern: "{controller=Home}/{action=Index}/{id?}"); }); //9.ì—”ë“œ í¬ì¸íŠ¸ ë¼ìš°íŒ… ë¯¸ë“¤ì›¨ì–´(MapRazorPages ë¥¼ í¬í•¨í•˜ëŠ” UseEndPoints)ë¥¼ ì‚¬ìš©í•˜ì—¬ ìš”ì²­ íŒŒì´í”„ë¼ì¸ì— Razor Pages ì—”ë“œí¬ì¸íŠ¸ë¥¼ ì¶”ê°€í•©ë‹ˆë‹¤.
 
 #region Multi-Language
 var supportedCultures = new[] { "en-US", "ko-KR" };

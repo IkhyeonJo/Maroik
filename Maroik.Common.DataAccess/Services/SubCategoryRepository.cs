@@ -18,7 +18,7 @@ namespace Maroik.Common.DataAccess.Services
         }
 
         /// <summary>
-        /// ¸ğµç ¼­ºêÄ«Å×°í¸®µéÀ» ±¸ÇÕ´Ï´Ù.
+        /// ëª¨ë“  ì„œë¸Œì¹´í…Œê³ ë¦¬ë“¤ì„ êµ¬í•©ë‹ˆë‹¤.
         /// </summary>
         /// <returns></returns>
         public IEnumerable<SubCategory> GetSubCategory()
@@ -26,7 +26,7 @@ namespace Maroik.Common.DataAccess.Services
             return context.SubCategories.ToList();
         }
         /// <summary>
-        /// ±ÇÇÑ¿¡ µû¸¥ ¼­ºêÄ«Å×°í¸®µéÀ» ±¸ÇÕ´Ï´Ù.
+        /// ê¶Œí•œì— ë”°ë¥¸ ì„œë¸Œì¹´í…Œê³ ë¦¬ë“¤ì„ êµ¬í•©ë‹ˆë‹¤.
         /// </summary>
         /// <param name="role"></param>
         /// <returns></returns>
@@ -38,7 +38,7 @@ namespace Maroik.Common.DataAccess.Services
                     .ToListAsync();
         }
         /// <summary>
-        /// ¼­ºêÄ«Å×°í¸®¸¦ »ı¼ºÇÕ´Ï´Ù.
+        /// ì„œë¸Œì¹´í…Œê³ ë¦¬ë¥¼ ìƒì„±í•©ë‹ˆë‹¤.
         /// </summary>
         /// <param name="subCategory"></param>
         /// <returns></returns>
@@ -48,7 +48,7 @@ namespace Maroik.Common.DataAccess.Services
             await context.SaveChangesAsync();
         }
         /// <summary>
-        /// ¼­ºêÄ«Å×°í¸®¸¦ ¾÷µ¥ÀÌÆ®ÇÕ´Ï´Ù.
+        /// ì„œë¸Œì¹´í…Œê³ ë¦¬ë¥¼ ì—…ë°ì´íŠ¸í•©ë‹ˆë‹¤.
         /// </summary>
         /// <param name="category"></param>
         /// <returns></returns>
@@ -58,7 +58,7 @@ namespace Maroik.Common.DataAccess.Services
             await context.SaveChangesAsync();
         }
         /// <summary>
-        /// ¼­ºêÄ«Å×°í¸®¸¦ Á¦°ÅÇÕ´Ï´Ù.
+        /// ì„œë¸Œì¹´í…Œê³ ë¦¬ë¥¼ ì œê±°í•©ë‹ˆë‹¤.
         /// </summary>
         /// <param name="category"></param>
         /// <returns></returns>

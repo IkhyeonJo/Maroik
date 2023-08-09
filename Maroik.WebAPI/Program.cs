@@ -71,7 +71,7 @@ builder.Services.AddHostedService<JwtRefreshTokenCache>();
 
 #region AddMariaDbContext
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-      //options.UseLazyLoadingProxies().UseMySql(builder.Configuration.GetConnectionString("DefaultConnection"), ServerVersion.AutoDetect(builder.Configuration.GetConnectionString("DefaultConnection")), providerOptions => providerOptions.EnableRetryOnFailure())); // ÀÌ°ÅÇÏ´Ï Excel Export ¾È µÊ
+      //options.UseLazyLoadingProxies().UseMySql(builder.Configuration.GetConnectionString("DefaultConnection"), ServerVersion.AutoDetect(builder.Configuration.GetConnectionString("DefaultConnection")), providerOptions => providerOptions.EnableRetryOnFailure())); // ì´ê±°í•˜ë‹ˆ Excel Export ì•ˆ ë¨
       options.UseMySql(builder.Configuration.GetConnectionString("DefaultConnection"), ServerVersion.AutoDetect(builder.Configuration.GetConnectionString("DefaultConnection")), providerOptions => providerOptions.EnableRetryOnFailure()).EnableSensitiveDataLogging());
 #endregion
 
@@ -136,14 +136,14 @@ if (app.Environment.IsDevelopment())
     app.UseDeveloperExceptionPage();
 }
 
-#region µµ¸ŞÀÎ ÀÖÀ» ¶§, »ç¿ë
+#region ë„ë©”ì¸ ìˆì„ ë•Œ, ì‚¬ìš©
 //app.UseRewriter(new RewriteOptions()
 //   .AddRedirectToWwwPermanent()
 //   .AddRedirectToHttpsPermanent()
 //);
 #endregion
 
-#region µµ¸ŞÀÎ ¾øÀ» ¶§, »ç¿ë
+#region ë„ë©”ì¸ ì—†ì„ ë•Œ, ì‚¬ìš©
 app.UseHttpsRedirection();
 #endregion
 

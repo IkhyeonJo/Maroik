@@ -18,7 +18,7 @@ namespace Maroik.Common.DataAccess.Services
         }
 
         /// <summary>
-        /// ·Î±×ÀÎ °èÁ¤¿¡ ÇØ´çÇÏ´Â ¸ğµç °íÁ¤ÁöÃâÀ» ±¸ÇÕ´Ï´Ù.
+        /// ë¡œê·¸ì¸ ê³„ì •ì— í•´ë‹¹í•˜ëŠ” ëª¨ë“  ê³ ì •ì§€ì¶œì„ êµ¬í•©ë‹ˆë‹¤.
         /// </summary>
         /// <param name="email"></param>
         /// <returns></returns>
@@ -28,7 +28,7 @@ namespace Maroik.Common.DataAccess.Services
         }
 
         /// <summary>
-        /// °íÁ¤ÁöÃâÀ» »ı¼ºÇÕ´Ï´Ù.
+        /// ê³ ì •ì§€ì¶œì„ ìƒì„±í•©ë‹ˆë‹¤.
         /// </summary>
         /// <param name="fixedExpenditure"></param>
         /// <returns></returns>
@@ -39,7 +39,7 @@ namespace Maroik.Common.DataAccess.Services
         }
 
         /// <summary>
-        /// °íÁ¤ÁöÃâÀ» ¾÷µ¥ÀÌÆ®ÇÕ´Ï´Ù.
+        /// ê³ ì •ì§€ì¶œì„ ì—…ë°ì´íŠ¸í•©ë‹ˆë‹¤.
         /// </summary>
         /// <param name="fixedExpenditure"></param>
         /// <returns></returns>
@@ -50,7 +50,7 @@ namespace Maroik.Common.DataAccess.Services
         }
 
         /// <summary>
-        /// °íÁ¤ÁöÃâÀ» Á¦°ÅÇÕ´Ï´Ù.
+        /// ê³ ì •ì§€ì¶œì„ ì œê±°í•©ë‹ˆë‹¤.
         /// </summary>
         /// <param name="fixedExpenditure"></param>
         /// <returns></returns>

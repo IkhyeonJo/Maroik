@@ -7,26 +7,26 @@ namespace Maroik.Common.DataAccess.Contracts
     public interface ICommentRepository
     {
         /// <summary>
-        /// ÇÑ °Ô½Ã¹°ÀÇ ¸ğµç ´ñ±ÛÀ» ±¸ÇÕ´Ï´Ù.
+        /// í•œ ê²Œì‹œë¬¼ì˜ ëª¨ë“  ëŒ“ê¸€ì„ êµ¬í•©ë‹ˆë‹¤.
         /// </summary>
         /// <returns></returns>
         public Task<IEnumerable<Comment>> GetOneBoardComments(int boardId);
 
         /// <summary>
-        /// ÇÑ ´ñ±ÛÀ» ±¸ÇÕ´Ï´Ù.
+        /// í•œ ëŒ“ê¸€ì„ êµ¬í•©ë‹ˆë‹¤.
         /// </summary>
         /// <returns></returns>
         public Task<Comment> GetComment(int id);
 
         /// <summary>
-        /// ´ñ±ÛÀ» »ı¼ºÇÕ´Ï´Ù.
+        /// ëŒ“ê¸€ì„ ìƒì„±í•©ë‹ˆë‹¤.
         /// </summary>
         /// <param name="comment"></param>
         /// <returns></returns>
         public Task WriteCommentAsync(Comment comment);
 
         /// <summary>
-        /// ´ñ±ÛÀ» »èÁ¦ÇÕ´Ï´Ù.
+        /// ëŒ“ê¸€ì„ ì‚­ì œí•©ë‹ˆë‹¤.
         /// </summary>
         /// <param name="comment"></param>
         /// <returns></returns>

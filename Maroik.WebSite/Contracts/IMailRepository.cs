@@ -7,7 +7,7 @@ namespace Maroik.WebSite.Contracts
     public interface IMailRepository
     {
         /// <summary>
-        /// °èÁ¤ ºñ¹Ğ¹øÈ£ ÃÊ±âÈ­ ¸ŞÀÏÀÇ HttpBody ºÎºĞÀ» ±¸ÇÕ´Ï´Ù.
+        /// ê³„ì • ë¹„ë°€ë²ˆí˜¸ ì´ˆê¸°í™” ë©”ì¼ì˜ HttpBody ë¶€ë¶„ì„ êµ¬í•©ë‹ˆë‹¤.
         /// </summary>
         /// <param name="loginInputViewModel"></param>
         /// <param name="title"></param>
@@ -16,7 +16,7 @@ namespace Maroik.WebSite.Contracts
         /// <returns></returns>
         public string GetMailResetPasswordBody(LoginInputViewModel loginInputViewModel, string title, string content0, string content1);
         /// <summary>
-        /// °èÁ¤ È®ÀÎ ¸ŞÀÏÀÇ HttpBody ºÎºĞÀ» ±¸ÇÕ´Ï´Ù.
+        /// ê³„ì • í™•ì¸ ë©”ì¼ì˜ HttpBody ë¶€ë¶„ì„ êµ¬í•©ë‹ˆë‹¤.
         /// </summary>
         /// <param name="loginInputViewModel"></param>
         /// <param name="title"></param>
@@ -25,7 +25,7 @@ namespace Maroik.WebSite.Contracts
         /// <returns></returns>
         public string GetMailConfirmationBody(LoginInputViewModel loginInputViewModel, string title, string content0, string content1);
         /// <summary>
-        /// ¸ŞÀÏ Àü¼Û
+        /// ë©”ì¼ ì „ì†¡
         /// </summary>
         /// <param name="mail"></param>
         /// <returns></returns>

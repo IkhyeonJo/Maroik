@@ -2,4 +2,4 @@ https://{Address}:5001/swagger/index.html // API Instruction
 http://{Address}:5000/swagger/index.html // API Instruction
 
 
-https://github.com/dotnet-labs/JwtAuthDemo ÄÚµå ÂüÁ¶ÇÒ °Í
+https://github.com/dotnet-labs/JwtAuthDemo ì½”ë“œ ì°¸ì¡°í•  ê²ƒ

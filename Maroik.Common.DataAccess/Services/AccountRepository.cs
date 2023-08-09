@@ -17,7 +17,7 @@ namespace Maroik.Common.DataAccess.Services
             this.context = context;
         }
         /// <summary>
-        /// µî·ÏµÈ ¸ğµç °èÁ¤À» ±¸ÇÕ´Ï´Ù.
+        /// ë“±ë¡ëœ ëª¨ë“  ê³„ì •ì„ êµ¬í•©ë‹ˆë‹¤.
         /// </summary>
         /// <returns></returns>
         public async Task<List<Account>> GetAllAsync()
@@ -25,7 +25,7 @@ namespace Maroik.Common.DataAccess.Services
             return await context.Accounts.ToListAsync();
         }
         /// <summary>
-        /// ÇÑ °èÁ¤À» ÀÌ¸ŞÀÏ·Î ±¸ÇÕ´Ï´Ù.
+        /// í•œ ê³„ì •ì„ ì´ë©”ì¼ë¡œ êµ¬í•©ë‹ˆë‹¤.
         /// </summary>
         /// <param name="email"></param>
         /// <returns></returns>
@@ -34,7 +34,7 @@ namespace Maroik.Common.DataAccess.Services
             return await context.Accounts.FirstOrDefaultAsync(x => x.Email == email);
         }
         /// <summary>
-        /// °èÁ¤À» »ı¼ºÇÕ´Ï´Ù.
+        /// ê³„ì •ì„ ìƒì„±í•©ë‹ˆë‹¤.
         /// </summary>
         /// <param name="account"></param>
         /// <returns></returns>
@@ -44,7 +44,7 @@ namespace Maroik.Common.DataAccess.Services
             await context.SaveChangesAsync();
         }
         /// <summary>
-        /// °èÁ¤À» ¾÷µ¥ÀÌÆ®ÇÕ´Ï´Ù.
+        /// ê³„ì •ì„ ì—…ë°ì´íŠ¸í•©ë‹ˆë‹¤.
         /// </summary>
         /// <param name="account"></param>
         /// <returns></returns>

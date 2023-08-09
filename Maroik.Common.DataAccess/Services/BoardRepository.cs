@@ -18,7 +18,7 @@ namespace Maroik.Common.DataAccess.Services
         }
 
         /// <summary>
-        /// ÇÑ Á¾·ùÀÇ ¸ğµç °Ô½Ã¹°À» ±¸ÇÕ´Ï´Ù.
+        /// í•œ ì¢…ë¥˜ì˜ ëª¨ë“  ê²Œì‹œë¬¼ì„ êµ¬í•©ë‹ˆë‹¤.
         /// </summary>
         /// <returns></returns>
         public async Task<IEnumerable<Board>> GetOneTypeBoards(string type)
@@ -27,7 +27,7 @@ namespace Maroik.Common.DataAccess.Services
         }
 
         /// <summary>
-        /// °Ô½Ã¹°À» »ı¼ºÇÕ´Ï´Ù.
+        /// ê²Œì‹œë¬¼ì„ ìƒì„±í•©ë‹ˆë‹¤.
         /// </summary>
         /// <param name="board"></param>
         /// <returns></returns>
@@ -38,7 +38,7 @@ namespace Maroik.Common.DataAccess.Services
         }
 
         /// <summary>
-        /// °è½Ã¹°À» ¾÷µ¥ÀÌÆ®ÇÕ´Ï´Ù.
+        /// ê³„ì‹œë¬¼ì„ ì—…ë°ì´íŠ¸í•©ë‹ˆë‹¤.
         /// </summary>
         /// <param name="board"></param>
         /// <returns></returns>
@@ -49,7 +49,7 @@ namespace Maroik.Common.DataAccess.Services
         }
 
         /// <summary>
-        /// °è½Ã¹°À» »èÁ¦ÇÕ´Ï´Ù.
+        /// ê³„ì‹œë¬¼ì„ ì‚­ì œí•©ë‹ˆë‹¤.
         /// </summary>
         /// <param name="board"></param>
         /// <returns></returns>

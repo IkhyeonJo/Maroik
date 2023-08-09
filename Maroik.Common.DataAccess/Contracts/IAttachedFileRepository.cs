@@ -7,20 +7,20 @@ namespace Maroik.Common.DataAccess.Contracts
     public interface IAttachedFileRepository
     {
         /// <summary>
-        /// µî·ÏµÈ ¸ğµç ÆÄÀÏÀ» ±¸ÇÕ´Ï´Ù.
+        /// ë“±ë¡ëœ ëª¨ë“  íŒŒì¼ì„ êµ¬í•©ë‹ˆë‹¤.
         /// </summary>
         /// <returns></returns>
         public Task<List<AttachedFile>> GetAllAsync();
 
         /// <summary>
-        /// Ã·ºÎÆÄÀÏÀ» ÀúÀåÇÕ´Ï´Ù.
+        /// ì²¨ë¶€íŒŒì¼ì„ ì €ì¥í•©ë‹ˆë‹¤.
         /// </summary>
         /// <param name="attachedFile"></param>
         /// <returns></returns>
         public Task SaveAttachedFileAsync(AttachedFile attachedFile);
 
         /// <summary>
-        /// Ã·ºÎÆÄÀÏÀ» ¾÷µ¥ÀÌÆ®ÇÕ´Ï´Ù.
+        /// ì²¨ë¶€íŒŒì¼ì„ ì—…ë°ì´íŠ¸í•©ë‹ˆë‹¤.
         /// </summary>
         /// <param name="attachedFile"></param>
         /// <returns></returns>

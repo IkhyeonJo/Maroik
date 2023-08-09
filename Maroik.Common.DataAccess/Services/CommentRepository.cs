@@ -18,7 +18,7 @@ namespace Maroik.Common.DataAccess.Services
         }
 
         /// <summary>
-        /// ÇÑ °Ô½Ã¹°ÀÇ ¸ğµç ´ñ±ÛÀ» ±¸ÇÕ´Ï´Ù.
+        /// í•œ ê²Œì‹œë¬¼ì˜ ëª¨ë“  ëŒ“ê¸€ì„ êµ¬í•©ë‹ˆë‹¤.
         /// </summary>
         /// <returns></returns>
         public async Task<IEnumerable<Comment>> GetOneBoardComments(int boardId)
@@ -27,7 +27,7 @@ namespace Maroik.Common.DataAccess.Services
         }
 
         /// <summary>
-        /// ÇÑ ´ñ±ÛÀ» ±¸ÇÕ´Ï´Ù.
+        /// í•œ ëŒ“ê¸€ì„ êµ¬í•©ë‹ˆë‹¤.
         /// </summary>
         /// <returns></returns>
         public async Task<Comment> GetComment(int id)
@@ -36,7 +36,7 @@ namespace Maroik.Common.DataAccess.Services
         }
 
         /// <summary>
-        /// ´ñ±ÛÀ» »ı¼ºÇÕ´Ï´Ù.
+        /// ëŒ“ê¸€ì„ ìƒì„±í•©ë‹ˆë‹¤.
         /// </summary>
         /// <param name="comment"></param>
         /// <returns></returns>
@@ -47,7 +47,7 @@ namespace Maroik.Common.DataAccess.Services
         }
 
         /// <summary>
-        /// °è½Ã¹°À» »èÁ¦ÇÕ´Ï´Ù.
+        /// ê³„ì‹œë¬¼ì„ ì‚­ì œí•©ë‹ˆë‹¤.
         /// </summary>
         /// <param name="board"></param>
         /// <returns></returns>
