@@ -21,14 +21,15 @@ namespace Maroik.WebAPI.Controllers
     [Route("api/[controller]")]
     public class AccountController : ControllerBase
     {
-        private readonly ILogger<AccountController> logger;
+        //private readonly ILogger<AccountController> logger;
         private readonly IUserService userService;
         private readonly IJwtAuthManager jwtAuthManager;
         private readonly IAccountRepository accountRepository;
 
-        public AccountController(ILogger<AccountController> logger, IUserService userService, IJwtAuthManager jwtAuthManager, IAccountRepository accountRepository)
+        //public AccountController(ILogger<AccountController> logger, IUserService userService, IJwtAuthManager jwtAuthManager, IAccountRepository accountRepository)
+        public AccountController(IUserService userService, IJwtAuthManager jwtAuthManager, IAccountRepository accountRepository)
         {
-            this.logger = logger;
+            //this.logger = logger;
             this.userService = userService;
             this.jwtAuthManager = jwtAuthManager;
             this.accountRepository = accountRepository;
