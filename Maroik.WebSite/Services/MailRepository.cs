@@ -56,27 +56,25 @@ namespace Maroik.WebSite.Services
         {
             try
             {
-                using (MailMessage mailMessage = new MailMessage())
+                using MailMessage mailMessage = new();
+                mailMessage.From = new MailAddress(mail.FromEmail, mail.FromFullName);
+                mail.ToMailIds.ForEach(x =>
                 {
-                    mailMessage.From = new MailAddress(mail.FromEmail, mail.FromFullName);
-                    mail.ToMailIds.ForEach(x => {
-                        mailMessage.To.Add(x);
-                    });
-                    mailMessage.Subject = mail.Subject;
-                    mailMessage.Body = mail.Body;
-                    mailMessage.IsBodyHtml = mail.IsBodyHTML;
-                    mail.Attachments.ForEach(x => {
-                        mailMessage.Attachments.Add(new Attachment(x));
-                    });
+                    mailMessage.To.Add(x);
+                });
+                mailMessage.Subject = mail.Subject;
+                mailMessage.Body = mail.Body;
+                mailMessage.IsBodyHtml = mail.IsBodyHTML;
+                mail.Attachments.ForEach(x =>
+                {
+                    mailMessage.Attachments.Add(new Attachment(x));
+                });
 
-                    using (SmtpClient smtp = new SmtpClient(mail.SmtpHost, mail.SmtpPort))
-                    {
-                        smtp.Credentials = new System.Net.NetworkCredential(mail.SmtpUserName, mail.SmtpPassword);
-                        smtp.EnableSsl = mail.SmtpSSL;
-                        await smtp.SendMailAsync(mailMessage);
-                        return AccountMessage.MailSent;
-                    }
-                }
+                using SmtpClient smtp = new(mail.SmtpHost, mail.SmtpPort);
+                smtp.Credentials = new System.Net.NetworkCredential(mail.SmtpUserName, mail.SmtpPassword);
+                smtp.EnableSsl = mail.SmtpSSL;
+                await smtp.SendMailAsync(mailMessage);
+                return AccountMessage.MailSent;
             }
             catch (Exception ex)
             {
