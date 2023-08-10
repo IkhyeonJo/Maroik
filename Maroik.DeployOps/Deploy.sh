@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# run this script as root user
+# run this script as current user
 
 # Update and upgrade system
 sudo apt update -y
@@ -16,7 +16,7 @@ sudo docker-compose -f ~/Maroik/docker-compose.yml up -d
 sudo apt install python3 -y
 
 # Set permissions for scripts
-chmod 755 ~/Maroik/Maroik.Crontab/*.sh
+chmod 777 ~/Maroik/Maroik.Crontab/*.sh
 
 # Set up cron jobs
 sudo crontab ~/Maroik/Maroik.Crontab/InitCron

@@ -15,12 +15,12 @@
 
 #AWS Command
 #-----------------------------------------------------------------------------------
-#sudo yum update -y && sudo amazon-linux-extras install docker -y && sudo service docker start && sudo curl -L https://github.com/docker/compose/releases/download/1.21.0/docker-compose-`uname -s`-`uname -m` | sudo tee /usr/local/bin/docker-compose > /dev/null && sudo chmod +x /usr/local/bin/docker-compose && sudo ln -s /usr/local/bin/docker-compose /usr/bin/docker-compose && sudo docker-compose up -d && sudo yum install -y python3 && sudo yum install -y cronie && chmod 755 DBBackup.sh  && sudo chmod 755 UploadFileBackUp.sh && crontab InitCron && sudo service crond restart
+#sudo yum update -y && sudo amazon-linux-extras install docker -y && sudo service docker start && sudo curl -L https://github.com/docker/compose/releases/download/1.21.0/docker-compose-`uname -s`-`uname -m` | sudo tee /usr/local/bin/docker-compose > /dev/null && sudo chmod +x /usr/local/bin/docker-compose && sudo ln -s /usr/local/bin/docker-compose /usr/bin/docker-compose && sudo docker-compose up -d && sudo yum install -y python3 && sudo yum install -y cronie && chmod 777 DBBackup.sh  && sudo chmod 777 UploadFileBackUp.sh && crontab InitCron && sudo service crond restart
 #-----------------------------------------------------------------------------------
 
 #Ubuntu Command
 #-----------------------------------------------------------------------------------
-#sudo apt update -y && sudo apt upgrade -y && sudo apt install docker-compose -y && sudo docker-compose up -d && sudo apt install python3 -y && sudo chmod 755 DBBackup.sh && sudo chmod 755 RebootDockerCompose.sh && sudo chmod 755 AutoMountExternalStorages.sh && sudo chmod 755 UploadFileBackUp.sh && sudo crontab InitCron && sudo service cron reload && ./AutoMountExternalStorages.sh
+#sudo apt update -y && sudo apt upgrade -y && sudo apt install docker-compose -y && sudo docker-compose up -d && sudo apt install python3 -y && sudo chmod 777 DBBackup.sh && sudo chmod 777 RebootDockerCompose.sh && sudo chmod 777 AutoMountExternalStorages.sh && sudo chmod 777 UploadFileBackUp.sh && sudo crontab InitCron && sudo service cron reload && ./AutoMountExternalStorages.sh
 #-----------------------------------------------------------------------------------
 
 ###stop docker-compose
