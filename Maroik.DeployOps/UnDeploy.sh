@@ -35,3 +35,11 @@ sudo systemctl daemon-reload
 # Uninstall net-tools, ethtool, and wakeonlan packages
 sudo apt remove --purge net-tools ethtool wakeonlan -y
 sudo apt autoremove -y
+
+# Uninstall Docker Compose
+sudo apt remove docker-compose -y
+sudo apt autoremove -y
+
+# Uninstall Python 3
+sudo apt remove python3 -y
+sudo apt autoremove -y
