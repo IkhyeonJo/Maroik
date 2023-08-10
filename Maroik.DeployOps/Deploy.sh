@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# run this script as current user
+# run this script as default user
 
 # Update and upgrade system
 sudo apt update -y

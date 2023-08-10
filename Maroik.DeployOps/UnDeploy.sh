@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# run this script as current user
+# run this script as default user
 
 # Bring down the Docker containers defined in docker-compose.yml
 sudo docker-compose -f "~/Maroik/docker-compose.yml" down
