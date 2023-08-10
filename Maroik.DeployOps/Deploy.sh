@@ -8,22 +8,40 @@ sudo apt upgrade -y
 sudo apt install docker-compose -y
 
 # Start Docker Compose
-sudo docker-compose -f /home/peter-cho/Maroik/docker-compose.yml up -d
+sudo docker-compose -f ~/Maroik/docker-compose.yml up -d
 
 # Install Python 3
 sudo apt install python3 -y
 
 # Set permissions for scripts
-sudo chmod 755 /home/peter-cho/Maroik/Maroik.Crontab/DBBackup.sh
-sudo chmod 755 /home/peter-cho/Maroik/Maroik.Crontab/RebootDockerCompose.sh
-sudo chmod 755 /home/peter-cho/Maroik/Maroik.Crontab/AutoMountExternalStorages.sh
-sudo chmod 755 /home/peter-cho/Maroik/Maroik.Crontab/UploadFileBackUp.sh
+chmod 755 ~/Maroik/Maroik.Crontab/*.sh
 
 # Set up cron jobs
-sudo crontab /home/peter-cho/Maroik/Maroik.Crontab/InitCron
+sudo crontab ~/Maroik/Maroik.Crontab/InitCron
 
 # Reload cron service
-sudo service cron reload
+sudo systemctl reload cron
 
 # Execute AutoMountExternalStorages.sh
-/home/peter-cho/Maroik/Maroik.Crontab/AutoMountExternalStorages.sh
+~/Maroik/Maroik.Crontab/AutoMountExternalStorages.sh
+
+# Set up Wake-on-LAN (WoL)
+sudo apt install net-tools ethtool wakeonlan -y
+# Replace 'enp1s0' with your actual Ethernet interface name
+sudo ethtool -s enp1s0 wol g
+
+# Create and enable WoL service
+echo "[Unit]
+Description=Configure Wake-up on LAN
+
+[Service]
+Type=oneshot
+ExecStart=/sbin/ethtool -s enp1s0 wol g
+
+[Install]
+WantedBy=basic.target" | sudo tee /etc/systemd/system/wol.service
+
+# Enable and start the WoL service
+sudo systemctl daemon-reload
+sudo systemctl enable wol.service
+sudo systemctl start wol.service

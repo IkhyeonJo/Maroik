@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Bring down the Docker containers defined in docker-compose.yml
-docker-compose -f "/home/peter-cho/Maroik/docker-compose.yml" down
+docker-compose -f "~/Maroik/docker-compose.yml" down
 
 # Stop and remove all Docker containers
 docker stop $(docker ps -a -q)
@@ -17,11 +17,21 @@ docker rmi $(docker images -q)
 sudo crontab -r
 
 # Unmount devices by UUID
-#sudo umount /home/peter-cho/32GB/
-#sudo umount /home/peter-cho/64GB/
-sudo umount /home/peter-cho/512GB/
+#sudo umount ~/32GB/
+#sudo umount ~/64GB/
+sudo umount ~/512GB/
 
 # Remove directories
-#sudo rmdir /home/peter-cho/32GB/
-#sudo rmdir /home/peter-cho/64GB/
-sudo rmdir /home/peter-cho/512GB/
+#sudo rmdir ~/32GB/
+#sudo rmdir ~/64GB/
+sudo rmdir ~/512GB/
+
+# Remove Wake-on-LAN (WoL) configuration
+sudo systemctl stop wol.service
+sudo systemctl disable wol.service
+sudo rm /etc/systemd/system/wol.service
+sudo systemctl daemon-reload
+
+# Uninstall net-tools, ethtool, and wakeonlan packages
+sudo apt remove --purge net-tools ethtool wakeonlan -y
+sudo apt autoremove -y
