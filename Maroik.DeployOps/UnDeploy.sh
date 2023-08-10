@@ -33,11 +33,3 @@ sudo systemctl stop wol.service
 sudo systemctl disable wol.service
 sudo rm /etc/systemd/system/wol.service
 sudo systemctl daemon-reload
-
-# Uninstall net-tools, ethtool, and wakeonlan packages
-sudo apt remove --purge net-tools ethtool wakeonlan -y
-sudo apt autoremove -y
-
-# Uninstall Docker Compose
-sudo apt remove docker-compose -y
-sudo apt autoremove -y
