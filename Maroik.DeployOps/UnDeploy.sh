@@ -2,6 +2,12 @@
 
 # run this script as default user
 
+# Adds the current user to the "docker" group, 
+sudo usermod -a -G docker $USER
+
+# Starts a new shell session with the "docker" group applied.
+newgrp docker
+
 # Bring down the Docker containers defined in docker-compose.yml
 sudo docker-compose -f "~/Maroik/docker-compose.yml" down
 
