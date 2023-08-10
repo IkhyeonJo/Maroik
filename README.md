@@ -7,9 +7,8 @@ Docker, AdminLTE, MariaDB, Session Login, RESTful API, HTTPS etc.
 
 # How to deploy to ubuntu Server [You must read 홈서버 구축.pptx]
 
-## 1. Move all files to your ubuntu server
-## 2. Go to Maroik folder
-## 3. execute this command [chmod 777 Deploy.sh && ./Deploy.sh]
+## 1. Move all files to your ubuntu server [path:(~/)]
+## 2. execute this command [chmod 777 ~/Maroik/Maroik.DeployOps/Deploy.sh && ~/Maroik/Maroik.DeployOps/Deploy.sh]
 
 # IMPORTANT!! MUST Set this value [Maroik.WebSite -> appsettings.json -> DomainName (According to Server Domain)] & Mail Account & READ docker-compose file's comment!!
 
@@ -17,7 +16,9 @@ Docker, AdminLTE, MariaDB, Session Login, RESTful API, HTTPS etc.
 
 # How to run this project
 
-## execute [Maroik.sln] -> Open [1.Web] folder -> right-click [docker-compose] -> click "Set as Startup Project" -> Press F5 Button
+## First, you must install docker & docker-compose
+## Go to Project folder which docker-compose.yml file exist and type this command: docker-compose up -d
+
 
 ## For more detail information, please see each project's README.md file
 
