@@ -2,6 +2,9 @@
 
 # run this script as default user
 
+# apt-get upgrade auto restart services
+sudo sed -i 's/#$nrconf{restart} = '"'"'i'"'"';/$nrconf{restart} = '"'"'a'"'"';/g' /etc/needrestart/needrestart.conf
+
 # Update and upgrade system
 sudo apt update -y
 sudo apt upgrade -y
@@ -47,3 +50,9 @@ WantedBy=basic.target" | sudo tee /etc/systemd/system/wol.service
 sudo systemctl daemon-reload
 sudo systemctl enable wol.service
 sudo systemctl start wol.service
+
+# Adds the current user to the "docker" group, 
+sudo usermod -a -G docker $USER
+
+# Starts a new shell session with the "docker" group applied.
+newgrp docker
