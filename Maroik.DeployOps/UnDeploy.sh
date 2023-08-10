@@ -3,7 +3,7 @@
 # run this script as default user
 
 # Bring down the Docker containers defined in docker-compose.yml
-sudo docker-compose -f "~/Maroik/docker-compose.yml" down
+sudo docker-compose -f ~/Maroik/docker-compose.yml down
 
 # Stop and remove all Docker containers
 sudo docker stop $(docker ps -a -q)
@@ -33,3 +33,5 @@ sudo systemctl stop wol.service
 sudo systemctl disable wol.service
 sudo rm /etc/systemd/system/wol.service
 sudo systemctl daemon-reload
+# Replace 'enp1s0' with your actual Ethernet interface name
+sudo ethtool -s enp1s0 wol d
