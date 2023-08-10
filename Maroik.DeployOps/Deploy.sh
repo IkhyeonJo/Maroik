@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# run this script as root user
+
 # Update and upgrade system
 sudo apt update -y
 sudo apt upgrade -y

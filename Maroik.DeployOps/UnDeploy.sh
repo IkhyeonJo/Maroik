@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# run this script as root user
+
 # Bring down the Docker containers defined in docker-compose.yml
 docker-compose -f "~/Maroik/docker-compose.yml" down
 
