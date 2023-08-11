@@ -13,7 +13,7 @@ from email.mime.text import MIMEText
 from email.utils import formatdate
 from datetime import datetime
 
-garbage_tar_xz_files = glob.glob('~/Maroik/*.tar.xz')
+garbage_tar_xz_files = glob.glob(os.path.expanduser(f'~/Maroik/*.tar.xz'))
 for garbage_tar_xz_file in garbage_tar_xz_files:
     os.remove(garbage_tar_xz_file)
 
@@ -33,7 +33,7 @@ body = MIMEText(f'Maroik.WebSite Upload File Backup ({current_date})', _charset=
 msg.attach(body)
 
 files = list()
-files.append(f'~/Maroik/{backup_upload_file_name}.tar.xz')
+files.append(os.path.expanduser(f'~/Maroik/{backup_upload_file_name}.tar.xz'))
 
 for f in files:
     part = MIMEBase('application', "octet-stream")
