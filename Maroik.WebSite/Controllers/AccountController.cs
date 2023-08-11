@@ -292,8 +292,10 @@ namespace Maroik.WebSite.Controllers
                             return View();
                         }
                         #region 메일 전송
-                        Mail mail = new Mail();
-                        mail.Subject = localizer["Maroik Email Confirmation"].Value;
+                        Mail mail = new()
+                        {
+                            Subject = localizer["Maroik Email Confirmation"].Value
+                        };
                         loginInputViewModel.RegistrationToken = new RSA(RSAType.RSA2, Encoding.UTF8, RSA.privateKey, RSA.publicKey).Sign(loginInputViewModel.RegistrationToken); // 암호화
                         mail.Body = mailRepository.GetMailConfirmationBody(loginInputViewModel, localizer["Welcome to Maroik WebSite"].Value, localizer["Click the link below to verify your Email"].Value, localizer["If this link does not work, please copy & paste this link to your Internet URL"].Value);
                         mail.ToMailIds = new List<string>
@@ -350,8 +352,10 @@ namespace Maroik.WebSite.Controllers
                         if (!account.EmailConfirmed) // 생성은 되었으나 Email 확인 안 함
                         {
                             #region 메일 전송
-                            Mail mail = new Mail();
-                            mail.Subject = localizer["Maroik Email Confirmation"].Value;
+                            Mail mail = new()
+                            {
+                                Subject = localizer["Maroik Email Confirmation"].Value
+                            };
                             if (string.IsNullOrEmpty(account.RegistrationToken))
                             {
                                 account.RegistrationToken = GUIDToken.Generate();
@@ -450,12 +454,14 @@ namespace Maroik.WebSite.Controllers
                         if (!account.EmailConfirmed) // 생성은 되었으나 Email 확인 안 함.
                         {
                             #region 메일 전송
-                            Mail mail = new Mail();
-                            mail.Subject = localizer["Maroik Email Confirmation"].Value;
-                            mail.Body = mailRepository.GetMailConfirmationBody(new LoginInputViewModel() { RegistrationToken = new RSA(RSAType.RSA2, Encoding.UTF8, RSA.privateKey, RSA.publicKey).Sign(account.RegistrationToken) }, localizer["Welcome to Maroik WebSite"].Value, localizer["Click the link below to verify your Email"].Value, localizer["If this link does not work, please copy & paste this link to your Internet URL"].Value);
-                            mail.ToMailIds = new List<string>
+                            Mail mail = new()
                             {
-                                account.Email
+                                Subject = localizer["Maroik Email Confirmation"].Value,
+                                Body = mailRepository.GetMailConfirmationBody(new LoginInputViewModel() { RegistrationToken = new RSA(RSAType.RSA2, Encoding.UTF8, RSA.privateKey, RSA.publicKey).Sign(account.RegistrationToken) }, localizer["Welcome to Maroik WebSite"].Value, localizer["Click the link below to verify your Email"].Value, localizer["If this link does not work, please copy & paste this link to your Internet URL"].Value),
+                                ToMailIds = new List<string>
+                                {
+                                    account.Email
+                                }
                             };
                             string result = await mailRepository.SendMailAsync(mail);
                             if (result != AccountMessage.MailSent) // 메일 전송 오류 발생 했을 시..
@@ -697,13 +703,15 @@ namespace Maroik.WebSite.Controllers
                     try
                     {
                         #region 메일 전송
-                        Mail mail = new Mail();
-                        mail.Subject = localizer["Maroik Reset Password"].Value;
-                        mail.Body = mailRepository.GetMailResetPasswordBody(new LoginInputViewModel() { ResetPasswordToken = new RSA(RSAType.RSA2, Encoding.UTF8, RSA.privateKey, RSA.publicKey).Sign(resetPasswordToken) }, localizer["Welcome to Maroik WebSite"].Value, localizer["Click the link below to reset your password"].Value, localizer["If this link does not work, please copy & paste this link to your Internet URL"].Value);
-                        mail.ToMailIds = new List<string>
+                        Mail mail = new()
+                        {
+                            Subject = localizer["Maroik Reset Password"].Value,
+                            Body = mailRepository.GetMailResetPasswordBody(new LoginInputViewModel() { ResetPasswordToken = new RSA(RSAType.RSA2, Encoding.UTF8, RSA.privateKey, RSA.publicKey).Sign(resetPasswordToken) }, localizer["Welcome to Maroik WebSite"].Value, localizer["Click the link below to reset your password"].Value, localizer["If this link does not work, please copy & paste this link to your Internet URL"].Value),
+                            ToMailIds = new List<string>
                             {
                                 account.Email
-                            };
+                            }
+                        };
                         string result = await mailRepository.SendMailAsync(mail);
                         if (result != AccountMessage.MailSent) // 메일 전송 오류 발생 했을 시..
                         {
