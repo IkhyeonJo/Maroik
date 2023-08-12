@@ -53,8 +53,8 @@ namespace Maroik.Common.DataAccess.Services
         /// <returns></returns>
         public async Task CreateIncomeAsync(Income income)
         {
-            await context.Incomes.AddAsync(income);
-            await context.SaveChangesAsync();
+            _ = await context.Incomes.AddAsync(income);
+            _ = await context.SaveChangesAsync();
         }
 
         /// <summary>
@@ -64,8 +64,8 @@ namespace Maroik.Common.DataAccess.Services
         /// <returns></returns>
         public async Task UpdateIncomeAsync(Income income)
         {
-            context.Incomes.Update(income);
-            await context.SaveChangesAsync();
+            _ = context.Incomes.Update(income);
+            _ = await context.SaveChangesAsync();
         }
 
         /// <summary>
@@ -75,8 +75,8 @@ namespace Maroik.Common.DataAccess.Services
         /// <returns></returns>
         public async Task DeleteIncomeAsync(Income income)
         {
-            context.Incomes.Remove(income);
-            await context.SaveChangesAsync();
+            _ = context.Incomes.Remove(income);
+            _ = await context.SaveChangesAsync();
         }
 
         /// <summary>

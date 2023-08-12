@@ -42,8 +42,8 @@ namespace Maroik.Common.DataAccess.Services
         /// <returns></returns>
         public async Task WriteCommentAsync(Comment comment)
         {
-            await context.Comments.AddAsync(comment);
-            await context.SaveChangesAsync();
+            _ = await context.Comments.AddAsync(comment);
+            _ = await context.SaveChangesAsync();
         }
 
         /// <summary>
@@ -53,8 +53,8 @@ namespace Maroik.Common.DataAccess.Services
         /// <returns></returns>
         public async Task DeleteCommentAsync(Comment comment)
         {
-            context.Comments.Update(comment);
-            await context.SaveChangesAsync();
+            _ = context.Comments.Update(comment);
+            _ = await context.SaveChangesAsync();
         }
 
     }

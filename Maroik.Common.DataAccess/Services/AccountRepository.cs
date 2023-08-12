@@ -39,8 +39,8 @@ namespace Maroik.Common.DataAccess.Services
         /// <returns></returns>
         public async Task CreateAccountAsync(Account account)
         {
-            await context.Accounts.AddAsync(account);
-            await context.SaveChangesAsync();
+            _ = await context.Accounts.AddAsync(account);
+            _ = await context.SaveChangesAsync();
         }
         /// <summary>
         /// 계정을 업데이트합니다.
@@ -49,8 +49,8 @@ namespace Maroik.Common.DataAccess.Services
         /// <returns></returns>
         public async Task UpdateAccountAsync(Account account)
         {
-            context.Accounts.Update(account);
-            await context.SaveChangesAsync();
+            _ = context.Accounts.Update(account);
+            _ = await context.SaveChangesAsync();
         }
     }
 }

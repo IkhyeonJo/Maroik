@@ -45,8 +45,8 @@ namespace Maroik.Common.DataAccess.Services
         /// <returns></returns>
         public async Task CreateAssetAsync(Asset asset)
         {
-            await context.Assets.AddAsync(asset);
-            await context.SaveChangesAsync();
+            _ = await context.Assets.AddAsync(asset);
+            _ = await context.SaveChangesAsync();
         }
 
         /// <summary>
@@ -56,8 +56,8 @@ namespace Maroik.Common.DataAccess.Services
         /// <returns></returns>
         public async Task UpdateAssetAsync(Asset asset)
         {
-            context.Assets.Update(asset);
-            await context.SaveChangesAsync();
+            _ = context.Assets.Update(asset);
+            _ = await context.SaveChangesAsync();
         }
     }
 }

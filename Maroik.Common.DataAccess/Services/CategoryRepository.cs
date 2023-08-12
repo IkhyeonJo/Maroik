@@ -44,8 +44,8 @@ namespace Maroik.Common.DataAccess.Services
         /// <returns></returns>
         public async Task CreateCategoryAsync(Category category)
         {
-            await context.Categories.AddAsync(category);
-            await context.SaveChangesAsync();
+            _ = await context.Categories.AddAsync(category);
+            _ = await context.SaveChangesAsync();
         }
         /// <summary>
         /// 카테고리를 업데이트합니다.
@@ -54,8 +54,8 @@ namespace Maroik.Common.DataAccess.Services
         /// <returns></returns>
         public async Task UpdateCategoryAsync(Category category)
         {
-            context.Categories.Update(category);
-            await context.SaveChangesAsync();
+            _ = context.Categories.Update(category);
+            _ = await context.SaveChangesAsync();
         }
         /// <summary>
         /// 카테고리를 제거합니다.
@@ -64,8 +64,8 @@ namespace Maroik.Common.DataAccess.Services
         /// <returns></returns>
         public async Task DeleteCategoryAsync(Category category)
         {
-            context.Categories.Remove(category);
-            await context.SaveChangesAsync();
+            _ = context.Categories.Remove(category);
+            _ = await context.SaveChangesAsync();
         }
     }
 }

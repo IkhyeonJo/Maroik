@@ -53,8 +53,8 @@ namespace Maroik.Common.DataAccess.Services
         /// <returns></returns>
         public async Task CreateExpenditureAsync(Expenditure expenditure)
         {
-            await context.Expenditures.AddAsync(expenditure);
-            await context.SaveChangesAsync();
+            _ = await context.Expenditures.AddAsync(expenditure);
+            _ = await context.SaveChangesAsync();
         }
 
         /// <summary>
@@ -64,8 +64,8 @@ namespace Maroik.Common.DataAccess.Services
         /// <returns></returns>
         public async Task UpdateExpenditureAsync(Expenditure expenditure)
         {
-            context.Expenditures.Update(expenditure);
-            await context.SaveChangesAsync();
+            _ = context.Expenditures.Update(expenditure);
+            _ = await context.SaveChangesAsync();
         }
 
         /// <summary>
@@ -75,8 +75,8 @@ namespace Maroik.Common.DataAccess.Services
         /// <returns></returns>
         public async Task DeleteExpenditureAsync(Expenditure expenditure)
         {
-            context.Expenditures.Remove(expenditure);
-            await context.SaveChangesAsync();
+            _ = context.Expenditures.Remove(expenditure);
+            _ = await context.SaveChangesAsync();
         }
 
         /// <summary>

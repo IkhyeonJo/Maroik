@@ -34,8 +34,8 @@ namespace Maroik.Common.DataAccess.Services
         /// <returns></returns>
         public async Task CreateFixedIncomeAsync(FixedIncome fixedIncome)
         {
-            await context.FixedIncomes.AddAsync(fixedIncome);
-            await context.SaveChangesAsync();
+            _ = await context.FixedIncomes.AddAsync(fixedIncome);
+            _ = await context.SaveChangesAsync();
         }
 
         /// <summary>
@@ -45,8 +45,8 @@ namespace Maroik.Common.DataAccess.Services
         /// <returns></returns>
         public async Task UpdateFixedIncomeAsync(FixedIncome fixedIncome)
         {
-            context.FixedIncomes.Update(fixedIncome);
-            await context.SaveChangesAsync();
+            _ = context.FixedIncomes.Update(fixedIncome);
+            _ = await context.SaveChangesAsync();
         }
 
         /// <summary>
@@ -56,8 +56,8 @@ namespace Maroik.Common.DataAccess.Services
         /// <returns></returns>
         public async Task DeleteFixedIncomeAsync(FixedIncome fixedIncome)
         {
-            context.FixedIncomes.Remove(fixedIncome);
-            await context.SaveChangesAsync();
+            _ = context.FixedIncomes.Remove(fixedIncome);
+            _ = await context.SaveChangesAsync();
         }
     }
 }

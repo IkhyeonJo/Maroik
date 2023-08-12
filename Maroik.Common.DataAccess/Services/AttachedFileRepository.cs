@@ -31,8 +31,8 @@ namespace Maroik.Common.DataAccess.Services
         /// <returns></returns>
         public async Task SaveAttachedFileAsync(AttachedFile attachedFile)
         {
-            await context.AttachedFiles.AddAsync(attachedFile);
-            await context.SaveChangesAsync();
+            _ = await context.AttachedFiles.AddAsync(attachedFile);
+            _ = await context.SaveChangesAsync();
         }
 
         /// <summary>
@@ -42,8 +42,8 @@ namespace Maroik.Common.DataAccess.Services
         /// <returns></returns>
         public async Task UpdateAttachedFileAsync(AttachedFile attachedFile)
         {
-            context.AttachedFiles.Update(attachedFile);
-            await context.SaveChangesAsync();
+            _ = context.AttachedFiles.Update(attachedFile);
+            _ = await context.SaveChangesAsync();
         }
     }
 }

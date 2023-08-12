@@ -33,8 +33,8 @@ namespace Maroik.Common.DataAccess.Services
         /// <returns></returns>
         public async Task WriteBoardAsync(Board board)
         {
-            await context.Boards.AddAsync(board);
-            await context.SaveChangesAsync();
+            _ = await context.Boards.AddAsync(board);
+            _ = await context.SaveChangesAsync();
         }
 
         /// <summary>
@@ -44,8 +44,8 @@ namespace Maroik.Common.DataAccess.Services
         /// <returns></returns>
         public async Task UpdateBoardAsync(Board board)
         {
-            context.Boards.Update(board);
-            await context.SaveChangesAsync();
+            _ = context.Boards.Update(board);
+            _ = await context.SaveChangesAsync();
         }
 
         /// <summary>
@@ -55,8 +55,8 @@ namespace Maroik.Common.DataAccess.Services
         /// <returns></returns>
         public async Task DeleteBoardAsync(Board board)
         {
-            context.Boards.Update(board);
-            await context.SaveChangesAsync();
+            _ = context.Boards.Update(board);
+            _ = await context.SaveChangesAsync();
         }
 
     }

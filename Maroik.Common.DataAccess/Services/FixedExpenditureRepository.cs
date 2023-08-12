@@ -34,8 +34,8 @@ namespace Maroik.Common.DataAccess.Services
         /// <returns></returns>
         public async Task CreateFixedExpenditureAsync(FixedExpenditure fixedExpenditure)
         {
-            await context.FixedExpenditures.AddAsync(fixedExpenditure);
-            await context.SaveChangesAsync();
+            _ = await context.FixedExpenditures.AddAsync(fixedExpenditure);
+            _ = await context.SaveChangesAsync();
         }
 
         /// <summary>
@@ -45,8 +45,8 @@ namespace Maroik.Common.DataAccess.Services
         /// <returns></returns>
         public async Task UpdateFixedExpenditureAsync(FixedExpenditure fixedExpenditure)
         {
-            context.FixedExpenditures.Update(fixedExpenditure);
-            await context.SaveChangesAsync();
+            _ = context.FixedExpenditures.Update(fixedExpenditure);
+            _ = await context.SaveChangesAsync();
         }
 
         /// <summary>
@@ -56,8 +56,8 @@ namespace Maroik.Common.DataAccess.Services
         /// <returns></returns>
         public async Task DeleteFixedExpenditureAsync(FixedExpenditure fixedExpenditure)
         {
-            context.FixedExpenditures.Remove(fixedExpenditure);
-            await context.SaveChangesAsync();
+            _ = context.FixedExpenditures.Remove(fixedExpenditure);
+            _ = await context.SaveChangesAsync();
         }
     }
 }
