@@ -1,10 +1,7 @@
-﻿using System.Collections.Generic;
-using System.Text;
-using System.Threading.Tasks;
-using Microsoft.Extensions.Logging;
-using Maroik.Common.DataAccess.Contracts;
+﻿using Maroik.Common.DataAccess.Contracts;
 using Maroik.WebAPI.Common;
 using Maroik.WebAPI.Helpers;
+using System.Text;
 
 namespace Maroik.WebAPI.Services
 {

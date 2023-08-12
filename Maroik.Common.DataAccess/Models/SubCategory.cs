@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-
-namespace Maroik.Common.DataAccess.Models;
+﻿namespace Maroik.Common.DataAccess.Models;
 
 /// <summary>
 /// 서브 카테고리 /*Maroik.WebSite의 로그인 후 접근 가능한 좌측 SideBar 설정 시 사용*/

@@ -1,5 +1,3 @@
-using System;
-
 namespace Maroik.WebSite.Models.ViewModels
 {
     public class ErrorViewModel

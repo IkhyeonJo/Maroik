@@ -1,19 +1,13 @@
 ﻿using Ganss.Xss;
 using Maroik.Common.DataAccess.Contracts;
 using Maroik.Common.DataAccess.Models;
-using Maroik.Common.DataAccess.Services;
 using Maroik.WebSite.Common;
 using Maroik.WebSite.Helpers;
 using Maroik.WebSite.Models;
-using Maroik.WebSite.Models.ViewModels.AccountBook;
-using Maroik.WebSite.Models.ViewModels.DashBoard;
 using Maroik.WebSite.Models.ViewModels.Forum;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Localization;
-using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.Extensions.Hosting;
 using Newtonsoft.Json;
-using System.Reflection;
 using System.Text;
 
 namespace Maroik.WebSite.Controllers
@@ -849,7 +843,7 @@ namespace Maroik.WebSite.Controllers
                     {
                         return Json(new { result = true, message = localizer["You do not have permission to delete."].Value });
                     }
-                    
+
                 }
             }
             catch (Exception e)

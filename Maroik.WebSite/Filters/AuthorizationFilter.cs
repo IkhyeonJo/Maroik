@@ -1,17 +1,12 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Filters;
-using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Http;
-using Newtonsoft.Json;
-using Maroik.WebSite.Models;
-using System.Text;
-using Maroik.WebSite.Common;
-using System.Linq;
-using System;
-using System.Reflection;
-using Maroik.WebSite.Helpers;
+﻿using Maroik.Common.DataAccess.Contracts;
 using Maroik.Common.DataAccess.Models;
-using Maroik.Common.DataAccess.Contracts;
+using Maroik.WebSite.Common;
+using Maroik.WebSite.Helpers;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Filters;
+using Newtonsoft.Json;
+using System.Reflection;
+using System.Text;
 
 namespace Maroik.WebSite.Filters
 {

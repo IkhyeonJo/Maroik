@@ -1,6 +1,6 @@
+using Maroik.Common.DataAccess.Models;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Maroik.Common.DataAccess.Models;
 
 namespace Maroik.Common.DataAccess.Contracts
 {

@@ -1,23 +1,16 @@
-using System;
-using System.Security.Authentication;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using System.Text;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Server.Kestrel.Core;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using Microsoft.IdentityModel.Tokens;
 using Maroik.Common.DataAccess.Contracts;
 using Maroik.Common.DataAccess.Data;
 using Maroik.Common.DataAccess.Services;
 using Maroik.WebAPI.Common;
 using Maroik.WebAPI.Infrastructure;
 using Maroik.WebAPI.Services;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Server.Kestrel.Core;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using Microsoft.AspNetCore.Rewrite;
+using System.Security.Authentication;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 

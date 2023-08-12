@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Maroik.WebSite.Common
+﻿namespace Maroik.WebSite.Common
 {
     public static class Role
     {

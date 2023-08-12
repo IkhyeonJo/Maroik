@@ -10,7 +10,7 @@
         public int EndPage { get; private set; }
 
         public Pager()
-        {    
+        {
         }
 
         public Pager(int totalItems, int page, int pageSize = 10)

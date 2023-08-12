@@ -1,6 +1,3 @@
-using Microsoft.EntityFrameworkCore;
-using Maroik.WebSite.Models;
-using System.Collections.Generic;
 using Maroik.Common.DataAccess.Models;
 
 namespace Maroik.WebSite.Common

@@ -1,11 +1,8 @@
-using System;
-using System.Net.Mail;
-using System.Text;
-using System.Threading.Tasks;
 using Maroik.WebSite.Common;
 using Maroik.WebSite.Contracts;
 using Maroik.WebSite.Helpers;
 using Maroik.WebSite.Models.ViewModels.Account;
+using System.Net.Mail;
 
 namespace Maroik.WebSite.Services
 {

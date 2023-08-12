@@ -1,11 +1,8 @@
-using System;
-using System.Linq;
-
 namespace Maroik.WebSite.Common
 {
     public class GUIDToken
     {
-        public static string Generate() 
+        public static string Generate()
         {
             #region Unique token
             //string token = Convert.ToBase64String(Guid.NewGuid().ToByteArray()); 

@@ -1,18 +1,13 @@
-﻿using System;
-using System.ComponentModel.DataAnnotations;
-using System.Security.Claims;
-using System.Text.Json.Serialization;
-using System.Threading.Tasks;
+﻿using Maroik.Common.DataAccess.Contracts;
 using Maroik.WebAPI.Infrastructure;
 using Maroik.WebAPI.Services;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
-using Maroik.Common.DataAccess.Contracts;
-using Maroik.Common.DataAccess.Services;
-using Maroik.WebAPI.Common;
+using System.ComponentModel.DataAnnotations;
+using System.Security.Claims;
+using System.Text.Json.Serialization;
 
 namespace Maroik.WebAPI.Controllers
 {

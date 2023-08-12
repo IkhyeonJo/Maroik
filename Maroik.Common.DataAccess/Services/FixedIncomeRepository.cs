@@ -1,10 +1,10 @@
+using Maroik.Common.DataAccess.Contracts;
+using Maroik.Common.DataAccess.Data;
+using Maroik.Common.DataAccess.Models;
+using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
-using Maroik.Common.DataAccess.Data;
-using Maroik.Common.DataAccess.Models;
-using Maroik.Common.DataAccess.Contracts;
 
 namespace Maroik.Common.DataAccess.Services
 {

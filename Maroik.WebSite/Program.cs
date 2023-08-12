@@ -1,20 +1,19 @@
-using Maroik.Common.DataAccess.Data;
-using Maroik.WebSite.Common;
-using Microsoft.EntityFrameworkCore;
 using Maroik.Common.DataAccess.Contracts;
+using Maroik.Common.DataAccess.Data;
+using Maroik.Common.DataAccess.Models;
 using Maroik.Common.DataAccess.Services;
+using Maroik.WebSite.Common;
 using Maroik.WebSite.Contracts;
+using Maroik.WebSite.Filters;
 using Maroik.WebSite.Services;
+using Microsoft.AspNetCore.CookiePolicy;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Mvc.Razor;
-using System.Globalization;
-using Maroik.WebSite.Filters;
-using System.Net;
-using Maroik.Common.DataAccess.Models;
+using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
+using System.Globalization;
+using System.Net;
 using System.Text;
-using Microsoft.AspNetCore.Rewrite;
-using Microsoft.AspNetCore.CookiePolicy;
 
 var builder = WebApplication.CreateBuilder(args);
 

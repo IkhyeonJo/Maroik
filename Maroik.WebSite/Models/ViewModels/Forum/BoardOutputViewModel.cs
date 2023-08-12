@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace Maroik.WebSite.Models.ViewModels.Forum
 {
@@ -9,7 +7,7 @@ namespace Maroik.WebSite.Models.ViewModels.Forum
         [Required(ErrorMessage = "Title is required.")]
         [StringLength(100, ErrorMessage = "Must be between 1 and 100 characters.", MinimumLength = 1)]
         public string Title { get; set; }
-        
+
         public string Content { get; set; }
 
         public bool Locked { get; set; }

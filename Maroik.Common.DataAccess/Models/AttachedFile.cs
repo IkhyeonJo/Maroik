@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-
-namespace Maroik.Common.DataAccess.Models;
+﻿namespace Maroik.Common.DataAccess.Models;
 
 /// <summary>
 /// Maroik.WebSite 첨부 파일

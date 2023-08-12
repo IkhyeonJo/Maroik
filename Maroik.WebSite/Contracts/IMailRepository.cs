@@ -1,6 +1,5 @@
 using Maroik.WebSite.Helpers;
 using Maroik.WebSite.Models.ViewModels.Account;
-using System.Threading.Tasks;
 
 namespace Maroik.WebSite.Contracts
 {

@@ -5,7 +5,7 @@ namespace Maroik.WebSite.Common
     public static class OSTimeZone
     {
         private static string destinationTimeZoneId;
-        public static string DestinationTimeZoneId 
+        public static string DestinationTimeZoneId
         {
             get
             {
@@ -19,7 +19,7 @@ namespace Maroik.WebSite.Common
                 }
 
                 return destinationTimeZoneId;
-            } 
+            }
         }
     }
 }

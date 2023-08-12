@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Maroik.Common.DataAccess.Models
+﻿namespace Maroik.Common.DataAccess.Models
 {
     public class USP_Income_MonthlyReport
     {

@@ -1,7 +1,5 @@
-using Microsoft.EntityFrameworkCore;
 using Maroik.Common.DataAccess.Models;
-using System.ComponentModel.DataAnnotations.Schema;
-using System;
+using Microsoft.EntityFrameworkCore;
 
 namespace Maroik.Common.DataAccess.Data
 {

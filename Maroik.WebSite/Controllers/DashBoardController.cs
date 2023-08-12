@@ -1,24 +1,13 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
-using Maroik.WebSite.Models;
-using System.Diagnostics;
-using Microsoft.Extensions.Configuration;
-using System.Collections.Generic;
-using System;
-using Microsoft.EntityFrameworkCore;
-using Maroik.WebSite.Services;
-using Microsoft.AspNetCore.Authorization;
-using Maroik.WebSite.Common;
-using Maroik.WebSite.Contracts;
-using Maroik.Common.DataAccess.Contracts;
-using System.Threading.Tasks;
-using Newtonsoft.Json;
+﻿using Maroik.Common.DataAccess.Contracts;
 using Maroik.Common.DataAccess.Models;
-using System.Text;
-using Maroik.WebSite.Models.ViewModels.DashBoard;
-using Maroik.WebSite.Models.ViewModels.Account;
-using Microsoft.AspNetCore.Localization;
+using Maroik.WebSite.Common;
 using Maroik.WebSite.Helpers;
+using Maroik.WebSite.Models.ViewModels.Account;
+using Maroik.WebSite.Models.ViewModels.DashBoard;
+using Microsoft.AspNetCore.Localization;
+using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
+using System.Text;
 
 namespace Maroik.WebSite.Controllers
 {

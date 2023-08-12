@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Maroik.WebAPI.Common
+﻿namespace Maroik.WebAPI.Common
 {
     public static class Role
     {
