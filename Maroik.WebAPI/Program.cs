@@ -12,7 +12,7 @@ using Microsoft.OpenApi.Models;
 using System.Security.Authentication;
 using System.Text;
 
-var builder = WebApplication.CreateBuilder(args);
+WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 builder.WebHost.ConfigureKestrel(serverOptions =>
 {
@@ -37,7 +37,7 @@ ServerSetting.MaxLoginAttempt = Convert.ToInt32(builder.Configuration.GetSection
 
 builder.Services.AddControllers();
 
-var jwtTokenConfig = builder.Configuration.GetSection("jwtTokenConfig").Get<JwtTokenConfig>();
+JwtTokenConfig jwtTokenConfig = builder.Configuration.GetSection("jwtTokenConfig").Get<JwtTokenConfig>();
 builder.Services.AddSingleton(jwtTokenConfig);
 builder.Services.AddAuthentication(x =>
 {
@@ -94,7 +94,7 @@ builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "Maroik.WebAPI", Version = "v1" });
 
-    var securityScheme = new OpenApiSecurityScheme
+    OpenApiSecurityScheme securityScheme = new()
     {
         Name = "Maroik.WebAPI",
         Description = "Enter JWT Bearer token **_only_**",
@@ -118,15 +118,15 @@ builder.Services.AddSwaggerGen(c =>
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll",
-        builder => { builder.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader(); });
+        builder => { _ = builder.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader(); });
 });
 
-var app = builder.Build();
+WebApplication app = builder.Build();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
-    app.UseDeveloperExceptionPage();
+    _ = app.UseDeveloperExceptionPage();
 }
 
 #region 도메인 있을 때, 사용

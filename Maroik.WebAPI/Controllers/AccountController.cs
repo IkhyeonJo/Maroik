@@ -44,15 +44,15 @@ namespace Maroik.WebAPI.Controllers
                 return Unauthorized();
             }
 
-            var tempAccount = await accountRepository.GetAccountByEmailAsync(request.Email);
-            var claims = new[]
+            Maroik.Common.DataAccess.Models.Account tempAccount = await accountRepository.GetAccountByEmailAsync(request.Email);
+            Claim[] claims = new[]
             {
                 new Claim(ClaimTypes.Email, tempAccount.Email),
                 new Claim(ClaimTypes.Name, tempAccount.Nickname),
                 new Claim(ClaimTypes.Role, tempAccount.Role)
             };
 
-            var jwtResult = jwtAuthManager.GenerateTokens(tempAccount.Nickname, claims, DateTime.UtcNow);
+            JwtAuthResult jwtResult = jwtAuthManager.GenerateTokens(tempAccount.Nickname, claims, DateTime.UtcNow);
             //logger.LogInformation($"User [{tempAccount.Email}] logged in the system.");
             return Ok(new LoginResult
             {
@@ -82,7 +82,7 @@ namespace Maroik.WebAPI.Controllers
             // optionally "revoke" JWT token on the server side --> add the current token to a block-list
             // https://github.com/auth0/node-jsonwebtoken/issues/375
 
-            var userName = User.Identity?.Name;
+            string userName = User.Identity?.Name;
             jwtAuthManager.RemoveRefreshTokenByUserName(userName);
             //logger.LogInformation($"User [{userName}] logged out the system.");
             return Ok();
@@ -94,7 +94,7 @@ namespace Maroik.WebAPI.Controllers
         {
             try
             {
-                var userName = User.Identity?.Name;
+                string userName = User.Identity?.Name;
                 //logger.LogInformation($"User [{userName}] is trying to refresh JWT token.");
 
                 if (string.IsNullOrWhiteSpace(request.RefreshToken))
@@ -102,8 +102,8 @@ namespace Maroik.WebAPI.Controllers
                     return Unauthorized();
                 }
 
-                var accessToken = await HttpContext.GetTokenAsync("Bearer", "access_token");
-                var jwtResult = jwtAuthManager.Refresh(request.RefreshToken, accessToken, DateTime.UtcNow);
+                string accessToken = await HttpContext.GetTokenAsync("Bearer", "access_token");
+                JwtAuthResult jwtResult = jwtAuthManager.Refresh(request.RefreshToken, accessToken, DateTime.UtcNow);
                 //logger.LogInformation($"User [{userName}] has refreshed JWT token.");
                 return Ok(new LoginResult
                 {

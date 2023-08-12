@@ -36,41 +36,41 @@ namespace Maroik.WebAPI.Infrastructure
         // optional: clean up expired refresh tokens
         public void RemoveExpiredRefreshTokens(DateTime now)
         {
-            var expiredTokens = _usersRefreshTokens.Where(x => x.Value.ExpireAt < now).ToList();
-            foreach (var expiredToken in expiredTokens)
+            List<KeyValuePair<string, RefreshToken>> expiredTokens = _usersRefreshTokens.Where(x => x.Value.ExpireAt < now).ToList();
+            foreach (KeyValuePair<string, RefreshToken> expiredToken in expiredTokens)
             {
-                _usersRefreshTokens.TryRemove(expiredToken.Key, out _);
+                _ = _usersRefreshTokens.TryRemove(expiredToken.Key, out _);
             }
         }
 
         // can be more specific to ip, user agent, device name, etc.
         public void RemoveRefreshTokenByUserName(string userName)
         {
-            var refreshTokens = _usersRefreshTokens.Where(x => x.Value.UserName == userName).ToList();
-            foreach (var refreshToken in refreshTokens)
+            List<KeyValuePair<string, RefreshToken>> refreshTokens = _usersRefreshTokens.Where(x => x.Value.UserName == userName).ToList();
+            foreach (KeyValuePair<string, RefreshToken> refreshToken in refreshTokens)
             {
-                _usersRefreshTokens.TryRemove(refreshToken.Key, out _);
+                _ = _usersRefreshTokens.TryRemove(refreshToken.Key, out _);
             }
         }
 
         public JwtAuthResult GenerateTokens(string username, Claim[] claims, DateTime now)
         {
-            var shouldAddAudienceClaim = string.IsNullOrWhiteSpace(claims?.FirstOrDefault(x => x.Type == JwtRegisteredClaimNames.Aud)?.Value);
-            var jwtToken = new JwtSecurityToken(
+            bool shouldAddAudienceClaim = string.IsNullOrWhiteSpace(claims?.FirstOrDefault(x => x.Type == JwtRegisteredClaimNames.Aud)?.Value);
+            JwtSecurityToken jwtToken = new(
                 _jwtTokenConfig.Issuer,
                 shouldAddAudienceClaim ? _jwtTokenConfig.Audience : string.Empty,
                 claims,
                 expires: now.AddMinutes(_jwtTokenConfig.AccessTokenExpiration),
                 signingCredentials: new SigningCredentials(new SymmetricSecurityKey(_secret), SecurityAlgorithms.HmacSha256Signature));
-            var accessToken = new JwtSecurityTokenHandler().WriteToken(jwtToken);
+            string accessToken = new JwtSecurityTokenHandler().WriteToken(jwtToken);
 
-            var refreshToken = new RefreshToken
+            RefreshToken refreshToken = new()
             {
                 UserName = username,
                 TokenString = GenerateRefreshTokenString(),
                 ExpireAt = now.AddMinutes(_jwtTokenConfig.RefreshTokenExpiration)
             };
-            _usersRefreshTokens.AddOrUpdate(refreshToken.TokenString, refreshToken, (_, _) => refreshToken);
+            _ = _usersRefreshTokens.AddOrUpdate(refreshToken.TokenString, refreshToken, (_, _) => refreshToken);
 
             return new JwtAuthResult
             {
@@ -81,14 +81,14 @@ namespace Maroik.WebAPI.Infrastructure
 
         public JwtAuthResult Refresh(string refreshToken, string accessToken, DateTime now)
         {
-            var (principal, jwtToken) = DecodeJwtToken(accessToken);
+            (ClaimsPrincipal principal, JwtSecurityToken jwtToken) = DecodeJwtToken(accessToken);
             if (jwtToken == null || !jwtToken.Header.Alg.Equals(SecurityAlgorithms.HmacSha256Signature))
             {
                 throw new SecurityTokenException("Invalid token");
             }
 
-            var userName = principal.Identity?.Name;
-            if (!_usersRefreshTokens.TryGetValue(refreshToken, out var existingRefreshToken))
+            string userName = principal.Identity?.Name;
+            if (!_usersRefreshTokens.TryGetValue(refreshToken, out RefreshToken existingRefreshToken))
             {
                 throw new SecurityTokenException("Invalid token");
             }
@@ -106,7 +106,7 @@ namespace Maroik.WebAPI.Infrastructure
             {
                 throw new SecurityTokenException("Invalid token");
             }
-            var principal = new JwtSecurityTokenHandler()
+            ClaimsPrincipal principal = new JwtSecurityTokenHandler()
                 .ValidateToken(token,
                     new TokenValidationParameters
                     {
@@ -119,14 +119,14 @@ namespace Maroik.WebAPI.Infrastructure
                         ValidateLifetime = true,
                         ClockSkew = TimeSpan.FromMinutes(1)
                     },
-                    out var validatedToken);
+                    out SecurityToken validatedToken);
             return (principal, validatedToken as JwtSecurityToken);
         }
 
         private static string GenerateRefreshTokenString()
         {
-            var randomNumber = new byte[32];
-            using var randomNumberGenerator = RandomNumberGenerator.Create();
+            byte[] randomNumber = new byte[32];
+            using RandomNumberGenerator randomNumberGenerator = RandomNumberGenerator.Create();
             randomNumberGenerator.GetBytes(randomNumber);
             return Convert.ToBase64String(randomNumber);
         }
