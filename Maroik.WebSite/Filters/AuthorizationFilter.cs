@@ -24,8 +24,8 @@ namespace Maroik.WebSite.Filters
         // Do something before the action executes.
         public override void OnActionExecuting(ActionExecutingContext context)
         {
-            var categories = categoryRepository.GetCategory();
-            var subCategories = subCategoryRepository.GetSubCategory();
+            IEnumerable<Category> categories = categoryRepository.GetCategory();
+            IEnumerable<SubCategory> subCategories = subCategoryRepository.GetSubCategory();
 
             DbCache.AdminCategories = from adminCategory in categories
                                       where adminCategory.Role == Role.Admin
@@ -102,15 +102,15 @@ namespace Maroik.WebSite.Filters
                         return;
                     }
 
-                    var anonymousCategories = DbCache.AnonymousCategories;
-                    var anonymousSubCategories = DbCache.AnonymousSubCategories;
+                    IEnumerable<Category> anonymousCategories = DbCache.AnonymousCategories;
+                    IEnumerable<SubCategory> anonymousSubCategories = DbCache.AnonymousSubCategories;
 
                     #region SubCategory가 없는 Category일 경우
-                    var singleCategories = from anonymousCategory in anonymousCategories
-                                           where !string.IsNullOrEmpty(anonymousCategory.Action)
-                                           select anonymousCategory; // 서브 카테고리 없는 카테고리 모음.
+                    IEnumerable<Category> singleCategories = from anonymousCategory in anonymousCategories
+                                                             where !string.IsNullOrEmpty(anonymousCategory.Action)
+                                                             select anonymousCategory; // 서브 카테고리 없는 카테고리 모음.
 
-                    foreach (var singleCategory in singleCategories)
+                    foreach (Category singleCategory in singleCategories)
                     {
                         if (singleCategory.Controller == currentControllerName && singleCategory.Action == currentActionName)
                         {
@@ -121,16 +121,16 @@ namespace Maroik.WebSite.Filters
                     #endregion
 
                     #region SubCategory가 있는 Category일 경우
-                    var nonSingleCategories = from anonymousCategory in anonymousCategories
-                                              where string.IsNullOrEmpty(anonymousCategory.Action)
-                                              select anonymousCategory; // 서브 카테고리 있는 카테고리 모음.
+                    IEnumerable<Category> nonSingleCategories = from anonymousCategory in anonymousCategories
+                                                                where string.IsNullOrEmpty(anonymousCategory.Action)
+                                                                select anonymousCategory; // 서브 카테고리 있는 카테고리 모음.
 
-                    foreach (var nonSingleCategory in nonSingleCategories)
+                    foreach (Category nonSingleCategory in nonSingleCategories)
                     {
-                        var nonSingleCategorysSubCategories = from anonymousSubCategory in anonymousSubCategories
-                                                              where anonymousSubCategory.CategoryId == nonSingleCategory.Id
-                                                              select anonymousSubCategory;
-                        foreach (var nonSingleCategorysSubCategory in nonSingleCategorysSubCategories)
+                        IEnumerable<SubCategory> nonSingleCategorysSubCategories = from anonymousSubCategory in anonymousSubCategories
+                                                                                   where anonymousSubCategory.CategoryId == nonSingleCategory.Id
+                                                                                   select anonymousSubCategory;
+                        foreach (SubCategory nonSingleCategorysSubCategory in nonSingleCategorysSubCategories)
                         {
                             if (nonSingleCategory.Controller == currentControllerName && nonSingleCategorysSubCategory.Action == currentActionName)
                             {
@@ -162,20 +162,20 @@ namespace Maroik.WebSite.Filters
                         return;
                     }
 
-                    context.HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
-                    var loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)); // Get Session
+                    _ = context.HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+                    Account loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)); // Get Session
 
                     if (loginedAccount.Role == Role.Admin) // 로그인한 사용자 권한이 Admin일 경우
                     {
-                        var adminCategories = DbCache.AdminCategories;
-                        var adminSubCategories = DbCache.AdminSubCategories;
+                        IEnumerable<Category> adminCategories = DbCache.AdminCategories;
+                        IEnumerable<SubCategory> adminSubCategories = DbCache.AdminSubCategories;
 
                         #region SubCategory가 없는 Category일 경우
-                        var singleCategories = from adminCategory in adminCategories
-                                               where !string.IsNullOrEmpty(adminCategory.Action)
-                                               select adminCategory; // 서브 카테고리 없는 카테고리 모음.
+                        IEnumerable<Category> singleCategories = from adminCategory in adminCategories
+                                                                 where !string.IsNullOrEmpty(adminCategory.Action)
+                                                                 select adminCategory; // 서브 카테고리 없는 카테고리 모음.
 
-                        foreach (var singleCategory in singleCategories)
+                        foreach (Category singleCategory in singleCategories)
                         {
                             if (singleCategory.Controller == currentControllerName && singleCategory.Action == currentActionName)
                             {
@@ -186,16 +186,16 @@ namespace Maroik.WebSite.Filters
                         #endregion
 
                         #region SubCategory가 있는 Category일 경우
-                        var nonSingleCategories = from adminCategory in adminCategories
-                                                  where string.IsNullOrEmpty(adminCategory.Action)
-                                                  select adminCategory; // 서브 카테고리 있는 카테고리 모음.
+                        IEnumerable<Category> nonSingleCategories = from adminCategory in adminCategories
+                                                                    where string.IsNullOrEmpty(adminCategory.Action)
+                                                                    select adminCategory; // 서브 카테고리 있는 카테고리 모음.
 
-                        foreach (var nonSingleCategory in nonSingleCategories)
+                        foreach (Category nonSingleCategory in nonSingleCategories)
                         {
-                            var nonSingleCategorysSubCategories = from adminSubCategory in adminSubCategories
-                                                                  where adminSubCategory.CategoryId == nonSingleCategory.Id
-                                                                  select adminSubCategory;
-                            foreach (var nonSingleCategorysSubCategory in nonSingleCategorysSubCategories)
+                            IEnumerable<SubCategory> nonSingleCategorysSubCategories = from adminSubCategory in adminSubCategories
+                                                                                       where adminSubCategory.CategoryId == nonSingleCategory.Id
+                                                                                       select adminSubCategory;
+                            foreach (SubCategory nonSingleCategorysSubCategory in nonSingleCategorysSubCategories)
                             {
                                 if (nonSingleCategory.Controller == currentControllerName && nonSingleCategorysSubCategory.Action == currentActionName)
                                 {
@@ -212,15 +212,15 @@ namespace Maroik.WebSite.Filters
                     }
                     else if (loginedAccount.Role == Role.User) // 로그인한 사용자 권한이 User일 경우
                     {
-                        var userCategories = DbCache.UserCategories;
-                        var userSubCategories = DbCache.UserSubCategories;
+                        IEnumerable<Category> userCategories = DbCache.UserCategories;
+                        IEnumerable<SubCategory> userSubCategories = DbCache.UserSubCategories;
 
                         #region SubCategory가 없는 Category일 경우
-                        var singleCategories = from userCategory in userCategories
-                                               where !string.IsNullOrEmpty(userCategory.Action)
-                                               select userCategory; // 서브 카테고리 없는 카테고리 모음.
+                        IEnumerable<Category> singleCategories = from userCategory in userCategories
+                                                                 where !string.IsNullOrEmpty(userCategory.Action)
+                                                                 select userCategory; // 서브 카테고리 없는 카테고리 모음.
 
-                        foreach (var singleCategory in singleCategories)
+                        foreach (Category singleCategory in singleCategories)
                         {
                             if (singleCategory.Controller == currentControllerName && singleCategory.Action == currentActionName)
                             {
@@ -231,16 +231,16 @@ namespace Maroik.WebSite.Filters
                         #endregion
 
                         #region SubCategory가 있는 Category일 경우
-                        var nonSingleCategories = from userCategory in userCategories
-                                                  where string.IsNullOrEmpty(userCategory.Action)
-                                                  select userCategory; // 서브 카테고리 있는 카테고리 모음.
+                        IEnumerable<Category> nonSingleCategories = from userCategory in userCategories
+                                                                    where string.IsNullOrEmpty(userCategory.Action)
+                                                                    select userCategory; // 서브 카테고리 있는 카테고리 모음.
 
-                        foreach (var nonSingleCategory in nonSingleCategories)
+                        foreach (Category nonSingleCategory in nonSingleCategories)
                         {
-                            var nonSingleCategorysSubCategories = from userSubCategory in userSubCategories
-                                                                  where userSubCategory.CategoryId == nonSingleCategory.Id
-                                                                  select userSubCategory;
-                            foreach (var nonSingleCategorysSubCategory in nonSingleCategorysSubCategories)
+                            IEnumerable<SubCategory> nonSingleCategorysSubCategories = from userSubCategory in userSubCategories
+                                                                                       where userSubCategory.CategoryId == nonSingleCategory.Id
+                                                                                       select userSubCategory;
+                            foreach (SubCategory nonSingleCategorysSubCategory in nonSingleCategorysSubCategories)
                             {
                                 if (nonSingleCategory.Controller == currentControllerName && nonSingleCategorysSubCategory.Action == currentActionName)
                                 {
@@ -259,17 +259,17 @@ namespace Maroik.WebSite.Filters
             }
             else if (currentRequestMethod.ToUpper() == "POST") // POST 방식
             {
-                var existingControllers = Assembly.GetExecutingAssembly().GetTypes()
+                IEnumerable<Type> existingControllers = Assembly.GetExecutingAssembly().GetTypes()
                     .Where(type => typeof(Controller).IsAssignableFrom(type)); //filter controllers
 
                 if (isAccountSessionExist == false) // 로그인이 안 된 상태이면
                 {
-                    var existingHttpPostMethods = existingControllers
+                    IEnumerable<MethodInfo> existingHttpPostMethods = existingControllers
                     .Where(type => type.Name == "AccountController") // AccountController 체크
                     .SelectMany(type => type.GetMethods()) // Method 들을 구한다
                     .Where(method => method.IsPublic && !method.IsDefined(typeof(NonActionAttribute)) && method.IsDefined(typeof(HttpPostAttribute)) && method.IsDefined(typeof(ValidateAntiForgeryTokenAttribute))); // Method에서 접근 제한자가 Public이고 Attribute가 NonAction으로 되지 않고, HttpPost 및 ValidateAntiForgeryToken으로 된 메소드들을 구한다.
 
-                    foreach (var existingHttpPostMethod in existingHttpPostMethods)
+                    foreach (MethodInfo existingHttpPostMethod in existingHttpPostMethods)
                     {
                         if (currentControllerName == existingHttpPostMethod.DeclaringType.Name.Replace("Controller", "") && currentActionName == existingHttpPostMethod.Name) // (POST로 보낸) 현 Controller 명과 Action 명이 Account Controller의 NonAction Attribute가 없고 HttpPost & ValidateAntiForgeryToken Attribute를 가진 Method(Action) 명과 같다면
                         {
@@ -278,25 +278,25 @@ namespace Maroik.WebSite.Filters
                         }
                     }
 
-                    var anonymousCategories = DbCache.AnonymousCategories;
-                    foreach (var anonymousCategory in anonymousCategories)
+                    IEnumerable<Category> anonymousCategories = DbCache.AnonymousCategories;
+                    foreach (Category anonymousCategory in anonymousCategories)
                     {
                         existingHttpPostMethods = existingControllers
                         .Where(type => type.Name == $"{anonymousCategory.Controller}Controller") // 권한 AnonymousCategory일 때 등록 된 Category의 Controller 이름만 접근 가능
                         .SelectMany(type => type.GetMethods()) // Method 들을 구한다
                         .Where(method => method.IsPublic && !method.IsDefined(typeof(NonActionAttribute)) && method.IsDefined(typeof(HttpPostAttribute)) && method.IsDefined(typeof(ValidateAntiForgeryTokenAttribute)) && method.IsDefined(typeof(RequiredHttpPostAccessAttribute))); // Method에서 접근 제한자가 Public이고 Attribute가 NonAction으로 되지 않고, HttpPost 및 ValidateAntiForgeryToken가 있고 RequiredHttpPostAccess로 된 메소드들을 구한다.
 
-                        foreach (var existingHttpPostMethod in existingHttpPostMethods)
+                        foreach (MethodInfo existingHttpPostMethod in existingHttpPostMethods)
                         {
                             if (currentControllerName == existingHttpPostMethod.DeclaringType.Name.Replace("Controller", "") && currentActionName == existingHttpPostMethod.Name) // (POST로 보낸) 현 Controller 명과 Action 명이 Account Controller의 NonAction Attribute가 없고 HttpPost & ValidateAntiForgeryToken Attribute를 가진 Method(Action) 명과 같다면
                             {
-                                foreach (var customAttribute in existingHttpPostMethod.CustomAttributes)
+                                foreach (CustomAttributeData customAttribute in existingHttpPostMethod.CustomAttributes)
                                 {
                                     if (customAttribute.AttributeType.FullName == typeof(RequiredHttpPostAccessAttribute).ToString())
                                     {
-                                        foreach (var namedArgument in customAttribute.NamedArguments)
+                                        foreach (CustomAttributeNamedArgument namedArgument in customAttribute.NamedArguments)
                                         {
-                                            if ((namedArgument.MemberName == nameof(RequiredHttpPostAccessAttribute.Role)) && (namedArgument.TypedValue.Value as string == Role.Anonymous))
+                                            if ((namedArgument.MemberName == nameof(RequiredHttpPostAccessAttribute.Role)) && ((namedArgument.TypedValue.Value as string) == Role.Anonymous))
                                             {
                                                 base.OnActionExecuting(context); // Do Action!!
                                                 return;
@@ -314,30 +314,30 @@ namespace Maroik.WebSite.Filters
                 }
                 else if (isAccountSessionExist == true) // 로그인이 된 상태라면
                 {
-                    context.HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
-                    var loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)); // Get Session
+                    _ = context.HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+                    Account loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)); // Get Session
 
                     if (loginedAccount.Role == Role.Admin) // 로그인한 사용자 권한이 Admin일 경우
                     {
-                        var adminCategories = DbCache.AdminCategories;
-                        foreach (var adminCategory in adminCategories)
+                        IEnumerable<Category> adminCategories = DbCache.AdminCategories;
+                        foreach (Category adminCategory in adminCategories)
                         {
-                            var existingHttpPostMethods = existingControllers
+                            IEnumerable<MethodInfo> existingHttpPostMethods = existingControllers
                             .Where(type => type.Name == $"{adminCategory.Controller}Controller") // 권한 Admin일 때 등록 된 Category의 Controller 이름만 접근 가능
                             .SelectMany(type => type.GetMethods()) // Method 들을 구한다
                             .Where(method => method.IsPublic && !method.IsDefined(typeof(NonActionAttribute)) && method.IsDefined(typeof(HttpPostAttribute)) && method.IsDefined(typeof(ValidateAntiForgeryTokenAttribute)) && method.IsDefined(typeof(RequiredHttpPostAccessAttribute))); // Method에서 접근 제한자가 Public이고 Attribute가 NonAction으로 되지 않고, HttpPost 및 ValidateAntiForgeryToken가 있고 RequiredHttpPostAccess로 된 메소드들을 구한다.
 
-                            foreach (var existingHttpPostMethod in existingHttpPostMethods)
+                            foreach (MethodInfo existingHttpPostMethod in existingHttpPostMethods)
                             {
                                 if (currentControllerName == existingHttpPostMethod.DeclaringType.Name.Replace("Controller", "") && currentActionName == existingHttpPostMethod.Name) // (POST로 보낸) 현 Controller 명과 Action 명이 Account Controller의 NonAction Attribute가 없고 HttpPost & ValidateAntiForgeryToken Attribute를 가진 Method(Action) 명과 같다면
                                 {
-                                    foreach (var customAttribute in existingHttpPostMethod.CustomAttributes)
+                                    foreach (CustomAttributeData customAttribute in existingHttpPostMethod.CustomAttributes)
                                     {
                                         if (customAttribute.AttributeType.FullName == typeof(RequiredHttpPostAccessAttribute).ToString())
                                         {
-                                            foreach (var namedArgument in customAttribute.NamedArguments)
+                                            foreach (CustomAttributeNamedArgument namedArgument in customAttribute.NamedArguments)
                                             {
-                                                if ((namedArgument.MemberName == nameof(RequiredHttpPostAccessAttribute.Role)) && (namedArgument.TypedValue.Value as string == loginedAccount.Role))
+                                                if ((namedArgument.MemberName == nameof(RequiredHttpPostAccessAttribute.Role)) && ((namedArgument.TypedValue.Value as string) == loginedAccount.Role))
                                                 {
                                                     base.OnActionExecuting(context); // Do Action!!
                                                     return;
@@ -354,25 +354,25 @@ namespace Maroik.WebSite.Filters
                     }
                     else if (loginedAccount.Role == Role.User) // 로그인한 사용자 권한이 User일 경우
                     {
-                        var userCategories = DbCache.UserCategories;
-                        foreach (var userCategory in userCategories)
+                        IEnumerable<Category> userCategories = DbCache.UserCategories;
+                        foreach (Category userCategory in userCategories)
                         {
-                            var existingHttpPostMethods = existingControllers
+                            IEnumerable<MethodInfo> existingHttpPostMethods = existingControllers
                             .Where(type => type.Name == $"{userCategory.Controller}Controller") // 권한 User일 때 등록 된 Category의 Controller 이름만 접근 가능
                             .SelectMany(type => type.GetMethods()) // Method 들을 구한다
                             .Where(method => method.IsPublic && !method.IsDefined(typeof(NonActionAttribute)) && method.IsDefined(typeof(HttpPostAttribute)) && method.IsDefined(typeof(ValidateAntiForgeryTokenAttribute)) && method.IsDefined(typeof(RequiredHttpPostAccessAttribute))); // Method에서 접근 제한자가 Public이고 Attribute가 NonAction으로 되지 않고, HttpPost 및 ValidateAntiForgeryToken가 있고 RequiredHttpPostAccess로 된 메소드들을 구한다.
 
-                            foreach (var existingHttpPostMethod in existingHttpPostMethods)
+                            foreach (MethodInfo existingHttpPostMethod in existingHttpPostMethods)
                             {
                                 if (currentControllerName == existingHttpPostMethod.DeclaringType.Name.Replace("Controller", "") && currentActionName == existingHttpPostMethod.Name) // (POST로 보낸) 현 Controller 명과 Action 명이 Account Controller의 NonAction Attribute가 없고 HttpPost & ValidateAntiForgeryToken Attribute를 가진 Method(Action) 명과 같다면
                                 {
-                                    foreach (var customAttribute in existingHttpPostMethod.CustomAttributes)
+                                    foreach (CustomAttributeData customAttribute in existingHttpPostMethod.CustomAttributes)
                                     {
                                         if (customAttribute.AttributeType.FullName == typeof(RequiredHttpPostAccessAttribute).ToString())
                                         {
-                                            foreach (var namedArgument in customAttribute.NamedArguments)
+                                            foreach (CustomAttributeNamedArgument namedArgument in customAttribute.NamedArguments)
                                             {
-                                                if ((namedArgument.MemberName == nameof(RequiredHttpPostAccessAttribute.Role)) && (namedArgument.TypedValue.Value as string == loginedAccount.Role))
+                                                if ((namedArgument.MemberName == nameof(RequiredHttpPostAccessAttribute.Role)) && ((namedArgument.TypedValue.Value as string) == loginedAccount.Role))
                                                 {
                                                     base.OnActionExecuting(context); // Do Action!!
                                                     return;

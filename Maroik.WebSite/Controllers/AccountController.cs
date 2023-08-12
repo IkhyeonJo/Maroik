@@ -40,7 +40,7 @@ namespace Maroik.WebSite.Controllers
 
             if (isAccountSessionExist) // 로그인 된 상태라면
             {
-                var loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)); // Get Session
+                Account loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)); // Get Session
                 if (loginedAccount.Role == Role.Admin) // 로그인한 사용자 권한이 Admin일 경우
                 {
                     return RedirectToAction("AdminIndex", "DashBoard");
@@ -79,12 +79,12 @@ namespace Maroik.WebSite.Controllers
                 return View();
             }
 
-            ModelState.Remove(nameof(loginInputViewModel.Password));
-            ModelState.Remove(nameof(loginInputViewModel.Nickname));
+            _ = ModelState.Remove(nameof(loginInputViewModel.Password));
+            _ = ModelState.Remove(nameof(loginInputViewModel.Nickname));
 
             if (ModelState.IsValid)
             {
-                var tempAccount = await accountRepository.GetAccountByEmailAsync(loginInputViewModel.Email);
+                Account tempAccount = await accountRepository.GetAccountByEmailAsync(loginInputViewModel.Email);
 
                 if (tempAccount == null) // no account exist
                 {
@@ -132,18 +132,9 @@ namespace Maroik.WebSite.Controllers
                     HttpContext.Session.Set("AccountSession", Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(tempAccount)));
 
                     #region DB Cache
-                    if (tempAccount.Role == Role.Admin) // 로그인 권한이 Admin인 경우
-                    {
-                        return RedirectToAction("AdminIndex", "DashBoard");
-                    }
-                    else if (tempAccount.Role == Role.User) // 로그인 권한이 User인 경우
-                    {
-                        return RedirectToAction("UserIndex", "DashBoard");
-                    }
-                    else // 로그인 권한은 Admin 또는 User만 있음 이 경우는 버그 발생한 것임
-                    {
-                        return null;
-                    }
+                    return tempAccount.Role == Role.Admin
+                        ? RedirectToAction("AdminIndex", "DashBoard")
+                        : tempAccount.Role == Role.User ? RedirectToAction("UserIndex", "DashBoard") : (IActionResult)null;
                     #endregion
                 }
                 else
@@ -189,7 +180,7 @@ namespace Maroik.WebSite.Controllers
 
             if (isAccountSessionExist) // 로그인 된 상태라면
             {
-                var loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)); // Get Session
+                Account loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)); // Get Session
                 if (loginedAccount.Role == Role.Admin) // 로그인한 사용자 권한이 Admin일 경우
                 {
                     return RedirectToAction("AdminIndex", "DashBoard");
@@ -223,7 +214,7 @@ namespace Maroik.WebSite.Controllers
                         return View();
                     }
 
-                    var account = await accountRepository.GetAccountByEmailAsync(loginInputViewModel.Email);
+                    Account account = await accountRepository.GetAccountByEmailAsync(loginInputViewModel.Email);
 
                     #region 새롭게 회원가입을 진행하는 경우
                     if (account == null) // 입력된 ID로 생성된 Record가 없다.
@@ -415,12 +406,12 @@ namespace Maroik.WebSite.Controllers
             }
             else // 이메일 재전송
             {
-                ModelState.Remove(nameof(loginInputViewModel.Password));
-                ModelState.Remove(nameof(loginInputViewModel.Nickname));
+                _ = ModelState.Remove(nameof(loginInputViewModel.Password));
+                _ = ModelState.Remove(nameof(loginInputViewModel.Nickname));
 
                 if (ModelState.IsValid) // 입력 값 검증
                 {
-                    var account = await accountRepository.GetAccountByEmailAsync(loginInputViewModel.Email);
+                    Account account = await accountRepository.GetAccountByEmailAsync(loginInputViewModel.Email);
 
                     #region 이메일 재전송 하는데 받은 Email로 DB 조회를 했는데 Record가 없다. (버그임)
                     if (account == null) // 입력된 ID로 생성된 Record 없다.
@@ -523,7 +514,7 @@ namespace Maroik.WebSite.Controllers
 
             if (isAccountSessionExist) // 로그인 된 상태라면
             {
-                var loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)); // Get Session
+                Account loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)); // Get Session
                 if (loginedAccount.Role == Role.Admin) // 로그인한 사용자 권한이 Admin일 경우
                 {
                     return RedirectToAction("AdminIndex", "DashBoard");
@@ -542,9 +533,9 @@ namespace Maroik.WebSite.Controllers
                 Account account = null;
 
                 #region 1.	입력된 token[암호화 됨]이랑 모든 계정에 저장된 토큰 해쉬화 후 비교해서 해당 계정 찾아낸다.
-                var rsaHelper = new RSA(RSAType.RSA2, Encoding.UTF8, RSA.privateKey, RSA.publicKey);
+                RSA rsaHelper = new(RSAType.RSA2, Encoding.UTF8, RSA.privateKey, RSA.publicKey);
 
-                foreach (var tempAccount in await accountRepository.GetAllAsync())
+                foreach (Account tempAccount in await accountRepository.GetAllAsync())
                 {
                     try
                     {
@@ -636,7 +627,7 @@ namespace Maroik.WebSite.Controllers
 
             if (isAccountSessionExist) // 로그인 된 상태라면
             {
-                var loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)); // Get Session
+                Account loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)); // Get Session
                 if (loginedAccount.Role == Role.Admin) // 로그인한 사용자 권한이 Admin일 경우
                 {
                     return RedirectToAction("AdminIndex", "DashBoard");
@@ -660,12 +651,12 @@ namespace Maroik.WebSite.Controllers
         [ValidateAntiForgeryToken] //To Prevent CSRF attack
         public async Task<IActionResult> ForgotPassword(LoginInputViewModel loginInputViewModel)
         {
-            ModelState.Remove(nameof(loginInputViewModel.Nickname));
-            ModelState.Remove(nameof(loginInputViewModel.Password));
+            _ = ModelState.Remove(nameof(loginInputViewModel.Nickname));
+            _ = ModelState.Remove(nameof(loginInputViewModel.Password));
 
             if (ModelState.IsValid)
             {
-                var account = await accountRepository.GetAccountByEmailAsync(loginInputViewModel.Email);
+                Account account = await accountRepository.GetAccountByEmailAsync(loginInputViewModel.Email);
 
                 if (account == null) // 입력 된 Email로 생성된 Record 없다.
                 {
@@ -741,7 +732,7 @@ namespace Maroik.WebSite.Controllers
 
             if (isAccountSessionExist) // 로그인 된 상태라면
             {
-                var loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)); // Get Session
+                Account loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)); // Get Session
                 if (loginedAccount.Role == Role.Admin) // 로그인한 사용자 권한이 Admin일 경우
                 {
                     return RedirectToAction("AdminIndex", "DashBoard");
@@ -760,9 +751,9 @@ namespace Maroik.WebSite.Controllers
                 Account account = null;
 
                 #region 1.	입력된 token[암호화 됨]이랑 모든 계정에 저장된 토큰 해쉬화 후 비교해서 해당 계정 찾아낸다.
-                var rsaHelper = new RSA(RSAType.RSA2, Encoding.UTF8, RSA.privateKey, RSA.publicKey);
+                RSA rsaHelper = new(RSAType.RSA2, Encoding.UTF8, RSA.privateKey, RSA.publicKey);
 
-                foreach (var tempAccount in await accountRepository.GetAllAsync())
+                foreach (Account tempAccount in await accountRepository.GetAllAsync())
                 {
                     try
                     {
@@ -818,18 +809,18 @@ namespace Maroik.WebSite.Controllers
         [ValidateAntiForgeryToken] //To Prevent CSRF attack
         public async Task<IActionResult> ResetPassword(LoginInputViewModel loginInputViewModel)
         {
-            ModelState.Remove(nameof(loginInputViewModel.Email));
-            ModelState.Remove(nameof(loginInputViewModel.Nickname));
-            ModelState.Remove(nameof(loginInputViewModel.Password));
+            _ = ModelState.Remove(nameof(loginInputViewModel.Email));
+            _ = ModelState.Remove(nameof(loginInputViewModel.Nickname));
+            _ = ModelState.Remove(nameof(loginInputViewModel.Password));
 
             if (ModelState.IsValid)
             {
                 Account account = null;
 
                 #region 1.	입력된 token[암호화 됨]이랑 모든 계정에 저장된 토큰 해쉬화 후 비교해서 해당 계정 찾아낸다.
-                var rsaHelper = new RSA(RSAType.RSA2, Encoding.UTF8, RSA.privateKey, RSA.publicKey);
+                RSA rsaHelper = new(RSAType.RSA2, Encoding.UTF8, RSA.privateKey, RSA.publicKey);
 
-                foreach (var tempAccount in await accountRepository.GetAllAsync())
+                foreach (Account tempAccount in await accountRepository.GetAllAsync())
                 {
                     try
                     {

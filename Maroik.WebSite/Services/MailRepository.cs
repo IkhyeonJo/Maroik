@@ -55,10 +55,7 @@ namespace Maroik.WebSite.Services
             {
                 using MailMessage mailMessage = new();
                 mailMessage.From = new MailAddress(mail.FromEmail, mail.FromFullName);
-                mail.ToMailIds.ForEach(x =>
-                {
-                    mailMessage.To.Add(x);
-                });
+                mail.ToMailIds.ForEach(mailMessage.To.Add);
                 mailMessage.Subject = mail.Subject;
                 mailMessage.Body = mail.Body;
                 mailMessage.IsBodyHtml = mail.IsBodyHTML;

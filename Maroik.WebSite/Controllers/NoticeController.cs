@@ -56,25 +56,25 @@ namespace Maroik.WebSite.Controllers
                     try
                     {
                         fixedIncomeInputViewModel.Amount = Math.Abs(fixedIncomeInputViewModel.Amount);
-                        HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+                        _ = HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
 
                         #region Validation of MainClass & SubClass Value
                         if (fixedIncomeInputViewModel.MainClass == "RegularIncome")
                         {
-                            if (!(fixedIncomeInputViewModel.SubClass == "LaborIncome" ||
-                                fixedIncomeInputViewModel.SubClass == "BusinessIncome" ||
-                                fixedIncomeInputViewModel.SubClass == "PensionIncome" ||
-                                fixedIncomeInputViewModel.SubClass == "FinancialIncome" ||
-                                fixedIncomeInputViewModel.SubClass == "RentalIncome" ||
-                                fixedIncomeInputViewModel.SubClass == "OtherIncome"))
+                            if (fixedIncomeInputViewModel.SubClass is not ("LaborIncome" or
+                                "BusinessIncome" or
+                                "PensionIncome" or
+                                "FinancialIncome" or
+                                "RentalIncome" or
+                                "OtherIncome"))
                             {
                                 return Json(new { result = false, error = localizer["Input is invalid"].Value });
                             }
                         }
                         else if (fixedIncomeInputViewModel.MainClass == "IrregularIncome")
                         {
-                            if (!(fixedIncomeInputViewModel.SubClass == "LaborIncome" ||
-                                fixedIncomeInputViewModel.SubClass == "OtherIncome"))
+                            if (fixedIncomeInputViewModel.SubClass is not ("LaborIncome" or
+                                "OtherIncome"))
                             {
                                 return Json(new { result = false, error = localizer["Input is invalid"].Value });
                             }
@@ -82,39 +82,39 @@ namespace Maroik.WebSite.Controllers
                         #endregion
 
                         #region Validate of DepositMonth
-                        if (!(fixedIncomeInputViewModel.DepositMonth >= 1 && fixedIncomeInputViewModel.DepositMonth <= 12))
+                        if (fixedIncomeInputViewModel.DepositMonth is not (>= 1 and <= 12))
                         {
                             return Json(new { result = false, error = localizer["Input is invalid"].Value });
                         }
                         #endregion
 
                         #region Validate of DepositDay
-                        if (fixedIncomeInputViewModel.DepositMonth == 1 ||
-                            fixedIncomeInputViewModel.DepositMonth == 3 ||
-                            fixedIncomeInputViewModel.DepositMonth == 5 ||
-                            fixedIncomeInputViewModel.DepositMonth == 7 ||
-                            fixedIncomeInputViewModel.DepositMonth == 8 ||
-                            fixedIncomeInputViewModel.DepositMonth == 10 ||
-                            fixedIncomeInputViewModel.DepositMonth == 12)
+                        if (fixedIncomeInputViewModel.DepositMonth is 1 or
+                            3 or
+                            5 or
+                            7 or
+                            8 or
+                            10 or
+                            12)
                         {
-                            if (!(fixedIncomeInputViewModel.DepositDay >= 1 && fixedIncomeInputViewModel.DepositDay <= 31))
+                            if (fixedIncomeInputViewModel.DepositDay is not (>= 1 and <= 31))
                             {
                                 return Json(new { result = false, error = localizer["Input is invalid"].Value });
                             }
                         }
                         else if (fixedIncomeInputViewModel.DepositMonth == 2)
                         {
-                            if (!(fixedIncomeInputViewModel.DepositDay >= 1 && fixedIncomeInputViewModel.DepositDay <= 29))
+                            if (fixedIncomeInputViewModel.DepositDay is not (>= 1 and <= 29))
                             {
                                 return Json(new { result = false, error = localizer["Input is invalid"].Value });
                             }
                         }
-                        else if (fixedIncomeInputViewModel.DepositMonth == 4 ||
-                                fixedIncomeInputViewModel.DepositMonth == 6 ||
-                                fixedIncomeInputViewModel.DepositMonth == 9 ||
-                                fixedIncomeInputViewModel.DepositMonth == 11)
+                        else if (fixedIncomeInputViewModel.DepositMonth is 4 or
+                                6 or
+                                9 or
+                                11)
                         {
-                            if (!(fixedIncomeInputViewModel.DepositDay >= 1 && fixedIncomeInputViewModel.DepositDay <= 30))
+                            if (fixedIncomeInputViewModel.DepositDay is not (>= 1 and <= 30))
                             {
                                 return Json(new { result = false, error = localizer["Input is invalid"].Value });
                             }
@@ -174,14 +174,14 @@ namespace Maroik.WebSite.Controllers
         {
             if (HttpContext.Request.Headers["X-Requested-With"] == "XMLHttpRequest") // ajax
             {
-                List<FixedIncomeOutputViewModel> fixedIncomeOutputViewModels = new List<FixedIncomeOutputViewModel>();
+                List<FixedIncomeOutputViewModel> fixedIncomeOutputViewModels = new();
 
                 #region FixedIncomes
-                HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+                _ = HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
 
-                DateTime currentDate = new DateTime(Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[0]), Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[1]), Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[2]));
+                DateTime currentDate = new(Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[0]), Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[1]), Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[2]));
 
-                foreach (var item in await fixedIncomeRepository.GetFixedIncomesAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email))
+                foreach (FixedIncome item in await fixedIncomeRepository.GetFixedIncomesAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email))
                 {
                     if (string.IsNullOrEmpty(wholeSearch))
                     {
@@ -271,7 +271,7 @@ namespace Maroik.WebSite.Controllers
                 }
                 #endregion
 
-                var result = fixedIncomeOutputViewModels.OrderByDescending(a => a.Expired).ThenByDescending(m => m.Noticed).ThenByDescending(a => a.Created).ThenByDescending(a => a.Updated).AsQueryable();
+                IQueryable<FixedIncomeOutputViewModel> result = fixedIncomeOutputViewModels.OrderByDescending(a => a.Expired).ThenByDescending(m => m.Noticed).ThenByDescending(a => a.Created).ThenByDescending(a => a.Updated).AsQueryable();
                 return PartialView("_FixedIncomeGrid", result);
             }
             return View();
@@ -283,9 +283,9 @@ namespace Maroik.WebSite.Controllers
         {
             try
             {
-                HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+                _ = HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
 
-                var tempFixedIncomes = await fixedIncomeRepository.GetFixedIncomesAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+                List<FixedIncome> tempFixedIncomes = await fixedIncomeRepository.GetFixedIncomesAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
 
                 if (tempFixedIncomes == null)
                 {
@@ -293,7 +293,7 @@ namespace Maroik.WebSite.Controllers
                 }
                 else
                 {
-                    var tempFixedIncome = tempFixedIncomes.Where(a => a.Id == id).FirstOrDefault();
+                    FixedIncome tempFixedIncome = tempFixedIncomes.Where(a => a.Id == id).FirstOrDefault();
 
                     if (tempFixedIncome == null)
                     {
@@ -301,7 +301,7 @@ namespace Maroik.WebSite.Controllers
                     }
                     else
                     {
-                        var tempFixedIncomeOutputModel = new FixedIncomeOutputViewModel()
+                        FixedIncomeOutputViewModel tempFixedIncomeOutputModel = new()
                         {
                             Id = tempFixedIncome.Id,
                             MainClass = tempFixedIncome.MainClass,
@@ -339,25 +339,25 @@ namespace Maroik.WebSite.Controllers
                     try
                     {
                         fixedIncomeInputViewModel.Amount = Math.Abs(fixedIncomeInputViewModel.Amount);
-                        HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+                        _ = HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
 
                         #region Validation of MainClass & SubClass Value
                         if (fixedIncomeInputViewModel.MainClass == "RegularIncome")
                         {
-                            if (!(fixedIncomeInputViewModel.SubClass == "LaborIncome" ||
-                                fixedIncomeInputViewModel.SubClass == "BusinessIncome" ||
-                                fixedIncomeInputViewModel.SubClass == "PensionIncome" ||
-                                fixedIncomeInputViewModel.SubClass == "FinancialIncome" ||
-                                fixedIncomeInputViewModel.SubClass == "RentalIncome" ||
-                                fixedIncomeInputViewModel.SubClass == "OtherIncome"))
+                            if (fixedIncomeInputViewModel.SubClass is not ("LaborIncome" or
+                                "BusinessIncome" or
+                                "PensionIncome" or
+                                "FinancialIncome" or
+                                "RentalIncome" or
+                                "OtherIncome"))
                             {
                                 return Json(new { result = false, error = localizer["Input is invalid"].Value });
                             }
                         }
                         else if (fixedIncomeInputViewModel.MainClass == "IrregularIncome")
                         {
-                            if (!(fixedIncomeInputViewModel.SubClass == "LaborIncome" ||
-                                fixedIncomeInputViewModel.SubClass == "OtherIncome"))
+                            if (fixedIncomeInputViewModel.SubClass is not ("LaborIncome" or
+                                "OtherIncome"))
                             {
                                 return Json(new { result = false, error = localizer["Input is invalid"].Value });
                             }
@@ -365,39 +365,39 @@ namespace Maroik.WebSite.Controllers
                         #endregion
 
                         #region Validate of DepositMonth
-                        if (!(fixedIncomeInputViewModel.DepositMonth >= 1 && fixedIncomeInputViewModel.DepositMonth <= 12))
+                        if (fixedIncomeInputViewModel.DepositMonth is not (>= 1 and <= 12))
                         {
                             return Json(new { result = false, error = localizer["Input is invalid"].Value });
                         }
                         #endregion
 
                         #region Validate of DepositDay
-                        if (fixedIncomeInputViewModel.DepositMonth == 1 ||
-                            fixedIncomeInputViewModel.DepositMonth == 3 ||
-                            fixedIncomeInputViewModel.DepositMonth == 5 ||
-                            fixedIncomeInputViewModel.DepositMonth == 7 ||
-                            fixedIncomeInputViewModel.DepositMonth == 8 ||
-                            fixedIncomeInputViewModel.DepositMonth == 10 ||
-                            fixedIncomeInputViewModel.DepositMonth == 12)
+                        if (fixedIncomeInputViewModel.DepositMonth is 1 or
+                            3 or
+                            5 or
+                            7 or
+                            8 or
+                            10 or
+                            12)
                         {
-                            if (!(fixedIncomeInputViewModel.DepositDay >= 1 && fixedIncomeInputViewModel.DepositDay <= 31))
+                            if (fixedIncomeInputViewModel.DepositDay is not (>= 1 and <= 31))
                             {
                                 return Json(new { result = false, error = localizer["Input is invalid"].Value });
                             }
                         }
                         else if (fixedIncomeInputViewModel.DepositMonth == 2)
                         {
-                            if (!(fixedIncomeInputViewModel.DepositDay >= 1 && fixedIncomeInputViewModel.DepositDay <= 29))
+                            if (fixedIncomeInputViewModel.DepositDay is not (>= 1 and <= 29))
                             {
                                 return Json(new { result = false, error = localizer["Input is invalid"].Value });
                             }
                         }
-                        else if (fixedIncomeInputViewModel.DepositMonth == 4 ||
-                                fixedIncomeInputViewModel.DepositMonth == 6 ||
-                                fixedIncomeInputViewModel.DepositMonth == 9 ||
-                                fixedIncomeInputViewModel.DepositMonth == 11)
+                        else if (fixedIncomeInputViewModel.DepositMonth is 4 or
+                                6 or
+                                9 or
+                                11)
                         {
-                            if (!(fixedIncomeInputViewModel.DepositDay >= 1 && fixedIncomeInputViewModel.DepositDay <= 30))
+                            if (fixedIncomeInputViewModel.DepositDay is not (>= 1 and <= 30))
                             {
                                 return Json(new { result = false, error = localizer["Input is invalid"].Value });
                             }
@@ -412,7 +412,7 @@ namespace Maroik.WebSite.Controllers
                         #endregion
 
                         #region 고정 수입 업데이트
-                        var tempFixedIncomes = await fixedIncomeRepository.GetFixedIncomesAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+                        List<FixedIncome> tempFixedIncomes = await fixedIncomeRepository.GetFixedIncomesAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
 
                         if (tempFixedIncomes == null)
                         {
@@ -420,7 +420,7 @@ namespace Maroik.WebSite.Controllers
                         }
                         else
                         {
-                            var tempFixedIncome = tempFixedIncomes.Where(a => a.Id == fixedIncomeInputViewModel.Id).FirstOrDefault();
+                            FixedIncome tempFixedIncome = tempFixedIncomes.Where(a => a.Id == fixedIncomeInputViewModel.Id).FirstOrDefault();
 
                             if (tempFixedIncome == null)
                             {
@@ -474,9 +474,9 @@ namespace Maroik.WebSite.Controllers
         {
             try
             {
-                HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+                _ = HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
 
-                var tempFixedIncomes = await fixedIncomeRepository.GetFixedIncomesAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+                List<FixedIncome> tempFixedIncomes = await fixedIncomeRepository.GetFixedIncomesAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
 
                 if (tempFixedIncomes == null)
                 {
@@ -484,7 +484,7 @@ namespace Maroik.WebSite.Controllers
                 }
                 else
                 {
-                    var tempFixedIncome = tempFixedIncomes.Where(a => a.Id == fixedIncomeInputViewModel.Id).FirstOrDefault();
+                    FixedIncome tempFixedIncome = tempFixedIncomes.Where(a => a.Id == fixedIncomeInputViewModel.Id).FirstOrDefault();
 
                     if (tempFixedIncome == null)
                     {
@@ -516,15 +516,15 @@ namespace Maroik.WebSite.Controllers
             // query data from database
             await Task.Yield();
 
-            List<FixedIncomeOutputViewModel> fixedIncomeOutputViewModels = new List<FixedIncomeOutputViewModel>();
+            List<FixedIncomeOutputViewModel> fixedIncomeOutputViewModels = new();
 
             #region FixedIncomes
 
-            HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+            _ = HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
 
-            DateTime currentDate = new DateTime(Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[0]), Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[1]), Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[2]));
+            DateTime currentDate = new(Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[0]), Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[1]), Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[2]));
 
-            foreach (var item in await fixedIncomeRepository.GetFixedIncomesAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email))
+            foreach (FixedIncome item in await fixedIncomeRepository.GetFixedIncomesAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email))
             {
                 bool noticedResult = false;
 
@@ -562,11 +562,11 @@ namespace Maroik.WebSite.Controllers
             fixedIncomeOutputViewModels = fixedIncomeOutputViewModels.OrderByDescending(a => a.Expired).ThenByDescending(m => m.Noticed).ThenByDescending(a => a.Created).ThenByDescending(a => a.Updated).ToList();
             #endregion
 
-            var stream = new MemoryStream();
+            MemoryStream stream = new();
 
-            using (var package = new ExcelPackage(stream))
+            using (ExcelPackage package = new(stream))
             {
-                var workSheetMenuOutputViewModels = package.Workbook.Worksheets.Add("Sheet1");
+                ExcelWorksheet workSheetMenuOutputViewModels = package.Workbook.Worksheets.Add("Sheet1");
 
                 workSheetMenuOutputViewModels.Row(1).Height = 20;
                 workSheetMenuOutputViewModels.Row(1).Style.HorizontalAlignment = OfficeOpenXml.Style.ExcelHorizontalAlignment.Center;
@@ -586,7 +586,7 @@ namespace Maroik.WebSite.Controllers
                 workSheetMenuOutputViewModels.Cells[1, 13].Value = localizer[nameof(FixedIncomeOutputViewModel.Expired).ToString()].Value;
 
                 int recordIndex = 2;
-                foreach (var item in fixedIncomeOutputViewModels.OrderByDescending(a => a.Expired).ThenByDescending(a => a.Noticed))
+                foreach (FixedIncomeOutputViewModel item in fixedIncomeOutputViewModels.OrderByDescending(a => a.Expired).ThenByDescending(a => a.Noticed))
                 {
                     workSheetMenuOutputViewModels.Cells[recordIndex, 1].Value = localizer[item?.MainClass?.ToString() ?? ""].Value;
                     workSheetMenuOutputViewModels.Cells[recordIndex, 2].Value = localizer[item?.SubClass?.ToString() ?? ""].Value;
@@ -607,7 +607,7 @@ namespace Maroik.WebSite.Controllers
                 package.Save();
             }
             stream.Position = 0;
-            string excelName = $"{fileName}-{TimeZoneInfo.ConvertTimeBySystemTimeZoneId(DateTime.UtcNow, OSTimeZone.DestinationTimeZoneId).ToString("yyyy-MM-dd-HH-mm-ss-fff")}.xlsx";
+            string excelName = $"{fileName}-{TimeZoneInfo.ConvertTimeBySystemTimeZoneId(DateTime.UtcNow, OSTimeZone.DestinationTimeZoneId):yyyy-MM-dd-HH-mm-ss-fff}.xlsx";
 
             return File(stream, "application/octet-stream", excelName);
         }
@@ -628,12 +628,12 @@ namespace Maroik.WebSite.Controllers
                 if (ModelState.IsValid)
                 {
                     fixedExpenditureInputViewModel.Amount = Math.Abs(fixedExpenditureInputViewModel.Amount);
-                    HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+                    _ = HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
 
                     #region 대분류 = '정기저축'
                     if (fixedExpenditureInputViewModel.MainClass == "RegularSavings")
                     {
-                        if (fixedExpenditureInputViewModel.SubClass == "Deposit" || fixedExpenditureInputViewModel.SubClass == "Investment")
+                        if (fixedExpenditureInputViewModel.SubClass is "Deposit" or "Investment")
                         {
                             try
                             {
@@ -681,7 +681,7 @@ namespace Maroik.WebSite.Controllers
                     #region 대분류 = '비소비지출'
                     else if (fixedExpenditureInputViewModel.MainClass == "NonConsumerSpending")
                     {
-                        if (fixedExpenditureInputViewModel.SubClass == "PublicPension" || fixedExpenditureInputViewModel.SubClass == "DebtRepayment")
+                        if (fixedExpenditureInputViewModel.SubClass is "PublicPension" or "DebtRepayment")
                         {
                             try
                             {
@@ -719,10 +719,10 @@ namespace Maroik.WebSite.Controllers
                                 return Json(new { result = false, error = e.ToString() });
                             }
                         }
-                        else if (fixedExpenditureInputViewModel.SubClass == "Tax" ||
-                            fixedExpenditureInputViewModel.SubClass == "SocialInsurance" ||
-                            fixedExpenditureInputViewModel.SubClass == "InterHouseholdTranserExpenses" ||
-                            fixedExpenditureInputViewModel.SubClass == "NonProfitOrganizationTransfer")
+                        else if (fixedExpenditureInputViewModel.SubClass is "Tax" or
+                            "SocialInsurance" or
+                            "InterHouseholdTranserExpenses" or
+                            "NonProfitOrganizationTransfer")
                         {
                             try
                             {
@@ -765,18 +765,18 @@ namespace Maroik.WebSite.Controllers
                     #region 대분류 = '소비지출'
                     else if (fixedExpenditureInputViewModel.MainClass == "ConsumerSpending")
                     {
-                        if (fixedExpenditureInputViewModel.SubClass == "MealOrEatOutExpenses" ||
-                            fixedExpenditureInputViewModel.SubClass == "HousingOrSuppliesCost" ||
-                            fixedExpenditureInputViewModel.SubClass == "EducationExpenses" ||
-                            fixedExpenditureInputViewModel.SubClass == "MedicalExpenses" ||
-                            fixedExpenditureInputViewModel.SubClass == "TransportationCost" ||
-                            fixedExpenditureInputViewModel.SubClass == "CommunicationCost" ||
-                            fixedExpenditureInputViewModel.SubClass == "LeisureOrCulture" ||
-                            fixedExpenditureInputViewModel.SubClass == "ClothingOrShoes" ||
-                            fixedExpenditureInputViewModel.SubClass == "PinMoney" ||
-                            fixedExpenditureInputViewModel.SubClass == "ProtectionTypeInsurance" ||
-                            fixedExpenditureInputViewModel.SubClass == "OtherExpenses" ||
-                            fixedExpenditureInputViewModel.SubClass == "UnknownExpenditure")
+                        if (fixedExpenditureInputViewModel.SubClass is "MealOrEatOutExpenses" or
+                            "HousingOrSuppliesCost" or
+                            "EducationExpenses" or
+                            "MedicalExpenses" or
+                            "TransportationCost" or
+                            "CommunicationCost" or
+                            "LeisureOrCulture" or
+                            "ClothingOrShoes" or
+                            "PinMoney" or
+                            "ProtectionTypeInsurance" or
+                            "OtherExpenses" or
+                            "UnknownExpenditure")
                         {
                             try
                             {
@@ -841,14 +841,14 @@ namespace Maroik.WebSite.Controllers
         {
             if (HttpContext.Request.Headers["X-Requested-With"] == "XMLHttpRequest") // ajax
             {
-                List<FixedExpenditureOutputViewModel> fixedExpenditureOutputViewModels = new List<FixedExpenditureOutputViewModel>();
+                List<FixedExpenditureOutputViewModel> fixedExpenditureOutputViewModels = new();
 
                 #region FixedExpenditures
-                HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+                _ = HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
 
-                DateTime currentDate = new DateTime(Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[0]), Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[1]), Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[2]));
+                DateTime currentDate = new(Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[0]), Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[1]), Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[2]));
 
-                foreach (var item in await fixedExpenditureRepository.GetFixedExpendituresAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email))
+                foreach (FixedExpenditure item in await fixedExpenditureRepository.GetFixedExpendituresAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email))
                 {
                     if (string.IsNullOrEmpty(wholeSearch))
                     {
@@ -941,7 +941,7 @@ namespace Maroik.WebSite.Controllers
                 }
                 #endregion
 
-                var result = fixedExpenditureOutputViewModels.OrderByDescending(a => a.Expired).ThenByDescending(m => m.Noticed).ThenByDescending(a => a.Created).ThenByDescending(a => a.Updated).AsQueryable();
+                IQueryable<FixedExpenditureOutputViewModel> result = fixedExpenditureOutputViewModels.OrderByDescending(a => a.Expired).ThenByDescending(m => m.Noticed).ThenByDescending(a => a.Created).ThenByDescending(a => a.Updated).AsQueryable();
                 return PartialView("_FixedExpenditureGrid", result);
             }
             return View();
@@ -953,9 +953,9 @@ namespace Maroik.WebSite.Controllers
         {
             try
             {
-                HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+                _ = HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
 
-                var tempFixedExpenditures = await fixedExpenditureRepository.GetFixedExpendituresAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+                List<FixedExpenditure> tempFixedExpenditures = await fixedExpenditureRepository.GetFixedExpendituresAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
 
                 if (tempFixedExpenditures == null)
                 {
@@ -963,7 +963,7 @@ namespace Maroik.WebSite.Controllers
                 }
                 else
                 {
-                    var tempFixedExpenditure = tempFixedExpenditures.Where(a => a.Id == id).FirstOrDefault();
+                    FixedExpenditure tempFixedExpenditure = tempFixedExpenditures.Where(a => a.Id == id).FirstOrDefault();
 
                     if (tempFixedExpenditure == null)
                     {
@@ -971,7 +971,7 @@ namespace Maroik.WebSite.Controllers
                     }
                     else
                     {
-                        var tempFixedIncomeOutputModel = new FixedExpenditureOutputViewModel()
+                        FixedExpenditureOutputViewModel tempFixedIncomeOutputModel = new()
                         {
                             Id = tempFixedExpenditure.Id,
                             MainClass = tempFixedExpenditure.MainClass,
@@ -1008,12 +1008,12 @@ namespace Maroik.WebSite.Controllers
                 if (ModelState.IsValid)
                 {
                     fixedExpenditureInputViewModel.Amount = Math.Abs(fixedExpenditureInputViewModel.Amount);
-                    HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+                    _ = HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
 
                     #region 대분류 = '정기저축'
                     if (fixedExpenditureInputViewModel.MainClass == "RegularSavings")
                     {
-                        if (fixedExpenditureInputViewModel.SubClass == "Deposit" || fixedExpenditureInputViewModel.SubClass == "Investment")
+                        if (fixedExpenditureInputViewModel.SubClass is "Deposit" or "Investment")
                         {
                             try
                             {
@@ -1022,8 +1022,8 @@ namespace Maroik.WebSite.Controllers
                                     return Json(new { result = false, error = localizer["The PaymentMethod and MyDepositAsset value cannot be the same."].Value });
                                 }
 
-                                var tempFixedExpenditures = await fixedExpenditureRepository.GetFixedExpendituresAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
-                                var tempFixedExpenditure = tempFixedExpenditures.Where(a => a.Id == fixedExpenditureInputViewModel.Id).FirstOrDefault();
+                                List<FixedExpenditure> tempFixedExpenditures = await fixedExpenditureRepository.GetFixedExpendituresAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+                                FixedExpenditure tempFixedExpenditure = tempFixedExpenditures.Where(a => a.Id == fixedExpenditureInputViewModel.Id).FirstOrDefault();
 
                                 if (tempFixedExpenditure == null)
                                 {
@@ -1064,7 +1064,7 @@ namespace Maroik.WebSite.Controllers
                     #region 대분류 = '비소비지출'
                     else if (fixedExpenditureInputViewModel.MainClass == "NonConsumerSpending")
                     {
-                        if (fixedExpenditureInputViewModel.SubClass == "PublicPension" || fixedExpenditureInputViewModel.SubClass == "DebtRepayment")
+                        if (fixedExpenditureInputViewModel.SubClass is "PublicPension" or "DebtRepayment")
                         {
                             try
                             {
@@ -1073,8 +1073,8 @@ namespace Maroik.WebSite.Controllers
                                     return Json(new { result = false, error = localizer["The PaymentMethod and MyDepositAsset value cannot be the same."].Value });
                                 }
 
-                                var tempFixedExpenditures = await fixedExpenditureRepository.GetFixedExpendituresAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
-                                var tempFixedExpenditure = tempFixedExpenditures.Where(a => a.Id == fixedExpenditureInputViewModel.Id).FirstOrDefault();
+                                List<FixedExpenditure> tempFixedExpenditures = await fixedExpenditureRepository.GetFixedExpendituresAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+                                FixedExpenditure tempFixedExpenditure = tempFixedExpenditures.Where(a => a.Id == fixedExpenditureInputViewModel.Id).FirstOrDefault();
 
                                 if (tempFixedExpenditure == null)
                                 {
@@ -1105,15 +1105,15 @@ namespace Maroik.WebSite.Controllers
                                 return Json(new { result = false, error = e.ToString() });
                             }
                         }
-                        else if (fixedExpenditureInputViewModel.SubClass == "Tax" ||
-                            fixedExpenditureInputViewModel.SubClass == "SocialInsurance" ||
-                            fixedExpenditureInputViewModel.SubClass == "InterHouseholdTranserExpenses" ||
-                            fixedExpenditureInputViewModel.SubClass == "NonProfitOrganizationTransfer")
+                        else if (fixedExpenditureInputViewModel.SubClass is "Tax" or
+                            "SocialInsurance" or
+                            "InterHouseholdTranserExpenses" or
+                            "NonProfitOrganizationTransfer")
                         {
                             try
                             {
-                                var tempFixedExpenditures = await fixedExpenditureRepository.GetFixedExpendituresAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
-                                var tempFixedExpenditure = tempFixedExpenditures.Where(a => a.Id == fixedExpenditureInputViewModel.Id).FirstOrDefault();
+                                List<FixedExpenditure> tempFixedExpenditures = await fixedExpenditureRepository.GetFixedExpendituresAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+                                FixedExpenditure tempFixedExpenditure = tempFixedExpenditures.Where(a => a.Id == fixedExpenditureInputViewModel.Id).FirstOrDefault();
 
                                 if (tempFixedExpenditure == null)
                                 {
@@ -1154,23 +1154,23 @@ namespace Maroik.WebSite.Controllers
                     #region 대분류 = '소비지출'
                     else if (fixedExpenditureInputViewModel.MainClass == "ConsumerSpending")
                     {
-                        if (fixedExpenditureInputViewModel.SubClass == "MealOrEatOutExpenses" ||
-                            fixedExpenditureInputViewModel.SubClass == "HousingOrSuppliesCost" ||
-                            fixedExpenditureInputViewModel.SubClass == "EducationExpenses" ||
-                            fixedExpenditureInputViewModel.SubClass == "MedicalExpenses" ||
-                            fixedExpenditureInputViewModel.SubClass == "TransportationCost" ||
-                            fixedExpenditureInputViewModel.SubClass == "CommunicationCost" ||
-                            fixedExpenditureInputViewModel.SubClass == "LeisureOrCulture" ||
-                            fixedExpenditureInputViewModel.SubClass == "ClothingOrShoes" ||
-                            fixedExpenditureInputViewModel.SubClass == "PinMoney" ||
-                            fixedExpenditureInputViewModel.SubClass == "ProtectionTypeInsurance" ||
-                            fixedExpenditureInputViewModel.SubClass == "OtherExpenses" ||
-                            fixedExpenditureInputViewModel.SubClass == "UnknownExpenditure")
+                        if (fixedExpenditureInputViewModel.SubClass is "MealOrEatOutExpenses" or
+                            "HousingOrSuppliesCost" or
+                            "EducationExpenses" or
+                            "MedicalExpenses" or
+                            "TransportationCost" or
+                            "CommunicationCost" or
+                            "LeisureOrCulture" or
+                            "ClothingOrShoes" or
+                            "PinMoney" or
+                            "ProtectionTypeInsurance" or
+                            "OtherExpenses" or
+                            "UnknownExpenditure")
                         {
                             try
                             {
-                                var tempFixedExpenditures = await fixedExpenditureRepository.GetFixedExpendituresAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
-                                var tempFixedExpenditure = tempFixedExpenditures.Where(a => a.Id == fixedExpenditureInputViewModel.Id).FirstOrDefault();
+                                List<FixedExpenditure> tempFixedExpenditures = await fixedExpenditureRepository.GetFixedExpendituresAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+                                FixedExpenditure tempFixedExpenditure = tempFixedExpenditures.Where(a => a.Id == fixedExpenditureInputViewModel.Id).FirstOrDefault();
 
                                 if (tempFixedExpenditure == null)
                                 {
@@ -1235,9 +1235,9 @@ namespace Maroik.WebSite.Controllers
         {
             try
             {
-                HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+                _ = HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
 
-                var tempFixedExpenditures = await fixedExpenditureRepository.GetFixedExpendituresAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+                List<FixedExpenditure> tempFixedExpenditures = await fixedExpenditureRepository.GetFixedExpendituresAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
 
                 if (tempFixedExpenditures == null)
                 {
@@ -1245,7 +1245,7 @@ namespace Maroik.WebSite.Controllers
                 }
                 else
                 {
-                    var tempFixedExpenditure = tempFixedExpenditures.Where(a => a.Id == fixedExpenditureInputViewModel.Id).FirstOrDefault();
+                    FixedExpenditure tempFixedExpenditure = tempFixedExpenditures.Where(a => a.Id == fixedExpenditureInputViewModel.Id).FirstOrDefault();
                     if (tempFixedExpenditure == null)
                     {
                         return Json(new { result = false, error = localizer["Input is invalid"].Value });
@@ -1273,15 +1273,15 @@ namespace Maroik.WebSite.Controllers
             // query data from database
             await Task.Yield();
 
-            List<FixedExpenditureOutputViewModel> fixedExpenditureOutputViewModels = new List<FixedExpenditureOutputViewModel>();
+            List<FixedExpenditureOutputViewModel> fixedExpenditureOutputViewModels = new();
 
             #region FixedExpenditures
 
-            HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+            _ = HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
 
-            DateTime currentDate = new DateTime(Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[0]), Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[1]), Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[2]));
+            DateTime currentDate = new(Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[0]), Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[1]), Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[2]));
 
-            foreach (var item in await fixedExpenditureRepository.GetFixedExpendituresAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email))
+            foreach (FixedExpenditure item in await fixedExpenditureRepository.GetFixedExpendituresAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email))
             {
                 bool noticedResult = false;
 
@@ -1320,11 +1320,11 @@ namespace Maroik.WebSite.Controllers
             fixedExpenditureOutputViewModels = fixedExpenditureOutputViewModels.OrderByDescending(a => a.Expired).ThenByDescending(m => m.Noticed).ThenByDescending(a => a.Created).ThenByDescending(a => a.Updated).ToList();
             #endregion
 
-            var stream = new MemoryStream();
+            MemoryStream stream = new();
 
-            using (var package = new ExcelPackage(stream))
+            using (ExcelPackage package = new(stream))
             {
-                var workSheetMenuOutputViewModels = package.Workbook.Worksheets.Add("Sheet1");
+                ExcelWorksheet workSheetMenuOutputViewModels = package.Workbook.Worksheets.Add("Sheet1");
 
                 workSheetMenuOutputViewModels.Row(1).Height = 20;
                 workSheetMenuOutputViewModels.Row(1).Style.HorizontalAlignment = OfficeOpenXml.Style.ExcelHorizontalAlignment.Center;
@@ -1345,7 +1345,7 @@ namespace Maroik.WebSite.Controllers
                 workSheetMenuOutputViewModels.Cells[1, 14].Value = localizer[nameof(FixedExpenditureOutputViewModel.Expired).ToString()].Value;
 
                 int recordIndex = 2;
-                foreach (var item in fixedExpenditureOutputViewModels.OrderByDescending(a => a.Expired).ThenByDescending(a => a.Noticed))
+                foreach (FixedExpenditureOutputViewModel item in fixedExpenditureOutputViewModels.OrderByDescending(a => a.Expired).ThenByDescending(a => a.Noticed))
                 {
                     workSheetMenuOutputViewModels.Cells[recordIndex, 1].Value = localizer[item?.MainClass?.ToString() ?? ""].Value;
                     workSheetMenuOutputViewModels.Cells[recordIndex, 2].Value = localizer[item?.SubClass?.ToString() ?? ""].Value;
@@ -1367,7 +1367,7 @@ namespace Maroik.WebSite.Controllers
                 package.Save();
             }
             stream.Position = 0;
-            string excelName = $"{fileName}-{TimeZoneInfo.ConvertTimeBySystemTimeZoneId(DateTime.UtcNow, OSTimeZone.DestinationTimeZoneId).ToString("yyyy-MM-dd-HH-mm-ss-fff")}.xlsx";
+            string excelName = $"{fileName}-{TimeZoneInfo.ConvertTimeBySystemTimeZoneId(DateTime.UtcNow, OSTimeZone.DestinationTimeZoneId):yyyy-MM-dd-HH-mm-ss-fff}.xlsx";
 
             return File(stream, "application/octet-stream", excelName);
         }

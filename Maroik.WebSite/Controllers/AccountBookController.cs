@@ -48,7 +48,7 @@ namespace Maroik.WebSite.Controllers
             {
                 if (ModelState.IsValid)
                 {
-                    HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+                    _ = HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
 
                     if (await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, assetInputViewModel.ProductName) != null)
                     {
@@ -58,15 +58,15 @@ namespace Maroik.WebSite.Controllers
                     try
                     {
                         #region Validation of item Value
-                        if (!(assetInputViewModel.Item == "FreeDepositAndWithdrawal" ||
-                            assetInputViewModel.Item == "TrustAsset" ||
-                            assetInputViewModel.Item == "CashAsset" ||
-                            assetInputViewModel.Item == "SavingsAsset" ||
-                            assetInputViewModel.Item == "InvestmentAsset" ||
-                            assetInputViewModel.Item == "RealEstate" ||
-                            assetInputViewModel.Item == "Movables" ||
-                            assetInputViewModel.Item == "OtherPhysicalAsset" ||
-                            assetInputViewModel.Item == "InsuranceAsset"))
+                        if (assetInputViewModel.Item is not ("FreeDepositAndWithdrawal" or
+                            "TrustAsset" or
+                            "CashAsset" or
+                            "SavingsAsset" or
+                            "InvestmentAsset" or
+                            "RealEstate" or
+                            "Movables" or
+                            "OtherPhysicalAsset" or
+                            "InsuranceAsset"))
                         {
                             return Json(new { result = false, error = localizer["Input is invalid"].Value });
                         }
@@ -113,12 +113,12 @@ namespace Maroik.WebSite.Controllers
         {
             if (HttpContext.Request.Headers["X-Requested-With"] == "XMLHttpRequest") // ajax
             {
-                List<AssetOutputViewModel> assetOutputViewModels = new List<AssetOutputViewModel>();
+                List<AssetOutputViewModel> assetOutputViewModels = new();
 
                 #region Assets
-                HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+                _ = HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
 
-                foreach (var item in await assetRepository.GetAssetsAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email))
+                foreach (Asset item in await assetRepository.GetAssetsAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email))
                 {
                     if (string.IsNullOrEmpty(wholeSearch))
                     {
@@ -161,7 +161,7 @@ namespace Maroik.WebSite.Controllers
                 }
                 #endregion
 
-                var result = assetOutputViewModels.OrderBy(m => m.ProductName).AsQueryable();
+                IQueryable<AssetOutputViewModel> result = assetOutputViewModels.OrderBy(m => m.ProductName).AsQueryable();
                 return PartialView("_AssetGrid", result);
             }
             return View();
@@ -173,18 +173,13 @@ namespace Maroik.WebSite.Controllers
         {
             try
             {
-                HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+                _ = HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
 
-                var tempAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, productName);
+                Asset tempAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, productName);
 
-                if (tempAsset == null)
-                {
-                    return Json(new { result = false, error = localizer["Fail to find the asset by given product name"].Value });
-                }
-                else
-                {
-                    return Json(new { result = true, asset = tempAsset });
-                }
+                return tempAsset == null
+                    ? Json(new { result = false, error = localizer["Fail to find the asset by given product name"].Value })
+                    : (IActionResult)Json(new { result = true, asset = tempAsset });
             }
             catch (Exception e)
             {
@@ -201,30 +196,30 @@ namespace Maroik.WebSite.Controllers
         {
             try
             {
-                ModelState.Remove(nameof(assetInputViewModel.MonetaryUnit));
+                _ = ModelState.Remove(nameof(assetInputViewModel.MonetaryUnit));
 
                 if (ModelState.IsValid)
                 {
                     try
                     {
                         #region Validation of item Value
-                        if (!(assetInputViewModel.Item == "FreeDepositAndWithdrawal" ||
-                            assetInputViewModel.Item == "TrustAsset" ||
-                            assetInputViewModel.Item == "CashAsset" ||
-                            assetInputViewModel.Item == "SavingsAsset" ||
-                            assetInputViewModel.Item == "InvestmentAsset" ||
-                            assetInputViewModel.Item == "RealEstate" ||
-                            assetInputViewModel.Item == "Movables" ||
-                            assetInputViewModel.Item == "OtherPhysicalAsset" ||
-                            assetInputViewModel.Item == "InsuranceAsset"))
+                        if (assetInputViewModel.Item is not ("FreeDepositAndWithdrawal" or
+                            "TrustAsset" or
+                            "CashAsset" or
+                            "SavingsAsset" or
+                            "InvestmentAsset" or
+                            "RealEstate" or
+                            "Movables" or
+                            "OtherPhysicalAsset" or
+                            "InsuranceAsset"))
                         {
                             return Json(new { result = false, error = localizer["Input is invalid"].Value });
                         }
                         #endregion
 
-                        HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+                        _ = HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
 
-                        var tempAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, assetInputViewModel.ProductName);
+                        Asset tempAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, assetInputViewModel.ProductName);
 
                         if (tempAsset == null)
                         {
@@ -268,9 +263,9 @@ namespace Maroik.WebSite.Controllers
         {
             try
             {
-                HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+                _ = HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
 
-                var tempAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, assetInputViewModel.ProductName);
+                Asset tempAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, assetInputViewModel.ProductName);
 
                 if (tempAsset == null)
                 {
@@ -299,13 +294,13 @@ namespace Maroik.WebSite.Controllers
             // query data from database
             await Task.Yield();
 
-            List<AssetOutputViewModel> assetOutputViewModels = new List<AssetOutputViewModel>();
+            List<AssetOutputViewModel> assetOutputViewModels = new();
 
             #region Assets
 
-            HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+            _ = HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
 
-            foreach (var item in await assetRepository.GetAssetsAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email))
+            foreach (Asset item in await assetRepository.GetAssetsAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email))
             {
                 assetOutputViewModels.Add(new AssetOutputViewModel()
                 {
@@ -324,11 +319,11 @@ namespace Maroik.WebSite.Controllers
 
             #endregion
 
-            var stream = new MemoryStream();
+            MemoryStream stream = new();
 
-            using (var package = new ExcelPackage(stream))
+            using (ExcelPackage package = new(stream))
             {
-                var workSheetMenuOutputViewModels = package.Workbook.Worksheets.Add("Sheet1");
+                ExcelWorksheet workSheetMenuOutputViewModels = package.Workbook.Worksheets.Add("Sheet1");
 
                 workSheetMenuOutputViewModels.Row(1).Height = 20;
                 workSheetMenuOutputViewModels.Row(1).Style.HorizontalAlignment = OfficeOpenXml.Style.ExcelHorizontalAlignment.Center;
@@ -343,7 +338,7 @@ namespace Maroik.WebSite.Controllers
                 workSheetMenuOutputViewModels.Cells[1, 8].Value = localizer[nameof(AssetOutputViewModel.Deleted).ToString()].Value;
 
                 int recordIndex = 2;
-                foreach (var item in assetOutputViewModels)
+                foreach (AssetOutputViewModel item in assetOutputViewModels)
                 {
                     workSheetMenuOutputViewModels.Cells[recordIndex, 1].Value = item.ProductName;
                     workSheetMenuOutputViewModels.Cells[recordIndex, 2].Value = localizer[item?.Item?.ToString() ?? ""].Value;
@@ -359,7 +354,7 @@ namespace Maroik.WebSite.Controllers
                 package.Save();
             }
             stream.Position = 0;
-            string excelName = $"{fileName}-{TimeZoneInfo.ConvertTimeBySystemTimeZoneId(DateTime.UtcNow, OSTimeZone.DestinationTimeZoneId).ToString("yyyy-MM-dd-HH-mm-ss-fff")}.xlsx";
+            string excelName = $"{fileName}-{TimeZoneInfo.ConvertTimeBySystemTimeZoneId(DateTime.UtcNow, OSTimeZone.DestinationTimeZoneId):yyyy-MM-dd-HH-mm-ss-fff}.xlsx";
 
             return File(stream, "application/octet-stream", excelName);
         }
@@ -382,10 +377,10 @@ namespace Maroik.WebSite.Controllers
                     try
                     {
                         incomeInputViewModel.Amount = Math.Abs(incomeInputViewModel.Amount);
-                        HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+                        _ = HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
 
                         #region Validate ProductName's Deletion
-                        var tempAssetToValidate = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, incomeInputViewModel.DepositMyAssetProductName);
+                        Asset tempAssetToValidate = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, incomeInputViewModel.DepositMyAssetProductName);
                         if (tempAssetToValidate.Deleted)
                         {
                             return Json(new { result = false, error = localizer["Actions cannot be executed with assets that have already been deleted."].Value });
@@ -395,20 +390,20 @@ namespace Maroik.WebSite.Controllers
                         #region Validation of MainClass & SubClass Value
                         if (incomeInputViewModel.MainClass == "RegularIncome")
                         {
-                            if (!(incomeInputViewModel.SubClass == "LaborIncome" ||
-                                incomeInputViewModel.SubClass == "BusinessIncome" ||
-                                incomeInputViewModel.SubClass == "PensionIncome" ||
-                                incomeInputViewModel.SubClass == "FinancialIncome" ||
-                                incomeInputViewModel.SubClass == "RentalIncome" ||
-                                incomeInputViewModel.SubClass == "OtherIncome"))
+                            if (incomeInputViewModel.SubClass is not ("LaborIncome" or
+                                "BusinessIncome" or
+                                "PensionIncome" or
+                                "FinancialIncome" or
+                                "RentalIncome" or
+                                "OtherIncome"))
                             {
                                 return Json(new { result = false, error = localizer["Input is invalid"].Value });
                             }
                         }
                         else if (incomeInputViewModel.MainClass == "IrregularIncome")
                         {
-                            if (!(incomeInputViewModel.SubClass == "LaborIncome" ||
-                                incomeInputViewModel.SubClass == "OtherIncome"))
+                            if (incomeInputViewModel.SubClass is not ("LaborIncome" or
+                                "OtherIncome"))
                             {
                                 return Json(new { result = false, error = localizer["Input is invalid"].Value });
                             }
@@ -434,7 +429,7 @@ namespace Maroik.WebSite.Controllers
                         #endregion
 
                         #region 자산 업데이트
-                        var tempAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, incomeInputViewModel.DepositMyAssetProductName);
+                        Asset tempAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, incomeInputViewModel.DepositMyAssetProductName);
                         tempAsset.Amount += Math.Abs(incomeInputViewModel.Amount);
                         tempAsset.Updated = DateTime.UtcNow;
                         await assetRepository.UpdateAssetAsync(tempAsset);
@@ -465,12 +460,12 @@ namespace Maroik.WebSite.Controllers
         {
             if (HttpContext.Request.Headers["X-Requested-With"] == "XMLHttpRequest") // ajax
             {
-                List<IncomeOutputViewModel> incomeOutputViewModels = new List<IncomeOutputViewModel>();
+                List<IncomeOutputViewModel> incomeOutputViewModels = new();
 
                 #region Incomes
-                HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+                _ = HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
 
-                foreach (var item in await incomeRepository.GetIncomesAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email))
+                foreach (Income item in await incomeRepository.GetIncomesAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email))
                 {
                     if (string.IsNullOrEmpty(wholeSearch))
                     {
@@ -515,7 +510,7 @@ namespace Maroik.WebSite.Controllers
                 }
                 #endregion
 
-                var result = incomeOutputViewModels.OrderByDescending(m => m.Created).ThenByDescending(m => m.Updated).AsQueryable();
+                IQueryable<IncomeOutputViewModel> result = incomeOutputViewModels.OrderByDescending(m => m.Created).ThenByDescending(m => m.Updated).AsQueryable();
                 return PartialView("_IncomeGrid", result);
             }
             return View();
@@ -527,9 +522,9 @@ namespace Maroik.WebSite.Controllers
         {
             try
             {
-                HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+                _ = HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
 
-                var tempIncomes = await incomeRepository.GetIncomesAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+                List<Income> tempIncomes = await incomeRepository.GetIncomesAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
 
                 if (tempIncomes == null)
                 {
@@ -537,7 +532,7 @@ namespace Maroik.WebSite.Controllers
                 }
                 else
                 {
-                    var tempIncome = tempIncomes.Where(a => a.Id == id).FirstOrDefault();
+                    Income tempIncome = tempIncomes.Where(a => a.Id == id).FirstOrDefault();
 
                     if (tempIncome == null)
                     {
@@ -570,25 +565,25 @@ namespace Maroik.WebSite.Controllers
                     try
                     {
                         incomeInputViewModel.Amount = Math.Abs(incomeInputViewModel.Amount);
-                        HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+                        _ = HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
 
                         #region Validation of MainClass & SubClass Value
                         if (incomeInputViewModel.MainClass == "RegularIncome")
                         {
-                            if (!(incomeInputViewModel.SubClass == "LaborIncome" ||
-                                incomeInputViewModel.SubClass == "BusinessIncome" ||
-                                incomeInputViewModel.SubClass == "PensionIncome" ||
-                                incomeInputViewModel.SubClass == "FinancialIncome" ||
-                                incomeInputViewModel.SubClass == "RentalIncome" ||
-                                incomeInputViewModel.SubClass == "OtherIncome"))
+                            if (incomeInputViewModel.SubClass is not ("LaborIncome" or
+                                "BusinessIncome" or
+                                "PensionIncome" or
+                                "FinancialIncome" or
+                                "RentalIncome" or
+                                "OtherIncome"))
                             {
                                 return Json(new { result = false, error = localizer["Input is invalid"].Value });
                             }
                         }
                         else if (incomeInputViewModel.MainClass == "IrregularIncome")
                         {
-                            if (!(incomeInputViewModel.SubClass == "LaborIncome" ||
-                                incomeInputViewModel.SubClass == "OtherIncome"))
+                            if (incomeInputViewModel.SubClass is not ("LaborIncome" or
+                                "OtherIncome"))
                             {
                                 return Json(new { result = false, error = localizer["Input is invalid"].Value });
                             }
@@ -596,7 +591,7 @@ namespace Maroik.WebSite.Controllers
                         #endregion
 
                         #region 수입 & 자산 업데이트
-                        var tempIncomes = await incomeRepository.GetIncomesAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+                        List<Income> tempIncomes = await incomeRepository.GetIncomesAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
 
                         if (tempIncomes == null)
                         {
@@ -604,7 +599,7 @@ namespace Maroik.WebSite.Controllers
                         }
                         else
                         {
-                            var tempIncome = tempIncomes.Where(a => a.Id == incomeInputViewModel.Id).FirstOrDefault();
+                            Income tempIncome = tempIncomes.Where(a => a.Id == incomeInputViewModel.Id).FirstOrDefault();
 
                             if (tempIncome == null)
                             {
@@ -613,14 +608,14 @@ namespace Maroik.WebSite.Controllers
                             else
                             {
                                 #region Validate ProductName's Deletion
-                                var tempAssetToValidate = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, tempIncome.DepositMyAssetProductName);
+                                Asset tempAssetToValidate = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, tempIncome.DepositMyAssetProductName);
                                 if (tempAssetToValidate.Deleted)
                                 {
                                     return Json(new { result = false, error = localizer["Actions cannot be executed with assets that have already been deleted."].Value });
                                 }
                                 #endregion
-                                var previousTempIncomeDepositMyAssetProductName = tempIncome.DepositMyAssetProductName;
-                                var previousTempIncomeAmount = tempIncome.Amount;
+                                string previousTempIncomeDepositMyAssetProductName = tempIncome.DepositMyAssetProductName;
+                                long previousTempIncomeAmount = tempIncome.Amount;
 
                                 #region 수입 업데이트
                                 tempIncome.MainClass = incomeInputViewModel.MainClass;
@@ -639,7 +634,7 @@ namespace Maroik.WebSite.Controllers
                                 if (tempIncome.DepositMyAssetProductName == previousTempIncomeDepositMyAssetProductName) // 같은 경우
                                 {
                                     #region 자산 업데이트
-                                    var tempAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, tempIncome.DepositMyAssetProductName);
+                                    Asset tempAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, tempIncome.DepositMyAssetProductName);
                                     tempAsset.Amount = tempAsset.Amount - Math.Abs(previousTempIncomeAmount) + Math.Abs(tempIncome.Amount);
                                     tempAsset.Updated = DateTime.UtcNow;
                                     await assetRepository.UpdateAssetAsync(tempAsset);
@@ -648,7 +643,7 @@ namespace Maroik.WebSite.Controllers
                                 else // 다른 경우
                                 {
                                     #region 구 자산 업데이트
-                                    var tempAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempIncomeDepositMyAssetProductName);
+                                    Asset tempAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempIncomeDepositMyAssetProductName);
                                     tempAsset.Amount -= Math.Abs(previousTempIncomeAmount);
                                     tempAsset.Updated = DateTime.UtcNow;
                                     await assetRepository.UpdateAssetAsync(tempAsset);
@@ -693,9 +688,9 @@ namespace Maroik.WebSite.Controllers
         {
             try
             {
-                HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+                _ = HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
 
-                var tempIncomes = await incomeRepository.GetIncomesAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+                List<Income> tempIncomes = await incomeRepository.GetIncomesAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
 
                 if (tempIncomes == null)
                 {
@@ -703,7 +698,7 @@ namespace Maroik.WebSite.Controllers
                 }
                 else
                 {
-                    var tempIncome = tempIncomes.Where(a => a.Id == incomeInputViewModel.Id).FirstOrDefault();
+                    Income tempIncome = tempIncomes.Where(a => a.Id == incomeInputViewModel.Id).FirstOrDefault();
 
                     if (tempIncome == null)
                     {
@@ -712,7 +707,7 @@ namespace Maroik.WebSite.Controllers
                     else
                     {
                         #region Validate ProductName's Deletion
-                        var tempAssetToValidate = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, tempIncome.DepositMyAssetProductName);
+                        Asset tempAssetToValidate = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, tempIncome.DepositMyAssetProductName);
                         if (tempAssetToValidate.Deleted)
                         {
                             return Json(new { result = false, error = localizer["Actions cannot be executed with assets that have already been deleted."].Value });
@@ -720,7 +715,7 @@ namespace Maroik.WebSite.Controllers
                         #endregion
 
                         #region 자산 업데이트
-                        var tempAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, tempIncome.DepositMyAssetProductName);
+                        Asset tempAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, tempIncome.DepositMyAssetProductName);
                         tempAsset.Amount -= Math.Abs(tempIncome.Amount);
                         tempAsset.Updated = DateTime.UtcNow;
                         await assetRepository.UpdateAssetAsync(tempAsset);
@@ -750,13 +745,13 @@ namespace Maroik.WebSite.Controllers
             // query data from database
             await Task.Yield();
 
-            List<IncomeOutputViewModel> incomeOutputViewModels = new List<IncomeOutputViewModel>();
+            List<IncomeOutputViewModel> incomeOutputViewModels = new();
 
             #region Incomes
 
-            HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+            _ = HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
 
-            foreach (var item in await incomeRepository.GetIncomesAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email))
+            foreach (Income item in await incomeRepository.GetIncomesAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email))
             {
                 incomeOutputViewModels.Add(new IncomeOutputViewModel()
                 {
@@ -774,11 +769,11 @@ namespace Maroik.WebSite.Controllers
 
             #endregion
 
-            var stream = new MemoryStream();
+            MemoryStream stream = new();
 
-            using (var package = new ExcelPackage(stream))
+            using (ExcelPackage package = new(stream))
             {
-                var workSheetMenuOutputViewModels = package.Workbook.Worksheets.Add("Sheet1");
+                ExcelWorksheet workSheetMenuOutputViewModels = package.Workbook.Worksheets.Add("Sheet1");
 
                 workSheetMenuOutputViewModels.Row(1).Height = 20;
                 workSheetMenuOutputViewModels.Row(1).Style.HorizontalAlignment = OfficeOpenXml.Style.ExcelHorizontalAlignment.Center;
@@ -793,7 +788,7 @@ namespace Maroik.WebSite.Controllers
                 workSheetMenuOutputViewModels.Cells[1, 8].Value = localizer[nameof(IncomeOutputViewModel.Note).ToString()].Value;
 
                 int recordIndex = 2;
-                foreach (var item in incomeOutputViewModels)
+                foreach (IncomeOutputViewModel item in incomeOutputViewModels)
                 {
                     workSheetMenuOutputViewModels.Cells[recordIndex, 1].Value = localizer[item?.MainClass?.ToString() ?? ""].Value;
                     workSheetMenuOutputViewModels.Cells[recordIndex, 2].Value = localizer[item?.SubClass?.ToString() ?? ""].Value;
@@ -809,7 +804,7 @@ namespace Maroik.WebSite.Controllers
                 package.Save();
             }
             stream.Position = 0;
-            string excelName = $"{fileName}-{TimeZoneInfo.ConvertTimeBySystemTimeZoneId(DateTime.UtcNow, OSTimeZone.DestinationTimeZoneId).ToString("yyyy-MM-dd-HH-mm-ss-fff")}.xlsx";
+            string excelName = $"{fileName}-{TimeZoneInfo.ConvertTimeBySystemTimeZoneId(DateTime.UtcNow, OSTimeZone.DestinationTimeZoneId):yyyy-MM-dd-HH-mm-ss-fff}.xlsx";
 
             return File(stream, "application/octet-stream", excelName);
         }
@@ -830,17 +825,17 @@ namespace Maroik.WebSite.Controllers
                 if (ModelState.IsValid)
                 {
                     expenditureInputViewModel.Amount = Math.Abs(expenditureInputViewModel.Amount);
-                    HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+                    _ = HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
 
                     #region Validate ProductName's Deletion
-                    var tempExpenditureAssetToValidate = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, expenditureInputViewModel.PaymentMethod);
+                    Asset tempExpenditureAssetToValidate = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, expenditureInputViewModel.PaymentMethod);
                     if (tempExpenditureAssetToValidate.Deleted)
                     {
                         return Json(new { result = false, error = localizer["Actions cannot be executed with assets that have already been deleted."].Value });
                     }
                     if (!string.IsNullOrEmpty(expenditureInputViewModel.MyDepositAsset))
                     {
-                        var tempIncomeAssetToValidate = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, expenditureInputViewModel.MyDepositAsset);
+                        Asset tempIncomeAssetToValidate = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, expenditureInputViewModel.MyDepositAsset);
                         if (tempIncomeAssetToValidate.Deleted)
                         {
                             return Json(new { result = false, error = localizer["Actions cannot be executed with assets that have already been deleted."].Value });
@@ -851,7 +846,7 @@ namespace Maroik.WebSite.Controllers
                     #region 대분류 = '정기저축'
                     if (expenditureInputViewModel.MainClass == "RegularSavings")
                     {
-                        if (expenditureInputViewModel.SubClass == "Deposit" || expenditureInputViewModel.SubClass == "Investment")
+                        if (expenditureInputViewModel.SubClass is "Deposit" or "Investment")
                         {
                             try
                             {
@@ -860,8 +855,8 @@ namespace Maroik.WebSite.Controllers
                                     return Json(new { result = false, error = localizer["The PaymentMethod and MyDepositAsset value cannot be the same."].Value });
                                 }
 
-                                var expenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, expenditureInputViewModel.PaymentMethod);
-                                var incomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, expenditureInputViewModel.MyDepositAsset);
+                                Asset expenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, expenditureInputViewModel.PaymentMethod);
+                                Asset incomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, expenditureInputViewModel.MyDepositAsset);
 
                                 if (expenditureAsset == null || incomeAsset == null)
                                 {
@@ -916,7 +911,7 @@ namespace Maroik.WebSite.Controllers
                     #region 대분류 = '비소비지출'
                     else if (expenditureInputViewModel.MainClass == "NonConsumerSpending")
                     {
-                        if (expenditureInputViewModel.SubClass == "PublicPension" || expenditureInputViewModel.SubClass == "DebtRepayment")
+                        if (expenditureInputViewModel.SubClass is "PublicPension" or "DebtRepayment")
                         {
                             try
                             {
@@ -925,8 +920,8 @@ namespace Maroik.WebSite.Controllers
                                     return Json(new { result = false, error = localizer["The PaymentMethod and MyDepositAsset value cannot be the same."].Value });
                                 }
 
-                                var expenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, expenditureInputViewModel.PaymentMethod);
-                                var incomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, expenditureInputViewModel.MyDepositAsset);
+                                Asset expenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, expenditureInputViewModel.PaymentMethod);
+                                Asset incomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, expenditureInputViewModel.MyDepositAsset);
 
                                 if (expenditureAsset == null || incomeAsset == null)
                                 {
@@ -971,14 +966,14 @@ namespace Maroik.WebSite.Controllers
                                 return Json(new { result = false, error = e.ToString() });
                             }
                         }
-                        else if (expenditureInputViewModel.SubClass == "Tax" ||
-                            expenditureInputViewModel.SubClass == "SocialInsurance" ||
-                            expenditureInputViewModel.SubClass == "InterHouseholdTranserExpenses" ||
-                            expenditureInputViewModel.SubClass == "NonProfitOrganizationTransfer")
+                        else if (expenditureInputViewModel.SubClass is "Tax" or
+                            "SocialInsurance" or
+                            "InterHouseholdTranserExpenses" or
+                            "NonProfitOrganizationTransfer")
                         {
                             try
                             {
-                                var expenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, expenditureInputViewModel.PaymentMethod);
+                                Asset expenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, expenditureInputViewModel.PaymentMethod);
 
                                 if (expenditureAsset == null)
                                 {
@@ -1027,22 +1022,22 @@ namespace Maroik.WebSite.Controllers
                     #region 대분류 = '소비지출'
                     else if (expenditureInputViewModel.MainClass == "ConsumerSpending")
                     {
-                        if (expenditureInputViewModel.SubClass == "MealOrEatOutExpenses" ||
-                            expenditureInputViewModel.SubClass == "HousingOrSuppliesCost" ||
-                            expenditureInputViewModel.SubClass == "EducationExpenses" ||
-                            expenditureInputViewModel.SubClass == "MedicalExpenses" ||
-                            expenditureInputViewModel.SubClass == "TransportationCost" ||
-                            expenditureInputViewModel.SubClass == "CommunicationCost" ||
-                            expenditureInputViewModel.SubClass == "LeisureOrCulture" ||
-                            expenditureInputViewModel.SubClass == "ClothingOrShoes" ||
-                            expenditureInputViewModel.SubClass == "PinMoney" ||
-                            expenditureInputViewModel.SubClass == "ProtectionTypeInsurance" ||
-                            expenditureInputViewModel.SubClass == "OtherExpenses" ||
-                            expenditureInputViewModel.SubClass == "UnknownExpenditure")
+                        if (expenditureInputViewModel.SubClass is "MealOrEatOutExpenses" or
+                            "HousingOrSuppliesCost" or
+                            "EducationExpenses" or
+                            "MedicalExpenses" or
+                            "TransportationCost" or
+                            "CommunicationCost" or
+                            "LeisureOrCulture" or
+                            "ClothingOrShoes" or
+                            "PinMoney" or
+                            "ProtectionTypeInsurance" or
+                            "OtherExpenses" or
+                            "UnknownExpenditure")
                         {
                             try
                             {
-                                var expenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, expenditureInputViewModel.PaymentMethod);
+                                Asset expenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, expenditureInputViewModel.PaymentMethod);
 
                                 if (expenditureAsset == null)
                                 {
@@ -1113,12 +1108,12 @@ namespace Maroik.WebSite.Controllers
         {
             if (HttpContext.Request.Headers["X-Requested-With"] == "XMLHttpRequest") // ajax
             {
-                List<ExpenditureOutputViewModel> expenditureOutputViewModels = new List<ExpenditureOutputViewModel>();
+                List<ExpenditureOutputViewModel> expenditureOutputViewModels = new();
 
                 #region Expenditures
-                HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+                _ = HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
 
-                foreach (var item in await expenditureRepository.GetExpendituresAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email))
+                foreach (Expenditure item in await expenditureRepository.GetExpendituresAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email))
                 {
                     if (string.IsNullOrEmpty(wholeSearch))
                     {
@@ -1166,7 +1161,7 @@ namespace Maroik.WebSite.Controllers
                 }
                 #endregion
 
-                var result = expenditureOutputViewModels.OrderByDescending(m => m.Created).ThenByDescending(m => m.Updated).AsQueryable();
+                IQueryable<ExpenditureOutputViewModel> result = expenditureOutputViewModels.OrderByDescending(m => m.Created).ThenByDescending(m => m.Updated).AsQueryable();
                 return PartialView("_ExpenditureGrid", result);
             }
             return View();
@@ -1178,9 +1173,9 @@ namespace Maroik.WebSite.Controllers
         {
             try
             {
-                HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+                _ = HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
 
-                var tempExpenditures = await expenditureRepository.GetExpendituresAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+                List<Expenditure> tempExpenditures = await expenditureRepository.GetExpendituresAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
 
                 if (tempExpenditures == null)
                 {
@@ -1188,7 +1183,7 @@ namespace Maroik.WebSite.Controllers
                 }
                 else
                 {
-                    var tempExpenditure = tempExpenditures.Where(a => a.Id == id).FirstOrDefault();
+                    Expenditure tempExpenditure = tempExpenditures.Where(a => a.Id == id).FirstOrDefault();
 
                     if (tempExpenditure == null)
                     {
@@ -1219,12 +1214,12 @@ namespace Maroik.WebSite.Controllers
                 if (ModelState.IsValid)
                 {
                     expenditureInputViewModel.Amount = Math.Abs(expenditureInputViewModel.Amount);
-                    HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+                    _ = HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
 
                     #region 대분류 = '정기저축'
                     if (expenditureInputViewModel.MainClass == "RegularSavings")
                     {
-                        if (expenditureInputViewModel.SubClass == "Deposit" || expenditureInputViewModel.SubClass == "Investment")
+                        if (expenditureInputViewModel.SubClass is "Deposit" or "Investment")
                         {
                             try
                             {
@@ -1233,9 +1228,9 @@ namespace Maroik.WebSite.Controllers
                                     return Json(new { result = false, error = localizer["The PaymentMethod and MyDepositAsset value cannot be the same."].Value });
                                 }
 
-                                var tempExpenditures = await expenditureRepository.GetExpendituresAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
-                                var previousTempExpenditure = tempExpenditures.Where(a => a.Id == expenditureInputViewModel.Id).FirstOrDefault();
-                                var currentTempExpenditure = new Expenditure()
+                                List<Expenditure> tempExpenditures = await expenditureRepository.GetExpendituresAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+                                Expenditure previousTempExpenditure = tempExpenditures.Where(a => a.Id == expenditureInputViewModel.Id).FirstOrDefault();
+                                Expenditure currentTempExpenditure = new()
                                 {
                                     Id = expenditureInputViewModel.Id,
                                     AccountEmail = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email,
@@ -1252,14 +1247,14 @@ namespace Maroik.WebSite.Controllers
                                 };
 
                                 #region Validate ProductName's Deletion
-                                var tempExpenditureAssetToValidate = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
+                                Asset tempExpenditureAssetToValidate = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
                                 if (tempExpenditureAssetToValidate.Deleted)
                                 {
                                     return Json(new { result = false, error = localizer["Actions cannot be executed with assets that have already been deleted."].Value });
                                 }
                                 if (!string.IsNullOrEmpty(previousTempExpenditure.MyDepositAsset))
                                 {
-                                    var tempIncomeAssetToValidate = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
+                                    Asset tempIncomeAssetToValidate = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
                                     if (tempIncomeAssetToValidate.Deleted)
                                     {
                                         return Json(new { result = false, error = localizer["Actions cannot be executed with assets that have already been deleted."].Value });
@@ -1277,24 +1272,24 @@ namespace Maroik.WebSite.Controllers
 
                                     if (previousTempExpenditure.PaymentMethod == currentTempExpenditure.PaymentMethod) // else 보고 참조함.
                                     {
-                                        var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
+                                        Asset pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
                                         pastExpenditureAsset.Amount = pastExpenditureAsset.Amount + Math.Abs(previousTempExpenditure.Amount) - Math.Abs(currentTempExpenditure.Amount);
                                         pastExpenditureAsset.Updated = DateTime.UtcNow;
                                         await assetRepository.UpdateAssetAsync(pastExpenditureAsset);
 
-                                        var currentIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.MyDepositAsset);
+                                        Asset currentIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.MyDepositAsset);
                                         currentIncomeAsset.Amount += Math.Abs(currentTempExpenditure.Amount);
                                         currentIncomeAsset.Updated = DateTime.UtcNow;
                                         await assetRepository.UpdateAssetAsync(currentIncomeAsset);
                                     }
                                     else if (previousTempExpenditure.PaymentMethod == currentTempExpenditure.MyDepositAsset) // else 보고 참조함.
                                     {
-                                        var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
+                                        Asset pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
                                         pastExpenditureAsset.Amount = pastExpenditureAsset.Amount + Math.Abs(previousTempExpenditure.Amount) + Math.Abs(currentTempExpenditure.Amount);
                                         pastExpenditureAsset.Updated = DateTime.UtcNow;
                                         await assetRepository.UpdateAssetAsync(pastExpenditureAsset);
 
-                                        var currentExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.PaymentMethod);
+                                        Asset currentExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.PaymentMethod);
                                         currentExpenditureAsset.Amount -= Math.Abs(currentTempExpenditure.Amount);
                                         currentExpenditureAsset.Updated = DateTime.UtcNow;
                                         await assetRepository.UpdateAssetAsync(currentExpenditureAsset);
@@ -1303,11 +1298,11 @@ namespace Maroik.WebSite.Controllers
                                     {
                                         #region 자산 업데이트
 
-                                        var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
+                                        Asset pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
                                         //var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
 
-                                        var currentExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.PaymentMethod);
-                                        var currentIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.MyDepositAsset);
+                                        Asset currentExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.PaymentMethod);
+                                        Asset currentIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.MyDepositAsset);
 
                                         #region 과거 자산
                                         pastExpenditureAsset.Amount += Math.Abs(previousTempExpenditure.Amount);
@@ -1348,8 +1343,8 @@ namespace Maroik.WebSite.Controllers
                                         if (previousTempExpenditure.MyDepositAsset == currentTempExpenditure.MyDepositAsset)
                                         {
                                             #region 자산 업데이트
-                                            var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
-                                            var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
+                                            Asset pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
+                                            Asset pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
 
                                             pastExpenditureAsset.Amount = pastExpenditureAsset.Amount + Math.Abs(previousTempExpenditure.Amount) - Math.Abs(currentTempExpenditure.Amount);
                                             pastExpenditureAsset.Updated = DateTime.UtcNow;
@@ -1393,10 +1388,10 @@ namespace Maroik.WebSite.Controllers
                                         else
                                         {
                                             #region 자산 업데이트
-                                            var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
-                                            var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
+                                            Asset pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
+                                            Asset pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
 
-                                            var currentIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.MyDepositAsset);
+                                            Asset currentIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.MyDepositAsset);
 
                                             pastExpenditureAsset.Amount = pastExpenditureAsset.Amount + Math.Abs(previousTempExpenditure.Amount) - Math.Abs(currentTempExpenditure.Amount);
                                             pastExpenditureAsset.Updated = DateTime.UtcNow;
@@ -1447,8 +1442,8 @@ namespace Maroik.WebSite.Controllers
                                         if (previousTempExpenditure.MyDepositAsset == currentTempExpenditure.PaymentMethod)
                                         {
                                             #region 자산 업데이트
-                                            var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
-                                            var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
+                                            Asset pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
+                                            Asset pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
 
                                             pastExpenditureAsset.Amount = pastExpenditureAsset.Amount + Math.Abs(previousTempExpenditure.Amount) + Math.Abs(currentTempExpenditure.Amount);
                                             pastExpenditureAsset.Updated = DateTime.UtcNow;
@@ -1494,10 +1489,10 @@ namespace Maroik.WebSite.Controllers
                                             #region 자산 업데이트
 
                                             #region 과거 자산
-                                            var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
-                                            var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
+                                            Asset pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
+                                            Asset pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
 
-                                            var currentExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.PaymentMethod);
+                                            Asset currentExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.PaymentMethod);
 
                                             pastExpenditureAsset.Amount = pastExpenditureAsset.Amount + Math.Abs(previousTempExpenditure.Amount) + Math.Abs(currentTempExpenditure.Amount);
                                             pastExpenditureAsset.Updated = DateTime.UtcNow;
@@ -1555,8 +1550,8 @@ namespace Maroik.WebSite.Controllers
                                             #region 자산 업데이트
 
                                             #region 과거 자산
-                                            var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
-                                            var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
+                                            Asset pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
+                                            Asset pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
 
                                             pastExpenditureAsset.Amount = pastExpenditureAsset.Amount + Math.Abs(previousTempExpenditure.Amount) + Math.Abs(currentTempExpenditure.Amount);
                                             pastExpenditureAsset.Updated = DateTime.UtcNow;
@@ -1604,10 +1599,10 @@ namespace Maroik.WebSite.Controllers
                                             #region 자산 업데이트
 
                                             #region 과거 자산
-                                            var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
-                                            var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
+                                            Asset pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
+                                            Asset pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
 
-                                            var currentIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.MyDepositAsset);
+                                            Asset currentIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.MyDepositAsset);
 
                                             pastExpenditureAsset.Amount += Math.Abs(previousTempExpenditure.Amount);
                                             pastExpenditureAsset.Updated = DateTime.UtcNow;
@@ -1665,8 +1660,8 @@ namespace Maroik.WebSite.Controllers
                                             #region 자산 업데이트
 
                                             #region 과거 자산
-                                            var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
-                                            var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
+                                            Asset pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
+                                            Asset pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
 
                                             pastExpenditureAsset.Amount = pastExpenditureAsset.Amount + Math.Abs(previousTempExpenditure.Amount) - Math.Abs(currentTempExpenditure.Amount);
                                             pastExpenditureAsset.Updated = DateTime.UtcNow;
@@ -1714,10 +1709,10 @@ namespace Maroik.WebSite.Controllers
                                             #region 자산 업데이트
 
                                             #region 과거 자산
-                                            var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
-                                            var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
+                                            Asset pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
+                                            Asset pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
 
-                                            var currentExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.PaymentMethod);
+                                            Asset currentExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.PaymentMethod);
 
                                             pastExpenditureAsset.Amount += Math.Abs(previousTempExpenditure.Amount);
                                             pastExpenditureAsset.Updated = DateTime.UtcNow;
@@ -1772,11 +1767,11 @@ namespace Maroik.WebSite.Controllers
                                         #region 자산 업데이트
 
                                         #region 과거 자산
-                                        var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
-                                        var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
+                                        Asset pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
+                                        Asset pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
 
-                                        var currentExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.PaymentMethod);
-                                        var currentIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.MyDepositAsset);
+                                        Asset currentExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.PaymentMethod);
+                                        Asset currentIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.MyDepositAsset);
 
                                         pastExpenditureAsset.Amount += Math.Abs(previousTempExpenditure.Amount);
                                         pastExpenditureAsset.Updated = DateTime.UtcNow;
@@ -1825,7 +1820,7 @@ namespace Maroik.WebSite.Controllers
                     #region 대분류 = '비소비지출'
                     else if (expenditureInputViewModel.MainClass == "NonConsumerSpending")
                     {
-                        if (expenditureInputViewModel.SubClass == "PublicPension" || expenditureInputViewModel.SubClass == "DebtRepayment")
+                        if (expenditureInputViewModel.SubClass is "PublicPension" or "DebtRepayment")
                         {
                             try
                             {
@@ -1834,9 +1829,9 @@ namespace Maroik.WebSite.Controllers
                                     return Json(new { result = false, error = localizer["The PaymentMethod and MyDepositAsset value cannot be the same."].Value });
                                 }
 
-                                var tempExpenditures = await expenditureRepository.GetExpendituresAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
-                                var previousTempExpenditure = tempExpenditures.Where(a => a.Id == expenditureInputViewModel.Id).FirstOrDefault();
-                                var currentTempExpenditure = new Expenditure()
+                                List<Expenditure> tempExpenditures = await expenditureRepository.GetExpendituresAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+                                Expenditure previousTempExpenditure = tempExpenditures.Where(a => a.Id == expenditureInputViewModel.Id).FirstOrDefault();
+                                Expenditure currentTempExpenditure = new()
                                 {
                                     Id = expenditureInputViewModel.Id,
                                     AccountEmail = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email,
@@ -1853,14 +1848,14 @@ namespace Maroik.WebSite.Controllers
                                 };
 
                                 #region Validate ProductName's Deletion
-                                var tempExpenditureAssetToValidate = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
+                                Asset tempExpenditureAssetToValidate = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
                                 if (tempExpenditureAssetToValidate.Deleted)
                                 {
                                     return Json(new { result = false, error = localizer["Actions cannot be executed with assets that have already been deleted."].Value });
                                 }
                                 if (!string.IsNullOrEmpty(previousTempExpenditure.MyDepositAsset))
                                 {
-                                    var tempIncomeAssetToValidate = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
+                                    Asset tempIncomeAssetToValidate = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
                                     if (tempIncomeAssetToValidate.Deleted)
                                     {
                                         return Json(new { result = false, error = localizer["Actions cannot be executed with assets that have already been deleted."].Value });
@@ -1879,8 +1874,8 @@ namespace Maroik.WebSite.Controllers
                                     if (previousTempExpenditure.PaymentMethod == currentTempExpenditure.PaymentMethod)
                                     {
                                         #region 자산 업데이트
-                                        var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
-                                        var currentIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.MyDepositAsset);
+                                        Asset pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
+                                        Asset currentIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.MyDepositAsset);
 
                                         pastExpenditureAsset.Amount = pastExpenditureAsset.Amount + Math.Abs(previousTempExpenditure.Amount) - Math.Abs(currentTempExpenditure.Amount);
                                         pastExpenditureAsset.Updated = DateTime.UtcNow;
@@ -1925,9 +1920,9 @@ namespace Maroik.WebSite.Controllers
                                         #region 자산 업데이트
 
                                         #region 과거 자산
-                                        var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
+                                        Asset pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
 
-                                        var currentExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.PaymentMethod);
+                                        Asset currentExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.PaymentMethod);
 
                                         pastExpenditureAsset.Amount = pastExpenditureAsset.Amount + Math.Abs(previousTempExpenditure.Amount) + Math.Abs(currentTempExpenditure.Amount);
                                         pastExpenditureAsset.Updated = DateTime.UtcNow;
@@ -1976,11 +1971,11 @@ namespace Maroik.WebSite.Controllers
                                         #region 자산 업데이트
 
                                         #region 과거 자산
-                                        var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
+                                        Asset pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
                                         //var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
 
-                                        var currentExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.PaymentMethod);
-                                        var currentIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.MyDepositAsset);
+                                        Asset currentExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.PaymentMethod);
+                                        Asset currentIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.MyDepositAsset);
 
                                         pastExpenditureAsset.Amount += Math.Abs(previousTempExpenditure.Amount);
                                         pastExpenditureAsset.Updated = DateTime.UtcNow;
@@ -2020,8 +2015,8 @@ namespace Maroik.WebSite.Controllers
                                         if (previousTempExpenditure.MyDepositAsset == currentTempExpenditure.MyDepositAsset)
                                         {
                                             #region 자산 업데이트
-                                            var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
-                                            var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
+                                            Asset pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
+                                            Asset pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
 
                                             pastExpenditureAsset.Amount = pastExpenditureAsset.Amount + Math.Abs(previousTempExpenditure.Amount) - Math.Abs(currentTempExpenditure.Amount);
                                             pastExpenditureAsset.Updated = DateTime.UtcNow;
@@ -2065,10 +2060,10 @@ namespace Maroik.WebSite.Controllers
                                         else
                                         {
                                             #region 자산 업데이트
-                                            var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
-                                            var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
+                                            Asset pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
+                                            Asset pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
 
-                                            var currentIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.MyDepositAsset);
+                                            Asset currentIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.MyDepositAsset);
 
                                             pastExpenditureAsset.Amount = pastExpenditureAsset.Amount + Math.Abs(previousTempExpenditure.Amount) - Math.Abs(currentTempExpenditure.Amount);
                                             pastExpenditureAsset.Updated = DateTime.UtcNow;
@@ -2119,8 +2114,8 @@ namespace Maroik.WebSite.Controllers
                                         if (previousTempExpenditure.MyDepositAsset == currentTempExpenditure.PaymentMethod)
                                         {
                                             #region 자산 업데이트
-                                            var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
-                                            var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
+                                            Asset pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
+                                            Asset pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
 
                                             pastExpenditureAsset.Amount = pastExpenditureAsset.Amount + Math.Abs(previousTempExpenditure.Amount) + Math.Abs(currentTempExpenditure.Amount);
                                             pastExpenditureAsset.Updated = DateTime.UtcNow;
@@ -2166,10 +2161,10 @@ namespace Maroik.WebSite.Controllers
                                             #region 자산 업데이트
 
                                             #region 과거 자산
-                                            var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
-                                            var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
+                                            Asset pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
+                                            Asset pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
 
-                                            var currentExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.PaymentMethod);
+                                            Asset currentExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.PaymentMethod);
 
                                             pastExpenditureAsset.Amount = pastExpenditureAsset.Amount + Math.Abs(previousTempExpenditure.Amount) + Math.Abs(currentTempExpenditure.Amount);
                                             pastExpenditureAsset.Updated = DateTime.UtcNow;
@@ -2227,8 +2222,8 @@ namespace Maroik.WebSite.Controllers
                                             #region 자산 업데이트
 
                                             #region 과거 자산
-                                            var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
-                                            var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
+                                            Asset pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
+                                            Asset pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
 
                                             pastExpenditureAsset.Amount = pastExpenditureAsset.Amount + Math.Abs(previousTempExpenditure.Amount) + Math.Abs(currentTempExpenditure.Amount);
                                             pastExpenditureAsset.Updated = DateTime.UtcNow;
@@ -2276,10 +2271,10 @@ namespace Maroik.WebSite.Controllers
                                             #region 자산 업데이트
 
                                             #region 과거 자산
-                                            var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
-                                            var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
+                                            Asset pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
+                                            Asset pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
 
-                                            var currentIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.MyDepositAsset);
+                                            Asset currentIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.MyDepositAsset);
 
                                             pastExpenditureAsset.Amount += Math.Abs(previousTempExpenditure.Amount);
                                             pastExpenditureAsset.Updated = DateTime.UtcNow;
@@ -2337,8 +2332,8 @@ namespace Maroik.WebSite.Controllers
                                             #region 자산 업데이트
 
                                             #region 과거 자산
-                                            var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
-                                            var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
+                                            Asset pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
+                                            Asset pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
 
                                             pastExpenditureAsset.Amount = pastExpenditureAsset.Amount + Math.Abs(previousTempExpenditure.Amount) - Math.Abs(currentTempExpenditure.Amount);
                                             pastExpenditureAsset.Updated = DateTime.UtcNow;
@@ -2386,10 +2381,10 @@ namespace Maroik.WebSite.Controllers
                                             #region 자산 업데이트
 
                                             #region 과거 자산
-                                            var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
-                                            var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
+                                            Asset pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
+                                            Asset pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
 
-                                            var currentExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.PaymentMethod);
+                                            Asset currentExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.PaymentMethod);
 
                                             pastExpenditureAsset.Amount += Math.Abs(previousTempExpenditure.Amount);
                                             pastExpenditureAsset.Updated = DateTime.UtcNow;
@@ -2444,11 +2439,11 @@ namespace Maroik.WebSite.Controllers
                                         #region 자산 업데이트
 
                                         #region 과거 자산
-                                        var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
-                                        var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
+                                        Asset pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
+                                        Asset pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
 
-                                        var currentExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.PaymentMethod);
-                                        var currentIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.MyDepositAsset);
+                                        Asset currentExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.PaymentMethod);
+                                        Asset currentIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.MyDepositAsset);
 
                                         pastExpenditureAsset.Amount += Math.Abs(previousTempExpenditure.Amount);
                                         pastExpenditureAsset.Updated = DateTime.UtcNow;
@@ -2487,16 +2482,16 @@ namespace Maroik.WebSite.Controllers
                                 return Json(new { result = false, error = e.ToString() });
                             }
                         }
-                        else if (expenditureInputViewModel.SubClass == "Tax" ||
-                            expenditureInputViewModel.SubClass == "SocialInsurance" ||
-                            expenditureInputViewModel.SubClass == "InterHouseholdTranserExpenses" ||
-                            expenditureInputViewModel.SubClass == "NonProfitOrganizationTransfer")
+                        else if (expenditureInputViewModel.SubClass is "Tax" or
+                            "SocialInsurance" or
+                            "InterHouseholdTranserExpenses" or
+                            "NonProfitOrganizationTransfer")
                         {
                             try
                             {
-                                var tempExpenditures = await expenditureRepository.GetExpendituresAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
-                                var previousTempExpenditure = tempExpenditures.Where(a => a.Id == expenditureInputViewModel.Id).FirstOrDefault();
-                                var currentTempExpenditure = new Expenditure()
+                                List<Expenditure> tempExpenditures = await expenditureRepository.GetExpendituresAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+                                Expenditure previousTempExpenditure = tempExpenditures.Where(a => a.Id == expenditureInputViewModel.Id).FirstOrDefault();
+                                Expenditure currentTempExpenditure = new()
                                 {
                                     Id = expenditureInputViewModel.Id,
                                     AccountEmail = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email,
@@ -2513,14 +2508,14 @@ namespace Maroik.WebSite.Controllers
                                 };
 
                                 #region Validate ProductName's Deletion
-                                var tempExpenditureAssetToValidate = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
+                                Asset tempExpenditureAssetToValidate = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
                                 if (tempExpenditureAssetToValidate.Deleted)
                                 {
                                     return Json(new { result = false, error = localizer["Actions cannot be executed with assets that have already been deleted."].Value });
                                 }
                                 if (!string.IsNullOrEmpty(previousTempExpenditure.MyDepositAsset))
                                 {
-                                    var tempIncomeAssetToValidate = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
+                                    Asset tempIncomeAssetToValidate = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
                                     if (tempIncomeAssetToValidate.Deleted)
                                     {
                                         return Json(new { result = false, error = localizer["Actions cannot be executed with assets that have already been deleted."].Value });
@@ -2541,7 +2536,7 @@ namespace Maroik.WebSite.Controllers
                                         #region 자산 업데이트
 
                                         #region 과거 자산
-                                        var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
+                                        Asset pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
                                         pastExpenditureAsset.Amount = pastExpenditureAsset.Amount + Math.Abs(previousTempExpenditure.Amount) - Math.Abs(currentTempExpenditure.Amount);
                                         pastExpenditureAsset.Updated = DateTime.UtcNow;
                                         await assetRepository.UpdateAssetAsync(pastExpenditureAsset);
@@ -2554,10 +2549,10 @@ namespace Maroik.WebSite.Controllers
                                         #region 자산 업데이트
 
                                         #region 과거 자산
-                                        var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
+                                        Asset pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
                                         //var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
 
-                                        var currentExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.PaymentMethod);
+                                        Asset currentExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.PaymentMethod);
                                         //var currentIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.MyDepositAsset);
 
                                         pastExpenditureAsset.Amount += Math.Abs(previousTempExpenditure.Amount);
@@ -2598,8 +2593,8 @@ namespace Maroik.WebSite.Controllers
                                         #region 자산 업데이트
 
                                         #region 과거 자산
-                                        var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
-                                        var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
+                                        Asset pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
+                                        Asset pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
 
                                         pastExpenditureAsset.Amount = pastExpenditureAsset.Amount + Math.Abs(previousTempExpenditure.Amount) - Math.Abs(currentTempExpenditure.Amount);
                                         pastExpenditureAsset.Updated = DateTime.UtcNow;
@@ -2617,8 +2612,8 @@ namespace Maroik.WebSite.Controllers
                                         #region 자산 업데이트
 
                                         #region 과거 자산
-                                        var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
-                                        var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
+                                        Asset pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
+                                        Asset pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
 
                                         pastExpenditureAsset.Amount += Math.Abs(previousTempExpenditure.Amount);
                                         pastExpenditureAsset.Updated = DateTime.UtcNow;
@@ -2636,10 +2631,10 @@ namespace Maroik.WebSite.Controllers
                                         #region 자산 업데이트
 
                                         #region 과거 자산
-                                        var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
-                                        var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
+                                        Asset pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
+                                        Asset pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
 
-                                        var currentExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.PaymentMethod);
+                                        Asset currentExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.PaymentMethod);
 
                                         pastExpenditureAsset.Amount += Math.Abs(previousTempExpenditure.Amount);
                                         pastExpenditureAsset.Updated = DateTime.UtcNow;
@@ -2684,24 +2679,24 @@ namespace Maroik.WebSite.Controllers
                     #region 대분류 = '소비지출'
                     else if (expenditureInputViewModel.MainClass == "ConsumerSpending")
                     {
-                        if (expenditureInputViewModel.SubClass == "MealOrEatOutExpenses" ||
-                            expenditureInputViewModel.SubClass == "HousingOrSuppliesCost" ||
-                            expenditureInputViewModel.SubClass == "EducationExpenses" ||
-                            expenditureInputViewModel.SubClass == "MedicalExpenses" ||
-                            expenditureInputViewModel.SubClass == "TransportationCost" ||
-                            expenditureInputViewModel.SubClass == "CommunicationCost" ||
-                            expenditureInputViewModel.SubClass == "LeisureOrCulture" ||
-                            expenditureInputViewModel.SubClass == "ClothingOrShoes" ||
-                            expenditureInputViewModel.SubClass == "PinMoney" ||
-                            expenditureInputViewModel.SubClass == "ProtectionTypeInsurance" ||
-                            expenditureInputViewModel.SubClass == "OtherExpenses" ||
-                            expenditureInputViewModel.SubClass == "UnknownExpenditure")
+                        if (expenditureInputViewModel.SubClass is "MealOrEatOutExpenses" or
+                            "HousingOrSuppliesCost" or
+                            "EducationExpenses" or
+                            "MedicalExpenses" or
+                            "TransportationCost" or
+                            "CommunicationCost" or
+                            "LeisureOrCulture" or
+                            "ClothingOrShoes" or
+                            "PinMoney" or
+                            "ProtectionTypeInsurance" or
+                            "OtherExpenses" or
+                            "UnknownExpenditure")
                         {
                             try
                             {
-                                var tempExpenditures = await expenditureRepository.GetExpendituresAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
-                                var previousTempExpenditure = tempExpenditures.Where(a => a.Id == expenditureInputViewModel.Id).FirstOrDefault();
-                                var currentTempExpenditure = new Expenditure()
+                                List<Expenditure> tempExpenditures = await expenditureRepository.GetExpendituresAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+                                Expenditure previousTempExpenditure = tempExpenditures.Where(a => a.Id == expenditureInputViewModel.Id).FirstOrDefault();
+                                Expenditure currentTempExpenditure = new()
                                 {
                                     Id = expenditureInputViewModel.Id,
                                     AccountEmail = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email,
@@ -2718,14 +2713,14 @@ namespace Maroik.WebSite.Controllers
                                 };
 
                                 #region Validate ProductName's Deletion
-                                var tempExpenditureAssetToValidate = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
+                                Asset tempExpenditureAssetToValidate = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
                                 if (tempExpenditureAssetToValidate.Deleted)
                                 {
                                     return Json(new { result = false, error = localizer["Actions cannot be executed with assets that have already been deleted."].Value });
                                 }
                                 if (!string.IsNullOrEmpty(previousTempExpenditure.MyDepositAsset))
                                 {
-                                    var tempIncomeAssetToValidate = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
+                                    Asset tempIncomeAssetToValidate = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
                                     if (tempIncomeAssetToValidate.Deleted)
                                     {
                                         return Json(new { result = false, error = localizer["Actions cannot be executed with assets that have already been deleted."].Value });
@@ -2746,7 +2741,7 @@ namespace Maroik.WebSite.Controllers
                                         #region 자산 업데이트
 
                                         #region 과거 자산
-                                        var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
+                                        Asset pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
                                         //var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
 
                                         //var currentExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.PaymentMethod);
@@ -2778,10 +2773,10 @@ namespace Maroik.WebSite.Controllers
                                         #region 자산 업데이트
 
                                         #region 과거 자산
-                                        var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
+                                        Asset pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
                                         //var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
 
-                                        var currentExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.PaymentMethod);
+                                        Asset currentExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.PaymentMethod);
                                         //var currentIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.MyDepositAsset);
 
                                         pastExpenditureAsset.Amount += Math.Abs(previousTempExpenditure.Amount);
@@ -2822,8 +2817,8 @@ namespace Maroik.WebSite.Controllers
                                         #region 자산 업데이트
 
                                         #region 과거 자산
-                                        var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
-                                        var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
+                                        Asset pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
+                                        Asset pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
 
                                         //var currentExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.PaymentMethod);
                                         //var currentIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.MyDepositAsset);
@@ -2854,8 +2849,8 @@ namespace Maroik.WebSite.Controllers
                                         #region 자산 업데이트
 
                                         #region 과거 자산
-                                        var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
-                                        var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
+                                        Asset pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
+                                        Asset pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
 
                                         //var currentExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.PaymentMethod);
                                         //var currentIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.MyDepositAsset);
@@ -2886,10 +2881,10 @@ namespace Maroik.WebSite.Controllers
                                         #region 자산 업데이트
 
                                         #region 과거 자산
-                                        var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
-                                        var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
+                                        Asset pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
+                                        Asset pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
 
-                                        var currentExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.PaymentMethod);
+                                        Asset currentExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.PaymentMethod);
                                         //var currentIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, currentTempExpenditure.MyDepositAsset);
 
                                         pastExpenditureAsset.Amount += Math.Abs(previousTempExpenditure.Amount);
@@ -2963,9 +2958,9 @@ namespace Maroik.WebSite.Controllers
         {
             try
             {
-                HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+                _ = HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
 
-                var tempExpenditures = await expenditureRepository.GetExpendituresAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+                List<Expenditure> tempExpenditures = await expenditureRepository.GetExpendituresAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
 
                 if (tempExpenditures == null)
                 {
@@ -2973,7 +2968,7 @@ namespace Maroik.WebSite.Controllers
                 }
                 else
                 {
-                    var tempExpenditure = tempExpenditures.Where(a => a.Id == expenditureInputViewModel.Id).FirstOrDefault();
+                    Expenditure tempExpenditure = tempExpenditures.Where(a => a.Id == expenditureInputViewModel.Id).FirstOrDefault();
                     if (tempExpenditure == null)
                     {
                         return Json(new { result = false, error = localizer["Input is invalid"].Value });
@@ -2981,14 +2976,14 @@ namespace Maroik.WebSite.Controllers
                     else
                     {
                         #region Validate ProductName's Deletion
-                        var tempExpenditureAssetToValidate = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, tempExpenditure.PaymentMethod);
+                        Asset tempExpenditureAssetToValidate = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, tempExpenditure.PaymentMethod);
                         if (tempExpenditureAssetToValidate.Deleted)
                         {
                             return Json(new { result = false, error = localizer["Actions cannot be executed with assets that have already been deleted."].Value });
                         }
                         if (!string.IsNullOrEmpty(tempExpenditure.MyDepositAsset))
                         {
-                            var tempIncomeAssetToValidate = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, tempExpenditure.MyDepositAsset);
+                            Asset tempIncomeAssetToValidate = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, tempExpenditure.MyDepositAsset);
                             if (tempIncomeAssetToValidate.Deleted)
                             {
                                 return Json(new { result = false, error = localizer["Actions cannot be executed with assets that have already been deleted."].Value });
@@ -3003,8 +2998,8 @@ namespace Maroik.WebSite.Controllers
                             #endregion
 
                             #region 자산 업데이트
-                            var expenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, tempExpenditure.PaymentMethod);
-                            var incomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, tempExpenditure.MyDepositAsset);
+                            Asset expenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, tempExpenditure.PaymentMethod);
+                            Asset incomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, tempExpenditure.MyDepositAsset);
 
                             expenditureAsset.Amount += Math.Abs(tempExpenditure.Amount);
                             expenditureAsset.Updated = DateTime.UtcNow;
@@ -3024,7 +3019,7 @@ namespace Maroik.WebSite.Controllers
                             #endregion
 
                             #region 자산 업데이트
-                            var expenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, tempExpenditure.PaymentMethod);
+                            Asset expenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, tempExpenditure.PaymentMethod);
 
                             expenditureAsset.Amount += Math.Abs(tempExpenditure.Amount);
                             expenditureAsset.Updated = DateTime.UtcNow;
@@ -3052,13 +3047,13 @@ namespace Maroik.WebSite.Controllers
             // query data from database
             await Task.Yield();
 
-            List<ExpenditureOutputViewModel> expenditureOutputViewModels = new List<ExpenditureOutputViewModel>();
+            List<ExpenditureOutputViewModel> expenditureOutputViewModels = new();
 
             #region Expenditures
 
-            HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+            _ = HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
 
-            foreach (var item in await expenditureRepository.GetExpendituresAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email))
+            foreach (Expenditure item in await expenditureRepository.GetExpendituresAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email))
             {
                 expenditureOutputViewModels.Add(new ExpenditureOutputViewModel()
                 {
@@ -3077,11 +3072,11 @@ namespace Maroik.WebSite.Controllers
 
             #endregion
 
-            var stream = new MemoryStream();
+            MemoryStream stream = new();
 
-            using (var package = new ExcelPackage(stream))
+            using (ExcelPackage package = new(stream))
             {
-                var workSheetMenuOutputViewModels = package.Workbook.Worksheets.Add("Sheet1");
+                ExcelWorksheet workSheetMenuOutputViewModels = package.Workbook.Worksheets.Add("Sheet1");
 
                 workSheetMenuOutputViewModels.Row(1).Height = 20;
                 workSheetMenuOutputViewModels.Row(1).Style.HorizontalAlignment = OfficeOpenXml.Style.ExcelHorizontalAlignment.Center;
@@ -3097,7 +3092,7 @@ namespace Maroik.WebSite.Controllers
                 workSheetMenuOutputViewModels.Cells[1, 9].Value = localizer[nameof(ExpenditureOutputViewModel.Updated).ToString()].Value;
 
                 int recordIndex = 2;
-                foreach (var item in expenditureOutputViewModels)
+                foreach (ExpenditureOutputViewModel item in expenditureOutputViewModels)
                 {
                     workSheetMenuOutputViewModels.Cells[recordIndex, 1].Value = localizer[item?.MainClass?.ToString() ?? ""].Value;
                     workSheetMenuOutputViewModels.Cells[recordIndex, 2].Value = localizer[item?.SubClass?.ToString() ?? ""].Value;
@@ -3115,7 +3110,7 @@ namespace Maroik.WebSite.Controllers
                 package.Save();
             }
             stream.Position = 0;
-            string excelName = $"{fileName}-{TimeZoneInfo.ConvertTimeBySystemTimeZoneId(DateTime.UtcNow, OSTimeZone.DestinationTimeZoneId).ToString("yyyy-MM-dd-HH-mm-ss-fff")}.xlsx";
+            string excelName = $"{fileName}-{TimeZoneInfo.ConvertTimeBySystemTimeZoneId(DateTime.UtcNow, OSTimeZone.DestinationTimeZoneId):yyyy-MM-dd-HH-mm-ss-fff}.xlsx";
 
             return File(stream, "application/octet-stream", excelName);
         }

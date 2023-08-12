@@ -38,8 +38,8 @@ namespace Maroik.WebSite.Controllers
         [HttpGet]
         public async Task<IActionResult> Profile()
         {
-            HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
-            var tempAccount = await accountRepository.GetAccountByEmailAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+            _ = HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+            Account tempAccount = await accountRepository.GetAccountByEmailAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
 
             return View(new ProfileOutputViewModel() { Email = tempAccount.Email, AvatarImagePath = tempAccount.AvatarImagePath, Nickname = tempAccount.Nickname, Created = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(tempAccount.Created, OSTimeZone.DestinationTimeZoneId) });
         }
@@ -60,21 +60,24 @@ namespace Maroik.WebSite.Controllers
             }
             else
             {
-                var profileAvatarFile = profileInputViewModel.ProfileAvatarFiles[0];
-                if (profileAvatarFile.Length > 0 && profileAvatarFile.Length <= 10485760) // profileAvatarFile Length : 파일 크기 0MB 이상, 10MB 이하)
+                IFormFile profileAvatarFile = profileInputViewModel.ProfileAvatarFiles[0];
+                if (profileAvatarFile.Length is > 0 and <= 10485760) // profileAvatarFile Length : 파일 크기 0MB 이상, 10MB 이하)
                 {
-                    if ((Path.GetExtension(profileAvatarFile.FileName) == ".png") || (Path.GetExtension(profileAvatarFile.FileName) == ".jpg") || (Path.GetExtension(profileAvatarFile.FileName) == ".jpeg"))
+                    if (Path.GetExtension(profileAvatarFile.FileName) is ".png" or ".jpg" or ".jpeg")
                     {
-                        HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+                        _ = HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
                         string avatarPath = Path.Combine(hostEnvironment.ContentRootPath, "wwwroot", "upload", "Management", "Profile", "Avatar");
                         if (!Directory.Exists(avatarPath))
-                            Directory.CreateDirectory(avatarPath);
+                        {
+                            _ = Directory.CreateDirectory(avatarPath);
+                        }
+
                         string guid = Guid.NewGuid().ToString().ToUpper();
                         string avatarFile = $"{guid}{Path.GetExtension(profileAvatarFile.FileName)}";
                         string filePath = Path.Combine(avatarPath, avatarFile);
 
 #pragma warning disable SCS0018 // Potential Path Traversal vulnerability was found where '{0}' in '{1}' may be tainted by user-controlled data from '{2}' in method '{3}'.
-                        using (FileStream stream = new FileStream(filePath, FileMode.Create))
+                        using (FileStream stream = new(filePath, FileMode.Create))
 #pragma warning restore SCS0018 // Potential Path Traversal vulnerability was found where '{0}' in '{1}' may be tainted by user-controlled data from '{2}' in method '{3}'.
                         {
                             await profileAvatarFile.CopyToAsync(stream);
@@ -83,7 +86,7 @@ namespace Maroik.WebSite.Controllers
 
                         try
                         {
-                            var tempAccount = await accountRepository.GetAccountByEmailAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+                            Account tempAccount = await accountRepository.GetAccountByEmailAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
                             tempAccount.AvatarImagePath = $"/upload/Management/Profile/Avatar/{avatarFile}";
                             await accountRepository.UpdateAccountAsync(tempAccount);
                             return Ok(new { result = true });
@@ -143,14 +146,14 @@ namespace Maroik.WebSite.Controllers
         [RequiredHttpPostAccess(Role = Role.User)]
         public async Task<IActionResult> UpdateProfilePassword([FromBody] ProfileInputViewModel profileInputViewModel)
         {
-            ModelState.Remove(nameof(profileInputViewModel.Nickname));
+            _ = ModelState.Remove(nameof(profileInputViewModel.Nickname));
 
             if (ModelState.IsValid)
             {
                 try
                 {
-                    HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
-                    var tempAccount = await accountRepository.GetAccountByEmailAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+                    _ = HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+                    Account tempAccount = await accountRepository.GetAccountByEmailAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
 
                     if (new RSA(RSAType.RSA2, Encoding.UTF8, RSA.privateKey, RSA.publicKey).Verify(profileInputViewModel.Password ?? "", tempAccount.HashedPassword)) // right password
                     {
@@ -189,32 +192,47 @@ namespace Maroik.WebSite.Controllers
         {
             try
             {
-                ModelState.Remove(nameof(accountInputViewModel.AvatarImagePath));
-                ModelState.Remove(nameof(accountInputViewModel.RegistrationToken));
-                ModelState.Remove(nameof(accountInputViewModel.ResetPasswordToken));
-                ModelState.Remove(nameof(accountInputViewModel.Message));
+                _ = ModelState.Remove(nameof(accountInputViewModel.AvatarImagePath));
+                _ = ModelState.Remove(nameof(accountInputViewModel.RegistrationToken));
+                _ = ModelState.Remove(nameof(accountInputViewModel.ResetPasswordToken));
+                _ = ModelState.Remove(nameof(accountInputViewModel.Message));
 
                 if (ModelState.IsValid)
                 {
                     #region Email 형식 체크
-                    bool IsValidEmail(string email)
+                    static bool IsValidEmail(string email)
                     {
-                        if (!MailAddress.TryCreate(email, out var mailAddress))
+                        if (!MailAddress.TryCreate(email, out MailAddress mailAddress))
+                        {
                             return false;
+                        }
 
                         // And if you want to be more strict:
-                        var hostParts = mailAddress.Host.Split('.');
+                        string[] hostParts = mailAddress.Host.Split('.');
                         if (hostParts.Length == 1)
+                        {
                             return false; // No dot.
+                        }
+
                         if (hostParts.Any(p => p == string.Empty))
+                        {
                             return false; // Double dot.
+                        }
+
                         if (hostParts[^1].Length < 2)
+                        {
                             return false; // TLD only one letter.
+                        }
 
                         if (mailAddress.User.Contains(' '))
+                        {
                             return false;
+                        }
+
                         if (mailAddress.User.Split('.').Any(p => p == string.Empty))
+                        {
                             return false; // Double dot or dot at end of user part.
+                        }
 
                         return true;
                     }
@@ -236,14 +254,14 @@ namespace Maroik.WebSite.Controllers
                     {
                         return Json(new { result = false, error = localizer["Please enter Nickname"].Value });
                     }
-                    else if (!(accountInputViewModel.Nickname.Length >= 1 && accountInputViewModel.Nickname.Length <= 255))
+                    else if (accountInputViewModel.Nickname.Length is not (>= 1 and <= 255))
                     {
                         return Json(new { result = false, error = localizer["Nickname is must be between 1 and 255 characters"].Value });
                     }
                     #endregion
 
                     #region Role 체크
-                    if (!(accountInputViewModel.Role == Role.Admin || accountInputViewModel.Role == Role.User))
+                    if (accountInputViewModel.Role is not (Role.Admin or Role.User))
                     {
                         accountInputViewModel.Role = Role.User;
                     }
@@ -300,10 +318,10 @@ namespace Maroik.WebSite.Controllers
         {
             if (HttpContext.Request.Headers["X-Requested-With"] == "XMLHttpRequest") // ajax
             {
-                List<AccountOutputViewModel> accountOutputViewModels = new List<AccountOutputViewModel>();
+                List<AccountOutputViewModel> accountOutputViewModels = new();
 
                 #region Accounts
-                foreach (var item in await accountRepository.GetAllAsync())
+                foreach (Account item in await accountRepository.GetAllAsync())
                 {
                     if (string.IsNullOrEmpty(wholeSearch))
                     {
@@ -367,7 +385,7 @@ namespace Maroik.WebSite.Controllers
                 }
                 #endregion
 
-                var result = accountOutputViewModels.OrderBy(m => m.Email).ThenBy(m => m.Nickname).ThenByDescending(m => m.Created).ThenByDescending(m => m.Updated).AsQueryable();
+                IQueryable<AccountOutputViewModel> result = accountOutputViewModels.OrderBy(m => m.Email).ThenBy(m => m.Nickname).ThenByDescending(m => m.Created).ThenByDescending(m => m.Updated).AsQueryable();
                 return PartialView("_AccountGrid", result);
             }
             return View();
@@ -380,16 +398,11 @@ namespace Maroik.WebSite.Controllers
         {
             try
             {
-                var tempAccount = await accountRepository.GetAccountByEmailAsync(email);
+                Account tempAccount = await accountRepository.GetAccountByEmailAsync(email);
 
-                if (tempAccount == null)
-                {
-                    return Json(new { result = false, error = localizer["Fail to find the account by given email address"].Value });
-                }
-                else
-                {
-                    return Json(new { result = true, account = tempAccount });
-                }
+                return tempAccount == null
+                    ? Json(new { result = false, error = localizer["Fail to find the account by given email address"].Value })
+                    : (IActionResult)Json(new { result = true, account = tempAccount });
             }
             catch (Exception e)
             {
@@ -407,14 +420,14 @@ namespace Maroik.WebSite.Controllers
         {
             try
             {
-                ModelState.Remove(nameof(accountInputViewModel.Nickname));
-                ModelState.Remove(nameof(accountInputViewModel.AvatarImagePath));
-                ModelState.Remove(nameof(accountInputViewModel.RegistrationToken));
-                ModelState.Remove(nameof(accountInputViewModel.ResetPasswordToken));
+                _ = ModelState.Remove(nameof(accountInputViewModel.Nickname));
+                _ = ModelState.Remove(nameof(accountInputViewModel.AvatarImagePath));
+                _ = ModelState.Remove(nameof(accountInputViewModel.RegistrationToken));
+                _ = ModelState.Remove(nameof(accountInputViewModel.ResetPasswordToken));
 
                 if (ModelState.IsValid)
                 {
-                    var tempAccount = await accountRepository.GetAccountByEmailAsync(accountInputViewModel.Email);
+                    Account tempAccount = await accountRepository.GetAccountByEmailAsync(accountInputViewModel.Email);
 
                     if (tempAccount == null)
                     {
@@ -459,7 +472,7 @@ namespace Maroik.WebSite.Controllers
         {
             try
             {
-                var tempAccount = await accountRepository.GetAccountByEmailAsync(accountInputViewModel.Email);
+                Account tempAccount = await accountRepository.GetAccountByEmailAsync(accountInputViewModel.Email);
 
                 if (tempAccount == null)
                 {
@@ -489,10 +502,10 @@ namespace Maroik.WebSite.Controllers
             // query data from database
             await Task.Yield();
 
-            List<AccountOutputViewModel> accountOutputViewModels = new List<AccountOutputViewModel>();
+            List<AccountOutputViewModel> accountOutputViewModels = new();
 
             #region Accounts
-            foreach (var item in await accountRepository.GetAllAsync())
+            foreach (Account item in await accountRepository.GetAllAsync())
             {
                 accountOutputViewModels.Add(new AccountOutputViewModel()
                 {
@@ -516,11 +529,11 @@ namespace Maroik.WebSite.Controllers
             accountOutputViewModels = accountOutputViewModels.OrderBy(m => m.Email).ThenBy(m => m.Nickname).ThenByDescending(m => m.Created).ThenByDescending(m => m.Updated).ToList();
             #endregion
 
-            var stream = new MemoryStream();
+            MemoryStream stream = new();
 
-            using (var package = new ExcelPackage(stream))
+            using (ExcelPackage package = new(stream))
             {
-                var workSheetMenuOutputViewModels = package.Workbook.Worksheets.Add("Sheet1");
+                ExcelWorksheet workSheetMenuOutputViewModels = package.Workbook.Worksheets.Add("Sheet1");
 
                 workSheetMenuOutputViewModels.Row(1).Height = 20;
                 workSheetMenuOutputViewModels.Row(1).Style.HorizontalAlignment = OfficeOpenXml.Style.ExcelHorizontalAlignment.Center;
@@ -542,7 +555,7 @@ namespace Maroik.WebSite.Controllers
                 workSheetMenuOutputViewModels.Cells[1, 15].Value = localizer[nameof(AccountOutputViewModel.Deleted).ToString()].Value;
 
                 int recordIndex = 2;
-                foreach (var item in accountOutputViewModels)
+                foreach (AccountOutputViewModel item in accountOutputViewModels)
                 {
                     workSheetMenuOutputViewModels.Cells[recordIndex, 1].Value = item.Email;
                     workSheetMenuOutputViewModels.Cells[recordIndex, 2].Value = item.HashedPassword;
@@ -565,7 +578,7 @@ namespace Maroik.WebSite.Controllers
                 package.Save();
             }
             stream.Position = 0;
-            string excelName = $"{fileName}-{TimeZoneInfo.ConvertTimeBySystemTimeZoneId(DateTime.UtcNow, OSTimeZone.DestinationTimeZoneId).ToString("yyyy-MM-dd-HH-mm-ss-fff")}.xlsx";
+            string excelName = $"{fileName}-{TimeZoneInfo.ConvertTimeBySystemTimeZoneId(DateTime.UtcNow, OSTimeZone.DestinationTimeZoneId):yyyy-MM-dd-HH-mm-ss-fff}.xlsx";
 
             return File(stream, "application/octet-stream", excelName);
         }
@@ -583,11 +596,11 @@ namespace Maroik.WebSite.Controllers
         {
             try
             {
-                ModelState.Remove(nameof(menuInputViewModel.Action)); // remove ModelState check in Action (in Request parameters, Action can be null)
+                _ = ModelState.Remove(nameof(menuInputViewModel.Action)); // remove ModelState check in Action (in Request parameters, Action can be null)
 
                 if (ModelState.IsValid)
                 {
-                    Category category = new Category
+                    Category category = new()
                     {
                         Name = menuInputViewModel.Name,
                         DisplayName = menuInputViewModel.DisplayName,
@@ -619,11 +632,11 @@ namespace Maroik.WebSite.Controllers
         {
             try
             {
-                ModelState.Remove(nameof(menuInputViewModel.Controller)); // remove ModelState check in Controller (in Request parameters, Controller can be null)
+                _ = ModelState.Remove(nameof(menuInputViewModel.Controller)); // remove ModelState check in Controller (in Request parameters, Controller can be null)
 
                 if (ModelState.IsValid)
                 {
-                    SubCategory subCategory = new SubCategory
+                    SubCategory subCategory = new()
                     {
                         CategoryId = menuInputViewModel.CategoryId,
                         Name = menuInputViewModel.Name,
@@ -655,10 +668,10 @@ namespace Maroik.WebSite.Controllers
         {
             if (HttpContext.Request.Headers["X-Requested-With"] == "XMLHttpRequest") // ajax
             {
-                List<MenuOutputViewModel> menuOutputViewModels = new List<MenuOutputViewModel>();
+                List<MenuOutputViewModel> menuOutputViewModels = new();
 
                 #region AdminCategories
-                foreach (var item in await categoryRepository.GetCategoryByRoleAsync(Role.Admin))
+                foreach (Category item in await categoryRepository.GetCategoryByRoleAsync(Role.Admin))
                 {
                     if (string.IsNullOrEmpty(wholeSearch))
                     {
@@ -704,7 +717,7 @@ namespace Maroik.WebSite.Controllers
                 #endregion
 
                 #region UserCategories
-                foreach (var item in await categoryRepository.GetCategoryByRoleAsync(Role.User))
+                foreach (Category item in await categoryRepository.GetCategoryByRoleAsync(Role.User))
                 {
                     if (string.IsNullOrEmpty(wholeSearch))
                     {
@@ -750,7 +763,7 @@ namespace Maroik.WebSite.Controllers
                 #endregion
 
                 #region AnonymousCategories
-                foreach (var item in await categoryRepository.GetCategoryByRoleAsync(Role.Anonymous))
+                foreach (Category item in await categoryRepository.GetCategoryByRoleAsync(Role.Anonymous))
                 {
                     if (string.IsNullOrEmpty(wholeSearch))
                     {
@@ -796,7 +809,7 @@ namespace Maroik.WebSite.Controllers
                 #endregion
 
                 #region AdminSubCategories
-                foreach (var item in await subCategoryRepository.GetSubCategoryByRoleAsync(Role.Admin))
+                foreach (SubCategory item in await subCategoryRepository.GetSubCategoryByRoleAsync(Role.Admin))
                 {
                     if (string.IsNullOrEmpty(wholeSearch))
                     {
@@ -842,7 +855,7 @@ namespace Maroik.WebSite.Controllers
                 #endregion
 
                 #region UserSubCategories
-                foreach (var item in await subCategoryRepository.GetSubCategoryByRoleAsync(Role.User))
+                foreach (SubCategory item in await subCategoryRepository.GetSubCategoryByRoleAsync(Role.User))
                 {
                     if (string.IsNullOrEmpty(wholeSearch))
                     {
@@ -888,7 +901,7 @@ namespace Maroik.WebSite.Controllers
                 #endregion
 
                 #region AnonymousSubCategories
-                foreach (var item in await subCategoryRepository.GetSubCategoryByRoleAsync(Role.Anonymous))
+                foreach (SubCategory item in await subCategoryRepository.GetSubCategoryByRoleAsync(Role.Anonymous))
                 {
                     if (string.IsNullOrEmpty(wholeSearch))
                     {
@@ -933,7 +946,7 @@ namespace Maroik.WebSite.Controllers
                 }
                 #endregion
 
-                var result = menuOutputViewModels.OrderByDescending(m => m.Id).ThenByDescending(m => m.CategoryId).AsQueryable();
+                IQueryable<MenuOutputViewModel> result = menuOutputViewModels.OrderByDescending(m => m.Id).ThenByDescending(m => m.CategoryId).AsQueryable();
                 return PartialView("_MenuGrid", result);
             }
 
@@ -947,10 +960,10 @@ namespace Maroik.WebSite.Controllers
         {
             try
             {
-                List<MenuOutputViewModel> menuOutputViewModels = new List<MenuOutputViewModel>();
+                List<MenuOutputViewModel> menuOutputViewModels = new();
 
                 #region AdminCategories
-                foreach (var item in await categoryRepository.GetCategoryByRoleAsync(Role.Admin))
+                foreach (Category item in await categoryRepository.GetCategoryByRoleAsync(Role.Admin))
                 {
                     menuOutputViewModels.Add(new MenuOutputViewModel()
                     {
@@ -968,7 +981,7 @@ namespace Maroik.WebSite.Controllers
                 #endregion
 
                 #region UserCategories
-                foreach (var item in await categoryRepository.GetCategoryByRoleAsync(Role.User))
+                foreach (Category item in await categoryRepository.GetCategoryByRoleAsync(Role.User))
                 {
                     menuOutputViewModels.Add(new MenuOutputViewModel()
                     {
@@ -986,7 +999,7 @@ namespace Maroik.WebSite.Controllers
                 #endregion
 
                 #region AnonymousCategories
-                foreach (var item in await categoryRepository.GetCategoryByRoleAsync(Role.Anonymous))
+                foreach (Category item in await categoryRepository.GetCategoryByRoleAsync(Role.Anonymous))
                 {
                     menuOutputViewModels.Add(new MenuOutputViewModel()
                     {
@@ -1003,7 +1016,7 @@ namespace Maroik.WebSite.Controllers
                 }
                 #endregion
 
-                var selectedCategory = menuOutputViewModels.Where(a => a.Id == id).FirstOrDefault();
+                MenuOutputViewModel selectedCategory = menuOutputViewModels.Where(a => a.Id == id).FirstOrDefault();
                 if (selectedCategory == null)
                 {
                     throw new Exception(); // DB에서 못 찾음
@@ -1023,10 +1036,10 @@ namespace Maroik.WebSite.Controllers
         {
             try
             {
-                List<MenuOutputViewModel> menuOutputViewModels = new List<MenuOutputViewModel>();
+                List<MenuOutputViewModel> menuOutputViewModels = new();
 
                 #region AdminSubCategories
-                foreach (var item in await subCategoryRepository.GetSubCategoryByRoleAsync(Role.Admin))
+                foreach (SubCategory item in await subCategoryRepository.GetSubCategoryByRoleAsync(Role.Admin))
                 {
                     menuOutputViewModels.Add(new MenuOutputViewModel()
                     {
@@ -1044,7 +1057,7 @@ namespace Maroik.WebSite.Controllers
                 #endregion
 
                 #region UserSubCategories
-                foreach (var item in await subCategoryRepository.GetSubCategoryByRoleAsync(Role.User))
+                foreach (SubCategory item in await subCategoryRepository.GetSubCategoryByRoleAsync(Role.User))
                 {
                     menuOutputViewModels.Add(new MenuOutputViewModel()
                     {
@@ -1062,7 +1075,7 @@ namespace Maroik.WebSite.Controllers
                 #endregion
 
                 #region AnonymousSubCategories
-                foreach (var item in await subCategoryRepository.GetSubCategoryByRoleAsync(Role.Anonymous))
+                foreach (SubCategory item in await subCategoryRepository.GetSubCategoryByRoleAsync(Role.Anonymous))
                 {
                     menuOutputViewModels.Add(new MenuOutputViewModel()
                     {
@@ -1079,7 +1092,7 @@ namespace Maroik.WebSite.Controllers
                 }
                 #endregion
 
-                var selectedCategory = menuOutputViewModels.Where(a => a.Id == id).FirstOrDefault();
+                MenuOutputViewModel selectedCategory = menuOutputViewModels.Where(a => a.Id == id).FirstOrDefault();
                 if (selectedCategory == null)
                 {
                     throw new Exception(); // DB에서 못 찾음
@@ -1101,11 +1114,11 @@ namespace Maroik.WebSite.Controllers
         {
             try
             {
-                ModelState.Remove(nameof(menuInputViewModel.Action)); // remove ModelState check in Action (in Request parameters, Action can be null)
+                _ = ModelState.Remove(nameof(menuInputViewModel.Action)); // remove ModelState check in Action (in Request parameters, Action can be null)
 
                 if (ModelState.IsValid)
                 {
-                    Category category = new Category
+                    Category category = new()
                     {
                         Id = menuInputViewModel.Id,
                         Name = menuInputViewModel.Name,
@@ -1138,11 +1151,11 @@ namespace Maroik.WebSite.Controllers
         {
             try
             {
-                ModelState.Remove(nameof(menuInputViewModel.Controller)); // remove ModelState check in Controller (in Request parameters, Controller can be null)
+                _ = ModelState.Remove(nameof(menuInputViewModel.Controller)); // remove ModelState check in Controller (in Request parameters, Controller can be null)
 
                 if (ModelState.IsValid)
                 {
-                    SubCategory subCategory = new SubCategory
+                    SubCategory subCategory = new()
                     {
                         Id = menuInputViewModel.Id,
                         CategoryId = menuInputViewModel.CategoryId,
@@ -1177,11 +1190,11 @@ namespace Maroik.WebSite.Controllers
         {
             try
             {
-                ModelState.Remove(nameof(menuInputViewModel.Action)); // remove ModelState check in Action (in Request parameters, Action can be null)
+                _ = ModelState.Remove(nameof(menuInputViewModel.Action)); // remove ModelState check in Action (in Request parameters, Action can be null)
 
                 if (ModelState.IsValid)
                 {
-                    Category category = new Category
+                    Category category = new()
                     {
                         Id = menuInputViewModel.Id,
                         Name = menuInputViewModel.Name,
@@ -1213,11 +1226,11 @@ namespace Maroik.WebSite.Controllers
         {
             try
             {
-                ModelState.Remove(nameof(menuInputViewModel.Controller)); // remove ModelState check in Controller (in Request parameters, Controller can be null)
+                _ = ModelState.Remove(nameof(menuInputViewModel.Controller)); // remove ModelState check in Controller (in Request parameters, Controller can be null)
 
                 if (ModelState.IsValid)
                 {
-                    SubCategory subCategory = new SubCategory
+                    SubCategory subCategory = new()
                     {
                         Id = menuInputViewModel.Id,
                         CategoryId = menuInputViewModel.CategoryId,
@@ -1254,10 +1267,10 @@ namespace Maroik.WebSite.Controllers
             // query data from database
             await Task.Yield();
 
-            List<MenuOutputViewModel> menuOutputViewModels = new List<MenuOutputViewModel>();
+            List<MenuOutputViewModel> menuOutputViewModels = new();
 
             #region AdminCategories
-            foreach (var item in await categoryRepository.GetCategoryByRoleAsync(Role.Admin))
+            foreach (Category item in await categoryRepository.GetCategoryByRoleAsync(Role.Admin))
             {
                 menuOutputViewModels.Add(new MenuOutputViewModel()
                 {
@@ -1275,7 +1288,7 @@ namespace Maroik.WebSite.Controllers
             #endregion
 
             #region UserCategories
-            foreach (var item in await categoryRepository.GetCategoryByRoleAsync(Role.User))
+            foreach (Category item in await categoryRepository.GetCategoryByRoleAsync(Role.User))
             {
                 menuOutputViewModels.Add(new MenuOutputViewModel()
                 {
@@ -1293,7 +1306,7 @@ namespace Maroik.WebSite.Controllers
             #endregion
 
             #region AnonymousCategories
-            foreach (var item in await categoryRepository.GetCategoryByRoleAsync(Role.Anonymous))
+            foreach (Category item in await categoryRepository.GetCategoryByRoleAsync(Role.Anonymous))
             {
                 menuOutputViewModels.Add(new MenuOutputViewModel()
                 {
@@ -1311,7 +1324,7 @@ namespace Maroik.WebSite.Controllers
             #endregion
 
             #region AdminSubCategories
-            foreach (var item in await subCategoryRepository.GetSubCategoryByRoleAsync(Role.Admin))
+            foreach (SubCategory item in await subCategoryRepository.GetSubCategoryByRoleAsync(Role.Admin))
             {
                 menuOutputViewModels.Add(new MenuOutputViewModel()
                 {
@@ -1329,7 +1342,7 @@ namespace Maroik.WebSite.Controllers
             #endregion
 
             #region UserSubCategories
-            foreach (var item in await subCategoryRepository.GetSubCategoryByRoleAsync(Role.User))
+            foreach (SubCategory item in await subCategoryRepository.GetSubCategoryByRoleAsync(Role.User))
             {
                 menuOutputViewModels.Add(new MenuOutputViewModel()
                 {
@@ -1347,7 +1360,7 @@ namespace Maroik.WebSite.Controllers
             #endregion
 
             #region AnonymousSubCategories
-            foreach (var item in await subCategoryRepository.GetSubCategoryByRoleAsync(Role.Anonymous))
+            foreach (SubCategory item in await subCategoryRepository.GetSubCategoryByRoleAsync(Role.Anonymous))
             {
                 menuOutputViewModels.Add(new MenuOutputViewModel()
                 {
@@ -1366,11 +1379,11 @@ namespace Maroik.WebSite.Controllers
 
             menuOutputViewModels = menuOutputViewModels.OrderByDescending(m => m.Id).ThenByDescending(m => m.CategoryId).ToList();
 
-            var stream = new MemoryStream();
+            MemoryStream stream = new();
 
-            using (var package = new ExcelPackage(stream))
+            using (ExcelPackage package = new(stream))
             {
-                var workSheetMenuOutputViewModels = package.Workbook.Worksheets.Add("Sheet1");
+                ExcelWorksheet workSheetMenuOutputViewModels = package.Workbook.Worksheets.Add("Sheet1");
 
                 workSheetMenuOutputViewModels.Row(1).Height = 20;
                 workSheetMenuOutputViewModels.Row(1).Style.HorizontalAlignment = OfficeOpenXml.Style.ExcelHorizontalAlignment.Center;
@@ -1386,7 +1399,7 @@ namespace Maroik.WebSite.Controllers
                 workSheetMenuOutputViewModels.Cells[1, 9].Value = localizer[nameof(MenuOutputViewModel.Order).ToString()].Value;
 
                 int recordIndex = 2;
-                foreach (var item in menuOutputViewModels)
+                foreach (MenuOutputViewModel item in menuOutputViewModels)
                 {
                     workSheetMenuOutputViewModels.Cells[recordIndex, 1].Value = item.Id;
                     workSheetMenuOutputViewModels.Cells[recordIndex, 2].Value = item.CategoryId;
@@ -1403,7 +1416,7 @@ namespace Maroik.WebSite.Controllers
                 package.Save();
             }
             stream.Position = 0;
-            string excelName = $"{fileName}-{TimeZoneInfo.ConvertTimeBySystemTimeZoneId(DateTime.UtcNow, OSTimeZone.DestinationTimeZoneId).ToString("yyyy-MM-dd-HH-mm-ss-fff")}.xlsx";
+            string excelName = $"{fileName}-{TimeZoneInfo.ConvertTimeBySystemTimeZoneId(DateTime.UtcNow, OSTimeZone.DestinationTimeZoneId):yyyy-MM-dd-HH-mm-ss-fff}.xlsx";
 
             return File(stream, "application/octet-stream", excelName);
         }

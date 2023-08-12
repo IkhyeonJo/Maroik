@@ -15,7 +15,7 @@ using System.Globalization;
 using System.Net;
 using System.Text;
 
-var builder = WebApplication.CreateBuilder(args);
+WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 #region ServerSettings
 ServerSetting.DomainName = builder.Configuration.GetSection("ServerSetting")["DomainName"];
@@ -92,7 +92,7 @@ builder.Services.AddMvc().AddViewLocalization(LanguageViewLocationExpanderFormat
 builder.Services.Configure<RequestLocalizationOptions>(
     opt =>
     {
-        var supportedCultures = new List<CultureInfo>
+        List<CultureInfo> supportedCultures = new()
         {
                         new CultureInfo("en-US"),
                         new CultureInfo("ko-KR")
@@ -105,10 +105,10 @@ builder.Services.Configure<RequestLocalizationOptions>(
 
 builder.Services.AddControllersWithViews(options =>
 {
-    options.Filters.Add(typeof(AuthorizationFilter)); // An instance
+    _ = options.Filters.Add(typeof(AuthorizationFilter)); // An instance
 });
 
-var app = builder.Build();
+WebApplication app = builder.Build();
 //1.Exception / error handling
 
 //앱이 개발환경에서 실행되는 경우
@@ -185,8 +185,8 @@ app.UseStaticFiles(new StaticFileOptions
         }
         else if (isAccountSessionExist == true)
         {
-            context.Context.Session.TryGetValue("AccountSession", out byte[] resultByte);
-            var loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)); // Get Session
+            _ = context.Context.Session.TryGetValue("AccountSession", out byte[] resultByte);
+            Account loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)); // Get Session
 
             if (loginedAccount.Role == Role.Admin && !context.Context.Request.Path.StartsWithSegments("/admin")) // 로그인이 되었고 권한이 Admin인가? 그렇다면 ~/admin 자원에만 접근 허용
             {
@@ -279,8 +279,8 @@ app.Use(async (context, next) =>
 //app.UseEndpoints(endpoints => { endpoints.MapRazorPages(); endpoints.MapControllerRoute(name: "default", pattern: "{controller=Home}/{action=Index}/{id?}"); }); //9.엔드 포인트 라우팅 미들웨어(MapRazorPages 를 포함하는 UseEndPoints)를 사용하여 요청 파이프라인에 Razor Pages 엔드포인트를 추가합니다.
 
 #region Multi-Language
-var supportedCultures = new[] { "en-US", "ko-KR" };
-var localizationOptions = new RequestLocalizationOptions().SetDefaultCulture(supportedCultures[0])
+string[] supportedCultures = new[] { "en-US", "ko-KR" };
+RequestLocalizationOptions localizationOptions = new RequestLocalizationOptions().SetDefaultCulture(supportedCultures[0])
     .AddSupportedCultures(supportedCultures)
     .AddSupportedUICultures(supportedCultures);
 

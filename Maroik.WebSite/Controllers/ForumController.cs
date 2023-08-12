@@ -53,13 +53,13 @@ namespace Maroik.WebSite.Controllers
                     boardInputViewModel.Content ??= ""; // 내용이 아무것도 입력되지 않았다면
 
                     #region HtmlSanitizer
-                    var sanitizer = new HtmlSanitizer();
-                    sanitizer.AllowedAttributes.Add("class");
-                    var sanitized = sanitizer.Sanitize(boardInputViewModel.Content);
+                    HtmlSanitizer sanitizer = new();
+                    _ = sanitizer.AllowedAttributes.Add("class");
+                    string sanitized = sanitizer.Sanitize(boardInputViewModel.Content);
                     boardInputViewModel.Content = sanitized;
                     #endregion
 
-                    if (!(boardInputViewModel.Title.Length > 0 && boardInputViewModel.Title.Length <= 100)) // 제목 길이
+                    if (boardInputViewModel.Title.Length is not (> 0 and <= 100)) // 제목 길이
                     {
                         return Json(new { result = false, error = localizer["Title length is must be between 1 and 100 characters."].Value });
                     }
@@ -76,7 +76,7 @@ namespace Maroik.WebSite.Controllers
                             return Json(new { result = false, error = localizer["Only zip extension allowed."].Value });
                         }
 
-                        if (!(boardInputViewModel.UploadedFile.Length > 0 && boardInputViewModel.UploadedFile.Length <= 10485760)) // 10MB 이하만 가능
+                        if (boardInputViewModel.UploadedFile.Length is not (> 0 and <= 10485760)) // 10MB 이하만 가능
                         {
                             return Json(new { result = false, error = localizer["uploaded file size must be smaller than 10MB."].Value });
                         }
@@ -88,8 +88,8 @@ namespace Maroik.WebSite.Controllers
 
                         if (isAccountSessionExist)
                         {
-                            var loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)); // Get Session
-                            var board = new Board();
+                            Account loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)); // Get Session
+                            Board board = new();
 
                             if (loginedAccount.Role == Role.Admin) // 관리자인 경우
                             {
@@ -126,19 +126,22 @@ namespace Maroik.WebSite.Controllers
                             #region 첨부 파일 저장
                             if (boardInputViewModel.UploadedFile != null) // 첨부 파일 존재 시,
                             {
-                                if (boardInputViewModel.UploadedFile.Length > 0 && boardInputViewModel.UploadedFile.Length <= 10485760) // boardInputViewModel.UploadedFile Length : 파일 크기 0MB 이상, 10MB 이하
+                                if (boardInputViewModel.UploadedFile.Length is > 0 and <= 10485760) // boardInputViewModel.UploadedFile Length : 파일 크기 0MB 이상, 10MB 이하
                                 {
-                                    var createdBoardId = board.Id; // 첨부파일 FK 해서 로직 추가할 것
+                                    int createdBoardId = board.Id; // 첨부파일 FK 해서 로직 추가할 것
 
                                     string attachedFilePath = Path.Combine(hostEnvironment.ContentRootPath, "wwwroot", "upload", "Forum", "attachedFiles", $"{createdBoardId}");
                                     if (!Directory.Exists(attachedFilePath))
-                                        Directory.CreateDirectory(attachedFilePath);
+                                    {
+                                        _ = Directory.CreateDirectory(attachedFilePath);
+                                    }
+
                                     string guid = Guid.NewGuid().ToString().ToUpper();
                                     string attachedFile = $"{guid}{Path.GetExtension(boardInputViewModel.UploadedFile.FileName)}";
                                     string filePath = Path.Combine(attachedFilePath, attachedFile);
 
 #pragma warning disable SCS0018 // Potential Path Traversal vulnerability was found where '{0}' in '{1}' may be tainted by user-controlled data from '{2}' in method '{3}'.
-                                    using (FileStream stream = new FileStream(filePath, FileMode.Create))
+                                    using (FileStream stream = new(filePath, FileMode.Create))
 #pragma warning restore SCS0018 // Potential Path Traversal vulnerability was found where '{0}' in '{1}' may be tainted by user-controlled data from '{2}' in method '{3}'.
                                     {
                                         await boardInputViewModel.UploadedFile.CopyToAsync(stream);
@@ -203,9 +206,9 @@ namespace Maroik.WebSite.Controllers
                     }
 
                     #region HtmlSanitizer
-                    var sanitizer = new HtmlSanitizer();
-                    sanitizer.AllowedAttributes.Add("class");
-                    var sanitized = sanitizer.Sanitize(commentInputViewModel.Content);
+                    HtmlSanitizer sanitizer = new();
+                    _ = sanitizer.AllowedAttributes.Add("class");
+                    string sanitized = sanitizer.Sanitize(commentInputViewModel.Content);
                     commentInputViewModel.Content = sanitized;
                     #endregion
 
@@ -215,11 +218,11 @@ namespace Maroik.WebSite.Controllers
 
                         if (isAccountSessionExist)
                         {
-                            var loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)); // Get Session
+                            Account loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)); // Get Session
 
-                            var totalCommentsInSelectedBoard = await commentRepository.GetOneBoardComments(commentInputViewModel.BoardId);
+                            IEnumerable<Comment> totalCommentsInSelectedBoard = await commentRepository.GetOneBoardComments(commentInputViewModel.BoardId);
 
-                            var comment = new Comment()
+                            Comment comment = new()
                             {
                                 BoardId = commentInputViewModel.BoardId,
                                 Order = totalCommentsInSelectedBoard?.Count() ?? default,
@@ -270,19 +273,22 @@ namespace Maroik.WebSite.Controllers
             }
             else
             {
-                if (summernoteImageFile.Length > 0 && summernoteImageFile.Length <= 10485760) // imageFile Length : 파일 크기 0MB 이상, 10MB 이하
+                if (summernoteImageFile.Length is > 0 and <= 10485760) // imageFile Length : 파일 크기 0MB 이상, 10MB 이하
                 {
-                    if ((Path.GetExtension(summernoteImageFile.FileName) == ".png") || (Path.GetExtension(summernoteImageFile.FileName) == ".jpg") || (Path.GetExtension(summernoteImageFile.FileName) == ".jpeg"))
+                    if (Path.GetExtension(summernoteImageFile.FileName) is ".png" or ".jpg" or ".jpeg")
                     {
 
                         string summernoteImagePath = Path.Combine(hostEnvironment.ContentRootPath, "wwwroot", "upload", "Forum", "summernote", "images");
                         if (!Directory.Exists(summernoteImagePath))
-                            Directory.CreateDirectory(summernoteImagePath);
+                        {
+                            _ = Directory.CreateDirectory(summernoteImagePath);
+                        }
+
                         string imageFile = $"{Guid.NewGuid().ToString().ToUpper()}{Path.GetExtension(summernoteImageFile.FileName)}";
                         string filePath = Path.Combine(summernoteImagePath, imageFile);
 
 #pragma warning disable SCS0018 // Potential Path Traversal vulnerability was found where '{0}' in '{1}' may be tainted by user-controlled data from '{2}' in method '{3}'.
-                        using (FileStream stream = new FileStream(filePath, FileMode.Create))
+                        using (FileStream stream = new(filePath, FileMode.Create))
 #pragma warning restore SCS0018 // Potential Path Traversal vulnerability was found where '{0}' in '{1}' may be tainted by user-controlled data from '{2}' in method '{3}'.
                         {
                             await summernoteImageFile.CopyToAsync(stream);
@@ -312,7 +318,7 @@ namespace Maroik.WebSite.Controllers
         {
             if (method == "write") // 글쓰기 (write)
             {
-                var freeForumOutputViewModel = new FreeForumOutputViewModel();
+                FreeForumOutputViewModel freeForumOutputViewModel = new();
 
                 #region 게시판 글쓰기
                 freeForumOutputViewModel.Method = method;
@@ -320,14 +326,7 @@ namespace Maroik.WebSite.Controllers
 
                 bool isAccountSessionExist = HttpContext.Session.TryGetValue("AccountSession", out _); // 로그인이 되어 계정 세션이 생겼는지 확인
 
-                if (isAccountSessionExist) // Role: Admin or User
-                {
-                    return View(freeForumOutputViewModel);
-                }
-                else // Role: Anonymous
-                {
-                    return RedirectToAction("Login", "Account");
-                }
+                return isAccountSessionExist ? View(freeForumOutputViewModel) : RedirectToAction("Login", "Account");
             }
             else if (method == "detail") // 상세보기 (detail)
             {
@@ -336,24 +335,25 @@ namespace Maroik.WebSite.Controllers
                     return RedirectToAction("FreeForum", "Forum");
                 }
 
-                var freeForumOutputViewModel = new FreeForumOutputViewModel();
+                FreeForumOutputViewModel freeForumOutputViewModel = new()
+                {
+                    Method = method,
+                    DetailCurrentPage = page,
+                    DetailBoardId = boardId ?? default
+                };
 
-                freeForumOutputViewModel.Method = method;
-                freeForumOutputViewModel.DetailCurrentPage = page;
-                freeForumOutputViewModel.DetailBoardId = boardId ?? default;
-
-                var freeBoards = await boardRepository.GetOneTypeBoards("Free");
+                IEnumerable<Board> freeBoards = await boardRepository.GetOneTypeBoards("Free");
                 freeBoards = freeBoards.Where(m => m.Deleted == false).OrderByDescending(a => a.Id);
-                var attachedFiles = await attachedFileRepository.GetAllAsync();
+                List<AttachedFile> attachedFiles = await attachedFileRepository.GetAllAsync();
 
                 try
                 {
-                    var freeBoard = freeBoards.FirstOrDefault(m => m.Id == boardId);
+                    Board freeBoard = freeBoards.FirstOrDefault(m => m.Id == boardId);
 
                     if (freeBoard.Locked)
                     {
-                        HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte); // 작성자 또는 관리자인 경우
-                        var loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)); // Get Session
+                        _ = HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte); // 작성자 또는 관리자인 경우
+                        Account loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)); // Get Session
 
                         if (!(loginedAccount.Nickname == freeBoard.Writer || loginedAccount.Role == Role.Admin))
                         {
@@ -363,7 +363,7 @@ namespace Maroik.WebSite.Controllers
 
                     freeBoard.Views++;
                     await boardRepository.UpdateBoardAsync(freeBoard);
-                    var attachedFile = attachedFiles.FirstOrDefault(m => m.BoardId == boardId);
+                    AttachedFile attachedFile = attachedFiles.FirstOrDefault(m => m.BoardId == boardId);
 
 
                     freeForumOutputViewModel.BoardOutputViewModel = new BoardOutputViewModel()
@@ -393,29 +393,30 @@ namespace Maroik.WebSite.Controllers
                     return RedirectToAction("FreeForum", "Forum");
                 }
 
-                var freeForumOutputViewModel = new FreeForumOutputViewModel();
+                FreeForumOutputViewModel freeForumOutputViewModel = new()
+                {
+                    Method = method,
+                    EditCurrentPage = page,
+                    EditBoardId = boardId ?? default
+                };
 
-                freeForumOutputViewModel.Method = method;
-                freeForumOutputViewModel.EditCurrentPage = page;
-                freeForumOutputViewModel.EditBoardId = boardId ?? default;
-
-                var freeBoards = await boardRepository.GetOneTypeBoards("Free");
+                IEnumerable<Board> freeBoards = await boardRepository.GetOneTypeBoards("Free");
                 freeBoards = freeBoards.Where(m => m.Deleted == false).OrderByDescending(a => a.Id);
-                var attachedFiles = await attachedFileRepository.GetAllAsync();
+                List<AttachedFile> attachedFiles = await attachedFileRepository.GetAllAsync();
 
                 try
                 {
-                    var freeBoard = freeBoards.FirstOrDefault(m => m.Id == boardId);
+                    Board freeBoard = freeBoards.FirstOrDefault(m => m.Id == boardId);
 
-                    HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
-                    var loginedAccount = await accountRepository.GetAccountByEmailAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+                    _ = HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+                    Account loginedAccount = await accountRepository.GetAccountByEmailAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
 
                     if (freeBoard.Writer != loginedAccount.Nickname) // 작성자와 로그인한 사용자가 같지 않으면
                     {
                         return RedirectToAction("FreeForum", "Forum");
                     }
 
-                    var attachedFile = attachedFiles.FirstOrDefault(m => m.BoardId == boardId);
+                    AttachedFile attachedFile = attachedFiles.FirstOrDefault(m => m.BoardId == boardId);
 
 
                     freeForumOutputViewModel.BoardOutputViewModel = new BoardOutputViewModel()
@@ -445,11 +446,13 @@ namespace Maroik.WebSite.Controllers
                 #region 게시판 기본 페이징 로직
                 const int pageSize = 5;
                 if (page < 1)
+                {
                     page = 1;
+                }
                 #endregion
 
                 #region 관련된 모든 게시판 데이터 가져오는 로직
-                var freeBoards = await boardRepository.GetOneTypeBoards("Free");
+                IEnumerable<Board> freeBoards = await boardRepository.GetOneTypeBoards("Free");
                 freeBoards = freeBoards.Where(m => m.Deleted == false && m.Noticed == false).OrderByDescending(a => a.Id);
                 #endregion
 
@@ -460,7 +463,7 @@ namespace Maroik.WebSite.Controllers
 
                     if (isAccountSessionExist) // 로그인이 되어 있다면
                     {
-                        var loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)); // Get Session
+                        Account loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)); // Get Session
 
                         if (loginedAccount.Role == Role.Admin) // 관리자는 모든 게시물을 볼 수 있음
                         {
@@ -468,9 +471,9 @@ namespace Maroik.WebSite.Controllers
                         }
                         else if (loginedAccount.Role == Role.User) // 사용자는 보통 글 + 자신이 쓴 비밀글만 볼 수 있음
                         {
-                            var searchFreeBoards = new List<Board>();
-                            var noLockedFreeBoards = freeBoards.Where(a => a.Title.Contains(searchText)).Where(a => !a.Locked).ToList();
-                            var myLockedFreeBoards = freeBoards.Where(a => a.Title.Contains(searchText)).Where(a => a.Locked && a.Writer == loginedAccount.Nickname).ToList();
+                            List<Board> searchFreeBoards = new();
+                            List<Board> noLockedFreeBoards = freeBoards.Where(a => a.Title.Contains(searchText)).Where(a => !a.Locked).ToList();
+                            List<Board> myLockedFreeBoards = freeBoards.Where(a => a.Title.Contains(searchText)).Where(a => a.Locked && a.Writer == loginedAccount.Nickname).ToList();
                             searchFreeBoards.AddRange(noLockedFreeBoards);
                             searchFreeBoards.AddRange(myLockedFreeBoards);
 
@@ -492,7 +495,7 @@ namespace Maroik.WebSite.Controllers
                 }
                 #endregion
 
-                var freeForumOutputViewModel = new FreeForumOutputViewModel();
+                FreeForumOutputViewModel freeForumOutputViewModel = new();
 
                 #region 공지사항
                 freeForumOutputViewModel.NoticeBoards = (await boardRepository.GetOneTypeBoards("Free")).Where(m => m.Deleted == false && m.Noticed == true).OrderByDescending(a => a.Id);
@@ -526,7 +529,7 @@ namespace Maroik.WebSite.Controllers
         {
             try
             {
-                var freeBoards = await boardRepository.GetOneTypeBoards("Free");
+                IEnumerable<Board> freeBoards = await boardRepository.GetOneTypeBoards("Free");
                 freeBoards = freeBoards.Where(m => m.Deleted == false).OrderByDescending(a => a.Id);
 
                 if (freeBoards == null)
@@ -535,16 +538,11 @@ namespace Maroik.WebSite.Controllers
                 }
                 else
                 {
-                    var tempFreeBoard = freeBoards.Where(a => a.Id == id).FirstOrDefault();
+                    Board tempFreeBoard = freeBoards.Where(a => a.Id == id).FirstOrDefault();
 
-                    if (tempFreeBoard == null)
-                    {
-                        return Json(new { result = false, error = localizer["Input is invalid"].Value });
-                    }
-                    else
-                    {
-                        return Json(new { result = true, freeBoard = tempFreeBoard });
-                    }
+                    return tempFreeBoard == null
+                        ? Json(new { result = false, error = localizer["Input is invalid"].Value })
+                        : (IActionResult)Json(new { result = true, freeBoard = tempFreeBoard });
                 }
             }
             catch (Exception e)
@@ -572,13 +570,13 @@ namespace Maroik.WebSite.Controllers
                     boardInputViewModel.Content ??= ""; // 내용이 아무것도 입력되지 않았다면
 
                     #region HtmlSanitizer
-                    var sanitizer = new HtmlSanitizer();
-                    sanitizer.AllowedAttributes.Add("class");
-                    var sanitized = sanitizer.Sanitize(boardInputViewModel.Content);
+                    HtmlSanitizer sanitizer = new();
+                    _ = sanitizer.AllowedAttributes.Add("class");
+                    string sanitized = sanitizer.Sanitize(boardInputViewModel.Content);
                     boardInputViewModel.Content = sanitized;
                     #endregion
 
-                    if (!(boardInputViewModel.Title.Length > 0 && boardInputViewModel.Title.Length <= 100)) // 제목 길이
+                    if (boardInputViewModel.Title.Length is not (> 0 and <= 100)) // 제목 길이
                     {
                         return Json(new { result = false, error = localizer["Title length is must be between 1 and 100 characters."].Value });
                     }
@@ -595,7 +593,7 @@ namespace Maroik.WebSite.Controllers
                             return Json(new { result = false, error = localizer["Only zip extension allowed."].Value });
                         }
 
-                        if (!(boardInputViewModel.UploadedFile.Length > 0 && boardInputViewModel.UploadedFile.Length <= 10485760)) // 10MB 이하만 가능
+                        if (boardInputViewModel.UploadedFile.Length is not (> 0 and <= 10485760)) // 10MB 이하만 가능
                         {
                             return Json(new { result = false, error = localizer["uploaded file size must be smaller than 10MB."].Value });
                         }
@@ -607,12 +605,12 @@ namespace Maroik.WebSite.Controllers
 
                         if (isAccountSessionExist)
                         {
-                            var loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)); // Get Session
+                            Account loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)); // Get Session
 
-                            var freeBoards = await boardRepository.GetOneTypeBoards("Free");
+                            IEnumerable<Board> freeBoards = await boardRepository.GetOneTypeBoards("Free");
                             freeBoards = freeBoards.Where(m => m.Deleted == false).OrderByDescending(a => a.Id);
 
-                            var tempFreeBoard = freeBoards.Where(a => a.Id == boardInputViewModel.Id).FirstOrDefault();
+                            Board tempFreeBoard = freeBoards.Where(a => a.Id == boardInputViewModel.Id).FirstOrDefault();
 
                             if (tempFreeBoard.Writer != loginedAccount.Nickname)
                             {
@@ -626,27 +624,30 @@ namespace Maroik.WebSite.Controllers
 
                             await boardRepository.UpdateBoardAsync(tempFreeBoard);
 
-                            var attachedFiles = await attachedFileRepository?.GetAllAsync();
-                            var previousAttachedFile = attachedFiles?.FirstOrDefault(m => m.BoardId == boardInputViewModel.Id);
+                            List<AttachedFile> attachedFiles = await attachedFileRepository?.GetAllAsync();
+                            AttachedFile previousAttachedFile = attachedFiles?.FirstOrDefault(m => m.BoardId == boardInputViewModel.Id);
 
                             #region 첨부 파일 저장
 
                             #region 기존 첨부 파일 O && 신 첨부 파일 O
                             if (previousAttachedFile != null && boardInputViewModel.UploadedFile != null)
                             {
-                                if (boardInputViewModel.UploadedFile.Length > 0 && boardInputViewModel.UploadedFile.Length <= 10485760) // boardInputViewModel.UploadedFile Length : 파일 크기 0MB 이상, 10MB 이하
+                                if (boardInputViewModel.UploadedFile.Length is > 0 and <= 10485760) // boardInputViewModel.UploadedFile Length : 파일 크기 0MB 이상, 10MB 이하
                                 {
-                                    var createdBoardId = boardInputViewModel.Id; // 첨부파일 FK 해서 로직 추가할 것
+                                    int createdBoardId = boardInputViewModel.Id; // 첨부파일 FK 해서 로직 추가할 것
 
                                     string attachedFilePath = Path.Combine(hostEnvironment.ContentRootPath, "wwwroot", "upload", "Forum", "attachedFiles", $"{createdBoardId}");
                                     if (!Directory.Exists(attachedFilePath))
-                                        Directory.CreateDirectory(attachedFilePath);
+                                    {
+                                        _ = Directory.CreateDirectory(attachedFilePath);
+                                    }
+
                                     string guid = Guid.NewGuid().ToString().ToUpper();
                                     string attachedFile = $"{guid}{Path.GetExtension(boardInputViewModel.UploadedFile.FileName)}";
                                     string filePath = Path.Combine(attachedFilePath, attachedFile);
 
 #pragma warning disable SCS0018 // Potential Path Traversal vulnerability was found where '{0}' in '{1}' may be tainted by user-controlled data from '{2}' in method '{3}'.
-                                    using (FileStream stream = new FileStream(filePath, FileMode.Create))
+                                    using (FileStream stream = new(filePath, FileMode.Create))
 #pragma warning restore SCS0018 // Potential Path Traversal vulnerability was found where '{0}' in '{1}' may be tainted by user-controlled data from '{2}' in method '{3}'.
                                     {
                                         await boardInputViewModel.UploadedFile.CopyToAsync(stream);
@@ -686,19 +687,22 @@ namespace Maroik.WebSite.Controllers
                             #region 기존 첨부 파일 X && 신 첨부 파일 O
                             else if (previousAttachedFile == null && boardInputViewModel.UploadedFile != null)
                             {
-                                if (boardInputViewModel.UploadedFile.Length > 0 && boardInputViewModel.UploadedFile.Length <= 10485760) // boardInputViewModel.UploadedFile Length : 파일 크기 0MB 이상, 10MB 이하
+                                if (boardInputViewModel.UploadedFile.Length is > 0 and <= 10485760) // boardInputViewModel.UploadedFile Length : 파일 크기 0MB 이상, 10MB 이하
                                 {
-                                    var createdBoardId = boardInputViewModel.Id; // 첨부파일 FK 해서 로직 추가할 것
+                                    int createdBoardId = boardInputViewModel.Id; // 첨부파일 FK 해서 로직 추가할 것
 
                                     string attachedFilePath = Path.Combine(hostEnvironment.ContentRootPath, "wwwroot", "upload", "Forum", "attachedFiles", $"{createdBoardId}");
                                     if (!Directory.Exists(attachedFilePath))
-                                        Directory.CreateDirectory(attachedFilePath);
+                                    {
+                                        _ = Directory.CreateDirectory(attachedFilePath);
+                                    }
+
                                     string guid = Guid.NewGuid().ToString().ToUpper();
                                     string attachedFile = $"{guid}{Path.GetExtension(boardInputViewModel.UploadedFile.FileName)}";
                                     string filePath = Path.Combine(attachedFilePath, attachedFile);
 
 #pragma warning disable SCS0018 // Potential Path Traversal vulnerability was found where '{0}' in '{1}' may be tainted by user-controlled data from '{2}' in method '{3}'.
-                                    using (FileStream stream = new FileStream(filePath, FileMode.Create))
+                                    using (FileStream stream = new(filePath, FileMode.Create))
 #pragma warning restore SCS0018 // Potential Path Traversal vulnerability was found where '{0}' in '{1}' may be tainted by user-controlled data from '{2}' in method '{3}'.
                                     {
                                         await boardInputViewModel.UploadedFile.CopyToAsync(stream);
@@ -767,7 +771,7 @@ namespace Maroik.WebSite.Controllers
         {
             try
             {
-                var freeBoards = await boardRepository.GetOneTypeBoards("Free");
+                IEnumerable<Board> freeBoards = await boardRepository.GetOneTypeBoards("Free");
                 freeBoards = freeBoards.Where(m => m.Deleted == false).OrderByDescending(a => a.Id);
 
                 if (freeBoards == null)
@@ -776,7 +780,7 @@ namespace Maroik.WebSite.Controllers
                 }
                 else
                 {
-                    var tempFreeBoard = freeBoards.Where(a => a.Id == boardInputViewModel.Id).FirstOrDefault();
+                    Board tempFreeBoard = freeBoards.Where(a => a.Id == boardInputViewModel.Id).FirstOrDefault();
 
                     if (tempFreeBoard == null)
                     {
@@ -784,8 +788,8 @@ namespace Maroik.WebSite.Controllers
                     }
                     else
                     {
-                        HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
-                        var loginedAccount = await accountRepository.GetAccountByEmailAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+                        _ = HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+                        Account loginedAccount = await accountRepository.GetAccountByEmailAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
 
                         if ((loginedAccount.Nickname == tempFreeBoard.Writer) || loginedAccount.Role == Role.Admin) // 방문한 사람이 작성자 또는 관리자인 경우
                         {
@@ -819,7 +823,7 @@ namespace Maroik.WebSite.Controllers
         {
             try
             {
-                var comment = await commentRepository.GetComment(id);
+                Comment comment = await commentRepository.GetComment(id);
 
                 if (comment == null)
                 {
@@ -827,8 +831,8 @@ namespace Maroik.WebSite.Controllers
                 }
                 else
                 {
-                    HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
-                    var loginedAccount = await accountRepository.GetAccountByEmailAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+                    _ = HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+                    Account loginedAccount = await accountRepository.GetAccountByEmailAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
 
                     if ((loginedAccount.Nickname == comment.Writer) || loginedAccount.Role == Role.Admin) // 삭제하는 사람이 작성자 또는 관리자인 경우
                     {

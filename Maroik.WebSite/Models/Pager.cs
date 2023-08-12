@@ -15,14 +15,14 @@
 
         public Pager(int totalItems, int page, int pageSize = 10)
         {
-            int totalPages = (int)Math.Ceiling((decimal)totalItems / (decimal)pageSize);
+            int totalPages = (int)Math.Ceiling(totalItems / (decimal)pageSize);
             int currentPage = page;
             int startPage = currentPage - 2;
             int endPage = currentPage + 2;
 
             if (startPage <= 0)
             {
-                endPage = endPage - (startPage - 1);
+                endPage -= startPage - 1;
                 startPage = 1;
             }
 

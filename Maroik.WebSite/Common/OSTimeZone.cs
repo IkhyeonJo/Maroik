@@ -9,14 +9,7 @@ namespace Maroik.WebSite.Common
         {
             get
             {
-                if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-                {
-                    destinationTimeZoneId = "Korea Standard Time";
-                }
-                else
-                {
-                    destinationTimeZoneId = "Asia/Seoul";
-                }
+                destinationTimeZoneId = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "Korea Standard Time" : "Asia/Seoul";
 
                 return destinationTimeZoneId;
             }

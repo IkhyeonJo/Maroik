@@ -6,14 +6,14 @@ namespace Maroik.WebSite.Helpers
     {
         public Mail()
         {
-            this.SmtpUserName = ServerSetting.SmtpUserName;
-            this.SmtpPassword = ServerSetting.SmtpPassword;
-            this.SmtpHost = ServerSetting.SmtpHost;
-            this.SmtpPort = ServerSetting.SmtpPort;
-            this.SmtpSSL = ServerSetting.SmtpSSL;
-            this.FromEmail = ServerSetting.FromEmail;
-            this.FromFullName = ServerSetting.FromFullName;
-            this.IsDefault = ServerSetting.IsDefault;
+            SmtpUserName = ServerSetting.SmtpUserName;
+            SmtpPassword = ServerSetting.SmtpPassword;
+            SmtpHost = ServerSetting.SmtpHost;
+            SmtpPort = ServerSetting.SmtpPort;
+            SmtpSSL = ServerSetting.SmtpSSL;
+            FromEmail = ServerSetting.FromEmail;
+            FromFullName = ServerSetting.FromFullName;
+            IsDefault = ServerSetting.IsDefault;
         }
         public string SmtpUserName { get; set; }
         public string SmtpPassword { get; set; }

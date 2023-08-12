@@ -52,14 +52,17 @@ namespace Maroik.WebSite.Controllers
         public async Task<IActionResult> UserIndex()
         {
             #region Current Year & Month Income/Expenditure
-            HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
-            var currentYearMonth = DateTime.UtcNow.ToString("yyyy-MM");
-            var currentLoginUserEmail = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email;
+            _ = HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+            string currentYearMonth = DateTime.UtcNow.ToString("yyyy-MM");
+            string currentLoginUserEmail = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email;
 
-            var userIndexOutputViewModel = new UserIndexOutputViewModel();
-            userIndexOutputViewModel.Incomes = await incomeRepository.GetCurrentYearMonthIncomesAsync(currentLoginUserEmail, currentYearMonth);
-            userIndexOutputViewModel.Expenditures = await expenditureRepository.GetCurrentYearMonthExpendituresAsync(currentLoginUserEmail, currentYearMonth);
-            userIndexOutputViewModel.USP_Income_MonthlyReport_Results = await incomeRepository.GetCurrentYearMonthIncomesMonthlyReport(currentLoginUserEmail, currentYearMonth); ;
+            UserIndexOutputViewModel userIndexOutputViewModel = new()
+            {
+                Incomes = await incomeRepository.GetCurrentYearMonthIncomesAsync(currentLoginUserEmail, currentYearMonth),
+                Expenditures = await expenditureRepository.GetCurrentYearMonthExpendituresAsync(currentLoginUserEmail, currentYearMonth),
+                USP_Income_MonthlyReport_Results = await incomeRepository.GetCurrentYearMonthIncomesMonthlyReport(currentLoginUserEmail, currentYearMonth)
+            };
+            ;
             userIndexOutputViewModel.USP_Expenditure_MonthlyReport_Results = await expenditureRepository.GetCurrentYearMonthExpendituresMonthlyReport(currentLoginUserEmail, currentYearMonth);
             #endregion
 
@@ -75,7 +78,7 @@ namespace Maroik.WebSite.Controllers
 
             if (isAccountSessionExist) // 로그인 된 상태라면
             {
-                var loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)); // Get Session
+                Account loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)); // Get Session
                 if (loginedAccount.Role == Role.Admin) // 로그인한 사용자 권한이 Admin일 경우
                 {
                     return RedirectToAction("AdminIndex", "DashBoard");
