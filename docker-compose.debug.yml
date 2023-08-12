@@ -1,0 +1,68 @@
+﻿version: "3"
+
+volumes:
+      datasource:
+
+networks:       
+       backend:
+
+services:
+    mariadb:
+        image: "mariadb:10.11.2"
+        container_name: Maroik.MariaDB
+        volumes:
+          - datasource:/var/lib/mysql
+          - ./Maroik.MariaDB/SQL_Init_Script:/docker-entrypoint-initdb.d
+        networks:
+          - backend
+        environment:
+          - MYSQL_ROOT_PASSWORD=***REMOVED***
+          - bind-address=0.0.0.0
+          - TZ=Asia/Seoul
+        command:
+          - mysqld
+          - --character-set-server=utf8mb4
+          - --collation-server=utf8mb4_unicode_ci
+          - --default-time-zone=+09:00
+
+    maroik.website:
+        build :
+         context : .
+         dockerfile : Maroik.WebSite/Dockerfile
+        container_name: Maroik.WebSite
+        networks :
+          - backend          
+        ports:
+          - 80:80
+          - 443:443
+        environment :
+          - DBHOST=mariadb
+          - ASPNETCORE_ENVIRONMENT=DockerComposeLocalDebug
+          - ASPNETCORE_URLS=https://+:443;http://+:80
+          - ASPNETCORE_Kestrel__Certificates__Default__Password=Passw0rd
+          - ASPNETCORE_Kestrel__Certificates__Default__Path=/https/testhttps.pfx
+        volumes:
+          - ./Maroik.WebSite/:/https:ro
+        depends_on :
+          - mariadb  
+
+    maroik.webapi:
+        build :
+         context : .
+         dockerfile : Maroik.WebAPI/Dockerfile
+        container_name: Maroik.WebAPI
+        networks :
+          - backend          
+        ports:
+          - 5000:5000
+          - 5001:5001
+        environment :
+          - DBHOST=mariadb
+          - ASPNETCORE_ENVIRONMENT=DockerComposeLocalDebug
+          - ASPNETCORE_URLS=https://+:5001;http://+:5000
+          - ASPNETCORE_Kestrel__Certificates__Default__Password=Passw0rd
+          - ASPNETCORE_Kestrel__Certificates__Default__Path=/https/testhttps.pfx
+        volumes:
+          - ./Maroik.WebAPI/:/https:ro
+        depends_on :
+          - mariadb  

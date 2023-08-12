@@ -1,85 +1,4 @@
-﻿#https://docs.microsoft.com/en-us/visualstudio/containers/docker-compose-properties?view=vs-2019
-
-### ------------------------------------------README !IMPORTANT---------------------------------------------------------
-#Before start this project, Set Server settings in appsettings.json [Maroik.WebSite] (for registration & password recovery & Login) [Especially DomainName]
-### ------------------------------------------README !IMPORTANT---------------------------------------------------------
-
-##AWS step
-#step 1: Create AWS instance (in my case, AWS Linux)
-#step 2: Open PORT
-#80, 443, 5000, 5001 (DevelopmentMode)
-#80, 443, 5001 (Deploy)
-#step 3: Copy the entire [Maroik] folder to your AWS Instance.
-
-#Move to [Maroik] folder (which exists docker-compose.yml file) and execute below this command
-
-#AWS Command
-#-----------------------------------------------------------------------------------
-#sudo yum update -y && sudo amazon-linux-extras install docker -y && sudo service docker start && sudo curl -L https://github.com/docker/compose/releases/download/1.21.0/docker-compose-`uname -s`-`uname -m` | sudo tee /usr/local/bin/docker-compose > /dev/null && sudo chmod +x /usr/local/bin/docker-compose && sudo ln -s /usr/local/bin/docker-compose /usr/bin/docker-compose && sudo docker-compose up -d && sudo yum install -y python3 && sudo yum install -y cronie && chmod 777 DBBackup.sh  && sudo chmod 777 UploadFileBackUp.sh && crontab InitCron && sudo service crond restart
-#-----------------------------------------------------------------------------------
-
-#Ubuntu Command
-#-----------------------------------------------------------------------------------
-#sudo apt update -y && sudo apt upgrade -y && sudo apt install docker-compose -y && sudo docker-compose up -d && sudo apt install python3 -y && sudo chmod 777 DBBackup.sh && sudo chmod 777 RebootDockerCompose.sh && sudo chmod 777 AutoMountExternalStorages.sh && sudo chmod 777 UploadFileBackUp.sh && sudo crontab InitCron && sudo service cron reload && ./AutoMountExternalStorages.sh
-#-----------------------------------------------------------------------------------
-
-###stop docker-compose
-#sudo docker-compose down
-
-## To delete all containers
-#sudo docker rm -f $(docker ps -a -q)
-
-## To delete all volumes
-#sudo docker volume rm $(docker volume ls -q)
-
-## To delete all the images,
-#sudo docker rmi -f $(docker images -a -q)
-
-## To delete all containers including its volumes use,
-#sudo docker rm -vf $(docker ps -a -q)
-
-## To clear crontab list
-#sudo crontab -r
-
-###check docker containers
-#docker ps
-
-###check docker images
-#docker images
-
-###check docker volume
-#docker volume ls
-
-###check crontab (MUST CHECK root and current user)
-#crontab -l
-
-###remove docker images
-#docker rmi [Image ID]
-
-#when you should go debugging mode , change DB location (appsettings.json, DatabaseConfig.cs) and install (mariadb 10.6.5) and use IIS Express debugging mode
-
-#----------------------------------------------------------------------------------------------------
-### Tip: To see [CONTAINER ID], execute below this command
-#docker ps
-
-###Access docker container
-#docker exec -it <containerID> /bin/bash
-
-###In order to copy a file from a container to the host, you can use the command
-#docker cp <containerId>:/file/path/within/container /host/path/target
-
-###Backup and restore a mysql database from a running Docker mysql container
-
-## Backup
-#docker exec Maroik.MariaDB /usr/bin/mysqldump -u root --password=***REMOVED*** Maroik > backup.sql
-
-## Restore
-#cat backup.sql | docker exec -i Maroik.MariaDB /usr/bin/mysql -u root --password=***REMOVED*** Maroik
-#----------------------------------------------------------------------------------------------------
-
-
-#For Publish
-version: "3"
+﻿version: "3"
 
 volumes:
       datasource:
@@ -118,9 +37,9 @@ services:
           - 443:443
         environment :
           - DBHOST=mariadb
-          - ASPNETCORE_ENVIRONMENT=Development
+          - ASPNETCORE_ENVIRONMENT=Production
           - ASPNETCORE_URLS=https://+:443;http://+:80
-          - ASPNETCORE_Kestrel__Certificates__Default__Password=Passw0rd # must be equal to .pfx file's' password
+          - ASPNETCORE_Kestrel__Certificates__Default__Password=Passw0rd
           - ASPNETCORE_Kestrel__Certificates__Default__Path=/https/testhttps.pfx
         volumes:
           - ./Maroik.WebSite/:/https:ro
@@ -135,12 +54,11 @@ services:
         networks :
           - backend          
         ports:
-          #- 5000:5000 ## HTTP (for development purpose) (To see HTTP Packet) (RESTful API)
-          - 5001:5001 # HTTPS
+          - 5001:5001
         environment :
           - DBHOST=mariadb
-          - ASPNETCORE_ENVIRONMENT=Development
-          - ASPNETCORE_URLS=https://+:5001;http://+:5000
+          - ASPNETCORE_ENVIRONMENT=Production
+          - ASPNETCORE_URLS=https://+:5001
           - ASPNETCORE_Kestrel__Certificates__Default__Password=Passw0rd # must be equal to .pfx file's' password
           - ASPNETCORE_Kestrel__Certificates__Default__Path=/https/testhttps.pfx
         volumes:

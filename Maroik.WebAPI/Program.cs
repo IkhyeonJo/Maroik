@@ -144,7 +144,7 @@ if (app.Environment.IsDevelopment())
 #endregion
 
 #region 도메인 없을 때, 사용
-app.UseHttpsRedirection();
+//app.UseHttpsRedirection();
 #endregion
 
 app.UseSwagger();
