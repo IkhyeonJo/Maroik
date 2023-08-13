@@ -7,10 +7,10 @@ Docker, AdminLTE, MariaDB, Session Login, RESTful API, HTTPS etc.
 
 # How to deploy to ubuntu Server [You must read 홈서버 구축.pptx]
 
-## 1. Move all files to your ubuntu server [path:(~)]
+## 1. To Deploy Maroik service, Move all files to your ubuntu server [path:(~)]
 ## 2. execute this command [chmod 777 ~/Maroik/Maroik.DeployOps/Deploy.sh && ~/Maroik/Maroik.DeployOps/Deploy.sh]
 
-# IMPORTANT!! MUST Set this value [Maroik.WebSite -> appsettings.json -> DomainName (According to Server Domain)] & Mail Account & READ docker-compose file's comment!!
+# IMPORTANT!! MUST Set this value [Maroik.WebSite -> appsettings.Production.json -> DomainName (According to Server Domain)] & Mail Account & READ docker-compose file's comment!!
 
 # and if you wanna backup your .sql & Upload file frequently, please set [DBBackup.sh] [UploadFileBackup.sh] file's email address & password
 
