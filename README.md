@@ -5,8 +5,11 @@ I'm currently interested in make ASP.NET Core MVC WebApplication!
 
 Docker, AdminLTE, MariaDB, Session Login, RESTful API, HTTPS etc.
 
-# How to deploy to Ubuntu Server 22.04.3
+# How to run this project
+## 0. To completely debug Maroik.Website, you must set of /Maroik/Maroik.WebSite/[appsettings.DockerComposeLocalDebug.json & appsettings.Development]'s Mail Account Configuration.
+## 1. Execute [Maroik.sln] -> Open [1.Web] folder -> right-click [docker-compose] -> click "Set as Startup Project" -> Press F5 Button
 
+# How to deploy to Ubuntu Server 22.04.3
 ## 0. You must set this value [Maroik -> Maroik.WebSite -> appsettings.Production.json -> DomainName (According to Server Domain [If you don't have server domain, just set your server Public IP address])] & Mail Account
 ## 1. Depending on whether or not the domain exists, you must look at the comments (When you have server domain, uncomment, When you don't have server domain, uncomment) in [Maroik -> Maroik.WebSite -> Program.cs] and set it according to the environment. 
 ## 2. If you have server domain, you must register your specific domain!! [www.[domain] & [domain]] in DNS Server!
@@ -16,10 +19,6 @@ Docker, AdminLTE, MariaDB, Session Login, RESTful API, HTTPS etc.
 ## 6. Execute this command [chmod 777 ~/Maroik/Maroik.DeployOps/Deploy.sh && ~/Maroik/Maroik.DeployOps/Deploy.sh]
 ## 7. For more detail information, please read 홈서버 구축.pptx which is located /Maroik/Docs/HomeServer/홈서버 구축.pptx
 ## [Note] If you set number 3, the Maroik.WebSite Upload File Backup and Maroik MariaDB SQL Backup delivered by mail are server backups, you can overwrite them in the \Maroik\Maroik.WebSite\wwwroot\upload and \Maroik\Maroik.MariaDB\SQL_Init_Script folders respectively.
-
-# How to run this project
-## 0. To completely debug Maroik.Website, you must set of /Maroik/Maroik.WebSite/[appsettings.DockerComposeLocalDebug.json & appsettings.Development]'s Mail Account Configuration.
-## 1. Execute [Maroik.sln] -> Open [1.Web] folder -> right-click [docker-compose] -> click "Set as Startup Project" -> Press F5 Button
 
 # For more detail information, please see each project's README.md file
 
