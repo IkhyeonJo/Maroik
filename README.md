@@ -18,7 +18,7 @@ Docker, AdminLTE, MariaDB, Session Login, RESTful API, HTTPS etc.
 ## 5. Open Ubuntu Server 22.04.3 port 80, 443, 5001
 ## 6. Execute this command [chmod 777 ~/Maroik/Maroik.DeployOps/Deploy.sh && ~/Maroik/Maroik.DeployOps/Deploy.sh]
 ## 7. For more detail information, please read 홈서버 구축.pptx which is located /Maroik/Docs/HomeServer/홈서버 구축.pptx
-## [Note] If you set number 3, the Maroik.WebSite Upload File Backup and Maroik MariaDB SQL Backup delivered by mail are server backups, you can overwrite them in the \Maroik\Maroik.WebSite\wwwroot\upload and \Maroik\Maroik.MariaDB\SQL_Init_Script folders respectively.
+## 8. [Note] If you set number 3, the Maroik.WebSite Upload File Backup and Maroik MariaDB SQL Backup delivered by mail are server backups, you can overwrite them in the \Maroik\Maroik.WebSite\wwwroot\upload and \Maroik\Maroik.MariaDB\SQL_Init_Script folders respectively.
 
 ☞ 프로젝트명 : 스마트 홈 IoT & 가계부
 
