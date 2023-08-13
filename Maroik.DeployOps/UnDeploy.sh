@@ -2,8 +2,8 @@
 
 # run this script as default user
 
-# Bring down the Docker containers defined in docker-compose.yml
-sudo docker-compose -f ~/Maroik/docker-compose.yml down
+# Bring down the Docker containers defined in docker-compose.prod.yml
+sudo docker-compose -f ~/Maroik/docker-compose.prod.yml down
 
 # Stop and remove all Docker containers
 sudo docker stop $(docker ps -a -q)
