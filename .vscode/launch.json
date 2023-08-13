@@ -22,7 +22,7 @@
             "containerName": "Maroik.WebAPI"
         },
         {
-            "name": "C#: Maroik.WebSite",
+            "name": "Local: Maroik.WebSite",
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "build",
@@ -42,7 +42,7 @@
             }
         },
         {
-            "name": "C#: Maroik.WebAPI",
+            "name": "Local: Maroik.WebAPI",
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "build",
