@@ -1,42 +1,34 @@
 # Maroik
 Welcome to Maroik!
 
-I'm currently interested in make asp.net core mvc WebServer!
+I'm currently interested in make ASP.NET Core MVC WebApplication!
 
 Docker, AdminLTE, MariaDB, Session Login, RESTful API, HTTPS etc.
 
-# How to deploy to ubuntu Server [You must read 홈서버 구축.pptx]
+# How to deploy to Ubuntu Server 22.04.3
 
-## 1. To Deploy Maroik service, Move Maroik folder to your ubuntu server [path:(~)]
-## 2. execute this command [chmod 777 ~/Maroik/Maroik.DeployOps/Deploy.sh && ~/Maroik/Maroik.DeployOps/Deploy.sh]
-
-# IMPORTANT!! MUST Set this value [Maroik.WebSite -> appsettings.Production.json -> DomainName (According to Server Domain)] & Mail Account
-
-# To completely debug Maroik.Website, you must set all of appsettings.*.json's Mail Account Configuration.
-
-# and if you wanna backup your .sql & Upload file frequently, please set [DBBackup.sh] [UploadFileBackup.sh] file's email address & password
+## 0. You must set this value [Maroik -> Maroik.WebSite -> appsettings.Production.json -> DomainName (According to Server Domain [If you don't have server domain, just set your server Public IP address])] & Mail Account
+## 1. Depending on whether or not the domain exists, you must look at the comments (When you have server domain, uncomment, When you don't have server domain, uncomment) in [Maroik -> Maroik.WebSite -> Program.cs] and set it according to the environment. 
+## 2. If you have server domain, you must register your specific domain!! [www.[domain] & [domain]] in DNS Server!
+## 3. To Backup your .sql & Upload file frequently, please set [Maroik -> Maroik.Crontab -> DBBackup.sh] [Maroik -> Maroik.Crontab -> UploadFileBackup.sh] file's email address & password
+## 4. To Deploy Maroik service, Copy Maroik folder to your ubuntu server [path:(~)]
+## 5. Open Ubuntu Server 22.04.3 port 80, 443, 5001
+## 6. Execute this command [chmod 777 ~/Maroik/Maroik.DeployOps/Deploy.sh && ~/Maroik/Maroik.DeployOps/Deploy.sh]
+## 7. For more detail information, please read 홈서버 구축.pptx which is located /Maroik/Docs/HomeServer/홈서버 구축.pptx
 
 # How to run this project
+## 0. To completely debug Maroik.Website, you must set of /Maroik/Maroik.WebSite/[appsettings.DockerComposeLocalDebug.json & appsettings.Development]'s Mail Account Configuration.
+## 1. Execute [Maroik.sln] -> Open [1.Web] folder -> right-click [docker-compose] -> click "Set as Startup Project" -> Press F5 Button
 
-## First, you must install docker & docker-compose
-## Go to Project folder which docker-compose.yml file exist and type this command: docker-compose up -d
-
-
-## For more detail information, please see each project's README.md file
-
-# if you want publish this website, you must register your specific domain!! [www.[domain] & [domain]] in DNS Server!
-
-# Depending on whether or not the domain exists, look at the comments in Program.cs and set it according to the environment.
+# For more detail information, please see each project's README.md file
 
 ☞ 프로젝트명 : 스마트 홈 IoT & 가계부
 
-☞ OS 및 사용 기술 : AWS, Amazon Linux, C#, .NET 6, Docker, Docker-Compose, HTTPS, HTML, CSS (Bootstrap), 
+☞ OS 및 사용 기술 : AWS, Ubuntu Server 22.04.3, C#, .NET 7, Docker, Docker-Compose, HTTPS, HTML, CSS (Bootstrap), 
 　　　　　　　　　　　JS (JQeury), AdminLTE, ASP.NET Core MVC Pattern, MariaDB, MySQL WorkBrench(ERD), 
-　　　　　　　　　　　nonfactor-grid, EntityFrameWork Core, Xamarin Forms, REST API, GitHub Desktop, GitHub
-
-# Note
-## 메일로 날라오는 Maroik.WebSite Upload File Backup, Maroik MariaDB SQL Backup은 서버 백업본이므로 해당 프로젝트의 각각 \Maroik\Maroik.WebSite\wwwroot\upload, \Maroik\Maroik.MariaDB\SQL_Init_Script 폴더에 덮어쓰기하면 된다.
-
+　　　　　　　　　　　nonfactor-grid, EntityFrameWork Core, REST API, GitHub Desktop, GitHub, Visual Studio 2023,
+                   Visual Studio Code
+                   
 # Login Account
 
 ## Admin Account ID: ***REMOVED***m
