@@ -15,7 +15,7 @@ Docker, AdminLTE, MariaDB, Session Login, RESTful API, HTTPS etc.
 ## 2. If you have server domain, you must register your specific domain!! [www.[domain] & [domain]] in DNS Server!
 ## 3. To Backup your .sql & Upload file frequently, please set [Maroik -> Maroik.Crontab -> DBBackup.sh] [Maroik -> Maroik.Crontab -> UploadFileBackup.sh] file's email address & password
 ## 4. To Deploy Maroik service, Copy Maroik folder to your ubuntu server [path:(~)]
-## 5. Open Ubuntu Server 22.04.3 port 80, 443, 5001
+## 5. Open Ubuntu Server 22.04.3's port 80, 443, 5001
 ## 6. Execute this command [chmod 777 ~/Maroik/Maroik.DeployOps/Deploy.sh && ~/Maroik/Maroik.DeployOps/Deploy.sh]
 ## 7. For more detail information, please read 홈서버 구축.pptx which is located /Maroik/Docs/HomeServer/홈서버 구축.pptx
 ## 8. [Note] If you set number 3, the Maroik.WebSite Upload File Backup and Maroik MariaDB SQL Backup delivered by mail are server backups, you can overwrite them in the \Maroik\Maroik.WebSite\wwwroot\upload and \Maroik\Maroik.MariaDB\SQL_Init_Script folders respectively.
