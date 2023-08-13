@@ -2,13 +2,24 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Docker .NET Attach (Preview)",
+            "name": "Docker: Maroik.WebSite",
             "type": "docker",
             "request": "attach",
             "platform": "netCore",
             "sourceFileMap": {
                 "/src": "${workspaceFolder}"
-            }
+            },
+            "containerName": "Maroik.WebSite"
+        },
+        {
+            "name": "Docker: Maroik.WebAPI",
+            "type": "docker",
+            "request": "attach",
+            "platform": "netCore",
+            "sourceFileMap": {
+                "/src": "${workspaceFolder}"
+            },
+            "containerName": "Maroik.WebAPI"
         },
         {
             "name": "C#: Maroik.WebSite",
