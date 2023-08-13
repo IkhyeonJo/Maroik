@@ -20,8 +20,6 @@ Docker, AdminLTE, MariaDB, Session Login, RESTful API, HTTPS etc.
 ## 7. For more detail information, please read 홈서버 구축.pptx which is located /Maroik/Docs/HomeServer/홈서버 구축.pptx
 ## [Note] If you set number 3, the Maroik.WebSite Upload File Backup and Maroik MariaDB SQL Backup delivered by mail are server backups, you can overwrite them in the \Maroik\Maroik.WebSite\wwwroot\upload and \Maroik\Maroik.MariaDB\SQL_Init_Script folders respectively.
 
-# For more detail information, please see each project's README.md file
-
 ☞ 프로젝트명 : 스마트 홈 IoT & 가계부
 
 ☞ OS 및 사용 기술 : AWS, Ubuntu Server 22.04.3, C#, .NET 7, Docker, Docker-Compose, HTTPS, HTML, CSS (Bootstrap), JS (JQeury), AdminLTE, ASP.NET Core MVC Pattern, MariaDB, MySQL WorkBrench(ERD), nonfactor-grid, EntityFrameWork Core, REST API, GitHub Desktop, GitHub, Visual Studio, Visual Studio Code
