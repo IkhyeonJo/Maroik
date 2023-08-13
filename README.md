@@ -28,7 +28,7 @@ Docker, AdminLTE, MariaDB, Session Login, RESTful API, HTTPS etc.
 ☞ OS 및 사용 기술 : AWS, Ubuntu Server 22.04.3, C#, .NET 7, Docker, Docker-Compose, HTTPS, HTML, CSS (Bootstrap), 
 　　　　　　　　　　　JS (JQeury), AdminLTE, ASP.NET Core MVC Pattern, MariaDB, MySQL WorkBrench(ERD), 
 　　　　　　　　　　　nonfactor-grid, EntityFrameWork Core, REST API, GitHub Desktop, GitHub, Visual Studio 2023,
-                   Visual Studio Code
+　　　　　　　　　　　Visual Studio Code
                    
 # Login Account
 
