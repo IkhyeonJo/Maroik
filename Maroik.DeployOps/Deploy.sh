@@ -2,7 +2,7 @@
 
 # run this script as default user
 
-# apt-get upgrade auto restart services
+# apt upgrade auto restart services
 sudo sed -i 's/#$nrconf{restart} = '"'"'i'"'"';/$nrconf{restart} = '"'"'a'"'"';/g' /etc/needrestart/needrestart.conf
 
 # Update and upgrade system
