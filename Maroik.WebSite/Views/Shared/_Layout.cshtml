@@ -4,14 +4,17 @@
 @inject Maroik.Common.DataAccess.Contracts.IAccountRepository accountRepository
 
 @{
-    var returnUri = string.IsNullOrWhiteSpace(Context.Request.Path) ? "/" : $"{Context.Request.Path.Value}{Context.Request.QueryString}";
+    var returnUri = string.IsNullOrWhiteSpace(Context.Request.Path) ? "/" :
+    $"{Context.Request.Path.Value}{Context.Request.QueryString}";
     Context.Session.TryGetValue("AccountSession", out byte[] resultByte);
-    var currentCulture = Context.Features.Get<Microsoft.AspNetCore.Localization.IRequestCultureFeature>().RequestCulture.Culture.Name;
+    var currentCulture =
+    Context.Features.Get<Microsoft.AspNetCore.Localization.IRequestCultureFeature>().RequestCulture.Culture.Name;
     Account loginedAccount = new Account();
 
     if (resultByte != null) // 로그인이 된 상태라면
     {
-        loginedAccount = await accountRepository.GetAccountByEmailAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+        loginedAccount = await
+        accountRepository.GetAccountByEmailAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
     }
     else // 로그인이 되지 않은 상태라면
     {
@@ -23,6 +26,7 @@
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -47,7 +51,8 @@
         @*<!-- Font Awesome -->*@
         <link rel="stylesheet" href="~/admin/plugins/fontawesome-free/css/all.min.css" asp-append-version="true">
         @*<!-- Tempusdominus Bootstrap 4 -->*@
-        <link rel="stylesheet" href="~/admin/plugins/tempusdominus-bootstrap-4/css/tempusdominus-bootstrap-4.min.css" asp-append-version="true">
+        <link rel="stylesheet" href="~/admin/plugins/tempusdominus-bootstrap-4/css/tempusdominus-bootstrap-4.min.css"
+            asp-append-version="true">
         @*<!-- iCheck -->*@
         <link rel="stylesheet" href="~/admin/plugins/icheck-bootstrap/icheck-bootstrap.min.css" asp-append-version="true">
         @*<!-- JQVMap -->*@
@@ -55,7 +60,8 @@
         @*<!-- Theme style -->*@
         <link rel="stylesheet" href="~/admin/dist/css/adminlte.min.css" asp-append-version="true">
         @*<!-- overlayScrollbars -->*@
-        <link rel="stylesheet" href="~/admin/plugins/overlayScrollbars/css/OverlayScrollbars.min.css" asp-append-version="true">
+        <link rel="stylesheet" href="~/admin/plugins/overlayScrollbars/css/OverlayScrollbars.min.css"
+            asp-append-version="true">
         @*<!-- Daterange picker -->*@
         <link rel="stylesheet" href="~/admin/plugins/daterangepicker/daterangepicker.css" asp-append-version="true">
         @*<!-- summernote -->*@
@@ -82,7 +88,8 @@
         @*<!-- Font Awesome -->*@
         <link rel="stylesheet" href="~/user/plugins/fontawesome-free/css/all.min.css" asp-append-version="true">
         @*<!-- Tempusdominus Bootstrap 4 -->*@
-        <link rel="stylesheet" href="~/user/plugins/tempusdominus-bootstrap-4/css/tempusdominus-bootstrap-4.min.css" asp-append-version="true">
+        <link rel="stylesheet" href="~/user/plugins/tempusdominus-bootstrap-4/css/tempusdominus-bootstrap-4.min.css"
+            asp-append-version="true">
         @*<!-- iCheck -->*@
         <link rel="stylesheet" href="~/user/plugins/icheck-bootstrap/icheck-bootstrap.min.css" asp-append-version="true">
         @*<!-- JQVMap -->*@
@@ -90,7 +97,8 @@
         @*<!-- Theme style -->*@
         <link rel="stylesheet" href="~/user/dist/css/adminlte.min.css" asp-append-version="true">
         @*<!-- overlayScrollbars -->*@
-        <link rel="stylesheet" href="~/user/plugins/overlayScrollbars/css/OverlayScrollbars.min.css" asp-append-version="true">
+        <link rel="stylesheet" href="~/user/plugins/overlayScrollbars/css/OverlayScrollbars.min.css"
+            asp-append-version="true">
         @*<!-- Daterange picker -->*@
         <link rel="stylesheet" href="~/user/plugins/daterangepicker/daterangepicker.css" asp-append-version="true">
         @*<!-- summernote -->*@
@@ -115,15 +123,18 @@
         @*<!-- Font Awesome -->*@
         <link rel="stylesheet" href="~/anonymous/plugins/fontawesome-free/css/all.min.css" asp-append-version="true">
         @*<!-- Tempusdominus Bootstrap 4 -->*@
-        <link rel="stylesheet" href="~/anonymous/plugins/tempusdominus-bootstrap-4/css/tempusdominus-bootstrap-4.min.css" asp-append-version="true">
+        <link rel="stylesheet" href="~/anonymous/plugins/tempusdominus-bootstrap-4/css/tempusdominus-bootstrap-4.min.css"
+            asp-append-version="true">
         @*<!-- iCheck -->*@
-        <link rel="stylesheet" href="~/anonymous/plugins/icheck-bootstrap/icheck-bootstrap.min.css" asp-append-version="true">
+        <link rel="stylesheet" href="~/anonymous/plugins/icheck-bootstrap/icheck-bootstrap.min.css"
+            asp-append-version="true">
         @*<!-- JQVMap -->*@
         <link rel="stylesheet" href="~/anonymous/plugins/jqvmap/jqvmap.min.css" asp-append-version="true">
         @*<!-- Theme style -->*@
         <link rel="stylesheet" href="~/anonymous/dist/css/adminlte.min.css" asp-append-version="true">
         @*<!-- overlayScrollbars -->*@
-        <link rel="stylesheet" href="~/anonymous/plugins/overlayScrollbars/css/OverlayScrollbars.min.css" asp-append-version="true">
+        <link rel="stylesheet" href="~/anonymous/plugins/overlayScrollbars/css/OverlayScrollbars.min.css"
+            asp-append-version="true">
         @*<!-- Daterange picker -->*@
         <link rel="stylesheet" href="~/anonymous/plugins/daterangepicker/daterangepicker.css" asp-append-version="true">
         @*<!-- summernote -->*@
@@ -139,95 +150,24 @@
     }
 </head>
 @*
-    <!--
-    `body` tag options:
+<!--
+`body` tag options:
 
-      Apply one or more of the following classes to to the body tag
-      to get the desired effect
+Apply one or more of the following classes to to the body tag
+to get the desired effect
 
-      * sidebar-collapse
-      * sidebar-mini
-    -->
+* sidebar-collapse
+* sidebar-mini
+-->
 *@
 @*<body class="hold-transition dark-mode sidebar-mini layout-fixed layout-navbar-fixed layout-footer-fixed">*@
-<body class="hold-transition dark-mode sidebar-mini">
 
+<body class="hold-transition dark-mode sidebar-mini">
     @*Validation of form*@
     @Html.AntiForgeryToken()
     @*Language change return URI*@
     @Html.Hidden($"{nameof(returnUri)}",returnUri)
 
-    @if (loginedAccount.Role == Role.Admin)
-    {
-
-        @*<!-- jQuery -->*@
-        <script src="~/admin/plugins/jquery/jquery.min.js" asp-append-version="true"></script>
-        <script src="~/admin/plugins/jquery-ui/jquery-ui.min.js" asp-append-version="true"></script>
-        <script src="~/admin/lib/jquery-validation/dist/jquery.validate.min.js" asp-append-version="true"></script>
-        <script src="~/admin/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js" asp-append-version="true"></script>
-        <script src="~/admin/lib/jquery-confirm/jquery-confirm.min.js" asp-append-version="true"></script>
-        @*<!-- Bootstrap -->*@
-        <script src="~/admin/plugins/bootstrap/js/bootstrap.bundle.min.js" asp-append-version="true"></script>
-        @*<!-- AdminLTE -->*@
-        <script src="~/admin/dist/js/adminlte.js" asp-append-version="true"></script>
-        @*<!-- Toastr -->*@
-        <script src="~/admin/plugins/toastr/toastr.min.js" asp-append-version="true"></script>
-        @*
-    <!-- OPTIONAL SCRIPTS -->
-    <script src="~/plugins/chart.js/Chart.min.js"></script>
-    <!-- AdminLTE for demo purposes -->
-    <script src="~/dist/js/demo.js"></script>
-    <!-- AdminLTE dashboard demo (This is only for demo purposes) -->
-    <script src="~/dist/js/pages/dashboard3.js"></script>
-    *@
-        @*<!-- ChangeCulture.js -->*@
-        <script src="~/admin/custom/_Layout/js/site.js" asp-append-version="true"></script>
-        @*<!-- summernote.js -->*@
-        <script src="~/admin/plugins/summernote/summernote-bs4.js" asp-append-version="true"></script>
-        <script src="~/admin/plugins/summernote/lang/summernote-ko-KR.min.js" asp-append-version="true"></script>
-    }
-    else if (loginedAccount.Role == Role.User)
-    {
-        @*<!-- jQuery -->*@
-        <script src="~/user/plugins/jquery/jquery.min.js" asp-append-version="true"></script>
-        <script src="~/user/plugins/jquery-ui/jquery-ui.min.js" asp-append-version="true"></script>
-        <script src="~/user/lib/jquery-validation/dist/jquery.validate.min.js" asp-append-version="true"></script>
-        <script src="~/user/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js" asp-append-version="true"></script>
-        <script src="~/user/lib/jquery-confirm/jquery-confirm.min.js" asp-append-version="true"></script>
-        @*<!-- Bootstrap -->*@
-        <script src="~/user/plugins/bootstrap/js/bootstrap.bundle.min.js" asp-append-version="true"></script>
-        @*<!-- AdminLTE -->*@
-        <script src="~/user/dist/js/adminlte.js" asp-append-version="true"></script>
-        @*<!-- Toastr -->*@
-        <script src="~/user/plugins/toastr/toastr.min.js" asp-append-version="true"></script>
-        @*<!-- Chart.js -->*@
-        <script src="~/user/plugins/chart.js/Chart.min.js" asp-append-version="true"></script>
-        @*<!-- ChangeCulture.js -->*@
-        <script src="~/user/custom/_Layout/js/site.js" asp-append-version="true"></script>
-        @*<!-- summernote.js -->*@
-        <script src="~/user/plugins/summernote/summernote-bs4.js" asp-append-version="true"></script>
-        <script src="~/user/plugins/summernote/lang/summernote-ko-KR.min.js" asp-append-version="true"></script>
-
-    }
-    else if (loginedAccount.Role == Role.Anonymous)
-    {
-        @*<!-- jQuery -->*@
-        <script src="~/anonymous/plugins/jquery/jquery.min.js" asp-append-version="true"></script>
-        <script src="~/anonymous/plugins/jquery-ui/jquery-ui.min.js" asp-append-version="true"></script>
-        <script src="~/anonymous/lib/jquery-validation/dist/jquery.validate.min.js" asp-append-version="true"></script>
-        <script src="~/anonymous/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js" asp-append-version="true"></script>
-        <script src="~/anonymous/lib/jquery-confirm/jquery-confirm.min.js" asp-append-version="true"></script>
-        @*<!-- Bootstrap -->*@
-        <script src="~/anonymous/plugins/bootstrap/js/bootstrap.bundle.min.js" asp-append-version="true"></script>
-        @*<!-- AdminLTE -->*@
-        <script src="~/anonymous/dist/js/adminlte.js" asp-append-version="true"></script>
-        @*<!-- Toastr -->*@
-        <script src="~/anonymous/plugins/toastr/toastr.min.js" asp-append-version="true"></script>
-        @*<!-- Chart.js -->*@
-        <script src="~/anonymous/plugins/chart.js/Chart.min.js" asp-append-version="true"></script>
-        @*<!-- ChangeCulture.js -->*@
-        <script src="~/anonymous/custom/_Layout/js/site.js" asp-append-version="true"></script>
-    }
     <div class="wrapper">
 
 
@@ -236,7 +176,8 @@
         <div class="preloader flex-column justify-content-center align-items-center">
         @if (loginedAccount.Role == Role.Admin)
         {
-        <img class="animation__wobble" src="~/admin/dist/img/AdminLTELogo.png" alt="AdminLTELogo" height="60" width="60">
+        <img class="animation__wobble" src="~/admin/dist/img/AdminLTELogo.png" alt="AdminLTELogo" height="60"
+        width="60">
         }
         else if (loginedAccount.Role == Role.User)
         {
@@ -244,7 +185,8 @@
         }
         else if (loginedAccount.Role == Role.Anonymous)
         {
-        <img class="animation__wobble" src="~/anonymous/dist/img/AdminLTELogo.png" alt="AdminLTELogo" height="60" width="60">
+        <img class="animation__wobble" src="~/anonymous/dist/img/AdminLTELogo.png" alt="AdminLTELogo" height="60"
+        width="60">
         }
         </div>
         *@
@@ -255,8 +197,27 @@
         <div class="content-wrapper">
             @(await Html.PartialAsync("_BodyPageHeader", loginedAccount))
             @RenderBody()
-            @if (loginedAccount.Role == Role.Admin)@*nonfactors.grid.mvc6\6.2.4*@
+            @if (loginedAccount.Role == Role.Admin)
             {
+                @*<!-- jQuery -->*@
+                <script src="~/admin/plugins/jquery/jquery.min.js" asp-append-version="true"></script>
+                <script src="~/admin/plugins/jquery-ui/jquery-ui.min.js" asp-append-version="true"></script>
+                <script src="~/admin/lib/jquery-validation/dist/jquery.validate.min.js" asp-append-version="true"></script>
+                <script src="~/admin/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"
+                    asp-append-version="true"></script>
+                <script src="~/admin/lib/jquery-confirm/jquery-confirm.min.js" asp-append-version="true"></script>
+                @*<!-- Bootstrap -->*@
+                <script src="~/admin/plugins/bootstrap/js/bootstrap.bundle.min.js" asp-append-version="true"></script>
+                @*<!-- AdminLTE -->*@
+                <script src="~/admin/dist/js/adminlte.js" asp-append-version="true"></script>
+                @*<!-- Toastr -->*@
+                <script src="~/admin/plugins/toastr/toastr.min.js" asp-append-version="true"></script>
+                @*<!-- ChangeCulture.js -->*@
+                <script src="~/admin/custom/_Layout/js/site.js" asp-append-version="true"></script>
+                @*<!-- summernote.js -->*@
+                <script src="~/admin/plugins/summernote/summernote-bs4.js" asp-append-version="true"></script>
+                <script src="~/admin/plugins/summernote/lang/summernote-ko-KR.min.js" asp-append-version="true"></script>
+                @*nonfactors.grid.mvc6\6.2.4*@
                 if (currentCulture == "ko-KR")
                 {
                     <script src="~/admin/js/mvc-grid/mvc-grid-ko-KR.js" asp-append-version="true"></script>
@@ -271,8 +232,29 @@
 
                 <script src="~/admin/js/mvc-grid/mvc-grid.js" asp-append-version="true"></script>
             }
-            else if (loginedAccount.Role == Role.User) @*nonfactors.grid.mvc6\6.2.4*@
+            else if (loginedAccount.Role == Role.User)
             {
+                @*<!-- jQuery -->*@
+                <script src="~/user/plugins/jquery/jquery.min.js" asp-append-version="true"></script>
+                <script src="~/user/plugins/jquery-ui/jquery-ui.min.js" asp-append-version="true"></script>
+                <script src="~/user/lib/jquery-validation/dist/jquery.validate.min.js" asp-append-version="true"></script>
+                <script src="~/user/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"
+                    asp-append-version="true"></script>
+                <script src="~/user/lib/jquery-confirm/jquery-confirm.min.js" asp-append-version="true"></script>
+                @*<!-- Bootstrap -->*@
+                <script src="~/user/plugins/bootstrap/js/bootstrap.bundle.min.js" asp-append-version="true"></script>
+                @*<!-- AdminLTE -->*@
+                <script src="~/user/dist/js/adminlte.js" asp-append-version="true"></script>
+                @*<!-- Toastr -->*@
+                <script src="~/user/plugins/toastr/toastr.min.js" asp-append-version="true"></script>
+                @*<!-- Chart.js -->*@
+                <script src="~/user/plugins/chart.js/Chart.min.js" asp-append-version="true"></script>
+                @*<!-- ChangeCulture.js -->*@
+                <script src="~/user/custom/_Layout/js/site.js" asp-append-version="true"></script>
+                @*<!-- summernote.js -->*@
+                <script src="~/user/plugins/summernote/summernote-bs4.js" asp-append-version="true"></script>
+                <script src="~/user/plugins/summernote/lang/summernote-ko-KR.min.js" asp-append-version="true"></script>
+                @*nonfactors.grid.mvc6\6.2.4*@
                 if (currentCulture == "ko-KR")
                 {
                     <script src="~/user/js/mvc-grid/mvc-grid-ko-KR.js" asp-append-version="true"></script>
@@ -289,6 +271,25 @@
             }
             else if (loginedAccount.Role == Role.Anonymous)
             {
+                @*<!-- jQuery -->*@
+                <script src="~/anonymous/plugins/jquery/jquery.min.js" asp-append-version="true"></script>
+                <script src="~/anonymous/plugins/jquery-ui/jquery-ui.min.js" asp-append-version="true"></script>
+                <script src="~/anonymous/lib/jquery-validation/dist/jquery.validate.min.js"
+                    asp-append-version="true"></script>
+                <script src="~/anonymous/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"
+                    asp-append-version="true"></script>
+                <script src="~/anonymous/lib/jquery-confirm/jquery-confirm.min.js" asp-append-version="true"></script>
+                @*<!-- Bootstrap -->*@
+                <script src="~/anonymous/plugins/bootstrap/js/bootstrap.bundle.min.js" asp-append-version="true"></script>
+                @*<!-- AdminLTE -->*@
+                <script src="~/anonymous/dist/js/adminlte.js" asp-append-version="true"></script>
+                @*<!-- Toastr -->*@
+                <script src="~/anonymous/plugins/toastr/toastr.min.js" asp-append-version="true"></script>
+                @*<!-- Chart.js -->*@
+                <script src="~/anonymous/plugins/chart.js/Chart.min.js" asp-append-version="true"></script>
+                @*<!-- ChangeCulture.js -->*@
+                <script src="~/anonymous/custom/_Layout/js/site.js" asp-append-version="true"></script>
+                @*nonfactors.grid.mvc6\6.2.4*@
                 if (currentCulture == "ko-KR")
                 {
                     <script src="~/anonymous/js/mvc-grid/mvc-grid-ko-KR.js" asp-append-version="true"></script>
@@ -304,7 +305,7 @@
                 <script src="~/anonymous/js/mvc-grid/mvc-grid.js" asp-append-version="true"></script>
             }
 
-            @await RenderSectionAsync("Scripts", required: false) @* Model Only [Require] 이런거 모델 Model.IsValid 이런거 쓸 때 쓰는 자바스크립트임 aspnetcore를 위한 *@
+            @await RenderSectionAsync("Scripts", required: false)
         </div>
         @*<!-- /.content-wrapper -->*@
         @*<!-- Control Sidebar -->*@
@@ -316,4 +317,5 @@
     </div>
     @*<!-- ./wrapper -->*@
 </body>
+
 </html>
