@@ -3,12 +3,12 @@
 
 // Write your JavaScript code.
 
-$(document).ajaxError(function () {
+$(document).on("ajaxError", function () {
     window.location.href = "/DashBoard/AnonymousIndex";
 });
 
 function ChangeCulture(culture) {
-    
+
     var paramValue = JSON.stringify({
         Culture: culture
     });
