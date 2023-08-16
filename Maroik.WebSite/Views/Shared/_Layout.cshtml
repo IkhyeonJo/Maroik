@@ -212,8 +212,6 @@ to get the desired effect
                 <script src="~/admin/dist/js/adminlte.js" asp-append-version="true"></script>
                 @*<!-- Toastr -->*@
                 <script src="~/admin/plugins/toastr/toastr.min.js" asp-append-version="true"></script>
-                @*<!-- ChangeCulture.js -->*@
-                <script src="~/admin/custom/_Layout/js/site.js" asp-append-version="true"></script>
                 @*<!-- summernote.js -->*@
                 <script src="~/admin/plugins/summernote/summernote-bs4.js" asp-append-version="true"></script>
                 <script src="~/admin/plugins/summernote/lang/summernote-ko-KR.min.js" asp-append-version="true"></script>
@@ -229,8 +227,9 @@ to get the desired effect
                     <script src="~/admin/js/mvc-grid/mvc-grid-en-US-lang.js" asp-append-version="true"></script>
                 }
                 <script src="~/admin/js/mvc-grid/mvc-grid-attribute.js" asp-append-version="true"></script>
-
                 <script src="~/admin/js/mvc-grid/mvc-grid.js" asp-append-version="true"></script>
+
+                <script src="~/admin/custom/_Layout/js/site.js" asp-append-version="true"></script>
             }
             else if (loginedAccount.Role == Role.User)
             {
@@ -249,8 +248,6 @@ to get the desired effect
                 <script src="~/user/plugins/toastr/toastr.min.js" asp-append-version="true"></script>
                 @*<!-- Chart.js -->*@
                 <script src="~/user/plugins/chart.js/Chart.min.js" asp-append-version="true"></script>
-                @*<!-- ChangeCulture.js -->*@
-                <script src="~/user/custom/_Layout/js/site.js" asp-append-version="true"></script>
                 @*<!-- summernote.js -->*@
                 <script src="~/user/plugins/summernote/summernote-bs4.js" asp-append-version="true"></script>
                 <script src="~/user/plugins/summernote/lang/summernote-ko-KR.min.js" asp-append-version="true"></script>
@@ -266,8 +263,9 @@ to get the desired effect
                     <script src="~/user/js/mvc-grid/mvc-grid-en-US-lang.js" asp-append-version="true"></script>
                 }
                 <script src="~/user/js/mvc-grid/mvc-grid-attribute.js" asp-append-version="true"></script>
-
                 <script src="~/user/js/mvc-grid/mvc-grid.js" asp-append-version="true"></script>
+
+                <script src="~/user/custom/_Layout/js/site.js" asp-append-version="true"></script>
             }
             else if (loginedAccount.Role == Role.Anonymous)
             {
@@ -287,8 +285,6 @@ to get the desired effect
                 <script src="~/anonymous/plugins/toastr/toastr.min.js" asp-append-version="true"></script>
                 @*<!-- Chart.js -->*@
                 <script src="~/anonymous/plugins/chart.js/Chart.min.js" asp-append-version="true"></script>
-                @*<!-- ChangeCulture.js -->*@
-                <script src="~/anonymous/custom/_Layout/js/site.js" asp-append-version="true"></script>
                 @*nonfactors.grid.mvc6\6.2.4*@
                 if (currentCulture == "ko-KR")
                 {
@@ -301,8 +297,9 @@ to get the desired effect
                     <script src="~/anonymous/js/mvc-grid/mvc-grid-en-US-lang.js" asp-append-version="true"></script>
                 }
                 <script src="~/anonymous/js/mvc-grid/mvc-grid-attribute.js" asp-append-version="true"></script>
-
                 <script src="~/anonymous/js/mvc-grid/mvc-grid.js" asp-append-version="true"></script>
+
+                <script src="~/anonymous/custom/_Layout/js/site.js" asp-append-version="true"></script>
             }
 
             @await RenderSectionAsync("Scripts", required: false)

@@ -2,6 +2,11 @@
 // for details on configuring this project to bundle and minify static web assets.
 
 // Write your JavaScript code.
+
+$(document).ajaxError(function () {
+    window.location.href = "/DashBoard/AnonymousIndex";
+});
+
 function ChangeCulture(culture) {
     
     var paramValue = JSON.stringify({
