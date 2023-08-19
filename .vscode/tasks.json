@@ -2,7 +2,16 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "build",
+            "label": "Setup Docker Environment",
+            "type": "shell",
+            "command": "${workspaceFolder}/.vscode/setup-docker.sh",
+            "problemMatcher": [],
+            "runOptions": {
+                "runOn": "folderOpen"
+            }
+        },
+        {
+            "label": "Build",
             "command": "dotnet",
             "type": "process",
             "args": [
@@ -33,7 +42,8 @@
             "problemMatcher": [],
             "runOptions": {
                 "runOn": "folderOpen"
-            }
+            },
+            "dependsOn": ["Install Docker Components"]
         }
     ]
 }
