@@ -5,9 +5,15 @@ I'm currently interested in make ASP.NET Core MVC WebApplication!
 
 Docker, AdminLTE, MariaDB, Session Login, RESTful API, HTTPS etc.
 
-# How to run this project
+# How to run this project (Windows OS / Mac OS)
 ## 0. Execute [Maroik.sln] -> Open [1.Web] folder -> right-click [docker-compose] -> click "Set as Startup Project" -> Press F5 Button
 ## 1. [Note] To completely debug Maroik.Website, you must set of /Maroik/Maroik.WebSite/[appsettings.DockerComposeLocalDebug.json & appsettings.Development]'s Mail Account Configuration.
+
+# How to run this project (Ubuntu (Linux))
+## 0. Open [Maroik] folder with Visual Studio Code -> Wait till process is done [DOTNET SDK 자동 설치 스크립트 추가할 것...]
+## 1. Go to [Run and Debug] -> Select configuration name [Docker: Maroik.WebSite] or [Docker: Maroik.WebSite] -> Press F5
+## 2. Open Web browser and access to [https://localhost] 
+## 3. [Note] To completely debug Maroik.Website, you must set of /Maroik/Maroik.WebSite/[appsettings.DockerComposeLocalDebug.json & appsettings.Development]'s Mail Account Configuration.
 
 # How to deploy to Ubuntu Server 22.04.3
 ## 0. You must set this value [Maroik -> Maroik.WebSite -> appsettings.Production.json -> DomainName (According to Server Domain [If you don't have server domain, just set your server Public IP address])] & Mail Account
