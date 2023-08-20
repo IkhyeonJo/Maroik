@@ -14,7 +14,7 @@ Docker, AdminLTE, MariaDB, Session Login, RESTful API, HTTPS etc.
 ## 0. Open [Maroik] folder with Visual Studio Code
 ## 1. You will be asked to enter a password to run the sudo command in the TERMINAL of visual studio code. Enter the password to run the sudo command.
 ## 2. Wait till all process is done
-## 3. Visual Studio Code will ask you about to Install Workspace Recommended Extensions. Install all of them.
+## 3. Visual Studio Code may have recommended you to install the Workspace Recommended Extensions. Install all of them.
 ## 4. Go to [Run and Debug] -> Choose the following configuration name. [Docker: Maroik.WebSite] -> Press F5
 ## 5. Open Web browser and access to [https://localhost] 
 ## 6. [Note] To completely debug Maroik.Website, you must set of /Maroik/Maroik.WebSite/[appsettings.DockerComposeLocalDebug.json & appsettings.Development]'s Mail Account Configuration.
