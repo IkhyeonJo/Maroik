@@ -6,16 +6,16 @@ I'm currently interested in make ASP.NET Core MVC WebApplication!
 Docker, AdminLTE, MariaDB, Session Login, RESTful API, HTTPS etc.
 
 # How to run this project (Windows OS / Mac OS)
-## 0. Install Visual Studio 2023 or higher -> Execute [Maroik.sln] -> Install all required setup files to run this project 
+## 0. Install Visual Studio 2023 or higher -> Execute [Maroik.sln] -> Visual Studio will ask you about to Install setup files. Install all required setup files to run this project 
 ## 1. Open [1.Web] folder in Solution Explorer -> right-click [docker-compose] in Solution Explorer -> click "Set as Startup Project" -> Press F5 Button
 ## 2. [Note] To completely debug Maroik.Website, you must set of /Maroik/Maroik.WebSite/[appsettings.DockerComposeLocalDebug.json & appsettings.Development]'s Mail Account Configuration.
 
 # How to run this project (Ubuntu (Linux))
 ## 0. Open [Maroik] folder with Visual Studio Code
-## 1. You will be asked to enter a password to run the sudo command in the TERMINAL of visual studio code. Enter the password to run the sudo command.
-## 2. Wait till process is done
-## 3. Go to [Run and Debug] -> Choose the following configuration name. [Docker: Maroik.WebSite] -> Press F5
-## 4. Visual Studio Code will ask you about to Install docker Extension. install it.
+## 1. Visual Studio Code will ask you about to Install Workspace Recommended Extensions. Install all of them.
+## 2. You will be asked to enter a password to run the sudo command in the TERMINAL of visual studio code. Enter the password to run the sudo command.
+## 3. Wait till process is done
+## 4. Go to [Run and Debug] -> Choose the following configuration name. [Docker: Maroik.WebSite] -> Press F5
 ## 5. Open Web browser and access to [https://localhost] 
 ## 6. [Note] To completely debug Maroik.Website, you must set of /Maroik/Maroik.WebSite/[appsettings.DockerComposeLocalDebug.json & appsettings.Development]'s Mail Account Configuration.
 
