@@ -17,8 +17,9 @@ Docker, AdminLTE, MariaDB, Session Login, RESTful API, HTTPS etc.
 ## 3. Visual Studio Code may have recommended you to install the Workspace Recommended Extensions. Install all of them.
 ## 4. Wait till all process is done
 ## 5. Go to [Run and Debug] -> Choose the following configuration name. [Docker: Maroik.WebSite] -> Press F5
-## 6. Open Web browser and access to [https://localhost] 
-## 7. [Note] To completely debug Maroik.Website, you must set of /Maroik/Maroik.WebSite/[appsettings.DockerComposeLocalDebug.json & appsettings.Development]'s Mail Account Configuration.
+## 6. Answer "Yes" to all requests.
+## 7. Open Web browser and access to [https://localhost] 
+## 8. [Note] To completely debug Maroik.Website, you must set of /Maroik/Maroik.WebSite/[appsettings.DockerComposeLocalDebug.json & appsettings.Development]'s Mail Account Configuration.
 
 # How to deploy to Ubuntu Server 22.04.3
 ## 0. You must set this value [Maroik -> Maroik.WebSite -> appsettings.Production.json -> DomainName (According to Server Domain [If you don't have server domain, just set your server Public IP address])] & Mail Account
