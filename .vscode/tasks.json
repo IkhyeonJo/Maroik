@@ -2,9 +2,9 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "Setup Docker Environment",
+            "label": "Setup Dotnet Docker Environment",
             "type": "shell",
-            "command": "${workspaceFolder}/.vscode/setup-docker.sh",
+            "command": "${workspaceFolder}/.vscode/setup-dotnet-docker.sh",
             "problemMatcher": [],
             "runOptions": {
                 "runOn": "folderOpen"
@@ -43,7 +43,7 @@
             "runOptions": {
                 "runOn": "folderOpen"
             },
-            "dependsOn": ["Setup Docker Environment"]
+            "dependsOn": ["Setup Dotnet Docker Environment"]
         }
     ]
 }
