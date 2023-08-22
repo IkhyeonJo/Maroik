@@ -30,7 +30,7 @@ sudo ufw allow 443/tcp
 sudo ufw allow 5001/tcp
 
 # Enable UFW:
-sudo ufw enable
+echo "y" | sudo ufw enable
 
 # Install Docker Compose
 sudo apt install docker-compose -y
