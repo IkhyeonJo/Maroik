@@ -28,10 +28,10 @@ sudo umount ~/512GB/
 #sudo rmdir ~/64GB/
 sudo rmdir ~/512GB/
 
-# Remove Wake-on-LAN (WoL) configuration
-sudo systemctl stop wol.service
-sudo systemctl disable wol.service
-sudo rm /etc/systemd/system/wol.service
-sudo systemctl daemon-reload
-# Replace 'enp1s0' with your actual Ethernet interface name
-sudo ethtool -s enp1s0 wol d
+# # Remove Wake-on-LAN (WoL) configuration
+# sudo systemctl stop wol.service
+# sudo systemctl disable wol.service
+# sudo rm /etc/systemd/system/wol.service
+# sudo systemctl daemon-reload
+# # Replace 'enp1s0' with your actual Ethernet interface name
+# sudo ethtool -s enp1s0 wol d

@@ -30,26 +30,26 @@ sudo systemctl reload cron
 # Execute AutoMountExternalStorages.sh
 ~/Maroik/Maroik.Crontab/AutoMountExternalStorages.sh
 
-# Set up Wake-on-LAN (WoL)
-sudo apt install net-tools ethtool wakeonlan -y
-# Replace 'enp1s0' with your actual Ethernet interface name
-sudo ethtool -s enp1s0 wol g
+# # Set up Wake-on-LAN (WoL)
+# sudo apt install net-tools ethtool wakeonlan -y
+# # Replace 'enp1s0' with your actual Ethernet interface name
+# sudo ethtool -s enp1s0 wol g
 
-# Create and enable WoL service
-echo "[Unit]
-Description=Configure Wake-up on LAN
+# # Create and enable WoL service
+# echo "[Unit]
+# Description=Configure Wake-up on LAN
 
-[Service]
-Type=oneshot
-ExecStart=/sbin/ethtool -s enp1s0 wol g
+# [Service]
+# Type=oneshot
+# ExecStart=/sbin/ethtool -s enp1s0 wol g
 
-[Install]
-WantedBy=basic.target" | sudo tee /etc/systemd/system/wol.service
+# [Install]
+# WantedBy=basic.target" | sudo tee /etc/systemd/system/wol.service
 
-# Enable and start the WoL service
-sudo systemctl daemon-reload
-sudo systemctl enable wol.service
-sudo systemctl start wol.service
+# # Enable and start the WoL service
+# sudo systemctl daemon-reload
+# sudo systemctl enable wol.service
+# sudo systemctl start wol.service
 
 # Adds the current user to the "docker" group, 
 sudo usermod -a -G docker $USER
