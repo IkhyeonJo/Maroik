@@ -1,9 +1,36 @@
 #!/bin/bash
 
-# run this script as default user
+# Check if script is run as default user
+if [[ $EUID -eq 0 ]]; then
+   echo "This script should not be run as root. Please run it as the default user."
+   exit 1
+fi
+
+# Install UFW (if not already installed)
+sudo apt install ufw -y
+
+# Enable UFW
+sudo ufw enable
+
+# Set Default Rules
+sudo ufw default deny incoming
+sudo ufw default allow outgoing
+
+# Allow Specific Ports
+sudo ufw allow 22     # Allow SSH on port 22
+sudo ufw allow 80     # Allow HTTP on port 80
+sudo ufw allow 443    # Allow HTTPS on port 443
+sudo ufw allow 5001   # Allow port 5001
+
+# Reload UFW
+sudo ufw reload
 
 # apt upgrade auto restart services
 sudo sed -i 's/#$nrconf{restart} = '"'"'i'"'"';/$nrconf{restart} = '"'"'a'"'"';/g' /etc/needrestart/needrestart.conf
+
+# Modify logind.conf to ignore lid switch
+echo "HandleLidSwitch=ignore" | sudo tee -a /etc/systemd/logind.conf
+sudo systemctl restart systemd-logind
 
 # Update and upgrade system
 sudo apt update -y
