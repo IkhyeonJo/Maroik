@@ -6,9 +6,6 @@ if [[ $EUID -eq 0 ]]; then
    exit 1
 fi
 
-# Reset UFW to default settings
-sudo ufw reset
-
 # Bring down the Docker containers defined in docker-compose.prod.yml
 sudo docker-compose -f ~/Maroik/docker-compose.prod.yml down
 
