@@ -19,8 +19,8 @@ sudo docker volume rm $(docker volume ls -q)
 # Optionally, remove all Docker images (use with caution)
 sudo docker rmi $(docker images -q)
 
-# Remove root user's cron jobs
-sudo crontab -r
+# Remove current user's cron jobs
+crontab -r
 
 # Unmount devices by UUID
 sudo umount ~/512GB/

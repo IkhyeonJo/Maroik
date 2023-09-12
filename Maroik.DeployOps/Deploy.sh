@@ -30,7 +30,7 @@ sudo apt install python3 -y
 chmod 777 ~/Maroik/Maroik.Crontab/*.sh
 
 # Set up cron jobs
-sudo crontab ~/Maroik/Maroik.Crontab/InitCron
+crontab ~/Maroik/Maroik.Crontab/InitCron
 
 # Reload cron service
 sudo systemctl reload cron
