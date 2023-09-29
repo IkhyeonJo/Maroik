@@ -1,2 +1,2 @@
-0 * * * * /bin/bash ~/Maroik/Maroik.Crontab/DBBackup.sh
-0 * * * * /bin/bash ~/Maroik/Maroik.Crontab/UploadFileBackUp.sh
+0 * * * * /bin/bash /home/peter-cho/Maroik/Maroik.Crontab/DBBackup.sh
+0 * * * * /bin/bash /home/peter-cho/Maroik/Maroik.Crontab/UploadFileBackUp.sh
