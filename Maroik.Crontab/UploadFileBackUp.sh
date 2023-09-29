@@ -33,7 +33,7 @@ body = MIMEText(f'Maroik.WebSite Upload File Backup ({current_date})', _charset=
 msg.attach(body)
 
 files = list()
-files.append('/home/peter-cho/Maroik/{backup_upload_file_name}.tar.xz')
+files.append(f'/home/peter-cho/Maroik/{backup_upload_file_name}.tar.xz')
 
 for f in files:
     part = MIMEBase('application', "octet-stream")
