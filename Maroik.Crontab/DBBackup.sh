@@ -13,7 +13,7 @@ from email.mime.text import MIMEText
 from email.utils import formatdate
 from datetime import datetime
 
-garbage_sql_files = glob.glob('/home/peter-cho/Maroik/*.tar.xz')
+garbage_sql_files = glob.glob('/home/peter-cho/Maroik/*.sql')
 for garbage_sql_file in garbage_sql_files:
     os.remove(garbage_sql_file)
 
