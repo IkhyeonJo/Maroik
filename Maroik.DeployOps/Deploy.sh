@@ -40,3 +40,21 @@ sudo usermod -a -G docker $USER
 
 # Starts a new shell session with the "docker" group applied.
 newgrp docker
+
+# Install UFW (if not already installed)
+sudo apt install ufw -y
+
+# Enable UFW
+sudo ufw enable
+
+# Set Default Rules
+sudo ufw default deny incoming
+sudo ufw default allow outgoing
+
+# Allow Specific Ports
+sudo ufw allow 80     # Allow HTTP on port 80
+sudo ufw allow 443    # Allow HTTPS on port 443
+sudo ufw allow 5001   # Allow port 5001
+
+# Reload UFW
+sudo ufw reload
