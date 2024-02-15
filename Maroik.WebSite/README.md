@@ -843,9 +843,10 @@ html
         <div>
             <!-- Add your right side data here -->
             <!-- For example: -->
-            <span>Right side data 1</span><br>
-            <span>Right side data 2</span><br>
-            <span>Right side data 3</span><br>
+            <span>식비/외식비: 24.55%</span><br> <!-- Localization 적용할 것 -->
+            <span>주거/용품비: 25.45%</span><br> <!-- Localization 적용할 것 -->
+            <span>교육비: 22.43%</span><br> <!-- Localization 적용할 것 -->
+            <span>의료비: 27.57%</span><br> <!-- Localization 적용할 것 -->
             <!-- Add as many spans as needed -->
         </div>
     </div>
