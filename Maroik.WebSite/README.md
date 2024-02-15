@@ -790,3 +790,65 @@ https://tragramming.tistory.com/86 // Linux log 명령어
 이 때  <form> 태그 내 <input text>가 1개인 경우
 
 엔터키를 누르면 submit 된다고 하네요 (input  text 2개 이상이면 X)]
+
+
+
+User
+<div class="chart tab-pane active" id="dashboardExpenditureStatisticsTabs-3" style="position: relative; height: 380px;">
+                                        <span>Sum: 606950<br></span>
+                                        <span>Count: 35<br></span>
+                                        <span>Mode: 1700<br></span>
+                                        <span>Mode Count: 18<br></span>
+                                        <span>Min: 1400<br></span>
+                                        <span>Max: 432000<br></span>
+                                        <span>Range: 430600<br></span>
+                                        <span>Mean: 17341.42<br></span>
+                                        <span>Variance: 5114864355.1<br></span>
+                                        <span>Standard Deviation: 71518.27<br></span>
+                                        <span>Q1 (25%): 1700<br></span>
+                                        <span>Q2 (50%): 1700<br></span>
+                                        <span>Q3 (75%): 6350<br></span>
+                                        <span>Skewness: 5.56<br></span>
+                                        <span>Kurtosis: 32.28<br></span>
+                                        <span>Over Consumption Index: 1.37<br></span>
+                            </div>
+
+this code only shows data to left side, I wanna add right side data too!
+ChatGPT
+
+To add data to the right side of each entry in your <div>, you can wrap each pair of <span> elements in separate <div> containers and then use CSS to position them side by side. Here's how you can modify your code:
+
+html
+
+<div class="chart tab-pane active" id="dashboardExpenditureStatisticsTabs-3" style="position: relative; height: 380px;">
+    <div style="display: flex; justify-content: space-between;">
+        <div>
+            <span>Sum: 606950</span><br>
+            <span>Count: 35</span><br>
+            <span>Mode: 1700</span><br>
+            <span>Mode Count: 18</span><br>
+            <span>Min: 1400</span><br>
+            <span>Max: 432000</span><br>
+            <span>Range: 430600</span><br>
+            <span>Mean: 17341.42</span><br>
+            <span>Variance: 5114864355.1</span><br>
+            <span>Standard Deviation: 71518.27</span><br>
+            <span>Q1 (25%): 1700</span><br>
+            <span>Q2 (50%): 1700</span><br>
+            <span>Q3 (75%): 6350</span><br>
+            <span>Skewness: 5.56</span><br>
+            <span>Kurtosis: 32.28</span><br>
+            <span>Over Consumption Index: 1.37</span><br>
+        </div>
+        <div>
+            <!-- Add your right side data here -->
+            <!-- For example: -->
+            <span>Right side data 1</span><br>
+            <span>Right side data 2</span><br>
+            <span>Right side data 3</span><br>
+            <!-- Add as many spans as needed -->
+        </div>
+    </div>
+</div>
+
+This will place the data in two columns, with the data on the left in the first column and the additional data on the right in the second column. Adjust the content of the second column (<div> containing the right side data) according to your requirements.
