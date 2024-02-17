@@ -56,13 +56,13 @@
     irregularIncomeLaborIncome = irregularIncome.Where(x => x.SubClass == "LaborIncome").Sum(v => v.Amount);
     irregularIncomeOtherIncome = irregularIncome.Where(x => x.SubClass == "OtherIncome").Sum(v => v.Amount);
 
-    double percentageOfirregularIncomeLaborIncome = 0;
-    double percentageOfirregularIncomeOtherIncome = 0;
+    double percentageOfIrregularIncomeLaborIncome = 0;
+    double percentageOfIrregularIncomeOtherIncome = 0;
 
     if (irregularIncomeTotal != 0)
     {
-        percentageOfirregularIncomeLaborIncome = ((double)(100)) * (((double)irregularIncomeLaborIncome) / ((double)irregularIncomeTotal));
-        percentageOfirregularIncomeOtherIncome = ((double)(100)) * (((double)irregularIncomeOtherIncome) / ((double)irregularIncomeTotal));
+        percentageOfIrregularIncomeLaborIncome = ((double)(100)) * (((double)irregularIncomeLaborIncome) / ((double)irregularIncomeTotal));
+        percentageOfIrregularIncomeOtherIncome = ((double)(100)) * (((double)irregularIncomeOtherIncome) / ((double)irregularIncomeTotal));
     }
 
     #endregion
@@ -82,13 +82,13 @@
     regularSavingsDeposit = regularSavings.Where(x => x.SubClass == "Deposit").Sum(v => v.Amount);
     regularSavingsInvestment = regularSavings.Where(x => x.SubClass == "Investment").Sum(v => v.Amount);
 
-    double percentageOfregularSavingsDeposit = 0;
-    double percentageOfregularSavingsInvestment = 0;
+    double percentageOfRegularSavingsDeposit = 0;
+    double percentageOfRegularSavingsInvestment = 0;
 
     if (regularSavingsTotal != 0)
     {
-        percentageOfregularSavingsDeposit = ((double)(100)) * (((double)regularSavingsDeposit) / ((double)regularSavingsTotal));
-        percentageOfregularSavingsInvestment = ((double)(100)) * (((double)regularSavingsInvestment) / ((double)regularSavingsTotal));
+        percentageOfRegularSavingsDeposit = ((double)(100)) * (((double)regularSavingsDeposit) / ((double)regularSavingsTotal));
+        percentageOfRegularSavingsInvestment = ((double)(100)) * (((double)regularSavingsInvestment) / ((double)regularSavingsTotal));
     }
 
     #endregion
@@ -112,21 +112,21 @@
     nonConsumerSpendingInterHouseholdTranserExpenses = nonConsumerSpending.Where(x => x.SubClass == "InterHouseholdTranserExpenses").Sum(v => v.Amount);
     nonConsumerSpendingNonProfitOrganizationTransfer = nonConsumerSpending.Where(x => x.SubClass == "NonProfitOrganizationTransfer").Sum(v => v.Amount);
 
-    double percentageOfnonConsumerSpendingPublicPension = 0;
-    double percentageOfnonConsumerSpendingDebtRepayment = 0;
-    double percentageOfnonConsumerSpendingTax = 0;
-    double percentageOfnonConsumerSpendingSocialInsurance = 0;
-    double percentageOfnonConsumerSpendingInterHouseholdTranserExpenses = 0;
-    double percentageOfnonConsumerSpendingNonProfitOrganizationTransfer = 0;
+    double percentageOfNonConsumerSpendingPublicPension = 0;
+    double percentageOfNonConsumerSpendingDebtRepayment = 0;
+    double percentageOfNonConsumerSpendingTax = 0;
+    double percentageOfNonConsumerSpendingSocialInsurance = 0;
+    double percentageOfNonConsumerSpendingInterHouseholdTranserExpenses = 0;
+    double percentageOfNonConsumerSpendingNonProfitOrganizationTransfer = 0;
 
     if (nonConsumerSpendingTotal != 0)
     {
-        percentageOfnonConsumerSpendingPublicPension = ((double)(100)) * (((double)nonConsumerSpendingPublicPension) / ((double)nonConsumerSpendingTotal));
-        percentageOfnonConsumerSpendingDebtRepayment = ((double)(100)) * (((double)nonConsumerSpendingDebtRepayment) / ((double)nonConsumerSpendingTotal));
-        percentageOfnonConsumerSpendingTax = ((double)(100)) * (((double)nonConsumerSpendingTax) / ((double)nonConsumerSpendingTotal));
-        percentageOfnonConsumerSpendingSocialInsurance = ((double)(100)) * (((double)nonConsumerSpendingSocialInsurance) / ((double)nonConsumerSpendingTotal));
-        percentageOfnonConsumerSpendingInterHouseholdTranserExpenses = ((double)(100)) * (((double)nonConsumerSpendingInterHouseholdTranserExpenses) / ((double)nonConsumerSpendingTotal));
-        percentageOfnonConsumerSpendingNonProfitOrganizationTransfer = ((double)(100)) * (((double)nonConsumerSpendingNonProfitOrganizationTransfer) / ((double)nonConsumerSpendingTotal));
+        percentageOfNonConsumerSpendingPublicPension = ((double)(100)) * (((double)nonConsumerSpendingPublicPension) / ((double)nonConsumerSpendingTotal));
+        percentageOfNonConsumerSpendingDebtRepayment = ((double)(100)) * (((double)nonConsumerSpendingDebtRepayment) / ((double)nonConsumerSpendingTotal));
+        percentageOfNonConsumerSpendingTax = ((double)(100)) * (((double)nonConsumerSpendingTax) / ((double)nonConsumerSpendingTotal));
+        percentageOfNonConsumerSpendingSocialInsurance = ((double)(100)) * (((double)nonConsumerSpendingSocialInsurance) / ((double)nonConsumerSpendingTotal));
+        percentageOfNonConsumerSpendingInterHouseholdTranserExpenses = ((double)(100)) * (((double)nonConsumerSpendingInterHouseholdTranserExpenses) / ((double)nonConsumerSpendingTotal));
+        percentageOfNonConsumerSpendingNonProfitOrganizationTransfer = ((double)(100)) * (((double)nonConsumerSpendingNonProfitOrganizationTransfer) / ((double)nonConsumerSpendingTotal));
     }
 
     #endregion
@@ -162,33 +162,33 @@
     consumerSpendingOtherExpenses = consumerSpending.Where(x => x.SubClass == "OtherExpenses").Sum(v => v.Amount);
     consumerSpendingUnknownExpenditure = consumerSpending.Where(x => x.SubClass == "UnknownExpenditure").Sum(v => v.Amount);
 
-    double percentageOfconsumerSpendingMealOrEatOutExpenses = 0;
-    double percentageOfconsumerSpendingHousingOrSuppliesCost = 0;
-    double percentageOfconsumerSpendingEducationExpenses = 0;
-    double percentageOfconsumerSpendingMedicalExpenses = 0;
-    double percentageOfconsumerSpendingTransportationCost = 0;
-    double percentageOfconsumerSpendingCommunicationCost = 0;
-    double percentageOfconsumerSpendingLeisureOrCulture = 0;
-    double percentageOfconsumerSpendingClothingOrShoes = 0;
-    double percentageOfconsumerSpendingPinMoney = 0;
-    double percentageOfconsumerSpendingProtectionTypeInsurance = 0;
-    double percentageOfconsumerSpendingOtherExpenses = 0;
-    double percentageOfconsumerSpendingUnknownExpenditure = 0;
+    double percentageOfConsumerSpendingMealOrEatOutExpenses = 0;
+    double percentageOfConsumerSpendingHousingOrSuppliesCost = 0;
+    double percentageOfConsumerSpendingEducationExpenses = 0;
+    double percentageOfConsumerSpendingMedicalExpenses = 0;
+    double percentageOfConsumerSpendingTransportationCost = 0;
+    double percentageOfConsumerSpendingCommunicationCost = 0;
+    double percentageOfConsumerSpendingLeisureOrCulture = 0;
+    double percentageOfConsumerSpendingClothingOrShoes = 0;
+    double percentageOfConsumerSpendingPinMoney = 0;
+    double percentageOfConsumerSpendingProtectionTypeInsurance = 0;
+    double percentageOfConsumerSpendingOtherExpenses = 0;
+    double percentageOfConsumerSpendingUnknownExpenditure = 0;
 
     if (consumerSpendingTotal != 0)
     {
-        percentageOfconsumerSpendingMealOrEatOutExpenses = ((double)(100)) * (((double)consumerSpendingMealOrEatOutExpenses) / ((double)consumerSpendingTotal));
-        percentageOfconsumerSpendingHousingOrSuppliesCost = ((double)(100)) * (((double)consumerSpendingHousingOrSuppliesCost) / ((double)consumerSpendingTotal));
-        percentageOfconsumerSpendingEducationExpenses = ((double)(100)) * (((double)consumerSpendingEducationExpenses) / ((double)consumerSpendingTotal));
-        percentageOfconsumerSpendingMedicalExpenses = ((double)(100)) * (((double)consumerSpendingMedicalExpenses) / ((double)consumerSpendingTotal));
-        percentageOfconsumerSpendingTransportationCost = ((double)(100)) * (((double)consumerSpendingTransportationCost) / ((double)consumerSpendingTotal));
-        percentageOfconsumerSpendingCommunicationCost = ((double)(100)) * (((double)consumerSpendingCommunicationCost) / ((double)consumerSpendingTotal));
-        percentageOfconsumerSpendingLeisureOrCulture = ((double)(100)) * (((double)consumerSpendingLeisureOrCulture) / ((double)consumerSpendingTotal));
-        percentageOfconsumerSpendingClothingOrShoes = ((double)(100)) * (((double)consumerSpendingClothingOrShoes) / ((double)consumerSpendingTotal));
-        percentageOfconsumerSpendingPinMoney = ((double)(100)) * (((double)consumerSpendingPinMoney) / ((double)consumerSpendingTotal));
-        percentageOfconsumerSpendingProtectionTypeInsurance = ((double)(100)) * (((double)consumerSpendingProtectionTypeInsurance) / ((double)consumerSpendingTotal));
-        percentageOfconsumerSpendingOtherExpenses = ((double)(100)) * (((double)consumerSpendingOtherExpenses) / ((double)consumerSpendingTotal));
-        percentageOfconsumerSpendingUnknownExpenditure = ((double)(100)) * (((double)consumerSpendingUnknownExpenditure) / ((double)consumerSpendingTotal));
+        percentageOfConsumerSpendingMealOrEatOutExpenses = ((double)(100)) * (((double)consumerSpendingMealOrEatOutExpenses) / ((double)consumerSpendingTotal));
+        percentageOfConsumerSpendingHousingOrSuppliesCost = ((double)(100)) * (((double)consumerSpendingHousingOrSuppliesCost) / ((double)consumerSpendingTotal));
+        percentageOfConsumerSpendingEducationExpenses = ((double)(100)) * (((double)consumerSpendingEducationExpenses) / ((double)consumerSpendingTotal));
+        percentageOfConsumerSpendingMedicalExpenses = ((double)(100)) * (((double)consumerSpendingMedicalExpenses) / ((double)consumerSpendingTotal));
+        percentageOfConsumerSpendingTransportationCost = ((double)(100)) * (((double)consumerSpendingTransportationCost) / ((double)consumerSpendingTotal));
+        percentageOfConsumerSpendingCommunicationCost = ((double)(100)) * (((double)consumerSpendingCommunicationCost) / ((double)consumerSpendingTotal));
+        percentageOfConsumerSpendingLeisureOrCulture = ((double)(100)) * (((double)consumerSpendingLeisureOrCulture) / ((double)consumerSpendingTotal));
+        percentageOfConsumerSpendingClothingOrShoes = ((double)(100)) * (((double)consumerSpendingClothingOrShoes) / ((double)consumerSpendingTotal));
+        percentageOfConsumerSpendingPinMoney = ((double)(100)) * (((double)consumerSpendingPinMoney) / ((double)consumerSpendingTotal));
+        percentageOfConsumerSpendingProtectionTypeInsurance = ((double)(100)) * (((double)consumerSpendingProtectionTypeInsurance) / ((double)consumerSpendingTotal));
+        percentageOfConsumerSpendingOtherExpenses = ((double)(100)) * (((double)consumerSpendingOtherExpenses) / ((double)consumerSpendingTotal));
+        percentageOfConsumerSpendingUnknownExpenditure = ((double)(100)) * (((double)consumerSpendingUnknownExpenditure) / ((double)consumerSpendingTotal));
     }
 
     #endregion
@@ -607,14 +607,14 @@
                                         }
                                     </div>
                                     <div>
-                                        @if (percentageOfirregularIncomeLaborIncome != 0)
+                                        @if (percentageOfIrregularIncomeLaborIncome != 0)
                                         {
-                                            <span>@localizer["LaborIncome"]: @(percentageOfirregularIncomeLaborIncome.ToString("0.00"))%<br /></span>
+                                            <span>@localizer["LaborIncome"]: @(percentageOfIrregularIncomeLaborIncome.ToString("0.00"))%<br /></span>
                                         }
 
-                                        @if (percentageOfirregularIncomeOtherIncome != 0)
+                                        @if (percentageOfIrregularIncomeOtherIncome != 0)
                                         {
-                                            <span>@localizer["OtherIncome"]: @(percentageOfirregularIncomeOtherIncome.ToString("0.00"))%<br /></span>
+                                            <span>@localizer["OtherIncome"]: @(percentageOfIrregularIncomeOtherIncome.ToString("0.00"))%<br /></span>
                                         }
                                     </div>
                                 </div>
@@ -840,14 +840,14 @@
                                         }
                                     </div>
                                     <div>
-                                        @if (percentageOfregularSavingsDeposit != 0)
+                                        @if (percentageOfRegularSavingsDeposit != 0)
                                         {
-                                            <span>@localizer["Deposit"]: @(percentageOfregularSavingsDeposit.ToString("0.00"))%<br /></span>
+                                            <span>@localizer["Deposit"]: @(percentageOfRegularSavingsDeposit.ToString("0.00"))%<br /></span>
                                         }
 
-                                        @if (percentageOfregularSavingsInvestment != 0)
+                                        @if (percentageOfRegularSavingsInvestment != 0)
                                         {
-                                            <span>@localizer["Investment"]: @(percentageOfregularSavingsInvestment.ToString("0.00"))%<br /></span>
+                                            <span>@localizer["Investment"]: @(percentageOfRegularSavingsInvestment.ToString("0.00"))%<br /></span>
                                         }
                                     </div>
                                 </div>
@@ -1003,34 +1003,34 @@
                                         }
                                     </div>
                                     <div>
-                                        @if (percentageOfnonConsumerSpendingPublicPension != 0)
+                                        @if (percentageOfNonConsumerSpendingPublicPension != 0)
                                         {
-                                            <span>@localizer["PublicPension"]: @(percentageOfnonConsumerSpendingPublicPension.ToString("0.00"))%<br /></span>
+                                            <span>@localizer["PublicPension"]: @(percentageOfNonConsumerSpendingPublicPension.ToString("0.00"))%<br /></span>
                                         }
 
-                                        @if (percentageOfnonConsumerSpendingDebtRepayment != 0)
+                                        @if (percentageOfNonConsumerSpendingDebtRepayment != 0)
                                         {
-                                            <span>@localizer["DebtRepayment"]: @(percentageOfnonConsumerSpendingDebtRepayment.ToString("0.00"))%<br /></span>
+                                            <span>@localizer["DebtRepayment"]: @(percentageOfNonConsumerSpendingDebtRepayment.ToString("0.00"))%<br /></span>
                                         }
 
-                                        @if (percentageOfnonConsumerSpendingTax != 0)
+                                        @if (percentageOfNonConsumerSpendingTax != 0)
                                         {
-                                            <span>@localizer["Tax"]: @(percentageOfnonConsumerSpendingTax.ToString("0.00"))%<br /></span>
+                                            <span>@localizer["Tax"]: @(percentageOfNonConsumerSpendingTax.ToString("0.00"))%<br /></span>
                                         }
 
-                                        @if (percentageOfnonConsumerSpendingSocialInsurance != 0)
+                                        @if (percentageOfNonConsumerSpendingSocialInsurance != 0)
                                         {
-                                            <span>@localizer["SocialInsurance"]: @(percentageOfnonConsumerSpendingSocialInsurance.ToString("0.00"))%<br /></span>
+                                            <span>@localizer["SocialInsurance"]: @(percentageOfNonConsumerSpendingSocialInsurance.ToString("0.00"))%<br /></span>
                                         }
 
-                                        @if (percentageOfnonConsumerSpendingInterHouseholdTranserExpenses != 0)
+                                        @if (percentageOfNonConsumerSpendingInterHouseholdTranserExpenses != 0)
                                         {
-                                            <span>@localizer["InterHouseholdTransferExpenses"]: @(percentageOfnonConsumerSpendingInterHouseholdTranserExpenses.ToString("0.00"))%<br /></span>
+                                            <span>@localizer["InterHouseholdTransferExpenses"]: @(percentageOfNonConsumerSpendingInterHouseholdTranserExpenses.ToString("0.00"))%<br /></span>
                                         }
 
-                                        @if (percentageOfnonConsumerSpendingNonProfitOrganizationTransfer != 0)
+                                        @if (percentageOfNonConsumerSpendingNonProfitOrganizationTransfer != 0)
                                         {
-                                            <span>@localizer["NonProfitOrganizationTransfer"]: @(percentageOfnonConsumerSpendingNonProfitOrganizationTransfer.ToString("0.00"))%<br /></span>
+                                            <span>@localizer["NonProfitOrganizationTransfer"]: @(percentageOfNonConsumerSpendingNonProfitOrganizationTransfer.ToString("0.00"))%<br /></span>
                                         }
                                     </div>
                                 </div>
@@ -1187,64 +1187,64 @@
                                         }
                                     </div>
                                     <div>
-                                        @if (percentageOfconsumerSpendingMealOrEatOutExpenses != 0)
+                                        @if (percentageOfConsumerSpendingMealOrEatOutExpenses != 0)
                                         {
-                                            <span>@localizer["MealOrEatOutExpenses"]: @(percentageOfconsumerSpendingMealOrEatOutExpenses.ToString("0.00"))%<br /></span>
+                                            <span>@localizer["MealOrEatOutExpenses"]: @(percentageOfConsumerSpendingMealOrEatOutExpenses.ToString("0.00"))%<br /></span>
                                         }
 
-                                        @if (percentageOfconsumerSpendingHousingOrSuppliesCost != 0)
+                                        @if (percentageOfConsumerSpendingHousingOrSuppliesCost != 0)
                                         {
-                                            <span>@localizer["HousingOrSuppliesCost"]: @(percentageOfconsumerSpendingHousingOrSuppliesCost.ToString("0.00"))%<br /></span>
+                                            <span>@localizer["HousingOrSuppliesCost"]: @(percentageOfConsumerSpendingHousingOrSuppliesCost.ToString("0.00"))%<br /></span>
                                         }
 
-                                        @if (percentageOfconsumerSpendingEducationExpenses != 0)
+                                        @if (percentageOfConsumerSpendingEducationExpenses != 0)
                                         {
-                                            <span>@localizer["EducationExpenses"]: @(percentageOfconsumerSpendingEducationExpenses.ToString("0.00"))%<br /></span>
+                                            <span>@localizer["EducationExpenses"]: @(percentageOfConsumerSpendingEducationExpenses.ToString("0.00"))%<br /></span>
                                         }
 
-                                        @if (percentageOfconsumerSpendingMedicalExpenses != 0)
+                                        @if (percentageOfConsumerSpendingMedicalExpenses != 0)
                                         {
-                                            <span>@localizer["MedicalExpenses"]: @(percentageOfconsumerSpendingMedicalExpenses.ToString("0.00"))%<br /></span>
+                                            <span>@localizer["MedicalExpenses"]: @(percentageOfConsumerSpendingMedicalExpenses.ToString("0.00"))%<br /></span>
                                         }
 
-                                        @if (percentageOfconsumerSpendingTransportationCost != 0)
+                                        @if (percentageOfConsumerSpendingTransportationCost != 0)
                                         {
-                                            <span>@localizer["TransportationCost"]: @(percentageOfconsumerSpendingTransportationCost.ToString("0.00"))%<br /></span>
+                                            <span>@localizer["TransportationCost"]: @(percentageOfConsumerSpendingTransportationCost.ToString("0.00"))%<br /></span>
                                         }
 
-                                        @if (percentageOfconsumerSpendingCommunicationCost != 0)
+                                        @if (percentageOfConsumerSpendingCommunicationCost != 0)
                                         {
-                                            <span>@localizer["CommunicationCost"]: @(percentageOfconsumerSpendingCommunicationCost.ToString("0.00"))%<br /></span>
+                                            <span>@localizer["CommunicationCost"]: @(percentageOfConsumerSpendingCommunicationCost.ToString("0.00"))%<br /></span>
                                         }
 
-                                        @if (percentageOfconsumerSpendingLeisureOrCulture != 0)
+                                        @if (percentageOfConsumerSpendingLeisureOrCulture != 0)
                                         {
-                                            <span>@localizer["LeisureOrCulture"]: @(percentageOfconsumerSpendingLeisureOrCulture.ToString("0.00"))%<br /></span>
+                                            <span>@localizer["LeisureOrCulture"]: @(percentageOfConsumerSpendingLeisureOrCulture.ToString("0.00"))%<br /></span>
                                         }
 
-                                        @if (percentageOfconsumerSpendingClothingOrShoes != 0)
+                                        @if (percentageOfConsumerSpendingClothingOrShoes != 0)
                                         {
-                                            <span>@localizer["ClothingOrShoes"]: @(percentageOfconsumerSpendingClothingOrShoes.ToString("0.00"))%<br /></span>
+                                            <span>@localizer["ClothingOrShoes"]: @(percentageOfConsumerSpendingClothingOrShoes.ToString("0.00"))%<br /></span>
                                         }
 
-                                        @if (percentageOfconsumerSpendingPinMoney != 0)
+                                        @if (percentageOfConsumerSpendingPinMoney != 0)
                                         {
-                                            <span>@localizer["PinMoney"]: @(percentageOfconsumerSpendingPinMoney.ToString("0.00"))%<br /></span>
+                                            <span>@localizer["PinMoney"]: @(percentageOfConsumerSpendingPinMoney.ToString("0.00"))%<br /></span>
                                         }
 
-                                        @if (percentageOfconsumerSpendingProtectionTypeInsurance != 0)
+                                        @if (percentageOfConsumerSpendingProtectionTypeInsurance != 0)
                                         {
-                                            <span>@localizer["ProtectionTypeInsurance"]: @(percentageOfconsumerSpendingProtectionTypeInsurance.ToString("0.00"))%<br /></span>
+                                            <span>@localizer["ProtectionTypeInsurance"]: @(percentageOfConsumerSpendingProtectionTypeInsurance.ToString("0.00"))%<br /></span>
                                         }
 
-                                        @if (percentageOfconsumerSpendingOtherExpenses != 0)
+                                        @if (percentageOfConsumerSpendingOtherExpenses != 0)
                                         {
-                                            <span>@localizer["OtherExpenses"]: @(percentageOfconsumerSpendingOtherExpenses.ToString("0.00"))%<br /></span>
+                                            <span>@localizer["OtherExpenses"]: @(percentageOfConsumerSpendingOtherExpenses.ToString("0.00"))%<br /></span>
                                         }
 
-                                        @if (percentageOfconsumerSpendingUnknownExpenditure != 0)
+                                        @if (percentageOfConsumerSpendingUnknownExpenditure != 0)
                                         {
-                                            <span>@localizer["UnknownExpenditure"]: @(percentageOfconsumerSpendingUnknownExpenditure.ToString("0.00"))%<br /></span>
+                                            <span>@localizer["UnknownExpenditure"]: @(percentageOfConsumerSpendingUnknownExpenditure.ToString("0.00"))%<br /></span>
                                         }
                                     </div>
                                 </div>
