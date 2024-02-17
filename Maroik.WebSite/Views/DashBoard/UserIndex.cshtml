@@ -70,6 +70,7 @@
     #region 대분류 = '소비지출'
     var consumerSpending = Model.Expenditures.Where(x => x.MainClass == "ConsumerSpending").ToList();
 
+    long consumerSpendingTotal = 0;
     long consumerSpendingMealOrEatOutExpenses = 0;
     long consumerSpendingHousingOrSuppliesCost = 0;
     long consumerSpendingEducationExpenses = 0;
@@ -83,6 +84,7 @@
     long consumerSpendingOtherExpenses = 0;
     long consumerSpendingUnknownExpenditure = 0;
 
+    consumerSpendingTotal = consumerSpending.Sum(v => v.Amount);
     consumerSpendingMealOrEatOutExpenses = consumerSpending.Where(x => x.SubClass == "MealOrEatOutExpenses").Sum(v => v.Amount);
     consumerSpendingHousingOrSuppliesCost = consumerSpending.Where(x => x.SubClass == "HousingOrSuppliesCost").Sum(v => v.Amount);
     consumerSpendingEducationExpenses = consumerSpending.Where(x => x.SubClass == "EducationExpenses").Sum(v => v.Amount);
@@ -95,6 +97,36 @@
     consumerSpendingProtectionTypeInsurance = consumerSpending.Where(x => x.SubClass == "ProtectionTypeInsurance").Sum(v => v.Amount);
     consumerSpendingOtherExpenses = consumerSpending.Where(x => x.SubClass == "OtherExpenses").Sum(v => v.Amount);
     consumerSpendingUnknownExpenditure = consumerSpending.Where(x => x.SubClass == "UnknownExpenditure").Sum(v => v.Amount);
+
+    double percentageOfconsumerSpendingMealOrEatOutExpenses = 0;
+    double percentageOfconsumerSpendingHousingOrSuppliesCost = 0;
+    double percentageOfconsumerSpendingEducationExpenses = 0;
+    double percentageOfconsumerSpendingMedicalExpenses = 0;
+    double percentageOfconsumerSpendingTransportationCost = 0;
+    double percentageOfconsumerSpendingCommunicationCost = 0;
+    double percentageOfconsumerSpendingLeisureOrCulture = 0;
+    double percentageOfconsumerSpendingClothingOrShoes = 0;
+    double percentageOfconsumerSpendingPinMoney = 0;
+    double percentageOfconsumerSpendingProtectionTypeInsurance = 0;
+    double percentageOfconsumerSpendingOtherExpenses = 0;
+    double percentageOfconsumerSpendingUnknownExpenditure = 0;
+
+    if (consumerSpendingTotal != 0)
+    {
+        percentageOfconsumerSpendingMealOrEatOutExpenses = ((double)(100)) * (((double)consumerSpendingMealOrEatOutExpenses) / ((double)consumerSpendingTotal));
+        percentageOfconsumerSpendingHousingOrSuppliesCost = ((double)(100)) * (((double)consumerSpendingHousingOrSuppliesCost) / ((double)consumerSpendingTotal));
+        percentageOfconsumerSpendingEducationExpenses = ((double)(100)) * (((double)consumerSpendingEducationExpenses) / ((double)consumerSpendingTotal));
+        percentageOfconsumerSpendingMedicalExpenses = ((double)(100)) * (((double)consumerSpendingMedicalExpenses) / ((double)consumerSpendingTotal));
+        percentageOfconsumerSpendingTransportationCost = ((double)(100)) * (((double)consumerSpendingTransportationCost) / ((double)consumerSpendingTotal));
+        percentageOfconsumerSpendingCommunicationCost = ((double)(100)) * (((double)consumerSpendingCommunicationCost) / ((double)consumerSpendingTotal));
+        percentageOfconsumerSpendingLeisureOrCulture = ((double)(100)) * (((double)consumerSpendingLeisureOrCulture) / ((double)consumerSpendingTotal));
+        percentageOfconsumerSpendingClothingOrShoes = ((double)(100)) * (((double)consumerSpendingClothingOrShoes) / ((double)consumerSpendingTotal));
+        percentageOfconsumerSpendingPinMoney = ((double)(100)) * (((double)consumerSpendingPinMoney) / ((double)consumerSpendingTotal));
+        percentageOfconsumerSpendingProtectionTypeInsurance = ((double)(100)) * (((double)consumerSpendingProtectionTypeInsurance) / ((double)consumerSpendingTotal));
+        percentageOfconsumerSpendingOtherExpenses = ((double)(100)) * (((double)consumerSpendingOtherExpenses) / ((double)consumerSpendingTotal));
+        percentageOfconsumerSpendingUnknownExpenditure = ((double)(100)) * (((double)consumerSpendingUnknownExpenditure) / ((double)consumerSpendingTotal));
+    }
+
     #endregion
 
     #endregion
@@ -102,43 +134,43 @@
 
 @*수입*@
 @*정기수입*@
-@Html.Hidden($"{nameof(regularIncomeLaborIncome)}",regularIncomeLaborIncome)
-@Html.Hidden($"{nameof(regularIncomeBusinessIncome)}",regularIncomeBusinessIncome)
-@Html.Hidden($"{nameof(regularIncomePensionIncome)}",regularIncomePensionIncome)
-@Html.Hidden($"{nameof(regularIncomeFinancialIncome)}",regularIncomeFinancialIncome)
-@Html.Hidden($"{nameof(regularIncomeRentalIncome)}",regularIncomeRentalIncome)
-@Html.Hidden($"{nameof(regularIncomeOtherIncome)}",regularIncomeOtherIncome)
+@Html.Hidden($"{nameof(regularIncomeLaborIncome)}", regularIncomeLaborIncome)
+@Html.Hidden($"{nameof(regularIncomeBusinessIncome)}", regularIncomeBusinessIncome)
+@Html.Hidden($"{nameof(regularIncomePensionIncome)}", regularIncomePensionIncome)
+@Html.Hidden($"{nameof(regularIncomeFinancialIncome)}", regularIncomeFinancialIncome)
+@Html.Hidden($"{nameof(regularIncomeRentalIncome)}", regularIncomeRentalIncome)
+@Html.Hidden($"{nameof(regularIncomeOtherIncome)}", regularIncomeOtherIncome)
 
 @*비정기수입*@
-@Html.Hidden($"{nameof(irregularIncomeLaborIncome)}",irregularIncomeLaborIncome)
-@Html.Hidden($"{nameof(irregularIncomeOtherIncome)}",irregularIncomeOtherIncome)
+@Html.Hidden($"{nameof(irregularIncomeLaborIncome)}", irregularIncomeLaborIncome)
+@Html.Hidden($"{nameof(irregularIncomeOtherIncome)}", irregularIncomeOtherIncome)
 
 @*지출*@
 @*정기저축*@
-@Html.Hidden($"{nameof(regularSavingsDeposit)}",regularSavingsDeposit)
-@Html.Hidden($"{nameof(regularSavingsInvestment)}",regularSavingsInvestment)
+@Html.Hidden($"{nameof(regularSavingsDeposit)}", regularSavingsDeposit)
+@Html.Hidden($"{nameof(regularSavingsInvestment)}", regularSavingsInvestment)
 
 @*비소비지출*@
-@Html.Hidden($"{nameof(nonConsumerSpendingPublicPension)}",nonConsumerSpendingPublicPension)
-@Html.Hidden($"{nameof(nonConsumerSpendingDebtRepayment)}",nonConsumerSpendingDebtRepayment)
-@Html.Hidden($"{nameof(nonConsumerSpendingTax)}",nonConsumerSpendingTax)
-@Html.Hidden($"{nameof(nonConsumerSpendingSocialInsurance)}",nonConsumerSpendingSocialInsurance)
-@Html.Hidden($"{nameof(nonConsumerSpendingInterHouseholdTranserExpenses)}",nonConsumerSpendingInterHouseholdTranserExpenses)
-@Html.Hidden($"{nameof(nonConsumerSpendingNonProfitOrganizationTransfer)}",nonConsumerSpendingNonProfitOrganizationTransfer)
+@Html.Hidden($"{nameof(nonConsumerSpendingPublicPension)}", nonConsumerSpendingPublicPension)
+@Html.Hidden($"{nameof(nonConsumerSpendingDebtRepayment)}", nonConsumerSpendingDebtRepayment)
+@Html.Hidden($"{nameof(nonConsumerSpendingTax)}", nonConsumerSpendingTax)
+@Html.Hidden($"{nameof(nonConsumerSpendingSocialInsurance)}", nonConsumerSpendingSocialInsurance)
+@Html.Hidden($"{nameof(nonConsumerSpendingInterHouseholdTranserExpenses)}", nonConsumerSpendingInterHouseholdTranserExpenses)
+@Html.Hidden($"{nameof(nonConsumerSpendingNonProfitOrganizationTransfer)}", nonConsumerSpendingNonProfitOrganizationTransfer)
 
 @*소비지출*@
-@Html.Hidden($"{nameof(consumerSpendingMealOrEatOutExpenses)}",consumerSpendingMealOrEatOutExpenses)
-@Html.Hidden($"{nameof(consumerSpendingHousingOrSuppliesCost)}",consumerSpendingHousingOrSuppliesCost)
-@Html.Hidden($"{nameof(consumerSpendingEducationExpenses)}",consumerSpendingEducationExpenses)
-@Html.Hidden($"{nameof(consumerSpendingMedicalExpenses)}",consumerSpendingMedicalExpenses)
-@Html.Hidden($"{nameof(consumerSpendingTransportationCost)}",consumerSpendingTransportationCost)
-@Html.Hidden($"{nameof(consumerSpendingCommunicationCost)}",consumerSpendingCommunicationCost)
-@Html.Hidden($"{nameof(consumerSpendingLeisureOrCulture)}",consumerSpendingLeisureOrCulture)
-@Html.Hidden($"{nameof(consumerSpendingClothingOrShoes)}",consumerSpendingClothingOrShoes)
-@Html.Hidden($"{nameof(consumerSpendingPinMoney)}",consumerSpendingPinMoney)
-@Html.Hidden($"{nameof(consumerSpendingProtectionTypeInsurance)}",consumerSpendingProtectionTypeInsurance)
-@Html.Hidden($"{nameof(consumerSpendingOtherExpenses)}",consumerSpendingOtherExpenses)
-@Html.Hidden($"{nameof(consumerSpendingUnknownExpenditure)}",consumerSpendingUnknownExpenditure)
+@Html.Hidden($"{nameof(consumerSpendingMealOrEatOutExpenses)}", consumerSpendingMealOrEatOutExpenses)
+@Html.Hidden($"{nameof(consumerSpendingHousingOrSuppliesCost)}", consumerSpendingHousingOrSuppliesCost)
+@Html.Hidden($"{nameof(consumerSpendingEducationExpenses)}", consumerSpendingEducationExpenses)
+@Html.Hidden($"{nameof(consumerSpendingMedicalExpenses)}", consumerSpendingMedicalExpenses)
+@Html.Hidden($"{nameof(consumerSpendingTransportationCost)}", consumerSpendingTransportationCost)
+@Html.Hidden($"{nameof(consumerSpendingCommunicationCost)}", consumerSpendingCommunicationCost)
+@Html.Hidden($"{nameof(consumerSpendingLeisureOrCulture)}", consumerSpendingLeisureOrCulture)
+@Html.Hidden($"{nameof(consumerSpendingClothingOrShoes)}", consumerSpendingClothingOrShoes)
+@Html.Hidden($"{nameof(consumerSpendingPinMoney)}", consumerSpendingPinMoney)
+@Html.Hidden($"{nameof(consumerSpendingProtectionTypeInsurance)}", consumerSpendingProtectionTypeInsurance)
+@Html.Hidden($"{nameof(consumerSpendingOtherExpenses)}", consumerSpendingOtherExpenses)
+@Html.Hidden($"{nameof(consumerSpendingUnknownExpenditure)}", consumerSpendingUnknownExpenditure)
 
 <section class="content">
     <div class="container-fluid">
@@ -841,152 +873,217 @@
                                 }
                             </div>
                             <div class="chart tab-pane active" id="dashboardExpenditureStatisticsTabs-3" style="position: relative; height: 380px;">
-                                @foreach (USP_Expenditure_MonthlyReport USP_Expenditure_MonthlyReport_Result in Model.USP_Expenditure_MonthlyReport_Results.Where(m => m.MainClass == "ConsumerSpending"))
-                                {
-                                    @if (USP_Expenditure_MonthlyReport_Result.SumValue == null)
-                                    {
-                                        <span>@localizer["Sum"]: @localizer["None"]<br /></span>
-                                    }
-                                    else
-                                    {
-                                        <span>@localizer["Sum"]: @Math.Round((decimal)(USP_Expenditure_MonthlyReport_Result.SumValue), 2, MidpointRounding.ToZero)<br /></span>
-                                    }
+                                <div style="display: flex; justify-content: space-between;">
+                                    <div>
+                                        @foreach (USP_Expenditure_MonthlyReport USP_Expenditure_MonthlyReport_Result in Model.USP_Expenditure_MonthlyReport_Results.Where(m => m.MainClass == "ConsumerSpending"))
+                                        {
+                                            @if (USP_Expenditure_MonthlyReport_Result.SumValue == null)
+                                            {
+                                                <span>@localizer["Sum"]: @localizer["None"]<br /></span>
+                                            }
+                                            else
+                                            {
+                                                <span>@localizer["Sum"]: @Math.Round((decimal)(USP_Expenditure_MonthlyReport_Result.SumValue), 2, MidpointRounding.ToZero)<br /></span>
+                                            }
 
-                                    @if (USP_Expenditure_MonthlyReport_Result.CountValue == null)
-                                    {
-                                        <span>@localizer["Count"]: @localizer["None"]<br /></span>
-                                    }
-                                    else
-                                    {
-                                        <span>@localizer["Count"]: @USP_Expenditure_MonthlyReport_Result.CountValue<br /></span>
-                                    }
+                                            @if (USP_Expenditure_MonthlyReport_Result.CountValue == null)
+                                            {
+                                                <span>@localizer["Count"]: @localizer["None"]<br /></span>
+                                            }
+                                            else
+                                            {
+                                                <span>@localizer["Count"]: @USP_Expenditure_MonthlyReport_Result.CountValue<br /></span>
+                                            }
 
-                                    @if (USP_Expenditure_MonthlyReport_Result.ModeValue == null)
-                                    {
-                                        <span>@localizer["Mode"]: @localizer["None"]<br /></span>
-                                    }
-                                    else
-                                    {
-                                        <span>@localizer["Mode"]: @USP_Expenditure_MonthlyReport_Result.ModeValue<br /></span>
-                                    }
+                                            @if (USP_Expenditure_MonthlyReport_Result.ModeValue == null)
+                                            {
+                                                <span>@localizer["Mode"]: @localizer["None"]<br /></span>
+                                            }
+                                            else
+                                            {
+                                                <span>@localizer["Mode"]: @USP_Expenditure_MonthlyReport_Result.ModeValue<br /></span>
+                                            }
 
-                                    @if (USP_Expenditure_MonthlyReport_Result.ModeCount == null)
-                                    {
-                                        <span>@localizer["Mode Count"]: @localizer["None"]<br /></span>
-                                    }
-                                    else
-                                    {
-                                        <span>@localizer["Mode Count"]: @USP_Expenditure_MonthlyReport_Result.ModeCount<br /></span>
-                                    }
+                                            @if (USP_Expenditure_MonthlyReport_Result.ModeCount == null)
+                                            {
+                                                <span>@localizer["Mode Count"]: @localizer["None"]<br /></span>
+                                            }
+                                            else
+                                            {
+                                                <span>@localizer["Mode Count"]: @USP_Expenditure_MonthlyReport_Result.ModeCount<br /></span>
+                                            }
 
-                                    @if (USP_Expenditure_MonthlyReport_Result.MinValue == null)
-                                    {
-                                        <span>@localizer["Min"]: @localizer["None"]<br /></span>
-                                    }
-                                    else
-                                    {
-                                        <span>@localizer["Min"]: @USP_Expenditure_MonthlyReport_Result.MinValue<br /></span>
-                                    }
+                                            @if (USP_Expenditure_MonthlyReport_Result.MinValue == null)
+                                            {
+                                                <span>@localizer["Min"]: @localizer["None"]<br /></span>
+                                            }
+                                            else
+                                            {
+                                                <span>@localizer["Min"]: @USP_Expenditure_MonthlyReport_Result.MinValue<br /></span>
+                                            }
 
-                                    @if (USP_Expenditure_MonthlyReport_Result.MaxValue == null)
-                                    {
-                                        <span>@localizer["Max"]: @localizer["None"]<br /></span>
-                                    }
-                                    else
-                                    {
-                                        <span>@localizer["Max"]: @USP_Expenditure_MonthlyReport_Result.MaxValue<br /></span>
-                                    }
+                                            @if (USP_Expenditure_MonthlyReport_Result.MaxValue == null)
+                                            {
+                                                <span>@localizer["Max"]: @localizer["None"]<br /></span>
+                                            }
+                                            else
+                                            {
+                                                <span>@localizer["Max"]: @USP_Expenditure_MonthlyReport_Result.MaxValue<br /></span>
+                                            }
 
-                                    @if (USP_Expenditure_MonthlyReport_Result.RangeValue == null)
-                                    {
-                                        <span>@localizer["Range"]: @localizer["None"]<br /></span>
-                                    }
-                                    else
-                                    {
-                                        <span>@localizer["Range"]: @USP_Expenditure_MonthlyReport_Result.RangeValue<br /></span>
-                                    }
+                                            @if (USP_Expenditure_MonthlyReport_Result.RangeValue == null)
+                                            {
+                                                <span>@localizer["Range"]: @localizer["None"]<br /></span>
+                                            }
+                                            else
+                                            {
+                                                <span>@localizer["Range"]: @USP_Expenditure_MonthlyReport_Result.RangeValue<br /></span>
+                                            }
 
-                                    @if (USP_Expenditure_MonthlyReport_Result.MeanValue == null)
-                                    {
-                                        <span>@localizer["Mean"]: @localizer["None"]<br /></span>
-                                    }
-                                    else
-                                    {
-                                        <span>@localizer["Mean"]: @Math.Round((decimal)(USP_Expenditure_MonthlyReport_Result.MeanValue), 2, MidpointRounding.ToZero)<br /></span>
-                                    }
+                                            @if (USP_Expenditure_MonthlyReport_Result.MeanValue == null)
+                                            {
+                                                <span>@localizer["Mean"]: @localizer["None"]<br /></span>
+                                            }
+                                            else
+                                            {
+                                                <span>@localizer["Mean"]: @Math.Round((decimal)(USP_Expenditure_MonthlyReport_Result.MeanValue), 2, MidpointRounding.ToZero)<br /></span>
+                                            }
 
-                                    @if (USP_Expenditure_MonthlyReport_Result.Variance == null)
-                                    {
-                                        <span>@localizer["Variance"]: @localizer["None"]<br /></span>
-                                    }
-                                    else
-                                    {
-                                        <span>@localizer["Variance"]: @Math.Round((double)(USP_Expenditure_MonthlyReport_Result.Variance), 2, MidpointRounding.ToZero)<br /></span>
-                                    }
+                                            @if (USP_Expenditure_MonthlyReport_Result.Variance == null)
+                                            {
+                                                <span>@localizer["Variance"]: @localizer["None"]<br /></span>
+                                            }
+                                            else
+                                            {
+                                                <span>@localizer["Variance"]: @Math.Round((double)(USP_Expenditure_MonthlyReport_Result.Variance), 2, MidpointRounding.ToZero)<br /></span>
+                                            }
 
-                                    @if (USP_Expenditure_MonthlyReport_Result.StandardDeviation == null)
-                                    {
-                                        <span>@localizer["Standard Deviation"]: @localizer["None"]<br /></span>
-                                    }
-                                    else
-                                    {
-                                        <span>@localizer["Standard Deviation"]: @Math.Round((double)(USP_Expenditure_MonthlyReport_Result.StandardDeviation), 2, MidpointRounding.ToZero)<br /></span>
-                                    }
+                                            @if (USP_Expenditure_MonthlyReport_Result.StandardDeviation == null)
+                                            {
+                                                <span>@localizer["Standard Deviation"]: @localizer["None"]<br /></span>
+                                            }
+                                            else
+                                            {
+                                                <span>@localizer["Standard Deviation"]: @Math.Round((double)(USP_Expenditure_MonthlyReport_Result.StandardDeviation), 2, MidpointRounding.ToZero)<br /></span>
+                                            }
 
-                                    @if (USP_Expenditure_MonthlyReport_Result.Q1 == null)
-                                    {
-                                        <span>Q1 (25%): @localizer["None"]<br /></span>
-                                    }
-                                    else
-                                    {
-                                        <span>Q1 (25%): @Math.Round((double)(USP_Expenditure_MonthlyReport_Result.Q1), 2, MidpointRounding.ToZero)<br /></span>
-                                    }
+                                            @if (USP_Expenditure_MonthlyReport_Result.Q1 == null)
+                                            {
+                                                <span>Q1 (25%): @localizer["None"]<br /></span>
+                                            }
+                                            else
+                                            {
+                                                <span>Q1 (25%): @Math.Round((double)(USP_Expenditure_MonthlyReport_Result.Q1), 2, MidpointRounding.ToZero)<br /></span>
+                                            }
 
-                                    @if (USP_Expenditure_MonthlyReport_Result.Q2 == null)
-                                    {
-                                        <span>Q2 (50%): @localizer["None"]<br /></span>
-                                    }
-                                    else
-                                    {
-                                        <span>Q2 (50%): @Math.Round((double)(USP_Expenditure_MonthlyReport_Result.Q2), 2, MidpointRounding.ToZero)<br /></span>
-                                    }
+                                            @if (USP_Expenditure_MonthlyReport_Result.Q2 == null)
+                                            {
+                                                <span>Q2 (50%): @localizer["None"]<br /></span>
+                                            }
+                                            else
+                                            {
+                                                <span>Q2 (50%): @Math.Round((double)(USP_Expenditure_MonthlyReport_Result.Q2), 2, MidpointRounding.ToZero)<br /></span>
+                                            }
 
-                                    @if (USP_Expenditure_MonthlyReport_Result.Q3 == null)
-                                    {
-                                        <span>Q3 (75%): @localizer["None"]<br /></span>
-                                    }
-                                    else
-                                    {
-                                        <span>Q3 (75%): @Math.Round((double)(USP_Expenditure_MonthlyReport_Result.Q3), 2, MidpointRounding.ToZero)<br /></span>
-                                    }
+                                            @if (USP_Expenditure_MonthlyReport_Result.Q3 == null)
+                                            {
+                                                <span>Q3 (75%): @localizer["None"]<br /></span>
+                                            }
+                                            else
+                                            {
+                                                <span>Q3 (75%): @Math.Round((double)(USP_Expenditure_MonthlyReport_Result.Q3), 2, MidpointRounding.ToZero)<br /></span>
+                                            }
 
-                                    @if (USP_Expenditure_MonthlyReport_Result.Skewness == null)
-                                    {
-                                        <span>@localizer["Skewness"]: @localizer["None"]<br /></span>
-                                    }
-                                    else
-                                    {
-                                        <span>@localizer["Skewness"]: @Math.Round((double)(USP_Expenditure_MonthlyReport_Result.Skewness), 2, MidpointRounding.ToZero)<br /></span>
-                                    }
+                                            @if (USP_Expenditure_MonthlyReport_Result.Skewness == null)
+                                            {
+                                                <span>@localizer["Skewness"]: @localizer["None"]<br /></span>
+                                            }
+                                            else
+                                            {
+                                                <span>@localizer["Skewness"]: @Math.Round((double)(USP_Expenditure_MonthlyReport_Result.Skewness), 2, MidpointRounding.ToZero)<br /></span>
+                                            }
 
-                                    @if (USP_Expenditure_MonthlyReport_Result.Kurtosis == null)
-                                    {
-                                        <span>@localizer["Kurtosis"]: @localizer["None"]<br /></span>
-                                    }
-                                    else
-                                    {
-                                        <span>@localizer["Kurtosis"]: @Math.Round((double)(USP_Expenditure_MonthlyReport_Result.Kurtosis), 2, MidpointRounding.ToZero)<br /></span>
-                                    }
+                                            @if (USP_Expenditure_MonthlyReport_Result.Kurtosis == null)
+                                            {
+                                                <span>@localizer["Kurtosis"]: @localizer["None"]<br /></span>
+                                            }
+                                            else
+                                            {
+                                                <span>@localizer["Kurtosis"]: @Math.Round((double)(USP_Expenditure_MonthlyReport_Result.Kurtosis), 2, MidpointRounding.ToZero)<br /></span>
+                                            }
 
-                                    @if (USP_Expenditure_MonthlyReport_Result.OverConsumptionIndex == null)
-                                    {
-                                        <span>@localizer["Over Consumption Index"]: @localizer["None"]<br /></span>
-                                    }
-                                    else
-                                    {
-                                        <span>@localizer["Over Consumption Index"]: @Math.Round((decimal)(USP_Expenditure_MonthlyReport_Result.OverConsumptionIndex), 2, MidpointRounding.ToZero)<br /></span>
-                                    }
-                                }
+                                            @if (USP_Expenditure_MonthlyReport_Result.OverConsumptionIndex == null)
+                                            {
+                                                <span>@localizer["Over Consumption Index"]: @localizer["None"]<br /></span>
+                                            }
+                                            else
+                                            {
+                                                <span>@localizer["Over Consumption Index"]: @Math.Round((decimal)(USP_Expenditure_MonthlyReport_Result.OverConsumptionIndex), 2, MidpointRounding.ToZero)<br /></span>
+                                            }
+                                        }
+                                    </div>
+                                    <div>
+                                        @if (percentageOfconsumerSpendingMealOrEatOutExpenses != 0)
+                                        {
+                                            <span>@localizer["MealOrEatOutExpenses"]: @(percentageOfconsumerSpendingMealOrEatOutExpenses.ToString("0.00"))%<br /></span>
+                                        }
+
+                                        @if (percentageOfconsumerSpendingHousingOrSuppliesCost != 0)
+                                        {
+                                            <span>@localizer["HousingOrSuppliesCost"]: @(percentageOfconsumerSpendingHousingOrSuppliesCost.ToString("0.00"))%<br /></span>
+                                        }
+
+                                        @if (percentageOfconsumerSpendingEducationExpenses != 0)
+                                        {
+                                            <span>@localizer["EducationExpenses"]: @(percentageOfconsumerSpendingEducationExpenses.ToString("0.00"))%<br /></span>
+                                        }
+
+                                        @if (percentageOfconsumerSpendingMedicalExpenses != 0)
+                                        {
+                                            <span>@localizer["MedicalExpenses"]: @(percentageOfconsumerSpendingMedicalExpenses.ToString("0.00"))%<br /></span>
+                                        }
+
+                                        @if (percentageOfconsumerSpendingTransportationCost != 0)
+                                        {
+                                            <span>@localizer["TransportationCost"]: @(percentageOfconsumerSpendingTransportationCost.ToString("0.00"))%<br /></span>
+                                        }
+
+                                        @if (percentageOfconsumerSpendingCommunicationCost != 0)
+                                        {
+                                            <span>@localizer["CommunicationCost"]: @(percentageOfconsumerSpendingCommunicationCost.ToString("0.00"))%<br /></span>
+                                        }
+
+                                        @if (percentageOfconsumerSpendingLeisureOrCulture != 0)
+                                        {
+                                            <span>@localizer["LeisureOrCulture"]: @(percentageOfconsumerSpendingLeisureOrCulture.ToString("0.00"))%<br /></span>
+                                        }
+
+                                        @if (percentageOfconsumerSpendingClothingOrShoes != 0)
+                                        {
+                                            <span>@localizer["ClothingOrShoes"]: @(percentageOfconsumerSpendingClothingOrShoes.ToString("0.00"))%<br /></span>
+                                        }
+
+                                        @if (percentageOfconsumerSpendingPinMoney != 0)
+                                        {
+                                            <span>@localizer["PinMoney"]: @(percentageOfconsumerSpendingPinMoney.ToString("0.00"))%<br /></span>
+                                        }
+
+                                        @if (percentageOfconsumerSpendingProtectionTypeInsurance != 0)
+                                        {
+                                            <span>@localizer["ProtectionTypeInsurance"]: @(percentageOfconsumerSpendingProtectionTypeInsurance.ToString("0.00"))%<br /></span>
+                                        }
+
+                                        @if (percentageOfconsumerSpendingOtherExpenses != 0)
+                                        {
+                                            <span>@localizer["OtherExpenses"]: @(percentageOfconsumerSpendingOtherExpenses.ToString("0.00"))%<br /></span>
+                                        }
+
+                                        @if (percentageOfconsumerSpendingUnknownExpenditure != 0)
+                                        {
+                                            <span>@localizer["UnknownExpenditure"]: @(percentageOfconsumerSpendingUnknownExpenditure.ToString("0.00"))%<br /></span>
+                                        }
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -996,7 +1093,7 @@
         </div>
     </div>
 </section>
-@section Scripts{
+@section Scripts {
     @if (currentCulture == "ko-KR")
     {
         <script src="~/user/custom/DashBoard/UserIndex/js/ko-KR-site.js" asp-append-version="true"></script>
@@ -1005,4 +1102,4 @@
     {
         <script src="~/user/custom/DashBoard/UserIndex/js/en-US-site.js" asp-append-version="true"></script>
     }
-}
+    }
