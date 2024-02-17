@@ -117,17 +117,47 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="BusinessIncome" xml:space="preserve">
+    <value>사업수입</value>
+  </data>
+  <data name="ClothingOrShoes" xml:space="preserve">
+    <value>의류/신발</value>
+  </data>
+  <data name="CommunicationCost" xml:space="preserve">
+    <value>통신비</value>
+  </data>
   <data name="Consumer spending" xml:space="preserve">
     <value>소비지출</value>
   </data>
   <data name="Count" xml:space="preserve">
     <value>개수</value>
   </data>
+  <data name="DebtRepayment" xml:space="preserve">
+    <value>부채상환</value>
+  </data>
+  <data name="Deposit" xml:space="preserve">
+    <value>예적금</value>
+  </data>
+  <data name="EducationExpenses" xml:space="preserve">
+    <value>교육비</value>
+  </data>
   <data name="Expenditure this month" xml:space="preserve">
     <value>이번달 지출</value>
   </data>
+  <data name="FinancialIncome" xml:space="preserve">
+    <value>금융소득</value>
+  </data>
+  <data name="HousingOrSuppliesCost" xml:space="preserve">
+    <value>주거/용품비</value>
+  </data>
   <data name="Income this month" xml:space="preserve">
     <value>이번달 수입</value>
+  </data>
+  <data name="InterHouseholdTransferExpenses" xml:space="preserve">
+    <value>가구간 이전지출</value>
+  </data>
+  <data name="Investment" xml:space="preserve">
+    <value>투자</value>
   </data>
   <data name="Irregular income" xml:space="preserve">
     <value>비정기수입</value>
@@ -135,11 +165,23 @@
   <data name="Kurtosis" xml:space="preserve">
     <value>첨도</value>
   </data>
+  <data name="LaborIncome" xml:space="preserve">
+    <value>근로수입</value>
+  </data>
+  <data name="LeisureOrCulture" xml:space="preserve">
+    <value>여가/문화</value>
+  </data>
   <data name="Max" xml:space="preserve">
     <value>최댓값</value>
   </data>
+  <data name="MealOrEatOutExpenses" xml:space="preserve">
+    <value>식비/외식비</value>
+  </data>
   <data name="Mean" xml:space="preserve">
     <value>평균</value>
+  </data>
+  <data name="MedicalExpenses" xml:space="preserve">
+    <value>의료비</value>
   </data>
   <data name="Min" xml:space="preserve">
     <value>최솟값</value>
@@ -156,8 +198,29 @@
   <data name="None" xml:space="preserve">
     <value>없음</value>
   </data>
+  <data name="NonProfitOrganizationTransfer" xml:space="preserve">
+    <value>비영리단체 이전</value>
+  </data>
+  <data name="OtherExpenses" xml:space="preserve">
+    <value>기타지출</value>
+  </data>
+  <data name="OtherIncome" xml:space="preserve">
+    <value>기타수입</value>
+  </data>
   <data name="Over Consumption Index" xml:space="preserve">
     <value>과소비지수</value>
+  </data>
+  <data name="PensionIncome" xml:space="preserve">
+    <value>연금수입</value>
+  </data>
+  <data name="PinMoney" xml:space="preserve">
+    <value>용돈</value>
+  </data>
+  <data name="ProtectionTypeInsurance" xml:space="preserve">
+    <value>보장성보험</value>
+  </data>
+  <data name="PublicPension" xml:space="preserve">
+    <value>공적연금</value>
   </data>
   <data name="Range" xml:space="preserve">
     <value>범위</value>
@@ -168,14 +231,29 @@
   <data name="Regular savings" xml:space="preserve">
     <value>정기저축</value>
   </data>
+  <data name="RentalIncome" xml:space="preserve">
+    <value>임대수입</value>
+  </data>
   <data name="Skewness" xml:space="preserve">
     <value>왜도</value>
+  </data>
+  <data name="SocialInsurance" xml:space="preserve">
+    <value>사회보험</value>
   </data>
   <data name="Standard Deviation" xml:space="preserve">
     <value>표준편차</value>
   </data>
   <data name="Sum" xml:space="preserve">
     <value>합계</value>
+  </data>
+  <data name="Tax" xml:space="preserve">
+    <value>세금</value>
+  </data>
+  <data name="TransportationCost" xml:space="preserve">
+    <value>교통비</value>
+  </data>
+  <data name="UnknownExpenditure" xml:space="preserve">
+    <value>미파악지출</value>
   </data>
   <data name="Variance" xml:space="preserve">
     <value>분산</value>
