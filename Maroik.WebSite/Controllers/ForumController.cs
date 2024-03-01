@@ -471,7 +471,7 @@ namespace Maroik.WebSite.Controllers
                         }
                         else if (loginedAccount.Role == Role.User) // 사용자는 보통 글 + 자신이 쓴 비밀글만 볼 수 있음
                         {
-                            List<Board> searchFreeBoards = new();
+                            List<Board> searchFreeBoards = [];
                             List<Board> noLockedFreeBoards = freeBoards.Where(a => a.Title.Contains(searchText)).Where(a => !a.Locked).ToList();
                             List<Board> myLockedFreeBoards = freeBoards.Where(a => a.Title.Contains(searchText)).Where(a => a.Locked && a.Writer == loginedAccount.Nickname).ToList();
                             searchFreeBoards.AddRange(noLockedFreeBoards);

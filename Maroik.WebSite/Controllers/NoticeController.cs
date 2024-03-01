@@ -174,7 +174,7 @@ namespace Maroik.WebSite.Controllers
         {
             if (HttpContext.Request.Headers["X-Requested-With"] == "XMLHttpRequest") // ajax
             {
-                List<FixedIncomeOutputViewModel> fixedIncomeOutputViewModels = new();
+                List<FixedIncomeOutputViewModel> fixedIncomeOutputViewModels = [];
 
                 #region FixedIncomes
                 _ = HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
@@ -516,7 +516,7 @@ namespace Maroik.WebSite.Controllers
             // query data from database
             await Task.Yield();
 
-            List<FixedIncomeOutputViewModel> fixedIncomeOutputViewModels = new();
+            List<FixedIncomeOutputViewModel> fixedIncomeOutputViewModels = [];
 
             #region FixedIncomes
 
@@ -841,7 +841,7 @@ namespace Maroik.WebSite.Controllers
         {
             if (HttpContext.Request.Headers["X-Requested-With"] == "XMLHttpRequest") // ajax
             {
-                List<FixedExpenditureOutputViewModel> fixedExpenditureOutputViewModels = new();
+                List<FixedExpenditureOutputViewModel> fixedExpenditureOutputViewModels = [];
 
                 #region FixedExpenditures
                 _ = HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
@@ -1273,7 +1273,7 @@ namespace Maroik.WebSite.Controllers
             // query data from database
             await Task.Yield();
 
-            List<FixedExpenditureOutputViewModel> fixedExpenditureOutputViewModels = new();
+            List<FixedExpenditureOutputViewModel> fixedExpenditureOutputViewModels = [];
 
             #region FixedExpenditures
 

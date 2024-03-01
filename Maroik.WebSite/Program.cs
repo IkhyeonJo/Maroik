@@ -92,11 +92,11 @@ builder.Services.AddMvc().AddViewLocalization(LanguageViewLocationExpanderFormat
 builder.Services.Configure<RequestLocalizationOptions>(
     opt =>
     {
-        List<CultureInfo> supportedCultures = new()
-        {
+        List<CultureInfo> supportedCultures =
+        [
                         new CultureInfo("en-US"),
                         new CultureInfo("ko-KR")
-        };
+        ];
         opt.DefaultRequestCulture = new RequestCulture("en-US");
         opt.SupportedCultures = supportedCultures;
         opt.SupportedUICultures = supportedCultures;

@@ -23,10 +23,10 @@ namespace Maroik.WebSite.Helpers
         public string FromEmail { get; set; }
         public string FromFullName { get; set; }
         public bool IsDefault { get; set; }
-        public List<string> ToMailIds { get; set; } = new List<string>();
+        public List<string> ToMailIds { get; set; } = [];
         public string Subject { get; set; } = "";
         public string Body { get; set; } = "";
         public bool IsBodyHTML { get; set; } = true;
-        public List<string> Attachments { get; set; } = new List<string>();
+        public List<string> Attachments { get; set; } = [];
     }
 }

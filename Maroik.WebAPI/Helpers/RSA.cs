@@ -158,14 +158,9 @@ UJGwvsObGSwUfhFISDcxew/exQS5mfJdBLKJI1kf60cjqy5UxWqY/CE=";
                 byte bt = 0;
                 ushort twobytes = 0;
                 twobytes = binr.ReadUInt16();
-                if (twobytes == 0x8130)
-                {
-                    _ = binr.ReadByte();
-                }
-                else
-                {
-                    _ = twobytes == 0x8230 ? binr.ReadInt16() : throw new Exception("Unexpected value read binr.ReadUInt16()");
-                }
+                _ = twobytes == 0x8130
+                    ? binr.ReadByte()
+                    : twobytes == 0x8230 ? binr.ReadInt16() : throw new Exception("Unexpected value read binr.ReadUInt16()");
 
                 twobytes = binr.ReadUInt16();
                 if (twobytes != 0x0102)

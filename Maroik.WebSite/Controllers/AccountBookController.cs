@@ -113,7 +113,7 @@ namespace Maroik.WebSite.Controllers
         {
             if (HttpContext.Request.Headers["X-Requested-With"] == "XMLHttpRequest") // ajax
             {
-                List<AssetOutputViewModel> assetOutputViewModels = new();
+                List<AssetOutputViewModel> assetOutputViewModels = [];
 
                 #region Assets
                 _ = HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
@@ -294,7 +294,7 @@ namespace Maroik.WebSite.Controllers
             // query data from database
             await Task.Yield();
 
-            List<AssetOutputViewModel> assetOutputViewModels = new();
+            List<AssetOutputViewModel> assetOutputViewModels = [];
 
             #region Assets
 
@@ -460,7 +460,7 @@ namespace Maroik.WebSite.Controllers
         {
             if (HttpContext.Request.Headers["X-Requested-With"] == "XMLHttpRequest") // ajax
             {
-                List<IncomeOutputViewModel> incomeOutputViewModels = new();
+                List<IncomeOutputViewModel> incomeOutputViewModels = [];
 
                 #region Incomes
                 _ = HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
@@ -745,7 +745,7 @@ namespace Maroik.WebSite.Controllers
             // query data from database
             await Task.Yield();
 
-            List<IncomeOutputViewModel> incomeOutputViewModels = new();
+            List<IncomeOutputViewModel> incomeOutputViewModels = [];
 
             #region Incomes
 
@@ -1108,7 +1108,7 @@ namespace Maroik.WebSite.Controllers
         {
             if (HttpContext.Request.Headers["X-Requested-With"] == "XMLHttpRequest") // ajax
             {
-                List<ExpenditureOutputViewModel> expenditureOutputViewModels = new();
+                List<ExpenditureOutputViewModel> expenditureOutputViewModels = [];
 
                 #region Expenditures
                 _ = HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
@@ -3047,7 +3047,7 @@ namespace Maroik.WebSite.Controllers
             // query data from database
             await Task.Yield();
 
-            List<ExpenditureOutputViewModel> expenditureOutputViewModels = new();
+            List<ExpenditureOutputViewModel> expenditureOutputViewModels = [];
 
             #region Expenditures
 

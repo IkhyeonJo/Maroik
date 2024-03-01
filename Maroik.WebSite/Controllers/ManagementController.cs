@@ -318,7 +318,7 @@ namespace Maroik.WebSite.Controllers
         {
             if (HttpContext.Request.Headers["X-Requested-With"] == "XMLHttpRequest") // ajax
             {
-                List<AccountOutputViewModel> accountOutputViewModels = new();
+                List<AccountOutputViewModel> accountOutputViewModels = [];
 
                 #region Accounts
                 foreach (Account item in await accountRepository.GetAllAsync())
@@ -502,7 +502,7 @@ namespace Maroik.WebSite.Controllers
             // query data from database
             await Task.Yield();
 
-            List<AccountOutputViewModel> accountOutputViewModels = new();
+            List<AccountOutputViewModel> accountOutputViewModels = [];
 
             #region Accounts
             foreach (Account item in await accountRepository.GetAllAsync())
@@ -668,7 +668,7 @@ namespace Maroik.WebSite.Controllers
         {
             if (HttpContext.Request.Headers["X-Requested-With"] == "XMLHttpRequest") // ajax
             {
-                List<MenuOutputViewModel> menuOutputViewModels = new();
+                List<MenuOutputViewModel> menuOutputViewModels = [];
 
                 #region AdminCategories
                 foreach (Category item in await categoryRepository.GetCategoryByRoleAsync(Role.Admin))
@@ -960,7 +960,7 @@ namespace Maroik.WebSite.Controllers
         {
             try
             {
-                List<MenuOutputViewModel> menuOutputViewModels = new();
+                List<MenuOutputViewModel> menuOutputViewModels = [];
 
                 #region AdminCategories
                 foreach (Category item in await categoryRepository.GetCategoryByRoleAsync(Role.Admin))
@@ -1036,7 +1036,7 @@ namespace Maroik.WebSite.Controllers
         {
             try
             {
-                List<MenuOutputViewModel> menuOutputViewModels = new();
+                List<MenuOutputViewModel> menuOutputViewModels = [];
 
                 #region AdminSubCategories
                 foreach (SubCategory item in await subCategoryRepository.GetSubCategoryByRoleAsync(Role.Admin))
@@ -1267,7 +1267,7 @@ namespace Maroik.WebSite.Controllers
             // query data from database
             await Task.Yield();
 
-            List<MenuOutputViewModel> menuOutputViewModels = new();
+            List<MenuOutputViewModel> menuOutputViewModels = [];
 
             #region AdminCategories
             foreach (Category item in await categoryRepository.GetCategoryByRoleAsync(Role.Admin))
