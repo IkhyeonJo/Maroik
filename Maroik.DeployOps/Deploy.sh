@@ -11,6 +11,9 @@ sudo systemctl restart systemd-logind
 sudo apt update -y
 sudo apt upgrade -y
 
+sudo snap set nextcloud ports.http=8079
+sudo snap set nextcloud ports.https=8080
+
 # Install Docker Compose
 sudo apt install docker-compose -y
 
