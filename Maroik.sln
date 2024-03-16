@@ -3,13 +3,13 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31912.275
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "2.Web", "2.Web", "{02764078-45D4-4634-95B1-CF053BD2EA45}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "3.Web", "3.Web", "{02764078-45D4-4634-95B1-CF053BD2EA45}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "1.Common", "1.Common", "{4A48DCC0-ABF7-42EF-ABA4-9F490564CA1A}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "2.Common", "2.Common", "{4A48DCC0-ABF7-42EF-ABA4-9F490564CA1A}"
 EndProject
 Project("{E53339B2-1760-4266-BCC7-CA923CBCF16C}") = "docker-compose", "docker-compose.dcproj", "{16950BFB-9A7B-4326-B6E9-873B22449DF3}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "3.Crontab", "3.Crontab", "{8DA628A8-E6AC-41CA-917C-FDFEF4283CE8}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "4.Crontab", "4.Crontab", "{8DA628A8-E6AC-41CA-917C-FDFEF4283CE8}"
 	ProjectSection(SolutionItems) = preProject
 		Maroik.Crontab\DBBackup.sh = Maroik.Crontab\DBBackup.sh
 		Maroik.Crontab\InitCron = Maroik.Crontab\InitCron
@@ -31,10 +31,18 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Maroik.WebAPI", "Maroik.Web
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Maroik.WebSite", "Maroik.WebSite\Maroik.WebSite.csproj", "{33AA9A81-0AE5-4E8D-A271-14E060D054F9}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "4.DeployOps", "4.DeployOps", "{F558CB38-4FF2-4371-8F2E-7F3189E920B7}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "5.DeployOps", "5.DeployOps", "{F558CB38-4FF2-4371-8F2E-7F3189E920B7}"
 	ProjectSection(SolutionItems) = preProject
 		Maroik.DeployOps\Deploy.sh = Maroik.DeployOps\Deploy.sh
 		Maroik.DeployOps\UnDeploy.sh = Maroik.DeployOps\UnDeploy.sh
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "1.SSL", "1.SSL", "{D3135BD2-6AC6-48FD-BC4A-724B8967BC8C}"
+	ProjectSection(SolutionItems) = preProject
+		Maroik.SSL\ReadMe.txt = Maroik.SSL\ReadMe.txt
+		Maroik.SSL\testhttps.crt = Maroik.SSL\testhttps.crt
+		Maroik.SSL\testhttps.key = Maroik.SSL\testhttps.key
+		Maroik.SSL\testhttps.pfx = Maroik.SSL\testhttps.pfx
 	EndProjectSection
 EndProject
 Global
