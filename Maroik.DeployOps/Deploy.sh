@@ -32,12 +32,6 @@ sudo crontab /home/peter-cho/Maroik/Maroik.Crontab/InitCron
 # Reload cron service
 sudo systemctl reload cron
 
-# Create directories
-sudo mkdir -p /home/peter-cho/512GB/
-
-# Mount devices by UUID
-sudo mount -U 5CBA6F45BA6F1B32 /home/peter-cho/512GB/
-
 # Adds the current user to the "docker" group, 
 sudo usermod -a -G docker $USER
 
