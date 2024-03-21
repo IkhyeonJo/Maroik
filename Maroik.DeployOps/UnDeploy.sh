@@ -15,9 +15,3 @@ sudo docker rmi $(docker images -q)
 
 # Remove current user's cron jobs
 sudo crontab -r
-
-# Unmount devices by UUID
-sudo umount /home/peter-cho/512GB/
-
-# Remove directories
-sudo rmdir /home/peter-cho/512GB/
