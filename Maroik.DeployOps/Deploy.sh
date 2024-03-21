@@ -36,6 +36,12 @@ sudo crontab /home/peter-cho/Maroik/Maroik.Crontab/InitCron
 # Reload cron service
 sudo systemctl reload cron
 
+# only port 80, 443, 5001, 8080 allowed by ufw
+sudo ufw allow 80
+sudo ufw allow 443
+sudo ufw allow 5001
+sudo ufw allow 8080
+
 # Adds the current user to the "docker" group, 
 sudo usermod -a -G docker $USER
 
