@@ -15,3 +15,6 @@ sudo docker rmi $(docker images -q)
 
 # Remove current user's cron jobs
 sudo crontab -r
+
+# Disable ufw
+sudo ufw disable
