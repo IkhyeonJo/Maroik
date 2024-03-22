@@ -11,12 +11,12 @@ sudo systemctl restart systemd-logind
 sudo apt update -y
 sudo apt upgrade -y
 
-# Enable HTTPS nextcloud
-sudo nextcloud.enable-https self-signed
+## Enable HTTPS nextcloud
+#sudo nextcloud.enable-https self-signed
 
-# Change nextcloud ports
-sudo snap set nextcloud ports.http=8079
-sudo snap set nextcloud ports.https=8080
+## Change nextcloud ports
+#sudo snap set nextcloud ports.http=8079
+#sudo snap set nextcloud ports.https=8080
 
 # Install Docker Compose
 sudo apt install docker-compose -y
@@ -41,7 +41,7 @@ sudo apt install ufw -y
 sudo ufw allow 80
 sudo ufw allow 443
 sudo ufw allow 5001
-sudo ufw allow 8080
+#sudo ufw allow 8080
 sudo ufw enable
 
 # Adds the current user to the "docker" group, 
