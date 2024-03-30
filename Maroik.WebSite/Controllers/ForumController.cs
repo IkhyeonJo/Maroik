@@ -1,5 +1,4 @@
-﻿using Ganss.Xss;
-using Maroik.Common.DataAccess.Contracts;
+﻿using Maroik.Common.DataAccess.Contracts;
 using Maroik.Common.DataAccess.Models;
 using Maroik.WebSite.Common;
 using Maroik.WebSite.Helpers;
@@ -53,10 +52,7 @@ namespace Maroik.WebSite.Controllers
                     boardInputViewModel.Content ??= ""; // 내용이 아무것도 입력되지 않았다면
 
                     #region HtmlSanitizer
-                    HtmlSanitizer sanitizer = new();
-                    _ = sanitizer.AllowedAttributes.Add("class");
-                    string sanitized = sanitizer.Sanitize(boardInputViewModel.Content);
-                    boardInputViewModel.Content = sanitized;
+                    boardInputViewModel.Content = boardInputViewModel.Content;
                     #endregion
 
                     if (boardInputViewModel.Title.Length is not (> 0 and <= 100)) // 제목 길이
@@ -206,10 +202,7 @@ namespace Maroik.WebSite.Controllers
                     }
 
                     #region HtmlSanitizer
-                    HtmlSanitizer sanitizer = new();
-                    _ = sanitizer.AllowedAttributes.Add("class");
-                    string sanitized = sanitizer.Sanitize(commentInputViewModel.Content);
-                    commentInputViewModel.Content = sanitized;
+                    commentInputViewModel.Content = commentInputViewModel.Content;
                     #endregion
 
                     try
@@ -570,10 +563,7 @@ namespace Maroik.WebSite.Controllers
                     boardInputViewModel.Content ??= ""; // 내용이 아무것도 입력되지 않았다면
 
                     #region HtmlSanitizer
-                    HtmlSanitizer sanitizer = new();
-                    _ = sanitizer.AllowedAttributes.Add("class");
-                    string sanitized = sanitizer.Sanitize(boardInputViewModel.Content);
-                    boardInputViewModel.Content = sanitized;
+                    boardInputViewModel.Content = boardInputViewModel.Content;
                     #endregion
 
                     if (boardInputViewModel.Title.Length is not (> 0 and <= 100)) // 제목 길이
