@@ -157,7 +157,7 @@
 
                                             @if (loginedAccount.Nickname == comment.Writer || loginedAccount.Role == Role.Admin)@*작성자 또는 관리자인 경우*@
                                             {
-                                                <span class="text-muted float-right" style="margin: 0px 0px 0px 3px"><a class="hover" href="javascript:DeleteComment('@(comment.Id)', '@(Model.DetailBoardId)', '@(Model.DetailCurrentPage)');">@localizer["Delete"].Value</a></span>
+                                                <span class="text-muted float-right" style="margin: 0px 0px 0px 3px"><a class="hover aFreeForumDeleteComment" href="#" data-commentId="@(comment.Id)" data-detailBoardId="@(Model.DetailBoardId)" data-detailCurrentPage="@(Model.DetailCurrentPage)">@localizer["Delete"].Value</a></span>
                                             }
                                         </span>
                                         @comment.Content
@@ -185,7 +185,6 @@
 
                                             @if (loginedAccount.Nickname == comment.Writer || loginedAccount.Role == Role.Admin)@*작성자 또는 관리자인 경우*@
                                             {
-                                                @* <span class="text-muted float-right" style="margin: 0px 0px 0px 3px"><a class="hover" href="javascript:DeleteComment('@(comment.Id)', '@(Model.DetailBoardId)', '@(Model.DetailCurrentPage)');">@localizer["Delete"].Value</a></span> *@
                                                 <span class="text-muted float-right" style="margin: 0px 0px 0px 3px"><a class="hover aFreeForumDeleteComment" href="#" data-commentId="@(comment.Id)" data-detailBoardId="@(Model.DetailBoardId)" data-detailCurrentPage="@(Model.DetailCurrentPage)">@localizer["Delete"].Value</a></span>
                                             }
                                         </span>
