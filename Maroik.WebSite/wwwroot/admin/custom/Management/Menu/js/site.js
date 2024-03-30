@@ -553,3 +553,35 @@ function ExportExcelMenu() {
 
     form.submit();
 }
+
+$('#btnEditMenuGridRow').off('click').on('click', function () {
+    EditMenuGridRow($(this).attr('data-errorMessageSelectGridRow'));
+});
+
+$('#btnConfirmDeleteMenu').off('click').on('click', function () {
+    ConfirmDeleteMenu($(this).attr('data-errorMessageSelectGridRow'));
+});
+
+$('#btnExportExcelMenu').off('click').on('click', function () {
+    ExportExcelMenu();
+});
+
+$('#btnDeleteMenu').off('click').on('click', function () {
+    DeleteMenu($(this).attr('data-errorMessageSelectGridRow'));
+});
+
+$('#formCreateCategory').off('submit').on('submit', function () {
+    return CreateCategory();
+});
+
+$('#formCreateSubCategory').off('submit').on('submit', function () {
+    return CreateSubCategory();
+});
+
+$('#formEditCategory').off('submit').on('submit', function () {
+    return UpdateCategory();
+});
+
+$('#formEditSubCategory').off('submit').on('submit', function () {
+    return UpdateSubCategory();
+});

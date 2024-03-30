@@ -24,13 +24,13 @@
                         <button type="button" class="btn btn-primary btn-block btn-sm" data-toggle="modal" data-target="#createFixedIncomeDialogModal" data-backdrop="static" data-keyboard="false" style="width: 100px !important;"><i class="fa fa-plus" style="padding-right:3px;"></i> @localizer["CREATE"].Value</button>
                     </li>
                     <li class="nav-item" style="padding-bottom: 10px; padding-right: 7px;">
-                        <button type="button" class="btn btn-success btn-block btn-sm" onclick="EditFixedIncomeGridRow('@localizer["Please select grid row"].Value')" style="width: 100px !important;"><i class="fas fa-edit" style="padding-right:3px;"></i> @localizer["EDIT"].Value</button>
+                        <button id="btnEditFixedIncomeGridRow" type="button" class="btn btn-success btn-block btn-sm" data-errorMessageSelectGridRow="@localizer["Please select grid row"].Value" style="width: 100px !important;"><i class="fas fa-edit" style="padding-right:3px;"></i> @localizer["EDIT"].Value</button>
                     </li>
                     <li class="nav-item" style="padding-bottom: 10px; padding-right: 7px;">
-                        <button type="button" class="btn btn-danger btn-block btn-sm" onclick="ConfirmDeleteFixedIncome('@localizer["Please select grid row"].Value')" style="width: 100px !important;"><i class="fa fa-trash" style="padding-right:3px;"></i> @localizer["DELETE"].Value</button>
+                        <button id="btnConfirmDeleteFixedIncome" type="button" class="btn btn-danger btn-block btn-sm" data-errorMessageSelectGridRow="@localizer["Please select grid row"].Value" style="width: 100px !important;"><i class="fa fa-trash" style="padding-right:3px;"></i> @localizer["DELETE"].Value</button>
                     </li>
                     <li class="nav-item" style="padding-bottom: 10px; padding-right: 7px;">
-                        <button type="button" class="btn btn-secondary btn-block btn-sm" onclick="ExportExcelFixedIncome()" style="width: 100px !important;"><i class="fas fa-file-excel" style="padding-right:3px;"></i> @localizer["EXCEL"].Value</button>
+                        <button id="btnExportExcelFixedIncome" type="button" class="btn btn-secondary btn-block btn-sm" style="width: 100px !important;"><i class="fas fa-file-excel" style="padding-right:3px;"></i> @localizer["EXCEL"].Value</button>
                     </li>
                     <li class="nav-item ml-auto">
                         <input type="text" id="gridSearch" placeholder="@localizer["Search..."].Value" style="margin-bottom: 7px; text-align: center; font-size: .7em; padding: 5px 0; color: #000; border: none; " />
@@ -53,12 +53,12 @@
                 </ul>
                 @*Tabs-1: Create FixedIncome Modal*@
                 <div id="createFixedIncomeTabs-1">
-                    <form id="formCreateFixedIncome" onsubmit="return CreateFixedIncome()">
+                    <form id="formCreateFixedIncome">
                         <div class="form-row">
                             <div class="form-group col-md-6 mb-3">
                                 <label for="createFixedIncomeMainClass">@localizer["MainClass"].Value</label>
                                 <br />
-                                <select id="createFixedIncomeMainClass" name="createFixedIncomeMainClass" onchange="CreateFormShowFixedIncomeSubClassBySelectedFixedIncomeMainClass(this)" style="max-width:90%;">
+                                <select id="createFixedIncomeMainClass" name="createFixedIncomeMainClass" style="max-width:90%;">
                                     <option value="RegularIncome" selected="selected">@localizer["정기수입"].Value</option>
                                     <option value="IrregularIncome">@localizer["비정기수입"].Value</option>
                                 </select>
@@ -91,7 +91,7 @@
                             <div class="form-group col-md-6 mb-3">
                                 <label for="createFixedIncomeDepositMonth">@localizer["DepositMonth"].Value</label>
                                 <br />
-                                <select id="createFixedIncomeDepositMonth" name="createFixedIncomeDepositMonth" onchange="CreateFormShowFixedIncomeDepositDayBySelectedFixedIncomeDepositMonth(this)" style="max-width:90%;">
+                                <select id="createFixedIncomeDepositMonth" name="createFixedIncomeDepositMonth" style="max-width:90%;">
                                     <option value="1" selected="selected">1</option>
                                     @for (int i = 2; i <= 12; i++)
                                     {
@@ -161,13 +161,13 @@
                 </ul>
                 @*Tabs-1: Edit FixedIncome Modal*@
                 <div id="editFixedIncomeTabs-1">
-                    <form id="formEditFixedIncome" onsubmit="return UpdateFixedIncome()">
+                    <form id="formEditFixedIncome">
                         <input type="hidden" id="editFixedIncomeId" />
                         <div class="form-row">
                             <div class="form-group col-md-6 mb-3">
                                 <label for="editFixedIncomeMainClass">@localizer["MainClass"].Value</label>
                                 <br />
-                                <select id="editFixedIncomeMainClass" name="editFixedIncomeMainClass" onchange="EditFormShowFixedIncomeSubClassBySelectedFixedIncomeMainClass(this)" style="max-width:90%;">
+                                <select id="editFixedIncomeMainClass" name="editFixedIncomeMainClass" style="max-width:90%;">
                                     <option value="RegularIncome">@localizer["정기수입"].Value</option>
                                     <option value="IrregularIncome">@localizer["비정기수입"].Value</option>
                                 </select>
@@ -200,7 +200,7 @@
                             <div class="form-group col-md-6 mb-3">
                                 <label for="editFixedIncomeDepositMonth">@localizer["DepositMonth"].Value</label>
                                 <br />
-                                <select id="editFixedIncomeDepositMonth" name="editFixedIncomeDepositMonth" onchange="EditFormShowFixedIncomeDepositDayBySelectedFixedIncomeDepositMonth(this)" style="max-width:90%;">
+                                <select id="editFixedIncomeDepositMonth" name="editFixedIncomeDepositMonth" style="max-width:90%;">
                                     <option value="1" selected="selected">1</option>
                                     @for (int i = 2; i <= 12; i++)
                                     {
@@ -272,7 +272,7 @@
                 @localizer["Are you sure to delete?"].Value
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-danger" onclick="DeleteFixedIncome('@localizer["Please select grid row"].Value')">@localizer["DELETE"].Value</button>
+                <button id="btnDeleteFixedIncome" type="button" class="btn btn-danger" data-errorMessageSelectGridRow="@localizer["Please select grid row"].Value">@localizer["DELETE"].Value</button>
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">@localizer["Close"].Value</button>
             </div>
         </div>

@@ -24,16 +24,16 @@
                 <div class="row">
                     <div class="col-4">
                         <div>
-                            <a onclick="ChangeCulture('en-US')" style="cursor: pointer;">
+                            <a id="aChangeCultureEnUS" style="cursor: pointer;">
                                 <img src="~/anonymous/images/us.jpg" style="height: 42px !important; padding-bottom: 4px !important;" />
                             </a>
-                            <a onclick="ChangeCulture('ko-KR')" style="cursor: pointer;">
+                            <a id="aChangeCultureKoKR" style="cursor: pointer;">
                                 <img src="~/anonymous/images/kr.jpg" style="height: 42px !important; padding-bottom: 4px !important; padding-left: 3px !important;" />
                             </a>
                         </div>
                     </div>
                     <div class="col-8">
-                        <button type="submit" class="btn btn-primary btn-block" onclick="ShowLoginLoading()">
+                        <button id="btnSignIn" type="submit" class="btn btn-primary btn-block">
                             <i class="fas fa-sign-in-alt" style="padding-right:6px;"></i>@localizer["Sign In"]
                         </button>
                     </div>

@@ -32,3 +32,11 @@ function ChangeCulture(culture) {
         }
     });
 }
+
+$('#aChangeCultureEnUS').off('click').on('click', function () {
+    ChangeCulture('en-US');
+});
+
+$('#aChangeCultureKoKR').off('click').on('click', function () {
+    ChangeCulture('ko-KR');
+});

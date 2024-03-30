@@ -324,3 +324,27 @@ function ExportExcelAsset() {
 
     form.submit();
 }
+
+$('#btnEditAssetGridRow').off('click').on('click', function () {
+    EditAssetGridRow($(this).attr("data-errorMessageSelectGridRow"));
+});
+
+$('#btnConfirmDeleteAsset').off('click').on('click', function () {
+    ConfirmDeleteAsset($(this).attr("data-errorMessageSelectGridRow"));
+});
+
+$('#btnExportExcelAsset').off('click').on('click', function () {
+    ExportExcelAsset();
+});
+
+$('#btnDeleteAsset').off('click').on('click', function () {
+    DeleteAsset($(this).attr("data-errorMessageSelectGridRow"));
+});
+
+$('#formCreateAsset').off('submit').on('submit', function () {
+    return CreateAsset();
+});
+
+$('#formEditAsset').off('submit').on('submit', function () {
+    return UpdateAsset();
+});

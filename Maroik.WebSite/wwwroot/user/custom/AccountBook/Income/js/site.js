@@ -463,3 +463,35 @@ function ExportExcelIncome() {
 
     form.submit();
 }
+
+$('#btnEditIncomeGridRow').off('click').on('click', function () {
+    EditIncomeGridRow($(this).attr("data-errorMessageSelectGridRow"));
+});
+
+$('#btnConfirmDeleteIncome').off('click').on('click', function () {
+    ConfirmDeleteIncome($(this).attr("data-errorMessageSelectGridRow"));
+});
+
+$('#btnExportExcelIncome').off('click').on('click', function () {
+    ExportExcelIncome();
+});
+
+$('#btnDeleteIncome').off('click').on('click', function () {
+    DeleteIncome($(this).attr("data-errorMessageSelectGridRow"));
+});
+
+$('#formCreateIncome').off('submit').on('submit', function () {
+    return CreateIncome();
+});
+
+$('#formEditIncome').off('submit').on('submit', function () {
+    return UpdateIncome();
+});
+
+$('#createIncomeMainClass').off('change').on('change', function () {
+    CreateFormShowIncomeSubClassBySelectedIncomeMainClass(this);
+});
+
+$('#editIncomeMainClass').off('change').on('change', function () {
+    EditFormShowIncomeSubClassBySelectedIncomeMainClass(this);
+});

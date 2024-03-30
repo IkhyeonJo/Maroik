@@ -47,7 +47,7 @@
                             </div>
                         </div>
                         <div class="col-4">
-                            <button type="submit" class="btn btn-primary btn-block" onclick="ShowRegisterLoading()">@localizer["Register"]</button>
+                            <button id="btnRegister" type="submit" class="btn btn-primary btn-block">@localizer["Register"]</button>
                         </div>
                     </div>
                 </form>
@@ -79,7 +79,7 @@ else
                         <p class="mb-0">
                             <font style="font-weight:normal" color="black">@localizer["Please check {0}'s MailBox", resentEmailAddress]<br /><br />@localizer["If you do not receive an email,"] <br />@localizer["please check your spam folder or resend the email."]</font>
                         </p>
-                        <button type="submit" class="btn btn-primary btn-block" onclick="ShowRegisterLoading()">@localizer["Resend"]</button>
+                        <button id="btnResend" type="submit" class="btn btn-primary btn-block">@localizer["Resend"]</button>
                     </form>
                     <p class="mb-0">
                         <font style="font-weight:bold" color="red">@error</font>
@@ -105,7 +105,7 @@ else
                         <p class="mb-0">
                             <font style="font-weight:normal" color="black">@localizer["Please check {0}'s MailBox", resentEmailAddress]<br /><br />@localizer["If you do not receive an email,"] <br /> @localizer["please check your spam folder or resend the email."] <br /><br />@localizer["If you keep fail to receive authentication email,"] @localizer["please contact to"]<a href='mailto: ***REMOVED***m'> @localizer["Administrator"]</a></font>
                         </p>
-                        <button type="submit" class="btn btn-primary btn-block" onclick="ShowRegisterLoading()">@localizer["Resend"]</button>
+                        <button id="btnResend" type="submit" class="btn btn-primary btn-block">@localizer["Resend"]</button>
                     </form>
                     <p class="mb-0">
                         <font style="font-weight:bold" color="red">@error</font>

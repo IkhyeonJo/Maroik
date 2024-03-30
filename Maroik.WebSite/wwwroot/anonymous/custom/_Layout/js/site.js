@@ -32,3 +32,15 @@ function ChangeCulture(culture) {
         }
     });
 }
+
+$('#aChangeCultureEnUS').off('click').on('click', function () {
+    ChangeCulture('en-US');
+});
+
+$('#aChangeCultureKoKR').off('click').on('click', function () {
+    ChangeCulture('ko-KR');
+});
+
+$('#btnMainTopBarLogin').off('click').on('click', function () {
+    location.href = "/Account/Login";
+});

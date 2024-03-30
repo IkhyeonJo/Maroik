@@ -71,3 +71,31 @@ function ChangeCulture(culture) {
         }
     });
 }
+
+$('#btnRequestNewPassword').off('click').on('click', function () {
+    ShowForgotPasswordLoading();
+});
+
+$('#aChangeCultureEnUS').off('click').on('click', function () {
+    ChangeCulture('en-US');
+});
+
+$('#aChangeCultureKoKR').off('click').on('click', function () {
+    ChangeCulture('ko-KR');
+});
+
+$('#btnSignIn').off('click').on('click', function () {
+    ShowLoginLoading();
+});
+
+$('#btnRegister').off('click').on('click', function () {
+    ShowRegisterLoading();
+});
+
+$('#btnResend').off('click').on('click', function () {
+    ShowRegisterLoading();
+});
+
+$('#btnChangePassword').off('click').on('click', function () {
+    ShowResetPasswordLoading();
+});

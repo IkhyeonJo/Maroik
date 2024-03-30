@@ -251,15 +251,15 @@
                 @if (currentCulture == "en-US")
                 {
                     <div class="dropdown-menu" role="menu">
-                        <a class="dropdown-item active" onclick="ChangeCulture('en-US')" style="cursor: pointer;">English</a>
-                        <a class="dropdown-item" onclick="ChangeCulture('ko-KR')" style="cursor: pointer;">한국어</a>
+                        <a id="aChangeCultureEnUS" class="dropdown-item active" style="cursor: pointer;">English</a>
+                        <a id="aChangeCultureKoKR" class="dropdown-item" style="cursor: pointer;">한국어</a>
                     </div>
                 }
                 else if (currentCulture == "ko-KR")
                 {
                     <div class="dropdown-menu" role="menu">
-                        <a class="dropdown-item" onclick="ChangeCulture('en-US')" style="cursor: pointer;">English</a>
-                        <a class="dropdown-item active" onclick="ChangeCulture('ko-KR')" style="cursor: pointer;">한국어</a>
+                        <a id="aChangeCultureEnUS" class="dropdown-item" style="cursor: pointer;">English</a>
+                        <a id="aChangeCultureKoKR" class="dropdown-item active" style="cursor: pointer;">한국어</a>
                     </div>
                 }
             </li>
@@ -303,15 +303,15 @@
                 @if (currentCulture == "en-US")
                 {
                     <div class="dropdown-menu" role="menu">
-                        <a class="dropdown-item active" onclick="ChangeCulture('en-US')" style="cursor: pointer;">English</a>
-                        <a class="dropdown-item" onclick="ChangeCulture('ko-KR')" style="cursor: pointer;">한국어</a>
+                        <a id="aChangeCultureEnUS" class="dropdown-item active" style="cursor: pointer;">English</a>
+                        <a id="aChangeCultureKoKR" class="dropdown-item" style="cursor: pointer;">한국어</a>
                     </div>
                 }
                 else if (currentCulture == "ko-KR")
                 {
                     <div class="dropdown-menu" role="menu">
-                        <a class="dropdown-item" onclick="ChangeCulture('en-US')" style="cursor: pointer;">English</a>
-                        <a class="dropdown-item active" onclick="ChangeCulture('ko-KR')" style="cursor: pointer;">한국어</a>
+                        <a id="aChangeCultureEnUS" class="dropdown-item" style="cursor: pointer;">English</a>
+                        <a id="aChangeCultureKoKR" class="dropdown-item active" style="cursor: pointer;">한국어</a>
                     </div>
                 }
             </li>
@@ -429,15 +429,15 @@
                     @if (currentCulture == "en-US")
                     {
                         <div class="dropdown-menu" role="menu">
-                            <a class="dropdown-item active" onclick="ChangeCulture('en-US')" style="cursor: pointer;">English</a>
-                            <a class="dropdown-item" onclick="ChangeCulture('ko-KR')" style="cursor: pointer;">한국어</a>
+                            <a id="aChangeCultureEnUS" class="dropdown-item active" style="cursor: pointer;">English</a>
+                            <a id="aChangeCultureKoKR" class="dropdown-item" style="cursor: pointer;">한국어</a>
                         </div>
                     }
                     else if (currentCulture == "ko-KR")
                     {
                         <div class="dropdown-menu" role="menu">
-                            <a class="dropdown-item" onclick="ChangeCulture('en-US')" style="cursor: pointer;">English</a>
-                            <a class="dropdown-item active" onclick="ChangeCulture('ko-KR')" style="cursor: pointer;">한국어</a>
+                            <a id="aChangeCultureEnUS" class="dropdown-item" style="cursor: pointer;">English</a>
+                            <a id="aChangeCultureKoKR" class="dropdown-item active" style="cursor: pointer;">한국어</a>
                         </div>
                     }
                 </div>
@@ -445,7 +445,7 @@
 
             @*<!-- Login Button -->*@
             <li class="nav-item dropdown">
-                <button class="btn btn-primary btn-block" onclick="location.href='/Account/Login';">
+                <button id="btnMainTopBarLogin" class="btn btn-primary btn-block">
                     <i class="fas fa-sign-in-alt" style="padding-right:6px;"></i>@localizer["Login"]
                 </button>
             </li>

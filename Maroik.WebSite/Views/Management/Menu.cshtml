@@ -11,13 +11,13 @@
                         <button type="button" class="btn btn-primary btn-block btn-sm" data-toggle="modal" data-target="#createMenuDialogModal" data-backdrop="static" data-keyboard="false" style="width: 100px !important;"><i class="fa fa-plus" style="padding-right:3px;"></i> @localizer["CREATE"].Value</button>
                     </li>
                     <li class="nav-item" style="padding-bottom: 10px; padding-right: 7px;">
-                        <button type="button" class="btn btn-success btn-block btn-sm" onclick="EditMenuGridRow('@localizer["Please select grid row"].Value')" style="width: 100px !important;"><i class="fas fa-edit" style="padding-right:3px;"></i> @localizer["EDIT"].Value</button>
+                        <button id="btnEditMenuGridRow" type="button" class="btn btn-success btn-block btn-sm" data-errorMessageSelectGridRow="@localizer["Please select grid row"].Value" style="width: 100px !important;"><i class="fas fa-edit" style="padding-right:3px;"></i> @localizer["EDIT"].Value</button>
                     </li>
                     <li class="nav-item" style="padding-bottom: 10px; padding-right: 7px;">
-                        <button type="button" class="btn btn-danger btn-block btn-sm" onclick="ConfirmDeleteMenu('@localizer["Please select grid row"].Value')" style="width: 100px !important;"><i class="fa fa-trash" style="padding-right:3px;"></i> @localizer["DELETE"].Value</button>
+                        <button id="btnConfirmDeleteMenu" type="button" class="btn btn-danger btn-block btn-sm" data-errorMessageSelectGridRow="@localizer["Please select grid row"].Value" style="width: 100px !important;"><i class="fa fa-trash" style="padding-right:3px;"></i> @localizer["DELETE"].Value</button>
                     </li>
                     <li class="nav-item" style="padding-bottom: 10px; padding-right: 7px;">
-                        <button type="button" class="btn btn-secondary btn-block btn-sm" onclick="ExportExcelMenu()" style="width: 100px !important;"><i class="fas fa-file-excel" style="padding-right:3px;"></i> @localizer["EXCEL"].Value</button>
+                        <button id="btnExportExcelMenu" type="button" class="btn btn-secondary btn-block btn-sm" style="width: 100px !important;"><i class="fas fa-file-excel" style="padding-right:3px;"></i> @localizer["EXCEL"].Value</button>
                     </li>
                     <li class="nav-item ml-auto">
                         <input type="text" id="gridSearch" placeholder="@localizer["Search..."].Value" style="margin-bottom: 7px; text-align: center; font-size: .7em; padding: 5px 0; color: #000; border: none; " />
@@ -41,7 +41,7 @@
                 </ul>
                 @*Tabs-1: Create Category Modal*@
                 <div id="createMenuTabs-1">
-                    <form id="formCreateCategory" onsubmit="return CreateCategory()">
+                    <form id="formCreateCategory">
                         <div class="form-row">
                             <div class="form-group col-md-6 mb-3">
                                 <label for="createCategoryName">@localizer["Name"].Value</label>
@@ -95,7 +95,7 @@
                 </div>
                 @*Tabs-2: Create SubCategory Modal*@
                 <div id="createMenuTabs-2">
-                    <form id="formCreateSubCategory" onsubmit="return CreateSubCategory()">
+                    <form id="formCreateSubCategory">
                         <div class="form-row">
                             <div class="form-group col-md-6 mb-3">
                                 <label for="createSubcategoryCategoryId">@localizer["CategoryId"].Value</label>
@@ -163,7 +163,7 @@
                 </ul>
                 @*Tabs-1: Edit Category Modal*@
                 <div id="editCategoryTabs-1">
-                    <form id="formEditCategory" onsubmit="return UpdateCategory()">
+                    <form id="formEditCategory">
                         <input type="hidden" id="editCategoryId" />
                         <div class="form-row">
                             <div class="form-group col-md-6 mb-3">
@@ -232,7 +232,7 @@
                 </ul>
                 @*Tabs-1: Edit Category Modal*@
                 <div id="editSubCategoryTabs-1">
-                    <form id="formEditSubCategory" onsubmit="return UpdateSubCategory()">
+                    <form id="formEditSubCategory">
                         <input type="hidden" id="editSubCategoryId" />
                         <div class="form-row">
                             <div class="form-group col-md-6 mb-3">
@@ -298,7 +298,7 @@
                 @localizer["Are you sure to delete?"].Value
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-danger" onclick="DeleteMenu('@localizer["Please select grid row"].Value')">@localizer["DELETE"].Value</button>
+                <button id="btnDeleteMenu" type="button" class="btn btn-danger" data-errorMessageSelectGridRow="@localizer["Please select grid row"].Value">@localizer["DELETE"].Value</button>
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">@localizer["Close"].Value</button>
             </div>
         </div>

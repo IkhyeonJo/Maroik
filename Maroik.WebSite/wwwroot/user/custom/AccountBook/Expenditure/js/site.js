@@ -743,3 +743,43 @@ function ExportExcelExpenditure() {
 
     form.submit();
 }
+
+$('#btnEditExpenditureGridRow').off('click').on('click', function () {
+    EditExpenditureGridRow($(this).attr("data-errorMessageSelectGridRow"));
+});
+
+$('#btnConfirmDeleteExpenditure').off('click').on('click', function () {
+    ConfirmDeleteExpenditure($(this).attr("data-errorMessageSelectGridRow"));
+});
+
+$('#btnExportExcelExpenditure').off('click').on('click', function () {
+    ExportExcelExpenditure();
+});
+
+$('#btnDeleteExpenditure').off('click').on('click', function () {
+    DeleteExpenditure($(this).attr("data-errorMessageSelectGridRow"));
+});
+
+$('#formCreateExpenditure').off('submit').on('submit', function () {
+    return CreateExpenditure();
+});
+
+$('#formEditExpenditure').off('submit').on('submit', function () {
+    return UpdateExpenditure();
+});
+
+$('#createExpenditureMainClass').off('change').on('change', function () {
+    CreateFormShowExpenditureSubClassBySelectedExpenditureMainClass(this);
+});
+
+$('#createExpenditureSubClass').off('change').on('change', function () {
+    CreateFormShowExpenditureDivCreateExpenditureMyDepositAssetBySelectedExpenditureSubClass(this);
+});
+
+$('#editExpenditureMainClass').off('change').on('change', function () {
+    EditFormShowExpenditureSubClassBySelectedExpenditureMainClass(this);
+});
+
+$('#editExpenditureSubClass').off('change').on('change', function () {
+    EditFormShowExpenditureDivCreateExpenditureMyDepositAssetBySelectedExpenditureSubClass(this);
+});

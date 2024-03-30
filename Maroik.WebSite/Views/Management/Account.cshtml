@@ -11,13 +11,13 @@
                         <button type="button" class="btn btn-primary btn-block btn-sm" data-toggle="modal" data-target="#createAccountDialogModal" data-backdrop="static" data-keyboard="false" style="width: 100px !important;"><i class="fa fa-plus" style="padding-right:3px;"></i> @localizer["CREATE"].Value</button>
                     </li>
                     <li class="nav-item" style="padding-bottom: 10px; padding-right: 7px;">
-                        <button type="button" class="btn btn-success btn-block btn-sm" onclick="EditAccountGridRow('@localizer["Please select grid row"].Value')" style="width: 100px !important;"><i class="fas fa-edit" style="padding-right:3px;"></i> @localizer["EDIT"].Value</button>
+                        <button id="btnEditAccountGridRow" type="button" class="btn btn-success btn-block btn-sm" data-errorMessageSelectGridRow="@localizer["Please select grid row"].Value" style="width: 100px !important;"><i class="fas fa-edit" style="padding-right:3px;"></i> @localizer["EDIT"].Value</button>
                     </li>
                     <li class="nav-item" style="padding-bottom: 10px; padding-right: 7px;">
-                        <button type="button" class="btn btn-danger btn-block btn-sm" onclick="ConfirmDeleteAccount('@localizer["Please select grid row"].Value')" style="width: 100px !important;"><i class="fa fa-trash" style="padding-right:3px;"></i> @localizer["DELETE"].Value</button>
+                        <button id="btnConfirmDeleteAccount" type="button" class="btn btn-danger btn-block btn-sm" data-errorMessageSelectGridRow="@localizer["Please select grid row"].Value" style="width: 100px !important;"><i class="fa fa-trash" style="padding-right:3px;"></i> @localizer["DELETE"].Value</button>
                     </li>
                     <li class="nav-item" style="padding-bottom: 10px; padding-right: 7px;">
-                        <button type="button" class="btn btn-secondary btn-block btn-sm" onclick="ExportExcelAccount()" style="width: 100px !important;"><i class="fas fa-file-excel" style="padding-right:3px;"></i> @localizer["EXCEL"].Value</button>
+                        <button id="btnExportExcelAccount" type="button" class="btn btn-secondary btn-block btn-sm" style="width: 100px !important;"><i class="fas fa-file-excel" style="padding-right:3px;"></i> @localizer["EXCEL"].Value</button>
                     </li>
                     <li class="nav-item ml-auto">
                         <input type="text" id="gridSearch" placeholder="@localizer["Search..."].Value" style="margin-bottom: 7px; text-align: center; font-size: .7em; padding: 5px 0; color: #000; border: none; " />
@@ -40,7 +40,7 @@
                 </ul>
                 @*Tabs-1: Create Account Modal*@
                 <div id="createAccountTabs-1">
-                    <form id="formCreateAccount" onsubmit="return CreateAccount()">
+                    <form id="formCreateAccount">
                         <div class="form-row">
                             <div class="form-group col-md-6 mb-3">
                                 <label for="createAccountEmail">@localizer["Email"].Value</label>
@@ -90,7 +90,7 @@
                 </ul>
                 @*Tabs-1: Edit Account Modal*@
                 <div id="editAccountTabs-1">
-                    <form id="formEditAccount" onsubmit="return UpdateAccount()">
+                    <form id="formEditAccount">
                         <div class="form-row">
                             <div class="form-group col-md-6 mb-3">
                                 <label for="editAccountEmail">@localizer["Email"].Value</label>
@@ -162,7 +162,7 @@
                 @localizer["Are you sure to delete?"].Value
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-danger" onclick="DeleteAccount('@localizer["Please select grid row"].Value')">@localizer["DELETE"].Value</button>
+                <button id="btnDeleteAccount" type="button" class="btn btn-danger" data-errorMessageSelectGridRow="@localizer["Please select grid row"].Value">@localizer["DELETE"].Value</button>
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">@localizer["Close"].Value</button>
             </div>
         </div>

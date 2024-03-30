@@ -29,7 +29,7 @@ function EditUploadFile(obj, errorMessage) {
 }
 
 function SearchBoard() {
-    window.location.href = "/Forum/FreeForum?searchType=" + $('#searchType').val() + "&searchText=" + $('#searchText').val();
+    window.location.href = "/Forum/FreeForum?searchType=" + $('#searchType').val() + "&searchText=" + $('#btnFreeForumSearchText').val();
 }
 
 
@@ -312,3 +312,66 @@ function DeleteComment(commentId, boardId, page) {
         }
     });
 }
+
+$('#btnFreeForumShowWriteBoardLoading').off('click').on('click', function () {
+    return ShowWriteBoardLoading();
+});
+
+$('#btnFreeForumModify').off('click').on('click', function () {
+    location.href = $(this).attr("data-link");
+});
+
+$('#btnFreeForumConfirmDeleteBoard').off('click').on('click', function () {
+    ConfirmDeleteBoard();
+});
+
+$('#btnFreeForumList').off('click').on('click', function () {
+    location.href = $(this).attr("data-link");
+});
+
+$('#btnFreeForumSubmitModify').off('click').on('click', function () {
+    return ShowEditBoardLoading();
+});
+
+$('#btnFreeForumWrite').off('click').on('click', function () {
+    location.href = "/Forum/FreeForum?method=write";
+});
+
+$('#btnFreeForumSearchBoard').off('click').on('click', function () {
+    SearchBoard();
+});
+
+$('#btnFreeForumDeleteBoard').off('click').on('click', function () {
+    DeleteBoard($(this).attr("data-boardId"));
+});
+
+$('#btnFreeForumSearchText').off('keypress').on('keypress', function (event) {
+    if (event.keyCode == 13 || event.which == 13) {
+        SearchBoard();
+    }
+});
+
+$('.aFreeForumDeleteComment').off('click').on('click', function (event) {
+    event.preventDefault();
+    DeleteComment($(this).attr("data-commentId"), $(this).attr("data-detailBoardId"), $(this).attr("data-detailCurrentPage"));
+});
+
+$('#formWriteFreeComment').off('submit').on('submit', function () {
+    return WriteFreeComment($(this).attr("data-detailBoardId"), $(this).attr("data-detailCurrentPage"), $(this).attr("data-errorMessage"));
+});
+
+$('#formWriteBoard').off('submit').on('submit', function () {
+    return WriteBoard();
+});
+
+$('#formEditBoard').off('submit').on('submit', function () {
+    return EditBoard($(this).attr('data-editBoardId'), $(this).attr('data-editCurrentPage'));
+});
+
+$('#writeUploadedFile').off('change').on('change', function () {
+    return WriteUploadFile(this, $(this).attr('data-errorMessage'));
+});
+
+$('#editUploadedFile').off('change').on('change', function () {
+    return EditUploadFile(this, $(this).attr('data-errorMessage'));
+});

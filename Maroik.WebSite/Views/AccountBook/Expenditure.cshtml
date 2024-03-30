@@ -28,13 +28,13 @@
                         <button type="button" class="btn btn-primary btn-block btn-sm" data-toggle="modal" data-target="#createExpenditureDialogModal" data-backdrop="static" data-keyboard="false" style="width: 100px !important;"><i class="fa fa-plus" style="padding-right:3px;"></i> @localizer["CREATE"].Value</button>
                     </li>
                     <li class="nav-item" style="padding-bottom: 10px; padding-right: 7px;">
-                        <button type="button" class="btn btn-success btn-block btn-sm" onclick="EditExpenditureGridRow('@localizer["Please select grid row"].Value')" style="width: 100px !important;"><i class="fas fa-edit" style="padding-right:3px;"></i> @localizer["EDIT"].Value</button>
+                        <button id="btnEditExpenditureGridRow" type="button" class="btn btn-success btn-block btn-sm" data-errorMessageSelectGridRow="@localizer["Please select grid row"].Value" style="width: 100px !important;"><i class="fas fa-edit" style="padding-right:3px;"></i> @localizer["EDIT"].Value</button>
                     </li>
                     <li class="nav-item" style="padding-bottom: 10px; padding-right: 7px;">
-                        <button type="button" class="btn btn-danger btn-block btn-sm" onclick="ConfirmDeleteExpenditure('@localizer["Please select grid row"].Value')" style="width: 100px !important;"><i class="fa fa-trash" style="padding-right:3px;"></i> @localizer["DELETE"].Value</button>
+                        <button id="btnConfirmDeleteExpenditure" type="button" class="btn btn-danger btn-block btn-sm" data-errorMessageSelectGridRow="@localizer["Please select grid row"].Value" style="width: 100px !important;"><i class="fa fa-trash" style="padding-right:3px;"></i> @localizer["DELETE"].Value</button>
                     </li>
                     <li class="nav-item" style="padding-bottom: 10px; padding-right: 7px;">
-                        <button type="button" class="btn btn-secondary btn-block btn-sm" onclick="ExportExcelExpenditure()" style="width: 100px !important;"><i class="fas fa-file-excel" style="padding-right:3px;"></i> @localizer["EXCEL"].Value</button>
+                        <button id="btnExportExcelExpenditure" type="button" class="btn btn-secondary btn-block btn-sm" style="width: 100px !important;"><i class="fas fa-file-excel" style="padding-right:3px;"></i> @localizer["EXCEL"].Value</button>
                     </li>
                     <li class="nav-item ml-auto">
                         <input type="text" id="gridSearch" placeholder="@localizer["Search..."].Value" style="margin-bottom: 7px; text-align: center; font-size: .7em; padding: 5px 0; color: #000; border: none; " />
@@ -57,12 +57,12 @@
                 </ul>
                 @*Tabs-1: Create Expenditure Modal*@
                 <div id="createExpenditureTabs-1">
-                    <form id="formCreateExpenditure" onsubmit="return CreateExpenditure()">
+                    <form id="formCreateExpenditure">
                         <div class="form-row">
                             <div class="form-group col-md-6 mb-3">
                                 <label for="createExpenditureMainClass">@localizer["MainClass"].Value</label>
                                 <br />
-                                <select id="createExpenditureMainClass" name="createExpenditureMainClass" onchange="CreateFormShowExpenditureSubClassBySelectedExpenditureMainClass(this)" style="max-width:90%;">
+                                <select id="createExpenditureMainClass" name="createExpenditureMainClass" style="max-width:90%;">
                                     <option value="RegularSavings" selected="selected">@localizer["정기저축"].Value</option>
                                     <option value="NonConsumerSpending">@localizer["비소비지출"].Value</option>
                                     <option value="ConsumerSpending">@localizer["소비지출"].Value</option>
@@ -71,7 +71,7 @@
                             <div class="form-group col-md-6 mb-3">
                                 <label for="createExpenditureSubClass">@localizer["SubClass"].Value</label>
                                 <br />
-                                <select id="createExpenditureSubClass" name="createExpenditureSubClass" onchange="CreateFormShowExpenditureDivCreateExpenditureMyDepositAssetBySelectedExpenditureSubClass(this)" style="max-width:90%;">
+                                <select id="createExpenditureSubClass" name="createExpenditureSubClass" style="max-width:90%;">
                                     @*정기저축*@
                                     <option value="Deposit" selected="selected">@localizer["예적금"].Value</option>
                                     <option value="Investment">@localizer["투자"].Value</option>
@@ -225,13 +225,13 @@
                 </ul>
                 @*Tabs-1: Edit Expenditure Modal*@
                 <div id="editExpenditureTabs-1">
-                    <form id="formEditExpenditure" onsubmit="return UpdateExpenditure()">
+                    <form id="formEditExpenditure">
                         <input type="hidden" id="editExpenditureId" />
                         <div class="form-row">
                             <div class="form-group col-md-6 mb-3">
                                 <label for="editExpenditureMainClass">@localizer["MainClass"].Value</label>
                                 <br />
-                                <select id="editExpenditureMainClass" name="editExpenditureMainClass" onchange="EditFormShowExpenditureSubClassBySelectedExpenditureMainClass(this)" style="max-width:90%;">
+                                <select id="editExpenditureMainClass" name="editExpenditureMainClass" style="max-width:90%;">
                                     <option value="RegularSavings" selected="selected">@localizer["정기저축"].Value</option>
                                     <option value="NonConsumerSpending">@localizer["비소비지출"].Value</option>
                                     <option value="ConsumerSpending">@localizer["소비지출"].Value</option>
@@ -240,7 +240,7 @@
                             <div class="form-group col-md-6 mb-3">
                                 <label for="editExpenditureSubClass">@localizer["SubClass"].Value</label>
                                 <br />
-                                <select id="editExpenditureSubClass" name="editExpenditureSubClass" onchange="EditFormShowExpenditureDivCreateExpenditureMyDepositAssetBySelectedExpenditureSubClass(this)" style="max-width:90%;">
+                                <select id="editExpenditureSubClass" name="editExpenditureSubClass" style="max-width:90%;">
                                     @*정기저축*@
                                     <option value="Deposit" selected="selected">@localizer["예적금"].Value</option>
                                     <option value="Investment">@localizer["투자"].Value</option>
@@ -373,7 +373,7 @@
                 @localizer["Are you sure to delete?"].Value
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-danger" onclick="DeleteExpenditure('@localizer["Please select grid row"].Value')">@localizer["DELETE"].Value</button>
+                <button id="btnDeleteExpenditure" type="button" class="btn btn-danger" data-errorMessageSelectGridRow="@localizer["Please select grid row"].Value">@localizer["DELETE"].Value</button>
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">@localizer["Close"].Value</button>
             </div>
         </div>

@@ -330,3 +330,27 @@ function ExportExcelAccount() {
 
     form.submit();
 }
+
+$('#btnEditAccountGridRow').off('click').on('click', function () {
+    EditAccountGridRow($(this).attr('data-errorMessageSelectGridRow'));
+});
+
+$('#btnConfirmDeleteAccount').off('click').on('click', function () {
+    ConfirmDeleteAccount($(this).attr('data-errorMessageSelectGridRow'));
+});
+
+$('#btnExportExcelAccount').off('click').on('click', function () {
+    ExportExcelAccount();
+});
+
+$('#btnDeleteAccount').off('click').on('click', function () {
+    DeleteAccount($(this).attr('data-errorMessageSelectGridRow'));
+});
+
+$('#formCreateAccount').off('submit').on('submit', function () {
+    return CreateAccount();
+});
+
+$('#formEditAccount').off('submit').on('submit', function () {
+    return UpdateAccount();
+});

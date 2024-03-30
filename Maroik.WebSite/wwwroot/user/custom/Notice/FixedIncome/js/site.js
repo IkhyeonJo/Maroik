@@ -615,3 +615,43 @@ function ExportExcelFixedIncome() {
 
     form.submit();
 }
+
+$('#btnEditFixedExpenditureGridRow').off('click').on('click', function () {
+    EditFixedIncomeGridRow($(this).attr('data-errorMessageSelectGridRow'));
+});
+
+$('#btnConfirmDeleteFixedIncome').off('click').on('click', function () {
+    ConfirmDeleteFixedIncome($(this).attr('data-errorMessageSelectGridRow'));
+});
+
+$('#btnExportExcelFixedIncome').off('click').on('click', function () {
+    ExportExcelFixedIncome();
+});
+
+$('#btnDeleteFixedIncome').off('click').on('click', function () {
+    DeleteFixedIncome($(this).attr('data-errorMessageSelectGridRow'));
+});
+
+$('#formCreateFixedIncome').off('submit').on('submit', function () {
+    return CreateFixedIncome();
+});
+
+$('#formEditFixedIncome').off('submit').on('submit', function () {
+    return UpdateFixedIncome();
+});
+
+$('#createFixedIncomeMainClass').off('change').on('change', function () {
+    return CreateFormShowFixedIncomeSubClassBySelectedFixedIncomeMainClass(this);
+});
+
+$('#createFixedIncomeDepositMonth').off('change').on('change', function () {
+    return CreateFormShowFixedIncomeDepositDayBySelectedFixedIncomeDepositMonth(this);
+});
+
+$('#editFixedIncomeMainClass').off('change').on('change', function () {
+    return EditFormShowFixedIncomeSubClassBySelectedFixedIncomeMainClass(this);
+});
+
+$('#editFixedIncomeDepositMonth').off('change').on('change', function () {
+    return EditFormShowFixedIncomeDepositDayBySelectedFixedIncomeDepositMonth(this);
+});

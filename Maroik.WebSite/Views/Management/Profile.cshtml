@@ -380,7 +380,7 @@
                                                                                     <div class="form-group">
                                                                                         <div class="btn btn-default btn-file">
                                                                                             <i class="fas fa-paperclip" style="padding-right: 3px;"></i>&nbsp;&nbsp;&nbsp;@localizer["Browse"]
-                                                                                            <input type="file" name="ProfileAvatarFiles" id="ProfileAvatarFiles" onchange="return UpdateProfileAvatar('@localizer["Please attach a file."]', '@localizer["File Size must be smaller than 10MB."]', '@localizer["Only .jpg or jpeg or .png file allowed."]');" accept="image/png, image/jpg, image/jpeg">
+                                                                                            <input type="file" name="ProfileAvatarFiles" id="ProfileAvatarFiles" data-noFileAttachedErrorMessage="@localizer["Please attach a file."]" data-fileSizeLimitationErrorMessage="@localizer["File Size must be smaller than 10MB."]" data-fileTypeErrorMessage="@localizer["Only .jpg or jpeg or .png file allowed."]" accept="image/png, image/jpg, image/jpeg">
                                                                                         </div>
                                                                                     </div>
                                                                                 </form>
@@ -448,7 +448,7 @@
                                                     </h3>
                                                 </div>
                                                 <div class="card-body pad table-responsive">
-                                                    <form id="formUpdateProfilePassword" class="form-horizontal" method="post" onsubmit="return UpdateProfilePassword();">
+                                                    <form id="formUpdateProfilePassword" class="form-horizontal" method="post">
                                                         <div class="form-group row">
                                                             <label asp-for="Password" class="col-sm-2 col-form-label">@localizer["Password"]</label>
                                                             <div class="col-sm-10">

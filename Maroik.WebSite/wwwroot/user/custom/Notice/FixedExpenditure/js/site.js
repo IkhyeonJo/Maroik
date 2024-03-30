@@ -1023,3 +1023,51 @@ function ExportExcelFixedExpenditure() {
 
     form.submit();
 }
+
+$('#btnEditFixedExpenditureGridRow').off('click').on('click', function () {
+    EditFixedExpenditureGridRow($(this).attr('data-errorMessageSelectGridRow'));
+});
+
+$('#btnConfirmDeleteFixedExpenditure').off('click').on('click', function () {
+    ConfirmDeleteFixedExpenditure($(this).attr('data-errorMessageSelectGridRow'));
+});
+
+$('#btnExportExcelFixedExpenditure').off('click').on('click', function () {
+    ExportExcelFixedExpenditure();
+});
+
+$('#btnDeleteFixedExpenditure').off('click').on('click', function () {
+    DeleteFixedExpenditure($(this).attr('data-errorMessageSelectGridRow'));
+});
+
+$('#formCreateFixedExpenditure').off('submit').on('submit', function () {
+    return CreateFixedExpenditure();
+});
+
+$('#formEditFixedExpenditure').off('submit').on('submit', function () {
+    return UpdateFixedExpenditure();
+});
+
+$('#createFixedExpenditureMainClass').off('change').on('change', function () {
+    return CreateFormShowFixedExpenditureSubClassBySelectedFixedExpenditureMainClass(this);
+});
+
+$('#createFixedExpenditureSubClass').off('change').on('change', function () {
+    return CreateFormShowFixedExpenditureDivCreateFixedExpenditureMyDepositAssetBySelectedFixedExpenditureSubClass(this);
+});
+
+$('#createFixedExpenditureDepositMonth').off('change').on('change', function () {
+    return CreateFormShowFixedExpenditureDepositDayBySelectedFixedExpenditureDepositMonth(this);
+});
+
+$('#editFixedExpenditureMainClass').off('change').on('change', function () {
+    return EditFormShowFixedExpenditureSubClassBySelectedFixedExpenditureMainClass(this);
+});
+
+$('#editFixedExpenditureSubClass').off('change').on('change', function () {
+    return EditFormShowFixedExpenditureDivCreateFixedExpenditureMyDepositAssetBySelectedFixedExpenditureSubClass(this);
+});
+
+$('#editFixedExpenditureDepositMonth').off('change').on('change', function () {
+    return EditFormShowFixedExpenditureDepositDayBySelectedFixedExpenditureDepositMonth(this);
+});

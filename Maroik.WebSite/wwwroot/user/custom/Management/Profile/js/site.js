@@ -85,3 +85,11 @@ function UpdateProfilePassword() {
     });
     return false;
 }
+
+$('#formUpdateProfilePassword').off('submit').on('submit', function () {
+    return UpdateProfilePassword();
+});
+
+$('#ProfileAvatarFiles').off('change').on('change', function () {
+    return UpdateProfileAvatar($(this).attr('data-noFileAttachedErrorMessage'), $(this).attr('data-fileSizeLimitationErrorMessage'), $(this).attr('data-fileTypeErrorMessage'));
+});
