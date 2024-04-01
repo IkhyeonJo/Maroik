@@ -5,7 +5,7 @@
 @inject Maroik.Common.DataAccess.Contracts.IAccountRepository accountRepository
 
 @{
-    Context.Session.TryGetValue("AccountSession", out byte[] resultByte);
+    Context.Session.TryGetValue(Maroik.WebSite.Common.Session.Account, out byte[] resultByte);
 
     var loginedAccount = await accountRepository.GetAccountByEmailAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
 }

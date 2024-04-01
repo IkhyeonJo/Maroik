@@ -56,7 +56,7 @@ namespace Maroik.WebSite.Controllers
                     try
                     {
                         fixedIncomeInputViewModel.Amount = Math.Abs(fixedIncomeInputViewModel.Amount);
-                        _ = HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+                        _ = HttpContext.Session.TryGetValue(Maroik.WebSite.Common.Session.Account, out byte[] resultByte);
 
                         #region Validation of MainClass & SubClass Value
                         if (fixedIncomeInputViewModel.MainClass == "RegularIncome")
@@ -177,7 +177,7 @@ namespace Maroik.WebSite.Controllers
                 List<FixedIncomeOutputViewModel> fixedIncomeOutputViewModels = [];
 
                 #region FixedIncomes
-                _ = HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+                _ = HttpContext.Session.TryGetValue(Maroik.WebSite.Common.Session.Account, out byte[] resultByte);
 
                 DateTime currentDate = new(Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[0]), Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[1]), Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[2]));
 
@@ -283,7 +283,7 @@ namespace Maroik.WebSite.Controllers
         {
             try
             {
-                _ = HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+                _ = HttpContext.Session.TryGetValue(Maroik.WebSite.Common.Session.Account, out byte[] resultByte);
 
                 List<FixedIncome> tempFixedIncomes = await fixedIncomeRepository.GetFixedIncomesAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
 
@@ -339,7 +339,7 @@ namespace Maroik.WebSite.Controllers
                     try
                     {
                         fixedIncomeInputViewModel.Amount = Math.Abs(fixedIncomeInputViewModel.Amount);
-                        _ = HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+                        _ = HttpContext.Session.TryGetValue(Maroik.WebSite.Common.Session.Account, out byte[] resultByte);
 
                         #region Validation of MainClass & SubClass Value
                         if (fixedIncomeInputViewModel.MainClass == "RegularIncome")
@@ -474,7 +474,7 @@ namespace Maroik.WebSite.Controllers
         {
             try
             {
-                _ = HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+                _ = HttpContext.Session.TryGetValue(Maroik.WebSite.Common.Session.Account, out byte[] resultByte);
 
                 List<FixedIncome> tempFixedIncomes = await fixedIncomeRepository.GetFixedIncomesAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
 
@@ -520,7 +520,7 @@ namespace Maroik.WebSite.Controllers
 
             #region FixedIncomes
 
-            _ = HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+            _ = HttpContext.Session.TryGetValue(Maroik.WebSite.Common.Session.Account, out byte[] resultByte);
 
             DateTime currentDate = new(Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[0]), Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[1]), Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[2]));
 
@@ -628,7 +628,7 @@ namespace Maroik.WebSite.Controllers
                 if (ModelState.IsValid)
                 {
                     fixedExpenditureInputViewModel.Amount = Math.Abs(fixedExpenditureInputViewModel.Amount);
-                    _ = HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+                    _ = HttpContext.Session.TryGetValue(Maroik.WebSite.Common.Session.Account, out byte[] resultByte);
 
                     #region 대분류 = '정기저축'
                     if (fixedExpenditureInputViewModel.MainClass == "RegularSavings")
@@ -844,7 +844,7 @@ namespace Maroik.WebSite.Controllers
                 List<FixedExpenditureOutputViewModel> fixedExpenditureOutputViewModels = [];
 
                 #region FixedExpenditures
-                _ = HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+                _ = HttpContext.Session.TryGetValue(Maroik.WebSite.Common.Session.Account, out byte[] resultByte);
 
                 DateTime currentDate = new(Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[0]), Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[1]), Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[2]));
 
@@ -953,7 +953,7 @@ namespace Maroik.WebSite.Controllers
         {
             try
             {
-                _ = HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+                _ = HttpContext.Session.TryGetValue(Maroik.WebSite.Common.Session.Account, out byte[] resultByte);
 
                 List<FixedExpenditure> tempFixedExpenditures = await fixedExpenditureRepository.GetFixedExpendituresAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
 
@@ -1008,7 +1008,7 @@ namespace Maroik.WebSite.Controllers
                 if (ModelState.IsValid)
                 {
                     fixedExpenditureInputViewModel.Amount = Math.Abs(fixedExpenditureInputViewModel.Amount);
-                    _ = HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+                    _ = HttpContext.Session.TryGetValue(Maroik.WebSite.Common.Session.Account, out byte[] resultByte);
 
                     #region 대분류 = '정기저축'
                     if (fixedExpenditureInputViewModel.MainClass == "RegularSavings")
@@ -1235,7 +1235,7 @@ namespace Maroik.WebSite.Controllers
         {
             try
             {
-                _ = HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+                _ = HttpContext.Session.TryGetValue(Maroik.WebSite.Common.Session.Account, out byte[] resultByte);
 
                 List<FixedExpenditure> tempFixedExpenditures = await fixedExpenditureRepository.GetFixedExpendituresAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
 
@@ -1277,7 +1277,7 @@ namespace Maroik.WebSite.Controllers
 
             #region FixedExpenditures
 
-            _ = HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+            _ = HttpContext.Session.TryGetValue(Maroik.WebSite.Common.Session.Account, out byte[] resultByte);
 
             DateTime currentDate = new(Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[0]), Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[1]), Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[2]));
 

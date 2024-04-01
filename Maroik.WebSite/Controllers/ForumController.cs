@@ -80,7 +80,7 @@ namespace Maroik.WebSite.Controllers
 
                     try
                     {
-                        bool isAccountSessionExist = HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+                        bool isAccountSessionExist = HttpContext.Session.TryGetValue(Maroik.WebSite.Common.Session.Account, out byte[] resultByte);
 
                         if (isAccountSessionExist)
                         {
@@ -207,7 +207,7 @@ namespace Maroik.WebSite.Controllers
 
                     try
                     {
-                        bool isAccountSessionExist = HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+                        bool isAccountSessionExist = HttpContext.Session.TryGetValue(Maroik.WebSite.Common.Session.Account, out byte[] resultByte);
 
                         if (isAccountSessionExist)
                         {
@@ -317,7 +317,7 @@ namespace Maroik.WebSite.Controllers
                 freeForumOutputViewModel.Method = method;
                 #endregion
 
-                bool isAccountSessionExist = HttpContext.Session.TryGetValue("AccountSession", out _); // 로그인이 되어 계정 세션이 생겼는지 확인
+                bool isAccountSessionExist = HttpContext.Session.TryGetValue(Maroik.WebSite.Common.Session.Account, out _); // 로그인이 되어 계정 세션이 생겼는지 확인
 
                 return isAccountSessionExist ? View(freeForumOutputViewModel) : RedirectToAction("Login", "Account");
             }
@@ -345,7 +345,7 @@ namespace Maroik.WebSite.Controllers
 
                     if (freeBoard.Locked)
                     {
-                        _ = HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte); // 작성자 또는 관리자인 경우
+                        _ = HttpContext.Session.TryGetValue(Maroik.WebSite.Common.Session.Account, out byte[] resultByte); // 작성자 또는 관리자인 경우
                         Account loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)); // Get Session
 
                         if (!(loginedAccount.Nickname == freeBoard.Writer || loginedAccount.Role == Role.Admin))
@@ -401,7 +401,7 @@ namespace Maroik.WebSite.Controllers
                 {
                     Board freeBoard = freeBoards.FirstOrDefault(m => m.Id == boardId);
 
-                    _ = HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+                    _ = HttpContext.Session.TryGetValue(Maroik.WebSite.Common.Session.Account, out byte[] resultByte);
                     Account loginedAccount = await accountRepository.GetAccountByEmailAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
 
                     if (freeBoard.Writer != loginedAccount.Nickname) // 작성자와 로그인한 사용자가 같지 않으면
@@ -452,7 +452,7 @@ namespace Maroik.WebSite.Controllers
                 #region 검색어 로직
                 if (searchType == "Title" && !string.IsNullOrEmpty(searchText))
                 {
-                    bool isAccountSessionExist = HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+                    bool isAccountSessionExist = HttpContext.Session.TryGetValue(Maroik.WebSite.Common.Session.Account, out byte[] resultByte);
 
                     if (isAccountSessionExist) // 로그인이 되어 있다면
                     {
@@ -591,7 +591,7 @@ namespace Maroik.WebSite.Controllers
 
                     try
                     {
-                        bool isAccountSessionExist = HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+                        bool isAccountSessionExist = HttpContext.Session.TryGetValue(Maroik.WebSite.Common.Session.Account, out byte[] resultByte);
 
                         if (isAccountSessionExist)
                         {
@@ -778,7 +778,7 @@ namespace Maroik.WebSite.Controllers
                     }
                     else
                     {
-                        _ = HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+                        _ = HttpContext.Session.TryGetValue(Maroik.WebSite.Common.Session.Account, out byte[] resultByte);
                         Account loginedAccount = await accountRepository.GetAccountByEmailAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
 
                         if ((loginedAccount.Nickname == tempFreeBoard.Writer) || loginedAccount.Role == Role.Admin) // 방문한 사람이 작성자 또는 관리자인 경우
@@ -821,7 +821,7 @@ namespace Maroik.WebSite.Controllers
                 }
                 else
                 {
-                    _ = HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+                    _ = HttpContext.Session.TryGetValue(Maroik.WebSite.Common.Session.Account, out byte[] resultByte);
                     Account loginedAccount = await accountRepository.GetAccountByEmailAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
 
                     if ((loginedAccount.Nickname == comment.Writer) || loginedAccount.Role == Role.Admin) // 삭제하는 사람이 작성자 또는 관리자인 경우

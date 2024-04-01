@@ -55,7 +55,7 @@ namespace Maroik.WebSite.Filters
             string currentControllerName = context.ActionDescriptor.RouteValues["controller"].ToString(); // 실행 전 Controller 이름
             string currentActionName = context.ActionDescriptor.RouteValues["action"].ToString(); // 실행 전 Action 이름
             string currentRequestMethod = context.HttpContext.Request.Method; // GET HTTP METHOD
-            bool isAccountSessionExist = context.HttpContext.Session.TryGetValue("AccountSession", out _); // 로그인이 되어 계정 세션이 생겼는지 확인
+            bool isAccountSessionExist = context.HttpContext.Session.TryGetValue(Maroik.WebSite.Common.Session.Account, out _); // 로그인이 되어 계정 세션이 생겼는지 확인
 
             if (currentRequestMethod.ToUpper() == "GET") // GET 방식 (페이지 접근만 차단!!)
             {
@@ -162,7 +162,7 @@ namespace Maroik.WebSite.Filters
                         return;
                     }
 
-                    _ = context.HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+                    _ = context.HttpContext.Session.TryGetValue(Maroik.WebSite.Common.Session.Account, out byte[] resultByte);
                     Account loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)); // Get Session
 
                     if (loginedAccount.Role == Role.Admin) // 로그인한 사용자 권한이 Admin일 경우
@@ -314,7 +314,7 @@ namespace Maroik.WebSite.Filters
                 }
                 else if (isAccountSessionExist == true) // 로그인이 된 상태라면
                 {
-                    _ = context.HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+                    _ = context.HttpContext.Session.TryGetValue(Maroik.WebSite.Common.Session.Account, out byte[] resultByte);
                     Account loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)); // Get Session
 
                     if (loginedAccount.Role == Role.Admin) // 로그인한 사용자 권한이 Admin일 경우

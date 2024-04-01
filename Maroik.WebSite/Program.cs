@@ -170,7 +170,7 @@ app.UseStaticFiles(new StaticFileOptions
 {
     OnPrepareResponse = context =>
     {
-        bool isAccountSessionExist = context.Context.Session.TryGetValue("AccountSession", out _); // 로그인이 되어 계정 세션이 생겼는지 확인
+        bool isAccountSessionExist = context.Context.Session.TryGetValue(Maroik.WebSite.Common.Session.Account, out _); // 로그인이 되어 계정 세션이 생겼는지 확인
 
         if (context.Context.Request.Path.StartsWithSegments("/upload/Forum") || context.Context.Request.Path.StartsWithSegments("/upload/Management/Profile/Avatar") || context.Context.Request.Path.ToString().Contains("/upload/Management/Profile/default-avatar.jpg")) // (~/upload/Forum) [게시물] (~/upload/Management/Profile/Avatar) [댓글 게시판 이미지] 게시판 파일들은 모두 접근 허용
         {
@@ -185,7 +185,7 @@ app.UseStaticFiles(new StaticFileOptions
         }
         else if (isAccountSessionExist == true)
         {
-            _ = context.Context.Session.TryGetValue("AccountSession", out byte[] resultByte);
+            _ = context.Context.Session.TryGetValue(Maroik.WebSite.Common.Session.Account, out byte[] resultByte);
             Account loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)); // Get Session
 
             if (loginedAccount.Role == Role.Admin && !context.Context.Request.Path.StartsWithSegments("/admin")) // 로그인이 되었고 권한이 Admin인가? 그렇다면 ~/admin 자원에만 접근 허용

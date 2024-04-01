@@ -36,7 +36,7 @@ namespace Maroik.WebSite.Controllers
         [HttpGet]
         public IActionResult ConsentForm()
         {
-            bool isAccountSessionExist = HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+            bool isAccountSessionExist = HttpContext.Session.TryGetValue(Maroik.WebSite.Common.Session.Account, out byte[] resultByte);
 
             if (isAccountSessionExist) // 로그인 된 상태라면
             {
@@ -129,7 +129,7 @@ namespace Maroik.WebSite.Controllers
                     tempAccount.LoginAttempt = 0;
                     await accountRepository.UpdateAccountAsync(tempAccount);
                     tempAccount.HashedPassword = null;
-                    HttpContext.Session.Set("AccountSession", Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(tempAccount)));
+                    HttpContext.Session.Set(Maroik.WebSite.Common.Session.Account, Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(tempAccount)));
 
                     #region DB Cache
                     return tempAccount.Role == Role.Admin
@@ -167,7 +167,7 @@ namespace Maroik.WebSite.Controllers
         [HttpGet]
         public IActionResult Logout()
         {
-            HttpContext.Session.Remove("AccountSession");
+            HttpContext.Session.Remove(Maroik.WebSite.Common.Session.Account);
             return RedirectToAction("AnonymousIndex", "DashBoard");
         }
         #endregion
@@ -176,7 +176,7 @@ namespace Maroik.WebSite.Controllers
         [HttpGet]
         public IActionResult Register()
         {
-            bool isAccountSessionExist = HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+            bool isAccountSessionExist = HttpContext.Session.TryGetValue(Maroik.WebSite.Common.Session.Account, out byte[] resultByte);
 
             if (isAccountSessionExist) // 로그인 된 상태라면
             {
@@ -510,7 +510,7 @@ namespace Maroik.WebSite.Controllers
         [HttpGet]
         public async Task<IActionResult> ConfirmEmail(string registrationToken)
         {
-            bool isAccountSessionExist = HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+            bool isAccountSessionExist = HttpContext.Session.TryGetValue(Maroik.WebSite.Common.Session.Account, out byte[] resultByte);
 
             if (isAccountSessionExist) // 로그인 된 상태라면
             {
@@ -623,7 +623,7 @@ namespace Maroik.WebSite.Controllers
         [HttpGet]
         public IActionResult ForgotPassword()
         {
-            bool isAccountSessionExist = HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+            bool isAccountSessionExist = HttpContext.Session.TryGetValue(Maroik.WebSite.Common.Session.Account, out byte[] resultByte);
 
             if (isAccountSessionExist) // 로그인 된 상태라면
             {
@@ -728,7 +728,7 @@ namespace Maroik.WebSite.Controllers
         [HttpGet]
         public async Task<IActionResult> ResetPassword(string resetPasswordToken)
         {
-            bool isAccountSessionExist = HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+            bool isAccountSessionExist = HttpContext.Session.TryGetValue(Maroik.WebSite.Common.Session.Account, out byte[] resultByte);
 
             if (isAccountSessionExist) // 로그인 된 상태라면
             {

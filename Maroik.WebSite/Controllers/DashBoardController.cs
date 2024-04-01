@@ -52,7 +52,7 @@ namespace Maroik.WebSite.Controllers
         public async Task<IActionResult> UserIndex()
         {
             #region Current Year & Month Income/Expenditure
-            _ = HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+            _ = HttpContext.Session.TryGetValue(Maroik.WebSite.Common.Session.Account, out byte[] resultByte);
             string currentYearMonth = DateTime.UtcNow.ToString("yyyy-MM");
             string currentLoginUserEmail = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email;
 
@@ -74,7 +74,7 @@ namespace Maroik.WebSite.Controllers
         [HttpGet]
         public IActionResult AnonymousIndex()
         {
-            bool isAccountSessionExist = HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+            bool isAccountSessionExist = HttpContext.Session.TryGetValue(Maroik.WebSite.Common.Session.Account, out byte[] resultByte);
 
             if (isAccountSessionExist) // 로그인 된 상태라면
             {

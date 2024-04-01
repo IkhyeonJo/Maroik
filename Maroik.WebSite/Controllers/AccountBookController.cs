@@ -48,7 +48,7 @@ namespace Maroik.WebSite.Controllers
             {
                 if (ModelState.IsValid)
                 {
-                    _ = HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+                    _ = HttpContext.Session.TryGetValue(Maroik.WebSite.Common.Session.Account, out byte[] resultByte);
 
                     if (await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, assetInputViewModel.ProductName) != null)
                     {
@@ -116,7 +116,7 @@ namespace Maroik.WebSite.Controllers
                 List<AssetOutputViewModel> assetOutputViewModels = [];
 
                 #region Assets
-                _ = HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+                _ = HttpContext.Session.TryGetValue(Maroik.WebSite.Common.Session.Account, out byte[] resultByte);
 
                 foreach (Asset item in await assetRepository.GetAssetsAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email))
                 {
@@ -173,7 +173,7 @@ namespace Maroik.WebSite.Controllers
         {
             try
             {
-                _ = HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+                _ = HttpContext.Session.TryGetValue(Maroik.WebSite.Common.Session.Account, out byte[] resultByte);
 
                 Asset tempAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, productName);
 
@@ -217,7 +217,7 @@ namespace Maroik.WebSite.Controllers
                         }
                         #endregion
 
-                        _ = HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+                        _ = HttpContext.Session.TryGetValue(Maroik.WebSite.Common.Session.Account, out byte[] resultByte);
 
                         Asset tempAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, assetInputViewModel.ProductName);
 
@@ -263,7 +263,7 @@ namespace Maroik.WebSite.Controllers
         {
             try
             {
-                _ = HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+                _ = HttpContext.Session.TryGetValue(Maroik.WebSite.Common.Session.Account, out byte[] resultByte);
 
                 Asset tempAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, assetInputViewModel.ProductName);
 
@@ -298,7 +298,7 @@ namespace Maroik.WebSite.Controllers
 
             #region Assets
 
-            _ = HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+            _ = HttpContext.Session.TryGetValue(Maroik.WebSite.Common.Session.Account, out byte[] resultByte);
 
             foreach (Asset item in await assetRepository.GetAssetsAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email))
             {
@@ -377,7 +377,7 @@ namespace Maroik.WebSite.Controllers
                     try
                     {
                         incomeInputViewModel.Amount = Math.Abs(incomeInputViewModel.Amount);
-                        _ = HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+                        _ = HttpContext.Session.TryGetValue(Maroik.WebSite.Common.Session.Account, out byte[] resultByte);
 
                         #region Validate ProductName's Deletion
                         Asset tempAssetToValidate = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, incomeInputViewModel.DepositMyAssetProductName);
@@ -463,7 +463,7 @@ namespace Maroik.WebSite.Controllers
                 List<IncomeOutputViewModel> incomeOutputViewModels = [];
 
                 #region Incomes
-                _ = HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+                _ = HttpContext.Session.TryGetValue(Maroik.WebSite.Common.Session.Account, out byte[] resultByte);
 
                 foreach (Income item in await incomeRepository.GetIncomesAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email))
                 {
@@ -522,7 +522,7 @@ namespace Maroik.WebSite.Controllers
         {
             try
             {
-                _ = HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+                _ = HttpContext.Session.TryGetValue(Maroik.WebSite.Common.Session.Account, out byte[] resultByte);
 
                 List<Income> tempIncomes = await incomeRepository.GetIncomesAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
 
@@ -565,7 +565,7 @@ namespace Maroik.WebSite.Controllers
                     try
                     {
                         incomeInputViewModel.Amount = Math.Abs(incomeInputViewModel.Amount);
-                        _ = HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+                        _ = HttpContext.Session.TryGetValue(Maroik.WebSite.Common.Session.Account, out byte[] resultByte);
 
                         #region Validation of MainClass & SubClass Value
                         if (incomeInputViewModel.MainClass == "RegularIncome")
@@ -688,7 +688,7 @@ namespace Maroik.WebSite.Controllers
         {
             try
             {
-                _ = HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+                _ = HttpContext.Session.TryGetValue(Maroik.WebSite.Common.Session.Account, out byte[] resultByte);
 
                 List<Income> tempIncomes = await incomeRepository.GetIncomesAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
 
@@ -749,7 +749,7 @@ namespace Maroik.WebSite.Controllers
 
             #region Incomes
 
-            _ = HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+            _ = HttpContext.Session.TryGetValue(Maroik.WebSite.Common.Session.Account, out byte[] resultByte);
 
             foreach (Income item in await incomeRepository.GetIncomesAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email))
             {
@@ -825,7 +825,7 @@ namespace Maroik.WebSite.Controllers
                 if (ModelState.IsValid)
                 {
                     expenditureInputViewModel.Amount = Math.Abs(expenditureInputViewModel.Amount);
-                    _ = HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+                    _ = HttpContext.Session.TryGetValue(Maroik.WebSite.Common.Session.Account, out byte[] resultByte);
 
                     #region Validate ProductName's Deletion
                     Asset tempExpenditureAssetToValidate = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, expenditureInputViewModel.PaymentMethod);
@@ -1111,7 +1111,7 @@ namespace Maroik.WebSite.Controllers
                 List<ExpenditureOutputViewModel> expenditureOutputViewModels = [];
 
                 #region Expenditures
-                _ = HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+                _ = HttpContext.Session.TryGetValue(Maroik.WebSite.Common.Session.Account, out byte[] resultByte);
 
                 foreach (Expenditure item in await expenditureRepository.GetExpendituresAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email))
                 {
@@ -1173,7 +1173,7 @@ namespace Maroik.WebSite.Controllers
         {
             try
             {
-                _ = HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+                _ = HttpContext.Session.TryGetValue(Maroik.WebSite.Common.Session.Account, out byte[] resultByte);
 
                 List<Expenditure> tempExpenditures = await expenditureRepository.GetExpendituresAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
 
@@ -1214,7 +1214,7 @@ namespace Maroik.WebSite.Controllers
                 if (ModelState.IsValid)
                 {
                     expenditureInputViewModel.Amount = Math.Abs(expenditureInputViewModel.Amount);
-                    _ = HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+                    _ = HttpContext.Session.TryGetValue(Maroik.WebSite.Common.Session.Account, out byte[] resultByte);
 
                     #region 대분류 = '정기저축'
                     if (expenditureInputViewModel.MainClass == "RegularSavings")
@@ -2958,7 +2958,7 @@ namespace Maroik.WebSite.Controllers
         {
             try
             {
-                _ = HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+                _ = HttpContext.Session.TryGetValue(Maroik.WebSite.Common.Session.Account, out byte[] resultByte);
 
                 List<Expenditure> tempExpenditures = await expenditureRepository.GetExpendituresAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
 
@@ -3051,7 +3051,7 @@ namespace Maroik.WebSite.Controllers
 
             #region Expenditures
 
-            _ = HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+            _ = HttpContext.Session.TryGetValue(Maroik.WebSite.Common.Session.Account, out byte[] resultByte);
 
             foreach (Expenditure item in await expenditureRepository.GetExpendituresAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email))
             {

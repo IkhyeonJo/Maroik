@@ -38,7 +38,7 @@ namespace Maroik.WebSite.Controllers
         [HttpGet]
         public async Task<IActionResult> Profile()
         {
-            _ = HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+            _ = HttpContext.Session.TryGetValue(Maroik.WebSite.Common.Session.Account, out byte[] resultByte);
             Account tempAccount = await accountRepository.GetAccountByEmailAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
 
             return View(new ProfileOutputViewModel() { Email = tempAccount.Email, AvatarImagePath = tempAccount.AvatarImagePath, Nickname = tempAccount.Nickname, Created = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(tempAccount.Created, OSTimeZone.DestinationTimeZoneId) });
@@ -65,7 +65,7 @@ namespace Maroik.WebSite.Controllers
                 {
                     if (Path.GetExtension(profileAvatarFile.FileName) is ".png" or ".jpg" or ".jpeg")
                     {
-                        _ = HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+                        _ = HttpContext.Session.TryGetValue(Maroik.WebSite.Common.Session.Account, out byte[] resultByte);
                         string avatarPath = Path.Combine(hostEnvironment.ContentRootPath, "wwwroot", "upload", "Management", "Profile", "Avatar");
                         if (!Directory.Exists(avatarPath))
                         {
@@ -125,7 +125,7 @@ namespace Maroik.WebSite.Controllers
         //    {
         //        try
         //        {
-        //            HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+        //            HttpContext.Session.TryGetValue(Maroik.WebSite.Common.Session.Account, out byte[] resultByte);
         //            var tempAccount = await accountRepository.GetAccountAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
         //            tempAccount.Nickname = profileInputViewModel.Nickname;
         //            await accountRepository.UpdateAccountAsync(tempAccount);
@@ -152,7 +152,7 @@ namespace Maroik.WebSite.Controllers
             {
                 try
                 {
-                    _ = HttpContext.Session.TryGetValue("AccountSession", out byte[] resultByte);
+                    _ = HttpContext.Session.TryGetValue(Maroik.WebSite.Common.Session.Account, out byte[] resultByte);
                     Account tempAccount = await accountRepository.GetAccountByEmailAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
 
                     if (new RSA(RSAType.RSA2, Encoding.UTF8, RSA.privateKey, RSA.publicKey).Verify(profileInputViewModel.Password ?? "", tempAccount.HashedPassword)) // right password

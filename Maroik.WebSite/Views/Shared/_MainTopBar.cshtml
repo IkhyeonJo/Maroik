@@ -8,7 +8,7 @@
 @inject Maroik.Common.DataAccess.Contracts.IFixedExpenditureRepository fixedExpenditureRepository
 @{
     string currentCulture = Context.Features.Get<Microsoft.AspNetCore.Localization.IRequestCultureFeature>().RequestCulture.Culture.Name;
-    Context.Session.TryGetValue("AccountSession", out byte[] resultByte);
+    Context.Session.TryGetValue(Maroik.WebSite.Common.Session.Account, out byte[] resultByte);
     DateTime currentDate = new DateTime(Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[0]), Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[1]), Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[2]));
     List<FixedIncomeOutputViewModel> fixedIncomeOutputViewModels = new List<FixedIncomeOutputViewModel>();
     List<FixedExpenditureOutputViewModel> fixedExpenditureOutputViewModels = new List<FixedExpenditureOutputViewModel>();

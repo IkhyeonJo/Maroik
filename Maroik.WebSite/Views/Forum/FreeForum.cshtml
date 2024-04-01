@@ -10,7 +10,7 @@
 @model FreeForumOutputViewModel
 
 @{
-    Context.Session.TryGetValue("AccountSession", out byte[] resultByte);
+    Context.Session.TryGetValue(Maroik.WebSite.Common.Session.Account, out byte[] resultByte);
     Account loginedAccount = new Account();
 
     if (resultByte != null) // 로그인이 된 상태라면
