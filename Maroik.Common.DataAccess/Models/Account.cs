@@ -83,5 +83,5 @@ public partial class Account
     /// </summary>
     public bool Deleted { get; set; }
 
-    public virtual ICollection<Asset> Assets { get; } = new List<Asset>();
+    public virtual ICollection<Asset> Assets { get; } = [];
 }

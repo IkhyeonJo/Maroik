@@ -63,7 +63,7 @@ public partial class Board
     /// </summary>
     public bool Noticed { get; set; }
 
-    public virtual ICollection<AttachedFile> AttachedFiles { get; } = new List<AttachedFile>();
+    public virtual ICollection<AttachedFile> AttachedFiles { get; } = [];
 
-    public virtual ICollection<Comment> Comments { get; } = new List<Comment>();
+    public virtual ICollection<Comment> Comments { get; } = [];
 }

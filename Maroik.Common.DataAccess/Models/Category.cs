@@ -47,5 +47,5 @@ public partial class Category
     /// </summary>
     public int Order { get; set; }
 
-    public virtual ICollection<SubCategory> SubCategories { get; } = new List<SubCategory>();
+    public virtual ICollection<SubCategory> SubCategories { get; } = [];
 }
