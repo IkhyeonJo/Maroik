@@ -13,6 +13,7 @@ namespace Maroik.WebSite.Common
             byte[] key = Guid.NewGuid().ToByteArray();
             string token = Convert.ToBase64String(time.Concat(key).ToArray());
             #endregion
+
             return token;
         }
 
