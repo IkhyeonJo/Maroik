@@ -3,6 +3,7 @@
 @using Maroik.WebSite.Models.ViewModels.Forum
 @using Newtonsoft.Json
 @using System.Text
+@using System.Web
 @inject Maroik.Common.DataAccess.Contracts.IAccountRepository accountRepository
 @inject Maroik.Common.DataAccess.Contracts.ICommentRepository commentRepository
 @inject Maroik.Common.DataAccess.Contracts.IAttachedFileRepository attachedFileRepository
@@ -160,7 +161,7 @@
                                                 <span class="text-muted float-right" style="margin: 0px 0px 0px 3px"><a class="hover aFreeForumDeleteComment" href="#" data-commentId="@(comment.Id)" data-detailBoardId="@(Model.DetailBoardId)" data-detailCurrentPage="@(Model.DetailCurrentPage)">@localizer["Delete"].Value</a></span>
                                             }
                                         </span>
-                                        @comment.Content
+                                        @(HttpUtility.HtmlDecode(comment.Content))
                                     </div>
                                 </div>
                             }
@@ -188,7 +189,7 @@
                                                 <span class="text-muted float-right" style="margin: 0px 0px 0px 3px"><a class="hover aFreeForumDeleteComment" href="#" data-commentId="@(comment.Id)" data-detailBoardId="@(Model.DetailBoardId)" data-detailCurrentPage="@(Model.DetailCurrentPage)">@localizer["Delete"].Value</a></span>
                                             }
                                         </span>
-                                        @comment.Content
+                                        @(HttpUtility.HtmlDecode(comment.Content))
                                     </div>
                                 </div>
                             }
