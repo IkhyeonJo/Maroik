@@ -83,7 +83,7 @@ builder.Services.AddResponseCaching(); // For HTTP Header Setting
 //{
 //    options.IncludeSubDomains = true;
 //    options.MaxAge = TimeSpan.FromDays(365);
-////  options.Preload = true; // 시험삼아 넣어보자... 이 기능 좋단다.
+//    options.Preload = true;
 //});
 #endregion
 
