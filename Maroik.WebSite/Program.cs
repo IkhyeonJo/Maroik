@@ -8,6 +8,7 @@ using Maroik.WebSite.Filters;
 using Maroik.WebSite.Services;
 using Microsoft.AspNetCore.CookiePolicy;
 using Microsoft.AspNetCore.Localization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Razor;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
@@ -107,6 +108,7 @@ builder.Services.Configure<RequestLocalizationOptions>(
 builder.Services.AddControllersWithViews(options =>
 {
     _ = options.Filters.Add(typeof(AuthorizationFilter)); // An instance
+    options.Filters.Add(new AutoValidateAntiforgeryTokenAttribute()); // Globally enables token validation for all requests except for GET, HEAD, OPTIONS, and TRACE
 });
 
 WebApplication app = builder.Build();
