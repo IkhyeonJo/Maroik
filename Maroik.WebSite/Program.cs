@@ -75,6 +75,17 @@ builder.Services.AddSession(options =>
 });
 #endregion
 
+#region AddAntiforgery
+builder.Services.AddAntiforgery(options =>
+{
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true;
+    options.Cookie.Domain = ServerSetting.DomainName.Replace("https://", "").Replace("/", "").ToString();
+    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+    options.Cookie.SameSite = SameSiteMode.Strict;
+});
+#endregion
+
 builder.Services.AddSingleton<IConfiguration>(builder.Configuration);
 builder.Services.AddResponseCaching(); // For HTTP Header Setting 
 
