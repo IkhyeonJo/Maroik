@@ -86,6 +86,17 @@ builder.Services.AddAntiforgery(options =>
 });
 #endregion
 
+#region AddCors
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(
+        builder =>
+        {
+            builder.WithOrigins(ServerSetting.DomainName.Replace("/", "").ToString());
+        });
+});
+#endregion
+
 builder.Services.AddSingleton<IConfiguration>(builder.Configuration);
 builder.Services.AddResponseCaching(); // For HTTP Header Setting 
 
@@ -170,7 +181,7 @@ app.UseHttpsRedirection(); // 2. HTTPS 리디렉션 미들웨어 (UseHttpsRedire
 app.UseRouting(); // 5. 요청을 라우팅하기위한 미들웨어 라우팅 (UseRouting)
 
 // app.UseRequestLocalization();
-// app.UseCors();
+app.UseCors();
 
 
 #region Login
