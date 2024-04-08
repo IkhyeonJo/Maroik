@@ -4,9 +4,9 @@
 if command -v dotnet &> /dev/null; then
     echo ".NET SDK is already installed."
 else
-    # Install .NET SDK (replace '7.0' with the correct version)
+    # Install .NET SDK (replace '8.0' with the correct version)
     echo "Installing .NET SDK..."
-    sudo apt install dotnet-sdk-7.0 -y
+    sudo apt install dotnet-sdk-8.0 -y
     
     # Verify installation
     if command -v dotnet &> /dev/null; then
