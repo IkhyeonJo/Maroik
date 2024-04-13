@@ -249,20 +249,20 @@ namespace Maroik.WebSite.Controllers
                         {
                             if (((MySqlException)e.InnerException).ErrorCode == MySqlErrorCode.DuplicateKeyEntry)
                             {
-                                Console.WriteLine(e.ToString()); // ActivityLog 등으로 로그 남겨야 한다..
+                                Console.WriteLine(localizer["Input is invalid"].Value); // ActivityLog 등으로 로그 남겨야 한다..
                                 TempData["Error"] = $"'{loginInputViewModel.Nickname}' {localizer["is a Nickname that already exists."].Value} {localizer["Please enter another Nickname."].Value}";
                                 return View();
                             }
                             else
                             {
-                                Console.WriteLine(e.ToString()); // ActivityLog 등으로 로그 남겨야 한다..
+                                Console.WriteLine(localizer["Input is invalid"].Value); // ActivityLog 등으로 로그 남겨야 한다..
                                 TempData["Error"] = localizer["Error occurred while processing about account registration"].Value;
                                 return View();
                             }
                         }
                         catch (Exception e)
                         {
-                            Console.WriteLine(e.ToString()); // ActivityLog 등으로 로그 남겨야 한다..
+                            Console.WriteLine(localizer["Input is invalid"].Value); // ActivityLog 등으로 로그 남겨야 한다..
                             TempData["Error"] = localizer["Error occurred while processing about account registration"].Value;
                             return View();
                         }

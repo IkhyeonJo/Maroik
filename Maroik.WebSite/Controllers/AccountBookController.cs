@@ -90,7 +90,7 @@ namespace Maroik.WebSite.Controllers
                     }
                     catch (Exception e)
                     {
-                        return Json(new { result = false, error = e.ToString() });
+                        return Json(new { result = false, error = localizer["Input is invalid"].Value });
                     }
 
                     return Json(new { result = true, message = localizer["The asset has been successfully created."].Value });
@@ -102,7 +102,7 @@ namespace Maroik.WebSite.Controllers
             }
             catch (Exception e)
             {
-                return Json(new { result = false, error = e.ToString() });
+                return Json(new { result = false, error = localizer["Input is invalid"].Value });
             }
         }
         #endregion
@@ -183,7 +183,7 @@ namespace Maroik.WebSite.Controllers
             }
             catch (Exception e)
             {
-                return Json(new { result = false, error = e.ToString() });
+                return Json(new { result = false, error = localizer["Input is invalid"].Value });
             }
         }
         #endregion
@@ -243,7 +243,7 @@ namespace Maroik.WebSite.Controllers
                     }
                     catch (Exception e)
                     {
-                        return Json(new { result = false, error = e.ToString() });
+                        return Json(new { result = false, error = localizer["Input is invalid"].Value });
                     }
                 }
                 else
@@ -253,7 +253,7 @@ namespace Maroik.WebSite.Controllers
             }
             catch (Exception e)
             {
-                return Json(new { result = false, error = e.ToString() });
+                return Json(new { result = false, error = localizer["Input is invalid"].Value });
             }
         }
         #endregion
@@ -283,7 +283,7 @@ namespace Maroik.WebSite.Controllers
             }
             catch (Exception e)
             {
-                return Json(new { result = false, error = e.ToString() });
+                return Json(new { result = false, error = localizer["Input is invalid"].Value });
             }
         }
         #endregion
@@ -442,7 +442,7 @@ namespace Maroik.WebSite.Controllers
                     }
                     catch (Exception e)
                     {
-                        return Json(new { result = false, error = e.ToString() });
+                        return Json(new { result = false, error = localizer["Input is invalid"].Value });
                     }
                 }
                 else
@@ -452,7 +452,7 @@ namespace Maroik.WebSite.Controllers
             }
             catch (Exception e)
             {
-                return Json(new { result = false, error = e.ToString() });
+                return Json(new { result = false, error = localizer["Input is invalid"].Value });
             }
         }
         #endregion
@@ -550,7 +550,7 @@ namespace Maroik.WebSite.Controllers
             }
             catch (Exception e)
             {
-                return Json(new { result = false, error = e.ToString() });
+                return Json(new { result = false, error = localizer["Input is invalid"].Value });
             }
         }
         #endregion
@@ -668,7 +668,7 @@ namespace Maroik.WebSite.Controllers
                     }
                     catch (Exception e)
                     {
-                        return Json(new { result = false, error = e.ToString() });
+                        return Json(new { result = false, error = localizer["Input is invalid"].Value });
                     }
                 }
                 else
@@ -678,7 +678,7 @@ namespace Maroik.WebSite.Controllers
             }
             catch (Exception e)
             {
-                return Json(new { result = false, error = e.ToString() });
+                return Json(new { result = false, error = localizer["Input is invalid"].Value });
             }
         }
         #endregion
@@ -734,7 +734,7 @@ namespace Maroik.WebSite.Controllers
             }
             catch (Exception e)
             {
-                return Json(new { result = false, error = e.ToString() });
+                return Json(new { result = false, error = localizer["Input is invalid"].Value });
             }
         }
         #endregion
@@ -901,7 +901,7 @@ namespace Maroik.WebSite.Controllers
                             }
                             catch (Exception e)
                             {
-                                return Json(new { result = false, error = e.ToString() });
+                                return Json(new { result = false, error = localizer["Input is invalid"].Value });
                             }
                         }
                         else
@@ -966,7 +966,7 @@ namespace Maroik.WebSite.Controllers
                             }
                             catch (Exception e)
                             {
-                                return Json(new { result = false, error = e.ToString() });
+                                return Json(new { result = false, error = localizer["Input is invalid"].Value });
                             }
                         }
                         else if (expenditureInputViewModel.SubClass is "Tax" or
@@ -1012,7 +1012,7 @@ namespace Maroik.WebSite.Controllers
                             }
                             catch (Exception e)
                             {
-                                return Json(new { result = false, error = e.ToString() });
+                                return Json(new { result = false, error = localizer["Input is invalid"].Value });
                             }
                         }
                         else
@@ -1076,7 +1076,7 @@ namespace Maroik.WebSite.Controllers
                             }
                             catch (Exception e)
                             {
-                                return Json(new { result = false, error = e.ToString() });
+                                return Json(new { result = false, error = localizer["Input is invalid"].Value });
                             }
                         }
                         else
@@ -1100,7 +1100,7 @@ namespace Maroik.WebSite.Controllers
             }
             catch (Exception e)
             {
-                return Json(new { result = false, error = e.ToString() });
+                return Json(new { result = false, error = localizer["Input is invalid"].Value });
             }
         }
         #endregion
@@ -1201,7 +1201,7 @@ namespace Maroik.WebSite.Controllers
             }
             catch (Exception e)
             {
-                return Json(new { result = false, error = e.ToString() });
+                return Json(new { result = false, error = localizer["Input is invalid"].Value });
             }
         }
         #endregion
@@ -1810,7 +1810,7 @@ namespace Maroik.WebSite.Controllers
                             }
                             catch (Exception e)
                             {
-                                return Json(new { result = false, error = e.ToString() });
+                                return Json(new { result = false, error = localizer["Input is invalid"].Value });
                             }
                         }
                         else
@@ -2482,7 +2482,7 @@ namespace Maroik.WebSite.Controllers
                             }
                             catch (Exception e)
                             {
-                                return Json(new { result = false, error = e.ToString() });
+                                return Json(new { result = false, error = localizer["Input is invalid"].Value });
                             }
                         }
                         else if (expenditureInputViewModel.SubClass is "Tax" or
@@ -2669,7 +2669,7 @@ namespace Maroik.WebSite.Controllers
                             }
                             catch (Exception e)
                             {
-                                return Json(new { result = false, error = e.ToString() });
+                                return Json(new { result = false, error = localizer["Input is invalid"].Value });
                             }
                         }
                         else
@@ -2924,7 +2924,7 @@ namespace Maroik.WebSite.Controllers
                             }
                             catch (Exception e)
                             {
-                                return Json(new { result = false, error = e.ToString() });
+                                return Json(new { result = false, error = localizer["Input is invalid"].Value });
                             }
                         }
                         else
@@ -2948,7 +2948,7 @@ namespace Maroik.WebSite.Controllers
             }
             catch (Exception e)
             {
-                return Json(new { result = false, error = e.ToString() });
+                return Json(new { result = false, error = localizer["Input is invalid"].Value });
             }
         }
         #endregion
@@ -3036,7 +3036,7 @@ namespace Maroik.WebSite.Controllers
             }
             catch (Exception e)
             {
-                return Json(new { result = false, error = e.ToString() });
+                return Json(new { result = false, error = localizer["Input is invalid"].Value });
             }
         }
         #endregion
