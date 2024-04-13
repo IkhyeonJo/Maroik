@@ -34,5 +34,12 @@ namespace Maroik.Common.DataAccess.Contracts
         /// <param name="asset"></param>
         /// <returns></returns>
         public Task UpdateAssetAsync(Asset asset);
+
+        /// <summary>
+        /// 자산명을 포함하여 자산을 업데이트합니다.
+        /// </summary>
+        /// <param name="asset"></param>
+        /// <returns></returns>
+        public Task<int> UpdateAssetWithProductNameAsync(Asset asset, string originalProductName);
     }
 }

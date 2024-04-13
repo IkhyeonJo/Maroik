@@ -20,5 +20,6 @@ namespace Maroik.WebSite.Models.ViewModels.AccountBook
         public string Note { get; set; }
         [Display(Name = "Deleted")]
         public bool Deleted { get; set; }
+        public string OriginalProductName { get; set; }
     }
 }

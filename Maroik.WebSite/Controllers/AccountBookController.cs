@@ -219,7 +219,7 @@ namespace Maroik.WebSite.Controllers
 
                         _ = HttpContext.Session.TryGetValue(Maroik.WebSite.Common.Session.Account, out byte[] resultByte);
 
-                        Asset tempAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, assetInputViewModel.ProductName);
+                        Asset tempAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, assetInputViewModel.OriginalProductName);
 
                         if (tempAsset == null)
                         {
@@ -227,15 +227,18 @@ namespace Maroik.WebSite.Controllers
                         }
                         else
                         {
+                            tempAsset.ProductName = assetInputViewModel.ProductName;
                             tempAsset.Item = assetInputViewModel.Item;
                             tempAsset.Amount = assetInputViewModel.Amount;
                             tempAsset.Note = assetInputViewModel.Note;
                             tempAsset.Deleted = assetInputViewModel.Deleted;
                             tempAsset.Updated = DateTime.UtcNow;
 
-                            await assetRepository.UpdateAssetAsync(tempAsset);
-
-                            return Json(new { result = true, message = localizer["The asset has been successfully updated."].Value });
+                            return await assetRepository.UpdateAssetWithProductNameAsync(tempAsset, assetInputViewModel.OriginalProductName) switch
+                            {
+                                > 0 => Json(new { result = true, message = localizer["The asset has been successfully updated."].Value }),
+                                _ => Json(new { result = false, error = localizer["Input is invalid"].Value }),
+                            };
                         }
                     }
                     catch (Exception e)

@@ -59,5 +59,25 @@ namespace Maroik.Common.DataAccess.Services
             _ = context.Assets.Update(asset);
             _ = await context.SaveChangesAsync();
         }
+
+        /// <summary>
+        /// 자산명을 포함하여 자산을 업데이트합니다.
+        /// </summary>
+        /// <param name="asset"></param>
+        /// <returns></returns>
+        public async Task<int> UpdateAssetWithProductNameAsync(Asset asset, string originalProductName)
+        {
+            return await context.Database.ExecuteSqlInterpolatedAsync
+                    (
+                        @$"UPDATE Asset
+                           SET ProductName = {asset.ProductName},
+                               Item = {asset.Item},
+                               Amount = {asset.Amount},
+                               Note = {asset.Note},
+                               Deleted = {asset.Deleted},
+                               Updated = {asset.Updated}
+                           WHERE ProductName = {originalProductName} AND AccountEmail = {asset.AccountEmail}"
+                    );
+        }
     }
 }
