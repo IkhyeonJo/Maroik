@@ -14,11 +14,11 @@ namespace Maroik.WebSite.Controllers
             this.logger = logger;
         }
 
-        #region User Calendar
+        #region Calendar
 
         #region Read
         [HttpGet]
-        public IActionResult UserIndex()
+        public IActionResult Index()
         {
             return View();
         }
