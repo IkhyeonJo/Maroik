@@ -216,6 +216,7 @@ namespace Maroik.WebSite.Controllers
                             Created = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Created, OSTimeZone.DestinationTimeZoneId),
                             Updated = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Updated, OSTimeZone.DestinationTimeZoneId),
                             Noticed = noticedResult,
+                            Unpunctuality = item.Unpunctuality,
                             Expired = item.MaturityDate.Subtract(currentDate).TotalDays < 0
                         });
                     }
@@ -264,6 +265,7 @@ namespace Maroik.WebSite.Controllers
                                 Created = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Created, OSTimeZone.DestinationTimeZoneId),
                                 Updated = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Updated, OSTimeZone.DestinationTimeZoneId),
                                 Noticed = noticedResult,
+                                Unpunctuality = item.Unpunctuality,
                                 Expired = item.MaturityDate.Subtract(currentDate).TotalDays < 0
                             });
                         }
@@ -271,7 +273,7 @@ namespace Maroik.WebSite.Controllers
                 }
                 #endregion
 
-                IQueryable<FixedIncomeOutputViewModel> result = fixedIncomeOutputViewModels.OrderByDescending(a => a.Expired).ThenByDescending(m => m.Noticed).ThenByDescending(a => a.Created).ThenByDescending(a => a.Updated).AsQueryable();
+                IQueryable<FixedIncomeOutputViewModel> result = fixedIncomeOutputViewModels.OrderByDescending(a => a.Expired).ThenByDescending(m => m.Noticed).ThenByDescending(m => m.Unpunctuality).ThenByDescending(a => a.Created).ThenByDescending(a => a.Updated).AsQueryable();
                 return PartialView("_FixedIncomeGrid", result);
             }
             return View();
@@ -556,10 +558,11 @@ namespace Maroik.WebSite.Controllers
                     Created = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Created, OSTimeZone.DestinationTimeZoneId),
                     Updated = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Updated, OSTimeZone.DestinationTimeZoneId),
                     Noticed = noticedResult,
+                    Unpunctuality = item.Unpunctuality,
                     Expired = item.MaturityDate.Subtract(currentDate).TotalDays < 0
                 });
             }
-            fixedIncomeOutputViewModels = fixedIncomeOutputViewModels.OrderByDescending(a => a.Expired).ThenByDescending(m => m.Noticed).ThenByDescending(a => a.Created).ThenByDescending(a => a.Updated).ToList();
+            fixedIncomeOutputViewModels = fixedIncomeOutputViewModels.OrderByDescending(a => a.Expired).ThenByDescending(m => m.Noticed).ThenByDescending(m => m.Unpunctuality).ThenByDescending(a => a.Created).ThenByDescending(a => a.Updated).ToList();
             #endregion
 
             MemoryStream stream = new();
@@ -884,6 +887,7 @@ namespace Maroik.WebSite.Controllers
                             Updated = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Updated, OSTimeZone.DestinationTimeZoneId),
                             Note = item.Note,
                             Noticed = noticedResult,
+                            Unpunctuality = item.Unpunctuality,
                             Expired = item.MaturityDate.Subtract(currentDate).TotalDays < 0
                         });
                     }
@@ -934,6 +938,7 @@ namespace Maroik.WebSite.Controllers
                                 Updated = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Updated, OSTimeZone.DestinationTimeZoneId),
                                 Note = item.Note,
                                 Noticed = noticedResult,
+                                Unpunctuality = item.Unpunctuality,
                                 Expired = item.MaturityDate.Subtract(currentDate).TotalDays < 0
                             });
                         }
@@ -941,7 +946,7 @@ namespace Maroik.WebSite.Controllers
                 }
                 #endregion
 
-                IQueryable<FixedExpenditureOutputViewModel> result = fixedExpenditureOutputViewModels.OrderByDescending(a => a.Expired).ThenByDescending(m => m.Noticed).ThenByDescending(a => a.Created).ThenByDescending(a => a.Updated).AsQueryable();
+                IQueryable<FixedExpenditureOutputViewModel> result = fixedExpenditureOutputViewModels.OrderByDescending(a => a.Expired).ThenByDescending(m => m.Noticed).ThenByDescending(m => m.Unpunctuality).ThenByDescending(a => a.Created).ThenByDescending(a => a.Updated).AsQueryable();
                 return PartialView("_FixedExpenditureGrid", result);
             }
             return View();
@@ -1314,10 +1319,11 @@ namespace Maroik.WebSite.Controllers
                     Updated = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Updated, OSTimeZone.DestinationTimeZoneId),
                     Note = item.Note,
                     Noticed = noticedResult,
+                    Unpunctuality = item.Unpunctuality,
                     Expired = item.MaturityDate.Subtract(currentDate).TotalDays < 0
                 });
             }
-            fixedExpenditureOutputViewModels = fixedExpenditureOutputViewModels.OrderByDescending(a => a.Expired).ThenByDescending(m => m.Noticed).ThenByDescending(a => a.Created).ThenByDescending(a => a.Updated).ToList();
+            fixedExpenditureOutputViewModels = fixedExpenditureOutputViewModels.OrderByDescending(a => a.Expired).ThenByDescending(m => m.Noticed).ThenByDescending(m => m.Unpunctuality).ThenByDescending(a => a.Created).ThenByDescending(a => a.Updated).ToList();
             #endregion
 
             MemoryStream stream = new();
