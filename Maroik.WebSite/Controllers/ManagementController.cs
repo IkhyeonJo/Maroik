@@ -91,7 +91,7 @@ namespace Maroik.WebSite.Controllers
                             await accountRepository.UpdateAccountAsync(tempAccount);
                             return Ok(new { result = true });
                         }
-                        catch (Exception e)
+                        catch
                         {
                             return Ok(new { result = false, errorMessage = localizer["Input is invalid"].Value });
                         }
@@ -130,7 +130,7 @@ namespace Maroik.WebSite.Controllers
         //            tempAccount.Nickname = profileInputViewModel.Nickname;
         //            await accountRepository.UpdateAccountAsync(tempAccount);
         //        }
-        //        catch (Exception e)
+        //        catch
         //        {
         //            Console.WriteLine(localizer["Input is invalid"].Value);
         //        }
@@ -166,7 +166,7 @@ namespace Maroik.WebSite.Controllers
                         return Json(new { result = false, error = localizer["Invalid password. Please check again."].Value });
                     }
                 }
-                catch (Exception e)
+                catch
                 {
                     return Json(new { result = false, error = localizer["Input is invalid"].Value });
                 }
@@ -305,7 +305,7 @@ namespace Maroik.WebSite.Controllers
 
                 }
             }
-            catch (Exception e)
+            catch
             {
                 return Json(new { result = false, error = localizer["Input is invalid"].Value });
             }
@@ -404,7 +404,7 @@ namespace Maroik.WebSite.Controllers
                     ? Json(new { result = false, error = localizer["Fail to find the account by given email address"].Value })
                     : (IActionResult)Json(new { result = true, account = tempAccount });
             }
-            catch (Exception e)
+            catch
             {
                 return Json(new { result = false, error = localizer["Input is invalid"].Value });
             }
@@ -457,7 +457,7 @@ namespace Maroik.WebSite.Controllers
                     return Json(new { result = false, error = localizer["Input is invalid"].Value });
                 }
             }
-            catch (Exception e)
+            catch
             {
                 return Json(new { result = false, error = localizer["Input is invalid"].Value });
             }
@@ -485,7 +485,7 @@ namespace Maroik.WebSite.Controllers
                     return Json(new { result = true, message = localizer["Successfully deleted the account"].Value });
                 }
             }
-            catch (Exception e)
+            catch
             {
                 return Json(new { result = false, error = localizer["Input is invalid"].Value });
             }
@@ -619,7 +619,7 @@ namespace Maroik.WebSite.Controllers
                     return Json(new { result = false, error = localizer["Input is invalid"].Value });
                 }
             }
-            catch (Exception e)
+            catch
             {
                 return Json(new { result = false, error = localizer["Input is invalid"].Value });
             }
@@ -655,7 +655,7 @@ namespace Maroik.WebSite.Controllers
                     return Json(new { result = false, error = localizer["Input is invalid"].Value });
                 }
             }
-            catch (Exception e)
+            catch
             {
                 return Json(new { result = false, error = localizer["Input is invalid"].Value });
             }
@@ -1023,7 +1023,7 @@ namespace Maroik.WebSite.Controllers
                 }
                 return Json(new { result = true, category = menuOutputViewModels.Where(a => a.Id == id).FirstOrDefault() });
             }
-            catch (Exception e)
+            catch
             {
                 return Json(new { result = false, error = localizer["Input is invalid"].Value });
             }
@@ -1099,7 +1099,7 @@ namespace Maroik.WebSite.Controllers
                 }
                 return Json(new { result = true, subCategory = menuOutputViewModels.Where(a => a.Id == id).FirstOrDefault() });
             }
-            catch (Exception e)
+            catch
             {
                 return Json(new { result = false, error = localizer["Input is invalid"].Value });
             }
@@ -1138,7 +1138,7 @@ namespace Maroik.WebSite.Controllers
                     return Json(new { result = false, error = localizer["Input is invalid"].Value });
                 }
             }
-            catch (Exception e)
+            catch
             {
                 return Json(new { result = false, error = localizer["Input is invalid"].Value });
             }
@@ -1175,7 +1175,7 @@ namespace Maroik.WebSite.Controllers
                     return Json(new { result = false, error = localizer["Input is invalid"].Value });
                 }
             }
-            catch (Exception e)
+            catch
             {
                 return Json(new { result = false, error = localizer["Input is invalid"].Value });
             }
@@ -1214,7 +1214,7 @@ namespace Maroik.WebSite.Controllers
                     return Json(new { result = false, error = localizer["Input is invalid"].Value });
                 }
             }
-            catch (Exception e)
+            catch
             {
                 return Json(new { result = false, error = localizer["Input is invalid"].Value });
             }
@@ -1250,7 +1250,7 @@ namespace Maroik.WebSite.Controllers
                     return Json(new { result = false, error = localizer["Input is invalid"].Value });
                 }
             }
-            catch (Exception e)
+            catch
             {
                 return Json(new { result = false, error = localizer["Input is invalid"].Value });
             }

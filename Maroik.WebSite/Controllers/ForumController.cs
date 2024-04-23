@@ -172,7 +172,7 @@ namespace Maroik.WebSite.Controllers
                             return Json(new { result = false, error = localizer["Please Login to write board"].Value });
                         }
                     }
-                    catch (Exception e)
+                    catch
                     {
                         return Json(new { result = false, error = localizer["Input is invalid"].Value });
                     }
@@ -182,7 +182,7 @@ namespace Maroik.WebSite.Controllers
                     return Json(new { result = false, error = localizer["Input is invalid"].Value });
                 }
             }
-            catch (Exception e)
+            catch
             {
                 return Json(new { result = false, error = localizer["Input is invalid"].Value });
             }
@@ -241,7 +241,7 @@ namespace Maroik.WebSite.Controllers
                             return Json(new { result = false, error = localizer["Please Login to write comment."].Value });
                         }
                     }
-                    catch (Exception e)
+                    catch
                     {
                         return Json(new { result = false, error = localizer["Input is invalid"].Value });
                     }
@@ -251,7 +251,7 @@ namespace Maroik.WebSite.Controllers
                     return Json(new { result = false, error = localizer["Input is invalid"].Value });
                 }
             }
-            catch (Exception e)
+            catch
             {
                 return Json(new { result = false, error = localizer["Input is invalid"].Value });
             }
@@ -545,7 +545,7 @@ namespace Maroik.WebSite.Controllers
                         : (IActionResult)Json(new { result = true, freeBoard = tempFreeBoard });
                 }
             }
-            catch (Exception e)
+            catch
             {
                 return Json(new { result = false, error = localizer["Input is invalid"].Value });
             }
@@ -741,7 +741,7 @@ namespace Maroik.WebSite.Controllers
                             return Json(new { result = false, error = localizer["Please Login to edit board"].Value });
                         }
                     }
-                    catch (Exception e)
+                    catch
                     {
                         return Json(new { result = false, error = localizer["Input is invalid"].Value });
                     }
@@ -751,7 +751,7 @@ namespace Maroik.WebSite.Controllers
                     return Json(new { result = false, error = localizer["Input is invalid"].Value });
                 }
             }
-            catch (Exception e)
+            catch
             {
                 return Json(new { result = false, error = localizer["Input is invalid"].Value });
             }
@@ -807,7 +807,7 @@ namespace Maroik.WebSite.Controllers
                     }
                 }
             }
-            catch (Exception e)
+            catch
             {
                 return Json(new { result = false, error = localizer["Input is invalid"].Value });
             }
@@ -850,7 +850,7 @@ namespace Maroik.WebSite.Controllers
 
                 }
             }
-            catch (Exception e)
+            catch
             {
                 return Json(new { result = false, error = localizer["Input is invalid"].Value });
             }

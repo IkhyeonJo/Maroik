@@ -151,7 +151,7 @@ namespace Maroik.WebSite.Controllers
 
                         return Json(new { result = true, message = localizer["The fixedIncome has been successfully created."].Value });
                     }
-                    catch (Exception e)
+                    catch
                     {
                         return Json(new { result = false, error = localizer["Input is invalid"].Value });
                     }
@@ -161,7 +161,7 @@ namespace Maroik.WebSite.Controllers
                     return Json(new { result = false, error = localizer["Input is invalid"].Value });
                 }
             }
-            catch (Exception e)
+            catch
             {
                 return Json(new { result = false, error = localizer["Input is invalid"].Value });
             }
@@ -321,7 +321,7 @@ namespace Maroik.WebSite.Controllers
                     }
                 }
             }
-            catch (Exception e)
+            catch
             {
                 return Json(new { result = false, error = localizer["Input is invalid"].Value });
             }
@@ -451,7 +451,7 @@ namespace Maroik.WebSite.Controllers
                         }
                         #endregion
                     }
-                    catch (Exception e)
+                    catch
                     {
                         return Json(new { result = false, error = localizer["Input is invalid"].Value });
                     }
@@ -461,7 +461,7 @@ namespace Maroik.WebSite.Controllers
                     return Json(new { result = false, error = localizer["Input is invalid"].Value });
                 }
             }
-            catch (Exception e)
+            catch
             {
                 return Json(new { result = false, error = localizer["Input is invalid"].Value });
             }
@@ -502,7 +502,7 @@ namespace Maroik.WebSite.Controllers
                     }
                 }
             }
-            catch (Exception e)
+            catch
             {
                 return Json(new { result = false, error = localizer["Input is invalid"].Value });
             }
@@ -669,7 +669,7 @@ namespace Maroik.WebSite.Controllers
 
                                 return Json(new { result = true, message = localizer["The fixedExpenditure has been successfully created."].Value });
                             }
-                            catch (Exception e)
+                            catch
                             {
                                 return Json(new { result = false, error = localizer["Input is invalid"].Value });
                             }
@@ -717,7 +717,7 @@ namespace Maroik.WebSite.Controllers
 
                                 return Json(new { result = true, message = localizer["The fixedExpenditure has been successfully created."].Value });
                             }
-                            catch (Exception e)
+                            catch
                             {
                                 return Json(new { result = false, error = localizer["Input is invalid"].Value });
                             }
@@ -753,7 +753,7 @@ namespace Maroik.WebSite.Controllers
 
                                 return Json(new { result = true, message = localizer["The fixedExpenditure has been successfully created."].Value });
                             }
-                            catch (Exception e)
+                            catch
                             {
                                 return Json(new { result = false, error = localizer["Input is invalid"].Value });
                             }
@@ -807,7 +807,7 @@ namespace Maroik.WebSite.Controllers
 
                                 return Json(new { result = true, message = localizer["The fixedExpenditure has been successfully created."].Value });
                             }
-                            catch (Exception e)
+                            catch
                             {
                                 return Json(new { result = false, error = localizer["Input is invalid"].Value });
                             }
@@ -831,7 +831,7 @@ namespace Maroik.WebSite.Controllers
                     return Json(new { result = false, error = localizer["Input is invalid"].Value });
                 }
             }
-            catch (Exception e)
+            catch
             {
                 return Json(new { result = false, error = localizer["Input is invalid"].Value });
             }
@@ -995,7 +995,7 @@ namespace Maroik.WebSite.Controllers
                     }
                 }
             }
-            catch (Exception e)
+            catch
             {
                 return Json(new { result = false, error = localizer["Input is invalid"].Value });
             }
@@ -1054,7 +1054,7 @@ namespace Maroik.WebSite.Controllers
 
                                 return Json(new { result = true, message = localizer["The fixedExpenditure has been successfully updated."].Value });
                             }
-                            catch (Exception e)
+                            catch
                             {
                                 return Json(new { result = false, error = localizer["Input is invalid"].Value });
                             }
@@ -1105,7 +1105,7 @@ namespace Maroik.WebSite.Controllers
 
                                 return Json(new { result = true, message = localizer["The fixedExpenditure has been successfully updated."].Value });
                             }
-                            catch (Exception e)
+                            catch
                             {
                                 return Json(new { result = false, error = localizer["Input is invalid"].Value });
                             }
@@ -1144,7 +1144,7 @@ namespace Maroik.WebSite.Controllers
 
                                 return Json(new { result = true, message = localizer["The fixedExpenditure has been successfully updated."].Value });
                             }
-                            catch (Exception e)
+                            catch
                             {
                                 return Json(new { result = false, error = localizer["Input is invalid"].Value });
                             }
@@ -1201,7 +1201,7 @@ namespace Maroik.WebSite.Controllers
 
                                 return Json(new { result = true, message = localizer["The fixedExpenditure has been successfully updated."].Value });
                             }
-                            catch (Exception e)
+                            catch
                             {
                                 return Json(new { result = false, error = localizer["Input is invalid"].Value });
                             }
@@ -1225,7 +1225,7 @@ namespace Maroik.WebSite.Controllers
                     return Json(new { result = false, error = localizer["Input is invalid"].Value });
                 }
             }
-            catch (Exception e)
+            catch
             {
                 return Json(new { result = false, error = localizer["Input is invalid"].Value });
             }
@@ -1262,7 +1262,7 @@ namespace Maroik.WebSite.Controllers
                     }
                 }
             }
-            catch (Exception e)
+            catch
             {
                 return Json(new { result = false, error = localizer["Input is invalid"].Value });
             }
