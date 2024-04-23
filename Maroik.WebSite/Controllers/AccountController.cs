@@ -260,7 +260,7 @@ namespace Maroik.WebSite.Controllers
                                 return View();
                             }
                         }
-                        catch (Exception e)
+                        catch
                         {
                             Console.WriteLine(localizer["Input is invalid"].Value); // ActivityLog 등으로 로그 남겨야 한다..
                             TempData["Error"] = localizer["Error occurred while processing about account registration"].Value;

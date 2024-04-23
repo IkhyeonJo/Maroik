@@ -88,7 +88,7 @@ namespace Maroik.WebSite.Controllers
                             }
                             );
                     }
-                    catch (Exception e)
+                    catch
                     {
                         return Json(new { result = false, error = localizer["Input is invalid"].Value });
                     }
@@ -100,7 +100,7 @@ namespace Maroik.WebSite.Controllers
                     return Json(new { result = false, error = localizer["Input is invalid"].Value });
                 }
             }
-            catch (Exception e)
+            catch
             {
                 return Json(new { result = false, error = localizer["Input is invalid"].Value });
             }
@@ -181,7 +181,7 @@ namespace Maroik.WebSite.Controllers
                     ? Json(new { result = false, error = localizer["Fail to find the asset by given product name"].Value })
                     : (IActionResult)Json(new { result = true, asset = tempAsset });
             }
-            catch (Exception e)
+            catch
             {
                 return Json(new { result = false, error = localizer["Input is invalid"].Value });
             }
@@ -241,7 +241,7 @@ namespace Maroik.WebSite.Controllers
                             };
                         }
                     }
-                    catch (Exception e)
+                    catch
                     {
                         return Json(new { result = false, error = localizer["Input is invalid"].Value });
                     }
@@ -251,7 +251,7 @@ namespace Maroik.WebSite.Controllers
                     return Json(new { result = false, error = localizer["Input is invalid"].Value });
                 }
             }
-            catch (Exception e)
+            catch
             {
                 return Json(new { result = false, error = localizer["Input is invalid"].Value });
             }
@@ -281,7 +281,7 @@ namespace Maroik.WebSite.Controllers
                     return Json(new { result = true, message = localizer["The asset has been successfully deleted."].Value });
                 }
             }
-            catch (Exception e)
+            catch
             {
                 return Json(new { result = false, error = localizer["Input is invalid"].Value });
             }
@@ -440,7 +440,7 @@ namespace Maroik.WebSite.Controllers
 
                         return Json(new { result = true, message = localizer["The income has been successfully created."].Value });
                     }
-                    catch (Exception e)
+                    catch
                     {
                         return Json(new { result = false, error = localizer["Input is invalid"].Value });
                     }
@@ -450,7 +450,7 @@ namespace Maroik.WebSite.Controllers
                     return Json(new { result = false, error = localizer["Input is invalid"].Value });
                 }
             }
-            catch (Exception e)
+            catch
             {
                 return Json(new { result = false, error = localizer["Input is invalid"].Value });
             }
@@ -548,7 +548,7 @@ namespace Maroik.WebSite.Controllers
                     }
                 }
             }
-            catch (Exception e)
+            catch
             {
                 return Json(new { result = false, error = localizer["Input is invalid"].Value });
             }
@@ -666,7 +666,7 @@ namespace Maroik.WebSite.Controllers
                         }
                         #endregion
                     }
-                    catch (Exception e)
+                    catch
                     {
                         return Json(new { result = false, error = localizer["Input is invalid"].Value });
                     }
@@ -676,7 +676,7 @@ namespace Maroik.WebSite.Controllers
                     return Json(new { result = false, error = localizer["Input is invalid"].Value });
                 }
             }
-            catch (Exception e)
+            catch
             {
                 return Json(new { result = false, error = localizer["Input is invalid"].Value });
             }
@@ -732,7 +732,7 @@ namespace Maroik.WebSite.Controllers
                     }
                 }
             }
-            catch (Exception e)
+            catch
             {
                 return Json(new { result = false, error = localizer["Input is invalid"].Value });
             }
@@ -899,7 +899,7 @@ namespace Maroik.WebSite.Controllers
 
                                 return Json(new { result = true, message = localizer["The expenditure has been successfully created."].Value });
                             }
-                            catch (Exception e)
+                            catch
                             {
                                 return Json(new { result = false, error = localizer["Input is invalid"].Value });
                             }
@@ -964,7 +964,7 @@ namespace Maroik.WebSite.Controllers
 
                                 return Json(new { result = true, message = localizer["The expenditure has been successfully created."].Value });
                             }
-                            catch (Exception e)
+                            catch
                             {
                                 return Json(new { result = false, error = localizer["Input is invalid"].Value });
                             }
@@ -1010,7 +1010,7 @@ namespace Maroik.WebSite.Controllers
 
                                 return Json(new { result = true, message = localizer["The expenditure has been successfully created."].Value });
                             }
-                            catch (Exception e)
+                            catch
                             {
                                 return Json(new { result = false, error = localizer["Input is invalid"].Value });
                             }
@@ -1074,7 +1074,7 @@ namespace Maroik.WebSite.Controllers
 
                                 return Json(new { result = true, message = localizer["The expenditure has been successfully created."].Value });
                             }
-                            catch (Exception e)
+                            catch
                             {
                                 return Json(new { result = false, error = localizer["Input is invalid"].Value });
                             }
@@ -1098,7 +1098,7 @@ namespace Maroik.WebSite.Controllers
                     return Json(new { result = false, error = localizer["Input is invalid"].Value });
                 }
             }
-            catch (Exception e)
+            catch
             {
                 return Json(new { result = false, error = localizer["Input is invalid"].Value });
             }
@@ -1199,7 +1199,7 @@ namespace Maroik.WebSite.Controllers
                     }
                 }
             }
-            catch (Exception e)
+            catch
             {
                 return Json(new { result = false, error = localizer["Input is invalid"].Value });
             }
@@ -1808,7 +1808,7 @@ namespace Maroik.WebSite.Controllers
                                 }
                                 #endregion
                             }
-                            catch (Exception e)
+                            catch
                             {
                                 return Json(new { result = false, error = localizer["Input is invalid"].Value });
                             }
@@ -2480,7 +2480,7 @@ namespace Maroik.WebSite.Controllers
                                 }
                                 #endregion
                             }
-                            catch (Exception e)
+                            catch
                             {
                                 return Json(new { result = false, error = localizer["Input is invalid"].Value });
                             }
@@ -2667,7 +2667,7 @@ namespace Maroik.WebSite.Controllers
                                 }
                                 #endregion
                             }
-                            catch (Exception e)
+                            catch
                             {
                                 return Json(new { result = false, error = localizer["Input is invalid"].Value });
                             }
@@ -2922,7 +2922,7 @@ namespace Maroik.WebSite.Controllers
                                 }
                                 #endregion
                             }
-                            catch (Exception e)
+                            catch
                             {
                                 return Json(new { result = false, error = localizer["Input is invalid"].Value });
                             }
@@ -2946,7 +2946,7 @@ namespace Maroik.WebSite.Controllers
                     return Json(new { result = false, error = localizer["Input is invalid"].Value });
                 }
             }
-            catch (Exception e)
+            catch
             {
                 return Json(new { result = false, error = localizer["Input is invalid"].Value });
             }
@@ -3034,7 +3034,7 @@ namespace Maroik.WebSite.Controllers
                     }
                 }
             }
-            catch (Exception e)
+            catch
             {
                 return Json(new { result = false, error = localizer["Input is invalid"].Value });
             }
