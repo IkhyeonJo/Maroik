@@ -319,7 +319,7 @@
                     </ul>
                 </nav>
                 <div style="overflow:auto;">
-                    <table class="table table-striped table-bordered table-hover">
+                    <table id="tblFreeForum" class="table table-striped table-bordered table-hover">
                         <thead>
                             <tr>
                                 <th>@localizer["Number"].Value</th>
@@ -355,11 +355,24 @@
                                     }
 
                                     <td><span style="font-weight:bold; color:green;">@noticeBoard.Writer</span></td>
-                                    <td><span style="font-weight:bold; color:green;">@TimeZoneInfo.ConvertTimeBySystemTimeZoneId(noticeBoard.Created, OSTimeZone.DestinationTimeZoneId)</span></td>
+
+                                    @if (loginedAccount.Role == Role.Admin || loginedAccount.Role == Role.User)
+                                    {
+                                        <td class="free_forum_board_created"><span style="font-weight:bold; color:green;">@TimeZoneInfo.ConvertTimeBySystemTimeZoneId(noticeBoard.Created, OSTimeZone.DestinationTimeZoneId)</span></td>
+                                    }
+                                    else if (loginedAccount.Role == Role.Anonymous)
+                                    {
+                                        <td class="free_forum_board_created"><span style="font-weight:bold; color:green;">@noticeBoard.Created.ToString("yyyy-MM-ddTHH:mm:ssZ")</span></td>
+                                    }
+                                    else
+                                    {
+                                        
+                                    }
+                                    
                                     <td><span style="font-weight:bold; color:green;">@noticeBoard.Views</span></td>
                                     @if (attachedFilesWithName.Count != 0)
                                     {
-                                        <td><span style="font-weight:bold; color:green;"><i class="fas fa-paperclip"></i></td>
+                                        <td><span style="font-weight:bold; color:green;"><i class="fas fa-paperclip"></i></span></td>
                                     }
                                     else
                                     {
@@ -399,8 +412,19 @@
                                         <td><span>@board.Writer</span></td>
                                     }
 
-
-                                    <td>@TimeZoneInfo.ConvertTimeBySystemTimeZoneId(board.Created, OSTimeZone.DestinationTimeZoneId)</td>
+                                    @if (loginedAccount.Role == Role.Admin || loginedAccount.Role == Role.User)
+                                    {
+                                        <td class="free_forum_board_created">@TimeZoneInfo.ConvertTimeBySystemTimeZoneId(board.Created, OSTimeZone.DestinationTimeZoneId)</td>
+                                    }
+                                    else if (loginedAccount.Role == Role.Anonymous)
+                                    {
+                                        <td class="free_forum_board_created">@board.Created.ToString("yyyy-MM-ddTHH:mm:ssZ")</td>
+                                    }
+                                    else
+                                    {
+                                        
+                                    }
+                                    
                                     <td>@board.Views</td>
                                     @if (attachedFilesWithName.Count != 0)
                                     {
