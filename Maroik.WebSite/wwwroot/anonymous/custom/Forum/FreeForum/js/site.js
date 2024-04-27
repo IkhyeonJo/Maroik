@@ -21,6 +21,13 @@ $(function () {
         $span.length > 0 ? $span.html(localDateStr) : $element.text(localDateStr); // span 태그가 있는 경우 span 태그 안에, 없는 경우 그대로 텍스트를 변환된 날짜로 업데이트
     });
 
+    $('.free_forum_detail_comment_created').each(function () {
+        var utcDateStr = $(this).text();
+        var utcDate = new Date(utcDateStr);
+        var localDateStr = utcDate.toLocaleString();
+        $(this).text(localDateStr);
+    });
+
     function SearchBoard() {
         window.location.href = "/Forum/FreeForum?searchType=" + $('#searchType').val() + "&searchText=" + $('#btnFreeForumSearchText').val();
     }

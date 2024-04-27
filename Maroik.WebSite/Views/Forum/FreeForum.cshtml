@@ -170,7 +170,22 @@
                                                 <span>@comment.Writer</span>
                                             }
 
-                                            <span class="text-muted float-middle">@localizer["Created"].Value: [@TimeZoneInfo.ConvertTimeBySystemTimeZoneId(comment.Created, OSTimeZone.DestinationTimeZoneId)] </span>
+                                            @if (loginedAccount.Role == Role.Admin || loginedAccount.Role == Role.User)
+                                            {
+                                                <span class="text-muted float-middle">
+                                                    @localizer["Created"].Value: [<span class="free_forum_detail_comment_created">@TimeZoneInfo.ConvertTimeBySystemTimeZoneId(comment.Created, OSTimeZone.DestinationTimeZoneId)</span>] 
+                                                </span>
+                                            }
+                                            else if (loginedAccount.Role == Role.Anonymous)
+                                            {
+                                                <span class="text-muted float-middle">
+                                                    @localizer["Created"].Value: [<span class="free_forum_detail_comment_created">@comment.Created.ToString("yyyy-MM-ddTHH:mm:ssZ")</span>]
+                                                </span>
+                                            }
+                                            else
+                                            {
+
+                                            }
 
                                             @if (loginedAccount.Nickname == comment.Writer || loginedAccount.Role == Role.Admin)@*작성자 또는 관리자인 경우*@
                                             {
@@ -198,7 +213,22 @@
                                                 <span>@comment.Writer</span>
                                             }
 
-                                            <span class="text-muted float-middle">@localizer["Created"].Value: [@TimeZoneInfo.ConvertTimeBySystemTimeZoneId(comment.Created, OSTimeZone.DestinationTimeZoneId)] </span>
+                                            @if (loginedAccount.Role == Role.Admin || loginedAccount.Role == Role.User)
+                                            {
+                                                <span class="text-muted float-middle">
+                                                    @localizer["Created"].Value: [<span class="free_forum_detail_comment_created">@TimeZoneInfo.ConvertTimeBySystemTimeZoneId(comment.Created, OSTimeZone.DestinationTimeZoneId)</span>]
+                                                </span>
+                                            }
+                                            else if (loginedAccount.Role == Role.Anonymous)
+                                            {
+                                                <span class="text-muted float-middle">
+                                                    @localizer["Created"].Value: [<span class="free_forum_detail_comment_created">@comment.Created.ToString("yyyy-MM-ddTHH:mm:ssZ")</span>]
+                                                </span>
+                                            }
+                                            else
+                                            {
+
+                                            }
 
                                             @if (loginedAccount.Nickname == comment.Writer || loginedAccount.Role == Role.Admin)@*작성자 또는 관리자인 경우*@
                                             {
