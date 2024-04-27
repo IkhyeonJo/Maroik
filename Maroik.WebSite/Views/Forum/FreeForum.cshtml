@@ -87,7 +87,23 @@
                         @localizer["Writer"].Value: @Model.BoardOutputViewModel.Writer
                     </h6>
                     <span class="mailbox-read-time float-left">@localizer["Views"].Value: @Model.BoardOutputViewModel.Views</span>
-                    <span class="mailbox-read-time float-right">@localizer["Updated"].Value: [@TimeZoneInfo.ConvertTimeBySystemTimeZoneId(Model.BoardOutputViewModel.Updated, OSTimeZone.DestinationTimeZoneId)]</span>
+
+                    @if (loginedAccount.Role == Role.Admin || loginedAccount.Role == Role.User)
+                    {
+                        <span class="mailbox-read-time float-right">
+                            @localizer["Updated"].Value: [<span id="free_forum_detail_updated">@TimeZoneInfo.ConvertTimeBySystemTimeZoneId(Model.BoardOutputViewModel.Updated, OSTimeZone.DestinationTimeZoneId)</span>]
+                        </span>
+                    }
+                    else if (loginedAccount.Role == Role.Anonymous)
+                    {
+                        <span class="mailbox-read-time float-right">
+                            @localizer["Updated"].Value: [<span id="free_forum_detail_updated">@Model.BoardOutputViewModel.Updated.ToString("yyyy-MM-ddTHH:mm:ssZ")</span>]
+                        </span>
+                    }
+                    else
+                    {
+
+                    }
                     <br />
                 </div>
 

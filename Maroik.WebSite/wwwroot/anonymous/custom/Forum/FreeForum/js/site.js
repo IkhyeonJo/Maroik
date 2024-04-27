@@ -5,6 +5,13 @@
 
 $(function () {
 
+    if ($('#free_forum_detail_updated').length > 0) {
+        var utcDateStr = $('#free_forum_detail_updated').text();
+        var utcDate = new Date(utcDateStr);
+        var localDateStr = utcDate.toLocaleString();
+        $('#free_forum_detail_updated').text(localDateStr);
+    }
+
     $('#tblFreeForum tbody tr .free_forum_board_created').each(function () {
         var $element = $(this);
         var $span = $element.find('span');
