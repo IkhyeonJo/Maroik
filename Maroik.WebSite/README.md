@@ -63,7 +63,7 @@ C:\Program Files\MariaDB 10.6\data\my.ini에서
 
 # [Code First Migration]
 
-먼저 DB 깨끗이 다 지우고 [Package Manager Console] 창 띄우고 Default project를 [1.Common\Maroik.Common.DataAccess]로 맞추고 
+먼저 DB 깨끗이 다 지우고 [Package Manager Console] 창 띄우고 Default project를 [2.Common\Maroik.Common.DataAccess]로 맞추고 
 
 [cd .\Maroik.Common.DataAccess] 명령어를 통해 Maroik.Common.DataAccess로 이동
 
@@ -92,7 +92,7 @@ dotnet ef database update
 
 먼저 DB 깨끗이 다 지우고 [Maroik.Common.DataAccess]에 있는 새롭게 짜여진 DB Script (_MariaDBSql_Init_Script)로 다 복원 후 [로컬 DB에 할 것!!] [그 appsettings.json도 로컬로 맞추고]
 
-[Package Manager Console] 창 띄우고 Default project를 [1.Common\Maroik.Common.DataAccess]로 맞추고
+[Package Manager Console] 창 띄우고 Default project를 [2.Common\Maroik.Common.DataAccess]로 맞추고
 
 [cd .\Maroik.Common.DataAccess] 명령어를 통해 Maroik.Common.DataAccess로 이동
 
