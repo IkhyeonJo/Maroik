@@ -34,6 +34,11 @@ public partial class Account
     public string Role { get; set; }
 
     /// <summary>
+    /// IANA TimeZone ID
+    /// </summary>
+    public string TimeZoneIanaId { get; set; }
+
+    /// <summary>
     /// 잠금 여부
     /// </summary>
     public bool Locked { get; set; }

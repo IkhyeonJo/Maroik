@@ -91,6 +91,11 @@ namespace Maroik.Common.DataAccess.Data
                     .HasMaxLength(255)
                     .HasDefaultValueSql("'User'")
                     .HasComment("역할 (Admin 또는 User)");
+                _ = entity.Property(e => e.TimeZoneIanaId)
+                    .IsRequired()
+                    .HasMaxLength(255)
+                    .HasDefaultValueSql("'UTC'")
+                    .HasComment("IANA TimeZone ID");
                 _ = entity.Property(e => e.Updated)
                     .HasMaxLength(6)
                     .HasDefaultValueSql("'1900-01-01 00:00:00.000000'")
