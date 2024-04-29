@@ -183,6 +183,9 @@
   <data name="Please enter another Nickname." xml:space="preserve">
     <value>Please enter another Nickname.</value>
   </data>
+  <data name="Please select your time zone." xml:space="preserve">
+    <value>Please select your time zone.</value>
+  </data>
   <data name="User already created, please login" xml:space="preserve">
     <value>User already created, please login</value>
   </data>

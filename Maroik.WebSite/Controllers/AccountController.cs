@@ -214,6 +214,12 @@ namespace Maroik.WebSite.Controllers
                         return View();
                     }
 
+                    if (string.IsNullOrEmpty(loginInputViewModel.TimeZoneIanaId)) // TimeZone 선택 하지 않을 시,
+                    {
+                        TempData["Error"] = localizer["Please select your time zone."].Value;
+                        return View();
+                    }
+
                     Account account = await accountRepository.GetAccountByEmailAsync(loginInputViewModel.Email);
 
                     #region 새롭게 회원가입을 진행하는 경우
@@ -232,6 +238,7 @@ namespace Maroik.WebSite.Controllers
                                     Nickname = loginInputViewModel.Nickname,
                                     AvatarImagePath = "/upload/Management/Profile/default-avatar.jpg",
                                     Role = Role.User,
+                                    TimeZoneIanaId = loginInputViewModel.TimeZoneIanaId,
                                     Locked = false,
                                     LoginAttempt = 0,
                                     EmailConfirmed = false,
@@ -293,6 +300,7 @@ namespace Maroik.WebSite.Controllers
                                         Nickname = loginInputViewModel.Nickname,
                                         AvatarImagePath = "/upload/Management/Profile/default-avatar.jpg",
                                         Role = Role.User,
+                                        TimeZoneIanaId = loginInputViewModel.TimeZoneIanaId,
                                         Locked = false,
                                         LoginAttempt = 0,
                                         EmailConfirmed = false,

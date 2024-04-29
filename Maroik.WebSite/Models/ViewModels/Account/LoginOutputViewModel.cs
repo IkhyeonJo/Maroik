@@ -27,5 +27,7 @@ namespace Maroik.WebSite.Models.ViewModels.Account
         public string Nickname { get; set; }
 
         public bool AgreedServiceTerms { get; set; }
+
+        public string TimeZoneIanaId { get; set; }
     }
 }

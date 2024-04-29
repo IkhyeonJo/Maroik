@@ -171,4 +171,7 @@
   <data name="terms" xml:space="preserve">
     <value>terms</value>
   </data>
+  <data name="Please select your time zone." xml:space="preserve">
+    <value>Please select your time zone.</value>
+  </data>
 </root>
