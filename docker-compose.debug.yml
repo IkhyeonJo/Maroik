@@ -8,8 +8,7 @@ networks:
 
 services:
     mariadb:
-        #image: "mariadb:10.11.2" # Legacy MariaDB Image
-        image: "mariadb:latest"
+        image: "mariadb:10.11.2"
         container_name: Maroik.MariaDB
         volumes:
           - datasource:/var/lib/mysql
