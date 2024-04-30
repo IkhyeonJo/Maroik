@@ -855,3 +855,98 @@ html
 </div>
 
 This will place the data in two columns, with the data on the left in the first column and the additional data on the right in the second column. Adjust the content of the second column (<div> containing the right side data) according to your requirements.
+
+
+
+
+
+
+Enum.cs
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.ComponentModel;
+using System.Reflection;
+using PathCalculation.Constant;
+
+namespace PathCalculation.Types
+{
+	public enum ModuleType
+	{
+		Calculation,
+		AssistInput
+	}
+
+	public enum ModuleCategory
+	{
+		Nomal,
+		Today
+	}
+
+	public enum ApplyRequestType
+	{
+		All,
+		Single  // ex) 직접적인 해당 필드만 요청이 온경우 계산(ex: Borrower.Age)
+	}
+
+	public enum TableRelation
+	{
+		_1To1,
+		_1ToN
+	}
+
+	public enum TableType
+	{
+		None,
+		Loan,
+		Borrower
+	}
+
+	public enum BorrowerType : int
+	{
+		Borrower = 0,
+		CoBorrower
+	}
+
+	public enum GeneralDataType
+	{
+		None,
+		Double,
+		String,
+		Boolean,
+		DateTime
+	}
+
+	[Flags]
+	public enum SpecialCaseType
+	{
+		None = 0x0,
+		ReferToEachOther = 0x1,
+		ConditionallyInput = 0x2
+	}
+
+	//public enum LogicalOperator
+	//{
+	//	And,
+	//	Or
+	//}
+
+	public enum ValidationTaget
+	{
+		None,
+		CaseRequired,
+		DecisionRequired
+	}
+
+	public enum ReferenceDataType
+	{
+		None,
+		AdminSecondaryLockPeriod,
+		AdminSecondaryExtensionPeriod,
+		BusinessCalendar,
+		ResidualIncomeGuidelines
+	}
+
+}
