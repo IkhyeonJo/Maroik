@@ -1,7 +1,23 @@
 #See https://aka.ms/containerfastmode to understand how Visual Studio uses this Dockerfile to build your images for faster debugging.
+#https://medium.com/@maheshwar.ramkrushna/best-practices-for-secure-docker-containerization-non-root-user-read-only-volumes-and-resource-d34ed09b1bd3
 
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
+
+# Create a system group named "user" with the -r flag
+RUN groupadd -r user
+
+# Create a system user named "user" and add it to the "user" group with the -r and -g flags
+RUN useradd -r -g user user
+
+# Set the working directory to /app
 WORKDIR /app
+
+# Change the ownership of the working directory to the non-root user "user"
+RUN chown -R user:user /app
+
+# Switch to the non-root user "user"
+USER user
+
 EXPOSE 5000
 EXPOSE 5001
 
