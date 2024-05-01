@@ -19,7 +19,7 @@ namespace Maroik.Common.DataAccess.Contracts
         /// <param name="email"></param>
         /// <param name="yearMonth"></param>
         /// <returns></returns>
-        public Task<List<Income>> GetCurrentYearMonthIncomesAsync(string email, string yearMonth);
+        public Task<List<Income>> GetCurrentYearMonthIncomesAsync(string email, string yearMonth, double utcOffset);
 
         /// <summary>
         /// 수입을 생성합니다.
@@ -48,6 +48,6 @@ namespace Maroik.Common.DataAccess.Contracts
         /// <param name="email"></param>
         /// <param name="yearMonth"></param>
         /// <returns></returns>
-        public Task<List<USP_Income_MonthlyReport>> GetCurrentYearMonthIncomesMonthlyReport(string email, string yearMonth);
+        public Task<List<USP_Income_MonthlyReport>> GetCurrentYearMonthIncomesMonthlyReport(string email, string yearMonth, double utcOffset);
     }
 }

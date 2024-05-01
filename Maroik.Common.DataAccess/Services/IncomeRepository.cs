@@ -34,14 +34,14 @@ namespace Maroik.Common.DataAccess.Services
         /// <param name="email"></param>
         /// <param name="yearMonth"></param>
         /// <returns></returns>
-        public async Task<List<Income>> GetCurrentYearMonthIncomesAsync(string email, string yearMonth)
+        public async Task<List<Income>> GetCurrentYearMonthIncomesAsync(string email, string yearMonth, double utcOffset)
         {
             return await context.Incomes.FromSqlInterpolated
                     (
                         @$"SELECT *
                             FROM Income
                             WHERE 
-                            DATE_FORMAT(DATE_ADD(Created, INTERVAL 9 HOUR), '%Y-%m') = {yearMonth}
+                            DATE_FORMAT(DATE_ADD(Created, INTERVAL {utcOffset} MICROSECOND), '%Y-%m') = {yearMonth}
                             AND AccountEmail = {email}"
                     ).ToListAsync();
         }
@@ -85,9 +85,9 @@ namespace Maroik.Common.DataAccess.Services
         /// <param name="email"></param>
         /// <param name="yearMonth"></param>
         /// <returns></returns>
-        public async Task<List<USP_Income_MonthlyReport>> GetCurrentYearMonthIncomesMonthlyReport(string email, string yearMonth)
+        public async Task<List<USP_Income_MonthlyReport>> GetCurrentYearMonthIncomesMonthlyReport(string email, string yearMonth, double utcOffset)
         {
-            return await context.USP_Income_MonthlyReports.FromSqlRaw("CALL USP_Income_MonthlyReport(@yearMonth, @email)", new MySqlParameter("@yearMonth", yearMonth), new MySqlParameter("@email", email)).ToListAsync();
+            return await context.USP_Income_MonthlyReports.FromSqlRaw("CALL USP_Income_MonthlyReport(@yearMonth, @email, @utcOffset)", new MySqlParameter("@yearMonth", yearMonth), new MySqlParameter("@email", email), new MySqlParameter("@utcOffset", utcOffset)).ToListAsync();
         }
     }
 }
