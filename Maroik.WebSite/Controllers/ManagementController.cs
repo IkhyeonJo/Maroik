@@ -268,6 +268,13 @@ namespace Maroik.WebSite.Controllers
                     }
                     #endregion
 
+                    #region TimeZone 형식 체크
+                    if (string.IsNullOrEmpty(accountInputViewModel.TimeZoneIanaId))
+                    {
+                        return Json(new { result = false, error = localizer["Please select time zone"].Value });
+                    }
+                    #endregion
+
                     #region 이미 입력된 이메일로 계정이 있는 지 확인
                     if (await accountRepository.GetAccountByEmailAsync(accountInputViewModel.Email) != null)
                     {
@@ -285,6 +292,7 @@ namespace Maroik.WebSite.Controllers
                         Nickname = accountInputViewModel.Nickname,
                         AvatarImagePath = "/upload/Management/Profile/default-avatar.jpg",
                         Role = accountInputViewModel.Role,
+                        TimeZoneIanaId = accountInputViewModel.TimeZoneIanaId,
                         Locked = false,
                         LoginAttempt = 0,
                         EmailConfirmed = true,

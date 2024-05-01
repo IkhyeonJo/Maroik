@@ -255,4 +255,7 @@
   <data name="Updated" xml:space="preserve">
     <value>Updated</value>
   </data>
+  <data name="Please select time zone" xml:space="preserve">
+    <value>Please select time zone</value>
+  </data>
 </root>

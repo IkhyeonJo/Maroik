@@ -83,12 +83,14 @@ function CreateAccount() {
     var password = createForm.find('input[id="createAccountPassword"]').val();
     var nickname = createForm.find('input[id="createAccountNickname"]').val();
     var role = createForm.find('select[id="createAccountRole"]').val();
+    var timeZoneIanaId = createForm.find('select[id="createAccountTimeZone"]').val();
 
     var paramValue = JSON.stringify({
         Email: email,
         Password: password,
         Nickname: nickname,
-        Role: role
+        Role: role,
+        TimeZoneIanaId: timeZoneIanaId
     });
 
     $.ajax({
