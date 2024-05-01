@@ -184,6 +184,7 @@ function UpdateAccount() {
     var email = createForm.find('input[id="editAccountEmail"]').val();
     var password = createForm.find('input[id="editAccountPassword"]').val();
     var role = createForm.find('select[id="editAccountRole"]').val();
+    var timeZoneIanaId = createForm.find('select[id="editAccountTimeZone"]').val();
     var locked = createForm.find('input[id="editAccountLocked"]').is(":checked");
     var emailConfirmed = createForm.find('input[id="editAccountEmailConfirmed"]').is(":checked");
     var agreedServiceTerms = createForm.find('input[id="editAccountAgreedServiceTerms"]').is(":checked");
@@ -194,6 +195,7 @@ function UpdateAccount() {
         Email: email,
         Password: password,
         Role: role,
+        TimeZoneIanaId: timeZoneIanaId,
         Locked: locked,
         EmailConfirmed: emailConfirmed,
         AgreedServiceTerms: agreedServiceTerms,
