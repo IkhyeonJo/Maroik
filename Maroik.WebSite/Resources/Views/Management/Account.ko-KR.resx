@@ -198,4 +198,7 @@
   <data name="User" xml:space="preserve">
     <value>사용자</value>
   </data>
+  <data name="TimeZone" xml:space="preserve">
+    <value>시간대</value>
+  </data>
 </root>
