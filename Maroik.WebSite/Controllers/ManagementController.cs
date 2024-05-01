@@ -41,7 +41,7 @@ namespace Maroik.WebSite.Controllers
             _ = HttpContext.Session.TryGetValue(Maroik.WebSite.Common.Session.Account, out byte[] resultByte);
             Account tempAccount = await accountRepository.GetAccountByEmailAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
 
-            return View(new ProfileOutputViewModel() { Email = tempAccount.Email, AvatarImagePath = tempAccount.AvatarImagePath, Nickname = tempAccount.Nickname, Created = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(tempAccount.Created, OSTimeZone.DestinationTimeZoneId) });
+            return View(new ProfileOutputViewModel() { Email = tempAccount.Email, AvatarImagePath = tempAccount.AvatarImagePath, Nickname = tempAccount.Nickname, Created = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(tempAccount.Created, OSTimeZone.DestinationTimeZoneId), TimeZoneIanaId = tempAccount.TimeZoneIanaId });
         }
         #endregion
 
@@ -111,32 +111,33 @@ namespace Maroik.WebSite.Controllers
         }
         #endregion
 
-        #region ProfileInformation
-        //[HttpPost]
-        //[ValidateAntiForgeryToken]
-        //[RequiredHttpPostAccess(Role = Role.Admin)]
-        //[RequiredHttpPostAccess(Role = Role.User)]
-        //public async Task<IActionResult> UpdateProfileInformation(ProfileInputViewModel profileInputViewModel)
-        //{
-        //    ModelState.Remove(nameof(profileInputViewModel.Password));
-        //    ModelState.Remove(nameof(profileInputViewModel.NewPassword));
+        #region ProfileTimeZone
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [RequiredHttpPostAccess(Role = Role.Admin)]
+        [RequiredHttpPostAccess(Role = Role.User)]
+        public async Task<IActionResult> UpdateProfileTimeZone(ProfileInputViewModel profileInputViewModel)
+        {
+            _ = ModelState.Remove(nameof(profileInputViewModel.Nickname));
+            _ = ModelState.Remove(nameof(profileInputViewModel.Password));
+            _ = ModelState.Remove(nameof(profileInputViewModel.NewPassword));
 
-        //    if (ModelState.IsValid)
-        //    {
-        //        try
-        //        {
-        //            HttpContext.Session.TryGetValue(Maroik.WebSite.Common.Session.Account, out byte[] resultByte);
-        //            var tempAccount = await accountRepository.GetAccountAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
-        //            tempAccount.Nickname = profileInputViewModel.Nickname;
-        //            await accountRepository.UpdateAccountAsync(tempAccount);
-        //        }
-        //        catch
-        //        {
-        //            Console.WriteLine(localizer["Input is invalid"].Value);
-        //        }
-        //    }
-        //    return RedirectToAction("Profile", "Management");
-        //}
+            if (ModelState.IsValid)
+            {
+                try
+                {
+                    HttpContext.Session.TryGetValue(Maroik.WebSite.Common.Session.Account, out byte[] resultByte);
+                    Account tempAccount = await accountRepository.GetAccountByEmailAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+                    tempAccount.TimeZoneIanaId = profileInputViewModel.TimeZoneIanaId;
+                    await accountRepository.UpdateAccountAsync(tempAccount);
+                }
+                catch
+                {
+                    Console.WriteLine(localizer["Input is invalid"].Value);
+                }
+            }
+            return RedirectToAction("Profile", "Management");
+        }
         #endregion
 
         #region ProfilePassword
