@@ -261,4 +261,7 @@
   <data name="TimeZone" xml:space="preserve">
     <value>TimeZone</value>
   </data>
+  <data name="TimeZoneIanaId" xml:space="preserve">
+    <value>TimeZone</value>
+  </data>
 </root>

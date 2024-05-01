@@ -152,6 +152,7 @@ function EditAccountGridRow(errorMessageSelectGridRow) {
                 formEditAccount.find('input[id="editAccountEmail"]').val(data.account.email);
                 formEditAccount.find('input[id="editAccountNickname"]').val(data.account.nickname);
                 formEditAccount.find('select[id="editAccountRole"]').val(data.account.role).change();
+                formEditAccount.find('select[id="editAccountTimeZone"]').val(data.account.timeZoneIanaId).change();
                 formEditAccount.find('input[id="editAccountLocked"]').prop("checked", data.account.locked);
                 formEditAccount.find('input[id="editAccountEmailConfirmed"]').prop("checked", data.account.emailConfirmed);
                 formEditAccount.find('input[id="editAccountAgreedServiceTerms"]').prop("checked", data.account.agreedServiceTerms);

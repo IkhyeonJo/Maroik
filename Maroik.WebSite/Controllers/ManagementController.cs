@@ -449,6 +449,7 @@ namespace Maroik.WebSite.Controllers
                     tempAccount.Email = accountInputViewModel.Email;
                     tempAccount.HashedPassword = new RSA(RSAType.RSA2, Encoding.UTF8, RSA.privateKey, RSA.publicKey).Sign(accountInputViewModel.Password); // 암호화
                     tempAccount.Role = accountInputViewModel.Role;
+                    tempAccount.TimeZoneIanaId = accountInputViewModel.TimeZoneIanaId;
                     tempAccount.Locked = accountInputViewModel.Locked;
                     if (accountInputViewModel.Locked == false)
                     {
@@ -526,6 +527,7 @@ namespace Maroik.WebSite.Controllers
                     Nickname = item.Nickname,
                     AvatarImagePath = item.AvatarImagePath,
                     Role = item.Role,
+                    TimeZoneIanaId = item.TimeZoneIanaId,
                     Locked = item.Locked,
                     LoginAttempt = item.LoginAttempt,
                     EmailConfirmed = item.EmailConfirmed,
