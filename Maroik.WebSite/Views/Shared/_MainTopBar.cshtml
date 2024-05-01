@@ -50,8 +50,8 @@
                 MaturityDate = item.MaturityDate.ToString("yyyy-MM-dd"),
                 Note = item.Note,
                 DepositMyAssetProductName = item.DepositMyAssetProductName,
-                Created = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Created, OSTimeZone.DestinationTimeZoneId),
-                Updated = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Updated, OSTimeZone.DestinationTimeZoneId),
+                Created = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Created, JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId),
+                Updated = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Updated, JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId),
                 Noticed = noticedResult,
                 Expired = item.MaturityDate.Subtract(currentDate).TotalDays < 0
             });
@@ -87,8 +87,8 @@
                 DepositMonth = item.DepositMonth,
                 DepositDay = item.DepositDay,
                 MaturityDate = item.MaturityDate.ToString("yyyy-MM-dd"),
-                Created = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Created, OSTimeZone.DestinationTimeZoneId),
-                Updated = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Updated, OSTimeZone.DestinationTimeZoneId),
+                Created = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Created, JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId),
+                Updated = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Updated, JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId),
                 Note = item.Note,
                 Noticed = noticedResult,
                 Expired = item.MaturityDate.Subtract(currentDate).TotalDays < 0
@@ -346,7 +346,7 @@
                         <img src="@Model.AvatarImagePath" class="img-circle elevation-2" alt="User Image">
                         <p>
                             @Model.Nickname
-                            <small>@localizer["Member since"] @TimeZoneInfo.ConvertTimeBySystemTimeZoneId(Model.Created, Maroik.WebSite.Common.OSTimeZone.DestinationTimeZoneId).ToString("d")</small>
+                            <small>@localizer["Member since"] @TimeZoneInfo.ConvertTimeBySystemTimeZoneId(Model.Created, JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId).ToString("d")</small>
                         </p>
                     </li>
                     @*
@@ -387,7 +387,7 @@
                         <img src="@Model.AvatarImagePath" class="img-circle elevation-2" alt="User Image">
                         <p>
                             @Model.Nickname
-                            <small>@localizer["Member since"] @TimeZoneInfo.ConvertTimeBySystemTimeZoneId(Model.Created, Maroik.WebSite.Common.OSTimeZone.DestinationTimeZoneId).ToString("d")</small>
+                            <small>@localizer["Member since"] @TimeZoneInfo.ConvertTimeBySystemTimeZoneId(Model.Created, JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId).ToString("d")</small>
                         </p>
                     </li>
                     @*

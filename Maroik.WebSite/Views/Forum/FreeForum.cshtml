@@ -91,7 +91,7 @@
                     @if (loginedAccount.Role == Role.Admin || loginedAccount.Role == Role.User)
                     {
                         <span class="mailbox-read-time float-right">
-                            @localizer["Updated"].Value: [<span id="free_forum_detail_updated">@TimeZoneInfo.ConvertTimeBySystemTimeZoneId(Model.BoardOutputViewModel.Updated, OSTimeZone.DestinationTimeZoneId)</span>]
+                            @localizer["Updated"].Value: [<span id="free_forum_detail_updated">@TimeZoneInfo.ConvertTimeBySystemTimeZoneId(Model.BoardOutputViewModel.Updated, JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId)</span>]
                         </span>
                     }
                     else if (loginedAccount.Role == Role.Anonymous)
@@ -173,7 +173,7 @@
                                             @if (loginedAccount.Role == Role.Admin || loginedAccount.Role == Role.User)
                                             {
                                                 <span class="text-muted float-middle">
-                                                    @localizer["Created"].Value: [<span class="free_forum_detail_comment_created">@TimeZoneInfo.ConvertTimeBySystemTimeZoneId(comment.Created, OSTimeZone.DestinationTimeZoneId)</span>] 
+                                                    @localizer["Created"].Value: [<span class="free_forum_detail_comment_created">@TimeZoneInfo.ConvertTimeBySystemTimeZoneId(comment.Created, JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId)</span>] 
                                                 </span>
                                             }
                                             else if (loginedAccount.Role == Role.Anonymous)
@@ -216,7 +216,7 @@
                                             @if (loginedAccount.Role == Role.Admin || loginedAccount.Role == Role.User)
                                             {
                                                 <span class="text-muted float-middle">
-                                                    @localizer["Created"].Value: [<span class="free_forum_detail_comment_created">@TimeZoneInfo.ConvertTimeBySystemTimeZoneId(comment.Created, OSTimeZone.DestinationTimeZoneId)</span>]
+                                                    @localizer["Created"].Value: [<span class="free_forum_detail_comment_created">@TimeZoneInfo.ConvertTimeBySystemTimeZoneId(comment.Created, JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId)</span>]
                                                 </span>
                                             }
                                             else if (loginedAccount.Role == Role.Anonymous)
@@ -404,7 +404,7 @@
 
                                     @if (loginedAccount.Role == Role.Admin || loginedAccount.Role == Role.User)
                                     {
-                                        <td class="free_forum_board_created"><span style="font-weight:bold; color:green;">@TimeZoneInfo.ConvertTimeBySystemTimeZoneId(noticeBoard.Created, OSTimeZone.DestinationTimeZoneId)</span></td>
+                                        <td class="free_forum_board_created"><span style="font-weight:bold; color:green;">@TimeZoneInfo.ConvertTimeBySystemTimeZoneId(noticeBoard.Created, JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId)</span></td>
                                     }
                                     else if (loginedAccount.Role == Role.Anonymous)
                                     {
@@ -460,7 +460,7 @@
 
                                     @if (loginedAccount.Role == Role.Admin || loginedAccount.Role == Role.User)
                                     {
-                                        <td class="free_forum_board_created">@TimeZoneInfo.ConvertTimeBySystemTimeZoneId(board.Created, OSTimeZone.DestinationTimeZoneId)</td>
+                                        <td class="free_forum_board_created">@TimeZoneInfo.ConvertTimeBySystemTimeZoneId(board.Created, JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId)</td>
                                     }
                                     else if (loginedAccount.Role == Role.Anonymous)
                                     {
