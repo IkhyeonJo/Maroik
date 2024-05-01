@@ -341,6 +341,7 @@ namespace Maroik.WebSite.Controllers
                             Nickname = item.Nickname,
                             AvatarImagePath = item.AvatarImagePath,
                             Role = item.Role,
+                            TimeZoneIanaId = item.TimeZoneIanaId,
                             Locked = item.Locked,
                             LoginAttempt = item.LoginAttempt,
                             EmailConfirmed = item.EmailConfirmed,
@@ -360,6 +361,7 @@ namespace Maroik.WebSite.Controllers
                             (item.Nickname?.ToString() ?? "").Contains(wholeSearch) ||
                             (item.AvatarImagePath?.ToString() ?? "").Contains(wholeSearch) ||
                             (item.Role?.ToString() ?? "").Contains(wholeSearch) ||
+                            (item.TimeZoneIanaId?.ToString() ?? "").Contains(wholeSearch) ||
                             (item.Locked.ToString() ?? "").Contains(wholeSearch) ||
                             (item.LoginAttempt.ToString() ?? "").Contains(wholeSearch) ||
                             (item.EmailConfirmed.ToString() ?? "").Contains(wholeSearch) ||
@@ -378,6 +380,7 @@ namespace Maroik.WebSite.Controllers
                                 Nickname = item.Nickname,
                                 AvatarImagePath = item.AvatarImagePath,
                                 Role = item.Role,
+                                TimeZoneIanaId = item.TimeZoneIanaId,
                                 Locked = item.Locked,
                                 LoginAttempt = item.LoginAttempt,
                                 EmailConfirmed = item.EmailConfirmed,

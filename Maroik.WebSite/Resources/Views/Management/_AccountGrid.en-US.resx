@@ -165,4 +165,7 @@
   <data name="Updated" xml:space="preserve">
     <value>Updated</value>
   </data>
+  <data name="TimeZoneIanaId" xml:space="preserve">
+    <value>TimeZone</value>
+  </data>
 </root>

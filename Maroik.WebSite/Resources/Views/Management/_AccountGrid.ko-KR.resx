@@ -165,4 +165,7 @@
   <data name="Updated" xml:space="preserve">
     <value>업데이트일</value>
   </data>
+  <data name="TimeZoneIanaId" xml:space="preserve">
+    <value>시간대</value>
+  </data>
 </root>
