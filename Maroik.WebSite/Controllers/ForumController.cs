@@ -93,7 +93,7 @@ namespace Maroik.WebSite.Controllers
 
                             if (loginedAccount.Role == Role.Admin) // 관리자인 경우
                             {
-                                board.Type = "Free"; // 자유게시판
+                                board.Type = "FreeForum"; // 자유게시판
                                 board.Title = boardInputViewModel.Title;
                                 board.Content = boardInputViewModel.Content;
                                 board.Writer = loginedAccount.Nickname;
@@ -106,7 +106,7 @@ namespace Maroik.WebSite.Controllers
                             }
                             else if (loginedAccount.Role == Role.User) // 일반 사용자인 경우
                             {
-                                board.Type = "Free"; // 자유게시판
+                                board.Type = "FreeForum"; // 자유게시판
                                 board.Title = boardInputViewModel.Title;
                                 board.Content = boardInputViewModel.Content;
                                 board.Writer = loginedAccount.Nickname;
@@ -342,7 +342,7 @@ namespace Maroik.WebSite.Controllers
                     DetailBoardId = boardId ?? default
                 };
 
-                IEnumerable<Board> freeBoards = await boardRepository.GetOneTypeBoards("Free");
+                IEnumerable<Board> freeBoards = await boardRepository.GetOneTypeBoards("FreeForum");
                 freeBoards = freeBoards.Where(m => m.Deleted == false).OrderByDescending(a => a.Id);
                 List<AttachedFile> attachedFiles = await attachedFileRepository.GetAllAsync();
 
@@ -400,7 +400,7 @@ namespace Maroik.WebSite.Controllers
                     EditBoardId = boardId ?? default
                 };
 
-                IEnumerable<Board> freeBoards = await boardRepository.GetOneTypeBoards("Free");
+                IEnumerable<Board> freeBoards = await boardRepository.GetOneTypeBoards("FreeForum");
                 freeBoards = freeBoards.Where(m => m.Deleted == false).OrderByDescending(a => a.Id);
                 List<AttachedFile> attachedFiles = await attachedFileRepository.GetAllAsync();
 
@@ -452,7 +452,7 @@ namespace Maroik.WebSite.Controllers
                 #endregion
 
                 #region 관련된 모든 게시판 데이터 가져오는 로직
-                IEnumerable<Board> freeBoards = await boardRepository.GetOneTypeBoards("Free");
+                IEnumerable<Board> freeBoards = await boardRepository.GetOneTypeBoards("FreeForum");
                 freeBoards = freeBoards.Where(m => m.Deleted == false && m.Noticed == false).OrderByDescending(a => a.Id);
                 #endregion
 
@@ -498,7 +498,7 @@ namespace Maroik.WebSite.Controllers
                 FreeForumOutputViewModel freeForumOutputViewModel = new();
 
                 #region 공지사항
-                freeForumOutputViewModel.NoticeBoards = (await boardRepository.GetOneTypeBoards("Free")).Where(m => m.Deleted == false && m.Noticed == true).OrderByDescending(a => a.Id);
+                freeForumOutputViewModel.NoticeBoards = (await boardRepository.GetOneTypeBoards("FreeForum")).Where(m => m.Deleted == false && m.Noticed == true).OrderByDescending(a => a.Id);
                 #endregion
 
                 #region 게시판 목록
@@ -529,7 +529,7 @@ namespace Maroik.WebSite.Controllers
         {
             try
             {
-                IEnumerable<Board> freeBoards = await boardRepository.GetOneTypeBoards("Free");
+                IEnumerable<Board> freeBoards = await boardRepository.GetOneTypeBoards("FreeForum");
                 freeBoards = freeBoards.Where(m => m.Deleted == false).OrderByDescending(a => a.Id);
 
                 if (freeBoards == null)
@@ -607,7 +607,7 @@ namespace Maroik.WebSite.Controllers
                         {
                             Account loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)); // Get Session
 
-                            IEnumerable<Board> freeBoards = await boardRepository.GetOneTypeBoards("Free");
+                            IEnumerable<Board> freeBoards = await boardRepository.GetOneTypeBoards("FreeForum");
                             freeBoards = freeBoards.Where(m => m.Deleted == false).OrderByDescending(a => a.Id);
 
                             Board tempFreeBoard = freeBoards.Where(a => a.Id == boardInputViewModel.Id).FirstOrDefault();
@@ -771,7 +771,7 @@ namespace Maroik.WebSite.Controllers
         {
             try
             {
-                IEnumerable<Board> freeBoards = await boardRepository.GetOneTypeBoards("Free");
+                IEnumerable<Board> freeBoards = await boardRepository.GetOneTypeBoards("FreeForum");
                 freeBoards = freeBoards.Where(m => m.Deleted == false).OrderByDescending(a => a.Id);
 
                 if (freeBoards == null)
