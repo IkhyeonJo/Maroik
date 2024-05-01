@@ -20,6 +20,7 @@
     {
         loginedAccount.Nickname = @localizer["Login"].Value;
         loginedAccount.Role = Role.Anonymous;
+        loginedAccount.TimeZoneIanaId = "UTC";
         loginedAccount.AvatarImagePath = "/anonymous/images/bg1.jpg";
     }
 }
@@ -310,7 +311,7 @@ to get the desired effect
             @*<!-- Control sidebar content goes here -->*@
         </aside>
         @*<!-- /.control-sidebar -->*@
-        @(await Html.PartialAsync("_MainFooter"))
+        @(await Html.PartialAsync("_MainFooter", loginedAccount))
     </div>
     @*<!-- ./wrapper -->*@
 </body>

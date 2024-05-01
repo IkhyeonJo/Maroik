@@ -83,12 +83,14 @@ function CreateAccount() {
     var password = createForm.find('input[id="createAccountPassword"]').val();
     var nickname = createForm.find('input[id="createAccountNickname"]').val();
     var role = createForm.find('select[id="createAccountRole"]').val();
+    var timeZoneIanaId = createForm.find('select[id="createAccountTimeZone"]').val();
 
     var paramValue = JSON.stringify({
         Email: email,
         Password: password,
         Nickname: nickname,
-        Role: role
+        Role: role,
+        TimeZoneIanaId: timeZoneIanaId
     });
 
     $.ajax({
@@ -150,6 +152,7 @@ function EditAccountGridRow(errorMessageSelectGridRow) {
                 formEditAccount.find('input[id="editAccountEmail"]').val(data.account.email);
                 formEditAccount.find('input[id="editAccountNickname"]').val(data.account.nickname);
                 formEditAccount.find('select[id="editAccountRole"]').val(data.account.role).change();
+                formEditAccount.find('select[id="editAccountTimeZone"]').val(data.account.timeZoneIanaId).change();
                 formEditAccount.find('input[id="editAccountLocked"]').prop("checked", data.account.locked);
                 formEditAccount.find('input[id="editAccountEmailConfirmed"]').prop("checked", data.account.emailConfirmed);
                 formEditAccount.find('input[id="editAccountAgreedServiceTerms"]').prop("checked", data.account.agreedServiceTerms);
@@ -181,6 +184,7 @@ function UpdateAccount() {
     var email = createForm.find('input[id="editAccountEmail"]').val();
     var password = createForm.find('input[id="editAccountPassword"]').val();
     var role = createForm.find('select[id="editAccountRole"]').val();
+    var timeZoneIanaId = createForm.find('select[id="editAccountTimeZone"]').val();
     var locked = createForm.find('input[id="editAccountLocked"]').is(":checked");
     var emailConfirmed = createForm.find('input[id="editAccountEmailConfirmed"]').is(":checked");
     var agreedServiceTerms = createForm.find('input[id="editAccountAgreedServiceTerms"]').is(":checked");
@@ -191,6 +195,7 @@ function UpdateAccount() {
         Email: email,
         Password: password,
         Role: role,
+        TimeZoneIanaId: timeZoneIanaId,
         Locked: locked,
         EmailConfirmed: emailConfirmed,
         AgreedServiceTerms: agreedServiceTerms,

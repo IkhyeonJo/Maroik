@@ -407,37 +407,6 @@
                                         </div>
                                     </div>
 
-@*                                   
-                                    <div class="row">
-                                        <div class="col-md-12">
-                                            <div class="card card-primary card-outline">
-                                                <div class="card-header">
-                                                    <h3 class="card-title">
-                                                        <i class="fa fa-user"></i>
-                                                        @localizer["Profile Information"]
-                                                    </h3>
-                                                </div>
-                                                <div class="card-body pad table-responsive">
-                                                    <form id="formUpdateProfileInformation" class="form-horizontal" method="post" asp-controller="Management" asp-action="UpdateProfileInformation">
-                                                        <div class="form-group row">
-                                    <label asp-for="Nickname" class="col-sm-2 col-form-label">@localizer["Nickname"]</label>
-                                                            <div class="col-sm-10">
-                                                                <input asp-for="Nickname" type="text" class="form-control" placeholder="@localizer["Nickname"]" />
-                                                                <span asp-validation-for="Nickname" class="text-danger"></span>
-                                                            </div>
-                                                        </div>
-                                                        <div class="form-group row">
-                                                            <div class="offset-sm-2 col-sm-10">
-                                                                <button type="submit" class="btn btn-danger">@localizer["Modify"]</button>
-                                                            </div>
-                                                        </div>
-                                                    </form>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-*@
-
                                     <div class="row">
                                         <div class="col-md-12">
                                             <div class="card card-primary card-outline">
@@ -468,6 +437,54 @@
                                                             <div class="col-sm-10">
                                                                 <input asp-for="ConfirmNewPassword" type="password" class="form-control" placeholder="@localizer["Confirm new password"]" />
                                                                 <span asp-validation-for="ConfirmNewPassword" class="text-danger"></span>
+                                                            </div>
+                                                        </div>
+                                                        <div class="form-group row">
+                                                            <div class="offset-sm-2 col-sm-10">
+                                                                <button type="submit" class="btn btn-danger">@localizer["Modify"]</button>
+                                                            </div>
+                                                        </div>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="row">
+                                        <div class="col-md-12">
+                                            <div class="card card-primary card-outline">
+                                                <div class="card-header">
+                                                    <h3 class="card-title">
+                                                        <i class="fas fa-clock"></i>
+                                                        @localizer["Time zone"] 
+                                                    </h3>
+                                                </div>
+                                                <div class="card-body pad table-responsive">
+                                                    <form id="formUpdateProfileTimeZone" class="form-horizontal" method="post" asp-controller="Management" asp-action="UpdateProfileTimeZone">
+                                                        <div class="form-group row">
+                                                            <label asp-for="TimeZoneIanaId" class="col-sm-2 col-form-label">@localizer["Time zone"]</label>
+                                                            <div class="col-sm-10">
+                                                                <select asp-for="TimeZoneIanaId" class="form-control">
+                                                                    @foreach (TimeZoneInfo systemTimeZone in TimeZoneInfo.GetSystemTimeZones())
+                                                                    {
+                                                                        string systemTimeZoneIanaId = string.Empty;
+
+                                                                        if (systemTimeZone.HasIanaId)
+                                                                        {
+                                                                            systemTimeZoneIanaId = systemTimeZone.Id;  // no conversion necessary
+                                                                        }
+                                                                        else if (TimeZoneInfo.TryConvertWindowsIdToIanaId(systemTimeZone.Id, out string ianaId))
+                                                                        {
+                                                                            systemTimeZoneIanaId = ianaId;  // use the converted ID
+                                                                        }
+
+                                                                        if (string.IsNullOrEmpty(systemTimeZoneIanaId))
+                                                                            continue;
+
+                                                                        <option value="@systemTimeZoneIanaId">@systemTimeZoneIanaId</option>
+                                                                    }
+                                                                </select>
+                                                                <span class="text-danger"></span>
                                                             </div>
                                                         </div>
                                                         <div class="form-group row">

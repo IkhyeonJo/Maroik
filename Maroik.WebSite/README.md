@@ -1,4 +1,6 @@
-﻿#----------------------------------------------------------------------------------------------------
+﻿#docker-compose 구동 시, Maroik.WebSite /wwwroot/upload File 전부 ReadOnly로 올리고, Upload File 바이러스 없는 지 검사 다 할 것!
+
+#----------------------------------------------------------------------------------------------------
 ### Tip: To see [CONTAINER ID], execute below this command
 #docker ps
 
@@ -63,7 +65,7 @@ C:\Program Files\MariaDB 10.6\data\my.ini에서
 
 # [Code First Migration]
 
-먼저 DB 깨끗이 다 지우고 [Package Manager Console] 창 띄우고 Default project를 [1.Common\Maroik.Common.DataAccess]로 맞추고 
+먼저 DB 깨끗이 다 지우고 [Package Manager Console] 창 띄우고 Default project를 [2.Common\Maroik.Common.DataAccess]로 맞추고 
 
 [cd .\Maroik.Common.DataAccess] 명령어를 통해 Maroik.Common.DataAccess로 이동
 
@@ -92,7 +94,7 @@ dotnet ef database update
 
 먼저 DB 깨끗이 다 지우고 [Maroik.Common.DataAccess]에 있는 새롭게 짜여진 DB Script (_MariaDBSql_Init_Script)로 다 복원 후 [로컬 DB에 할 것!!] [그 appsettings.json도 로컬로 맞추고]
 
-[Package Manager Console] 창 띄우고 Default project를 [1.Common\Maroik.Common.DataAccess]로 맞추고
+[Package Manager Console] 창 띄우고 Default project를 [2.Common\Maroik.Common.DataAccess]로 맞추고
 
 [cd .\Maroik.Common.DataAccess] 명령어를 통해 Maroik.Common.DataAccess로 이동
 

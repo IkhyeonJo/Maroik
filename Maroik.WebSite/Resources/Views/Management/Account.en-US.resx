@@ -198,4 +198,7 @@
   <data name="User" xml:space="preserve">
     <value>User</value>
   </data>
+  <data name="TimeZone" xml:space="preserve">
+    <value>TimeZone</value>
+  </data>
 </root>

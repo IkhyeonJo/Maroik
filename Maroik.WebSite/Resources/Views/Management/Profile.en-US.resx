@@ -168,4 +168,7 @@
   <data name="User profile picture" xml:space="preserve">
     <value>User profile picture</value>
   </data>
+  <data name="Time zone" xml:space="preserve">
+    <value>Time zone</value>
+  </data>
 </root>

@@ -41,7 +41,7 @@ namespace Maroik.WebSite.Controllers
             _ = HttpContext.Session.TryGetValue(Maroik.WebSite.Common.Session.Account, out byte[] resultByte);
             Account tempAccount = await accountRepository.GetAccountByEmailAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
 
-            return View(new ProfileOutputViewModel() { Email = tempAccount.Email, AvatarImagePath = tempAccount.AvatarImagePath, Nickname = tempAccount.Nickname, Created = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(tempAccount.Created, OSTimeZone.DestinationTimeZoneId) });
+            return View(new ProfileOutputViewModel() { Email = tempAccount.Email, AvatarImagePath = tempAccount.AvatarImagePath, Nickname = tempAccount.Nickname, Created = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(tempAccount.Created, JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId), TimeZoneIanaId = tempAccount.TimeZoneIanaId });
         }
         #endregion
 
@@ -111,32 +111,33 @@ namespace Maroik.WebSite.Controllers
         }
         #endregion
 
-        #region ProfileInformation
-        //[HttpPost]
-        //[ValidateAntiForgeryToken]
-        //[RequiredHttpPostAccess(Role = Role.Admin)]
-        //[RequiredHttpPostAccess(Role = Role.User)]
-        //public async Task<IActionResult> UpdateProfileInformation(ProfileInputViewModel profileInputViewModel)
-        //{
-        //    ModelState.Remove(nameof(profileInputViewModel.Password));
-        //    ModelState.Remove(nameof(profileInputViewModel.NewPassword));
+        #region ProfileTimeZone
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [RequiredHttpPostAccess(Role = Role.Admin)]
+        [RequiredHttpPostAccess(Role = Role.User)]
+        public async Task<IActionResult> UpdateProfileTimeZone(ProfileInputViewModel profileInputViewModel)
+        {
+            _ = ModelState.Remove(nameof(profileInputViewModel.Nickname));
+            _ = ModelState.Remove(nameof(profileInputViewModel.Password));
+            _ = ModelState.Remove(nameof(profileInputViewModel.NewPassword));
 
-        //    if (ModelState.IsValid)
-        //    {
-        //        try
-        //        {
-        //            HttpContext.Session.TryGetValue(Maroik.WebSite.Common.Session.Account, out byte[] resultByte);
-        //            var tempAccount = await accountRepository.GetAccountAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
-        //            tempAccount.Nickname = profileInputViewModel.Nickname;
-        //            await accountRepository.UpdateAccountAsync(tempAccount);
-        //        }
-        //        catch
-        //        {
-        //            Console.WriteLine(localizer["Input is invalid"].Value);
-        //        }
-        //    }
-        //    return RedirectToAction("Profile", "Management");
-        //}
+            if (ModelState.IsValid)
+            {
+                try
+                {
+                    HttpContext.Session.TryGetValue(Maroik.WebSite.Common.Session.Account, out byte[] resultByte);
+                    Account tempAccount = await accountRepository.GetAccountByEmailAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+                    tempAccount.TimeZoneIanaId = profileInputViewModel.TimeZoneIanaId;
+                    await accountRepository.UpdateAccountAsync(tempAccount);
+                }
+                catch
+                {
+                    Console.WriteLine(localizer["Input is invalid"].Value);
+                }
+            }
+            return RedirectToAction("Profile", "Management");
+        }
         #endregion
 
         #region ProfilePassword
@@ -267,6 +268,13 @@ namespace Maroik.WebSite.Controllers
                     }
                     #endregion
 
+                    #region TimeZone 형식 체크
+                    if (string.IsNullOrEmpty(accountInputViewModel.TimeZoneIanaId))
+                    {
+                        return Json(new { result = false, error = localizer["Please select time zone"].Value });
+                    }
+                    #endregion
+
                     #region 이미 입력된 이메일로 계정이 있는 지 확인
                     if (await accountRepository.GetAccountByEmailAsync(accountInputViewModel.Email) != null)
                     {
@@ -284,6 +292,7 @@ namespace Maroik.WebSite.Controllers
                         Nickname = accountInputViewModel.Nickname,
                         AvatarImagePath = "/upload/Management/Profile/default-avatar.jpg",
                         Role = accountInputViewModel.Role,
+                        TimeZoneIanaId = accountInputViewModel.TimeZoneIanaId,
                         Locked = false,
                         LoginAttempt = 0,
                         EmailConfirmed = true,
@@ -319,6 +328,7 @@ namespace Maroik.WebSite.Controllers
             if (HttpContext.Request.Headers["X-Requested-With"] == "XMLHttpRequest") // ajax
             {
                 List<AccountOutputViewModel> accountOutputViewModels = [];
+                _ = HttpContext.Session.TryGetValue(Maroik.WebSite.Common.Session.Account, out byte[] resultByte);
 
                 #region Accounts
                 foreach (Account item in await accountRepository.GetAllAsync())
@@ -332,14 +342,15 @@ namespace Maroik.WebSite.Controllers
                             Nickname = item.Nickname,
                             AvatarImagePath = item.AvatarImagePath,
                             Role = item.Role,
+                            TimeZoneIanaId = item.TimeZoneIanaId,
                             Locked = item.Locked,
                             LoginAttempt = item.LoginAttempt,
                             EmailConfirmed = item.EmailConfirmed,
                             AgreedServiceTerms = item.AgreedServiceTerms,
                             RegistrationToken = item.RegistrationToken,
                             ResetPasswordToken = item.ResetPasswordToken,
-                            Created = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Created, OSTimeZone.DestinationTimeZoneId),
-                            Updated = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Updated, OSTimeZone.DestinationTimeZoneId),
+                            Created = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Created, JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId),
+                            Updated = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Updated, JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId),
                             Message = item.Message,
                             Deleted = item.Deleted
                         });
@@ -351,14 +362,15 @@ namespace Maroik.WebSite.Controllers
                             (item.Nickname?.ToString() ?? "").Contains(wholeSearch) ||
                             (item.AvatarImagePath?.ToString() ?? "").Contains(wholeSearch) ||
                             (item.Role?.ToString() ?? "").Contains(wholeSearch) ||
+                            (item.TimeZoneIanaId?.ToString() ?? "").Contains(wholeSearch) ||
                             (item.Locked.ToString() ?? "").Contains(wholeSearch) ||
                             (item.LoginAttempt.ToString() ?? "").Contains(wholeSearch) ||
                             (item.EmailConfirmed.ToString() ?? "").Contains(wholeSearch) ||
                             (item.AgreedServiceTerms.ToString() ?? "").Contains(wholeSearch) ||
                             (item.RegistrationToken?.ToString() ?? "").Contains(wholeSearch) ||
                             (item.ResetPasswordToken?.ToString() ?? "").Contains(wholeSearch) ||
-                            (TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Created, OSTimeZone.DestinationTimeZoneId).ToString() ?? "").Contains(wholeSearch) ||
-                            (TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Updated, OSTimeZone.DestinationTimeZoneId).ToString() ?? "").Contains(wholeSearch) ||
+                            (TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Created, JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId).ToString() ?? "").Contains(wholeSearch) ||
+                            (TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Updated, JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId).ToString() ?? "").Contains(wholeSearch) ||
                             (item.Message?.ToString() ?? "").Contains(wholeSearch) ||
                             (item.Deleted.ToString() ?? "").Contains(wholeSearch))
                         {
@@ -369,14 +381,15 @@ namespace Maroik.WebSite.Controllers
                                 Nickname = item.Nickname,
                                 AvatarImagePath = item.AvatarImagePath,
                                 Role = item.Role,
+                                TimeZoneIanaId = item.TimeZoneIanaId,
                                 Locked = item.Locked,
                                 LoginAttempt = item.LoginAttempt,
                                 EmailConfirmed = item.EmailConfirmed,
                                 AgreedServiceTerms = item.AgreedServiceTerms,
                                 RegistrationToken = item.RegistrationToken,
                                 ResetPasswordToken = item.ResetPasswordToken,
-                                Created = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Created, OSTimeZone.DestinationTimeZoneId),
-                                Updated = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Updated, OSTimeZone.DestinationTimeZoneId),
+                                Created = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Created, JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId),
+                                Updated = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Updated, JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId),
                                 Message = item.Message,
                                 Deleted = item.Deleted
                             });
@@ -437,6 +450,7 @@ namespace Maroik.WebSite.Controllers
                     tempAccount.Email = accountInputViewModel.Email;
                     tempAccount.HashedPassword = new RSA(RSAType.RSA2, Encoding.UTF8, RSA.privateKey, RSA.publicKey).Sign(accountInputViewModel.Password); // 암호화
                     tempAccount.Role = accountInputViewModel.Role;
+                    tempAccount.TimeZoneIanaId = accountInputViewModel.TimeZoneIanaId;
                     tempAccount.Locked = accountInputViewModel.Locked;
                     if (accountInputViewModel.Locked == false)
                     {
@@ -503,6 +517,7 @@ namespace Maroik.WebSite.Controllers
             await Task.Yield();
 
             List<AccountOutputViewModel> accountOutputViewModels = [];
+            _ = HttpContext.Session.TryGetValue(Maroik.WebSite.Common.Session.Account, out byte[] resultByte);
 
             #region Accounts
             foreach (Account item in await accountRepository.GetAllAsync())
@@ -514,14 +529,15 @@ namespace Maroik.WebSite.Controllers
                     Nickname = item.Nickname,
                     AvatarImagePath = item.AvatarImagePath,
                     Role = item.Role,
+                    TimeZoneIanaId = item.TimeZoneIanaId,
                     Locked = item.Locked,
                     LoginAttempt = item.LoginAttempt,
                     EmailConfirmed = item.EmailConfirmed,
                     AgreedServiceTerms = item.AgreedServiceTerms,
                     RegistrationToken = item.RegistrationToken,
                     ResetPasswordToken = item.ResetPasswordToken,
-                    Created = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Created, OSTimeZone.DestinationTimeZoneId),
-                    Updated = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Updated, OSTimeZone.DestinationTimeZoneId),
+                    Created = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Created, JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId),
+                    Updated = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Updated, JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId),
                     Message = item.Message,
                     Deleted = item.Deleted
                 });
@@ -543,16 +559,17 @@ namespace Maroik.WebSite.Controllers
                 workSheetMenuOutputViewModels.Cells[1, 3].Value = localizer[nameof(AccountOutputViewModel.Nickname).ToString()].Value;
                 workSheetMenuOutputViewModels.Cells[1, 4].Value = localizer[nameof(AccountOutputViewModel.AvatarImagePath).ToString()].Value;
                 workSheetMenuOutputViewModels.Cells[1, 5].Value = localizer[nameof(AccountOutputViewModel.Role).ToString()].Value;
-                workSheetMenuOutputViewModels.Cells[1, 6].Value = localizer[nameof(AccountOutputViewModel.Locked).ToString()].Value;
-                workSheetMenuOutputViewModels.Cells[1, 7].Value = localizer[nameof(AccountOutputViewModel.LoginAttempt).ToString()].Value;
-                workSheetMenuOutputViewModels.Cells[1, 8].Value = localizer[nameof(AccountOutputViewModel.EmailConfirmed).ToString()].Value;
-                workSheetMenuOutputViewModels.Cells[1, 9].Value = localizer[nameof(AccountOutputViewModel.AgreedServiceTerms).ToString()].Value;
-                workSheetMenuOutputViewModels.Cells[1, 10].Value = localizer[nameof(AccountOutputViewModel.RegistrationToken).ToString()].Value;
-                workSheetMenuOutputViewModels.Cells[1, 11].Value = localizer[nameof(AccountOutputViewModel.ResetPasswordToken).ToString()].Value;
-                workSheetMenuOutputViewModels.Cells[1, 12].Value = localizer[nameof(AccountOutputViewModel.Created).ToString()].Value;
-                workSheetMenuOutputViewModels.Cells[1, 13].Value = localizer[nameof(AccountOutputViewModel.Updated).ToString()].Value;
-                workSheetMenuOutputViewModels.Cells[1, 14].Value = localizer[nameof(AccountOutputViewModel.Message).ToString()].Value;
-                workSheetMenuOutputViewModels.Cells[1, 15].Value = localizer[nameof(AccountOutputViewModel.Deleted).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 6].Value = localizer[nameof(AccountOutputViewModel.TimeZoneIanaId).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 7].Value = localizer[nameof(AccountOutputViewModel.Locked).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 8].Value = localizer[nameof(AccountOutputViewModel.LoginAttempt).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 9].Value = localizer[nameof(AccountOutputViewModel.EmailConfirmed).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 10].Value = localizer[nameof(AccountOutputViewModel.AgreedServiceTerms).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 11].Value = localizer[nameof(AccountOutputViewModel.RegistrationToken).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 12].Value = localizer[nameof(AccountOutputViewModel.ResetPasswordToken).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 13].Value = localizer[nameof(AccountOutputViewModel.Created).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 14].Value = localizer[nameof(AccountOutputViewModel.Updated).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 15].Value = localizer[nameof(AccountOutputViewModel.Message).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 16].Value = localizer[nameof(AccountOutputViewModel.Deleted).ToString()].Value;
 
                 int recordIndex = 2;
                 foreach (AccountOutputViewModel item in accountOutputViewModels)
@@ -562,23 +579,24 @@ namespace Maroik.WebSite.Controllers
                     workSheetMenuOutputViewModels.Cells[recordIndex, 3].Value = item.Nickname;
                     workSheetMenuOutputViewModels.Cells[recordIndex, 4].Value = item.AvatarImagePath;
                     workSheetMenuOutputViewModels.Cells[recordIndex, 5].Value = item.Role;
-                    workSheetMenuOutputViewModels.Cells[recordIndex, 6].Value = item.Locked;
-                    workSheetMenuOutputViewModels.Cells[recordIndex, 7].Value = item.LoginAttempt;
-                    workSheetMenuOutputViewModels.Cells[recordIndex, 8].Value = item.EmailConfirmed;
-                    workSheetMenuOutputViewModels.Cells[recordIndex, 9].Value = item.AgreedServiceTerms;
-                    workSheetMenuOutputViewModels.Cells[recordIndex, 10].Value = item.RegistrationToken;
-                    workSheetMenuOutputViewModels.Cells[recordIndex, 11].Value = item.ResetPasswordToken;
-                    workSheetMenuOutputViewModels.Cells[recordIndex, 12].Value = item.Created.ToString();
-                    workSheetMenuOutputViewModels.Cells[recordIndex, 13].Value = item.Updated.ToString();
-                    workSheetMenuOutputViewModels.Cells[recordIndex, 14].Value = item.Message;
-                    workSheetMenuOutputViewModels.Cells[recordIndex, 15].Value = item.Deleted;
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 6].Value = item.TimeZoneIanaId;
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 7].Value = item.Locked;
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 8].Value = item.LoginAttempt;
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 9].Value = item.EmailConfirmed;
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 10].Value = item.AgreedServiceTerms;
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 11].Value = item.RegistrationToken;
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 12].Value = item.ResetPasswordToken;
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 13].Value = item.Created.ToString();
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 14].Value = item.Updated.ToString();
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 15].Value = item.Message;
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 16].Value = item.Deleted;
                     recordIndex++;
                 }
 
                 package.Save();
             }
             stream.Position = 0;
-            string excelName = $"{fileName}-{TimeZoneInfo.ConvertTimeBySystemTimeZoneId(DateTime.UtcNow, OSTimeZone.DestinationTimeZoneId):yyyy-MM-dd-HH-mm-ss-fff}.xlsx";
+            string excelName = $"{fileName}-{TimeZoneInfo.ConvertTimeBySystemTimeZoneId(DateTime.UtcNow, JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId):yyyy-MM-dd-HH-mm-ss-fff}.xlsx";
 
             return File(stream, "application/octet-stream", excelName);
         }
@@ -1268,6 +1286,7 @@ namespace Maroik.WebSite.Controllers
             await Task.Yield();
 
             List<MenuOutputViewModel> menuOutputViewModels = [];
+            _ = HttpContext.Session.TryGetValue(Maroik.WebSite.Common.Session.Account, out byte[] resultByte);
 
             #region AdminCategories
             foreach (Category item in await categoryRepository.GetCategoryByRoleAsync(Role.Admin))
@@ -1416,7 +1435,7 @@ namespace Maroik.WebSite.Controllers
                 package.Save();
             }
             stream.Position = 0;
-            string excelName = $"{fileName}-{TimeZoneInfo.ConvertTimeBySystemTimeZoneId(DateTime.UtcNow, OSTimeZone.DestinationTimeZoneId):yyyy-MM-dd-HH-mm-ss-fff}.xlsx";
+            string excelName = $"{fileName}-{TimeZoneInfo.ConvertTimeBySystemTimeZoneId(DateTime.UtcNow, JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId):yyyy-MM-dd-HH-mm-ss-fff}.xlsx";
 
             return File(stream, "application/octet-stream", excelName);
         }

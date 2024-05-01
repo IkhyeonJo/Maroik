@@ -213,8 +213,8 @@ namespace Maroik.WebSite.Controllers
                             MaturityDate = item.MaturityDate.ToString("yyyy-MM-dd"),
                             Note = item.Note,
                             DepositMyAssetProductName = item.DepositMyAssetProductName,
-                            Created = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Created, OSTimeZone.DestinationTimeZoneId),
-                            Updated = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Updated, OSTimeZone.DestinationTimeZoneId),
+                            Created = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Created, JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId),
+                            Updated = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Updated, JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId),
                             Noticed = noticedResult,
                             Unpunctuality = item.Unpunctuality,
                             Expired = item.MaturityDate.Subtract(currentDate).TotalDays < 0
@@ -231,8 +231,8 @@ namespace Maroik.WebSite.Controllers
                             (item.MaturityDate.ToString("yyyy-MM-dd") ?? "").Contains(wholeSearch) ||
                             (item.Note?.ToString() ?? "").Contains(wholeSearch) ||
                             (item.DepositMyAssetProductName?.ToString() ?? "").Contains(wholeSearch) ||
-                            (TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Created, OSTimeZone.DestinationTimeZoneId).ToString() ?? "").Contains(wholeSearch) ||
-                            (TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Updated, OSTimeZone.DestinationTimeZoneId).ToString() ?? "").Contains(wholeSearch))
+                            (TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Created, JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId).ToString() ?? "").Contains(wholeSearch) ||
+                            (TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Updated, JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId).ToString() ?? "").Contains(wholeSearch))
                         {
                             bool noticedResult = false;
 
@@ -262,8 +262,8 @@ namespace Maroik.WebSite.Controllers
                                 MaturityDate = item.MaturityDate.ToString("yyyy-MM-dd"),
                                 Note = item.Note,
                                 DepositMyAssetProductName = item.DepositMyAssetProductName,
-                                Created = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Created, OSTimeZone.DestinationTimeZoneId),
-                                Updated = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Updated, OSTimeZone.DestinationTimeZoneId),
+                                Created = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Created, JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId),
+                                Updated = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Updated, JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId),
                                 Noticed = noticedResult,
                                 Unpunctuality = item.Unpunctuality,
                                 Expired = item.MaturityDate.Subtract(currentDate).TotalDays < 0
@@ -555,8 +555,8 @@ namespace Maroik.WebSite.Controllers
                     MaturityDate = item.MaturityDate.ToString("yyyy-MM-dd"),
                     Note = item.Note,
                     DepositMyAssetProductName = item.DepositMyAssetProductName,
-                    Created = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Created, OSTimeZone.DestinationTimeZoneId),
-                    Updated = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Updated, OSTimeZone.DestinationTimeZoneId),
+                    Created = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Created, JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId),
+                    Updated = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Updated, JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId),
                     Noticed = noticedResult,
                     Unpunctuality = item.Unpunctuality,
                     Expired = item.MaturityDate.Subtract(currentDate).TotalDays < 0
@@ -610,7 +610,7 @@ namespace Maroik.WebSite.Controllers
                 package.Save();
             }
             stream.Position = 0;
-            string excelName = $"{fileName}-{TimeZoneInfo.ConvertTimeBySystemTimeZoneId(DateTime.UtcNow, OSTimeZone.DestinationTimeZoneId):yyyy-MM-dd-HH-mm-ss-fff}.xlsx";
+            string excelName = $"{fileName}-{TimeZoneInfo.ConvertTimeBySystemTimeZoneId(DateTime.UtcNow, JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId):yyyy-MM-dd-HH-mm-ss-fff}.xlsx";
 
             return File(stream, "application/octet-stream", excelName);
         }
@@ -883,8 +883,8 @@ namespace Maroik.WebSite.Controllers
                             DepositMonth = item.DepositMonth,
                             DepositDay = item.DepositDay,
                             MaturityDate = item.MaturityDate.ToString("yyyy-MM-dd"),
-                            Created = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Created, OSTimeZone.DestinationTimeZoneId),
-                            Updated = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Updated, OSTimeZone.DestinationTimeZoneId),
+                            Created = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Created, JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId),
+                            Updated = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Updated, JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId),
                             Note = item.Note,
                             Noticed = noticedResult,
                             Unpunctuality = item.Unpunctuality,
@@ -902,8 +902,8 @@ namespace Maroik.WebSite.Controllers
                             (item.DepositMonth.ToString() ?? "").Contains(wholeSearch) ||
                             (item.DepositDay.ToString() ?? "").Contains(wholeSearch) ||
                             (item.MaturityDate.ToString("yyyy-MM-dd") ?? "").Contains(wholeSearch) ||
-                            (TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Created, OSTimeZone.DestinationTimeZoneId).ToString() ?? "").Contains(wholeSearch) ||
-                            (TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Updated, OSTimeZone.DestinationTimeZoneId).ToString() ?? "").Contains(wholeSearch) ||
+                            (TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Created, JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId).ToString() ?? "").Contains(wholeSearch) ||
+                            (TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Updated, JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId).ToString() ?? "").Contains(wholeSearch) ||
                             (item.Note?.ToString() ?? "").Contains(wholeSearch))
                         {
                             bool noticedResult = false;
@@ -934,8 +934,8 @@ namespace Maroik.WebSite.Controllers
                                 DepositMonth = item.DepositMonth,
                                 DepositDay = item.DepositDay,
                                 MaturityDate = item.MaturityDate.ToString("yyyy-MM-dd"),
-                                Created = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Created, OSTimeZone.DestinationTimeZoneId),
-                                Updated = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Updated, OSTimeZone.DestinationTimeZoneId),
+                                Created = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Created, JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId),
+                                Updated = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Updated, JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId),
                                 Note = item.Note,
                                 Noticed = noticedResult,
                                 Unpunctuality = item.Unpunctuality,
@@ -1315,8 +1315,8 @@ namespace Maroik.WebSite.Controllers
                     DepositMonth = item.DepositMonth,
                     DepositDay = item.DepositDay,
                     MaturityDate = item.MaturityDate.ToString("yyyy-MM-dd"),
-                    Created = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Created, OSTimeZone.DestinationTimeZoneId),
-                    Updated = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Updated, OSTimeZone.DestinationTimeZoneId),
+                    Created = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Created, JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId),
+                    Updated = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Updated, JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId),
                     Note = item.Note,
                     Noticed = noticedResult,
                     Unpunctuality = item.Unpunctuality,
@@ -1373,7 +1373,7 @@ namespace Maroik.WebSite.Controllers
                 package.Save();
             }
             stream.Position = 0;
-            string excelName = $"{fileName}-{TimeZoneInfo.ConvertTimeBySystemTimeZoneId(DateTime.UtcNow, OSTimeZone.DestinationTimeZoneId):yyyy-MM-dd-HH-mm-ss-fff}.xlsx";
+            string excelName = $"{fileName}-{TimeZoneInfo.ConvertTimeBySystemTimeZoneId(DateTime.UtcNow, JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId):yyyy-MM-dd-HH-mm-ss-fff}.xlsx";
 
             return File(stream, "application/octet-stream", excelName);
         }

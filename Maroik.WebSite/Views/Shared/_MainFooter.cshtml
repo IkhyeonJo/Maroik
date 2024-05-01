@@ -1,9 +1,20 @@
 ﻿@using Maroik.WebSite.Common
 @using System
-
+@model Maroik.Common.DataAccess.Models.Account
 
 <footer class="main-footer text-sm">
-    <strong>Copyright &copy; 2021-@TimeZoneInfo.ConvertTimeBySystemTimeZoneId(DateTime.UtcNow, OSTimeZone.DestinationTimeZoneId).Year <a href="@ServerSetting.DomainName">Maroik</a>.</strong>
+    @if(Model.Role == Role.Admin)
+    {
+        <strong><span id="mainFooterYear">Copyright &copy; 2021-@TimeZoneInfo.ConvertTimeBySystemTimeZoneId(DateTime.UtcNow, Model.TimeZoneIanaId).Year </span><a href="@ServerSetting.DomainName">Maroik</a>.</strong>
+    }
+    else if (Model.Role == Role.User)
+    {
+        <strong><span id="mainFooterYear">Copyright &copy; 2021-@TimeZoneInfo.ConvertTimeBySystemTimeZoneId(DateTime.UtcNow, Model.TimeZoneIanaId).Year </span><a href="@ServerSetting.DomainName">Maroik</a>.</strong>
+    }
+    else if (Model.Role == Role.Anonymous)
+    {
+        <strong><span id="mainFooterYear">Copyright &copy; 2021-@TimeZoneInfo.ConvertTimeBySystemTimeZoneId(DateTime.UtcNow, Model.TimeZoneIanaId).Year </span><a href="@ServerSetting.DomainName">Maroik</a>.</strong>
+    }
     All rights reserved.
     <div class="float-right d-none d-sm-inline-block">
         <b>Version</b> 3.1.0

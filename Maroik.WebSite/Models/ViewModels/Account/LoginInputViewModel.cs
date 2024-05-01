@@ -24,5 +24,6 @@ namespace Maroik.WebSite.Models.ViewModels.Account
         public string RegistrationToken { get; set; }
         public string ResetPasswordToken { get; set; }
         public string Culture { get; set; }
+        public string TimeZoneIanaId { get; set; }
     }
 }

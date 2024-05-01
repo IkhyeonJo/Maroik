@@ -168,4 +168,7 @@
   <data name="User profile picture" xml:space="preserve">
     <value>사용자 프로필 사진</value>
   </data>
+  <data name="Time zone" xml:space="preserve">
+    <value>시간대</value>
+  </data>
 </root>

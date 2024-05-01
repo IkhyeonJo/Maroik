@@ -19,6 +19,9 @@ namespace Maroik.WebSite.Models.ViewModels.Management
         [Required(ErrorMessage = "Please enter Role")]
         [Display(Name = "Role")]
         public string Role { get; set; }
+        [Required(ErrorMessage = "Please select time zone")]
+        [Display(Name = "Time zone")]
+        public string TimeZoneIanaId { get; set; }
         [Required(ErrorMessage = "Please enter Locked")]
         [Display(Name = "Locked")]
         public bool Locked { get; set; }

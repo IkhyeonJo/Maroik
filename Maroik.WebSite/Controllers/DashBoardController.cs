@@ -56,14 +56,16 @@ namespace Maroik.WebSite.Controllers
             string currentYearMonth = DateTime.UtcNow.ToString("yyyy-MM");
             string currentLoginUserEmail = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email;
 
+            TimeZoneInfo.TryFindSystemTimeZoneById(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId, out TimeZoneInfo timeZoneInfo);
+
             UserIndexOutputViewModel userIndexOutputViewModel = new()
             {
-                Incomes = await incomeRepository.GetCurrentYearMonthIncomesAsync(currentLoginUserEmail, currentYearMonth),
-                Expenditures = await expenditureRepository.GetCurrentYearMonthExpendituresAsync(currentLoginUserEmail, currentYearMonth),
-                USP_Income_MonthlyReport_Results = await incomeRepository.GetCurrentYearMonthIncomesMonthlyReport(currentLoginUserEmail, currentYearMonth)
+                Incomes = await incomeRepository.GetCurrentYearMonthIncomesAsync(currentLoginUserEmail, currentYearMonth, timeZoneInfo.BaseUtcOffset.TotalMilliseconds),
+                Expenditures = await expenditureRepository.GetCurrentYearMonthExpendituresAsync(currentLoginUserEmail, currentYearMonth, timeZoneInfo.BaseUtcOffset.TotalMilliseconds),
+                USP_Income_MonthlyReport_Results = await incomeRepository.GetCurrentYearMonthIncomesMonthlyReport(currentLoginUserEmail, currentYearMonth, timeZoneInfo.BaseUtcOffset.TotalMilliseconds)
             };
             ;
-            userIndexOutputViewModel.USP_Expenditure_MonthlyReport_Results = await expenditureRepository.GetCurrentYearMonthExpendituresMonthlyReport(currentLoginUserEmail, currentYearMonth);
+            userIndexOutputViewModel.USP_Expenditure_MonthlyReport_Results = await expenditureRepository.GetCurrentYearMonthExpendituresMonthlyReport(currentLoginUserEmail, currentYearMonth, timeZoneInfo.BaseUtcOffset.TotalMilliseconds);
             #endregion
 
             return View(userIndexOutputViewModel);

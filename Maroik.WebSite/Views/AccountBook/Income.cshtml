@@ -7,7 +7,7 @@
     string currentCulture = Context.Features.Get<Microsoft.AspNetCore.Localization.IRequestCultureFeature>().RequestCulture.Culture.Name;
     Context.Session.TryGetValue(Maroik.WebSite.Common.Session.Account, out byte[] resultByte);
 
-    DateTime currentTime = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(DateTime.UtcNow, OSTimeZone.DestinationTimeZoneId);
+    DateTime currentTime = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(DateTime.UtcNow, JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId);
     string currentDate = currentTime.ToString("yyyy-MM-dd");
     int currentHour = currentTime.Hour;
     int currentMinute = currentTime.Minute;

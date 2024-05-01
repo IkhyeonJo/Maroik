@@ -87,7 +87,23 @@
                         @localizer["Writer"].Value: @Model.BoardOutputViewModel.Writer
                     </h6>
                     <span class="mailbox-read-time float-left">@localizer["Views"].Value: @Model.BoardOutputViewModel.Views</span>
-                    <span class="mailbox-read-time float-right">@localizer["Updated"].Value: [@TimeZoneInfo.ConvertTimeBySystemTimeZoneId(Model.BoardOutputViewModel.Updated, OSTimeZone.DestinationTimeZoneId)]</span>
+
+                    @if (loginedAccount.Role == Role.Admin || loginedAccount.Role == Role.User)
+                    {
+                        <span class="mailbox-read-time float-right">
+                            @localizer["Updated"].Value: [<span id="free_forum_detail_updated">@TimeZoneInfo.ConvertTimeBySystemTimeZoneId(Model.BoardOutputViewModel.Updated, JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId)</span>]
+                        </span>
+                    }
+                    else if (loginedAccount.Role == Role.Anonymous)
+                    {
+                        <span class="mailbox-read-time float-right">
+                            @localizer["Updated"].Value: [<span id="free_forum_detail_updated">@Model.BoardOutputViewModel.Updated.ToString("yyyy-MM-ddTHH:mm:ssZ")</span>]
+                        </span>
+                    }
+                    else
+                    {
+
+                    }
                     <br />
                 </div>
 
@@ -154,7 +170,22 @@
                                                 <span>@comment.Writer</span>
                                             }
 
-                                            <span class="text-muted float-middle">@localizer["Created"].Value: [@TimeZoneInfo.ConvertTimeBySystemTimeZoneId(comment.Created, OSTimeZone.DestinationTimeZoneId)] </span>
+                                            @if (loginedAccount.Role == Role.Admin || loginedAccount.Role == Role.User)
+                                            {
+                                                <span class="text-muted float-middle">
+                                                    @localizer["Created"].Value: [<span class="free_forum_detail_comment_created">@TimeZoneInfo.ConvertTimeBySystemTimeZoneId(comment.Created, JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId)</span>] 
+                                                </span>
+                                            }
+                                            else if (loginedAccount.Role == Role.Anonymous)
+                                            {
+                                                <span class="text-muted float-middle">
+                                                    @localizer["Created"].Value: [<span class="free_forum_detail_comment_created">@comment.Created.ToString("yyyy-MM-ddTHH:mm:ssZ")</span>]
+                                                </span>
+                                            }
+                                            else
+                                            {
+
+                                            }
 
                                             @if (loginedAccount.Nickname == comment.Writer || loginedAccount.Role == Role.Admin)@*작성자 또는 관리자인 경우*@
                                             {
@@ -182,7 +213,22 @@
                                                 <span>@comment.Writer</span>
                                             }
 
-                                            <span class="text-muted float-middle">@localizer["Created"].Value: [@TimeZoneInfo.ConvertTimeBySystemTimeZoneId(comment.Created, OSTimeZone.DestinationTimeZoneId)] </span>
+                                            @if (loginedAccount.Role == Role.Admin || loginedAccount.Role == Role.User)
+                                            {
+                                                <span class="text-muted float-middle">
+                                                    @localizer["Created"].Value: [<span class="free_forum_detail_comment_created">@TimeZoneInfo.ConvertTimeBySystemTimeZoneId(comment.Created, JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId)</span>]
+                                                </span>
+                                            }
+                                            else if (loginedAccount.Role == Role.Anonymous)
+                                            {
+                                                <span class="text-muted float-middle">
+                                                    @localizer["Created"].Value: [<span class="free_forum_detail_comment_created">@comment.Created.ToString("yyyy-MM-ddTHH:mm:ssZ")</span>]
+                                                </span>
+                                            }
+                                            else
+                                            {
+
+                                            }
 
                                             @if (loginedAccount.Nickname == comment.Writer || loginedAccount.Role == Role.Admin)@*작성자 또는 관리자인 경우*@
                                             {
@@ -319,7 +365,7 @@
                     </ul>
                 </nav>
                 <div style="overflow:auto;">
-                    <table class="table table-striped table-bordered table-hover">
+                    <table id="tblFreeForum" class="table table-striped table-bordered table-hover">
                         <thead>
                             <tr>
                                 <th>@localizer["Number"].Value</th>
@@ -355,11 +401,24 @@
                                     }
 
                                     <td><span style="font-weight:bold; color:green;">@noticeBoard.Writer</span></td>
-                                    <td><span style="font-weight:bold; color:green;">@TimeZoneInfo.ConvertTimeBySystemTimeZoneId(noticeBoard.Created, OSTimeZone.DestinationTimeZoneId)</span></td>
+
+                                    @if (loginedAccount.Role == Role.Admin || loginedAccount.Role == Role.User)
+                                    {
+                                        <td class="free_forum_board_created"><span style="font-weight:bold; color:green;">@TimeZoneInfo.ConvertTimeBySystemTimeZoneId(noticeBoard.Created, JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId)</span></td>
+                                    }
+                                    else if (loginedAccount.Role == Role.Anonymous)
+                                    {
+                                        <td class="free_forum_board_created"><span style="font-weight:bold; color:green;">@noticeBoard.Created.ToString("yyyy-MM-ddTHH:mm:ssZ")</span></td>
+                                    }
+                                    else
+                                    {
+                                        
+                                    }
+                                    
                                     <td><span style="font-weight:bold; color:green;">@noticeBoard.Views</span></td>
                                     @if (attachedFilesWithName.Count != 0)
                                     {
-                                        <td><span style="font-weight:bold; color:green;"><i class="fas fa-paperclip"></i></td>
+                                        <td><span style="font-weight:bold; color:green;"><i class="fas fa-paperclip"></i></span></td>
                                     }
                                     else
                                     {
@@ -399,8 +458,19 @@
                                         <td><span>@board.Writer</span></td>
                                     }
 
-
-                                    <td>@TimeZoneInfo.ConvertTimeBySystemTimeZoneId(board.Created, OSTimeZone.DestinationTimeZoneId)</td>
+                                    @if (loginedAccount.Role == Role.Admin || loginedAccount.Role == Role.User)
+                                    {
+                                        <td class="free_forum_board_created">@TimeZoneInfo.ConvertTimeBySystemTimeZoneId(board.Created, JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId)</td>
+                                    }
+                                    else if (loginedAccount.Role == Role.Anonymous)
+                                    {
+                                        <td class="free_forum_board_created">@board.Created.ToString("yyyy-MM-ddTHH:mm:ssZ")</td>
+                                    }
+                                    else
+                                    {
+                                        
+                                    }
+                                    
                                     <td>@board.Views</td>
                                     @if (attachedFilesWithName.Count != 0)
                                     {
