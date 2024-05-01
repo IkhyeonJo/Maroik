@@ -40,7 +40,7 @@
                     <div class="form-group has-feedback">
                         <select asp-for="TimeZoneIanaId" required class="form-control">
                             <option value="" disabled selected hidden>
-                                @localizer["Please select your time zone."]
+                                @localizer["Please select time zone"]
                             </option>
 
                             @foreach(TimeZoneInfo systemTimeZone in TimeZoneInfo.GetSystemTimeZones())

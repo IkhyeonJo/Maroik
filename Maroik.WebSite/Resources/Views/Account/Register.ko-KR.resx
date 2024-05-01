@@ -171,7 +171,7 @@
   <data name="terms" xml:space="preserve">
     <value>동의합니다.</value>
   </data>
-  <data name="Please select your time zone." xml:space="preserve">
-    <value>당신의 시간대를 선택해 주세요.</value>
+  <data name="Please select time zone" xml:space="preserve">
+    <value>시간대를 선택해 주세요</value>
   </data>
 </root>

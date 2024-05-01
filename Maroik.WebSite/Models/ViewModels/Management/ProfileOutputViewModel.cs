@@ -36,7 +36,7 @@ namespace Maroik.WebSite.Models.ViewModels.Management
         [Compare(nameof(NewPassword), ErrorMessage = "The new password do not match")]
         public string ConfirmNewPassword { get; set; }
 
-        [Required(ErrorMessage = "Please select your time zone")]
+        [Required(ErrorMessage = "Please select time zone")]
         [Display(Name = "Time zone")]
         public string TimeZoneIanaId { get; set; }
     }

@@ -159,7 +159,7 @@
   <data name="The {0} must be at least {2} characters long." xml:space="preserve">
     <value>확인 비밀번호는 적어도 {2} 자리 이상이여야 합니다.</value>
   </data>
-  <data name="Please select your time zone" xml:space="preserve">
-    <value>당신의 시간대를 선택해주세요</value>
+  <data name="Please select time zone" xml:space="preserve">
+    <value>시간대를 선택해 주세요</value>
   </data>
 </root>

@@ -216,7 +216,7 @@ namespace Maroik.WebSite.Controllers
 
                     if (string.IsNullOrEmpty(loginInputViewModel.TimeZoneIanaId)) // TimeZone 선택 하지 않을 시,
                     {
-                        TempData["Error"] = localizer["Please select your time zone."].Value;
+                        TempData["Error"] = localizer["Please select time zone"].Value;
                         return View();
                     }
 
