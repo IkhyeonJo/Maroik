@@ -130,6 +130,10 @@ namespace Maroik.WebSite.Controllers
                     Account tempAccount = await accountRepository.GetAccountByEmailAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
                     tempAccount.TimeZoneIanaId = profileInputViewModel.TimeZoneIanaId;
                     await accountRepository.UpdateAccountAsync(tempAccount);
+                    
+                    HttpContext.Session.Remove(Maroik.WebSite.Extensions.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account));
+                    tempAccount.HashedPassword = null;
+                    HttpContext.Session.Set(Maroik.WebSite.Extensions.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account), Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(tempAccount)));
                 }
                 catch
                 {
