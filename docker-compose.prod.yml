@@ -8,6 +8,8 @@ networks:
 
 services:
     mariadb:
+        # https://stackoverflow.com/questions/49959601/configure-time-zone-to-mysql-docker-container
+        # The mariadb:10.3 docker container interprets the TZ environment variable, although it's not mentioned on the Readme.md for the docker image. In my case providing the value of America\New_York worked perfectly.
         image: "mariadb:10.3"
         container_name: Maroik.MariaDB
         volumes:
