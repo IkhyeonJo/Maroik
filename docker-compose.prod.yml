@@ -8,7 +8,7 @@ networks:
 
 services:
     mariadb:
-        image: "mariadb:10.11.2"
+        image: "mariadb:10.3"
         container_name: Maroik.MariaDB
         volumes:
           - datasource:/var/lib/mysql

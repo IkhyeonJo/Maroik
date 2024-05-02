@@ -19,7 +19,7 @@ namespace Maroik.Common.DataAccess.Contracts
         /// <param name="email"></param>
         /// <param name="yearMonth"></param>
         /// <returns></returns>
-        public Task<List<Expenditure>> GetCurrentYearMonthExpendituresAsync(string email, string yearMonth, double utcOffset);
+        public Task<List<Expenditure>> GetCurrentYearMonthExpendituresAsync(string email, string yearMonth, string timeZoneIanaId);
 
         /// <summary>
         /// 지출을 생성합니다.
@@ -48,6 +48,6 @@ namespace Maroik.Common.DataAccess.Contracts
         /// <param name="email"></param>
         /// <param name="yearMonth"></param>
         /// <returns></returns>
-        public Task<List<USP_Expenditure_MonthlyReport>> GetCurrentYearMonthExpendituresMonthlyReport(string email, string yearMonth, double utcOffset);
+        public Task<List<USP_Expenditure_MonthlyReport>> GetCurrentYearMonthExpendituresMonthlyReport(string email, string yearMonth, string timeZoneIanaId);
     }
 }

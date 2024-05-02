@@ -34,14 +34,14 @@ namespace Maroik.Common.DataAccess.Services
         /// <param name="email"></param>
         /// <param name="yearMonth"></param>
         /// <returns></returns>
-        public async Task<List<Income>> GetCurrentYearMonthIncomesAsync(string email, string yearMonth, double utcOffset)
+        public async Task<List<Income>> GetCurrentYearMonthIncomesAsync(string email, string yearMonth, string timeZoneIanaId)
         {
             return await context.Incomes.FromSqlInterpolated
                     (
                         @$"SELECT *
                             FROM Income
                             WHERE 
-                            DATE_FORMAT(DATE_ADD(Created, INTERVAL {utcOffset} MICROSECOND), '%Y-%m') = {yearMonth}
+                            DATE_FORMAT(CONVERT_TZ(Created, 'UTC', {timeZoneIanaId}), '%Y-%m') = {yearMonth}
                             AND AccountEmail = {email}"
                     ).ToListAsync();
         }
@@ -85,9 +85,9 @@ namespace Maroik.Common.DataAccess.Services
         /// <param name="email"></param>
         /// <param name="yearMonth"></param>
         /// <returns></returns>
-        public async Task<List<USP_Income_MonthlyReport>> GetCurrentYearMonthIncomesMonthlyReport(string email, string yearMonth, double utcOffset)
+        public async Task<List<USP_Income_MonthlyReport>> GetCurrentYearMonthIncomesMonthlyReport(string email, string yearMonth, string timeZoneIanaId)
         {
-            return await context.USP_Income_MonthlyReports.FromSqlRaw("CALL USP_Income_MonthlyReport(@yearMonth, @email, @utcOffset)", new MySqlParameter("@yearMonth", yearMonth), new MySqlParameter("@email", email), new MySqlParameter("@utcOffset", utcOffset)).ToListAsync();
+            return await context.USP_Income_MonthlyReports.FromSqlRaw("CALL USP_Income_MonthlyReport(@yearMonth, @email, @timeZoneIanaId)", new MySqlParameter("@yearMonth", yearMonth), new MySqlParameter("@email", email), new MySqlParameter("@timeZoneIanaId", timeZoneIanaId)).ToListAsync();
         }
     }
 }
