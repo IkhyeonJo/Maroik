@@ -1,21 +1,17 @@
 ﻿using Maroik.Common.DataAccess.Contracts;
+using Maroik.WebAPI.Contracts;
 using Maroik.WebAPI.Extensions;
 using Maroik.WebAPI.Utilities;
 using System.Text;
 
 namespace Maroik.WebAPI.Services
 {
-    public interface IUserService
+    public class UserRepository : IUserRepository
     {
-        Task<bool> IsValidUserCredentials(string email, string password);
-    }
-
-    public class UserService : IUserService
-    {
-        private readonly ILogger<UserService> logger;
+        private readonly ILogger<UserRepository> logger;
         private readonly IAccountRepository accountRepository;
 
-        public UserService(ILogger<UserService> logger, IAccountRepository accountRepository)
+        public UserRepository(ILogger<UserRepository> logger, IAccountRepository accountRepository)
         {
             this.logger = logger;
             this.accountRepository = accountRepository;

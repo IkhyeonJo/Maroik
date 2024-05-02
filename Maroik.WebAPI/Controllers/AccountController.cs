@@ -1,4 +1,5 @@
 ﻿using Maroik.Common.DataAccess.Contracts;
+using Maroik.WebAPI.Contracts;
 using Maroik.WebAPI.Infrastructure;
 using Maroik.WebAPI.Services;
 using Microsoft.AspNetCore.Authentication;
@@ -17,15 +18,15 @@ namespace Maroik.WebAPI.Controllers
     public class AccountController : ControllerBase
     {
         //private readonly ILogger<AccountController> logger;
-        private readonly IUserService userService;
+        private readonly IUserRepository userRepository;
         private readonly IJwtAuthManager jwtAuthManager;
         private readonly IAccountRepository accountRepository;
 
         //public AccountController(ILogger<AccountController> logger, IUserService userService, IJwtAuthManager jwtAuthManager, IAccountRepository accountRepository)
-        public AccountController(IUserService userService, IJwtAuthManager jwtAuthManager, IAccountRepository accountRepository)
+        public AccountController(IUserRepository userRepository, IJwtAuthManager jwtAuthManager, IAccountRepository accountRepository)
         {
             //this.logger = logger;
-            this.userService = userService;
+            this.userRepository = userRepository;
             this.jwtAuthManager = jwtAuthManager;
             this.accountRepository = accountRepository;
         }
@@ -39,7 +40,7 @@ namespace Maroik.WebAPI.Controllers
                 return BadRequest();
             }
 
-            if (!await userService.IsValidUserCredentials(request.Email, request.Password))
+            if (!await userRepository.IsValidUserCredentials(request.Email, request.Password))
             {
                 return Unauthorized();
             }
