@@ -1,7 +1,7 @@
 using Maroik.Common.DataAccess.Contracts;
 using Maroik.Common.DataAccess.Data;
 using Maroik.Common.DataAccess.Services;
-using Maroik.WebAPI.Common;
+using Maroik.WebAPI.Utilities;
 using Maroik.WebAPI.Infrastructure;
 using Maroik.WebAPI.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;

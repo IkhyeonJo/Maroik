@@ -1,4 +1,4 @@
-namespace Maroik.WebAPI.Common
+namespace Maroik.WebAPI.Utilities
 {
     public static class AccountMessage
     {
