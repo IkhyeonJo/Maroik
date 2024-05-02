@@ -1,8 +1,8 @@
 ﻿using Maroik.Common.DataAccess.Contracts;
 using Maroik.Common.DataAccess.Models;
-using Maroik.WebSite.Utilities;
 using Maroik.WebSite.Extensions;
 using Maroik.WebSite.Models.ViewModels.Management;
+using Maroik.WebSite.Utilities;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Localization;
 using Newtonsoft.Json;
@@ -126,7 +126,7 @@ namespace Maroik.WebSite.Controllers
             {
                 try
                 {
-                    HttpContext.Session.TryGetValue(Maroik.WebSite.Extensions.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account), out byte[] resultByte);
+                    _ = HttpContext.Session.TryGetValue(Maroik.WebSite.Extensions.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account), out byte[] resultByte);
                     Account tempAccount = await accountRepository.GetAccountByEmailAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
                     tempAccount.TimeZoneIanaId = profileInputViewModel.TimeZoneIanaId;
                     await accountRepository.UpdateAccountAsync(tempAccount);

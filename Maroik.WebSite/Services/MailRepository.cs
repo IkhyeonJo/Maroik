@@ -1,7 +1,7 @@
-using Maroik.WebSite.Utilities;
 using Maroik.WebSite.Contracts;
 using Maroik.WebSite.Extensions;
 using Maroik.WebSite.Models.ViewModels.Account;
+using Maroik.WebSite.Utilities;
 using System.Net.Mail;
 
 namespace Maroik.WebSite.Services

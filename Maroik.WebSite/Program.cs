@@ -2,9 +2,9 @@ using Maroik.Common.DataAccess.Contracts;
 using Maroik.Common.DataAccess.Data;
 using Maroik.Common.DataAccess.Models;
 using Maroik.Common.DataAccess.Services;
-using Maroik.WebSite.Utilities;
 using Maroik.WebSite.Contracts;
 using Maroik.WebSite.Services;
+using Maroik.WebSite.Utilities;
 using Microsoft.AspNetCore.CookiePolicy;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Mvc;
@@ -91,7 +91,7 @@ builder.Services.AddCors(options =>
     options.AddDefaultPolicy(
         builder =>
         {
-            builder.WithOrigins(ServerSetting.DomainName.Replace("/", "").ToString());
+            _ = builder.WithOrigins(ServerSetting.DomainName.Replace("/", "").ToString());
         });
 });
 #endregion

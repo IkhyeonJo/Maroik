@@ -1,9 +1,10 @@
 using Maroik.Common.DataAccess.Contracts;
 using Maroik.Common.DataAccess.Data;
 using Maroik.Common.DataAccess.Services;
-using Maroik.WebAPI.Utilities;
+using Maroik.WebAPI.Contracts;
 using Maroik.WebAPI.Infrastructure;
 using Maroik.WebAPI.Services;
+using Maroik.WebAPI.Utilities;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.EntityFrameworkCore;
@@ -11,7 +12,6 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Security.Authentication;
 using System.Text;
-using Maroik.WebAPI.Contracts;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 

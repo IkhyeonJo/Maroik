@@ -1,7 +1,6 @@
 ﻿using Maroik.Common.DataAccess.Contracts;
 using Maroik.WebAPI.Contracts;
 using Maroik.WebAPI.Infrastructure;
-using Maroik.WebAPI.Services;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
