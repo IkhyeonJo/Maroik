@@ -11,6 +11,7 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Security.Authentication;
 using System.Text;
+using Maroik.WebAPI.Contracts;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
@@ -82,7 +83,7 @@ builder.Services.AddScoped<IFixedExpenditureRepository, FixedExpenditureReposito
 #endregion
 
 #region LOCAL
-builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IUserRepository, UserRepository>();
 #endregion
 
 #endregion
