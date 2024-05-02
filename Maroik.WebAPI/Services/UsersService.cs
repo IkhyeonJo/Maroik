@@ -1,4 +1,5 @@
 ﻿using Maroik.Common.DataAccess.Contracts;
+using Maroik.WebAPI.Extensions;
 using Maroik.WebAPI.Utilities;
 using System.Text;
 
@@ -57,7 +58,7 @@ namespace Maroik.WebAPI.Services
                 if (tempAccount.LoginAttempt == ServerSetting.MaxLoginAttempt)
                 {
                     tempAccount.Locked = true;
-                    tempAccount.Message = AccountMessage.AccountLocked;
+                    tempAccount.Message = EnumHelper.GetDescription(AccountMessage.AccountLocked);
                     await accountRepository.UpdateAccountAsync(tempAccount);
                     return false;
                 }
