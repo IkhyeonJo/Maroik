@@ -1,7 +1,7 @@
 ﻿using Maroik.Common.DataAccess.Contracts;
 using Maroik.Common.DataAccess.Models;
-using Maroik.WebSite.Common;
-using Maroik.WebSite.Helpers;
+using Maroik.WebSite.Utilities;
+using Maroik.WebSite.Extensions;
 using Maroik.WebSite.Models.ViewModels.Management;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Localization;
@@ -38,7 +38,7 @@ namespace Maroik.WebSite.Controllers
         [HttpGet]
         public async Task<IActionResult> Profile()
         {
-            _ = HttpContext.Session.TryGetValue(Maroik.WebSite.Common.Session.Account, out byte[] resultByte);
+            _ = HttpContext.Session.TryGetValue(Maroik.WebSite.Extensions.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account), out byte[] resultByte);
             Account tempAccount = await accountRepository.GetAccountByEmailAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
 
             return View(new ProfileOutputViewModel() { Email = tempAccount.Email, AvatarImagePath = tempAccount.AvatarImagePath, Nickname = tempAccount.Nickname, Created = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(tempAccount.Created, JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId), TimeZoneIanaId = tempAccount.TimeZoneIanaId });
@@ -65,7 +65,7 @@ namespace Maroik.WebSite.Controllers
                 {
                     if (Path.GetExtension(profileAvatarFile.FileName) is ".png" or ".jpg" or ".jpeg")
                     {
-                        _ = HttpContext.Session.TryGetValue(Maroik.WebSite.Common.Session.Account, out byte[] resultByte);
+                        _ = HttpContext.Session.TryGetValue(Maroik.WebSite.Extensions.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account), out byte[] resultByte);
                         string avatarPath = Path.Combine(hostEnvironment.ContentRootPath, "wwwroot", "upload", "Management", "Profile", "Avatar");
                         if (!Directory.Exists(avatarPath))
                         {
@@ -126,7 +126,7 @@ namespace Maroik.WebSite.Controllers
             {
                 try
                 {
-                    HttpContext.Session.TryGetValue(Maroik.WebSite.Common.Session.Account, out byte[] resultByte);
+                    HttpContext.Session.TryGetValue(Maroik.WebSite.Extensions.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account), out byte[] resultByte);
                     Account tempAccount = await accountRepository.GetAccountByEmailAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
                     tempAccount.TimeZoneIanaId = profileInputViewModel.TimeZoneIanaId;
                     await accountRepository.UpdateAccountAsync(tempAccount);
@@ -153,7 +153,7 @@ namespace Maroik.WebSite.Controllers
             {
                 try
                 {
-                    _ = HttpContext.Session.TryGetValue(Maroik.WebSite.Common.Session.Account, out byte[] resultByte);
+                    _ = HttpContext.Session.TryGetValue(Maroik.WebSite.Extensions.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account), out byte[] resultByte);
                     Account tempAccount = await accountRepository.GetAccountByEmailAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
 
                     if (new RSA(RSAType.RSA2, Encoding.UTF8, RSA.privateKey, RSA.publicKey).Verify(profileInputViewModel.Password ?? "", tempAccount.HashedPassword)) // right password
@@ -301,7 +301,7 @@ namespace Maroik.WebSite.Controllers
                         ResetPasswordToken = null,
                         Created = DateTime.UtcNow,
                         Updated = DateTime.UtcNow,
-                        Message = AccountMessage.Success,
+                        Message = EnumHelper.GetDescription(AccountMessage.Success),
                         Deleted = false
                     }
                     );
@@ -328,7 +328,7 @@ namespace Maroik.WebSite.Controllers
             if (HttpContext.Request.Headers["X-Requested-With"] == "XMLHttpRequest") // ajax
             {
                 List<AccountOutputViewModel> accountOutputViewModels = [];
-                _ = HttpContext.Session.TryGetValue(Maroik.WebSite.Common.Session.Account, out byte[] resultByte);
+                _ = HttpContext.Session.TryGetValue(Maroik.WebSite.Extensions.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account), out byte[] resultByte);
 
                 #region Accounts
                 foreach (Account item in await accountRepository.GetAllAsync())
@@ -517,7 +517,7 @@ namespace Maroik.WebSite.Controllers
             await Task.Yield();
 
             List<AccountOutputViewModel> accountOutputViewModels = [];
-            _ = HttpContext.Session.TryGetValue(Maroik.WebSite.Common.Session.Account, out byte[] resultByte);
+            _ = HttpContext.Session.TryGetValue(Maroik.WebSite.Extensions.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account), out byte[] resultByte);
 
             #region Accounts
             foreach (Account item in await accountRepository.GetAllAsync())
@@ -1286,7 +1286,7 @@ namespace Maroik.WebSite.Controllers
             await Task.Yield();
 
             List<MenuOutputViewModel> menuOutputViewModels = [];
-            _ = HttpContext.Session.TryGetValue(Maroik.WebSite.Common.Session.Account, out byte[] resultByte);
+            _ = HttpContext.Session.TryGetValue(Maroik.WebSite.Extensions.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account), out byte[] resultByte);
 
             #region AdminCategories
             foreach (Category item in await categoryRepository.GetCategoryByRoleAsync(Role.Admin))

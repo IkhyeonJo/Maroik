@@ -1,4 +1,4 @@
-﻿namespace Maroik.WebSite.Common
+﻿namespace Maroik.WebSite.Utilities
 {
     public static class Role
     {

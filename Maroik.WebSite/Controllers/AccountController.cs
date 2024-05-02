@@ -1,8 +1,8 @@
 ﻿using Maroik.Common.DataAccess.Contracts;
 using Maroik.Common.DataAccess.Models;
-using Maroik.WebSite.Common;
+using Maroik.WebSite.Utilities;
 using Maroik.WebSite.Contracts;
-using Maroik.WebSite.Helpers;
+using Maroik.WebSite.Extensions;
 using Maroik.WebSite.Models.ViewModels.Account;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Localization;
@@ -36,7 +36,7 @@ namespace Maroik.WebSite.Controllers
         [HttpGet]
         public IActionResult ConsentForm()
         {
-            bool isAccountSessionExist = HttpContext.Session.TryGetValue(Maroik.WebSite.Common.Session.Account, out byte[] resultByte);
+            bool isAccountSessionExist = HttpContext.Session.TryGetValue(Maroik.WebSite.Extensions.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account), out byte[] resultByte);
 
             if (isAccountSessionExist) // 로그인 된 상태라면
             {
@@ -111,7 +111,7 @@ namespace Maroik.WebSite.Controllers
                     if (tempAccount.LoginAttempt == ServerSetting.MaxLoginAttempt)
                     {
                         tempAccount.Locked = true;
-                        tempAccount.Message = AccountMessage.AccountLocked;
+                        tempAccount.Message = EnumHelper.GetDescription(AccountMessage.AccountLocked);
                         await accountRepository.UpdateAccountAsync(tempAccount);
                         TempData["Error"] = localizer["Your Account is Locked, Please reset your password by clicking Forgot password Button"].Value;
                         return View();
@@ -129,7 +129,7 @@ namespace Maroik.WebSite.Controllers
                     tempAccount.LoginAttempt = 0;
                     await accountRepository.UpdateAccountAsync(tempAccount);
                     tempAccount.HashedPassword = null;
-                    HttpContext.Session.Set(Maroik.WebSite.Common.Session.Account, Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(tempAccount)));
+                    HttpContext.Session.Set(Maroik.WebSite.Extensions.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account), Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(tempAccount)));
 
                     #region DB Cache
                     return tempAccount.Role == Role.Admin
@@ -167,7 +167,7 @@ namespace Maroik.WebSite.Controllers
         [HttpGet]
         public IActionResult Logout()
         {
-            HttpContext.Session.Remove(Maroik.WebSite.Common.Session.Account);
+            HttpContext.Session.Remove(Maroik.WebSite.Extensions.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account));
             return RedirectToAction("AnonymousIndex", "DashBoard");
         }
         #endregion
@@ -176,7 +176,7 @@ namespace Maroik.WebSite.Controllers
         [HttpGet]
         public IActionResult Register()
         {
-            bool isAccountSessionExist = HttpContext.Session.TryGetValue(Maroik.WebSite.Common.Session.Account, out byte[] resultByte);
+            bool isAccountSessionExist = HttpContext.Session.TryGetValue(Maroik.WebSite.Extensions.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account), out byte[] resultByte);
 
             if (isAccountSessionExist) // 로그인 된 상태라면
             {
@@ -247,7 +247,7 @@ namespace Maroik.WebSite.Controllers
                                     ResetPasswordToken = null,
                                     Created = DateTime.UtcNow,
                                     Updated = DateTime.UtcNow,
-                                    Message = AccountMessage.UserCreatedVerifyEmail,
+                                    Message = EnumHelper.GetDescription(AccountMessage.UserCreatedVerifyEmail),
                                     Deleted = false
                                 }
                                 );
@@ -285,7 +285,7 @@ namespace Maroik.WebSite.Controllers
                             loginInputViewModel.Email
                         ];
                         string result = await mailRepository.SendMailAsync(mail);
-                        if (result != AccountMessage.MailSent) // 메일 전송 오류 발생 했을 시..
+                        if (result != EnumHelper.GetDescription(AccountMessage.MailSent)) // 메일 전송 오류 발생 했을 시..
                         {
                             Console.WriteLine(result); // ActivityLog 등으로 로그 남겨야 한다..
                             loginInputViewModel.RegistrationToken = registrationToken;
@@ -309,7 +309,7 @@ namespace Maroik.WebSite.Controllers
                                         ResetPasswordToken = null,
                                         Created = DateTime.UtcNow,
                                         Updated = DateTime.UtcNow,
-                                        Message = AccountMessage.FailToMailSent,
+                                        Message = EnumHelper.GetDescription(AccountMessage.FailToMailSent),
                                         Deleted = false
                                     });
                             }
@@ -349,13 +349,13 @@ namespace Maroik.WebSite.Controllers
                                 account.Email
                             ];
                             string result = await mailRepository.SendMailAsync(mail);
-                            if (result != AccountMessage.MailSent) // 메일 전송 오류 발생 했을 시..
+                            if (result != EnumHelper.GetDescription(AccountMessage.MailSent)) // 메일 전송 오류 발생 했을 시..
                             {
                                 Console.WriteLine(result); // ActivityLog 등으로 로그 남겨야 한다..
                                 try
                                 {
                                     account.Updated = DateTime.UtcNow;
-                                    account.Message = AccountMessage.FailToMailSent;
+                                    account.Message = EnumHelper.GetDescription(AccountMessage.FailToMailSent);
                                     await accountRepository.UpdateAccountAsync(account);
                                 }
                                 catch
@@ -369,7 +369,7 @@ namespace Maroik.WebSite.Controllers
                             #endregion
                             try
                             {
-                                account.Message = AccountMessage.VerifyEmail;
+                                account.Message = EnumHelper.GetDescription(AccountMessage.VerifyEmail);
                                 account.Updated = DateTime.UtcNow;
                                 await accountRepository.UpdateAccountAsync(account);
                             }
@@ -389,7 +389,7 @@ namespace Maroik.WebSite.Controllers
                         {
                             try
                             {
-                                account.Message = AccountMessage.UserAlreadyCreated;
+                                account.Message = EnumHelper.GetDescription(AccountMessage.UserAlreadyCreated);
                                 account.Updated = DateTime.UtcNow;
                                 account.AgreedServiceTerms = true;
                                 await accountRepository.UpdateAccountAsync(account);
@@ -399,7 +399,7 @@ namespace Maroik.WebSite.Controllers
                                 TempData["Error"] = localizer["Error occurred while processing about account status"].Value;
                                 return View();
                             }
-                            TempData["Error"] = localizer[AccountMessage.UserAlreadyCreated].Value;
+                            TempData["Error"] = localizer[EnumHelper.GetDescription(AccountMessage.UserAlreadyCreated)].Value;
                             ViewBag.ResendEmail = false; // 로그인 폼 활성화
                             return View();
                         }
@@ -447,13 +447,13 @@ namespace Maroik.WebSite.Controllers
                                 ]
                             };
                             string result = await mailRepository.SendMailAsync(mail);
-                            if (result != AccountMessage.MailSent) // 메일 전송 오류 발생 했을 시..
+                            if (result != EnumHelper.GetDescription(AccountMessage.MailSent)) // 메일 전송 오류 발생 했을 시..
                             {
                                 Console.WriteLine(result); // ActivityLog 등으로 로그 남겨야 한다..
                                 try
                                 {
                                     account.Updated = DateTime.UtcNow;
-                                    account.Message = AccountMessage.FailToMailSent;
+                                    account.Message = EnumHelper.GetDescription(AccountMessage.FailToMailSent);
                                     await accountRepository.UpdateAccountAsync(account);
                                 }
                                 catch
@@ -467,7 +467,7 @@ namespace Maroik.WebSite.Controllers
                             #endregion
                             try
                             {
-                                account.Message = AccountMessage.VerifyEmail;
+                                account.Message = EnumHelper.GetDescription(AccountMessage.VerifyEmail);
                                 account.Updated = DateTime.UtcNow;
                                 await accountRepository.UpdateAccountAsync(account);
                             }
@@ -488,7 +488,7 @@ namespace Maroik.WebSite.Controllers
                         {
                             try
                             {
-                                account.Message = AccountMessage.UserAlreadyCreated;
+                                account.Message = EnumHelper.GetDescription(AccountMessage.UserAlreadyCreated);
                                 account.Updated = DateTime.UtcNow;
                                 await accountRepository.UpdateAccountAsync(account);
                             }
@@ -497,7 +497,7 @@ namespace Maroik.WebSite.Controllers
                                 TempData["Error"] = localizer["Error occurred while processing about account status"].Value;
                                 return View();
                             }
-                            TempData["Error"] = localizer[AccountMessage.UserAlreadyCreated].Value;
+                            TempData["Error"] = localizer[EnumHelper.GetDescription(AccountMessage.UserAlreadyCreated)].Value;
                             ViewBag.ResendEmail = false; // 로그인 폼 활성화
                             return View();
                         }
@@ -518,7 +518,7 @@ namespace Maroik.WebSite.Controllers
         [HttpGet]
         public async Task<IActionResult> ConfirmEmail(string registrationToken)
         {
-            bool isAccountSessionExist = HttpContext.Session.TryGetValue(Maroik.WebSite.Common.Session.Account, out byte[] resultByte);
+            bool isAccountSessionExist = HttpContext.Session.TryGetValue(Maroik.WebSite.Extensions.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account), out byte[] resultByte);
 
             if (isAccountSessionExist) // 로그인 된 상태라면
             {
@@ -584,7 +584,7 @@ namespace Maroik.WebSite.Controllers
                     account.RegistrationToken = null;
                     account.EmailConfirmed = true;
                     account.Updated = DateTime.UtcNow;
-                    account.Message = AccountMessage.Success;
+                    account.Message = EnumHelper.GetDescription(AccountMessage.Success);
                     try
                     {
                         await accountRepository.UpdateAccountAsync(account);
@@ -606,7 +606,7 @@ namespace Maroik.WebSite.Controllers
                 else
                 {
                     account.Updated = DateTime.UtcNow;
-                    account.Message = AccountMessage.UserAlreadyCreated;
+                    account.Message = EnumHelper.GetDescription(AccountMessage.UserAlreadyCreated);
                     try
                     {
                         await accountRepository.UpdateAccountAsync(account);
@@ -631,7 +631,7 @@ namespace Maroik.WebSite.Controllers
         [HttpGet]
         public IActionResult ForgotPassword()
         {
-            bool isAccountSessionExist = HttpContext.Session.TryGetValue(Maroik.WebSite.Common.Session.Account, out byte[] resultByte);
+            bool isAccountSessionExist = HttpContext.Session.TryGetValue(Maroik.WebSite.Extensions.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account), out byte[] resultByte);
 
             if (isAccountSessionExist) // 로그인 된 상태라면
             {
@@ -696,11 +696,11 @@ namespace Maroik.WebSite.Controllers
                             ]
                         };
                         string result = await mailRepository.SendMailAsync(mail);
-                        if (result != AccountMessage.MailSent) // 메일 전송 오류 발생 했을 시..
+                        if (result != EnumHelper.GetDescription(AccountMessage.MailSent)) // 메일 전송 오류 발생 했을 시..
                         {
                             Console.WriteLine(result); // ActivityLog 등으로 로그 남겨야 한다..
                             account.Updated = DateTime.UtcNow;
-                            account.Message = AccountMessage.FailToMailSent;
+                            account.Message = EnumHelper.GetDescription(AccountMessage.FailToMailSent);
                             await accountRepository.UpdateAccountAsync(account);
                             ViewBag.mailSent = true;
                             ViewBag.sentEmailAddress = loginInputViewModel.Email;
@@ -710,7 +710,7 @@ namespace Maroik.WebSite.Controllers
 
                         account.ResetPasswordToken = resetPasswordToken;
                         account.Updated = DateTime.UtcNow;
-                        account.Message = AccountMessage.ResetPasswordMail;
+                        account.Message = EnumHelper.GetDescription(AccountMessage.ResetPasswordMail);
                         await accountRepository.UpdateAccountAsync(account);
                         ViewBag.mailSent = true;
                         ViewBag.sentEmailAddress = loginInputViewModel.Email;
@@ -736,7 +736,7 @@ namespace Maroik.WebSite.Controllers
         [HttpGet]
         public async Task<IActionResult> ResetPassword(string resetPasswordToken)
         {
-            bool isAccountSessionExist = HttpContext.Session.TryGetValue(Maroik.WebSite.Common.Session.Account, out byte[] resultByte);
+            bool isAccountSessionExist = HttpContext.Session.TryGetValue(Maroik.WebSite.Extensions.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account), out byte[] resultByte);
 
             if (isAccountSessionExist) // 로그인 된 상태라면
             {
@@ -877,7 +877,7 @@ namespace Maroik.WebSite.Controllers
                     account.Locked = false; // 잠금 해제
                     account.LoginAttempt = 0; // 로그인 시도 횟수 초기화
                     account.Updated = DateTime.UtcNow;
-                    account.Message = AccountMessage.SuccessToResetPassword;
+                    account.Message = EnumHelper.GetDescription(AccountMessage.SuccessToResetPassword);
                     try
                     {
                         await accountRepository.UpdateAccountAsync(account);

@@ -1,6 +1,6 @@
-using Maroik.WebSite.Common;
+using Maroik.WebSite.Utilities;
 using Maroik.WebSite.Contracts;
-using Maroik.WebSite.Helpers;
+using Maroik.WebSite.Extensions;
 using Maroik.WebSite.Models.ViewModels.Account;
 using System.Net.Mail;
 
@@ -68,7 +68,7 @@ namespace Maroik.WebSite.Services
                 smtp.Credentials = new System.Net.NetworkCredential(mail.SmtpUserName, mail.SmtpPassword);
                 smtp.EnableSsl = mail.SmtpSSL;
                 await smtp.SendMailAsync(mailMessage);
-                return AccountMessage.MailSent;
+                return EnumHelper.GetDescription(AccountMessage.MailSent);
             }
             catch (Exception ex)
             {

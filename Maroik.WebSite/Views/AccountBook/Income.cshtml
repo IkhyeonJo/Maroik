@@ -1,11 +1,11 @@
-﻿@using Maroik.WebSite.Common
+﻿@using Maroik.WebSite.Utilities
 @using Newtonsoft.Json
 @using System.Text
 @inject Maroik.Common.DataAccess.Contracts.IAssetRepository assetRepository
 
 @{
     string currentCulture = Context.Features.Get<Microsoft.AspNetCore.Localization.IRequestCultureFeature>().RequestCulture.Culture.Name;
-    Context.Session.TryGetValue(Maroik.WebSite.Common.Session.Account, out byte[] resultByte);
+    Context.Session.TryGetValue(Maroik.WebSite.Extensions.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account), out byte[] resultByte);
 
     DateTime currentTime = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(DateTime.UtcNow, JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId);
     string currentDate = currentTime.ToString("yyyy-MM-dd");

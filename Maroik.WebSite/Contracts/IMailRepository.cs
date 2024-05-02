@@ -1,4 +1,4 @@
-using Maroik.WebSite.Helpers;
+using Maroik.WebSite.Utilities;
 using Maroik.WebSite.Models.ViewModels.Account;
 
 namespace Maroik.WebSite.Contracts

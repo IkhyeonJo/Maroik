@@ -1,4 +1,4 @@
-﻿namespace Maroik.WebSite.Helpers
+﻿namespace Maroik.WebSite.Utilities
 {
     [AttributeUsage(AttributeTargets.Method, AllowMultiple = true)]
     public class RequiredHttpPostAccessAttribute : Attribute

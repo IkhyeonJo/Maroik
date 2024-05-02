@@ -1,6 +1,4 @@
-using Maroik.WebSite.Common;
-
-namespace Maroik.WebSite.Helpers
+namespace Maroik.WebSite.Utilities
 {
     public class Mail
     {

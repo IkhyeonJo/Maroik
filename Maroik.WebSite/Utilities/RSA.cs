@@ -1,7 +1,7 @@
 ﻿using System.Security.Cryptography;
 using System.Text;
 
-namespace Maroik.WebSite.Helpers
+namespace Maroik.WebSite.Utilities
 {
     #region Code Example
     //string plaintext = "plaintext";

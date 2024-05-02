@@ -1,6 +1,6 @@
 using Maroik.Common.DataAccess.Models;
 
-namespace Maroik.WebSite.Common
+namespace Maroik.WebSite.Utilities
 {
     public static class DbCache
     {

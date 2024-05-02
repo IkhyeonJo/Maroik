@@ -1,7 +1,6 @@
 ﻿using Maroik.Common.DataAccess.Contracts;
 using Maroik.Common.DataAccess.Models;
-using Maroik.WebSite.Common;
-using Maroik.WebSite.Helpers;
+using Maroik.WebSite.Utilities;
 using Maroik.WebSite.Models.ViewModels.Account;
 using Maroik.WebSite.Models.ViewModels.DashBoard;
 using Microsoft.AspNetCore.Localization;
@@ -52,7 +51,7 @@ namespace Maroik.WebSite.Controllers
         public async Task<IActionResult> UserIndex()
         {
             #region Current Year & Month Income/Expenditure
-            _ = HttpContext.Session.TryGetValue(Maroik.WebSite.Common.Session.Account, out byte[] resultByte);
+            _ = HttpContext.Session.TryGetValue(Maroik.WebSite.Extensions.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account), out byte[] resultByte);
             string currentYearMonth = DateTime.UtcNow.ToString("yyyy-MM");
             string currentLoginUserEmail = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email;
 
@@ -74,7 +73,7 @@ namespace Maroik.WebSite.Controllers
         [HttpGet]
         public IActionResult AnonymousIndex()
         {
-            bool isAccountSessionExist = HttpContext.Session.TryGetValue(Maroik.WebSite.Common.Session.Account, out byte[] resultByte);
+            bool isAccountSessionExist = HttpContext.Session.TryGetValue(Maroik.WebSite.Extensions.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account), out byte[] resultByte);
 
             if (isAccountSessionExist) // 로그인 된 상태라면
             {
