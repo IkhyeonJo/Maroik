@@ -7,7 +7,7 @@ using Newtonsoft.Json;
 using System.Reflection;
 using System.Text;
 
-namespace Maroik.WebSite.Filters
+namespace Maroik.WebSite.Utilities
 {
     public class AuthorizationFilter : ActionFilterAttribute
     {

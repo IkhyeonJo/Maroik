@@ -4,7 +4,6 @@ using Maroik.Common.DataAccess.Models;
 using Maroik.Common.DataAccess.Services;
 using Maroik.WebSite.Utilities;
 using Maroik.WebSite.Contracts;
-using Maroik.WebSite.Filters;
 using Maroik.WebSite.Services;
 using Microsoft.AspNetCore.CookiePolicy;
 using Microsoft.AspNetCore.Localization;
