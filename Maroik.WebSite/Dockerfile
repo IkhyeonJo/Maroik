@@ -3,6 +3,21 @@
 
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
 
+# Create a system group named "user" with the -r flag
+RUN groupadd -r user
+
+# Create a system user named "user" and add it to the "user" group with the -r and -g flags
+RUN useradd -r -g user user
+
+# Set the working directory to /app
+WORKDIR /app
+
+# Change the ownership of the working directory to the non-root user "user" and grant write permission
+RUN chown -R user:user /app && chmod -R u+w /app
+
+# Switch to the non-root user "user"
+USER user
+
 EXPOSE 80
 EXPOSE 443
 
