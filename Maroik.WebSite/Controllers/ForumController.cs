@@ -220,6 +220,15 @@ namespace Maroik.WebSite.Controllers
                         {
                             Account loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)); // Get Session
 
+                            IEnumerable<Board> freeForumBoards = await boardRepository.GetOneTypeBoards(EnumHelper.GetDescription(BoardType.FreeForum));
+                            freeForumBoards = freeForumBoards.Where(m => m.Writer == loginedAccount.Nickname).Where(m => m.Deleted == false).OrderByDescending(a => a.Id);
+                            Board freeForumBoard = freeForumBoards.FirstOrDefault(m => m.Id == commentInputViewModel.BoardId);
+
+                            if (freeForumBoard.Id != commentInputViewModel.BoardId)
+                            {
+                                return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                            }
+
                             IEnumerable<Comment> totalCommentsInSelectedBoard = await commentRepository.GetOneBoardComments(commentInputViewModel.BoardId);
 
                             Comment comment = new()
