@@ -37,4 +37,10 @@ namespace Maroik.WebSite.Utilities
         [Description("Account")]
         Account
     }
+
+    public enum BoardType
+    {
+        [Description("FreeForum")]
+        FreeForum
+    }
 }
