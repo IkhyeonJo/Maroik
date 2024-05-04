@@ -264,4 +264,49 @@
   <data name="TimeZoneIanaId" xml:space="preserve">
     <value>TimeZone</value>
   </data>
+  <data name="content length is must be between 0 and 16384 characters." xml:space="preserve">
+    <value>content length is must be between 0 and 16384 characters.</value>
+  </data>
+  <data name="No PrivateNoteBoard exists" xml:space="preserve">
+    <value>No PrivateNoteBoard exists</value>
+  </data>
+  <data name="Only .jpg or jpeg or .png file allowed." xml:space="preserve">
+    <value>Only .jpg or jpeg or .png file allowed.</value>
+  </data>
+  <data name="Only zip extension allowed." xml:space="preserve">
+    <value>Only zip extension allowed.</value>
+  </data>
+  <data name="Please attach a file." xml:space="preserve">
+    <value>Please attach a file.</value>
+  </data>
+  <data name="Please enter a comment." xml:space="preserve">
+    <value>Please enter a comment.</value>
+  </data>
+  <data name="Please Login to edit board" xml:space="preserve">
+    <value>Please Login to edit board</value>
+  </data>
+  <data name="Please Login to write board" xml:space="preserve">
+    <value>Please Login to write board</value>
+  </data>
+  <data name="Please Login to write comment." xml:space="preserve">
+    <value>Please Login to write comment.</value>
+  </data>
+  <data name="The board has been successfully created." xml:space="preserve">
+    <value>The board has been successfully created.</value>
+  </data>
+  <data name="The board has been successfully deleted." xml:space="preserve">
+    <value>The board has been successfully deleted.</value>
+  </data>
+  <data name="The board has been successfully updated." xml:space="preserve">
+    <value>The board has been successfully updated.</value>
+  </data>
+  <data name="Title length is must be between 1 and 100 characters." xml:space="preserve">
+    <value>Title length is must be between 1 and 100 characters.</value>
+  </data>
+  <data name="uploaded file size must be smaller than 10MB." xml:space="preserve">
+    <value>uploaded file size must be smaller than 10MB.</value>
+  </data>
+  <data name="You do not have permission to delete." xml:space="preserve">
+    <value>You do not have permission to delete.</value>
+  </data>
 </root>

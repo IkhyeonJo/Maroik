@@ -171,6 +171,9 @@
   <data name="Notice" xml:space="preserve">
     <value>알림</value>
   </data>
+  <data name="Private Note" xml:space="preserve">
+    <value>사적 메모</value>
+  </data>
   <data name="Profile" xml:space="preserve">
     <value>프로필</value>
   </data>
