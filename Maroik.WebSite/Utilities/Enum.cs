@@ -41,6 +41,8 @@ namespace Maroik.WebSite.Utilities
     public enum BoardType
     {
         [Description("FreeForum")]
-        FreeForum
+        FreeForum,
+        [Description("PrivateNote")]
+        PrivateNote
     }
 }
