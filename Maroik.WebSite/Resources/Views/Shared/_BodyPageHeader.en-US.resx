@@ -171,6 +171,9 @@
   <data name="Notice" xml:space="preserve">
     <value>Notice</value>
   </data>
+  <data name="Private Note" xml:space="preserve">
+    <value>Private Note</value>
+  </data>
   <data name="Profile" xml:space="preserve">
     <value>Profile</value>
   </data>

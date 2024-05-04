@@ -1,6 +1,9 @@
-﻿using Maroik.Common.DataAccess.Contracts;
+﻿using Ganss.Xss;
+using Maroik.Common.DataAccess.Contracts;
 using Maroik.Common.DataAccess.Models;
 using Maroik.WebSite.Extensions;
+using Maroik.WebSite.Models;
+using Maroik.WebSite.Models.ViewModels.Account;
 using Maroik.WebSite.Models.ViewModels.Management;
 using Maroik.WebSite.Utilities;
 using Microsoft.AspNetCore.Mvc;
@@ -22,14 +25,21 @@ namespace Maroik.WebSite.Controllers
         private readonly IHostEnvironment hostEnvironment;
         private readonly ICategoryRepository categoryRepository;
         private readonly ISubCategoryRepository subCategoryRepository;
-        public ManagementController(IHtmlLocalizer<ManagementController> localizer, ILogger<ManagementController> logger, IAccountRepository accountRepository, IHostEnvironment hostEnvironment, ICategoryRepository categoryRepository, ISubCategoryRepository subCategoryRepository)
+        private readonly IBoardRepository boardRepository;
+        private readonly IAttachedFileRepository attachedFileRepository;
+        private readonly ICommentRepository commentRepository;
+
+        public ManagementController(IHtmlLocalizer<ManagementController> localizer, ILogger<ManagementController> logger, IBoardRepository boardRepository, IAttachedFileRepository attachedFileRepository, ICommentRepository commentRepository, IAccountRepository accountRepository, IHostEnvironment hostEnvironment, ICategoryRepository categoryRepository, ISubCategoryRepository subCategoryRepository)
         {
             this.localizer = localizer;
             this.logger = logger;
+            this.boardRepository = boardRepository;
+            this.attachedFileRepository = attachedFileRepository;
             this.accountRepository = accountRepository;
             this.hostEnvironment = hostEnvironment;
             this.categoryRepository = categoryRepository;
             this.subCategoryRepository = subCategoryRepository;
+            this.commentRepository = commentRepository;
         }
 
         #region Profile
@@ -1443,6 +1453,849 @@ namespace Maroik.WebSite.Controllers
 
             return File(stream, "application/octet-stream", excelName);
         }
+        #endregion
+
+        #endregion
+
+        #region PrivateNote
+
+        #region Create
+
+        #region Write
+
+        #region PrivateNoteBoard
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [RequiredHttpPostAccess(Role = Role.Admin)]
+        [RequiredHttpPostAccess(Role = Role.User)]
+        public async Task<IActionResult> WritePrivateNoteBoard(BoardInputViewModel boardInputViewModel)
+        {
+            try
+            {
+                _ = ModelState.Remove(nameof(boardInputViewModel.Locked));
+
+                if (ModelState.IsValid)
+                {
+                    boardInputViewModel.Content ??= ""; // 내용이 아무것도 입력되지 않았다면
+
+                    #region HtmlSanitizer
+                    HtmlSanitizer sanitizer = new();
+                    _ = sanitizer.AllowedAttributes.Add("class");
+                    string sanitized = sanitizer.Sanitize(boardInputViewModel.Content);
+                    boardInputViewModel.Content = sanitized;
+                    #endregion
+
+                    if (boardInputViewModel.Title.Length is not (> 0 and <= 100)) // 제목 길이
+                    {
+                        return Json(new { result = false, error = localizer["Title length is must be between 1 and 100 characters."].Value });
+                    }
+
+                    if (boardInputViewModel.Content.Length > 16384) // Content Maxlength: 16KB
+                    {
+                        return Json(new { result = false, error = localizer["content length is must be between 0 and 16384 characters."].Value });
+                    }
+
+                    if (boardInputViewModel.UploadedFile != null) // 파일 첨부가 되었다면
+                    {
+                        if (!(Path.GetExtension(boardInputViewModel.UploadedFile.FileName) == ".zip")) // zip 확장자만 가능
+                        {
+                            return Json(new { result = false, error = localizer["Only zip extension allowed."].Value });
+                        }
+
+                        if (boardInputViewModel.UploadedFile.Length is not (> 0 and <= 10485760)) // 10MB 이하만 가능
+                        {
+                            return Json(new { result = false, error = localizer["uploaded file size must be smaller than 10MB."].Value });
+                        }
+                    }
+
+                    try
+                    {
+                        bool isAccountSessionExist = HttpContext.Session.TryGetValue(Maroik.WebSite.Extensions.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account), out byte[] resultByte);
+
+                        if (isAccountSessionExist)
+                        {
+                            Account loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)); // Get Session
+                            Board board = new();
+
+                            if (loginedAccount.Role == Role.Admin) // 관리자인 경우
+                            {
+                                board.Type = EnumHelper.GetDescription(BoardType.PrivateNote); // 사적 메모
+                                board.Title = boardInputViewModel.Title;
+                                board.Content = boardInputViewModel.Content;
+                                board.Writer = loginedAccount.Nickname;
+                                board.Created = DateTime.UtcNow;
+                                board.Updated = DateTime.UtcNow;
+                                board.Views = 0;
+                                board.Deleted = false;
+                                //board.Locked = boardInputViewModel.Locked;
+                                board.Noticed = boardInputViewModel.Noticed;
+                            }
+                            else if (loginedAccount.Role == Role.User) // 일반 사용자인 경우
+                            {
+                                board.Type = EnumHelper.GetDescription(BoardType.PrivateNote); // 사적 메모
+                                board.Title = boardInputViewModel.Title;
+                                board.Content = boardInputViewModel.Content;
+                                board.Writer = loginedAccount.Nickname;
+                                board.Created = DateTime.UtcNow;
+                                board.Updated = DateTime.UtcNow;
+                                board.Views = 0;
+                                board.Deleted = false;
+                                //board.Locked = boardInputViewModel.Locked;
+                            }
+                            else // 비로그인 사용자인 경우
+                            {
+                                return Json(new { result = false, error = localizer["Please Login to write board"].Value });
+                            }
+
+                            await boardRepository.WriteBoardAsync(board);
+
+                            #region 첨부 파일 저장
+                            if (boardInputViewModel.UploadedFile != null) // 첨부 파일 존재 시,
+                            {
+                                if (boardInputViewModel.UploadedFile.Length is > 0 and <= 10485760) // boardInputViewModel.UploadedFile Length : 파일 크기 0MB 이상, 10MB 이하
+                                {
+                                    int createdBoardId = board.Id; // 첨부파일 FK 해서 로직 추가할 것
+
+                                    string attachedFilePath = Path.Combine(hostEnvironment.ContentRootPath, "wwwroot", "upload", "Management", "attachedFiles", $"{createdBoardId}");
+                                    if (!Directory.Exists(attachedFilePath))
+                                    {
+                                        _ = Directory.CreateDirectory(attachedFilePath);
+                                    }
+
+                                    string guid = Guid.NewGuid().ToString().ToUpper();
+                                    string attachedFile = $"{guid}{Path.GetExtension(boardInputViewModel.UploadedFile.FileName)}";
+                                    string filePath = Path.Combine(attachedFilePath, attachedFile);
+
+#pragma warning disable SCS0018 // Potential Path Traversal vulnerability was found where '{0}' in '{1}' may be tainted by user-controlled data from '{2}' in method '{3}'.
+                                    using (FileStream stream = new(filePath, FileMode.Create))
+#pragma warning restore SCS0018 // Potential Path Traversal vulnerability was found where '{0}' in '{1}' may be tainted by user-controlled data from '{2}' in method '{3}'.
+                                    {
+                                        await boardInputViewModel.UploadedFile.CopyToAsync(stream);
+                                        await stream.FlushAsync();
+                                    }
+
+                                    await attachedFileRepository.SaveAttachedFileAsync(new AttachedFile()
+                                    {
+                                        BoardId = createdBoardId,
+                                        Size = Convert.ToInt32(boardInputViewModel.UploadedFile.Length),
+                                        Name = Path.GetFileNameWithoutExtension(boardInputViewModel.UploadedFile.FileName),
+                                        Extension = Path.GetExtension(boardInputViewModel.UploadedFile.FileName),
+                                        Path = $"/upload/Management/attachedFiles/{createdBoardId}/{attachedFile}"
+                                    });
+                                }
+                                else
+                                {
+                                    return Ok(new { result = false, errorMessage = localizer["File Size must be smaller than 10MB."].Value });
+                                }
+
+                            }
+                            #endregion
+
+                            return Json(new { result = true, message = localizer["The board has been successfully created."].Value });
+                        }
+                        else
+                        {
+                            return Json(new { result = false, error = localizer["Please Login to write board"].Value });
+                        }
+                    }
+                    catch
+                    {
+                        return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                    }
+                }
+                else
+                {
+                    return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                }
+            }
+            catch
+            {
+                return Json(new { result = false, error = localizer["Input is invalid"].Value });
+            }
+        }
+        #endregion
+
+        #region PrivateNoteComment
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [RequiredHttpPostAccess(Role = Role.Admin)]
+        [RequiredHttpPostAccess(Role = Role.User)]
+        public async Task<IActionResult> WritePrivateNoteComment([FromBody] CommentInputViewModel commentInputViewModel)
+        {
+            try
+            {
+                if (ModelState.IsValid)
+                {
+                    if (string.IsNullOrEmpty(commentInputViewModel.Content))
+                    {
+                        return Json(new { result = false, error = localizer["Please enter a comment."].Value });
+                    }
+
+                    #region HtmlSanitizer
+                    HtmlSanitizer sanitizer = new();
+                    _ = sanitizer.AllowedAttributes.Add("class");
+                    string sanitized = sanitizer.Sanitize(commentInputViewModel.Content);
+                    commentInputViewModel.Content = sanitized;
+                    #endregion
+
+                    try
+                    {
+                        bool isAccountSessionExist = HttpContext.Session.TryGetValue(Maroik.WebSite.Extensions.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account), out byte[] resultByte);
+
+                        if (isAccountSessionExist)
+                        {
+                            Account loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)); // Get Session
+
+                            IEnumerable<Board> privateNoteBoards = await boardRepository.GetOneTypeBoards(EnumHelper.GetDescription(BoardType.PrivateNote));
+                            privateNoteBoards = privateNoteBoards.Where(m => m.Writer == loginedAccount.Nickname).Where(m => m.Deleted == false).OrderByDescending(a => a.Id);
+                            Board privateNoteBoard = privateNoteBoards.FirstOrDefault(m => m.Id == commentInputViewModel.BoardId);
+
+                            if (privateNoteBoard.Id != commentInputViewModel.BoardId)
+                            {
+                                return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                            }
+
+                            IEnumerable<Comment> totalCommentsInSelectedBoard = await commentRepository.GetOneBoardComments(commentInputViewModel.BoardId);
+
+                            Comment comment = new()
+                            {
+                                BoardId = commentInputViewModel.BoardId,
+                                Order = totalCommentsInSelectedBoard?.Count() ?? default,
+                                AvatarImagePath = loginedAccount.AvatarImagePath,
+                                Writer = loginedAccount.Nickname,
+                                Content = commentInputViewModel.Content,
+                                Created = DateTime.UtcNow,
+                                Deleted = false
+                            };
+                            await commentRepository.WriteCommentAsync(comment);
+
+                            return Json(new { result = true, boardId = commentInputViewModel.BoardId, page = commentInputViewModel.DetailCurrentPage });
+                        }
+                        else
+                        {
+                            return Json(new { result = false, error = localizer["Please Login to write comment."].Value });
+                        }
+                    }
+                    catch
+                    {
+                        return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                    }
+                }
+                else
+                {
+                    return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                }
+            }
+            catch
+            {
+                return Json(new { result = false, error = localizer["Input is invalid"].Value });
+            }
+        }
+        #endregion
+
+        #endregion
+
+        #region Summernote Image File Upload
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [RequiredHttpPostAccess(Role = Role.Admin)]
+        [RequiredHttpPostAccess(Role = Role.User)]
+        public async Task<IActionResult> UploadImageFile(IFormFile summernoteImageFile)
+        {
+            if (summernoteImageFile == null) // 파일 없을 시
+            {
+                return Ok(new { result = false, errorMessage = localizer["Please attach a file."].Value });
+            }
+            else
+            {
+                if (summernoteImageFile.Length is > 0 and <= 10485760) // imageFile Length : 파일 크기 0MB 이상, 10MB 이하
+                {
+                    if (Path.GetExtension(summernoteImageFile.FileName) is ".png" or ".jpg" or ".jpeg")
+                    {
+
+                        string summernoteImagePath = Path.Combine(hostEnvironment.ContentRootPath, "wwwroot", "upload", "Management", "summernote", "images");
+                        if (!Directory.Exists(summernoteImagePath))
+                        {
+                            _ = Directory.CreateDirectory(summernoteImagePath);
+                        }
+
+                        string imageFile = $"{Guid.NewGuid().ToString().ToUpper()}{Path.GetExtension(summernoteImageFile.FileName)}";
+                        string filePath = Path.Combine(summernoteImagePath, imageFile);
+
+#pragma warning disable SCS0018 // Potential Path Traversal vulnerability was found where '{0}' in '{1}' may be tainted by user-controlled data from '{2}' in method '{3}'.
+                        using (FileStream stream = new(filePath, FileMode.Create))
+#pragma warning restore SCS0018 // Potential Path Traversal vulnerability was found where '{0}' in '{1}' may be tainted by user-controlled data from '{2}' in method '{3}'.
+                        {
+                            await summernoteImageFile.CopyToAsync(stream);
+                            await stream.FlushAsync();
+                        }
+                        return Ok(new { result = true, filePath = $"/upload/Management/summernote/images/{imageFile}" });
+                    }
+                    else // 이미지 png 또는 jpg 또는 jpeg 외 확장자는 거절
+                    {
+                        return Ok(new { result = false, errorMessage = localizer["Only .jpg or jpeg or .png file allowed."].Value });
+                    }
+                }
+                else
+                {
+                    return Ok(new { result = false, errorMessage = localizer["File Size must be smaller than 10MB."].Value });
+                }
+            }
+        }
+        #endregion
+
+        #endregion
+
+        #region Read
+
+        #region Edit, List, Detail, Write
+        public async Task<IActionResult> PrivateNote(string method = "list", int? boardId = null, int page = 1, string searchType = "", string searchText = "")
+        {
+            if (method == "write") // 글쓰기 (write)
+            {
+                PrivateNoteOutputViewModel privateNoteOutputViewModel = new();
+
+                #region 게시판 글쓰기
+                privateNoteOutputViewModel.Method = method;
+                #endregion
+
+                bool isAccountSessionExist = HttpContext.Session.TryGetValue(Maroik.WebSite.Extensions.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account), out _); // 로그인이 되어 계정 세션이 생겼는지 확인
+
+                return isAccountSessionExist ? View(privateNoteOutputViewModel) : RedirectToAction("Login", "Account");
+            }
+            else if (method == "detail") // 상세보기 (detail)
+            {
+                _ = HttpContext.Session.TryGetValue(Maroik.WebSite.Extensions.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account), out byte[] resultByte); // 작성자 또는 관리자인 경우
+                Account loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)); // Get Session
+
+                if (boardId == null)
+                {
+                    return RedirectToAction("PrivateNote", "Management");
+                }
+
+                PrivateNoteOutputViewModel privateNoteOutputViewModel = new()
+                {
+                    Method = method,
+                    DetailCurrentPage = page,
+                    DetailBoardId = boardId ?? default
+                };
+
+                IEnumerable<Board> privateNoteBoards = await boardRepository.GetOneTypeBoards(EnumHelper.GetDescription(BoardType.PrivateNote));
+                privateNoteBoards = privateNoteBoards.Where(m => m.Writer == loginedAccount.Nickname).Where(m => m.Deleted == false).OrderByDescending(a => a.Id);
+                List<AttachedFile> attachedFiles = await attachedFileRepository.GetAllAsync();
+
+                try
+                {
+                    Board privateNoteBoard = privateNoteBoards.FirstOrDefault(m => m.Id == boardId);
+
+                    if (privateNoteBoard.Locked)
+                    {
+                        if (!(loginedAccount.Nickname == privateNoteBoard.Writer || loginedAccount.Role == Role.Admin))
+                        {
+                            return RedirectToAction("PrivateNote", "Management");
+                        }
+                    }
+
+                    privateNoteBoard.Views++;
+                    await boardRepository.UpdateBoardAsync(privateNoteBoard);
+                    AttachedFile attachedFile = attachedFiles.FirstOrDefault(m => m.BoardId == boardId);
+
+
+                    privateNoteOutputViewModel.BoardOutputViewModel = new BoardOutputViewModel()
+                    {
+                        Title = privateNoteBoard.Title,
+                        Writer = privateNoteBoard.Writer,
+                        Views = privateNoteBoard.Views,
+                        Content = privateNoteBoard.Content,
+                        Updated = privateNoteBoard.Updated,
+                        AttachedFileName = attachedFile?.Name ?? "",
+                        AttachedFileExtension = attachedFile?.Extension ?? "",
+                        AttachedFileSize = attachedFile?.Size ?? 0,
+                        AttachedFilePath = attachedFile?.Path ?? ""
+                    };
+
+                    return View(privateNoteOutputViewModel);
+                }
+                catch
+                {
+                    return RedirectToAction("PrivateNote", "Management");
+                }
+            }
+            else if (method == "edit") // 수정 (edit)
+            {
+                if (boardId == null)
+                {
+                    return RedirectToAction("PrivateNote", "Management");
+                }
+
+                PrivateNoteOutputViewModel privateNoteOutputViewModel = new()
+                {
+                    Method = method,
+                    EditCurrentPage = page,
+                    EditBoardId = boardId ?? default
+                };
+
+                _ = HttpContext.Session.TryGetValue(Maroik.WebSite.Extensions.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account), out byte[] resultByte);
+                Account loginedAccount = await accountRepository.GetAccountByEmailAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+
+                IEnumerable<Board> privateNoteBoards = await boardRepository.GetOneTypeBoards(EnumHelper.GetDescription(BoardType.PrivateNote));
+                privateNoteBoards = privateNoteBoards.Where(m => m.Writer == loginedAccount.Nickname).Where(m => m.Deleted == false).OrderByDescending(a => a.Id);
+                List<AttachedFile> attachedFiles = await attachedFileRepository.GetAllAsync();
+
+                try
+                {
+                    Board privateNoteBoard = privateNoteBoards.FirstOrDefault(m => m.Id == boardId);
+
+                    if (privateNoteBoard.Writer != loginedAccount.Nickname) // 작성자와 로그인한 사용자가 같지 않으면
+                    {
+                        return RedirectToAction("PrivateNote", "Management");
+                    }
+
+                    AttachedFile attachedFile = attachedFiles.FirstOrDefault(m => m.BoardId == boardId);
+
+
+                    privateNoteOutputViewModel.BoardOutputViewModel = new BoardOutputViewModel()
+                    {
+                        Title = privateNoteBoard.Title,
+                        Writer = privateNoteBoard.Writer,
+                        Views = privateNoteBoard.Views,
+                        Content = privateNoteBoard.Content,
+                        Locked = privateNoteBoard.Locked,
+                        Updated = privateNoteBoard.Updated,
+                        AttachedFileName = attachedFile?.Name ?? "",
+                        AttachedFileExtension = attachedFile?.Extension ?? "",
+                        AttachedFileSize = attachedFile?.Size ?? 0,
+                        AttachedFilePath = attachedFile?.Path ?? ""
+                    };
+
+                    return View(privateNoteOutputViewModel);
+                }
+                catch
+                {
+                    return RedirectToAction("PrivateNote", "Management");
+                }
+
+            }
+            else // 목록 (list)
+            {
+                bool isAccountSessionExist = HttpContext.Session.TryGetValue(Maroik.WebSite.Extensions.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account), out byte[] resultByte);
+                Account loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)); // Get Session
+
+                #region 게시판 기본 페이징 로직
+                const int pageSize = 5;
+                if (page < 1)
+                {
+                    page = 1;
+                }
+                #endregion
+
+                #region 관련된 모든 게시판 데이터 가져오는 로직
+                IEnumerable<Board> privateNoteBoards = await boardRepository.GetOneTypeBoards(EnumHelper.GetDescription(BoardType.PrivateNote));
+                privateNoteBoards = privateNoteBoards.Where(m => m.Writer == loginedAccount.Nickname).Where(m => m.Deleted == false && m.Noticed == false).OrderByDescending(a => a.Id);
+                #endregion
+
+                #region 검색어 로직
+                if (searchType == "Title" && !string.IsNullOrEmpty(searchText))
+                {
+                    if (isAccountSessionExist) // 로그인이 되어 있다면
+                    {
+                        if (loginedAccount.Role == Role.Admin) // 관리자는 모든 게시물을 볼 수 있음
+                        {
+                            privateNoteBoards = privateNoteBoards.Where(a => a.Title.Contains(searchText));
+                        }
+                        else if (loginedAccount.Role == Role.User) // 사용자는 보통 글 + 자신이 쓴 비밀글만 볼 수 있음
+                        {
+                            List<Board> searchPrivateNoteBoards = [];
+                            List<Board> noLockedPrivateNoteBoards = privateNoteBoards.Where(a => a.Title.Contains(searchText)).Where(a => !a.Locked).ToList();
+                            List<Board> myLockedPrivateNoteBoards = privateNoteBoards.Where(a => a.Title.Contains(searchText)).Where(a => a.Locked && a.Writer == loginedAccount.Nickname).ToList();
+                            searchPrivateNoteBoards.AddRange(noLockedPrivateNoteBoards);
+                            searchPrivateNoteBoards.AddRange(myLockedPrivateNoteBoards);
+
+                            privateNoteBoards = searchPrivateNoteBoards;
+                        }
+                        else // 로그인 시, Admin 또는 User 권한이 없다면 버그임
+                        {
+
+                        }
+                    }
+                    else // 로그인이 되지 않았다면
+                    {
+                        privateNoteBoards = privateNoteBoards.Where(a => a.Title.Contains(searchText)).Where(a => !a.Locked); // 비 로그인 시, 비밀글은 검색 되지 않도록 해야함
+                    }
+                }
+                else if (searchType == "Writer" && !string.IsNullOrEmpty(searchText))
+                {
+                    privateNoteBoards = privateNoteBoards.Where(a => a.Writer.Contains(searchText));
+                }
+                #endregion
+
+                PrivateNoteOutputViewModel privateNoteOutputViewModel = new();
+
+                #region 공지사항
+                privateNoteOutputViewModel.NoticeBoards = new List<Board>();
+                #endregion
+
+                #region 게시판 목록
+                privateNoteOutputViewModel.Method = "list";
+                #endregion
+
+                #region 게시판 페이징 로직
+                privateNoteOutputViewModel.Pager = new Pager(privateNoteBoards.Count(), page, pageSize);
+                #endregion
+
+                #region 게시판 데이터 로직
+                privateNoteOutputViewModel.Boards = privateNoteBoards.Skip((page - 1) * pageSize).Take(privateNoteOutputViewModel.Pager.PageSize).ToList();
+                #endregion
+
+                ViewBag.SelectedSearchType = searchType;
+                ViewBag.TypedSearchText = searchText;
+                return View(privateNoteOutputViewModel);
+            }
+        }
+        #endregion
+
+        #region IsBoardExists
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [RequiredHttpPostAccess(Role = Role.Admin)]
+        [RequiredHttpPostAccess(Role = Role.User)]
+        public async Task<IActionResult> IsBoardExists(int id)
+        {
+            try
+            {
+                _ = HttpContext.Session.TryGetValue(Maroik.WebSite.Extensions.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account), out byte[] resultByte);
+                Account loginedAccount = await accountRepository.GetAccountByEmailAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+
+                IEnumerable<Board> privateNoteBoards = await boardRepository.GetOneTypeBoards(EnumHelper.GetDescription(BoardType.PrivateNote));
+                privateNoteBoards = privateNoteBoards.Where(m => m.Writer == loginedAccount.Nickname).Where(m => m.Deleted == false).OrderByDescending(a => a.Id);
+
+                if (privateNoteBoards == null)
+                {
+                    return Json(new { result = false, error = localizer["No PrivateNoteBoard exists"].Value });
+                }
+                else
+                {
+                    Board tempPrivateNoteBoard = privateNoteBoards.Where(a => a.Id == id).FirstOrDefault();
+
+                    return tempPrivateNoteBoard == null
+                        ? Json(new { result = false, error = localizer["Input is invalid"].Value })
+                        : (IActionResult)Json(new { result = true, PrivateNoteBoard = tempPrivateNoteBoard });
+                }
+            }
+            catch
+            {
+                return Json(new { result = false, error = localizer["Input is invalid"].Value });
+            }
+        }
+        #endregion
+
+        #endregion
+
+        #region Update
+
+        #region Edit
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [RequiredHttpPostAccess(Role = Role.Admin)]
+        [RequiredHttpPostAccess(Role = Role.User)]
+        public async Task<IActionResult> EditPrivateNoteBoard(BoardInputViewModel boardInputViewModel)
+        {
+            try
+            {
+                _ = ModelState.Remove(nameof(boardInputViewModel.Locked));
+
+                if (ModelState.IsValid)
+                {
+                    boardInputViewModel.Content ??= ""; // 내용이 아무것도 입력되지 않았다면
+
+                    #region HtmlSanitizer
+                    HtmlSanitizer sanitizer = new();
+                    _ = sanitizer.AllowedAttributes.Add("class");
+                    string sanitized = sanitizer.Sanitize(boardInputViewModel.Content);
+                    boardInputViewModel.Content = sanitized;
+                    #endregion
+
+                    if (boardInputViewModel.Title.Length is not (> 0 and <= 100)) // 제목 길이
+                    {
+                        return Json(new { result = false, error = localizer["Title length is must be between 1 and 100 characters."].Value });
+                    }
+
+                    if (boardInputViewModel.Content.Length > 16384) // Content Maxlength: 16KB
+                    {
+                        return Json(new { result = false, error = localizer["content length is must be between 0 and 16384 characters."].Value });
+                    }
+
+                    if (boardInputViewModel.UploadedFile != null) // 파일 첨부가 되었다면
+                    {
+                        if (!(Path.GetExtension(boardInputViewModel.UploadedFile.FileName) == ".zip")) // zip 확장자만 가능
+                        {
+                            return Json(new { result = false, error = localizer["Only zip extension allowed."].Value });
+                        }
+
+                        if (boardInputViewModel.UploadedFile.Length is not (> 0 and <= 10485760)) // 10MB 이하만 가능
+                        {
+                            return Json(new { result = false, error = localizer["uploaded file size must be smaller than 10MB."].Value });
+                        }
+                    }
+
+                    try
+                    {
+                        bool isAccountSessionExist = HttpContext.Session.TryGetValue(Maroik.WebSite.Extensions.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account), out byte[] resultByte);
+
+                        if (isAccountSessionExist)
+                        {
+                            Account loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)); // Get Session
+
+                            IEnumerable<Board> privateNoteBoards = await boardRepository.GetOneTypeBoards(EnumHelper.GetDescription(BoardType.PrivateNote));
+                            privateNoteBoards = privateNoteBoards.Where(m => m.Writer == loginedAccount.Nickname).Where(m => m.Deleted == false).OrderByDescending(a => a.Id);
+
+                            Board tempPrivateNoteBoard = privateNoteBoards.Where(a => a.Id == boardInputViewModel.Id).FirstOrDefault();
+
+                            if (tempPrivateNoteBoard.Writer != loginedAccount.Nickname)
+                            {
+                                return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                            }
+
+                            tempPrivateNoteBoard.Title = boardInputViewModel.Title;
+                            tempPrivateNoteBoard.Content = boardInputViewModel.Content;
+                            //tempPrivateNoteBoard.Locked = boardInputViewModel.Locked;
+                            tempPrivateNoteBoard.Updated = DateTime.UtcNow;
+
+                            await boardRepository.UpdateBoardAsync(tempPrivateNoteBoard);
+
+                            List<AttachedFile> attachedFiles = await attachedFileRepository?.GetAllAsync();
+                            AttachedFile previousAttachedFile = attachedFiles?.FirstOrDefault(m => m.BoardId == boardInputViewModel.Id);
+
+                            #region 첨부 파일 저장
+
+                            #region 기존 첨부 파일 O && 신 첨부 파일 O
+                            if (previousAttachedFile != null && boardInputViewModel.UploadedFile != null)
+                            {
+                                if (boardInputViewModel.UploadedFile.Length is > 0 and <= 10485760) // boardInputViewModel.UploadedFile Length : 파일 크기 0MB 이상, 10MB 이하
+                                {
+                                    int createdBoardId = boardInputViewModel.Id; // 첨부파일 FK 해서 로직 추가할 것
+
+                                    string attachedFilePath = Path.Combine(hostEnvironment.ContentRootPath, "wwwroot", "upload", "Management", "attachedFiles", $"{createdBoardId}");
+                                    if (!Directory.Exists(attachedFilePath))
+                                    {
+                                        _ = Directory.CreateDirectory(attachedFilePath);
+                                    }
+
+                                    string guid = Guid.NewGuid().ToString().ToUpper();
+                                    string attachedFile = $"{guid}{Path.GetExtension(boardInputViewModel.UploadedFile.FileName)}";
+                                    string filePath = Path.Combine(attachedFilePath, attachedFile);
+
+#pragma warning disable SCS0018 // Potential Path Traversal vulnerability was found where '{0}' in '{1}' may be tainted by user-controlled data from '{2}' in method '{3}'.
+                                    using (FileStream stream = new(filePath, FileMode.Create))
+#pragma warning restore SCS0018 // Potential Path Traversal vulnerability was found where '{0}' in '{1}' may be tainted by user-controlled data from '{2}' in method '{3}'.
+                                    {
+                                        await boardInputViewModel.UploadedFile.CopyToAsync(stream);
+                                        await stream.FlushAsync();
+                                    }
+
+                                    previousAttachedFile.Size = Convert.ToInt32(boardInputViewModel.UploadedFile.Length);
+                                    previousAttachedFile.Name = Path.GetFileNameWithoutExtension(boardInputViewModel.UploadedFile.FileName);
+                                    previousAttachedFile.Extension = Path.GetExtension(boardInputViewModel.UploadedFile.FileName);
+                                    previousAttachedFile.Path = $"/upload/Management/attachedFiles/{createdBoardId}/{attachedFile}";
+
+                                    await attachedFileRepository.UpdateAttachedFileAsync(previousAttachedFile);
+
+                                    return Json(new { result = true, message = localizer["The board has been successfully updated."].Value });
+                                }
+                                else
+                                {
+                                    return Ok(new { result = false, errorMessage = localizer["File Size must be smaller than 10MB."].Value });
+                                }
+                            }
+                            #endregion
+
+                            #region 기존 첨부 파일 O && 신 첨부 파일 X
+                            else if (previousAttachedFile != null && boardInputViewModel.UploadedFile == null)
+                            {
+                                previousAttachedFile.Size = 0;
+                                previousAttachedFile.Name = "";
+                                previousAttachedFile.Extension = "";
+                                previousAttachedFile.Path = "";
+
+                                await attachedFileRepository.UpdateAttachedFileAsync(previousAttachedFile);
+
+                                return Json(new { result = true, message = localizer["The board has been successfully updated."].Value });
+                            }
+                            #endregion
+
+                            #region 기존 첨부 파일 X && 신 첨부 파일 O
+                            else if (previousAttachedFile == null && boardInputViewModel.UploadedFile != null)
+                            {
+                                if (boardInputViewModel.UploadedFile.Length is > 0 and <= 10485760) // boardInputViewModel.UploadedFile Length : 파일 크기 0MB 이상, 10MB 이하
+                                {
+                                    int createdBoardId = boardInputViewModel.Id; // 첨부파일 FK 해서 로직 추가할 것
+
+                                    string attachedFilePath = Path.Combine(hostEnvironment.ContentRootPath, "wwwroot", "upload", "Management", "attachedFiles", $"{createdBoardId}");
+                                    if (!Directory.Exists(attachedFilePath))
+                                    {
+                                        _ = Directory.CreateDirectory(attachedFilePath);
+                                    }
+
+                                    string guid = Guid.NewGuid().ToString().ToUpper();
+                                    string attachedFile = $"{guid}{Path.GetExtension(boardInputViewModel.UploadedFile.FileName)}";
+                                    string filePath = Path.Combine(attachedFilePath, attachedFile);
+
+#pragma warning disable SCS0018 // Potential Path Traversal vulnerability was found where '{0}' in '{1}' may be tainted by user-controlled data from '{2}' in method '{3}'.
+                                    using (FileStream stream = new(filePath, FileMode.Create))
+#pragma warning restore SCS0018 // Potential Path Traversal vulnerability was found where '{0}' in '{1}' may be tainted by user-controlled data from '{2}' in method '{3}'.
+                                    {
+                                        await boardInputViewModel.UploadedFile.CopyToAsync(stream);
+                                        await stream.FlushAsync();
+                                    }
+
+                                    await attachedFileRepository.SaveAttachedFileAsync(new AttachedFile()
+                                    {
+                                        BoardId = createdBoardId,
+                                        Size = Convert.ToInt32(boardInputViewModel.UploadedFile.Length),
+                                        Name = Path.GetFileNameWithoutExtension(boardInputViewModel.UploadedFile.FileName),
+                                        Extension = Path.GetExtension(boardInputViewModel.UploadedFile.FileName),
+                                        Path = $"/upload/Management/attachedFiles/{createdBoardId}/{attachedFile}"
+                                    });
+
+                                    return Json(new { result = true, message = localizer["The board has been successfully updated."].Value });
+                                }
+                                else
+                                {
+                                    return Ok(new { result = false, errorMessage = localizer["File Size must be smaller than 10MB."].Value });
+                                }
+                            }
+                            #endregion
+
+                            #region 기존 첨부 파일 X && 신 첨부 파일 X
+                            else
+                            {
+                                return Json(new { result = true, message = localizer["The board has been successfully updated."].Value });
+                            }
+                            #endregion
+
+                            #endregion
+                        }
+                        else
+                        {
+                            return Json(new { result = false, error = localizer["Please Login to edit board"].Value });
+                        }
+                    }
+                    catch
+                    {
+                        return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                    }
+                }
+                else
+                {
+                    return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                }
+            }
+            catch
+            {
+                return Json(new { result = false, error = localizer["Input is invalid"].Value });
+            }
+        }
+        #endregion
+
+        #endregion
+
+        #region Delete
+
+        #region Board
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [RequiredHttpPostAccess(Role = Role.Admin)]
+        [RequiredHttpPostAccess(Role = Role.User)]
+        public async Task<IActionResult> DeleteBoard([FromBody] BoardInputViewModel boardInputViewModel)
+        {
+            try
+            {
+                _ = HttpContext.Session.TryGetValue(Maroik.WebSite.Extensions.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account), out byte[] resultByte);
+                Account loginedAccount = await accountRepository.GetAccountByEmailAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+
+                IEnumerable<Board> privateNoteBoards = await boardRepository.GetOneTypeBoards(EnumHelper.GetDescription(BoardType.PrivateNote));
+                privateNoteBoards = privateNoteBoards.Where(m => m.Writer == loginedAccount.Nickname).Where(m => m.Deleted == false).OrderByDescending(a => a.Id);
+
+                if (privateNoteBoards == null)
+                {
+                    return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                }
+                else
+                {
+                    Board tempPrivateNoteBoard = privateNoteBoards.Where(a => a.Id == boardInputViewModel.Id).FirstOrDefault();
+
+                    if (tempPrivateNoteBoard == null)
+                    {
+                        return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                    }
+                    else
+                    {
+                        if ((loginedAccount.Nickname == tempPrivateNoteBoard.Writer)) // 방문한 사람이 작성자인 경우
+                        {
+                            #region 게시물 삭제
+                            tempPrivateNoteBoard.Deleted = true;
+                            await boardRepository.DeleteBoardAsync(tempPrivateNoteBoard);
+                            #endregion
+
+                            return Json(new { result = true, message = localizer["The board has been successfully deleted."].Value });
+                        }
+                        else
+                        {
+                            return Json(new { result = true, message = localizer["You do not have permission to delete."].Value });
+                        }
+                    }
+                }
+            }
+            catch
+            {
+                return Json(new { result = false, error = localizer["Input is invalid"].Value });
+            }
+        }
+        #endregion
+
+        #region Comment
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [RequiredHttpPostAccess(Role = Role.Admin)]
+        [RequiredHttpPostAccess(Role = Role.User)]
+        public async Task<IActionResult> DeleteComment(int id)
+        {
+            try
+            {
+                Comment comment = await commentRepository.GetComment(id);
+
+                if (comment == null)
+                {
+                    return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                }
+                else
+                {
+                    _ = HttpContext.Session.TryGetValue(Maroik.WebSite.Extensions.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account), out byte[] resultByte);
+                    Account loginedAccount = await accountRepository.GetAccountByEmailAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+
+                    if ((loginedAccount.Nickname == comment.Writer)) // 삭제하는 사람이 작성자인 경우
+                    {
+                        #region 게시물 삭제
+                        comment.Deleted = true;
+                        await commentRepository.DeleteCommentAsync(comment);
+                        #endregion
+
+                        return Json(new { result = true });
+                    }
+                    else
+                    {
+                        return Json(new { result = true, message = localizer["You do not have permission to delete."].Value });
+                    }
+
+                }
+            }
+            catch
+            {
+                return Json(new { result = false, error = localizer["Input is invalid"].Value });
+            }
+        }
+        #endregion
+
         #endregion
 
         #endregion
