@@ -187,7 +187,7 @@
 
                                             }
 
-                                            @if (loginedAccount.Nickname == comment.Writer || loginedAccount.Role == Role.Admin)@*작성자 또는 관리자인 경우*@
+                                            @if (loginedAccount.Nickname == comment.Writer)@*작성자인 경우*@
                                             {
                                                 <span class="text-muted float-right" style="margin: 0px 0px 0px 3px"><a class="hover aPrivateNoteDeleteComment" href="#" data-commentId="@(comment.Id)" data-detailBoardId="@(Model.DetailBoardId)" data-detailCurrentPage="@(Model.DetailCurrentPage)">@localizer["Delete"].Value</a></span>
                                             }
@@ -392,7 +392,7 @@
                                     <td style="font-weight:bold;">@localizer["Notice"]</td>
                                     @if (noticeBoard.Locked)
                                     {
-                                        @if (loginedAccount.Nickname == noticeBoard.Writer || loginedAccount.Role == Role.Admin)@*작성자 또는 관리자인 경우*@
+                                        @if (loginedAccount.Nickname == noticeBoard.Writer)@*작성자인 경우*@
                                         {
                                             <td><i class="fa fa-lock-open" aria-hidden="true"></i>@Html.ActionLink($"{noticeBoard.Title} [{commentsOfUndeletedSelectedBoard.Count}]", "PrivateNote", new {method = "detail", boardId = noticeBoard.Id, page = Model.Pager.CurrentPage}, new { style = "font-weight: bold;" })</td>
                                         }
@@ -440,7 +440,7 @@
                                 <tr>
                                     @if (board.Locked)
                                     {
-                                        @if (loginedAccount.Nickname == board.Writer || loginedAccount.Role == Role.Admin)@*작성자 또는 관리자인 경우*@
+                                        @if (loginedAccount.Nickname == board.Writer)@*작성자인 경우*@
                                         {
                                             <td><i class="fa fa-lock-open" aria-hidden="true"></i> @Html.ActionLink($"{board.Title} [{commentsOfUndeletedSelectedBoard.Count}]", "PrivateNote", new {method = "detail", boardId = board.Id, page = Model.Pager.CurrentPage})</td>
                                         }
