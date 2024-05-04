@@ -337,7 +337,7 @@
                         <li class="nav-item ml-auto">
                             <div class="input-group input-group-sm">
                                 <select id="searchType" name="searchType" style="margin: 0px 3px 0px 0px;">
-                                    @if (selectedSearchType == "Title")
+@*                                     @if (selectedSearchType == "Title")
                                     {
                                         <option value="Title" selected>@localizer["Title"].Value</option>
                                         <option value="Writer">@localizer["Writer"]</option>
@@ -351,6 +351,14 @@
                                     {
                                         <option value="Title">@localizer["Title"].Value</option>
                                         <option value="Writer">@localizer["Writer"]</option>
+                                    } *@
+                                    @if (selectedSearchType == "Title")
+                                    {
+                                        <option value="Title" selected>@localizer["Title"].Value</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="Title">@localizer["Title"].Value</option>
                                     }
                                 </select>
                                 <input class="form-control" type="text" id="btnPrivateNoteSearchText" value="@typedSearchText">
