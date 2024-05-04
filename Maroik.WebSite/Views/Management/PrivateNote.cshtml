@@ -230,7 +230,7 @@
 
                                             }
 
-                                            @if (loginedAccount.Nickname == comment.Writer || loginedAccount.Role == Role.Admin)@*작성자 또는 관리자인 경우*@
+                                            @if (loginedAccount.Nickname == comment.Writer)@*작성자인 경우*@
                                             {
                                                 <span class="text-muted float-right" style="margin: 0px 0px 0px 3px"><a class="hover aPrivateNoteDeleteComment" href="#" data-commentId="@(comment.Id)" data-detailBoardId="@(Model.DetailBoardId)" data-detailCurrentPage="@(Model.DetailCurrentPage)">@localizer["Delete"].Value</a></span>
                                             }
