@@ -1646,6 +1646,15 @@ namespace Maroik.WebSite.Controllers
                         {
                             Account loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)); // Get Session
 
+                            IEnumerable<Board> privateNoteBoards = await boardRepository.GetOneTypeBoards(EnumHelper.GetDescription(BoardType.PrivateNote));
+                            privateNoteBoards = privateNoteBoards.Where(m => m.Writer == loginedAccount.Nickname).Where(m => m.Deleted == false).OrderByDescending(a => a.Id);
+                            Board privateNoteBoard = privateNoteBoards.FirstOrDefault(m => m.Id == commentInputViewModel.BoardId);
+
+                            if (privateNoteBoard.Id != commentInputViewModel.BoardId)
+                            {
+                                return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                            }
+
                             IEnumerable<Comment> totalCommentsInSelectedBoard = await commentRepository.GetOneBoardComments(commentInputViewModel.BoardId);
 
                             Comment comment = new()
@@ -2221,7 +2230,7 @@ namespace Maroik.WebSite.Controllers
                     }
                     else
                     {
-                        if ((loginedAccount.Nickname == tempPrivateNoteBoard.Writer) || loginedAccount.Role == Role.Admin) // 방문한 사람이 작성자 또는 관리자인 경우
+                        if ((loginedAccount.Nickname == tempPrivateNoteBoard.Writer)) // 방문한 사람이 작성자인 경우
                         {
                             #region 게시물 삭제
                             tempPrivateNoteBoard.Deleted = true;
@@ -2264,7 +2273,7 @@ namespace Maroik.WebSite.Controllers
                     _ = HttpContext.Session.TryGetValue(Maroik.WebSite.Extensions.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account), out byte[] resultByte);
                     Account loginedAccount = await accountRepository.GetAccountByEmailAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
 
-                    if ((loginedAccount.Nickname == comment.Writer) || loginedAccount.Role == Role.Admin) // 삭제하는 사람이 작성자 또는 관리자인 경우
+                    if ((loginedAccount.Nickname == comment.Writer)) // 삭제하는 사람이 작성자인 경우
                     {
                         #region 게시물 삭제
                         comment.Deleted = true;
