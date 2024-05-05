@@ -183,6 +183,9 @@
   <data name="Title is required" xml:space="preserve">
     <value>Title is required</value>
   </data>
+  <data name="Type" xml:space="preserve">
+    <value>Type</value>
+  </data>
   <data name="Updated" xml:space="preserve">
     <value>Updated</value>
   </data>

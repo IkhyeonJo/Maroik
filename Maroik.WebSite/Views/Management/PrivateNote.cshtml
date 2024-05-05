@@ -375,6 +375,7 @@
                     <table id="tblPrivateNote" class="table table-striped table-bordered table-hover">
                         <thead>
                             <tr>
+                                <th>@localizer["Type"].Value</th>
                                 <th>@localizer["Title"].Value</th>
                                 <th>@localizer["Writer"].Value</th>
                                 <th>@localizer["Created"].Value</th>
@@ -438,6 +439,7 @@
                                 var attachedFilesWithName = (await attachedFileRepository.GetAllAsync()).Where(m => m.BoardId == board.Id).Where(m => !string.IsNullOrEmpty(m.Name)).ToList();
 
                                 <tr>
+                                    <td>@localizer["Private Note"]</td>
                                     @if (board.Locked)
                                     {
                                         @if (loginedAccount.Nickname == board.Writer)@*작성자인 경우*@
