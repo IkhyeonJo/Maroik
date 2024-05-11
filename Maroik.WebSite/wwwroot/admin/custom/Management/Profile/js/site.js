@@ -4,7 +4,7 @@
 // Write your JavaScript code.
 function UpdateProfileAvatar(noFileAttachedErrorMessage, fileSizeLimitationErrorMessage, fileTypeErrorMessage) {
     let files = document.getElementById('ProfileAvatarFiles').files[0];
-    if (files === undefined || files == null) {
+    if (files === undefined || files === null) {
         alert(noFileAttachedErrorMessage);
         window.location.href = "/Management/Profile";
     }

@@ -69,7 +69,7 @@ $('#gridSearch').on('input', function () {
 
 function CreateFormShowIncomeSubClassBySelectedIncomeMainClass(createIncomeMainClass) {
 
-    if (createIncomeMainClass.value == "RegularIncome") {
+    if (createIncomeMainClass.value === "RegularIncome") {
         $('#createIncomeSubClass option[value=LaborIncome]').prop('disabled', true).prop('hidden', true);
         $('#createIncomeSubClass option[value=BusinessIncome]').prop('disabled', true).prop('hidden', true);
         $('#createIncomeSubClass option[value=PensionIncome]').prop('disabled', true).prop('hidden', true);
@@ -88,7 +88,7 @@ function CreateFormShowIncomeSubClassBySelectedIncomeMainClass(createIncomeMainC
 
         $("#createIncomeSubClass").val("LaborIncome").change();
     }
-    else if (createIncomeMainClass.value == "IrregularIncome") {
+    else if (createIncomeMainClass.value === "IrregularIncome") {
         $('#createIncomeSubClass option[value=LaborIncome]').prop('disabled', true).prop('hidden', true);
         $('#createIncomeSubClass option[value=BusinessIncome]').prop('disabled', true).prop('hidden', true);
         $('#createIncomeSubClass option[value=PensionIncome]').prop('disabled', true).prop('hidden', true);
@@ -107,7 +107,7 @@ function CreateFormShowIncomeSubClassBySelectedIncomeMainClass(createIncomeMainC
 
 function EditFormShowIncomeSubClassBySelectedIncomeMainClass(createIncomeMainClass) {
 
-    if (createIncomeMainClass.value == "RegularIncome") {
+    if (createIncomeMainClass.value === "RegularIncome") {
         $('#editIncomeSubClass option[value=LaborIncome]').prop('disabled', true).prop('hidden', true);
         $('#editIncomeSubClass option[value=BusinessIncome]').prop('disabled', true).prop('hidden', true);
         $('#editIncomeSubClass option[value=PensionIncome]').prop('disabled', true).prop('hidden', true);
@@ -126,7 +126,7 @@ function EditFormShowIncomeSubClassBySelectedIncomeMainClass(createIncomeMainCla
 
         $("#editIncomeSubClass").val("LaborIncome").change();
     }
-    else if (createIncomeMainClass.value == "IrregularIncome") {
+    else if (createIncomeMainClass.value === "IrregularIncome") {
         $('#editIncomeSubClass option[value=LaborIncome]').prop('disabled', true).prop('hidden', true);
         $('#editIncomeSubClass option[value=BusinessIncome]').prop('disabled', true).prop('hidden', true);
         $('#editIncomeSubClass option[value=PensionIncome]').prop('disabled', true).prop('hidden', true);
@@ -236,7 +236,7 @@ function EditIncomeGridRow(errorMessageSelectGridRow) {
                 formEditIncome.find('input[id="editIncomeId"]').val(data.income.id);
                 formEditIncome.find('select[id="editIncomeMainClass"]').val(data.income.mainClass).change();
 
-                if (data.income.mainClass == "RegularIncome") {
+                if (data.income.mainClass === "RegularIncome") {
                     $('#editIncomeSubClass option[value=LaborIncome]').prop('disabled', true).prop('hidden', true);
                     $('#editIncomeSubClass option[value=BusinessIncome]').prop('disabled', true).prop('hidden', true);
                     $('#editIncomeSubClass option[value=PensionIncome]').prop('disabled', true).prop('hidden', true);
@@ -255,7 +255,7 @@ function EditIncomeGridRow(errorMessageSelectGridRow) {
 
                     formEditIncome.find('select[id="editIncomeSubClass"]').val(data.income.subClass).change();
                 }
-                else if (data.income.mainClass == "IrregularIncome") {
+                else if (data.income.mainClass === "IrregularIncome") {
                     $('#editIncomeSubClass option[value=LaborIncome]').prop('disabled', true).prop('hidden', true);
                     $('#editIncomeSubClass option[value=BusinessIncome]').prop('disabled', true).prop('hidden', true);
                     $('#editIncomeSubClass option[value=PensionIncome]').prop('disabled', true).prop('hidden', true);

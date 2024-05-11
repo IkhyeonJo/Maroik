@@ -69,7 +69,7 @@ $('#gridSearch').on('input', function () {
 
 function CreateFormShowFixedIncomeSubClassBySelectedFixedIncomeMainClass(createFixedIncomeMainClass) {
 
-    if (createFixedIncomeMainClass.value == "RegularIncome") {
+    if (createFixedIncomeMainClass.value === "RegularIncome") {
         $('#createFixedIncomeSubClass option[value=LaborIncome]').prop('disabled', true).prop('hidden', true);
         $('#createFixedIncomeSubClass option[value=BusinessIncome]').prop('disabled', true).prop('hidden', true);
         $('#createFixedIncomeSubClass option[value=PensionIncome]').prop('disabled', true).prop('hidden', true);
@@ -88,7 +88,7 @@ function CreateFormShowFixedIncomeSubClassBySelectedFixedIncomeMainClass(createF
 
         $("#createFixedIncomeSubClass").val("LaborIncome").change();
     }
-    else if (createFixedIncomeMainClass.value == "IrregularIncome") {
+    else if (createFixedIncomeMainClass.value === "IrregularIncome") {
         $('#createFixedIncomeSubClass option[value=LaborIncome]').prop('disabled', true).prop('hidden', true);
         $('#createFixedIncomeSubClass option[value=BusinessIncome]').prop('disabled', true).prop('hidden', true);
         $('#createFixedIncomeSubClass option[value=PensionIncome]').prop('disabled', true).prop('hidden', true);
@@ -107,13 +107,13 @@ function CreateFormShowFixedIncomeSubClassBySelectedFixedIncomeMainClass(createF
 
 function CreateFormShowFixedIncomeDepositDayBySelectedFixedIncomeDepositMonth(createFixedIncomeDepositMonth) {
 
-    if (createFixedIncomeDepositMonth.value == "1" ||
-        createFixedIncomeDepositMonth.value == "3" ||
-        createFixedIncomeDepositMonth.value == "5" ||
-        createFixedIncomeDepositMonth.value == "7" ||
-        createFixedIncomeDepositMonth.value == "8" ||
-        createFixedIncomeDepositMonth.value == "10" ||
-        createFixedIncomeDepositMonth.value == "12"
+    if (createFixedIncomeDepositMonth.value === "1" ||
+        createFixedIncomeDepositMonth.value === "3" ||
+        createFixedIncomeDepositMonth.value === "5" ||
+        createFixedIncomeDepositMonth.value === "7" ||
+        createFixedIncomeDepositMonth.value === "8" ||
+        createFixedIncomeDepositMonth.value === "10" ||
+        createFixedIncomeDepositMonth.value === "12"
     ) {
         $('#createFixedIncomeDepositDay option[value=29]').prop('disabled', true).prop('hidden', true);
         $('#createFixedIncomeDepositDay option[value=30]').prop('disabled', true).prop('hidden', true);
@@ -128,7 +128,7 @@ function CreateFormShowFixedIncomeDepositDayBySelectedFixedIncomeDepositMonth(cr
 
         $("#createFixedIncomeDepositDay").val("1").change();
     }
-    else if (createFixedIncomeDepositMonth.value == "2") {
+    else if (createFixedIncomeDepositMonth.value === "2") {
         $('#createFixedIncomeDepositDay option[value=29]').prop('disabled', true).prop('hidden', true);
         $('#createFixedIncomeDepositDay option[value=30]').prop('disabled', true).prop('hidden', true);
         $('#createFixedIncomeDepositDay option[value=31]').prop('disabled', true).prop('hidden', true);
@@ -140,10 +140,10 @@ function CreateFormShowFixedIncomeDepositDayBySelectedFixedIncomeDepositMonth(cr
 
         $("#createFixedIncomeDepositDay").val("1").change();
     }
-    else if (createFixedIncomeDepositMonth.value == "4" ||
-        createFixedIncomeDepositMonth.value == "6" ||
-        createFixedIncomeDepositMonth.value == "9" ||
-        createFixedIncomeDepositMonth.value == "11"
+    else if (createFixedIncomeDepositMonth.value === "4" ||
+        createFixedIncomeDepositMonth.value === "6" ||
+        createFixedIncomeDepositMonth.value === "9" ||
+        createFixedIncomeDepositMonth.value === "11"
     ) {
         $('#createFixedIncomeDepositDay option[value=29]').prop('disabled', true).prop('hidden', true);
         $('#createFixedIncomeDepositDay option[value=30]').prop('disabled', true).prop('hidden', true);
@@ -161,7 +161,7 @@ function CreateFormShowFixedIncomeDepositDayBySelectedFixedIncomeDepositMonth(cr
 
 function EditFormShowFixedIncomeSubClassBySelectedFixedIncomeMainClass(editFixedIncomeMainClass) {
 
-    if (editFixedIncomeMainClass.value == "RegularIncome") {
+    if (editFixedIncomeMainClass.value === "RegularIncome") {
         $('#editFixedIncomeSubClass option[value=LaborIncome]').prop('disabled', true).prop('hidden', true);
         $('#editFixedIncomeSubClass option[value=BusinessIncome]').prop('disabled', true).prop('hidden', true);
         $('#editFixedIncomeSubClass option[value=PensionIncome]').prop('disabled', true).prop('hidden', true);
@@ -180,7 +180,7 @@ function EditFormShowFixedIncomeSubClassBySelectedFixedIncomeMainClass(editFixed
 
         $("#editFixedIncomeSubClass").val("LaborIncome").change();
     }
-    else if (editFixedIncomeMainClass.value == "IrregularIncome") {
+    else if (editFixedIncomeMainClass.value === "IrregularIncome") {
         $('#editFixedIncomeSubClass option[value=LaborIncome]').prop('disabled', true).prop('hidden', true);
         $('#editFixedIncomeSubClass option[value=BusinessIncome]').prop('disabled', true).prop('hidden', true);
         $('#editFixedIncomeSubClass option[value=PensionIncome]').prop('disabled', true).prop('hidden', true);
@@ -199,13 +199,13 @@ function EditFormShowFixedIncomeSubClassBySelectedFixedIncomeMainClass(editFixed
 
 function EditFormShowFixedIncomeDepositDayBySelectedFixedIncomeDepositMonth(editFixedIncomeDepositMonth) {
 
-    if (editFixedIncomeDepositMonth.value == "1" ||
-        editFixedIncomeDepositMonth.value == "3" ||
-        editFixedIncomeDepositMonth.value == "5" ||
-        editFixedIncomeDepositMonth.value == "7" ||
-        editFixedIncomeDepositMonth.value == "8" ||
-        editFixedIncomeDepositMonth.value == "10" ||
-        editFixedIncomeDepositMonth.value == "12"
+    if (editFixedIncomeDepositMonth.value === "1" ||
+        editFixedIncomeDepositMonth.value === "3" ||
+        editFixedIncomeDepositMonth.value === "5" ||
+        editFixedIncomeDepositMonth.value === "7" ||
+        editFixedIncomeDepositMonth.value === "8" ||
+        editFixedIncomeDepositMonth.value === "10" ||
+        editFixedIncomeDepositMonth.value === "12"
     ) {
         $('#editFixedIncomeDepositDay option[value=29]').prop('disabled', true).prop('hidden', true);
         $('#editFixedIncomeDepositDay option[value=30]').prop('disabled', true).prop('hidden', true);
@@ -220,7 +220,7 @@ function EditFormShowFixedIncomeDepositDayBySelectedFixedIncomeDepositMonth(edit
 
         $("#editFixedIncomeDepositDay").val("1").change();
     }
-    else if (editFixedIncomeDepositMonth.value == "2") {
+    else if (editFixedIncomeDepositMonth.value === "2") {
         $('#editFixedIncomeDepositDay option[value=29]').prop('disabled', true).prop('hidden', true);
         $('#editFixedIncomeDepositDay option[value=30]').prop('disabled', true).prop('hidden', true);
         $('#editFixedIncomeDepositDay option[value=31]').prop('disabled', true).prop('hidden', true);
@@ -232,10 +232,10 @@ function EditFormShowFixedIncomeDepositDayBySelectedFixedIncomeDepositMonth(edit
 
         $("#editFixedIncomeDepositDay").val("1").change();
     }
-    else if (editFixedIncomeDepositMonth.value == "4" ||
-        editFixedIncomeDepositMonth.value == "6" ||
-        editFixedIncomeDepositMonth.value == "9" ||
-        editFixedIncomeDepositMonth.value == "11"
+    else if (editFixedIncomeDepositMonth.value === "4" ||
+        editFixedIncomeDepositMonth.value === "6" ||
+        editFixedIncomeDepositMonth.value === "9" ||
+        editFixedIncomeDepositMonth.value === "11"
     ) {
         $('#editFixedIncomeDepositDay option[value=29]').prop('disabled', true).prop('hidden', true);
         $('#editFixedIncomeDepositDay option[value=30]').prop('disabled', true).prop('hidden', true);
@@ -340,7 +340,7 @@ function EditFixedIncomeGridRow(errorMessageSelectGridRow) {
                 formEditFixedIncome.find('input[id="editFixedIncomeId"]').val(data.fixedIncome.id);
                 formEditFixedIncome.find('select[id="editFixedIncomeMainClass"]').val(data.fixedIncome.mainClass).change();
 
-                if (data.fixedIncome.mainClass == "RegularIncome") {
+                if (data.fixedIncome.mainClass === "RegularIncome") {
                     $('#editFixedIncomeSubClass option[value=LaborIncome]').prop('disabled', true).prop('hidden', true);
                     $('#editFixedIncomeSubClass option[value=BusinessIncome]').prop('disabled', true).prop('hidden', true);
                     $('#editFixedIncomeSubClass option[value=PensionIncome]').prop('disabled', true).prop('hidden', true);
@@ -359,7 +359,7 @@ function EditFixedIncomeGridRow(errorMessageSelectGridRow) {
 
                     formEditFixedIncome.find('select[id="editFixedIncomeSubClass"]').val(data.fixedIncome.subClass).change();
                 }
-                else if (data.fixedIncome.mainClass == "IrregularIncome") {
+                else if (data.fixedIncome.mainClass === "IrregularIncome") {
                     $('#editFixedIncomeSubClass option[value=LaborIncome]').prop('disabled', true).prop('hidden', true);
                     $('#editFixedIncomeSubClass option[value=BusinessIncome]').prop('disabled', true).prop('hidden', true);
                     $('#editFixedIncomeSubClass option[value=PensionIncome]').prop('disabled', true).prop('hidden', true);
@@ -380,13 +380,13 @@ function EditFixedIncomeGridRow(errorMessageSelectGridRow) {
 
                 formEditFixedIncome.find('select[id="editFixedIncomeDepositMonth"]').val(data.fixedIncome.depositMonth.toString()).change();
 
-                if (data.fixedIncome.depositMonth.toString() == "1" ||
-                    data.fixedIncome.depositMonth.toString() == "3" ||
-                    data.fixedIncome.depositMonth.toString() == "5" ||
-                    data.fixedIncome.depositMonth.toString() == "7" ||
-                    data.fixedIncome.depositMonth.toString() == "8" ||
-                    data.fixedIncome.depositMonth.toString() == "10" ||
-                    data.fixedIncome.depositMonth.toString() == "12"
+                if (data.fixedIncome.depositMonth.toString() === "1" ||
+                    data.fixedIncome.depositMonth.toString() === "3" ||
+                    data.fixedIncome.depositMonth.toString() === "5" ||
+                    data.fixedIncome.depositMonth.toString() === "7" ||
+                    data.fixedIncome.depositMonth.toString() === "8" ||
+                    data.fixedIncome.depositMonth.toString() === "10" ||
+                    data.fixedIncome.depositMonth.toString() === "12"
                 ) {
                     $('#editFixedIncomeDepositDay option[value=29]').prop('disabled', true).prop('hidden', true);
                     $('#editFixedIncomeDepositDay option[value=30]').prop('disabled', true).prop('hidden', true);
@@ -400,7 +400,7 @@ function EditFixedIncomeGridRow(errorMessageSelectGridRow) {
 
                     formEditFixedIncome.find('select[id="editFixedIncomeDepositDay"]').val(data.fixedIncome.depositDay.toString()).change();
                 }
-                else if (data.fixedIncome.depositMonth.toString() == "2") {
+                else if (data.fixedIncome.depositMonth.toString() === "2") {
                     $('#editFixedIncomeDepositDay option[value=29]').prop('disabled', true).prop('hidden', true);
                     $('#editFixedIncomeDepositDay option[value=30]').prop('disabled', true).prop('hidden', true);
                     $('#editFixedIncomeDepositDay option[value=31]').prop('disabled', true).prop('hidden', true);
@@ -411,10 +411,10 @@ function EditFixedIncomeGridRow(errorMessageSelectGridRow) {
 
                     formEditFixedIncome.find('select[id="editFixedIncomeDepositDay"]').val(data.fixedIncome.depositDay.toString()).change();
                 }
-                else if (data.fixedIncome.depositMonth.toString() == "4" ||
-                    data.fixedIncome.depositMonth.toString() == "6" ||
-                    data.fixedIncome.depositMonth.toString() == "9" ||
-                    data.fixedIncome.depositMonth.toString() == "11"
+                else if (data.fixedIncome.depositMonth.toString() === "4" ||
+                    data.fixedIncome.depositMonth.toString() === "6" ||
+                    data.fixedIncome.depositMonth.toString() === "9" ||
+                    data.fixedIncome.depositMonth.toString() === "11"
                 ) {
                     $('#editFixedIncomeDepositDay option[value=29]').prop('disabled', true).prop('hidden', true);
                     $('#editFixedIncomeDepositDay option[value=30]').prop('disabled', true).prop('hidden', true);

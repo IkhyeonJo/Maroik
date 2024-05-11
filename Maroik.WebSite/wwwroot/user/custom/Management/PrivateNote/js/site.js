@@ -346,7 +346,7 @@ $('#btnPrivateNoteDeleteBoard').off('click').on('click', function () {
 });
 
 $('#btnPrivateNoteSearchText').off('keypress').on('keypress', function (event) {
-    if (event.keyCode == 13 || event.which == 13) {
+    if (event.keyCode === 13 || event.which === 13) {
         SearchBoard();
     }
 });
