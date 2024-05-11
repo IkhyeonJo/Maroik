@@ -3,7 +3,6 @@ using Maroik.Common.DataAccess.Contracts;
 using Maroik.Common.DataAccess.Models;
 using Maroik.WebSite.Extensions;
 using Maroik.WebSite.Models;
-using Maroik.WebSite.Models.ViewModels.Account;
 using Maroik.WebSite.Models.ViewModels.Management;
 using Maroik.WebSite.Utilities;
 using Microsoft.AspNetCore.Mvc;
@@ -140,7 +139,7 @@ namespace Maroik.WebSite.Controllers
                     Account tempAccount = await accountRepository.GetAccountByEmailAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
                     tempAccount.TimeZoneIanaId = profileInputViewModel.TimeZoneIanaId;
                     await accountRepository.UpdateAccountAsync(tempAccount);
-                    
+
                     HttpContext.Session.Remove(Maroik.WebSite.Extensions.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account));
                     tempAccount.HashedPassword = null;
                     HttpContext.Session.Set(Maroik.WebSite.Extensions.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account), Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(tempAccount)));
@@ -1932,7 +1931,7 @@ namespace Maroik.WebSite.Controllers
                 PrivateNoteOutputViewModel privateNoteOutputViewModel = new();
 
                 #region 공지사항
-                privateNoteOutputViewModel.NoticeBoards = new List<Board>();
+                privateNoteOutputViewModel.NoticeBoards = [];
                 #endregion
 
                 #region 게시판 목록
@@ -2230,7 +2229,7 @@ namespace Maroik.WebSite.Controllers
                     }
                     else
                     {
-                        if ((loginedAccount.Nickname == tempPrivateNoteBoard.Writer)) // 방문한 사람이 작성자인 경우
+                        if (loginedAccount.Nickname == tempPrivateNoteBoard.Writer) // 방문한 사람이 작성자인 경우
                         {
                             #region 게시물 삭제
                             tempPrivateNoteBoard.Deleted = true;
@@ -2273,7 +2272,7 @@ namespace Maroik.WebSite.Controllers
                     _ = HttpContext.Session.TryGetValue(Maroik.WebSite.Extensions.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account), out byte[] resultByte);
                     Account loginedAccount = await accountRepository.GetAccountByEmailAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
 
-                    if ((loginedAccount.Nickname == comment.Writer)) // 삭제하는 사람이 작성자인 경우
+                    if (loginedAccount.Nickname == comment.Writer) // 삭제하는 사람이 작성자인 경우
                     {
                         #region 게시물 삭제
                         comment.Deleted = true;
