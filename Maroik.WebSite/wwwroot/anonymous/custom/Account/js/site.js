@@ -48,7 +48,7 @@ function ShowLoginLoading() {
 
 function ChangeCulture(culture) {
     
-    var paramValue = JSON.stringify({
+    let paramValue = JSON.stringify({
         Culture: culture
     });
 

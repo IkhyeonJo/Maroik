@@ -22,7 +22,7 @@ $(function () {
         showButtonPanel: true,
         beforeShow: function (input) {
             setTimeout(function () {
-                var buttonPane = $(input)
+                let buttonPane = $(input)
                     .datepicker("widget")
                     .find(".ui-datepicker-buttonpane");
 
@@ -46,7 +46,7 @@ $(function () {
         },
         onChangeMonthYear: function (year, month, instance) {
             setTimeout(function () {
-                var buttonPane = $(instance)
+                let buttonPane = $(instance)
                     .datepicker("widget")
                     .find(".ui-datepicker-buttonpane");
 
@@ -92,7 +92,7 @@ $(function () {
         showButtonPanel: true,
         beforeShow: function (input) {
             setTimeout(function () {
-                var buttonPane = $(input)
+                let buttonPane = $(input)
                     .datepicker("widget")
                     .find(".ui-datepicker-buttonpane");
 
@@ -116,7 +116,7 @@ $(function () {
         },
         onChangeMonthYear: function (year, month, instance) {
             setTimeout(function () {
-                var buttonPane = $(instance)
+                let buttonPane = $(instance)
                     .datepicker("widget")
                     .find(".ui-datepicker-buttonpane");
 

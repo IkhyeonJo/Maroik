@@ -3,7 +3,7 @@
 
 // Write your JavaScript code.
 
-var selectedRowColor = "table-primary";
+let selectedRowColor = "table-primary";
 
 // Triggered when grid's row is clicked. It's recommended to use event delegation in ajax scenarios.
 document.addEventListener("rowclick", e => {
@@ -11,8 +11,8 @@ document.addEventListener("rowclick", e => {
     //e.detail.grid - grid's instance.
     //e.detail.originalEvent - original tr click event which triggered the rowclick.
 
-    var selectedRow = e.detail;
-    var selectedRowId = selectedRow.data.Id;
+    let selectedRow = e.detail;
+    let selectedRowId = selectedRow.data.Id;
 
     $('#incomeGrid > table > tbody  > tr').each(function (index, tr) {
         $(this).removeClass(selectedRowColor);
@@ -149,25 +149,25 @@ function CreateIncome() {
         return false;
     }
 
-    var createForm = $('#formCreateIncome');
+    let createForm = $('#formCreateIncome');
 
-    var mainClass = createForm.find('select[id="createIncomeMainClass"]').val();
-    var subClass = createForm.find('select[id="createIncomeSubClass"]').val();
-    var contents = createForm.find('input[id="createIncomeContents"]').val();
-    var amount = createForm.find('input[id="createIncomeAmount"]').val();
+    let mainClass = createForm.find('select[id="createIncomeMainClass"]').val();
+    let subClass = createForm.find('select[id="createIncomeSubClass"]').val();
+    let contents = createForm.find('input[id="createIncomeContents"]').val();
+    let amount = createForm.find('input[id="createIncomeAmount"]').val();
 
-    var year = parseInt(createForm.find('input[id="createIncomeDate"]').val().substring(0, 4));
-    var month = parseInt(createForm.find('input[id="createIncomeDate"]').val().substring(5, 7));
-    var day = parseInt(createForm.find('input[id="createIncomeDate"]').val().substring(8, 10));
-    var hour = parseInt(createForm.find('select[id="createIncomeHour"]').val());
-    var minute = parseInt(createForm.find('select[id="createIncomeMinute"]').val());
-    var second = parseInt(createForm.find('select[id="createIncomeSecond"]').val());
+    let year = parseInt(createForm.find('input[id="createIncomeDate"]').val().substring(0, 4));
+    let month = parseInt(createForm.find('input[id="createIncomeDate"]').val().substring(5, 7));
+    let day = parseInt(createForm.find('input[id="createIncomeDate"]').val().substring(8, 10));
+    let hour = parseInt(createForm.find('select[id="createIncomeHour"]').val());
+    let minute = parseInt(createForm.find('select[id="createIncomeMinute"]').val());
+    let second = parseInt(createForm.find('select[id="createIncomeSecond"]').val());
 
-    var created = new Date(year, month - 1, day, hour, minute, second).toISOString();
-    var depositMyAssetProductName = createForm.find('select[id="createIncomeDepositMyAssetProductName"]').val();
-    var note = createForm.find('input[id="createIncomeNote"]').val();
+    let created = new Date(year, month - 1, day, hour, minute, second).toISOString();
+    let depositMyAssetProductName = createForm.find('select[id="createIncomeDepositMyAssetProductName"]').val();
+    let note = createForm.find('input[id="createIncomeNote"]').val();
 
-    var paramValue = JSON.stringify({
+    let paramValue = JSON.stringify({
         MainClass: mainClass,
         SubClass: subClass,
         Contents: contents,
@@ -206,7 +206,7 @@ function CreateIncome() {
 
 function EditIncomeGridRow(errorMessageSelectGridRow) {
 
-    var selectedRowId = "";
+    let selectedRowId = "";
 
     $('#incomeGrid > table > tbody  > tr').each(function (index, tr) {
         if ($(this).attr("class").includes(selectedRowColor)) { // Get SelectedRow by Color
@@ -231,7 +231,7 @@ function EditIncomeGridRow(errorMessageSelectGridRow) {
         success: function (data) {
             if (data.result) {
 
-                var formEditIncome = $('#formEditIncome');
+                let formEditIncome = $('#formEditIncome');
 
                 formEditIncome.find('input[id="editIncomeId"]').val(data.income.id);
                 formEditIncome.find('select[id="editIncomeMainClass"]').val(data.income.mainClass).change();
@@ -301,26 +301,26 @@ function UpdateIncome() {
         return false;
     }
 
-    var createForm = $('#formEditIncome');
+    let createForm = $('#formEditIncome');
 
-    var id = createForm.find('input[id="editIncomeId"]').val();
-    var mainClass = createForm.find('select[id="editIncomeMainClass"]').val();
-    var subClass = createForm.find('select[id="editIncomeSubClass"]').val();
-    var contents = createForm.find('input[id="editIncomeContents"]').val();
-    var amount = createForm.find('input[id="editIncomeAmount"]').val();
+    let id = createForm.find('input[id="editIncomeId"]').val();
+    let mainClass = createForm.find('select[id="editIncomeMainClass"]').val();
+    let subClass = createForm.find('select[id="editIncomeSubClass"]').val();
+    let contents = createForm.find('input[id="editIncomeContents"]').val();
+    let amount = createForm.find('input[id="editIncomeAmount"]').val();
 
-    var year = parseInt(createForm.find('input[id="editIncomeDate"]').val().substring(0, 4));
-    var month = parseInt(createForm.find('input[id="editIncomeDate"]').val().substring(5, 7));
-    var day = parseInt(createForm.find('input[id="editIncomeDate"]').val().substring(8, 10));
-    var hour = parseInt(createForm.find('select[id="editIncomeHour"]').val());
-    var minute = parseInt(createForm.find('select[id="editIncomeMinute"]').val());
-    var second = parseInt(createForm.find('select[id="editIncomeSecond"]').val());
+    let year = parseInt(createForm.find('input[id="editIncomeDate"]').val().substring(0, 4));
+    let month = parseInt(createForm.find('input[id="editIncomeDate"]').val().substring(5, 7));
+    let day = parseInt(createForm.find('input[id="editIncomeDate"]').val().substring(8, 10));
+    let hour = parseInt(createForm.find('select[id="editIncomeHour"]').val());
+    let minute = parseInt(createForm.find('select[id="editIncomeMinute"]').val());
+    let second = parseInt(createForm.find('select[id="editIncomeSecond"]').val());
 
-    var created = new Date(year, month - 1, day, hour, minute, second).toISOString();
-    var depositMyAssetProductName = createForm.find('select[id="editIncomeDepositMyAssetProductName"]').val();
-    var note = createForm.find('input[id="editIncomeNote"]').val();
+    let created = new Date(year, month - 1, day, hour, minute, second).toISOString();
+    let depositMyAssetProductName = createForm.find('select[id="editIncomeDepositMyAssetProductName"]').val();
+    let note = createForm.find('input[id="editIncomeNote"]').val();
 
-    var paramValue = JSON.stringify({
+    let paramValue = JSON.stringify({
         Id: id,
         MainClass: mainClass,
         SubClass: subClass,
@@ -359,7 +359,7 @@ function UpdateIncome() {
 
 function ConfirmDeleteIncome(errorMessageSelectGridRow) {
 
-    var selectedRowId = "";
+    let selectedRowId = "";
 
     $('#incomeGrid > table > tbody  > tr').each(function (index, tr) {
         if ($(this).attr("class").includes(selectedRowColor)) { // Get SelectedRow by Color
@@ -383,7 +383,7 @@ function ConfirmDeleteIncome(errorMessageSelectGridRow) {
 
 function DeleteIncome(errorMessageSelectGridRow) {
 
-    var selectedRowId = "";
+    let selectedRowId = "";
 
     $('#incomeGrid > table > tbody  > tr').each(function (index, tr) {
         if ($(this).attr("class").includes(selectedRowColor)) { // Get SelectedRow by Color
@@ -408,7 +408,7 @@ function DeleteIncome(errorMessageSelectGridRow) {
         success: function (data) {
             if (data.result) {
 
-                var paramValue = JSON.stringify({
+                let paramValue = JSON.stringify({
                     Id: data.income.id
                 });
 
@@ -444,9 +444,9 @@ function DeleteIncome(errorMessageSelectGridRow) {
 }
 
 function ExportExcelIncome() {
-    var form = document.createElement("form");
-    var element1 = document.createElement("input");
-    var element2 = document.createElement("input");
+    let form = document.createElement("form");
+    let element1 = document.createElement("input");
+    let element2 = document.createElement("input");
 
     form.method = "POST";
     form.action = "/AccountBook/ExportExcelIncome";

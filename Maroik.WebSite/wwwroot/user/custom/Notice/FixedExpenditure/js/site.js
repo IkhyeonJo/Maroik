@@ -3,7 +3,7 @@
 
 // Write your JavaScript code.
 
-var selectedRowColor = "table-primary";
+let selectedRowColor = "table-primary";
 
 // Triggered when grid's row is clicked. It's recommended to use event delegation in ajax scenarios.
 document.addEventListener("rowclick", e => {
@@ -11,8 +11,8 @@ document.addEventListener("rowclick", e => {
     //e.detail.grid - grid's instance.
     //e.detail.originalEvent - original tr click event which triggered the rowclick.
 
-    var selectedRow = e.detail;
-    var selectedRowId = selectedRow.data.Id;
+    let selectedRow = e.detail;
+    let selectedRowId = selectedRow.data.Id;
 
     $('#fixedExpenditureGrid > table > tbody  > tr').each(function (index, tr) {
         $(this).removeClass(selectedRowColor);
@@ -441,20 +441,20 @@ function CreateFixedExpenditure() {
         return false;
     }
 
-    var createForm = $('#formCreateFixedExpenditure');
+    let createForm = $('#formCreateFixedExpenditure');
 
-    var mainClass = createForm.find('select[id="createFixedExpenditureMainClass"]').val();
-    var subClass = createForm.find('select[id="createFixedExpenditureSubClass"]').val();
-    var contents = createForm.find('input[id="createFixedExpenditureContents"]').val();
-    var amount = createForm.find('input[id="createFixedExpenditureAmount"]').val();
-    var depositMonth = createForm.find('select[id="createFixedExpenditureDepositMonth"]').val();
-    var depositDay = createForm.find('select[id="createFixedExpenditureDepositDay"]').val();
-    var maturityDate = createForm.find('input[id="createFixedExpenditureMaturityDate"]').val();
-    var note = createForm.find('input[id="createFixedExpenditureNote"]').val();
-    var paymentMethod = createForm.find('select[id="createFixedExpenditurePaymentMethod"]').val();
-    var myDepositAsset = createForm.find('select[id="createFixedExpenditureMyDepositAsset"]').val();
+    let mainClass = createForm.find('select[id="createFixedExpenditureMainClass"]').val();
+    let subClass = createForm.find('select[id="createFixedExpenditureSubClass"]').val();
+    let contents = createForm.find('input[id="createFixedExpenditureContents"]').val();
+    let amount = createForm.find('input[id="createFixedExpenditureAmount"]').val();
+    let depositMonth = createForm.find('select[id="createFixedExpenditureDepositMonth"]').val();
+    let depositDay = createForm.find('select[id="createFixedExpenditureDepositDay"]').val();
+    let maturityDate = createForm.find('input[id="createFixedExpenditureMaturityDate"]').val();
+    let note = createForm.find('input[id="createFixedExpenditureNote"]').val();
+    let paymentMethod = createForm.find('select[id="createFixedExpenditurePaymentMethod"]').val();
+    let myDepositAsset = createForm.find('select[id="createFixedExpenditureMyDepositAsset"]').val();
 
-    var paramValue = JSON.stringify({
+    let paramValue = JSON.stringify({
         MainClass: mainClass,
         SubClass: subClass,
         Contents: contents,
@@ -496,7 +496,7 @@ function CreateFixedExpenditure() {
 
 function EditFixedExpenditureGridRow(errorMessageSelectGridRow) {
 
-    var selectedRowId = "";
+    let selectedRowId = "";
 
     $('#fixedExpenditureGrid > table > tbody  > tr').each(function (index, tr) {
         if ($(this).attr("class").includes(selectedRowColor)) { // Get SelectedRow by Color
@@ -521,7 +521,7 @@ function EditFixedExpenditureGridRow(errorMessageSelectGridRow) {
         success: function (data) {
             if (data.result) {
 
-                var formEditFixedExpenditure = $('#formEditFixedExpenditure');
+                let formEditFixedExpenditure = $('#formEditFixedExpenditure');
 
                 formEditFixedExpenditure.find('input[id="editFixedExpenditureId"]').val(data.fixedExpenditure.id);
                 formEditFixedExpenditure.find('select[id="editFixedExpenditureMainClass"]').val(data.fixedExpenditure.mainClass).change();
@@ -861,22 +861,22 @@ function UpdateFixedExpenditure() {
         return false;
     }
 
-    var createForm = $('#formEditFixedExpenditure');
+    let createForm = $('#formEditFixedExpenditure');
 
-    var id = createForm.find('input[id="editFixedExpenditureId"]').val();
-    var mainClass = createForm.find('select[id="editFixedExpenditureMainClass"]').val();
-    var subClass = createForm.find('select[id="editFixedExpenditureSubClass"]').val();
-    var contents = createForm.find('input[id="editFixedExpenditureContents"]').val();
-    var amount = createForm.find('input[id="editFixedExpenditureAmount"]').val();
-    var depositMonth = createForm.find('select[id="editFixedExpenditureDepositMonth"]').val();
-    var depositDay = createForm.find('select[id="editFixedExpenditureDepositDay"]').val();
-    var maturityDate = createForm.find('input[id="editFixedExpenditureMaturityDate"]').val();
-    var note = createForm.find('input[id="editFixedExpenditureNote"]').val();
-    var paymentMethod = createForm.find('select[id="editFixedExpenditurePaymentMethod"]').val();
-    var myDepositAsset = createForm.find('select[id="editFixedExpenditureMyDepositAsset"]').val();
-    var unpunctuality = createForm.find('input[id="editFixedExpenditureUnpunctuality"]').is(":checked");
+    let id = createForm.find('input[id="editFixedExpenditureId"]').val();
+    let mainClass = createForm.find('select[id="editFixedExpenditureMainClass"]').val();
+    let subClass = createForm.find('select[id="editFixedExpenditureSubClass"]').val();
+    let contents = createForm.find('input[id="editFixedExpenditureContents"]').val();
+    let amount = createForm.find('input[id="editFixedExpenditureAmount"]').val();
+    let depositMonth = createForm.find('select[id="editFixedExpenditureDepositMonth"]').val();
+    let depositDay = createForm.find('select[id="editFixedExpenditureDepositDay"]').val();
+    let maturityDate = createForm.find('input[id="editFixedExpenditureMaturityDate"]').val();
+    let note = createForm.find('input[id="editFixedExpenditureNote"]').val();
+    let paymentMethod = createForm.find('select[id="editFixedExpenditurePaymentMethod"]').val();
+    let myDepositAsset = createForm.find('select[id="editFixedExpenditureMyDepositAsset"]').val();
+    let unpunctuality = createForm.find('input[id="editFixedExpenditureUnpunctuality"]').is(":checked");
 
-    var paramValue = JSON.stringify({
+    let paramValue = JSON.stringify({
         Id: id,
         MainClass: mainClass,
         SubClass: subClass,
@@ -919,7 +919,7 @@ function UpdateFixedExpenditure() {
 
 function ConfirmDeleteFixedExpenditure(errorMessageSelectGridRow) {
 
-    var selectedRowId = "";
+    let selectedRowId = "";
 
     $('#fixedExpenditureGrid > table > tbody  > tr').each(function (index, tr) {
         if ($(this).attr("class").includes(selectedRowColor)) { // Get SelectedRow by Color
@@ -943,7 +943,7 @@ function ConfirmDeleteFixedExpenditure(errorMessageSelectGridRow) {
 
 function DeleteFixedExpenditure(errorMessageSelectGridRow) {
 
-    var selectedRowId = "";
+    let selectedRowId = "";
 
     $('#fixedExpenditureGrid > table > tbody  > tr').each(function (index, tr) {
         if ($(this).attr("class").includes(selectedRowColor)) { // Get SelectedRow by Color
@@ -968,7 +968,7 @@ function DeleteFixedExpenditure(errorMessageSelectGridRow) {
         success: function (data) {
             if (data.result) {
 
-                var paramValue = JSON.stringify({
+                let paramValue = JSON.stringify({
                     Id: data.fixedExpenditure.id
                 });
 
@@ -1004,9 +1004,9 @@ function DeleteFixedExpenditure(errorMessageSelectGridRow) {
 }
 
 function ExportExcelFixedExpenditure() {
-    var form = document.createElement("form");
-    var element1 = document.createElement("input");
-    var element2 = document.createElement("input");
+    let form = document.createElement("form");
+    let element1 = document.createElement("input");
+    let element2 = document.createElement("input");
 
     form.method = "POST";
     form.action = "/Notice/ExportExcelFixedExpenditure";

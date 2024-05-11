@@ -3,7 +3,7 @@
 
 // Write your JavaScript code.
 
-var selectedRowColor = "table-primary";
+let selectedRowColor = "table-primary";
 
 // Triggered when grid's row is clicked. It's recommended to use event delegation in ajax scenarios.
 document.addEventListener("rowclick", e => {
@@ -11,8 +11,8 @@ document.addEventListener("rowclick", e => {
     //e.detail.grid - grid's instance.
     //e.detail.originalEvent - original tr click event which triggered the rowclick.
 
-    var selectedRow = e.detail;
-    var selectedRowId = selectedRow.data.Id;
+    let selectedRow = e.detail;
+    let selectedRowId = selectedRow.data.Id;
 
     $('#expenditureGrid > table > tbody  > tr').each(function (index, tr) {
         $(this).removeClass(selectedRowColor);
@@ -203,27 +203,27 @@ function CreateExpenditure() {
         return false;
     }
 
-    var createForm = $('#formCreateExpenditure');
+    let createForm = $('#formCreateExpenditure');
 
-    var mainClass = createForm.find('select[id="createExpenditureMainClass"]').val();
-    var subClass = createForm.find('select[id="createExpenditureSubClass"]').val();
-    var contents = createForm.find('input[id="createExpenditureContents"]').val();
-    var amount = createForm.find('input[id="createExpenditureAmount"]').val();
+    let mainClass = createForm.find('select[id="createExpenditureMainClass"]').val();
+    let subClass = createForm.find('select[id="createExpenditureSubClass"]').val();
+    let contents = createForm.find('input[id="createExpenditureContents"]').val();
+    let amount = createForm.find('input[id="createExpenditureAmount"]').val();
 
-    var year = parseInt(createForm.find('input[id="createExpenditureDate"]').val().substring(0, 4));
-    var month = parseInt(createForm.find('input[id="createExpenditureDate"]').val().substring(5, 7));
-    var day = parseInt(createForm.find('input[id="createExpenditureDate"]').val().substring(8, 10));
-    var hour = parseInt(createForm.find('select[id="createExpenditureHour"]').val());
-    var minute = parseInt(createForm.find('select[id="createExpenditureMinute"]').val());
-    var second = parseInt(createForm.find('select[id="createExpenditureSecond"]').val());
+    let year = parseInt(createForm.find('input[id="createExpenditureDate"]').val().substring(0, 4));
+    let month = parseInt(createForm.find('input[id="createExpenditureDate"]').val().substring(5, 7));
+    let day = parseInt(createForm.find('input[id="createExpenditureDate"]').val().substring(8, 10));
+    let hour = parseInt(createForm.find('select[id="createExpenditureHour"]').val());
+    let minute = parseInt(createForm.find('select[id="createExpenditureMinute"]').val());
+    let second = parseInt(createForm.find('select[id="createExpenditureSecond"]').val());
 
-    var created = new Date(year, month - 1, day, hour, minute, second).toISOString();
+    let created = new Date(year, month - 1, day, hour, minute, second).toISOString();
 
-    var paymentMethod = createForm.find('select[id="createExpenditurePaymentMethod"]').val();
-    var note = createForm.find('input[id="createExpenditureNote"]').val();
-    var myDepositAsset = createForm.find('select[id="createExpenditureMyDepositAsset"]').val();
+    let paymentMethod = createForm.find('select[id="createExpenditurePaymentMethod"]').val();
+    let note = createForm.find('input[id="createExpenditureNote"]').val();
+    let myDepositAsset = createForm.find('select[id="createExpenditureMyDepositAsset"]').val();
 
-    var paramValue = JSON.stringify({
+    let paramValue = JSON.stringify({
         MainClass: mainClass,
         SubClass: subClass,
         Contents: contents,
@@ -263,7 +263,7 @@ function CreateExpenditure() {
 
 function EditExpenditureGridRow(errorMessageSelectGridRow) {
 
-    var selectedRowId = "";
+    let selectedRowId = "";
 
     $('#expenditureGrid > table > tbody  > tr').each(function (index, tr) {
         if ($(this).attr("class").includes(selectedRowColor)) { // Get SelectedRow by Color
@@ -288,7 +288,7 @@ function EditExpenditureGridRow(errorMessageSelectGridRow) {
         success: function (data) {
             if (data.result) {
 
-                var formEditExpenditure = $('#formEditExpenditure');
+                let formEditExpenditure = $('#formEditExpenditure');
 
                 formEditExpenditure.find('input[id="editExpenditureId"]').val(data.expenditure.id);
                 formEditExpenditure.find('select[id="editExpenditureMainClass"]').val(data.expenditure.mainClass).change();
@@ -579,27 +579,27 @@ function UpdateExpenditure() {
         return false;
     }
 
-    var createForm = $('#formEditExpenditure');
+    let createForm = $('#formEditExpenditure');
 
-    var id = createForm.find('input[id="editExpenditureId"]').val();
-    var mainClass = createForm.find('select[id="editExpenditureMainClass"]').val();
-    var subClass = createForm.find('select[id="editExpenditureSubClass"]').val();
-    var contents = createForm.find('input[id="editExpenditureContents"]').val();
-    var amount = createForm.find('input[id="editExpenditureAmount"]').val();
+    let id = createForm.find('input[id="editExpenditureId"]').val();
+    let mainClass = createForm.find('select[id="editExpenditureMainClass"]').val();
+    let subClass = createForm.find('select[id="editExpenditureSubClass"]').val();
+    let contents = createForm.find('input[id="editExpenditureContents"]').val();
+    let amount = createForm.find('input[id="editExpenditureAmount"]').val();
 
-    var year = parseInt(createForm.find('input[id="editExpenditureDate"]').val().substring(0, 4));
-    var month = parseInt(createForm.find('input[id="editExpenditureDate"]').val().substring(5, 7));
-    var day = parseInt(createForm.find('input[id="editExpenditureDate"]').val().substring(8, 10));
-    var hour = parseInt(createForm.find('select[id="editExpenditureHour"]').val());
-    var minute = parseInt(createForm.find('select[id="editExpenditureMinute"]').val());
-    var second = parseInt(createForm.find('select[id="editExpenditureSecond"]').val());
+    let year = parseInt(createForm.find('input[id="editExpenditureDate"]').val().substring(0, 4));
+    let month = parseInt(createForm.find('input[id="editExpenditureDate"]').val().substring(5, 7));
+    let day = parseInt(createForm.find('input[id="editExpenditureDate"]').val().substring(8, 10));
+    let hour = parseInt(createForm.find('select[id="editExpenditureHour"]').val());
+    let minute = parseInt(createForm.find('select[id="editExpenditureMinute"]').val());
+    let second = parseInt(createForm.find('select[id="editExpenditureSecond"]').val());
 
-    var created = new Date(year, month - 1, day, hour, minute, second).toISOString();
-    var paymentMethod = createForm.find('select[id="editExpenditurePaymentMethod"]').val();
-    var note = createForm.find('input[id="editExpenditureNote"]').val();
-    var myDepositAsset = createForm.find('select[id="editExpenditureMyDepositAsset"]').val();
+    let created = new Date(year, month - 1, day, hour, minute, second).toISOString();
+    let paymentMethod = createForm.find('select[id="editExpenditurePaymentMethod"]').val();
+    let note = createForm.find('input[id="editExpenditureNote"]').val();
+    let myDepositAsset = createForm.find('select[id="editExpenditureMyDepositAsset"]').val();
 
-    var paramValue = JSON.stringify({
+    let paramValue = JSON.stringify({
         Id: id,
         MainClass: mainClass,
         SubClass: subClass,
@@ -639,7 +639,7 @@ function UpdateExpenditure() {
 
 function ConfirmDeleteExpenditure(errorMessageSelectGridRow) {
 
-    var selectedRowId = "";
+    let selectedRowId = "";
 
     $('#expenditureGrid > table > tbody  > tr').each(function (index, tr) {
         if ($(this).attr("class").includes(selectedRowColor)) { // Get SelectedRow by Color
@@ -663,7 +663,7 @@ function ConfirmDeleteExpenditure(errorMessageSelectGridRow) {
 
 function DeleteExpenditure(errorMessageSelectGridRow) {
 
-    var selectedRowId = "";
+    let selectedRowId = "";
 
     $('#expenditureGrid > table > tbody  > tr').each(function (index, tr) {
         if ($(this).attr("class").includes(selectedRowColor)) { // Get SelectedRow by Color
@@ -688,7 +688,7 @@ function DeleteExpenditure(errorMessageSelectGridRow) {
         success: function (data) {
             if (data.result) {
 
-                var paramValue = JSON.stringify({
+                let paramValue = JSON.stringify({
                     Id: data.expenditure.id
                 });
 
@@ -724,9 +724,9 @@ function DeleteExpenditure(errorMessageSelectGridRow) {
 }
 
 function ExportExcelExpenditure() {
-    var form = document.createElement("form");
-    var element1 = document.createElement("input");
-    var element2 = document.createElement("input");
+    let form = document.createElement("form");
+    let element1 = document.createElement("input");
+    let element2 = document.createElement("input");
 
     form.method = "POST";
     form.action = "/AccountBook/ExportExcelExpenditure";

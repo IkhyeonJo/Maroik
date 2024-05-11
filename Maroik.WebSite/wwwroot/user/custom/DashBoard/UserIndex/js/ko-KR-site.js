@@ -1,13 +1,13 @@
 ﻿$(function () {
-    var regularIncomeLaborIncome = parseInt($("#regularIncomeLaborIncome").val());
-    var regularIncomeBusinessIncome = parseInt($("#regularIncomeBusinessIncome").val());
-    var regularIncomePensionIncome = parseInt($("#regularIncomePensionIncome").val());
-    var regularIncomeFinancialIncome = parseInt($("#regularIncomeFinancialIncome").val());
-    var regularIncomeRentalIncome = parseInt($("#regularIncomeRentalIncome").val());
-    var regularIncomeOtherIncome = parseInt($("#regularIncomeOtherIncome").val());
+    let regularIncomeLaborIncome = parseInt($("#regularIncomeLaborIncome").val());
+    let regularIncomeBusinessIncome = parseInt($("#regularIncomeBusinessIncome").val());
+    let regularIncomePensionIncome = parseInt($("#regularIncomePensionIncome").val());
+    let regularIncomeFinancialIncome = parseInt($("#regularIncomeFinancialIncome").val());
+    let regularIncomeRentalIncome = parseInt($("#regularIncomeRentalIncome").val());
+    let regularIncomeOtherIncome = parseInt($("#regularIncomeOtherIncome").val());
 
-    var donutChartCanvasRegularIncome = $('#regularIncome').get(0).getContext('2d')
-    var donutDataRegularIncome = {
+    let donutChartCanvasRegularIncome = $('#regularIncome').get(0).getContext('2d')
+    let donutDataRegularIncome = {
         labels: [
             '근로수입',
             '사업수입',
@@ -23,7 +23,7 @@
             }
         ]
     }
-    var donutOptionsRegularIncome = {
+    let donutOptionsRegularIncome = {
         maintainAspectRatio: false,
         responsive: true,
     }
@@ -36,11 +36,11 @@
 
 
 
-    var irregularIncomeLaborIncome = parseInt($("#irregularIncomeLaborIncome").val());
-    var irregularIncomeOtherIncome = parseInt($("#irregularIncomeOtherIncome").val());
+    let irregularIncomeLaborIncome = parseInt($("#irregularIncomeLaborIncome").val());
+    let irregularIncomeOtherIncome = parseInt($("#irregularIncomeOtherIncome").val());
 
-    var donutChartCanvasIrregularIncome = $('#irregularIncome').get(0).getContext('2d')
-    var donutDataIrregularIncome = {
+    let donutChartCanvasIrregularIncome = $('#irregularIncome').get(0).getContext('2d')
+    let donutDataIrregularIncome = {
         labels: [
             '근로수입',
             '기타수입',
@@ -52,7 +52,7 @@
             }
         ]
     }
-    var donutOptionsIrregularIncome = {
+    let donutOptionsIrregularIncome = {
         maintainAspectRatio: false,
         responsive: true,
     }
@@ -65,11 +65,11 @@
 
 
 
-    var regularSavingsDeposit = parseInt($("#regularSavingsDeposit").val());
-    var regularSavingsInvestment = parseInt($("#regularSavingsInvestment").val());
+    let regularSavingsDeposit = parseInt($("#regularSavingsDeposit").val());
+    let regularSavingsInvestment = parseInt($("#regularSavingsInvestment").val());
 
-    var donutChartCanvasRegularSavings = $('#regularSavings').get(0).getContext('2d')
-    var donutDataRegularSavings = {
+    let donutChartCanvasRegularSavings = $('#regularSavings').get(0).getContext('2d')
+    let donutDataRegularSavings = {
         labels: [
             '예적금',
             '투자',
@@ -81,7 +81,7 @@
             }
         ]
     }
-    var donutOptionsRegularSavings = {
+    let donutOptionsRegularSavings = {
         maintainAspectRatio: false,
         responsive: true,
     }
@@ -94,15 +94,15 @@
 
 
 
-    var nonConsumerSpendingPublicPension = parseInt($("#nonConsumerSpendingPublicPension").val());
-    var nonConsumerSpendingDebtRepayment = parseInt($("#nonConsumerSpendingDebtRepayment").val());
-    var nonConsumerSpendingTax = parseInt($("#nonConsumerSpendingTax").val());
-    var nonConsumerSpendingSocialInsurance = parseInt($("#nonConsumerSpendingSocialInsurance").val());
-    var nonConsumerSpendingInterHouseholdTranserExpenses = parseInt($("#nonConsumerSpendingInterHouseholdTranserExpenses").val());
-    var nonConsumerSpendingNonProfitOrganizationTransfer = parseInt($("#nonConsumerSpendingNonProfitOrganizationTransfer").val());
+    let nonConsumerSpendingPublicPension = parseInt($("#nonConsumerSpendingPublicPension").val());
+    let nonConsumerSpendingDebtRepayment = parseInt($("#nonConsumerSpendingDebtRepayment").val());
+    let nonConsumerSpendingTax = parseInt($("#nonConsumerSpendingTax").val());
+    let nonConsumerSpendingSocialInsurance = parseInt($("#nonConsumerSpendingSocialInsurance").val());
+    let nonConsumerSpendingInterHouseholdTranserExpenses = parseInt($("#nonConsumerSpendingInterHouseholdTranserExpenses").val());
+    let nonConsumerSpendingNonProfitOrganizationTransfer = parseInt($("#nonConsumerSpendingNonProfitOrganizationTransfer").val());
 
-    var donutChartCanvasNonConsumerSpending = $('#nonConsumerSpending').get(0).getContext('2d')
-    var donutDataNonConsumerSpending = {
+    let donutChartCanvasNonConsumerSpending = $('#nonConsumerSpending').get(0).getContext('2d')
+    let donutDataNonConsumerSpending = {
         labels: [
             '공적연금',
             '부채상환',
@@ -118,7 +118,7 @@
             }
         ]
     }
-    var donutOptionsNonConsumerSpending = {
+    let donutOptionsNonConsumerSpending = {
         maintainAspectRatio: false,
         responsive: true,
     }
@@ -131,21 +131,21 @@
 
 
 
-    var consumerSpendingMealOrEatOutExpenses = parseInt($("#consumerSpendingMealOrEatOutExpenses").val());
-    var consumerSpendingHousingOrSuppliesCost = parseInt($("#consumerSpendingHousingOrSuppliesCost").val());
-    var consumerSpendingEducationExpenses = parseInt($("#consumerSpendingEducationExpenses").val());
-    var consumerSpendingMedicalExpenses = parseInt($("#consumerSpendingMedicalExpenses").val());
-    var consumerSpendingTransportationCost = parseInt($("#consumerSpendingTransportationCost").val());
-    var consumerSpendingCommunicationCost = parseInt($("#consumerSpendingCommunicationCost").val());
-    var consumerSpendingLeisureOrCulture = parseInt($("#consumerSpendingLeisureOrCulture").val());
-    var consumerSpendingClothingOrShoes = parseInt($("#consumerSpendingClothingOrShoes").val());
-    var consumerSpendingPinMoney = parseInt($("#consumerSpendingPinMoney").val());
-    var consumerSpendingProtectionTypeInsurance = parseInt($("#consumerSpendingProtectionTypeInsurance").val());
-    var consumerSpendingOtherExpenses = parseInt($("#consumerSpendingOtherExpenses").val());
-    var consumerSpendingUnknownExpenditure = parseInt($("#consumerSpendingUnknownExpenditure").val());
+    let consumerSpendingMealOrEatOutExpenses = parseInt($("#consumerSpendingMealOrEatOutExpenses").val());
+    let consumerSpendingHousingOrSuppliesCost = parseInt($("#consumerSpendingHousingOrSuppliesCost").val());
+    let consumerSpendingEducationExpenses = parseInt($("#consumerSpendingEducationExpenses").val());
+    let consumerSpendingMedicalExpenses = parseInt($("#consumerSpendingMedicalExpenses").val());
+    let consumerSpendingTransportationCost = parseInt($("#consumerSpendingTransportationCost").val());
+    let consumerSpendingCommunicationCost = parseInt($("#consumerSpendingCommunicationCost").val());
+    let consumerSpendingLeisureOrCulture = parseInt($("#consumerSpendingLeisureOrCulture").val());
+    let consumerSpendingClothingOrShoes = parseInt($("#consumerSpendingClothingOrShoes").val());
+    let consumerSpendingPinMoney = parseInt($("#consumerSpendingPinMoney").val());
+    let consumerSpendingProtectionTypeInsurance = parseInt($("#consumerSpendingProtectionTypeInsurance").val());
+    let consumerSpendingOtherExpenses = parseInt($("#consumerSpendingOtherExpenses").val());
+    let consumerSpendingUnknownExpenditure = parseInt($("#consumerSpendingUnknownExpenditure").val());
 
-    var donutChartCanvasConsumerSpending = $('#consumerSpending').get(0).getContext('2d')
-    var donutDataConsumerSpending = {
+    let donutChartCanvasConsumerSpending = $('#consumerSpending').get(0).getContext('2d')
+    let donutDataConsumerSpending = {
         labels: [
             '식비/외식비',
             '주거/용품비',
@@ -167,7 +167,7 @@
             }
         ]
     }
-    var donutOptionsConsumerSpending = {
+    let donutOptionsConsumerSpending = {
         maintainAspectRatio: false,
         responsive: true,
     }

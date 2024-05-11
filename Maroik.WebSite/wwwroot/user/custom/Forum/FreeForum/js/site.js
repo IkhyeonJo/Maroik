@@ -2,9 +2,9 @@
 // for details on configuring this project to bundle and minify static web assets.
 
 // Write your JavaScript code.
-var writeUploadedFile;
+let writeUploadedFile;
 
-var editUploadedFile;
+let editUploadedFile;
 
 function WriteUploadFile(obj, errorMessage) {
     if (obj.files[0].size > 10485760) {
@@ -72,7 +72,7 @@ function WriteUploadImageFile(file) {
         cache: false,
         success: function (data) {
             if (data.result) {
-                var imgNode = document.createElement('img');
+                let imgNode = document.createElement('img');
                 imgNode.src = data.filePath;
                 imgNode.style.maxWidth = "170px";
                 imgNode.style.maxHeight = "209px";
@@ -102,7 +102,7 @@ function EditUploadImageFile(file) {
         cache: false,
         success: function (data) {
             if (data.result) {
-                var imgNode = document.createElement('img');
+                let imgNode = document.createElement('img');
                 imgNode.src = data.filePath;
                 imgNode.style.maxWidth = "170px";
                 imgNode.style.maxHeight = "209px";
@@ -121,13 +121,13 @@ function WriteBoard() {
         return false;
     }
 
-    var createForm = $('#formWriteBoard');
+    let createForm = $('#formWriteBoard');
 
-    var title = createForm.find('input[id="writeBoardTitle"]').val();
-    var content = createForm.find('textarea[id="writeBoardContent"]').val();
-    var locked = createForm.find('input[id="writeBoardLocked"]').is(":checked");
+    let title = createForm.find('input[id="writeBoardTitle"]').val();
+    let content = createForm.find('textarea[id="writeBoardContent"]').val();
+    let locked = createForm.find('input[id="writeBoardLocked"]').is(":checked");
 
-    var formData = new FormData();
+    let formData = new FormData();
     formData.append('Title', title);
     formData.append('Content', content);
     formData.append('Locked', locked);
@@ -162,13 +162,13 @@ function EditBoard(editBoardId, editCurrentPage) {
         return false;
     }
 
-    var createForm = $('#formEditBoard');
+    let createForm = $('#formEditBoard');
 
-    var title = createForm.find('input[id="editBoardTitle"]').val();
-    var content = createForm.find('textarea[id="editBoardContent"]').val();
-    var locked = createForm.find('input[id="editBoardLocked"]').is(":checked");
+    let title = createForm.find('input[id="editBoardTitle"]').val();
+    let content = createForm.find('textarea[id="editBoardContent"]').val();
+    let locked = createForm.find('input[id="editBoardLocked"]').is(":checked");
 
-    var formData = new FormData();
+    let formData = new FormData();
     formData.append('Id', editBoardId);
     formData.append('Title', title);
     formData.append('Locked', locked);
@@ -223,7 +223,7 @@ function DeleteBoard(detailBoardId) {
         success: function (data) {
             if (data.result) {
 
-                var paramValue = JSON.stringify({
+                let paramValue = JSON.stringify({
                     Id: data.freeBoard.id
                 });
 
@@ -257,15 +257,15 @@ function DeleteBoard(detailBoardId) {
 
 function WriteFreeComment(detailBoardId, detailCurrentPage, errorMessage) {
 
-    var createForm = $('#formWriteFreeComment');
-    var content = createForm.find('input[id="writeFreeCommentContent"]').val();
+    let createForm = $('#formWriteFreeComment');
+    let content = createForm.find('input[id="writeFreeCommentContent"]').val();
 
     if (!content) {
         alert(errorMessage);
         return false;
     }
 
-    var paramValue = JSON.stringify({
+    let paramValue = JSON.stringify({
         BoardId: detailBoardId,
         Content: content,
         DetailCurrentPage: detailCurrentPage

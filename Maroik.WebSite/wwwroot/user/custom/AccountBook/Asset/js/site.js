@@ -7,7 +7,7 @@ $(function () {
     $("#editAssetTabs").tabs();
 });
 
-var selectedRowColor = "table-primary";
+let selectedRowColor = "table-primary";
 
 // Triggered when grid's row is clicked. It's recommended to use event delegation in ajax scenarios.
 document.addEventListener("rowclick", e => {
@@ -15,8 +15,8 @@ document.addEventListener("rowclick", e => {
     //e.detail.grid - grid's instance.
     //e.detail.originalEvent - original tr click event which triggered the rowclick.
 
-    var selectedRow = e.detail;
-    var selectedRowProductName = selectedRow.data.ProductName;
+    let selectedRow = e.detail;
+    let selectedRowProductName = selectedRow.data.ProductName;
 
     $('#assetGrid > table > tbody  > tr').each(function (index, tr) {
         $(this).removeClass(selectedRowColor);
@@ -77,15 +77,15 @@ function CreateAsset() {
         return false;
     }
 
-    var createForm = $('#formCreateAsset');
+    let createForm = $('#formCreateAsset');
 
-    var productName = createForm.find('input[id="createAssetProductName"]').val();
-    var item = createForm.find('select[id="createAssetItem"]').val();
-    var amount = createForm.find('input[id="createAssetAmount"]').val();
-    var monetaryUnit = createForm.find('input[id="createAssetMonetaryUnit"]').val();
-    var note = createForm.find('input[id="createAssetNote"]').val();
+    let productName = createForm.find('input[id="createAssetProductName"]').val();
+    let item = createForm.find('select[id="createAssetItem"]').val();
+    let amount = createForm.find('input[id="createAssetAmount"]').val();
+    let monetaryUnit = createForm.find('input[id="createAssetMonetaryUnit"]').val();
+    let note = createForm.find('input[id="createAssetNote"]').val();
 
-    var paramValue = JSON.stringify({
+    let paramValue = JSON.stringify({
         ProductName: productName,
         Item: item,
         Amount: amount,
@@ -122,7 +122,7 @@ function CreateAsset() {
 
 function EditAssetGridRow(errorMessageSelectGridRow) {
 
-    var selectedRowProductName = "";
+    let selectedRowProductName = "";
 
     $('#assetGrid > table > tbody  > tr').each(function (index, tr) {
         if ($(this).attr("class").includes(selectedRowColor)) { // Get SelectedRow by Color
@@ -147,7 +147,7 @@ function EditAssetGridRow(errorMessageSelectGridRow) {
         success: function (data) {
             if (data.result) {
 
-                var formEditAsset = $('#formEditAsset');
+                let formEditAsset = $('#formEditAsset');
 
                 formEditAsset.find('input[id="editAssetOriginalProductName"]').val(data.asset.productName);
                 formEditAsset.find('input[id="editAssetProductName"]').val(data.asset.productName);
@@ -177,16 +177,16 @@ function UpdateAsset() {
         return false;
     }
 
-    var createForm = $('#formEditAsset');
+    let createForm = $('#formEditAsset');
 
-    var productName = createForm.find('input[id="editAssetProductName"]').val();
-    var item = createForm.find('select[id="editAssetItem"]').val();
-    var amount = createForm.find('input[id="editAssetAmount"]').val();
-    var note = createForm.find('input[id="editAssetNote"]').val();
-    var deleted = createForm.find('input[id="editAssetDeleted"]').is(":checked");
-    var originalProductName = createForm.find('input[id="editAssetOriginalProductName"]').val();
+    let productName = createForm.find('input[id="editAssetProductName"]').val();
+    let item = createForm.find('select[id="editAssetItem"]').val();
+    let amount = createForm.find('input[id="editAssetAmount"]').val();
+    let note = createForm.find('input[id="editAssetNote"]').val();
+    let deleted = createForm.find('input[id="editAssetDeleted"]').is(":checked");
+    let originalProductName = createForm.find('input[id="editAssetOriginalProductName"]').val();
 
-    var paramValue = JSON.stringify({
+    let paramValue = JSON.stringify({
         ProductName: productName,
         Item: item,
         Amount: amount,
@@ -223,7 +223,7 @@ function UpdateAsset() {
 
 function ConfirmDeleteAsset(errorMessageSelectGridRow) {
 
-    var selectedRowProductName = "";
+    let selectedRowProductName = "";
 
     $('#assetGrid > table > tbody  > tr').each(function (index, tr) {
         if ($(this).attr("class").includes(selectedRowColor)) { // Get SelectedRow by Color
@@ -247,7 +247,7 @@ function ConfirmDeleteAsset(errorMessageSelectGridRow) {
 
 function DeleteAsset(errorMessageSelectGridRow) {
 
-    var selectedRowProductName = "";
+    let selectedRowProductName = "";
 
     $('#assetGrid > table > tbody  > tr').each(function (index, tr) {
         if ($(this).attr("class").includes(selectedRowColor)) { // Get SelectedRow by Color
@@ -272,7 +272,7 @@ function DeleteAsset(errorMessageSelectGridRow) {
         success: function (data) {
             if (data.result) {
 
-                var paramValue = JSON.stringify({
+                let paramValue = JSON.stringify({
                     ProductName: data.asset.productName
                 });
 
@@ -308,9 +308,9 @@ function DeleteAsset(errorMessageSelectGridRow) {
 }
 
 function ExportExcelAsset() {
-    var form = document.createElement("form");
-    var element1 = document.createElement("input");
-    var element2 = document.createElement("input");
+    let form = document.createElement("form");
+    let element1 = document.createElement("input");
+    let element2 = document.createElement("input");
 
     form.method = "POST";
     form.action = "/AccountBook/ExportExcelAsset";

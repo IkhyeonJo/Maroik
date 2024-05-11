@@ -7,7 +7,7 @@ $(function () {
     $("#editAccountTabs").tabs();
 });
 
-var selectedRowColor = "table-primary";
+let selectedRowColor = "table-primary";
 
 // Triggered when grid's row is clicked. It's recommended to use event delegation in ajax scenarios.
 document.addEventListener("rowclick", e => {
@@ -15,8 +15,8 @@ document.addEventListener("rowclick", e => {
     //e.detail.grid - grid's instance.
     //e.detail.originalEvent - original tr click event which triggered the rowclick.
 
-    var selectedRow = e.detail;
-    var selectedRowEmail = selectedRow.data.Email;
+    let selectedRow = e.detail;
+    let selectedRowEmail = selectedRow.data.Email;
 
     $('#accountGrid > table > tbody  > tr').each(function (index, tr) {
         $(this).removeClass(selectedRowColor);
@@ -77,15 +77,15 @@ function CreateAccount() {
         return false;
     }
 
-    var createForm = $('#formCreateAccount');
+    let createForm = $('#formCreateAccount');
 
-    var email = createForm.find('input[id="createAccountEmail"]').val();
-    var password = createForm.find('input[id="createAccountPassword"]').val();
-    var nickname = createForm.find('input[id="createAccountNickname"]').val();
-    var role = createForm.find('select[id="createAccountRole"]').val();
-    var timeZoneIanaId = createForm.find('select[id="createAccountTimeZone"]').val();
+    let email = createForm.find('input[id="createAccountEmail"]').val();
+    let password = createForm.find('input[id="createAccountPassword"]').val();
+    let nickname = createForm.find('input[id="createAccountNickname"]').val();
+    let role = createForm.find('select[id="createAccountRole"]').val();
+    let timeZoneIanaId = createForm.find('select[id="createAccountTimeZone"]').val();
 
-    var paramValue = JSON.stringify({
+    let paramValue = JSON.stringify({
         Email: email,
         Password: password,
         Nickname: nickname,
@@ -122,7 +122,7 @@ function CreateAccount() {
 
 function EditAccountGridRow(errorMessageSelectGridRow) {
 
-    var selectedRowEmail = "";
+    let selectedRowEmail = "";
 
     $('#accountGrid > table > tbody  > tr').each(function (index, tr) {
         if ($(this).attr("class").includes(selectedRowColor)) { // Get SelectedRow by Color
@@ -147,7 +147,7 @@ function EditAccountGridRow(errorMessageSelectGridRow) {
         success: function (data) {
             if (data.result) {
 
-                var formEditAccount = $('#formEditAccount');
+                let formEditAccount = $('#formEditAccount');
 
                 formEditAccount.find('input[id="editAccountEmail"]').val(data.account.email);
                 formEditAccount.find('input[id="editAccountNickname"]').val(data.account.nickname);
@@ -179,19 +179,19 @@ function UpdateAccount() {
         return false;
     }
 
-    var createForm = $('#formEditAccount');
+    let createForm = $('#formEditAccount');
 
-    var email = createForm.find('input[id="editAccountEmail"]').val();
-    var password = createForm.find('input[id="editAccountPassword"]').val();
-    var role = createForm.find('select[id="editAccountRole"]').val();
-    var timeZoneIanaId = createForm.find('select[id="editAccountTimeZone"]').val();
-    var locked = createForm.find('input[id="editAccountLocked"]').is(":checked");
-    var emailConfirmed = createForm.find('input[id="editAccountEmailConfirmed"]').is(":checked");
-    var agreedServiceTerms = createForm.find('input[id="editAccountAgreedServiceTerms"]').is(":checked");
-    var message = createForm.find('input[id="editMessage"]').val();
-    var deleted = createForm.find('input[id="editAccountDeleted"]').is(":checked");
+    let email = createForm.find('input[id="editAccountEmail"]').val();
+    let password = createForm.find('input[id="editAccountPassword"]').val();
+    let role = createForm.find('select[id="editAccountRole"]').val();
+    let timeZoneIanaId = createForm.find('select[id="editAccountTimeZone"]').val();
+    let locked = createForm.find('input[id="editAccountLocked"]').is(":checked");
+    let emailConfirmed = createForm.find('input[id="editAccountEmailConfirmed"]').is(":checked");
+    let agreedServiceTerms = createForm.find('input[id="editAccountAgreedServiceTerms"]').is(":checked");
+    let message = createForm.find('input[id="editMessage"]').val();
+    let deleted = createForm.find('input[id="editAccountDeleted"]').is(":checked");
 
-    var paramValue = JSON.stringify({
+    let paramValue = JSON.stringify({
         Email: email,
         Password: password,
         Role: role,
@@ -231,7 +231,7 @@ function UpdateAccount() {
 
 function ConfirmDeleteAccount(errorMessageSelectGridRow) {
 
-    var selectedRowEmail = "";
+    let selectedRowEmail = "";
 
     $('#accountGrid > table > tbody  > tr').each(function (index, tr) {
         if ($(this).attr("class").includes(selectedRowColor)) { // Get SelectedRow by Color
@@ -255,7 +255,7 @@ function ConfirmDeleteAccount(errorMessageSelectGridRow) {
 
 function DeleteAccount(errorMessageSelectGridRow) {
 
-    var selectedRowEmail = "";
+    let selectedRowEmail = "";
 
     $('#accountGrid > table > tbody  > tr').each(function (index, tr) {
         if ($(this).attr("class").includes(selectedRowColor)) { // Get SelectedRow by Color
@@ -280,7 +280,7 @@ function DeleteAccount(errorMessageSelectGridRow) {
         success: function (data) {
             if (data.result) {
 
-                var paramValue = JSON.stringify({
+                let paramValue = JSON.stringify({
                     Email: data.account.email
                 });
 
@@ -316,9 +316,9 @@ function DeleteAccount(errorMessageSelectGridRow) {
 }
 
 function ExportExcelAccount() {
-    var form = document.createElement("form");
-    var element1 = document.createElement("input");
-    var element2 = document.createElement("input");
+    let form = document.createElement("form");
+    let element1 = document.createElement("input");
+    let element2 = document.createElement("input");
 
     form.method = "POST";
     form.action = "/Management/ExportExcelAccount";

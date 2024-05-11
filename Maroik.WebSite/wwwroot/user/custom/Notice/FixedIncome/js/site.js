@@ -3,7 +3,7 @@
 
 // Write your JavaScript code.
 
-var selectedRowColor = "table-primary";
+let selectedRowColor = "table-primary";
 
 // Triggered when grid's row is clicked. It's recommended to use event delegation in ajax scenarios.
 document.addEventListener("rowclick", e => {
@@ -11,8 +11,8 @@ document.addEventListener("rowclick", e => {
     //e.detail.grid - grid's instance.
     //e.detail.originalEvent - original tr click event which triggered the rowclick.
 
-    var selectedRow = e.detail;
-    var selectedRowId = selectedRow.data.Id;
+    let selectedRow = e.detail;
+    let selectedRowId = selectedRow.data.Id;
 
     $('#fixedIncomeGrid > table > tbody  > tr').each(function (index, tr) {
         $(this).removeClass(selectedRowColor);
@@ -257,19 +257,19 @@ function CreateFixedIncome() {
         return false;
     }
 
-    var createForm = $('#formCreateFixedIncome');
+    let createForm = $('#formCreateFixedIncome');
 
-    var mainClass = createForm.find('select[id="createFixedIncomeMainClass"]').val();
-    var subClass = createForm.find('select[id="createFixedIncomeSubClass"]').val();
-    var contents = createForm.find('input[id="createFixedIncomeContents"]').val();
-    var amount = createForm.find('input[id="createFixedIncomeAmount"]').val();
-    var depositMonth = createForm.find('select[id="createFixedIncomeDepositMonth"]').val();
-    var depositDay = createForm.find('select[id="createFixedIncomeDepositDay"]').val();
-    var maturityDate = createForm.find('input[id="createFixedIncomeMaturityDate"]').val();
-    var note = createForm.find('input[id="createFixedIncomeNote"]').val();
-    var depositMyAssetProductName = createForm.find('select[id="createFixedIncomeDepositMyAssetProductName"]').val();
+    let mainClass = createForm.find('select[id="createFixedIncomeMainClass"]').val();
+    let subClass = createForm.find('select[id="createFixedIncomeSubClass"]').val();
+    let contents = createForm.find('input[id="createFixedIncomeContents"]').val();
+    let amount = createForm.find('input[id="createFixedIncomeAmount"]').val();
+    let depositMonth = createForm.find('select[id="createFixedIncomeDepositMonth"]').val();
+    let depositDay = createForm.find('select[id="createFixedIncomeDepositDay"]').val();
+    let maturityDate = createForm.find('input[id="createFixedIncomeMaturityDate"]').val();
+    let note = createForm.find('input[id="createFixedIncomeNote"]').val();
+    let depositMyAssetProductName = createForm.find('select[id="createFixedIncomeDepositMyAssetProductName"]').val();
 
-    var paramValue = JSON.stringify({
+    let paramValue = JSON.stringify({
         MainClass: mainClass,
         SubClass: subClass,
         Contents: contents,
@@ -310,7 +310,7 @@ function CreateFixedIncome() {
 
 function EditFixedIncomeGridRow(errorMessageSelectGridRow) {
 
-    var selectedRowId = "";
+    let selectedRowId = "";
 
     $('#fixedIncomeGrid > table > tbody  > tr').each(function (index, tr) {
         if ($(this).attr("class").includes(selectedRowColor)) { // Get SelectedRow by Color
@@ -335,7 +335,7 @@ function EditFixedIncomeGridRow(errorMessageSelectGridRow) {
         success: function (data) {
             if (data.result) {
 
-                var formEditFixedIncome = $('#formEditFixedIncome');
+                let formEditFixedIncome = $('#formEditFixedIncome');
 
                 formEditFixedIncome.find('input[id="editFixedIncomeId"]').val(data.fixedIncome.id);
                 formEditFixedIncome.find('select[id="editFixedIncomeMainClass"]').val(data.fixedIncome.mainClass).change();
@@ -454,21 +454,21 @@ function UpdateFixedIncome() {
         return false;
     }
 
-    var createForm = $('#formEditFixedIncome');
+    let createForm = $('#formEditFixedIncome');
 
-    var id = createForm.find('input[id="editFixedIncomeId"]').val();
-    var mainClass = createForm.find('select[id="editFixedIncomeMainClass"]').val();
-    var subClass = createForm.find('select[id="editFixedIncomeSubClass"]').val();
-    var contents = createForm.find('input[id="editFixedIncomeContents"]').val();
-    var amount = createForm.find('input[id="editFixedIncomeAmount"]').val();
-    var depositMonth = createForm.find('select[id="editFixedIncomeDepositMonth"]').val();
-    var depositDay = createForm.find('select[id="editFixedIncomeDepositDay"]').val();
-    var maturityDate = createForm.find('input[id="editFixedIncomeMaturityDate"]').val();
-    var note = createForm.find('input[id="editFixedIncomeNote"]').val();
-    var depositMyAssetProductName = createForm.find('select[id="editFixedIncomeDepositMyAssetProductName"]').val();
-    var unpunctuality = createForm.find('input[id="editFixedIncomeUnpunctuality"]').is(":checked");
+    let id = createForm.find('input[id="editFixedIncomeId"]').val();
+    let mainClass = createForm.find('select[id="editFixedIncomeMainClass"]').val();
+    let subClass = createForm.find('select[id="editFixedIncomeSubClass"]').val();
+    let contents = createForm.find('input[id="editFixedIncomeContents"]').val();
+    let amount = createForm.find('input[id="editFixedIncomeAmount"]').val();
+    let depositMonth = createForm.find('select[id="editFixedIncomeDepositMonth"]').val();
+    let depositDay = createForm.find('select[id="editFixedIncomeDepositDay"]').val();
+    let maturityDate = createForm.find('input[id="editFixedIncomeMaturityDate"]').val();
+    let note = createForm.find('input[id="editFixedIncomeNote"]').val();
+    let depositMyAssetProductName = createForm.find('select[id="editFixedIncomeDepositMyAssetProductName"]').val();
+    let unpunctuality = createForm.find('input[id="editFixedIncomeUnpunctuality"]').is(":checked");
 
-    var paramValue = JSON.stringify({
+    let paramValue = JSON.stringify({
         Id: id,
         MainClass: mainClass,
         SubClass: subClass,
@@ -511,7 +511,7 @@ function UpdateFixedIncome() {
 
 function ConfirmDeleteFixedIncome(errorMessageSelectGridRow) {
 
-    var selectedRowId = "";
+    let selectedRowId = "";
 
     $('#fixedIncomeGrid > table > tbody  > tr').each(function (index, tr) {
         if ($(this).attr("class").includes(selectedRowColor)) { // Get SelectedRow by Color
@@ -535,7 +535,7 @@ function ConfirmDeleteFixedIncome(errorMessageSelectGridRow) {
 
 function DeleteFixedIncome(errorMessageSelectGridRow) {
 
-    var selectedRowId = "";
+    let selectedRowId = "";
 
     $('#fixedIncomeGrid > table > tbody  > tr').each(function (index, tr) {
         if ($(this).attr("class").includes(selectedRowColor)) { // Get SelectedRow by Color
@@ -560,7 +560,7 @@ function DeleteFixedIncome(errorMessageSelectGridRow) {
         success: function (data) {
             if (data.result) {
 
-                var paramValue = JSON.stringify({
+                let paramValue = JSON.stringify({
                     Id: data.fixedIncome.id
                 });
 
@@ -596,9 +596,9 @@ function DeleteFixedIncome(errorMessageSelectGridRow) {
 }
 
 function ExportExcelFixedIncome() {
-    var form = document.createElement("form");
-    var element1 = document.createElement("input");
-    var element2 = document.createElement("input");
+    let form = document.createElement("form");
+    let element1 = document.createElement("input");
+    let element2 = document.createElement("input");
 
     form.method = "POST";
     form.action = "/Notice/ExportExcelFixedIncome";

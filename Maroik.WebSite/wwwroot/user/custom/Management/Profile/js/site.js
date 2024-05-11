@@ -3,7 +3,7 @@
 
 // Write your JavaScript code.
 function UpdateProfileAvatar(noFileAttachedErrorMessage, fileSizeLimitationErrorMessage, fileTypeErrorMessage) {
-    var files = document.getElementById('ProfileAvatarFiles').files[0];
+    let files = document.getElementById('ProfileAvatarFiles').files[0];
     if (files === undefined || files == null) {
         alert(noFileAttachedErrorMessage);
         window.location.href = "/Management/Profile";
@@ -15,8 +15,8 @@ function UpdateProfileAvatar(noFileAttachedErrorMessage, fileSizeLimitationError
         }
         else if (files.size > 0 && files.size <= 10485760) {
             if (files.type.toUpperCase() === "image/jpeg".toUpperCase() || files.type.toUpperCase() === "image/png".toUpperCase()) {
-                var form = $('#formUpdateProfileAvatar')[0]; // FormData 객체 생성
-                var formData = new FormData(form);
+                let form = $('#formUpdateProfileAvatar')[0]; // FormData 객체 생성
+                let formData = new FormData(form);
                 $.ajax({
                     url: "/Management/UpdateProfileAvatar",
                     data: formData,
@@ -56,11 +56,11 @@ function UpdateProfilePassword() {
         return false;
     }
 
-    var createForm = $('#formUpdateProfilePassword');
-    var password = createForm.find('input[id="Password"]').val();
-    var newPassword = createForm.find('input[id="NewPassword"]').val();
+    let createForm = $('#formUpdateProfilePassword');
+    let password = createForm.find('input[id="Password"]').val();
+    let newPassword = createForm.find('input[id="NewPassword"]').val();
 
-    var paramValue = JSON.stringify({
+    let paramValue = JSON.stringify({
         Password: password,
         NewPassword: newPassword
     });

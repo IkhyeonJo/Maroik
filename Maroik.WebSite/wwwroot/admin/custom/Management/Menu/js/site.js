@@ -8,7 +8,7 @@ $(function () {
     $("#editSubCategoryTabs").tabs();
 });
 
-var selectedRowColor = "table-primary";
+let selectedRowColor = "table-primary";
 
 // Triggered when grid's row is clicked. It's recommended to use event delegation in ajax scenarios.
 document.addEventListener("rowclick", e => {
@@ -16,9 +16,9 @@ document.addEventListener("rowclick", e => {
     //e.detail.grid - grid's instance.
     //e.detail.originalEvent - original tr click event which triggered the rowclick.
 
-    var selectedRow = e.detail;
-    var selectedRowId = selectedRow.data.Id;
-    var selectedRowCategoryId = selectedRow.data.CategoryId;
+    let selectedRow = e.detail;
+    let selectedRowId = selectedRow.data.Id;
+    let selectedRowCategoryId = selectedRow.data.CategoryId;
 
     if (selectedRowCategoryId === "") {
         selectedRowCategoryId = "-1";
@@ -83,16 +83,16 @@ function CreateCategory() {
         return false;
     }
 
-    var createForm = $('#formCreateCategory');
-    var name = createForm.find('input[id="createCategoryName"]').val();
-    var displayName = createForm.find('input[id="createCategoryDisplayName"]').val();
-    var iconPath = createForm.find('input[id="createCategoryIconPath"]').val();
-    var controller = createForm.find('input[id="createCategoryController"]').val();
-    var action = createForm.find('input[id="createCategoryAction"]').val();
-    var role = createForm.find('select[id="createCategoryRole"]').val();
-    var order = createForm.find('input[id="createCategoryOrder"]').val();
+    let createForm = $('#formCreateCategory');
+    let name = createForm.find('input[id="createCategoryName"]').val();
+    let displayName = createForm.find('input[id="createCategoryDisplayName"]').val();
+    let iconPath = createForm.find('input[id="createCategoryIconPath"]').val();
+    let controller = createForm.find('input[id="createCategoryController"]').val();
+    let action = createForm.find('input[id="createCategoryAction"]').val();
+    let role = createForm.find('select[id="createCategoryRole"]').val();
+    let order = createForm.find('input[id="createCategoryOrder"]').val();
 
-    var paramValue = JSON.stringify({
+    let paramValue = JSON.stringify({
         Name: name,
         DisplayName: displayName,
         IconPath: iconPath,
@@ -134,17 +134,17 @@ function CreateSubCategory() {
         return false;
     }
 
-    var createForm = $('#formCreateSubCategory');
+    let createForm = $('#formCreateSubCategory');
 
-    var categoryId = createForm.find('input[id="createSubcategoryCategoryId"]').val();
-    var name = createForm.find('input[id="createSubcategoryName"]').val();
-    var displayName = createForm.find('input[id="createSubcategoryDisplayName"]').val();
-    var iconPath = createForm.find('input[id="createSubcategoryIconPath"]').val();
-    var action = createForm.find('input[id="createSubcategoryAction"]').val();
-    var role = createForm.find('select[id="createSubcategoryRole"]').val();
-    var order = createForm.find('input[id="createSubcategoryOrder"]').val();
+    let categoryId = createForm.find('input[id="createSubcategoryCategoryId"]').val();
+    let name = createForm.find('input[id="createSubcategoryName"]').val();
+    let displayName = createForm.find('input[id="createSubcategoryDisplayName"]').val();
+    let iconPath = createForm.find('input[id="createSubcategoryIconPath"]').val();
+    let action = createForm.find('input[id="createSubcategoryAction"]').val();
+    let role = createForm.find('select[id="createSubcategoryRole"]').val();
+    let order = createForm.find('input[id="createSubcategoryOrder"]').val();
 
-    var paramValue = JSON.stringify({
+    let paramValue = JSON.stringify({
         CategoryId: categoryId,
         Name: name,
         DisplayName: displayName,
@@ -182,8 +182,8 @@ function CreateSubCategory() {
 
 function EditMenuGridRow(errorMessageSelectGridRow) {
 
-    var selectedRowId = "-1";
-    var selectedRowCategoryId = "-1";
+    let selectedRowId = "-1";
+    let selectedRowCategoryId = "-1";
 
     $('#menuGrid > table > tbody  > tr').each(function (index, tr) {
         if ($(this).attr("class").includes(selectedRowColor)) { // Get SelectedRow by Color
@@ -211,7 +211,7 @@ function EditMenuGridRow(errorMessageSelectGridRow) {
             success: function (data) {
                 if (data.result) {
 
-                    var editCategoryForm = $('#formEditCategory');
+                    let editCategoryForm = $('#formEditCategory');
 
                     editCategoryForm.find('input[id="editCategoryId"]').val(data.category.id);
                     editCategoryForm.find('input[id="editCategoryName"]').val(data.category.name);
@@ -249,7 +249,7 @@ function EditMenuGridRow(errorMessageSelectGridRow) {
             success: function (data) {
                 if (data.result) {
 
-                    var editCategoryForm = $('#formEditSubCategory');
+                    let editCategoryForm = $('#formEditSubCategory');
 
                     editCategoryForm.find('input[id="editSubCategoryId"]').val(data.subCategory.id);
                     editCategoryForm.find('input[id="editSubCategoryCategoryId"]').val(data.subCategory.categoryId);
@@ -281,18 +281,18 @@ function UpdateCategory() {
         return false;
     }
 
-    var createForm = $('#formEditCategory');
+    let createForm = $('#formEditCategory');
 
-    var id = createForm.find('input[id="editCategoryId"]').val();
-    var name = createForm.find('input[id="editCategoryName"]').val();
-    var displayName = createForm.find('input[id="editCategoryDisplayName"]').val();
-    var iconPath = createForm.find('input[id="editCategoryIconPath"]').val();
-    var controller = createForm.find('input[id="editCategoryController"]').val();
-    var action = createForm.find('input[id="editCategoryAction"]').val();
-    var role = createForm.find('select[id="editCategoryRole"]').val();
-    var order = createForm.find('input[id="editCategoryOrder"]').val();
+    let id = createForm.find('input[id="editCategoryId"]').val();
+    let name = createForm.find('input[id="editCategoryName"]').val();
+    let displayName = createForm.find('input[id="editCategoryDisplayName"]').val();
+    let iconPath = createForm.find('input[id="editCategoryIconPath"]').val();
+    let controller = createForm.find('input[id="editCategoryController"]').val();
+    let action = createForm.find('input[id="editCategoryAction"]').val();
+    let role = createForm.find('select[id="editCategoryRole"]').val();
+    let order = createForm.find('input[id="editCategoryOrder"]').val();
 
-    var paramValue = JSON.stringify({
+    let paramValue = JSON.stringify({
         Id: id,
         Name: name,
         DisplayName: displayName,
@@ -334,18 +334,18 @@ function UpdateSubCategory() {
         return false;
     }
 
-    var createForm = $('#formEditSubCategory');
+    let createForm = $('#formEditSubCategory');
 
-    var id = createForm.find('input[id="editSubCategoryId"]').val();
-    var categoryId = createForm.find('input[id="editSubCategoryCategoryId"]').val();
-    var name = createForm.find('input[id="editSubCategoryName"]').val();
-    var displayName = createForm.find('input[id="editSubCategoryDisplayName"]').val();
-    var iconPath = createForm.find('input[id="editSubCategoryIconPath"]').val();
-    var action = createForm.find('input[id="editSubCategoryAction"]').val();
-    var role = createForm.find('select[id="editSubCategoryRole"]').val();
-    var order = createForm.find('input[id="editSubCategoryOrder"]').val();
+    let id = createForm.find('input[id="editSubCategoryId"]').val();
+    let categoryId = createForm.find('input[id="editSubCategoryCategoryId"]').val();
+    let name = createForm.find('input[id="editSubCategoryName"]').val();
+    let displayName = createForm.find('input[id="editSubCategoryDisplayName"]').val();
+    let iconPath = createForm.find('input[id="editSubCategoryIconPath"]').val();
+    let action = createForm.find('input[id="editSubCategoryAction"]').val();
+    let role = createForm.find('select[id="editSubCategoryRole"]').val();
+    let order = createForm.find('input[id="editSubCategoryOrder"]').val();
 
-    var paramValue = JSON.stringify({
+    let paramValue = JSON.stringify({
         Id: id,
         CategoryId: categoryId,
         Name: name,
@@ -384,7 +384,7 @@ function UpdateSubCategory() {
 
 function ConfirmDeleteMenu(errorMessageSelectGridRow) {
 
-    var selectedRowId = "-1";
+    let selectedRowId = "-1";
 
     $('#menuGrid > table > tbody  > tr').each(function (index, tr) {
         if ($(this).attr("class").includes(selectedRowColor)) { // Get SelectedRow by Color
@@ -407,8 +407,8 @@ function ConfirmDeleteMenu(errorMessageSelectGridRow) {
 }
 
 function DeleteMenu(errorMessageSelectGridRow) {
-    var selectedRowId = "-1";
-    var selectedRowCategoryId = "-1";
+    let selectedRowId = "-1";
+    let selectedRowCategoryId = "-1";
 
     $('#menuGrid > table > tbody  > tr').each(function (index, tr) {
         if ($(this).attr("class").includes(selectedRowColor)) { // Get SelectedRow by Color
@@ -436,7 +436,7 @@ function DeleteMenu(errorMessageSelectGridRow) {
             success: function (data) {
                 if (data.result) {
 
-                    var paramValue = JSON.stringify({
+                    let paramValue = JSON.stringify({
                         Id: data.category.id,
                         Name: data.category.name,
                         DisplayName: data.category.displayName,
@@ -490,7 +490,7 @@ function DeleteMenu(errorMessageSelectGridRow) {
             success: function (data) {
                 if (data.result) {
 
-                    var paramValue = JSON.stringify({
+                    let paramValue = JSON.stringify({
                         Id: data.subCategory.id,
                         CategoryId: data.subCategory.categoryId,
                         Name: data.subCategory.name,
@@ -534,9 +534,9 @@ function DeleteMenu(errorMessageSelectGridRow) {
 }
 
 function ExportExcelMenu() {
-    var form = document.createElement("form");
-    var element1 = document.createElement("input");
-    var element2 = document.createElement("input");
+    let form = document.createElement("form");
+    let element1 = document.createElement("input");
+    let element2 = document.createElement("input");
 
     form.method = "POST";
     form.action = "/Management/ExportExcelMenu";

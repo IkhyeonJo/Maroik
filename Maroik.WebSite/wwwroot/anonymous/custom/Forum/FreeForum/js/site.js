@@ -6,25 +6,25 @@
 $(function () {
 
     if ($('#free_forum_detail_updated').length > 0) {
-        var utcDateStr = $('#free_forum_detail_updated').text();
-        var utcDate = new Date(utcDateStr);
-        var localDateStr = utcDate.toLocaleString();
+        let utcDateStr = $('#free_forum_detail_updated').text();
+        let utcDate = new Date(utcDateStr);
+        let localDateStr = utcDate.toLocaleString();
         $('#free_forum_detail_updated').text(localDateStr);
     }
 
     $('#tblFreeForum tbody tr .free_forum_board_created').each(function () {
-        var $element = $(this);
-        var $span = $element.find('span');
-        var utcDateStr = $span.length > 0 ? $span.html() : $element.text(); // span 태그가 있는 경우 span 태그의 HTML을, 없는 경우 그대로 텍스트를 가져옴
-        var utcDate = new Date(utcDateStr);
-        var localDateStr = utcDate.toLocaleString();
+        let $element = $(this);
+        let $span = $element.find('span');
+        let utcDateStr = $span.length > 0 ? $span.html() : $element.text(); // span 태그가 있는 경우 span 태그의 HTML을, 없는 경우 그대로 텍스트를 가져옴
+        let utcDate = new Date(utcDateStr);
+        let localDateStr = utcDate.toLocaleString();
         $span.length > 0 ? $span.html(localDateStr) : $element.text(localDateStr); // span 태그가 있는 경우 span 태그 안에, 없는 경우 그대로 텍스트를 변환된 날짜로 업데이트
     });
 
     $('.free_forum_detail_comment_created').each(function () {
-        var utcDateStr = $(this).text();
-        var utcDate = new Date(utcDateStr);
-        var localDateStr = utcDate.toLocaleString();
+        let utcDateStr = $(this).text();
+        let utcDate = new Date(utcDateStr);
+        let localDateStr = utcDate.toLocaleString();
         $(this).text(localDateStr);
     });
 
