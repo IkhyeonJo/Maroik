@@ -73,6 +73,7 @@ namespace Maroik.Common.DataAccess.Services
                            SET ProductName = {asset.ProductName},
                                Item = {asset.Item},
                                Amount = {asset.Amount},
+                               MonetaryUnit = {asset.MonetaryUnit},
                                Note = {asset.Note},
                                Deleted = {asset.Deleted},
                                Updated = {asset.Updated}
