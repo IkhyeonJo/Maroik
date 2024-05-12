@@ -1,5 +1,6 @@
 ﻿using Maroik.Common.DataAccess.Contracts;
 using Maroik.Common.DataAccess.Models;
+using Maroik.WebSite.Extensions;
 using Maroik.WebSite.Models.ViewModels.AccountBook;
 using Maroik.WebSite.Utilities;
 using Microsoft.AspNetCore.Mvc;
@@ -125,7 +126,7 @@ namespace Maroik.WebSite.Controllers
                         {
                             ProductName = item.ProductName,
                             Item = localizer[item.Item.ToString()].Value,
-                            Amount = item.Amount,
+                            Amount = Convert.ToDecimal(item.Amount.TrimTrailingZeros()),
                             MonetaryUnit = item.MonetaryUnit,
                             Created = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Created, JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId),
                             Updated = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Updated, JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId),
@@ -137,7 +138,7 @@ namespace Maroik.WebSite.Controllers
                     {
                         if ((item.ProductName?.ToString() ?? "").Contains(wholeSearch) ||
                             localizer[item.Item?.ToString() ?? ""].Value.Contains(wholeSearch) ||
-                            (item.Amount.ToString() ?? "").Contains(wholeSearch) ||
+                            (item.Amount.TrimTrailingZeros() ?? "").Contains(wholeSearch) ||
                             (item.MonetaryUnit?.ToString() ?? "").Contains(wholeSearch) ||
                             (TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Created, JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId).ToString() ?? "").Contains(wholeSearch) ||
                             (TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Updated, JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId).ToString() ?? "").Contains(wholeSearch) ||
@@ -148,7 +149,7 @@ namespace Maroik.WebSite.Controllers
                             {
                                 ProductName = item.ProductName,
                                 Item = localizer[item.Item.ToString()].Value,
-                                Amount = item.Amount,
+                                Amount = Convert.ToDecimal(item.Amount.TrimTrailingZeros()),
                                 MonetaryUnit = item.MonetaryUnit,
                                 Created = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Created, JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId),
                                 Updated = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Updated, JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId),
@@ -308,7 +309,7 @@ namespace Maroik.WebSite.Controllers
                 {
                     ProductName = item.ProductName,
                     Item = item.Item,
-                    Amount = item.Amount,
+                    Amount = Convert.ToDecimal(item.Amount.TrimTrailingZeros()),
                     MonetaryUnit = item.MonetaryUnit,
                     Created = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Created, JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId),
                     Updated = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Updated, JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId),
@@ -344,7 +345,7 @@ namespace Maroik.WebSite.Controllers
                 {
                     workSheetMenuOutputViewModels.Cells[recordIndex, 1].Value = item.ProductName;
                     workSheetMenuOutputViewModels.Cells[recordIndex, 2].Value = localizer[item?.Item?.ToString() ?? ""].Value;
-                    workSheetMenuOutputViewModels.Cells[recordIndex, 3].Value = item.Amount;
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 3].Value = Convert.ToDecimal(item.Amount.TrimTrailingZeros());
                     workSheetMenuOutputViewModels.Cells[recordIndex, 4].Value = item.MonetaryUnit;
                     workSheetMenuOutputViewModels.Cells[recordIndex, 5].Value = item.Created.ToString();
                     workSheetMenuOutputViewModels.Cells[recordIndex, 6].Value = item.Updated.ToString();
@@ -477,7 +478,7 @@ namespace Maroik.WebSite.Controllers
                             MainClass = localizer[item.MainClass.ToString()].Value,
                             SubClass = localizer[item.SubClass.ToString()].Value,
                             Contents = item.Contents,
-                            Amount = item.Amount,
+                            Amount = Convert.ToDecimal(item.Amount.TrimTrailingZeros()),
                             DepositMyAssetProductName = item.DepositMyAssetProductName,
                             Created = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Created, JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId),
                             Updated = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Updated, JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId),
@@ -489,7 +490,7 @@ namespace Maroik.WebSite.Controllers
                         if (localizer[item.MainClass?.ToString() ?? ""].Value.Contains(wholeSearch) ||
                             localizer[item.SubClass?.ToString() ?? ""].Value.Contains(wholeSearch) ||
                             (item.Contents?.ToString() ?? "").Contains(wholeSearch) ||
-                            (item.Amount.ToString() ?? "").Contains(wholeSearch) ||
+                            (item.Amount.TrimTrailingZeros() ?? "").Contains(wholeSearch) ||
                             (item.DepositMyAssetProductName?.ToString() ?? "").Contains(wholeSearch) ||
                             (TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Created, JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId).ToString() ?? "").Contains(wholeSearch) ||
                             (TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Updated, JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId).ToString() ?? "").Contains(wholeSearch) ||
@@ -501,7 +502,7 @@ namespace Maroik.WebSite.Controllers
                                 MainClass = localizer[item.MainClass.ToString()].Value,
                                 SubClass = localizer[item.SubClass.ToString()].Value,
                                 Contents = item.Contents,
-                                Amount = item.Amount,
+                                Amount = Convert.ToDecimal(item.Amount.TrimTrailingZeros()),
                                 DepositMyAssetProductName = item.DepositMyAssetProductName,
                                 Created = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Created, JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId),
                                 Updated = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Updated, JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId),
@@ -617,7 +618,7 @@ namespace Maroik.WebSite.Controllers
                                 }
                                 #endregion
                                 string previousTempIncomeDepositMyAssetProductName = tempIncome.DepositMyAssetProductName;
-                                long previousTempIncomeAmount = tempIncome.Amount;
+                                decimal previousTempIncomeAmount = tempIncome.Amount;
 
                                 #region 수입 업데이트
                                 tempIncome.MainClass = incomeInputViewModel.MainClass;
@@ -760,7 +761,7 @@ namespace Maroik.WebSite.Controllers
                     MainClass = item.MainClass,
                     SubClass = item.SubClass,
                     Contents = item.Contents,
-                    Amount = item.Amount,
+                    Amount = Convert.ToDecimal(item.Amount.TrimTrailingZeros()),
                     DepositMyAssetProductName = item.DepositMyAssetProductName,
                     Created = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Created, JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId),
                     Updated = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Updated, JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId),
@@ -795,7 +796,7 @@ namespace Maroik.WebSite.Controllers
                     workSheetMenuOutputViewModels.Cells[recordIndex, 1].Value = localizer[item?.MainClass?.ToString() ?? ""].Value;
                     workSheetMenuOutputViewModels.Cells[recordIndex, 2].Value = localizer[item?.SubClass?.ToString() ?? ""].Value;
                     workSheetMenuOutputViewModels.Cells[recordIndex, 3].Value = item.Contents;
-                    workSheetMenuOutputViewModels.Cells[recordIndex, 4].Value = item.Amount;
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 4].Value = Convert.ToDecimal(item.Amount.TrimTrailingZeros());
                     workSheetMenuOutputViewModels.Cells[recordIndex, 5].Value = item.DepositMyAssetProductName;
                     workSheetMenuOutputViewModels.Cells[recordIndex, 6].Value = item.Created.ToString();
                     workSheetMenuOutputViewModels.Cells[recordIndex, 7].Value = item.Updated.ToString();
@@ -1125,7 +1126,7 @@ namespace Maroik.WebSite.Controllers
                             MainClass = localizer[item.MainClass.ToString()].Value,
                             SubClass = localizer[item.SubClass.ToString()].Value,
                             Contents = item.Contents,
-                            Amount = item.Amount,
+                            Amount = Convert.ToDecimal(item.Amount.TrimTrailingZeros()),
                             PaymentMethod = item.PaymentMethod,
                             Note = item.Note,
                             MyDepositAsset = item.MyDepositAsset,
@@ -1138,7 +1139,7 @@ namespace Maroik.WebSite.Controllers
                         if (localizer[item.MainClass?.ToString() ?? ""].Value.Contains(wholeSearch) ||
                             localizer[item.SubClass?.ToString() ?? ""].Value.Contains(wholeSearch) ||
                             (item.Contents?.ToString() ?? "").Contains(wholeSearch) ||
-                            (item.Amount.ToString() ?? "").Contains(wholeSearch) ||
+                            (item.Amount.TrimTrailingZeros() ?? "").Contains(wholeSearch) ||
                             (item.PaymentMethod?.ToString() ?? "").Contains(wholeSearch) ||
                             (item.Note?.ToString() ?? "").Contains(wholeSearch) ||
                             (item.MyDepositAsset?.ToString() ?? "").Contains(wholeSearch) ||
@@ -1151,7 +1152,7 @@ namespace Maroik.WebSite.Controllers
                                 MainClass = localizer[item.MainClass.ToString()].Value,
                                 SubClass = localizer[item.SubClass.ToString()].Value,
                                 Contents = item.Contents,
-                                Amount = item.Amount,
+                                Amount = Convert.ToDecimal(item.Amount.TrimTrailingZeros()),
                                 PaymentMethod = item.PaymentMethod,
                                 Note = item.Note,
                                 MyDepositAsset = item.MyDepositAsset,
@@ -3062,7 +3063,7 @@ namespace Maroik.WebSite.Controllers
                     MainClass = localizer[item.MainClass.ToString()].Value,
                     SubClass = localizer[item.SubClass.ToString()].Value,
                     Contents = item.Contents,
-                    Amount = item.Amount,
+                    Amount = Convert.ToDecimal(item.Amount.TrimTrailingZeros()),
                     PaymentMethod = item.PaymentMethod,
                     Note = item.Note,
                     MyDepositAsset = item.MyDepositAsset,
@@ -3099,7 +3100,7 @@ namespace Maroik.WebSite.Controllers
                     workSheetMenuOutputViewModels.Cells[recordIndex, 1].Value = localizer[item?.MainClass?.ToString() ?? ""].Value;
                     workSheetMenuOutputViewModels.Cells[recordIndex, 2].Value = localizer[item?.SubClass?.ToString() ?? ""].Value;
                     workSheetMenuOutputViewModels.Cells[recordIndex, 3].Value = item.Contents;
-                    workSheetMenuOutputViewModels.Cells[recordIndex, 4].Value = item.Amount;
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 4].Value = Convert.ToDecimal(item.Amount.TrimTrailingZeros());
                     workSheetMenuOutputViewModels.Cells[recordIndex, 5].Value = item.PaymentMethod;
                     workSheetMenuOutputViewModels.Cells[recordIndex, 6].Value = item.Note;
                     workSheetMenuOutputViewModels.Cells[recordIndex, 7].Value = item.MyDepositAsset;

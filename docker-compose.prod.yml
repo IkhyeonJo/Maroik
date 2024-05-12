@@ -20,12 +20,10 @@ services:
         environment:
           - MYSQL_ROOT_PASSWORD=***REMOVED***
           - bind-address=0.0.0.0
-          - TZ=Asia/Seoul
         command:
           - mysqld
           - --character-set-server=utf8mb4
           - --collation-server=utf8mb4_unicode_ci
-          - --default-time-zone=+09:00
 
     maroik.website:
         build :

@@ -18,7 +18,7 @@ namespace Maroik.WebSite.Models.ViewModels.AccountBook
         public string Contents { get; set; }
         [Required(ErrorMessage = "Please enter Amount")]
         [Display(Name = "Amount")]
-        public long Amount { get; set; }
+        public decimal Amount { get; set; }
         public DateTime Created { get; set; }
         [Required(ErrorMessage = "Please enter PaymentMethod")]
         [Display(Name = "PaymentMethod")]

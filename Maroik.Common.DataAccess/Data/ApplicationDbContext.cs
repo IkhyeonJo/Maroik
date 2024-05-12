@@ -54,9 +54,7 @@ namespace Maroik.Common.DataAccess.Data
             {
                 _ = entity.HasKey(e => e.Email).HasName("PRIMARY");
 
-                _ = entity
-                    .ToTable("Account", tb => tb.HasComment("Maroik.WebSite 계정"))
-                    .UseCollation("utf8mb4_general_ci");
+                _ = entity.ToTable("Account", tb => tb.HasComment("Maroik.WebSite 계정"));
 
                 _ = entity.HasIndex(e => e.Nickname, "Nickname").IsUnique();
 
@@ -108,17 +106,13 @@ namespace Maroik.Common.DataAccess.Data
                     .HasName("PRIMARY")
                     .HasAnnotation("MySql:IndexPrefixLength", new[] { 0, 0 });
 
-                _ = entity
-                    .ToTable("Asset", tb => tb.HasComment("Maroik.WebSite 자산"))
-                    .UseCollation("utf8mb4_general_ci");
+                _ = entity.ToTable("Asset", tb => tb.HasComment("Maroik.WebSite 자산"));
 
                 _ = entity.HasIndex(e => e.AccountEmail, "Asset_FK");
 
                 _ = entity.Property(e => e.ProductName).HasComment("상품명 (은행 계좌명, 증권 계좌명, 현금 등)");
                 _ = entity.Property(e => e.AccountEmail).HasComment("계정 이메일 (ID)");
-                _ = entity.Property(e => e.Amount)
-                    .HasComment("금액")
-                    .HasColumnType("bigint(255)");
+                _ = entity.Property(e => e.Amount).HasComment("금액");
                 _ = entity.Property(e => e.Created)
                     .HasMaxLength(6)
                     .HasComment("생성일");
@@ -159,7 +153,7 @@ namespace Maroik.Common.DataAccess.Data
                     .HasComment("PK")
                     .HasColumnType("int(11)");
                 _ = entity.Property(e => e.BoardId)
-                    .HasComment("부모 게시판 Id")
+                    .HasComment("부모 Board Id")
                     .HasColumnType("int(11)");
                 _ = entity.Property(e => e.Extension)
                     .HasMaxLength(255)
@@ -187,7 +181,7 @@ namespace Maroik.Common.DataAccess.Data
                 _ = entity.HasKey(e => e.Id).HasName("PRIMARY");
 
                 _ = entity
-                    .ToTable("Board", tb => tb.HasComment("Maroik.WebSite 게시판"))
+                    .ToTable("Board", tb => tb.HasComment("Maroik.WebSite Board"))
                     .HasCharSet("utf8mb3")
                     .UseCollation("utf8mb3_general_ci");
 
@@ -310,9 +304,7 @@ namespace Maroik.Common.DataAccess.Data
             {
                 _ = entity.HasKey(e => e.Id).HasName("PRIMARY");
 
-                _ = entity
-                    .ToTable("Expenditure", tb => tb.HasComment("Maroik.WebSite 지출"))
-                    .UseCollation("utf8mb4_general_ci");
+                _ = entity.ToTable("Expenditure", tb => tb.HasComment("Maroik.WebSite 지출"));
 
                 _ = entity.HasIndex(e => new { e.PaymentMethod, e.AccountEmail }, "Expenditure_FK");
 
@@ -322,9 +314,7 @@ namespace Maroik.Common.DataAccess.Data
                 _ = entity.Property(e => e.AccountEmail)
                     .IsRequired()
                     .HasComment("계정 이메일 (ID)");
-                _ = entity.Property(e => e.Amount)
-                    .HasComment("금액")
-                    .HasColumnType("bigint(255)");
+                _ = entity.Property(e => e.Amount).HasComment("금액");
                 _ = entity.Property(e => e.Contents)
                     .IsRequired()
                     .HasMaxLength(255)
@@ -363,9 +353,7 @@ namespace Maroik.Common.DataAccess.Data
             {
                 _ = entity.HasKey(e => e.Id).HasName("PRIMARY");
 
-                _ = entity
-                    .ToTable("FixedExpenditure", tb => tb.HasComment("Maroik.WebSite 고정지출"))
-                    .UseCollation("utf8mb4_general_ci");
+                _ = entity.ToTable("FixedExpenditure", tb => tb.HasComment("Maroik.WebSite 고정지출"));
 
                 _ = entity.HasIndex(e => new { e.PaymentMethod, e.AccountEmail }, "FixedExpenditure_FK");
 
@@ -375,9 +363,7 @@ namespace Maroik.Common.DataAccess.Data
                 _ = entity.Property(e => e.AccountEmail)
                     .IsRequired()
                     .HasComment("계정 이메일 (ID)");
-                _ = entity.Property(e => e.Amount)
-                    .HasComment("금액")
-                    .HasColumnType("bigint(255)");
+                _ = entity.Property(e => e.Amount).HasComment("금액");
                 _ = entity.Property(e => e.Contents)
                     .IsRequired()
                     .HasMaxLength(255)
@@ -426,9 +412,7 @@ namespace Maroik.Common.DataAccess.Data
             {
                 _ = entity.HasKey(e => e.Id).HasName("PRIMARY");
 
-                _ = entity
-                    .ToTable("FixedIncome", tb => tb.HasComment("Maroik.WebSite 고정수입"))
-                    .UseCollation("utf8mb4_general_ci");
+                _ = entity.ToTable("FixedIncome", tb => tb.HasComment("Maroik.WebSite 고정수입"));
 
                 _ = entity.HasIndex(e => new { e.DepositMyAssetProductName, e.AccountEmail }, "FixedIncome_FK");
 
@@ -438,9 +422,7 @@ namespace Maroik.Common.DataAccess.Data
                 _ = entity.Property(e => e.AccountEmail)
                     .IsRequired()
                     .HasComment("계정 이메일 (ID)");
-                _ = entity.Property(e => e.Amount)
-                    .HasComment("금액")
-                    .HasColumnType("bigint(255)");
+                _ = entity.Property(e => e.Amount).HasComment("금액");
                 _ = entity.Property(e => e.Contents)
                     .IsRequired()
                     .HasMaxLength(255)
@@ -486,9 +468,7 @@ namespace Maroik.Common.DataAccess.Data
             {
                 _ = entity.HasKey(e => e.Id).HasName("PRIMARY");
 
-                _ = entity
-                    .ToTable("Income", tb => tb.HasComment("Maroik.WebSite 수입"))
-                    .UseCollation("utf8mb4_general_ci");
+                _ = entity.ToTable("Income", tb => tb.HasComment("Maroik.WebSite 수입"));
 
                 _ = entity.HasIndex(e => new { e.DepositMyAssetProductName, e.AccountEmail }, "Income_FK");
 
@@ -498,9 +478,7 @@ namespace Maroik.Common.DataAccess.Data
                 _ = entity.Property(e => e.AccountEmail)
                     .IsRequired()
                     .HasComment("계정 이메일 (ID)");
-                _ = entity.Property(e => e.Amount)
-                    .HasComment("금액")
-                    .HasColumnType("bigint(255)");
+                _ = entity.Property(e => e.Amount).HasComment("금액");
                 _ = entity.Property(e => e.Contents)
                     .IsRequired()
                     .HasMaxLength(255)

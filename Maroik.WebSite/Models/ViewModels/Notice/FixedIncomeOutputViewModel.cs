@@ -18,7 +18,7 @@ namespace Maroik.WebSite.Models.ViewModels.Notice
         public string Contents { get; set; }
         [Required(ErrorMessage = "Please enter Amount")]
         [Display(Name = "Amount")]
-        public long Amount { get; set; }
+        public decimal Amount { get; set; }
         [Required(ErrorMessage = "Please enter DepositMonth")]
         [Display(Name = "DepositMonth")]
         public byte DepositMonth { get; set; }
