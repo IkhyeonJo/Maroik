@@ -35,7 +35,7 @@ public partial class FixedExpenditure
     /// <summary>
     /// 금액
     /// </summary>
-    public long Amount { get; set; }
+    public decimal Amount { get; set; }
 
     /// <summary>
     /// 결제 수단 (자산 상품명/현금)

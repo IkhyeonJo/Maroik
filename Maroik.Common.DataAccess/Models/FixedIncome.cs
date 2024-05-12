@@ -35,7 +35,7 @@ public partial class FixedIncome
     /// <summary>
     /// 금액
     /// </summary>
-    public long Amount { get; set; }
+    public decimal Amount { get; set; }
 
     /// <summary>
     /// 입금 자산 (자산 상품명/현금)

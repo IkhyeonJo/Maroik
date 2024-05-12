@@ -5,11 +5,11 @@
         public string MainClass { get; set; }
         public decimal? SumValue { get; set; }
         public long? CountValue { get; set; }
-        public long? ModeValue { get; set; }
+        public decimal? ModeValue { get; set; }
         public long? ModeCount { get; set; }
-        public long? MinValue { get; set; }
-        public long? MaxValue { get; set; }
-        public long? RangeValue { get; set; }
+        public decimal? MinValue { get; set; }
+        public decimal? MaxValue { get; set; }
+        public decimal? RangeValue { get; set; }
         public decimal? MeanValue { get; set; }
         public double? Variance { get; set; }
         public double? StandardDeviation { get; set; }

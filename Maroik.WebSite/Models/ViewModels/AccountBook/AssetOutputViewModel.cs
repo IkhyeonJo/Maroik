@@ -12,7 +12,7 @@ namespace Maroik.WebSite.Models.ViewModels.AccountBook
         public string Item { get; set; }
         [Required(ErrorMessage = "Please enter Amount")]
         [Display(Name = "Amount")]
-        public long Amount { get; set; }
+        public decimal Amount { get; set; }
         [Required(ErrorMessage = "Please enter MonetaryUnit")]
         [Display(Name = "MonetaryUnit")]
         public string MonetaryUnit { get; set; }

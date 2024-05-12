@@ -10,13 +10,13 @@
     #region 대분류 = '정기수입'
     var regularIncome = Model.Incomes.Where(x => x.MainClass == "RegularIncome").ToList();
 
-    long regularIncomeTotal = 0;
-    long regularIncomeLaborIncome = 0;
-    long regularIncomeBusinessIncome = 0;
-    long regularIncomePensionIncome = 0;
-    long regularIncomeFinancialIncome = 0;
-    long regularIncomeRentalIncome = 0;
-    long regularIncomeOtherIncome = 0;
+    decimal regularIncomeTotal = 0;
+    decimal regularIncomeLaborIncome = 0;
+    decimal regularIncomeBusinessIncome = 0;
+    decimal regularIncomePensionIncome = 0;
+    decimal regularIncomeFinancialIncome = 0;
+    decimal regularIncomeRentalIncome = 0;
+    decimal regularIncomeOtherIncome = 0;
 
     regularIncomeTotal = regularIncome.Sum(v => v.Amount);
     regularIncomeLaborIncome = regularIncome.Where(x => x.SubClass == "LaborIncome").Sum(v => v.Amount);
@@ -48,9 +48,9 @@
     #region 대분류 = '비정기수입'
     var irregularIncome = Model.Incomes.Where(x => x.MainClass == "IrregularIncome").ToList();
 
-    long irregularIncomeTotal = 0;
-    long irregularIncomeLaborIncome = 0;
-    long irregularIncomeOtherIncome = 0;
+    decimal irregularIncomeTotal = 0;
+    decimal irregularIncomeLaborIncome = 0;
+    decimal irregularIncomeOtherIncome = 0;
 
     irregularIncomeTotal = irregularIncome.Sum(v => v.Amount);
     irregularIncomeLaborIncome = irregularIncome.Where(x => x.SubClass == "LaborIncome").Sum(v => v.Amount);
@@ -74,9 +74,9 @@
     #region 대분류 = '정기저축'
     var regularSavings = Model.Expenditures.Where(x => x.MainClass == "RegularSavings").ToList();
 
-    long regularSavingsTotal = 0;
-    long regularSavingsDeposit = 0;
-    long regularSavingsInvestment = 0;
+    decimal regularSavingsTotal = 0;
+    decimal regularSavingsDeposit = 0;
+    decimal regularSavingsInvestment = 0;
 
     regularSavingsTotal = regularSavings.Sum(v => v.Amount);
     regularSavingsDeposit = regularSavings.Where(x => x.SubClass == "Deposit").Sum(v => v.Amount);
@@ -96,13 +96,13 @@
     #region 대분류 = '비소비지출'
     var nonConsumerSpending = Model.Expenditures.Where(x => x.MainClass == "NonConsumerSpending").ToList();
 
-    long nonConsumerSpendingTotal = 0;
-    long nonConsumerSpendingPublicPension = 0;
-    long nonConsumerSpendingDebtRepayment = 0;
-    long nonConsumerSpendingTax = 0;
-    long nonConsumerSpendingSocialInsurance = 0;
-    long nonConsumerSpendingInterHouseholdTranserExpenses = 0;
-    long nonConsumerSpendingNonProfitOrganizationTransfer = 0;
+    decimal nonConsumerSpendingTotal = 0;
+    decimal nonConsumerSpendingPublicPension = 0;
+    decimal nonConsumerSpendingDebtRepayment = 0;
+    decimal nonConsumerSpendingTax = 0;
+    decimal nonConsumerSpendingSocialInsurance = 0;
+    decimal nonConsumerSpendingInterHouseholdTranserExpenses = 0;
+    decimal nonConsumerSpendingNonProfitOrganizationTransfer = 0;
 
     nonConsumerSpendingTotal = nonConsumerSpending.Sum(v => v.Amount);
     nonConsumerSpendingPublicPension = nonConsumerSpending.Where(x => x.SubClass == "PublicPension").Sum(v => v.Amount);
@@ -134,19 +134,19 @@
     #region 대분류 = '소비지출'
     var consumerSpending = Model.Expenditures.Where(x => x.MainClass == "ConsumerSpending").ToList();
 
-    long consumerSpendingTotal = 0;
-    long consumerSpendingMealOrEatOutExpenses = 0;
-    long consumerSpendingHousingOrSuppliesCost = 0;
-    long consumerSpendingEducationExpenses = 0;
-    long consumerSpendingMedicalExpenses = 0;
-    long consumerSpendingTransportationCost = 0;
-    long consumerSpendingCommunicationCost = 0;
-    long consumerSpendingLeisureOrCulture = 0;
-    long consumerSpendingClothingOrShoes = 0;
-    long consumerSpendingPinMoney = 0;
-    long consumerSpendingProtectionTypeInsurance = 0;
-    long consumerSpendingOtherExpenses = 0;
-    long consumerSpendingUnknownExpenditure = 0;
+    decimal consumerSpendingTotal = 0;
+    decimal consumerSpendingMealOrEatOutExpenses = 0;
+    decimal consumerSpendingHousingOrSuppliesCost = 0;
+    decimal consumerSpendingEducationExpenses = 0;
+    decimal consumerSpendingMedicalExpenses = 0;
+    decimal consumerSpendingTransportationCost = 0;
+    decimal consumerSpendingCommunicationCost = 0;
+    decimal consumerSpendingLeisureOrCulture = 0;
+    decimal consumerSpendingClothingOrShoes = 0;
+    decimal consumerSpendingPinMoney = 0;
+    decimal consumerSpendingProtectionTypeInsurance = 0;
+    decimal consumerSpendingOtherExpenses = 0;
+    decimal consumerSpendingUnknownExpenditure = 0;
 
     consumerSpendingTotal = consumerSpending.Sum(v => v.Amount);
     consumerSpendingMealOrEatOutExpenses = consumerSpending.Where(x => x.SubClass == "MealOrEatOutExpenses").Sum(v => v.Amount);
@@ -198,43 +198,43 @@
 
 @*수입*@
 @*정기수입*@
-@Html.Hidden($"{nameof(regularIncomeLaborIncome)}", regularIncomeLaborIncome)
-@Html.Hidden($"{nameof(regularIncomeBusinessIncome)}", regularIncomeBusinessIncome)
-@Html.Hidden($"{nameof(regularIncomePensionIncome)}", regularIncomePensionIncome)
-@Html.Hidden($"{nameof(regularIncomeFinancialIncome)}", regularIncomeFinancialIncome)
-@Html.Hidden($"{nameof(regularIncomeRentalIncome)}", regularIncomeRentalIncome)
-@Html.Hidden($"{nameof(regularIncomeOtherIncome)}", regularIncomeOtherIncome)
+@Html.Hidden($"{nameof(regularIncomeLaborIncome)}", Convert.ToDecimal(regularIncomeLaborIncome.TrimTrailingZeros()))
+@Html.Hidden($"{nameof(regularIncomeBusinessIncome)}", Convert.ToDecimal(regularIncomeBusinessIncome.TrimTrailingZeros()))
+@Html.Hidden($"{nameof(regularIncomePensionIncome)}", Convert.ToDecimal(regularIncomePensionIncome.TrimTrailingZeros()))
+@Html.Hidden($"{nameof(regularIncomeFinancialIncome)}", Convert.ToDecimal(regularIncomeFinancialIncome.TrimTrailingZeros()))
+@Html.Hidden($"{nameof(regularIncomeRentalIncome)}", Convert.ToDecimal(regularIncomeRentalIncome.TrimTrailingZeros()))
+@Html.Hidden($"{nameof(regularIncomeOtherIncome)}", Convert.ToDecimal(regularIncomeOtherIncome.TrimTrailingZeros()))
 
 @*비정기수입*@
-@Html.Hidden($"{nameof(irregularIncomeLaborIncome)}", irregularIncomeLaborIncome)
-@Html.Hidden($"{nameof(irregularIncomeOtherIncome)}", irregularIncomeOtherIncome)
+@Html.Hidden($"{nameof(irregularIncomeLaborIncome)}", Convert.ToDecimal(irregularIncomeLaborIncome.TrimTrailingZeros()))
+@Html.Hidden($"{nameof(irregularIncomeOtherIncome)}", Convert.ToDecimal(irregularIncomeOtherIncome.TrimTrailingZeros()))
 
 @*지출*@
 @*정기저축*@
-@Html.Hidden($"{nameof(regularSavingsDeposit)}", regularSavingsDeposit)
-@Html.Hidden($"{nameof(regularSavingsInvestment)}", regularSavingsInvestment)
+@Html.Hidden($"{nameof(regularSavingsDeposit)}", Convert.ToDecimal(regularSavingsDeposit.TrimTrailingZeros()))
+@Html.Hidden($"{nameof(regularSavingsInvestment)}", Convert.ToDecimal(regularSavingsInvestment.TrimTrailingZeros()))
 
 @*비소비지출*@
-@Html.Hidden($"{nameof(nonConsumerSpendingPublicPension)}", nonConsumerSpendingPublicPension)
-@Html.Hidden($"{nameof(nonConsumerSpendingDebtRepayment)}", nonConsumerSpendingDebtRepayment)
-@Html.Hidden($"{nameof(nonConsumerSpendingTax)}", nonConsumerSpendingTax)
-@Html.Hidden($"{nameof(nonConsumerSpendingSocialInsurance)}", nonConsumerSpendingSocialInsurance)
-@Html.Hidden($"{nameof(nonConsumerSpendingInterHouseholdTranserExpenses)}", nonConsumerSpendingInterHouseholdTranserExpenses)
-@Html.Hidden($"{nameof(nonConsumerSpendingNonProfitOrganizationTransfer)}", nonConsumerSpendingNonProfitOrganizationTransfer)
+@Html.Hidden($"{nameof(nonConsumerSpendingPublicPension)}", Convert.ToDecimal(nonConsumerSpendingPublicPension.TrimTrailingZeros()))
+@Html.Hidden($"{nameof(nonConsumerSpendingDebtRepayment)}", Convert.ToDecimal(nonConsumerSpendingDebtRepayment.TrimTrailingZeros()))
+@Html.Hidden($"{nameof(nonConsumerSpendingTax)}", Convert.ToDecimal(nonConsumerSpendingTax.TrimTrailingZeros()))
+@Html.Hidden($"{nameof(nonConsumerSpendingSocialInsurance)}", Convert.ToDecimal(nonConsumerSpendingSocialInsurance.TrimTrailingZeros()))
+@Html.Hidden($"{nameof(nonConsumerSpendingInterHouseholdTranserExpenses)}", Convert.ToDecimal(nonConsumerSpendingInterHouseholdTranserExpenses.TrimTrailingZeros()))
+@Html.Hidden($"{nameof(nonConsumerSpendingNonProfitOrganizationTransfer)}", Convert.ToDecimal(nonConsumerSpendingNonProfitOrganizationTransfer.TrimTrailingZeros()))
 
 @*소비지출*@
-@Html.Hidden($"{nameof(consumerSpendingMealOrEatOutExpenses)}", consumerSpendingMealOrEatOutExpenses)
-@Html.Hidden($"{nameof(consumerSpendingHousingOrSuppliesCost)}", consumerSpendingHousingOrSuppliesCost)
-@Html.Hidden($"{nameof(consumerSpendingEducationExpenses)}", consumerSpendingEducationExpenses)
-@Html.Hidden($"{nameof(consumerSpendingMedicalExpenses)}", consumerSpendingMedicalExpenses)
-@Html.Hidden($"{nameof(consumerSpendingTransportationCost)}", consumerSpendingTransportationCost)
-@Html.Hidden($"{nameof(consumerSpendingCommunicationCost)}", consumerSpendingCommunicationCost)
-@Html.Hidden($"{nameof(consumerSpendingLeisureOrCulture)}", consumerSpendingLeisureOrCulture)
-@Html.Hidden($"{nameof(consumerSpendingClothingOrShoes)}", consumerSpendingClothingOrShoes)
-@Html.Hidden($"{nameof(consumerSpendingPinMoney)}", consumerSpendingPinMoney)
-@Html.Hidden($"{nameof(consumerSpendingProtectionTypeInsurance)}", consumerSpendingProtectionTypeInsurance)
-@Html.Hidden($"{nameof(consumerSpendingOtherExpenses)}", consumerSpendingOtherExpenses)
-@Html.Hidden($"{nameof(consumerSpendingUnknownExpenditure)}", consumerSpendingUnknownExpenditure)
+@Html.Hidden($"{nameof(consumerSpendingMealOrEatOutExpenses)}", Convert.ToDecimal(consumerSpendingMealOrEatOutExpenses.TrimTrailingZeros()))
+@Html.Hidden($"{nameof(consumerSpendingHousingOrSuppliesCost)}", Convert.ToDecimal(consumerSpendingHousingOrSuppliesCost.TrimTrailingZeros()))
+@Html.Hidden($"{nameof(consumerSpendingEducationExpenses)}", Convert.ToDecimal(consumerSpendingEducationExpenses.TrimTrailingZeros()))
+@Html.Hidden($"{nameof(consumerSpendingMedicalExpenses)}", Convert.ToDecimal(consumerSpendingMedicalExpenses.TrimTrailingZeros()))
+@Html.Hidden($"{nameof(consumerSpendingTransportationCost)}", Convert.ToDecimal(consumerSpendingTransportationCost.TrimTrailingZeros()))
+@Html.Hidden($"{nameof(consumerSpendingCommunicationCost)}", Convert.ToDecimal(consumerSpendingCommunicationCost.TrimTrailingZeros()))
+@Html.Hidden($"{nameof(consumerSpendingLeisureOrCulture)}", Convert.ToDecimal(consumerSpendingLeisureOrCulture.TrimTrailingZeros()))
+@Html.Hidden($"{nameof(consumerSpendingClothingOrShoes)}", Convert.ToDecimal(consumerSpendingClothingOrShoes.TrimTrailingZeros()))
+@Html.Hidden($"{nameof(consumerSpendingPinMoney)}", Convert.ToDecimal(consumerSpendingPinMoney.TrimTrailingZeros()))
+@Html.Hidden($"{nameof(consumerSpendingProtectionTypeInsurance)}", Convert.ToDecimal(consumerSpendingProtectionTypeInsurance.TrimTrailingZeros()))
+@Html.Hidden($"{nameof(consumerSpendingOtherExpenses)}", Convert.ToDecimal(consumerSpendingOtherExpenses.TrimTrailingZeros()))
+@Html.Hidden($"{nameof(consumerSpendingUnknownExpenditure)}", Convert.ToDecimal(consumerSpendingUnknownExpenditure.TrimTrailingZeros()))
 
 <section class="content">
     <div class="container-fluid">
@@ -302,7 +302,7 @@
                                             }
                                             else
                                             {
-                                                <span>@localizer["Sum"]: @Math.Round((decimal)(USP_Income_MonthlyReport_Result.SumValue), 2, MidpointRounding.ToZero)<br /></span>
+                                                <span>@localizer["Sum"]: @Math.Round((decimal)(USP_Income_MonthlyReport_Result.SumValue), 2, MidpointRounding.ToZero).TrimTrailingZeros()<br /></span>
                                             }
 
                                             @if (USP_Income_MonthlyReport_Result.CountValue == null)
@@ -320,7 +320,7 @@
                                             }
                                             else
                                             {
-                                                <span>@localizer["Mode"]: @USP_Income_MonthlyReport_Result.ModeValue<br /></span>
+                                                <span>@localizer["Mode"]: @USP_Income_MonthlyReport_Result.ModeValue.TrimTrailingZeros()<br /></span>
                                             }
 
                                             @if (USP_Income_MonthlyReport_Result.ModeCount == null)
@@ -338,7 +338,7 @@
                                             }
                                             else
                                             {
-                                                <span>@localizer["Min"]: @USP_Income_MonthlyReport_Result.MinValue<br /></span>
+                                                <span>@localizer["Min"]: @USP_Income_MonthlyReport_Result.MinValue.TrimTrailingZeros()<br /></span>
                                             }
 
                                             @if (USP_Income_MonthlyReport_Result.MaxValue == null)
@@ -347,7 +347,7 @@
                                             }
                                             else
                                             {
-                                                <span>@localizer["Max"]: @USP_Income_MonthlyReport_Result.MaxValue<br /></span>
+                                                <span>@localizer["Max"]: @USP_Income_MonthlyReport_Result.MaxValue.TrimTrailingZeros()<br /></span>
                                             }
 
                                             @if (USP_Income_MonthlyReport_Result.RangeValue == null)
@@ -356,7 +356,7 @@
                                             }
                                             else
                                             {
-                                                <span>@localizer["Range"]: @USP_Income_MonthlyReport_Result.RangeValue<br /></span>
+                                                <span>@localizer["Range"]: @USP_Income_MonthlyReport_Result.RangeValue.TrimTrailingZeros()<br /></span>
                                             }
 
                                             @if (USP_Income_MonthlyReport_Result.MeanValue == null)
@@ -365,7 +365,7 @@
                                             }
                                             else
                                             {
-                                                <span>@localizer["Mean"]: @Math.Round((decimal)(USP_Income_MonthlyReport_Result.MeanValue), 2, MidpointRounding.ToZero)<br /></span>
+                                                <span>@localizer["Mean"]: @Math.Round((decimal)(USP_Income_MonthlyReport_Result.MeanValue), 2, MidpointRounding.ToZero).TrimTrailingZeros()<br /></span>
                                             }
 
                                             @if (USP_Income_MonthlyReport_Result.Variance == null)
@@ -476,7 +476,7 @@
                                             }
                                             else
                                             {
-                                                <span>@localizer["Sum"]: @Math.Round((decimal)(USP_Income_MonthlyReport_Result.SumValue), 2, MidpointRounding.ToZero)<br /></span>
+                                                <span>@localizer["Sum"]: @Math.Round((decimal)(USP_Income_MonthlyReport_Result.SumValue), 2, MidpointRounding.ToZero).TrimTrailingZeros()<br /></span>
                                             }
 
                                             @if (USP_Income_MonthlyReport_Result.CountValue == null)
@@ -494,7 +494,7 @@
                                             }
                                             else
                                             {
-                                                <span>@localizer["Mode"]: @USP_Income_MonthlyReport_Result.ModeValue<br /></span>
+                                                <span>@localizer["Mode"]: @USP_Income_MonthlyReport_Result.ModeValue.TrimTrailingZeros()<br /></span>
                                             }
 
                                             @if (USP_Income_MonthlyReport_Result.ModeCount == null)
@@ -512,7 +512,7 @@
                                             }
                                             else
                                             {
-                                                <span>@localizer["Min"]: @USP_Income_MonthlyReport_Result.MinValue<br /></span>
+                                                <span>@localizer["Min"]: @USP_Income_MonthlyReport_Result.MinValue.TrimTrailingZeros()<br /></span>
                                             }
 
                                             @if (USP_Income_MonthlyReport_Result.MaxValue == null)
@@ -521,7 +521,7 @@
                                             }
                                             else
                                             {
-                                                <span>@localizer["Max"]: @USP_Income_MonthlyReport_Result.MaxValue<br /></span>
+                                                <span>@localizer["Max"]: @USP_Income_MonthlyReport_Result.MaxValue.TrimTrailingZeros()<br /></span>
                                             }
 
                                             @if (USP_Income_MonthlyReport_Result.RangeValue == null)
@@ -530,7 +530,7 @@
                                             }
                                             else
                                             {
-                                                <span>@localizer["Range"]: @USP_Income_MonthlyReport_Result.RangeValue<br /></span>
+                                                <span>@localizer["Range"]: @USP_Income_MonthlyReport_Result.RangeValue.TrimTrailingZeros()<br /></span>
                                             }
 
                                             @if (USP_Income_MonthlyReport_Result.MeanValue == null)
@@ -539,7 +539,7 @@
                                             }
                                             else
                                             {
-                                                <span>@localizer["Mean"]: @Math.Round((decimal)(USP_Income_MonthlyReport_Result.MeanValue), 2, MidpointRounding.ToZero)<br /></span>
+                                                <span>@localizer["Mean"]: @Math.Round((decimal)(USP_Income_MonthlyReport_Result.MeanValue), 2, MidpointRounding.ToZero).TrimTrailingZeros()<br /></span>
                                             }
 
                                             @if (USP_Income_MonthlyReport_Result.Variance == null)
@@ -700,7 +700,7 @@
                                             }
                                             else
                                             {
-                                                <span>@localizer["Sum"]: @Math.Round((decimal)(USP_Expenditure_MonthlyReport_Result.SumValue), 2, MidpointRounding.ToZero)<br /></span>
+                                                <span>@localizer["Sum"]: @Math.Round((decimal)(USP_Expenditure_MonthlyReport_Result.SumValue), 2, MidpointRounding.ToZero).TrimTrailingZeros()<br /></span>
                                             }
 
                                             @if (USP_Expenditure_MonthlyReport_Result.CountValue == null)
@@ -718,7 +718,7 @@
                                             }
                                             else
                                             {
-                                                <span>@localizer["Mode"]: @USP_Expenditure_MonthlyReport_Result.ModeValue<br /></span>
+                                                <span>@localizer["Mode"]: @USP_Expenditure_MonthlyReport_Result.ModeValue.TrimTrailingZeros()<br /></span>
                                             }
 
                                             @if (USP_Expenditure_MonthlyReport_Result.ModeCount == null)
@@ -736,7 +736,7 @@
                                             }
                                             else
                                             {
-                                                <span>@localizer["Min"]: @USP_Expenditure_MonthlyReport_Result.MinValue<br /></span>
+                                                <span>@localizer["Min"]: @USP_Expenditure_MonthlyReport_Result.MinValue.TrimTrailingZeros()<br /></span>
                                             }
 
                                             @if (USP_Expenditure_MonthlyReport_Result.MaxValue == null)
@@ -745,7 +745,7 @@
                                             }
                                             else
                                             {
-                                                <span>@localizer["Max"]: @USP_Expenditure_MonthlyReport_Result.MaxValue<br /></span>
+                                                <span>@localizer["Max"]: @USP_Expenditure_MonthlyReport_Result.MaxValue.TrimTrailingZeros()<br /></span>
                                             }
 
                                             @if (USP_Expenditure_MonthlyReport_Result.RangeValue == null)
@@ -754,7 +754,7 @@
                                             }
                                             else
                                             {
-                                                <span>@localizer["Range"]: @USP_Expenditure_MonthlyReport_Result.RangeValue<br /></span>
+                                                <span>@localizer["Range"]: @USP_Expenditure_MonthlyReport_Result.RangeValue.TrimTrailingZeros()<br /></span>
                                             }
 
                                             @if (USP_Expenditure_MonthlyReport_Result.MeanValue == null)
@@ -763,7 +763,7 @@
                                             }
                                             else
                                             {
-                                                <span>@localizer["Mean"]: @Math.Round((decimal)(USP_Expenditure_MonthlyReport_Result.MeanValue), 2, MidpointRounding.ToZero)<br /></span>
+                                                <span>@localizer["Mean"]: @Math.Round((decimal)(USP_Expenditure_MonthlyReport_Result.MeanValue), 2, MidpointRounding.ToZero).TrimTrailingZeros()<br /></span>
                                             }
 
                                             @if (USP_Expenditure_MonthlyReport_Result.Variance == null)
@@ -835,7 +835,7 @@
                                             }
                                             else
                                             {
-                                                <span>@localizer["Over Consumption Index"]: @Math.Round((decimal)(USP_Expenditure_MonthlyReport_Result.OverConsumptionIndex), 2, MidpointRounding.ToZero)<br /></span>
+                                                <span>@localizer["Over Consumption Index"]: @Math.Round((decimal)(USP_Expenditure_MonthlyReport_Result.OverConsumptionIndex), 2, MidpointRounding.ToZero).TrimTrailingZeros()<br /></span>
                                             }
                                         }
                                     </div>
@@ -863,7 +863,7 @@
                                             }
                                             else
                                             {
-                                                <span>@localizer["Sum"]: @Math.Round((decimal)(USP_Expenditure_MonthlyReport_Result.SumValue), 2, MidpointRounding.ToZero)<br /></span>
+                                                <span>@localizer["Sum"]: @Math.Round((decimal)(USP_Expenditure_MonthlyReport_Result.SumValue), 2, MidpointRounding.ToZero).TrimTrailingZeros()<br /></span>
                                             }
 
                                             @if (USP_Expenditure_MonthlyReport_Result.CountValue == null)
@@ -881,7 +881,7 @@
                                             }
                                             else
                                             {
-                                                <span>@localizer["Mode"]: @USP_Expenditure_MonthlyReport_Result.ModeValue<br /></span>
+                                                <span>@localizer["Mode"]: @USP_Expenditure_MonthlyReport_Result.ModeValue.TrimTrailingZeros()<br /></span>
                                             }
 
                                             @if (USP_Expenditure_MonthlyReport_Result.ModeCount == null)
@@ -899,7 +899,7 @@
                                             }
                                             else
                                             {
-                                                <span>@localizer["Min"]: @USP_Expenditure_MonthlyReport_Result.MinValue<br /></span>
+                                                <span>@localizer["Min"]: @USP_Expenditure_MonthlyReport_Result.MinValue.TrimTrailingZeros()<br /></span>
                                             }
 
                                             @if (USP_Expenditure_MonthlyReport_Result.MaxValue == null)
@@ -908,7 +908,7 @@
                                             }
                                             else
                                             {
-                                                <span>@localizer["Max"]: @USP_Expenditure_MonthlyReport_Result.MaxValue<br /></span>
+                                                <span>@localizer["Max"]: @USP_Expenditure_MonthlyReport_Result.MaxValue.TrimTrailingZeros()<br /></span>
                                             }
 
                                             @if (USP_Expenditure_MonthlyReport_Result.RangeValue == null)
@@ -917,7 +917,7 @@
                                             }
                                             else
                                             {
-                                                <span>@localizer["Range"]: @USP_Expenditure_MonthlyReport_Result.RangeValue<br /></span>
+                                                <span>@localizer["Range"]: @USP_Expenditure_MonthlyReport_Result.RangeValue.TrimTrailingZeros()<br /></span>
                                             }
 
                                             @if (USP_Expenditure_MonthlyReport_Result.MeanValue == null)
@@ -926,7 +926,7 @@
                                             }
                                             else
                                             {
-                                                <span>@localizer["Mean"]: @Math.Round((decimal)(USP_Expenditure_MonthlyReport_Result.MeanValue), 2, MidpointRounding.ToZero)<br /></span>
+                                                <span>@localizer["Mean"]: @Math.Round((decimal)(USP_Expenditure_MonthlyReport_Result.MeanValue), 2, MidpointRounding.ToZero).TrimTrailingZeros()<br /></span>
                                             }
 
                                             @if (USP_Expenditure_MonthlyReport_Result.Variance == null)
@@ -998,7 +998,7 @@
                                             }
                                             else
                                             {
-                                                <span>@localizer["Over Consumption Index"]: @Math.Round((decimal)(USP_Expenditure_MonthlyReport_Result.OverConsumptionIndex), 2, MidpointRounding.ToZero)<br /></span>
+                                                <span>@localizer["Over Consumption Index"]: @Math.Round((decimal)(USP_Expenditure_MonthlyReport_Result.OverConsumptionIndex), 2, MidpointRounding.ToZero).TrimTrailingZeros()<br /></span>
                                             }
                                         }
                                     </div>
@@ -1047,7 +1047,7 @@
                                             }
                                             else
                                             {
-                                                <span>@localizer["Sum"]: @Math.Round((decimal)(USP_Expenditure_MonthlyReport_Result.SumValue), 2, MidpointRounding.ToZero)<br /></span>
+                                                <span>@localizer["Sum"]: @Math.Round((decimal)(USP_Expenditure_MonthlyReport_Result.SumValue), 2, MidpointRounding.ToZero).TrimTrailingZeros()<br /></span>
                                             }
 
                                             @if (USP_Expenditure_MonthlyReport_Result.CountValue == null)
@@ -1065,7 +1065,7 @@
                                             }
                                             else
                                             {
-                                                <span>@localizer["Mode"]: @USP_Expenditure_MonthlyReport_Result.ModeValue<br /></span>
+                                                <span>@localizer["Mode"]: @USP_Expenditure_MonthlyReport_Result.ModeValue.TrimTrailingZeros()<br /></span>
                                             }
 
                                             @if (USP_Expenditure_MonthlyReport_Result.ModeCount == null)
@@ -1083,7 +1083,7 @@
                                             }
                                             else
                                             {
-                                                <span>@localizer["Min"]: @USP_Expenditure_MonthlyReport_Result.MinValue<br /></span>
+                                                <span>@localizer["Min"]: @USP_Expenditure_MonthlyReport_Result.MinValue.TrimTrailingZeros()<br /></span>
                                             }
 
                                             @if (USP_Expenditure_MonthlyReport_Result.MaxValue == null)
@@ -1092,7 +1092,7 @@
                                             }
                                             else
                                             {
-                                                <span>@localizer["Max"]: @USP_Expenditure_MonthlyReport_Result.MaxValue<br /></span>
+                                                <span>@localizer["Max"]: @USP_Expenditure_MonthlyReport_Result.MaxValue.TrimTrailingZeros()<br /></span>
                                             }
 
                                             @if (USP_Expenditure_MonthlyReport_Result.RangeValue == null)
@@ -1101,7 +1101,7 @@
                                             }
                                             else
                                             {
-                                                <span>@localizer["Range"]: @USP_Expenditure_MonthlyReport_Result.RangeValue<br /></span>
+                                                <span>@localizer["Range"]: @USP_Expenditure_MonthlyReport_Result.RangeValue.TrimTrailingZeros()<br /></span>
                                             }
 
                                             @if (USP_Expenditure_MonthlyReport_Result.MeanValue == null)
@@ -1110,7 +1110,7 @@
                                             }
                                             else
                                             {
-                                                <span>@localizer["Mean"]: @Math.Round((decimal)(USP_Expenditure_MonthlyReport_Result.MeanValue), 2, MidpointRounding.ToZero)<br /></span>
+                                                <span>@localizer["Mean"]: @Math.Round((decimal)(USP_Expenditure_MonthlyReport_Result.MeanValue), 2, MidpointRounding.ToZero).TrimTrailingZeros()<br /></span>
                                             }
 
                                             @if (USP_Expenditure_MonthlyReport_Result.Variance == null)
@@ -1182,7 +1182,7 @@
                                             }
                                             else
                                             {
-                                                <span>@localizer["Over Consumption Index"]: @Math.Round((decimal)(USP_Expenditure_MonthlyReport_Result.OverConsumptionIndex), 2, MidpointRounding.ToZero)<br /></span>
+                                                <span>@localizer["Over Consumption Index"]: @Math.Round((decimal)(USP_Expenditure_MonthlyReport_Result.OverConsumptionIndex), 2, MidpointRounding.ToZero).TrimTrailingZeros()<br /></span>
                                             }
                                         }
                                     </div>

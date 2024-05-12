@@ -26,7 +26,7 @@ public partial class Asset
     /// <summary>
     /// 금액
     /// </summary>
-    public long Amount { get; set; }
+    public decimal Amount { get; set; }
 
     /// <summary>
     /// 화폐 단위 (KRW, USD, ETC)

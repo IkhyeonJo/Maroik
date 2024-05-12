@@ -1,5 +1,6 @@
 ﻿using Maroik.Common.DataAccess.Contracts;
 using Maroik.Common.DataAccess.Models;
+using Maroik.WebSite.Extensions;
 using Maroik.WebSite.Models.ViewModels.Notice;
 using Maroik.WebSite.Utilities;
 using Microsoft.AspNetCore.Mvc;
@@ -206,7 +207,7 @@ namespace Maroik.WebSite.Controllers
                             MainClass = localizer[item.MainClass.ToString()].Value,
                             SubClass = localizer[item.SubClass.ToString()].Value,
                             Contents = item.Contents,
-                            Amount = item.Amount,
+                            Amount = Convert.ToDecimal(item.Amount.TrimTrailingZeros()),
                             DepositMonth = item.DepositMonth,
                             DepositDay = item.DepositDay,
                             MaturityDate = item.MaturityDate.ToString("yyyy-MM-dd"),
@@ -224,7 +225,7 @@ namespace Maroik.WebSite.Controllers
                         if (localizer[item.MainClass?.ToString() ?? ""].Value.Contains(wholeSearch) ||
                             localizer[item.SubClass?.ToString() ?? ""].Value.Contains(wholeSearch) ||
                             (item.Contents?.ToString() ?? "").Contains(wholeSearch) ||
-                            (item.Amount.ToString() ?? "").Contains(wholeSearch) ||
+                            (item.Amount.TrimTrailingZeros() ?? "").Contains(wholeSearch) ||
                             (item.DepositMonth.ToString() ?? "").Contains(wholeSearch) ||
                             (item.DepositDay.ToString() ?? "").Contains(wholeSearch) ||
                             (item.MaturityDate.ToString("yyyy-MM-dd") ?? "").Contains(wholeSearch) ||
@@ -255,7 +256,7 @@ namespace Maroik.WebSite.Controllers
                                 MainClass = localizer[item.MainClass.ToString()].Value,
                                 SubClass = localizer[item.SubClass.ToString()].Value,
                                 Contents = item.Contents,
-                                Amount = item.Amount,
+                                Amount = Convert.ToDecimal(item.Amount.TrimTrailingZeros()),
                                 DepositMonth = item.DepositMonth,
                                 DepositDay = item.DepositDay,
                                 MaturityDate = item.MaturityDate.ToString("yyyy-MM-dd"),
@@ -308,7 +309,7 @@ namespace Maroik.WebSite.Controllers
                             MainClass = tempFixedIncome.MainClass,
                             SubClass = tempFixedIncome.SubClass,
                             Contents = tempFixedIncome.Contents,
-                            Amount = tempFixedIncome.Amount,
+                            Amount = Convert.ToDecimal(tempFixedIncome.Amount.TrimTrailingZeros()),
                             DepositMonth = tempFixedIncome.DepositMonth,
                             DepositDay = tempFixedIncome.DepositDay,
                             MaturityDate = tempFixedIncome.MaturityDate.ToString("yyyy-MM-dd"),
@@ -548,7 +549,7 @@ namespace Maroik.WebSite.Controllers
                     MainClass = localizer[item.MainClass.ToString()].Value,
                     SubClass = localizer[item.SubClass.ToString()].Value,
                     Contents = item.Contents,
-                    Amount = item.Amount,
+                    Amount = Convert.ToDecimal(item.Amount.TrimTrailingZeros()),
                     DepositMonth = item.DepositMonth,
                     DepositDay = item.DepositDay,
                     MaturityDate = item.MaturityDate.ToString("yyyy-MM-dd"),
@@ -593,7 +594,7 @@ namespace Maroik.WebSite.Controllers
                     workSheetMenuOutputViewModels.Cells[recordIndex, 1].Value = localizer[item?.MainClass?.ToString() ?? ""].Value;
                     workSheetMenuOutputViewModels.Cells[recordIndex, 2].Value = localizer[item?.SubClass?.ToString() ?? ""].Value;
                     workSheetMenuOutputViewModels.Cells[recordIndex, 3].Value = item.Contents;
-                    workSheetMenuOutputViewModels.Cells[recordIndex, 4].Value = item.Amount;
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 4].Value = Convert.ToDecimal(item.Amount.TrimTrailingZeros());
                     workSheetMenuOutputViewModels.Cells[recordIndex, 5].Value = item.DepositMonth;
                     workSheetMenuOutputViewModels.Cells[recordIndex, 6].Value = item.DepositDay;
                     workSheetMenuOutputViewModels.Cells[recordIndex, 7].Value = item.MaturityDate;
@@ -876,7 +877,7 @@ namespace Maroik.WebSite.Controllers
                             MainClass = localizer[item.MainClass.ToString()].Value,
                             SubClass = localizer[item.SubClass.ToString()].Value,
                             Contents = item.Contents,
-                            Amount = item.Amount,
+                            Amount = Convert.ToDecimal(item.Amount.TrimTrailingZeros()),
                             PaymentMethod = item.PaymentMethod,
                             MyDepositAsset = item.MyDepositAsset,
                             DepositMonth = item.DepositMonth,
@@ -895,7 +896,7 @@ namespace Maroik.WebSite.Controllers
                         if (localizer[item.MainClass?.ToString() ?? ""].Value.Contains(wholeSearch) ||
                             localizer[item.SubClass?.ToString() ?? ""].Value.Contains(wholeSearch) ||
                             (item.Contents?.ToString() ?? "").Contains(wholeSearch) ||
-                            (item.Amount.ToString() ?? "").Contains(wholeSearch) ||
+                            (item.Amount.TrimTrailingZeros() ?? "").Contains(wholeSearch) ||
                             (item.PaymentMethod.ToString() ?? "").Contains(wholeSearch) ||
                             (item.MyDepositAsset?.ToString() ?? "").Contains(wholeSearch) ||
                             (item.DepositMonth.ToString() ?? "").Contains(wholeSearch) ||
@@ -927,7 +928,7 @@ namespace Maroik.WebSite.Controllers
                                 MainClass = localizer[item.MainClass.ToString()].Value,
                                 SubClass = localizer[item.SubClass.ToString()].Value,
                                 Contents = item.Contents,
-                                Amount = item.Amount,
+                                Amount = Convert.ToDecimal(item.Amount.TrimTrailingZeros()),
                                 PaymentMethod = item.PaymentMethod,
                                 MyDepositAsset = item.MyDepositAsset,
                                 DepositMonth = item.DepositMonth,
@@ -981,7 +982,7 @@ namespace Maroik.WebSite.Controllers
                             MainClass = tempFixedExpenditure.MainClass,
                             SubClass = tempFixedExpenditure.SubClass,
                             Contents = tempFixedExpenditure.Contents,
-                            Amount = tempFixedExpenditure.Amount,
+                            Amount = Convert.ToDecimal(tempFixedExpenditure.Amount.TrimTrailingZeros()),
                             DepositMonth = tempFixedExpenditure.DepositMonth,
                             DepositDay = tempFixedExpenditure.DepositDay,
                             MaturityDate = tempFixedExpenditure.MaturityDate.ToString("yyyy-MM-dd"),
@@ -1308,7 +1309,7 @@ namespace Maroik.WebSite.Controllers
                     MainClass = localizer[item.MainClass.ToString()].Value,
                     SubClass = localizer[item.SubClass.ToString()].Value,
                     Contents = item.Contents,
-                    Amount = item.Amount,
+                    Amount = Convert.ToDecimal(item.Amount.TrimTrailingZeros()),
                     PaymentMethod = item.PaymentMethod,
                     MyDepositAsset = item.MyDepositAsset,
                     DepositMonth = item.DepositMonth,
@@ -1355,7 +1356,7 @@ namespace Maroik.WebSite.Controllers
                     workSheetMenuOutputViewModels.Cells[recordIndex, 1].Value = localizer[item?.MainClass?.ToString() ?? ""].Value;
                     workSheetMenuOutputViewModels.Cells[recordIndex, 2].Value = localizer[item?.SubClass?.ToString() ?? ""].Value;
                     workSheetMenuOutputViewModels.Cells[recordIndex, 3].Value = item.Contents;
-                    workSheetMenuOutputViewModels.Cells[recordIndex, 4].Value = item.Amount;
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 4].Value = Convert.ToDecimal(item.Amount.TrimTrailingZeros());
                     workSheetMenuOutputViewModels.Cells[recordIndex, 5].Value = item.PaymentMethod;
                     workSheetMenuOutputViewModels.Cells[recordIndex, 6].Value = item.MyDepositAsset;
                     workSheetMenuOutputViewModels.Cells[recordIndex, 7].Value = item.DepositMonth;
