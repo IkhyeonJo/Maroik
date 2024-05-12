@@ -153,6 +153,7 @@ function EditAssetGridRow(errorMessageSelectGridRow) {
                 formEditAsset.find('input[id="editAssetProductName"]').val(data.asset.productName);
                 formEditAsset.find('select[id="editAssetItem"]').val(data.asset.item).change();
                 formEditAsset.find('input[id="editAssetAmount"]').val(data.asset.amount);
+                formEditAsset.find('input[id="editAssetMonetaryUnit"]').val(data.asset.monetaryUnit);
                 formEditAsset.find('input[id="editAssetNote"]').val(data.asset.note);
                 formEditAsset.find('input[id="editAssetDeleted"]').prop("checked", data.asset.deleted);
 
@@ -182,6 +183,7 @@ function UpdateAsset() {
     let productName = createForm.find('input[id="editAssetProductName"]').val();
     let item = createForm.find('select[id="editAssetItem"]').val();
     let amount = createForm.find('input[id="editAssetAmount"]').val();
+    let monetaryUnit = createForm.find('input[id="editAssetMonetaryUnit"]').val();
     let note = createForm.find('input[id="editAssetNote"]').val();
     let deleted = createForm.find('input[id="editAssetDeleted"]').is(":checked");
     let originalProductName = createForm.find('input[id="editAssetOriginalProductName"]').val();
@@ -190,6 +192,7 @@ function UpdateAsset() {
         ProductName: productName,
         Item: item,
         Amount: amount,
+        MonetaryUnit: monetaryUnit,
         Note: note,
         Deleted: deleted,
         OriginalProductName: originalProductName

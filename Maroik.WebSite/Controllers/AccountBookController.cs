@@ -230,6 +230,7 @@ namespace Maroik.WebSite.Controllers
                             tempAsset.ProductName = assetInputViewModel.ProductName;
                             tempAsset.Item = assetInputViewModel.Item;
                             tempAsset.Amount = assetInputViewModel.Amount;
+                            tempAsset.MonetaryUnit = assetInputViewModel.MonetaryUnit;
                             tempAsset.Note = assetInputViewModel.Note;
                             tempAsset.Deleted = assetInputViewModel.Deleted;
                             tempAsset.Updated = DateTime.UtcNow;
