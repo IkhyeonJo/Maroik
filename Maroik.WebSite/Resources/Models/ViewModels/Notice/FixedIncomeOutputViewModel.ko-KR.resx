@@ -145,7 +145,7 @@
     <value>만기일</value>
   </data>
   <data name="MonetaryUnit" xml:space="preserve">
-    <value>화폐 단위</value>
+    <value>화폐단위</value>
   </data>
   <data name="Note" xml:space="preserve">
     <value>주석</value>
