@@ -89,5 +89,22 @@ namespace Maroik.Common.DataAccess.Services
         {
             return await context.USP_Expenditure_MonthlyReports.FromSqlRaw("CALL USP_Expenditure_MonthlyReport(@yearMonth, @email, @timeZoneIanaId)", new MySqlParameter("@yearMonth", yearMonth), new MySqlParameter("@email", email), new MySqlParameter("@timeZoneIanaId", timeZoneIanaId)).ToListAsync();
         }
+
+        /// <summary>
+        /// 내입금자산명을 업데이트합니다.
+        /// </summary>
+        /// <param name="accountEmail"></param>
+        /// <param name="oldMyDepositAsset"></param>
+        /// <param name="newMyDepositAsset"></param>
+        /// <returns></returns>
+        public async Task<int> UpdateMyDepositAssetWithProductNameAsync(string accountEmail, string oldMyDepositAsset, string newMyDepositAsset)
+        {
+            return await context.Database.ExecuteSqlInterpolatedAsync
+                    (
+                        @$"UPDATE Expenditure
+                           SET MyDepositAsset = {newMyDepositAsset}
+                           WHERE MyDepositAsset = {oldMyDepositAsset} AND AccountEmail = {accountEmail}"
+                    );
+        }
     }
 }

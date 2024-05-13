@@ -59,5 +59,22 @@ namespace Maroik.Common.DataAccess.Services
             _ = context.FixedExpenditures.Remove(fixedExpenditure);
             _ = await context.SaveChangesAsync();
         }
+
+        /// <summary>
+        /// 내입금자산명을 업데이트합니다.
+        /// </summary>
+        /// <param name="accountEmail"></param>
+        /// <param name="oldMyDepositAsset"></param>
+        /// <param name="newMyDepositAsset"></param>
+        /// <returns></returns>
+        public async Task<int> UpdateMyDepositAssetWithProductNameAsync(string accountEmail, string oldMyDepositAsset, string newMyDepositAsset)
+        {
+            return await context.Database.ExecuteSqlInterpolatedAsync
+                    (
+                        @$"UPDATE FixedExpenditure
+                           SET MyDepositAsset = {newMyDepositAsset}
+                           WHERE MyDepositAsset = {oldMyDepositAsset} AND AccountEmail = {accountEmail}"
+                    );
+        }
     }
 }

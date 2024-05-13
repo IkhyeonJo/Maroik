@@ -49,5 +49,14 @@ namespace Maroik.Common.DataAccess.Contracts
         /// <param name="yearMonth"></param>
         /// <returns></returns>
         public Task<List<USP_Expenditure_MonthlyReport>> GetCurrentYearMonthExpendituresMonthlyReport(string email, string yearMonth, string timeZoneIanaId);
+
+        /// <summary>
+        /// 내입금자산명을 업데이트합니다.
+        /// </summary>
+        /// <param name="accountEmail"></param>
+        /// <param name="oldMyDepositAsset"></param>
+        /// <param name="newMyDepositAsset"></param>
+        /// <returns></returns>
+        public Task<int> UpdateMyDepositAssetWithProductNameAsync(string accountEmail, string oldMyDepositAsset, string newMyDepositAsset);
     }
 }

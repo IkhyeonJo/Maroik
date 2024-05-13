@@ -33,5 +33,14 @@ namespace Maroik.Common.DataAccess.Contracts
         /// <param name="fixedExpenditure"></param>
         /// <returns></returns>
         public Task DeleteFixedExpenditureAsync(FixedExpenditure fixedExpenditure);
+
+        /// <summary>
+        /// 내입금자산명을 업데이트합니다.
+        /// </summary>
+        /// <param name="accountEmail"></param>
+        /// <param name="oldMyDepositAsset"></param>
+        /// <param name="newMyDepositAsset"></param>
+        /// <returns></returns>
+        public Task<int> UpdateMyDepositAssetWithProductNameAsync(string accountEmail, string oldMyDepositAsset, string newMyDepositAsset);
     }
 }

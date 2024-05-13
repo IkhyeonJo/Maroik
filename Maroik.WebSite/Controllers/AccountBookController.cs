@@ -23,7 +23,8 @@ namespace Maroik.WebSite.Controllers
         private readonly IAssetRepository assetRepository;
         private readonly IIncomeRepository incomeRepository;
         private readonly IExpenditureRepository expenditureRepository;
-        public AccountBookController(IHtmlLocalizer<AccountBookController> localizer, ILogger<AccountBookController> logger, IAccountRepository accountRepository, IHostEnvironment hostEnvironment, ICategoryRepository categoryRepository, ISubCategoryRepository subCategoryRepository, IAssetRepository assetRepository, IIncomeRepository incomeRepository, IExpenditureRepository expenditureRepository)
+        private readonly IFixedExpenditureRepository fixedExpenditureRepository;
+        public AccountBookController(IHtmlLocalizer<AccountBookController> localizer, ILogger<AccountBookController> logger, IAccountRepository accountRepository, IHostEnvironment hostEnvironment, ICategoryRepository categoryRepository, ISubCategoryRepository subCategoryRepository, IAssetRepository assetRepository, IIncomeRepository incomeRepository, IExpenditureRepository expenditureRepository, IFixedExpenditureRepository fixedExpenditureRepository)
         {
             this.localizer = localizer;
             this.logger = logger;
@@ -34,6 +35,7 @@ namespace Maroik.WebSite.Controllers
             this.assetRepository = assetRepository;
             this.incomeRepository = incomeRepository;
             this.expenditureRepository = expenditureRepository;
+            this.fixedExpenditureRepository = fixedExpenditureRepository;
         }
 
         #region 자산
@@ -235,11 +237,17 @@ namespace Maroik.WebSite.Controllers
                             tempAsset.Deleted = assetInputViewModel.Deleted;
                             tempAsset.Updated = DateTime.UtcNow;
 
-                            return await assetRepository.UpdateAssetWithProductNameAsync(tempAsset, assetInputViewModel.OriginalProductName) switch
+                            if (await assetRepository.UpdateAssetWithProductNameAsync(tempAsset, assetInputViewModel.OriginalProductName) > 0)
                             {
-                                > 0 => Json(new { result = true, message = localizer["The asset has been successfully updated."].Value }),
-                                _ => Json(new { result = false, error = localizer["Input is invalid"].Value }),
-                            };
+                                await fixedExpenditureRepository.UpdateMyDepositAssetWithProductNameAsync(tempAsset.AccountEmail, assetInputViewModel.OriginalProductName, assetInputViewModel.ProductName);
+                                await expenditureRepository.UpdateMyDepositAssetWithProductNameAsync(tempAsset.AccountEmail, assetInputViewModel.OriginalProductName, assetInputViewModel.ProductName);
+
+                                return Json(new { result = true, message = localizer["The asset has been successfully updated."].Value });
+                            }
+                            else
+                            {
+                                return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                            }
                         }
                     }
                     catch
