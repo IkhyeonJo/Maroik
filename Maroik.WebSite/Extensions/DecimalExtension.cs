@@ -1,7 +1,4 @@
-﻿using System.ComponentModel;
-using System.Reflection;
-
-namespace Maroik.WebSite.Extensions
+﻿namespace Maroik.WebSite.Extensions
 {
     public static class DecimalExtension
     {

@@ -239,8 +239,8 @@ namespace Maroik.WebSite.Controllers
 
                             if (await assetRepository.UpdateAssetWithProductNameAsync(tempAsset, assetInputViewModel.OriginalProductName) > 0)
                             {
-                                await fixedExpenditureRepository.UpdateMyDepositAssetWithProductNameAsync(tempAsset.AccountEmail, assetInputViewModel.OriginalProductName, assetInputViewModel.ProductName);
-                                await expenditureRepository.UpdateMyDepositAssetWithProductNameAsync(tempAsset.AccountEmail, assetInputViewModel.OriginalProductName, assetInputViewModel.ProductName);
+                                _ = await fixedExpenditureRepository.UpdateMyDepositAssetWithProductNameAsync(tempAsset.AccountEmail, assetInputViewModel.OriginalProductName, assetInputViewModel.ProductName);
+                                _ = await expenditureRepository.UpdateMyDepositAssetWithProductNameAsync(tempAsset.AccountEmail, assetInputViewModel.OriginalProductName, assetInputViewModel.ProductName);
 
                                 return Json(new { result = true, message = localizer["The asset has been successfully updated."].Value });
                             }
