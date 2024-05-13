@@ -141,6 +141,9 @@
   <data name="MaturityDate" xml:space="preserve">
     <value>만기일</value>
   </data>
+  <data name="MonetaryUnit" xml:space="preserve">
+    <value>화폐 단위</value>
+  </data>
   <data name="MyDepositAsset" xml:space="preserve">
     <value>내입금자산</value>
   </data>

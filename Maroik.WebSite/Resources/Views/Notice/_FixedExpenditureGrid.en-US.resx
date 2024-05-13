@@ -141,6 +141,9 @@
   <data name="MaturityDate" xml:space="preserve">
     <value>MaturityDate</value>
   </data>
+  <data name="MonetaryUnit" xml:space="preserve">
+    <value>MonetaryUnit</value>
+  </data>
   <data name="MyDepositAsset" xml:space="preserve">
     <value>MyDepositAsset</value>
   </data>

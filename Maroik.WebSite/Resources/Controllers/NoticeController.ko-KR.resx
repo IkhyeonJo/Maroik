@@ -201,6 +201,9 @@
   <data name="MonetaryUnit" xml:space="preserve">
     <value>화폐 단위</value>
   </data>
+  <data name="MyDepositAsset" xml:space="preserve">
+    <value>내입금자산</value>
+  </data>
   <data name="No fixedExpenditure exists" xml:space="preserve">
     <value>고정 지출이 없습니다.</value>
   </data>
@@ -224,6 +227,9 @@
   </data>
   <data name="OtherIncome" xml:space="preserve">
     <value>기타수입</value>
+  </data>
+  <data name="PaymentMethod" xml:space="preserve">
+    <value>결제수단</value>
   </data>
   <data name="PaymentMethod MonetaryUnit must be same as MyDepositAsset MonetaryUnit." xml:space="preserve">
     <value>결제수단의 화폐단위와 내입금자산의 화폐단위가 서로 같아야 합니다.</value>

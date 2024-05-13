@@ -201,6 +201,9 @@
   <data name="MonetaryUnit" xml:space="preserve">
     <value>MonetaryUnit</value>
   </data>
+  <data name="MyDepositAsset" xml:space="preserve">
+    <value>MyDepositAsset</value>
+  </data>
   <data name="No fixedExpenditure exists" xml:space="preserve">
     <value>No fixedExpenditure exists</value>
   </data>
@@ -224,6 +227,9 @@
   </data>
   <data name="OtherIncome" xml:space="preserve">
     <value>OtherIncome</value>
+  </data>
+  <data name="PaymentMethod" xml:space="preserve">
+    <value>PaymentMethod</value>
   </data>
   <data name="PaymentMethod MonetaryUnit must be same as MyDepositAsset MonetaryUnit." xml:space="preserve">
     <value>PaymentMethod MonetaryUnit must be same as MyDepositAsset MonetaryUnit.</value>
