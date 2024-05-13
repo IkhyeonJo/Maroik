@@ -1,6 +1,7 @@
 ﻿using Maroik.Common.DataAccess.Contracts;
 using Maroik.Common.DataAccess.Models;
 using Maroik.WebSite.Extensions;
+using Maroik.WebSite.Models.ViewModels.AccountBook;
 using Maroik.WebSite.Models.ViewModels.Notice;
 using Maroik.WebSite.Utilities;
 using Microsoft.AspNetCore.Mvc;
@@ -645,6 +646,19 @@ namespace Maroik.WebSite.Controllers
                                     return Json(new { result = false, error = localizer["The PaymentMethod and MyDepositAsset value cannot be the same."].Value });
                                 }
 
+                                Asset expenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, fixedExpenditureInputViewModel.PaymentMethod);
+                                Asset incomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, fixedExpenditureInputViewModel.MyDepositAsset);
+
+                                if (expenditureAsset == null || incomeAsset == null)
+                                {
+                                    return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                                }
+
+                                if (expenditureAsset.MonetaryUnit != incomeAsset.MonetaryUnit)
+                                {
+                                    return Json(new { result = false, error = localizer["PaymentMethod MonetaryUnit must be same as MyDepositAsset MonetaryUnit."].Value });
+                                }
+
                                 #region 고정 지출 생성
                                 await fixedExpenditureRepository.CreateFixedExpenditureAsync
                                     (
@@ -691,6 +705,19 @@ namespace Maroik.WebSite.Controllers
                                 if (fixedExpenditureInputViewModel.PaymentMethod == fixedExpenditureInputViewModel.MyDepositAsset)
                                 {
                                     return Json(new { result = false, error = localizer["The PaymentMethod and MyDepositAsset value cannot be the same."].Value });
+                                }
+
+                                Asset expenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, fixedExpenditureInputViewModel.PaymentMethod);
+                                Asset incomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, fixedExpenditureInputViewModel.MyDepositAsset);
+
+                                if (expenditureAsset == null || incomeAsset == null)
+                                {
+                                    return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                                }
+
+                                if (expenditureAsset.MonetaryUnit != incomeAsset.MonetaryUnit)
+                                {
+                                    return Json(new { result = false, error = localizer["PaymentMethod MonetaryUnit must be same as MyDepositAsset MonetaryUnit."].Value });
                                 }
 
                                 #region 고정 지출 생성
@@ -1027,6 +1054,19 @@ namespace Maroik.WebSite.Controllers
                                     return Json(new { result = false, error = localizer["The PaymentMethod and MyDepositAsset value cannot be the same."].Value });
                                 }
 
+                                Asset expenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, fixedExpenditureInputViewModel.PaymentMethod);
+                                Asset incomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, fixedExpenditureInputViewModel.MyDepositAsset);
+
+                                if (expenditureAsset == null || incomeAsset == null)
+                                {
+                                    return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                                }
+
+                                if (expenditureAsset.MonetaryUnit != incomeAsset.MonetaryUnit)
+                                {
+                                    return Json(new { result = false, error = localizer["PaymentMethod MonetaryUnit must be same as MyDepositAsset MonetaryUnit."].Value });
+                                }
+
                                 List<FixedExpenditure> tempFixedExpenditures = await fixedExpenditureRepository.GetFixedExpendituresAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
                                 FixedExpenditure tempFixedExpenditure = tempFixedExpenditures.Where(a => a.Id == fixedExpenditureInputViewModel.Id).FirstOrDefault();
 
@@ -1076,6 +1116,19 @@ namespace Maroik.WebSite.Controllers
                                 if (fixedExpenditureInputViewModel.PaymentMethod == fixedExpenditureInputViewModel.MyDepositAsset)
                                 {
                                     return Json(new { result = false, error = localizer["The PaymentMethod and MyDepositAsset value cannot be the same."].Value });
+                                }
+
+                                Asset expenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, fixedExpenditureInputViewModel.PaymentMethod);
+                                Asset incomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, fixedExpenditureInputViewModel.MyDepositAsset);
+
+                                if (expenditureAsset == null || incomeAsset == null)
+                                {
+                                    return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                                }
+
+                                if (expenditureAsset.MonetaryUnit != incomeAsset.MonetaryUnit)
+                                {
+                                    return Json(new { result = false, error = localizer["PaymentMethod MonetaryUnit must be same as MyDepositAsset MonetaryUnit."].Value });
                                 }
 
                                 List<FixedExpenditure> tempFixedExpenditures = await fixedExpenditureRepository.GetFixedExpendituresAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
