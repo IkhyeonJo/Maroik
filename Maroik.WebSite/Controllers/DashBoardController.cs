@@ -15,12 +15,16 @@ namespace Maroik.WebSite.Controllers
         private readonly ILogger<DashBoardController> logger;
         private readonly IIncomeRepository incomeRepository;
         private readonly IExpenditureRepository expenditureRepository;
+        private readonly IAssetRepository assetRepository;
+        private readonly IAccountRepository accountRepository;
 
-        public DashBoardController(ILogger<DashBoardController> logger, IIncomeRepository incomeRepository, IExpenditureRepository expenditureRepository)
+        public DashBoardController(ILogger<DashBoardController> logger, IIncomeRepository incomeRepository, IExpenditureRepository expenditureRepository, IAssetRepository assetRepository, IAccountRepository accountRepository)
         {
             this.logger = logger;
             this.incomeRepository = incomeRepository;
             this.expenditureRepository = expenditureRepository;
+            this.assetRepository = assetRepository;
+            this.accountRepository = accountRepository;
         }
 
         #region 언어 변경
@@ -50,7 +54,7 @@ namespace Maroik.WebSite.Controllers
         [HttpGet]
         public async Task<IActionResult> UserIndex()
         {
-            #region Current Year & Month Income/Expenditure
+            #region Current Year & Month Income/Expenditure & MonetaryUnits
             _ = HttpContext.Session.TryGetValue(Maroik.WebSite.Extensions.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account), out byte[] resultByte);
             string currentYearMonth = DateTime.UtcNow.ToString("yyyy-MM");
             string currentLoginUserEmail = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email;
@@ -63,6 +67,28 @@ namespace Maroik.WebSite.Controllers
             };
             ;
             userIndexOutputViewModel.USP_Expenditure_MonthlyReport_Results = await expenditureRepository.GetCurrentYearMonthExpendituresMonthlyReport(currentLoginUserEmail, currentYearMonth, JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId);
+            userIndexOutputViewModel.MonetaryUnits = (await assetRepository.GetAssetsAsync(currentLoginUserEmail))?.Select(x => x?.MonetaryUnit)?.Distinct()?.ToList() ?? [];
+            #endregion
+
+            #region Set if currentLoginUser's DefaultMonetaryUnit is not existed in Assets
+            Account currentLoginUser = await accountRepository.GetAccountByEmailAsync(currentLoginUserEmail);
+
+            if (!userIndexOutputViewModel.MonetaryUnits.Contains(currentLoginUser.DefaultMonetaryUnit))
+            {
+                List<Asset> assets = await assetRepository.GetAssetsAsync(currentLoginUserEmail);
+
+                var mostUsedMonetaryUnit = assets
+                    .Where(a => !a.Deleted)
+                    .GroupBy(a => a.MonetaryUnit)
+                    .OrderByDescending(g => g.Count())
+                    .FirstOrDefault();
+
+                currentLoginUser.DefaultMonetaryUnit = mostUsedMonetaryUnit?.Key;
+
+                await accountRepository.UpdateAccountAsync(currentLoginUser);
+            }
+
+            userIndexOutputViewModel.DefaultMonetaryUnit = currentLoginUser.DefaultMonetaryUnit;
             #endregion
 
             return View(userIndexOutputViewModel);
