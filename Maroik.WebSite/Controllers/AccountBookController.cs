@@ -477,6 +477,8 @@ namespace Maroik.WebSite.Controllers
                 #region Incomes
                 _ = HttpContext.Session.TryGetValue(Maroik.WebSite.Extensions.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account), out byte[] resultByte);
 
+                var assets = await assetRepository.GetAssetsAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+
                 foreach (Income item in await incomeRepository.GetIncomesAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email))
                 {
                     if (string.IsNullOrEmpty(wholeSearch))
@@ -488,7 +490,7 @@ namespace Maroik.WebSite.Controllers
                             SubClass = localizer[item.SubClass.ToString()].Value,
                             Contents = item.Contents,
                             Amount = Convert.ToDecimal(item.Amount.TrimTrailingZeros()),
-                            MonetaryUnit = (await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, item.DepositMyAssetProductName)).MonetaryUnit,
+                            MonetaryUnit = assets.Where(x => x.ProductName == item.DepositMyAssetProductName).FirstOrDefault().MonetaryUnit,
                             DepositMyAssetProductName = item.DepositMyAssetProductName,
                             Created = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Created, JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId),
                             Updated = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Updated, JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId),
@@ -501,7 +503,7 @@ namespace Maroik.WebSite.Controllers
                             localizer[item.SubClass?.ToString() ?? ""].Value.Contains(wholeSearch) ||
                             (item.Contents?.ToString() ?? "").Contains(wholeSearch) ||
                             (item.Amount.TrimTrailingZeros() ?? "").Contains(wholeSearch) ||
-                            ((await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, item.DepositMyAssetProductName))?.MonetaryUnit?.ToString() ?? "").Contains(wholeSearch) ||
+                            (assets.Where(x => x.ProductName == item.DepositMyAssetProductName).FirstOrDefault().MonetaryUnit.ToString() ?? "").Contains(wholeSearch) ||
                             (item.DepositMyAssetProductName?.ToString() ?? "").Contains(wholeSearch) ||
                             (TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Created, JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId).ToString() ?? "").Contains(wholeSearch) ||
                             (TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Updated, JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId).ToString() ?? "").Contains(wholeSearch) ||
@@ -514,7 +516,7 @@ namespace Maroik.WebSite.Controllers
                                 SubClass = localizer[item.SubClass.ToString()].Value,
                                 Contents = item.Contents,
                                 Amount = Convert.ToDecimal(item.Amount.TrimTrailingZeros()),
-                                MonetaryUnit = (await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, item.DepositMyAssetProductName)).MonetaryUnit,
+                                MonetaryUnit = assets.Where(x => x.ProductName == item.DepositMyAssetProductName).FirstOrDefault().MonetaryUnit,
                                 DepositMyAssetProductName = item.DepositMyAssetProductName,
                                 Created = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Created, JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId),
                                 Updated = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Updated, JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId),
@@ -766,6 +768,8 @@ namespace Maroik.WebSite.Controllers
 
             _ = HttpContext.Session.TryGetValue(Maroik.WebSite.Extensions.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account), out byte[] resultByte);
 
+            var assets = await assetRepository.GetAssetsAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+
             foreach (Income item in await incomeRepository.GetIncomesAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email))
             {
                 incomeOutputViewModels.Add(new IncomeOutputViewModel()
@@ -774,7 +778,7 @@ namespace Maroik.WebSite.Controllers
                     SubClass = item.SubClass,
                     Contents = item.Contents,
                     Amount = Convert.ToDecimal(item.Amount.TrimTrailingZeros()),
-                    MonetaryUnit = (await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, item.DepositMyAssetProductName)).MonetaryUnit,
+                    MonetaryUnit = assets.Where(x => x.ProductName == item.DepositMyAssetProductName).FirstOrDefault().MonetaryUnit,
                     DepositMyAssetProductName = item.DepositMyAssetProductName,
                     Created = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Created, JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId),
                     Updated = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Updated, JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId),
@@ -811,7 +815,7 @@ namespace Maroik.WebSite.Controllers
                     workSheetMenuOutputViewModels.Cells[recordIndex, 2].Value = localizer[item?.SubClass?.ToString() ?? ""].Value;
                     workSheetMenuOutputViewModels.Cells[recordIndex, 3].Value = item.Contents;
                     workSheetMenuOutputViewModels.Cells[recordIndex, 4].Value = Convert.ToDecimal(item.Amount.TrimTrailingZeros());
-                    workSheetMenuOutputViewModels.Cells[recordIndex, 5].Value = (await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, item.DepositMyAssetProductName)).MonetaryUnit;
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 5].Value = assets.Where(x => x.ProductName == item.DepositMyAssetProductName).FirstOrDefault().MonetaryUnit;
                     workSheetMenuOutputViewModels.Cells[recordIndex, 6].Value = item.DepositMyAssetProductName;
                     workSheetMenuOutputViewModels.Cells[recordIndex, 7].Value = item.Created.ToString();
                     workSheetMenuOutputViewModels.Cells[recordIndex, 8].Value = item.Updated.ToString();
@@ -1141,6 +1145,8 @@ namespace Maroik.WebSite.Controllers
                 #region Expenditures
                 _ = HttpContext.Session.TryGetValue(Maroik.WebSite.Extensions.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account), out byte[] resultByte);
 
+                var assets = await assetRepository.GetAssetsAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+
                 foreach (Expenditure item in await expenditureRepository.GetExpendituresAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email))
                 {
                     if (string.IsNullOrEmpty(wholeSearch))
@@ -1152,7 +1158,7 @@ namespace Maroik.WebSite.Controllers
                             SubClass = localizer[item.SubClass.ToString()].Value,
                             Contents = item.Contents,
                             Amount = Convert.ToDecimal(item.Amount.TrimTrailingZeros()),
-                            MonetaryUnit = (await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, item.PaymentMethod)).MonetaryUnit,
+                            MonetaryUnit = assets.Where(x => x.ProductName == item.PaymentMethod).FirstOrDefault().MonetaryUnit,
                             PaymentMethod = item.PaymentMethod,
                             Note = item.Note,
                             MyDepositAsset = item.MyDepositAsset,
@@ -1166,7 +1172,7 @@ namespace Maroik.WebSite.Controllers
                             localizer[item.SubClass?.ToString() ?? ""].Value.Contains(wholeSearch) ||
                             (item.Contents?.ToString() ?? "").Contains(wholeSearch) ||
                             (item.Amount.TrimTrailingZeros() ?? "").Contains(wholeSearch) ||
-                            ((await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, item.PaymentMethod))?.MonetaryUnit?.ToString() ?? "").Contains(wholeSearch) ||
+                            (assets.Where(x => x.ProductName == item.PaymentMethod).FirstOrDefault().MonetaryUnit.ToString() ?? "").Contains(wholeSearch) ||
                             (item.PaymentMethod?.ToString() ?? "").Contains(wholeSearch) ||
                             (item.Note?.ToString() ?? "").Contains(wholeSearch) ||
                             (item.MyDepositAsset?.ToString() ?? "").Contains(wholeSearch) ||
@@ -1180,7 +1186,7 @@ namespace Maroik.WebSite.Controllers
                                 SubClass = localizer[item.SubClass.ToString()].Value,
                                 Contents = item.Contents,
                                 Amount = Convert.ToDecimal(item.Amount.TrimTrailingZeros()),
-                                MonetaryUnit = (await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, item.PaymentMethod)).MonetaryUnit,
+                                MonetaryUnit = assets.Where(x => x.ProductName == item.PaymentMethod).FirstOrDefault().MonetaryUnit,
                                 PaymentMethod = item.PaymentMethod,
                                 Note = item.Note,
                                 MyDepositAsset = item.MyDepositAsset,
@@ -3110,6 +3116,8 @@ namespace Maroik.WebSite.Controllers
 
             _ = HttpContext.Session.TryGetValue(Maroik.WebSite.Extensions.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account), out byte[] resultByte);
 
+            var assets = await assetRepository.GetAssetsAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+
             foreach (Expenditure item in await expenditureRepository.GetExpendituresAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email))
             {
                 expenditureOutputViewModels.Add(new ExpenditureOutputViewModel()
@@ -3118,7 +3126,7 @@ namespace Maroik.WebSite.Controllers
                     SubClass = localizer[item.SubClass.ToString()].Value,
                     Contents = item.Contents,
                     Amount = Convert.ToDecimal(item.Amount.TrimTrailingZeros()),
-                    MonetaryUnit = (await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, item.PaymentMethod)).MonetaryUnit,
+                    MonetaryUnit = assets.Where(x => x.ProductName == item.PaymentMethod).FirstOrDefault().MonetaryUnit,
                     PaymentMethod = item.PaymentMethod,
                     Note = item.Note,
                     MyDepositAsset = item.MyDepositAsset,
@@ -3157,7 +3165,7 @@ namespace Maroik.WebSite.Controllers
                     workSheetMenuOutputViewModels.Cells[recordIndex, 2].Value = localizer[item?.SubClass?.ToString() ?? ""].Value;
                     workSheetMenuOutputViewModels.Cells[recordIndex, 3].Value = item.Contents;
                     workSheetMenuOutputViewModels.Cells[recordIndex, 4].Value = Convert.ToDecimal(item.Amount.TrimTrailingZeros());
-                    workSheetMenuOutputViewModels.Cells[recordIndex, 5].Value = (await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, item.PaymentMethod)).MonetaryUnit;
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 5].Value = assets.Where(x => x.ProductName == item.PaymentMethod).FirstOrDefault().MonetaryUnit;
                     workSheetMenuOutputViewModels.Cells[recordIndex, 6].Value = item.PaymentMethod;
                     workSheetMenuOutputViewModels.Cells[recordIndex, 7].Value = item.Note;
                     workSheetMenuOutputViewModels.Cells[recordIndex, 8].Value = item.MyDepositAsset;

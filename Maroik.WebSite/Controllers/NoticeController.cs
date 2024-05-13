@@ -181,6 +181,8 @@ namespace Maroik.WebSite.Controllers
 
                 DateTime currentDate = new(Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[0]), Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[1]), Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[2]));
 
+                var assets = await assetRepository.GetAssetsAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+
                 foreach (FixedIncome item in await fixedIncomeRepository.GetFixedIncomesAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email))
                 {
                     if (string.IsNullOrEmpty(wholeSearch))
@@ -208,7 +210,7 @@ namespace Maroik.WebSite.Controllers
                             SubClass = localizer[item.SubClass.ToString()].Value,
                             Contents = item.Contents,
                             Amount = Convert.ToDecimal(item.Amount.TrimTrailingZeros()),
-                            MonetaryUnit = (await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, item.DepositMyAssetProductName)).MonetaryUnit,
+                            MonetaryUnit = assets.Where(x => x.ProductName == item.DepositMyAssetProductName).FirstOrDefault().MonetaryUnit,
                             DepositMonth = item.DepositMonth,
                             DepositDay = item.DepositDay,
                             MaturityDate = item.MaturityDate.ToString("yyyy-MM-dd"),
@@ -227,7 +229,7 @@ namespace Maroik.WebSite.Controllers
                             localizer[item.SubClass?.ToString() ?? ""].Value.Contains(wholeSearch) ||
                             (item.Contents?.ToString() ?? "").Contains(wholeSearch) ||
                             (item.Amount.TrimTrailingZeros() ?? "").Contains(wholeSearch) ||
-                            ((await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, item.DepositMyAssetProductName))?.MonetaryUnit?.ToString() ?? "").Contains(wholeSearch) ||
+                            (assets.Where(x => x.ProductName == item.DepositMyAssetProductName).FirstOrDefault().MonetaryUnit.ToString() ?? "").Contains(wholeSearch) ||
                             (item.DepositMonth.ToString() ?? "").Contains(wholeSearch) ||
                             (item.DepositDay.ToString() ?? "").Contains(wholeSearch) ||
                             (item.MaturityDate.ToString("yyyy-MM-dd") ?? "").Contains(wholeSearch) ||
@@ -259,7 +261,7 @@ namespace Maroik.WebSite.Controllers
                                 SubClass = localizer[item.SubClass.ToString()].Value,
                                 Contents = item.Contents,
                                 Amount = Convert.ToDecimal(item.Amount.TrimTrailingZeros()),
-                                MonetaryUnit = (await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, item.DepositMyAssetProductName)).MonetaryUnit,
+                                MonetaryUnit = assets.Where(x => x.ProductName == item.DepositMyAssetProductName).FirstOrDefault().MonetaryUnit,
                                 DepositMonth = item.DepositMonth,
                                 DepositDay = item.DepositDay,
                                 MaturityDate = item.MaturityDate.ToString("yyyy-MM-dd"),
@@ -529,6 +531,8 @@ namespace Maroik.WebSite.Controllers
 
             DateTime currentDate = new(Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[0]), Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[1]), Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[2]));
 
+            var assets = await assetRepository.GetAssetsAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+
             foreach (FixedIncome item in await fixedIncomeRepository.GetFixedIncomesAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email))
             {
                 bool noticedResult = false;
@@ -553,7 +557,7 @@ namespace Maroik.WebSite.Controllers
                     SubClass = localizer[item.SubClass.ToString()].Value,
                     Contents = item.Contents,
                     Amount = Convert.ToDecimal(item.Amount.TrimTrailingZeros()),
-                    MonetaryUnit = (await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, item.DepositMyAssetProductName)).MonetaryUnit,
+                    MonetaryUnit = assets.Where(x => x.ProductName == item.DepositMyAssetProductName).FirstOrDefault().MonetaryUnit,
                     DepositMonth = item.DepositMonth,
                     DepositDay = item.DepositDay,
                     MaturityDate = item.MaturityDate.ToString("yyyy-MM-dd"),
@@ -600,7 +604,7 @@ namespace Maroik.WebSite.Controllers
                     workSheetMenuOutputViewModels.Cells[recordIndex, 2].Value = localizer[item?.SubClass?.ToString() ?? ""].Value;
                     workSheetMenuOutputViewModels.Cells[recordIndex, 3].Value = item.Contents;
                     workSheetMenuOutputViewModels.Cells[recordIndex, 4].Value = Convert.ToDecimal(item.Amount.TrimTrailingZeros());
-                    workSheetMenuOutputViewModels.Cells[recordIndex, 5].Value = (await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, item.DepositMyAssetProductName)).MonetaryUnit;
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 5].Value = assets.Where(x => x.ProductName == item.DepositMyAssetProductName).FirstOrDefault().MonetaryUnit;
                     workSheetMenuOutputViewModels.Cells[recordIndex, 6].Value = item.DepositMonth;
                     workSheetMenuOutputViewModels.Cells[recordIndex, 7].Value = item.DepositDay;
                     workSheetMenuOutputViewModels.Cells[recordIndex, 8].Value = item.MaturityDate;
@@ -883,6 +887,8 @@ namespace Maroik.WebSite.Controllers
 
                 DateTime currentDate = new(Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[0]), Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[1]), Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[2]));
 
+                var assets = await assetRepository.GetAssetsAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+
                 foreach (FixedExpenditure item in await fixedExpenditureRepository.GetFixedExpendituresAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email))
                 {
                     if (string.IsNullOrEmpty(wholeSearch))
@@ -910,7 +916,7 @@ namespace Maroik.WebSite.Controllers
                             SubClass = localizer[item.SubClass.ToString()].Value,
                             Contents = item.Contents,
                             Amount = Convert.ToDecimal(item.Amount.TrimTrailingZeros()),
-                            MonetaryUnit = (await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, item.PaymentMethod)).MonetaryUnit,
+                            MonetaryUnit = assets.Where(x => x.ProductName == item.PaymentMethod).FirstOrDefault().MonetaryUnit,
                             PaymentMethod = item.PaymentMethod,
                             MyDepositAsset = item.MyDepositAsset,
                             DepositMonth = item.DepositMonth,
@@ -930,7 +936,7 @@ namespace Maroik.WebSite.Controllers
                             localizer[item.SubClass?.ToString() ?? ""].Value.Contains(wholeSearch) ||
                             (item.Contents?.ToString() ?? "").Contains(wholeSearch) ||
                             (item.Amount.TrimTrailingZeros() ?? "").Contains(wholeSearch) ||
-                            ((await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, item.PaymentMethod))?.MonetaryUnit?.ToString() ?? "").Contains(wholeSearch) ||
+                            (assets.Where(x => x.ProductName == item.PaymentMethod).FirstOrDefault().MonetaryUnit.ToString() ?? "").Contains(wholeSearch) ||
                             (item.PaymentMethod.ToString() ?? "").Contains(wholeSearch) ||
                             (item.MyDepositAsset?.ToString() ?? "").Contains(wholeSearch) ||
                             (item.DepositMonth.ToString() ?? "").Contains(wholeSearch) ||
@@ -963,7 +969,7 @@ namespace Maroik.WebSite.Controllers
                                 SubClass = localizer[item.SubClass.ToString()].Value,
                                 Contents = item.Contents,
                                 Amount = Convert.ToDecimal(item.Amount.TrimTrailingZeros()),
-                                MonetaryUnit = (await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, item.PaymentMethod)).MonetaryUnit,
+                                MonetaryUnit = assets.Where(x => x.ProductName == item.PaymentMethod).FirstOrDefault().MonetaryUnit,
                                 PaymentMethod = item.PaymentMethod,
                                 MyDepositAsset = item.MyDepositAsset,
                                 DepositMonth = item.DepositMonth,
@@ -1347,6 +1353,8 @@ namespace Maroik.WebSite.Controllers
 
             DateTime currentDate = new(Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[0]), Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[1]), Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[2]));
 
+            var assets = await assetRepository.GetAssetsAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+
             foreach (FixedExpenditure item in await fixedExpenditureRepository.GetFixedExpendituresAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email))
             {
                 bool noticedResult = false;
@@ -1371,7 +1379,7 @@ namespace Maroik.WebSite.Controllers
                     SubClass = localizer[item.SubClass.ToString()].Value,
                     Contents = item.Contents,
                     Amount = Convert.ToDecimal(item.Amount.TrimTrailingZeros()),
-                    MonetaryUnit = (await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, item.PaymentMethod)).MonetaryUnit,
+                    MonetaryUnit = assets.Where(x => x.ProductName == item.PaymentMethod).FirstOrDefault().MonetaryUnit,
                     PaymentMethod = item.PaymentMethod,
                     MyDepositAsset = item.MyDepositAsset,
                     DepositMonth = item.DepositMonth,
@@ -1420,7 +1428,7 @@ namespace Maroik.WebSite.Controllers
                     workSheetMenuOutputViewModels.Cells[recordIndex, 2].Value = localizer[item?.SubClass?.ToString() ?? ""].Value;
                     workSheetMenuOutputViewModels.Cells[recordIndex, 3].Value = item.Contents;
                     workSheetMenuOutputViewModels.Cells[recordIndex, 4].Value = Convert.ToDecimal(item.Amount.TrimTrailingZeros());
-                    workSheetMenuOutputViewModels.Cells[recordIndex, 5].Value = (await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, item.PaymentMethod)).MonetaryUnit;
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 5].Value = assets.Where(x => x.ProductName == item.PaymentMethod).FirstOrDefault().MonetaryUnit;
                     workSheetMenuOutputViewModels.Cells[recordIndex, 6].Value = item.PaymentMethod;
                     workSheetMenuOutputViewModels.Cells[recordIndex, 7].Value = item.MyDepositAsset;
                     workSheetMenuOutputViewModels.Cells[recordIndex, 8].Value = item.DepositMonth;
