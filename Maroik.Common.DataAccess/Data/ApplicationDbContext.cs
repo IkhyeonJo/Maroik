@@ -69,6 +69,9 @@ namespace Maroik.Common.DataAccess.Data
                     .HasMaxLength(6)
                     .HasDefaultValueSql("'1900-01-01 00:00:00.000000'")
                     .HasComment("생성일");
+                _ = entity.Property(e => e.DefaultMonetaryUnit)
+                    .HasMaxLength(45)
+                    .HasComment("기본 화폐 단위 (KRW, USD, ETC)");
                 _ = entity.Property(e => e.Deleted).HasComment("삭제 여부");
                 _ = entity.Property(e => e.EmailConfirmed).HasComment("이메일 확인 여부");
                 _ = entity.Property(e => e.HashedPassword)

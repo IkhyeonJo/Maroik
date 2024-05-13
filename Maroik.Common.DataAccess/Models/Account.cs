@@ -39,6 +39,11 @@ public partial class Account
     public string TimeZoneIanaId { get; set; }
 
     /// <summary>
+    /// 기본 화폐 단위 (KRW, USD, ETC)
+    /// </summary>
+    public string DefaultMonetaryUnit { get; set; }
+
+    /// <summary>
     /// 잠금 여부
     /// </summary>
     public bool Locked { get; set; }
