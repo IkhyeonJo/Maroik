@@ -132,6 +132,9 @@
   <data name="MainClass" xml:space="preserve">
     <value>MainClass</value>
   </data>
+  <data name="MonetaryUnit" xml:space="preserve">
+    <value>MonetaryUnit</value>
+  </data>
   <data name="MyDepositAsset" xml:space="preserve">
     <value>MyDepositAsset</value>
   </data>

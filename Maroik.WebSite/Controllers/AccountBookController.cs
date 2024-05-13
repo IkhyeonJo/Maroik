@@ -1152,6 +1152,7 @@ namespace Maroik.WebSite.Controllers
                             SubClass = localizer[item.SubClass.ToString()].Value,
                             Contents = item.Contents,
                             Amount = Convert.ToDecimal(item.Amount.TrimTrailingZeros()),
+                            MonetaryUnit = (await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, item.PaymentMethod)).MonetaryUnit,
                             PaymentMethod = item.PaymentMethod,
                             Note = item.Note,
                             MyDepositAsset = item.MyDepositAsset,
@@ -1165,6 +1166,7 @@ namespace Maroik.WebSite.Controllers
                             localizer[item.SubClass?.ToString() ?? ""].Value.Contains(wholeSearch) ||
                             (item.Contents?.ToString() ?? "").Contains(wholeSearch) ||
                             (item.Amount.TrimTrailingZeros() ?? "").Contains(wholeSearch) ||
+                            ((await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, item.PaymentMethod))?.MonetaryUnit?.ToString() ?? "").Contains(wholeSearch) ||
                             (item.PaymentMethod?.ToString() ?? "").Contains(wholeSearch) ||
                             (item.Note?.ToString() ?? "").Contains(wholeSearch) ||
                             (item.MyDepositAsset?.ToString() ?? "").Contains(wholeSearch) ||
@@ -1178,6 +1180,7 @@ namespace Maroik.WebSite.Controllers
                                 SubClass = localizer[item.SubClass.ToString()].Value,
                                 Contents = item.Contents,
                                 Amount = Convert.ToDecimal(item.Amount.TrimTrailingZeros()),
+                                MonetaryUnit = (await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, item.PaymentMethod)).MonetaryUnit,
                                 PaymentMethod = item.PaymentMethod,
                                 Note = item.Note,
                                 MyDepositAsset = item.MyDepositAsset,
@@ -3115,6 +3118,7 @@ namespace Maroik.WebSite.Controllers
                     SubClass = localizer[item.SubClass.ToString()].Value,
                     Contents = item.Contents,
                     Amount = Convert.ToDecimal(item.Amount.TrimTrailingZeros()),
+                    MonetaryUnit = (await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, item.PaymentMethod)).MonetaryUnit,
                     PaymentMethod = item.PaymentMethod,
                     Note = item.Note,
                     MyDepositAsset = item.MyDepositAsset,
@@ -3139,11 +3143,12 @@ namespace Maroik.WebSite.Controllers
                 workSheetMenuOutputViewModels.Cells[1, 2].Value = localizer[nameof(ExpenditureOutputViewModel.SubClass).ToString()].Value;
                 workSheetMenuOutputViewModels.Cells[1, 3].Value = localizer[nameof(ExpenditureOutputViewModel.Contents).ToString()].Value;
                 workSheetMenuOutputViewModels.Cells[1, 4].Value = localizer[nameof(ExpenditureOutputViewModel.Amount).ToString()].Value;
-                workSheetMenuOutputViewModels.Cells[1, 5].Value = localizer[nameof(ExpenditureOutputViewModel.PaymentMethod).ToString()].Value;
-                workSheetMenuOutputViewModels.Cells[1, 6].Value = localizer[nameof(ExpenditureOutputViewModel.Note).ToString()].Value;
-                workSheetMenuOutputViewModels.Cells[1, 7].Value = localizer[nameof(ExpenditureOutputViewModel.MyDepositAsset).ToString()].Value;
-                workSheetMenuOutputViewModels.Cells[1, 8].Value = localizer[nameof(ExpenditureOutputViewModel.Created).ToString()].Value;
-                workSheetMenuOutputViewModels.Cells[1, 9].Value = localizer[nameof(ExpenditureOutputViewModel.Updated).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 5].Value = localizer[nameof(ExpenditureOutputViewModel.MonetaryUnit).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 6].Value = localizer[nameof(ExpenditureOutputViewModel.PaymentMethod).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 7].Value = localizer[nameof(ExpenditureOutputViewModel.Note).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 8].Value = localizer[nameof(ExpenditureOutputViewModel.MyDepositAsset).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 9].Value = localizer[nameof(ExpenditureOutputViewModel.Created).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 10].Value = localizer[nameof(ExpenditureOutputViewModel.Updated).ToString()].Value;
 
                 int recordIndex = 2;
                 foreach (ExpenditureOutputViewModel item in expenditureOutputViewModels)
@@ -3152,11 +3157,12 @@ namespace Maroik.WebSite.Controllers
                     workSheetMenuOutputViewModels.Cells[recordIndex, 2].Value = localizer[item?.SubClass?.ToString() ?? ""].Value;
                     workSheetMenuOutputViewModels.Cells[recordIndex, 3].Value = item.Contents;
                     workSheetMenuOutputViewModels.Cells[recordIndex, 4].Value = Convert.ToDecimal(item.Amount.TrimTrailingZeros());
-                    workSheetMenuOutputViewModels.Cells[recordIndex, 5].Value = item.PaymentMethod;
-                    workSheetMenuOutputViewModels.Cells[recordIndex, 6].Value = item.Note;
-                    workSheetMenuOutputViewModels.Cells[recordIndex, 7].Value = item.MyDepositAsset;
-                    workSheetMenuOutputViewModels.Cells[recordIndex, 8].Value = item.Created.ToString();
-                    workSheetMenuOutputViewModels.Cells[recordIndex, 9].Value = item.Updated.ToString();
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 5].Value = (await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, item.PaymentMethod)).MonetaryUnit;
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 6].Value = item.PaymentMethod;
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 7].Value = item.Note;
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 8].Value = item.MyDepositAsset;
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 9].Value = item.Created.ToString();
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 10].Value = item.Updated.ToString();
 
                     recordIndex++;
                 }
