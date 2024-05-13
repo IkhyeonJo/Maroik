@@ -488,6 +488,7 @@ namespace Maroik.WebSite.Controllers
                             SubClass = localizer[item.SubClass.ToString()].Value,
                             Contents = item.Contents,
                             Amount = Convert.ToDecimal(item.Amount.TrimTrailingZeros()),
+                            MonetaryUnit = (await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, item.DepositMyAssetProductName)).MonetaryUnit,
                             DepositMyAssetProductName = item.DepositMyAssetProductName,
                             Created = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Created, JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId),
                             Updated = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Updated, JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId),
@@ -500,6 +501,7 @@ namespace Maroik.WebSite.Controllers
                             localizer[item.SubClass?.ToString() ?? ""].Value.Contains(wholeSearch) ||
                             (item.Contents?.ToString() ?? "").Contains(wholeSearch) ||
                             (item.Amount.TrimTrailingZeros() ?? "").Contains(wholeSearch) ||
+                            ((await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, item.DepositMyAssetProductName))?.MonetaryUnit?.ToString() ?? "").Contains(wholeSearch) ||
                             (item.DepositMyAssetProductName?.ToString() ?? "").Contains(wholeSearch) ||
                             (TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Created, JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId).ToString() ?? "").Contains(wholeSearch) ||
                             (TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Updated, JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId).ToString() ?? "").Contains(wholeSearch) ||
@@ -512,6 +514,7 @@ namespace Maroik.WebSite.Controllers
                                 SubClass = localizer[item.SubClass.ToString()].Value,
                                 Contents = item.Contents,
                                 Amount = Convert.ToDecimal(item.Amount.TrimTrailingZeros()),
+                                MonetaryUnit = (await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, item.DepositMyAssetProductName)).MonetaryUnit,
                                 DepositMyAssetProductName = item.DepositMyAssetProductName,
                                 Created = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Created, JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId),
                                 Updated = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Updated, JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId),
@@ -771,6 +774,7 @@ namespace Maroik.WebSite.Controllers
                     SubClass = item.SubClass,
                     Contents = item.Contents,
                     Amount = Convert.ToDecimal(item.Amount.TrimTrailingZeros()),
+                    MonetaryUnit = (await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, item.DepositMyAssetProductName)).MonetaryUnit,
                     DepositMyAssetProductName = item.DepositMyAssetProductName,
                     Created = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Created, JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId),
                     Updated = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Updated, JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId),
@@ -794,10 +798,11 @@ namespace Maroik.WebSite.Controllers
                 workSheetMenuOutputViewModels.Cells[1, 2].Value = localizer[nameof(IncomeOutputViewModel.SubClass).ToString()].Value;
                 workSheetMenuOutputViewModels.Cells[1, 3].Value = localizer[nameof(IncomeOutputViewModel.Contents).ToString()].Value;
                 workSheetMenuOutputViewModels.Cells[1, 4].Value = localizer[nameof(IncomeOutputViewModel.Amount).ToString()].Value;
-                workSheetMenuOutputViewModels.Cells[1, 5].Value = localizer[nameof(IncomeOutputViewModel.DepositMyAssetProductName).ToString()].Value;
-                workSheetMenuOutputViewModels.Cells[1, 6].Value = localizer[nameof(IncomeOutputViewModel.Created).ToString()].Value;
-                workSheetMenuOutputViewModels.Cells[1, 7].Value = localizer[nameof(IncomeOutputViewModel.Updated).ToString()].Value;
-                workSheetMenuOutputViewModels.Cells[1, 8].Value = localizer[nameof(IncomeOutputViewModel.Note).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 5].Value = localizer[nameof(IncomeOutputViewModel.MonetaryUnit).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 6].Value = localizer[nameof(IncomeOutputViewModel.DepositMyAssetProductName).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 7].Value = localizer[nameof(IncomeOutputViewModel.Created).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 8].Value = localizer[nameof(IncomeOutputViewModel.Updated).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 9].Value = localizer[nameof(IncomeOutputViewModel.Note).ToString()].Value;
 
                 int recordIndex = 2;
                 foreach (IncomeOutputViewModel item in incomeOutputViewModels)
@@ -806,10 +811,11 @@ namespace Maroik.WebSite.Controllers
                     workSheetMenuOutputViewModels.Cells[recordIndex, 2].Value = localizer[item?.SubClass?.ToString() ?? ""].Value;
                     workSheetMenuOutputViewModels.Cells[recordIndex, 3].Value = item.Contents;
                     workSheetMenuOutputViewModels.Cells[recordIndex, 4].Value = Convert.ToDecimal(item.Amount.TrimTrailingZeros());
-                    workSheetMenuOutputViewModels.Cells[recordIndex, 5].Value = item.DepositMyAssetProductName;
-                    workSheetMenuOutputViewModels.Cells[recordIndex, 6].Value = item.Created.ToString();
-                    workSheetMenuOutputViewModels.Cells[recordIndex, 7].Value = item.Updated.ToString();
-                    workSheetMenuOutputViewModels.Cells[recordIndex, 8].Value = item.Note;
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 5].Value = (await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, item.DepositMyAssetProductName)).MonetaryUnit;
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 6].Value = item.DepositMyAssetProductName;
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 7].Value = item.Created.ToString();
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 8].Value = item.Updated.ToString();
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 9].Value = item.Note;
                     recordIndex++;
                 }
 

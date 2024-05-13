@@ -135,6 +135,9 @@
   <data name="MainClass" xml:space="preserve">
     <value>대분류</value>
   </data>
+  <data name="MonetaryUnit" xml:space="preserve">
+    <value>화폐 단위</value>
+  </data>
   <data name="Note" xml:space="preserve">
     <value>주석</value>
   </data>

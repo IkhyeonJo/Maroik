@@ -19,6 +19,8 @@ namespace Maroik.WebSite.Models.ViewModels.AccountBook
         [Required(ErrorMessage = "Please enter Amount")]
         [Display(Name = "Amount")]
         public decimal Amount { get; set; }
+        [Display(Name = "MonetaryUnit")]
+        public string MonetaryUnit { get; set; }
         [Required(ErrorMessage = "Please enter DepositMyAssetProductName")]
         [Display(Name = "DepositMyAssetProductName")]
         public string DepositMyAssetProductName { get; set; }
