@@ -208,6 +208,7 @@ namespace Maroik.WebSite.Controllers
                             SubClass = localizer[item.SubClass.ToString()].Value,
                             Contents = item.Contents,
                             Amount = Convert.ToDecimal(item.Amount.TrimTrailingZeros()),
+                            MonetaryUnit = (await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, item.DepositMyAssetProductName)).MonetaryUnit,
                             DepositMonth = item.DepositMonth,
                             DepositDay = item.DepositDay,
                             MaturityDate = item.MaturityDate.ToString("yyyy-MM-dd"),
@@ -226,6 +227,7 @@ namespace Maroik.WebSite.Controllers
                             localizer[item.SubClass?.ToString() ?? ""].Value.Contains(wholeSearch) ||
                             (item.Contents?.ToString() ?? "").Contains(wholeSearch) ||
                             (item.Amount.TrimTrailingZeros() ?? "").Contains(wholeSearch) ||
+                            ((await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, item.DepositMyAssetProductName))?.MonetaryUnit?.ToString() ?? "").Contains(wholeSearch) ||
                             (item.DepositMonth.ToString() ?? "").Contains(wholeSearch) ||
                             (item.DepositDay.ToString() ?? "").Contains(wholeSearch) ||
                             (item.MaturityDate.ToString("yyyy-MM-dd") ?? "").Contains(wholeSearch) ||
@@ -257,6 +259,7 @@ namespace Maroik.WebSite.Controllers
                                 SubClass = localizer[item.SubClass.ToString()].Value,
                                 Contents = item.Contents,
                                 Amount = Convert.ToDecimal(item.Amount.TrimTrailingZeros()),
+                                MonetaryUnit = (await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, item.DepositMyAssetProductName)).MonetaryUnit,
                                 DepositMonth = item.DepositMonth,
                                 DepositDay = item.DepositDay,
                                 MaturityDate = item.MaturityDate.ToString("yyyy-MM-dd"),
@@ -550,6 +553,7 @@ namespace Maroik.WebSite.Controllers
                     SubClass = localizer[item.SubClass.ToString()].Value,
                     Contents = item.Contents,
                     Amount = Convert.ToDecimal(item.Amount.TrimTrailingZeros()),
+                    MonetaryUnit = (await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, item.DepositMyAssetProductName)).MonetaryUnit,
                     DepositMonth = item.DepositMonth,
                     DepositDay = item.DepositDay,
                     MaturityDate = item.MaturityDate.ToString("yyyy-MM-dd"),
@@ -578,15 +582,16 @@ namespace Maroik.WebSite.Controllers
                 workSheetMenuOutputViewModels.Cells[1, 2].Value = localizer[nameof(FixedIncomeOutputViewModel.SubClass).ToString()].Value;
                 workSheetMenuOutputViewModels.Cells[1, 3].Value = localizer[nameof(FixedIncomeOutputViewModel.Contents).ToString()].Value;
                 workSheetMenuOutputViewModels.Cells[1, 4].Value = localizer[nameof(FixedIncomeOutputViewModel.Amount).ToString()].Value;
-                workSheetMenuOutputViewModels.Cells[1, 5].Value = localizer[nameof(FixedIncomeOutputViewModel.DepositMonth).ToString()].Value;
-                workSheetMenuOutputViewModels.Cells[1, 6].Value = localizer[nameof(FixedIncomeOutputViewModel.DepositDay).ToString()].Value;
-                workSheetMenuOutputViewModels.Cells[1, 7].Value = localizer[nameof(FixedIncomeOutputViewModel.MaturityDate).ToString()].Value;
-                workSheetMenuOutputViewModels.Cells[1, 8].Value = localizer[nameof(FixedIncomeOutputViewModel.Note).ToString()].Value;
-                workSheetMenuOutputViewModels.Cells[1, 9].Value = localizer[nameof(FixedIncomeOutputViewModel.DepositMyAssetProductName).ToString()].Value;
-                workSheetMenuOutputViewModels.Cells[1, 10].Value = localizer[nameof(FixedIncomeOutputViewModel.Created).ToString()].Value;
-                workSheetMenuOutputViewModels.Cells[1, 11].Value = localizer[nameof(FixedIncomeOutputViewModel.Updated).ToString()].Value;
-                workSheetMenuOutputViewModels.Cells[1, 12].Value = localizer[nameof(FixedIncomeOutputViewModel.Noticed).ToString()].Value;
-                workSheetMenuOutputViewModels.Cells[1, 13].Value = localizer[nameof(FixedIncomeOutputViewModel.Expired).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 5].Value = localizer[nameof(FixedIncomeOutputViewModel.MonetaryUnit).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 6].Value = localizer[nameof(FixedIncomeOutputViewModel.DepositMonth).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 7].Value = localizer[nameof(FixedIncomeOutputViewModel.DepositDay).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 8].Value = localizer[nameof(FixedIncomeOutputViewModel.MaturityDate).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 9].Value = localizer[nameof(FixedIncomeOutputViewModel.Note).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 10].Value = localizer[nameof(FixedIncomeOutputViewModel.DepositMyAssetProductName).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 11].Value = localizer[nameof(FixedIncomeOutputViewModel.Created).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 12].Value = localizer[nameof(FixedIncomeOutputViewModel.Updated).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 13].Value = localizer[nameof(FixedIncomeOutputViewModel.Noticed).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 14].Value = localizer[nameof(FixedIncomeOutputViewModel.Expired).ToString()].Value;
 
                 int recordIndex = 2;
                 foreach (FixedIncomeOutputViewModel item in fixedIncomeOutputViewModels.OrderByDescending(a => a.Expired).ThenByDescending(a => a.Noticed))
@@ -595,15 +600,16 @@ namespace Maroik.WebSite.Controllers
                     workSheetMenuOutputViewModels.Cells[recordIndex, 2].Value = localizer[item?.SubClass?.ToString() ?? ""].Value;
                     workSheetMenuOutputViewModels.Cells[recordIndex, 3].Value = item.Contents;
                     workSheetMenuOutputViewModels.Cells[recordIndex, 4].Value = Convert.ToDecimal(item.Amount.TrimTrailingZeros());
-                    workSheetMenuOutputViewModels.Cells[recordIndex, 5].Value = item.DepositMonth;
-                    workSheetMenuOutputViewModels.Cells[recordIndex, 6].Value = item.DepositDay;
-                    workSheetMenuOutputViewModels.Cells[recordIndex, 7].Value = item.MaturityDate;
-                    workSheetMenuOutputViewModels.Cells[recordIndex, 8].Value = item.Note;
-                    workSheetMenuOutputViewModels.Cells[recordIndex, 9].Value = item.DepositMyAssetProductName;
-                    workSheetMenuOutputViewModels.Cells[recordIndex, 10].Value = item.Created.ToString();
-                    workSheetMenuOutputViewModels.Cells[recordIndex, 11].Value = item.Updated.ToString();
-                    workSheetMenuOutputViewModels.Cells[recordIndex, 12].Value = item.Noticed.ToString();
-                    workSheetMenuOutputViewModels.Cells[recordIndex, 13].Value = item.Expired.ToString();
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 5].Value = (await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, item.DepositMyAssetProductName)).MonetaryUnit;
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 6].Value = item.DepositMonth;
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 7].Value = item.DepositDay;
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 8].Value = item.MaturityDate;
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 9].Value = item.Note;
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 10].Value = item.DepositMyAssetProductName;
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 11].Value = item.Created.ToString();
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 12].Value = item.Updated.ToString();
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 13].Value = item.Noticed.ToString();
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 14].Value = item.Expired.ToString();
                     recordIndex++;
                 }
 

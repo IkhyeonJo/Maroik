@@ -198,6 +198,9 @@
   <data name="MedicalExpenses" xml:space="preserve">
     <value>MedicalExpenses</value>
   </data>
+  <data name="MonetaryUnit" xml:space="preserve">
+    <value>MonetaryUnit</value>
+  </data>
   <data name="No fixedExpenditure exists" xml:space="preserve">
     <value>No fixedExpenditure exists</value>
   </data>
