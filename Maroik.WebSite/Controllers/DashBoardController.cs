@@ -1,6 +1,5 @@
 ﻿using Maroik.Common.DataAccess.Contracts;
 using Maroik.Common.DataAccess.Models;
-using Maroik.Common.DataAccess.Services;
 using Maroik.WebSite.Extensions;
 using Maroik.WebSite.Models.ViewModels.Account;
 using Maroik.WebSite.Models.ViewModels.DashBoard;
@@ -60,9 +59,9 @@ namespace Maroik.WebSite.Controllers
         {
             _ = HttpContext.Session.TryGetValue(Maroik.WebSite.Extensions.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account), out byte[] resultByte);
 
-            UserIndexOutputViewModel userIndexOutputViewModel = new UserIndexOutputViewModel();
+            UserIndexOutputViewModel userIndexOutputViewModel = new();
             Account currentLoginUser = await accountRepository.GetAccountByEmailAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
-            var assets = (await assetRepository.GetAssetsAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email)) ?? [];
+            List<Asset> assets = (await assetRepository.GetAssetsAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email)) ?? [];
 
             #region Set if currentLoginUser's DefaultMonetaryUnit is not existed in Assets
             if (currentLoginUser?.DefaultMonetaryUnit == null && assets.Count() == 0)
@@ -72,7 +71,7 @@ namespace Maroik.WebSite.Controllers
             }
             else if (currentLoginUser?.DefaultMonetaryUnit == null && assets.Count() != 0)
             {
-                var mostUsedMonetaryUnit = assets
+                IGrouping<string, Asset> mostUsedMonetaryUnit = assets
                     .GroupBy(a => a.MonetaryUnit)
                     .OrderByDescending(g => g.Count())
                     .FirstOrDefault();
@@ -88,7 +87,7 @@ namespace Maroik.WebSite.Controllers
             {
                 if (!assets.Select(x => x.MonetaryUnit).Distinct().ToList().Contains(currentLoginUser.DefaultMonetaryUnit))
                 {
-                    var mostUsedMonetaryUnit = assets
+                    IGrouping<string, Asset> mostUsedMonetaryUnit = assets
                         .GroupBy(a => a.MonetaryUnit)
                         .OrderByDescending(g => g.Count())
                         .FirstOrDefault();
@@ -106,9 +105,9 @@ namespace Maroik.WebSite.Controllers
                 string currentYearMonth = DateTime.UtcNow.ToString("yyyy-MM");
                 string currentLoginUserEmail = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email;
 
-                var incomes = await incomeRepository.GetCurrentYearMonthIncomesAsync(currentLoginUserEmail, currentYearMonth, JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId);
-                userIndexOutputViewModel.IncomeOutputViewModels = new List<IncomeOutputViewModel>();
-                foreach (var item in incomes)
+                List<Income> incomes = await incomeRepository.GetCurrentYearMonthIncomesAsync(currentLoginUserEmail, currentYearMonth, JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId);
+                userIndexOutputViewModel.IncomeOutputViewModels = [];
+                foreach (Income item in incomes)
                 {
                     userIndexOutputViewModel.IncomeOutputViewModels.Add(new IncomeOutputViewModel()
                     {
@@ -125,9 +124,9 @@ namespace Maroik.WebSite.Controllers
                     });
                 }
 
-                var expenditures = await expenditureRepository.GetCurrentYearMonthExpendituresAsync(currentLoginUserEmail, currentYearMonth, JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId);
-                userIndexOutputViewModel.ExpenditureOutputViewModels = new List<ExpenditureOutputViewModel>();
-                foreach (var item in expenditures)
+                List<Expenditure> expenditures = await expenditureRepository.GetCurrentYearMonthExpendituresAsync(currentLoginUserEmail, currentYearMonth, JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId);
+                userIndexOutputViewModel.ExpenditureOutputViewModels = [];
+                foreach (Expenditure item in expenditures)
                 {
                     userIndexOutputViewModel.ExpenditureOutputViewModels.Add(new ExpenditureOutputViewModel()
                     {

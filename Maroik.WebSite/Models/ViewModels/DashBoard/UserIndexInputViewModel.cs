@@ -1,6 +1,4 @@
-﻿using Maroik.Common.DataAccess.Models;
-
-namespace Maroik.WebSite.Models.ViewModels.DashBoard
+﻿namespace Maroik.WebSite.Models.ViewModels.DashBoard
 {
     public class UserIndexInputViewModel
     {
