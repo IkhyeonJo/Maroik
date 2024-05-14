@@ -192,6 +192,9 @@
   <data name="Mode Count" xml:space="preserve">
     <value>Mode Count</value>
   </data>
+  <data name="MonetaryUnit" xml:space="preserve">
+    <value>MonetaryUnit</value>
+  </data>
   <data name="NonConsumer spending" xml:space="preserve">
     <value>NonConsumer spending</value>
   </data>

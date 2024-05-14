@@ -76,12 +76,12 @@
     double percentageOfConsumerSpendingOtherExpenses = 0;
     double percentageOfConsumerSpendingUnknownExpenditure = 0;
 
-    if (Model.MonetaryUnits.Count() != 0)
+    if (Model.DefaultMonetaryUnit != null)
     {
         #region 수입
 
         #region 대분류 = '정기수입'
-        var regularIncome = Model.Incomes.Where(x => x.MainClass == "RegularIncome").ToList();
+        var regularIncome = Model.IncomeOutputViewModels.Where(x => x.MainClass == "RegularIncome").ToList();
 
         regularIncomeTotal = regularIncome.Sum(v => v.Amount);
         regularIncomeLaborIncome = regularIncome.Where(x => x.SubClass == "LaborIncome").Sum(v => v.Amount);
@@ -104,7 +104,7 @@
         #endregion
 
         #region 대분류 = '비정기수입'
-        var irregularIncome = Model.Incomes.Where(x => x.MainClass == "IrregularIncome").ToList();
+        var irregularIncome = Model.IncomeOutputViewModels.Where(x => x.MainClass == "IrregularIncome").ToList();
 
         irregularIncomeTotal = irregularIncome.Sum(v => v.Amount);
         irregularIncomeLaborIncome = irregularIncome.Where(x => x.SubClass == "LaborIncome").Sum(v => v.Amount);
@@ -123,7 +123,7 @@
         #region 지출
 
         #region 대분류 = '정기저축'
-        var regularSavings = Model.Expenditures.Where(x => x.MainClass == "RegularSavings").ToList();
+        var regularSavings = Model.ExpenditureOutputViewModels.Where(x => x.MainClass == "RegularSavings").ToList();
 
         regularSavingsTotal = regularSavings.Sum(v => v.Amount);
         regularSavingsDeposit = regularSavings.Where(x => x.SubClass == "Deposit").Sum(v => v.Amount);
@@ -138,7 +138,7 @@
         #endregion
 
         #region 대분류 = '비소비지출'
-        var nonConsumerSpending = Model.Expenditures.Where(x => x.MainClass == "NonConsumerSpending").ToList();
+        var nonConsumerSpending = Model.ExpenditureOutputViewModels.Where(x => x.MainClass == "NonConsumerSpending").ToList();
 
         nonConsumerSpendingTotal = nonConsumerSpending.Sum(v => v.Amount);
         nonConsumerSpendingPublicPension = nonConsumerSpending.Where(x => x.SubClass == "PublicPension").Sum(v => v.Amount);
@@ -161,7 +161,7 @@
         #endregion
 
         #region 대분류 = '소비지출'
-        var consumerSpending = Model.Expenditures.Where(x => x.MainClass == "ConsumerSpending").ToList();
+        var consumerSpending = Model.ExpenditureOutputViewModels.Where(x => x.MainClass == "ConsumerSpending").ToList();
 
         consumerSpendingTotal = consumerSpending.Sum(v => v.Amount);
         consumerSpendingMealOrEatOutExpenses = consumerSpending.Where(x => x.SubClass == "MealOrEatOutExpenses").Sum(v => v.Amount);
@@ -241,6 +241,36 @@
 
 <section class="content">
     <div class="container-fluid">
+
+        @if(Model.MonetaryUnits.Count() != 0)
+        {
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">
+                                <i class="fas fa-money-bill-alt"></i> @localizer["MonetaryUnit"].Value
+                            </h3>
+                            <div class="card-tools">
+                                <select id="monetaryUnit" style="max-width:100%;">
+                                    @foreach (string monetaryUnit in Model.MonetaryUnits)
+                                    {
+                                        if (Model.DefaultMonetaryUnit == monetaryUnit)
+                                        {
+                                            <option value="@monetaryUnit" selected="selected">@monetaryUnit</option>
+                                        }
+                                        else
+                                        {
+                                            <option value="@monetaryUnit">@monetaryUnit</option>
+                                        }
+                                    }
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
         <div class="row">
 
             <div class="col-md-6">

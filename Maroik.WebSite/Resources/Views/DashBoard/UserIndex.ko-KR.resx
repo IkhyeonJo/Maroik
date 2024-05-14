@@ -192,6 +192,9 @@
   <data name="Mode Count" xml:space="preserve">
     <value>최빈값 개수</value>
   </data>
+  <data name="MonetaryUnit" xml:space="preserve">
+    <value>화폐단위</value>
+  </data>
   <data name="NonConsumer spending" xml:space="preserve">
     <value>비소비지출</value>
   </data>
