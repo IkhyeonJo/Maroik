@@ -5,11 +5,6 @@
 @{
     var currentCulture = Context.Features.Get<Microsoft.AspNetCore.Localization.IRequestCultureFeature>().RequestCulture.Culture.Name;
 
-    #region 수입
-
-    #region 대분류 = '정기수입'
-    var regularIncome = Model.Incomes.Where(x => x.MainClass == "RegularIncome").ToList();
-
     decimal regularIncomeTotal = 0;
     decimal regularIncomeLaborIncome = 0;
     decimal regularIncomeBusinessIncome = 0;
@@ -18,14 +13,6 @@
     decimal regularIncomeRentalIncome = 0;
     decimal regularIncomeOtherIncome = 0;
 
-    regularIncomeTotal = regularIncome.Sum(v => v.Amount);
-    regularIncomeLaborIncome = regularIncome.Where(x => x.SubClass == "LaborIncome").Sum(v => v.Amount);
-    regularIncomeBusinessIncome = regularIncome.Where(x => x.SubClass == "BusinessIncome").Sum(v => v.Amount);
-    regularIncomePensionIncome = regularIncome.Where(x => x.SubClass == "PensionIncome").Sum(v => v.Amount);
-    regularIncomeFinancialIncome = regularIncome.Where(x => x.SubClass == "FinancialIncome").Sum(v => v.Amount);
-    regularIncomeRentalIncome = regularIncome.Where(x => x.SubClass == "RentalIncome").Sum(v => v.Amount);
-    regularIncomeOtherIncome = regularIncome.Where(x => x.SubClass == "OtherIncome").Sum(v => v.Amount);
-
     double percetageOfRegularIncomeLaborIncome = 0;
     double percetageOfRegularIncomeBusinessIncome = 0;
     double percetageOfRegularIncomePensionIncome = 0;
@@ -33,68 +20,19 @@
     double percetageOfRegularIncomeRentalIncome = 0;
     double percetageOfRegularIncomeOtherIncome = 0;
 
-    if (regularIncomeTotal != 0)
-    {
-        percetageOfRegularIncomeLaborIncome = ((double)(100)) * (((double)regularIncomeLaborIncome) / ((double)regularIncomeTotal));
-        percetageOfRegularIncomeBusinessIncome = ((double)(100)) * (((double)regularIncomeBusinessIncome) / ((double)regularIncomeTotal));
-        percetageOfRegularIncomePensionIncome = ((double)(100)) * (((double)regularIncomePensionIncome) / ((double)regularIncomeTotal));
-        percetageOfRegularIncomeFinancialIncome = ((double)(100)) * (((double)regularIncomeFinancialIncome) / ((double)regularIncomeTotal));
-        percetageOfRegularIncomeRentalIncome = ((double)(100)) * (((double)regularIncomeRentalIncome) / ((double)regularIncomeTotal));
-        percetageOfRegularIncomeOtherIncome = ((double)(100)) * (((double)regularIncomeOtherIncome) / ((double)regularIncomeTotal));
-    }
-
-    #endregion
-
-    #region 대분류 = '비정기수입'
-    var irregularIncome = Model.Incomes.Where(x => x.MainClass == "IrregularIncome").ToList();
-
     decimal irregularIncomeTotal = 0;
     decimal irregularIncomeLaborIncome = 0;
     decimal irregularIncomeOtherIncome = 0;
 
-    irregularIncomeTotal = irregularIncome.Sum(v => v.Amount);
-    irregularIncomeLaborIncome = irregularIncome.Where(x => x.SubClass == "LaborIncome").Sum(v => v.Amount);
-    irregularIncomeOtherIncome = irregularIncome.Where(x => x.SubClass == "OtherIncome").Sum(v => v.Amount);
-
     double percentageOfIrregularIncomeLaborIncome = 0;
     double percentageOfIrregularIncomeOtherIncome = 0;
-
-    if (irregularIncomeTotal != 0)
-    {
-        percentageOfIrregularIncomeLaborIncome = ((double)(100)) * (((double)irregularIncomeLaborIncome) / ((double)irregularIncomeTotal));
-        percentageOfIrregularIncomeOtherIncome = ((double)(100)) * (((double)irregularIncomeOtherIncome) / ((double)irregularIncomeTotal));
-    }
-
-    #endregion
-
-    #endregion
-
-    #region 지출
-
-    #region 대분류 = '정기저축'
-    var regularSavings = Model.Expenditures.Where(x => x.MainClass == "RegularSavings").ToList();
 
     decimal regularSavingsTotal = 0;
     decimal regularSavingsDeposit = 0;
     decimal regularSavingsInvestment = 0;
 
-    regularSavingsTotal = regularSavings.Sum(v => v.Amount);
-    regularSavingsDeposit = regularSavings.Where(x => x.SubClass == "Deposit").Sum(v => v.Amount);
-    regularSavingsInvestment = regularSavings.Where(x => x.SubClass == "Investment").Sum(v => v.Amount);
-
     double percentageOfRegularSavingsDeposit = 0;
     double percentageOfRegularSavingsInvestment = 0;
-
-    if (regularSavingsTotal != 0)
-    {
-        percentageOfRegularSavingsDeposit = ((double)(100)) * (((double)regularSavingsDeposit) / ((double)regularSavingsTotal));
-        percentageOfRegularSavingsInvestment = ((double)(100)) * (((double)regularSavingsInvestment) / ((double)regularSavingsTotal));
-    }
-
-    #endregion
-
-    #region 대분류 = '비소비지출'
-    var nonConsumerSpending = Model.Expenditures.Where(x => x.MainClass == "NonConsumerSpending").ToList();
 
     decimal nonConsumerSpendingTotal = 0;
     decimal nonConsumerSpendingPublicPension = 0;
@@ -104,35 +42,12 @@
     decimal nonConsumerSpendingInterHouseholdTranserExpenses = 0;
     decimal nonConsumerSpendingNonProfitOrganizationTransfer = 0;
 
-    nonConsumerSpendingTotal = nonConsumerSpending.Sum(v => v.Amount);
-    nonConsumerSpendingPublicPension = nonConsumerSpending.Where(x => x.SubClass == "PublicPension").Sum(v => v.Amount);
-    nonConsumerSpendingDebtRepayment = nonConsumerSpending.Where(x => x.SubClass == "DebtRepayment").Sum(v => v.Amount);
-    nonConsumerSpendingTax = nonConsumerSpending.Where(x => x.SubClass == "Tax").Sum(v => v.Amount);
-    nonConsumerSpendingSocialInsurance = nonConsumerSpending.Where(x => x.SubClass == "SocialInsurance").Sum(v => v.Amount);
-    nonConsumerSpendingInterHouseholdTranserExpenses = nonConsumerSpending.Where(x => x.SubClass == "InterHouseholdTranserExpenses").Sum(v => v.Amount);
-    nonConsumerSpendingNonProfitOrganizationTransfer = nonConsumerSpending.Where(x => x.SubClass == "NonProfitOrganizationTransfer").Sum(v => v.Amount);
-
     double percentageOfNonConsumerSpendingPublicPension = 0;
     double percentageOfNonConsumerSpendingDebtRepayment = 0;
     double percentageOfNonConsumerSpendingTax = 0;
     double percentageOfNonConsumerSpendingSocialInsurance = 0;
     double percentageOfNonConsumerSpendingInterHouseholdTranserExpenses = 0;
     double percentageOfNonConsumerSpendingNonProfitOrganizationTransfer = 0;
-
-    if (nonConsumerSpendingTotal != 0)
-    {
-        percentageOfNonConsumerSpendingPublicPension = ((double)(100)) * (((double)nonConsumerSpendingPublicPension) / ((double)nonConsumerSpendingTotal));
-        percentageOfNonConsumerSpendingDebtRepayment = ((double)(100)) * (((double)nonConsumerSpendingDebtRepayment) / ((double)nonConsumerSpendingTotal));
-        percentageOfNonConsumerSpendingTax = ((double)(100)) * (((double)nonConsumerSpendingTax) / ((double)nonConsumerSpendingTotal));
-        percentageOfNonConsumerSpendingSocialInsurance = ((double)(100)) * (((double)nonConsumerSpendingSocialInsurance) / ((double)nonConsumerSpendingTotal));
-        percentageOfNonConsumerSpendingInterHouseholdTranserExpenses = ((double)(100)) * (((double)nonConsumerSpendingInterHouseholdTranserExpenses) / ((double)nonConsumerSpendingTotal));
-        percentageOfNonConsumerSpendingNonProfitOrganizationTransfer = ((double)(100)) * (((double)nonConsumerSpendingNonProfitOrganizationTransfer) / ((double)nonConsumerSpendingTotal));
-    }
-
-    #endregion
-
-    #region 대분류 = '소비지출'
-    var consumerSpending = Model.Expenditures.Where(x => x.MainClass == "ConsumerSpending").ToList();
 
     decimal consumerSpendingTotal = 0;
     decimal consumerSpendingMealOrEatOutExpenses = 0;
@@ -148,20 +63,6 @@
     decimal consumerSpendingOtherExpenses = 0;
     decimal consumerSpendingUnknownExpenditure = 0;
 
-    consumerSpendingTotal = consumerSpending.Sum(v => v.Amount);
-    consumerSpendingMealOrEatOutExpenses = consumerSpending.Where(x => x.SubClass == "MealOrEatOutExpenses").Sum(v => v.Amount);
-    consumerSpendingHousingOrSuppliesCost = consumerSpending.Where(x => x.SubClass == "HousingOrSuppliesCost").Sum(v => v.Amount);
-    consumerSpendingEducationExpenses = consumerSpending.Where(x => x.SubClass == "EducationExpenses").Sum(v => v.Amount);
-    consumerSpendingMedicalExpenses = consumerSpending.Where(x => x.SubClass == "MedicalExpenses").Sum(v => v.Amount);
-    consumerSpendingTransportationCost = consumerSpending.Where(x => x.SubClass == "TransportationCost").Sum(v => v.Amount);
-    consumerSpendingCommunicationCost = consumerSpending.Where(x => x.SubClass == "CommunicationCost").Sum(v => v.Amount);
-    consumerSpendingLeisureOrCulture = consumerSpending.Where(x => x.SubClass == "LeisureOrCulture").Sum(v => v.Amount);
-    consumerSpendingClothingOrShoes = consumerSpending.Where(x => x.SubClass == "ClothingOrShoes").Sum(v => v.Amount);
-    consumerSpendingPinMoney = consumerSpending.Where(x => x.SubClass == "PinMoney").Sum(v => v.Amount);
-    consumerSpendingProtectionTypeInsurance = consumerSpending.Where(x => x.SubClass == "ProtectionTypeInsurance").Sum(v => v.Amount);
-    consumerSpendingOtherExpenses = consumerSpending.Where(x => x.SubClass == "OtherExpenses").Sum(v => v.Amount);
-    consumerSpendingUnknownExpenditure = consumerSpending.Where(x => x.SubClass == "UnknownExpenditure").Sum(v => v.Amount);
-
     double percentageOfConsumerSpendingMealOrEatOutExpenses = 0;
     double percentageOfConsumerSpendingHousingOrSuppliesCost = 0;
     double percentageOfConsumerSpendingEducationExpenses = 0;
@@ -175,25 +76,127 @@
     double percentageOfConsumerSpendingOtherExpenses = 0;
     double percentageOfConsumerSpendingUnknownExpenditure = 0;
 
-    if (consumerSpendingTotal != 0)
+    if (Model.DefaultMonetaryUnit != null)
     {
-        percentageOfConsumerSpendingMealOrEatOutExpenses = ((double)(100)) * (((double)consumerSpendingMealOrEatOutExpenses) / ((double)consumerSpendingTotal));
-        percentageOfConsumerSpendingHousingOrSuppliesCost = ((double)(100)) * (((double)consumerSpendingHousingOrSuppliesCost) / ((double)consumerSpendingTotal));
-        percentageOfConsumerSpendingEducationExpenses = ((double)(100)) * (((double)consumerSpendingEducationExpenses) / ((double)consumerSpendingTotal));
-        percentageOfConsumerSpendingMedicalExpenses = ((double)(100)) * (((double)consumerSpendingMedicalExpenses) / ((double)consumerSpendingTotal));
-        percentageOfConsumerSpendingTransportationCost = ((double)(100)) * (((double)consumerSpendingTransportationCost) / ((double)consumerSpendingTotal));
-        percentageOfConsumerSpendingCommunicationCost = ((double)(100)) * (((double)consumerSpendingCommunicationCost) / ((double)consumerSpendingTotal));
-        percentageOfConsumerSpendingLeisureOrCulture = ((double)(100)) * (((double)consumerSpendingLeisureOrCulture) / ((double)consumerSpendingTotal));
-        percentageOfConsumerSpendingClothingOrShoes = ((double)(100)) * (((double)consumerSpendingClothingOrShoes) / ((double)consumerSpendingTotal));
-        percentageOfConsumerSpendingPinMoney = ((double)(100)) * (((double)consumerSpendingPinMoney) / ((double)consumerSpendingTotal));
-        percentageOfConsumerSpendingProtectionTypeInsurance = ((double)(100)) * (((double)consumerSpendingProtectionTypeInsurance) / ((double)consumerSpendingTotal));
-        percentageOfConsumerSpendingOtherExpenses = ((double)(100)) * (((double)consumerSpendingOtherExpenses) / ((double)consumerSpendingTotal));
-        percentageOfConsumerSpendingUnknownExpenditure = ((double)(100)) * (((double)consumerSpendingUnknownExpenditure) / ((double)consumerSpendingTotal));
+        #region 수입
+
+        #region 대분류 = '정기수입'
+        var regularIncome = Model.IncomeOutputViewModels.Where(x => x.MainClass == "RegularIncome").ToList();
+
+        regularIncomeTotal = regularIncome.Sum(v => v.Amount);
+        regularIncomeLaborIncome = regularIncome.Where(x => x.SubClass == "LaborIncome").Sum(v => v.Amount);
+        regularIncomeBusinessIncome = regularIncome.Where(x => x.SubClass == "BusinessIncome").Sum(v => v.Amount);
+        regularIncomePensionIncome = regularIncome.Where(x => x.SubClass == "PensionIncome").Sum(v => v.Amount);
+        regularIncomeFinancialIncome = regularIncome.Where(x => x.SubClass == "FinancialIncome").Sum(v => v.Amount);
+        regularIncomeRentalIncome = regularIncome.Where(x => x.SubClass == "RentalIncome").Sum(v => v.Amount);
+        regularIncomeOtherIncome = regularIncome.Where(x => x.SubClass == "OtherIncome").Sum(v => v.Amount);
+
+        if (regularIncomeTotal != 0)
+        {
+            percetageOfRegularIncomeLaborIncome = ((double)(100)) * (((double)regularIncomeLaborIncome) / ((double)regularIncomeTotal));
+            percetageOfRegularIncomeBusinessIncome = ((double)(100)) * (((double)regularIncomeBusinessIncome) / ((double)regularIncomeTotal));
+            percetageOfRegularIncomePensionIncome = ((double)(100)) * (((double)regularIncomePensionIncome) / ((double)regularIncomeTotal));
+            percetageOfRegularIncomeFinancialIncome = ((double)(100)) * (((double)regularIncomeFinancialIncome) / ((double)regularIncomeTotal));
+            percetageOfRegularIncomeRentalIncome = ((double)(100)) * (((double)regularIncomeRentalIncome) / ((double)regularIncomeTotal));
+            percetageOfRegularIncomeOtherIncome = ((double)(100)) * (((double)regularIncomeOtherIncome) / ((double)regularIncomeTotal));
+        }
+
+        #endregion
+
+        #region 대분류 = '비정기수입'
+        var irregularIncome = Model.IncomeOutputViewModels.Where(x => x.MainClass == "IrregularIncome").ToList();
+
+        irregularIncomeTotal = irregularIncome.Sum(v => v.Amount);
+        irregularIncomeLaborIncome = irregularIncome.Where(x => x.SubClass == "LaborIncome").Sum(v => v.Amount);
+        irregularIncomeOtherIncome = irregularIncome.Where(x => x.SubClass == "OtherIncome").Sum(v => v.Amount);
+
+        if (irregularIncomeTotal != 0)
+        {
+            percentageOfIrregularIncomeLaborIncome = ((double)(100)) * (((double)irregularIncomeLaborIncome) / ((double)irregularIncomeTotal));
+            percentageOfIrregularIncomeOtherIncome = ((double)(100)) * (((double)irregularIncomeOtherIncome) / ((double)irregularIncomeTotal));
+        }
+
+        #endregion
+
+        #endregion
+
+        #region 지출
+
+        #region 대분류 = '정기저축'
+        var regularSavings = Model.ExpenditureOutputViewModels.Where(x => x.MainClass == "RegularSavings").ToList();
+
+        regularSavingsTotal = regularSavings.Sum(v => v.Amount);
+        regularSavingsDeposit = regularSavings.Where(x => x.SubClass == "Deposit").Sum(v => v.Amount);
+        regularSavingsInvestment = regularSavings.Where(x => x.SubClass == "Investment").Sum(v => v.Amount);
+
+        if (regularSavingsTotal != 0)
+        {
+            percentageOfRegularSavingsDeposit = ((double)(100)) * (((double)regularSavingsDeposit) / ((double)regularSavingsTotal));
+            percentageOfRegularSavingsInvestment = ((double)(100)) * (((double)regularSavingsInvestment) / ((double)regularSavingsTotal));
+        }
+
+        #endregion
+
+        #region 대분류 = '비소비지출'
+        var nonConsumerSpending = Model.ExpenditureOutputViewModels.Where(x => x.MainClass == "NonConsumerSpending").ToList();
+
+        nonConsumerSpendingTotal = nonConsumerSpending.Sum(v => v.Amount);
+        nonConsumerSpendingPublicPension = nonConsumerSpending.Where(x => x.SubClass == "PublicPension").Sum(v => v.Amount);
+        nonConsumerSpendingDebtRepayment = nonConsumerSpending.Where(x => x.SubClass == "DebtRepayment").Sum(v => v.Amount);
+        nonConsumerSpendingTax = nonConsumerSpending.Where(x => x.SubClass == "Tax").Sum(v => v.Amount);
+        nonConsumerSpendingSocialInsurance = nonConsumerSpending.Where(x => x.SubClass == "SocialInsurance").Sum(v => v.Amount);
+        nonConsumerSpendingInterHouseholdTranserExpenses = nonConsumerSpending.Where(x => x.SubClass == "InterHouseholdTranserExpenses").Sum(v => v.Amount);
+        nonConsumerSpendingNonProfitOrganizationTransfer = nonConsumerSpending.Where(x => x.SubClass == "NonProfitOrganizationTransfer").Sum(v => v.Amount);
+
+        if (nonConsumerSpendingTotal != 0)
+        {
+            percentageOfNonConsumerSpendingPublicPension = ((double)(100)) * (((double)nonConsumerSpendingPublicPension) / ((double)nonConsumerSpendingTotal));
+            percentageOfNonConsumerSpendingDebtRepayment = ((double)(100)) * (((double)nonConsumerSpendingDebtRepayment) / ((double)nonConsumerSpendingTotal));
+            percentageOfNonConsumerSpendingTax = ((double)(100)) * (((double)nonConsumerSpendingTax) / ((double)nonConsumerSpendingTotal));
+            percentageOfNonConsumerSpendingSocialInsurance = ((double)(100)) * (((double)nonConsumerSpendingSocialInsurance) / ((double)nonConsumerSpendingTotal));
+            percentageOfNonConsumerSpendingInterHouseholdTranserExpenses = ((double)(100)) * (((double)nonConsumerSpendingInterHouseholdTranserExpenses) / ((double)nonConsumerSpendingTotal));
+            percentageOfNonConsumerSpendingNonProfitOrganizationTransfer = ((double)(100)) * (((double)nonConsumerSpendingNonProfitOrganizationTransfer) / ((double)nonConsumerSpendingTotal));
+        }
+
+        #endregion
+
+        #region 대분류 = '소비지출'
+        var consumerSpending = Model.ExpenditureOutputViewModels.Where(x => x.MainClass == "ConsumerSpending").ToList();
+
+        consumerSpendingTotal = consumerSpending.Sum(v => v.Amount);
+        consumerSpendingMealOrEatOutExpenses = consumerSpending.Where(x => x.SubClass == "MealOrEatOutExpenses").Sum(v => v.Amount);
+        consumerSpendingHousingOrSuppliesCost = consumerSpending.Where(x => x.SubClass == "HousingOrSuppliesCost").Sum(v => v.Amount);
+        consumerSpendingEducationExpenses = consumerSpending.Where(x => x.SubClass == "EducationExpenses").Sum(v => v.Amount);
+        consumerSpendingMedicalExpenses = consumerSpending.Where(x => x.SubClass == "MedicalExpenses").Sum(v => v.Amount);
+        consumerSpendingTransportationCost = consumerSpending.Where(x => x.SubClass == "TransportationCost").Sum(v => v.Amount);
+        consumerSpendingCommunicationCost = consumerSpending.Where(x => x.SubClass == "CommunicationCost").Sum(v => v.Amount);
+        consumerSpendingLeisureOrCulture = consumerSpending.Where(x => x.SubClass == "LeisureOrCulture").Sum(v => v.Amount);
+        consumerSpendingClothingOrShoes = consumerSpending.Where(x => x.SubClass == "ClothingOrShoes").Sum(v => v.Amount);
+        consumerSpendingPinMoney = consumerSpending.Where(x => x.SubClass == "PinMoney").Sum(v => v.Amount);
+        consumerSpendingProtectionTypeInsurance = consumerSpending.Where(x => x.SubClass == "ProtectionTypeInsurance").Sum(v => v.Amount);
+        consumerSpendingOtherExpenses = consumerSpending.Where(x => x.SubClass == "OtherExpenses").Sum(v => v.Amount);
+        consumerSpendingUnknownExpenditure = consumerSpending.Where(x => x.SubClass == "UnknownExpenditure").Sum(v => v.Amount);
+
+        if (consumerSpendingTotal != 0)
+        {
+            percentageOfConsumerSpendingMealOrEatOutExpenses = ((double)(100)) * (((double)consumerSpendingMealOrEatOutExpenses) / ((double)consumerSpendingTotal));
+            percentageOfConsumerSpendingHousingOrSuppliesCost = ((double)(100)) * (((double)consumerSpendingHousingOrSuppliesCost) / ((double)consumerSpendingTotal));
+            percentageOfConsumerSpendingEducationExpenses = ((double)(100)) * (((double)consumerSpendingEducationExpenses) / ((double)consumerSpendingTotal));
+            percentageOfConsumerSpendingMedicalExpenses = ((double)(100)) * (((double)consumerSpendingMedicalExpenses) / ((double)consumerSpendingTotal));
+            percentageOfConsumerSpendingTransportationCost = ((double)(100)) * (((double)consumerSpendingTransportationCost) / ((double)consumerSpendingTotal));
+            percentageOfConsumerSpendingCommunicationCost = ((double)(100)) * (((double)consumerSpendingCommunicationCost) / ((double)consumerSpendingTotal));
+            percentageOfConsumerSpendingLeisureOrCulture = ((double)(100)) * (((double)consumerSpendingLeisureOrCulture) / ((double)consumerSpendingTotal));
+            percentageOfConsumerSpendingClothingOrShoes = ((double)(100)) * (((double)consumerSpendingClothingOrShoes) / ((double)consumerSpendingTotal));
+            percentageOfConsumerSpendingPinMoney = ((double)(100)) * (((double)consumerSpendingPinMoney) / ((double)consumerSpendingTotal));
+            percentageOfConsumerSpendingProtectionTypeInsurance = ((double)(100)) * (((double)consumerSpendingProtectionTypeInsurance) / ((double)consumerSpendingTotal));
+            percentageOfConsumerSpendingOtherExpenses = ((double)(100)) * (((double)consumerSpendingOtherExpenses) / ((double)consumerSpendingTotal));
+            percentageOfConsumerSpendingUnknownExpenditure = ((double)(100)) * (((double)consumerSpendingUnknownExpenditure) / ((double)consumerSpendingTotal));
+        }
+
+        #endregion
+
+        #endregion
     }
-
-    #endregion
-
-    #endregion
 }
 
 @*수입*@
@@ -238,6 +241,36 @@
 
 <section class="content">
     <div class="container-fluid">
+
+        @if(Model.MonetaryUnits.Count() != 0)
+        {
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">
+                                <i class="fas fa-money-bill-alt"></i> @localizer["MonetaryUnit"].Value
+                            </h3>
+                            <div class="card-tools">
+                                <select id="monetaryUnit" style="max-width:100%;">
+                                    @foreach (string monetaryUnit in Model.MonetaryUnits)
+                                    {
+                                        if (Model.DefaultMonetaryUnit == monetaryUnit)
+                                        {
+                                            <option value="@monetaryUnit" selected="selected">@monetaryUnit</option>
+                                        }
+                                        else
+                                        {
+                                            <option value="@monetaryUnit">@monetaryUnit</option>
+                                        }
+                                    }
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
         <div class="row">
 
             <div class="col-md-6">

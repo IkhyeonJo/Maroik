@@ -1,4 +1,29 @@
-﻿$(function () {
+﻿$('#monetaryUnit').off('change').on('change', function () {
+    let paramValue = JSON.stringify({
+        DefaultMonetaryUnit: $('#monetaryUnit').find(":selected").val()
+    });
+
+    $.ajax({
+        url: '/DashBoard/UserUpdateDefaultMonetary',
+        type: 'POST',
+        headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
+        dataType: 'json',
+        data: paramValue,
+        contentType: 'application/json; charset=utf-8',
+        //async: false,
+        //cache: false,
+        success: function (data) {
+            if (data.result) {
+                window.location.href = $("#returnUri").val();
+            }
+            else {
+                window.location.href = $("#returnUri").val();
+            }
+        }
+    });
+});
+
+$(function () {
     let regularIncomeLaborIncome = parseInt($("#regularIncomeLaborIncome").val());
     let regularIncomeBusinessIncome = parseInt($("#regularIncomeBusinessIncome").val());
     let regularIncomePensionIncome = parseInt($("#regularIncomePensionIncome").val());

@@ -1,5 +1,7 @@
 ﻿using Maroik.Common.DataAccess.Contracts;
 using Maroik.Common.DataAccess.Models;
+using Maroik.Common.DataAccess.Services;
+using Maroik.WebSite.Extensions;
 using Maroik.WebSite.Models.ViewModels.Account;
 using Maroik.WebSite.Models.ViewModels.DashBoard;
 using Maroik.WebSite.Utilities;
@@ -15,12 +17,16 @@ namespace Maroik.WebSite.Controllers
         private readonly ILogger<DashBoardController> logger;
         private readonly IIncomeRepository incomeRepository;
         private readonly IExpenditureRepository expenditureRepository;
+        private readonly IAssetRepository assetRepository;
+        private readonly IAccountRepository accountRepository;
 
-        public DashBoardController(ILogger<DashBoardController> logger, IIncomeRepository incomeRepository, IExpenditureRepository expenditureRepository)
+        public DashBoardController(ILogger<DashBoardController> logger, IIncomeRepository incomeRepository, IExpenditureRepository expenditureRepository, IAssetRepository assetRepository, IAccountRepository accountRepository)
         {
             this.logger = logger;
             this.incomeRepository = incomeRepository;
             this.expenditureRepository = expenditureRepository;
+            this.assetRepository = assetRepository;
+            this.accountRepository = accountRepository;
         }
 
         #region 언어 변경
@@ -47,26 +53,139 @@ namespace Maroik.WebSite.Controllers
         #endregion
 
         #region User
+
+        #region Read
         [HttpGet]
         public async Task<IActionResult> UserIndex()
         {
-            #region Current Year & Month Income/Expenditure
             _ = HttpContext.Session.TryGetValue(Maroik.WebSite.Extensions.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account), out byte[] resultByte);
-            string currentYearMonth = DateTime.UtcNow.ToString("yyyy-MM");
-            string currentLoginUserEmail = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email;
 
-            UserIndexOutputViewModel userIndexOutputViewModel = new()
+            UserIndexOutputViewModel userIndexOutputViewModel = new UserIndexOutputViewModel();
+            Account currentLoginUser = await accountRepository.GetAccountByEmailAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+            var assets = (await assetRepository.GetAssetsAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email)) ?? [];
+
+            #region Set if currentLoginUser's DefaultMonetaryUnit is not existed in Assets
+            if (currentLoginUser?.DefaultMonetaryUnit == null && assets.Count() == 0)
             {
-                Incomes = await incomeRepository.GetCurrentYearMonthIncomesAsync(currentLoginUserEmail, currentYearMonth, JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId),
-                Expenditures = await expenditureRepository.GetCurrentYearMonthExpendituresAsync(currentLoginUserEmail, currentYearMonth, JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId),
-                USP_Income_MonthlyReport_Results = await incomeRepository.GetCurrentYearMonthIncomesMonthlyReport(currentLoginUserEmail, currentYearMonth, JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId)
-            };
-            ;
-            userIndexOutputViewModel.USP_Expenditure_MonthlyReport_Results = await expenditureRepository.GetCurrentYearMonthExpendituresMonthlyReport(currentLoginUserEmail, currentYearMonth, JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId);
+                currentLoginUser.DefaultMonetaryUnit = null;
+                await accountRepository.UpdateAccountAsync(currentLoginUser);
+            }
+            else if (currentLoginUser?.DefaultMonetaryUnit == null && assets.Count() != 0)
+            {
+                var mostUsedMonetaryUnit = assets
+                    .GroupBy(a => a.MonetaryUnit)
+                    .OrderByDescending(g => g.Count())
+                    .FirstOrDefault();
+                currentLoginUser.DefaultMonetaryUnit = mostUsedMonetaryUnit?.Key;
+                await accountRepository.UpdateAccountAsync(currentLoginUser);
+            }
+            else if (currentLoginUser?.DefaultMonetaryUnit != null && assets.Count() == 0)
+            {
+                currentLoginUser.DefaultMonetaryUnit = null;
+                await accountRepository.UpdateAccountAsync(currentLoginUser);
+            }
+            else if (currentLoginUser?.DefaultMonetaryUnit != null && assets.Count() != 0)
+            {
+                if (!assets.Select(x => x.MonetaryUnit).Distinct().ToList().Contains(currentLoginUser.DefaultMonetaryUnit))
+                {
+                    var mostUsedMonetaryUnit = assets
+                        .GroupBy(a => a.MonetaryUnit)
+                        .OrderByDescending(g => g.Count())
+                        .FirstOrDefault();
+                    currentLoginUser.DefaultMonetaryUnit = mostUsedMonetaryUnit?.Key;
+                    await accountRepository.UpdateAccountAsync(currentLoginUser);
+                }
+            }
+
+            userIndexOutputViewModel.DefaultMonetaryUnit = currentLoginUser.DefaultMonetaryUnit;
+            #endregion
+
+            #region Current Year & Month Income/Expenditure & MonetaryUnits
+            if (userIndexOutputViewModel.DefaultMonetaryUnit != null)
+            {
+                string currentYearMonth = DateTime.UtcNow.ToString("yyyy-MM");
+                string currentLoginUserEmail = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email;
+
+                var incomes = await incomeRepository.GetCurrentYearMonthIncomesAsync(currentLoginUserEmail, currentYearMonth, JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId);
+                userIndexOutputViewModel.IncomeOutputViewModels = new List<IncomeOutputViewModel>();
+                foreach (var item in incomes)
+                {
+                    userIndexOutputViewModel.IncomeOutputViewModels.Add(new IncomeOutputViewModel()
+                    {
+                        Id = item.Id,
+                        MainClass = item.MainClass,
+                        SubClass = item.SubClass,
+                        Contents = item.Contents,
+                        Amount = Convert.ToDecimal(item.Amount.TrimTrailingZeros()),
+                        MonetaryUnit = assets.Where(x => x.ProductName == item.DepositMyAssetProductName).FirstOrDefault().MonetaryUnit,
+                        DepositMyAssetProductName = item.DepositMyAssetProductName,
+                        Created = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Created, JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId),
+                        Updated = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Updated, JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId),
+                        Note = item.Note
+                    });
+                }
+
+                var expenditures = await expenditureRepository.GetCurrentYearMonthExpendituresAsync(currentLoginUserEmail, currentYearMonth, JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId);
+                userIndexOutputViewModel.ExpenditureOutputViewModels = new List<ExpenditureOutputViewModel>();
+                foreach (var item in expenditures)
+                {
+                    userIndexOutputViewModel.ExpenditureOutputViewModels.Add(new ExpenditureOutputViewModel()
+                    {
+                        Id = item.Id,
+                        MainClass = item.MainClass,
+                        SubClass = item.SubClass,
+                        Contents = item.Contents,
+                        Amount = Convert.ToDecimal(item.Amount.TrimTrailingZeros()),
+                        MonetaryUnit = assets.Where(x => x.ProductName == item.PaymentMethod).FirstOrDefault().MonetaryUnit,
+                        PaymentMethod = item.PaymentMethod,
+                        Note = item.Note,
+                        MyDepositAsset = item.MyDepositAsset,
+                        Created = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Created, JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId),
+                        Updated = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Updated, JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId)
+                    });
+                }
+                userIndexOutputViewModel.IncomeOutputViewModels = userIndexOutputViewModel.IncomeOutputViewModels.Where(x => x.MonetaryUnit == userIndexOutputViewModel.DefaultMonetaryUnit).ToList();
+                userIndexOutputViewModel.ExpenditureOutputViewModels = userIndexOutputViewModel.ExpenditureOutputViewModels.Where(x => x.MonetaryUnit == userIndexOutputViewModel.DefaultMonetaryUnit).ToList();
+                userIndexOutputViewModel.USP_Income_MonthlyReport_Results = await incomeRepository.GetCurrentYearMonthIncomesMonthlyReport(currentLoginUserEmail, currentYearMonth, JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId, userIndexOutputViewModel.DefaultMonetaryUnit);
+                userIndexOutputViewModel.USP_Expenditure_MonthlyReport_Results = await expenditureRepository.GetCurrentYearMonthExpendituresMonthlyReport(currentLoginUserEmail, currentYearMonth, JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId, userIndexOutputViewModel.DefaultMonetaryUnit);
+            }
+            #endregion
+
+            #region Set MonetaryUnits
+            if (assets?.Count() != 0)
+            {
+                userIndexOutputViewModel.MonetaryUnits = assets?.Select(x => x?.MonetaryUnit)?.Distinct()?.ToList() ?? [];
+            }
             #endregion
 
             return View(userIndexOutputViewModel);
         }
+        #endregion
+
+        #region Update
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [RequiredHttpPostAccess(Role = Role.User)]
+        public async Task<IActionResult> UserUpdateDefaultMonetary([FromBody] UserIndexInputViewModel userIndexInputViewModel)
+        {
+            try
+            {
+                _ = HttpContext.Session.TryGetValue(Maroik.WebSite.Extensions.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account), out byte[] resultByte);
+                Account currentLoginUser = await accountRepository.GetAccountByEmailAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+                currentLoginUser.DefaultMonetaryUnit = userIndexInputViewModel.DefaultMonetaryUnit;
+
+                await accountRepository.UpdateAccountAsync(currentLoginUser);
+
+                return Json(new { result = true });
+
+            }
+            catch
+            {
+                return Json(new { result = false });
+            }
+        }
+        #endregion
+
         #endregion
 
         #region Anonymous
