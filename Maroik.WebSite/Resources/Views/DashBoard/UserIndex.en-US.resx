@@ -141,8 +141,8 @@
   <data name="EducationExpenses" xml:space="preserve">
     <value>EducationExpenses</value>
   </data>
-  <data name="Expenditure this month" xml:space="preserve">
-    <value>Expenditure this month</value>
+  <data name="Expenditure" xml:space="preserve">
+    <value>Expenditure</value>
   </data>
   <data name="FinancialIncome" xml:space="preserve">
     <value>FinancialIncome</value>
@@ -150,8 +150,8 @@
   <data name="HousingOrSuppliesCost" xml:space="preserve">
     <value>HousingOrSuppliesCost</value>
   </data>
-  <data name="Income this month" xml:space="preserve">
-    <value>Income this month</value>
+  <data name="Income" xml:space="preserve">
+    <value>Income</value>
   </data>
   <data name="InterHouseholdTransferExpenses" xml:space="preserve">
     <value>InterHouseholdTransferExpenses</value>
@@ -236,6 +236,9 @@
   </data>
   <data name="RentalIncome" xml:space="preserve">
     <value>RentalIncome</value>
+  </data>
+  <data name="Setting" xml:space="preserve">
+    <value>Setting</value>
   </data>
   <data name="Skewness" xml:space="preserve">
     <value>Skewness</value>

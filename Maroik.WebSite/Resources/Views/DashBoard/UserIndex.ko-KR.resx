@@ -141,8 +141,8 @@
   <data name="EducationExpenses" xml:space="preserve">
     <value>교육비</value>
   </data>
-  <data name="Expenditure this month" xml:space="preserve">
-    <value>이번달 지출</value>
+  <data name="Expenditure" xml:space="preserve">
+    <value>지출</value>
   </data>
   <data name="FinancialIncome" xml:space="preserve">
     <value>금융소득</value>
@@ -150,8 +150,8 @@
   <data name="HousingOrSuppliesCost" xml:space="preserve">
     <value>주거/용품비</value>
   </data>
-  <data name="Income this month" xml:space="preserve">
-    <value>이번달 수입</value>
+  <data name="Income" xml:space="preserve">
+    <value>수입</value>
   </data>
   <data name="InterHouseholdTransferExpenses" xml:space="preserve">
     <value>가구간 이전지출</value>
@@ -236,6 +236,9 @@
   </data>
   <data name="RentalIncome" xml:space="preserve">
     <value>임대수입</value>
+  </data>
+  <data name="Setting" xml:space="preserve">
+    <value>설정</value>
   </data>
   <data name="Skewness" xml:space="preserve">
     <value>왜도</value>

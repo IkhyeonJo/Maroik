@@ -55,8 +55,41 @@ namespace Maroik.WebSite.Controllers
 
         #region Read
         [HttpGet]
-        public async Task<IActionResult> UserIndex()
+        public async Task<IActionResult> UserIndex(string year, string month)
         {
+            if (string.IsNullOrEmpty(year))
+            {
+                year = DateTime.UtcNow.Year.ToString();
+            }
+            else
+            {
+                try
+                {
+                    year = Convert.ToInt32(year).ToString();
+                }
+                catch
+                {
+                    year = DateTime.UtcNow.Year.ToString();
+                }
+            }
+
+            if (string.IsNullOrEmpty(month))
+            {
+                month = DateTime.UtcNow.Month.ToString("00");
+            }
+            else
+            {
+                try
+                {
+                    month = Convert.ToInt32(month).ToString("00");
+                }
+                catch
+                {
+                    month = DateTime.UtcNow.Month.ToString("00");
+                }
+            }
+
+
             _ = HttpContext.Session.TryGetValue(Maroik.WebSite.Extensions.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account), out byte[] resultByte);
 
             UserIndexOutputViewModel userIndexOutputViewModel = new();
@@ -102,7 +135,7 @@ namespace Maroik.WebSite.Controllers
             #region Current Year & Month Income/Expenditure & MonetaryUnits
             if (userIndexOutputViewModel.DefaultMonetaryUnit != null)
             {
-                string currentYearMonth = DateTime.UtcNow.ToString("yyyy-MM");
+                string currentYearMonth = $"{year}-{month}";
                 string currentLoginUserEmail = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email;
 
                 List<Income> incomes = await incomeRepository.GetCurrentYearMonthIncomesAsync(currentLoginUserEmail, currentYearMonth, JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId);
@@ -156,6 +189,10 @@ namespace Maroik.WebSite.Controllers
                 userIndexOutputViewModel.MonetaryUnits = assets?.Select(x => x?.MonetaryUnit)?.Distinct()?.ToList() ?? [];
             }
             #endregion
+
+            ViewBag.StartYear = currentLoginUser.Created.Year.ToString();
+            ViewBag.SelectedYear = year;
+            ViewBag.SelectedMonth = month;
 
             return View(userIndexOutputViewModel);
         }

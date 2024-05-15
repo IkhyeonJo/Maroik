@@ -3,6 +3,11 @@
 @model UserIndexOutputViewModel
 
 @{
+    int startYear = Convert.ToInt32((ViewBag.StartYear as string) ?? "");
+    int endYear = DateTime.UtcNow.Year;
+    int selectedYear = Convert.ToInt32((ViewBag.SelectedYear as string) ?? "");
+    int selectedMonth = Convert.ToInt32((ViewBag.SelectedMonth as string) ?? "");
+
     var currentCulture = Context.Features.Get<Microsoft.AspNetCore.Localization.IRequestCultureFeature>().RequestCulture.Culture.Name;
 
     decimal regularIncomeTotal = 0;
@@ -249,22 +254,50 @@
                     <div class="card">
                         <div class="card-header">
                             <h3 class="card-title">
-                                <i class="fas fa-money-bill-alt"></i> @localizer["MonetaryUnit"].Value
+                                <i class="fas fa-cog"></i> @localizer["Setting"].Value
                             </h3>
                             <div class="card-tools">
-                                <select id="monetaryUnit" style="max-width:100%;">
-                                    @foreach (string monetaryUnit in Model.MonetaryUnits)
-                                    {
-                                        if (Model.DefaultMonetaryUnit == monetaryUnit)
+                                <div class="input-group input-group-sm">
+                                    <select id="year" style="max-width:100%;">
+                                        @for (int i = endYear; i >= startYear; i--)
                                         {
-                                            <option value="@monetaryUnit" selected="selected">@monetaryUnit</option>
+                                            if (i == selectedYear)
+                                            {
+                                                <option value="@i" selected="selected">@i</option>
+                                            }
+                                            else
+                                            {
+                                                <option value="@i">@i</option>
+                                            }
                                         }
-                                        else
+                                    </select>
+                                    <select id="month" style="max-width:100%;">
+                                        @for (int i = 1; i <= 12; i++)
                                         {
-                                            <option value="@monetaryUnit">@monetaryUnit</option>
+                                            if (i == selectedMonth)
+                                            {
+                                                <option value="@i" selected="selected">@i</option>
+                                            }
+                                            else
+                                            {
+                                                <option value="@i">@i</option>
+                                            }
                                         }
-                                    }
-                                </select>
+                                    </select>
+                                    <select id="monetaryUnit" style="max-width:100%;">
+                                        @foreach (string monetaryUnit in Model.MonetaryUnits)
+                                        {
+                                            if (Model.DefaultMonetaryUnit == monetaryUnit)
+                                            {
+                                                <option value="@monetaryUnit" selected="selected">@monetaryUnit</option>
+                                            }
+                                            else
+                                            {
+                                                <option value="@monetaryUnit">@monetaryUnit</option>
+                                            }
+                                        }
+                                    </select>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -278,7 +311,7 @@
                     <div class="card-header">
                         <h3 class="card-title">
                             <i class="fas fa-chart-pie mr-1"></i>
-                            @localizer["Income this month"].Value
+                            @localizer["Income"].Value
                         </h3>
                         <div class="card-tools">
                             <ul class="nav nav-pills ml-auto">
@@ -309,7 +342,7 @@
                     <div class="card-header">
                         <h3 class="card-title">
                             <i class="fas fa-chart-pie mr-1"></i>
-                            @localizer["Income this month"].Value
+                            @localizer["Income"].Value
                         </h3>
                         <div class="card-tools">
                             <ul class="nav nav-pills ml-auto">
@@ -667,7 +700,7 @@
                     <div class="card-header">
                         <h3 class="card-title">
                             <i class="fas fa-chart-pie mr-1"></i>
-                            @localizer["Expenditure this month"].Value
+                            @localizer["Expenditure"].Value
                         </h3>
                         <div class="card-tools">
                             <ul class="nav nav-pills ml-auto">
@@ -704,7 +737,7 @@
                     <div class="card-header">
                         <h3 class="card-title">
                             <i class="fas fa-chart-pie mr-1"></i>
-                            @localizer["Expenditure this month"].Value
+                            @localizer["Expenditure"].Value
                         </h3>
                         <div class="card-tools">
                             <ul class="nav nav-pills ml-auto">
