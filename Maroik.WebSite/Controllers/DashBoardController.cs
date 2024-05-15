@@ -192,8 +192,8 @@ namespace Maroik.WebSite.Controllers
             #endregion
 
             #region StartYear
-            var firstCreatedIncome = (await incomeRepository.GetIncomesAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email)).OrderBy(x => x.Created).ToList().FirstOrDefault() ?? new Income();
-            var firstCreatedExpenditure = (await expenditureRepository.GetExpendituresAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email)).OrderBy(x => x.Created).ToList().FirstOrDefault() ?? new Expenditure();
+            Income firstCreatedIncome = (await incomeRepository.GetIncomesAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email)).OrderBy(x => x.Created).ToList().FirstOrDefault() ?? new Income();
+            Expenditure firstCreatedExpenditure = (await expenditureRepository.GetExpendituresAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email)).OrderBy(x => x.Created).ToList().FirstOrDefault() ?? new Expenditure();
 
             DateTime firstCreatedIncomeOrExpenditure;
 
