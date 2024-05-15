@@ -57,6 +57,13 @@ namespace Maroik.WebSite.Controllers
         [HttpGet]
         public async Task<IActionResult> UserIndex(string year, string month)
         {
+            _ = HttpContext.Session.TryGetValue(Maroik.WebSite.Extensions.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account), out byte[] resultByte);
+
+            UserIndexOutputViewModel userIndexOutputViewModel = new();
+            Account currentLoginUser = await accountRepository.GetAccountByEmailAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+            List<Asset> assets = (await assetRepository.GetAssetsAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email)) ?? [];
+
+            #region Year & Month
             if (string.IsNullOrEmpty(year))
             {
                 year = DateTime.UtcNow.Year.ToString();
@@ -88,13 +95,7 @@ namespace Maroik.WebSite.Controllers
                     month = DateTime.UtcNow.Month.ToString("00");
                 }
             }
-
-
-            _ = HttpContext.Session.TryGetValue(Maroik.WebSite.Extensions.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account), out byte[] resultByte);
-
-            UserIndexOutputViewModel userIndexOutputViewModel = new();
-            Account currentLoginUser = await accountRepository.GetAccountByEmailAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
-            List<Asset> assets = (await assetRepository.GetAssetsAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email)) ?? [];
+            #endregion
 
             #region Set if currentLoginUser's DefaultMonetaryUnit is not existed in Assets
             if (currentLoginUser?.DefaultMonetaryUnit == null && assets.Count() == 0)
@@ -190,7 +191,30 @@ namespace Maroik.WebSite.Controllers
             }
             #endregion
 
-            ViewBag.StartYear = currentLoginUser.Created.Year.ToString();
+            #region StartYear
+            var firstCreatedIncome = (await incomeRepository.GetIncomesAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email)).OrderBy(x => x.Created).ToList().FirstOrDefault() ?? new Income();
+            var firstCreatedExpenditure = (await expenditureRepository.GetExpendituresAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email)).OrderBy(x => x.Created).ToList().FirstOrDefault() ?? new Expenditure();
+
+            DateTime firstCreatedIncomeOrExpenditure;
+
+            if (DateTime.Compare(firstCreatedIncome.Created, firstCreatedExpenditure.Created) < 0)
+            {
+                firstCreatedIncomeOrExpenditure = firstCreatedIncome.Created;
+            }
+            else
+            {
+                firstCreatedIncomeOrExpenditure = firstCreatedExpenditure.Created;
+            }
+
+            if (firstCreatedIncomeOrExpenditure.Year == 1)
+            {
+                firstCreatedIncomeOrExpenditure = DateTime.UtcNow;
+            }
+
+            firstCreatedIncomeOrExpenditure = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(firstCreatedIncomeOrExpenditure, JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId);
+            #endregion
+
+            ViewBag.StartYear = firstCreatedIncomeOrExpenditure.Year.ToString();
             ViewBag.SelectedYear = year;
             ViewBag.SelectedMonth = month;
 
