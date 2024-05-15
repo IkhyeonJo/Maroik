@@ -207,8 +207,18 @@ namespace Maroik.WebSite.Controllers
             try
             {
                 _ = HttpContext.Session.TryGetValue(Maroik.WebSite.Extensions.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account), out byte[] resultByte);
+                List<Asset> assets = (await assetRepository.GetAssetsAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email)) ?? [];
+
                 Account currentLoginUser = await accountRepository.GetAccountByEmailAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
-                currentLoginUser.DefaultMonetaryUnit = userIndexInputViewModel.DefaultMonetaryUnit;
+
+                if (!assets.Select(x => x.MonetaryUnit).Distinct().ToList().Contains(userIndexInputViewModel.DefaultMonetaryUnit))
+                {
+                    currentLoginUser.DefaultMonetaryUnit = null;
+                }
+                else
+                {
+                    currentLoginUser.DefaultMonetaryUnit = userIndexInputViewModel.DefaultMonetaryUnit;
+                }
 
                 await accountRepository.UpdateAccountAsync(currentLoginUser);
 
