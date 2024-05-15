@@ -24,12 +24,12 @@
 });
 
 $(function () {
-    let regularIncomeLaborIncome = parseInt($("#regularIncomeLaborIncome").val());
-    let regularIncomeBusinessIncome = parseInt($("#regularIncomeBusinessIncome").val());
-    let regularIncomePensionIncome = parseInt($("#regularIncomePensionIncome").val());
-    let regularIncomeFinancialIncome = parseInt($("#regularIncomeFinancialIncome").val());
-    let regularIncomeRentalIncome = parseInt($("#regularIncomeRentalIncome").val());
-    let regularIncomeOtherIncome = parseInt($("#regularIncomeOtherIncome").val());
+    let regularIncomeLaborIncome = Number($("#regularIncomeLaborIncome").val());
+    let regularIncomeBusinessIncome = Number($("#regularIncomeBusinessIncome").val());
+    let regularIncomePensionIncome = Number($("#regularIncomePensionIncome").val());
+    let regularIncomeFinancialIncome = Number($("#regularIncomeFinancialIncome").val());
+    let regularIncomeRentalIncome = Number($("#regularIncomeRentalIncome").val());
+    let regularIncomeOtherIncome = Number($("#regularIncomeOtherIncome").val());
 
     let donutChartCanvasRegularIncome = $('#regularIncome').get(0).getContext('2d')
     let donutDataRegularIncome = {
@@ -61,8 +61,8 @@ $(function () {
 
 
 
-    let irregularIncomeLaborIncome = parseInt($("#irregularIncomeLaborIncome").val());
-    let irregularIncomeOtherIncome = parseInt($("#irregularIncomeOtherIncome").val());
+    let irregularIncomeLaborIncome = Number($("#irregularIncomeLaborIncome").val());
+    let irregularIncomeOtherIncome = Number($("#irregularIncomeOtherIncome").val());
 
     let donutChartCanvasIrregularIncome = $('#irregularIncome').get(0).getContext('2d')
     let donutDataIrregularIncome = {
@@ -90,8 +90,8 @@ $(function () {
 
 
 
-    let regularSavingsDeposit = parseInt($("#regularSavingsDeposit").val());
-    let regularSavingsInvestment = parseInt($("#regularSavingsInvestment").val());
+    let regularSavingsDeposit = Number($("#regularSavingsDeposit").val());
+    let regularSavingsInvestment = Number($("#regularSavingsInvestment").val());
 
     let donutChartCanvasRegularSavings = $('#regularSavings').get(0).getContext('2d')
     let donutDataRegularSavings = {
@@ -119,12 +119,12 @@ $(function () {
 
 
 
-    let nonConsumerSpendingPublicPension = parseInt($("#nonConsumerSpendingPublicPension").val());
-    let nonConsumerSpendingDebtRepayment = parseInt($("#nonConsumerSpendingDebtRepayment").val());
-    let nonConsumerSpendingTax = parseInt($("#nonConsumerSpendingTax").val());
-    let nonConsumerSpendingSocialInsurance = parseInt($("#nonConsumerSpendingSocialInsurance").val());
-    let nonConsumerSpendingInterHouseholdTranserExpenses = parseInt($("#nonConsumerSpendingInterHouseholdTranserExpenses").val());
-    let nonConsumerSpendingNonProfitOrganizationTransfer = parseInt($("#nonConsumerSpendingNonProfitOrganizationTransfer").val());
+    let nonConsumerSpendingPublicPension = Number($("#nonConsumerSpendingPublicPension").val());
+    let nonConsumerSpendingDebtRepayment = Number($("#nonConsumerSpendingDebtRepayment").val());
+    let nonConsumerSpendingTax = Number($("#nonConsumerSpendingTax").val());
+    let nonConsumerSpendingSocialInsurance = Number($("#nonConsumerSpendingSocialInsurance").val());
+    let nonConsumerSpendingInterHouseholdTranserExpenses = Number($("#nonConsumerSpendingInterHouseholdTranserExpenses").val());
+    let nonConsumerSpendingNonProfitOrganizationTransfer = Number($("#nonConsumerSpendingNonProfitOrganizationTransfer").val());
 
     let donutChartCanvasNonConsumerSpending = $('#nonConsumerSpending').get(0).getContext('2d')
     let donutDataNonConsumerSpending = {
@@ -156,18 +156,18 @@ $(function () {
 
 
 
-    let consumerSpendingMealOrEatOutExpenses = parseInt($("#consumerSpendingMealOrEatOutExpenses").val());
-    let consumerSpendingHousingOrSuppliesCost = parseInt($("#consumerSpendingHousingOrSuppliesCost").val());
-    let consumerSpendingEducationExpenses = parseInt($("#consumerSpendingEducationExpenses").val());
-    let consumerSpendingMedicalExpenses = parseInt($("#consumerSpendingMedicalExpenses").val());
-    let consumerSpendingTransportationCost = parseInt($("#consumerSpendingTransportationCost").val());
-    let consumerSpendingCommunicationCost = parseInt($("#consumerSpendingCommunicationCost").val());
-    let consumerSpendingLeisureOrCulture = parseInt($("#consumerSpendingLeisureOrCulture").val());
-    let consumerSpendingClothingOrShoes = parseInt($("#consumerSpendingClothingOrShoes").val());
-    let consumerSpendingPinMoney = parseInt($("#consumerSpendingPinMoney").val());
-    let consumerSpendingProtectionTypeInsurance = parseInt($("#consumerSpendingProtectionTypeInsurance").val());
-    let consumerSpendingOtherExpenses = parseInt($("#consumerSpendingOtherExpenses").val());
-    let consumerSpendingUnknownExpenditure = parseInt($("#consumerSpendingUnknownExpenditure").val());
+    let consumerSpendingMealOrEatOutExpenses = Number($("#consumerSpendingMealOrEatOutExpenses").val());
+    let consumerSpendingHousingOrSuppliesCost = Number($("#consumerSpendingHousingOrSuppliesCost").val());
+    let consumerSpendingEducationExpenses = Number($("#consumerSpendingEducationExpenses").val());
+    let consumerSpendingMedicalExpenses = Number($("#consumerSpendingMedicalExpenses").val());
+    let consumerSpendingTransportationCost = Number($("#consumerSpendingTransportationCost").val());
+    let consumerSpendingCommunicationCost = Number($("#consumerSpendingCommunicationCost").val());
+    let consumerSpendingLeisureOrCulture = Number($("#consumerSpendingLeisureOrCulture").val());
+    let consumerSpendingClothingOrShoes = Number($("#consumerSpendingClothingOrShoes").val());
+    let consumerSpendingPinMoney = Number($("#consumerSpendingPinMoney").val());
+    let consumerSpendingProtectionTypeInsurance = Number($("#consumerSpendingProtectionTypeInsurance").val());
+    let consumerSpendingOtherExpenses = Number($("#consumerSpendingOtherExpenses").val());
+    let consumerSpendingUnknownExpenditure = Number($("#consumerSpendingUnknownExpenditure").val());
 
     let donutChartCanvasConsumerSpending = $('#consumerSpending').get(0).getContext('2d')
     let donutDataConsumerSpending = {

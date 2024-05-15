@@ -201,43 +201,43 @@
 
 @*수입*@
 @*정기수입*@
-@Html.Hidden($"{nameof(regularIncomeLaborIncome)}", Convert.ToDecimal(regularIncomeLaborIncome.TrimTrailingZeros()))
-@Html.Hidden($"{nameof(regularIncomeBusinessIncome)}", Convert.ToDecimal(regularIncomeBusinessIncome.TrimTrailingZeros()))
-@Html.Hidden($"{nameof(regularIncomePensionIncome)}", Convert.ToDecimal(regularIncomePensionIncome.TrimTrailingZeros()))
-@Html.Hidden($"{nameof(regularIncomeFinancialIncome)}", Convert.ToDecimal(regularIncomeFinancialIncome.TrimTrailingZeros()))
-@Html.Hidden($"{nameof(regularIncomeRentalIncome)}", Convert.ToDecimal(regularIncomeRentalIncome.TrimTrailingZeros()))
-@Html.Hidden($"{nameof(regularIncomeOtherIncome)}", Convert.ToDecimal(regularIncomeOtherIncome.TrimTrailingZeros()))
+@Html.Hidden($"{nameof(regularIncomeLaborIncome)}", regularIncomeLaborIncome.TrimTrailingZeros())
+@Html.Hidden($"{nameof(regularIncomeBusinessIncome)}", regularIncomeBusinessIncome.TrimTrailingZeros())
+@Html.Hidden($"{nameof(regularIncomePensionIncome)}", regularIncomePensionIncome.TrimTrailingZeros())
+@Html.Hidden($"{nameof(regularIncomeFinancialIncome)}", regularIncomeFinancialIncome.TrimTrailingZeros())
+@Html.Hidden($"{nameof(regularIncomeRentalIncome)}", regularIncomeRentalIncome.TrimTrailingZeros())
+@Html.Hidden($"{nameof(regularIncomeOtherIncome)}", regularIncomeOtherIncome.TrimTrailingZeros())
 
 @*비정기수입*@
-@Html.Hidden($"{nameof(irregularIncomeLaborIncome)}", Convert.ToDecimal(irregularIncomeLaborIncome.TrimTrailingZeros()))
-@Html.Hidden($"{nameof(irregularIncomeOtherIncome)}", Convert.ToDecimal(irregularIncomeOtherIncome.TrimTrailingZeros()))
+@Html.Hidden($"{nameof(irregularIncomeLaborIncome)}", irregularIncomeLaborIncome.TrimTrailingZeros())
+@Html.Hidden($"{nameof(irregularIncomeOtherIncome)}", irregularIncomeOtherIncome.TrimTrailingZeros())
 
 @*지출*@
 @*정기저축*@
-@Html.Hidden($"{nameof(regularSavingsDeposit)}", Convert.ToDecimal(regularSavingsDeposit.TrimTrailingZeros()))
-@Html.Hidden($"{nameof(regularSavingsInvestment)}", Convert.ToDecimal(regularSavingsInvestment.TrimTrailingZeros()))
+@Html.Hidden($"{nameof(regularSavingsDeposit)}", regularSavingsDeposit.TrimTrailingZeros())
+@Html.Hidden($"{nameof(regularSavingsInvestment)}", regularSavingsInvestment.TrimTrailingZeros())
 
 @*비소비지출*@
-@Html.Hidden($"{nameof(nonConsumerSpendingPublicPension)}", Convert.ToDecimal(nonConsumerSpendingPublicPension.TrimTrailingZeros()))
-@Html.Hidden($"{nameof(nonConsumerSpendingDebtRepayment)}", Convert.ToDecimal(nonConsumerSpendingDebtRepayment.TrimTrailingZeros()))
-@Html.Hidden($"{nameof(nonConsumerSpendingTax)}", Convert.ToDecimal(nonConsumerSpendingTax.TrimTrailingZeros()))
-@Html.Hidden($"{nameof(nonConsumerSpendingSocialInsurance)}", Convert.ToDecimal(nonConsumerSpendingSocialInsurance.TrimTrailingZeros()))
-@Html.Hidden($"{nameof(nonConsumerSpendingInterHouseholdTranserExpenses)}", Convert.ToDecimal(nonConsumerSpendingInterHouseholdTranserExpenses.TrimTrailingZeros()))
-@Html.Hidden($"{nameof(nonConsumerSpendingNonProfitOrganizationTransfer)}", Convert.ToDecimal(nonConsumerSpendingNonProfitOrganizationTransfer.TrimTrailingZeros()))
+@Html.Hidden($"{nameof(nonConsumerSpendingPublicPension)}", nonConsumerSpendingPublicPension.TrimTrailingZeros())
+@Html.Hidden($"{nameof(nonConsumerSpendingDebtRepayment)}", nonConsumerSpendingDebtRepayment.TrimTrailingZeros())
+@Html.Hidden($"{nameof(nonConsumerSpendingTax)}", nonConsumerSpendingTax.TrimTrailingZeros())
+@Html.Hidden($"{nameof(nonConsumerSpendingSocialInsurance)}", nonConsumerSpendingSocialInsurance.TrimTrailingZeros())
+@Html.Hidden($"{nameof(nonConsumerSpendingInterHouseholdTranserExpenses)}", nonConsumerSpendingInterHouseholdTranserExpenses.TrimTrailingZeros())
+@Html.Hidden($"{nameof(nonConsumerSpendingNonProfitOrganizationTransfer)}", nonConsumerSpendingNonProfitOrganizationTransfer.TrimTrailingZeros())
 
 @*소비지출*@
-@Html.Hidden($"{nameof(consumerSpendingMealOrEatOutExpenses)}", Convert.ToDecimal(consumerSpendingMealOrEatOutExpenses.TrimTrailingZeros()))
-@Html.Hidden($"{nameof(consumerSpendingHousingOrSuppliesCost)}", Convert.ToDecimal(consumerSpendingHousingOrSuppliesCost.TrimTrailingZeros()))
-@Html.Hidden($"{nameof(consumerSpendingEducationExpenses)}", Convert.ToDecimal(consumerSpendingEducationExpenses.TrimTrailingZeros()))
-@Html.Hidden($"{nameof(consumerSpendingMedicalExpenses)}", Convert.ToDecimal(consumerSpendingMedicalExpenses.TrimTrailingZeros()))
-@Html.Hidden($"{nameof(consumerSpendingTransportationCost)}", Convert.ToDecimal(consumerSpendingTransportationCost.TrimTrailingZeros()))
-@Html.Hidden($"{nameof(consumerSpendingCommunicationCost)}", Convert.ToDecimal(consumerSpendingCommunicationCost.TrimTrailingZeros()))
-@Html.Hidden($"{nameof(consumerSpendingLeisureOrCulture)}", Convert.ToDecimal(consumerSpendingLeisureOrCulture.TrimTrailingZeros()))
-@Html.Hidden($"{nameof(consumerSpendingClothingOrShoes)}", Convert.ToDecimal(consumerSpendingClothingOrShoes.TrimTrailingZeros()))
-@Html.Hidden($"{nameof(consumerSpendingPinMoney)}", Convert.ToDecimal(consumerSpendingPinMoney.TrimTrailingZeros()))
-@Html.Hidden($"{nameof(consumerSpendingProtectionTypeInsurance)}", Convert.ToDecimal(consumerSpendingProtectionTypeInsurance.TrimTrailingZeros()))
-@Html.Hidden($"{nameof(consumerSpendingOtherExpenses)}", Convert.ToDecimal(consumerSpendingOtherExpenses.TrimTrailingZeros()))
-@Html.Hidden($"{nameof(consumerSpendingUnknownExpenditure)}", Convert.ToDecimal(consumerSpendingUnknownExpenditure.TrimTrailingZeros()))
+@Html.Hidden($"{nameof(consumerSpendingMealOrEatOutExpenses)}", consumerSpendingMealOrEatOutExpenses.TrimTrailingZeros())
+@Html.Hidden($"{nameof(consumerSpendingHousingOrSuppliesCost)}", consumerSpendingHousingOrSuppliesCost.TrimTrailingZeros())
+@Html.Hidden($"{nameof(consumerSpendingEducationExpenses)}", consumerSpendingEducationExpenses.TrimTrailingZeros())
+@Html.Hidden($"{nameof(consumerSpendingMedicalExpenses)}", consumerSpendingMedicalExpenses.TrimTrailingZeros())
+@Html.Hidden($"{nameof(consumerSpendingTransportationCost)}", consumerSpendingTransportationCost.TrimTrailingZeros())
+@Html.Hidden($"{nameof(consumerSpendingCommunicationCost)}", consumerSpendingCommunicationCost.TrimTrailingZeros())
+@Html.Hidden($"{nameof(consumerSpendingLeisureOrCulture)}", consumerSpendingLeisureOrCulture.TrimTrailingZeros())
+@Html.Hidden($"{nameof(consumerSpendingClothingOrShoes)}", consumerSpendingClothingOrShoes.TrimTrailingZeros())
+@Html.Hidden($"{nameof(consumerSpendingPinMoney)}", consumerSpendingPinMoney.TrimTrailingZeros())
+@Html.Hidden($"{nameof(consumerSpendingProtectionTypeInsurance)}", consumerSpendingProtectionTypeInsurance.TrimTrailingZeros())
+@Html.Hidden($"{nameof(consumerSpendingOtherExpenses)}", consumerSpendingOtherExpenses.TrimTrailingZeros())
+@Html.Hidden($"{nameof(consumerSpendingUnknownExpenditure)}", consumerSpendingUnknownExpenditure.TrimTrailingZeros())
 
 <section class="content">
     <div class="container-fluid">
