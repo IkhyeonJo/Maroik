@@ -195,6 +195,16 @@ namespace Maroik.WebSite.Controllers
             Income firstCreatedIncome = (await incomeRepository.GetIncomesAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email)).OrderBy(x => x.Created).ToList().FirstOrDefault() ?? new Income();
             Expenditure firstCreatedExpenditure = (await expenditureRepository.GetExpendituresAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email)).OrderBy(x => x.Created).ToList().FirstOrDefault() ?? new Expenditure();
 
+            if (firstCreatedIncome.Created == DateTime.MinValue)
+            {
+                firstCreatedIncome.Created = DateTime.MaxValue;
+            }
+
+            if (firstCreatedExpenditure.Created == DateTime.MinValue)
+            {
+                firstCreatedExpenditure.Created = DateTime.MaxValue;
+            }
+
             DateTime firstCreatedIncomeOrExpenditure;
 
             if (DateTime.Compare(firstCreatedIncome.Created, firstCreatedExpenditure.Created) < 0)
@@ -206,7 +216,7 @@ namespace Maroik.WebSite.Controllers
                 firstCreatedIncomeOrExpenditure = firstCreatedExpenditure.Created;
             }
 
-            if (firstCreatedIncomeOrExpenditure.Year == 1)
+            if (firstCreatedIncomeOrExpenditure == DateTime.MaxValue)
             {
                 firstCreatedIncomeOrExpenditure = DateTime.UtcNow;
             }
