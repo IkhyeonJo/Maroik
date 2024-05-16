@@ -744,6 +744,48 @@ function ExportExcelExpenditure() {
     form.submit();
 }
 
+function ChangeCreateExpenditureAmountLabel(productName) {
+    $.ajax({
+        url: '/AccountBook/GetExpenditureAmountLabel' + '?productName=' + productName,
+        type: 'POST',
+        headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
+        dataType: 'json',
+        data: null,
+        contentType: 'application/json; charset=utf-8',
+        //async: false,
+        //cache: false,
+        success: function (data) {
+            if (data.result) {
+                $('#labelCreateExpenditureAmount').text(data.label);
+            }
+            else {
+                $('#labelCreateExpenditureAmount').text(data.label);
+            }
+        }
+    });
+}
+
+function ChangeEditExpenditureAmountLabel(productName) {
+    $.ajax({
+        url: '/AccountBook/GetExpenditureAmountLabel' + '?productName=' + productName,
+        type: 'POST',
+        headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
+        dataType: 'json',
+        data: null,
+        contentType: 'application/json; charset=utf-8',
+        //async: false,
+        //cache: false,
+        success: function (data) {
+            if (data.result) {
+                $('#labelEditExpenditureAmount').text(data.label);
+            }
+            else {
+                $('#labelEditExpenditureAmount').text(data.label);
+            }
+        }
+    });
+}
+
 $('#btnEditExpenditureGridRow').off('click').on('click', function () {
     EditExpenditureGridRow($(this).attr("data-errorMessageSelectGridRow"));
 });
@@ -783,3 +825,15 @@ $('#editExpenditureMainClass').off('change').on('change', function () {
 $('#editExpenditureSubClass').off('change').on('change', function () {
     EditFormShowExpenditureDivCreateExpenditureMyDepositAssetBySelectedExpenditureSubClass(this);
 });
+
+$('#createExpenditurePaymentMethod').off('change').on('change', function () {
+    ChangeCreateExpenditureAmountLabel(this.value);
+});
+
+$('#editExpenditurePaymentMethod').off('change').on('change', function () {
+    ChangeEditExpenditureAmountLabel(this.value);
+});
+
+$(function () {
+    ChangeCreateExpenditureAmountLabel($('#createExpenditurePaymentMethod option:selected').val());
+})
