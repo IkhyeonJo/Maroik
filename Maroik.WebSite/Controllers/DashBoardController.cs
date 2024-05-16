@@ -205,17 +205,9 @@ namespace Maroik.WebSite.Controllers
                 firstCreatedExpenditure.Created = DateTime.MaxValue;
             }
 
-            DateTime firstCreatedIncomeOrExpenditure;
-
-            if (DateTime.Compare(firstCreatedIncome.Created, firstCreatedExpenditure.Created) < 0)
-            {
-                firstCreatedIncomeOrExpenditure = firstCreatedIncome.Created;
-            }
-            else
-            {
-                firstCreatedIncomeOrExpenditure = firstCreatedExpenditure.Created;
-            }
-
+            DateTime firstCreatedIncomeOrExpenditure = DateTime.Compare(firstCreatedIncome.Created, firstCreatedExpenditure.Created) < 0
+                ? firstCreatedIncome.Created
+                : firstCreatedExpenditure.Created;
             if (firstCreatedIncomeOrExpenditure == DateTime.MaxValue)
             {
                 firstCreatedIncomeOrExpenditure = DateTime.UtcNow;
@@ -245,14 +237,9 @@ namespace Maroik.WebSite.Controllers
 
                 Account currentLoginUser = await accountRepository.GetAccountByEmailAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
 
-                if (!assets.Select(x => x.MonetaryUnit).Distinct().ToList().Contains(userIndexInputViewModel.DefaultMonetaryUnit))
-                {
-                    currentLoginUser.DefaultMonetaryUnit = null;
-                }
-                else
-                {
-                    currentLoginUser.DefaultMonetaryUnit = userIndexInputViewModel.DefaultMonetaryUnit;
-                }
+                currentLoginUser.DefaultMonetaryUnit = !assets.Select(x => x.MonetaryUnit).Distinct().ToList().Contains(userIndexInputViewModel.DefaultMonetaryUnit)
+                    ? null
+                    : userIndexInputViewModel.DefaultMonetaryUnit;
 
                 await accountRepository.UpdateAccountAsync(currentLoginUser);
 

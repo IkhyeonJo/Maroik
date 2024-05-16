@@ -351,7 +351,7 @@ namespace Maroik.WebSite.Controllers
                     label = $"{localizer["Amount"].Value} ({asset.MonetaryUnit})";
                 }
 
-                return Json(new { result = true, label = label });
+                return Json(new { result = true, label });
             }
             catch
             {
@@ -1090,7 +1090,7 @@ namespace Maroik.WebSite.Controllers
                     label = $"{localizer["Amount"].Value} ({asset.MonetaryUnit})";
                 }
 
-                return Json(new { result = true, label = label });
+                return Json(new { result = true, label });
             }
             catch
             {
