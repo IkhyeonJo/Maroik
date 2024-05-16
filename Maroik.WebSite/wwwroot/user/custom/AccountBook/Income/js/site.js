@@ -464,6 +464,48 @@ function ExportExcelIncome() {
     form.submit();
 }
 
+function ChangeCreateIncomeAmountLabel(productName) {
+    $.ajax({
+        url: '/AccountBook/GetIncomeAmountLabel' + '?productName=' + productName,
+        type: 'POST',
+        headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
+        dataType: 'json',
+        data: null,
+        contentType: 'application/json; charset=utf-8',
+        //async: false,
+        //cache: false,
+        success: function (data) {
+            if (data.result) {
+                $('#labelCreateIncomeAmount').text(data.label);
+            }
+            else {
+                $('#labelCreateIncomeAmount').text(data.label);
+            }
+        }
+    });
+}
+
+function ChangeEditIncomeAmountLabel(productName) {
+    $.ajax({
+        url: '/AccountBook/GetIncomeAmountLabel' + '?productName=' + productName,
+        type: 'POST',
+        headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
+        dataType: 'json',
+        data: null,
+        contentType: 'application/json; charset=utf-8',
+        //async: false,
+        //cache: false,
+        success: function (data) {
+            if (data.result) {
+                $('#labelEditIncomeAmount').text(data.label);
+            }
+            else {
+                $('#labelEditIncomeAmount').text(data.label);
+            }
+        }
+    });
+}
+
 $('#btnEditIncomeGridRow').off('click').on('click', function () {
     EditIncomeGridRow($(this).attr("data-errorMessageSelectGridRow"));
 });
@@ -495,3 +537,15 @@ $('#createIncomeMainClass').off('change').on('change', function () {
 $('#editIncomeMainClass').off('change').on('change', function () {
     EditFormShowIncomeSubClassBySelectedIncomeMainClass(this);
 });
+
+$('#createIncomeDepositMyAssetProductName').off('change').on('change', function () {
+    ChangeCreateIncomeAmountLabel(this.value);
+});
+
+$('#editIncomeDepositMyAssetProductName').off('change').on('change', function () {
+    ChangeEditIncomeAmountLabel(this.value);
+});
+
+$(function () {
+    ChangeCreateIncomeAmountLabel($('#createIncomeDepositMyAssetProductName option:selected').val());
+})

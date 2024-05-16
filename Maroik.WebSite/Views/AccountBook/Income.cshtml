@@ -7,6 +7,8 @@
     string currentCulture = Context.Features.Get<Microsoft.AspNetCore.Localization.IRequestCultureFeature>().RequestCulture.Culture.Name;
     Context.Session.TryGetValue(Maroik.WebSite.Extensions.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account), out byte[] resultByte);
 
+    List<Asset> assets = (await assetRepository.GetAssetsAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email)).Where(x => !x.Deleted).ToList();
+
     DateTime currentTime = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(DateTime.UtcNow, JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId);
     string currentDate = currentTime.ToString("yyyy-MM-dd");
     int currentHour = currentTime.Hour;
@@ -86,7 +88,7 @@
                                 <span class="field-validation-valid text-danger" data-valmsg-for="createIncomeContents" data-valmsg-replace="true"></span>
                             </div>
                             <div class="form-group col-md-6 mb-3">
-                                <label for="createIncomeAmount">@localizer["Amount"].Value</label>
+                                <label id="labelCreateIncomeAmount" for="createIncomeAmount">@localizer["Amount"].Value</label>
                                 <input class="form-control form-control-sm" min="0" type="number" id="createIncomeAmount" name="createIncomeAmount" value="0">
                             </div>
                         </div>
@@ -155,9 +157,13 @@
                                 <label for="createIncomeDepositMyAssetProductName">@localizer["DepositMyAssetProductName"].Value</label>
                                 <br />
                                 <select id="createIncomeDepositMyAssetProductName" name="createIncomeDepositMyAssetProductName" style="max-width:90%;width:210px;text-overflow:ellipsis;">
-                                    @foreach (var item in await assetRepository.GetAssetsAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email))
+                                    @foreach (var item in assets)
                                     {
-                                        if (!item.Deleted)
+                                        if (assets.First() == item)
+                                        {
+                                            <option value="@item.ProductName" selected="selected">@item.ProductName</option>
+                                        }
+                                        else
                                         {
                                             <option value="@item.ProductName">@item.ProductName</option>
 
@@ -223,7 +229,7 @@
                                 <span class="field-validation-valid text-danger" data-valmsg-for="editIncomeContents" data-valmsg-replace="true"></span>
                             </div>
                             <div class="form-group col-md-6 mb-3">
-                                <label for="editIncomeAmount">@localizer["Amount"].Value</label>
+                                <label id="labelEditIncomeAmount" for="editIncomeAmount">@localizer["Amount"].Value</label>
                                 <input class="form-control form-control-sm" min="0" type="number" id="editIncomeAmount" name="editIncomeAmount" value="0">
                             </div>
                         </div>
@@ -274,12 +280,9 @@
                                 <label for="editIncomeDepositMyAssetProductName">@localizer["DepositMyAssetProductName"].Value</label>
                                 <br />
                                 <select id="editIncomeDepositMyAssetProductName" name="editIncomeDepositMyAssetProductName" style="max-width:90%;width:210px;text-overflow:ellipsis;">
-                                    @foreach (var item in await assetRepository.GetAssetsAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email))
+                                    @foreach (var item in assets)
                                     {
-                                        if (!item.Deleted)
-                                        {
-                                            <option value="@item.ProductName">@item.ProductName</option>
-                                        }
+                                        <option value="@item.ProductName">@item.ProductName</option>
                                     }
                                 </select>
                             </div>
