@@ -333,6 +333,31 @@ namespace Maroik.WebSite.Controllers
                 return Json(new { result = false, error = localizer["Input is invalid"].Value });
             }
         }
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [RequiredHttpPostAccess(Role = Role.User)]
+        public async Task<IActionResult> GetFixedIncomeAmountLabel(string productName)
+        {
+            try
+            {
+                string label = localizer["Amount"].Value;
+
+                _ = HttpContext.Session.TryGetValue(Maroik.WebSite.Extensions.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account), out byte[] resultByte);
+
+                Asset asset = (await assetRepository.GetAssetsAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email)).Where(x => !x.Deleted).Where(x => x.ProductName == productName).FirstOrDefault() ?? new Asset();
+
+                if (!string.IsNullOrEmpty(asset.MonetaryUnit))
+                {
+                    label = $"{localizer["Amount"].Value} ({asset.MonetaryUnit})";
+                }
+
+                return Json(new { result = true, label = label });
+            }
+            catch
+            {
+                return Json(new { result = false, label = localizer["Amount"].Value });
+            }
+        }
         #endregion
 
         #region Update

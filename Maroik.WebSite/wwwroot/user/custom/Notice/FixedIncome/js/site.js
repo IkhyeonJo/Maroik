@@ -616,6 +616,48 @@ function ExportExcelFixedIncome() {
     form.submit();
 }
 
+function ChangeCreateFixedIncomeAmountLabel(productName) {
+    $.ajax({
+        url: '/Notice/GetFixedIncomeAmountLabel' + '?productName=' + productName,
+        type: 'POST',
+        headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
+        dataType: 'json',
+        data: null,
+        contentType: 'application/json; charset=utf-8',
+        //async: false,
+        //cache: false,
+        success: function (data) {
+            if (data.result) {
+                $('#labelCreateFixedIncomeAmount').text(data.label);
+            }
+            else {
+                $('#labelCreateFixedIncomeAmount').text(data.label);
+            }
+        }
+    });
+}
+
+function ChangeEditFixedIncomeAmountLabel(productName) {
+    $.ajax({
+        url: '/Notice/GetFixedIncomeAmountLabel' + '?productName=' + productName,
+        type: 'POST',
+        headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
+        dataType: 'json',
+        data: null,
+        contentType: 'application/json; charset=utf-8',
+        //async: false,
+        //cache: false,
+        success: function (data) {
+            if (data.result) {
+                $('#labelEditFixedIncomeAmount').text(data.label);
+            }
+            else {
+                $('#labelEditFixedIncomeAmount').text(data.label);
+            }
+        }
+    });
+}
+
 $('#btnEditFixedExpenditureGridRow').off('click').on('click', function () {
     EditFixedIncomeGridRow($(this).attr('data-errorMessageSelectGridRow'));
 });
@@ -655,3 +697,15 @@ $('#editFixedIncomeMainClass').off('change').on('change', function () {
 $('#editFixedIncomeDepositMonth').off('change').on('change', function () {
     return EditFormShowFixedIncomeDepositDayBySelectedFixedIncomeDepositMonth(this);
 });
+
+$('#createFixedIncomeDepositMyAssetProductName').off('change').on('change', function () {
+    ChangeCreateFixedIncomeAmountLabel(this.value);
+});
+
+$('#editFixedIncomeDepositMyAssetProductName').off('change').on('change', function () {
+    ChangeEditFixedIncomeAmountLabel(this.value);
+});
+
+$(function () {
+    ChangeCreateFixedIncomeAmountLabel($('#createFixedIncomeDepositMyAssetProductName option:selected').val());
+})
