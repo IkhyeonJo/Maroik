@@ -1024,6 +1024,48 @@ function ExportExcelFixedExpenditure() {
     form.submit();
 }
 
+function ChangeCreateFixedExpenditureAmountLabel(productName) {
+    $.ajax({
+        url: '/Notice/GetFixedExpenditureAmountLabel' + '?productName=' + productName,
+        type: 'POST',
+        headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
+        dataType: 'json',
+        data: null,
+        contentType: 'application/json; charset=utf-8',
+        //async: false,
+        //cache: false,
+        success: function (data) {
+            if (data.result) {
+                $('#labelCreateFixedExpenditureAmount').text(data.label);
+            }
+            else {
+                $('#labelCreateFixedExpenditureAmount').text(data.label);
+            }
+        }
+    });
+}
+
+function ChangeEditFixedExpenditureAmountLabel(productName) {
+    $.ajax({
+        url: '/Notice/GetFixedExpenditureAmountLabel' + '?productName=' + productName,
+        type: 'POST',
+        headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
+        dataType: 'json',
+        data: null,
+        contentType: 'application/json; charset=utf-8',
+        //async: false,
+        //cache: false,
+        success: function (data) {
+            if (data.result) {
+                $('#labelEditFixedExpenditureAmount').text(data.label);
+            }
+            else {
+                $('#labelEditFixedExpenditureAmount').text(data.label);
+            }
+        }
+    });
+}
+
 $('#btnEditFixedExpenditureGridRow').off('click').on('click', function () {
     EditFixedExpenditureGridRow($(this).attr('data-errorMessageSelectGridRow'));
 });
@@ -1071,3 +1113,15 @@ $('#editFixedExpenditureSubClass').off('change').on('change', function () {
 $('#editFixedExpenditureDepositMonth').off('change').on('change', function () {
     return EditFormShowFixedExpenditureDepositDayBySelectedFixedExpenditureDepositMonth(this);
 });
+
+$('#createFixedExpenditurePaymentMethod').off('change').on('change', function () {
+    ChangeCreateFixedExpenditureAmountLabel(this.value);
+});
+
+$('#editFixedExpenditurePaymentMethod').off('change').on('change', function () {
+    ChangeEditFixedExpenditureAmountLabel(this.value);
+});
+
+$(function () {
+    ChangeCreateFixedExpenditureAmountLabel($('#createFixedExpenditurePaymentMethod option:selected').val());
+})

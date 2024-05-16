@@ -5,6 +5,8 @@
 @{
     var currentCulture = Context.Features.Get<Microsoft.AspNetCore.Localization.IRequestCultureFeature>().RequestCulture.Culture.Name;
     Context.Session.TryGetValue(Maroik.WebSite.Extensions.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account), out byte[] resultByte);
+
+    List<Asset> assets = (await assetRepository.GetAssetsAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email)).Where(x => !x.Deleted).ToList();
 }
 
 <section class="content">
@@ -101,7 +103,7 @@
                                 <span class="field-validation-valid text-danger" data-valmsg-for="createFixedExpenditureContents" data-valmsg-replace="true"></span>
                             </div>
                             <div class="form-group col-md-6 mb-3">
-                                <label for="createFixedExpenditureAmount">@localizer["Amount"].Value</label>
+                                <label id="labelCreateFixedExpenditureAmount" for="createFixedExpenditureAmount">@localizer["Amount"].Value</label>
                                 <input class="form-control form-control-sm" min="0" type="number" id="createFixedExpenditureAmount" name="createFixedExpenditureAmount" value="0">
                             </div>
                         </div>
@@ -146,11 +148,16 @@
                                 <label for="createFixedExpenditurePaymentMethod">@localizer["PaymentMethod"].Value</label>
                                 <br />
                                 <select id="createFixedExpenditurePaymentMethod" name="createFixedExpenditurePaymentMethod" style="max-width:90%;width:210px;text-overflow:ellipsis;">
-                                    @foreach (var item in await assetRepository.GetAssetsAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email))
+                                    @foreach (var item in assets)
                                     {
-                                        if (!item.Deleted)
+                                        if (assets.First() == item)
+                                        {
+                                            <option value="@item.ProductName" selected="selected">@item.ProductName</option>
+                                        }
+                                        else
                                         {
                                             <option value="@item.ProductName">@item.ProductName</option>
+
                                         }
                                     }
                                 </select>
@@ -159,12 +166,9 @@
                                 <label for="createFixedExpenditureMyDepositAsset">@localizer["MyDepositAsset"].Value</label>
                                 <br />
                                 <select id="createFixedExpenditureMyDepositAsset" name="createFixedExpenditureMyDepositAsset" style="max-width:90%;width:210px;text-overflow:ellipsis;">
-                                    @foreach (var item in await assetRepository.GetAssetsAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email))
+                                    @foreach (var item in assets)
                                     {
-                                        if (!item.Deleted)
-                                        {
-                                            <option value="@item.ProductName">@item.ProductName</option>
-                                        }
+                                        <option value="@item.ProductName">@item.ProductName</option>
                                     }
                                 </select>
                             </div>
@@ -240,7 +244,7 @@
                                 <span class="field-validation-valid text-danger" data-valmsg-for="editFixedExpenditureContents" data-valmsg-replace="true"></span>
                             </div>
                             <div class="form-group col-md-6 mb-3">
-                                <label for="editFixedExpenditureAmount">@localizer["Amount"].Value</label>
+                                <label id="labelEditFixedExpenditureAmount" for="editFixedExpenditureAmount">@localizer["Amount"].Value</label>
                                 <input class="form-control form-control-sm" min="0" type="number" id="editFixedExpenditureAmount" name="editFixedExpenditureAmount" value="0">
                             </div>
                         </div>
@@ -285,12 +289,9 @@
                                 <label for="editFixedExpenditurePaymentMethod">@localizer["PaymentMethod"].Value</label>
                                 <br />
                                 <select id="editFixedExpenditurePaymentMethod" name="editFixedExpenditurePaymentMethod" style="max-width:90%;width:210px;text-overflow:ellipsis;">
-                                    @foreach (var item in await assetRepository.GetAssetsAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email))
+                                    @foreach (var item in assets)
                                     {
-                                        if (!item.Deleted)
-                                        {
-                                            <option value="@item.ProductName">@item.ProductName</option>
-                                        }
+                                        <option value="@item.ProductName">@item.ProductName</option>
                                     }
                                 </select>
                             </div>
@@ -298,12 +299,9 @@
                                 <label for="editFixedExpenditureMyDepositAsset">@localizer["MyDepositAsset"].Value</label>
                                 <br />
                                 <select id="editFixedExpenditureMyDepositAsset" name="editFixedExpenditureMyDepositAsset" style="max-width:90%;width:210px;text-overflow:ellipsis;">
-                                    @foreach (var item in await assetRepository.GetAssetsAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email))
+                                    @foreach (var item in assets)
                                     {
-                                        if (!item.Deleted)
-                                        {
-                                            <option value="@item.ProductName">@item.ProductName</option>
-                                        }
+                                        <option value="@item.ProductName">@item.ProductName</option>
                                     }
                                 </select>
                             </div>
