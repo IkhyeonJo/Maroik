@@ -584,7 +584,7 @@ namespace Maroik.WebSite.Controllers
 
                 if (!string.IsNullOrEmpty(asset.MonetaryUnit))
                 {
-                    label = $"{localizer["Amount"].Value} ({asset.MonetaryUnit})";
+                    label = label.GetAmountLabel(asset.MonetaryUnit);
                 }
 
                 return Json(new { result = true, label });
@@ -1284,7 +1284,7 @@ namespace Maroik.WebSite.Controllers
 
                 if (!string.IsNullOrEmpty(asset.MonetaryUnit))
                 {
-                    label = $"{localizer["Amount"].Value} ({asset.MonetaryUnit})";
+                    label = label.GetAmountLabel(asset.MonetaryUnit);
                 }
 
                 return Json(new { result = true, label });
