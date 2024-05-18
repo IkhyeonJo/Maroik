@@ -9,7 +9,15 @@
 @{
     string currentCulture = Context.Features.Get<Microsoft.AspNetCore.Localization.IRequestCultureFeature>().RequestCulture.Culture.Name;
     Context.Session.TryGetValue(Maroik.WebSite.Extensions.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account), out byte[] resultByte);
-    string loginedAccountTimeZoneIanaId = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId;
+    string loginedAccountTimeZoneIanaId;
+    try
+    {
+        loginedAccountTimeZoneIanaId = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId;
+    }
+    catch
+    {
+        loginedAccountTimeZoneIanaId = string.Empty;
+    }
     DateTime currentDate = new DateTime(Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[0]), Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[1]), Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[2]));
     List<FixedIncomeOutputViewModel> fixedIncomeOutputViewModels = new List<FixedIncomeOutputViewModel>();
     List<FixedExpenditureOutputViewModel> fixedExpenditureOutputViewModels = new List<FixedExpenditureOutputViewModel>();
