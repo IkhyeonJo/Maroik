@@ -1,6 +1,4 @@
-﻿using System.Reflection.Emit;
-
-namespace Maroik.WebSite.Extensions
+﻿namespace Maroik.WebSite.Extensions
 {
     public static class StringExtension
     {
