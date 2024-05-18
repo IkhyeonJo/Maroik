@@ -1,9 +1,4 @@
-﻿using Maroik.Common.DataAccess.Models;
-using Newtonsoft.Json;
-using System;
-using System.Text;
-
-namespace Maroik.WebSite.Extensions
+﻿namespace Maroik.WebSite.Extensions
 {
     public static class DateTimeExtension
     {
