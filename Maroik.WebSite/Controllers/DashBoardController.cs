@@ -59,6 +59,8 @@ namespace Maroik.WebSite.Controllers
         {
             _ = HttpContext.Session.TryGetValue(Maroik.WebSite.Extensions.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account), out byte[] resultByte);
 
+            string loginedAccountTimeZoneIanaId = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId;
+
             UserIndexOutputViewModel userIndexOutputViewModel = new();
             Account currentLoginUser = await accountRepository.GetAccountByEmailAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
             List<Asset> assets = (await assetRepository.GetAssetsAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email)) ?? [];
@@ -152,8 +154,8 @@ namespace Maroik.WebSite.Controllers
                         Amount = Convert.ToDecimal(item.Amount.TrimTrailingZeros()),
                         MonetaryUnit = assets.Where(x => x.ProductName == item.DepositMyAssetProductName).FirstOrDefault().MonetaryUnit,
                         DepositMyAssetProductName = item.DepositMyAssetProductName,
-                        Created = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Created, JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId),
-                        Updated = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Updated, JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId),
+                        Created = item.Created.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId),
+                        Updated = item.Updated.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId),
                         Note = item.Note
                     });
                 }
@@ -173,8 +175,8 @@ namespace Maroik.WebSite.Controllers
                         PaymentMethod = item.PaymentMethod,
                         Note = item.Note,
                         MyDepositAsset = item.MyDepositAsset,
-                        Created = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Created, JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId),
-                        Updated = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Updated, JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId)
+                        Created = item.Created.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId),
+                        Updated = item.Updated.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId)
                     });
                 }
                 userIndexOutputViewModel.IncomeOutputViewModels = userIndexOutputViewModel.IncomeOutputViewModels.Where(x => x.MonetaryUnit == userIndexOutputViewModel.DefaultMonetaryUnit).ToList();
@@ -213,7 +215,7 @@ namespace Maroik.WebSite.Controllers
                 firstCreatedIncomeOrExpenditure = DateTime.UtcNow;
             }
 
-            firstCreatedIncomeOrExpenditure = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(firstCreatedIncomeOrExpenditure, JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId);
+            firstCreatedIncomeOrExpenditure = firstCreatedIncomeOrExpenditure.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId);
             #endregion
 
             ViewBag.StartYear = firstCreatedIncomeOrExpenditure.Year.ToString();

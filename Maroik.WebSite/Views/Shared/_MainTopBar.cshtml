@@ -9,6 +9,7 @@
 @{
     string currentCulture = Context.Features.Get<Microsoft.AspNetCore.Localization.IRequestCultureFeature>().RequestCulture.Culture.Name;
     Context.Session.TryGetValue(Maroik.WebSite.Extensions.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account), out byte[] resultByte);
+    string loginedAccountTimeZoneIanaId = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId;
     DateTime currentDate = new DateTime(Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[0]), Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[1]), Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[2]));
     List<FixedIncomeOutputViewModel> fixedIncomeOutputViewModels = new List<FixedIncomeOutputViewModel>();
     List<FixedExpenditureOutputViewModel> fixedExpenditureOutputViewModels = new List<FixedExpenditureOutputViewModel>();
@@ -50,8 +51,8 @@
                 MaturityDate = item.MaturityDate.ToString("yyyy-MM-dd"),
                 Note = item.Note,
                 DepositMyAssetProductName = item.DepositMyAssetProductName,
-                Created = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Created, JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId),
-                Updated = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Updated, JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId),
+                Created = item.Created.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId),
+                Updated = item.Updated.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId),
                 Noticed = noticedResult,
                 Expired = item.MaturityDate.Subtract(currentDate).TotalDays < 0
             });
@@ -87,8 +88,8 @@
                 DepositMonth = item.DepositMonth,
                 DepositDay = item.DepositDay,
                 MaturityDate = item.MaturityDate.ToString("yyyy-MM-dd"),
-                Created = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Created, JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId),
-                Updated = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(item.Updated, JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId),
+                Created = item.Created.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId),
+                Updated = item.Updated.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId),
                 Note = item.Note,
                 Noticed = noticedResult,
                 Expired = item.MaturityDate.Subtract(currentDate).TotalDays < 0
@@ -346,7 +347,7 @@
                         <img src="@Model.AvatarImagePath" class="img-circle elevation-2" alt="User Image">
                         <p>
                             @Model.Nickname
-                            <small>@localizer["Member since"] @TimeZoneInfo.ConvertTimeBySystemTimeZoneId(Model.Created, JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId).ToString("d")</small>
+                            <small>@localizer["Member since"] @Model.Created.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId).ToString("d")</small>
                         </p>
                     </li>
                     @*
@@ -387,7 +388,7 @@
                         <img src="@Model.AvatarImagePath" class="img-circle elevation-2" alt="User Image">
                         <p>
                             @Model.Nickname
-                            <small>@localizer["Member since"] @TimeZoneInfo.ConvertTimeBySystemTimeZoneId(Model.Created, JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId).ToString("d")</small>
+                            <small>@localizer["Member since"] @Model.Created.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId).ToString("d")</small>
                         </p>
                     </li>
                     @*
