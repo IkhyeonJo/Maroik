@@ -10,20 +10,20 @@ namespace Maroik.WebSite.Utilities
 {
     public class AuthorizationFilter : ActionFilterAttribute
     {
-        private readonly ICategoryRepository categoryRepository;
-        private readonly ISubCategoryRepository subCategoryRepository;
+        private readonly ICategoryRepository _categoryRepository;
+        private readonly ISubCategoryRepository _subCategoryRepository;
 
         public AuthorizationFilter(ICategoryRepository categoryRepository, ISubCategoryRepository subCategoryRepository)
         {
-            this.categoryRepository = categoryRepository;
-            this.subCategoryRepository = subCategoryRepository;
+            _categoryRepository = categoryRepository;
+            _subCategoryRepository = subCategoryRepository;
         }
 
         // Do something before the action executes.
         public override void OnActionExecuting(ActionExecutingContext context)
         {
-            IEnumerable<Category> categories = categoryRepository.GetCategory();
-            IEnumerable<SubCategory> subCategories = subCategoryRepository.GetSubCategory();
+            IEnumerable<Category> categories = _categoryRepository.GetCategory();
+            IEnumerable<SubCategory> subCategories = _subCategoryRepository.GetSubCategory();
 
             DbCache.AdminCategories = from adminCategory in categories
                                       where adminCategory.Role == Role.Admin

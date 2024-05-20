@@ -15,21 +15,21 @@ namespace Maroik.WebSite.Controllers
 {
     public class AccountController : Controller
     {
-        private readonly IHtmlLocalizer<AccountController> localizer;
-        private readonly ILogger<AccountController> logger;
-        private readonly IAccountRepository accountRepository;
-        private readonly ICategoryRepository categoryRepository;
-        private readonly ISubCategoryRepository subCategoryRepository;
-        private readonly IMailRepository mailRepository;
+        private readonly IHtmlLocalizer<AccountController> _localizer;
+        private readonly ILogger<AccountController> _logger;
+        private readonly IAccountRepository _accountRepository;
+        private readonly ICategoryRepository _categoryRepository;
+        private readonly ISubCategoryRepository _subCategoryRepository;
+        private readonly IMailRepository _mailRepository;
 
         public AccountController(IHtmlLocalizer<AccountController> localizer, ILogger<AccountController> logger, IAccountRepository accountRepository, ICategoryRepository categoryRepository, ISubCategoryRepository subCategoryRepository, IMailRepository mailRepository)
         {
-            this.localizer = localizer;
-            this.logger = logger;
-            this.accountRepository = accountRepository;
-            this.categoryRepository = categoryRepository;
-            this.subCategoryRepository = subCategoryRepository;
-            this.mailRepository = mailRepository;
+            _localizer = localizer;
+            _logger = logger;
+            _accountRepository = accountRepository;
+            _categoryRepository = categoryRepository;
+            _subCategoryRepository = subCategoryRepository;
+            _mailRepository = mailRepository;
         }
 
         #region 동의서
@@ -75,7 +75,7 @@ namespace Maroik.WebSite.Controllers
             string userAgent = Request.Headers["User-Agent"].ToString();
             if (userAgent.Contains("MSIE") || userAgent.Contains("Trident")) // IsInternetExplorer (차단 이유: Nonfactor Data Grid에서 문제 생김...)
             {
-                TempData["Error"] = localizer["BlockInternetExplorer"].Value;
+                TempData["Error"] = _localizer["BlockInternetExplorer"].Value;
                 return View();
             }
 
@@ -84,23 +84,23 @@ namespace Maroik.WebSite.Controllers
 
             if (ModelState.IsValid)
             {
-                Account tempAccount = await accountRepository.GetAccountByEmailAsync(loginInputViewModel.Email);
+                Account tempAccount = await _accountRepository.GetAccountByEmailAsync(loginInputViewModel.Email);
 
                 if (tempAccount == null) // no account exist
                 {
-                    TempData["Error"] = localizer["Email or Password is wrong"].Value;
+                    TempData["Error"] = _localizer["Email or Password is wrong"].Value;
                     return View();
                 }
 
                 if (tempAccount.Deleted)
                 {
-                    TempData["Error"] = localizer["Your Account is Deleted, Please create your new account by clicking Sign up Button"].Value;
+                    TempData["Error"] = _localizer["Your Account is Deleted, Please create your new account by clicking Sign up Button"].Value;
                     return View();
                 }
 
                 if (tempAccount.Locked)
                 {
-                    TempData["Error"] = localizer["Your Account is Locked, Please reset your password by clicking Forgot password Button"].Value;
+                    TempData["Error"] = _localizer["Your Account is Locked, Please reset your password by clicking Forgot password Button"].Value;
                     return View();
                 }
 
@@ -112,14 +112,14 @@ namespace Maroik.WebSite.Controllers
                     {
                         tempAccount.Locked = true;
                         tempAccount.Message = EnumHelper.GetDescription(AccountMessage.AccountLocked);
-                        await accountRepository.UpdateAccountAsync(tempAccount);
-                        TempData["Error"] = localizer["Your Account is Locked, Please reset your password by clicking Forgot password Button"].Value;
+                        await _accountRepository.UpdateAccountAsync(tempAccount);
+                        TempData["Error"] = _localizer["Your Account is Locked, Please reset your password by clicking Forgot password Button"].Value;
                         return View();
                     }
                     else
                     {
-                        await accountRepository.UpdateAccountAsync(tempAccount);
-                        TempData["Error"] = localizer["Email or Password is wrong"].Value;
+                        await _accountRepository.UpdateAccountAsync(tempAccount);
+                        TempData["Error"] = _localizer["Email or Password is wrong"].Value;
                         return View();
                     }
                 }
@@ -127,7 +127,7 @@ namespace Maroik.WebSite.Controllers
                 if (tempAccount.EmailConfirmed == true && tempAccount.AgreedServiceTerms == true)
                 {
                     tempAccount.LoginAttempt = 0;
-                    await accountRepository.UpdateAccountAsync(tempAccount);
+                    await _accountRepository.UpdateAccountAsync(tempAccount);
                     tempAccount.HashedPassword = null;
                     HttpContext.Session.Set(Maroik.WebSite.Extensions.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account), Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(tempAccount)));
 
@@ -141,17 +141,17 @@ namespace Maroik.WebSite.Controllers
                 {
                     if (tempAccount.EmailConfirmed == false)
                     {
-                        TempData["Error"] = localizer["Email verification was not completed. Please try sign up again."].Value;
+                        TempData["Error"] = _localizer["Email verification was not completed. Please try sign up again."].Value;
                         return View();
                     }
                     else if (tempAccount.AgreedServiceTerms == false)
                     {
-                        TempData["Error"] = localizer["Agreed Service Terms was not checked. Please try sign up again and login again."].Value;
+                        TempData["Error"] = _localizer["Agreed Service Terms was not checked. Please try sign up again and login again."].Value;
                         return View();
                     }
                     else
                     {
-                        TempData["Error"] = localizer["Email verification was not completed and Agreed Service Terms was not checked. Please try sign up again."].Value;
+                        TempData["Error"] = _localizer["Email verification was not completed and Agreed Service Terms was not checked. Please try sign up again."].Value;
                         return View();
                     }
                 }
@@ -210,17 +210,17 @@ namespace Maroik.WebSite.Controllers
                 {
                     if (!loginInputViewModel.AgreedServiceTerms) // 계약서 동의 하지 않을 시,
                     {
-                        TempData["Error"] = localizer["Please check the consent form"].Value;
+                        TempData["Error"] = _localizer["Please check the consent form"].Value;
                         return View();
                     }
 
                     if (string.IsNullOrEmpty(loginInputViewModel.TimeZoneIanaId)) // TimeZone 선택 하지 않을 시,
                     {
-                        TempData["Error"] = localizer["Please select time zone"].Value;
+                        TempData["Error"] = _localizer["Please select time zone"].Value;
                         return View();
                     }
 
-                    Account account = await accountRepository.GetAccountByEmailAsync(loginInputViewModel.Email);
+                    Account account = await _accountRepository.GetAccountByEmailAsync(loginInputViewModel.Email);
 
                     #region 새롭게 회원가입을 진행하는 경우
                     if (account == null) // 입력된 ID로 생성된 Record가 없다.
@@ -229,7 +229,7 @@ namespace Maroik.WebSite.Controllers
                         loginInputViewModel.RegistrationToken = registrationToken;
                         try
                         {
-                            await accountRepository.CreateAccountAsync
+                            await _accountRepository.CreateAccountAsync
                                 (
                                 new Account()
                                 {
@@ -256,42 +256,42 @@ namespace Maroik.WebSite.Controllers
                         {
                             if (((MySqlException)e.InnerException).ErrorCode == MySqlErrorCode.DuplicateKeyEntry)
                             {
-                                Console.WriteLine(localizer["Input is invalid"].Value); // ActivityLog 등으로 로그 남겨야 한다..
-                                TempData["Error"] = $"'{loginInputViewModel.Nickname}' {localizer["is a Nickname that already exists."].Value} {localizer["Please enter another Nickname."].Value}";
+                                Console.WriteLine(_localizer["Input is invalid"].Value); // ActivityLog 등으로 로그 남겨야 한다..
+                                TempData["Error"] = $"'{loginInputViewModel.Nickname}' {_localizer["is a Nickname that already exists."].Value} {_localizer["Please enter another Nickname."].Value}";
                                 return View();
                             }
                             else
                             {
-                                Console.WriteLine(localizer["Input is invalid"].Value); // ActivityLog 등으로 로그 남겨야 한다..
-                                TempData["Error"] = localizer["Error occurred while processing about account registration"].Value;
+                                Console.WriteLine(_localizer["Input is invalid"].Value); // ActivityLog 등으로 로그 남겨야 한다..
+                                TempData["Error"] = _localizer["Error occurred while processing about account registration"].Value;
                                 return View();
                             }
                         }
                         catch
                         {
-                            Console.WriteLine(localizer["Input is invalid"].Value); // ActivityLog 등으로 로그 남겨야 한다..
-                            TempData["Error"] = localizer["Error occurred while processing about account registration"].Value;
+                            Console.WriteLine(_localizer["Input is invalid"].Value); // ActivityLog 등으로 로그 남겨야 한다..
+                            TempData["Error"] = _localizer["Error occurred while processing about account registration"].Value;
                             return View();
                         }
                         #region 메일 전송
                         Mail mail = new()
                         {
-                            Subject = localizer["Maroik Email Confirmation"].Value
+                            Subject = _localizer["Maroik Email Confirmation"].Value
                         };
                         loginInputViewModel.RegistrationToken = new RSA(RSAType.RSA2, Encoding.UTF8, RSA.privateKey, RSA.publicKey).Sign(loginInputViewModel.RegistrationToken); // 암호화
-                        mail.Body = mailRepository.GetMailConfirmationBody(loginInputViewModel, localizer["Welcome to Maroik WebSite"].Value, localizer["Click the link below to verify your Email"].Value, localizer["If this link does not work, please copy & paste this link to your Internet URL"].Value);
+                        mail.Body = _mailRepository.GetMailConfirmationBody(loginInputViewModel, _localizer["Welcome to Maroik WebSite"].Value, _localizer["Click the link below to verify your Email"].Value, _localizer["If this link does not work, please copy & paste this link to your Internet URL"].Value);
                         mail.ToMailIds =
                         [
                             loginInputViewModel.Email
                         ];
-                        string result = await mailRepository.SendMailAsync(mail);
+                        string result = await _mailRepository.SendMailAsync(mail);
                         if (result != EnumHelper.GetDescription(AccountMessage.MailSent)) // 메일 전송 오류 발생 했을 시..
                         {
                             Console.WriteLine(result); // ActivityLog 등으로 로그 남겨야 한다..
                             loginInputViewModel.RegistrationToken = registrationToken;
                             try
                             {
-                                await accountRepository.UpdateAccountAsync
+                                await _accountRepository.UpdateAccountAsync
                                     (
                                     new Account()
                                     {
@@ -315,10 +315,10 @@ namespace Maroik.WebSite.Controllers
                             }
                             catch
                             {
-                                TempData["Error"] = localizer["Error occurred while processing about account status"].Value;
+                                TempData["Error"] = _localizer["Error occurred while processing about account status"].Value;
                                 return View();
                             }
-                            TempData["Error"] = localizer["Error occurred while processing about sending account authentication mail"].Value;
+                            TempData["Error"] = _localizer["Error occurred while processing about sending account authentication mail"].Value;
                             return View();
                         }
                         #endregion
@@ -337,18 +337,18 @@ namespace Maroik.WebSite.Controllers
                             #region 메일 전송
                             Mail mail = new()
                             {
-                                Subject = localizer["Maroik Email Confirmation"].Value
+                                Subject = _localizer["Maroik Email Confirmation"].Value
                             };
                             if (string.IsNullOrEmpty(account.RegistrationToken))
                             {
                                 account.RegistrationToken = GUIDToken.Generate();
                             }
-                            mail.Body = mailRepository.GetMailConfirmationBody(new LoginInputViewModel() { RegistrationToken = new RSA(RSAType.RSA2, Encoding.UTF8, RSA.privateKey, RSA.publicKey).Sign(account.RegistrationToken) }, localizer["Welcome to Maroik WebSite"].Value, localizer["Click the link below to verify your Email"].Value, localizer["If this link does not work, please copy & paste this link to your Internet URL"].Value);
+                            mail.Body = _mailRepository.GetMailConfirmationBody(new LoginInputViewModel() { RegistrationToken = new RSA(RSAType.RSA2, Encoding.UTF8, RSA.privateKey, RSA.publicKey).Sign(account.RegistrationToken) }, _localizer["Welcome to Maroik WebSite"].Value, _localizer["Click the link below to verify your Email"].Value, _localizer["If this link does not work, please copy & paste this link to your Internet URL"].Value);
                             mail.ToMailIds =
                             [
                                 account.Email
                             ];
-                            string result = await mailRepository.SendMailAsync(mail);
+                            string result = await _mailRepository.SendMailAsync(mail);
                             if (result != EnumHelper.GetDescription(AccountMessage.MailSent)) // 메일 전송 오류 발생 했을 시..
                             {
                                 Console.WriteLine(result); // ActivityLog 등으로 로그 남겨야 한다..
@@ -356,14 +356,14 @@ namespace Maroik.WebSite.Controllers
                                 {
                                     account.Updated = DateTime.UtcNow;
                                     account.Message = EnumHelper.GetDescription(AccountMessage.FailToMailSent);
-                                    await accountRepository.UpdateAccountAsync(account);
+                                    await _accountRepository.UpdateAccountAsync(account);
                                 }
                                 catch
                                 {
-                                    TempData["Error"] = localizer["Error occurred while processing about account status"].Value;
+                                    TempData["Error"] = _localizer["Error occurred while processing about account status"].Value;
                                     return View();
                                 }
-                                TempData["Error"] = localizer["Error occurred while processing about sending account authentication mail"].Value;
+                                TempData["Error"] = _localizer["Error occurred while processing about sending account authentication mail"].Value;
                                 return View();
                             }
                             #endregion
@@ -371,11 +371,11 @@ namespace Maroik.WebSite.Controllers
                             {
                                 account.Message = EnumHelper.GetDescription(AccountMessage.VerifyEmail);
                                 account.Updated = DateTime.UtcNow;
-                                await accountRepository.UpdateAccountAsync(account);
+                                await _accountRepository.UpdateAccountAsync(account);
                             }
                             catch
                             {
-                                TempData["Error"] = localizer["Error occurred while processing about account status"].Value;
+                                TempData["Error"] = _localizer["Error occurred while processing about account status"].Value;
                                 return View();
                             }
                             ViewBag.ResendEmail = true; // 이메일 재전송 폼 활성화
@@ -392,14 +392,14 @@ namespace Maroik.WebSite.Controllers
                                 account.Message = EnumHelper.GetDescription(AccountMessage.UserAlreadyCreated);
                                 account.Updated = DateTime.UtcNow;
                                 account.AgreedServiceTerms = true;
-                                await accountRepository.UpdateAccountAsync(account);
+                                await _accountRepository.UpdateAccountAsync(account);
                             }
                             catch
                             {
-                                TempData["Error"] = localizer["Error occurred while processing about account status"].Value;
+                                TempData["Error"] = _localizer["Error occurred while processing about account status"].Value;
                                 return View();
                             }
-                            TempData["Error"] = localizer[EnumHelper.GetDescription(AccountMessage.UserAlreadyCreated)].Value;
+                            TempData["Error"] = _localizer[EnumHelper.GetDescription(AccountMessage.UserAlreadyCreated)].Value;
                             ViewBag.ResendEmail = false; // 로그인 폼 활성화
                             return View();
                         }
@@ -419,12 +419,12 @@ namespace Maroik.WebSite.Controllers
 
                 if (ModelState.IsValid) // 입력 값 검증
                 {
-                    Account account = await accountRepository.GetAccountByEmailAsync(loginInputViewModel.Email);
+                    Account account = await _accountRepository.GetAccountByEmailAsync(loginInputViewModel.Email);
 
                     #region 이메일 재전송 하는데 받은 Email로 DB 조회를 했는데 Record가 없다. (버그임)
                     if (account == null) // 입력된 ID로 생성된 Record 없다.
                     {
-                        TempData["Error"] = localizer["Failed to resend email"].Value;
+                        TempData["Error"] = _localizer["Failed to resend email"].Value;
                         ViewBag.ResendEmail = true; // 이메일 재전송 폼 활성화
                         return View();
                     }
@@ -439,14 +439,14 @@ namespace Maroik.WebSite.Controllers
                             #region 메일 전송
                             Mail mail = new()
                             {
-                                Subject = localizer["Maroik Email Confirmation"].Value,
-                                Body = mailRepository.GetMailConfirmationBody(new LoginInputViewModel() { RegistrationToken = new RSA(RSAType.RSA2, Encoding.UTF8, RSA.privateKey, RSA.publicKey).Sign(account.RegistrationToken) }, localizer["Welcome to Maroik WebSite"].Value, localizer["Click the link below to verify your Email"].Value, localizer["If this link does not work, please copy & paste this link to your Internet URL"].Value),
+                                Subject = _localizer["Maroik Email Confirmation"].Value,
+                                Body = _mailRepository.GetMailConfirmationBody(new LoginInputViewModel() { RegistrationToken = new RSA(RSAType.RSA2, Encoding.UTF8, RSA.privateKey, RSA.publicKey).Sign(account.RegistrationToken) }, _localizer["Welcome to Maroik WebSite"].Value, _localizer["Click the link below to verify your Email"].Value, _localizer["If this link does not work, please copy & paste this link to your Internet URL"].Value),
                                 ToMailIds =
                                 [
                                     account.Email
                                 ]
                             };
-                            string result = await mailRepository.SendMailAsync(mail);
+                            string result = await _mailRepository.SendMailAsync(mail);
                             if (result != EnumHelper.GetDescription(AccountMessage.MailSent)) // 메일 전송 오류 발생 했을 시..
                             {
                                 Console.WriteLine(result); // ActivityLog 등으로 로그 남겨야 한다..
@@ -454,14 +454,14 @@ namespace Maroik.WebSite.Controllers
                                 {
                                     account.Updated = DateTime.UtcNow;
                                     account.Message = EnumHelper.GetDescription(AccountMessage.FailToMailSent);
-                                    await accountRepository.UpdateAccountAsync(account);
+                                    await _accountRepository.UpdateAccountAsync(account);
                                 }
                                 catch
                                 {
-                                    TempData["Error"] = localizer["Error occurred while processing about account status"].Value;
+                                    TempData["Error"] = _localizer["Error occurred while processing about account status"].Value;
                                     return View();
                                 }
-                                TempData["Error"] = localizer["Error occurred while processing about sending account authentication mail"].Value;
+                                TempData["Error"] = _localizer["Error occurred while processing about sending account authentication mail"].Value;
                                 return View();
                             }
                             #endregion
@@ -469,11 +469,11 @@ namespace Maroik.WebSite.Controllers
                             {
                                 account.Message = EnumHelper.GetDescription(AccountMessage.VerifyEmail);
                                 account.Updated = DateTime.UtcNow;
-                                await accountRepository.UpdateAccountAsync(account);
+                                await _accountRepository.UpdateAccountAsync(account);
                             }
                             catch
                             {
-                                TempData["Error"] = localizer["Error occurred while processing about mail send account status"].Value;
+                                TempData["Error"] = _localizer["Error occurred while processing about mail send account status"].Value;
                                 return View();
                             }
                             ViewBag.ResendEmail = true; // 이메일 재전송 폼 활성화
@@ -490,14 +490,14 @@ namespace Maroik.WebSite.Controllers
                             {
                                 account.Message = EnumHelper.GetDescription(AccountMessage.UserAlreadyCreated);
                                 account.Updated = DateTime.UtcNow;
-                                await accountRepository.UpdateAccountAsync(account);
+                                await _accountRepository.UpdateAccountAsync(account);
                             }
                             catch
                             {
-                                TempData["Error"] = localizer["Error occurred while processing about account status"].Value;
+                                TempData["Error"] = _localizer["Error occurred while processing about account status"].Value;
                                 return View();
                             }
-                            TempData["Error"] = localizer[EnumHelper.GetDescription(AccountMessage.UserAlreadyCreated)].Value;
+                            TempData["Error"] = _localizer[EnumHelper.GetDescription(AccountMessage.UserAlreadyCreated)].Value;
                             ViewBag.ResendEmail = false; // 로그인 폼 활성화
                             return View();
                         }
@@ -543,7 +543,7 @@ namespace Maroik.WebSite.Controllers
                 #region 1.	입력된 token[암호화 됨]이랑 모든 계정에 저장된 토큰 해쉬화 후 비교해서 해당 계정 찾아낸다.
                 RSA rsaHelper = new(RSAType.RSA2, Encoding.UTF8, RSA.privateKey, RSA.publicKey);
 
-                foreach (Account tempAccount in await accountRepository.GetAllAsync())
+                foreach (Account tempAccount in await _accountRepository.GetAllAsync())
                 {
                     try
                     {
@@ -587,13 +587,13 @@ namespace Maroik.WebSite.Controllers
                     account.Message = EnumHelper.GetDescription(AccountMessage.Success);
                     try
                     {
-                        await accountRepository.UpdateAccountAsync(account);
+                        await _accountRepository.UpdateAccountAsync(account);
                     }
                     catch  // 2. Update 시, 예외 발생 했다
                     {
                         ViewBag.InvalidToken = true;
                         ViewBag.AccountCreated = true;
-                        TempData["Error"] = localizer["Error occurred while processing about confirm email account status"].Value;
+                        TempData["Error"] = _localizer["Error occurred while processing about confirm email account status"].Value;
                         return View();
                     }
                     ViewBag.InvalidToken = false;
@@ -609,13 +609,13 @@ namespace Maroik.WebSite.Controllers
                     account.Message = EnumHelper.GetDescription(AccountMessage.UserAlreadyCreated);
                     try
                     {
-                        await accountRepository.UpdateAccountAsync(account);
+                        await _accountRepository.UpdateAccountAsync(account);
                     }
                     catch // 2.	Update 시, 예외 발생 했다 [있을 수 없는 일].
                     {
                         ViewBag.InvalidToken = true;
                         ViewBag.AccountCreated = true;
-                        TempData["Error"] = localizer["Error occurred while processing about account status"].Value;
+                        TempData["Error"] = _localizer["Error occurred while processing about account status"].Value;
                         return View();
                     }
                     ViewBag.InvalidToken = false;
@@ -664,7 +664,7 @@ namespace Maroik.WebSite.Controllers
 
             if (ModelState.IsValid)
             {
-                Account account = await accountRepository.GetAccountByEmailAsync(loginInputViewModel.Email);
+                Account account = await _accountRepository.GetAccountByEmailAsync(loginInputViewModel.Email);
 
                 if (account == null) // 입력 된 Email로 생성된 Record 없다.
                 {
@@ -688,20 +688,20 @@ namespace Maroik.WebSite.Controllers
                         #region 메일 전송
                         Mail mail = new()
                         {
-                            Subject = localizer["Maroik Reset Password"].Value,
-                            Body = mailRepository.GetMailResetPasswordBody(new LoginInputViewModel() { ResetPasswordToken = new RSA(RSAType.RSA2, Encoding.UTF8, RSA.privateKey, RSA.publicKey).Sign(resetPasswordToken) }, localizer["Welcome to Maroik WebSite"].Value, localizer["Click the link below to reset your password"].Value, localizer["If this link does not work, please copy & paste this link to your Internet URL"].Value),
+                            Subject = _localizer["Maroik Reset Password"].Value,
+                            Body = _mailRepository.GetMailResetPasswordBody(new LoginInputViewModel() { ResetPasswordToken = new RSA(RSAType.RSA2, Encoding.UTF8, RSA.privateKey, RSA.publicKey).Sign(resetPasswordToken) }, _localizer["Welcome to Maroik WebSite"].Value, _localizer["Click the link below to reset your password"].Value, _localizer["If this link does not work, please copy & paste this link to your Internet URL"].Value),
                             ToMailIds =
                             [
                                 account.Email
                             ]
                         };
-                        string result = await mailRepository.SendMailAsync(mail);
+                        string result = await _mailRepository.SendMailAsync(mail);
                         if (result != EnumHelper.GetDescription(AccountMessage.MailSent)) // 메일 전송 오류 발생 했을 시..
                         {
                             Console.WriteLine(result); // ActivityLog 등으로 로그 남겨야 한다..
                             account.Updated = DateTime.UtcNow;
                             account.Message = EnumHelper.GetDescription(AccountMessage.FailToMailSent);
-                            await accountRepository.UpdateAccountAsync(account);
+                            await _accountRepository.UpdateAccountAsync(account);
                             ViewBag.mailSent = true;
                             ViewBag.sentEmailAddress = loginInputViewModel.Email;
                             return View();
@@ -711,7 +711,7 @@ namespace Maroik.WebSite.Controllers
                         account.ResetPasswordToken = resetPasswordToken;
                         account.Updated = DateTime.UtcNow;
                         account.Message = EnumHelper.GetDescription(AccountMessage.ResetPasswordMail);
-                        await accountRepository.UpdateAccountAsync(account);
+                        await _accountRepository.UpdateAccountAsync(account);
                         ViewBag.mailSent = true;
                         ViewBag.sentEmailAddress = loginInputViewModel.Email;
                         return View();
@@ -761,7 +761,7 @@ namespace Maroik.WebSite.Controllers
                 #region 1.	입력된 token[암호화 됨]이랑 모든 계정에 저장된 토큰 해쉬화 후 비교해서 해당 계정 찾아낸다.
                 RSA rsaHelper = new(RSAType.RSA2, Encoding.UTF8, RSA.privateKey, RSA.publicKey);
 
-                foreach (Account tempAccount in await accountRepository.GetAllAsync())
+                foreach (Account tempAccount in await _accountRepository.GetAllAsync())
                 {
                     try
                     {
@@ -828,7 +828,7 @@ namespace Maroik.WebSite.Controllers
                 #region 1.	입력된 token[암호화 됨]이랑 모든 계정에 저장된 토큰 해쉬화 후 비교해서 해당 계정 찾아낸다.
                 RSA rsaHelper = new(RSAType.RSA2, Encoding.UTF8, RSA.privateKey, RSA.publicKey);
 
-                foreach (Account tempAccount in await accountRepository.GetAllAsync())
+                foreach (Account tempAccount in await _accountRepository.GetAllAsync())
                 {
                     try
                     {
@@ -880,12 +880,12 @@ namespace Maroik.WebSite.Controllers
                     account.Message = EnumHelper.GetDescription(AccountMessage.SuccessToResetPassword);
                     try
                     {
-                        await accountRepository.UpdateAccountAsync(account);
+                        await _accountRepository.UpdateAccountAsync(account);
                     }
                     catch  // 2. Update 시, 예외 발생 했다
                     {
                         ViewBag.FailToResetPassword = true;
-                        TempData["Error"] = localizer["Error occurred while processing about reset password"].Value;
+                        TempData["Error"] = _localizer["Error occurred while processing about reset password"].Value;
                         return View();
                     }
                     ViewBag.resetPasswordComplete = true;

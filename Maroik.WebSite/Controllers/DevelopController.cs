@@ -5,13 +5,13 @@ namespace Maroik.WebSite.Controllers
 {
     public class DevelopController : Controller
     {
-        private readonly IHtmlLocalizer<DevelopController> localizer;
-        private readonly ILogger<DevelopController> logger;
+        private readonly IHtmlLocalizer<DevelopController> _localizer;
+        private readonly ILogger<DevelopController> _logger;
 
         public DevelopController(IHtmlLocalizer<DevelopController> localizer, ILogger<DevelopController> logger)
         {
-            this.localizer = localizer;
-            this.logger = logger;
+            _localizer = localizer;
+            _logger = logger;
         }
 
         #region WebAPI

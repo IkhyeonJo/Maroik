@@ -15,30 +15,30 @@ namespace Maroik.WebSite.Controllers
 {
     public class NoticeController : Controller
     {
-        private readonly IHtmlLocalizer<NoticeController> localizer;
-        private readonly ILogger<NoticeController> logger;
-        private readonly IAccountRepository accountRepository;
-        private readonly IHostEnvironment hostEnvironment;
-        private readonly ICategoryRepository categoryRepository;
-        private readonly ISubCategoryRepository subCategoryRepository;
-        private readonly IAssetRepository assetRepository;
-        private readonly IIncomeRepository incomeRepository;
-        private readonly IExpenditureRepository expenditureRepository;
-        private readonly IFixedIncomeRepository fixedIncomeRepository;
-        private readonly IFixedExpenditureRepository fixedExpenditureRepository;
+        private readonly IHtmlLocalizer<NoticeController> _localizer;
+        private readonly ILogger<NoticeController> _logger;
+        private readonly IAccountRepository _accountRepository;
+        private readonly IHostEnvironment _hostEnvironment;
+        private readonly ICategoryRepository _categoryRepository;
+        private readonly ISubCategoryRepository _subCategoryRepository;
+        private readonly IAssetRepository _assetRepository;
+        private readonly IIncomeRepository _incomeRepository;
+        private readonly IExpenditureRepository _expenditureRepository;
+        private readonly IFixedIncomeRepository _fixedIncomeRepository;
+        private readonly IFixedExpenditureRepository _fixedExpenditureRepository;
         public NoticeController(IHtmlLocalizer<NoticeController> localizer, ILogger<NoticeController> logger, IAccountRepository accountRepository, IHostEnvironment hostEnvironment, ICategoryRepository categoryRepository, ISubCategoryRepository subCategoryRepository, IAssetRepository assetRepository, IIncomeRepository incomeRepository, IExpenditureRepository expenditureRepository, IFixedIncomeRepository fixedIncomeRepository, IFixedExpenditureRepository fixedExpenditureRepository)
         {
-            this.localizer = localizer;
-            this.logger = logger;
-            this.accountRepository = accountRepository;
-            this.hostEnvironment = hostEnvironment;
-            this.categoryRepository = categoryRepository;
-            this.subCategoryRepository = subCategoryRepository;
-            this.assetRepository = assetRepository;
-            this.incomeRepository = incomeRepository;
-            this.expenditureRepository = expenditureRepository;
-            this.fixedIncomeRepository = fixedIncomeRepository;
-            this.fixedExpenditureRepository = fixedExpenditureRepository;
+            _localizer = localizer;
+            _logger = logger;
+            _accountRepository = accountRepository;
+            _hostEnvironment = hostEnvironment;
+            _categoryRepository = categoryRepository;
+            _subCategoryRepository = subCategoryRepository;
+            _assetRepository = assetRepository;
+            _incomeRepository = incomeRepository;
+            _expenditureRepository = expenditureRepository;
+            _fixedIncomeRepository = fixedIncomeRepository;
+            _fixedExpenditureRepository = fixedExpenditureRepository;
         }
 
         #region 고정 수입
@@ -68,7 +68,7 @@ namespace Maroik.WebSite.Controllers
                                 "RentalIncome" or
                                 "OtherIncome"))
                             {
-                                return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                                return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                             }
                         }
                         else if (fixedIncomeInputViewModel.MainClass == "IrregularIncome")
@@ -76,7 +76,7 @@ namespace Maroik.WebSite.Controllers
                             if (fixedIncomeInputViewModel.SubClass is not ("LaborIncome" or
                                 "OtherIncome"))
                             {
-                                return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                                return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                             }
                         }
                         #endregion
@@ -84,7 +84,7 @@ namespace Maroik.WebSite.Controllers
                         #region Validate of DepositMonth
                         if (fixedIncomeInputViewModel.DepositMonth is not (>= 1 and <= 12))
                         {
-                            return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                            return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                         }
                         #endregion
 
@@ -99,14 +99,14 @@ namespace Maroik.WebSite.Controllers
                         {
                             if (fixedIncomeInputViewModel.DepositDay is not (>= 1 and <= 31))
                             {
-                                return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                                return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                             }
                         }
                         else if (fixedIncomeInputViewModel.DepositMonth == 2)
                         {
                             if (fixedIncomeInputViewModel.DepositDay is not (>= 1 and <= 29))
                             {
-                                return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                                return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                             }
                         }
                         else if (fixedIncomeInputViewModel.DepositMonth is 4 or
@@ -116,7 +116,7 @@ namespace Maroik.WebSite.Controllers
                         {
                             if (fixedIncomeInputViewModel.DepositDay is not (>= 1 and <= 30))
                             {
-                                return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                                return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                             }
                         }
                         #endregion
@@ -124,12 +124,12 @@ namespace Maroik.WebSite.Controllers
                         #region MaturityDate 형식 체크 (윤년 또는 월에 따른 일도 체크함)
                         if (!new Regex(@"^\d{4}-((0[1-9])|(1[012]))-((0[1-9]|[12]\d)|3[01])$").IsMatch(fixedIncomeInputViewModel.MaturityDate)) // https://stackoverflow.com/questions/5247219/regular-expression-to-detect-yyyy-mm-dd/15233484
                         {
-                            return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                            return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                         }
                         #endregion
 
                         #region 고정 수입 생성
-                        await fixedIncomeRepository.CreateFixedIncomeAsync
+                        await _fixedIncomeRepository.CreateFixedIncomeAsync
                             (
                             new FixedIncome()
                             {
@@ -149,21 +149,21 @@ namespace Maroik.WebSite.Controllers
                             );
                         #endregion
 
-                        return Json(new { result = true, message = localizer["The fixedIncome has been successfully created."].Value });
+                        return Json(new { result = true, message = _localizer["The fixedIncome has been successfully created."].Value });
                     }
                     catch
                     {
-                        return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                        return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                     }
                 }
                 else
                 {
-                    return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                    return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                 }
             }
             catch
             {
-                return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                return Json(new { result = false, error = _localizer["Input is invalid"].Value });
             }
         }
         #endregion
@@ -183,9 +183,9 @@ namespace Maroik.WebSite.Controllers
 
                 DateTime currentDate = new(Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[0]), Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[1]), Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[2]));
 
-                List<Asset> assets = await assetRepository.GetAssetsAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+                List<Asset> assets = await _assetRepository.GetAssetsAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
 
-                foreach (FixedIncome item in await fixedIncomeRepository.GetFixedIncomesAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email))
+                foreach (FixedIncome item in await _fixedIncomeRepository.GetFixedIncomesAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email))
                 {
                     if (string.IsNullOrEmpty(wholeSearch))
                     {
@@ -208,8 +208,8 @@ namespace Maroik.WebSite.Controllers
                         fixedIncomeOutputViewModels.Add(new FixedIncomeOutputViewModel()
                         {
                             Id = item.Id,
-                            MainClass = localizer[item.MainClass.ToString()].Value,
-                            SubClass = localizer[item.SubClass.ToString()].Value,
+                            MainClass = _localizer[item.MainClass.ToString()].Value,
+                            SubClass = _localizer[item.SubClass.ToString()].Value,
                             Contents = item.Contents,
                             Amount = Convert.ToDecimal(item.Amount.TrimTrailingZeros()),
                             MonetaryUnit = assets.Where(x => x.ProductName == item.DepositMyAssetProductName).FirstOrDefault().MonetaryUnit,
@@ -227,8 +227,8 @@ namespace Maroik.WebSite.Controllers
                     }
                     else
                     {
-                        if (localizer[item.MainClass?.ToString() ?? ""].Value.Contains(wholeSearch) ||
-                            localizer[item.SubClass?.ToString() ?? ""].Value.Contains(wholeSearch) ||
+                        if (_localizer[item.MainClass?.ToString() ?? ""].Value.Contains(wholeSearch) ||
+                            _localizer[item.SubClass?.ToString() ?? ""].Value.Contains(wholeSearch) ||
                             (item.Contents?.ToString() ?? "").Contains(wholeSearch) ||
                             (item.Amount.TrimTrailingZeros() ?? "").Contains(wholeSearch) ||
                             (assets.Where(x => x.ProductName == item.DepositMyAssetProductName).FirstOrDefault().MonetaryUnit.ToString() ?? "").Contains(wholeSearch) ||
@@ -259,8 +259,8 @@ namespace Maroik.WebSite.Controllers
                             fixedIncomeOutputViewModels.Add(new FixedIncomeOutputViewModel()
                             {
                                 Id = item.Id,
-                                MainClass = localizer[item.MainClass.ToString()].Value,
-                                SubClass = localizer[item.SubClass.ToString()].Value,
+                                MainClass = _localizer[item.MainClass.ToString()].Value,
+                                SubClass = _localizer[item.SubClass.ToString()].Value,
                                 Contents = item.Contents,
                                 Amount = Convert.ToDecimal(item.Amount.TrimTrailingZeros()),
                                 MonetaryUnit = assets.Where(x => x.ProductName == item.DepositMyAssetProductName).FirstOrDefault().MonetaryUnit,
@@ -294,11 +294,11 @@ namespace Maroik.WebSite.Controllers
             {
                 _ = HttpContext.Session.TryGetValue(Maroik.WebSite.Extensions.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account), out byte[] resultByte);
 
-                List<FixedIncome> tempFixedIncomes = await fixedIncomeRepository.GetFixedIncomesAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+                List<FixedIncome> tempFixedIncomes = await _fixedIncomeRepository.GetFixedIncomesAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
 
                 if (tempFixedIncomes == null)
                 {
-                    return Json(new { result = false, error = localizer["No fixedIncome exists"].Value });
+                    return Json(new { result = false, error = _localizer["No fixedIncome exists"].Value });
                 }
                 else
                 {
@@ -306,7 +306,7 @@ namespace Maroik.WebSite.Controllers
 
                     if (tempFixedIncome == null)
                     {
-                        return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                        return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                     }
                     else
                     {
@@ -330,7 +330,7 @@ namespace Maroik.WebSite.Controllers
             }
             catch
             {
-                return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                return Json(new { result = false, error = _localizer["Input is invalid"].Value });
             }
         }
         [HttpPost]
@@ -340,11 +340,11 @@ namespace Maroik.WebSite.Controllers
         {
             try
             {
-                string label = localizer["Amount"].Value;
+                string label = _localizer["Amount"].Value;
 
                 _ = HttpContext.Session.TryGetValue(Maroik.WebSite.Extensions.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account), out byte[] resultByte);
 
-                Asset asset = (await assetRepository.GetAssetsAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email)).Where(x => !x.Deleted).Where(x => x.ProductName == productName).FirstOrDefault() ?? new Asset();
+                Asset asset = (await _assetRepository.GetAssetsAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email)).Where(x => !x.Deleted).Where(x => x.ProductName == productName).FirstOrDefault() ?? new Asset();
 
                 if (!string.IsNullOrEmpty(asset.MonetaryUnit))
                 {
@@ -355,7 +355,7 @@ namespace Maroik.WebSite.Controllers
             }
             catch
             {
-                return Json(new { result = false, label = localizer["Amount"].Value });
+                return Json(new { result = false, label = _localizer["Amount"].Value });
             }
         }
         #endregion
@@ -385,7 +385,7 @@ namespace Maroik.WebSite.Controllers
                                 "RentalIncome" or
                                 "OtherIncome"))
                             {
-                                return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                                return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                             }
                         }
                         else if (fixedIncomeInputViewModel.MainClass == "IrregularIncome")
@@ -393,7 +393,7 @@ namespace Maroik.WebSite.Controllers
                             if (fixedIncomeInputViewModel.SubClass is not ("LaborIncome" or
                                 "OtherIncome"))
                             {
-                                return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                                return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                             }
                         }
                         #endregion
@@ -401,7 +401,7 @@ namespace Maroik.WebSite.Controllers
                         #region Validate of DepositMonth
                         if (fixedIncomeInputViewModel.DepositMonth is not (>= 1 and <= 12))
                         {
-                            return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                            return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                         }
                         #endregion
 
@@ -416,14 +416,14 @@ namespace Maroik.WebSite.Controllers
                         {
                             if (fixedIncomeInputViewModel.DepositDay is not (>= 1 and <= 31))
                             {
-                                return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                                return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                             }
                         }
                         else if (fixedIncomeInputViewModel.DepositMonth == 2)
                         {
                             if (fixedIncomeInputViewModel.DepositDay is not (>= 1 and <= 29))
                             {
-                                return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                                return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                             }
                         }
                         else if (fixedIncomeInputViewModel.DepositMonth is 4 or
@@ -433,7 +433,7 @@ namespace Maroik.WebSite.Controllers
                         {
                             if (fixedIncomeInputViewModel.DepositDay is not (>= 1 and <= 30))
                             {
-                                return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                                return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                             }
                         }
                         #endregion
@@ -441,16 +441,16 @@ namespace Maroik.WebSite.Controllers
                         #region MaturityDate 형식 체크 (윤년 또는 월에 따른 일도 체크함)
                         if (!new Regex(@"^\d{4}-((0[1-9])|(1[012]))-((0[1-9]|[12]\d)|3[01])$").IsMatch(fixedIncomeInputViewModel.MaturityDate)) // https://stackoverflow.com/questions/5247219/regular-expression-to-detect-yyyy-mm-dd/15233484
                         {
-                            return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                            return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                         }
                         #endregion
 
                         #region 고정 수입 업데이트
-                        List<FixedIncome> tempFixedIncomes = await fixedIncomeRepository.GetFixedIncomesAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+                        List<FixedIncome> tempFixedIncomes = await _fixedIncomeRepository.GetFixedIncomesAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
 
                         if (tempFixedIncomes == null)
                         {
-                            return Json(new { result = false, error = localizer["No fixedIncome exists"].Value });
+                            return Json(new { result = false, error = _localizer["No fixedIncome exists"].Value });
                         }
                         else
                         {
@@ -458,7 +458,7 @@ namespace Maroik.WebSite.Controllers
 
                             if (tempFixedIncome == null)
                             {
-                                return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                                return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                             }
                             else
                             {
@@ -475,27 +475,27 @@ namespace Maroik.WebSite.Controllers
                                 tempFixedIncome.Note = fixedIncomeInputViewModel.Note ?? "";
                                 tempFixedIncome.Unpunctuality = fixedIncomeInputViewModel.Unpunctuality;
 
-                                await fixedIncomeRepository.UpdateFixedIncomeAsync(tempFixedIncome);
+                                await _fixedIncomeRepository.UpdateFixedIncomeAsync(tempFixedIncome);
                                 #endregion
 
-                                return Json(new { result = true, message = localizer["The fixedIncome has been successfully updated."].Value });
+                                return Json(new { result = true, message = _localizer["The fixedIncome has been successfully updated."].Value });
                             }
                         }
                         #endregion
                     }
                     catch
                     {
-                        return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                        return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                     }
                 }
                 else
                 {
-                    return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                    return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                 }
             }
             catch
             {
-                return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                return Json(new { result = false, error = _localizer["Input is invalid"].Value });
             }
         }
         #endregion
@@ -510,11 +510,11 @@ namespace Maroik.WebSite.Controllers
             {
                 _ = HttpContext.Session.TryGetValue(Maroik.WebSite.Extensions.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account), out byte[] resultByte);
 
-                List<FixedIncome> tempFixedIncomes = await fixedIncomeRepository.GetFixedIncomesAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+                List<FixedIncome> tempFixedIncomes = await _fixedIncomeRepository.GetFixedIncomesAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
 
                 if (tempFixedIncomes == null)
                 {
-                    return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                    return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                 }
                 else
                 {
@@ -522,21 +522,21 @@ namespace Maroik.WebSite.Controllers
 
                     if (tempFixedIncome == null)
                     {
-                        return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                        return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                     }
                     else
                     {
                         #region 고정 수입 삭제
-                        await fixedIncomeRepository.DeleteFixedIncomeAsync(tempFixedIncome);
+                        await _fixedIncomeRepository.DeleteFixedIncomeAsync(tempFixedIncome);
                         #endregion
 
-                        return Json(new { result = true, message = localizer["The fixedIncome has been successfully deleted."].Value });
+                        return Json(new { result = true, message = _localizer["The fixedIncome has been successfully deleted."].Value });
                     }
                 }
             }
             catch
             {
-                return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                return Json(new { result = false, error = _localizer["Input is invalid"].Value });
             }
         }
         #endregion
@@ -560,9 +560,9 @@ namespace Maroik.WebSite.Controllers
 
             DateTime currentDate = new(Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[0]), Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[1]), Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[2]));
 
-            List<Asset> assets = await assetRepository.GetAssetsAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+            List<Asset> assets = await _assetRepository.GetAssetsAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
 
-            foreach (FixedIncome item in await fixedIncomeRepository.GetFixedIncomesAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email))
+            foreach (FixedIncome item in await _fixedIncomeRepository.GetFixedIncomesAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email))
             {
                 bool noticedResult = false;
 
@@ -582,8 +582,8 @@ namespace Maroik.WebSite.Controllers
 
                 fixedIncomeOutputViewModels.Add(new FixedIncomeOutputViewModel()
                 {
-                    MainClass = localizer[item.MainClass.ToString()].Value,
-                    SubClass = localizer[item.SubClass.ToString()].Value,
+                    MainClass = _localizer[item.MainClass.ToString()].Value,
+                    SubClass = _localizer[item.SubClass.ToString()].Value,
                     Contents = item.Contents,
                     Amount = Convert.ToDecimal(item.Amount.TrimTrailingZeros()),
                     MonetaryUnit = assets.Where(x => x.ProductName == item.DepositMyAssetProductName).FirstOrDefault().MonetaryUnit,
@@ -611,26 +611,26 @@ namespace Maroik.WebSite.Controllers
                 workSheetMenuOutputViewModels.Row(1).Height = 20;
                 workSheetMenuOutputViewModels.Row(1).Style.HorizontalAlignment = OfficeOpenXml.Style.ExcelHorizontalAlignment.Center;
                 workSheetMenuOutputViewModels.Row(1).Style.Font.Bold = true;
-                workSheetMenuOutputViewModels.Cells[1, 1].Value = localizer[nameof(FixedIncomeOutputViewModel.MainClass).ToString()].Value;
-                workSheetMenuOutputViewModels.Cells[1, 2].Value = localizer[nameof(FixedIncomeOutputViewModel.SubClass).ToString()].Value;
-                workSheetMenuOutputViewModels.Cells[1, 3].Value = localizer[nameof(FixedIncomeOutputViewModel.Contents).ToString()].Value;
-                workSheetMenuOutputViewModels.Cells[1, 4].Value = localizer[nameof(FixedIncomeOutputViewModel.Amount).ToString()].Value;
-                workSheetMenuOutputViewModels.Cells[1, 5].Value = localizer[nameof(FixedIncomeOutputViewModel.MonetaryUnit).ToString()].Value;
-                workSheetMenuOutputViewModels.Cells[1, 6].Value = localizer[nameof(FixedIncomeOutputViewModel.DepositMonth).ToString()].Value;
-                workSheetMenuOutputViewModels.Cells[1, 7].Value = localizer[nameof(FixedIncomeOutputViewModel.DepositDay).ToString()].Value;
-                workSheetMenuOutputViewModels.Cells[1, 8].Value = localizer[nameof(FixedIncomeOutputViewModel.MaturityDate).ToString()].Value;
-                workSheetMenuOutputViewModels.Cells[1, 9].Value = localizer[nameof(FixedIncomeOutputViewModel.Note).ToString()].Value;
-                workSheetMenuOutputViewModels.Cells[1, 10].Value = localizer[nameof(FixedIncomeOutputViewModel.DepositMyAssetProductName).ToString()].Value;
-                workSheetMenuOutputViewModels.Cells[1, 11].Value = localizer[nameof(FixedIncomeOutputViewModel.Created).ToString()].Value;
-                workSheetMenuOutputViewModels.Cells[1, 12].Value = localizer[nameof(FixedIncomeOutputViewModel.Updated).ToString()].Value;
-                workSheetMenuOutputViewModels.Cells[1, 13].Value = localizer[nameof(FixedIncomeOutputViewModel.Noticed).ToString()].Value;
-                workSheetMenuOutputViewModels.Cells[1, 14].Value = localizer[nameof(FixedIncomeOutputViewModel.Expired).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 1].Value = _localizer[nameof(FixedIncomeOutputViewModel.MainClass).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 2].Value = _localizer[nameof(FixedIncomeOutputViewModel.SubClass).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 3].Value = _localizer[nameof(FixedIncomeOutputViewModel.Contents).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 4].Value = _localizer[nameof(FixedIncomeOutputViewModel.Amount).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 5].Value = _localizer[nameof(FixedIncomeOutputViewModel.MonetaryUnit).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 6].Value = _localizer[nameof(FixedIncomeOutputViewModel.DepositMonth).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 7].Value = _localizer[nameof(FixedIncomeOutputViewModel.DepositDay).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 8].Value = _localizer[nameof(FixedIncomeOutputViewModel.MaturityDate).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 9].Value = _localizer[nameof(FixedIncomeOutputViewModel.Note).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 10].Value = _localizer[nameof(FixedIncomeOutputViewModel.DepositMyAssetProductName).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 11].Value = _localizer[nameof(FixedIncomeOutputViewModel.Created).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 12].Value = _localizer[nameof(FixedIncomeOutputViewModel.Updated).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 13].Value = _localizer[nameof(FixedIncomeOutputViewModel.Noticed).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 14].Value = _localizer[nameof(FixedIncomeOutputViewModel.Expired).ToString()].Value;
 
                 int recordIndex = 2;
                 foreach (FixedIncomeOutputViewModel item in fixedIncomeOutputViewModels.OrderByDescending(a => a.Expired).ThenByDescending(a => a.Noticed))
                 {
-                    workSheetMenuOutputViewModels.Cells[recordIndex, 1].Value = localizer[item?.MainClass?.ToString() ?? ""].Value;
-                    workSheetMenuOutputViewModels.Cells[recordIndex, 2].Value = localizer[item?.SubClass?.ToString() ?? ""].Value;
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 1].Value = _localizer[item?.MainClass?.ToString() ?? ""].Value;
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 2].Value = _localizer[item?.SubClass?.ToString() ?? ""].Value;
                     workSheetMenuOutputViewModels.Cells[recordIndex, 3].Value = item.Contents;
                     workSheetMenuOutputViewModels.Cells[recordIndex, 4].Value = Convert.ToDecimal(item.Amount.TrimTrailingZeros());
                     workSheetMenuOutputViewModels.Cells[recordIndex, 5].Value = assets.Where(x => x.ProductName == item.DepositMyAssetProductName).FirstOrDefault().MonetaryUnit;
@@ -681,24 +681,24 @@ namespace Maroik.WebSite.Controllers
                             {
                                 if (fixedExpenditureInputViewModel.PaymentMethod == fixedExpenditureInputViewModel.MyDepositAsset)
                                 {
-                                    return Json(new { result = false, error = localizer["The PaymentMethod and MyDepositAsset value cannot be the same."].Value });
+                                    return Json(new { result = false, error = _localizer["The PaymentMethod and MyDepositAsset value cannot be the same."].Value });
                                 }
 
-                                Asset expenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, fixedExpenditureInputViewModel.PaymentMethod);
-                                Asset incomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, fixedExpenditureInputViewModel.MyDepositAsset);
+                                Asset expenditureAsset = await _assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, fixedExpenditureInputViewModel.PaymentMethod);
+                                Asset incomeAsset = await _assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, fixedExpenditureInputViewModel.MyDepositAsset);
 
                                 if (expenditureAsset == null || incomeAsset == null)
                                 {
-                                    return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                                    return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                                 }
 
                                 if (expenditureAsset.MonetaryUnit != incomeAsset.MonetaryUnit)
                                 {
-                                    return Json(new { result = false, error = localizer["PaymentMethod MonetaryUnit must be same as MyDepositAsset MonetaryUnit."].Value });
+                                    return Json(new { result = false, error = _localizer["PaymentMethod MonetaryUnit must be same as MyDepositAsset MonetaryUnit."].Value });
                                 }
 
                                 #region 고정 지출 생성
-                                await fixedExpenditureRepository.CreateFixedExpenditureAsync
+                                await _fixedExpenditureRepository.CreateFixedExpenditureAsync
                                     (
                                     new FixedExpenditure()
                                     {
@@ -719,16 +719,16 @@ namespace Maroik.WebSite.Controllers
                                     );
                                 #endregion
 
-                                return Json(new { result = true, message = localizer["The fixedExpenditure has been successfully created."].Value });
+                                return Json(new { result = true, message = _localizer["The fixedExpenditure has been successfully created."].Value });
                             }
                             catch
                             {
-                                return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                                return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                             }
                         }
                         else
                         {
-                            return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                            return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                         }
                     }
                     #endregion
@@ -742,24 +742,24 @@ namespace Maroik.WebSite.Controllers
                             {
                                 if (fixedExpenditureInputViewModel.PaymentMethod == fixedExpenditureInputViewModel.MyDepositAsset)
                                 {
-                                    return Json(new { result = false, error = localizer["The PaymentMethod and MyDepositAsset value cannot be the same."].Value });
+                                    return Json(new { result = false, error = _localizer["The PaymentMethod and MyDepositAsset value cannot be the same."].Value });
                                 }
 
-                                Asset expenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, fixedExpenditureInputViewModel.PaymentMethod);
-                                Asset incomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, fixedExpenditureInputViewModel.MyDepositAsset);
+                                Asset expenditureAsset = await _assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, fixedExpenditureInputViewModel.PaymentMethod);
+                                Asset incomeAsset = await _assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, fixedExpenditureInputViewModel.MyDepositAsset);
 
                                 if (expenditureAsset == null || incomeAsset == null)
                                 {
-                                    return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                                    return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                                 }
 
                                 if (expenditureAsset.MonetaryUnit != incomeAsset.MonetaryUnit)
                                 {
-                                    return Json(new { result = false, error = localizer["PaymentMethod MonetaryUnit must be same as MyDepositAsset MonetaryUnit."].Value });
+                                    return Json(new { result = false, error = _localizer["PaymentMethod MonetaryUnit must be same as MyDepositAsset MonetaryUnit."].Value });
                                 }
 
                                 #region 고정 지출 생성
-                                await fixedExpenditureRepository.CreateFixedExpenditureAsync
+                                await _fixedExpenditureRepository.CreateFixedExpenditureAsync
                                     (
                                     new FixedExpenditure()
                                     {
@@ -780,11 +780,11 @@ namespace Maroik.WebSite.Controllers
                                     );
                                 #endregion
 
-                                return Json(new { result = true, message = localizer["The fixedExpenditure has been successfully created."].Value });
+                                return Json(new { result = true, message = _localizer["The fixedExpenditure has been successfully created."].Value });
                             }
                             catch
                             {
-                                return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                                return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                             }
                         }
                         else if (fixedExpenditureInputViewModel.SubClass is "Tax" or
@@ -795,7 +795,7 @@ namespace Maroik.WebSite.Controllers
                             try
                             {
                                 #region 고정 지출 생성
-                                await fixedExpenditureRepository.CreateFixedExpenditureAsync
+                                await _fixedExpenditureRepository.CreateFixedExpenditureAsync
                                     (
                                     new FixedExpenditure()
                                     {
@@ -816,16 +816,16 @@ namespace Maroik.WebSite.Controllers
                                     );
                                 #endregion
 
-                                return Json(new { result = true, message = localizer["The fixedExpenditure has been successfully created."].Value });
+                                return Json(new { result = true, message = _localizer["The fixedExpenditure has been successfully created."].Value });
                             }
                             catch
                             {
-                                return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                                return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                             }
                         }
                         else
                         {
-                            return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                            return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                         }
                     }
                     #endregion
@@ -849,7 +849,7 @@ namespace Maroik.WebSite.Controllers
                             try
                             {
                                 #region 고정 지출 생성
-                                await fixedExpenditureRepository.CreateFixedExpenditureAsync
+                                await _fixedExpenditureRepository.CreateFixedExpenditureAsync
                                     (
                                     new FixedExpenditure()
                                     {
@@ -870,16 +870,16 @@ namespace Maroik.WebSite.Controllers
                                     );
                                 #endregion
 
-                                return Json(new { result = true, message = localizer["The fixedExpenditure has been successfully created."].Value });
+                                return Json(new { result = true, message = _localizer["The fixedExpenditure has been successfully created."].Value });
                             }
                             catch
                             {
-                                return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                                return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                             }
                         }
                         else
                         {
-                            return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                            return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                         }
                     }
                     #endregion
@@ -887,18 +887,18 @@ namespace Maroik.WebSite.Controllers
                     #region 대분류에 없는 값
                     else
                     {
-                        return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                        return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                     }
                     #endregion
                 }
                 else
                 {
-                    return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                    return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                 }
             }
             catch
             {
-                return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                return Json(new { result = false, error = _localizer["Input is invalid"].Value });
             }
         }
         #endregion
@@ -918,9 +918,9 @@ namespace Maroik.WebSite.Controllers
 
                 DateTime currentDate = new(Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[0]), Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[1]), Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[2]));
 
-                List<Asset> assets = await assetRepository.GetAssetsAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+                List<Asset> assets = await _assetRepository.GetAssetsAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
 
-                foreach (FixedExpenditure item in await fixedExpenditureRepository.GetFixedExpendituresAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email))
+                foreach (FixedExpenditure item in await _fixedExpenditureRepository.GetFixedExpendituresAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email))
                 {
                     if (string.IsNullOrEmpty(wholeSearch))
                     {
@@ -943,8 +943,8 @@ namespace Maroik.WebSite.Controllers
                         fixedExpenditureOutputViewModels.Add(new FixedExpenditureOutputViewModel()
                         {
                             Id = item.Id,
-                            MainClass = localizer[item.MainClass.ToString()].Value,
-                            SubClass = localizer[item.SubClass.ToString()].Value,
+                            MainClass = _localizer[item.MainClass.ToString()].Value,
+                            SubClass = _localizer[item.SubClass.ToString()].Value,
                             Contents = item.Contents,
                             Amount = Convert.ToDecimal(item.Amount.TrimTrailingZeros()),
                             MonetaryUnit = assets.Where(x => x.ProductName == item.PaymentMethod).FirstOrDefault().MonetaryUnit,
@@ -963,8 +963,8 @@ namespace Maroik.WebSite.Controllers
                     }
                     else
                     {
-                        if (localizer[item.MainClass?.ToString() ?? ""].Value.Contains(wholeSearch) ||
-                            localizer[item.SubClass?.ToString() ?? ""].Value.Contains(wholeSearch) ||
+                        if (_localizer[item.MainClass?.ToString() ?? ""].Value.Contains(wholeSearch) ||
+                            _localizer[item.SubClass?.ToString() ?? ""].Value.Contains(wholeSearch) ||
                             (item.Contents?.ToString() ?? "").Contains(wholeSearch) ||
                             (item.Amount.TrimTrailingZeros() ?? "").Contains(wholeSearch) ||
                             (assets.Where(x => x.ProductName == item.PaymentMethod).FirstOrDefault().MonetaryUnit.ToString() ?? "").Contains(wholeSearch) ||
@@ -996,8 +996,8 @@ namespace Maroik.WebSite.Controllers
                             fixedExpenditureOutputViewModels.Add(new FixedExpenditureOutputViewModel()
                             {
                                 Id = item.Id,
-                                MainClass = localizer[item.MainClass.ToString()].Value,
-                                SubClass = localizer[item.SubClass.ToString()].Value,
+                                MainClass = _localizer[item.MainClass.ToString()].Value,
+                                SubClass = _localizer[item.SubClass.ToString()].Value,
                                 Contents = item.Contents,
                                 Amount = Convert.ToDecimal(item.Amount.TrimTrailingZeros()),
                                 MonetaryUnit = assets.Where(x => x.ProductName == item.PaymentMethod).FirstOrDefault().MonetaryUnit,
@@ -1032,11 +1032,11 @@ namespace Maroik.WebSite.Controllers
             {
                 _ = HttpContext.Session.TryGetValue(Maroik.WebSite.Extensions.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account), out byte[] resultByte);
 
-                List<FixedExpenditure> tempFixedExpenditures = await fixedExpenditureRepository.GetFixedExpendituresAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+                List<FixedExpenditure> tempFixedExpenditures = await _fixedExpenditureRepository.GetFixedExpendituresAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
 
                 if (tempFixedExpenditures == null)
                 {
-                    return Json(new { result = false, error = localizer["No fixedExpenditure exists"].Value });
+                    return Json(new { result = false, error = _localizer["No fixedExpenditure exists"].Value });
                 }
                 else
                 {
@@ -1044,7 +1044,7 @@ namespace Maroik.WebSite.Controllers
 
                     if (tempFixedExpenditure == null)
                     {
-                        return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                        return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                     }
                     else
                     {
@@ -1069,7 +1069,7 @@ namespace Maroik.WebSite.Controllers
             }
             catch
             {
-                return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                return Json(new { result = false, error = _localizer["Input is invalid"].Value });
             }
         }
         [HttpPost]
@@ -1079,11 +1079,11 @@ namespace Maroik.WebSite.Controllers
         {
             try
             {
-                string label = localizer["Amount"].Value;
+                string label = _localizer["Amount"].Value;
 
                 _ = HttpContext.Session.TryGetValue(Maroik.WebSite.Extensions.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account), out byte[] resultByte);
 
-                Asset asset = (await assetRepository.GetAssetsAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email)).Where(x => !x.Deleted).Where(x => x.ProductName == productName).FirstOrDefault() ?? new Asset();
+                Asset asset = (await _assetRepository.GetAssetsAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email)).Where(x => !x.Deleted).Where(x => x.ProductName == productName).FirstOrDefault() ?? new Asset();
 
                 if (!string.IsNullOrEmpty(asset.MonetaryUnit))
                 {
@@ -1094,7 +1094,7 @@ namespace Maroik.WebSite.Controllers
             }
             catch
             {
-                return Json(new { result = false, label = localizer["Amount"].Value });
+                return Json(new { result = false, label = _localizer["Amount"].Value });
             }
         }
         #endregion
@@ -1121,28 +1121,28 @@ namespace Maroik.WebSite.Controllers
                             {
                                 if (fixedExpenditureInputViewModel.PaymentMethod == fixedExpenditureInputViewModel.MyDepositAsset)
                                 {
-                                    return Json(new { result = false, error = localizer["The PaymentMethod and MyDepositAsset value cannot be the same."].Value });
+                                    return Json(new { result = false, error = _localizer["The PaymentMethod and MyDepositAsset value cannot be the same."].Value });
                                 }
 
-                                Asset expenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, fixedExpenditureInputViewModel.PaymentMethod);
-                                Asset incomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, fixedExpenditureInputViewModel.MyDepositAsset);
+                                Asset expenditureAsset = await _assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, fixedExpenditureInputViewModel.PaymentMethod);
+                                Asset incomeAsset = await _assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, fixedExpenditureInputViewModel.MyDepositAsset);
 
                                 if (expenditureAsset == null || incomeAsset == null)
                                 {
-                                    return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                                    return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                                 }
 
                                 if (expenditureAsset.MonetaryUnit != incomeAsset.MonetaryUnit)
                                 {
-                                    return Json(new { result = false, error = localizer["PaymentMethod MonetaryUnit must be same as MyDepositAsset MonetaryUnit."].Value });
+                                    return Json(new { result = false, error = _localizer["PaymentMethod MonetaryUnit must be same as MyDepositAsset MonetaryUnit."].Value });
                                 }
 
-                                List<FixedExpenditure> tempFixedExpenditures = await fixedExpenditureRepository.GetFixedExpendituresAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+                                List<FixedExpenditure> tempFixedExpenditures = await _fixedExpenditureRepository.GetFixedExpendituresAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
                                 FixedExpenditure tempFixedExpenditure = tempFixedExpenditures.Where(a => a.Id == fixedExpenditureInputViewModel.Id).FirstOrDefault();
 
                                 if (tempFixedExpenditure == null)
                                 {
-                                    return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                                    return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                                 }
 
                                 tempFixedExpenditure.Id = fixedExpenditureInputViewModel.Id;
@@ -1160,18 +1160,18 @@ namespace Maroik.WebSite.Controllers
                                 tempFixedExpenditure.Updated = DateTime.UtcNow;
                                 tempFixedExpenditure.Unpunctuality = fixedExpenditureInputViewModel.Unpunctuality;
 
-                                await fixedExpenditureRepository.UpdateFixedExpenditureAsync(tempFixedExpenditure);
+                                await _fixedExpenditureRepository.UpdateFixedExpenditureAsync(tempFixedExpenditure);
 
-                                return Json(new { result = true, message = localizer["The fixedExpenditure has been successfully updated."].Value });
+                                return Json(new { result = true, message = _localizer["The fixedExpenditure has been successfully updated."].Value });
                             }
                             catch
                             {
-                                return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                                return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                             }
                         }
                         else
                         {
-                            return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                            return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                         }
                     }
                     #endregion
@@ -1185,28 +1185,28 @@ namespace Maroik.WebSite.Controllers
                             {
                                 if (fixedExpenditureInputViewModel.PaymentMethod == fixedExpenditureInputViewModel.MyDepositAsset)
                                 {
-                                    return Json(new { result = false, error = localizer["The PaymentMethod and MyDepositAsset value cannot be the same."].Value });
+                                    return Json(new { result = false, error = _localizer["The PaymentMethod and MyDepositAsset value cannot be the same."].Value });
                                 }
 
-                                Asset expenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, fixedExpenditureInputViewModel.PaymentMethod);
-                                Asset incomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, fixedExpenditureInputViewModel.MyDepositAsset);
+                                Asset expenditureAsset = await _assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, fixedExpenditureInputViewModel.PaymentMethod);
+                                Asset incomeAsset = await _assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, fixedExpenditureInputViewModel.MyDepositAsset);
 
                                 if (expenditureAsset == null || incomeAsset == null)
                                 {
-                                    return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                                    return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                                 }
 
                                 if (expenditureAsset.MonetaryUnit != incomeAsset.MonetaryUnit)
                                 {
-                                    return Json(new { result = false, error = localizer["PaymentMethod MonetaryUnit must be same as MyDepositAsset MonetaryUnit."].Value });
+                                    return Json(new { result = false, error = _localizer["PaymentMethod MonetaryUnit must be same as MyDepositAsset MonetaryUnit."].Value });
                                 }
 
-                                List<FixedExpenditure> tempFixedExpenditures = await fixedExpenditureRepository.GetFixedExpendituresAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+                                List<FixedExpenditure> tempFixedExpenditures = await _fixedExpenditureRepository.GetFixedExpendituresAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
                                 FixedExpenditure tempFixedExpenditure = tempFixedExpenditures.Where(a => a.Id == fixedExpenditureInputViewModel.Id).FirstOrDefault();
 
                                 if (tempFixedExpenditure == null)
                                 {
-                                    return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                                    return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                                 }
 
                                 tempFixedExpenditure.Id = fixedExpenditureInputViewModel.Id;
@@ -1224,13 +1224,13 @@ namespace Maroik.WebSite.Controllers
                                 tempFixedExpenditure.Updated = DateTime.UtcNow;
                                 tempFixedExpenditure.Unpunctuality = fixedExpenditureInputViewModel.Unpunctuality;
 
-                                await fixedExpenditureRepository.UpdateFixedExpenditureAsync(tempFixedExpenditure);
+                                await _fixedExpenditureRepository.UpdateFixedExpenditureAsync(tempFixedExpenditure);
 
-                                return Json(new { result = true, message = localizer["The fixedExpenditure has been successfully updated."].Value });
+                                return Json(new { result = true, message = _localizer["The fixedExpenditure has been successfully updated."].Value });
                             }
                             catch
                             {
-                                return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                                return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                             }
                         }
                         else if (fixedExpenditureInputViewModel.SubClass is "Tax" or
@@ -1240,12 +1240,12 @@ namespace Maroik.WebSite.Controllers
                         {
                             try
                             {
-                                List<FixedExpenditure> tempFixedExpenditures = await fixedExpenditureRepository.GetFixedExpendituresAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+                                List<FixedExpenditure> tempFixedExpenditures = await _fixedExpenditureRepository.GetFixedExpendituresAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
                                 FixedExpenditure tempFixedExpenditure = tempFixedExpenditures.Where(a => a.Id == fixedExpenditureInputViewModel.Id).FirstOrDefault();
 
                                 if (tempFixedExpenditure == null)
                                 {
-                                    return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                                    return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                                 }
 
                                 tempFixedExpenditure.Id = fixedExpenditureInputViewModel.Id;
@@ -1263,18 +1263,18 @@ namespace Maroik.WebSite.Controllers
                                 tempFixedExpenditure.Updated = DateTime.UtcNow;
                                 tempFixedExpenditure.Unpunctuality = fixedExpenditureInputViewModel.Unpunctuality;
 
-                                await fixedExpenditureRepository.UpdateFixedExpenditureAsync(tempFixedExpenditure);
+                                await _fixedExpenditureRepository.UpdateFixedExpenditureAsync(tempFixedExpenditure);
 
-                                return Json(new { result = true, message = localizer["The fixedExpenditure has been successfully updated."].Value });
+                                return Json(new { result = true, message = _localizer["The fixedExpenditure has been successfully updated."].Value });
                             }
                             catch
                             {
-                                return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                                return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                             }
                         }
                         else
                         {
-                            return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                            return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                         }
                     }
                     #endregion
@@ -1297,12 +1297,12 @@ namespace Maroik.WebSite.Controllers
                         {
                             try
                             {
-                                List<FixedExpenditure> tempFixedExpenditures = await fixedExpenditureRepository.GetFixedExpendituresAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+                                List<FixedExpenditure> tempFixedExpenditures = await _fixedExpenditureRepository.GetFixedExpendituresAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
                                 FixedExpenditure tempFixedExpenditure = tempFixedExpenditures.Where(a => a.Id == fixedExpenditureInputViewModel.Id).FirstOrDefault();
 
                                 if (tempFixedExpenditure == null)
                                 {
-                                    return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                                    return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                                 }
 
                                 tempFixedExpenditure.Id = fixedExpenditureInputViewModel.Id;
@@ -1320,18 +1320,18 @@ namespace Maroik.WebSite.Controllers
                                 tempFixedExpenditure.Updated = DateTime.UtcNow;
                                 tempFixedExpenditure.Unpunctuality = fixedExpenditureInputViewModel.Unpunctuality;
 
-                                await fixedExpenditureRepository.UpdateFixedExpenditureAsync(tempFixedExpenditure);
+                                await _fixedExpenditureRepository.UpdateFixedExpenditureAsync(tempFixedExpenditure);
 
-                                return Json(new { result = true, message = localizer["The fixedExpenditure has been successfully updated."].Value });
+                                return Json(new { result = true, message = _localizer["The fixedExpenditure has been successfully updated."].Value });
                             }
                             catch
                             {
-                                return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                                return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                             }
                         }
                         else
                         {
-                            return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                            return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                         }
                     }
                     #endregion
@@ -1339,18 +1339,18 @@ namespace Maroik.WebSite.Controllers
                     #region 대분류에 없는 값
                     else
                     {
-                        return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                        return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                     }
                     #endregion
                 }
                 else
                 {
-                    return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                    return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                 }
             }
             catch
             {
-                return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                return Json(new { result = false, error = _localizer["Input is invalid"].Value });
             }
         }
         #endregion
@@ -1365,29 +1365,29 @@ namespace Maroik.WebSite.Controllers
             {
                 _ = HttpContext.Session.TryGetValue(Maroik.WebSite.Extensions.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account), out byte[] resultByte);
 
-                List<FixedExpenditure> tempFixedExpenditures = await fixedExpenditureRepository.GetFixedExpendituresAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+                List<FixedExpenditure> tempFixedExpenditures = await _fixedExpenditureRepository.GetFixedExpendituresAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
 
                 if (tempFixedExpenditures == null)
                 {
-                    return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                    return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                 }
                 else
                 {
                     FixedExpenditure tempFixedExpenditure = tempFixedExpenditures.Where(a => a.Id == fixedExpenditureInputViewModel.Id).FirstOrDefault();
                     if (tempFixedExpenditure == null)
                     {
-                        return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                        return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                     }
                     else
                     {
-                        await fixedExpenditureRepository.DeleteFixedExpenditureAsync(tempFixedExpenditure);
-                        return Json(new { result = true, message = localizer["The fixedExpenditure has been successfully deleted."].Value });
+                        await _fixedExpenditureRepository.DeleteFixedExpenditureAsync(tempFixedExpenditure);
+                        return Json(new { result = true, message = _localizer["The fixedExpenditure has been successfully deleted."].Value });
                     }
                 }
             }
             catch
             {
-                return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                return Json(new { result = false, error = _localizer["Input is invalid"].Value });
             }
         }
         #endregion
@@ -1411,9 +1411,9 @@ namespace Maroik.WebSite.Controllers
 
             DateTime currentDate = new(Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[0]), Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[1]), Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[2]));
 
-            List<Asset> assets = await assetRepository.GetAssetsAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+            List<Asset> assets = await _assetRepository.GetAssetsAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
 
-            foreach (FixedExpenditure item in await fixedExpenditureRepository.GetFixedExpendituresAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email))
+            foreach (FixedExpenditure item in await _fixedExpenditureRepository.GetFixedExpendituresAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email))
             {
                 bool noticedResult = false;
 
@@ -1433,8 +1433,8 @@ namespace Maroik.WebSite.Controllers
 
                 fixedExpenditureOutputViewModels.Add(new FixedExpenditureOutputViewModel()
                 {
-                    MainClass = localizer[item.MainClass.ToString()].Value,
-                    SubClass = localizer[item.SubClass.ToString()].Value,
+                    MainClass = _localizer[item.MainClass.ToString()].Value,
+                    SubClass = _localizer[item.SubClass.ToString()].Value,
                     Contents = item.Contents,
                     Amount = Convert.ToDecimal(item.Amount.TrimTrailingZeros()),
                     MonetaryUnit = assets.Where(x => x.ProductName == item.PaymentMethod).FirstOrDefault().MonetaryUnit,
@@ -1463,27 +1463,27 @@ namespace Maroik.WebSite.Controllers
                 workSheetMenuOutputViewModels.Row(1).Height = 20;
                 workSheetMenuOutputViewModels.Row(1).Style.HorizontalAlignment = OfficeOpenXml.Style.ExcelHorizontalAlignment.Center;
                 workSheetMenuOutputViewModels.Row(1).Style.Font.Bold = true;
-                workSheetMenuOutputViewModels.Cells[1, 1].Value = localizer[nameof(FixedExpenditureOutputViewModel.MainClass).ToString()].Value;
-                workSheetMenuOutputViewModels.Cells[1, 2].Value = localizer[nameof(FixedExpenditureOutputViewModel.SubClass).ToString()].Value;
-                workSheetMenuOutputViewModels.Cells[1, 3].Value = localizer[nameof(FixedExpenditureOutputViewModel.Contents).ToString()].Value;
-                workSheetMenuOutputViewModels.Cells[1, 4].Value = localizer[nameof(FixedExpenditureOutputViewModel.Amount).ToString()].Value;
-                workSheetMenuOutputViewModels.Cells[1, 5].Value = localizer[nameof(FixedExpenditureOutputViewModel.MonetaryUnit).ToString()].Value;
-                workSheetMenuOutputViewModels.Cells[1, 6].Value = localizer[nameof(FixedExpenditureOutputViewModel.PaymentMethod).ToString()].Value;
-                workSheetMenuOutputViewModels.Cells[1, 7].Value = localizer[nameof(FixedExpenditureOutputViewModel.MyDepositAsset).ToString()].Value;
-                workSheetMenuOutputViewModels.Cells[1, 8].Value = localizer[nameof(FixedExpenditureOutputViewModel.DepositMonth).ToString()].Value;
-                workSheetMenuOutputViewModels.Cells[1, 9].Value = localizer[nameof(FixedExpenditureOutputViewModel.DepositDay).ToString()].Value;
-                workSheetMenuOutputViewModels.Cells[1, 10].Value = localizer[nameof(FixedExpenditureOutputViewModel.MaturityDate).ToString()].Value;
-                workSheetMenuOutputViewModels.Cells[1, 11].Value = localizer[nameof(FixedExpenditureOutputViewModel.Created).ToString()].Value;
-                workSheetMenuOutputViewModels.Cells[1, 12].Value = localizer[nameof(FixedExpenditureOutputViewModel.Updated).ToString()].Value;
-                workSheetMenuOutputViewModels.Cells[1, 13].Value = localizer[nameof(FixedExpenditureOutputViewModel.Note).ToString()].Value;
-                workSheetMenuOutputViewModels.Cells[1, 14].Value = localizer[nameof(FixedExpenditureOutputViewModel.Noticed).ToString()].Value;
-                workSheetMenuOutputViewModels.Cells[1, 15].Value = localizer[nameof(FixedExpenditureOutputViewModel.Expired).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 1].Value = _localizer[nameof(FixedExpenditureOutputViewModel.MainClass).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 2].Value = _localizer[nameof(FixedExpenditureOutputViewModel.SubClass).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 3].Value = _localizer[nameof(FixedExpenditureOutputViewModel.Contents).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 4].Value = _localizer[nameof(FixedExpenditureOutputViewModel.Amount).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 5].Value = _localizer[nameof(FixedExpenditureOutputViewModel.MonetaryUnit).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 6].Value = _localizer[nameof(FixedExpenditureOutputViewModel.PaymentMethod).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 7].Value = _localizer[nameof(FixedExpenditureOutputViewModel.MyDepositAsset).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 8].Value = _localizer[nameof(FixedExpenditureOutputViewModel.DepositMonth).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 9].Value = _localizer[nameof(FixedExpenditureOutputViewModel.DepositDay).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 10].Value = _localizer[nameof(FixedExpenditureOutputViewModel.MaturityDate).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 11].Value = _localizer[nameof(FixedExpenditureOutputViewModel.Created).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 12].Value = _localizer[nameof(FixedExpenditureOutputViewModel.Updated).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 13].Value = _localizer[nameof(FixedExpenditureOutputViewModel.Note).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 14].Value = _localizer[nameof(FixedExpenditureOutputViewModel.Noticed).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 15].Value = _localizer[nameof(FixedExpenditureOutputViewModel.Expired).ToString()].Value;
 
                 int recordIndex = 2;
                 foreach (FixedExpenditureOutputViewModel item in fixedExpenditureOutputViewModels.OrderByDescending(a => a.Expired).ThenByDescending(a => a.Noticed))
                 {
-                    workSheetMenuOutputViewModels.Cells[recordIndex, 1].Value = localizer[item?.MainClass?.ToString() ?? ""].Value;
-                    workSheetMenuOutputViewModels.Cells[recordIndex, 2].Value = localizer[item?.SubClass?.ToString() ?? ""].Value;
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 1].Value = _localizer[item?.MainClass?.ToString() ?? ""].Value;
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 2].Value = _localizer[item?.SubClass?.ToString() ?? ""].Value;
                     workSheetMenuOutputViewModels.Cells[recordIndex, 3].Value = item.Contents;
                     workSheetMenuOutputViewModels.Cells[recordIndex, 4].Value = Convert.ToDecimal(item.Amount.TrimTrailingZeros());
                     workSheetMenuOutputViewModels.Cells[recordIndex, 5].Value = assets.Where(x => x.ProductName == item.PaymentMethod).FirstOrDefault().MonetaryUnit;

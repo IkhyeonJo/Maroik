@@ -18,27 +18,27 @@ namespace Maroik.WebSite.Controllers
 {
     public class ManagementController : Controller
     {
-        private readonly IHtmlLocalizer<ManagementController> localizer;
-        private readonly ILogger<ManagementController> logger;
-        private readonly IAccountRepository accountRepository;
-        private readonly IHostEnvironment hostEnvironment;
-        private readonly ICategoryRepository categoryRepository;
-        private readonly ISubCategoryRepository subCategoryRepository;
-        private readonly IBoardRepository boardRepository;
-        private readonly IAttachedFileRepository attachedFileRepository;
-        private readonly ICommentRepository commentRepository;
+        private readonly IHtmlLocalizer<ManagementController> _localizer;
+        private readonly ILogger<ManagementController> _logger;
+        private readonly IAccountRepository _accountRepository;
+        private readonly IHostEnvironment _hostEnvironment;
+        private readonly ICategoryRepository _categoryRepository;
+        private readonly ISubCategoryRepository _subCategoryRepository;
+        private readonly IBoardRepository _boardRepository;
+        private readonly IAttachedFileRepository _attachedFileRepository;
+        private readonly ICommentRepository _commentRepository;
 
         public ManagementController(IHtmlLocalizer<ManagementController> localizer, ILogger<ManagementController> logger, IBoardRepository boardRepository, IAttachedFileRepository attachedFileRepository, ICommentRepository commentRepository, IAccountRepository accountRepository, IHostEnvironment hostEnvironment, ICategoryRepository categoryRepository, ISubCategoryRepository subCategoryRepository)
         {
-            this.localizer = localizer;
-            this.logger = logger;
-            this.boardRepository = boardRepository;
-            this.attachedFileRepository = attachedFileRepository;
-            this.accountRepository = accountRepository;
-            this.hostEnvironment = hostEnvironment;
-            this.categoryRepository = categoryRepository;
-            this.subCategoryRepository = subCategoryRepository;
-            this.commentRepository = commentRepository;
+            _localizer = localizer;
+            _logger = logger;
+            _boardRepository = boardRepository;
+            _attachedFileRepository = attachedFileRepository;
+            _accountRepository = accountRepository;
+            _hostEnvironment = hostEnvironment;
+            _categoryRepository = categoryRepository;
+            _subCategoryRepository = subCategoryRepository;
+            _commentRepository = commentRepository;
         }
 
         #region Profile
@@ -49,7 +49,7 @@ namespace Maroik.WebSite.Controllers
         {
             _ = HttpContext.Session.TryGetValue(Maroik.WebSite.Extensions.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account), out byte[] resultByte);
             string loginedAccountTimeZoneIanaId = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId;
-            Account tempAccount = await accountRepository.GetAccountByEmailAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+            Account tempAccount = await _accountRepository.GetAccountByEmailAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
 
             return View(new ProfileOutputViewModel() { Email = tempAccount.Email, AvatarImagePath = tempAccount.AvatarImagePath, Nickname = tempAccount.Nickname, Created = tempAccount.Created.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId), TimeZoneIanaId = tempAccount.TimeZoneIanaId });
         }
@@ -66,7 +66,7 @@ namespace Maroik.WebSite.Controllers
         {
             if (profileInputViewModel.ProfileAvatarFiles == null) // 파일 없을 시
             {
-                return Ok(new { result = false, errorMessage = localizer["Please attach a file"].Value });
+                return Ok(new { result = false, errorMessage = _localizer["Please attach a file"].Value });
             }
             else
             {
@@ -76,7 +76,7 @@ namespace Maroik.WebSite.Controllers
                     if (Path.GetExtension(profileAvatarFile.FileName) is ".png" or ".jpg" or ".jpeg")
                     {
                         _ = HttpContext.Session.TryGetValue(Maroik.WebSite.Extensions.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account), out byte[] resultByte);
-                        string avatarPath = Path.Combine(hostEnvironment.ContentRootPath, "wwwroot", "upload", "Management", "Profile", "Avatar");
+                        string avatarPath = Path.Combine(_hostEnvironment.ContentRootPath, "wwwroot", "upload", "Management", "Profile", "Avatar");
                         if (!Directory.Exists(avatarPath))
                         {
                             _ = Directory.CreateDirectory(avatarPath);
@@ -96,24 +96,24 @@ namespace Maroik.WebSite.Controllers
 
                         try
                         {
-                            Account tempAccount = await accountRepository.GetAccountByEmailAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+                            Account tempAccount = await _accountRepository.GetAccountByEmailAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
                             tempAccount.AvatarImagePath = $"/upload/Management/Profile/Avatar/{avatarFile}";
-                            await accountRepository.UpdateAccountAsync(tempAccount);
+                            await _accountRepository.UpdateAccountAsync(tempAccount);
                             return Ok(new { result = true });
                         }
                         catch
                         {
-                            return Ok(new { result = false, errorMessage = localizer["Input is invalid"].Value });
+                            return Ok(new { result = false, errorMessage = _localizer["Input is invalid"].Value });
                         }
                     }
                     else // 이미지 png 또는 jpg 외 확장자는 거절
                     {
-                        return Ok(new { result = false, errorMessage = localizer["Only .jpg or jpeg or .png file allowed"].Value });
+                        return Ok(new { result = false, errorMessage = _localizer["Only .jpg or jpeg or .png file allowed"].Value });
                     }
                 }
                 else // fileSizeLimitationErrorMessage
                 {
-                    return Ok(new { result = false, errorMessage = localizer["File Size must be smaller than 10MB."].Value });
+                    return Ok(new { result = false, errorMessage = _localizer["File Size must be smaller than 10MB."].Value });
                 }
                 // process uploaded files 
                 // Don't rely on or trust the FileName property without validation.
@@ -137,9 +137,9 @@ namespace Maroik.WebSite.Controllers
                 try
                 {
                     _ = HttpContext.Session.TryGetValue(Maroik.WebSite.Extensions.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account), out byte[] resultByte);
-                    Account tempAccount = await accountRepository.GetAccountByEmailAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+                    Account tempAccount = await _accountRepository.GetAccountByEmailAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
                     tempAccount.TimeZoneIanaId = profileInputViewModel.TimeZoneIanaId;
-                    await accountRepository.UpdateAccountAsync(tempAccount);
+                    await _accountRepository.UpdateAccountAsync(tempAccount);
 
                     HttpContext.Session.Remove(Maroik.WebSite.Extensions.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account));
                     tempAccount.HashedPassword = null;
@@ -147,7 +147,7 @@ namespace Maroik.WebSite.Controllers
                 }
                 catch
                 {
-                    Console.WriteLine(localizer["Input is invalid"].Value);
+                    Console.WriteLine(_localizer["Input is invalid"].Value);
                 }
             }
             return RedirectToAction("Profile", "Management");
@@ -168,27 +168,27 @@ namespace Maroik.WebSite.Controllers
                 try
                 {
                     _ = HttpContext.Session.TryGetValue(Maroik.WebSite.Extensions.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account), out byte[] resultByte);
-                    Account tempAccount = await accountRepository.GetAccountByEmailAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+                    Account tempAccount = await _accountRepository.GetAccountByEmailAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
 
                     if (new RSA(RSAType.RSA2, Encoding.UTF8, RSA.privateKey, RSA.publicKey).Verify(profileInputViewModel.Password ?? "", tempAccount.HashedPassword)) // right password
                     {
                         tempAccount.HashedPassword = new RSA(RSAType.RSA2, Encoding.UTF8, RSA.privateKey, RSA.publicKey).Sign(profileInputViewModel.NewPassword);
-                        await accountRepository.UpdateAccountAsync(tempAccount);
-                        return Json(new { result = true, message = localizer["Password change successfully done."].Value });
+                        await _accountRepository.UpdateAccountAsync(tempAccount);
+                        return Json(new { result = true, message = _localizer["Password change successfully done."].Value });
                     }
                     else // wrong password
                     {
-                        return Json(new { result = false, error = localizer["Invalid password. Please check again."].Value });
+                        return Json(new { result = false, error = _localizer["Invalid password. Please check again."].Value });
                     }
                 }
                 catch
                 {
-                    return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                    return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                 }
             }
             else
             {
-                return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                return Json(new { result = false, error = _localizer["Input is invalid"].Value });
             }
         }
         #endregion
@@ -253,25 +253,25 @@ namespace Maroik.WebSite.Controllers
                     }
                     if (!IsValidEmail(accountInputViewModel.Email)) // 유효하지 않은 메일 형식
                     {
-                        return Json(new { result = false, error = localizer["Invalid email form"].Value });
+                        return Json(new { result = false, error = _localizer["Invalid email form"].Value });
                     }
                     #endregion
 
                     #region Password 형식 체크
                     if (!new Regex("^((?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])|(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[^a-zA-Z0-9])|(?=.*?[A-Z])(?=.*?[0-9])(?=.*?[^a-zA-Z0-9])|(?=.*?[a-z])(?=.*?[0-9])(?=.*?[^a-zA-Z0-9])).{8,}$").IsMatch(accountInputViewModel.Password)) // 유효하지 않은 비밀번호 형식
                     {
-                        return Json(new { result = false, error = localizer["Password must be at least 8 characters and contain at 3 of 4 of the following: upper case (A-Z), lower case (a-z), number (0-9) and special character (e.g. !@#$%^&*)"].Value });
+                        return Json(new { result = false, error = _localizer["Password must be at least 8 characters and contain at 3 of 4 of the following: upper case (A-Z), lower case (a-z), number (0-9) and special character (e.g. !@#$%^&*)"].Value });
                     }
                     #endregion
 
                     #region Nickname 형식 체크
                     if (string.IsNullOrEmpty(accountInputViewModel.Nickname))
                     {
-                        return Json(new { result = false, error = localizer["Please enter Nickname"].Value });
+                        return Json(new { result = false, error = _localizer["Please enter Nickname"].Value });
                     }
                     else if (accountInputViewModel.Nickname.Length is not (>= 1 and <= 255))
                     {
-                        return Json(new { result = false, error = localizer["Nickname is must be between 1 and 255 characters"].Value });
+                        return Json(new { result = false, error = _localizer["Nickname is must be between 1 and 255 characters"].Value });
                     }
                     #endregion
 
@@ -285,19 +285,19 @@ namespace Maroik.WebSite.Controllers
                     #region TimeZone 형식 체크
                     if (string.IsNullOrEmpty(accountInputViewModel.TimeZoneIanaId))
                     {
-                        return Json(new { result = false, error = localizer["Please select time zone"].Value });
+                        return Json(new { result = false, error = _localizer["Please select time zone"].Value });
                     }
                     #endregion
 
                     #region 이미 입력된 이메일로 계정이 있는 지 확인
-                    if (await accountRepository.GetAccountByEmailAsync(accountInputViewModel.Email) != null)
+                    if (await _accountRepository.GetAccountByEmailAsync(accountInputViewModel.Email) != null)
                     {
-                        return Json(new { result = false, error = localizer["This account has already been created."].Value });
+                        return Json(new { result = false, error = _localizer["This account has already been created."].Value });
                     }
                     #endregion
 
                     #region 계정 생성
-                    await accountRepository.CreateAccountAsync
+                    await _accountRepository.CreateAccountAsync
                     (
                     new Account()
                     {
@@ -319,18 +319,18 @@ namespace Maroik.WebSite.Controllers
                         Deleted = false
                     }
                     );
-                    return Json(new { result = true, message = localizer["Account create successfully done."].Value });
+                    return Json(new { result = true, message = _localizer["Account create successfully done."].Value });
                     #endregion
                 }
                 else
                 {
-                    return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                    return Json(new { result = false, error = _localizer["Input is invalid"].Value });
 
                 }
             }
             catch
             {
-                return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                return Json(new { result = false, error = _localizer["Input is invalid"].Value });
             }
         }
         #endregion
@@ -347,7 +347,7 @@ namespace Maroik.WebSite.Controllers
                 string loginedAccountTimeZoneIanaId = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId;
 
                 #region Accounts
-                foreach (Account item in await accountRepository.GetAllAsync())
+                foreach (Account item in await _accountRepository.GetAllAsync())
                 {
                     if (string.IsNullOrEmpty(wholeSearch))
                     {
@@ -427,15 +427,15 @@ namespace Maroik.WebSite.Controllers
         {
             try
             {
-                Account tempAccount = await accountRepository.GetAccountByEmailAsync(email);
+                Account tempAccount = await _accountRepository.GetAccountByEmailAsync(email);
 
                 return tempAccount == null
-                    ? Json(new { result = false, error = localizer["Fail to find the account by given email address"].Value })
+                    ? Json(new { result = false, error = _localizer["Fail to find the account by given email address"].Value })
                     : (IActionResult)Json(new { result = true, account = tempAccount });
             }
             catch
             {
-                return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                return Json(new { result = false, error = _localizer["Input is invalid"].Value });
             }
         }
 
@@ -456,11 +456,11 @@ namespace Maroik.WebSite.Controllers
 
                 if (ModelState.IsValid)
                 {
-                    Account tempAccount = await accountRepository.GetAccountByEmailAsync(accountInputViewModel.Email);
+                    Account tempAccount = await _accountRepository.GetAccountByEmailAsync(accountInputViewModel.Email);
 
                     if (tempAccount == null)
                     {
-                        return Json(new { result = false, error = localizer["Email address is wrong"].Value });
+                        return Json(new { result = false, error = _localizer["Email address is wrong"].Value });
                     }
 
                     tempAccount.Email = accountInputViewModel.Email;
@@ -478,18 +478,18 @@ namespace Maroik.WebSite.Controllers
                     tempAccount.Message = accountInputViewModel.Message;
                     tempAccount.Deleted = accountInputViewModel.Deleted;
 
-                    await accountRepository.UpdateAccountAsync(tempAccount);
+                    await _accountRepository.UpdateAccountAsync(tempAccount);
 
-                    return Json(new { result = true, message = localizer["Successfully updated the account"].Value });
+                    return Json(new { result = true, message = _localizer["Successfully updated the account"].Value });
                 }
                 else
                 {
-                    return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                    return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                 }
             }
             catch
             {
-                return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                return Json(new { result = false, error = _localizer["Input is invalid"].Value });
             }
         }
         #endregion
@@ -502,22 +502,22 @@ namespace Maroik.WebSite.Controllers
         {
             try
             {
-                Account tempAccount = await accountRepository.GetAccountByEmailAsync(accountInputViewModel.Email);
+                Account tempAccount = await _accountRepository.GetAccountByEmailAsync(accountInputViewModel.Email);
 
                 if (tempAccount == null)
                 {
-                    return Json(new { result = false, error = localizer["Fail to find the account by given email address"].Value });
+                    return Json(new { result = false, error = _localizer["Fail to find the account by given email address"].Value });
                 }
                 else
                 {
                     tempAccount.Deleted = true;
-                    await accountRepository.UpdateAccountAsync(tempAccount);
-                    return Json(new { result = true, message = localizer["Successfully deleted the account"].Value });
+                    await _accountRepository.UpdateAccountAsync(tempAccount);
+                    return Json(new { result = true, message = _localizer["Successfully deleted the account"].Value });
                 }
             }
             catch
             {
-                return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                return Json(new { result = false, error = _localizer["Input is invalid"].Value });
             }
         }
         #endregion
@@ -537,7 +537,7 @@ namespace Maroik.WebSite.Controllers
             string loginedAccountTimeZoneIanaId = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId;
 
             #region Accounts
-            foreach (Account item in await accountRepository.GetAllAsync())
+            foreach (Account item in await _accountRepository.GetAllAsync())
             {
                 accountOutputViewModels.Add(new AccountOutputViewModel()
                 {
@@ -571,22 +571,22 @@ namespace Maroik.WebSite.Controllers
                 workSheetMenuOutputViewModels.Row(1).Height = 20;
                 workSheetMenuOutputViewModels.Row(1).Style.HorizontalAlignment = OfficeOpenXml.Style.ExcelHorizontalAlignment.Center;
                 workSheetMenuOutputViewModels.Row(1).Style.Font.Bold = true;
-                workSheetMenuOutputViewModels.Cells[1, 1].Value = localizer[nameof(AccountOutputViewModel.Email).ToString()].Value;
-                workSheetMenuOutputViewModels.Cells[1, 2].Value = localizer[nameof(AccountOutputViewModel.HashedPassword).ToString()].Value;
-                workSheetMenuOutputViewModels.Cells[1, 3].Value = localizer[nameof(AccountOutputViewModel.Nickname).ToString()].Value;
-                workSheetMenuOutputViewModels.Cells[1, 4].Value = localizer[nameof(AccountOutputViewModel.AvatarImagePath).ToString()].Value;
-                workSheetMenuOutputViewModels.Cells[1, 5].Value = localizer[nameof(AccountOutputViewModel.Role).ToString()].Value;
-                workSheetMenuOutputViewModels.Cells[1, 6].Value = localizer[nameof(AccountOutputViewModel.TimeZoneIanaId).ToString()].Value;
-                workSheetMenuOutputViewModels.Cells[1, 7].Value = localizer[nameof(AccountOutputViewModel.Locked).ToString()].Value;
-                workSheetMenuOutputViewModels.Cells[1, 8].Value = localizer[nameof(AccountOutputViewModel.LoginAttempt).ToString()].Value;
-                workSheetMenuOutputViewModels.Cells[1, 9].Value = localizer[nameof(AccountOutputViewModel.EmailConfirmed).ToString()].Value;
-                workSheetMenuOutputViewModels.Cells[1, 10].Value = localizer[nameof(AccountOutputViewModel.AgreedServiceTerms).ToString()].Value;
-                workSheetMenuOutputViewModels.Cells[1, 11].Value = localizer[nameof(AccountOutputViewModel.RegistrationToken).ToString()].Value;
-                workSheetMenuOutputViewModels.Cells[1, 12].Value = localizer[nameof(AccountOutputViewModel.ResetPasswordToken).ToString()].Value;
-                workSheetMenuOutputViewModels.Cells[1, 13].Value = localizer[nameof(AccountOutputViewModel.Created).ToString()].Value;
-                workSheetMenuOutputViewModels.Cells[1, 14].Value = localizer[nameof(AccountOutputViewModel.Updated).ToString()].Value;
-                workSheetMenuOutputViewModels.Cells[1, 15].Value = localizer[nameof(AccountOutputViewModel.Message).ToString()].Value;
-                workSheetMenuOutputViewModels.Cells[1, 16].Value = localizer[nameof(AccountOutputViewModel.Deleted).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 1].Value = _localizer[nameof(AccountOutputViewModel.Email).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 2].Value = _localizer[nameof(AccountOutputViewModel.HashedPassword).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 3].Value = _localizer[nameof(AccountOutputViewModel.Nickname).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 4].Value = _localizer[nameof(AccountOutputViewModel.AvatarImagePath).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 5].Value = _localizer[nameof(AccountOutputViewModel.Role).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 6].Value = _localizer[nameof(AccountOutputViewModel.TimeZoneIanaId).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 7].Value = _localizer[nameof(AccountOutputViewModel.Locked).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 8].Value = _localizer[nameof(AccountOutputViewModel.LoginAttempt).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 9].Value = _localizer[nameof(AccountOutputViewModel.EmailConfirmed).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 10].Value = _localizer[nameof(AccountOutputViewModel.AgreedServiceTerms).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 11].Value = _localizer[nameof(AccountOutputViewModel.RegistrationToken).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 12].Value = _localizer[nameof(AccountOutputViewModel.ResetPasswordToken).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 13].Value = _localizer[nameof(AccountOutputViewModel.Created).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 14].Value = _localizer[nameof(AccountOutputViewModel.Updated).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 15].Value = _localizer[nameof(AccountOutputViewModel.Message).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 16].Value = _localizer[nameof(AccountOutputViewModel.Deleted).ToString()].Value;
 
                 int recordIndex = 2;
                 foreach (AccountOutputViewModel item in accountOutputViewModels)
@@ -645,18 +645,18 @@ namespace Maroik.WebSite.Controllers
                         Role = menuInputViewModel.Role,
                         Order = menuInputViewModel.Order
                     };
-                    await categoryRepository.CreateCategoryAsync(category);
+                    await _categoryRepository.CreateCategoryAsync(category);
 
-                    return Json(new { result = true, message = localizer["Successfully created the category"].Value });
+                    return Json(new { result = true, message = _localizer["Successfully created the category"].Value });
                 }
                 else
                 {
-                    return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                    return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                 }
             }
             catch
             {
-                return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                return Json(new { result = false, error = _localizer["Input is invalid"].Value });
             }
         }
 
@@ -681,18 +681,18 @@ namespace Maroik.WebSite.Controllers
                         Role = menuInputViewModel.Role,
                         Order = menuInputViewModel.Order
                     };
-                    await subCategoryRepository.CreateSubCategoryAsync(subCategory);
+                    await _subCategoryRepository.CreateSubCategoryAsync(subCategory);
 
-                    return Json(new { result = true, message = localizer["Successfully created the subCategory"].Value });
+                    return Json(new { result = true, message = _localizer["Successfully created the subCategory"].Value });
                 }
                 else
                 {
-                    return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                    return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                 }
             }
             catch
             {
-                return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                return Json(new { result = false, error = _localizer["Input is invalid"].Value });
             }
         }
         #endregion
@@ -706,7 +706,7 @@ namespace Maroik.WebSite.Controllers
                 List<MenuOutputViewModel> menuOutputViewModels = [];
 
                 #region AdminCategories
-                foreach (Category item in await categoryRepository.GetCategoryByRoleAsync(Role.Admin))
+                foreach (Category item in await _categoryRepository.GetCategoryByRoleAsync(Role.Admin))
                 {
                     if (string.IsNullOrEmpty(wholeSearch))
                     {
@@ -752,7 +752,7 @@ namespace Maroik.WebSite.Controllers
                 #endregion
 
                 #region UserCategories
-                foreach (Category item in await categoryRepository.GetCategoryByRoleAsync(Role.User))
+                foreach (Category item in await _categoryRepository.GetCategoryByRoleAsync(Role.User))
                 {
                     if (string.IsNullOrEmpty(wholeSearch))
                     {
@@ -798,7 +798,7 @@ namespace Maroik.WebSite.Controllers
                 #endregion
 
                 #region AnonymousCategories
-                foreach (Category item in await categoryRepository.GetCategoryByRoleAsync(Role.Anonymous))
+                foreach (Category item in await _categoryRepository.GetCategoryByRoleAsync(Role.Anonymous))
                 {
                     if (string.IsNullOrEmpty(wholeSearch))
                     {
@@ -844,7 +844,7 @@ namespace Maroik.WebSite.Controllers
                 #endregion
 
                 #region AdminSubCategories
-                foreach (SubCategory item in await subCategoryRepository.GetSubCategoryByRoleAsync(Role.Admin))
+                foreach (SubCategory item in await _subCategoryRepository.GetSubCategoryByRoleAsync(Role.Admin))
                 {
                     if (string.IsNullOrEmpty(wholeSearch))
                     {
@@ -890,7 +890,7 @@ namespace Maroik.WebSite.Controllers
                 #endregion
 
                 #region UserSubCategories
-                foreach (SubCategory item in await subCategoryRepository.GetSubCategoryByRoleAsync(Role.User))
+                foreach (SubCategory item in await _subCategoryRepository.GetSubCategoryByRoleAsync(Role.User))
                 {
                     if (string.IsNullOrEmpty(wholeSearch))
                     {
@@ -936,7 +936,7 @@ namespace Maroik.WebSite.Controllers
                 #endregion
 
                 #region AnonymousSubCategories
-                foreach (SubCategory item in await subCategoryRepository.GetSubCategoryByRoleAsync(Role.Anonymous))
+                foreach (SubCategory item in await _subCategoryRepository.GetSubCategoryByRoleAsync(Role.Anonymous))
                 {
                     if (string.IsNullOrEmpty(wholeSearch))
                     {
@@ -998,7 +998,7 @@ namespace Maroik.WebSite.Controllers
                 List<MenuOutputViewModel> menuOutputViewModels = [];
 
                 #region AdminCategories
-                foreach (Category item in await categoryRepository.GetCategoryByRoleAsync(Role.Admin))
+                foreach (Category item in await _categoryRepository.GetCategoryByRoleAsync(Role.Admin))
                 {
                     menuOutputViewModels.Add(new MenuOutputViewModel()
                     {
@@ -1016,7 +1016,7 @@ namespace Maroik.WebSite.Controllers
                 #endregion
 
                 #region UserCategories
-                foreach (Category item in await categoryRepository.GetCategoryByRoleAsync(Role.User))
+                foreach (Category item in await _categoryRepository.GetCategoryByRoleAsync(Role.User))
                 {
                     menuOutputViewModels.Add(new MenuOutputViewModel()
                     {
@@ -1034,7 +1034,7 @@ namespace Maroik.WebSite.Controllers
                 #endregion
 
                 #region AnonymousCategories
-                foreach (Category item in await categoryRepository.GetCategoryByRoleAsync(Role.Anonymous))
+                foreach (Category item in await _categoryRepository.GetCategoryByRoleAsync(Role.Anonymous))
                 {
                     menuOutputViewModels.Add(new MenuOutputViewModel()
                     {
@@ -1060,7 +1060,7 @@ namespace Maroik.WebSite.Controllers
             }
             catch
             {
-                return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                return Json(new { result = false, error = _localizer["Input is invalid"].Value });
             }
         }
 
@@ -1074,7 +1074,7 @@ namespace Maroik.WebSite.Controllers
                 List<MenuOutputViewModel> menuOutputViewModels = [];
 
                 #region AdminSubCategories
-                foreach (SubCategory item in await subCategoryRepository.GetSubCategoryByRoleAsync(Role.Admin))
+                foreach (SubCategory item in await _subCategoryRepository.GetSubCategoryByRoleAsync(Role.Admin))
                 {
                     menuOutputViewModels.Add(new MenuOutputViewModel()
                     {
@@ -1092,7 +1092,7 @@ namespace Maroik.WebSite.Controllers
                 #endregion
 
                 #region UserSubCategories
-                foreach (SubCategory item in await subCategoryRepository.GetSubCategoryByRoleAsync(Role.User))
+                foreach (SubCategory item in await _subCategoryRepository.GetSubCategoryByRoleAsync(Role.User))
                 {
                     menuOutputViewModels.Add(new MenuOutputViewModel()
                     {
@@ -1110,7 +1110,7 @@ namespace Maroik.WebSite.Controllers
                 #endregion
 
                 #region AnonymousSubCategories
-                foreach (SubCategory item in await subCategoryRepository.GetSubCategoryByRoleAsync(Role.Anonymous))
+                foreach (SubCategory item in await _subCategoryRepository.GetSubCategoryByRoleAsync(Role.Anonymous))
                 {
                     menuOutputViewModels.Add(new MenuOutputViewModel()
                     {
@@ -1136,7 +1136,7 @@ namespace Maroik.WebSite.Controllers
             }
             catch
             {
-                return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                return Json(new { result = false, error = _localizer["Input is invalid"].Value });
             }
         }
         #endregion
@@ -1164,18 +1164,18 @@ namespace Maroik.WebSite.Controllers
                         Role = menuInputViewModel.Role,
                         Order = menuInputViewModel.Order
                     };
-                    await categoryRepository.UpdateCategoryAsync(category);
+                    await _categoryRepository.UpdateCategoryAsync(category);
 
-                    return Json(new { result = true, message = localizer["Successfully updated the category"].Value });
+                    return Json(new { result = true, message = _localizer["Successfully updated the category"].Value });
                 }
                 else
                 {
-                    return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                    return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                 }
             }
             catch
             {
-                return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                return Json(new { result = false, error = _localizer["Input is invalid"].Value });
             }
         }
 
@@ -1201,18 +1201,18 @@ namespace Maroik.WebSite.Controllers
                         Role = menuInputViewModel.Role,
                         Order = menuInputViewModel.Order
                     };
-                    await subCategoryRepository.UpdateSubCategoryAsync(subCategory);
+                    await _subCategoryRepository.UpdateSubCategoryAsync(subCategory);
 
-                    return Json(new { result = true, message = localizer["Successfully updated the subCategory"].Value });
+                    return Json(new { result = true, message = _localizer["Successfully updated the subCategory"].Value });
                 }
                 else
                 {
-                    return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                    return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                 }
             }
             catch
             {
-                return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                return Json(new { result = false, error = _localizer["Input is invalid"].Value });
             }
         }
         #endregion
@@ -1240,18 +1240,18 @@ namespace Maroik.WebSite.Controllers
                         Role = menuInputViewModel.Role,
                         Order = menuInputViewModel.Order
                     };
-                    await categoryRepository.DeleteCategoryAsync(category);
+                    await _categoryRepository.DeleteCategoryAsync(category);
 
-                    return Json(new { result = true, message = localizer["Successfully deleted the category"].Value });
+                    return Json(new { result = true, message = _localizer["Successfully deleted the category"].Value });
                 }
                 else
                 {
-                    return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                    return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                 }
             }
             catch
             {
-                return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                return Json(new { result = false, error = _localizer["Input is invalid"].Value });
             }
         }
         [HttpPost]
@@ -1276,18 +1276,18 @@ namespace Maroik.WebSite.Controllers
                         Role = menuInputViewModel.Role,
                         Order = menuInputViewModel.Order
                     };
-                    await subCategoryRepository.DeleteSubCategoryAsync(subCategory);
+                    await _subCategoryRepository.DeleteSubCategoryAsync(subCategory);
 
-                    return Json(new { result = true, message = localizer["Successfully deleted the subCategory"].Value });
+                    return Json(new { result = true, message = _localizer["Successfully deleted the subCategory"].Value });
                 }
                 else
                 {
-                    return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                    return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                 }
             }
             catch
             {
-                return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                return Json(new { result = false, error = _localizer["Input is invalid"].Value });
             }
         }
         #endregion
@@ -1307,7 +1307,7 @@ namespace Maroik.WebSite.Controllers
             string loginedAccountTimeZoneIanaId = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId;
 
             #region AdminCategories
-            foreach (Category item in await categoryRepository.GetCategoryByRoleAsync(Role.Admin))
+            foreach (Category item in await _categoryRepository.GetCategoryByRoleAsync(Role.Admin))
             {
                 menuOutputViewModels.Add(new MenuOutputViewModel()
                 {
@@ -1325,7 +1325,7 @@ namespace Maroik.WebSite.Controllers
             #endregion
 
             #region UserCategories
-            foreach (Category item in await categoryRepository.GetCategoryByRoleAsync(Role.User))
+            foreach (Category item in await _categoryRepository.GetCategoryByRoleAsync(Role.User))
             {
                 menuOutputViewModels.Add(new MenuOutputViewModel()
                 {
@@ -1343,7 +1343,7 @@ namespace Maroik.WebSite.Controllers
             #endregion
 
             #region AnonymousCategories
-            foreach (Category item in await categoryRepository.GetCategoryByRoleAsync(Role.Anonymous))
+            foreach (Category item in await _categoryRepository.GetCategoryByRoleAsync(Role.Anonymous))
             {
                 menuOutputViewModels.Add(new MenuOutputViewModel()
                 {
@@ -1361,7 +1361,7 @@ namespace Maroik.WebSite.Controllers
             #endregion
 
             #region AdminSubCategories
-            foreach (SubCategory item in await subCategoryRepository.GetSubCategoryByRoleAsync(Role.Admin))
+            foreach (SubCategory item in await _subCategoryRepository.GetSubCategoryByRoleAsync(Role.Admin))
             {
                 menuOutputViewModels.Add(new MenuOutputViewModel()
                 {
@@ -1379,7 +1379,7 @@ namespace Maroik.WebSite.Controllers
             #endregion
 
             #region UserSubCategories
-            foreach (SubCategory item in await subCategoryRepository.GetSubCategoryByRoleAsync(Role.User))
+            foreach (SubCategory item in await _subCategoryRepository.GetSubCategoryByRoleAsync(Role.User))
             {
                 menuOutputViewModels.Add(new MenuOutputViewModel()
                 {
@@ -1397,7 +1397,7 @@ namespace Maroik.WebSite.Controllers
             #endregion
 
             #region AnonymousSubCategories
-            foreach (SubCategory item in await subCategoryRepository.GetSubCategoryByRoleAsync(Role.Anonymous))
+            foreach (SubCategory item in await _subCategoryRepository.GetSubCategoryByRoleAsync(Role.Anonymous))
             {
                 menuOutputViewModels.Add(new MenuOutputViewModel()
                 {
@@ -1425,15 +1425,15 @@ namespace Maroik.WebSite.Controllers
                 workSheetMenuOutputViewModels.Row(1).Height = 20;
                 workSheetMenuOutputViewModels.Row(1).Style.HorizontalAlignment = OfficeOpenXml.Style.ExcelHorizontalAlignment.Center;
                 workSheetMenuOutputViewModels.Row(1).Style.Font.Bold = true;
-                workSheetMenuOutputViewModels.Cells[1, 1].Value = localizer[nameof(MenuOutputViewModel.Id).ToString()].Value;
-                workSheetMenuOutputViewModels.Cells[1, 2].Value = localizer[nameof(MenuOutputViewModel.CategoryId).ToString()].Value;
-                workSheetMenuOutputViewModels.Cells[1, 3].Value = localizer[nameof(MenuOutputViewModel.Name).ToString()].Value;
-                workSheetMenuOutputViewModels.Cells[1, 4].Value = localizer[nameof(MenuOutputViewModel.DisplayName).ToString()].Value;
-                workSheetMenuOutputViewModels.Cells[1, 5].Value = localizer[nameof(MenuOutputViewModel.IconPath).ToString()].Value;
-                workSheetMenuOutputViewModels.Cells[1, 6].Value = localizer[nameof(MenuOutputViewModel.Controller).ToString()].Value;
-                workSheetMenuOutputViewModels.Cells[1, 7].Value = localizer[nameof(MenuOutputViewModel.Action).ToString()].Value;
-                workSheetMenuOutputViewModels.Cells[1, 8].Value = localizer[nameof(MenuOutputViewModel.Role).ToString()].Value;
-                workSheetMenuOutputViewModels.Cells[1, 9].Value = localizer[nameof(MenuOutputViewModel.Order).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 1].Value = _localizer[nameof(MenuOutputViewModel.Id).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 2].Value = _localizer[nameof(MenuOutputViewModel.CategoryId).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 3].Value = _localizer[nameof(MenuOutputViewModel.Name).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 4].Value = _localizer[nameof(MenuOutputViewModel.DisplayName).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 5].Value = _localizer[nameof(MenuOutputViewModel.IconPath).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 6].Value = _localizer[nameof(MenuOutputViewModel.Controller).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 7].Value = _localizer[nameof(MenuOutputViewModel.Action).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 8].Value = _localizer[nameof(MenuOutputViewModel.Role).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 9].Value = _localizer[nameof(MenuOutputViewModel.Order).ToString()].Value;
 
                 int recordIndex = 2;
                 foreach (MenuOutputViewModel item in menuOutputViewModels)
@@ -1491,24 +1491,24 @@ namespace Maroik.WebSite.Controllers
 
                     if (boardInputViewModel.Title.Length is not (> 0 and <= 100)) // 제목 길이
                     {
-                        return Json(new { result = false, error = localizer["Title length is must be between 1 and 100 characters."].Value });
+                        return Json(new { result = false, error = _localizer["Title length is must be between 1 and 100 characters."].Value });
                     }
 
                     if (boardInputViewModel.Content.Length > 16384) // Content Maxlength: 16KB
                     {
-                        return Json(new { result = false, error = localizer["content length is must be between 0 and 16384 characters."].Value });
+                        return Json(new { result = false, error = _localizer["content length is must be between 0 and 16384 characters."].Value });
                     }
 
                     if (boardInputViewModel.UploadedFile != null) // 파일 첨부가 되었다면
                     {
                         if (!(Path.GetExtension(boardInputViewModel.UploadedFile.FileName) == ".zip")) // zip 확장자만 가능
                         {
-                            return Json(new { result = false, error = localizer["Only zip extension allowed."].Value });
+                            return Json(new { result = false, error = _localizer["Only zip extension allowed."].Value });
                         }
 
                         if (boardInputViewModel.UploadedFile.Length is not (> 0 and <= 10485760)) // 10MB 이하만 가능
                         {
-                            return Json(new { result = false, error = localizer["uploaded file size must be smaller than 10MB."].Value });
+                            return Json(new { result = false, error = _localizer["uploaded file size must be smaller than 10MB."].Value });
                         }
                     }
 
@@ -1548,10 +1548,10 @@ namespace Maroik.WebSite.Controllers
                             }
                             else // 비로그인 사용자인 경우
                             {
-                                return Json(new { result = false, error = localizer["Please Login to write board"].Value });
+                                return Json(new { result = false, error = _localizer["Please Login to write board"].Value });
                             }
 
-                            await boardRepository.WriteBoardAsync(board);
+                            await _boardRepository.WriteBoardAsync(board);
 
                             #region 첨부 파일 저장
                             if (boardInputViewModel.UploadedFile != null) // 첨부 파일 존재 시,
@@ -1560,7 +1560,7 @@ namespace Maroik.WebSite.Controllers
                                 {
                                     int createdBoardId = board.Id; // 첨부파일 FK 해서 로직 추가할 것
 
-                                    string attachedFilePath = Path.Combine(hostEnvironment.ContentRootPath, "wwwroot", "upload", "Management", "attachedFiles", $"{createdBoardId}");
+                                    string attachedFilePath = Path.Combine(_hostEnvironment.ContentRootPath, "wwwroot", "upload", "Management", "attachedFiles", $"{createdBoardId}");
                                     if (!Directory.Exists(attachedFilePath))
                                     {
                                         _ = Directory.CreateDirectory(attachedFilePath);
@@ -1578,7 +1578,7 @@ namespace Maroik.WebSite.Controllers
                                         await stream.FlushAsync();
                                     }
 
-                                    await attachedFileRepository.SaveAttachedFileAsync(new AttachedFile()
+                                    await _attachedFileRepository.SaveAttachedFileAsync(new AttachedFile()
                                     {
                                         BoardId = createdBoardId,
                                         Size = Convert.ToInt32(boardInputViewModel.UploadedFile.Length),
@@ -1589,32 +1589,32 @@ namespace Maroik.WebSite.Controllers
                                 }
                                 else
                                 {
-                                    return Ok(new { result = false, errorMessage = localizer["File Size must be smaller than 10MB."].Value });
+                                    return Ok(new { result = false, errorMessage = _localizer["File Size must be smaller than 10MB."].Value });
                                 }
 
                             }
                             #endregion
 
-                            return Json(new { result = true, message = localizer["The board has been successfully created."].Value });
+                            return Json(new { result = true, message = _localizer["The board has been successfully created."].Value });
                         }
                         else
                         {
-                            return Json(new { result = false, error = localizer["Please Login to write board"].Value });
+                            return Json(new { result = false, error = _localizer["Please Login to write board"].Value });
                         }
                     }
                     catch
                     {
-                        return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                        return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                     }
                 }
                 else
                 {
-                    return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                    return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                 }
             }
             catch
             {
-                return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                return Json(new { result = false, error = _localizer["Input is invalid"].Value });
             }
         }
         #endregion
@@ -1632,7 +1632,7 @@ namespace Maroik.WebSite.Controllers
                 {
                     if (string.IsNullOrEmpty(commentInputViewModel.Content))
                     {
-                        return Json(new { result = false, error = localizer["Please enter a comment."].Value });
+                        return Json(new { result = false, error = _localizer["Please enter a comment."].Value });
                     }
 
                     #region HtmlSanitizer
@@ -1650,16 +1650,16 @@ namespace Maroik.WebSite.Controllers
                         {
                             Account loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)); // Get Session
 
-                            IEnumerable<Board> privateNoteBoards = await boardRepository.GetOneTypeBoards(EnumHelper.GetDescription(BoardType.PrivateNote));
+                            IEnumerable<Board> privateNoteBoards = await _boardRepository.GetOneTypeBoards(EnumHelper.GetDescription(BoardType.PrivateNote));
                             privateNoteBoards = privateNoteBoards.Where(m => m.Writer == loginedAccount.Nickname).Where(m => m.Deleted == false).OrderByDescending(a => a.Id);
                             Board privateNoteBoard = privateNoteBoards.FirstOrDefault(m => m.Id == commentInputViewModel.BoardId);
 
                             if (privateNoteBoard.Id != commentInputViewModel.BoardId)
                             {
-                                return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                                return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                             }
 
-                            IEnumerable<Comment> totalCommentsInSelectedBoard = await commentRepository.GetOneBoardComments(commentInputViewModel.BoardId);
+                            IEnumerable<Comment> totalCommentsInSelectedBoard = await _commentRepository.GetOneBoardComments(commentInputViewModel.BoardId);
 
                             Comment comment = new()
                             {
@@ -1671,28 +1671,28 @@ namespace Maroik.WebSite.Controllers
                                 Created = DateTime.UtcNow,
                                 Deleted = false
                             };
-                            await commentRepository.WriteCommentAsync(comment);
+                            await _commentRepository.WriteCommentAsync(comment);
 
                             return Json(new { result = true, boardId = commentInputViewModel.BoardId, page = commentInputViewModel.DetailCurrentPage });
                         }
                         else
                         {
-                            return Json(new { result = false, error = localizer["Please Login to write comment."].Value });
+                            return Json(new { result = false, error = _localizer["Please Login to write comment."].Value });
                         }
                     }
                     catch
                     {
-                        return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                        return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                     }
                 }
                 else
                 {
-                    return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                    return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                 }
             }
             catch
             {
-                return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                return Json(new { result = false, error = _localizer["Input is invalid"].Value });
             }
         }
         #endregion
@@ -1708,7 +1708,7 @@ namespace Maroik.WebSite.Controllers
         {
             if (summernoteImageFile == null) // 파일 없을 시
             {
-                return Ok(new { result = false, errorMessage = localizer["Please attach a file."].Value });
+                return Ok(new { result = false, errorMessage = _localizer["Please attach a file."].Value });
             }
             else
             {
@@ -1717,7 +1717,7 @@ namespace Maroik.WebSite.Controllers
                     if (Path.GetExtension(summernoteImageFile.FileName) is ".png" or ".jpg" or ".jpeg")
                     {
 
-                        string summernoteImagePath = Path.Combine(hostEnvironment.ContentRootPath, "wwwroot", "upload", "Management", "summernote", "images");
+                        string summernoteImagePath = Path.Combine(_hostEnvironment.ContentRootPath, "wwwroot", "upload", "Management", "summernote", "images");
                         if (!Directory.Exists(summernoteImagePath))
                         {
                             _ = Directory.CreateDirectory(summernoteImagePath);
@@ -1737,12 +1737,12 @@ namespace Maroik.WebSite.Controllers
                     }
                     else // 이미지 png 또는 jpg 또는 jpeg 외 확장자는 거절
                     {
-                        return Ok(new { result = false, errorMessage = localizer["Only .jpg or jpeg or .png file allowed."].Value });
+                        return Ok(new { result = false, errorMessage = _localizer["Only .jpg or jpeg or .png file allowed."].Value });
                     }
                 }
                 else
                 {
-                    return Ok(new { result = false, errorMessage = localizer["File Size must be smaller than 10MB."].Value });
+                    return Ok(new { result = false, errorMessage = _localizer["File Size must be smaller than 10MB."].Value });
                 }
             }
         }
@@ -1784,9 +1784,9 @@ namespace Maroik.WebSite.Controllers
                     DetailBoardId = boardId ?? default
                 };
 
-                IEnumerable<Board> privateNoteBoards = await boardRepository.GetOneTypeBoards(EnumHelper.GetDescription(BoardType.PrivateNote));
+                IEnumerable<Board> privateNoteBoards = await _boardRepository.GetOneTypeBoards(EnumHelper.GetDescription(BoardType.PrivateNote));
                 privateNoteBoards = privateNoteBoards.Where(m => m.Writer == loginedAccount.Nickname).Where(m => m.Deleted == false).OrderByDescending(a => a.Id);
-                List<AttachedFile> attachedFiles = await attachedFileRepository.GetAllAsync();
+                List<AttachedFile> attachedFiles = await _attachedFileRepository.GetAllAsync();
 
                 try
                 {
@@ -1801,7 +1801,7 @@ namespace Maroik.WebSite.Controllers
                     }
 
                     privateNoteBoard.Views++;
-                    await boardRepository.UpdateBoardAsync(privateNoteBoard);
+                    await _boardRepository.UpdateBoardAsync(privateNoteBoard);
                     AttachedFile attachedFile = attachedFiles.FirstOrDefault(m => m.BoardId == boardId);
 
 
@@ -1840,11 +1840,11 @@ namespace Maroik.WebSite.Controllers
                 };
 
                 _ = HttpContext.Session.TryGetValue(Maroik.WebSite.Extensions.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account), out byte[] resultByte);
-                Account loginedAccount = await accountRepository.GetAccountByEmailAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+                Account loginedAccount = await _accountRepository.GetAccountByEmailAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
 
-                IEnumerable<Board> privateNoteBoards = await boardRepository.GetOneTypeBoards(EnumHelper.GetDescription(BoardType.PrivateNote));
+                IEnumerable<Board> privateNoteBoards = await _boardRepository.GetOneTypeBoards(EnumHelper.GetDescription(BoardType.PrivateNote));
                 privateNoteBoards = privateNoteBoards.Where(m => m.Writer == loginedAccount.Nickname).Where(m => m.Deleted == false).OrderByDescending(a => a.Id);
-                List<AttachedFile> attachedFiles = await attachedFileRepository.GetAllAsync();
+                List<AttachedFile> attachedFiles = await _attachedFileRepository.GetAllAsync();
 
                 try
                 {
@@ -1894,7 +1894,7 @@ namespace Maroik.WebSite.Controllers
                 #endregion
 
                 #region 관련된 모든 게시판 데이터 가져오는 로직
-                IEnumerable<Board> privateNoteBoards = await boardRepository.GetOneTypeBoards(EnumHelper.GetDescription(BoardType.PrivateNote));
+                IEnumerable<Board> privateNoteBoards = await _boardRepository.GetOneTypeBoards(EnumHelper.GetDescription(BoardType.PrivateNote));
                 privateNoteBoards = privateNoteBoards.Where(m => m.Writer == loginedAccount.Nickname).Where(m => m.Deleted == false && m.Noticed == false).OrderByDescending(a => a.Id);
                 #endregion
 
@@ -1968,27 +1968,27 @@ namespace Maroik.WebSite.Controllers
             try
             {
                 _ = HttpContext.Session.TryGetValue(Maroik.WebSite.Extensions.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account), out byte[] resultByte);
-                Account loginedAccount = await accountRepository.GetAccountByEmailAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+                Account loginedAccount = await _accountRepository.GetAccountByEmailAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
 
-                IEnumerable<Board> privateNoteBoards = await boardRepository.GetOneTypeBoards(EnumHelper.GetDescription(BoardType.PrivateNote));
+                IEnumerable<Board> privateNoteBoards = await _boardRepository.GetOneTypeBoards(EnumHelper.GetDescription(BoardType.PrivateNote));
                 privateNoteBoards = privateNoteBoards.Where(m => m.Writer == loginedAccount.Nickname).Where(m => m.Deleted == false).OrderByDescending(a => a.Id);
 
                 if (privateNoteBoards == null)
                 {
-                    return Json(new { result = false, error = localizer["No PrivateNoteBoard exists"].Value });
+                    return Json(new { result = false, error = _localizer["No PrivateNoteBoard exists"].Value });
                 }
                 else
                 {
                     Board tempPrivateNoteBoard = privateNoteBoards.Where(a => a.Id == id).FirstOrDefault();
 
                     return tempPrivateNoteBoard == null
-                        ? Json(new { result = false, error = localizer["Input is invalid"].Value })
+                        ? Json(new { result = false, error = _localizer["Input is invalid"].Value })
                         : (IActionResult)Json(new { result = true, PrivateNoteBoard = tempPrivateNoteBoard });
                 }
             }
             catch
             {
-                return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                return Json(new { result = false, error = _localizer["Input is invalid"].Value });
             }
         }
         #endregion
@@ -2021,24 +2021,24 @@ namespace Maroik.WebSite.Controllers
 
                     if (boardInputViewModel.Title.Length is not (> 0 and <= 100)) // 제목 길이
                     {
-                        return Json(new { result = false, error = localizer["Title length is must be between 1 and 100 characters."].Value });
+                        return Json(new { result = false, error = _localizer["Title length is must be between 1 and 100 characters."].Value });
                     }
 
                     if (boardInputViewModel.Content.Length > 16384) // Content Maxlength: 16KB
                     {
-                        return Json(new { result = false, error = localizer["content length is must be between 0 and 16384 characters."].Value });
+                        return Json(new { result = false, error = _localizer["content length is must be between 0 and 16384 characters."].Value });
                     }
 
                     if (boardInputViewModel.UploadedFile != null) // 파일 첨부가 되었다면
                     {
                         if (!(Path.GetExtension(boardInputViewModel.UploadedFile.FileName) == ".zip")) // zip 확장자만 가능
                         {
-                            return Json(new { result = false, error = localizer["Only zip extension allowed."].Value });
+                            return Json(new { result = false, error = _localizer["Only zip extension allowed."].Value });
                         }
 
                         if (boardInputViewModel.UploadedFile.Length is not (> 0 and <= 10485760)) // 10MB 이하만 가능
                         {
-                            return Json(new { result = false, error = localizer["uploaded file size must be smaller than 10MB."].Value });
+                            return Json(new { result = false, error = _localizer["uploaded file size must be smaller than 10MB."].Value });
                         }
                     }
 
@@ -2050,14 +2050,14 @@ namespace Maroik.WebSite.Controllers
                         {
                             Account loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)); // Get Session
 
-                            IEnumerable<Board> privateNoteBoards = await boardRepository.GetOneTypeBoards(EnumHelper.GetDescription(BoardType.PrivateNote));
+                            IEnumerable<Board> privateNoteBoards = await _boardRepository.GetOneTypeBoards(EnumHelper.GetDescription(BoardType.PrivateNote));
                             privateNoteBoards = privateNoteBoards.Where(m => m.Writer == loginedAccount.Nickname).Where(m => m.Deleted == false).OrderByDescending(a => a.Id);
 
                             Board tempPrivateNoteBoard = privateNoteBoards.Where(a => a.Id == boardInputViewModel.Id).FirstOrDefault();
 
                             if (tempPrivateNoteBoard.Writer != loginedAccount.Nickname)
                             {
-                                return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                                return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                             }
 
                             tempPrivateNoteBoard.Title = boardInputViewModel.Title;
@@ -2065,9 +2065,9 @@ namespace Maroik.WebSite.Controllers
                             //tempPrivateNoteBoard.Locked = boardInputViewModel.Locked;
                             tempPrivateNoteBoard.Updated = DateTime.UtcNow;
 
-                            await boardRepository.UpdateBoardAsync(tempPrivateNoteBoard);
+                            await _boardRepository.UpdateBoardAsync(tempPrivateNoteBoard);
 
-                            List<AttachedFile> attachedFiles = await attachedFileRepository?.GetAllAsync();
+                            List<AttachedFile> attachedFiles = await _attachedFileRepository?.GetAllAsync();
                             AttachedFile previousAttachedFile = attachedFiles?.FirstOrDefault(m => m.BoardId == boardInputViewModel.Id);
 
                             #region 첨부 파일 저장
@@ -2079,7 +2079,7 @@ namespace Maroik.WebSite.Controllers
                                 {
                                     int createdBoardId = boardInputViewModel.Id; // 첨부파일 FK 해서 로직 추가할 것
 
-                                    string attachedFilePath = Path.Combine(hostEnvironment.ContentRootPath, "wwwroot", "upload", "Management", "attachedFiles", $"{createdBoardId}");
+                                    string attachedFilePath = Path.Combine(_hostEnvironment.ContentRootPath, "wwwroot", "upload", "Management", "attachedFiles", $"{createdBoardId}");
                                     if (!Directory.Exists(attachedFilePath))
                                     {
                                         _ = Directory.CreateDirectory(attachedFilePath);
@@ -2102,13 +2102,13 @@ namespace Maroik.WebSite.Controllers
                                     previousAttachedFile.Extension = Path.GetExtension(boardInputViewModel.UploadedFile.FileName);
                                     previousAttachedFile.Path = $"/upload/Management/attachedFiles/{createdBoardId}/{attachedFile}";
 
-                                    await attachedFileRepository.UpdateAttachedFileAsync(previousAttachedFile);
+                                    await _attachedFileRepository.UpdateAttachedFileAsync(previousAttachedFile);
 
-                                    return Json(new { result = true, message = localizer["The board has been successfully updated."].Value });
+                                    return Json(new { result = true, message = _localizer["The board has been successfully updated."].Value });
                                 }
                                 else
                                 {
-                                    return Ok(new { result = false, errorMessage = localizer["File Size must be smaller than 10MB."].Value });
+                                    return Ok(new { result = false, errorMessage = _localizer["File Size must be smaller than 10MB."].Value });
                                 }
                             }
                             #endregion
@@ -2121,9 +2121,9 @@ namespace Maroik.WebSite.Controllers
                                 previousAttachedFile.Extension = "";
                                 previousAttachedFile.Path = "";
 
-                                await attachedFileRepository.UpdateAttachedFileAsync(previousAttachedFile);
+                                await _attachedFileRepository.UpdateAttachedFileAsync(previousAttachedFile);
 
-                                return Json(new { result = true, message = localizer["The board has been successfully updated."].Value });
+                                return Json(new { result = true, message = _localizer["The board has been successfully updated."].Value });
                             }
                             #endregion
 
@@ -2134,7 +2134,7 @@ namespace Maroik.WebSite.Controllers
                                 {
                                     int createdBoardId = boardInputViewModel.Id; // 첨부파일 FK 해서 로직 추가할 것
 
-                                    string attachedFilePath = Path.Combine(hostEnvironment.ContentRootPath, "wwwroot", "upload", "Management", "attachedFiles", $"{createdBoardId}");
+                                    string attachedFilePath = Path.Combine(_hostEnvironment.ContentRootPath, "wwwroot", "upload", "Management", "attachedFiles", $"{createdBoardId}");
                                     if (!Directory.Exists(attachedFilePath))
                                     {
                                         _ = Directory.CreateDirectory(attachedFilePath);
@@ -2152,7 +2152,7 @@ namespace Maroik.WebSite.Controllers
                                         await stream.FlushAsync();
                                     }
 
-                                    await attachedFileRepository.SaveAttachedFileAsync(new AttachedFile()
+                                    await _attachedFileRepository.SaveAttachedFileAsync(new AttachedFile()
                                     {
                                         BoardId = createdBoardId,
                                         Size = Convert.ToInt32(boardInputViewModel.UploadedFile.Length),
@@ -2161,11 +2161,11 @@ namespace Maroik.WebSite.Controllers
                                         Path = $"/upload/Management/attachedFiles/{createdBoardId}/{attachedFile}"
                                     });
 
-                                    return Json(new { result = true, message = localizer["The board has been successfully updated."].Value });
+                                    return Json(new { result = true, message = _localizer["The board has been successfully updated."].Value });
                                 }
                                 else
                                 {
-                                    return Ok(new { result = false, errorMessage = localizer["File Size must be smaller than 10MB."].Value });
+                                    return Ok(new { result = false, errorMessage = _localizer["File Size must be smaller than 10MB."].Value });
                                 }
                             }
                             #endregion
@@ -2173,7 +2173,7 @@ namespace Maroik.WebSite.Controllers
                             #region 기존 첨부 파일 X && 신 첨부 파일 X
                             else
                             {
-                                return Json(new { result = true, message = localizer["The board has been successfully updated."].Value });
+                                return Json(new { result = true, message = _localizer["The board has been successfully updated."].Value });
                             }
                             #endregion
 
@@ -2181,22 +2181,22 @@ namespace Maroik.WebSite.Controllers
                         }
                         else
                         {
-                            return Json(new { result = false, error = localizer["Please Login to edit board"].Value });
+                            return Json(new { result = false, error = _localizer["Please Login to edit board"].Value });
                         }
                     }
                     catch
                     {
-                        return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                        return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                     }
                 }
                 else
                 {
-                    return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                    return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                 }
             }
             catch
             {
-                return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                return Json(new { result = false, error = _localizer["Input is invalid"].Value });
             }
         }
         #endregion
@@ -2215,14 +2215,14 @@ namespace Maroik.WebSite.Controllers
             try
             {
                 _ = HttpContext.Session.TryGetValue(Maroik.WebSite.Extensions.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account), out byte[] resultByte);
-                Account loginedAccount = await accountRepository.GetAccountByEmailAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+                Account loginedAccount = await _accountRepository.GetAccountByEmailAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
 
-                IEnumerable<Board> privateNoteBoards = await boardRepository.GetOneTypeBoards(EnumHelper.GetDescription(BoardType.PrivateNote));
+                IEnumerable<Board> privateNoteBoards = await _boardRepository.GetOneTypeBoards(EnumHelper.GetDescription(BoardType.PrivateNote));
                 privateNoteBoards = privateNoteBoards.Where(m => m.Writer == loginedAccount.Nickname).Where(m => m.Deleted == false).OrderByDescending(a => a.Id);
 
                 if (privateNoteBoards == null)
                 {
-                    return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                    return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                 }
                 else
                 {
@@ -2230,7 +2230,7 @@ namespace Maroik.WebSite.Controllers
 
                     if (tempPrivateNoteBoard == null)
                     {
-                        return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                        return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                     }
                     else
                     {
@@ -2238,21 +2238,21 @@ namespace Maroik.WebSite.Controllers
                         {
                             #region 게시물 삭제
                             tempPrivateNoteBoard.Deleted = true;
-                            await boardRepository.DeleteBoardAsync(tempPrivateNoteBoard);
+                            await _boardRepository.DeleteBoardAsync(tempPrivateNoteBoard);
                             #endregion
 
-                            return Json(new { result = true, message = localizer["The board has been successfully deleted."].Value });
+                            return Json(new { result = true, message = _localizer["The board has been successfully deleted."].Value });
                         }
                         else
                         {
-                            return Json(new { result = true, message = localizer["You do not have permission to delete."].Value });
+                            return Json(new { result = true, message = _localizer["You do not have permission to delete."].Value });
                         }
                     }
                 }
             }
             catch
             {
-                return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                return Json(new { result = false, error = _localizer["Input is invalid"].Value });
             }
         }
         #endregion
@@ -2266,36 +2266,36 @@ namespace Maroik.WebSite.Controllers
         {
             try
             {
-                Comment comment = await commentRepository.GetComment(id);
+                Comment comment = await _commentRepository.GetComment(id);
 
                 if (comment == null)
                 {
-                    return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                    return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                 }
                 else
                 {
                     _ = HttpContext.Session.TryGetValue(Maroik.WebSite.Extensions.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account), out byte[] resultByte);
-                    Account loginedAccount = await accountRepository.GetAccountByEmailAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+                    Account loginedAccount = await _accountRepository.GetAccountByEmailAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
 
                     if (loginedAccount.Nickname == comment.Writer) // 삭제하는 사람이 작성자인 경우
                     {
                         #region 게시물 삭제
                         comment.Deleted = true;
-                        await commentRepository.DeleteCommentAsync(comment);
+                        await _commentRepository.DeleteCommentAsync(comment);
                         #endregion
 
                         return Json(new { result = true });
                     }
                     else
                     {
-                        return Json(new { result = true, message = localizer["You do not have permission to delete."].Value });
+                        return Json(new { result = true, message = _localizer["You do not have permission to delete."].Value });
                     }
 
                 }
             }
             catch
             {
-                return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                return Json(new { result = false, error = _localizer["Input is invalid"].Value });
             }
         }
         #endregion

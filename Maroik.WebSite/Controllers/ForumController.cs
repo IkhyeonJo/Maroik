@@ -14,23 +14,23 @@ namespace Maroik.WebSite.Controllers
 {
     public class ForumController : Controller
     {
-        private readonly IHtmlLocalizer<ForumController> localizer;
-        private readonly ILogger<ForumController> logger;
-        private readonly IHostEnvironment hostEnvironment;
-        private readonly IBoardRepository boardRepository;
-        private readonly IAttachedFileRepository attachedFileRepository;
-        private readonly IAccountRepository accountRepository;
-        private readonly ICommentRepository commentRepository;
+        private readonly IHtmlLocalizer<ForumController> _localizer;
+        private readonly ILogger<ForumController> _logger;
+        private readonly IHostEnvironment _hostEnvironment;
+        private readonly IBoardRepository _boardRepository;
+        private readonly IAttachedFileRepository _attachedFileRepository;
+        private readonly IAccountRepository _accountRepository;
+        private readonly ICommentRepository _commentRepository;
 
         public ForumController(IHtmlLocalizer<ForumController> localizer, ILogger<ForumController> logger, IBoardRepository boardRepository, IHostEnvironment hostEnvironment, IAttachedFileRepository attachedFileRepository, IAccountRepository accountRepository, ICommentRepository commentRepository)
         {
-            this.localizer = localizer;
-            this.logger = logger;
-            this.boardRepository = boardRepository;
-            this.hostEnvironment = hostEnvironment;
-            this.attachedFileRepository = attachedFileRepository;
-            this.accountRepository = accountRepository;
-            this.commentRepository = commentRepository;
+            _localizer = localizer;
+            _logger = logger;
+            _boardRepository = boardRepository;
+            _hostEnvironment = hostEnvironment;
+            _attachedFileRepository = attachedFileRepository;
+            _accountRepository = accountRepository;
+            _commentRepository = commentRepository;
         }
 
         #region 자유게시판
@@ -61,24 +61,24 @@ namespace Maroik.WebSite.Controllers
 
                     if (boardInputViewModel.Title.Length is not (> 0 and <= 100)) // 제목 길이
                     {
-                        return Json(new { result = false, error = localizer["Title length is must be between 1 and 100 characters."].Value });
+                        return Json(new { result = false, error = _localizer["Title length is must be between 1 and 100 characters."].Value });
                     }
 
                     if (boardInputViewModel.Content.Length > 16384) // Content Maxlength: 16KB
                     {
-                        return Json(new { result = false, error = localizer["content length is must be between 0 and 16384 characters."].Value });
+                        return Json(new { result = false, error = _localizer["content length is must be between 0 and 16384 characters."].Value });
                     }
 
                     if (boardInputViewModel.UploadedFile != null) // 파일 첨부가 되었다면
                     {
                         if (!(Path.GetExtension(boardInputViewModel.UploadedFile.FileName) == ".zip")) // zip 확장자만 가능
                         {
-                            return Json(new { result = false, error = localizer["Only zip extension allowed."].Value });
+                            return Json(new { result = false, error = _localizer["Only zip extension allowed."].Value });
                         }
 
                         if (boardInputViewModel.UploadedFile.Length is not (> 0 and <= 10485760)) // 10MB 이하만 가능
                         {
-                            return Json(new { result = false, error = localizer["uploaded file size must be smaller than 10MB."].Value });
+                            return Json(new { result = false, error = _localizer["uploaded file size must be smaller than 10MB."].Value });
                         }
                     }
 
@@ -118,10 +118,10 @@ namespace Maroik.WebSite.Controllers
                             }
                             else // 비로그인 사용자인 경우
                             {
-                                return Json(new { result = false, error = localizer["Please Login to write board"].Value });
+                                return Json(new { result = false, error = _localizer["Please Login to write board"].Value });
                             }
 
-                            await boardRepository.WriteBoardAsync(board);
+                            await _boardRepository.WriteBoardAsync(board);
 
                             #region 첨부 파일 저장
                             if (boardInputViewModel.UploadedFile != null) // 첨부 파일 존재 시,
@@ -130,7 +130,7 @@ namespace Maroik.WebSite.Controllers
                                 {
                                     int createdBoardId = board.Id; // 첨부파일 FK 해서 로직 추가할 것
 
-                                    string attachedFilePath = Path.Combine(hostEnvironment.ContentRootPath, "wwwroot", "upload", "Forum", "attachedFiles", $"{createdBoardId}");
+                                    string attachedFilePath = Path.Combine(_hostEnvironment.ContentRootPath, "wwwroot", "upload", "Forum", "attachedFiles", $"{createdBoardId}");
                                     if (!Directory.Exists(attachedFilePath))
                                     {
                                         _ = Directory.CreateDirectory(attachedFilePath);
@@ -148,7 +148,7 @@ namespace Maroik.WebSite.Controllers
                                         await stream.FlushAsync();
                                     }
 
-                                    await attachedFileRepository.SaveAttachedFileAsync(new AttachedFile()
+                                    await _attachedFileRepository.SaveAttachedFileAsync(new AttachedFile()
                                     {
                                         BoardId = createdBoardId,
                                         Size = Convert.ToInt32(boardInputViewModel.UploadedFile.Length),
@@ -159,32 +159,32 @@ namespace Maroik.WebSite.Controllers
                                 }
                                 else
                                 {
-                                    return Ok(new { result = false, errorMessage = localizer["File Size must be smaller than 10MB."].Value });
+                                    return Ok(new { result = false, errorMessage = _localizer["File Size must be smaller than 10MB."].Value });
                                 }
 
                             }
                             #endregion
 
-                            return Json(new { result = true, message = localizer["The board has been successfully created."].Value });
+                            return Json(new { result = true, message = _localizer["The board has been successfully created."].Value });
                         }
                         else
                         {
-                            return Json(new { result = false, error = localizer["Please Login to write board"].Value });
+                            return Json(new { result = false, error = _localizer["Please Login to write board"].Value });
                         }
                     }
                     catch
                     {
-                        return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                        return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                     }
                 }
                 else
                 {
-                    return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                    return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                 }
             }
             catch
             {
-                return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                return Json(new { result = false, error = _localizer["Input is invalid"].Value });
             }
         }
         #endregion
@@ -202,7 +202,7 @@ namespace Maroik.WebSite.Controllers
                 {
                     if (string.IsNullOrEmpty(commentInputViewModel.Content))
                     {
-                        return Json(new { result = false, error = localizer["Please enter a comment."].Value });
+                        return Json(new { result = false, error = _localizer["Please enter a comment."].Value });
                     }
 
                     #region HtmlSanitizer
@@ -220,16 +220,16 @@ namespace Maroik.WebSite.Controllers
                         {
                             Account loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)); // Get Session
 
-                            IEnumerable<Board> freeForumBoards = await boardRepository.GetOneTypeBoards(EnumHelper.GetDescription(BoardType.FreeForum));
+                            IEnumerable<Board> freeForumBoards = await _boardRepository.GetOneTypeBoards(EnumHelper.GetDescription(BoardType.FreeForum));
                             freeForumBoards = freeForumBoards.Where(m => m.Writer == loginedAccount.Nickname).Where(m => m.Deleted == false).OrderByDescending(a => a.Id);
                             Board freeForumBoard = freeForumBoards.FirstOrDefault(m => m.Id == commentInputViewModel.BoardId);
 
                             if (freeForumBoard.Id != commentInputViewModel.BoardId)
                             {
-                                return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                                return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                             }
 
-                            IEnumerable<Comment> totalCommentsInSelectedBoard = await commentRepository.GetOneBoardComments(commentInputViewModel.BoardId);
+                            IEnumerable<Comment> totalCommentsInSelectedBoard = await _commentRepository.GetOneBoardComments(commentInputViewModel.BoardId);
 
                             Comment comment = new()
                             {
@@ -241,28 +241,28 @@ namespace Maroik.WebSite.Controllers
                                 Created = DateTime.UtcNow,
                                 Deleted = false
                             };
-                            await commentRepository.WriteCommentAsync(comment);
+                            await _commentRepository.WriteCommentAsync(comment);
 
                             return Json(new { result = true, boardId = commentInputViewModel.BoardId, page = commentInputViewModel.DetailCurrentPage });
                         }
                         else
                         {
-                            return Json(new { result = false, error = localizer["Please Login to write comment."].Value });
+                            return Json(new { result = false, error = _localizer["Please Login to write comment."].Value });
                         }
                     }
                     catch
                     {
-                        return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                        return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                     }
                 }
                 else
                 {
-                    return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                    return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                 }
             }
             catch
             {
-                return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                return Json(new { result = false, error = _localizer["Input is invalid"].Value });
             }
         }
         #endregion
@@ -278,7 +278,7 @@ namespace Maroik.WebSite.Controllers
         {
             if (summernoteImageFile == null) // 파일 없을 시
             {
-                return Ok(new { result = false, errorMessage = localizer["Please attach a file."].Value });
+                return Ok(new { result = false, errorMessage = _localizer["Please attach a file."].Value });
             }
             else
             {
@@ -287,7 +287,7 @@ namespace Maroik.WebSite.Controllers
                     if (Path.GetExtension(summernoteImageFile.FileName) is ".png" or ".jpg" or ".jpeg")
                     {
 
-                        string summernoteImagePath = Path.Combine(hostEnvironment.ContentRootPath, "wwwroot", "upload", "Forum", "summernote", "images");
+                        string summernoteImagePath = Path.Combine(_hostEnvironment.ContentRootPath, "wwwroot", "upload", "Forum", "summernote", "images");
                         if (!Directory.Exists(summernoteImagePath))
                         {
                             _ = Directory.CreateDirectory(summernoteImagePath);
@@ -307,12 +307,12 @@ namespace Maroik.WebSite.Controllers
                     }
                     else // 이미지 png 또는 jpg 또는 jpeg 외 확장자는 거절
                     {
-                        return Ok(new { result = false, errorMessage = localizer["Only .jpg or jpeg or .png file allowed."].Value });
+                        return Ok(new { result = false, errorMessage = _localizer["Only .jpg or jpeg or .png file allowed."].Value });
                     }
                 }
                 else
                 {
-                    return Ok(new { result = false, errorMessage = localizer["File Size must be smaller than 10MB."].Value });
+                    return Ok(new { result = false, errorMessage = _localizer["File Size must be smaller than 10MB."].Value });
                 }
             }
         }
@@ -351,9 +351,9 @@ namespace Maroik.WebSite.Controllers
                     DetailBoardId = boardId ?? default
                 };
 
-                IEnumerable<Board> freeBoards = await boardRepository.GetOneTypeBoards(EnumHelper.GetDescription(BoardType.FreeForum));
+                IEnumerable<Board> freeBoards = await _boardRepository.GetOneTypeBoards(EnumHelper.GetDescription(BoardType.FreeForum));
                 freeBoards = freeBoards.Where(m => m.Deleted == false).OrderByDescending(a => a.Id);
-                List<AttachedFile> attachedFiles = await attachedFileRepository.GetAllAsync();
+                List<AttachedFile> attachedFiles = await _attachedFileRepository.GetAllAsync();
 
                 try
                 {
@@ -371,7 +371,7 @@ namespace Maroik.WebSite.Controllers
                     }
 
                     freeBoard.Views++;
-                    await boardRepository.UpdateBoardAsync(freeBoard);
+                    await _boardRepository.UpdateBoardAsync(freeBoard);
                     AttachedFile attachedFile = attachedFiles.FirstOrDefault(m => m.BoardId == boardId);
 
 
@@ -409,16 +409,16 @@ namespace Maroik.WebSite.Controllers
                     EditBoardId = boardId ?? default
                 };
 
-                IEnumerable<Board> freeBoards = await boardRepository.GetOneTypeBoards(EnumHelper.GetDescription(BoardType.FreeForum));
+                IEnumerable<Board> freeBoards = await _boardRepository.GetOneTypeBoards(EnumHelper.GetDescription(BoardType.FreeForum));
                 freeBoards = freeBoards.Where(m => m.Deleted == false).OrderByDescending(a => a.Id);
-                List<AttachedFile> attachedFiles = await attachedFileRepository.GetAllAsync();
+                List<AttachedFile> attachedFiles = await _attachedFileRepository.GetAllAsync();
 
                 try
                 {
                     Board freeBoard = freeBoards.FirstOrDefault(m => m.Id == boardId);
 
                     _ = HttpContext.Session.TryGetValue(Maroik.WebSite.Extensions.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account), out byte[] resultByte);
-                    Account loginedAccount = await accountRepository.GetAccountByEmailAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+                    Account loginedAccount = await _accountRepository.GetAccountByEmailAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
 
                     if (freeBoard.Writer != loginedAccount.Nickname) // 작성자와 로그인한 사용자가 같지 않으면
                     {
@@ -461,7 +461,7 @@ namespace Maroik.WebSite.Controllers
                 #endregion
 
                 #region 관련된 모든 게시판 데이터 가져오는 로직
-                IEnumerable<Board> freeBoards = await boardRepository.GetOneTypeBoards(EnumHelper.GetDescription(BoardType.FreeForum));
+                IEnumerable<Board> freeBoards = await _boardRepository.GetOneTypeBoards(EnumHelper.GetDescription(BoardType.FreeForum));
                 freeBoards = freeBoards.Where(m => m.Deleted == false && m.Noticed == false).OrderByDescending(a => a.Id);
                 #endregion
 
@@ -507,7 +507,7 @@ namespace Maroik.WebSite.Controllers
                 FreeForumOutputViewModel freeForumOutputViewModel = new();
 
                 #region 공지사항
-                freeForumOutputViewModel.NoticeBoards = (await boardRepository.GetOneTypeBoards(EnumHelper.GetDescription(BoardType.FreeForum))).Where(m => m.Deleted == false && m.Noticed == true).OrderByDescending(a => a.Id);
+                freeForumOutputViewModel.NoticeBoards = (await _boardRepository.GetOneTypeBoards(EnumHelper.GetDescription(BoardType.FreeForum))).Where(m => m.Deleted == false && m.Noticed == true).OrderByDescending(a => a.Id);
                 #endregion
 
                 #region 게시판 목록
@@ -538,25 +538,25 @@ namespace Maroik.WebSite.Controllers
         {
             try
             {
-                IEnumerable<Board> freeBoards = await boardRepository.GetOneTypeBoards(EnumHelper.GetDescription(BoardType.FreeForum));
+                IEnumerable<Board> freeBoards = await _boardRepository.GetOneTypeBoards(EnumHelper.GetDescription(BoardType.FreeForum));
                 freeBoards = freeBoards.Where(m => m.Deleted == false).OrderByDescending(a => a.Id);
 
                 if (freeBoards == null)
                 {
-                    return Json(new { result = false, error = localizer["No freeBoard exists"].Value });
+                    return Json(new { result = false, error = _localizer["No freeBoard exists"].Value });
                 }
                 else
                 {
                     Board tempFreeBoard = freeBoards.Where(a => a.Id == id).FirstOrDefault();
 
                     return tempFreeBoard == null
-                        ? Json(new { result = false, error = localizer["Input is invalid"].Value })
+                        ? Json(new { result = false, error = _localizer["Input is invalid"].Value })
                         : (IActionResult)Json(new { result = true, freeBoard = tempFreeBoard });
                 }
             }
             catch
             {
-                return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                return Json(new { result = false, error = _localizer["Input is invalid"].Value });
             }
         }
         #endregion
@@ -587,24 +587,24 @@ namespace Maroik.WebSite.Controllers
 
                     if (boardInputViewModel.Title.Length is not (> 0 and <= 100)) // 제목 길이
                     {
-                        return Json(new { result = false, error = localizer["Title length is must be between 1 and 100 characters."].Value });
+                        return Json(new { result = false, error = _localizer["Title length is must be between 1 and 100 characters."].Value });
                     }
 
                     if (boardInputViewModel.Content.Length > 16384) // Content Maxlength: 16KB
                     {
-                        return Json(new { result = false, error = localizer["content length is must be between 0 and 16384 characters."].Value });
+                        return Json(new { result = false, error = _localizer["content length is must be between 0 and 16384 characters."].Value });
                     }
 
                     if (boardInputViewModel.UploadedFile != null) // 파일 첨부가 되었다면
                     {
                         if (!(Path.GetExtension(boardInputViewModel.UploadedFile.FileName) == ".zip")) // zip 확장자만 가능
                         {
-                            return Json(new { result = false, error = localizer["Only zip extension allowed."].Value });
+                            return Json(new { result = false, error = _localizer["Only zip extension allowed."].Value });
                         }
 
                         if (boardInputViewModel.UploadedFile.Length is not (> 0 and <= 10485760)) // 10MB 이하만 가능
                         {
-                            return Json(new { result = false, error = localizer["uploaded file size must be smaller than 10MB."].Value });
+                            return Json(new { result = false, error = _localizer["uploaded file size must be smaller than 10MB."].Value });
                         }
                     }
 
@@ -616,14 +616,14 @@ namespace Maroik.WebSite.Controllers
                         {
                             Account loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)); // Get Session
 
-                            IEnumerable<Board> freeBoards = await boardRepository.GetOneTypeBoards(EnumHelper.GetDescription(BoardType.FreeForum));
+                            IEnumerable<Board> freeBoards = await _boardRepository.GetOneTypeBoards(EnumHelper.GetDescription(BoardType.FreeForum));
                             freeBoards = freeBoards.Where(m => m.Deleted == false).OrderByDescending(a => a.Id);
 
                             Board tempFreeBoard = freeBoards.Where(a => a.Id == boardInputViewModel.Id).FirstOrDefault();
 
                             if (tempFreeBoard.Writer != loginedAccount.Nickname)
                             {
-                                return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                                return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                             }
 
                             tempFreeBoard.Title = boardInputViewModel.Title;
@@ -631,9 +631,9 @@ namespace Maroik.WebSite.Controllers
                             tempFreeBoard.Locked = boardInputViewModel.Locked;
                             tempFreeBoard.Updated = DateTime.UtcNow;
 
-                            await boardRepository.UpdateBoardAsync(tempFreeBoard);
+                            await _boardRepository.UpdateBoardAsync(tempFreeBoard);
 
-                            List<AttachedFile> attachedFiles = await attachedFileRepository?.GetAllAsync();
+                            List<AttachedFile> attachedFiles = await _attachedFileRepository?.GetAllAsync();
                             AttachedFile previousAttachedFile = attachedFiles?.FirstOrDefault(m => m.BoardId == boardInputViewModel.Id);
 
                             #region 첨부 파일 저장
@@ -645,7 +645,7 @@ namespace Maroik.WebSite.Controllers
                                 {
                                     int createdBoardId = boardInputViewModel.Id; // 첨부파일 FK 해서 로직 추가할 것
 
-                                    string attachedFilePath = Path.Combine(hostEnvironment.ContentRootPath, "wwwroot", "upload", "Forum", "attachedFiles", $"{createdBoardId}");
+                                    string attachedFilePath = Path.Combine(_hostEnvironment.ContentRootPath, "wwwroot", "upload", "Forum", "attachedFiles", $"{createdBoardId}");
                                     if (!Directory.Exists(attachedFilePath))
                                     {
                                         _ = Directory.CreateDirectory(attachedFilePath);
@@ -668,13 +668,13 @@ namespace Maroik.WebSite.Controllers
                                     previousAttachedFile.Extension = Path.GetExtension(boardInputViewModel.UploadedFile.FileName);
                                     previousAttachedFile.Path = $"/upload/Forum/attachedFiles/{createdBoardId}/{attachedFile}";
 
-                                    await attachedFileRepository.UpdateAttachedFileAsync(previousAttachedFile);
+                                    await _attachedFileRepository.UpdateAttachedFileAsync(previousAttachedFile);
 
-                                    return Json(new { result = true, message = localizer["The board has been successfully updated."].Value });
+                                    return Json(new { result = true, message = _localizer["The board has been successfully updated."].Value });
                                 }
                                 else
                                 {
-                                    return Ok(new { result = false, errorMessage = localizer["File Size must be smaller than 10MB."].Value });
+                                    return Ok(new { result = false, errorMessage = _localizer["File Size must be smaller than 10MB."].Value });
                                 }
                             }
                             #endregion
@@ -687,9 +687,9 @@ namespace Maroik.WebSite.Controllers
                                 previousAttachedFile.Extension = "";
                                 previousAttachedFile.Path = "";
 
-                                await attachedFileRepository.UpdateAttachedFileAsync(previousAttachedFile);
+                                await _attachedFileRepository.UpdateAttachedFileAsync(previousAttachedFile);
 
-                                return Json(new { result = true, message = localizer["The board has been successfully updated."].Value });
+                                return Json(new { result = true, message = _localizer["The board has been successfully updated."].Value });
                             }
                             #endregion
 
@@ -700,7 +700,7 @@ namespace Maroik.WebSite.Controllers
                                 {
                                     int createdBoardId = boardInputViewModel.Id; // 첨부파일 FK 해서 로직 추가할 것
 
-                                    string attachedFilePath = Path.Combine(hostEnvironment.ContentRootPath, "wwwroot", "upload", "Forum", "attachedFiles", $"{createdBoardId}");
+                                    string attachedFilePath = Path.Combine(_hostEnvironment.ContentRootPath, "wwwroot", "upload", "Forum", "attachedFiles", $"{createdBoardId}");
                                     if (!Directory.Exists(attachedFilePath))
                                     {
                                         _ = Directory.CreateDirectory(attachedFilePath);
@@ -718,7 +718,7 @@ namespace Maroik.WebSite.Controllers
                                         await stream.FlushAsync();
                                     }
 
-                                    await attachedFileRepository.SaveAttachedFileAsync(new AttachedFile()
+                                    await _attachedFileRepository.SaveAttachedFileAsync(new AttachedFile()
                                     {
                                         BoardId = createdBoardId,
                                         Size = Convert.ToInt32(boardInputViewModel.UploadedFile.Length),
@@ -727,11 +727,11 @@ namespace Maroik.WebSite.Controllers
                                         Path = $"/upload/Forum/attachedFiles/{createdBoardId}/{attachedFile}"
                                     });
 
-                                    return Json(new { result = true, message = localizer["The board has been successfully updated."].Value });
+                                    return Json(new { result = true, message = _localizer["The board has been successfully updated."].Value });
                                 }
                                 else
                                 {
-                                    return Ok(new { result = false, errorMessage = localizer["File Size must be smaller than 10MB."].Value });
+                                    return Ok(new { result = false, errorMessage = _localizer["File Size must be smaller than 10MB."].Value });
                                 }
                             }
                             #endregion
@@ -739,7 +739,7 @@ namespace Maroik.WebSite.Controllers
                             #region 기존 첨부 파일 X && 신 첨부 파일 X
                             else
                             {
-                                return Json(new { result = true, message = localizer["The board has been successfully updated."].Value });
+                                return Json(new { result = true, message = _localizer["The board has been successfully updated."].Value });
                             }
                             #endregion
 
@@ -747,22 +747,22 @@ namespace Maroik.WebSite.Controllers
                         }
                         else
                         {
-                            return Json(new { result = false, error = localizer["Please Login to edit board"].Value });
+                            return Json(new { result = false, error = _localizer["Please Login to edit board"].Value });
                         }
                     }
                     catch
                     {
-                        return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                        return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                     }
                 }
                 else
                 {
-                    return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                    return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                 }
             }
             catch
             {
-                return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                return Json(new { result = false, error = _localizer["Input is invalid"].Value });
             }
         }
         #endregion
@@ -780,12 +780,12 @@ namespace Maroik.WebSite.Controllers
         {
             try
             {
-                IEnumerable<Board> freeBoards = await boardRepository.GetOneTypeBoards(EnumHelper.GetDescription(BoardType.FreeForum));
+                IEnumerable<Board> freeBoards = await _boardRepository.GetOneTypeBoards(EnumHelper.GetDescription(BoardType.FreeForum));
                 freeBoards = freeBoards.Where(m => m.Deleted == false).OrderByDescending(a => a.Id);
 
                 if (freeBoards == null)
                 {
-                    return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                    return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                 }
                 else
                 {
@@ -793,32 +793,32 @@ namespace Maroik.WebSite.Controllers
 
                     if (tempFreeBoard == null)
                     {
-                        return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                        return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                     }
                     else
                     {
                         _ = HttpContext.Session.TryGetValue(Maroik.WebSite.Extensions.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account), out byte[] resultByte);
-                        Account loginedAccount = await accountRepository.GetAccountByEmailAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+                        Account loginedAccount = await _accountRepository.GetAccountByEmailAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
 
                         if ((loginedAccount.Nickname == tempFreeBoard.Writer) || loginedAccount.Role == Role.Admin) // 방문한 사람이 작성자 또는 관리자인 경우
                         {
                             #region 게시물 삭제
                             tempFreeBoard.Deleted = true;
-                            await boardRepository.DeleteBoardAsync(tempFreeBoard);
+                            await _boardRepository.DeleteBoardAsync(tempFreeBoard);
                             #endregion
 
-                            return Json(new { result = true, message = localizer["The board has been successfully deleted."].Value });
+                            return Json(new { result = true, message = _localizer["The board has been successfully deleted."].Value });
                         }
                         else
                         {
-                            return Json(new { result = true, message = localizer["You do not have permission to delete."].Value });
+                            return Json(new { result = true, message = _localizer["You do not have permission to delete."].Value });
                         }
                     }
                 }
             }
             catch
             {
-                return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                return Json(new { result = false, error = _localizer["Input is invalid"].Value });
             }
         }
         #endregion
@@ -832,36 +832,36 @@ namespace Maroik.WebSite.Controllers
         {
             try
             {
-                Comment comment = await commentRepository.GetComment(id);
+                Comment comment = await _commentRepository.GetComment(id);
 
                 if (comment == null)
                 {
-                    return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                    return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                 }
                 else
                 {
                     _ = HttpContext.Session.TryGetValue(Maroik.WebSite.Extensions.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account), out byte[] resultByte);
-                    Account loginedAccount = await accountRepository.GetAccountByEmailAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+                    Account loginedAccount = await _accountRepository.GetAccountByEmailAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
 
                     if ((loginedAccount.Nickname == comment.Writer) || loginedAccount.Role == Role.Admin) // 삭제하는 사람이 작성자 또는 관리자인 경우
                     {
                         #region 게시물 삭제
                         comment.Deleted = true;
-                        await commentRepository.DeleteCommentAsync(comment);
+                        await _commentRepository.DeleteCommentAsync(comment);
                         #endregion
 
                         return Json(new { result = true });
                     }
                     else
                     {
-                        return Json(new { result = true, message = localizer["You do not have permission to delete."].Value });
+                        return Json(new { result = true, message = _localizer["You do not have permission to delete."].Value });
                     }
 
                 }
             }
             catch
             {
-                return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                return Json(new { result = false, error = _localizer["Input is invalid"].Value });
             }
         }
         #endregion
