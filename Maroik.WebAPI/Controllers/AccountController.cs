@@ -16,18 +16,18 @@ namespace Maroik.WebAPI.Controllers
     [Route("api/[controller]")]
     public class AccountController : ControllerBase
     {
-        //private readonly ILogger<AccountController> logger;
-        private readonly IUserRepository userRepository;
-        private readonly IJwtAuthManager jwtAuthManager;
-        private readonly IAccountRepository accountRepository;
+        //private readonly ILogger<AccountController> _logger;
+        private readonly IUserRepository _userRepository;
+        private readonly IJwtAuthManager _jwtAuthManager;
+        private readonly IAccountRepository _accountRepository;
 
         //public AccountController(ILogger<AccountController> logger, IUserService userService, IJwtAuthManager jwtAuthManager, IAccountRepository accountRepository)
         public AccountController(IUserRepository userRepository, IJwtAuthManager jwtAuthManager, IAccountRepository accountRepository)
         {
-            //this.logger = logger;
-            this.userRepository = userRepository;
-            this.jwtAuthManager = jwtAuthManager;
-            this.accountRepository = accountRepository;
+            //_logger = logger;
+            _userRepository = userRepository;
+            _jwtAuthManager = jwtAuthManager;
+            _accountRepository = accountRepository;
         }
 
         [AllowAnonymous]
@@ -39,12 +39,12 @@ namespace Maroik.WebAPI.Controllers
                 return BadRequest();
             }
 
-            if (!await userRepository.IsValidUserCredentials(request.Email, request.Password))
+            if (!await _userRepository.IsValidUserCredentials(request.Email, request.Password))
             {
                 return Unauthorized();
             }
 
-            Maroik.Common.DataAccess.Models.Account tempAccount = await accountRepository.GetAccountByEmailAsync(request.Email);
+            Maroik.Common.DataAccess.Models.Account tempAccount = await _accountRepository.GetAccountByEmailAsync(request.Email);
             Claim[] claims = new[]
             {
                 new Claim(ClaimTypes.Email, tempAccount.Email),
@@ -52,7 +52,7 @@ namespace Maroik.WebAPI.Controllers
                 new Claim(ClaimTypes.Role, tempAccount.Role)
             };
 
-            JwtAuthResult jwtResult = jwtAuthManager.GenerateTokens(tempAccount.Nickname, claims, DateTime.UtcNow);
+            JwtAuthResult jwtResult = _jwtAuthManager.GenerateTokens(tempAccount.Nickname, claims, DateTime.UtcNow);
             //logger.LogInformation($"User [{tempAccount.Email}] logged in the system.");
             return Ok(new LoginResult
             {
@@ -83,7 +83,7 @@ namespace Maroik.WebAPI.Controllers
             // https://github.com/auth0/node-jsonwebtoken/issues/375
 
             string userName = User.Identity?.Name;
-            jwtAuthManager.RemoveRefreshTokenByUserName(userName);
+            _jwtAuthManager.RemoveRefreshTokenByUserName(userName);
             //logger.LogInformation($"User [{userName}] logged out the system.");
             return Ok();
         }
@@ -103,7 +103,7 @@ namespace Maroik.WebAPI.Controllers
                 }
 
                 string accessToken = await HttpContext.GetTokenAsync("Bearer", "access_token");
-                JwtAuthResult jwtResult = jwtAuthManager.Refresh(request.RefreshToken, accessToken, DateTime.UtcNow);
+                JwtAuthResult jwtResult = _jwtAuthManager.Refresh(request.RefreshToken, accessToken, DateTime.UtcNow);
                 //logger.LogInformation($"User [{userName}] has refreshed JWT token.");
                 return Ok(new LoginResult
                 {
