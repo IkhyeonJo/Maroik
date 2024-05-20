@@ -10,11 +10,11 @@ namespace Maroik.Common.DataAccess.Services
 {
     public class CommentRepository : ICommentRepository
     {
-        private readonly ApplicationDbContext context;
+        private readonly ApplicationDbContext _context;
 
         public CommentRepository(ApplicationDbContext context)
         {
-            this.context = context;
+            _context = context;
         }
 
         /// <summary>
@@ -23,7 +23,7 @@ namespace Maroik.Common.DataAccess.Services
         /// <returns></returns>
         public async Task<IEnumerable<Comment>> GetOneBoardComments(int boardId)
         {
-            return await context.Comments.Where(x => x.BoardId == boardId).OrderBy(m => m.Order).ToListAsync();
+            return await _context.Comments.Where(x => x.BoardId == boardId).OrderBy(m => m.Order).ToListAsync();
         }
 
         /// <summary>
@@ -32,7 +32,7 @@ namespace Maroik.Common.DataAccess.Services
         /// <returns></returns>
         public async Task<Comment> GetComment(int id)
         {
-            return await context.Comments.Where(x => x.Id == id).FirstOrDefaultAsync();
+            return await _context.Comments.Where(x => x.Id == id).FirstOrDefaultAsync();
         }
 
         /// <summary>
@@ -42,8 +42,8 @@ namespace Maroik.Common.DataAccess.Services
         /// <returns></returns>
         public async Task WriteCommentAsync(Comment comment)
         {
-            _ = await context.Comments.AddAsync(comment);
-            _ = await context.SaveChangesAsync();
+            _ = await _context.Comments.AddAsync(comment);
+            _ = await _context.SaveChangesAsync();
         }
 
         /// <summary>
@@ -53,8 +53,8 @@ namespace Maroik.Common.DataAccess.Services
         /// <returns></returns>
         public async Task DeleteCommentAsync(Comment comment)
         {
-            _ = context.Comments.Update(comment);
-            _ = await context.SaveChangesAsync();
+            _ = _context.Comments.Update(comment);
+            _ = await _context.SaveChangesAsync();
         }
 
     }

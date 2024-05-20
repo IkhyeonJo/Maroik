@@ -10,11 +10,11 @@ namespace Maroik.Common.DataAccess.Services
 {
     public class AssetRepository : IAssetRepository
     {
-        private readonly ApplicationDbContext context;
+        private readonly ApplicationDbContext _context;
 
         public AssetRepository(ApplicationDbContext context)
         {
-            this.context = context;
+            _context = context;
         }
 
         /// <summary>
@@ -24,7 +24,7 @@ namespace Maroik.Common.DataAccess.Services
         /// <returns></returns>
         public async Task<List<Asset>> GetAssetsAsync(string email)
         {
-            return await context.Assets.Where(x => x.AccountEmail == email).ToListAsync();
+            return await _context.Assets.Where(x => x.AccountEmail == email).ToListAsync();
         }
 
         /// <summary>
@@ -35,7 +35,7 @@ namespace Maroik.Common.DataAccess.Services
         /// <returns></returns>
         public async Task<Asset> GetAssetAsync(string email, string productName)
         {
-            return await context.Assets.FirstOrDefaultAsync(a => a.AccountEmail == email && a.ProductName == productName);
+            return await _context.Assets.FirstOrDefaultAsync(a => a.AccountEmail == email && a.ProductName == productName);
         }
 
         /// <summary>
@@ -45,8 +45,8 @@ namespace Maroik.Common.DataAccess.Services
         /// <returns></returns>
         public async Task CreateAssetAsync(Asset asset)
         {
-            _ = await context.Assets.AddAsync(asset);
-            _ = await context.SaveChangesAsync();
+            _ = await _context.Assets.AddAsync(asset);
+            _ = await _context.SaveChangesAsync();
         }
 
         /// <summary>
@@ -56,8 +56,8 @@ namespace Maroik.Common.DataAccess.Services
         /// <returns></returns>
         public async Task UpdateAssetAsync(Asset asset)
         {
-            _ = context.Assets.Update(asset);
-            _ = await context.SaveChangesAsync();
+            _ = _context.Assets.Update(asset);
+            _ = await _context.SaveChangesAsync();
         }
 
         /// <summary>
@@ -68,7 +68,7 @@ namespace Maroik.Common.DataAccess.Services
         /// <returns></returns>
         public async Task<int> UpdateAssetWithProductNameAsync(Asset asset, string originalProductName)
         {
-            return await context.Database.ExecuteSqlInterpolatedAsync
+            return await _context.Database.ExecuteSqlInterpolatedAsync
                     (
                         @$"UPDATE Asset
                            SET ProductName = {asset.ProductName},

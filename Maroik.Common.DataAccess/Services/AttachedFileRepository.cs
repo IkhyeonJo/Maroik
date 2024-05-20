@@ -9,11 +9,11 @@ namespace Maroik.Common.DataAccess.Services
 {
     public class AttachedFileRepository : IAttachedFileRepository
     {
-        private readonly ApplicationDbContext context;
+        private readonly ApplicationDbContext _context;
 
         public AttachedFileRepository(ApplicationDbContext context)
         {
-            this.context = context;
+            _context = context;
         }
         /// <summary>
         /// 등록된 모든 계정을 구합니다.
@@ -21,7 +21,7 @@ namespace Maroik.Common.DataAccess.Services
         /// <returns></returns>
         public async Task<List<AttachedFile>> GetAllAsync()
         {
-            return await context.AttachedFiles.ToListAsync();
+            return await _context.AttachedFiles.ToListAsync();
         }
 
         /// <summary>
@@ -31,8 +31,8 @@ namespace Maroik.Common.DataAccess.Services
         /// <returns></returns>
         public async Task SaveAttachedFileAsync(AttachedFile attachedFile)
         {
-            _ = await context.AttachedFiles.AddAsync(attachedFile);
-            _ = await context.SaveChangesAsync();
+            _ = await _context.AttachedFiles.AddAsync(attachedFile);
+            _ = await _context.SaveChangesAsync();
         }
 
         /// <summary>
@@ -42,8 +42,8 @@ namespace Maroik.Common.DataAccess.Services
         /// <returns></returns>
         public async Task UpdateAttachedFileAsync(AttachedFile attachedFile)
         {
-            _ = context.AttachedFiles.Update(attachedFile);
-            _ = await context.SaveChangesAsync();
+            _ = _context.AttachedFiles.Update(attachedFile);
+            _ = await _context.SaveChangesAsync();
         }
     }
 }

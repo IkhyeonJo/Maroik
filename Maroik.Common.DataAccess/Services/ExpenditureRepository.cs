@@ -11,11 +11,11 @@ namespace Maroik.Common.DataAccess.Services
 {
     public class ExpenditureRepository : IExpenditureRepository
     {
-        private readonly ApplicationDbContext context;
+        private readonly ApplicationDbContext _context;
 
         public ExpenditureRepository(ApplicationDbContext context)
         {
-            this.context = context;
+            _context = context;
         }
 
         /// <summary>
@@ -25,7 +25,7 @@ namespace Maroik.Common.DataAccess.Services
         /// <returns></returns>
         public async Task<List<Expenditure>> GetExpendituresAsync(string email)
         {
-            return await context.Expenditures.Where(x => x.AccountEmail == email).ToListAsync();
+            return await _context.Expenditures.Where(x => x.AccountEmail == email).ToListAsync();
         }
 
         /// <summary>
@@ -36,7 +36,7 @@ namespace Maroik.Common.DataAccess.Services
         /// <returns></returns>
         public async Task<List<Expenditure>> GetCurrentYearMonthExpendituresAsync(string email, string yearMonth, string timeZoneIanaId)
         {
-            return await context.Expenditures.FromSqlInterpolated
+            return await _context.Expenditures.FromSqlInterpolated
                     (
                         @$"SELECT *
                             FROM Expenditure
@@ -53,8 +53,8 @@ namespace Maroik.Common.DataAccess.Services
         /// <returns></returns>
         public async Task CreateExpenditureAsync(Expenditure expenditure)
         {
-            _ = await context.Expenditures.AddAsync(expenditure);
-            _ = await context.SaveChangesAsync();
+            _ = await _context.Expenditures.AddAsync(expenditure);
+            _ = await _context.SaveChangesAsync();
         }
 
         /// <summary>
@@ -64,8 +64,8 @@ namespace Maroik.Common.DataAccess.Services
         /// <returns></returns>
         public async Task UpdateExpenditureAsync(Expenditure expenditure)
         {
-            _ = context.Expenditures.Update(expenditure);
-            _ = await context.SaveChangesAsync();
+            _ = _context.Expenditures.Update(expenditure);
+            _ = await _context.SaveChangesAsync();
         }
 
         /// <summary>
@@ -75,8 +75,8 @@ namespace Maroik.Common.DataAccess.Services
         /// <returns></returns>
         public async Task DeleteExpenditureAsync(Expenditure expenditure)
         {
-            _ = context.Expenditures.Remove(expenditure);
-            _ = await context.SaveChangesAsync();
+            _ = _context.Expenditures.Remove(expenditure);
+            _ = await _context.SaveChangesAsync();
         }
 
         /// <summary>
@@ -89,7 +89,7 @@ namespace Maroik.Common.DataAccess.Services
         /// <returns></returns>
         public async Task<List<USP_Expenditure_MonthlyReport>> GetCurrentYearMonthExpendituresMonthlyReport(string email, string yearMonth, string timeZoneIanaId, string monetaryUnit)
         {
-            return await context.USP_Expenditure_MonthlyReports.FromSqlRaw("CALL USP_Expenditure_MonthlyReport(@yearMonth, @email, @timeZoneIanaId, @monetaryUnit)", new MySqlParameter("@yearMonth", yearMonth), new MySqlParameter("@email", email), new MySqlParameter("@timeZoneIanaId", timeZoneIanaId), new MySqlParameter("@monetaryUnit", monetaryUnit)).ToListAsync();
+            return await _context.USP_Expenditure_MonthlyReports.FromSqlRaw("CALL USP_Expenditure_MonthlyReport(@yearMonth, @email, @timeZoneIanaId, @monetaryUnit)", new MySqlParameter("@yearMonth", yearMonth), new MySqlParameter("@email", email), new MySqlParameter("@timeZoneIanaId", timeZoneIanaId), new MySqlParameter("@monetaryUnit", monetaryUnit)).ToListAsync();
         }
 
         /// <summary>
@@ -101,7 +101,7 @@ namespace Maroik.Common.DataAccess.Services
         /// <returns></returns>
         public async Task<int> UpdateMyDepositAssetWithProductNameAsync(string accountEmail, string oldMyDepositAsset, string newMyDepositAsset)
         {
-            return await context.Database.ExecuteSqlInterpolatedAsync
+            return await _context.Database.ExecuteSqlInterpolatedAsync
                     (
                         @$"UPDATE Expenditure
                            SET MyDepositAsset = {newMyDepositAsset}

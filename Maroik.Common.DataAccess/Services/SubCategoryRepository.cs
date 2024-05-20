@@ -10,11 +10,11 @@ namespace Maroik.Common.DataAccess.Services
 {
     public class SubCategoryRepository : ISubCategoryRepository
     {
-        private readonly ApplicationDbContext context;
+        private readonly ApplicationDbContext _context;
 
         public SubCategoryRepository(ApplicationDbContext context)
         {
-            this.context = context;
+            _context = context;
         }
 
         /// <summary>
@@ -23,7 +23,7 @@ namespace Maroik.Common.DataAccess.Services
         /// <returns></returns>
         public IEnumerable<SubCategory> GetSubCategory()
         {
-            return context.SubCategories.ToList();
+            return _context.SubCategories.ToList();
         }
         /// <summary>
         /// 권한에 따른 서브카테고리들을 구합니다.
@@ -32,7 +32,7 @@ namespace Maroik.Common.DataAccess.Services
         /// <returns></returns>
         public async Task<IEnumerable<SubCategory>> GetSubCategoryByRoleAsync(string role)
         {
-            return await context.SubCategories
+            return await _context.SubCategories
                     .Where(a => a.Role == role)
                     .OrderBy(a => a.Order)
                     .ToListAsync();
@@ -44,8 +44,8 @@ namespace Maroik.Common.DataAccess.Services
         /// <returns></returns>
         public async Task CreateSubCategoryAsync(SubCategory subCategory)
         {
-            _ = await context.SubCategories.AddAsync(subCategory);
-            _ = await context.SaveChangesAsync();
+            _ = await _context.SubCategories.AddAsync(subCategory);
+            _ = await _context.SaveChangesAsync();
         }
         /// <summary>
         /// 서브카테고리를 업데이트합니다.
@@ -54,8 +54,8 @@ namespace Maroik.Common.DataAccess.Services
         /// <returns></returns>
         public async Task UpdateSubCategoryAsync(SubCategory subCategory)
         {
-            _ = context.SubCategories.Update(subCategory);
-            _ = await context.SaveChangesAsync();
+            _ = _context.SubCategories.Update(subCategory);
+            _ = await _context.SaveChangesAsync();
         }
         /// <summary>
         /// 서브카테고리를 제거합니다.
@@ -64,8 +64,8 @@ namespace Maroik.Common.DataAccess.Services
         /// <returns></returns>
         public async Task DeleteSubCategoryAsync(SubCategory subCategory)
         {
-            _ = context.SubCategories.Remove(subCategory);
-            _ = await context.SaveChangesAsync();
+            _ = _context.SubCategories.Remove(subCategory);
+            _ = await _context.SaveChangesAsync();
         }
     }
 }

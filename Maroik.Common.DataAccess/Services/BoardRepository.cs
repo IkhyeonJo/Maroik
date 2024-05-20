@@ -10,11 +10,11 @@ namespace Maroik.Common.DataAccess.Services
 {
     public class BoardRepository : IBoardRepository
     {
-        private readonly ApplicationDbContext context;
+        private readonly ApplicationDbContext _context;
 
         public BoardRepository(ApplicationDbContext context)
         {
-            this.context = context;
+            _context = context;
         }
 
         /// <summary>
@@ -23,7 +23,7 @@ namespace Maroik.Common.DataAccess.Services
         /// <returns></returns>
         public async Task<IEnumerable<Board>> GetOneTypeBoards(string type)
         {
-            return await context.Boards.Where(x => x.Type == type).ToListAsync();
+            return await _context.Boards.Where(x => x.Type == type).ToListAsync();
         }
 
         /// <summary>
@@ -33,8 +33,8 @@ namespace Maroik.Common.DataAccess.Services
         /// <returns></returns>
         public async Task WriteBoardAsync(Board board)
         {
-            _ = await context.Boards.AddAsync(board);
-            _ = await context.SaveChangesAsync();
+            _ = await _context.Boards.AddAsync(board);
+            _ = await _context.SaveChangesAsync();
         }
 
         /// <summary>
@@ -44,8 +44,8 @@ namespace Maroik.Common.DataAccess.Services
         /// <returns></returns>
         public async Task UpdateBoardAsync(Board board)
         {
-            _ = context.Boards.Update(board);
-            _ = await context.SaveChangesAsync();
+            _ = _context.Boards.Update(board);
+            _ = await _context.SaveChangesAsync();
         }
 
         /// <summary>
@@ -55,8 +55,8 @@ namespace Maroik.Common.DataAccess.Services
         /// <returns></returns>
         public async Task DeleteBoardAsync(Board board)
         {
-            _ = context.Boards.Update(board);
-            _ = await context.SaveChangesAsync();
+            _ = _context.Boards.Update(board);
+            _ = await _context.SaveChangesAsync();
         }
 
     }

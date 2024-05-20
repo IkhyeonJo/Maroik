@@ -9,11 +9,11 @@ namespace Maroik.Common.DataAccess.Services
 {
     public class AccountRepository : IAccountRepository
     {
-        private readonly ApplicationDbContext context;
+        private readonly ApplicationDbContext _context;
 
         public AccountRepository(ApplicationDbContext context)
         {
-            this.context = context;
+            _context = context;
         }
         /// <summary>
         /// 등록된 모든 계정을 구합니다.
@@ -21,7 +21,7 @@ namespace Maroik.Common.DataAccess.Services
         /// <returns></returns>
         public async Task<List<Account>> GetAllAsync()
         {
-            return await context.Accounts.ToListAsync();
+            return await _context.Accounts.ToListAsync();
         }
         /// <summary>
         /// 한 계정을 이메일로 구합니다.
@@ -30,7 +30,7 @@ namespace Maroik.Common.DataAccess.Services
         /// <returns></returns>
         public async Task<Account> GetAccountByEmailAsync(string email)
         {
-            return await context.Accounts.FirstOrDefaultAsync(x => x.Email == email);
+            return await _context.Accounts.FirstOrDefaultAsync(x => x.Email == email);
         }
         /// <summary>
         /// 계정을 생성합니다.
@@ -39,8 +39,8 @@ namespace Maroik.Common.DataAccess.Services
         /// <returns></returns>
         public async Task CreateAccountAsync(Account account)
         {
-            _ = await context.Accounts.AddAsync(account);
-            _ = await context.SaveChangesAsync();
+            _ = await _context.Accounts.AddAsync(account);
+            _ = await _context.SaveChangesAsync();
         }
         /// <summary>
         /// 계정을 업데이트합니다.
@@ -49,8 +49,8 @@ namespace Maroik.Common.DataAccess.Services
         /// <returns></returns>
         public async Task UpdateAccountAsync(Account account)
         {
-            _ = context.Accounts.Update(account);
-            _ = await context.SaveChangesAsync();
+            _ = _context.Accounts.Update(account);
+            _ = await _context.SaveChangesAsync();
         }
     }
 }

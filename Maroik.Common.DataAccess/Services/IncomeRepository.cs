@@ -11,11 +11,11 @@ namespace Maroik.Common.DataAccess.Services
 {
     public class IncomeRepository : IIncomeRepository
     {
-        private readonly ApplicationDbContext context;
+        private readonly ApplicationDbContext _context;
 
         public IncomeRepository(ApplicationDbContext context)
         {
-            this.context = context;
+            _context = context;
         }
 
         /// <summary>
@@ -25,7 +25,7 @@ namespace Maroik.Common.DataAccess.Services
         /// <returns></returns>
         public async Task<List<Income>> GetIncomesAsync(string email)
         {
-            return await context.Incomes.Where(x => x.AccountEmail == email).ToListAsync();
+            return await _context.Incomes.Where(x => x.AccountEmail == email).ToListAsync();
         }
 
         /// <summary>
@@ -36,7 +36,7 @@ namespace Maroik.Common.DataAccess.Services
         /// <returns></returns>
         public async Task<List<Income>> GetCurrentYearMonthIncomesAsync(string email, string yearMonth, string timeZoneIanaId)
         {
-            return await context.Incomes.FromSqlInterpolated
+            return await _context.Incomes.FromSqlInterpolated
                     (
                         @$"SELECT *
                             FROM Income
@@ -53,8 +53,8 @@ namespace Maroik.Common.DataAccess.Services
         /// <returns></returns>
         public async Task CreateIncomeAsync(Income income)
         {
-            _ = await context.Incomes.AddAsync(income);
-            _ = await context.SaveChangesAsync();
+            _ = await _context.Incomes.AddAsync(income);
+            _ = await _context.SaveChangesAsync();
         }
 
         /// <summary>
@@ -64,8 +64,8 @@ namespace Maroik.Common.DataAccess.Services
         /// <returns></returns>
         public async Task UpdateIncomeAsync(Income income)
         {
-            _ = context.Incomes.Update(income);
-            _ = await context.SaveChangesAsync();
+            _ = _context.Incomes.Update(income);
+            _ = await _context.SaveChangesAsync();
         }
 
         /// <summary>
@@ -75,8 +75,8 @@ namespace Maroik.Common.DataAccess.Services
         /// <returns></returns>
         public async Task DeleteIncomeAsync(Income income)
         {
-            _ = context.Incomes.Remove(income);
-            _ = await context.SaveChangesAsync();
+            _ = _context.Incomes.Remove(income);
+            _ = await _context.SaveChangesAsync();
         }
 
         /// <summary>
@@ -89,7 +89,7 @@ namespace Maroik.Common.DataAccess.Services
         /// <returns></returns>
         public async Task<List<USP_Income_MonthlyReport>> GetCurrentYearMonthIncomesMonthlyReport(string email, string yearMonth, string timeZoneIanaId, string monetaryUnit)
         {
-            return await context.USP_Income_MonthlyReports.FromSqlRaw("CALL USP_Income_MonthlyReport(@yearMonth, @email, @timeZoneIanaId, @monetaryUnit)", new MySqlParameter("@yearMonth", yearMonth), new MySqlParameter("@email", email), new MySqlParameter("@timeZoneIanaId", timeZoneIanaId), new MySqlParameter("@monetaryUnit", monetaryUnit)).ToListAsync();
+            return await _context.USP_Income_MonthlyReports.FromSqlRaw("CALL USP_Income_MonthlyReport(@yearMonth, @email, @timeZoneIanaId, @monetaryUnit)", new MySqlParameter("@yearMonth", yearMonth), new MySqlParameter("@email", email), new MySqlParameter("@timeZoneIanaId", timeZoneIanaId), new MySqlParameter("@monetaryUnit", monetaryUnit)).ToListAsync();
         }
     }
 }
