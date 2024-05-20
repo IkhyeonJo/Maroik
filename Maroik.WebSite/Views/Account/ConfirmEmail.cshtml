@@ -1,7 +1,7 @@
 ﻿@{
     bool invalidToken = ViewBag.InvalidToken ?? false;
     bool accountCreated = ViewBag.AccountCreated ?? false;
-    var error = TempData["Error"] as string;
+    string error = (TempData["Error"] as string) ?? string.Empty;
 }
 
 @if (invalidToken == false && accountCreated == false) // 1.	이미 이메일 인증 하셨습니다. [로그인 화면으로] <- 버튼

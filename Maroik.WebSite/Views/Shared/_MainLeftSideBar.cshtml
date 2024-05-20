@@ -2,8 +2,8 @@
 @using Maroik.WebSite.Utilities
 
 @{
-    var currentControllerName = ViewContext.RouteData.Values["Controller"].ToString();
-    var currentActionName = ViewContext.RouteData.Values["Action"].ToString();
+    string currentControllerName = ViewContext.RouteData.Values["Controller"].ToString();
+    string currentActionName = ViewContext.RouteData.Values["Action"].ToString();
 }
 
 <aside class="main-sidebar sidebar-dark-primary elevation-4">
@@ -97,12 +97,12 @@
 
                 @if (Model.Role == Role.Admin) // 로그인 한 사용자의 권한이 Admin인 경우
                 {
-                    var tempAdminCategories = from adminCategory in DbCache.AdminCategories
-                                              orderby adminCategory.Order ascending
-                                              select adminCategory;
-                    var tempAdminSubCategories = DbCache.AdminSubCategories;
+                    IOrderedEnumerable<Category> tempAdminCategories = from adminCategory in DbCache.AdminCategories
+                                                                       orderby adminCategory.Order ascending
+                                                                       select adminCategory;
+                    IEnumerable<SubCategory> tempAdminSubCategories = DbCache.AdminSubCategories;
 
-                    foreach (var tempAdminCategory in tempAdminCategories)
+                    foreach (Category tempAdminCategory in tempAdminCategories)
                     {
                         if (!string.IsNullOrEmpty(tempAdminCategory.Action)) // 단일 카테고리
                         {
@@ -131,14 +131,14 @@
                         }
                         else if (string.IsNullOrEmpty(tempAdminCategory.Action)) // 다중 카테고리
                         {
-                            var tempAdminSelectedSubCategories = from tempAdminSubCategory in tempAdminSubCategories
-                                                                 where tempAdminCategory.Id == tempAdminSubCategory.CategoryId
-                                                                 orderby tempAdminSubCategory.Order ascending
-                                                                 select tempAdminSubCategory;
+                            IOrderedEnumerable<SubCategory> tempAdminSelectedSubCategories = from tempAdminSubCategory in tempAdminSubCategories
+                                                                                             where tempAdminCategory.Id == tempAdminSubCategory.CategoryId
+                                                                                             orderby tempAdminSubCategory.Order ascending
+                                                                                             select tempAdminSubCategory;
 
                             bool isExistSelectedSubCategoryInCategory = false;
 
-                            foreach (var tempAdminSelectedSubCategory in tempAdminSelectedSubCategories)
+                            foreach (SubCategory tempAdminSelectedSubCategory in tempAdminSelectedSubCategories)
                             {
                                 if (tempAdminCategory.Controller == currentControllerName && tempAdminSelectedSubCategory.Action == currentActionName)
                                 {
@@ -158,7 +158,7 @@
                                         </p>
                                     </a>
                                     <ul class="nav nav-treeview">
-                                        @foreach (var tempAdminSelectedSubCategory in tempAdminSelectedSubCategories)
+                                        @foreach (SubCategory tempAdminSelectedSubCategory in tempAdminSelectedSubCategories)
                                         {
                                             if (tempAdminSelectedSubCategory.Action == currentActionName)
                                             {
@@ -193,7 +193,7 @@
                                         </p>
                                     </a>
                                     <ul class="nav nav-treeview">
-                                        @foreach (var tempAdminSelectedSubCategory in tempAdminSelectedSubCategories)
+                                        @foreach (SubCategory tempAdminSelectedSubCategory in tempAdminSelectedSubCategories)
                                         {
                                             <li class="nav-item">
                                                 <a asp-controller="@tempAdminCategory.Controller" asp-action="@tempAdminSelectedSubCategory.Action" class="nav-link">
@@ -211,12 +211,12 @@
                 }
                 else if (Model.Role == Role.User) // 로그인 한 사용자의 권한이 User인 경우
                 {
-                    var tempUserCategories = from userCategory in DbCache.UserCategories
-                                             orderby userCategory.Order ascending
-                                             select userCategory;
-                    var tempUserSubCategories = DbCache.UserSubCategories;
+                    IOrderedEnumerable<Category> tempUserCategories = from userCategory in DbCache.UserCategories
+                                                                      orderby userCategory.Order ascending
+                                                                      select userCategory;
+                    IEnumerable<SubCategory> tempUserSubCategories = DbCache.UserSubCategories;
 
-                    foreach (var tempUserCategory in tempUserCategories)
+                    foreach (Category tempUserCategory in tempUserCategories)
                     {
                         if (!string.IsNullOrEmpty(tempUserCategory.Action)) // 단일 카테고리
                         {
@@ -245,14 +245,14 @@
                         }
                         else if (string.IsNullOrEmpty(tempUserCategory.Action)) // 다중 카테고리
                         {
-                            var tempUserSelectedSubCategories = from tempUserSubCategory in tempUserSubCategories
-                                                                where tempUserCategory.Id == tempUserSubCategory.CategoryId
-                                                                orderby tempUserSubCategory.Order ascending
-                                                                select tempUserSubCategory;
+                            IOrderedEnumerable<SubCategory> tempUserSelectedSubCategories = from tempUserSubCategory in tempUserSubCategories
+                                                                                            where tempUserCategory.Id == tempUserSubCategory.CategoryId
+                                                                                            orderby tempUserSubCategory.Order ascending
+                                                                                            select tempUserSubCategory;
 
                             bool isExistSelectedSubCategoryInCategory = false;
 
-                            foreach (var tempUserSelectedSubCategory in tempUserSelectedSubCategories)
+                            foreach (SubCategory tempUserSelectedSubCategory in tempUserSelectedSubCategories)
                             {
                                 if (tempUserCategory.Controller == currentControllerName && tempUserSelectedSubCategory.Action == currentActionName)
                                 {
@@ -272,7 +272,7 @@
                                         </p>
                                     </a>
                                     <ul class="nav nav-treeview">
-                                        @foreach (var tempUserSelectedSubCategory in tempUserSelectedSubCategories)
+                                        @foreach (SubCategory tempUserSelectedSubCategory in tempUserSelectedSubCategories)
                                         {
                                             if (tempUserSelectedSubCategory.Action == currentActionName)
                                             {
@@ -307,7 +307,7 @@
                                         </p>
                                     </a>
                                     <ul class="nav nav-treeview">
-                                        @foreach (var tempUserSelectedSubCategory in tempUserSelectedSubCategories)
+                                        @foreach (SubCategory tempUserSelectedSubCategory in tempUserSelectedSubCategories)
                                         {
                                             <li class="nav-item">
                                                 <a asp-controller="@tempUserCategory.Controller" asp-action="@tempUserSelectedSubCategory.Action" class="nav-link">
@@ -324,12 +324,12 @@
                 }
                 else if (Model.Role == Role.Anonymous) // 비 로그인 사용자인 경우
                 {
-                    var tempAnonymousCategories = from anonymousCategory in DbCache.AnonymousCategories
-                                                  orderby anonymousCategory.Order ascending
-                                                  select anonymousCategory;
-                    var tempAnonymousSubCategories = DbCache.AnonymousSubCategories;
+                    IOrderedEnumerable<Category> tempAnonymousCategories = from anonymousCategory in DbCache.AnonymousCategories
+                                                                           orderby anonymousCategory.Order ascending
+                                                                           select anonymousCategory;
+                    IEnumerable<SubCategory> tempAnonymousSubCategories = DbCache.AnonymousSubCategories;
 
-                    foreach (var tempAnonymousCategory in tempAnonymousCategories)
+                    foreach (Category tempAnonymousCategory in tempAnonymousCategories)
                     {
                         if (!string.IsNullOrEmpty(tempAnonymousCategory.Action)) // 단일 카테고리
                         {
@@ -358,14 +358,14 @@
                         }
                         else if (string.IsNullOrEmpty(tempAnonymousCategory.Action)) // 다중 카테고리
                         {
-                            var tempAnonymousSelectedSubCategories = from tempAnonymousSubCategory in tempAnonymousSubCategories
-                                                                     where tempAnonymousCategory.Id == tempAnonymousSubCategory.CategoryId
-                                                                     orderby tempAnonymousSubCategory.Order ascending
-                                                                     select tempAnonymousSubCategory;
+                            IOrderedEnumerable<SubCategory> tempAnonymousSelectedSubCategories = from tempAnonymousSubCategory in tempAnonymousSubCategories
+                                                                                                 where tempAnonymousCategory.Id == tempAnonymousSubCategory.CategoryId
+                                                                                                 orderby tempAnonymousSubCategory.Order ascending
+                                                                                                 select tempAnonymousSubCategory;
 
                             bool isExistSelectedSubCategoryInCategory = false;
 
-                            foreach (var tempUserSelectedSubCategory in tempAnonymousSelectedSubCategories)
+                            foreach (SubCategory tempUserSelectedSubCategory in tempAnonymousSelectedSubCategories)
                             {
                                 if (tempAnonymousCategory.Controller == currentControllerName && tempUserSelectedSubCategory.Action == currentActionName)
                                 {
@@ -385,7 +385,7 @@
                                         </p>
                                     </a>
                                     <ul class="nav nav-treeview">
-                                        @foreach (var tempAnonymousSelectedSubCategory in tempAnonymousSelectedSubCategories)
+                                        @foreach (SubCategory tempAnonymousSelectedSubCategory in tempAnonymousSelectedSubCategories)
                                         {
                                             if (tempAnonymousSelectedSubCategory.Action == currentActionName)
                                             {
@@ -420,7 +420,7 @@
                                         </p>
                                     </a>
                                     <ul class="nav nav-treeview">
-                                        @foreach (var tempAnonymousSelectedSubCategory in tempAnonymousSelectedSubCategories)
+                                        @foreach (SubCategory tempAnonymousSelectedSubCategory in tempAnonymousSelectedSubCategories)
                                         {
                                             <li class="nav-item">
                                                 <a asp-controller="@tempAnonymousCategory.Controller" asp-action="@tempAnonymousSelectedSubCategory.Action" class="nav-link">

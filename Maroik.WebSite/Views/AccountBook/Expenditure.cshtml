@@ -176,7 +176,7 @@
                                 <label for="createExpenditurePaymentMethod">@localizer["PaymentMethod"].Value</label>
                                 <br />
                                 <select id="createExpenditurePaymentMethod" name="createExpenditurePaymentMethod" style="max-width:90%;width:210px;text-overflow:ellipsis;">
-                                    @foreach (var item in assets)
+                                    @foreach (Asset item in assets)
                                     {
                                         if (assets.First() == item)
                                         {
@@ -200,7 +200,7 @@
                                 <label for="createExpenditureMyDepositAsset">@localizer["MyDepositAsset"].Value</label>
                                 <br />
                                 <select id="createExpenditureMyDepositAsset" name="createExpenditureMyDepositAsset" style="max-width:90%;width:210px;text-overflow:ellipsis;">
-                                    @foreach (var item in assets)
+                                    @foreach (Asset item in assets)
                                     {
                                         <option value="@item.ProductName">@item.ProductName</option>
                                     }
@@ -329,7 +329,7 @@
                                 <label for="editExpenditurePaymentMethod">@localizer["PaymentMethod"].Value</label>
                                 <br />
                                 <select id="editExpenditurePaymentMethod" name="editExpenditurePaymentMethod" style="max-width:90%;width:210px;text-overflow:ellipsis;">
-                                    @foreach (var item in assets)
+                                    @foreach (Asset item in assets)
                                     {
                                         <option value="@item.ProductName">@item.ProductName</option>
                                     }
@@ -345,7 +345,7 @@
                                 <label for="editExpenditureMyDepositAsset">@localizer["MyDepositAsset"].Value</label>
                                 <br />
                                 <select id="editExpenditureMyDepositAsset" name="editExpenditureMyDepositAsset" style="max-width:90%;width:210px;text-overflow:ellipsis;">
-                                    @foreach (var item in assets)
+                                    @foreach (Asset item in assets)
                                     {
                                         <option value="@item.ProductName">@item.ProductName</option>
                                     }

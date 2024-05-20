@@ -35,10 +35,10 @@
         loginedAccount.Role = Role.Anonymous;
     }
 
-    var currentCulture = Context.Features.Get<Microsoft.AspNetCore.Localization.IRequestCultureFeature>().RequestCulture.Culture.Name;
+    string currentCulture = Context.Features.Get<Microsoft.AspNetCore.Localization.IRequestCultureFeature>().RequestCulture.Culture.Name;
     string selectedSearchType = (ViewBag.SelectedSearchType as string) ?? "";
     string typedSearchText = (ViewBag.TypedSearchText as string) ?? "";
-    var accounts = await accountRepository.GetAllAsync(); // 게시물에서 특별 계정 찾기 위한 용도
+    List<Account> accounts = await accountRepository.GetAllAsync(); // 게시물에서 특별 계정 찾기 위한 용도
 }
 
 <section class="content">
@@ -161,7 +161,7 @@
                 </div>
 
                 <div class="card-footer card-comments">
-                    @foreach (var comment in await commentRepository.GetOneBoardComments(Model.DetailBoardId))
+                    @foreach (Comment comment in await commentRepository.GetOneBoardComments(Model.DetailBoardId))
                     {
                         if (!comment.Deleted)
                         {
@@ -389,10 +389,10 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach (var noticeBoard in Model.NoticeBoards)
+                            @foreach (Board noticeBoard in Model.NoticeBoards)
                             {
-                                var commentsOfUndeletedSelectedBoard = (await commentRepository.GetOneBoardComments(noticeBoard.Id)).Where(m => m.Deleted == false).ToList();
-                                var attachedFilesWithName = (await attachedFileRepository.GetAllAsync()).Where(m => m.BoardId == noticeBoard.Id).Where(m => !string.IsNullOrEmpty(m.Name)).ToList();
+                                List<Comment> commentsOfUndeletedSelectedBoard = (await commentRepository.GetOneBoardComments(noticeBoard.Id)).Where(m => m.Deleted == false).ToList();
+                                List<AttachedFile> attachedFilesWithName = (await attachedFileRepository.GetAllAsync()).Where(m => m.BoardId == noticeBoard.Id).Where(m => !string.IsNullOrEmpty(m.Name)).ToList();
 
                                 <tr style="background-color: lightgray;">
                                     <td style="color:green;font-weight:bold;">@localizer["Notice"]</td>
@@ -438,10 +438,10 @@
                                     }
                                 </tr>
                             }
-                            @foreach (var board in Model.Boards)
+                            @foreach (Board board in Model.Boards)
                             {
-                                var commentsOfUndeletedSelectedBoard = (await commentRepository.GetOneBoardComments(board.Id)).Where(m => m.Deleted == false).ToList();
-                                var attachedFilesWithName = (await attachedFileRepository.GetAllAsync()).Where(m => m.BoardId == board.Id).Where(m => !string.IsNullOrEmpty(m.Name)).ToList();
+                                List<Comment> commentsOfUndeletedSelectedBoard = (await commentRepository.GetOneBoardComments(board.Id)).Where(m => m.Deleted == false).ToList();
+                                List<AttachedFile> attachedFilesWithName = (await attachedFileRepository.GetAllAsync()).Where(m => m.BoardId == board.Id).Where(m => !string.IsNullOrEmpty(m.Name)).ToList();
 
                                 <tr>
                                     <td>@localizer["Free Forum"]</td>
@@ -514,7 +514,7 @@
                                 </li>
                             }
 
-                            @for (var pageNumber = Model.Pager.StartPage; pageNumber <= Model.Pager.EndPage; pageNumber++)
+                            @for (int pageNumber = Model.Pager.StartPage; pageNumber <= Model.Pager.EndPage; pageNumber++)
                             {
                                 <li class="page-item @(pageNumber == Model.Pager.CurrentPage ? "active" : "")">
                                     <a class="page-link" asp-controller="Forum" asp-action="FreeForum" asp-route-page="@pageNumber" asp-route-searchType="@selectedSearchType" asp-route-searchText="@typedSearchText">@pageNumber</a>

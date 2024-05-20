@@ -8,7 +8,7 @@
     int selectedYear = Convert.ToInt32((ViewBag.SelectedYear as string) ?? "");
     int selectedMonth = Convert.ToInt32((ViewBag.SelectedMonth as string) ?? "");
 
-    var currentCulture = Context.Features.Get<Microsoft.AspNetCore.Localization.IRequestCultureFeature>().RequestCulture.Culture.Name;
+    string currentCulture = Context.Features.Get<Microsoft.AspNetCore.Localization.IRequestCultureFeature>().RequestCulture.Culture.Name;
 
     decimal regularIncomeTotal = 0;
     decimal regularIncomeLaborIncome = 0;
@@ -86,7 +86,7 @@
         #region 수입
 
         #region 대분류 = '정기수입'
-        var regularIncome = Model.IncomeOutputViewModels.Where(x => x.MainClass == "RegularIncome").ToList();
+        List<IncomeOutputViewModel> regularIncome = Model.IncomeOutputViewModels.Where(x => x.MainClass == "RegularIncome").ToList();
 
         regularIncomeTotal = regularIncome.Sum(v => v.Amount);
         regularIncomeLaborIncome = regularIncome.Where(x => x.SubClass == "LaborIncome").Sum(v => v.Amount);
@@ -109,7 +109,7 @@
         #endregion
 
         #region 대분류 = '비정기수입'
-        var irregularIncome = Model.IncomeOutputViewModels.Where(x => x.MainClass == "IrregularIncome").ToList();
+        List<IncomeOutputViewModel> irregularIncome = Model.IncomeOutputViewModels.Where(x => x.MainClass == "IrregularIncome").ToList();
 
         irregularIncomeTotal = irregularIncome.Sum(v => v.Amount);
         irregularIncomeLaborIncome = irregularIncome.Where(x => x.SubClass == "LaborIncome").Sum(v => v.Amount);
@@ -128,7 +128,7 @@
         #region 지출
 
         #region 대분류 = '정기저축'
-        var regularSavings = Model.ExpenditureOutputViewModels.Where(x => x.MainClass == "RegularSavings").ToList();
+        List<ExpenditureOutputViewModel> regularSavings = Model.ExpenditureOutputViewModels.Where(x => x.MainClass == "RegularSavings").ToList();
 
         regularSavingsTotal = regularSavings.Sum(v => v.Amount);
         regularSavingsDeposit = regularSavings.Where(x => x.SubClass == "Deposit").Sum(v => v.Amount);
@@ -143,7 +143,7 @@
         #endregion
 
         #region 대분류 = '비소비지출'
-        var nonConsumerSpending = Model.ExpenditureOutputViewModels.Where(x => x.MainClass == "NonConsumerSpending").ToList();
+        List<ExpenditureOutputViewModel> nonConsumerSpending = Model.ExpenditureOutputViewModels.Where(x => x.MainClass == "NonConsumerSpending").ToList();
 
         nonConsumerSpendingTotal = nonConsumerSpending.Sum(v => v.Amount);
         nonConsumerSpendingPublicPension = nonConsumerSpending.Where(x => x.SubClass == "PublicPension").Sum(v => v.Amount);
@@ -166,7 +166,7 @@
         #endregion
 
         #region 대분류 = '소비지출'
-        var consumerSpending = Model.ExpenditureOutputViewModels.Where(x => x.MainClass == "ConsumerSpending").ToList();
+        List<ExpenditureOutputViewModel> consumerSpending = Model.ExpenditureOutputViewModels.Where(x => x.MainClass == "ConsumerSpending").ToList();
 
         consumerSpendingTotal = consumerSpending.Sum(v => v.Amount);
         consumerSpendingMealOrEatOutExpenses = consumerSpending.Where(x => x.SubClass == "MealOrEatOutExpenses").Sum(v => v.Amount);
