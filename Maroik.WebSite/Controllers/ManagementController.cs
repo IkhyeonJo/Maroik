@@ -1584,7 +1584,7 @@ namespace Maroik.WebSite.Controllers
                                         Size = Convert.ToInt32(boardInputViewModel.UploadedFile.Length),
                                         Name = Path.GetFileNameWithoutExtension(boardInputViewModel.UploadedFile.FileName),
                                         Extension = Path.GetExtension(boardInputViewModel.UploadedFile.FileName),
-                                        Path = $"/upload/Management/attachedFiles/{createdBoardId}/{attachedFile}"
+                                        Path = $"/upload/Management/{EnumHelper.GetDescription(BoardType.PrivateNote)}/attachedFiles/{createdBoardId}/{attachedFile}"
                                     });
                                 }
                                 else
@@ -1733,7 +1733,7 @@ namespace Maroik.WebSite.Controllers
                             await summernoteImageFile.CopyToAsync(stream);
                             await stream.FlushAsync();
                         }
-                        return Ok(new { result = true, filePath = $"/upload/Management/summernote/images/{imageFile}" });
+                        return Ok(new { result = true, filePath = $"/upload/Management/{EnumHelper.GetDescription(BoardType.PrivateNote)}/summernote/images/{imageFile}" });
                     }
                     else // 이미지 png 또는 jpg 또는 jpeg 외 확장자는 거절
                     {
@@ -2100,7 +2100,7 @@ namespace Maroik.WebSite.Controllers
                                     previousAttachedFile.Size = Convert.ToInt32(boardInputViewModel.UploadedFile.Length);
                                     previousAttachedFile.Name = Path.GetFileNameWithoutExtension(boardInputViewModel.UploadedFile.FileName);
                                     previousAttachedFile.Extension = Path.GetExtension(boardInputViewModel.UploadedFile.FileName);
-                                    previousAttachedFile.Path = $"/upload/Management/attachedFiles/{createdBoardId}/{attachedFile}";
+                                    previousAttachedFile.Path = $"/upload/Management/{EnumHelper.GetDescription(BoardType.PrivateNote)}/attachedFiles/{createdBoardId}/{attachedFile}";
 
                                     await _attachedFileRepository.UpdateAttachedFileAsync(previousAttachedFile);
 
@@ -2158,7 +2158,7 @@ namespace Maroik.WebSite.Controllers
                                         Size = Convert.ToInt32(boardInputViewModel.UploadedFile.Length),
                                         Name = Path.GetFileNameWithoutExtension(boardInputViewModel.UploadedFile.FileName),
                                         Extension = Path.GetExtension(boardInputViewModel.UploadedFile.FileName),
-                                        Path = $"/upload/Management/attachedFiles/{createdBoardId}/{attachedFile}"
+                                        Path = $"/upload/Management/{EnumHelper.GetDescription(BoardType.PrivateNote)}/attachedFiles/{createdBoardId}/{attachedFile}"
                                     });
 
                                     return Json(new { result = true, message = _localizer["The board has been successfully updated."].Value });
