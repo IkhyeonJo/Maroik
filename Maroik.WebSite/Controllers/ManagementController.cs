@@ -1560,7 +1560,7 @@ namespace Maroik.WebSite.Controllers
                                 {
                                     int createdBoardId = board.Id; // 첨부파일 FK 해서 로직 추가할 것
 
-                                    string attachedFilePath = Path.Combine(_hostEnvironment.ContentRootPath, "wwwroot", "upload", "Management", "attachedFiles", $"{createdBoardId}");
+                                    string attachedFilePath = Path.Combine(_hostEnvironment.ContentRootPath, "wwwroot", "upload", "Management", EnumHelper.GetDescription(BoardType.PrivateNote), "attachedFiles", $"{createdBoardId}");
                                     if (!Directory.Exists(attachedFilePath))
                                     {
                                         _ = Directory.CreateDirectory(attachedFilePath);
@@ -1717,7 +1717,7 @@ namespace Maroik.WebSite.Controllers
                     if (Path.GetExtension(summernoteImageFile.FileName) is ".png" or ".jpg" or ".jpeg")
                     {
 
-                        string summernoteImagePath = Path.Combine(_hostEnvironment.ContentRootPath, "wwwroot", "upload", "Management", "summernote", "images");
+                        string summernoteImagePath = Path.Combine(_hostEnvironment.ContentRootPath, "wwwroot", "upload", "Management", EnumHelper.GetDescription(BoardType.PrivateNote), "summernote", "images");
                         if (!Directory.Exists(summernoteImagePath))
                         {
                             _ = Directory.CreateDirectory(summernoteImagePath);
@@ -2079,7 +2079,7 @@ namespace Maroik.WebSite.Controllers
                                 {
                                     int createdBoardId = boardInputViewModel.Id; // 첨부파일 FK 해서 로직 추가할 것
 
-                                    string attachedFilePath = Path.Combine(_hostEnvironment.ContentRootPath, "wwwroot", "upload", "Management", "attachedFiles", $"{createdBoardId}");
+                                    string attachedFilePath = Path.Combine(_hostEnvironment.ContentRootPath, "wwwroot", "upload", "Management", EnumHelper.GetDescription(BoardType.PrivateNote), "attachedFiles", $"{createdBoardId}");
                                     if (!Directory.Exists(attachedFilePath))
                                     {
                                         _ = Directory.CreateDirectory(attachedFilePath);
@@ -2134,7 +2134,7 @@ namespace Maroik.WebSite.Controllers
                                 {
                                     int createdBoardId = boardInputViewModel.Id; // 첨부파일 FK 해서 로직 추가할 것
 
-                                    string attachedFilePath = Path.Combine(_hostEnvironment.ContentRootPath, "wwwroot", "upload", "Management", "attachedFiles", $"{createdBoardId}");
+                                    string attachedFilePath = Path.Combine(_hostEnvironment.ContentRootPath, "wwwroot", "upload", "Management", EnumHelper.GetDescription(BoardType.PrivateNote), "attachedFiles", $"{createdBoardId}");
                                     if (!Directory.Exists(attachedFilePath))
                                     {
                                         _ = Directory.CreateDirectory(attachedFilePath);
