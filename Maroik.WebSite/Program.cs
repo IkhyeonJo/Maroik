@@ -178,8 +178,6 @@ app.UseHttpsRedirection(); // 2. HTTPS 리디렉션 미들웨어 (UseHttpsRedire
 #endregion
 
 app.UseRouting(); // 5. 요청을 라우팅하기위한 미들웨어 라우팅 (UseRouting)
-
-// app.UseRequestLocalization();
 app.UseCors();
 
 
@@ -301,8 +299,6 @@ app.Use(async (context, next) =>
 });
 #endregion
 #endregion
-
-//app.UseEndpoints(endpoints => { endpoints.MapRazorPages(); endpoints.MapControllerRoute(name: "default", pattern: "{controller=Home}/{action=Index}/{id?}"); }); //9.엔드 포인트 라우팅 미들웨어(MapRazorPages 를 포함하는 UseEndPoints)를 사용하여 요청 파이프라인에 Razor Pages 엔드포인트를 추가합니다.
 
 #region Multi-Language
 string[] supportedCultures = new[] { "en-US", "ko-KR" };
