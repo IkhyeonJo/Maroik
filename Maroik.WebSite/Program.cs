@@ -99,7 +99,7 @@ builder.Services.AddCors(options =>
 builder.Services.AddSingleton<IConfiguration>(builder.Configuration);
 builder.Services.AddResponseCaching(); // For HTTP Header Setting 
 
-#region 도메인 있을 때, 사용
+#region When you have server domain, uncomment
 //builder.Services.AddHsts(options => // https://blog.elmah.io/the-asp-net-core-security-headers-guide/
 //{
 //    options.IncludeSubDomains = true;
