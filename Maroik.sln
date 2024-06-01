@@ -39,9 +39,13 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "5.DeployOps", "5.DeployOps"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "1.SSL", "1.SSL", "{D3135BD2-6AC6-48FD-BC4A-724B8967BC8C}"
 	ProjectSection(SolutionItems) = preProject
+		Maroik.SSL\cert1.pem = Maroik.SSL\cert1.pem
+		Maroik.SSL\chain1.pem = Maroik.SSL\chain1.pem
+		Maroik.SSL\fullchain1.pem = Maroik.SSL\fullchain1.pem
 		Maroik.SSL\maroik.crt = Maroik.SSL\maroik.crt
 		Maroik.SSL\maroik.key = Maroik.SSL\maroik.key
 		Maroik.SSL\maroik.pfx = Maroik.SSL\maroik.pfx
+		Maroik.SSL\privkey1.pem = Maroik.SSL\privkey1.pem
 		Maroik.SSL\ReadMe.txt = Maroik.SSL\ReadMe.txt
 	EndProjectSection
 EndProject
