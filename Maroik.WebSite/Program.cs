@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.CookiePolicy;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Razor;
+using Microsoft.AspNetCore.Rewrite;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 using System.Globalization;
@@ -100,12 +101,12 @@ builder.Services.AddSingleton<IConfiguration>(builder.Configuration);
 builder.Services.AddResponseCaching(); // For HTTP Header Setting 
 
 #region When you have server domain, uncomment
-//builder.Services.AddHsts(options => // https://blog.elmah.io/the-asp-net-core-security-headers-guide/
-//{
-//    options.IncludeSubDomains = true;
-//    options.MaxAge = TimeSpan.FromDays(365);
-//    options.Preload = true;
-//});
+builder.Services.AddHsts(options => // https://blog.elmah.io/the-asp-net-core-security-headers-guide/
+{
+    options.IncludeSubDomains = true;
+    options.MaxAge = TimeSpan.FromDays(365);
+    options.Preload = true;
+});
 #endregion
 
 #region Multi-Language
@@ -163,18 +164,18 @@ app.UseExceptionHandler("/Exception/Error");
 
 #region When you have server domain, uncomment
 // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
-//app.UseHsts();
+app.UseHsts();
 
-//app.UseRewriter(new RewriteOptions()
-//   .AddRedirectToWwwPermanent()
-//   .AddRedirectToHttpsPermanent()
-//);
+app.UseRewriter(new RewriteOptions()
+   .AddRedirectToWwwPermanent()
+   .AddRedirectToHttpsPermanent()
+);
 #endregion
 
 #region When you don't have server domain, uncomment
-app.UseHttpsRedirection(); // 2. HTTPS 리디렉션 미들웨어 (UseHttpsRedirection)는 HTTP 요청을 HTTPS로 리디렉션합니다.
-                           //app.UseStaticFiles(); // 3. 정적 파일 미들웨어 (UseStaticFiles)는 정적 파일을 리턴하고 추가 요청 처리를 단락시킵니다.
-                           // app.UseCookiePolicy(); 4. 쿠키 정책 미들웨어 (UseCookiePolicy)는 앱을 EU 일반 데이터 보호 규정 (GDPR) 규정에 따릅니다.
+//app.UseHttpsRedirection(); // 2. HTTPS 리디렉션 미들웨어 (UseHttpsRedirection)는 HTTP 요청을 HTTPS로 리디렉션합니다.
+//                           //app.UseStaticFiles(); // 3. 정적 파일 미들웨어 (UseStaticFiles)는 정적 파일을 리턴하고 추가 요청 처리를 단락시킵니다.
+//                           // app.UseCookiePolicy(); 4. 쿠키 정책 미들웨어 (UseCookiePolicy)는 앱을 EU 일반 데이터 보호 규정 (GDPR) 규정에 따릅니다.
 #endregion
 
 app.UseRouting(); // 5. 요청을 라우팅하기위한 미들웨어 라우팅 (UseRouting)
