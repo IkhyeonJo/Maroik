@@ -6,6 +6,7 @@ using Maroik.WebAPI.Infrastructure;
 using Maroik.WebAPI.Services;
 using Maroik.WebAPI.Utilities;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Rewrite;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -130,14 +131,14 @@ if (app.Environment.IsDevelopment())
     _ = app.UseDeveloperExceptionPage();
 }
 
-#region 도메인 있을 때, 사용
-//app.UseRewriter(new RewriteOptions()
-//   .AddRedirectToWwwPermanent()
-//   .AddRedirectToHttpsPermanent()
-//);
+#region When you have server domain, uncomment
+app.UseRewriter(new RewriteOptions()
+   .AddRedirectToWwwPermanent()
+   .AddRedirectToHttpsPermanent()
+);
 #endregion
 
-#region 도메인 없을 때, 사용
+#region When you don't have server domain, uncomment
 //app.UseHttpsRedirection();
 #endregion
 
