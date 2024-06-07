@@ -8,11 +8,11 @@ using System.Threading.Tasks;
 
 namespace Maroik.Common.DataAccess.Services
 {
-    public class CommentRepository : ICommentRepository
+    public class BoardCommentRepository : IBoardCommentRepository
     {
         private readonly ApplicationDbContext _context;
 
-        public CommentRepository(ApplicationDbContext context)
+        public BoardCommentRepository(ApplicationDbContext context)
         {
             _context = context;
         }

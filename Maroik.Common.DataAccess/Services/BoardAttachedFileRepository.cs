@@ -7,11 +7,11 @@ using System.Threading.Tasks;
 
 namespace Maroik.Common.DataAccess.Services
 {
-    public class AttachedFileRepository : IAttachedFileRepository
+    public class BoardAttachedFileRepository : IBoardAttachedFileRepository
     {
         private readonly ApplicationDbContext _context;
 
-        public AttachedFileRepository(ApplicationDbContext context)
+        public BoardAttachedFileRepository(ApplicationDbContext context)
         {
             _context = context;
         }

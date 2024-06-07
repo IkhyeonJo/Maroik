@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 
 namespace Maroik.Common.DataAccess.Contracts
 {
-    public interface IAttachedFileRepository
+    public interface IBoardAttachedFileRepository
     {
         /// <summary>
         /// 등록된 모든 파일을 구합니다.

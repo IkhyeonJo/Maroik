@@ -18,11 +18,11 @@ namespace Maroik.WebSite.Controllers
         private readonly ILogger<ForumController> _logger;
         private readonly IHostEnvironment _hostEnvironment;
         private readonly IBoardRepository _boardRepository;
-        private readonly IAttachedFileRepository _attachedFileRepository;
+        private readonly IBoardAttachedFileRepository _attachedFileRepository;
         private readonly IAccountRepository _accountRepository;
-        private readonly ICommentRepository _commentRepository;
+        private readonly IBoardCommentRepository _commentRepository;
 
-        public ForumController(IHtmlLocalizer<ForumController> localizer, ILogger<ForumController> logger, IBoardRepository boardRepository, IHostEnvironment hostEnvironment, IAttachedFileRepository attachedFileRepository, IAccountRepository accountRepository, ICommentRepository commentRepository)
+        public ForumController(IHtmlLocalizer<ForumController> localizer, ILogger<ForumController> logger, IBoardRepository boardRepository, IHostEnvironment hostEnvironment, IBoardAttachedFileRepository attachedFileRepository, IAccountRepository accountRepository, IBoardCommentRepository commentRepository)
         {
             _localizer = localizer;
             _logger = logger;

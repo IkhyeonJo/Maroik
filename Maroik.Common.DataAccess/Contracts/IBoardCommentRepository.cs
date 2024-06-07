@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 
 namespace Maroik.Common.DataAccess.Contracts
 {
-    public interface ICommentRepository
+    public interface IBoardCommentRepository
     {
         /// <summary>
         /// 한 게시물의 모든 댓글을 구합니다.

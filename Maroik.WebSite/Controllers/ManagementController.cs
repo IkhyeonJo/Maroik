@@ -25,10 +25,10 @@ namespace Maroik.WebSite.Controllers
         private readonly ICategoryRepository _categoryRepository;
         private readonly ISubCategoryRepository _subCategoryRepository;
         private readonly IBoardRepository _boardRepository;
-        private readonly IAttachedFileRepository _attachedFileRepository;
-        private readonly ICommentRepository _commentRepository;
+        private readonly IBoardAttachedFileRepository _attachedFileRepository;
+        private readonly IBoardCommentRepository _commentRepository;
 
-        public ManagementController(IHtmlLocalizer<ManagementController> localizer, ILogger<ManagementController> logger, IBoardRepository boardRepository, IAttachedFileRepository attachedFileRepository, ICommentRepository commentRepository, IAccountRepository accountRepository, IHostEnvironment hostEnvironment, ICategoryRepository categoryRepository, ISubCategoryRepository subCategoryRepository)
+        public ManagementController(IHtmlLocalizer<ManagementController> localizer, ILogger<ManagementController> logger, IBoardRepository boardRepository, IBoardAttachedFileRepository attachedFileRepository, IBoardCommentRepository commentRepository, IAccountRepository accountRepository, IHostEnvironment hostEnvironment, ICategoryRepository categoryRepository, ISubCategoryRepository subCategoryRepository)
         {
             _localizer = localizer;
             _logger = logger;
