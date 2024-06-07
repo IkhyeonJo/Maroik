@@ -19,30 +19,30 @@ namespace Maroik.Common.DataAccess.Services
         /// 등록된 모든 계정을 구합니다.
         /// </summary>
         /// <returns></returns>
-        public async Task<List<AttachedFile>> GetAllAsync()
+        public async Task<List<BoardAttachedFile>> GetAllAsync()
         {
-            return await _context.AttachedFiles.ToListAsync();
+            return await _context.BoardAttachedFiles.ToListAsync();
         }
 
         /// <summary>
         /// 첨부파일을 저장합니다.
         /// </summary>
-        /// <param name="attachedFile"></param>
+        /// <param name="boardAttachedFile"></param>
         /// <returns></returns>
-        public async Task SaveAttachedFileAsync(AttachedFile attachedFile)
+        public async Task SaveAttachedFileAsync(BoardAttachedFile boardAttachedFile)
         {
-            _ = await _context.AttachedFiles.AddAsync(attachedFile);
+            _ = await _context.BoardAttachedFiles.AddAsync(boardAttachedFile);
             _ = await _context.SaveChangesAsync();
         }
 
         /// <summary>
         /// 첨부파일을 업데이트합니다.
         /// </summary>
-        /// <param name="attachedFile"></param>
+        /// <param name="boardAttachedFile"></param>
         /// <returns></returns>
-        public async Task UpdateAttachedFileAsync(AttachedFile attachedFile)
+        public async Task UpdateAttachedFileAsync(BoardAttachedFile boardAttachedFile)
         {
-            _ = _context.AttachedFiles.Update(attachedFile);
+            _ = _context.BoardAttachedFiles.Update(boardAttachedFile);
             _ = await _context.SaveChangesAsync();
         }
     }

@@ -645,11 +645,11 @@ ROLLBACK;
 [mysqld]
 autocommit=0   --> autocommit 해제
 
-# MariaDB Table Column Comment
+# MariaDB Table Column BoardComment
 https://jhnyang.tistory.com/309
 https://arjunphp.com/how-to-get-mysql-table-comments/
 
-# MariaDB Table Comment Example
+# MariaDB Table BoardComment Example
 CREATE TABLE `Account` (
   `Email` varchar(255) NOT NULL COMMENT '계정 이메일 (ID)',
   `HashedPassword` longtext NOT NULL COMMENT '계정 암호화 된 비밀번호',

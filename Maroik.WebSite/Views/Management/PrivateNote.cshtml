@@ -113,7 +113,7 @@
                 </div>
 
                 <div class="card-footer bg-dark">
-                    @if (!string.IsNullOrEmpty(Model.BoardOutputViewModel.AttachedFileName))
+                    @if (!string.IsNullOrEmpty(Model.BoardOutputViewModel.BoardAttachedFileName))
                     {
 
                         <ul class="mailbox-attachments d-flex align-items-stretch clearfix">
@@ -121,11 +121,11 @@
                                 <span class="mailbox-attachment-icon"><i class="far fa-file"></i></span>
 
                                 <div class="mailbox-attachment-info">
-                                    <a href="@Model.BoardOutputViewModel.AttachedFilePath" class="mailbox-attachment-name" download="@($"{Model.BoardOutputViewModel.AttachedFileName}{Model.BoardOutputViewModel.AttachedFileExtension}")"><i class="fas fa-paperclip"></i>@Model.BoardOutputViewModel.AttachedFileName@Model.BoardOutputViewModel.AttachedFileExtension</a>
+                                    <a href="@Model.BoardOutputViewModel.BoardAttachedFilePath" class="mailbox-attachment-name" download="@($"{Model.BoardOutputViewModel.BoardAttachedFileName}{Model.BoardOutputViewModel.BoardAttachedFileExtension}")"><i class="fas fa-paperclip"></i>@Model.BoardOutputViewModel.BoardAttachedFileName@Model.BoardOutputViewModel.BoardAttachedFileExtension</a>
                                     <span class="mailbox-attachment-size clearfix mt-1">
                                         <span>
                                             @(
-                                                string.Format("{0:#,###0.#}", (int)(Model.BoardOutputViewModel.AttachedFileSize / 1024))
+                                                string.Format("{0:#,###0.#}", (int)(Model.BoardOutputViewModel.BoardAttachedFileSize / 1024))
                                                 )KB
                                         </span>
                                     </span>
@@ -150,7 +150,7 @@
                 </div>
 
                 <div class="card-footer card-comments">
-                    @foreach (Comment comment in await commentRepository.GetOneBoardComments(Model.DetailBoardId))
+                    @foreach (BoardComment comment in await commentRepository.GetOneBoardComments(Model.DetailBoardId))
                     {
                         if (!comment.Deleted)
                         {
@@ -294,18 +294,18 @@
                     </div> *@
 
                     <div class="card-footer bg-dark">
-                        @if (!string.IsNullOrEmpty(Model.BoardOutputViewModel.AttachedFileName))
+                        @if (!string.IsNullOrEmpty(Model.BoardOutputViewModel.BoardAttachedFileName))
                         {
                             <ul class="mailbox-attachments d-flex align-items-stretch clearfix">
                                 <li>
                                     <span class="mailbox-attachment-icon"><i class="far fa-file"></i></span>
 
                                     <div class="mailbox-attachment-info">
-                                        <a href="@Model.BoardOutputViewModel.AttachedFilePath" class="mailbox-attachment-name" download="@($"{Model.BoardOutputViewModel.AttachedFileName}{Model.BoardOutputViewModel.AttachedFileExtension}")"><i class="fas fa-paperclip"></i>@Model.BoardOutputViewModel.AttachedFileName@Model.BoardOutputViewModel.AttachedFileExtension</a>
+                                        <a href="@Model.BoardOutputViewModel.BoardAttachedFilePath" class="mailbox-attachment-name" download="@($"{Model.BoardOutputViewModel.BoardAttachedFileName}{Model.BoardOutputViewModel.BoardAttachedFileExtension}")"><i class="fas fa-paperclip"></i>@Model.BoardOutputViewModel.BoardAttachedFileName@Model.BoardOutputViewModel.BoardAttachedFileExtension</a>
                                         <span class="mailbox-attachment-size clearfix mt-1">
                                             <span>
                                                 @(
-                                                    string.Format("{0:#,###0.#}", (int)(Model.BoardOutputViewModel.AttachedFileSize / 1024))
+                                                    string.Format("{0:#,###0.#}", (int)(Model.BoardOutputViewModel.BoardAttachedFileSize / 1024))
                                                     )KB
                                             </span>
                                         </span>
@@ -387,8 +387,8 @@
                         <tbody>
                             @foreach (Board noticeBoard in Model.NoticeBoards)
                             {
-                                List<Comment> commentsOfUndeletedSelectedBoard = (await commentRepository.GetOneBoardComments(noticeBoard.Id)).Where(m => m.Deleted == false).ToList();
-                                List<AttachedFile> attachedFilesWithName = (await attachedFileRepository.GetAllAsync()).Where(m => m.BoardId == noticeBoard.Id).Where(m => !string.IsNullOrEmpty(m.Name)).ToList();
+                                List<BoardComment> commentsOfUndeletedSelectedBoard = (await commentRepository.GetOneBoardComments(noticeBoard.Id)).Where(m => m.Deleted == false).ToList();
+                                List<BoardAttachedFile> attachedFilesWithName = (await attachedFileRepository.GetAllAsync()).Where(m => m.BoardId == noticeBoard.Id).Where(m => !string.IsNullOrEmpty(m.Name)).ToList();
 
                                 <tr style="background-color: lightgray;">
                                     <td style="font-weight:bold;">@localizer["Notice"]</td>
@@ -436,8 +436,8 @@
                             }
                             @foreach (Board board in Model.Boards)
                             {
-                                List<Comment> commentsOfUndeletedSelectedBoard = (await commentRepository.GetOneBoardComments(board.Id)).Where(m => m.Deleted == false).ToList();
-                                List<AttachedFile> attachedFilesWithName = (await attachedFileRepository.GetAllAsync()).Where(m => m.BoardId == board.Id).Where(m => !string.IsNullOrEmpty(m.Name)).ToList();
+                                List<BoardComment> commentsOfUndeletedSelectedBoard = (await commentRepository.GetOneBoardComments(board.Id)).Where(m => m.Deleted == false).ToList();
+                                List<BoardAttachedFile> attachedFilesWithName = (await attachedFileRepository.GetAllAsync()).Where(m => m.BoardId == board.Id).Where(m => !string.IsNullOrEmpty(m.Name)).ToList();
 
                                 <tr>
                                     <td>@localizer["Private Note"]</td>

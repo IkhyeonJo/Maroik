@@ -1560,7 +1560,7 @@ namespace Maroik.WebSite.Controllers
                                 {
                                     int createdBoardId = board.Id; // 첨부파일 FK 해서 로직 추가할 것
 
-                                    string attachedFilePath = Path.Combine(_hostEnvironment.ContentRootPath, "wwwroot", "upload", "Management", EnumHelper.GetDescription(BoardType.PrivateNote), "attachedFiles", $"{createdBoardId}");
+                                    string attachedFilePath = Path.Combine(_hostEnvironment.ContentRootPath, "wwwroot", "upload", "Management", EnumHelper.GetDescription(BoardType.PrivateNote), "boardAttachedFiles", $"{createdBoardId}");
                                     if (!Directory.Exists(attachedFilePath))
                                     {
                                         _ = Directory.CreateDirectory(attachedFilePath);
@@ -1578,13 +1578,13 @@ namespace Maroik.WebSite.Controllers
                                         await stream.FlushAsync();
                                     }
 
-                                    await _attachedFileRepository.SaveAttachedFileAsync(new AttachedFile()
+                                    await _attachedFileRepository.SaveAttachedFileAsync(new BoardAttachedFile()
                                     {
                                         BoardId = createdBoardId,
                                         Size = Convert.ToInt32(boardInputViewModel.UploadedFile.Length),
                                         Name = Path.GetFileNameWithoutExtension(boardInputViewModel.UploadedFile.FileName),
                                         Extension = Path.GetExtension(boardInputViewModel.UploadedFile.FileName),
-                                        Path = $"/upload/Management/{EnumHelper.GetDescription(BoardType.PrivateNote)}/attachedFiles/{createdBoardId}/{attachedFile}"
+                                        Path = $"/upload/Management/{EnumHelper.GetDescription(BoardType.PrivateNote)}/boardAttachedFiles/{createdBoardId}/{attachedFile}"
                                     });
                                 }
                                 else
@@ -1659,9 +1659,9 @@ namespace Maroik.WebSite.Controllers
                                 return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                             }
 
-                            IEnumerable<Comment> totalCommentsInSelectedBoard = await _commentRepository.GetOneBoardComments(commentInputViewModel.BoardId);
+                            IEnumerable<BoardComment> totalCommentsInSelectedBoard = await _commentRepository.GetOneBoardComments(commentInputViewModel.BoardId);
 
-                            Comment comment = new()
+                            BoardComment comment = new()
                             {
                                 BoardId = commentInputViewModel.BoardId,
                                 Order = totalCommentsInSelectedBoard?.Count() ?? default,
@@ -1786,7 +1786,7 @@ namespace Maroik.WebSite.Controllers
 
                 IEnumerable<Board> privateNoteBoards = await _boardRepository.GetOneTypeBoards(EnumHelper.GetDescription(BoardType.PrivateNote));
                 privateNoteBoards = privateNoteBoards.Where(m => m.Writer == loginedAccount.Nickname).Where(m => m.Deleted == false).OrderByDescending(a => a.Id);
-                List<AttachedFile> attachedFiles = await _attachedFileRepository.GetAllAsync();
+                List<BoardAttachedFile> boardAttachedFiles = await _attachedFileRepository.GetAllAsync();
 
                 try
                 {
@@ -1802,7 +1802,7 @@ namespace Maroik.WebSite.Controllers
 
                     privateNoteBoard.Views++;
                     await _boardRepository.UpdateBoardAsync(privateNoteBoard);
-                    AttachedFile attachedFile = attachedFiles.FirstOrDefault(m => m.BoardId == boardId);
+                    BoardAttachedFile attachedFile = boardAttachedFiles.FirstOrDefault(m => m.BoardId == boardId);
 
 
                     privateNoteOutputViewModel.BoardOutputViewModel = new BoardOutputViewModel()
@@ -1812,10 +1812,10 @@ namespace Maroik.WebSite.Controllers
                         Views = privateNoteBoard.Views,
                         Content = privateNoteBoard.Content,
                         Updated = privateNoteBoard.Updated,
-                        AttachedFileName = attachedFile?.Name ?? "",
-                        AttachedFileExtension = attachedFile?.Extension ?? "",
-                        AttachedFileSize = attachedFile?.Size ?? 0,
-                        AttachedFilePath = attachedFile?.Path ?? ""
+                        BoardAttachedFileName = attachedFile?.Name ?? "",
+                        BoardAttachedFileExtension = attachedFile?.Extension ?? "",
+                        BoardAttachedFileSize = attachedFile?.Size ?? 0,
+                        BoardAttachedFilePath = attachedFile?.Path ?? ""
                     };
 
                     return View(privateNoteOutputViewModel);
@@ -1844,7 +1844,7 @@ namespace Maroik.WebSite.Controllers
 
                 IEnumerable<Board> privateNoteBoards = await _boardRepository.GetOneTypeBoards(EnumHelper.GetDescription(BoardType.PrivateNote));
                 privateNoteBoards = privateNoteBoards.Where(m => m.Writer == loginedAccount.Nickname).Where(m => m.Deleted == false).OrderByDescending(a => a.Id);
-                List<AttachedFile> attachedFiles = await _attachedFileRepository.GetAllAsync();
+                List<BoardAttachedFile> boardAttachedFiles = await _attachedFileRepository.GetAllAsync();
 
                 try
                 {
@@ -1855,7 +1855,7 @@ namespace Maroik.WebSite.Controllers
                         return RedirectToAction("PrivateNote", "Management");
                     }
 
-                    AttachedFile attachedFile = attachedFiles.FirstOrDefault(m => m.BoardId == boardId);
+                    BoardAttachedFile attachedFile = boardAttachedFiles.FirstOrDefault(m => m.BoardId == boardId);
 
 
                     privateNoteOutputViewModel.BoardOutputViewModel = new BoardOutputViewModel()
@@ -1866,10 +1866,10 @@ namespace Maroik.WebSite.Controllers
                         Content = privateNoteBoard.Content,
                         Locked = privateNoteBoard.Locked,
                         Updated = privateNoteBoard.Updated,
-                        AttachedFileName = attachedFile?.Name ?? "",
-                        AttachedFileExtension = attachedFile?.Extension ?? "",
-                        AttachedFileSize = attachedFile?.Size ?? 0,
-                        AttachedFilePath = attachedFile?.Path ?? ""
+                        BoardAttachedFileName = attachedFile?.Name ?? "",
+                        BoardAttachedFileExtension = attachedFile?.Extension ?? "",
+                        BoardAttachedFileSize = attachedFile?.Size ?? 0,
+                        BoardAttachedFilePath = attachedFile?.Path ?? ""
                     };
 
                     return View(privateNoteOutputViewModel);
@@ -2067,8 +2067,8 @@ namespace Maroik.WebSite.Controllers
 
                             await _boardRepository.UpdateBoardAsync(tempPrivateNoteBoard);
 
-                            List<AttachedFile> attachedFiles = await _attachedFileRepository?.GetAllAsync();
-                            AttachedFile previousAttachedFile = attachedFiles?.FirstOrDefault(m => m.BoardId == boardInputViewModel.Id);
+                            List<BoardAttachedFile> boardAttachedFiles = await _attachedFileRepository?.GetAllAsync();
+                            BoardAttachedFile previousAttachedFile = boardAttachedFiles?.FirstOrDefault(m => m.BoardId == boardInputViewModel.Id);
 
                             #region 첨부 파일 저장
 
@@ -2079,7 +2079,7 @@ namespace Maroik.WebSite.Controllers
                                 {
                                     int createdBoardId = boardInputViewModel.Id; // 첨부파일 FK 해서 로직 추가할 것
 
-                                    string attachedFilePath = Path.Combine(_hostEnvironment.ContentRootPath, "wwwroot", "upload", "Management", EnumHelper.GetDescription(BoardType.PrivateNote), "attachedFiles", $"{createdBoardId}");
+                                    string attachedFilePath = Path.Combine(_hostEnvironment.ContentRootPath, "wwwroot", "upload", "Management", EnumHelper.GetDescription(BoardType.PrivateNote), "boardAttachedFiles", $"{createdBoardId}");
                                     if (!Directory.Exists(attachedFilePath))
                                     {
                                         _ = Directory.CreateDirectory(attachedFilePath);
@@ -2100,7 +2100,7 @@ namespace Maroik.WebSite.Controllers
                                     previousAttachedFile.Size = Convert.ToInt32(boardInputViewModel.UploadedFile.Length);
                                     previousAttachedFile.Name = Path.GetFileNameWithoutExtension(boardInputViewModel.UploadedFile.FileName);
                                     previousAttachedFile.Extension = Path.GetExtension(boardInputViewModel.UploadedFile.FileName);
-                                    previousAttachedFile.Path = $"/upload/Management/{EnumHelper.GetDescription(BoardType.PrivateNote)}/attachedFiles/{createdBoardId}/{attachedFile}";
+                                    previousAttachedFile.Path = $"/upload/Management/{EnumHelper.GetDescription(BoardType.PrivateNote)}/boardAttachedFiles/{createdBoardId}/{attachedFile}";
 
                                     await _attachedFileRepository.UpdateAttachedFileAsync(previousAttachedFile);
 
@@ -2134,7 +2134,7 @@ namespace Maroik.WebSite.Controllers
                                 {
                                     int createdBoardId = boardInputViewModel.Id; // 첨부파일 FK 해서 로직 추가할 것
 
-                                    string attachedFilePath = Path.Combine(_hostEnvironment.ContentRootPath, "wwwroot", "upload", "Management", EnumHelper.GetDescription(BoardType.PrivateNote), "attachedFiles", $"{createdBoardId}");
+                                    string attachedFilePath = Path.Combine(_hostEnvironment.ContentRootPath, "wwwroot", "upload", "Management", EnumHelper.GetDescription(BoardType.PrivateNote), "boardAttachedFiles", $"{createdBoardId}");
                                     if (!Directory.Exists(attachedFilePath))
                                     {
                                         _ = Directory.CreateDirectory(attachedFilePath);
@@ -2152,13 +2152,13 @@ namespace Maroik.WebSite.Controllers
                                         await stream.FlushAsync();
                                     }
 
-                                    await _attachedFileRepository.SaveAttachedFileAsync(new AttachedFile()
+                                    await _attachedFileRepository.SaveAttachedFileAsync(new BoardAttachedFile()
                                     {
                                         BoardId = createdBoardId,
                                         Size = Convert.ToInt32(boardInputViewModel.UploadedFile.Length),
                                         Name = Path.GetFileNameWithoutExtension(boardInputViewModel.UploadedFile.FileName),
                                         Extension = Path.GetExtension(boardInputViewModel.UploadedFile.FileName),
-                                        Path = $"/upload/Management/{EnumHelper.GetDescription(BoardType.PrivateNote)}/attachedFiles/{createdBoardId}/{attachedFile}"
+                                        Path = $"/upload/Management/{EnumHelper.GetDescription(BoardType.PrivateNote)}/boardAttachedFiles/{createdBoardId}/{attachedFile}"
                                     });
 
                                     return Json(new { result = true, message = _localizer["The board has been successfully updated."].Value });
@@ -2257,7 +2257,7 @@ namespace Maroik.WebSite.Controllers
         }
         #endregion
 
-        #region Comment
+        #region BoardComment
         [HttpPost]
         [ValidateAntiForgeryToken]
         [RequiredHttpPostAccess(Role = Role.Admin)]
@@ -2266,7 +2266,7 @@ namespace Maroik.WebSite.Controllers
         {
             try
             {
-                Comment comment = await _commentRepository.GetComment(id);
+                BoardComment comment = await _commentRepository.GetComment(id);
 
                 if (comment == null)
                 {

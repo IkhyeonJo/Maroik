@@ -3,9 +3,9 @@
 namespace Maroik.Common.DataAccess.Models;
 
 /// <summary>
-/// Maroik.WebSite 댓글
+/// Maroik.WebSite 게시판 댓글
 /// </summary>
-public partial class Comment
+public partial class BoardComment
 {
     /// <summary>
     /// PK

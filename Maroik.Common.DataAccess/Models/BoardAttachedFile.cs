@@ -1,9 +1,9 @@
 ﻿namespace Maroik.Common.DataAccess.Models;
 
 /// <summary>
-/// Maroik.WebSite 첨부 파일
+/// Maroik.WebSite 게시판 첨부 파일
 /// </summary>
-public partial class AttachedFile
+public partial class BoardAttachedFile
 {
     /// <summary>
     /// PK
@@ -11,7 +11,7 @@ public partial class AttachedFile
     public int Id { get; set; }
 
     /// <summary>
-    /// 부모 게시판 Id
+    /// 부모 Board Id
     /// </summary>
     public int BoardId { get; set; }
 

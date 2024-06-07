@@ -17,10 +17,10 @@ namespace Maroik.Common.DataAccess.Data
         #region (For Migration) DbSet<T>'s T is Table.
         public virtual DbSet<Account> Accounts { get; set; }
         public virtual DbSet<Asset> Assets { get; set; }
-        public virtual DbSet<AttachedFile> AttachedFiles { get; set; }
+        public virtual DbSet<BoardAttachedFile> BoardAttachedFiles { get; set; }
         public virtual DbSet<Board> Boards { get; set; }
         public virtual DbSet<Category> Categories { get; set; }
-        public virtual DbSet<Comment> Comments { get; set; }
+        public virtual DbSet<BoardComment> BoardComments { get; set; }
         public virtual DbSet<Expenditure> Expenditures { get; set; }
         public virtual DbSet<FixedExpenditure> FixedExpenditures { get; set; }
         public virtual DbSet<FixedIncome> FixedIncomes { get; set; }
@@ -141,39 +141,39 @@ namespace Maroik.Common.DataAccess.Data
                     .HasConstraintName("Asset_FK");
             });
 
-            _ = modelBuilder.Entity<AttachedFile>(entity =>
+            modelBuilder.Entity<BoardAttachedFile>(entity =>
             {
-                _ = entity.HasKey(e => e.Id).HasName("PRIMARY");
+                entity.HasKey(e => e.Id).HasName("PRIMARY");
 
-                _ = entity
-                    .ToTable("AttachedFile", tb => tb.HasComment("Maroik.WebSite 첨부 파일"))
-                    .HasCharSet("utf8mb3")
-                    .UseCollation("utf8mb3_general_ci");
+                entity
+                    .ToTable("BoardAttachedFile", tb => tb.HasComment("Maroik.WebSite 게시판 첨부 파일"))
+                    .HasCharSet("utf8")
+                    .UseCollation("utf8_general_ci");
 
-                _ = entity.HasIndex(e => e.BoardId, "fk_Comment_Board_idx");
+                entity.HasIndex(e => e.BoardId, "fk_Comment_Board_idx");
 
-                _ = entity.Property(e => e.Id)
+                entity.Property(e => e.Id)
                     .HasComment("PK")
                     .HasColumnType("int(11)");
-                _ = entity.Property(e => e.BoardId)
+                entity.Property(e => e.BoardId)
                     .HasComment("부모 Board Id")
                     .HasColumnType("int(11)");
-                _ = entity.Property(e => e.Extension)
+                entity.Property(e => e.Extension)
                     .HasMaxLength(255)
                     .HasComment("확장자");
-                _ = entity.Property(e => e.Name)
+                entity.Property(e => e.Name)
                     .IsRequired()
                     .HasMaxLength(255)
                     .HasComment("이름");
-                _ = entity.Property(e => e.Path)
+                entity.Property(e => e.Path)
                     .IsRequired()
                     .HasMaxLength(255)
                     .HasComment("경로");
-                _ = entity.Property(e => e.Size)
+                entity.Property(e => e.Size)
                     .HasComment("크기 (Byte)")
                     .HasColumnType("int(11)");
 
-                _ = entity.HasOne(d => d.Board).WithMany(p => p.AttachedFiles)
+                entity.HasOne(d => d.Board).WithMany(p => p.BoardAttachedFiles)
                     .HasForeignKey(d => d.BoardId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("fk_Comment_Board0");
@@ -261,43 +261,43 @@ namespace Maroik.Common.DataAccess.Data
                     .HasComment("접근 권한 설정");
             });
 
-            _ = modelBuilder.Entity<Comment>(entity =>
+            modelBuilder.Entity<BoardComment>(entity =>
             {
-                _ = entity.HasKey(e => e.Id).HasName("PRIMARY");
+                entity.HasKey(e => e.Id).HasName("PRIMARY");
 
-                _ = entity
-                    .ToTable("Comment", tb => tb.HasComment("Maroik.WebSite 댓글"))
-                    .HasCharSet("utf8mb3")
-                    .UseCollation("utf8mb3_general_ci");
+                entity
+                    .ToTable("BoardComment", tb => tb.HasComment("Maroik.WebSite 게시판 댓글"))
+                    .HasCharSet("utf8")
+                    .UseCollation("utf8_general_ci");
 
-                _ = entity.HasIndex(e => e.BoardId, "fk_Comment_Board_idx");
+                entity.HasIndex(e => e.BoardId, "fk_Comment_Board_idx");
 
-                _ = entity.Property(e => e.Id)
+                entity.Property(e => e.Id)
                     .HasComment("PK")
                     .HasColumnType("int(11)");
-                _ = entity.Property(e => e.AvatarImagePath)
+                entity.Property(e => e.AvatarImagePath)
                     .IsRequired()
                     .HasMaxLength(255)
                     .HasComment("계정 아바타 이미지 경로");
-                _ = entity.Property(e => e.BoardId)
+                entity.Property(e => e.BoardId)
                     .HasComment("게시물 Id")
                     .HasColumnType("int(11)");
-                _ = entity.Property(e => e.Content)
+                entity.Property(e => e.Content)
                     .IsRequired()
                     .HasComment("내용");
-                _ = entity.Property(e => e.Created)
+                entity.Property(e => e.Created)
                     .HasMaxLength(6)
                     .HasComment("생성일");
-                _ = entity.Property(e => e.Deleted).HasComment("삭제 여부");
-                _ = entity.Property(e => e.Order)
+                entity.Property(e => e.Deleted).HasComment("삭제 여부");
+                entity.Property(e => e.Order)
                     .HasComment("순서")
                     .HasColumnType("int(11)");
-                _ = entity.Property(e => e.Writer)
+                entity.Property(e => e.Writer)
                     .IsRequired()
                     .HasMaxLength(255)
                     .HasComment("작성자");
 
-                _ = entity.HasOne(d => d.Board).WithMany(p => p.Comments)
+                entity.HasOne(d => d.Board).WithMany(p => p.BoardComments)
                     .HasForeignKey(d => d.BoardId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("fk_Comment_Board");

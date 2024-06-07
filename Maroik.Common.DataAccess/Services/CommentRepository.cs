@@ -21,39 +21,39 @@ namespace Maroik.Common.DataAccess.Services
         /// 한 게시물의 모든 댓글을 구합니다.
         /// </summary>
         /// <returns></returns>
-        public async Task<IEnumerable<Comment>> GetOneBoardComments(int boardId)
+        public async Task<IEnumerable<BoardComment>> GetOneBoardComments(int boardId)
         {
-            return await _context.Comments.Where(x => x.BoardId == boardId).OrderBy(m => m.Order).ToListAsync();
+            return await _context.BoardComments.Where(x => x.BoardId == boardId).OrderBy(m => m.Order).ToListAsync();
         }
 
         /// <summary>
         /// 한 댓글을 구합니다.
         /// </summary>
         /// <returns></returns>
-        public async Task<Comment> GetComment(int id)
+        public async Task<BoardComment> GetComment(int id)
         {
-            return await _context.Comments.Where(x => x.Id == id).FirstOrDefaultAsync();
+            return await _context.BoardComments.Where(x => x.Id == id).FirstOrDefaultAsync();
         }
 
         /// <summary>
         /// 댓글을 생성합니다.
         /// </summary>
-        /// <param name="comment"></param>
+        /// <param name="boardComment"></param>
         /// <returns></returns>
-        public async Task WriteCommentAsync(Comment comment)
+        public async Task WriteCommentAsync(BoardComment boardComment)
         {
-            _ = await _context.Comments.AddAsync(comment);
+            _ = await _context.BoardComments.AddAsync(boardComment);
             _ = await _context.SaveChangesAsync();
         }
 
         /// <summary>
-        /// 계시물을 삭제합니다.
+        /// 댓글을 삭제합니다.
         /// </summary>
-        /// <param name="board"></param>
+        /// <param name="boardComment"></param>
         /// <returns></returns>
-        public async Task DeleteCommentAsync(Comment comment)
+        public async Task DeleteCommentAsync(BoardComment boardComment)
         {
-            _ = _context.Comments.Update(comment);
+            _ = _context.BoardComments.Update(boardComment);
             _ = await _context.SaveChangesAsync();
         }
 
