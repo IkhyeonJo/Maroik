@@ -194,13 +194,13 @@ namespace Maroik.WebSite.Controllers
         [ValidateAntiForgeryToken]
         [RequiredHttpPostAccess(Role = Role.Admin)]
         [RequiredHttpPostAccess(Role = Role.User)]
-        public async Task<IActionResult> WriteFreeComment([FromBody] BoardCommentInputViewModel commentInputViewModel)
+        public async Task<IActionResult> WriteFreeComment([FromBody] BoardCommentInputViewModel boardCommentInputViewModel)
         {
             try
             {
                 if (ModelState.IsValid)
                 {
-                    if (string.IsNullOrEmpty(commentInputViewModel.Content))
+                    if (string.IsNullOrEmpty(boardCommentInputViewModel.Content))
                     {
                         return Json(new { result = false, error = _localizer["Please enter a boardComment."].Value });
                     }
@@ -208,8 +208,8 @@ namespace Maroik.WebSite.Controllers
                     #region HtmlSanitizer
                     HtmlSanitizer sanitizer = new();
                     _ = sanitizer.AllowedAttributes.Add("class");
-                    string sanitized = sanitizer.Sanitize(commentInputViewModel.Content);
-                    commentInputViewModel.Content = sanitized;
+                    string sanitized = sanitizer.Sanitize(boardCommentInputViewModel.Content);
+                    boardCommentInputViewModel.Content = sanitized;
                     #endregion
 
                     try
@@ -222,28 +222,28 @@ namespace Maroik.WebSite.Controllers
 
                             IEnumerable<Board> freeForumBoards = await _boardRepository.GetOneTypeBoards(EnumHelper.GetDescription(BoardType.FreeForum));
                             freeForumBoards = freeForumBoards.Where(m => m.Writer == loginedAccount.Nickname).Where(m => m.Deleted == false).OrderByDescending(a => a.Id);
-                            Board freeForumBoard = freeForumBoards.FirstOrDefault(m => m.Id == commentInputViewModel.BoardId);
+                            Board freeForumBoard = freeForumBoards.FirstOrDefault(m => m.Id == boardCommentInputViewModel.BoardId);
 
-                            if (freeForumBoard.Id != commentInputViewModel.BoardId)
+                            if (freeForumBoard.Id != boardCommentInputViewModel.BoardId)
                             {
                                 return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                             }
 
-                            IEnumerable<BoardComment> totalCommentsInSelectedBoard = await _boardCommentRepository.GetOneBoardComments(commentInputViewModel.BoardId);
+                            IEnumerable<BoardComment> totalBoardCommentsInSelectedBoard = await _boardCommentRepository.GetOneBoardComments(boardCommentInputViewModel.BoardId);
 
                             BoardComment boardComment = new()
                             {
-                                BoardId = commentInputViewModel.BoardId,
-                                Order = totalCommentsInSelectedBoard?.Count() ?? default,
+                                BoardId = boardCommentInputViewModel.BoardId,
+                                Order = totalBoardCommentsInSelectedBoard?.Count() ?? default,
                                 AvatarImagePath = loginedAccount.AvatarImagePath,
                                 Writer = loginedAccount.Nickname,
-                                Content = commentInputViewModel.Content,
+                                Content = boardCommentInputViewModel.Content,
                                 Created = DateTime.UtcNow,
                                 Deleted = false
                             };
-                            await _boardCommentRepository.WriteCommentAsync(boardComment);
+                            await _boardCommentRepository.WriteBoardCommentAsync(boardComment);
 
-                            return Json(new { result = true, boardId = commentInputViewModel.BoardId, page = commentInputViewModel.DetailCurrentPage });
+                            return Json(new { result = true, boardId = boardCommentInputViewModel.BoardId, page = boardCommentInputViewModel.DetailCurrentPage });
                         }
                         else
                         {
@@ -634,12 +634,12 @@ namespace Maroik.WebSite.Controllers
                             await _boardRepository.UpdateBoardAsync(tempFreeBoard);
 
                             List<BoardAttachedFile> boardAttachedFiles = await _boardAttachedFileRepository?.GetAllAsync();
-                            BoardAttachedFile previousAttachedFile = boardAttachedFiles?.FirstOrDefault(m => m.BoardId == boardInputViewModel.Id);
+                            BoardAttachedFile previousBoardAttachedFile = boardAttachedFiles?.FirstOrDefault(m => m.BoardId == boardInputViewModel.Id);
 
                             #region 첨부 파일 저장
 
                             #region 기존 첨부 파일 O && 신 첨부 파일 O
-                            if (previousAttachedFile != null && boardInputViewModel.UploadedFile != null)
+                            if (previousBoardAttachedFile != null && boardInputViewModel.UploadedFile != null)
                             {
                                 if (boardInputViewModel.UploadedFile.Length is > 0 and <= 10485760) // boardInputViewModel.UploadedFile Length : 파일 크기 0MB 이상, 10MB 이하
                                 {
@@ -663,12 +663,12 @@ namespace Maroik.WebSite.Controllers
                                         await stream.FlushAsync();
                                     }
 
-                                    previousAttachedFile.Size = Convert.ToInt32(boardInputViewModel.UploadedFile.Length);
-                                    previousAttachedFile.Name = Path.GetFileNameWithoutExtension(boardInputViewModel.UploadedFile.FileName);
-                                    previousAttachedFile.Extension = Path.GetExtension(boardInputViewModel.UploadedFile.FileName);
-                                    previousAttachedFile.Path = $"/upload/Forum/{EnumHelper.GetDescription(BoardType.FreeForum)}/boardAttachedFiles/{createdBoardId}/{boardAttachedFile}";
+                                    previousBoardAttachedFile.Size = Convert.ToInt32(boardInputViewModel.UploadedFile.Length);
+                                    previousBoardAttachedFile.Name = Path.GetFileNameWithoutExtension(boardInputViewModel.UploadedFile.FileName);
+                                    previousBoardAttachedFile.Extension = Path.GetExtension(boardInputViewModel.UploadedFile.FileName);
+                                    previousBoardAttachedFile.Path = $"/upload/Forum/{EnumHelper.GetDescription(BoardType.FreeForum)}/boardAttachedFiles/{createdBoardId}/{boardAttachedFile}";
 
-                                    await _boardAttachedFileRepository.UpdateBoardAttachedFileAsync(previousAttachedFile);
+                                    await _boardAttachedFileRepository.UpdateBoardAttachedFileAsync(previousBoardAttachedFile);
 
                                     return Json(new { result = true, message = _localizer["The board has been successfully updated."].Value });
                                 }
@@ -680,21 +680,21 @@ namespace Maroik.WebSite.Controllers
                             #endregion
 
                             #region 기존 첨부 파일 O && 신 첨부 파일 X
-                            else if (previousAttachedFile != null && boardInputViewModel.UploadedFile == null)
+                            else if (previousBoardAttachedFile != null && boardInputViewModel.UploadedFile == null)
                             {
-                                previousAttachedFile.Size = 0;
-                                previousAttachedFile.Name = "";
-                                previousAttachedFile.Extension = "";
-                                previousAttachedFile.Path = "";
+                                previousBoardAttachedFile.Size = 0;
+                                previousBoardAttachedFile.Name = "";
+                                previousBoardAttachedFile.Extension = "";
+                                previousBoardAttachedFile.Path = "";
 
-                                await _boardAttachedFileRepository.UpdateBoardAttachedFileAsync(previousAttachedFile);
+                                await _boardAttachedFileRepository.UpdateBoardAttachedFileAsync(previousBoardAttachedFile);
 
                                 return Json(new { result = true, message = _localizer["The board has been successfully updated."].Value });
                             }
                             #endregion
 
                             #region 기존 첨부 파일 X && 신 첨부 파일 O
-                            else if (previousAttachedFile == null && boardInputViewModel.UploadedFile != null)
+                            else if (previousBoardAttachedFile == null && boardInputViewModel.UploadedFile != null)
                             {
                                 if (boardInputViewModel.UploadedFile.Length is > 0 and <= 10485760) // boardInputViewModel.UploadedFile Length : 파일 크기 0MB 이상, 10MB 이하
                                 {
@@ -832,7 +832,7 @@ namespace Maroik.WebSite.Controllers
         {
             try
             {
-                BoardComment boardComment = await _boardCommentRepository.GetComment(id);
+                BoardComment boardComment = await _boardCommentRepository.GetBoardComment(id);
 
                 if (boardComment == null)
                 {
@@ -847,7 +847,7 @@ namespace Maroik.WebSite.Controllers
                     {
                         #region 게시물 삭제
                         boardComment.Deleted = true;
-                        await _boardCommentRepository.DeleteCommentAsync(boardComment);
+                        await _boardCommentRepository.DeleteBoardCommentAsync(boardComment);
                         #endregion
 
                         return Json(new { result = true });

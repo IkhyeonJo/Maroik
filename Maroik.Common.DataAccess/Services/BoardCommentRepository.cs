@@ -30,7 +30,7 @@ namespace Maroik.Common.DataAccess.Services
         /// 한 댓글을 구합니다.
         /// </summary>
         /// <returns></returns>
-        public async Task<BoardComment> GetComment(int id)
+        public async Task<BoardComment> GetBoardComment(int id)
         {
             return await _context.BoardComments.Where(x => x.Id == id).FirstOrDefaultAsync();
         }
@@ -40,7 +40,7 @@ namespace Maroik.Common.DataAccess.Services
         /// </summary>
         /// <param name="boardComment"></param>
         /// <returns></returns>
-        public async Task WriteCommentAsync(BoardComment boardComment)
+        public async Task WriteBoardCommentAsync(BoardComment boardComment)
         {
             _ = await _context.BoardComments.AddAsync(boardComment);
             _ = await _context.SaveChangesAsync();
@@ -51,7 +51,7 @@ namespace Maroik.Common.DataAccess.Services
         /// </summary>
         /// <param name="boardComment"></param>
         /// <returns></returns>
-        public async Task DeleteCommentAsync(BoardComment boardComment)
+        public async Task DeleteBoardCommentAsync(BoardComment boardComment)
         {
             _ = _context.BoardComments.Update(boardComment);
             _ = await _context.SaveChangesAsync();
