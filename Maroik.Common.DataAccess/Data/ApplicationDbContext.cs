@@ -141,39 +141,39 @@ namespace Maroik.Common.DataAccess.Data
                     .HasConstraintName("Asset_FK");
             });
 
-            modelBuilder.Entity<BoardAttachedFile>(entity =>
+            _ = modelBuilder.Entity<BoardAttachedFile>(entity =>
             {
-                entity.HasKey(e => e.Id).HasName("PRIMARY");
+                _ = entity.HasKey(e => e.Id).HasName("PRIMARY");
 
-                entity
+                _ = entity
                     .ToTable("BoardAttachedFile", tb => tb.HasComment("Maroik.WebSite 게시판 첨부 파일"))
                     .HasCharSet("utf8")
                     .UseCollation("utf8_general_ci");
 
-                entity.HasIndex(e => e.BoardId, "fk_Comment_Board_idx");
+                _ = entity.HasIndex(e => e.BoardId, "fk_Comment_Board_idx");
 
-                entity.Property(e => e.Id)
+                _ = entity.Property(e => e.Id)
                     .HasComment("PK")
                     .HasColumnType("int(11)");
-                entity.Property(e => e.BoardId)
+                _ = entity.Property(e => e.BoardId)
                     .HasComment("부모 Board Id")
                     .HasColumnType("int(11)");
-                entity.Property(e => e.Extension)
+                _ = entity.Property(e => e.Extension)
                     .HasMaxLength(255)
                     .HasComment("확장자");
-                entity.Property(e => e.Name)
+                _ = entity.Property(e => e.Name)
                     .IsRequired()
                     .HasMaxLength(255)
                     .HasComment("이름");
-                entity.Property(e => e.Path)
+                _ = entity.Property(e => e.Path)
                     .IsRequired()
                     .HasMaxLength(255)
                     .HasComment("경로");
-                entity.Property(e => e.Size)
+                _ = entity.Property(e => e.Size)
                     .HasComment("크기 (Byte)")
                     .HasColumnType("int(11)");
 
-                entity.HasOne(d => d.Board).WithMany(p => p.BoardAttachedFiles)
+                _ = entity.HasOne(d => d.Board).WithMany(p => p.BoardAttachedFiles)
                     .HasForeignKey(d => d.BoardId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("fk_Comment_Board0");
@@ -261,43 +261,43 @@ namespace Maroik.Common.DataAccess.Data
                     .HasComment("접근 권한 설정");
             });
 
-            modelBuilder.Entity<BoardComment>(entity =>
+            _ = modelBuilder.Entity<BoardComment>(entity =>
             {
-                entity.HasKey(e => e.Id).HasName("PRIMARY");
+                _ = entity.HasKey(e => e.Id).HasName("PRIMARY");
 
-                entity
+                _ = entity
                     .ToTable("BoardComment", tb => tb.HasComment("Maroik.WebSite 게시판 댓글"))
                     .HasCharSet("utf8")
                     .UseCollation("utf8_general_ci");
 
-                entity.HasIndex(e => e.BoardId, "fk_Comment_Board_idx");
+                _ = entity.HasIndex(e => e.BoardId, "fk_Comment_Board_idx");
 
-                entity.Property(e => e.Id)
+                _ = entity.Property(e => e.Id)
                     .HasComment("PK")
                     .HasColumnType("int(11)");
-                entity.Property(e => e.AvatarImagePath)
+                _ = entity.Property(e => e.AvatarImagePath)
                     .IsRequired()
                     .HasMaxLength(255)
                     .HasComment("계정 아바타 이미지 경로");
-                entity.Property(e => e.BoardId)
+                _ = entity.Property(e => e.BoardId)
                     .HasComment("게시물 Id")
                     .HasColumnType("int(11)");
-                entity.Property(e => e.Content)
+                _ = entity.Property(e => e.Content)
                     .IsRequired()
                     .HasComment("내용");
-                entity.Property(e => e.Created)
+                _ = entity.Property(e => e.Created)
                     .HasMaxLength(6)
                     .HasComment("생성일");
-                entity.Property(e => e.Deleted).HasComment("삭제 여부");
-                entity.Property(e => e.Order)
+                _ = entity.Property(e => e.Deleted).HasComment("삭제 여부");
+                _ = entity.Property(e => e.Order)
                     .HasComment("순서")
                     .HasColumnType("int(11)");
-                entity.Property(e => e.Writer)
+                _ = entity.Property(e => e.Writer)
                     .IsRequired()
                     .HasMaxLength(255)
                     .HasComment("작성자");
 
-                entity.HasOne(d => d.Board).WithMany(p => p.BoardComments)
+                _ = entity.HasOne(d => d.Board).WithMany(p => p.BoardComments)
                     .HasForeignKey(d => d.BoardId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("fk_Comment_Board");
