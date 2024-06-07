@@ -5,8 +5,8 @@
 @using System.Text
 @using System.Web
 @inject Maroik.Common.DataAccess.Contracts.IAccountRepository accountRepository
-@inject Maroik.Common.DataAccess.Contracts.IBoardCommentRepository commentRepository
-@inject Maroik.Common.DataAccess.Contracts.IBoardAttachedFileRepository attachedFileRepository
+@inject Maroik.Common.DataAccess.Contracts.IBoardCommentRepository boardCommentRepository
+@inject Maroik.Common.DataAccess.Contracts.IBoardAttachedFileRepository boardAttachedFileRepository
 
 @model FreeForumOutputViewModel
 
@@ -161,7 +161,7 @@
                 </div>
 
                 <div class="card-footer card-comments">
-                    @foreach (BoardComment comment in await commentRepository.GetOneBoardComments(Model.DetailBoardId))
+                    @foreach (BoardComment comment in await boardCommentRepository.GetOneBoardComments(Model.DetailBoardId))
                     {
                         if (!comment.Deleted)
                         {
@@ -391,8 +391,8 @@
                         <tbody>
                             @foreach (Board noticeBoard in Model.NoticeBoards)
                             {
-                                List<BoardComment> commentsOfUndeletedSelectedBoard = (await commentRepository.GetOneBoardComments(noticeBoard.Id)).Where(m => m.Deleted == false).ToList();
-                                List<BoardAttachedFile> attachedFilesWithName = (await attachedFileRepository.GetAllAsync()).Where(m => m.BoardId == noticeBoard.Id).Where(m => !string.IsNullOrEmpty(m.Name)).ToList();
+                                List<BoardComment> commentsOfUndeletedSelectedBoard = (await boardCommentRepository.GetOneBoardComments(noticeBoard.Id)).Where(m => m.Deleted == false).ToList();
+                                List<BoardAttachedFile> boardAttachedFilesWithName = (await boardAttachedFileRepository.GetAllAsync()).Where(m => m.BoardId == noticeBoard.Id).Where(m => !string.IsNullOrEmpty(m.Name)).ToList();
 
                                 <tr style="background-color: lightgray;">
                                     <td style="color:green;font-weight:bold;">@localizer["Notice"]</td>
@@ -428,7 +428,7 @@
                                     }
                                     
                                     <td><span style="font-weight:bold; color:green;">@noticeBoard.Views</span></td>
-                                    @if (attachedFilesWithName.Count != 0)
+                                    @if (boardAttachedFilesWithName.Count != 0)
                                     {
                                         <td><span style="font-weight:bold; color:green;"><i class="fas fa-paperclip"></i></span></td>
                                     }
@@ -440,8 +440,8 @@
                             }
                             @foreach (Board board in Model.Boards)
                             {
-                                List<BoardComment> commentsOfUndeletedSelectedBoard = (await commentRepository.GetOneBoardComments(board.Id)).Where(m => m.Deleted == false).ToList();
-                                List<BoardAttachedFile> attachedFilesWithName = (await attachedFileRepository.GetAllAsync()).Where(m => m.BoardId == board.Id).Where(m => !string.IsNullOrEmpty(m.Name)).ToList();
+                                List<BoardComment> commentsOfUndeletedSelectedBoard = (await boardCommentRepository.GetOneBoardComments(board.Id)).Where(m => m.Deleted == false).ToList();
+                                List<BoardAttachedFile> attachedFilesWithName = (await boardAttachedFileRepository.GetAllAsync()).Where(m => m.BoardId == board.Id).Where(m => !string.IsNullOrEmpty(m.Name)).ToList();
 
                                 <tr>
                                     <td>@localizer["Free Forum"]</td>
