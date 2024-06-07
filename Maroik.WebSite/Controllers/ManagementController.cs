@@ -1624,7 +1624,7 @@ namespace Maroik.WebSite.Controllers
         [ValidateAntiForgeryToken]
         [RequiredHttpPostAccess(Role = Role.Admin)]
         [RequiredHttpPostAccess(Role = Role.User)]
-        public async Task<IActionResult> WritePrivateNoteComment([FromBody] CommentInputViewModel commentInputViewModel)
+        public async Task<IActionResult> WritePrivateNoteComment([FromBody] BoardCommentInputViewModel commentInputViewModel)
         {
             try
             {

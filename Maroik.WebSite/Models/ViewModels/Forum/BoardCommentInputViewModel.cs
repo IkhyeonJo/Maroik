@@ -1,6 +1,6 @@
-﻿namespace Maroik.WebSite.Models.ViewModels.Management
+﻿namespace Maroik.WebSite.Models.ViewModels.Forum
 {
-    public class CommentInputViewModel
+    public class BoardCommentInputViewModel
     {
         public int BoardId { get; set; }
 
