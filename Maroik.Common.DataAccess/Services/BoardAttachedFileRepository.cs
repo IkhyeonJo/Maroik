@@ -29,7 +29,7 @@ namespace Maroik.Common.DataAccess.Services
         /// </summary>
         /// <param name="boardAttachedFile"></param>
         /// <returns></returns>
-        public async Task SaveAttachedFileAsync(BoardAttachedFile boardAttachedFile)
+        public async Task SaveBoardAttachedFileAsync(BoardAttachedFile boardAttachedFile)
         {
             _ = await _context.BoardAttachedFiles.AddAsync(boardAttachedFile);
             _ = await _context.SaveChangesAsync();
@@ -40,7 +40,7 @@ namespace Maroik.Common.DataAccess.Services
         /// </summary>
         /// <param name="boardAttachedFile"></param>
         /// <returns></returns>
-        public async Task UpdateAttachedFileAsync(BoardAttachedFile boardAttachedFile)
+        public async Task UpdateBoardAttachedFileAsync(BoardAttachedFile boardAttachedFile)
         {
             _ = _context.BoardAttachedFiles.Update(boardAttachedFile);
             _ = await _context.SaveChangesAsync();

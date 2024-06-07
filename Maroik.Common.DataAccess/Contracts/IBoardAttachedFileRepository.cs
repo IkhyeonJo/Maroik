@@ -17,13 +17,13 @@ namespace Maroik.Common.DataAccess.Contracts
         /// </summary>
         /// <param name="boardAttachedFile"></param>
         /// <returns></returns>
-        public Task SaveAttachedFileAsync(BoardAttachedFile boardAttachedFile);
+        public Task SaveBoardAttachedFileAsync(BoardAttachedFile boardAttachedFile);
 
         /// <summary>
         /// 첨부파일을 업데이트합니다.
         /// </summary>
         /// <param name="boardAttachedFile"></param>
         /// <returns></returns>
-        public Task UpdateAttachedFileAsync(BoardAttachedFile boardAttachedFile);
+        public Task UpdateBoardAttachedFileAsync(BoardAttachedFile boardAttachedFile);
     }
 }

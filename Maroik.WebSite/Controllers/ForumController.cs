@@ -18,19 +18,19 @@ namespace Maroik.WebSite.Controllers
         private readonly ILogger<ForumController> _logger;
         private readonly IHostEnvironment _hostEnvironment;
         private readonly IBoardRepository _boardRepository;
-        private readonly IBoardAttachedFileRepository _attachedFileRepository;
+        private readonly IBoardAttachedFileRepository _boardAttachedFileRepository;
         private readonly IAccountRepository _accountRepository;
-        private readonly IBoardCommentRepository _commentRepository;
+        private readonly IBoardCommentRepository _boardCommentRepository;
 
-        public ForumController(IHtmlLocalizer<ForumController> localizer, ILogger<ForumController> logger, IBoardRepository boardRepository, IHostEnvironment hostEnvironment, IBoardAttachedFileRepository attachedFileRepository, IAccountRepository accountRepository, IBoardCommentRepository commentRepository)
+        public ForumController(IHtmlLocalizer<ForumController> localizer, ILogger<ForumController> logger, IBoardRepository boardRepository, IHostEnvironment hostEnvironment, IBoardAttachedFileRepository boardAttachedFileRepository, IAccountRepository accountRepository, IBoardCommentRepository boardCommentRepository)
         {
             _localizer = localizer;
             _logger = logger;
             _boardRepository = boardRepository;
             _hostEnvironment = hostEnvironment;
-            _attachedFileRepository = attachedFileRepository;
+            _boardAttachedFileRepository = boardAttachedFileRepository;
             _accountRepository = accountRepository;
-            _commentRepository = commentRepository;
+            _boardCommentRepository = boardCommentRepository;
         }
 
         #region 자유게시판
@@ -130,15 +130,15 @@ namespace Maroik.WebSite.Controllers
                                 {
                                     int createdBoardId = board.Id; // 첨부파일 FK 해서 로직 추가할 것
 
-                                    string attachedFilePath = Path.Combine(_hostEnvironment.ContentRootPath, "wwwroot", "upload", "Forum", EnumHelper.GetDescription(BoardType.FreeForum), "boardAttachedFiles", $"{createdBoardId}");
-                                    if (!Directory.Exists(attachedFilePath))
+                                    string boardAttachedFilePath = Path.Combine(_hostEnvironment.ContentRootPath, "wwwroot", "upload", "Forum", EnumHelper.GetDescription(BoardType.FreeForum), "boardAttachedFiles", $"{createdBoardId}");
+                                    if (!Directory.Exists(boardAttachedFilePath))
                                     {
-                                        _ = Directory.CreateDirectory(attachedFilePath);
+                                        _ = Directory.CreateDirectory(boardAttachedFilePath);
                                     }
 
                                     string guid = Guid.NewGuid().ToString().ToUpper();
                                     string boardAttachedFile = $"{guid}{Path.GetExtension(boardInputViewModel.UploadedFile.FileName)}";
-                                    string filePath = Path.Combine(attachedFilePath, boardAttachedFile);
+                                    string filePath = Path.Combine(boardAttachedFilePath, boardAttachedFile);
 
 #pragma warning disable SCS0018 // Potential Path Traversal vulnerability was found where '{0}' in '{1}' may be tainted by user-controlled data from '{2}' in method '{3}'.
                                     using (FileStream stream = new(filePath, FileMode.Create))
@@ -148,7 +148,7 @@ namespace Maroik.WebSite.Controllers
                                         await stream.FlushAsync();
                                     }
 
-                                    await _attachedFileRepository.SaveAttachedFileAsync(new BoardAttachedFile()
+                                    await _boardAttachedFileRepository.SaveBoardAttachedFileAsync(new BoardAttachedFile()
                                     {
                                         BoardId = createdBoardId,
                                         Size = Convert.ToInt32(boardInputViewModel.UploadedFile.Length),
@@ -229,7 +229,7 @@ namespace Maroik.WebSite.Controllers
                                 return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                             }
 
-                            IEnumerable<BoardComment> totalCommentsInSelectedBoard = await _commentRepository.GetOneBoardComments(commentInputViewModel.BoardId);
+                            IEnumerable<BoardComment> totalCommentsInSelectedBoard = await _boardCommentRepository.GetOneBoardComments(commentInputViewModel.BoardId);
 
                             BoardComment boardComment = new()
                             {
@@ -241,7 +241,7 @@ namespace Maroik.WebSite.Controllers
                                 Created = DateTime.UtcNow,
                                 Deleted = false
                             };
-                            await _commentRepository.WriteCommentAsync(boardComment);
+                            await _boardCommentRepository.WriteCommentAsync(boardComment);
 
                             return Json(new { result = true, boardId = commentInputViewModel.BoardId, page = commentInputViewModel.DetailCurrentPage });
                         }
@@ -353,7 +353,7 @@ namespace Maroik.WebSite.Controllers
 
                 IEnumerable<Board> freeBoards = await _boardRepository.GetOneTypeBoards(EnumHelper.GetDescription(BoardType.FreeForum));
                 freeBoards = freeBoards.Where(m => m.Deleted == false).OrderByDescending(a => a.Id);
-                List<BoardAttachedFile> boardAttachedFiles = await _attachedFileRepository.GetAllAsync();
+                List<BoardAttachedFile> boardAttachedFiles = await _boardAttachedFileRepository.GetAllAsync();
 
                 try
                 {
@@ -411,7 +411,7 @@ namespace Maroik.WebSite.Controllers
 
                 IEnumerable<Board> freeBoards = await _boardRepository.GetOneTypeBoards(EnumHelper.GetDescription(BoardType.FreeForum));
                 freeBoards = freeBoards.Where(m => m.Deleted == false).OrderByDescending(a => a.Id);
-                List<BoardAttachedFile> boardAttachedFiles = await _attachedFileRepository.GetAllAsync();
+                List<BoardAttachedFile> boardAttachedFiles = await _boardAttachedFileRepository.GetAllAsync();
 
                 try
                 {
@@ -633,7 +633,7 @@ namespace Maroik.WebSite.Controllers
 
                             await _boardRepository.UpdateBoardAsync(tempFreeBoard);
 
-                            List<BoardAttachedFile> boardAttachedFiles = await _attachedFileRepository?.GetAllAsync();
+                            List<BoardAttachedFile> boardAttachedFiles = await _boardAttachedFileRepository?.GetAllAsync();
                             BoardAttachedFile previousAttachedFile = boardAttachedFiles?.FirstOrDefault(m => m.BoardId == boardInputViewModel.Id);
 
                             #region 첨부 파일 저장
@@ -645,15 +645,15 @@ namespace Maroik.WebSite.Controllers
                                 {
                                     int createdBoardId = boardInputViewModel.Id; // 첨부파일 FK 해서 로직 추가할 것
 
-                                    string attachedFilePath = Path.Combine(_hostEnvironment.ContentRootPath, "wwwroot", "upload", "Forum", EnumHelper.GetDescription(BoardType.FreeForum), "boardAttachedFiles", $"{createdBoardId}");
-                                    if (!Directory.Exists(attachedFilePath))
+                                    string boardAttachedFilePath = Path.Combine(_hostEnvironment.ContentRootPath, "wwwroot", "upload", "Forum", EnumHelper.GetDescription(BoardType.FreeForum), "boardAttachedFiles", $"{createdBoardId}");
+                                    if (!Directory.Exists(boardAttachedFilePath))
                                     {
-                                        _ = Directory.CreateDirectory(attachedFilePath);
+                                        _ = Directory.CreateDirectory(boardAttachedFilePath);
                                     }
 
                                     string guid = Guid.NewGuid().ToString().ToUpper();
                                     string boardAttachedFile = $"{guid}{Path.GetExtension(boardInputViewModel.UploadedFile.FileName)}";
-                                    string filePath = Path.Combine(attachedFilePath, boardAttachedFile);
+                                    string filePath = Path.Combine(boardAttachedFilePath, boardAttachedFile);
 
 #pragma warning disable SCS0018 // Potential Path Traversal vulnerability was found where '{0}' in '{1}' may be tainted by user-controlled data from '{2}' in method '{3}'.
                                     using (FileStream stream = new(filePath, FileMode.Create))
@@ -668,7 +668,7 @@ namespace Maroik.WebSite.Controllers
                                     previousAttachedFile.Extension = Path.GetExtension(boardInputViewModel.UploadedFile.FileName);
                                     previousAttachedFile.Path = $"/upload/Forum/{EnumHelper.GetDescription(BoardType.FreeForum)}/boardAttachedFiles/{createdBoardId}/{boardAttachedFile}";
 
-                                    await _attachedFileRepository.UpdateAttachedFileAsync(previousAttachedFile);
+                                    await _boardAttachedFileRepository.UpdateBoardAttachedFileAsync(previousAttachedFile);
 
                                     return Json(new { result = true, message = _localizer["The board has been successfully updated."].Value });
                                 }
@@ -687,7 +687,7 @@ namespace Maroik.WebSite.Controllers
                                 previousAttachedFile.Extension = "";
                                 previousAttachedFile.Path = "";
 
-                                await _attachedFileRepository.UpdateAttachedFileAsync(previousAttachedFile);
+                                await _boardAttachedFileRepository.UpdateBoardAttachedFileAsync(previousAttachedFile);
 
                                 return Json(new { result = true, message = _localizer["The board has been successfully updated."].Value });
                             }
@@ -700,15 +700,15 @@ namespace Maroik.WebSite.Controllers
                                 {
                                     int createdBoardId = boardInputViewModel.Id; // 첨부파일 FK 해서 로직 추가할 것
 
-                                    string attachedFilePath = Path.Combine(_hostEnvironment.ContentRootPath, "wwwroot", "upload", "Forum", EnumHelper.GetDescription(BoardType.FreeForum), "boardAttachedFiles", $"{createdBoardId}");
-                                    if (!Directory.Exists(attachedFilePath))
+                                    string boardAttachedFilePath = Path.Combine(_hostEnvironment.ContentRootPath, "wwwroot", "upload", "Forum", EnumHelper.GetDescription(BoardType.FreeForum), "boardAttachedFiles", $"{createdBoardId}");
+                                    if (!Directory.Exists(boardAttachedFilePath))
                                     {
-                                        _ = Directory.CreateDirectory(attachedFilePath);
+                                        _ = Directory.CreateDirectory(boardAttachedFilePath);
                                     }
 
                                     string guid = Guid.NewGuid().ToString().ToUpper();
                                     string boardAttachedFile = $"{guid}{Path.GetExtension(boardInputViewModel.UploadedFile.FileName)}";
-                                    string filePath = Path.Combine(attachedFilePath, boardAttachedFile);
+                                    string filePath = Path.Combine(boardAttachedFilePath, boardAttachedFile);
 
 #pragma warning disable SCS0018 // Potential Path Traversal vulnerability was found where '{0}' in '{1}' may be tainted by user-controlled data from '{2}' in method '{3}'.
                                     using (FileStream stream = new(filePath, FileMode.Create))
@@ -718,7 +718,7 @@ namespace Maroik.WebSite.Controllers
                                         await stream.FlushAsync();
                                     }
 
-                                    await _attachedFileRepository.SaveAttachedFileAsync(new BoardAttachedFile()
+                                    await _boardAttachedFileRepository.SaveBoardAttachedFileAsync(new BoardAttachedFile()
                                     {
                                         BoardId = createdBoardId,
                                         Size = Convert.ToInt32(boardInputViewModel.UploadedFile.Length),
@@ -832,7 +832,7 @@ namespace Maroik.WebSite.Controllers
         {
             try
             {
-                BoardComment boardComment = await _commentRepository.GetComment(id);
+                BoardComment boardComment = await _boardCommentRepository.GetComment(id);
 
                 if (boardComment == null)
                 {
@@ -847,7 +847,7 @@ namespace Maroik.WebSite.Controllers
                     {
                         #region 게시물 삭제
                         boardComment.Deleted = true;
-                        await _commentRepository.DeleteCommentAsync(boardComment);
+                        await _boardCommentRepository.DeleteCommentAsync(boardComment);
                         #endregion
 
                         return Json(new { result = true });
