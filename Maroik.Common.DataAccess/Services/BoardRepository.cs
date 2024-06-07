@@ -21,7 +21,7 @@ namespace Maroik.Common.DataAccess.Services
         /// 한 종류의 모든 게시물을 구합니다.
         /// </summary>
         /// <returns></returns>
-        public async Task<IEnumerable<Board>> GetOneTypeBoards(string type)
+        public async Task<IEnumerable<Board>> GetOneTypeBoardsAsync(string type)
         {
             return await _context.Boards.Where(x => x.Type == type).ToListAsync();
         }

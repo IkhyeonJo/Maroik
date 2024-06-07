@@ -21,7 +21,7 @@ namespace Maroik.Common.DataAccess.Services
         /// 한 게시물의 모든 댓글을 구합니다.
         /// </summary>
         /// <returns></returns>
-        public async Task<IEnumerable<BoardComment>> GetOneBoardComments(int boardId)
+        public async Task<IEnumerable<BoardComment>> GetOneBoardCommentsAsync(int boardId)
         {
             return await _context.BoardComments.Where(x => x.BoardId == boardId).OrderBy(m => m.Order).ToListAsync();
         }
@@ -30,7 +30,7 @@ namespace Maroik.Common.DataAccess.Services
         /// 한 댓글을 구합니다.
         /// </summary>
         /// <returns></returns>
-        public async Task<BoardComment> GetBoardComment(int id)
+        public async Task<BoardComment> GetBoardCommentAsync(int id)
         {
             return await _context.BoardComments.Where(x => x.Id == id).FirstOrDefaultAsync();
         }

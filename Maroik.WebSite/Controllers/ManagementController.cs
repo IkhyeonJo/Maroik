@@ -1650,7 +1650,7 @@ namespace Maroik.WebSite.Controllers
                         {
                             Account loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)); // Get Session
 
-                            IEnumerable<Board> privateNoteBoards = await _boardRepository.GetOneTypeBoards(EnumHelper.GetDescription(BoardType.PrivateNote));
+                            IEnumerable<Board> privateNoteBoards = await _boardRepository.GetOneTypeBoardsAsync(EnumHelper.GetDescription(BoardType.PrivateNote));
                             privateNoteBoards = privateNoteBoards.Where(m => m.Writer == loginedAccount.Nickname).Where(m => m.Deleted == false).OrderByDescending(a => a.Id);
                             Board privateNoteBoard = privateNoteBoards.FirstOrDefault(m => m.Id == boardCommentInputViewModel.BoardId);
 
@@ -1659,7 +1659,7 @@ namespace Maroik.WebSite.Controllers
                                 return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                             }
 
-                            IEnumerable<BoardComment> totalBoardCommentsInSelectedBoard = await _boardCommentRepository.GetOneBoardComments(boardCommentInputViewModel.BoardId);
+                            IEnumerable<BoardComment> totalBoardCommentsInSelectedBoard = await _boardCommentRepository.GetOneBoardCommentsAsync(boardCommentInputViewModel.BoardId);
 
                             BoardComment boardComment = new()
                             {
@@ -1784,7 +1784,7 @@ namespace Maroik.WebSite.Controllers
                     DetailBoardId = boardId ?? default
                 };
 
-                IEnumerable<Board> privateNoteBoards = await _boardRepository.GetOneTypeBoards(EnumHelper.GetDescription(BoardType.PrivateNote));
+                IEnumerable<Board> privateNoteBoards = await _boardRepository.GetOneTypeBoardsAsync(EnumHelper.GetDescription(BoardType.PrivateNote));
                 privateNoteBoards = privateNoteBoards.Where(m => m.Writer == loginedAccount.Nickname).Where(m => m.Deleted == false).OrderByDescending(a => a.Id);
                 List<BoardAttachedFile> boardAttachedFiles = await _boardAttachedFileRepository.GetAllAsync();
 
@@ -1842,7 +1842,7 @@ namespace Maroik.WebSite.Controllers
                 _ = HttpContext.Session.TryGetValue(Maroik.WebSite.Extensions.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account), out byte[] resultByte);
                 Account loginedAccount = await _accountRepository.GetAccountByEmailAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
 
-                IEnumerable<Board> privateNoteBoards = await _boardRepository.GetOneTypeBoards(EnumHelper.GetDescription(BoardType.PrivateNote));
+                IEnumerable<Board> privateNoteBoards = await _boardRepository.GetOneTypeBoardsAsync(EnumHelper.GetDescription(BoardType.PrivateNote));
                 privateNoteBoards = privateNoteBoards.Where(m => m.Writer == loginedAccount.Nickname).Where(m => m.Deleted == false).OrderByDescending(a => a.Id);
                 List<BoardAttachedFile> boardAttachedFiles = await _boardAttachedFileRepository.GetAllAsync();
 
@@ -1894,7 +1894,7 @@ namespace Maroik.WebSite.Controllers
                 #endregion
 
                 #region 관련된 모든 게시판 데이터 가져오는 로직
-                IEnumerable<Board> privateNoteBoards = await _boardRepository.GetOneTypeBoards(EnumHelper.GetDescription(BoardType.PrivateNote));
+                IEnumerable<Board> privateNoteBoards = await _boardRepository.GetOneTypeBoardsAsync(EnumHelper.GetDescription(BoardType.PrivateNote));
                 privateNoteBoards = privateNoteBoards.Where(m => m.Writer == loginedAccount.Nickname).Where(m => m.Deleted == false && m.Noticed == false).OrderByDescending(a => a.Id);
                 #endregion
 
@@ -1970,7 +1970,7 @@ namespace Maroik.WebSite.Controllers
                 _ = HttpContext.Session.TryGetValue(Maroik.WebSite.Extensions.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account), out byte[] resultByte);
                 Account loginedAccount = await _accountRepository.GetAccountByEmailAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
 
-                IEnumerable<Board> privateNoteBoards = await _boardRepository.GetOneTypeBoards(EnumHelper.GetDescription(BoardType.PrivateNote));
+                IEnumerable<Board> privateNoteBoards = await _boardRepository.GetOneTypeBoardsAsync(EnumHelper.GetDescription(BoardType.PrivateNote));
                 privateNoteBoards = privateNoteBoards.Where(m => m.Writer == loginedAccount.Nickname).Where(m => m.Deleted == false).OrderByDescending(a => a.Id);
 
                 if (privateNoteBoards == null)
@@ -2050,7 +2050,7 @@ namespace Maroik.WebSite.Controllers
                         {
                             Account loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)); // Get Session
 
-                            IEnumerable<Board> privateNoteBoards = await _boardRepository.GetOneTypeBoards(EnumHelper.GetDescription(BoardType.PrivateNote));
+                            IEnumerable<Board> privateNoteBoards = await _boardRepository.GetOneTypeBoardsAsync(EnumHelper.GetDescription(BoardType.PrivateNote));
                             privateNoteBoards = privateNoteBoards.Where(m => m.Writer == loginedAccount.Nickname).Where(m => m.Deleted == false).OrderByDescending(a => a.Id);
 
                             Board tempPrivateNoteBoard = privateNoteBoards.Where(a => a.Id == boardInputViewModel.Id).FirstOrDefault();
@@ -2217,7 +2217,7 @@ namespace Maroik.WebSite.Controllers
                 _ = HttpContext.Session.TryGetValue(Maroik.WebSite.Extensions.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account), out byte[] resultByte);
                 Account loginedAccount = await _accountRepository.GetAccountByEmailAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
 
-                IEnumerable<Board> privateNoteBoards = await _boardRepository.GetOneTypeBoards(EnumHelper.GetDescription(BoardType.PrivateNote));
+                IEnumerable<Board> privateNoteBoards = await _boardRepository.GetOneTypeBoardsAsync(EnumHelper.GetDescription(BoardType.PrivateNote));
                 privateNoteBoards = privateNoteBoards.Where(m => m.Writer == loginedAccount.Nickname).Where(m => m.Deleted == false).OrderByDescending(a => a.Id);
 
                 if (privateNoteBoards == null)
@@ -2266,7 +2266,7 @@ namespace Maroik.WebSite.Controllers
         {
             try
             {
-                BoardComment boardComment = await _boardCommentRepository.GetBoardComment(id);
+                BoardComment boardComment = await _boardCommentRepository.GetBoardCommentAsync(id);
 
                 if (boardComment == null)
                 {

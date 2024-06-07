@@ -87,7 +87,7 @@ namespace Maroik.Common.DataAccess.Services
         /// <param name="timeZoneIanaId"></param>
         /// <param name="monetaryUnit"></param>
         /// <returns></returns>
-        public async Task<List<USP_Expenditure_MonthlyReport>> GetCurrentYearMonthExpendituresMonthlyReport(string email, string yearMonth, string timeZoneIanaId, string monetaryUnit)
+        public async Task<List<USP_Expenditure_MonthlyReport>> GetCurrentYearMonthExpendituresMonthlyReportAsync(string email, string yearMonth, string timeZoneIanaId, string monetaryUnit)
         {
             return await _context.USP_Expenditure_MonthlyReports.FromSqlRaw("CALL USP_Expenditure_MonthlyReport(@yearMonth, @email, @timeZoneIanaId, @monetaryUnit)", new MySqlParameter("@yearMonth", yearMonth), new MySqlParameter("@email", email), new MySqlParameter("@timeZoneIanaId", timeZoneIanaId), new MySqlParameter("@monetaryUnit", monetaryUnit)).ToListAsync();
         }

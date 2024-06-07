@@ -50,6 +50,6 @@ namespace Maroik.Common.DataAccess.Contracts
         /// <param name="timeZoneIanaId"></param>
         /// <param name="monetaryUnit"></param>
         /// <returns></returns>
-        public Task<List<USP_Income_MonthlyReport>> GetCurrentYearMonthIncomesMonthlyReport(string email, string yearMonth, string timeZoneIanaId, string monetaryUnit);
+        public Task<List<USP_Income_MonthlyReport>> GetCurrentYearMonthIncomesMonthlyReportAsync(string email, string yearMonth, string timeZoneIanaId, string monetaryUnit);
     }
 }
