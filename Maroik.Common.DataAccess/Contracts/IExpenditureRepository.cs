@@ -50,7 +50,7 @@ namespace Maroik.Common.DataAccess.Contracts
         /// <param name="timeZoneIanaId"></param>
         /// <param name="monetaryUnit"></param>
         /// <returns></returns>
-        public Task<List<USP_Expenditure_MonthlyReport>> GetCurrentYearMonthExpendituresMonthlyReport(string email, string yearMonth, string timeZoneIanaId, string monetaryUnit);
+        public Task<List<USP_Expenditure_MonthlyReport>> GetCurrentYearMonthExpendituresMonthlyReportAsync(string email, string yearMonth, string timeZoneIanaId, string monetaryUnit);
 
         /// <summary>
         /// 내입금자산명을 업데이트합니다.

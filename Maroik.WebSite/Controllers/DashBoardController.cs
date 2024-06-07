@@ -181,8 +181,8 @@ namespace Maroik.WebSite.Controllers
                 }
                 userIndexOutputViewModel.IncomeOutputViewModels = userIndexOutputViewModel.IncomeOutputViewModels.Where(x => x.MonetaryUnit == userIndexOutputViewModel.DefaultMonetaryUnit).ToList();
                 userIndexOutputViewModel.ExpenditureOutputViewModels = userIndexOutputViewModel.ExpenditureOutputViewModels.Where(x => x.MonetaryUnit == userIndexOutputViewModel.DefaultMonetaryUnit).ToList();
-                userIndexOutputViewModel.USP_Income_MonthlyReport_Results = await _incomeRepository.GetCurrentYearMonthIncomesMonthlyReport(currentLoginUserEmail, currentYearMonth, JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId, userIndexOutputViewModel.DefaultMonetaryUnit);
-                userIndexOutputViewModel.USP_Expenditure_MonthlyReport_Results = await _expenditureRepository.GetCurrentYearMonthExpendituresMonthlyReport(currentLoginUserEmail, currentYearMonth, JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId, userIndexOutputViewModel.DefaultMonetaryUnit);
+                userIndexOutputViewModel.USP_Income_MonthlyReport_Results = await _incomeRepository.GetCurrentYearMonthIncomesMonthlyReportAsync(currentLoginUserEmail, currentYearMonth, JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId, userIndexOutputViewModel.DefaultMonetaryUnit);
+                userIndexOutputViewModel.USP_Expenditure_MonthlyReport_Results = await _expenditureRepository.GetCurrentYearMonthExpendituresMonthlyReportAsync(currentLoginUserEmail, currentYearMonth, JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId, userIndexOutputViewModel.DefaultMonetaryUnit);
             }
             #endregion
 

@@ -10,7 +10,7 @@ namespace Maroik.Common.DataAccess.Contracts
         /// 한 종류의 모든 게시물을 구합니다.
         /// </summary>
         /// <returns></returns>
-        public Task<IEnumerable<Board>> GetOneTypeBoards(string type);
+        public Task<IEnumerable<Board>> GetOneTypeBoardsAsync(string type);
 
         /// <summary>
         /// 게시물을 생성합니다.

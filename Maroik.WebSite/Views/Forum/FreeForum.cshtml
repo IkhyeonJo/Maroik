@@ -161,7 +161,7 @@
                 </div>
 
                 <div class="card-footer card-comments">
-                    @foreach (BoardComment comment in await boardCommentRepository.GetOneBoardComments(Model.DetailBoardId))
+                    @foreach (BoardComment comment in await boardCommentRepository.GetOneBoardCommentsAsync(Model.DetailBoardId))
                     {
                         if (!comment.Deleted)
                         {
@@ -391,7 +391,7 @@
                         <tbody>
                             @foreach (Board noticeBoard in Model.NoticeBoards)
                             {
-                                List<BoardComment> commentsOfUndeletedSelectedBoard = (await boardCommentRepository.GetOneBoardComments(noticeBoard.Id)).Where(m => m.Deleted == false).ToList();
+                                List<BoardComment> commentsOfUndeletedSelectedBoard = (await boardCommentRepository.GetOneBoardCommentsAsync(noticeBoard.Id)).Where(m => m.Deleted == false).ToList();
                                 List<BoardAttachedFile> boardAttachedFilesWithName = (await boardAttachedFileRepository.GetAllAsync()).Where(m => m.BoardId == noticeBoard.Id).Where(m => !string.IsNullOrEmpty(m.Name)).ToList();
 
                                 <tr style="background-color: lightgray;">
@@ -440,7 +440,7 @@
                             }
                             @foreach (Board board in Model.Boards)
                             {
-                                List<BoardComment> commentsOfUndeletedSelectedBoard = (await boardCommentRepository.GetOneBoardComments(board.Id)).Where(m => m.Deleted == false).ToList();
+                                List<BoardComment> commentsOfUndeletedSelectedBoard = (await boardCommentRepository.GetOneBoardCommentsAsync(board.Id)).Where(m => m.Deleted == false).ToList();
                                 List<BoardAttachedFile> attachedFilesWithName = (await boardAttachedFileRepository.GetAllAsync()).Where(m => m.BoardId == board.Id).Where(m => !string.IsNullOrEmpty(m.Name)).ToList();
 
                                 <tr>
