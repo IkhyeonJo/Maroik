@@ -16,21 +16,21 @@ namespace Maroik.Common.DataAccess.Contracts
         /// 한 댓글을 구합니다.
         /// </summary>
         /// <returns></returns>
-        public Task<BoardComment> GetComment(int id);
+        public Task<BoardComment> GetBoardComment(int id);
 
         /// <summary>
         /// 댓글을 생성합니다.
         /// </summary>
         /// <param name="boardComment"></param>
         /// <returns></returns>
-        public Task WriteCommentAsync(BoardComment boardComment);
+        public Task WriteBoardCommentAsync(BoardComment boardComment);
 
         /// <summary>
         /// 댓글을 삭제합니다.
         /// </summary>
         /// <param name="boardComment"></param>
         /// <returns></returns>
-        public Task DeleteCommentAsync(BoardComment boardComment);
+        public Task DeleteBoardCommentAsync(BoardComment boardComment);
 
     }
 }
