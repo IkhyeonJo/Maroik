@@ -3,7 +3,7 @@ using Maroik.Common.DataAccess.Models;
 using Maroik.Common.Miscellaneous.Extensions;
 using Maroik.WebSite.Models.ViewModels.Account;
 using Maroik.WebSite.Models.ViewModels.DashBoard;
-using Maroik.WebSite.Utilities;
+using Maroik.Common.Miscellaneous.Utilities;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;

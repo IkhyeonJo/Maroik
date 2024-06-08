@@ -1,5 +1,5 @@
 using Maroik.WebSite.Models.ViewModels.Account;
-using Maroik.WebSite.Utilities;
+using Maroik.Common.Miscellaneous.Utilities;
 
 namespace Maroik.WebSite.Contracts
 {
