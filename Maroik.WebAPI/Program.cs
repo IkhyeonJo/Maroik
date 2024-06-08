@@ -4,7 +4,7 @@ using Maroik.Common.DataAccess.Services;
 using Maroik.WebAPI.Contracts;
 using Maroik.WebAPI.Infrastructure;
 using Maroik.WebAPI.Services;
-using Maroik.WebAPI.Utilities;
+using Maroik.Common.Miscellaneous.Utilities;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Rewrite;
 using Microsoft.AspNetCore.Server.Kestrel.Core;

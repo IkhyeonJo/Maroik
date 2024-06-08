@@ -1,4 +1,5 @@
 ﻿@model Maroik.Common.DataAccess.Models.Account
+@using Maroik.Common.Miscellaneous.Utilities
 @using Maroik.WebSite.Utilities
 @using System.Text
 @using Newtonsoft.Json
@@ -8,7 +9,7 @@
 @inject Maroik.Common.DataAccess.Contracts.IFixedExpenditureRepository fixedExpenditureRepository
 @{
     string currentCulture = Context.Features.Get<Microsoft.AspNetCore.Localization.IRequestCultureFeature>().RequestCulture.Culture.Name;
-    Context.Session.TryGetValue(Maroik.WebSite.Extensions.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account), out byte[] resultByte);
+    Context.Session.TryGetValue(Maroik.Common.Miscellaneous.Extensions.EnumHelper.GetDescription(Maroik.Common.Miscellaneous.Utilities.Session.Account), out byte[] resultByte);
     string loginedAccountTimeZoneIanaId = string.Empty;
     try
     {

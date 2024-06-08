@@ -10,6 +10,8 @@ FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 COPY ["Maroik.WebAPI/Maroik.WebAPI.csproj", "Maroik.WebAPI/"]
 COPY ["Maroik.Common.DataAccess/Maroik.Common.DataAccess.csproj", "Maroik.Common.DataAccess/"]
+COPY ["Maroik.Common.Miscellaneous/Maroik.Common.Miscellaneous.csproj", "Maroik.Common.Miscellaneous/"]
+
 RUN dotnet restore "Maroik.WebAPI/Maroik.WebAPI.csproj"
 COPY . .
 WORKDIR "/src/Maroik.WebAPI"

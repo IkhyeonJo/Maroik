@@ -33,6 +33,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\Maroik.Common.Miscellaneous\Maroik.Common.Miscellaneous.csproj" />
     <ProjectReference Include="..\Maroik.Common.DataAccess\Maroik.Common.DataAccess.csproj" />
   </ItemGroup>
 
