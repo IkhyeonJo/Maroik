@@ -17,7 +17,7 @@ namespace Maroik.WebAPI.Services
             _accountRepository = accountRepository;
         }
 
-        public async Task<bool> IsValidUserCredentials(string email, string password)
+        public async Task<bool> IsValidUserCredentialsAsync(string email, string password)
         {
             _logger.LogInformation($"Validating user [{email}]");
             if (string.IsNullOrWhiteSpace(email))

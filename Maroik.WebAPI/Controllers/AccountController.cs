@@ -39,7 +39,7 @@ namespace Maroik.WebAPI.Controllers
                 return BadRequest();
             }
 
-            if (!await _userRepository.IsValidUserCredentials(request.Email, request.Password))
+            if (!await _userRepository.IsValidUserCredentialsAsync(request.Email, request.Password))
             {
                 return Unauthorized();
             }
