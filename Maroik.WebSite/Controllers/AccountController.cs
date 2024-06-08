@@ -1,10 +1,9 @@
 ﻿using Maroik.Common.DataAccess.Contracts;
 using Maroik.Common.DataAccess.Models;
-using Maroik.WebSite.Contracts;
 using Maroik.Common.Miscellaneous.Extensions;
-using Maroik.WebSite.Models.ViewModels.Account;
-using Maroik.WebSite.Utilities;
 using Maroik.Common.Miscellaneous.Utilities;
+using Maroik.WebSite.Contracts;
+using Maroik.WebSite.Models.ViewModels.Account;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Localization;
 using Microsoft.EntityFrameworkCore;

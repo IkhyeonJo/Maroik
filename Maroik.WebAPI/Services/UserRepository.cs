@@ -1,7 +1,7 @@
 ﻿using Maroik.Common.DataAccess.Contracts;
-using Maroik.WebAPI.Contracts;
 using Maroik.Common.Miscellaneous.Extensions;
 using Maroik.Common.Miscellaneous.Utilities;
+using Maroik.WebAPI.Contracts;
 using System.Text;
 
 namespace Maroik.WebAPI.Services

@@ -18,7 +18,7 @@
         {
             try
             {
-                return value % 1 == 0 ? ((int)(value?? 0) ).ToString() : (value ?? 0).ToString().TrimEnd('0').TrimEnd('.');
+                return value % 1 == 0 ? ((int)(value ?? 0)).ToString() : (value ?? 0).ToString().TrimEnd('0').TrimEnd('.');
             }
             catch
             {

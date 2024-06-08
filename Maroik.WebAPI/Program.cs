@@ -1,10 +1,10 @@
 using Maroik.Common.DataAccess.Contracts;
 using Maroik.Common.DataAccess.Data;
 using Maroik.Common.DataAccess.Services;
+using Maroik.Common.Miscellaneous.Utilities;
 using Maroik.WebAPI.Contracts;
 using Maroik.WebAPI.Infrastructure;
 using Maroik.WebAPI.Services;
-using Maroik.Common.Miscellaneous.Utilities;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Rewrite;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
