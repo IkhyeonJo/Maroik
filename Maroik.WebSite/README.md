@@ -855,3 +855,9 @@ html
 </div>
 
 This will place the data in two columns, with the data on the left in the first column and the additional data on the right in the second column. Adjust the content of the second column (<div> containing the right side data) according to your requirements.
+
+
+
+FullCalendar
+
+https://github.com/IkhyeonJo/Maroik/issues/37
