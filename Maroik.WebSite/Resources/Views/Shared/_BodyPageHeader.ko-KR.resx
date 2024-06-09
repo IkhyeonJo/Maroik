@@ -129,6 +129,9 @@
   <data name="Asset" xml:space="preserve">
     <value>자산</value>
   </data>
+  <data name="Calendar" xml:space="preserve">
+    <value>달력</value>
+  </data>
   <data name="Chart" xml:space="preserve">
     <value>차트</value>
   </data>
