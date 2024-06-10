@@ -58,9 +58,9 @@ $(function () {
 
     var calendar = new Calendar(calendarEl, {
         headerToolbar: {
-            left: 'prev,next today',
+            left: 'prevYear,prev,next,nextYear today',
             center: 'title',
-            right: 'dayGridMonth,timeGridWeek,timeGridDay'
+            right: 'dayGridMonth,dayGridWeek,dayGridDay'
         },
         themeSystem: 'bootstrap',
         //Random default events
@@ -111,7 +111,9 @@ $(function () {
                 borderColor: '#3c8dbc' //Primary (light-blue)
             }
         ],
+        navLinks: true, // can click day/week names to navigate views
         editable: true,
+        dayMaxEvents: true, // allow "more" link when too many events
         droppable: true, // this allows things to be dropped onto the calendar !!!
         drop: function (info) {
             // is the "remove after drop" checkbox checked?
