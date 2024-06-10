@@ -113,7 +113,6 @@ $(function () {
         ],
         navLinks: true, // can click day/week names to navigate views
         editable: true,
-        dayMaxEvents: true, // allow "more" link when too many events
         droppable: true, // this allows things to be dropped onto the calendar !!!
         drop: function (info) {
             // is the "remove after drop" checkbox checked?
