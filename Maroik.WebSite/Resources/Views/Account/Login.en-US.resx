@@ -126,6 +126,9 @@
   <data name="Go to main page" xml:space="preserve">
     <value>Go to main page</value>
   </data>
+  <data name="Language" xml:space="preserve">
+    <value>Language</value>
+  </data>
   <data name="Password" xml:space="preserve">
     <value>Password</value>
   </data>
