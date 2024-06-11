@@ -126,6 +126,9 @@
   <data name="Go to main page" xml:space="preserve">
     <value>본 화면으로 이동</value>
   </data>
+  <data name="Language" xml:space="preserve">
+    <value>언어</value>
+  </data>
   <data name="Password" xml:space="preserve">
     <value>비밀번호</value>
   </data>
