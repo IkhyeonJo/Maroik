@@ -6,10 +6,12 @@ using Maroik.Common.Miscellaneous.Utilities;
 using Maroik.WebSite.Contracts;
 using Maroik.WebSite.Services;
 using Maroik.WebSite.Utilities;
+using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.CookiePolicy;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Razor;
+using Microsoft.AspNetCore.Session;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 using System.Globalization;
@@ -17,6 +19,8 @@ using System.Net;
 using System.Text;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
+
+string cookiePrefix = "__Secure-";
 
 #region ServerSettings
 ServerSetting.DomainName = builder.Configuration.GetSection("ServerSetting")["DomainName"];
@@ -67,6 +71,7 @@ builder.Services.AddDistributedMemoryCache(); // Session Storage
 builder.Services.AddSession(options =>
 {
     options.IdleTimeout = TimeSpan.FromMinutes(ServerSetting.SessionExpireMinutes);
+    options.Cookie.Name = $"{cookiePrefix}{SessionDefaults.CookieName}";
     options.Cookie.HttpOnly = true;
     options.Cookie.IsEssential = true;
     options.Cookie.Domain = ServerSetting.DomainName.Replace("https://", "").Replace("/", "").ToString();
@@ -78,6 +83,7 @@ builder.Services.AddSession(options =>
 #region AddAntiforgery
 builder.Services.AddAntiforgery(options =>
 {
+    options.Cookie.Name = $"{cookiePrefix}{AntiforgeryOptions.DefaultCookiePrefix}";
     options.Cookie.HttpOnly = true;
     options.Cookie.IsEssential = true;
     options.Cookie.Domain = ServerSetting.DomainName.Replace("https://", "").Replace("/", "").ToString();
@@ -283,7 +289,7 @@ app.Use(async (context, next) =>
     context.Response.Headers.Append("Cross-Origin-Embedder-Policy", "require-corp");
     context.Response.Headers.Append("Cross-Origin-Opener-Policy", "same-origin");
     context.Response.Headers.Append("Permissions-Policy", "accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()");
-    context.Response.Headers.Append("Content-Security-Policy", "default-src 'self'; style-src 'self' 'unsafe-inline';"); // [https://csper.io/blog/no-more-unsafe-inline]
+    context.Response.Headers.Append("Content-Security-Policy", $"img-src 'self'; connect-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; object-src 'none'; base-uri 'none'; report-uri {ServerSetting.DomainName}; form-action 'self'; frame-ancestors 'none'"); // [https://csper.io/blog/no-more-unsafe-inline] [https://csp-evaluator.withgoogle.com/?csp=https://www.maroik.com]
     #endregion
     await next();
 });
