@@ -107,6 +107,8 @@ builder.Services.AddHsts(options => // https://blog.elmah.io/the-asp-net-core-se
     options.IncludeSubDomains = true;
     options.MaxAge = TimeSpan.FromDays(365);
     options.Preload = true;
+    options.ExcludedHosts.Add(ServerSetting.DomainName.Replace("https://", "").Replace("/", "").ToString());
+    options.ExcludedHosts.Add(ServerSetting.DomainName.Replace("https://", "").Replace("/", "").Replace("www.", "").ToString());
 });
 #endregion
 
@@ -167,9 +169,11 @@ app.UseExceptionHandler("/Exception/Error");
 // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
 app.UseHsts();
 
+//app.UseHttpsRedirection();
+
 app.UseRewriter(new RewriteOptions()
    .AddRedirectToWwwPermanent()
-   .AddRedirectToHttpsPermanent()
+   .AddRedirectToHttpsPermanent() // 이거 지우는거 시험할 것
 );
 #endregion
 
