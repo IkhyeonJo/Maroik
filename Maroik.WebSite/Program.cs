@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.CookiePolicy;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Razor;
+using Microsoft.AspNetCore.Rewrite;
 using Microsoft.AspNetCore.Session;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
@@ -171,6 +172,9 @@ app.UseExceptionHandler("/Exception/Error");
 // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
 app.UseHsts();
 app.UseHttpsRedirection();
+
+app.UseRewriter(new RewriteOptions()
+  .AddRedirectToWww());
 
 app.UseRouting(); // 5. 요청을 라우팅하기위한 미들웨어 라우팅 (UseRouting)
 app.UseCors();
