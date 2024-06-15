@@ -63,7 +63,7 @@ $(function () {
             right: 'dayGridMonth,dayGridWeek,dayGridDay'
         },
         themeSystem: 'bootstrap',
-        //Random default events
+        //Random default events // https://fullcalendar.io/docs/event-parsing
         events: [
             {
                 title: 'All Day Event',
@@ -111,6 +111,30 @@ $(function () {
                 borderColor: '#3c8dbc' //Primary (light-blue)
             }
         ],
+        //events:
+        //    [
+        //        {
+        //            id: 1,
+        //            title: 'First Event',
+        //            start: '2020-08-08T10:30:00',
+        //            end: '2020-08-08T11:30:00',
+        //            extendedProps: {
+        //                description: 'Test 1'
+        //            },
+        //            color: '#336e03'
+        //        },
+
+        //        {
+        //            id: 2,
+        //            title: 'Second Event',
+        //            start: '2020-08-08T15:30:00',
+        //            end: '2020-08-08T16:30:00',
+        //            extendedProps: {
+        //                description: 'Test 2'
+        //            },
+        //        }
+        //    ],
+        timezone: 'UTC',
         navLinks: true, // can click day/week names to navigate views
         editable: true,
         droppable: true, // this allows things to be dropped onto the calendar !!!
@@ -120,7 +144,46 @@ $(function () {
                 // if so, remove the element from the "Draggable Events" list
                 info.draggedEl.parentNode.removeChild(info.draggedEl);
             }
+        },
+        eventDrop: function (info) {
+            alert(info.event.title + " was dropped on id: " + info.event.id);
+            alert(info.event.title + " was dropped on " + info.oldEvent.start.toISOString());
+            alert(info.event.title + " was dropped on " + info.event.start.toISOString());
+
+            //if (!confirm("Are you sure about this change?")) {
+            //    info.revert();
+            //}
+        },
+        selectable: true,
+        selectMirror: true,
+        select: function (arg) {
+            var aaa = $('#calendarEventModel').val();
+            var bbb = JSON.parse($('#calendarEventModel').val());
+
+            var title = prompt('Event Title:');
+            if (title) {
+                calendar.addEvent({
+                    title: title,
+                    start: arg.start,
+                    end: arg.end,
+                    allDay: arg.allDay
+                })
+            }
+            calendar.unselect()
+        },
+        eventClick: function (arg) {
+            if (confirm('Are you sure you want to delete this event?')) {
+                arg.event.remove()
+            }
         }
+    });
+
+    calendar.addEvent({
+        id: 551,
+        title: 'Maroik',
+        start: '2024-06-25T15:30:00',
+        end: '2024-06-25T16:30:00',
+        allDay: false
     });
 
     calendar.render();

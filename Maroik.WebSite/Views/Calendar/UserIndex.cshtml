@@ -16,6 +16,8 @@
     int currentSecond = currentTime.Second;
 }
 
+@Html.Hidden("calendarEventModel", JsonConvert.SerializeObject(assets));
+
 <!-- Main content -->
 <section class="content">
     <div class="container-fluid">
