@@ -172,6 +172,9 @@ $(function () {
             calendar.unselect()
         },
         eventClick: function (arg) {
+
+            alert("clicked event id: " + arg.event.id);
+
             if (confirm('Are you sure you want to delete this event?')) {
                 arg.event.remove()
             }
