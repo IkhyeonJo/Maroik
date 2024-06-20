@@ -24,22 +24,22 @@
                 </div>
                 <div class="row">
                     <div class="col-6 input-group-prepend">
-                        <button type="button" class="btn btn-info btn-block dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
+                        <button type="button" class="btn btn-dark btn-block dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
                             <i class="fas fa-globe" style="padding-right:6px;"></i>@localizer["Language"]
                         </button>
                         @if (currentCulture == "en-US")
                         {
-                            <div class="dropdown-menu" style="">
-                                <a id="aChangeCultureEnUS" class="dropdown-item active" style="cursor: pointer;">English</a>
-                                <a id="aChangeCultureKoKR" class="dropdown-item" style="cursor: pointer;">한국어</a>
-                            </div>
+                        <div class="dropdown-menu" style="">
+                            <a id="aChangeCultureEnUS" class="dropdown-item active" style="cursor: pointer;">English</a>
+                            <a id="aChangeCultureKoKR" class="dropdown-item" style="cursor: pointer;">한국어</a>
+                        </div>
                         }
                         else if (currentCulture == "ko-KR")
                         {
-                            <div class="dropdown-menu" style="">
-                                <a id="aChangeCultureEnUS" class="dropdown-item" style="cursor: pointer;">English</a>
-                                <a id="aChangeCultureKoKR" class="dropdown-item active" style="cursor: pointer;">한국어</a>
-                            </div>
+                        <div class="dropdown-menu" style="">
+                            <a id="aChangeCultureEnUS" class="dropdown-item" style="cursor: pointer;">English</a>
+                            <a id="aChangeCultureKoKR" class="dropdown-item active" style="cursor: pointer;">한국어</a>
+                        </div>
                         }
                     </div>
                     <div class="col-6">
@@ -57,7 +57,7 @@
                 <a asp-controller="Account" asp-action="ForgotPassword" class="btn btn-block btn-danger">
                     <i class="fas fa-key" style="padding-right:3px;"></i>@localizer["Forgot password"]
                 </a>
-                <a asp-controller="DashBoard" asp-action="AnonymousIndex" class="btn btn-block btn-dark">
+                <a asp-controller="DashBoard" asp-action="AnonymousIndex" class="btn btn-block btn-info">
                     <i class="fas fa-sign-out-alt" style="padding-right:3px;"></i>@localizer["Go to main page"]
                 </a>
             </div>
