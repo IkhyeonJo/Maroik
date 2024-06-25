@@ -1,5 +1,7 @@
 $(function () {
 
+    $("#createMenuTabs").tabs();
+
     /* initialize the external events
      -----------------------------------------------------------------*/
     function ini_events(ele) {
@@ -160,16 +162,20 @@ $(function () {
             var aaa = $('#calendarEventModel').val();
             var bbb = JSON.parse($('#calendarEventModel').val());
 
-            var title = prompt('Event Title:');
-            if (title) {
-                calendar.addEvent({
-                    title: title,
-                    start: arg.start,
-                    end: arg.end,
-                    allDay: arg.allDay
-                })
-            }
-            calendar.unselect()
+            let modal = $('#createMenuDialogModal');
+            modal.modal('show');
+
+            //var title = prompt('Event Title:');
+            //if (title) {
+            //    calendar.addEvent({
+            //        title: title,
+            //        start: arg.start,
+            //        end: arg.end,
+            //        allDay: arg.allDay
+            //    })
+            //}
+
+            calendar.unselect();
         },
         eventClick: function (arg) {
 
@@ -230,3 +236,120 @@ $(function () {
         $('#new-event').val('')
     })
 })
+
+function CreateCategory() {
+
+    alert('CreateCategory');
+    return false;
+
+    if (!$('#formCreateCategory').valid()) {
+        return false;
+    }
+
+    let createForm = $('#formCreateCategory');
+    let name = createForm.find('input[id="createCategoryName"]').val();
+    let displayName = createForm.find('input[id="createCategoryDisplayName"]').val();
+    let iconPath = createForm.find('input[id="createCategoryIconPath"]').val();
+    let controller = createForm.find('input[id="createCategoryController"]').val();
+    let action = createForm.find('input[id="createCategoryAction"]').val();
+    let role = createForm.find('select[id="createCategoryRole"]').val();
+    let order = createForm.find('input[id="createCategoryOrder"]').val();
+
+    let paramValue = JSON.stringify({
+        Name: name,
+        DisplayName: displayName,
+        IconPath: iconPath,
+        Controller: controller,
+        Action: action,
+        Role: role,
+        Order: order
+    });
+
+    $.ajax({
+        url: '/Management/CreateCategory',
+        type: 'POST',
+        headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
+        dataType: 'json',
+        data: paramValue,
+        contentType: 'application/json; charset=utf-8',
+        //async: false,
+        //cache: false,
+        success: function (data) {
+            if (data.result) {
+                $('#createMenuDialogModal').modal('hide'); // hide Modal
+
+                const grid = new MvcGrid(document.querySelector(".mvc-grid")); //reload grid
+                grid.reload(); //reload grid
+
+                toastr.success(data.message);
+            }
+            else {
+                toastr.error(data.error);
+            }
+        }
+    });
+    return false;
+}
+
+function CreateSubCategory() {
+
+    alert('CreateSubCategory');
+    return false;
+
+    if (!$('#formCreateSubCategory').valid()) {
+        return false;
+    }
+
+    let createForm = $('#formCreateSubCategory');
+
+    let categoryId = createForm.find('input[id="createSubcategoryCategoryId"]').val();
+    let name = createForm.find('input[id="createSubcategoryName"]').val();
+    let displayName = createForm.find('input[id="createSubcategoryDisplayName"]').val();
+    let iconPath = createForm.find('input[id="createSubcategoryIconPath"]').val();
+    let action = createForm.find('input[id="createSubcategoryAction"]').val();
+    let role = createForm.find('select[id="createSubcategoryRole"]').val();
+    let order = createForm.find('input[id="createSubcategoryOrder"]').val();
+
+    let paramValue = JSON.stringify({
+        CategoryId: categoryId,
+        Name: name,
+        DisplayName: displayName,
+        IconPath: iconPath,
+        Action: action,
+        Role: role,
+        Order: order
+    });
+
+    $.ajax({
+        url: '/Management/CreateSubCategory',
+        type: 'POST',
+        headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
+        dataType: 'json',
+        data: paramValue,
+        contentType: 'application/json; charset=utf-8',
+        //async: false,
+        //cache: false,
+        success: function (data) {
+            if (data.result) {
+                $('#createMenuDialogModal').modal('hide'); // hide Modal
+
+                const grid = new MvcGrid(document.querySelector(".mvc-grid")); //reload grid
+                grid.reload(); //reload grid
+
+                toastr.success(data.message);
+            }
+            else {
+                toastr.error(data.error);
+            }
+        }
+    });
+    return false;
+}
+
+$('#formCreateCategory').off('submit').on('submit', function () {
+    return CreateCategory();
+});
+
+$('#formCreateSubCategory').off('submit').on('submit', function () {
+    return CreateSubCategory();
+});

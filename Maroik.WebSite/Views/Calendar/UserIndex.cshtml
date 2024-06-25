@@ -92,6 +92,129 @@
     </div><!-- /.container-fluid -->
 </section>
 
+@*<!--createMenuDialogModal-->*@
+<div class="modal fade" tabindex="-1" role="dialog" id="createMenuDialogModal">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div id="createMenuTabs">
+                @*<!--Tab Menu-->*@
+                <ul>
+                    <li><a href="#createMenuTabs-1">@localizer["Add Category"].Value</a></li>
+                    <li><a href="#createMenuTabs-2">@localizer["Add SubCategory"].Value</a></li>
+                </ul>
+                @*Tabs-1: Create Category Modal*@
+                <div id="createMenuTabs-1">
+                    <form id="formCreateCategory">
+                        <div class="form-row">
+                            <div class="form-group col-md-6 mb-3">
+                                <label for="createCategoryName">@localizer["Name"].Value</label>
+                                <input class="form-control form-control-sm" type="text" data-val="true" data-val-required="@localizer["Please enter Name"].Value" id="createCategoryName" name="createCategoryName" value="">
+                                <span class="field-validation-valid text-danger" data-valmsg-for="createCategoryName" data-valmsg-replace="true"></span>
+                            </div>
+                            <div class="form-group col-md-6 mb-3">
+                                <label for="createCategoryDisplayName">@localizer["DisplayName"].Value</label>
+                                <input class="form-control form-control-sm" type="text" data-val="true" data-val-required="@localizer["Please enter DisplayName"].Value" id="createCategoryDisplayName" name="createCategoryDisplayName" value="">
+                                <span class="field-validation-valid text-danger" data-valmsg-for="createCategoryDisplayName" data-valmsg-replace="true"></span>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group col-md-6 mb-3">
+                                <label for="createCategoryIconPath">@localizer["IconPath"].Value</label>
+                                <input class="form-control form-control-sm" type="text" data-val="true" data-val-required="@localizer["Please enter IconPath"].Value" id="createCategoryIconPath" name="createCategoryIconPath" value="">
+                                <span class="field-validation-valid text-danger" data-valmsg-for="createCategoryIconPath" data-valmsg-replace="true"></span>
+                            </div>
+                            <div class="form-group col-md-6 mb-3">
+                                <label for="createCategoryController">@localizer["Controller"].Value</label>
+                                <input class="form-control form-control-sm" type="text" data-val="true" data-val-required="@localizer["Please enter Controller"].Value" id="createCategoryController" name="createCategoryController" value="">
+                                <span class="field-validation-valid text-danger" data-valmsg-for="createCategoryController" data-valmsg-replace="true"></span>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group col-md-6 mb-3">
+                                <label for="createCategoryAction">@localizer["Action"].Value</label>
+                                <input class="form-control form-control-sm" type="text" data-val="false" id="createCategoryAction" name="createCategoryAction" value="">
+                            </div>
+                            <div class="form-group col-md-6 mb-3">
+                                <label for="createCategoryRole">@localizer["Role"].Value</label>
+                                <br />
+                                <select id="createCategoryRole" name="createCategoryRole" style="max-width:90%;">
+                                    <option value="Admin">@localizer["Admin"].Value</option>
+                                    <option value="User">@localizer["User"].Value</option>
+                                    <option value="Anonymous">@localizer["Anonymous"].Value</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group col-md-6 mb-3">
+                                <label for="createCategoryOrder">@localizer["Order"].Value</label>
+                                <input class="form-control form-control-sm" min="0" type="number" id="createCategoryOrder" name="createCategoryOrder" value="0">
+                            </div>
+                        </div>
+                        <div class="modal-footer justify-content-between">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">@localizer["Close"].Value</button>
+                            <input type="submit" class="btn btn-primary" value="@localizer["Save"].Value" />
+                        </div>
+                    </form>
+                </div>
+                @*Tabs-2: Create SubCategory Modal*@
+                <div id="createMenuTabs-2">
+                    <form id="formCreateSubCategory">
+                        <div class="form-row">
+                            <div class="form-group col-md-6 mb-3">
+                                <label for="createSubcategoryCategoryId">@localizer["CategoryId"].Value</label>
+                                <input class="form-control form-control-sm" min="0" type="number" id="createSubcategoryCategoryId" name="createSubcategoryCategoryId" value="0">
+                            </div>
+                            <div class="form-group col-md-6 mb-3">
+                                <label for="createSubcategoryName">@localizer["Name"].Value</label>
+                                <input class="form-control form-control-sm" type="text" data-val="true" data-val-required="@localizer["Please enter Name"].Value" id="createSubcategoryName" name="createSubcategoryName" value="">
+                                <span class="field-validation-valid text-danger" data-valmsg-for="createSubcategoryName" data-valmsg-replace="true"></span>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group col-md-6 mb-3">
+                                <label for="createSubcategoryDisplayName">@localizer["DisplayName"].Value</label>
+                                <input class="form-control form-control-sm" type="text" data-val="true" data-val-required="@localizer["Please enter DisplayName"].Value" id="createSubcategoryDisplayName" name="createSubcategoryDisplayName" value="">
+                                <span class="field-validation-valid text-danger" data-valmsg-for="createSubcategoryDisplayName" data-valmsg-replace="true"></span>
+                            </div>
+                            <div class="form-group col-md-6 mb-3">
+                                <label for="createSubcategoryIconPath">@localizer["IconPath"].Value</label>
+                                <input class="form-control form-control-sm" type="text" data-val="true" data-val-required="@localizer["Please enter IconPath"].Value" id="createSubcategoryIconPath" name="createSubcategoryIconPath" value="">
+                                <span class="field-validation-valid text-danger" data-valmsg-for="createSubcategoryIconPath" data-valmsg-replace="true"></span>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group col-md-6 mb-3">
+                                <label for="createSubcategoryAction">@localizer["Action"].Value</label>
+                                <input class="form-control form-control-sm" type="text" data-val="true" data-val-required="@localizer["Please enter Action"].Value" id="createSubcategoryAction" name="createSubcategoryAction" value="">
+                                <span class="field-validation-valid text-danger" data-valmsg-for="createSubcategoryAction" data-valmsg-replace="true"></span>
+                            </div>
+                            <div class="form-group col-md-6 mb-3">
+                                <label for="createSubcategoryRole">@localizer["Role"].Value</label>
+                                <br />
+                                <select id="createSubcategoryRole" name="createSubcategoryRole" style="max-width:90%;">
+                                    <option value="Admin">@localizer["Admin"].Value</option>
+                                    <option value="User">@localizer["User"].Value</option>
+                                    <option value="Anonymous">@localizer["Anonymous"].Value</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group col-md-6 mb-3">
+                                <label for="createSubcategoryOrder">@localizer["Order"].Value</label>
+                                <input class="form-control form-control-sm" min="0" type="number" id="createSubcategoryOrder" name="createSubcategoryOrder" value="0">
+                            </div>
+                        </div>
+                        <div class="modal-footer justify-content-between">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">@localizer["Close"].Value</button>
+                            <input type="submit" class="btn btn-primary" value="@localizer["Save"].Value" />
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
 @*     @if (currentCulture == "ko-KR")
     {
