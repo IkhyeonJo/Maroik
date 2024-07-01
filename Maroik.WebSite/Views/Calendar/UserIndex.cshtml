@@ -155,7 +155,7 @@
                             <div class="form-group col-md-6 mb-3">
                                 <label for="createEventRepeatCycle">@localizer["Repeat cycle"].Value</label>
                                 <br />
-                                <select id="createEventRepeatCycle" name="createEventRepeatCycle" style="max-width:90%;">
+                                <select id="createEventRepeatCycle" name="createEventRepeatCycle" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
                                     <option value="DoesNotRepeat" select>@localizer["Does not repeat"].Value</option>
                                     <option value="Daily">@localizer["Daily"].Value</option>
                                     <option value="WeeklyOnMonday">@localizer["Weekly on Monday"].Value</option>
@@ -189,7 +189,7 @@
                                 <div class="form-group col-md-6 mb-3">
                                     <label for="createEventAllDayUncheckedStartTime">@localizer["StartTime"].Value</label>
                                     <br />
-                                    <select id="createEventAllDayUncheckedStartTime" name="createEventAllDayUncheckedStartTime">
+                                    <select id="createEventAllDayUncheckedStartTime" name="createEventAllDayUncheckedStartTime" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
                                         @foreach (var time in timeIntervals)
                                         {
                                             if (time == currentInterval)
@@ -213,7 +213,7 @@
                                 <div class="form-group col-md-6 mb-3">
                                     <label for="createEventAllDayUncheckedEndTime">@localizer["EndTime"].Value</label>
                                     <br />
-                                    <select id="createEventAllDayUncheckedEndTime" name="createEventAllDayUncheckedEndTime">
+                                    <select id="createEventAllDayUncheckedEndTime" name="createEventAllDayUncheckedEndTime" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
                                         @foreach (var time in timeIntervals)
                                         {
                                             if (time == currentInterval)
@@ -231,11 +231,49 @@
                             <div class="form-row">
                                 <div class="form-group col-md-6 mb-3">
                                     <label for="createEventAllDayUncheckedStartTimeZone">@localizer["StartTimeZone"].Value</label>
-                                    <input class="form-control form-control-sm" type="text" id="createEventAllDayUncheckedStartTimeZone" name="createEventAllDayUncheckedStartTimeZone" value="(GMT+10:00)" readonly>
+                                    <select id="createEventAllDayUncheckedStartTimeZone" name="createEventAllDayUncheckedStartTimeZone" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
+                                        @foreach (TimeZoneInfo systemTimeZone in TimeZoneInfo.GetSystemTimeZones())
+                                        {
+                                            string systemTimeZoneIanaId = string.Empty;
+
+                                            if (systemTimeZone.HasIanaId)
+                                            {
+                                                systemTimeZoneIanaId = systemTimeZone.Id;  // no conversion necessary
+                                            }
+                                            else if (TimeZoneInfo.TryConvertWindowsIdToIanaId(systemTimeZone.Id, out string ianaId))
+                                            {
+                                                systemTimeZoneIanaId = ianaId;  // use the converted ID
+                                            }
+
+                                            if (string.IsNullOrEmpty(systemTimeZoneIanaId))
+                                                continue;
+
+                                            <option value="@systemTimeZoneIanaId">@systemTimeZone.DisplayName</option>
+                                        }
+                                    </select>
                                 </div>
                                 <div class="form-group col-md-6 mb-3">
                                     <label for="createEventAllDayUncheckedEndTimeZone">@localizer["EndTimeZone"].Value</label>
-                                    <input class="form-control form-control-sm" type="text" id="createEventAllDayUncheckedEndTimeZone" name="createEventAllDayUncheckedEndTimeZone" value="(GMT+12:00)" readonly>
+                                    <select id="createEventAllDayUncheckedEndTimeZone" name="createEventAllDayUncheckedEndTimeZone" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
+                                        @foreach (TimeZoneInfo systemTimeZone in TimeZoneInfo.GetSystemTimeZones())
+                                        {
+                                            string systemTimeZoneIanaId = string.Empty;
+
+                                            if (systemTimeZone.HasIanaId)
+                                            {
+                                                systemTimeZoneIanaId = systemTimeZone.Id;  // no conversion necessary
+                                            }
+                                            else if (TimeZoneInfo.TryConvertWindowsIdToIanaId(systemTimeZone.Id, out string ianaId))
+                                            {
+                                                systemTimeZoneIanaId = ianaId;  // use the converted ID
+                                            }
+
+                                            if (string.IsNullOrEmpty(systemTimeZoneIanaId))
+                                                continue;
+
+                                            <option value="@systemTimeZoneIanaId">@systemTimeZone.DisplayName</option>
+                                        }
+                                    </select>
                                 </div>
                             </div>
                         </div>
@@ -267,7 +305,7 @@
                             <div class="form-group col-md-6 mb-3">
                                 <label for="createEventMyCalendar">@localizer["My Calendar"].Value</label>
                                 <br />
-                                <select id="createEventMyCalendar" name="createEventMyCalendar" style="max-width:90%;">
+                                <select id="createEventMyCalendar" name="createEventMyCalendar" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
                                     <option value="IkHyeonJo" select>@localizer["IkHyeonJo"].Value</option>
                                     <option value="123456">@localizer["123456"].Value</option>
                                 </select>
@@ -275,7 +313,7 @@
                             <div class="form-group col-md-6 mb-3">
                                 <label for="createEventState">@localizer["State"].Value</label>
                                 <br />
-                                <select id="createEventState" name="createEventState" style="max-width:90%;">
+                                <select id="createEventState" name="createEventState" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
                                     <option value="Busy" select>@localizer["Busy"].Value</option>
                                     <option value="Free">@localizer["Free"].Value</option>
                                 </select>
@@ -283,19 +321,16 @@
                         </div>
 
                         <div class="form-row">
-                            <div class="form-group col-md-12 mb-3">
+                            <div class="form-group col-md-6 mb-3">
                                 <label for="createEventNotification">@localizer["Notification"].Value</label>
-                                <br />
-
-                                <div><select class='createEventSelNotification' style='max-width:90%;'><option value='FiveMinutesBefore' select>5 minutes before</option><option value='TenMinutesBefore'>10 minutes before</option></select><a class='hover aCalendarDeleteNotification' href='#'>&nbsp;<i class='fa fa-trash' aria-hidden='true'></i></a><br /><br /></div>
-                                <div><select class='createEventSelNotification' style='max-width:90%;'><option value='FiveMinutesBefore' select>5 minutes before</option><option value='TenMinutesBefore'>10 minutes before</option></select><a class='hover aCalendarDeleteNotification' href='#'>&nbsp;<i class='fa fa-trash' aria-hidden='true'></i></a><br /><br /></div>
-                                <div><select class='createEventSelNotification' style='max-width:90%;'><option value='FiveMinutesBefore' select>5 minutes before</option><option value='TenMinutesBefore'>10 minutes before</option></select><a class='hover aCalendarDeleteNotification' href='#'>&nbsp;<i class='fa fa-trash' aria-hidden='true'></i></a><br /><br /></div>
+                                <br/>
+                                
+                                <div><select class='form-control-sm createEventSelNotification' style='width:90%;text-overflow:ellipsis;'><option value='FiveMinutesBefore' select>5 minutes before</option><option value='TenMinutesBefore'>10 minutes before</option></select><a class='hover aCalendarDeleteNotification' href='#' style='width:10%;'><i class='fa fa-trash' aria-hidden='true' style='margin-left: 7px;'></i></a><br /><br /></div>
+                                <div><select class='form-control-sm createEventSelNotification' style='width:90%;text-overflow:ellipsis;'><option value='FiveMinutesBefore' select>5 minutes before</option><option value='TenMinutesBefore'>10 minutes before</option></select><a class='hover aCalendarDeleteNotification' href='#' style='width:10%;'><i class='fa fa-trash' aria-hidden='true' style='margin-left: 7px;'></i></a><br /><br /></div>
 
                                 <input class="btn btn-primary" type="button" id="createEventNotification" name="createEventNotification" value="@localizer["Add notification"].Value">
                             </div>
                         </div>
-
-
 
                         <div class="modal-footer justify-content-between">
                             <button type="button" class="btn btn-secondary" data-dismiss="modal">@localizer["Close"].Value</button>
@@ -334,7 +369,7 @@
                             <div class="form-group col-md-6 mb-3">
                                 <label for="createSubcategoryRole">@localizer["Role"].Value</label>
                                 <br />
-                                <select id="createSubcategoryRole" name="createSubcategoryRole" style="max-width:90%;">
+                                <select id="createSubcategoryRole" name="createSubcategoryRole">
                                     <option value="Admin">@localizer["Admin"].Value</option>
                                     <option value="User">@localizer["User"].Value</option>
                                     <option value="Anonymous">@localizer["Anonymous"].Value</option>

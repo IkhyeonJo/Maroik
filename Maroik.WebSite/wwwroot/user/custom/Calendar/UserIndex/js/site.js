@@ -159,7 +159,7 @@ $('#createEventAllDay').off('click').on('click', function () {
 });
 
 $('#createEventNotification').off('click').on('click', function () {
-    $("<div><select class='createEventSelNotification' style='max-width:90%;'><option value='FiveMinutesBefore' select>5 minutes before</option><option value='TenMinutesBefore'>10 minutes before</option></select><a class='hover aCalendarDeleteNotification' href='#'>&nbsp;<i class='fa fa-trash' aria-hidden='true'></i></a><br /><br /></div>").insertBefore(this);
+    $("<div><select class='form-control-sm createEventSelNotification' style='width:90%;text-overflow:ellipsis;'><option value='FiveMinutesBefore' select>5 minutes before</option><option value='TenMinutesBefore'>10 minutes before</option></select><a class='hover aCalendarDeleteNotification' href='#' style='width:10%;'><i class='fa fa-trash' aria-hidden='true' style='margin-left: 7px;'></i></a><br /><br /></div>").insertBefore(this);
 });
 
 $(document).off('click').on('click', '.aCalendarDeleteNotification', function () {
