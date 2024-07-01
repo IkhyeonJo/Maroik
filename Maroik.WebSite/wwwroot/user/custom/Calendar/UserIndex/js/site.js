@@ -1,241 +1,32 @@
-$(function () {
+function WriteUploadImageFile(file) {
 
-    $("#createMenuTabs").tabs();
+    formData = new FormData();
+    formData.append("summernoteImageFile", file);
 
-    /* initialize the external events
-     -----------------------------------------------------------------*/
-    function ini_events(ele) {
-        ele.each(function () {
-
-            // create an Event Object (https://fullcalendar.io/docs/event-object)
-            // it doesn't need to have a start or end
-            var eventObject = {
-                title: $.trim($(this).text()) // use the element's text as the event title
+    $.ajax({
+        url: "/Forum/UploadImageFile",
+        data: formData,
+        headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
+        type: 'POST',
+        enctype: 'multipart/form-data',
+        processData: false,
+        contentType: false,
+        dataType: 'json',
+        cache: false,
+        success: function (data) {
+            if (data.result) {
+                let imgNode = document.createElement('img');
+                imgNode.src = data.filePath;
+                imgNode.style.maxWidth = "170px";
+                imgNode.style.maxHeight = "209px";
+                $('#writeBoardContent').summernote('insertNode', imgNode);
             }
-
-            // store the Event Object in the DOM element so we can get to it later
-            $(this).data('eventObject', eventObject)
-
-            // make the event draggable using jQuery UI
-            $(this).draggable({
-                zIndex: 1070,
-                revert: true, // will cause the event to go back to its
-                revertDuration: 0  //  original position after the drag
-            })
-
-        })
-    }
-
-    ini_events($('#external-events div.external-event'))
-
-    /* initialize the calendar
-     -----------------------------------------------------------------*/
-    //Date for the calendar events (dummy data)
-    var date = new Date()
-    var d = date.getDate(),
-        m = date.getMonth(),
-        y = date.getFullYear()
-
-    var Calendar = FullCalendar.Calendar;
-    var Draggable = FullCalendar.Draggable;
-
-    var containerEl = document.getElementById('external-events');
-    var checkbox = document.getElementById('drop-remove');
-    var calendarEl = document.getElementById('calendar');
-
-    // initialize the external events
-    // -----------------------------------------------------------------
-
-    new Draggable(containerEl, {
-        itemSelector: '.external-event',
-        eventData: function (eventEl) {
-            return {
-                title: eventEl.innerText,
-                backgroundColor: window.getComputedStyle(eventEl, null).getPropertyValue('background-color'),
-                borderColor: window.getComputedStyle(eventEl, null).getPropertyValue('background-color'),
-                textColor: window.getComputedStyle(eventEl, null).getPropertyValue('color'),
-            };
-        }
-    });
-
-    var calendar = new Calendar(calendarEl, {
-        headerToolbar: {
-            left: 'prevYear,prev,next,nextYear today',
-            center: 'title',
-            right: 'dayGridMonth,dayGridWeek,dayGridDay'
-        },
-        themeSystem: 'bootstrap',
-        //Random default events // https://fullcalendar.io/docs/event-parsing
-        events: [
-            {
-                title: 'All Day Event',
-                start: new Date(y, m, 1),
-                backgroundColor: '#f56954', //red
-                borderColor: '#f56954', //red
-                allDay: true
-            },
-            {
-                title: 'Long Event',
-                start: new Date(y, m, d - 5),
-                end: new Date(y, m, d - 2),
-                backgroundColor: '#f39c12', //yellow
-                borderColor: '#f39c12' //yellow
-            },
-            {
-                title: 'Meeting',
-                start: new Date(y, m, d, 10, 30),
-                allDay: false,
-                backgroundColor: '#0073b7', //Blue
-                borderColor: '#0073b7' //Blue
-            },
-            {
-                title: 'Lunch',
-                start: new Date(y, m, d, 12, 0),
-                end: new Date(y, m, d, 14, 0),
-                allDay: false,
-                backgroundColor: '#00c0ef', //Info (aqua)
-                borderColor: '#00c0ef' //Info (aqua)
-            },
-            {
-                title: 'Birthday Party',
-                start: new Date(y, m, d + 1, 19, 0),
-                end: new Date(y, m, d + 1, 22, 30),
-                allDay: false,
-                backgroundColor: '#00a65a', //Success (green)
-                borderColor: '#00a65a' //Success (green)
-            },
-            {
-                title: 'Click for Google',
-                start: new Date(y, m, 28),
-                end: new Date(y, m, 29),
-                url: 'https://www.google.com/',
-                backgroundColor: '#3c8dbc', //Primary (light-blue)
-                borderColor: '#3c8dbc' //Primary (light-blue)
-            }
-        ],
-        //events:
-        //    [
-        //        {
-        //            id: 1,
-        //            title: 'First Event',
-        //            start: '2020-08-08T10:30:00',
-        //            end: '2020-08-08T11:30:00',
-        //            extendedProps: {
-        //                description: 'Test 1'
-        //            },
-        //            color: '#336e03'
-        //        },
-
-        //        {
-        //            id: 2,
-        //            title: 'Second Event',
-        //            start: '2020-08-08T15:30:00',
-        //            end: '2020-08-08T16:30:00',
-        //            extendedProps: {
-        //                description: 'Test 2'
-        //            },
-        //        }
-        //    ],
-        timezone: 'UTC',
-        navLinks: true, // can click day/week names to navigate views
-        editable: true,
-        droppable: true, // this allows things to be dropped onto the calendar !!!
-        drop: function (info) {
-            // is the "remove after drop" checkbox checked?
-            if (checkbox.checked) {
-                // if so, remove the element from the "Draggable Events" list
-                info.draggedEl.parentNode.removeChild(info.draggedEl);
-            }
-        },
-        eventDrop: function (info) {
-            alert(info.event.title + " was dropped on id: " + info.event.id);
-            alert(info.event.title + " was dropped on " + info.oldEvent.start.toISOString());
-            alert(info.event.title + " was dropped on " + info.event.start.toISOString());
-
-            //if (!confirm("Are you sure about this change?")) {
-            //    info.revert();
-            //}
-        },
-        selectable: true,
-        selectMirror: true,
-        select: function (arg) {
-            var aaa = $('#calendarEventModel').val();
-            var bbb = JSON.parse($('#calendarEventModel').val());
-
-            let modal = $('#createMenuDialogModal');
-            modal.modal('show');
-
-            //var title = prompt('Event Title:');
-            //if (title) {
-            //    calendar.addEvent({
-            //        title: title,
-            //        start: arg.start,
-            //        end: arg.end,
-            //        allDay: arg.allDay
-            //    })
-            //}
-
-            calendar.unselect();
-        },
-        eventClick: function (arg) {
-
-            alert("clicked event id: " + arg.event.id);
-
-            if (confirm('Are you sure you want to delete this event?')) {
-                arg.event.remove()
+            else {
+                alert(data.errorMessage);
             }
         }
     });
-
-    calendar.addEvent({
-        id: 551,
-        title: 'Maroik',
-        start: '2024-06-25T15:30:00',
-        end: '2024-06-25T16:30:00',
-        allDay: false
-    });
-
-    calendar.render();
-    // $('#calendar').fullCalendar()
-
-    /* ADDING EVENTS */
-    var currColor = '#3c8dbc' //Red by default
-    // Color chooser button
-    $('#color-chooser > li > a').click(function (e) {
-        e.preventDefault()
-        // Save color
-        currColor = $(this).css('color')
-        // Add color effect to button
-        $('#add-new-event').css({
-            'background-color': currColor,
-            'border-color': currColor
-        })
-    })
-    $('#add-new-event').click(function (e) {
-        e.preventDefault()
-        // Get value and make sure it is not null
-        var val = $('#new-event').val()
-        if (val.length == 0) {
-            return
-        }
-
-        // Create events
-        var event = $('<div />')
-        event.css({
-            'background-color': currColor,
-            'border-color': currColor,
-            'color': '#fff'
-        }).addClass('external-event')
-        event.text(val)
-        $('#external-events').prepend(event)
-
-        // Add draggable funtionality
-        ini_events(event)
-
-        // Remove event from text input
-        $('#new-event').val('')
-    })
-})
+}
 
 function CreateCategory() {
 
@@ -276,7 +67,7 @@ function CreateCategory() {
         //cache: false,
         success: function (data) {
             if (data.result) {
-                $('#createMenuDialogModal').modal('hide'); // hide Modal
+                $('#createEventTaskDialogModal').modal('hide'); // hide Modal
 
                 const grid = new MvcGrid(document.querySelector(".mvc-grid")); //reload grid
                 grid.reload(); //reload grid
@@ -331,7 +122,7 @@ function CreateSubCategory() {
         //cache: false,
         success: function (data) {
             if (data.result) {
-                $('#createMenuDialogModal').modal('hide'); // hide Modal
+                $('#createEventTaskDialogModal').modal('hide'); // hide Modal
 
                 const grid = new MvcGrid(document.querySelector(".mvc-grid")); //reload grid
                 grid.reload(); //reload grid
@@ -352,4 +143,25 @@ $('#formCreateCategory').off('submit').on('submit', function () {
 
 $('#formCreateSubCategory').off('submit').on('submit', function () {
     return CreateSubCategory();
+});
+
+$('#createEventAllDay').off('click').on('click', function () {
+    if ($(this).is(':checked')) {
+        $("#divCreateEventAllDayUnchecked").hide();
+        $("#divCreateEventAllDayChecked").hide();
+        $("#divCreateEventAllDayChecked").show();
+    }
+    else {
+        $("#divCreateEventAllDayUnchecked").hide();
+        $("#divCreateEventAllDayChecked").hide();
+        $("#divCreateEventAllDayUnchecked").show();
+    }
+});
+
+$('#createEventNotification').off('click').on('click', function () {
+    $("<div><select class='createEventSelNotification' style='max-width:90%;'><option value='FiveMinutesBefore' select>5 minutes before</option><option value='TenMinutesBefore'>10 minutes before</option></select><a class='hover aCalendarDeleteNotification' href='#'>&nbsp;<i class='fa fa-trash' aria-hidden='true'></i></a><br /><br /></div>").insertBefore(this);
+});
+
+$(document).off('click').on('click', '.aCalendarDeleteNotification', function () {
+    $(this).parent().remove();
 });
