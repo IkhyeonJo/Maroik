@@ -64,7 +64,7 @@
                             <div class="form-group col-md-6 mb-3">
                                 <label for="createExpenditureMainClass">@localizer["MainClass"].Value</label>
                                 <br />
-                                <select id="createExpenditureMainClass" name="createExpenditureMainClass" style="max-width:90%;">
+                                <select id="createExpenditureMainClass" name="createExpenditureMainClass" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
                                     <option value="RegularSavings" selected="selected">@localizer["정기저축"].Value</option>
                                     <option value="NonConsumerSpending">@localizer["비소비지출"].Value</option>
                                     <option value="ConsumerSpending">@localizer["소비지출"].Value</option>
@@ -73,7 +73,7 @@
                             <div class="form-group col-md-6 mb-3">
                                 <label for="createExpenditureSubClass">@localizer["SubClass"].Value</label>
                                 <br />
-                                <select id="createExpenditureSubClass" name="createExpenditureSubClass" style="max-width:90%;">
+                                <select id="createExpenditureSubClass" name="createExpenditureSubClass" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
                                     @*정기저축*@
                                     <option value="Deposit" selected="selected">@localizer["예적금"].Value</option>
                                     <option value="Investment">@localizer["투자"].Value</option>
@@ -120,7 +120,7 @@
                             <div class="form-group col-md-6 mb-3">
                                 <label for="createExpenditureHour">@localizer["Hour"].Value</label>
                                 <br />
-                                <select id="createExpenditureHour" name="createExpenditureHour" style="max-width:90%;">
+                                <select id="createExpenditureHour" name="createExpenditureHour" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
                                     @for (int i = 0; i < 24; i++)
                                     {
                                         if (i == currentHour)
@@ -139,7 +139,7 @@
                             <div class="form-group col-md-6 mb-3">
                                 <label for="createExpenditureMinute">@localizer["Minute"].Value</label>
                                 <br />
-                                <select id="createExpenditureMinute" name="createExpenditureMinute" style="max-width:90%;">
+                                <select id="createExpenditureMinute" name="createExpenditureMinute" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
                                     @for (int i = 0; i < 60; i++)
                                     {
                                         if (i == currentMinute)
@@ -156,7 +156,7 @@
                             <div class="form-group col-md-6 mb-3">
                                 <label for="createExpenditureSecond">@localizer["Second"].Value</label>
                                 <br />
-                                <select id="createExpenditureSecond" name="createExpenditureSecond" style="max-width:90%;">
+                                <select id="createExpenditureSecond" name="createExpenditureSecond" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
                                     @for (int i = 0; i < 60; i++)
                                     {
                                         if (i == currentSecond)
@@ -175,7 +175,7 @@
                             <div class="form-group col-md-6 mb-3">
                                 <label for="createExpenditurePaymentMethod">@localizer["PaymentMethod"].Value</label>
                                 <br />
-                                <select id="createExpenditurePaymentMethod" name="createExpenditurePaymentMethod" style="max-width:90%;width:210px;text-overflow:ellipsis;">
+                                <select id="createExpenditurePaymentMethod" name="createExpenditurePaymentMethod" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
                                     @foreach (Asset item in assets)
                                     {
                                         if (assets.First() == item)
@@ -199,7 +199,7 @@
                             <div class="form-group col-md-6 mb-3">
                                 <label for="createExpenditureMyDepositAsset">@localizer["MyDepositAsset"].Value</label>
                                 <br />
-                                <select id="createExpenditureMyDepositAsset" name="createExpenditureMyDepositAsset" style="max-width:90%;width:210px;text-overflow:ellipsis;">
+                                <select id="createExpenditureMyDepositAsset" name="createExpenditureMyDepositAsset" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
                                     @foreach (Asset item in assets)
                                     {
                                         <option value="@item.ProductName">@item.ProductName</option>
@@ -235,7 +235,7 @@
                             <div class="form-group col-md-6 mb-3">
                                 <label for="editExpenditureMainClass">@localizer["MainClass"].Value</label>
                                 <br />
-                                <select id="editExpenditureMainClass" name="editExpenditureMainClass" style="max-width:90%;">
+                                <select id="editExpenditureMainClass" name="editExpenditureMainClass" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
                                     <option value="RegularSavings" selected="selected">@localizer["정기저축"].Value</option>
                                     <option value="NonConsumerSpending">@localizer["비소비지출"].Value</option>
                                     <option value="ConsumerSpending">@localizer["소비지출"].Value</option>
@@ -244,7 +244,7 @@
                             <div class="form-group col-md-6 mb-3">
                                 <label for="editExpenditureSubClass">@localizer["SubClass"].Value</label>
                                 <br />
-                                <select id="editExpenditureSubClass" name="editExpenditureSubClass" style="max-width:90%;">
+                                <select id="editExpenditureSubClass" name="editExpenditureSubClass" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
                                     @*정기저축*@
                                     <option value="Deposit" selected="selected">@localizer["예적금"].Value</option>
                                     <option value="Investment">@localizer["투자"].Value</option>
@@ -291,7 +291,7 @@
                             <div class="form-group col-md-6 mb-3">
                                 <label for="editExpenditureHour">@localizer["Hour"].Value</label>
                                 <br />
-                                <select id="editExpenditureHour" name="editExpenditureHour" style="max-width:90%;">
+                                <select id="editExpenditureHour" name="editExpenditureHour" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
                                     <option value="0" selected="selected">0</option>
                                     @for (int i = 1; i < 24; i++)
                                     {
@@ -304,7 +304,7 @@
                             <div class="form-group col-md-6 mb-3">
                                 <label for="editExpenditureMinute">@localizer["Minute"].Value</label>
                                 <br />
-                                <select id="editExpenditureMinute" name="editExpenditureMinute" style="max-width:90%;">
+                                <select id="editExpenditureMinute" name="editExpenditureMinute" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
                                     <option value="0" selected="selected">0</option>
                                     @for (int i = 1; i < 60; i++)
                                     {
@@ -315,7 +315,7 @@
                             <div class="form-group col-md-6 mb-3">
                                 <label for="editExpenditureSecond">@localizer["Second"].Value</label>
                                 <br />
-                                <select id="editExpenditureSecond" name="editExpenditureSecond" style="max-width:90%;">
+                                <select id="editExpenditureSecond" name="editExpenditureSecond" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
                                     <option value="0" selected="selected">0</option>
                                     @for (int i = 1; i < 60; i++)
                                     {
@@ -328,7 +328,7 @@
                             <div class="form-group col-md-6 mb-3">
                                 <label for="editExpenditurePaymentMethod">@localizer["PaymentMethod"].Value</label>
                                 <br />
-                                <select id="editExpenditurePaymentMethod" name="editExpenditurePaymentMethod" style="max-width:90%;width:210px;text-overflow:ellipsis;">
+                                <select id="editExpenditurePaymentMethod" name="editExpenditurePaymentMethod" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
                                     @foreach (Asset item in assets)
                                     {
                                         <option value="@item.ProductName">@item.ProductName</option>
@@ -344,7 +344,7 @@
                             <div class="form-group col-md-6 mb-3">
                                 <label for="editExpenditureMyDepositAsset">@localizer["MyDepositAsset"].Value</label>
                                 <br />
-                                <select id="editExpenditureMyDepositAsset" name="editExpenditureMyDepositAsset" style="max-width:90%;width:210px;text-overflow:ellipsis;">
+                                <select id="editExpenditureMyDepositAsset" name="editExpenditureMyDepositAsset" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
                                     @foreach (Asset item in assets)
                                     {
                                         <option value="@item.ProductName">@item.ProductName</option>
