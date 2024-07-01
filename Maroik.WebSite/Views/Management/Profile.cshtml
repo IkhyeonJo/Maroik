@@ -465,7 +465,7 @@
                                                         <div class="form-group row">
                                                             <label asp-for="TimeZoneIanaId" class="col-sm-2 col-form-label">@localizer["Time zone"]</label>
                                                             <div class="col-sm-10">
-                                                                <select asp-for="TimeZoneIanaId" class="form-control">
+                                                                <select asp-for="TimeZoneIanaId" class="form-control" style="max-width:100%;text-overflow:ellipsis;">
                                                                     @foreach (TimeZoneInfo systemTimeZone in TimeZoneInfo.GetSystemTimeZones())
                                                                     {
                                                                         string systemTimeZoneIanaId = string.Empty;
@@ -482,7 +482,7 @@
                                                                         if (string.IsNullOrEmpty(systemTimeZoneIanaId))
                                                                             continue;
 
-                                                                        <option value="@systemTimeZoneIanaId">@systemTimeZoneIanaId</option>
+                                                                        <option value="@systemTimeZoneIanaId">@systemTimeZone.DisplayName</option>
                                                                     }
                                                                 </select>
                                                                 <span class="text-danger"></span>

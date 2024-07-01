@@ -38,7 +38,7 @@
                     </div>
 
                     <div class="form-group has-feedback">
-                        <select asp-for="TimeZoneIanaId" required class="form-control">
+                        <select asp-for="TimeZoneIanaId" required class="form-control" style="max-width:100%;text-overflow:ellipsis;">
                             <option value="" disabled selected hidden>
                                 @localizer["Please select time zone"]
                             </option>
@@ -59,7 +59,7 @@
                                 if (string.IsNullOrEmpty(systemTimeZoneIanaId))
                                     continue;
 
-                                <option value="@systemTimeZoneIanaId">@systemTimeZoneIanaId</option>
+                                <option value="@systemTimeZoneIanaId">@systemTimeZone.DisplayName</option>
                             }
                         </select>
                     </div>
