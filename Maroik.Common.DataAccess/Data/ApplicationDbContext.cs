@@ -318,7 +318,7 @@ namespace Maroik.Common.DataAccess.Data
                     .IsRequired()
                     .HasComment("계정 이메일 (ID)");
                 _ = entity.Property(e => e.Amount).HasComment("금액");
-                _ = entity.Property(e => e.Contents)
+                _ = entity.Property(e => e.Content)
                     .IsRequired()
                     .HasMaxLength(255)
                     .HasComment("내용 (A마트/B카드/C음식점/D도서관)");
@@ -367,7 +367,7 @@ namespace Maroik.Common.DataAccess.Data
                     .IsRequired()
                     .HasComment("계정 이메일 (ID)");
                 _ = entity.Property(e => e.Amount).HasComment("금액");
-                _ = entity.Property(e => e.Contents)
+                _ = entity.Property(e => e.Content)
                     .IsRequired()
                     .HasMaxLength(255)
                     .HasComment("내용 (A마트/B카드/C음식점/D도서관)");
@@ -426,7 +426,7 @@ namespace Maroik.Common.DataAccess.Data
                     .IsRequired()
                     .HasComment("계정 이메일 (ID)");
                 _ = entity.Property(e => e.Amount).HasComment("금액");
-                _ = entity.Property(e => e.Contents)
+                _ = entity.Property(e => e.Content)
                     .IsRequired()
                     .HasMaxLength(255)
                     .HasComment("내용 (회사명/사업명)");
@@ -482,7 +482,7 @@ namespace Maroik.Common.DataAccess.Data
                     .IsRequired()
                     .HasComment("계정 이메일 (ID)");
                 _ = entity.Property(e => e.Amount).HasComment("금액");
-                _ = entity.Property(e => e.Contents)
+                _ = entity.Property(e => e.Content)
                     .IsRequired()
                     .HasMaxLength(255)
                     .HasComment("내용 (회사명/사업명)");
