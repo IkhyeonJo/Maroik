@@ -136,7 +136,7 @@ namespace Maroik.WebSite.Controllers
                                 AccountEmail = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email,
                                 MainClass = fixedIncomeInputViewModel.MainClass,
                                 SubClass = fixedIncomeInputViewModel.SubClass,
-                                Contents = fixedIncomeInputViewModel.Contents ?? "",
+                                Content = fixedIncomeInputViewModel.Content ?? "",
                                 Amount = Math.Abs(fixedIncomeInputViewModel.Amount),
                                 DepositMyAssetProductName = fixedIncomeInputViewModel.DepositMyAssetProductName,
                                 DepositMonth = fixedIncomeInputViewModel.DepositMonth,
@@ -210,7 +210,7 @@ namespace Maroik.WebSite.Controllers
                             Id = item.Id,
                             MainClass = _localizer[item.MainClass.ToString()].Value,
                             SubClass = _localizer[item.SubClass.ToString()].Value,
-                            Contents = item.Contents,
+                            Content = item.Content,
                             Amount = Convert.ToDecimal(item.Amount.TrimTrailingZeros()),
                             MonetaryUnit = assets.Where(x => x.ProductName == item.DepositMyAssetProductName).FirstOrDefault().MonetaryUnit,
                             DepositMonth = item.DepositMonth,
@@ -229,7 +229,7 @@ namespace Maroik.WebSite.Controllers
                     {
                         if (_localizer[item.MainClass?.ToString() ?? ""].Value.Contains(wholeSearch) ||
                             _localizer[item.SubClass?.ToString() ?? ""].Value.Contains(wholeSearch) ||
-                            (item.Contents?.ToString() ?? "").Contains(wholeSearch) ||
+                            (item.Content?.ToString() ?? "").Contains(wholeSearch) ||
                             (item.Amount.TrimTrailingZeros() ?? "").Contains(wholeSearch) ||
                             (assets.Where(x => x.ProductName == item.DepositMyAssetProductName).FirstOrDefault().MonetaryUnit.ToString() ?? "").Contains(wholeSearch) ||
                             (item.DepositMonth.ToString() ?? "").Contains(wholeSearch) ||
@@ -261,7 +261,7 @@ namespace Maroik.WebSite.Controllers
                                 Id = item.Id,
                                 MainClass = _localizer[item.MainClass.ToString()].Value,
                                 SubClass = _localizer[item.SubClass.ToString()].Value,
-                                Contents = item.Contents,
+                                Content = item.Content,
                                 Amount = Convert.ToDecimal(item.Amount.TrimTrailingZeros()),
                                 MonetaryUnit = assets.Where(x => x.ProductName == item.DepositMyAssetProductName).FirstOrDefault().MonetaryUnit,
                                 DepositMonth = item.DepositMonth,
@@ -315,7 +315,7 @@ namespace Maroik.WebSite.Controllers
                             Id = tempFixedIncome.Id,
                             MainClass = tempFixedIncome.MainClass,
                             SubClass = tempFixedIncome.SubClass,
-                            Contents = tempFixedIncome.Contents,
+                            Content = tempFixedIncome.Content,
                             Amount = Convert.ToDecimal(tempFixedIncome.Amount.TrimTrailingZeros()),
                             DepositMonth = tempFixedIncome.DepositMonth,
                             DepositDay = tempFixedIncome.DepositDay,
@@ -465,7 +465,7 @@ namespace Maroik.WebSite.Controllers
                                 #region 고정 수입 업데이트
                                 tempFixedIncome.MainClass = fixedIncomeInputViewModel.MainClass;
                                 tempFixedIncome.SubClass = fixedIncomeInputViewModel.SubClass;
-                                tempFixedIncome.Contents = fixedIncomeInputViewModel.Contents ?? "";
+                                tempFixedIncome.Content = fixedIncomeInputViewModel.Content ?? "";
                                 tempFixedIncome.Amount = Math.Abs(fixedIncomeInputViewModel.Amount);
                                 tempFixedIncome.DepositMyAssetProductName = fixedIncomeInputViewModel.DepositMyAssetProductName;
                                 tempFixedIncome.DepositMonth = fixedIncomeInputViewModel.DepositMonth;
@@ -584,7 +584,7 @@ namespace Maroik.WebSite.Controllers
                 {
                     MainClass = _localizer[item.MainClass.ToString()].Value,
                     SubClass = _localizer[item.SubClass.ToString()].Value,
-                    Contents = item.Contents,
+                    Content = item.Content,
                     Amount = Convert.ToDecimal(item.Amount.TrimTrailingZeros()),
                     MonetaryUnit = assets.Where(x => x.ProductName == item.DepositMyAssetProductName).FirstOrDefault().MonetaryUnit,
                     DepositMonth = item.DepositMonth,
@@ -613,7 +613,7 @@ namespace Maroik.WebSite.Controllers
                 workSheetMenuOutputViewModels.Row(1).Style.Font.Bold = true;
                 workSheetMenuOutputViewModels.Cells[1, 1].Value = _localizer[nameof(FixedIncomeOutputViewModel.MainClass).ToString()].Value;
                 workSheetMenuOutputViewModels.Cells[1, 2].Value = _localizer[nameof(FixedIncomeOutputViewModel.SubClass).ToString()].Value;
-                workSheetMenuOutputViewModels.Cells[1, 3].Value = _localizer[nameof(FixedIncomeOutputViewModel.Contents).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 3].Value = _localizer[nameof(FixedIncomeOutputViewModel.Content).ToString()].Value;
                 workSheetMenuOutputViewModels.Cells[1, 4].Value = _localizer[nameof(FixedIncomeOutputViewModel.Amount).ToString()].Value;
                 workSheetMenuOutputViewModels.Cells[1, 5].Value = _localizer[nameof(FixedIncomeOutputViewModel.MonetaryUnit).ToString()].Value;
                 workSheetMenuOutputViewModels.Cells[1, 6].Value = _localizer[nameof(FixedIncomeOutputViewModel.DepositMonth).ToString()].Value;
@@ -631,7 +631,7 @@ namespace Maroik.WebSite.Controllers
                 {
                     workSheetMenuOutputViewModels.Cells[recordIndex, 1].Value = _localizer[item?.MainClass?.ToString() ?? ""].Value;
                     workSheetMenuOutputViewModels.Cells[recordIndex, 2].Value = _localizer[item?.SubClass?.ToString() ?? ""].Value;
-                    workSheetMenuOutputViewModels.Cells[recordIndex, 3].Value = item.Contents;
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 3].Value = item.Content;
                     workSheetMenuOutputViewModels.Cells[recordIndex, 4].Value = Convert.ToDecimal(item.Amount.TrimTrailingZeros());
                     workSheetMenuOutputViewModels.Cells[recordIndex, 5].Value = assets.Where(x => x.ProductName == item.DepositMyAssetProductName).FirstOrDefault().MonetaryUnit;
                     workSheetMenuOutputViewModels.Cells[recordIndex, 6].Value = item.DepositMonth;
@@ -705,7 +705,7 @@ namespace Maroik.WebSite.Controllers
                                         AccountEmail = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email,
                                         MainClass = fixedExpenditureInputViewModel.MainClass,
                                         SubClass = fixedExpenditureInputViewModel.SubClass,
-                                        Contents = fixedExpenditureInputViewModel.Contents ?? "",
+                                        Content = fixedExpenditureInputViewModel.Content ?? "",
                                         Amount = Math.Abs(fixedExpenditureInputViewModel.Amount),
                                         PaymentMethod = fixedExpenditureInputViewModel.PaymentMethod,
                                         MyDepositAsset = fixedExpenditureInputViewModel.MyDepositAsset,
@@ -766,7 +766,7 @@ namespace Maroik.WebSite.Controllers
                                         AccountEmail = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email,
                                         MainClass = fixedExpenditureInputViewModel.MainClass,
                                         SubClass = fixedExpenditureInputViewModel.SubClass,
-                                        Contents = fixedExpenditureInputViewModel.Contents ?? "",
+                                        Content = fixedExpenditureInputViewModel.Content ?? "",
                                         Amount = Math.Abs(fixedExpenditureInputViewModel.Amount),
                                         PaymentMethod = fixedExpenditureInputViewModel.PaymentMethod,
                                         MyDepositAsset = fixedExpenditureInputViewModel.MyDepositAsset,
@@ -802,7 +802,7 @@ namespace Maroik.WebSite.Controllers
                                         AccountEmail = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email,
                                         MainClass = fixedExpenditureInputViewModel.MainClass,
                                         SubClass = fixedExpenditureInputViewModel.SubClass,
-                                        Contents = fixedExpenditureInputViewModel.Contents ?? "",
+                                        Content = fixedExpenditureInputViewModel.Content ?? "",
                                         Amount = Math.Abs(fixedExpenditureInputViewModel.Amount),
                                         PaymentMethod = fixedExpenditureInputViewModel.PaymentMethod,
                                         MyDepositAsset = "",
@@ -856,7 +856,7 @@ namespace Maroik.WebSite.Controllers
                                         AccountEmail = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email,
                                         MainClass = fixedExpenditureInputViewModel.MainClass,
                                         SubClass = fixedExpenditureInputViewModel.SubClass,
-                                        Contents = fixedExpenditureInputViewModel.Contents ?? "",
+                                        Content = fixedExpenditureInputViewModel.Content ?? "",
                                         Amount = Math.Abs(fixedExpenditureInputViewModel.Amount),
                                         PaymentMethod = fixedExpenditureInputViewModel.PaymentMethod,
                                         MyDepositAsset = "",
@@ -945,7 +945,7 @@ namespace Maroik.WebSite.Controllers
                             Id = item.Id,
                             MainClass = _localizer[item.MainClass.ToString()].Value,
                             SubClass = _localizer[item.SubClass.ToString()].Value,
-                            Contents = item.Contents,
+                            Content = item.Content,
                             Amount = Convert.ToDecimal(item.Amount.TrimTrailingZeros()),
                             MonetaryUnit = assets.Where(x => x.ProductName == item.PaymentMethod).FirstOrDefault().MonetaryUnit,
                             PaymentMethod = item.PaymentMethod,
@@ -965,7 +965,7 @@ namespace Maroik.WebSite.Controllers
                     {
                         if (_localizer[item.MainClass?.ToString() ?? ""].Value.Contains(wholeSearch) ||
                             _localizer[item.SubClass?.ToString() ?? ""].Value.Contains(wholeSearch) ||
-                            (item.Contents?.ToString() ?? "").Contains(wholeSearch) ||
+                            (item.Content?.ToString() ?? "").Contains(wholeSearch) ||
                             (item.Amount.TrimTrailingZeros() ?? "").Contains(wholeSearch) ||
                             (assets.Where(x => x.ProductName == item.PaymentMethod).FirstOrDefault().MonetaryUnit.ToString() ?? "").Contains(wholeSearch) ||
                             (item.PaymentMethod.ToString() ?? "").Contains(wholeSearch) ||
@@ -998,7 +998,7 @@ namespace Maroik.WebSite.Controllers
                                 Id = item.Id,
                                 MainClass = _localizer[item.MainClass.ToString()].Value,
                                 SubClass = _localizer[item.SubClass.ToString()].Value,
-                                Contents = item.Contents,
+                                Content = item.Content,
                                 Amount = Convert.ToDecimal(item.Amount.TrimTrailingZeros()),
                                 MonetaryUnit = assets.Where(x => x.ProductName == item.PaymentMethod).FirstOrDefault().MonetaryUnit,
                                 PaymentMethod = item.PaymentMethod,
@@ -1053,7 +1053,7 @@ namespace Maroik.WebSite.Controllers
                             Id = tempFixedExpenditure.Id,
                             MainClass = tempFixedExpenditure.MainClass,
                             SubClass = tempFixedExpenditure.SubClass,
-                            Contents = tempFixedExpenditure.Contents,
+                            Content = tempFixedExpenditure.Content,
                             Amount = Convert.ToDecimal(tempFixedExpenditure.Amount.TrimTrailingZeros()),
                             DepositMonth = tempFixedExpenditure.DepositMonth,
                             DepositDay = tempFixedExpenditure.DepositDay,
@@ -1149,7 +1149,7 @@ namespace Maroik.WebSite.Controllers
                                 tempFixedExpenditure.AccountEmail = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email;
                                 tempFixedExpenditure.MainClass = fixedExpenditureInputViewModel.MainClass;
                                 tempFixedExpenditure.SubClass = fixedExpenditureInputViewModel.SubClass;
-                                tempFixedExpenditure.Contents = fixedExpenditureInputViewModel.Contents ?? "";
+                                tempFixedExpenditure.Content = fixedExpenditureInputViewModel.Content ?? "";
                                 tempFixedExpenditure.Amount = fixedExpenditureInputViewModel.Amount;
                                 tempFixedExpenditure.DepositMonth = fixedExpenditureInputViewModel.DepositMonth;
                                 tempFixedExpenditure.DepositDay = fixedExpenditureInputViewModel.DepositDay;
@@ -1213,7 +1213,7 @@ namespace Maroik.WebSite.Controllers
                                 tempFixedExpenditure.AccountEmail = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email;
                                 tempFixedExpenditure.MainClass = fixedExpenditureInputViewModel.MainClass;
                                 tempFixedExpenditure.SubClass = fixedExpenditureInputViewModel.SubClass;
-                                tempFixedExpenditure.Contents = fixedExpenditureInputViewModel.Contents ?? "";
+                                tempFixedExpenditure.Content = fixedExpenditureInputViewModel.Content ?? "";
                                 tempFixedExpenditure.Amount = fixedExpenditureInputViewModel.Amount;
                                 tempFixedExpenditure.DepositMonth = fixedExpenditureInputViewModel.DepositMonth;
                                 tempFixedExpenditure.DepositDay = fixedExpenditureInputViewModel.DepositDay;
@@ -1252,7 +1252,7 @@ namespace Maroik.WebSite.Controllers
                                 tempFixedExpenditure.AccountEmail = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email;
                                 tempFixedExpenditure.MainClass = fixedExpenditureInputViewModel.MainClass;
                                 tempFixedExpenditure.SubClass = fixedExpenditureInputViewModel.SubClass;
-                                tempFixedExpenditure.Contents = fixedExpenditureInputViewModel.Contents ?? "";
+                                tempFixedExpenditure.Content = fixedExpenditureInputViewModel.Content ?? "";
                                 tempFixedExpenditure.Amount = fixedExpenditureInputViewModel.Amount;
                                 tempFixedExpenditure.DepositMonth = fixedExpenditureInputViewModel.DepositMonth;
                                 tempFixedExpenditure.DepositDay = fixedExpenditureInputViewModel.DepositDay;
@@ -1309,7 +1309,7 @@ namespace Maroik.WebSite.Controllers
                                 tempFixedExpenditure.AccountEmail = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email;
                                 tempFixedExpenditure.MainClass = fixedExpenditureInputViewModel.MainClass;
                                 tempFixedExpenditure.SubClass = fixedExpenditureInputViewModel.SubClass;
-                                tempFixedExpenditure.Contents = fixedExpenditureInputViewModel.Contents ?? "";
+                                tempFixedExpenditure.Content = fixedExpenditureInputViewModel.Content ?? "";
                                 tempFixedExpenditure.Amount = fixedExpenditureInputViewModel.Amount;
                                 tempFixedExpenditure.DepositMonth = fixedExpenditureInputViewModel.DepositMonth;
                                 tempFixedExpenditure.DepositDay = fixedExpenditureInputViewModel.DepositDay;
@@ -1435,7 +1435,7 @@ namespace Maroik.WebSite.Controllers
                 {
                     MainClass = _localizer[item.MainClass.ToString()].Value,
                     SubClass = _localizer[item.SubClass.ToString()].Value,
-                    Contents = item.Contents,
+                    Content = item.Content,
                     Amount = Convert.ToDecimal(item.Amount.TrimTrailingZeros()),
                     MonetaryUnit = assets.Where(x => x.ProductName == item.PaymentMethod).FirstOrDefault().MonetaryUnit,
                     PaymentMethod = item.PaymentMethod,
@@ -1465,7 +1465,7 @@ namespace Maroik.WebSite.Controllers
                 workSheetMenuOutputViewModels.Row(1).Style.Font.Bold = true;
                 workSheetMenuOutputViewModels.Cells[1, 1].Value = _localizer[nameof(FixedExpenditureOutputViewModel.MainClass).ToString()].Value;
                 workSheetMenuOutputViewModels.Cells[1, 2].Value = _localizer[nameof(FixedExpenditureOutputViewModel.SubClass).ToString()].Value;
-                workSheetMenuOutputViewModels.Cells[1, 3].Value = _localizer[nameof(FixedExpenditureOutputViewModel.Contents).ToString()].Value;
+                workSheetMenuOutputViewModels.Cells[1, 3].Value = _localizer[nameof(FixedExpenditureOutputViewModel.Content).ToString()].Value;
                 workSheetMenuOutputViewModels.Cells[1, 4].Value = _localizer[nameof(FixedExpenditureOutputViewModel.Amount).ToString()].Value;
                 workSheetMenuOutputViewModels.Cells[1, 5].Value = _localizer[nameof(FixedExpenditureOutputViewModel.MonetaryUnit).ToString()].Value;
                 workSheetMenuOutputViewModels.Cells[1, 6].Value = _localizer[nameof(FixedExpenditureOutputViewModel.PaymentMethod).ToString()].Value;
@@ -1484,7 +1484,7 @@ namespace Maroik.WebSite.Controllers
                 {
                     workSheetMenuOutputViewModels.Cells[recordIndex, 1].Value = _localizer[item?.MainClass?.ToString() ?? ""].Value;
                     workSheetMenuOutputViewModels.Cells[recordIndex, 2].Value = _localizer[item?.SubClass?.ToString() ?? ""].Value;
-                    workSheetMenuOutputViewModels.Cells[recordIndex, 3].Value = item.Contents;
+                    workSheetMenuOutputViewModels.Cells[recordIndex, 3].Value = item.Content;
                     workSheetMenuOutputViewModels.Cells[recordIndex, 4].Value = Convert.ToDecimal(item.Amount.TrimTrailingZeros());
                     workSheetMenuOutputViewModels.Cells[recordIndex, 5].Value = assets.Where(x => x.ProductName == item.PaymentMethod).FirstOrDefault().MonetaryUnit;
                     workSheetMenuOutputViewModels.Cells[recordIndex, 6].Value = item.PaymentMethod;

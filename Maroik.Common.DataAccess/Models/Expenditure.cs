@@ -30,7 +30,7 @@ public partial class Expenditure
     /// <summary>
     /// 내용 (A마트/B카드/C음식점/D도서관)
     /// </summary>
-    public string Contents { get; set; }
+    public string Content { get; set; }
 
     /// <summary>
     /// 금액

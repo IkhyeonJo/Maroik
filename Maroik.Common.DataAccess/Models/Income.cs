@@ -30,7 +30,7 @@ public partial class Income
     /// <summary>
     /// 내용 (회사명/사업명)
     /// </summary>
-    public string Contents { get; set; }
+    public string Content { get; set; }
 
     /// <summary>
     /// 금액

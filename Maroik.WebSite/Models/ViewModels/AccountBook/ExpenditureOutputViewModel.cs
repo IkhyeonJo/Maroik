@@ -13,9 +13,9 @@ namespace Maroik.WebSite.Models.ViewModels.AccountBook
         [Required(ErrorMessage = "Please enter SubClass")]
         [Display(Name = "SubClass")]
         public string SubClass { get; set; }
-        [Required(ErrorMessage = "Please enter Contents")]
-        [Display(Name = "Contents")]
-        public string Contents { get; set; }
+        [Required(ErrorMessage = "Please enter Content")]
+        [Display(Name = "Content")]
+        public string Content { get; set; }
         [Required(ErrorMessage = "Please enter Amount")]
         [Display(Name = "Amount")]
         public decimal Amount { get; set; }
