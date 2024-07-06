@@ -46,7 +46,7 @@ public partial class Board
     /// <summary>
     /// 조회수
     /// </summary>
-    public int Views { get; set; }
+    public int View { get; set; }
 
     /// <summary>
     /// 삭제 여부

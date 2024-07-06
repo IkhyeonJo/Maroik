@@ -99,7 +99,7 @@ namespace Maroik.WebSite.Controllers
                                 board.Writer = loginedAccount.Nickname;
                                 board.Created = DateTime.UtcNow;
                                 board.Updated = DateTime.UtcNow;
-                                board.Views = 0;
+                                board.View = 0;
                                 board.Deleted = false;
                                 board.Locked = boardInputViewModel.Locked;
                                 board.Noticed = boardInputViewModel.Noticed;
@@ -112,7 +112,7 @@ namespace Maroik.WebSite.Controllers
                                 board.Writer = loginedAccount.Nickname;
                                 board.Created = DateTime.UtcNow;
                                 board.Updated = DateTime.UtcNow;
-                                board.Views = 0;
+                                board.View = 0;
                                 board.Deleted = false;
                                 board.Locked = boardInputViewModel.Locked;
                             }
@@ -370,7 +370,7 @@ namespace Maroik.WebSite.Controllers
                         }
                     }
 
-                    freeBoard.Views++;
+                    freeBoard.View++;
                     await _boardRepository.UpdateBoardAsync(freeBoard);
                     BoardAttachedFile boardAttachedFile = boardAttachedFiles.FirstOrDefault(m => m.BoardId == boardId);
 
@@ -379,7 +379,7 @@ namespace Maroik.WebSite.Controllers
                     {
                         Title = freeBoard.Title,
                         Writer = freeBoard.Writer,
-                        Views = freeBoard.Views,
+                        Views = freeBoard.View,
                         Content = freeBoard.Content,
                         Updated = freeBoard.Updated,
                         BoardAttachedFileName = boardAttachedFile?.Name ?? "",
@@ -432,7 +432,7 @@ namespace Maroik.WebSite.Controllers
                     {
                         Title = freeBoard.Title,
                         Writer = freeBoard.Writer,
-                        Views = freeBoard.Views,
+                        Views = freeBoard.View,
                         Content = freeBoard.Content,
                         Locked = freeBoard.Locked,
                         Updated = freeBoard.Updated,
