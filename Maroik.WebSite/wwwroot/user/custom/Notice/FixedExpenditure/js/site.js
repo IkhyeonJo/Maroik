@@ -445,7 +445,7 @@ function CreateFixedExpenditure() {
 
     let mainClass = createForm.find('select[id="createFixedExpenditureMainClass"]').val();
     let subClass = createForm.find('select[id="createFixedExpenditureSubClass"]').val();
-    let contents = createForm.find('input[id="createFixedExpenditureContents"]').val();
+    let content = createForm.find('input[id="createFixedExpenditureContent"]').val();
     let amount = createForm.find('input[id="createFixedExpenditureAmount"]').val();
     let depositMonth = createForm.find('select[id="createFixedExpenditureDepositMonth"]').val();
     let depositDay = createForm.find('select[id="createFixedExpenditureDepositDay"]').val();
@@ -457,7 +457,7 @@ function CreateFixedExpenditure() {
     let paramValue = JSON.stringify({
         MainClass: mainClass,
         SubClass: subClass,
-        Contents: contents,
+        Content: content,
         Amount: amount,
         DepositMonth: depositMonth,
         DepositDay: depositDay,
@@ -634,7 +634,7 @@ function EditFixedExpenditureGridRow(errorMessageSelectGridRow) {
                     formEditFixedExpenditure.find('select[id="editFixedExpenditureSubClass"]').val(data.fixedExpenditure.subClass).change();
                 }
 
-                formEditFixedExpenditure.find('input[id="editFixedExpenditureContents"]').val(data.fixedExpenditure.contents);
+                formEditFixedExpenditure.find('input[id="editFixedExpenditureContent"]').val(data.fixedExpenditure.content);
                 formEditFixedExpenditure.find('input[id="editFixedExpenditureAmount"]').val(data.fixedExpenditure.amount);
 
                 formEditFixedExpenditure.find('select[id="editFixedExpenditureDepositMonth"]').val(data.fixedExpenditure.depositMonth.toString()).change();
@@ -866,7 +866,7 @@ function UpdateFixedExpenditure() {
     let id = createForm.find('input[id="editFixedExpenditureId"]').val();
     let mainClass = createForm.find('select[id="editFixedExpenditureMainClass"]').val();
     let subClass = createForm.find('select[id="editFixedExpenditureSubClass"]').val();
-    let contents = createForm.find('input[id="editFixedExpenditureContents"]').val();
+    let content = createForm.find('input[id="editFixedExpenditureContent"]').val();
     let amount = createForm.find('input[id="editFixedExpenditureAmount"]').val();
     let depositMonth = createForm.find('select[id="editFixedExpenditureDepositMonth"]').val();
     let depositDay = createForm.find('select[id="editFixedExpenditureDepositDay"]').val();
@@ -880,7 +880,7 @@ function UpdateFixedExpenditure() {
         Id: id,
         MainClass: mainClass,
         SubClass: subClass,
-        Contents: contents,
+        Content: content,
         Amount: amount,
         DepositMonth: depositMonth,
         DepositDay: depositDay,
