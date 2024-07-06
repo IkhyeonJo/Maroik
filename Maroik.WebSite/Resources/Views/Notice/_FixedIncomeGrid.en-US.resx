@@ -120,8 +120,8 @@
   <data name="Amount" xml:space="preserve">
     <value>Amount</value>
   </data>
-  <data name="Contents" xml:space="preserve">
-    <value>Contents</value>
+  <data name="Content" xml:space="preserve">
+    <value>Content</value>
   </data>
   <data name="Created" xml:space="preserve">
     <value>Created</value>
