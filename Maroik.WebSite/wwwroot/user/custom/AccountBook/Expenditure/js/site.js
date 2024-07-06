@@ -207,7 +207,7 @@ function CreateExpenditure() {
 
     let mainClass = createForm.find('select[id="createExpenditureMainClass"]').val();
     let subClass = createForm.find('select[id="createExpenditureSubClass"]').val();
-    let contents = createForm.find('input[id="createExpenditureContents"]').val();
+    let content = createForm.find('input[id="createExpenditureContent"]').val();
     let amount = createForm.find('input[id="createExpenditureAmount"]').val();
 
     let year = parseInt(createForm.find('input[id="createExpenditureDate"]').val().substring(0, 4));
@@ -226,7 +226,7 @@ function CreateExpenditure() {
     let paramValue = JSON.stringify({
         MainClass: mainClass,
         SubClass: subClass,
-        Contents: contents,
+        Content: content,
         Amount: amount,
         Created: created,
         PaymentMethod: paymentMethod,
@@ -412,7 +412,7 @@ function EditExpenditureGridRow(errorMessageSelectGridRow) {
                 }
 
 
-                formEditExpenditure.find('input[id="editExpenditureContents"]').val(data.expenditure.contents);
+                formEditExpenditure.find('input[id="editExpenditureContent"]').val(data.expenditure.content);
                 formEditExpenditure.find('input[id="editExpenditureAmount"]').val(data.expenditure.amount);
                 formEditExpenditure.find('input[id="editExpenditureDate"]').val(data.expenditure.created.split('T')[0]);
                 formEditExpenditure.find('select[id="editExpenditureHour"]').val(parseInt(data.expenditure.created.split('T')[1].substring(0, 2))).change();
@@ -584,7 +584,7 @@ function UpdateExpenditure() {
     let id = createForm.find('input[id="editExpenditureId"]').val();
     let mainClass = createForm.find('select[id="editExpenditureMainClass"]').val();
     let subClass = createForm.find('select[id="editExpenditureSubClass"]').val();
-    let contents = createForm.find('input[id="editExpenditureContents"]').val();
+    let content = createForm.find('input[id="editExpenditureContent"]').val();
     let amount = createForm.find('input[id="editExpenditureAmount"]').val();
 
     let year = parseInt(createForm.find('input[id="editExpenditureDate"]').val().substring(0, 4));
@@ -603,7 +603,7 @@ function UpdateExpenditure() {
         Id: id,
         MainClass: mainClass,
         SubClass: subClass,
-        Contents: contents,
+        Content: content,
         Amount: amount,
         Created: created,
         PaymentMethod: paymentMethod,

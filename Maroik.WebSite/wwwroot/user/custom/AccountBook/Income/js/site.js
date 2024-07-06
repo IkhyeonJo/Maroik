@@ -153,7 +153,7 @@ function CreateIncome() {
 
     let mainClass = createForm.find('select[id="createIncomeMainClass"]').val();
     let subClass = createForm.find('select[id="createIncomeSubClass"]').val();
-    let contents = createForm.find('input[id="createIncomeContents"]').val();
+    let content = createForm.find('input[id="createIncomeContent"]').val();
     let amount = createForm.find('input[id="createIncomeAmount"]').val();
 
     let year = parseInt(createForm.find('input[id="createIncomeDate"]').val().substring(0, 4));
@@ -170,7 +170,7 @@ function CreateIncome() {
     let paramValue = JSON.stringify({
         MainClass: mainClass,
         SubClass: subClass,
-        Contents: contents,
+        Content: content,
         Amount: amount,
         Created: created,
         DepositMyAssetProductName: depositMyAssetProductName,
@@ -271,7 +271,7 @@ function EditIncomeGridRow(errorMessageSelectGridRow) {
                     formEditIncome.find('select[id="editIncomeSubClass"]').val(data.income.subClass).change();
                 }
 
-                formEditIncome.find('input[id="editIncomeContents"]').val(data.income.contents);
+                formEditIncome.find('input[id="editIncomeContent"]').val(data.income.content);
                 formEditIncome.find('input[id="editIncomeAmount"]').val(data.income.amount);
                 formEditIncome.find('input[id="editIncomeDate"]').val(data.income.created.split('T')[0]);
                 formEditIncome.find('select[id="editIncomeHour"]').val(parseInt(data.income.created.split('T')[1].substring(0, 2))).change();
@@ -306,7 +306,7 @@ function UpdateIncome() {
     let id = createForm.find('input[id="editIncomeId"]').val();
     let mainClass = createForm.find('select[id="editIncomeMainClass"]').val();
     let subClass = createForm.find('select[id="editIncomeSubClass"]').val();
-    let contents = createForm.find('input[id="editIncomeContents"]').val();
+    let content = createForm.find('input[id="editIncomeContent"]').val();
     let amount = createForm.find('input[id="editIncomeAmount"]').val();
 
     let year = parseInt(createForm.find('input[id="editIncomeDate"]').val().substring(0, 4));
@@ -324,7 +324,7 @@ function UpdateIncome() {
         Id: id,
         MainClass: mainClass,
         SubClass: subClass,
-        Contents: contents,
+        Content: content,
         Amount: amount,
         Created: created,
         DepositMyAssetProductName: depositMyAssetProductName,
