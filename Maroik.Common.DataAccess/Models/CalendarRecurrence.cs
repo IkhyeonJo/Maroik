@@ -1,0 +1,52 @@
+﻿using System;
+using System.Collections.Generic;
+
+namespace Maroik.Common.DataAccess.Models;
+
+/// <summary>
+/// Maroik.WebSite 달력 반복
+/// </summary>
+public partial class CalendarRecurrence
+{
+    /// <summary>
+    /// PK
+    /// </summary>
+    public int Id { get; set; }
+
+    /// <summary>
+    /// 반복 주기
+    /// </summary>
+    public string Frequency { get; set; }
+
+    /// <summary>
+    /// 반복 간격
+    /// </summary>
+    public int Interval { get; set; }
+
+    /// <summary>
+    /// 반복 요일
+    /// </summary>
+    public string DayOfWeek { get; set; }
+
+    /// <summary>
+    /// 매월 반복일 (1~31, 옵션)
+    /// </summary>
+    public int? DayOfMonth { get; set; }
+
+    /// <summary>
+    /// 매년 반복월 (1~12, 옵션)
+    /// </summary>
+    public int? MonthOfYear { get; set; }
+
+    /// <summary>
+    /// 반복 횟수 (옵션)
+    /// </summary>
+    public int? Count { get; set; }
+
+    /// <summary>
+    /// 반복 종료 날짜 (옵션)
+    /// </summary>
+    public DateTime? Until { get; set; }
+
+    public virtual ICollection<CalendarEvent> CalendarEvents { get; set; } = [];
+}

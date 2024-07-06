@@ -16,15 +16,37 @@ namespace Maroik.Common.DataAccess.Data
 
         #region (For Migration) DbSet<T>'s T is Table.
         public virtual DbSet<Account> Accounts { get; set; }
+
         public virtual DbSet<Asset> Assets { get; set; }
-        public virtual DbSet<BoardAttachedFile> BoardAttachedFiles { get; set; }
+
         public virtual DbSet<Board> Boards { get; set; }
-        public virtual DbSet<Category> Categories { get; set; }
+
+        public virtual DbSet<BoardAttachedFile> BoardAttachedFiles { get; set; }
+
         public virtual DbSet<BoardComment> BoardComments { get; set; }
+
+        public virtual DbSet<Calendar> Calendars { get; set; }
+
+        public virtual DbSet<CalendarEvent> CalendarEvents { get; set; }
+
+        public virtual DbSet<CalendarEventAttachedFile> CalendarEventAttachedFiles { get; set; }
+
+        public virtual DbSet<CalendarRecurrence> CalendarRecurrences { get; set; }
+
+        public virtual DbSet<CalendarReminder> CalendarReminders { get; set; }
+
+        public virtual DbSet<CalendarTask> CalendarTasks { get; set; }
+
+        public virtual DbSet<Category> Categories { get; set; }
+
         public virtual DbSet<Expenditure> Expenditures { get; set; }
+
         public virtual DbSet<FixedExpenditure> FixedExpenditures { get; set; }
+
         public virtual DbSet<FixedIncome> FixedIncomes { get; set; }
+
         public virtual DbSet<Income> Incomes { get; set; }
+
         public virtual DbSet<SubCategory> SubCategories { get; set; }
         #endregion
 
@@ -111,7 +133,7 @@ namespace Maroik.Common.DataAccess.Data
 
                 _ = entity.ToTable("Asset", tb => tb.HasComment("Maroik.WebSite 자산"));
 
-                _ = entity.HasIndex(e => e.AccountEmail, "Asset_FK");
+                _ = entity.HasIndex(e => e.AccountEmail, "AccountEmail");
 
                 _ = entity.Property(e => e.ProductName).HasComment("상품명 (은행 계좌명, 증권 계좌명, 현금 등)");
                 _ = entity.Property(e => e.AccountEmail).HasComment("계정 이메일 (ID)");
@@ -138,45 +160,7 @@ namespace Maroik.Common.DataAccess.Data
                 _ = entity.HasOne(d => d.AccountEmailNavigation).WithMany(p => p.Assets)
                     .HasForeignKey(d => d.AccountEmail)
                     .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("Asset_FK");
-            });
-
-            _ = modelBuilder.Entity<BoardAttachedFile>(entity =>
-            {
-                _ = entity.HasKey(e => e.Id).HasName("PRIMARY");
-
-                _ = entity
-                    .ToTable("BoardAttachedFile", tb => tb.HasComment("Maroik.WebSite 게시판 첨부 파일"))
-                    .HasCharSet("utf8")
-                    .UseCollation("utf8_general_ci");
-
-                _ = entity.HasIndex(e => e.BoardId, "fk_Comment_Board_idx");
-
-                _ = entity.Property(e => e.Id)
-                    .HasComment("PK")
-                    .HasColumnType("int(11)");
-                _ = entity.Property(e => e.BoardId)
-                    .HasComment("부모 Board Id")
-                    .HasColumnType("int(11)");
-                _ = entity.Property(e => e.Extension)
-                    .HasMaxLength(255)
-                    .HasComment("확장자");
-                _ = entity.Property(e => e.Name)
-                    .IsRequired()
-                    .HasMaxLength(255)
-                    .HasComment("이름");
-                _ = entity.Property(e => e.Path)
-                    .IsRequired()
-                    .HasMaxLength(255)
-                    .HasComment("경로");
-                _ = entity.Property(e => e.Size)
-                    .HasComment("크기 (Byte)")
-                    .HasColumnType("int(11)");
-
-                _ = entity.HasOne(d => d.Board).WithMany(p => p.BoardAttachedFiles)
-                    .HasForeignKey(d => d.BoardId)
-                    .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("fk_Comment_Board0");
+                    .HasConstraintName("Asset_FK_0");
             });
 
             _ = modelBuilder.Entity<Board>(entity =>
@@ -185,8 +169,8 @@ namespace Maroik.Common.DataAccess.Data
 
                 _ = entity
                     .ToTable("Board", tb => tb.HasComment("Maroik.WebSite Board"))
-                    .HasCharSet("utf8mb3")
-                    .UseCollation("utf8mb3_general_ci");
+                    .HasCharSet("utf8")
+                    .UseCollation("utf8_general_ci");
 
                 _ = entity.Property(e => e.Id)
                     .HasComment("PK")
@@ -220,14 +204,312 @@ namespace Maroik.Common.DataAccess.Data
                     .HasComment("작성자");
             });
 
+            _ = modelBuilder.Entity<BoardAttachedFile>(entity =>
+            {
+                _ = entity.HasKey(e => e.Id).HasName("PRIMARY");
+
+                _ = entity
+                    .ToTable("BoardAttachedFile", tb => tb.HasComment("Maroik.WebSite 게시판 첨부 파일"))
+                    .HasCharSet("utf8")
+                    .UseCollation("utf8_general_ci");
+
+                _ = entity.HasIndex(e => e.BoardId, "BoardId");
+
+                _ = entity.Property(e => e.Id)
+                    .HasComment("PK")
+                    .HasColumnType("int(11)");
+                _ = entity.Property(e => e.BoardId)
+                    .HasComment("부모 Board Id")
+                    .HasColumnType("int(11)");
+                _ = entity.Property(e => e.Extension)
+                    .HasMaxLength(255)
+                    .HasComment("확장자");
+                _ = entity.Property(e => e.Name)
+                    .IsRequired()
+                    .HasMaxLength(255)
+                    .HasComment("이름");
+                _ = entity.Property(e => e.Path)
+                    .IsRequired()
+                    .HasMaxLength(255)
+                    .HasComment("경로");
+                _ = entity.Property(e => e.Size)
+                    .HasComment("크기 (Byte)")
+                    .HasColumnType("int(11)");
+
+                _ = entity.HasOne(d => d.Board).WithMany(p => p.BoardAttachedFiles)
+                    .HasForeignKey(d => d.BoardId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("BoardAttachedFile_FK_0");
+            });
+
+            _ = modelBuilder.Entity<BoardComment>(entity =>
+            {
+                _ = entity.HasKey(e => e.Id).HasName("PRIMARY");
+
+                _ = entity
+                    .ToTable("BoardComment", tb => tb.HasComment("Maroik.WebSite 게시판 댓글"))
+                    .HasCharSet("utf8")
+                    .UseCollation("utf8_general_ci");
+
+                _ = entity.HasIndex(e => e.BoardId, "BoardId");
+
+                _ = entity.Property(e => e.Id)
+                    .HasComment("PK")
+                    .HasColumnType("int(11)");
+                _ = entity.Property(e => e.AvatarImagePath)
+                    .IsRequired()
+                    .HasMaxLength(255)
+                    .HasComment("계정 아바타 이미지 경로");
+                _ = entity.Property(e => e.BoardId)
+                    .HasComment("게시물 Id")
+                    .HasColumnType("int(11)");
+                _ = entity.Property(e => e.Content)
+                    .IsRequired()
+                    .HasComment("내용");
+                _ = entity.Property(e => e.Created)
+                    .HasMaxLength(6)
+                    .HasComment("생성일");
+                _ = entity.Property(e => e.Deleted).HasComment("삭제 여부");
+                _ = entity.Property(e => e.Order)
+                    .HasComment("순서")
+                    .HasColumnType("int(11)");
+                _ = entity.Property(e => e.Writer)
+                    .IsRequired()
+                    .HasMaxLength(255)
+                    .HasComment("작성자");
+
+                _ = entity.HasOne(d => d.Board).WithMany(p => p.BoardComments)
+                    .HasForeignKey(d => d.BoardId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("BoardComment_FK_0");
+            });
+
+            _ = modelBuilder.Entity<Calendar>(entity =>
+            {
+                _ = entity.HasKey(e => e.Id).HasName("PRIMARY");
+
+                _ = entity.ToTable("Calendar", tb => tb.HasComment("Maroik.WebSite 달력"));
+
+                _ = entity.HasIndex(e => e.AccountEmail, "AccountEmail");
+
+                _ = entity.Property(e => e.Id)
+                    .HasComment("PK")
+                    .HasColumnType("int(11)");
+                _ = entity.Property(e => e.AccountEmail)
+                    .IsRequired()
+                    .HasComment("계정 이메일 (ID)");
+                _ = entity.Property(e => e.Description)
+                    .HasComment("설명")
+                    .HasColumnType("text");
+                _ = entity.Property(e => e.Name)
+                    .IsRequired()
+                    .HasMaxLength(255)
+                    .HasComment("이름");
+                _ = entity.Property(e => e.TimeZoneIanaId)
+                    .IsRequired()
+                    .HasMaxLength(255)
+                    .HasComment("IANA TimeZone ID");
+
+                _ = entity.HasOne(d => d.AccountEmailNavigation).WithMany(p => p.Calendars)
+                    .HasForeignKey(d => d.AccountEmail)
+                    .HasConstraintName("Calendar_FK_0");
+            });
+
+            _ = modelBuilder.Entity<CalendarEvent>(entity =>
+            {
+                _ = entity.HasKey(e => e.Id).HasName("PRIMARY");
+
+                _ = entity.ToTable("CalendarEvent", tb => tb.HasComment("Maroik.WebSite 달력 이벤트"));
+
+                _ = entity.HasIndex(e => e.CalendarId, "CalendarId");
+
+                _ = entity.HasIndex(e => e.RecurrenceId, "RecurrenceId");
+
+                _ = entity.Property(e => e.Id)
+                    .HasComment("PK")
+                    .HasColumnType("int(11)");
+                _ = entity.Property(e => e.CalendarId)
+                    .HasComment("부모 Calendar Id")
+                    .HasColumnType("int(11)");
+                _ = entity.Property(e => e.Description)
+                    .HasComment("설명")
+                    .HasColumnType("text");
+                _ = entity.Property(e => e.EndDate)
+                    .HasComment("종료 날짜 및 시간")
+                    .HasColumnType("datetime");
+                _ = entity.Property(e => e.EndDateTimeZoneIanaId)
+                    .IsRequired()
+                    .HasMaxLength(255)
+                    .HasComment("종료 날짜 및 시간 (IANA TimeZone ID)");
+                _ = entity.Property(e => e.Location)
+                    .HasMaxLength(255)
+                    .HasComment("위치");
+                _ = entity.Property(e => e.RecurrenceId)
+                    .HasComment("반복 규칙 ID (옵션)")
+                    .HasColumnType("int(11)");
+                _ = entity.Property(e => e.StartDate)
+                    .HasComment("시작 날짜 및 시간")
+                    .HasColumnType("datetime");
+                _ = entity.Property(e => e.StartDateTimeZoneIanaId)
+                    .IsRequired()
+                    .HasMaxLength(255)
+                    .HasComment("시작 날짜 및 시간 (IANA TimeZone ID)");
+                _ = entity.Property(e => e.Title)
+                    .IsRequired()
+                    .HasMaxLength(255)
+                    .HasComment("제목");
+
+                _ = entity.HasOne(d => d.Calendar).WithMany(p => p.CalendarEvents)
+                    .HasForeignKey(d => d.CalendarId)
+                    .HasConstraintName("CalendarEvent_FK_0");
+
+                _ = entity.HasOne(d => d.Recurrence).WithMany(p => p.CalendarEvents)
+                    .HasForeignKey(d => d.RecurrenceId)
+                    .OnDelete(DeleteBehavior.SetNull)
+                    .HasConstraintName("CalendarEvent_FK_1");
+            });
+
+            _ = modelBuilder.Entity<CalendarEventAttachedFile>(entity =>
+            {
+                _ = entity.HasKey(e => e.Id).HasName("PRIMARY");
+
+                _ = entity.ToTable("CalendarEventAttachedFile", tb => tb.HasComment("Maroik.WebSite 달력 이벤트 첨부파일"));
+
+                _ = entity.HasIndex(e => e.CalendarEventId, "CalendarEventId");
+
+                _ = entity.Property(e => e.Id)
+                    .HasComment("PK")
+                    .HasColumnType("int(11)");
+                _ = entity.Property(e => e.CalendarEventId)
+                    .HasComment("부모 CalendarEvent Id")
+                    .HasColumnType("int(11)");
+                _ = entity.Property(e => e.Extension)
+                    .HasMaxLength(255)
+                    .HasComment("확장자");
+                _ = entity.Property(e => e.Name)
+                    .IsRequired()
+                    .HasMaxLength(255)
+                    .HasComment("이름");
+                _ = entity.Property(e => e.Path)
+                    .IsRequired()
+                    .HasMaxLength(255)
+                    .HasComment("경로");
+                _ = entity.Property(e => e.Size)
+                    .HasComment("크기 (Byte)")
+                    .HasColumnType("int(11)");
+
+                _ = entity.HasOne(d => d.CalendarEvent).WithMany(p => p.CalendarEventAttachedFiles)
+                    .HasForeignKey(d => d.CalendarEventId)
+                    .HasConstraintName("CalendarEventAttachedFile_FK_0");
+            });
+
+            _ = modelBuilder.Entity<CalendarRecurrence>(entity =>
+            {
+                _ = entity.HasKey(e => e.Id).HasName("PRIMARY");
+
+                _ = entity.ToTable("CalendarRecurrence", tb => tb.HasComment("Maroik.WebSite 달력 반복"));
+
+                _ = entity.Property(e => e.Id)
+                    .HasComment("PK")
+                    .HasColumnType("int(11)");
+                _ = entity.Property(e => e.Count)
+                    .HasComment("반복 횟수 (옵션)")
+                    .HasColumnType("int(11)");
+                _ = entity.Property(e => e.DayOfMonth)
+                    .HasComment("매월 반복일 (1~31, 옵션)")
+                    .HasColumnType("int(11)");
+                _ = entity.Property(e => e.DayOfWeek)
+                    .HasMaxLength(255)
+                    .HasComment("반복 요일");
+                _ = entity.Property(e => e.Frequency)
+                    .IsRequired()
+                    .HasMaxLength(255)
+                    .HasComment("반복 주기");
+                _ = entity.Property(e => e.Interval)
+                    .HasDefaultValueSql("'1'")
+                    .HasComment("반복 간격")
+                    .HasColumnType("int(11)");
+                _ = entity.Property(e => e.MonthOfYear)
+                    .HasComment("매년 반복월 (1~12, 옵션)")
+                    .HasColumnType("int(11)");
+                _ = entity.Property(e => e.Until)
+                    .HasComment("반복 종료 날짜 (옵션)")
+                    .HasColumnType("datetime");
+            });
+
+            _ = modelBuilder.Entity<CalendarReminder>(entity =>
+            {
+                _ = entity.HasKey(e => e.Id).HasName("PRIMARY");
+
+                _ = entity.ToTable("CalendarReminder", tb => tb.HasComment("Maroik.WebSite 달력 알림"));
+
+                _ = entity.HasIndex(e => e.CalendarEventId, "CalendarEventId");
+
+                _ = entity.Property(e => e.Id)
+                    .HasComment("PK")
+                    .HasColumnType("int(11)");
+                _ = entity.Property(e => e.CalendarEventId)
+                    .HasComment("부모 Calendar Event Id")
+                    .HasColumnType("int(11)");
+                _ = entity.Property(e => e.Method)
+                    .IsRequired()
+                    .HasMaxLength(255)
+                    .HasComment("알림 방법");
+                _ = entity.Property(e => e.TimeBeforeEvent)
+                    .HasComment("이벤트 전 알림 시간")
+                    .HasColumnType("time");
+
+                _ = entity.HasOne(d => d.CalendarEvent).WithMany(p => p.CalendarReminders)
+                    .HasForeignKey(d => d.CalendarEventId)
+                    .HasConstraintName("CalendarReminder_FK_0");
+            });
+
+            _ = modelBuilder.Entity<CalendarTask>(entity =>
+            {
+                _ = entity.HasKey(e => e.Id).HasName("PRIMARY");
+
+                _ = entity.ToTable("CalendarTask", tb => tb.HasComment("Maroik.WebSite 달력 할 일"));
+
+                _ = entity.HasIndex(e => e.CalendarId, "CalendarId");
+
+                _ = entity.Property(e => e.Id)
+                    .HasComment("PK")
+                    .HasColumnType("int(11)");
+                _ = entity.Property(e => e.CalendarId)
+                    .HasComment("부모 Calendar Id")
+                    .HasColumnType("int(11)");
+                _ = entity.Property(e => e.Description)
+                    .HasComment("할 일 설명")
+                    .HasColumnType("text");
+                _ = entity.Property(e => e.DueDate)
+                    .HasComment("마감 날짜 및 시간")
+                    .HasColumnType("datetime");
+                _ = entity.Property(e => e.Priority)
+                    .IsRequired()
+                    .HasMaxLength(255)
+                    .HasComment("우선순위 (옵션)");
+                _ = entity.Property(e => e.Status)
+                    .IsRequired()
+                    .HasMaxLength(255)
+                    .HasComment("상태");
+                _ = entity.Property(e => e.Title)
+                    .IsRequired()
+                    .HasMaxLength(255)
+                    .HasComment("할 일 제목");
+
+                _ = entity.HasOne(d => d.Calendar).WithMany(p => p.CalendarTasks)
+                    .HasForeignKey(d => d.CalendarId)
+                    .HasConstraintName("CalendarTask_FK_0");
+            });
+
             _ = modelBuilder.Entity<Category>(entity =>
             {
                 _ = entity.HasKey(e => e.Id).HasName("PRIMARY");
 
                 _ = entity
                     .ToTable("Category", tb => tb.HasComment("카테고리 /*Maroik.WebSite의 로그인 후 접근 가능한 좌측 SideBar 설정 시 사용*/"))
-                    .HasCharSet("utf8mb3")
-                    .UseCollation("utf8mb3_general_ci");
+                    .HasCharSet("utf8")
+                    .UseCollation("utf8_general_ci");
 
                 _ = entity.Property(e => e.Id)
                     .HasComment("ID")
@@ -261,55 +543,13 @@ namespace Maroik.Common.DataAccess.Data
                     .HasComment("접근 권한 설정");
             });
 
-            _ = modelBuilder.Entity<BoardComment>(entity =>
-            {
-                _ = entity.HasKey(e => e.Id).HasName("PRIMARY");
-
-                _ = entity
-                    .ToTable("BoardComment", tb => tb.HasComment("Maroik.WebSite 게시판 댓글"))
-                    .HasCharSet("utf8")
-                    .UseCollation("utf8_general_ci");
-
-                _ = entity.HasIndex(e => e.BoardId, "fk_Comment_Board_idx");
-
-                _ = entity.Property(e => e.Id)
-                    .HasComment("PK")
-                    .HasColumnType("int(11)");
-                _ = entity.Property(e => e.AvatarImagePath)
-                    .IsRequired()
-                    .HasMaxLength(255)
-                    .HasComment("계정 아바타 이미지 경로");
-                _ = entity.Property(e => e.BoardId)
-                    .HasComment("게시물 Id")
-                    .HasColumnType("int(11)");
-                _ = entity.Property(e => e.Content)
-                    .IsRequired()
-                    .HasComment("내용");
-                _ = entity.Property(e => e.Created)
-                    .HasMaxLength(6)
-                    .HasComment("생성일");
-                _ = entity.Property(e => e.Deleted).HasComment("삭제 여부");
-                _ = entity.Property(e => e.Order)
-                    .HasComment("순서")
-                    .HasColumnType("int(11)");
-                _ = entity.Property(e => e.Writer)
-                    .IsRequired()
-                    .HasMaxLength(255)
-                    .HasComment("작성자");
-
-                _ = entity.HasOne(d => d.Board).WithMany(p => p.BoardComments)
-                    .HasForeignKey(d => d.BoardId)
-                    .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("fk_Comment_Board");
-            });
-
             _ = modelBuilder.Entity<Expenditure>(entity =>
             {
                 _ = entity.HasKey(e => e.Id).HasName("PRIMARY");
 
                 _ = entity.ToTable("Expenditure", tb => tb.HasComment("Maroik.WebSite 지출"));
 
-                _ = entity.HasIndex(e => new { e.PaymentMethod, e.AccountEmail }, "Expenditure_FK");
+                _ = entity.HasIndex(e => new { e.PaymentMethod, e.AccountEmail }, "Expenditure_FK_0");
 
                 _ = entity.Property(e => e.Id)
                     .HasComment("PK")
@@ -349,7 +589,7 @@ namespace Maroik.Common.DataAccess.Data
                 _ = entity.HasOne(d => d.Asset).WithMany(p => p.Expenditures)
                     .HasForeignKey(d => new { d.PaymentMethod, d.AccountEmail })
                     .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("Expenditure_FK");
+                    .HasConstraintName("Expenditure_FK_0");
             });
 
             _ = modelBuilder.Entity<FixedExpenditure>(entity =>
@@ -358,7 +598,7 @@ namespace Maroik.Common.DataAccess.Data
 
                 _ = entity.ToTable("FixedExpenditure", tb => tb.HasComment("Maroik.WebSite 고정지출"));
 
-                _ = entity.HasIndex(e => new { e.PaymentMethod, e.AccountEmail }, "FixedExpenditure_FK");
+                _ = entity.HasIndex(e => new { e.PaymentMethod, e.AccountEmail }, "FixedExpenditure_FK_0");
 
                 _ = entity.Property(e => e.Id)
                     .HasComment("PK")
@@ -408,7 +648,7 @@ namespace Maroik.Common.DataAccess.Data
                 _ = entity.HasOne(d => d.Asset).WithMany(p => p.FixedExpenditures)
                     .HasForeignKey(d => new { d.PaymentMethod, d.AccountEmail })
                     .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FixedExpenditure_FK");
+                    .HasConstraintName("FixedExpenditure_FK_0");
             });
 
             _ = modelBuilder.Entity<FixedIncome>(entity =>
@@ -417,7 +657,7 @@ namespace Maroik.Common.DataAccess.Data
 
                 _ = entity.ToTable("FixedIncome", tb => tb.HasComment("Maroik.WebSite 고정수입"));
 
-                _ = entity.HasIndex(e => new { e.DepositMyAssetProductName, e.AccountEmail }, "FixedIncome_FK");
+                _ = entity.HasIndex(e => new { e.DepositMyAssetProductName, e.AccountEmail }, "FixedIncome_FK_0");
 
                 _ = entity.Property(e => e.Id)
                     .HasComment("PK")
@@ -464,7 +704,7 @@ namespace Maroik.Common.DataAccess.Data
                 _ = entity.HasOne(d => d.Asset).WithMany(p => p.FixedIncomes)
                     .HasForeignKey(d => new { d.DepositMyAssetProductName, d.AccountEmail })
                     .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FixedIncome_FK");
+                    .HasConstraintName("FixedIncome_FK_0");
             });
 
             _ = modelBuilder.Entity<Income>(entity =>
@@ -473,7 +713,7 @@ namespace Maroik.Common.DataAccess.Data
 
                 _ = entity.ToTable("Income", tb => tb.HasComment("Maroik.WebSite 수입"));
 
-                _ = entity.HasIndex(e => new { e.DepositMyAssetProductName, e.AccountEmail }, "Income_FK");
+                _ = entity.HasIndex(e => new { e.DepositMyAssetProductName, e.AccountEmail }, "Income_FK_0");
 
                 _ = entity.Property(e => e.Id)
                     .HasComment("PK")
@@ -510,7 +750,7 @@ namespace Maroik.Common.DataAccess.Data
                 _ = entity.HasOne(d => d.Asset).WithMany(p => p.Incomes)
                     .HasForeignKey(d => new { d.DepositMyAssetProductName, d.AccountEmail })
                     .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("Income_FK");
+                    .HasConstraintName("Income_FK_0");
             });
 
             _ = modelBuilder.Entity<SubCategory>(entity =>
@@ -519,10 +759,10 @@ namespace Maroik.Common.DataAccess.Data
 
                 _ = entity
                     .ToTable("SubCategory", tb => tb.HasComment("서브 카테고리 /*Maroik.WebSite의 로그인 후 접근 가능한 좌측 SideBar 설정 시 사용*/"))
-                    .HasCharSet("utf8mb3")
-                    .UseCollation("utf8mb3_general_ci");
+                    .HasCharSet("utf8")
+                    .UseCollation("utf8_general_ci");
 
-                _ = entity.HasIndex(e => e.CategoryId, "SubCategory_FK");
+                _ = entity.HasIndex(e => e.CategoryId, "SubCategory_FK_0");
 
                 _ = entity.Property(e => e.Id)
                     .HasComment("ID")
@@ -557,11 +797,11 @@ namespace Maroik.Common.DataAccess.Data
 
                 _ = entity.HasOne(d => d.Category).WithMany(p => p.SubCategories)
                     .HasForeignKey(d => d.CategoryId)
-                    .HasConstraintName("SubCategory_FK");
-            });
-            #endregion
+                    .HasConstraintName("SubCategory_FK_0");
+                #endregion
 
-            OnModelCreatingPartial(modelBuilder);
+                OnModelCreatingPartial(modelBuilder);
+            });
         }
 
         partial void OnModelCreatingPartial(ModelBuilder modelBuilder);

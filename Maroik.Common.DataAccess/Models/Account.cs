@@ -94,4 +94,5 @@ public partial class Account
     public bool Deleted { get; set; }
 
     public virtual ICollection<Asset> Assets { get; } = [];
+    public virtual ICollection<Calendar> Calendars { get; } = [];
 }
