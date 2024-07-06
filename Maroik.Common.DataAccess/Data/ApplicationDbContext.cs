@@ -211,7 +211,7 @@ namespace Maroik.Common.DataAccess.Data
                 _ = entity.Property(e => e.Updated)
                     .HasMaxLength(6)
                     .HasComment("업데이트일");
-                _ = entity.Property(e => e.Views)
+                _ = entity.Property(e => e.View)
                     .HasComment("조회수")
                     .HasColumnType("int(11)");
                 _ = entity.Property(e => e.Writer)

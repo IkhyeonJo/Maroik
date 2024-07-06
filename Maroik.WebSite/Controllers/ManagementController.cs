@@ -1529,7 +1529,7 @@ namespace Maroik.WebSite.Controllers
                                 board.Writer = loginedAccount.Nickname;
                                 board.Created = DateTime.UtcNow;
                                 board.Updated = DateTime.UtcNow;
-                                board.Views = 0;
+                                board.View = 0;
                                 board.Deleted = false;
                                 //board.Locked = boardInputViewModel.Locked;
                                 board.Noticed = boardInputViewModel.Noticed;
@@ -1542,7 +1542,7 @@ namespace Maroik.WebSite.Controllers
                                 board.Writer = loginedAccount.Nickname;
                                 board.Created = DateTime.UtcNow;
                                 board.Updated = DateTime.UtcNow;
-                                board.Views = 0;
+                                board.View = 0;
                                 board.Deleted = false;
                                 //board.Locked = boardInputViewModel.Locked;
                             }
@@ -1800,7 +1800,7 @@ namespace Maroik.WebSite.Controllers
                         }
                     }
 
-                    privateNoteBoard.Views++;
+                    privateNoteBoard.View++;
                     await _boardRepository.UpdateBoardAsync(privateNoteBoard);
                     BoardAttachedFile attachedFile = boardAttachedFiles.FirstOrDefault(m => m.BoardId == boardId);
 
@@ -1809,7 +1809,7 @@ namespace Maroik.WebSite.Controllers
                     {
                         Title = privateNoteBoard.Title,
                         Writer = privateNoteBoard.Writer,
-                        Views = privateNoteBoard.Views,
+                        Views = privateNoteBoard.View,
                         Content = privateNoteBoard.Content,
                         Updated = privateNoteBoard.Updated,
                         BoardAttachedFileName = attachedFile?.Name ?? "",
@@ -1862,7 +1862,7 @@ namespace Maroik.WebSite.Controllers
                     {
                         Title = privateNoteBoard.Title,
                         Writer = privateNoteBoard.Writer,
-                        Views = privateNoteBoard.Views,
+                        Views = privateNoteBoard.View,
                         Content = privateNoteBoard.Content,
                         Locked = privateNoteBoard.Locked,
                         Updated = privateNoteBoard.Updated,
