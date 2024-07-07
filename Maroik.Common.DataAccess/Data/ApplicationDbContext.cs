@@ -301,6 +301,11 @@ namespace Maroik.Common.DataAccess.Data
                 _ = entity.Property(e => e.Description)
                     .HasComment("설명")
                     .HasColumnType("text");
+                _ = entity.Property(e => e.HtmlcolorCode)
+                    .IsRequired()
+                    .HasMaxLength(10)
+                    .HasComment("대표색")
+                    .HasColumnName("HTMLColorCode");
                 _ = entity.Property(e => e.Name)
                     .IsRequired()
                     .HasMaxLength(255)

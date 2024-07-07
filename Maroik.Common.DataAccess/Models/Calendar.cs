@@ -32,9 +32,14 @@ public partial class Calendar
     /// </summary>
     public string TimeZoneIanaId { get; set; }
 
+    /// <summary>
+    /// 대표색
+    /// </summary>
+    public string HtmlcolorCode { get; set; }
+
     public virtual Account AccountEmailNavigation { get; set; }
 
-    public virtual ICollection<CalendarEvent> CalendarEvents { get; set; } = [];
+    public virtual ICollection<CalendarEvent> CalendarEvents { get; set; } = new List<CalendarEvent>();
 
-    public virtual ICollection<CalendarTask> CalendarTasks { get; set; } = [];
+    public virtual ICollection<CalendarTask> CalendarTasks { get; set; } = new List<CalendarTask>();
 }
