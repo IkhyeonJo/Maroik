@@ -175,3 +175,21 @@ $('#createEventNotification').off('click').on('click', function () {
 $(document).on('click', '.aCalendarDeleteNotification', function () {
     $(this).parent().remove();
 });
+
+$('#dropdown-icon').click(function () {
+    $('#dropdown-content').toggle();
+});
+
+$(window).click(function (event) {
+    if (!$(event.target).closest('#dropdown-icon, #dropdown-content').length) {
+        $('#dropdown-content').hide();
+    }
+});
+
+$('#dropdown-content a').click(function () {
+    $('#dropdown-content').hide();
+});
+
+$('#aCreateCalendar').off('click').on('click', function () {
+    alert('Hello World!!');
+});
