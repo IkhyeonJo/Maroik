@@ -162,6 +162,6 @@ $('#createEventNotification').off('click').on('click', function () {
     $("<div><select class='form-control-sm createEventSelNotification' style='width:90%;text-overflow:ellipsis;'><option value='FiveMinutesBefore' select>5 minutes before</option><option value='TenMinutesBefore'>10 minutes before</option></select><a class='hover aCalendarDeleteNotification' href='#' style='width:10%;'><i class='fa fa-trash' aria-hidden='true' style='margin-left: 7px;'></i></a><br /><br /></div>").insertBefore(this);
 });
 
-$(document).off('click').on('click', '.aCalendarDeleteNotification', function () {
+$(document).on('click', '.aCalendarDeleteNotification', function () {
     $(this).parent().remove();
 });
