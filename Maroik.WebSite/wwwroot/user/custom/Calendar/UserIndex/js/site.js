@@ -145,6 +145,16 @@ $('#formCreateSubCategory').off('submit').on('submit', function () {
     return CreateSubCategory();
 });
 
+$('#aCreateCalendarEvent').off('click').on('click', function () {
+    $('#createEventTaskDialogModal').modal('show');
+
+    $('#createEventAllDayUncheckedStartDate').val(moment().format("YYYY-MM-DD"));
+    $('#createEventAllDayCheckedStartDate').val(moment().format("YYYY-MM-DD"));
+
+    $('#createEventAllDayUncheckedEndDate').val(moment().format("YYYY-MM-DD"));
+    $('#createEventAllDayCheckedEndDate').val(moment().format("YYYY-MM-DD"));
+});
+
 $('#createEventAllDay').off('click').on('click', function () {
     if ($(this).is(':checked')) {
         $("#divCreateEventAllDayUnchecked").hide();

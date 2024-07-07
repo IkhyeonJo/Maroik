@@ -227,16 +227,8 @@ $(function () {
             $('#createEventAllDayUncheckedStartDate').val(moment(arg.start).format("YYYY-MM-DD"));
             $('#createEventAllDayCheckedStartDate').val(moment(arg.start).format("YYYY-MM-DD"));
 
-
-            //var title = prompt('Event Title:');
-            //if (title) {
-            //    calendar.addEvent({
-            //        title: title,
-            //        start: arg.start,
-            //        end: arg.end,
-            //        allDay: arg.allDay
-            //    })
-            //}
+            $('#createEventAllDayUncheckedEndDate').val(moment(arg.end).format("YYYY-MM-DD"));
+            $('#createEventAllDayCheckedEndDate').val(moment(arg.end).format("YYYY-MM-DD"));
 
             calendar.unselect();
         },
