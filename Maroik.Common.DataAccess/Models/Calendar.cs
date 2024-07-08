@@ -35,7 +35,7 @@ public partial class Calendar
     /// <summary>
     /// 대표색
     /// </summary>
-    public string HtmlcolorCode { get; set; }
+    public string HtmlColorCode { get; set; }
 
     public virtual Account AccountEmailNavigation { get; set; }
 

@@ -64,8 +64,7 @@ function CreateCalendar() {
             if (data.result) {
                 $('#createCalendarDialogModal').modal('hide'); // hide Modal
 
-                //const grid = new MvcGrid(document.querySelector(".mvc-grid")); //reload grid
-                //grid.reload(); //reload grid
+                $('#myCalendars').append(`<label style="position: relative; border:1px solid #ccc; padding:10px; margin:0 0 10px; display:block"><input type="checkbox" style="accent-color:${data.calendar.htmlColorCode}" checked /><label style="padding-left:0.5em;"> ${data.calendar.name}</label><i id="${data.calendar.id}" class="edit-calendar fas fa-edit" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); cursor: pointer;"></i></label>`);
 
                 toastr.success(data.message);
             }

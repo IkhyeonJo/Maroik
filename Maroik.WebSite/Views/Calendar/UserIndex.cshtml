@@ -77,11 +77,11 @@
                             <h4 class="card-title">My calendars</h4>
                         </div>
                         <div class="card-body">
-                            <div id="external-events">
+                            <div id="myCalendars">
                                 @foreach (Calendar calendar in Model.Calendars)
                                 {
                                     <label style="position: relative; border:1px solid #ccc; padding:10px; margin:0 0 10px; display:block">
-                                        <input type="checkbox" style="accent-color:@calendar.HtmlcolorCode" checked />
+                                        <input type="checkbox" style="accent-color:@calendar.HtmlColorCode" checked />
                                         <label style="padding-left:0.3em;">@calendar.Name</label>
                                         <i id="@calendar.Id" class="edit-calendar fas fa-edit" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); cursor: pointer;"></i>
                                     </label>

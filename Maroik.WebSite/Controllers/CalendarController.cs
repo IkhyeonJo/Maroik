@@ -61,29 +61,23 @@ namespace Maroik.WebSite.Controllers
                         _ = HttpContext.Session.TryGetValue(Maroik.Common.Miscellaneous.Extensions.EnumHelper.GetDescription(Maroik.Common.Miscellaneous.Utilities.Session.Account), out byte[] resultByte);
 
                         Calendar tempCalendar = calendarInputViewModel?.Calendars?.FirstOrDefault() ?? new Calendar();
+                        tempCalendar.AccountEmail = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email;
+                        tempCalendar.HtmlColorCode = _defaultHtmlcolorCode;
 
-                        Calendar tempCalendarToValidate = (await _calendarRepository.GetCalendarsAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email)).Where(x => x.Name == (tempCalendar?.Name ?? "")).FirstOrDefault();
+                        Calendar tempCalendarToValidate = (await _calendarRepository.GetCalendarsAsync(tempCalendar.AccountEmail)).Where(x => x.Name == (tempCalendar?.Name ?? "")).FirstOrDefault();
                         
                         if (tempCalendarToValidate is not null)
                         {
                             return Json(new { result = false, error = _localizer["The calendar already exists."].Value });
                         }
 
-                        #region 달력 생성
-                        await _calendarRepository.CreateCalendarAsync
-                            (
-                            new Calendar()
-                            {
-                                AccountEmail = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email,
-                                Name = tempCalendar.Name,
-                                Description = tempCalendar.Description,
-                                TimeZoneIanaId = tempCalendar.TimeZoneIanaId,
-                                HtmlcolorCode = _defaultHtmlcolorCode
-                            }
-                            );
-                        #endregion
+                        await _calendarRepository.CreateCalendarAsync(tempCalendar);
 
-                        return Json(new { result = true, message = _localizer["The calendar has been successfully created."].Value });
+                        tempCalendar.AccountEmail = null;
+                        tempCalendar.Description = null;
+                        tempCalendar.TimeZoneIanaId = null;
+
+                        return Json(new { result = true, message = _localizer["The calendar has been successfully created."].Value, calendar = tempCalendar });
                     }
                     catch
                     {
@@ -122,7 +116,7 @@ namespace Maroik.WebSite.Controllers
                     AccountEmail = loginedAccount.Email,
                     Name = loginedAccount.Nickname,
                     TimeZoneIanaId = loginedAccount.TimeZoneIanaId,
-                    HtmlcolorCode = _defaultHtmlcolorCode,
+                    HtmlColorCode = _defaultHtmlcolorCode,
                 });
                 await _calendarRepository.CreateCalendarAsync(calendars[0]);
             }
