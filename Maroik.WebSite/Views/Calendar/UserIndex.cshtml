@@ -1,8 +1,9 @@
-﻿@using Maroik.WebSite.Utilities
+﻿@using Maroik.WebSite.Models.ViewModels.Calendar
+@using Maroik.WebSite.Utilities
 @using Maroik.Common.Miscellaneous.Utilities
 @using Newtonsoft.Json
 @using System.Text
-@inject Maroik.Common.DataAccess.Contracts.IAssetRepository assetRepository
+@model CalendarOutputViewModel
 @inject Maroik.Common.DataAccess.Contracts.IAccountRepository accountRepository
 
 @{
@@ -21,8 +22,7 @@
         loginedAccount.Role = Role.Anonymous;
     }
 
-    List<Asset> assets = (await assetRepository.GetAssetsAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email)).Where(x => !x.Deleted).ToList();
-
+    #region Set Time
     DateTime currentTime = DateTime.UtcNow.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId);
     string currentDate = currentTime.ToString("yyyy-MM-dd");
     int currentHour = currentTime.Hour;
@@ -49,9 +49,11 @@
         nearestMinute = 0;
     }
     string currentInterval = $"{currentTime.Hour:D2}:{nearestMinute:D2}";
+    #endregion
 }
 
-@Html.Hidden("calendarEventModel", JsonConvert.SerializeObject(assets))
+@* @Html.Hidden("calendarEventModel", JsonConvert.SerializeObject(assets)) *@
+@Html.Hidden("calendarEventModel", null)
 
 <!-- Main content -->
 <section class="content">
@@ -76,17 +78,14 @@
                         </div>
                         <div class="card-body">
                             <div id="external-events">
-                                <div class="external-event bg-success">Lunch</div>
-                                <div class="external-event bg-warning">Go home</div>
-                                <div class="external-event bg-info">Do homework</div>
-                                <div class="external-event bg-primary">Work on UI design</div>
-                                <div class="external-event bg-danger">Sleep tight</div>
-                                <div class="checkbox">
-                                    <label for="drop-remove">
-                                        <input type="checkbox" id="drop-remove">
-                                        remove after drop
+                                @foreach (Calendar calendar in Model.Calendars)
+                                {
+                                    <label style="position: relative; border:1px solid #ccc; padding:10px; margin:0 0 10px; display:block">
+                                        <input type="checkbox" style="accent-color:@calendar.HtmlcolorCode" checked />
+                                        <label style="padding-left:0.3em;">@calendar.Name</label>
+                                        <i id="@calendar.Id" class="edit-calendar fas fa-edit" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); cursor: pointer;"></i>
                                     </label>
-                                </div>
+                                }
                             </div>
                         </div>
                     </div>
@@ -97,6 +96,7 @@
                             <i class="fas fa-plus" id="dropdown-icon" style="cursor: pointer; margin-left: auto;"></i>
                             <div id="dropdown-content" style="display: none; position: absolute; top: 100%; right: 0; background-color: #343a40; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); z-index: 1000;">
                                 <a id="aCreateCalendar" href="#" class="dropdown-item">Create new calendar</a>
+                                <a id="aBrowseCalendarsOfInterest" href="#" class="dropdown-item">Browse calendars of interest</a>
                             </div>
                         </div>
                         <div class="card-body">
@@ -134,6 +134,82 @@
         <!-- /.row -->
     </div><!-- /.container-fluid -->
 </section>
+
+@*<!--createCalendarDialogModal-->*@
+<div class="modal fade" tabindex="-1" role="dialog" id="createCalendarDialogModal">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div id="createCalendarTabs">
+                @*<!--Tab Calendar-->*@
+                <ul>
+                    <li><a href="#createCalendarTabs-1">@localizer["Add Calendar"].Value</a></li>
+                </ul>
+                @*Tabs-1: Create Calendar Modal*@
+                <div id="createCalendarTabs-1">
+                    <form id="formCreateCalendar">
+                        <div class="form-row">
+                            <div class="form-group col-md-12 mb-3">
+                                <label for="createCalendarName">@localizer["Name"].Value</label>
+                                <input class="form-control form-control-sm" type="text" data-val="true" data-val-required="@localizer["Please enter Name"].Value" id="createCalendarName" name="createCalendarName" value="">
+                                <span class="field-validation-valid text-danger" data-valmsg-for="createCalendarName" data-valmsg-replace="true"></span>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group col-md-12 mb-3">
+                                <label for="createCalendarDescription">@localizer["Description"].Value</label>
+                                <textarea class="form-control form-control-sm" id="createCalendarDescription" name="createCalendarDescription" maxlength="16384"></textarea> @*maxlength: 16KB*@
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <label for="createCalendarTimeZone">@localizer["TimeZone"].Value</label>
+                            <select id="createCalendarTimeZone" name="createCalendarTimeZone" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
+                                @foreach (TimeZoneInfo systemTimeZone in TimeZoneInfo.GetSystemTimeZones())
+                                {
+                                    string systemTimeZoneIanaId = string.Empty;
+
+                                    if (systemTimeZone.HasIanaId)
+                                    {
+                                        systemTimeZoneIanaId = systemTimeZone.Id;  // no conversion necessary
+                                    }
+                                    else if (TimeZoneInfo.TryConvertWindowsIdToIanaId(systemTimeZone.Id, out string ianaId))
+                                    {
+                                        systemTimeZoneIanaId = ianaId;  // use the converted ID
+                                    }
+
+                                    if (string.IsNullOrEmpty(systemTimeZoneIanaId))
+                                        continue;
+
+                                    if (!string.IsNullOrEmpty(loginedAccount.TimeZoneIanaId))
+                                    {
+                                        if(loginedAccount.TimeZoneIanaId == systemTimeZoneIanaId)
+                                        {
+                                            <option value="@systemTimeZoneIanaId" selected>@systemTimeZone.DisplayName</option>
+                                        }
+                                        else
+                                        {
+                                            <option value="@systemTimeZoneIanaId">@systemTimeZone.DisplayName</option>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <option value="@systemTimeZoneIanaId">@systemTimeZone.DisplayName</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+
+                        <div class="modal-footer justify-content-between">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">@localizer["Close"].Value</button>
+                            <input type="submit" class="btn btn-primary" value="@localizer["Save"].Value" />
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
 @*<!--createEventTaskDialogModal-->*@
 <div class="modal fade" tabindex="-1" role="dialog" id="createEventTaskDialogModal">

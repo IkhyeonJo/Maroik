@@ -58,6 +58,7 @@ builder.Services.AddScoped<IFixedExpenditureRepository, FixedExpenditureReposito
 builder.Services.AddScoped<IBoardRepository, BoardRepository>();
 builder.Services.AddScoped<IBoardAttachedFileRepository, BoardAttachedFileRepository>();
 builder.Services.AddScoped<IBoardCommentRepository, BoardCommentRepository>();
+builder.Services.AddScoped<ICalendarRepository, CalendarRepository>();
 #endregion
 
 #region LOCAL

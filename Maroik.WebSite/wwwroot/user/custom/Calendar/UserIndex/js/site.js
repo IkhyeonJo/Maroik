@@ -28,49 +28,44 @@ function WriteUploadImageFile(file) {
     });
 }
 
-function CreateCategory() {
+function CreateCalendar() {
 
-    alert('CreateCategory');
-    return false;
-
-    if (!$('#formCreateCategory').valid()) {
+    if (!$('#formCreateCalendar').valid()) {
         return false;
     }
 
-    let createForm = $('#formCreateCategory');
-    let name = createForm.find('input[id="createCategoryName"]').val();
-    let displayName = createForm.find('input[id="createCategoryDisplayName"]').val();
-    let iconPath = createForm.find('input[id="createCategoryIconPath"]').val();
-    let controller = createForm.find('input[id="createCategoryController"]').val();
-    let action = createForm.find('input[id="createCategoryAction"]').val();
-    let role = createForm.find('select[id="createCategoryRole"]').val();
-    let order = createForm.find('input[id="createCategoryOrder"]').val();
+    let createForm = $('#formCreateCalendar');
+    let name = createForm.find('input[id="createCalendarName"]').val();
+    let description = createForm.find('textarea[id="createCalendarDescription"]').val();
+    let timeZoneIanaId = createForm.find('select[id="createCalendarTimeZone"]').val();
 
-    let paramValue = JSON.stringify({
-        Name: name,
-        DisplayName: displayName,
-        IconPath: iconPath,
-        Controller: controller,
-        Action: action,
-        Role: role,
-        Order: order
-    });
+    let calendarsArray = [
+        { Name: name, Description: description, TimeZoneIanaId: timeZoneIanaId }
+    ];
+
+    let paramValue = {
+        Calendars: []
+    };
+
+    for (let i = 0; i < calendarsArray.length; i++) {
+        paramValue.Calendars.push(calendarsArray[i]);
+    }
 
     $.ajax({
-        url: '/Management/CreateCategory',
+        url: '/Calendar/CreateCalendar',
         type: 'POST',
         headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
         dataType: 'json',
-        data: paramValue,
+        data: JSON.stringify(paramValue),
         contentType: 'application/json; charset=utf-8',
         //async: false,
         //cache: false,
         success: function (data) {
             if (data.result) {
-                $('#createEventTaskDialogModal').modal('hide'); // hide Modal
+                $('#createCalendarDialogModal').modal('hide'); // hide Modal
 
-                const grid = new MvcGrid(document.querySelector(".mvc-grid")); //reload grid
-                grid.reload(); //reload grid
+                //const grid = new MvcGrid(document.querySelector(".mvc-grid")); //reload grid
+                //grid.reload(); //reload grid
 
                 toastr.success(data.message);
             }
@@ -137,8 +132,8 @@ function CreateSubCategory() {
     return false;
 }
 
-$('#formCreateCategory').off('submit').on('submit', function () {
-    return CreateCategory();
+$('#formCreateCalendar').off('submit').on('submit', function () {
+    return CreateCalendar();
 });
 
 $('#formCreateSubCategory').off('submit').on('submit', function () {
@@ -191,5 +186,13 @@ $('#dropdown-content a').click(function () {
 });
 
 $('#aCreateCalendar').off('click').on('click', function () {
-    alert('Hello World!!');
+    $('#createCalendarDialogModal').modal('show');
+});
+
+$('.edit-calendar').off('click').on('click', function (e) {
+    e.preventDefault();
+    e.stopPropagation();
+
+    let id = $(this).attr('id');
+    alert(`id: ${id} edit-calendar!!`);
 });

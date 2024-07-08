@@ -28,6 +28,7 @@ $.datepicker.setDefaults({
 });
 
 $(function () {
+    $("#createCalendarTabs").tabs();
     $("#createEventTaskTabs").tabs();
     //$("#editExpenditureTabs").tabs();
     $("#createEventAllDayUncheckedStartDate").datepicker({
@@ -218,11 +219,10 @@ $(function () {
         selectable: true,
         selectMirror: true,
         select: function (arg) {
-            var aaa = $('#calendarEventModel').val();
-            var bbb = JSON.parse($('#calendarEventModel').val());
+            //var aaa = $('#calendarEventModel').val();
+            //var bbb = JSON.parse($('#calendarEventModel').val());
 
-            let modal = $('#createEventTaskDialogModal');
-            modal.modal('show');
+            $('#createEventTaskDialogModal').modal('show');
 
             $('#createEventAllDayUncheckedStartDate').val(moment(arg.start).format("YYYY-MM-DD"));
             $('#createEventAllDayCheckedStartDate').val(moment(arg.start).format("YYYY-MM-DD"));
