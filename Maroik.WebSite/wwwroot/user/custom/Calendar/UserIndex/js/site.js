@@ -188,7 +188,7 @@ $('#aCreateCalendar').off('click').on('click', function () {
     $('#createCalendarDialogModal').modal('show');
 });
 
-$('.edit-calendar').off('click').on('click', function (e) {
+$(document).on('click', '.edit-calendar', function (e) {
     e.preventDefault();
     e.stopPropagation();
 
