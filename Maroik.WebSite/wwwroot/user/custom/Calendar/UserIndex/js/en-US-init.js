@@ -36,13 +36,85 @@ $(function () {
         showButtonPanel: true,
         beforeShow: function (input) {
             setTimeout(function () {
-
+                // Custom logic before showing the datepicker for start date
             }, 1);
         },
         onChangeMonthYear: function (year, month, instance) {
             setTimeout(function () {
-
+                // Custom logic when the month/year changes in start date datepicker
             }, 1);
+        },
+        onSelect: function (selectedDate) {
+            var startDate = $(this).datepicker('getDate');
+            var endDate = $("#createEventAllDayUncheckedEndDate").datepicker('getDate');
+            if (endDate && endDate < startDate) {
+                $("#createEventAllDayUncheckedEndDate").datepicker('setDate', startDate);
+            }
+            $("#createEventAllDayUncheckedEndDate").datepicker('option', 'minDate', startDate);
+        }
+    });
+
+    $("#createEventAllDayUncheckedEndDate").datepicker({
+        showButtonPanel: true,
+        beforeShow: function (input) {
+            setTimeout(function () {
+                // Custom logic before showing the datepicker for end date
+            }, 1);
+        },
+        onChangeMonthYear: function (year, month, instance) {
+            setTimeout(function () {
+                // Custom logic when the month/year changes in end date datepicker
+            }, 1);
+        },
+        onSelect: function (selectedDate) {
+            var endDate = $(this).datepicker('getDate');
+            var startDate = $("#createEventAllDayUncheckedStartDate").datepicker('getDate');
+            if (startDate && endDate < startDate) {
+                $(this).datepicker('setDate', startDate);
+            }
+        }
+    });
+
+    $("#createEventAllDayCheckedStartDate").datepicker({
+        showButtonPanel: true,
+        beforeShow: function (input) {
+            setTimeout(function () {
+                // Custom logic before showing the datepicker for start date
+            }, 1);
+        },
+        onChangeMonthYear: function (year, month, instance) {
+            setTimeout(function () {
+                // Custom logic when the month/year changes in start date datepicker
+            }, 1);
+        },
+        onSelect: function (selectedDate) {
+            var startDate = $(this).datepicker('getDate');
+            var endDate = $("#createEventAllDayCheckedEndDate").datepicker('getDate');
+            if (endDate && endDate < startDate) {
+                $("#createEventAllDayCheckedEndDate").datepicker('setDate', startDate);
+            }
+            $("#createEventAllDayCheckedEndDate").datepicker('option', 'minDate', startDate);
+        }
+    });
+
+    $("#createEventAllDayCheckedEndDate").datepicker({
+        showButtonPanel: true,
+        beforeShow: function (input) {
+            setTimeout(function () {
+                // Custom logic before showing the datepicker for end date
+            }, 1);
+        },
+        onChangeMonthYear: function (year, month, instance) {
+            setTimeout(function () {
+                // Custom logic when the month/year changes in end date datepicker
+            }, 1);
+        },
+        onSelect: function (selectedDate) {
+            var endDate = $(this).datepicker('getDate');
+            var startDate = $("#createEventAllDayCheckedStartDate").datepicker('getDate');
+            if (startDate && endDate < startDate) {
+                $(this).datepicker('setDate', startDate);
+            }
         }
     });
 
@@ -73,8 +145,6 @@ $(function () {
         $("#divCreateEventAllDayChecked").hide();
         $("#divCreateEventAllDayUnchecked").show();
     }
-
-
 
     function ini_events(element) {
         element.each(function () {
