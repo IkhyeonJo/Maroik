@@ -305,7 +305,7 @@ namespace Maroik.Common.DataAccess.Data
                     .IsRequired()
                     .HasMaxLength(10)
                     .HasComment("대표색")
-                    .HasColumnName("HTMLColorCode");
+                    .HasColumnName("HtmlColorCode");
                 _ = entity.Property(e => e.Name)
                     .IsRequired()
                     .HasMaxLength(255)

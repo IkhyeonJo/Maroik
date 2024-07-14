@@ -37,10 +37,11 @@ function CreateCalendar() {
     let createForm = $('#formCreateCalendar');
     let name = createForm.find('input[id="createCalendarName"]').val();
     let description = createForm.find('textarea[id="createCalendarDescription"]').val();
+    let htmlColorCode = createForm.find('input[id="createCalendarHtmlColorCode"]').val();
     let timeZoneIanaId = createForm.find('select[id="createCalendarTimeZone"]').val();
 
     let calendarsArray = [
-        { Name: name, Description: description, TimeZoneIanaId: timeZoneIanaId }
+        { Name: name, Description: description, HtmlColorCode: htmlColorCode, TimeZoneIanaId: timeZoneIanaId }
     ];
 
     let paramValue = {
@@ -62,9 +63,9 @@ function CreateCalendar() {
         //cache: false,
         success: function (data) {
             if (data.result) {
-                $('#createCalendarDialogModal').modal('hide'); // hide Modal
+                $('#createCalendarDialogModal').modal('hide');
 
-                $('#myCalendars').append(`<label style="position: relative; border:1px solid #ccc; padding:10px; margin:0 0 10px; display:block"><input type="checkbox" style="accent-color:${data.calendar.htmlColorCode}" checked /><label style="padding-left:0.5em;"> ${data.calendar.name}</label><i id="${data.calendar.id}" class="edit-calendar fas fa-edit" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); cursor: pointer;"></i></label>`);
+                $('#myCalendars').append(`<label id="lblCalendar${data.calendar.id}" style="position: relative; border:1px solid #ccc; padding:10px; margin:0 0 10px; display:block"><input type="checkbox" style="accent-color:${data.calendar.htmlColorCode}" checked /><label style="padding-left:0.5em;"> ${data.calendar.name}</label><i id="${data.calendar.id}" class="edit-calendar fas fa-edit" style="position: absolute; right: 40px; top: 50%; transform: translateY(-50%); cursor: pointer;"></i><i id="${data.calendar.id}" class="delete-calendar fas fa-trash" style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); cursor: pointer;"></i></label>`);
 
                 toastr.success(data.message);
             }
@@ -76,50 +77,54 @@ function CreateCalendar() {
     return false;
 }
 
-function CreateSubCategory() {
+function UpdateCalendar() {
 
-    alert('CreateSubCategory');
-    return false;
-
-    if (!$('#formCreateSubCategory').valid()) {
+    if (!$('#formEditCalendar').valid()) {
         return false;
     }
 
-    let createForm = $('#formCreateSubCategory');
+    let editForm = $('#formEditCalendar');
 
-    let categoryId = createForm.find('input[id="createSubcategoryCategoryId"]').val();
-    let name = createForm.find('input[id="createSubcategoryName"]').val();
-    let displayName = createForm.find('input[id="createSubcategoryDisplayName"]').val();
-    let iconPath = createForm.find('input[id="createSubcategoryIconPath"]').val();
-    let action = createForm.find('input[id="createSubcategoryAction"]').val();
-    let role = createForm.find('select[id="createSubcategoryRole"]').val();
-    let order = createForm.find('input[id="createSubcategoryOrder"]').val();
+    let id = editForm.find('input[id="editCalendarId"]').val();
+    let name = editForm.find('input[id="editCalendarName"]').val();
+    let description = editForm.find('textarea[id="editCalendarDescription"]').val();
+    let htmlColorCode = editForm.find('input[id="editCalendarHtmlColorCode"]').val();
+    let timeZoneIanaId = editForm.find('select[id="editCalendarTimeZone"]').val();
 
-    let paramValue = JSON.stringify({
-        CategoryId: categoryId,
-        Name: name,
-        DisplayName: displayName,
-        IconPath: iconPath,
-        Action: action,
-        Role: role,
-        Order: order
-    });
+    let calendarsArray = [
+        { Id: id, Name: name, Description: description, HtmlColorCode: htmlColorCode, TimeZoneIanaId: timeZoneIanaId }
+    ];
+
+    let paramValue = {
+        Calendars: []
+    };
+
+    for (let i = 0; i < calendarsArray.length; i++) {
+        paramValue.Calendars.push(calendarsArray[i]);
+    }
 
     $.ajax({
-        url: '/Management/CreateSubCategory',
+        url: '/Calendar/UpdateCalendar',
         type: 'POST',
         headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
         dataType: 'json',
-        data: paramValue,
+        data: JSON.stringify(paramValue),
         contentType: 'application/json; charset=utf-8',
         //async: false,
         //cache: false,
         success: function (data) {
             if (data.result) {
-                $('#createEventTaskDialogModal').modal('hide'); // hide Modal
+                $('#editCalendarDialogModal').modal('hide');
 
-                const grid = new MvcGrid(document.querySelector(".mvc-grid")); //reload grid
-                grid.reload(); //reload grid
+                let label = $('#lblCalendar' + data.calendar.id).find('label');
+                if (label.length > 0) {
+                    label.text(data.calendar.name);
+                }
+
+                let checkbox = $('#lblCalendar' + data.calendar.id).find('input[type="checkbox"]');
+                if (checkbox.length > 0) {
+                    checkbox.css('accent-color', data.calendar.htmlColorCode);
+                }
 
                 toastr.success(data.message);
             }
@@ -129,17 +134,99 @@ function CreateSubCategory() {
         }
     });
     return false;
+}
+
+function DeleteCalendar() {
+    let selectedCalendarId = $('#confirmDeleteCalendarDialogModal').data('calendar-id');
+
+    $.ajax({
+        url: '/Calendar/IsCalendarExists' + '?id=' + selectedCalendarId,
+        type: 'POST',
+        headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
+        dataType: 'json',
+        data: null,
+        contentType: 'application/json; charset=utf-8',
+        //async: false,
+        //cache: false,
+        success: function (data) {
+            if (data.result) {
+
+                let calendarsArray = [
+                    { Id: data.calendar.id }
+                ];
+
+                let paramValue = {
+                    Calendars: []
+                };
+
+                for (let i = 0; i < calendarsArray.length; i++) {
+                    paramValue.Calendars.push(calendarsArray[i]);
+                }
+
+
+                $.ajax({
+                    url: '/Calendar/DeleteCalendar',
+                    type: 'POST',
+                    headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
+                    dataType: 'json',
+                    data: JSON.stringify(paramValue),
+                    contentType: 'application/json; charset=utf-8',
+                    //async: false,
+                    //cache: false,
+                    success: function (data) {
+                        if (data.result) {
+                            $('#confirmDeleteCalendarDialogModal').modal('hide');
+
+                            $('#lblCalendar' + data.calendar.id).remove();
+
+                            toastr.success(data.message);
+                        }
+                        else {
+                            toastr.error(data.error);
+                        }
+                    }
+                });
+            }
+            else {
+                toastr.error(data.error);
+            }
+        }
+    });
 }
 
 $('#formCreateCalendar').off('submit').on('submit', function () {
     return CreateCalendar();
 });
 
-$('#formCreateSubCategory').off('submit').on('submit', function () {
-    return CreateSubCategory();
+$('#formEditCalendar').off('submit').on('submit', function () {
+    return UpdateCalendar();
 });
 
 $('#aCreateCalendarEvent').off('click').on('click', function () {
+
+    $.ajax({
+        url: '/Calendar/GetCalendars',
+        method: 'POST',
+        headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
+        dataType: 'json',
+        data: null,
+        contentType: 'application/json; charset=utf-8',
+        async: false,
+        //cache: false,
+        success: function (response) {
+            if (response.result) {
+                $('#createEventMyCalendar').empty();
+
+                $.each(response.calendars, function (index, calendar) {
+                    $('#createEventMyCalendar').append($('<option>', {
+                        value: calendar.id,
+                        text: calendar.name
+                    }));
+                });
+            }
+        }
+    });
+
     $('#createEventTaskDialogModal').modal('show');
 
     $('#createEventAllDayUncheckedStartDate').val(moment().format("YYYY-MM-DD"));
@@ -192,6 +279,74 @@ $(document).on('click', '.edit-calendar', function (e) {
     e.preventDefault();
     e.stopPropagation();
 
-    let id = $(this).attr('id');
-    alert(`id: ${id} edit-calendar!!`);
+    let selectedCalendarId = $(this).parent().attr('id').replace("lblCalendar", "");
+
+    $.ajax({
+        url: '/Calendar/IsCalendarExists' + '?id=' + selectedCalendarId,
+        type: 'POST',
+        headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
+        dataType: 'json',
+        data: null,
+        contentType: 'application/json; charset=utf-8',
+        //async: false,
+        //cache: false,
+        success: function (data) {
+            if (data.result) {
+                let formEditCalendar = $('#formEditCalendar');
+
+                formEditCalendar.find('input[id="editCalendarId"]').val(data.calendar.id);
+                formEditCalendar.find('input[id="editCalendarName"]').val(data.calendar.name);
+                formEditCalendar.find('input[id="editCalendarDescription"]').val(data.calendar.description);
+                formEditCalendar.find('input[id="editCalendarHtmlColorCode"]').val(data.calendar.htmlColorCode);
+                formEditCalendar.find('select[id="editCalendarTimeZone"]').val(data.calendar.timeZoneIanaId).change();
+
+                $('#editCalendarDialogModal').modal({
+                    keyboard: false,
+                    backdrop: "static"
+                });
+
+                $('#editCalendarDialogModal').modal('toggle');
+                $('#editCalendarDialogModal').modal('show');
+            }
+            else {
+                toastr.error(data.error);
+            }
+        }
+    });
+});
+
+$(document).on('mouseenter', '.edit-calendar', function () {
+    $(this).css('color', 'blue');
+});
+
+$(document).on('mouseleave', '.edit-calendar', function () {
+    $(this).css('color', '');
+});
+
+$(document).on('click', '.delete-calendar', function (e) {
+    e.preventDefault();
+    e.stopPropagation();
+
+    let calendarId = $(this).parent().attr('id').replace("lblCalendar", "");
+    $('#confirmDeleteCalendarDialogModal').data('calendar-id', calendarId);
+
+    $('#confirmDeleteCalendarDialogModal').modal({
+        keyboard: false,
+        backdrop: "static"
+    });
+
+    $('#confirmDeleteCalendarDialogModal').modal('toggle');
+    $('#confirmDeleteCalendarDialogModal').modal('show');
+});
+
+$(document).on('mouseenter', '.delete-calendar', function () {
+    $(this).css('color', 'blue');
+});
+
+$(document).on('mouseleave', '.delete-calendar', function () {
+    $(this).css('color', '');
+});
+
+$('#btnDeleteCalendar').off('click').on('click', function () {
+    DeleteCalendar();
 });

@@ -80,10 +80,11 @@
                             <div id="myCalendars">
                                 @foreach (Calendar calendar in Model.Calendars)
                                 {
-                                    <label style="position: relative; border:1px solid #ccc; padding:10px; margin:0 0 10px; display:block">
+                                    <label id="@($"lblCalendar{calendar.Id}")" style="position: relative; border:1px solid #ccc; padding:10px; margin:0 0 10px; display:block">
                                         <input type="checkbox" style="accent-color:@calendar.HtmlColorCode" checked />
                                         <label style="padding-left:0.3em;">@calendar.Name</label>
-                                        <i id="@calendar.Id" class="edit-calendar fas fa-edit" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); cursor: pointer;"></i>
+                                        <i class="edit-calendar fas fa-edit" style="position: absolute; right: 40px; top: 50%; transform: translateY(-50%); cursor: pointer;"></i>
+                                        <i class="delete-calendar fas fa-trash" style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); cursor: pointer;"></i>
                                     </label>
                                 }
                             </div>
@@ -163,6 +164,14 @@
                         </div>
 
                         <div class="form-row">
+                            <div class="form-group col-md-12 mb-3">
+                                <label for="createCalendarHtmlColorCode">@localizer["Color"].Value</label>
+                                <input class="form-control form-control-sm" type="color" data-val="true" data-val-required="@localizer["Please enter Color"].Value" id="createCalendarHtmlColorCode" name="createCalendarHtmlColorCode" value="">
+                                <span class="field-validation-valid text-danger" data-valmsg-for="createCalendarHtmlColorCode" data-valmsg-replace="true"></span>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
                             <label for="createCalendarTimeZone">@localizer["TimeZone"].Value</label>
                             <select id="createCalendarTimeZone" name="createCalendarTimeZone" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
                                 @foreach (TimeZoneInfo systemTimeZone in TimeZoneInfo.GetSystemTimeZones())
@@ -198,6 +207,7 @@
                                     }
                                 }
                             </select>
+                            <br />
                         </div>
 
                         <div class="modal-footer justify-content-between">
@@ -206,6 +216,106 @@
                         </div>
                     </form>
                 </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@*<!--editCalendarDialogModal-->*@
+<div class="modal fade" tabindex="-1" role="dialog" id="editCalendarDialogModal">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div id="editCalendarTabs">
+                @*<!--Tab Calendar-->*@
+                <ul>
+                    <li><a href="#editCalendarTabs-1">@localizer["Edit Calendar"].Value</a></li>
+                </ul>
+                @*Tabs-1: Edit Calendar Modal*@
+                <div id="editCalendarTabs-1">
+                    <form id="formEditCalendar">
+                        <input type="hidden" id="editCalendarId" />
+                        <div class="form-row">
+                            <div class="form-group col-md-12 mb-3">
+                                <label for="editCalendarName">@localizer["Name"].Value</label>
+                                <input class="form-control form-control-sm" type="text" data-val="true" data-val-required="@localizer["Please enter Name"].Value" id="editCalendarName" name="editCalendarName" value="">
+                                <span class="field-validation-valid text-danger" data-valmsg-for="editCalendarName" data-valmsg-replace="true"></span>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group col-md-12 mb-3">
+                                <label for="editCalendarDescription">@localizer["Description"].Value</label>
+                                <textarea class="form-control form-control-sm" id="editCalendarDescription" name="editCalendarDescription" maxlength="16384"></textarea> @*maxlength: 16KB*@
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group col-md-12 mb-3">
+                                <label for="editCalendarHtmlColorCode">@localizer["Color"].Value</label>
+                                <input class="form-control form-control-sm" type="color" data-val="true" data-val-required="@localizer["Please enter Color"].Value" id="editCalendarHtmlColorCode" name="editCalendarHtmlColorCode" value="">
+                                <span class="field-validation-valid text-danger" data-valmsg-for="editCalendarHtmlColorCode" data-valmsg-replace="true"></span>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <label for="editCalendarTimeZone">@localizer["TimeZone"].Value</label>
+                            <select id="editCalendarTimeZone" name="editCalendarTimeZone" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
+                                @foreach (TimeZoneInfo systemTimeZone in TimeZoneInfo.GetSystemTimeZones())
+                                {
+                                    string systemTimeZoneIanaId = string.Empty;
+
+                                    if (systemTimeZone.HasIanaId)
+                                    {
+                                        systemTimeZoneIanaId = systemTimeZone.Id;  // no conversion necessary
+                                    }
+                                    else if (TimeZoneInfo.TryConvertWindowsIdToIanaId(systemTimeZone.Id, out string ianaId))
+                                    {
+                                        systemTimeZoneIanaId = ianaId;  // use the converted ID
+                                    }
+
+                                    if (string.IsNullOrEmpty(systemTimeZoneIanaId))
+                                        continue;
+
+                                    if (!string.IsNullOrEmpty(loginedAccount.TimeZoneIanaId))
+                                    {
+                                        if (loginedAccount.TimeZoneIanaId == systemTimeZoneIanaId)
+                                        {
+                                            <option value="@systemTimeZoneIanaId" selected>@systemTimeZone.DisplayName</option>
+                                        }
+                                        else
+                                        {
+                                            <option value="@systemTimeZoneIanaId">@systemTimeZone.DisplayName</option>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <option value="@systemTimeZoneIanaId">@systemTimeZone.DisplayName</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+
+                        <div class="modal-footer justify-content-between">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">@localizer["Close"].Value</button>
+                            <input type="submit" class="btn btn-primary" value="@localizer["Save"].Value" />
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@*<!--ConfirmDeleteCalendarDialogModal-->*@
+<div class="modal" tabindex="-1" role="dialog" id="confirmDeleteCalendarDialogModal">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-body">
+                @localizer["Are you sure to delete?"].Value
+            </div>
+            <div class="modal-footer">
+                <button id="btnDeleteCalendar" type="button" class="btn btn-danger">@localizer["DELETE"].Value</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">@localizer["Close"].Value</button>
             </div>
         </div>
     </div>
@@ -241,11 +351,13 @@
                                 <br />
                                 <select id="createEventRepeatCycle" name="createEventRepeatCycle" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
                                     <option value="DoesNotRepeat" select>@localizer["Does not repeat"].Value</option>
+                                    @*                                  
                                     <option value="Daily">@localizer["Daily"].Value</option>
                                     <option value="WeeklyOnMonday">@localizer["Weekly on Monday"].Value</option>
                                     <option value="MonthlyOnTheFirstMonday">@localizer["Monthly on the"].Value</option>
                                     <option value="AnnuallyOnJune3">@localizer["Annually on June 3"].Value</option>
-                                    <option value="Custom...">@localizer["Custom..."].Value</option>
+                                    <option value="Custom...">@localizer["Custom..."].Value</option> 
+                                    *@
                                 </select>
                             </div>
                         </div>
@@ -390,8 +502,10 @@
                                 <label for="createEventMyCalendar">@localizer["My Calendar"].Value</label>
                                 <br />
                                 <select id="createEventMyCalendar" name="createEventMyCalendar" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
-                                    <option value="IkHyeonJo" select>@localizer["IkHyeonJo"].Value</option>
-                                    <option value="123456">@localizer["123456"].Value</option>
+                                    @foreach (Calendar calendar in Model.Calendars)
+                                    {
+                                        <option value="@calendar.Id">@calendar.Name</option>
+                                    }
                                 </select>
                             </div>
                             <div class="form-group col-md-6 mb-3">

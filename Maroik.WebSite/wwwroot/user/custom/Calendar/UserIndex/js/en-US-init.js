@@ -29,6 +29,7 @@ $.datepicker.setDefaults({
 
 $(function () {
     $("#createCalendarTabs").tabs();
+    $("#editCalendarTabs").tabs();
     $("#createEventTaskTabs").tabs();
     //$("#editExpenditureTabs").tabs();
     $("#createEventAllDayUncheckedStartDate").datepicker({

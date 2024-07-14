@@ -37,5 +37,27 @@ namespace Maroik.Common.DataAccess.Services
             _ = await _context.Calendars.AddAsync(calendar);
             _ = await _context.SaveChangesAsync();
         }
+
+        /// <summary>
+        /// 달력을 업데이트합니다.
+        /// </summary>
+        /// <param name="calendar"></param>
+        /// <returns></returns>
+        public async Task UpdateCalendarAsync(Calendar calendar)
+        {
+            _ = _context.Calendars.Update(calendar);
+            _ = await _context.SaveChangesAsync();
+        }
+
+        /// <summary>
+        /// 달력을 삭제합니다.
+        /// </summary>
+        /// <param name="calendar"></param>
+        /// <returns></returns>
+        public async Task DeleteCalendarAsync(Calendar calendar)
+        {
+            _ = _context.Calendars.Remove(calendar);
+            _ = await _context.SaveChangesAsync();
+        }
     }
 }

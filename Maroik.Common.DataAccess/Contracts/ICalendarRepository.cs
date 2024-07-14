@@ -20,5 +20,19 @@ namespace Maroik.Common.DataAccess.Contracts
         /// <param name="calendar"></param>
         /// <returns></returns>
         public Task CreateCalendarAsync(Calendar calendar);
+
+        /// <summary>
+        /// 달력을 업데이트합니다.
+        /// </summary>
+        /// <param name="calendar"></param>
+        /// <returns></returns>
+        public Task UpdateCalendarAsync(Calendar calendar);
+
+        /// <summary>
+        /// 달력을 삭제합니다.
+        /// </summary>
+        /// <param name="calendar"></param>
+        /// <returns></returns>
+        public Task DeleteCalendarAsync(Calendar calendar);
     }
 }
