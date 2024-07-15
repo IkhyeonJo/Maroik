@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace Maroik.Common.DataAccess.Models;
 
@@ -37,9 +38,17 @@ public partial class Calendar
     /// </summary>
     public string HtmlColorCode { get; set; }
 
+    /// <summary>
+    /// 생성일
+    /// </summary>
+    public DateTime Created { get; set; }
+
+    /// <summary>
+    /// 업데이트일
+    /// </summary>
+    public DateTime Updated { get; set; }
+
     public virtual Account AccountEmailNavigation { get; set; }
 
     public virtual ICollection<CalendarEvent> CalendarEvents { get; set; } = new List<CalendarEvent>();
-
-    public virtual ICollection<CalendarTask> CalendarTasks { get; set; } = new List<CalendarTask>();
 }

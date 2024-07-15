@@ -62,6 +62,8 @@ namespace Maroik.WebSite.Controllers
 
                         Calendar tempCalendar = calendarInputViewModel?.Calendars?.FirstOrDefault() ?? new Calendar();
                         tempCalendar.AccountEmail = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email;
+                        tempCalendar.Created = DateTime.UtcNow;
+                        tempCalendar.Updated = DateTime.UtcNow;
 
                         Calendar tempCalendarToValidate = (await _calendarRepository.GetCalendarsAsync(tempCalendar.AccountEmail)).Where(x => x.Name == (tempCalendar?.Name ?? "")).FirstOrDefault();
                         
@@ -116,6 +118,8 @@ namespace Maroik.WebSite.Controllers
                     Name = loginedAccount.Nickname,
                     TimeZoneIanaId = loginedAccount.TimeZoneIanaId,
                     HtmlColorCode = "#fc330e", // Default Html Color Code
+                    Created = DateTime.UtcNow,
+                    Updated = DateTime.UtcNow
                 });
                 await _calendarRepository.CreateCalendarAsync(calendars[0]);
             }
@@ -193,6 +197,7 @@ namespace Maroik.WebSite.Controllers
 
                         Calendar tempCalendar = calendarInputViewModel?.Calendars?.FirstOrDefault() ?? new Calendar();
                         tempCalendar.AccountEmail = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email;
+                        tempCalendar.Updated = DateTime.UtcNow;
 
                         List<Calendar> tempCalendars = await _calendarRepository.GetCalendarsAsync(tempCalendar.AccountEmail);
                         if ((tempCalendars.Where(a => a.Id == tempCalendar.Id).FirstOrDefault()?.Id ?? 0) > 0) 

@@ -48,5 +48,15 @@ public partial class CalendarRecurrence
     /// </summary>
     public DateTime? Until { get; set; }
 
-    public virtual ICollection<CalendarEvent> CalendarEvents { get; set; } = [];
+    /// <summary>
+    /// 생성일
+    /// </summary>
+    public DateTime Created { get; set; }
+
+    /// <summary>
+    /// 업데이트일
+    /// </summary>
+    public DateTime Updated { get; set; }
+
+    public virtual ICollection<CalendarEvent> CalendarEvents { get; set; } = new List<CalendarEvent>();
 }

@@ -250,7 +250,7 @@ $('#createEventAllDay').off('click').on('click', function () {
 });
 
 $('#createEventNotification').off('click').on('click', function () {
-    $("<div><select class='form-control-sm createEventSelNotification' style='width:90%;text-overflow:ellipsis;'><option value='FiveMinutesBefore' select>5 minutes before</option><option value='TenMinutesBefore'>10 minutes before</option></select><a class='hover aCalendarDeleteNotification' href='#' style='width:10%;'><i class='fa fa-trash' aria-hidden='true' style='margin-left: 7px;'></i></a><br /><br /></div>").insertBefore(this);
+    $("<div class='divcreateEventNotification'><select class='form-control-sm createEventSelNotificationMethod' style='width:20%;text-overflow:ellipsis;'><option value='Email'>Email</option><option value='Notification'>Notification</option></select> <select class='form-control-sm createEventSelNotificationDaysWeeksNumber' style='width:10%;text-overflow:ellipsis;'>" + Array.from({ length: 28 }, (_, i) => `<option value='${i + 1}'>${i + 1}</option>`).join('') + "</select> <select class='form-control-sm createEventSelNotificationDaysWeeksType' style='width:15%;text-overflow:ellipsis;'><option value='Days' selected>Days</option><option value='Weeks'>Weeks</option></select> <label style='padding-left:5px;padding-right:5px;'>before at</label> <select class='form-control-sm createEventSelNotificationTime' style='width:10%;text-overflow:ellipsis;'><option value='09:00' selected>09:00</option></select> <a class='hover aCalendarDeleteNotification' href='#' style='width:10%;'> <i class='fa fa-trash' aria-hidden='true' style='margin-left: 7px;'></i></a><br /><br /></div>").insertBefore(this);
 });
 
 $(document).on('click', '.aCalendarDeleteNotification', function () {
@@ -349,4 +349,26 @@ $(document).on('mouseleave', '.delete-calendar', function () {
 
 $('#btnDeleteCalendar').off('click').on('click', function () {
     DeleteCalendar();
+});
+
+$(document).on('change', '.createEventSelNotificationDaysWeeksType', function () {
+
+    if ($(this).val() === "Days") {
+        $(this).parent().find('.createEventSelNotificationDaysWeeksNumber').empty();
+        for (let i = 1; i <= 28; i++) {
+            $(this).parent().find('.createEventSelNotificationDaysWeeksNumber').append($('<option>', {
+                value: i,
+                text: i
+            }));
+        }
+    }
+    else if ($(this).val() === "Weeks") {
+        $(this).parent().find('.createEventSelNotificationDaysWeeksNumber').empty();
+        for (let i = 1; i <= 4; i++) {
+            $(this).parent().find('.createEventSelNotificationDaysWeeksNumber').append($('<option>', {
+                value: i,
+                text: i
+            }));
+        }
+    }
 });

@@ -29,6 +29,11 @@ public partial class CalendarEvent
     public string Description { get; set; }
 
     /// <summary>
+    /// 종일 이벤트 여부
+    /// </summary>
+    public bool AllDay { get; set; }
+
+    /// <summary>
     /// 시작 날짜 및 시간
     /// </summary>
     public DateTime StartDate { get; set; }
@@ -54,15 +59,30 @@ public partial class CalendarEvent
     public string Location { get; set; }
 
     /// <summary>
+    /// 이벤트 상태
+    /// </summary>
+    public string Status { get; set; }
+
+    /// <summary>
     /// 반복 규칙 ID (옵션)
     /// </summary>
     public int? RecurrenceId { get; set; }
 
+    /// <summary>
+    /// 생성일
+    /// </summary>
+    public DateTime Created { get; set; }
+
+    /// <summary>
+    /// 업데이트일
+    /// </summary>
+    public DateTime Updated { get; set; }
+
     public virtual Calendar Calendar { get; set; }
 
-    public virtual ICollection<CalendarEventAttachedFile> CalendarEventAttachedFiles { get; set; } = [];
+    public virtual ICollection<CalendarEventAttachedFile> CalendarEventAttachedFiles { get; set; } = new List<CalendarEventAttachedFile>();
 
-    public virtual ICollection<CalendarReminder> CalendarReminders { get; set; } = [];
+    public virtual ICollection<CalendarReminder> CalendarReminders { get; set; } = new List<CalendarReminder>();
 
     public virtual CalendarRecurrence Recurrence { get; set; }
 }

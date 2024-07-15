@@ -1,4 +1,6 @@
-﻿namespace Maroik.Common.DataAccess.Models;
+﻿using System;
+
+namespace Maroik.Common.DataAccess.Models;
 
 /// <summary>
 /// Maroik.WebSite 달력 이벤트 첨부파일
@@ -34,6 +36,16 @@ public partial class CalendarEventAttachedFile
     /// 경로
     /// </summary>
     public string Path { get; set; }
+
+    /// <summary>
+    /// 생성일
+    /// </summary>
+    public DateTime Created { get; set; }
+
+    /// <summary>
+    /// 업데이트일
+    /// </summary>
+    public DateTime Updated { get; set; }
 
     public virtual CalendarEvent CalendarEvent { get; set; }
 }

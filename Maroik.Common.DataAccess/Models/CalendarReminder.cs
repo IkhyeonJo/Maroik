@@ -23,9 +23,39 @@ public partial class CalendarReminder
     public string Method { get; set; }
 
     /// <summary>
-    /// 이벤트 전 알림 시간
+    /// 이벤트 발생 전 알림 시간 (분 단위)
     /// </summary>
-    public TimeOnly TimeBeforeEvent { get; set; }
+    public int? MinutesBeforeEvent { get; set; }
+
+    /// <summary>
+    /// 이벤트 발생 전 알림 시간 (시간 단위)
+    /// </summary>
+    public int? HoursBeforeEvent { get; set; }
+
+    /// <summary>
+    /// 이벤트 발생 전 알림 시간 (일 단위)
+    /// </summary>
+    public int? DaysBeforeEvent { get; set; }
+
+    /// <summary>
+    /// 이벤트 발생 전 알림 시간 (주 단위)
+    /// </summary>
+    public int? WeeksBeforeEvent { get; set; }
+
+    /// <summary>
+    /// 알림 발생 시간 (정확한 시간 설정)
+    /// </summary>
+    public TimeOnly NotificationTime { get; set; }
+
+    /// <summary>
+    /// 생성일
+    /// </summary>
+    public DateTime Created { get; set; }
+
+    /// <summary>
+    /// 업데이트일
+    /// </summary>
+    public DateTime Updated { get; set; }
 
     public virtual CalendarEvent CalendarEvent { get; set; }
 }
