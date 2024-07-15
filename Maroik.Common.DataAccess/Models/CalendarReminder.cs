@@ -23,6 +23,16 @@ public partial class CalendarReminder
     public string Method { get; set; }
 
     /// <summary>
+    /// 일 또는 주 수
+    /// </summary>
+    public int DaysOrWeeksNumber { get; set; }
+
+    /// <summary>
+    /// 일 또는 주 타입
+    /// </summary>
+    public string DaysOrWeeksType { get; set; }
+
+    /// <summary>
     /// 이벤트 전 알림 시간
     /// </summary>
     public TimeOnly TimeBeforeEvent { get; set; }
