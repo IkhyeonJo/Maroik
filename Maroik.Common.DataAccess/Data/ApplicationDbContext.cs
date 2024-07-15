@@ -456,19 +456,11 @@ namespace Maroik.Common.DataAccess.Data
                 _ = entity.Property(e => e.CalendarEventId)
                     .HasComment("부모 Calendar Event Id")
                     .HasColumnType("int(11)");
-                _ = entity.Property(e => e.DaysOrWeeksNumber)
-                    .HasComment("일 또는 주 수")
-                    .HasColumnType("int(11)");
-                _ = entity.Property(e => e.DaysOrWeeksType)
-                    .IsRequired()
-                    .HasMaxLength(255)
-                    .HasComment("일 또는 주 타입");
                 _ = entity.Property(e => e.Method)
                     .IsRequired()
                     .HasMaxLength(255)
                     .HasComment("알림 방법");
                 _ = entity.Property(e => e.TimeBeforeEvent)
-                    .HasDefaultValueSql("'09:00:00'")
                     .HasComment("이벤트 전 알림 시간")
                     .HasColumnType("time");
 
