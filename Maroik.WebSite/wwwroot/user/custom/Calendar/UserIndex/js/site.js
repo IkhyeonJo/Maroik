@@ -296,7 +296,7 @@ $(document).on('click', '.edit-calendar', function (e) {
 
                 formEditCalendar.find('input[id="editCalendarId"]').val(data.calendar.id);
                 formEditCalendar.find('input[id="editCalendarName"]').val(data.calendar.name);
-                formEditCalendar.find('input[id="editCalendarDescription"]').val(data.calendar.description);
+                formEditCalendar.find('textarea[id="editCalendarDescription"]').val(data.calendar.description);
                 formEditCalendar.find('input[id="editCalendarHtmlColorCode"]').val(data.calendar.htmlColorCode);
                 formEditCalendar.find('select[id="editCalendarTimeZone"]').val(data.calendar.timeZoneIanaId).change();
 

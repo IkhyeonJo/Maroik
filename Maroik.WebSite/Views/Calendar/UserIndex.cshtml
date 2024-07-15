@@ -68,7 +68,6 @@
                             </button>
                             <div class="dropdown-menu btn btn-block">
                                 <a id="aCreateCalendarEvent" class="dropdown-item" style="cursor: pointer;">@localizer["Event"]</a>
-                                <a id="aCreateCalendarTask" class="dropdown-item" style="cursor: pointer;">@localizer["Task"]</a>
                             </div>
                         </div>
                     </div>
@@ -329,7 +328,6 @@
                 @*<!--Tab EventTask-->*@
                 <ul>
                     <li><a href="#createEventTaskTabs-1">@localizer["Add Event"].Value</a></li>
-                    <li><a href="#createEventTaskTabs-2">@localizer["Add Task"].Value</a></li>
                 </ul>
                 @*Tabs-1: Create Event Modal*@
                 <div id="createEventTaskTabs-1">
@@ -509,9 +507,9 @@
                                 </select>
                             </div>
                             <div class="form-group col-md-6 mb-3">
-                                <label for="createEventState">@localizer["State"].Value</label>
+                                <label for="createEventStatus">@localizer["Status"].Value</label>
                                 <br />
-                                <select id="createEventState" name="createEventState" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
+                                <select id="createEventStatus" name="createEventStatus" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
                                     <option value="Busy" select>@localizer["Busy"].Value</option>
                                     <option value="Free">@localizer["Free"].Value</option>
                                 </select>
@@ -563,56 +561,6 @@
                             </div>
                         </div>
 
-                        <div class="modal-footer justify-content-between">
-                            <button type="button" class="btn btn-secondary" data-dismiss="modal">@localizer["Close"].Value</button>
-                            <input type="submit" class="btn btn-primary" value="@localizer["Save"].Value" />
-                        </div>
-                    </form>
-                </div>
-                @*Tabs-2: Create Task Modal*@
-                <div id="createEventTaskTabs-2">
-                    <form id="formCreateTask">
-                        <div class="form-row">
-                            <div class="form-group col-md-12 mb-3">
-                                <label for="createTaskName">@localizer["Name"].Value</label>
-                                <input class="form-control form-control-sm" type="text" data-val="true" data-val-required="@localizer["Please enter Name"].Value" id="createSubcategoryName" name="createSubcategoryName" value="">
-                                <span class="field-validation-valid text-danger" data-valmsg-for="createSubcategoryName" data-valmsg-replace="true"></span>
-                            </div>
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group col-md-6 mb-3">
-                                <label for="createSubcategoryDisplayName">@localizer["DisplayName"].Value</label>
-                                <input class="form-control form-control-sm" type="text" data-val="true" data-val-required="@localizer["Please enter DisplayName"].Value" id="createSubcategoryDisplayName" name="createSubcategoryDisplayName" value="">
-                                <span class="field-validation-valid text-danger" data-valmsg-for="createSubcategoryDisplayName" data-valmsg-replace="true"></span>
-                            </div>
-                            <div class="form-group col-md-6 mb-3">
-                                <label for="createSubcategoryIconPath">@localizer["IconPath"].Value</label>
-                                <input class="form-control form-control-sm" type="text" data-val="true" data-val-required="@localizer["Please enter IconPath"].Value" id="createSubcategoryIconPath" name="createSubcategoryIconPath" value="">
-                                <span class="field-validation-valid text-danger" data-valmsg-for="createSubcategoryIconPath" data-valmsg-replace="true"></span>
-                            </div>
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group col-md-6 mb-3">
-                                <label for="createSubcategoryAction">@localizer["Action"].Value</label>
-                                <input class="form-control form-control-sm" type="text" data-val="true" data-val-required="@localizer["Please enter Action"].Value" id="createSubcategoryAction" name="createSubcategoryAction" value="">
-                                <span class="field-validation-valid text-danger" data-valmsg-for="createSubcategoryAction" data-valmsg-replace="true"></span>
-                            </div>
-                            <div class="form-group col-md-6 mb-3">
-                                <label for="createSubcategoryRole">@localizer["Role"].Value</label>
-                                <br />
-                                <select id="createSubcategoryRole" name="createSubcategoryRole">
-                                    <option value="Admin">@localizer["Admin"].Value</option>
-                                    <option value="User">@localizer["User"].Value</option>
-                                    <option value="Anonymous">@localizer["Anonymous"].Value</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group col-md-6 mb-3">
-                                <label for="createSubcategoryOrder">@localizer["Order"].Value</label>
-                                <input class="form-control form-control-sm" min="0" type="number" id="createSubcategoryOrder" name="createSubcategoryOrder" value="0">
-                            </div>
-                        </div>
                         <div class="modal-footer justify-content-between">
                             <button type="button" class="btn btn-secondary" data-dismiss="modal">@localizer["Close"].Value</button>
                             <input type="submit" class="btn btn-primary" value="@localizer["Save"].Value" />

@@ -200,7 +200,10 @@ namespace Maroik.WebSite.Controllers
                         tempCalendar.Updated = DateTime.UtcNow;
 
                         List<Calendar> tempCalendars = await _calendarRepository.GetCalendarsAsync(tempCalendar.AccountEmail);
-                        if ((tempCalendars.Where(a => a.Id == tempCalendar.Id).FirstOrDefault()?.Id ?? 0) > 0) 
+                        Calendar previousCalendar = tempCalendars.Where(a => a.Id == tempCalendar.Id).FirstOrDefault();
+                        tempCalendar.Created = previousCalendar.Created;
+
+                        if (previousCalendar.Id > 0) 
                         {
                             await _calendarRepository.UpdateCalendarAsync(tempCalendar);
 
