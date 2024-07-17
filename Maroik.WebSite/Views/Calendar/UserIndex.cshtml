@@ -191,7 +191,7 @@
 
                                     if (!string.IsNullOrEmpty(loginedAccount.TimeZoneIanaId))
                                     {
-                                        if(loginedAccount.TimeZoneIanaId == systemTimeZoneIanaId)
+                                        if (loginedAccount.TimeZoneIanaId == systemTimeZoneIanaId)
                                         {
                                             <option value="@systemTimeZoneIanaId" selected>@systemTimeZone.DisplayName</option>
                                         }
@@ -349,12 +349,12 @@
                                 <br />
                                 <select id="createEventRepeatCycle" name="createEventRepeatCycle" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
                                     <option value="DoesNotRepeat" select>@localizer["Does not repeat"].Value</option>
-                                    @*                                  
+                                    @*
                                     <option value="Daily">@localizer["Daily"].Value</option>
                                     <option value="WeeklyOnMonday">@localizer["Weekly on Monday"].Value</option>
                                     <option value="MonthlyOnTheFirstMonday">@localizer["Monthly on the"].Value</option>
                                     <option value="AnnuallyOnJune3">@localizer["Annually on June 3"].Value</option>
-                                    <option value="Custom...">@localizer["Custom..."].Value</option> 
+                                    <option value="Custom...">@localizer["Custom..."].Value</option>
                                     *@
                                 </select>
                             </div>
@@ -516,51 +516,48 @@
                             </div>
                         </div>
 
-                        <div class="form-row">
+                        <div class="form-row divCreateEventNotificationAllDayChecked">
                             <div class="form-group col-md-12 mb-3">
-                                <label for="createEventNotification">@localizer["Notification"].Value</label>
-                                <br/>
-                                
-                                <div class="divcreateEventNotification">
-                                    <select class='form-control-sm createEventSelNotificationMethod' style='width:20%;text-overflow:ellipsis;'>
-                                        <option value='Email'>@localizer["Email"].Value</option>
-                                        <option value='Notification'>@localizer["Notification"].Value</option>
-                                    </select>
-                                    <select class='form-control-sm createEventSelNotificationDaysWeeksNumber' style='width:10%;text-overflow:ellipsis;'>
-                                        @for (int i = 1; i <= 28; i++)
-                                        {
-                                            <option value="@i">@i</option>
-                                        }
-                                    </select>
-                                    <select class='form-control-sm createEventSelNotificationDaysWeeksType' style='width:15%;text-overflow:ellipsis;'>
-                                        <option value='Days' selected>@localizer["Days"].Value</option>
-                                        <option value='Weeks'>@localizer["Weeks"].Value</option>
-                                    </select>
-                                    <label style="padding-left:5px;padding-right:5px;">@localizer["before at"].Value</label>
-                                    <select class='form-control-sm createEventSelNotificationTime' style='width:10%;text-overflow:ellipsis;'>
-                                        @foreach (var time in timeIntervals)
-                                        {
-                                            if (time == "09:00") // Default time
-                                            {
-                                                <option value="@time" selected>@time</option>
-                                            }
-                                            else
-                                            {
-                                                <option value="@time">@time</option>
-                                            }
-                                        }
-                                    </select>
-                                    <a class='hover aCalendarDeleteNotification' href='#' style='width:10%;'>
-                                        <i class='fa fa-trash' aria-hidden='true' style='margin-left: 7px;'></i>
-                                    </a>
-                                    <br />
-                                    <br />
-                                </div>
+                                <label for="createEventNotificationAllDayChecked">@localizer["Notification"].Value</label>
+                                <br />
 
-                                <input class="btn btn-primary" type="button" id="createEventNotification" name="createEventNotification" value="@localizer["Add notification"].Value">
+                                <select class='form-control-sm createEventSelNotificationMethodAllDayChecked' style='width:20%;text-overflow:ellipsis;'>
+                                    <option value='Email'>@localizer["Email"].Value</option>
+                                    <option value='Notification'>@localizer["Notification"].Value</option>
+                                </select>
+                                <select class='form-control-sm createEventSelNotificationDaysWeeksNumberAllDayChecked' style='width:10%;text-overflow:ellipsis;'>
+                                    @for (int i = 1; i <= 28; i++)
+                                    {
+                                        <option value="@i">@i</option>
+                                    }
+                                </select>
+                                <select class='form-control-sm createEventSelNotificationDaysWeeksTypeAllDayChecked' style='width:15%;text-overflow:ellipsis;'>
+                                    <option value='Days' selected>@localizer["Days"].Value</option>
+                                    <option value='Weeks'>@localizer["Weeks"].Value</option>
+                                </select>
+                                <label style="padding-left:5px;padding-right:5px;">@localizer["before at"].Value</label>
+                                <select class='form-control-sm createEventSelNotificationTimeAllDayChecked' style='width:10%;text-overflow:ellipsis;'>
+                                    @foreach (var time in timeIntervals)
+                                    {
+                                        if (time == "09:00") // Default time
+                                        {
+                                            <option value="@time" selected>@time</option>
+                                        }
+                                        else
+                                        {
+                                            <option value="@time">@time</option>
+                                        }
+                                    }
+                                </select>
+                                <a class='hover aCalendarDeleteNotificationAllDayChecked' href='#' style='width:10%;'>
+                                    <i class='fa fa-trash' aria-hidden='true' style='margin-left: 7px;'></i>
+                                </a>
+                                <br />
+                                <br />
+
+                                <input class="btn btn-primary" type="button" id="createEventNotificationAllDayChecked" name="createEventNotificationAllDayChecked" value="@localizer["Add notification"].Value">
                             </div>
                         </div>
-
                         <div class="modal-footer justify-content-between">
                             <button type="button" class="btn btn-secondary" data-dismiss="modal">@localizer["Close"].Value</button>
                             <input type="submit" class="btn btn-primary" value="@localizer["Save"].Value" />
