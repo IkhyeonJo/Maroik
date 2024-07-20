@@ -499,8 +499,8 @@ namespace Maroik.Common.DataAccess.Data
                 entity.Property(e => e.MinutesBeforeEvent)
                     .HasComment("이벤트 발생 전 알림 시간 (분 단위)")
                     .HasColumnType("int(11)");
-                entity.Property(e => e.NotificationTime)
-                    .HasComment("알림 발생 시간 (정확한 시간 설정)")
+                entity.Property(e => e.TimesBeforeEvent)
+                    .HasComment("이벤트 발생 전 알림 시간 (시간분 단위)")
                     .HasColumnType("time");
                 entity.Property(e => e.Updated)
                     .HasMaxLength(6)
