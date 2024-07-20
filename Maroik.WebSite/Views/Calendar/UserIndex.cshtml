@@ -525,13 +525,13 @@
                                     <option value='Email'>@localizer["Email"].Value</option>
                                     <option value='Notification'>@localizer["Notification"].Value</option>
                                 </select>
-                                <select class='form-control-sm createEventSelNotificationDaysWeeksNumberAllDayChecked' style='width:10%;text-overflow:ellipsis;'>
+                                <select class='form-control-sm createEventSelNotificationNumberAllDayChecked' style='width:10%;text-overflow:ellipsis;'>
                                     @for (int i = 1; i <= 28; i++)
                                     {
                                         <option value="@i">@i</option>
                                     }
                                 </select>
-                                <select class='form-control-sm createEventSelNotificationDaysWeeksTypeAllDayChecked' style='width:15%;text-overflow:ellipsis;'>
+                                <select class='form-control-sm createEventSelNotificationTimeTypeAllDayChecked' style='width:15%;text-overflow:ellipsis;'>
                                     <option value='Days' selected>@localizer["Days"].Value</option>
                                     <option value='Weeks'>@localizer["Weeks"].Value</option>
                                 </select>
@@ -558,6 +558,38 @@
                                 <input class="btn btn-primary" type="button" id="createEventNotificationAllDayChecked" name="createEventNotificationAllDayChecked" value="@localizer["Add notification"].Value">
                             </div>
                         </div>
+
+                        <div class="form-row divCreateEventNotificationAllDayUnchecked" style="display:none;">
+                            <div class="form-group col-md-12 mb-3">
+                                <label for="createEventNotificationAllDayUnchecked">@localizer["Notification"].Value</label>
+                                <br />
+
+                                <select class='form-control-sm createEventSelNotificationMethodAllDayUnchecked' style='width:20%;text-overflow:ellipsis;'>
+                                    <option value='Email'>@localizer["Email"].Value</option>
+                                    <option value='Notification'>@localizer["Notification"].Value</option>
+                                </select>
+                                <select class='form-control-sm createEventSelNotificationNumberAllDayUnchecked' style='width:10%;text-overflow:ellipsis;'>
+                                    @for (int i = 1; i <= 28; i++)
+                                    {
+                                        <option value="@i">@i</option>
+                                    }
+                                </select>
+                                <select class='form-control-sm createEventSelNotificationTimeTypeAllDayUnchecked' style='width:15%;text-overflow:ellipsis;'>
+                                    <option value='Minutes'>@localizer["Minutes"].Value</option>
+                                    <option value='Hours'>@localizer["Hours"].Value</option>
+                                    <option value='Days' selected>@localizer["Days"].Value</option>
+                                    <option value='Weeks'>@localizer["Weeks"].Value</option>
+                                </select>
+                                <a class='hover aCalendarDeleteNotificationAllDayUnchecked' href='#' style='width:10%;'>
+                                    <i class='fa fa-trash' aria-hidden='true' style='margin-left: 7px;'></i>
+                                </a>
+                                <br />
+                                <br />
+
+                                <input class="btn btn-primary" type="button" id="createEventNotificationAllDayUnchecked" name="createEventNotificationAllDayUnchecked" value="@localizer["Add notification"].Value">
+                            </div>
+                        </div>
+
                         <div class="modal-footer justify-content-between">
                             <button type="button" class="btn btn-secondary" data-dismiss="modal">@localizer["Close"].Value</button>
                             <input type="submit" class="btn btn-primary" value="@localizer["Save"].Value" />
