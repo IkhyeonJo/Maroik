@@ -516,50 +516,87 @@
                             </div>
                         </div>
 
-                        <div class="form-row divCreateEventNotificationAllDayChecked">
+                        <div id="divCreateEventNotificationAllDayChecked" class="form-row" style="display:none;">
                             <div class="form-group col-md-12 mb-3">
                                 <label for="createEventNotificationAllDayChecked">@localizer["Notification"].Value</label>
                                 <br />
 
-                                <select class='form-control-sm createEventSelNotificationMethodAllDayChecked' style='width:20%;text-overflow:ellipsis;'>
-                                    <option value='Email'>@localizer["Email"].Value</option>
-                                    <option value='Notification'>@localizer["Notification"].Value</option>
-                                </select>
-                                <select class='form-control-sm createEventSelNotificationNumberAllDayChecked' style='width:10%;text-overflow:ellipsis;'>
-                                    @for (int i = 1; i <= 28; i++)
-                                    {
-                                        <option value="@i">@i</option>
-                                    }
-                                </select>
-                                <select class='form-control-sm createEventSelNotificationTimeTypeAllDayChecked' style='width:15%;text-overflow:ellipsis;'>
-                                    <option value='Days' selected>@localizer["Days"].Value</option>
-                                    <option value='Weeks'>@localizer["Weeks"].Value</option>
-                                </select>
-                                <label style="padding-left:5px;padding-right:5px;">@localizer["before at"].Value</label>
-                                <select class='form-control-sm createEventSelNotificationTimeAllDayChecked' style='width:10%;text-overflow:ellipsis;'>
-                                    @foreach (var time in timeIntervals)
-                                    {
-                                        if (time == "09:00") // Default time
-                                        {
-                                            <option value="@time" selected>@time</option>
-                                        }
-                                        else
-                                        {
-                                            <option value="@time">@time</option>
-                                        }
-                                    }
-                                </select>
-                                <a class='hover aCalendarDeleteNotificationAllDayChecked' href='#' style='width:10%;'>
-                                    <i class='fa fa-trash' aria-hidden='true' style='margin-left: 7px;'></i>
-                                </a>
-                                <br />
-                                <br />
+                                <div class="divCreateEventNotificationAllDayCheckedRow">
+                                    <select class='form-control-sm createEventSelNotificationMethodAllDayChecked' style='width:20%;text-overflow:ellipsis;'>
+                                        <option value='Email'>@localizer["Email"].Value</option>
+                                        <option value='Notification'>@localizer["Notification"].Value</option>
+                                    </select>
 
+                                    <input type='number' class='form-control-sm createEventSelNotificationNumberAllDayChecked' style='width:10%;text-overflow:ellipsis; background-color:#343a40; color:#fff; border-color:#6c757d;' min="0" max="28">
+
+                                    <select class='form-control-sm createEventSelNotificationTimeTypeAllDayChecked' style='width:15%;text-overflow:ellipsis;'>
+                                        <option value='Days' selected>@localizer["days"].Value</option>
+                                        <option value='Weeks'>@localizer["weeks"].Value</option>
+                                    </select>
+                                    <label style="padding-left:5px;padding-right:5px;">@localizer["before at"].Value</label>
+                                    <select class='form-control-sm createEventSelNotificationTimeAllDayChecked' style='width:10%;text-overflow:ellipsis;'>
+                                        @foreach (var time in timeIntervals)
+                                        {
+                                            if (time == "09:00") // Default time
+                                            {
+                                                <option value="@time" selected>@time</option>
+                                            }
+                                            else
+                                            {
+                                                <option value="@time">@time</option>
+                                            }
+                                        }
+                                    </select>
+                                    <a class='hover aCalendarDeleteNotificationAllDayChecked' href='#' style='width:10%;'>
+                                        <i class='fa fa-trash' aria-hidden='true' style='margin-left: 7px;'></i>
+                                    </a>
+
+                                    <br />
+                                    <div class="error-message" style="color: red; font-size: 0.9em; display: none;"></div>
+
+                                </div>
+
+                                <div class="divCreateEventNotificationAllDayCheckedRow">
+                                    <select class='form-control-sm createEventSelNotificationMethodAllDayChecked' style='width:20%;text-overflow:ellipsis;'>
+                                        <option value='Email'>@localizer["Email"].Value</option>
+                                        <option value='Notification'>@localizer["Notification"].Value</option>
+                                    </select>
+
+                                    <input type='number' class='form-control-sm createEventSelNotificationNumberAllDayChecked' style='width:10%;text-overflow:ellipsis; background-color:#343a40; color:#fff; border-color:#6c757d;' min="0" max="28">
+
+                                    <select class='form-control-sm createEventSelNotificationTimeTypeAllDayChecked' style='width:15%;text-overflow:ellipsis;'>
+                                        <option value='Days' selected>@localizer["days"].Value</option>
+                                        <option value='Weeks'>@localizer["weeks"].Value</option>
+                                    </select>
+                                    <label style="padding-left:5px;padding-right:5px;">@localizer["before at"].Value</label>
+                                    <select class='form-control-sm createEventSelNotificationTimeAllDayChecked' style='width:10%;text-overflow:ellipsis;'>
+                                        @foreach (var time in timeIntervals)
+                                        {
+                                            if (time == "09:00") // Default time
+                                            {
+                                                <option value="@time" selected>@time</option>
+                                            }
+                                            else
+                                            {
+                                                <option value="@time">@time</option>
+                                            }
+                                        }
+                                    </select>
+                                    <a class='hover aCalendarDeleteNotificationAllDayChecked' href='#' style='width:10%;'>
+                                        <i class='fa fa-trash' aria-hidden='true' style='margin-left: 7px;'></i>
+                                    </a>
+
+                                    <br />
+                                    <div class="error-message" style="color: red; font-size: 0.9em; display: none;"></div>
+
+                                </div>
+
+                                <br />
                                 <input class="btn btn-primary" type="button" id="createEventNotificationAllDayChecked" name="createEventNotificationAllDayChecked" value="@localizer["Add notification"].Value">
                             </div>
                         </div>
 
-                        <div class="form-row divCreateEventNotificationAllDayUnchecked" style="display:none;">
+                        <div id="divCreateEventNotificationAllDayUnchecked" class="form-row" style="display:none;">
                             <div class="form-group col-md-12 mb-3">
                                 <label for="createEventNotificationAllDayUnchecked">@localizer["Notification"].Value</label>
                                 <br />
@@ -575,10 +612,10 @@
                                     }
                                 </select>
                                 <select class='form-control-sm createEventSelNotificationTimeTypeAllDayUnchecked' style='width:15%;text-overflow:ellipsis;'>
-                                    <option value='Minutes'>@localizer["Minutes"].Value</option>
-                                    <option value='Hours'>@localizer["Hours"].Value</option>
-                                    <option value='Days' selected>@localizer["Days"].Value</option>
-                                    <option value='Weeks'>@localizer["Weeks"].Value</option>
+                                    <option value='Minutes' selected>@localizer["minutes"].Value</option>
+                                    <option value='Hours'>@localizer["hours"].Value</option>
+                                    <option value='Days'>@localizer["days"].Value</option>
+                                    <option value='Weeks'>@localizer["weeks"].Value</option>
                                 </select>
                                 <a class='hover aCalendarDeleteNotificationAllDayUnchecked' href='#' style='width:10%;'>
                                     <i class='fa fa-trash' aria-hidden='true' style='margin-left: 7px;'></i>

@@ -241,11 +241,19 @@ $('#createEventAllDay').off('click').on('click', function () {
         $("#divCreateEventAllDayUnchecked").hide();
         $("#divCreateEventAllDayChecked").hide();
         $("#divCreateEventAllDayChecked").show();
+
+        $("#divCreateEventNotificationAllDayUnchecked").hide();
+        $("#divCreateEventNotificationAllDayChecked").hide();
+        $("#divCreateEventNotificationAllDayChecked").show();
     }
     else {
         $("#divCreateEventAllDayUnchecked").hide();
         $("#divCreateEventAllDayChecked").hide();
         $("#divCreateEventAllDayUnchecked").show();
+
+        $("#divCreateEventNotificationAllDayUnchecked").hide();
+        $("#divCreateEventNotificationAllDayChecked").hide();
+        $("#divCreateEventNotificationAllDayUnchecked").show();
     }
 });
 
@@ -349,26 +357,4 @@ $(document).on('mouseleave', '.delete-calendar', function () {
 
 $('#btnDeleteCalendar').off('click').on('click', function () {
     DeleteCalendar();
-});
-
-$(document).on('change', '.createEventSelNotificationDaysWeeksType', function () {
-
-    if ($(this).val() === "Days") {
-        $(this).parent().find('.createEventSelNotificationDaysWeeksNumber').empty();
-        for (let i = 1; i <= 28; i++) {
-            $(this).parent().find('.createEventSelNotificationDaysWeeksNumber').append($('<option>', {
-                value: i,
-                text: i
-            }));
-        }
-    }
-    else if ($(this).val() === "Weeks") {
-        $(this).parent().find('.createEventSelNotificationDaysWeeksNumber').empty();
-        for (let i = 1; i <= 4; i++) {
-            $(this).parent().find('.createEventSelNotificationDaysWeeksNumber').append($('<option>', {
-                value: i,
-                text: i
-            }));
-        }
-    }
 });

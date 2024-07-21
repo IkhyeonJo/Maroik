@@ -139,11 +139,19 @@ $(function () {
         $("#divCreateEventAllDayUnchecked").hide();
         $("#divCreateEventAllDayChecked").hide();
         $("#divCreateEventAllDayChecked").show();
+
+        $("#divCreateEventNotificationAllDayUnchecked").hide();
+        $("#divCreateEventNotificationAllDayChecked").hide();
+        $("#divCreateEventNotificationAllDayChecked").show();
     }
     else {
         $("#divCreateEventAllDayUnchecked").hide();
         $("#divCreateEventAllDayChecked").hide();
         $("#divCreateEventAllDayUnchecked").show();
+
+        $("#divCreateEventNotificationAllDayUnchecked").hide();
+        $("#divCreateEventNotificationAllDayChecked").hide();
+        $("#divCreateEventNotificationAllDayUnchecked").show();
     }
 
     function ini_events(element) {
@@ -361,4 +369,70 @@ $(function () {
         // Remove event from text input
         $('#new-event').val('')
     })
+
+    function ValidateInputAllDayChecked(row) {
+        let numberInput = row.find('.createEventSelNotificationNumberAllDayChecked');
+        let value = numberInput.val().trim();
+        let timeType = row.find('.createEventSelNotificationTimeTypeAllDayChecked').val();
+        let isValid = true;
+        let errorMessage = '';
+
+        if (value === '') {
+            isValid = false;
+            errorMessage = 'This field is required';
+        } else if (isNaN(value)) {
+            isValid = false;
+            errorMessage = 'Please enter a valid number';
+        } else {
+            value = parseInt(value, 10);
+            if (timeType === 'Weeks') {
+                if (value < 0 || value > 4) {
+                    isValid = false;
+                    errorMessage = 'Must be between 0 and 4 weeks';
+                }
+            } else if (timeType === 'Days') {
+                if (value < 0 || value > 28) {
+                    isValid = false;
+                    errorMessage = 'Must be between 0 and 28 days';
+                }
+            }
+        }
+
+        if (!isValid) {
+            numberInput.css('text-decoration', 'underline');
+            numberInput.css('text-decoration-color', 'red');
+        } else {
+            numberInput.css('text-decoration', 'none');
+        }
+
+        row.find('.error-message').text(errorMessage).toggle(!isValid);
+        return isValid;
+    }
+
+    $(document).on('change', '.createEventSelNotificationTimeTypeAllDayChecked', function () {
+        let row = $(this).closest('.divCreateEventNotificationAllDayCheckedRow');
+        ValidateInputAllDayChecked(row);
+        row.find('.error-message').hide();
+    });
+
+    $(document).on('input', '.createEventSelNotificationNumberAllDayChecked', function () {
+        let row = $(this).closest('.divCreateEventNotificationAllDayCheckedRow');
+        ValidateInputAllDayChecked(row);
+        row.find('.error-message').hide();
+    });
+
+    $('#formCreateEvent').off('submit').on('submit', function (event) {
+        event.preventDefault();
+        var isValidForm = true;
+
+        $('.divCreateEventNotificationAllDayCheckedRow').each(function () {
+            var isValidRow = ValidateInputAllDayChecked($(this));
+            isValidForm = isValidForm && isValidRow;
+        });
+
+        if (isValidForm) {
+            alert('Form submitted successfully');
+        }
+
+    });
 });
