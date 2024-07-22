@@ -45,8 +45,8 @@ $(function () {
             }, 1);
         },
         onSelect: function (selectedDate) {
-            var startDate = $(this).datepicker('getDate');
-            var endDate = $("#createEventAllDayUncheckedEndDate").datepicker('getDate');
+            let startDate = $(this).datepicker('getDate');
+            let endDate = $("#createEventAllDayUncheckedEndDate").datepicker('getDate');
             if (endDate && endDate < startDate) {
                 $("#createEventAllDayUncheckedEndDate").datepicker('setDate', startDate);
             }
@@ -67,8 +67,8 @@ $(function () {
             }, 1);
         },
         onSelect: function (selectedDate) {
-            var endDate = $(this).datepicker('getDate');
-            var startDate = $("#createEventAllDayUncheckedStartDate").datepicker('getDate');
+            let endDate = $(this).datepicker('getDate');
+            let startDate = $("#createEventAllDayUncheckedStartDate").datepicker('getDate');
             if (startDate && endDate < startDate) {
                 $(this).datepicker('setDate', startDate);
             }
@@ -88,8 +88,8 @@ $(function () {
             }, 1);
         },
         onSelect: function (selectedDate) {
-            var startDate = $(this).datepicker('getDate');
-            var endDate = $("#createEventAllDayCheckedEndDate").datepicker('getDate');
+            let startDate = $(this).datepicker('getDate');
+            let endDate = $("#createEventAllDayCheckedEndDate").datepicker('getDate');
             if (endDate && endDate < startDate) {
                 $("#createEventAllDayCheckedEndDate").datepicker('setDate', startDate);
             }
@@ -110,8 +110,8 @@ $(function () {
             }, 1);
         },
         onSelect: function (selectedDate) {
-            var endDate = $(this).datepicker('getDate');
-            var startDate = $("#createEventAllDayCheckedStartDate").datepicker('getDate');
+            let endDate = $(this).datepicker('getDate');
+            let startDate = $("#createEventAllDayCheckedStartDate").datepicker('getDate');
             if (startDate && endDate < startDate) {
                 $(this).datepicker('setDate', startDate);
             }
@@ -157,7 +157,7 @@ $(function () {
     function ini_events(element) {
         element.each(function () {
 
-            var eventObject = {
+            let eventObject = {
                 title: $.trim($(this).text())
             }
 
@@ -174,17 +174,17 @@ $(function () {
 
     ini_events($('#external-events div.external-event'))
 
-    var date = new Date()
-    var d = date.getDate(),
+    let date = new Date()
+    let d = date.getDate(),
         m = date.getMonth(),
         y = date.getFullYear()
 
-    var Calendar = FullCalendar.Calendar;
-    var Draggable = FullCalendar.Draggable;
+    let Calendar = FullCalendar.Calendar;
+    let Draggable = FullCalendar.Draggable;
 
-    var containerEl = document.getElementById('external-events');
-    var checkbox = document.getElementById('drop-remove');
-    var calendarEl = document.getElementById('calendar');
+    let containerEl = document.getElementById('external-events');
+    let checkbox = document.getElementById('drop-remove');
+    let calendarEl = document.getElementById('calendar');
 
     new Draggable(containerEl, {
         itemSelector: '.external-event',
@@ -198,7 +198,7 @@ $(function () {
         }
     });
 
-    var calendar = new Calendar(calendarEl, {
+    let calendar = new Calendar(calendarEl, {
         headerToolbar: {
             left: 'prevYear,prev,next,nextYear today',
             center: 'title',
@@ -298,8 +298,8 @@ $(function () {
         selectable: true,
         selectMirror: true,
         select: function (arg) {
-            //var aaa = $('#calendarEventModel').val();
-            //var bbb = JSON.parse($('#calendarEventModel').val());
+            //let aaa = $('#calendarEventModel').val();
+            //let bbb = JSON.parse($('#calendarEventModel').val());
 
             $('#createEventTaskDialogModal').modal('show');
 
@@ -333,7 +333,7 @@ $(function () {
     // $('#calendar').fullCalendar()
 
     /* ADDING EVENTS */
-    var currColor = '#3c8dbc' //Red by default
+    let currColor = '#3c8dbc' //Red by default
     // Color chooser button
     $('#color-chooser > li > a').off('click').on('click', function (e) {
         e.preventDefault()
@@ -348,13 +348,13 @@ $(function () {
     $('#add-new-event').off('click').on('click', function (e) {
         e.preventDefault()
         // Get value and make sure it is not null
-        var val = $('#new-event').val()
+        let val = $('#new-event').val()
         if (val.length == 0) {
             return
         }
 
         // Create events
-        var event = $('<div />')
+        let event = $('<div />')
         event.css({
             'background-color': currColor,
             'border-color': currColor,
@@ -385,15 +385,68 @@ $(function () {
             errorMessage = 'Please enter a valid number';
         } else {
             value = parseInt(value, 10);
-            if (timeType === 'Weeks') {
+            if (timeType === 'Days') {
+                if (value < 0 || value > 28) {
+                    isValid = false;
+                    errorMessage = 'Must be between 0 and 28 days';
+                }
+            }
+            else if (timeType === 'Weeks') {
                 if (value < 0 || value > 4) {
                     isValid = false;
                     errorMessage = 'Must be between 0 and 4 weeks';
                 }
-            } else if (timeType === 'Days') {
+            }
+        }
+
+        if (!isValid) {
+            numberInput.css('text-decoration', 'underline');
+            numberInput.css('text-decoration-color', 'red');
+        } else {
+            numberInput.css('text-decoration', 'none');
+        }
+
+        row.find('.error-message').text(errorMessage).toggle(!isValid);
+        return isValid;
+    }
+
+    function ValidateInputAllDayUnchecked(row) {
+        let numberInput = row.find('.createEventSelNotificationNumberAllDayUnchecked');
+        let value = numberInput.val().trim();
+        let timeType = row.find('.createEventSelNotificationTimeTypeAllDayUnchecked').val();
+        let isValid = true;
+        let errorMessage = '';
+
+        if (value === '') {
+            isValid = false;
+            errorMessage = 'This field is required';
+        } else if (isNaN(value)) {
+            isValid = false;
+            errorMessage = 'Please enter a valid number';
+        } else {
+            value = parseInt(value, 10);
+            if (timeType === 'Minutes') {
+                if (value < 0 || value > 40320) {
+                    isValid = false;
+                    errorMessage = 'Must be between 0 and 40,320 minutes';
+                }
+            }
+            else if (timeType === 'Hours') {
+                if (value < 0 || value > 672) {
+                    isValid = false;
+                    errorMessage = 'Must be between 0 and 672 hours';
+                }
+            }
+            else if (timeType === 'Days') {
                 if (value < 0 || value > 28) {
                     isValid = false;
                     errorMessage = 'Must be between 0 and 28 days';
+                }
+            }
+            else if (timeType === 'Weeks') {
+                if (value < 0 || value > 4) {
+                    isValid = false;
+                    errorMessage = 'Must be between 0 and 4 weeks';
                 }
             }
         }
@@ -421,14 +474,35 @@ $(function () {
         row.find('.error-message').hide();
     });
 
+    $(document).on('change', '.createEventSelNotificationTimeTypeAllDayUnchecked', function () {
+        let row = $(this).closest('.divCreateEventNotificationAllDayUncheckedRow');
+        ValidateInputAllDayUnchecked(row);
+        row.find('.error-message').hide();
+    });
+
+    $(document).on('input', '.createEventSelNotificationNumberAllDayUnchecked', function () {
+        let row = $(this).closest('.divCreateEventNotificationAllDayUncheckedRow');
+        ValidateInputAllDayUnchecked(row);
+        row.find('.error-message').hide();
+    });
+
     $('#formCreateEvent').off('submit').on('submit', function (event) {
         event.preventDefault();
-        var isValidForm = true;
 
-        $('.divCreateEventNotificationAllDayCheckedRow').each(function () {
-            var isValidRow = ValidateInputAllDayChecked($(this));
-            isValidForm = isValidForm && isValidRow;
-        });
+        let isValidForm = true;
+
+        if ($('#createEventAllDay').is(':checked')) {
+            $('.divCreateEventNotificationAllDayCheckedRow').each(function () {
+                let isValidRow = ValidateInputAllDayChecked($(this));
+                isValidForm = isValidForm && isValidRow;
+            });
+        }
+        else {
+            $('.divCreateEventNotificationAllDayUncheckedRow').each(function () {
+                let isValidRow = ValidateInputAllDayUnchecked($(this));
+                isValidForm = isValidForm && isValidRow;
+            });
+        }
 
         if (isValidForm) {
             alert('Form submitted successfully');

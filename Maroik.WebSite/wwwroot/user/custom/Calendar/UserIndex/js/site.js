@@ -257,11 +257,92 @@ $('#createEventAllDay').off('click').on('click', function () {
     }
 });
 
-$('#createEventNotification').off('click').on('click', function () {
-    $("<div class='divcreateEventNotification'><select class='form-control-sm createEventSelNotificationMethod' style='width:20%;text-overflow:ellipsis;'><option value='Email'>Email</option><option value='Notification'>Notification</option></select> <select class='form-control-sm createEventSelNotificationDaysWeeksNumber' style='width:10%;text-overflow:ellipsis;'>" + Array.from({ length: 28 }, (_, i) => `<option value='${i + 1}'>${i + 1}</option>`).join('') + "</select> <select class='form-control-sm createEventSelNotificationDaysWeeksType' style='width:15%;text-overflow:ellipsis;'><option value='Days' selected>Days</option><option value='Weeks'>Weeks</option></select> <label style='padding-left:5px;padding-right:5px;'>before at</label> <select class='form-control-sm createEventSelNotificationTime' style='width:10%;text-overflow:ellipsis;'><option value='09:00' selected>09:00</option></select> <a class='hover aCalendarDeleteNotification' href='#' style='width:10%;'> <i class='fa fa-trash' aria-hidden='true' style='margin-left: 7px;'></i></a><br /><br /></div>").insertBefore(this);
+$('#createEventNotificationAllDayChecked').off('click').on('click', function () {
+    const timeIntervals = Array.from({ length: 96 }, (_, i) => {
+        const hours = String(Math.floor(i / 4)).padStart(2, '0');
+        const minutes = String((i % 4) * 15).padStart(2, '0');
+        return `${hours}:${minutes}`;
+    });
+
+    const localizer = {
+        Email: "Email",
+        Notification: "Notification",
+        days: "days",
+        weeks: "weeks",
+        "before at": "before at"
+    };
+
+    const htmlString = String.raw`
+    <div class="divCreateEventNotificationAllDayCheckedRow">
+        <select class='form-control-sm createEventSelNotificationMethodAllDayChecked' style='width:20%;text-overflow:ellipsis;'>
+            <option value='Email'>${localizer.Email}</option>
+            <option value='Notification'>${localizer.Notification}</option>
+        </select>
+
+        <input type='number' class='form-control-sm createEventSelNotificationNumberAllDayChecked' style='width:10%;text-overflow:ellipsis; background-color:#343a40; color:#fff; border-color:#6c757d;' min="0" max="28">
+
+        <select class='form-control-sm createEventSelNotificationTimeTypeAllDayChecked' style='width:15%;text-overflow:ellipsis;'>
+            <option value='Days' selected>${localizer.days}</option>
+            <option value='Weeks'>${localizer.weeks}</option>
+        </select>
+        <label style="padding-left:5px;padding-right:5px;">${localizer["before at"]}</label>
+        <select class='form-control-sm createEventSelNotificationTimeAllDayChecked' style='width:11%;text-overflow:ellipsis;'>
+            ${timeIntervals.map(time => time === "09:00" ? `<option value="${time}" selected>${time}</option>` : `<option value="${time}">${time}</option>`).join('')}
+        </select>
+        <a class='hover aCalendarDeleteNotificationAllDayChecked' href='#' style='width:10%;'>
+            <i class='fa fa-trash' aria-hidden='true' style='margin-left: 7px;'></i>
+        </a>
+
+        <br />
+        <div class="error-message" style="color: red; font-size: 0.9em; display: none;"></div>
+    </div>
+`;
+
+    $(htmlString).insertBefore(this);
 });
 
-$(document).on('click', '.aCalendarDeleteNotification', function () {
+$('#createEventNotificationAllDayUnchecked').off('click').on('click', function () {
+    const localizer = {
+        Email: "Email",
+        Notification: "Notification",
+        minutes: "minutes",
+        hours: "hours",
+        days: "days",
+        weeks: "weeks"
+    };
+
+    const htmlString = String.raw`
+    <div class="divCreateEventNotificationAllDayUncheckedRow" style="padding-bottom:5px;">
+        <select class='form-control-sm createEventSelNotificationMethodAllDayUnchecked' style='width:20%;text-overflow:ellipsis;'>
+            <option value='Email'>${localizer.Email}</option>
+            <option value='Notification'>${localizer.Notification}</option>
+        </select>
+
+        <input type='number' class='form-control-sm createEventSelNotificationNumberAllDayUnchecked' style='width:10%;text-overflow:ellipsis; background-color:#343a40; color:#fff; border-color:#6c757d;' min="0" max="40320">
+
+        <select class='form-control-sm createEventSelNotificationTimeTypeAllDayUnchecked' style='width:15%;text-overflow:ellipsis;'>
+            <option value='Minutes' selected>${localizer.minutes}</option>
+            <option value='Hours'>${localizer.hours}</option>
+            <option value='Days'>${localizer.days}</option>
+            <option value='Weeks'>${localizer.weeks}</option>
+        </select>
+        <a class='hover aCalendarDeleteNotificationAllDayUnchecked' href='#' style='width:10%;'>
+            <i class='fa fa-trash' aria-hidden='true' style='margin-left: 7px;'></i>
+        </a>
+
+        <br />
+        <div class="error-message" style="color: red; font-size: 0.9em; display: none;"></div>
+    </div>
+`;
+
+    $(htmlString).insertBefore(this);
+});
+
+$(document).on('click', '.aCalendarDeleteNotificationAllDayChecked', function () {
+    $(this).parent().remove();
+});
+
+$(document).on('click', '.aCalendarDeleteNotificationAllDayUnchecked', function () {
     $(this).parent().remove();
 });
 
