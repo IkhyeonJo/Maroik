@@ -1,10 +1,10 @@
-function WriteUploadImageFile(file) {
+function CreateUploadImageFile(file) {
 
     formData = new FormData();
     formData.append("summernoteImageFile", file);
 
     $.ajax({
-        url: "/Forum/UploadImageFile",
+        url: "/Calendar/UploadImageFile",
         data: formData,
         headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
         type: 'POST',
@@ -19,7 +19,7 @@ function WriteUploadImageFile(file) {
                 imgNode.src = data.filePath;
                 imgNode.style.maxWidth = "170px";
                 imgNode.style.maxHeight = "209px";
-                $('#writeBoardContent').summernote('insertNode', imgNode);
+                $('#createEventDescription').summernote('insertNode', imgNode);
             }
             else {
                 alert(data.errorMessage);

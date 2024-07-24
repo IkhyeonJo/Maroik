@@ -194,7 +194,11 @@ app.UseStaticFiles(new StaticFileOptions
     {
         bool isAccountSessionExist = context.Context.Session.TryGetValue(Maroik.Common.Miscellaneous.Extensions.EnumHelper.GetDescription(Maroik.Common.Miscellaneous.Utilities.Session.Account), out _); // 로그인이 되어 계정 세션이 생겼는지 확인
 
-        if (context.Context.Request.Path.StartsWithSegments("/upload/Forum") || context.Context.Request.Path.StartsWithSegments("/upload/Management/Profile/Avatar") || context.Context.Request.Path.ToString().Contains("/upload/Management/Profile/default-avatar.jpg") || context.Context.Request.Path.StartsWithSegments("/upload/Management/PrivateNote")) // (~/upload/Forum) [게시물] (~/upload/Management/Profile/Avatar) [댓글 게시판 이미지] 게시판 파일들은 모두 접근 허용, [사적 메모]
+        if (context.Context.Request.Path.StartsWithSegments("/upload/Forum") || 
+        context.Context.Request.Path.StartsWithSegments("/upload/Management/Profile/Avatar") || 
+        context.Context.Request.Path.ToString().Contains("/upload/Management/Profile/default-avatar.jpg") || 
+        context.Context.Request.Path.StartsWithSegments("/upload/Management/PrivateNote") ||
+        context.Context.Request.Path.StartsWithSegments("/upload/Calendar/UserIndex")) // (~/upload/Forum) [게시물] (~/upload/Management/Profile/Avatar) [댓글 게시판 이미지] 게시판 파일들은 모두 접근 허용, [사적 메모], (~/upload/Calendar/UserIndex) [달력]
         {
 
         }
@@ -257,7 +261,6 @@ app.UseStaticFiles(new StaticFileOptions
     }
 });
 #endregion
-
 
 #region Default HTTP Header Setting
 //https://docs.microsoft.com/en-us/aspnet/core/performance/caching/middleware?view=aspnetcore-5.0

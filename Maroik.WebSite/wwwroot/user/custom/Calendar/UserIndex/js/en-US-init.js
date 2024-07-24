@@ -8,7 +8,7 @@ $('#createEventDescription').summernote({
     callbacks: {
         onImageUpload: function (files) {
             for (let i = 0; i < files.length; i++) {
-                WriteUploadImageFile(files[i]);
+                CreateUploadImageFile(files[i]);
             }
         }
     }
@@ -504,9 +504,11 @@ $(function () {
             });
         }
 
-        if (isValidForm) {
-            alert('Form submitted successfully');
+        if (!$('#formCreateEvent').valid() && !isValidForm) {
+            return false;
         }
+
+
 
     });
 });
