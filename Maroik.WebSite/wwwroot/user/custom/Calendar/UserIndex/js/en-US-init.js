@@ -275,7 +275,7 @@ $(function () {
         //            },
         //        }
         //    ],
-        timezone: 'UTC',
+        timezone: $('#calendarTimeZoneIanaId').val(),
         navLinks: true, // can click day/week names to navigate views
         editable: true,
         droppable: true, // this allows things to be dropped onto the calendar !!!
@@ -303,11 +303,11 @@ $(function () {
 
             $('#createEventTaskDialogModal').modal('show');
 
-            $('#createEventAllDayUncheckedStartDate').val(moment(arg.start).format("YYYY-MM-DD"));
-            $('#createEventAllDayCheckedStartDate').val(moment(arg.start).format("YYYY-MM-DD"));
+            $('#createEventAllDayUncheckedStartDate').val(moment.utc(arg.start).add('days', 1).format("YYYY-MM-DD"));
+            $('#createEventAllDayCheckedStartDate').val(moment.utc(arg.start).add('days', 1).format("YYYY-MM-DD"));
 
-            $('#createEventAllDayUncheckedEndDate').val(moment(arg.end).format("YYYY-MM-DD"));
-            $('#createEventAllDayCheckedEndDate').val(moment(arg.end).format("YYYY-MM-DD"));
+            $('#createEventAllDayUncheckedEndDate').val(moment.utc(arg.end).format("YYYY-MM-DD"));
+            $('#createEventAllDayCheckedEndDate').val(moment.utc(arg.end).format("YYYY-MM-DD"));
 
             calendar.unselect();
         },

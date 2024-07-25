@@ -20,6 +20,7 @@
     else // 로그인이 되지 않은 상태라면
     {
         loginedAccount.Role = Role.Anonymous;
+        loginedAccount.TimeZoneIanaId = "UTC";
     }
 
     #region Set Time
@@ -54,7 +55,7 @@
 
 @* @Html.Hidden("calendarEventModel", JsonConvert.SerializeObject(assets)) *@
 @Html.Hidden("calendarEventModel", null)
-
+@Html.Hidden("calendarTimeZoneIanaId", loginedAccount.TimeZoneIanaId);
 <!-- Main content -->
 <section class="content">
     <div class="container-fluid">
