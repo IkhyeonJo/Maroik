@@ -102,6 +102,73 @@ namespace Maroik.WebSite.Controllers
         }
         #endregion
 
+        #region Calendar Event
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [RequiredHttpPostAccess(Role = Role.User)]
+        public async Task<IActionResult> CreateCalendarEvent([FromForm] CalendarEventInputViewModel calendarEventInputViewModel)
+        {
+            try
+            {
+                if (ModelState.IsValid)
+                {
+                    try
+                    {
+                        _ = HttpContext.Session.TryGetValue(Maroik.Common.Miscellaneous.Extensions.EnumHelper.GetDescription(Maroik.Common.Miscellaneous.Utilities.Session.Account), out byte[] resultByte);
+
+                        List<Dictionary<string, object>> calendarReminders = JsonConvert.DeserializeObject<List<Dictionary<string, object>>>(calendarEventInputViewModel.SerializedCalendarReminders);
+
+                        foreach (var reminder in calendarReminders)
+                        {
+                            string method = reminder["Method"].ToString();
+                            int? minutesBeforeEvent = reminder["MinutesBeforeEvent"] != null ? (int?)Convert.ToInt32(reminder["MinutesBeforeEvent"]) : null;
+                            int? hoursBeforeEvent = reminder["HoursBeforeEvent"] != null ? (int?)Convert.ToInt32(reminder["HoursBeforeEvent"]) : null;
+                            int? daysBeforeEvent = reminder["DaysBeforeEvent"] != null ? (int?)Convert.ToInt32(reminder["DaysBeforeEvent"]) : null;
+                            int? weeksBeforeEvent = reminder["WeeksBeforeEvent"] != null ? (int?)Convert.ToInt32(reminder["WeeksBeforeEvent"]) : null;
+                            string timesBeforeEvent = reminder["TimesBeforeEvent"].ToString();
+
+                            // Your logic to handle each reminder
+                        }
+
+
+                        //Calendar tempCalendar = calendarInputViewModel?.Calendars?.FirstOrDefault() ?? new Calendar();
+                        //tempCalendar.AccountEmail = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email;
+                        //tempCalendar.Created = DateTime.UtcNow;
+                        //tempCalendar.Updated = DateTime.UtcNow;
+
+                        //Calendar tempCalendarToValidate = (await _calendarRepository.GetCalendarsAsync(tempCalendar.AccountEmail)).Where(x => x.Name == (tempCalendar?.Name ?? "")).FirstOrDefault();
+
+                        //if (tempCalendarToValidate is not null)
+                        //{
+                        //    return Json(new { result = false, error = _localizer["The calendar already exists."].Value });
+                        //}
+
+                        //await _calendarRepository.CreateCalendarAsync(tempCalendar);
+
+                        //tempCalendar.AccountEmail = null;
+                        //tempCalendar.Description = null;
+                        //tempCalendar.TimeZoneIanaId = null;
+
+                        //return Json(new { result = true, message = _localizer["The calendar has been successfully created."].Value, calendar = tempCalendar });
+                        return Json(new { result = true, message = _localizer["The calendar has been successfully created."].Value });
+                    }
+                    catch
+                    {
+                        return Json(new { result = false, error = _localizer["Input is invalid"].Value });
+                    }
+                }
+                else
+                {
+                    return Json(new { result = false, error = _localizer["Input is invalid"].Value });
+                }
+            }
+            catch
+            {
+                return Json(new { result = false, error = _localizer["Input is invalid"].Value });
+            }
+        }
+        #endregion
+
         #region Summernote Image File Upload
         [HttpPost]
         [ValidateAntiForgeryToken]

@@ -19,7 +19,7 @@ function CreateUploadImageFile(file) {
                 imgNode.src = data.filePath;
                 imgNode.style.maxWidth = "170px";
                 imgNode.style.maxHeight = "209px";
-                $('#createEventDescription').summernote('insertNode', imgNode);
+                $('#createCalendarEventDescription').summernote('insertNode', imgNode);
             }
             else {
                 alert(data.errorMessage);
@@ -215,10 +215,10 @@ $('#aCreateCalendarEvent').off('click').on('click', function () {
         //cache: false,
         success: function (response) {
             if (response.result) {
-                $('#createEventMyCalendar').empty();
+                $('#createCalendarEventMyCalendar').empty();
 
                 $.each(response.calendars, function (index, calendar) {
-                    $('#createEventMyCalendar').append($('<option>', {
+                    $('#createCalendarEventMyCalendar').append($('<option>', {
                         value: calendar.id,
                         text: calendar.name
                     }));
@@ -227,16 +227,16 @@ $('#aCreateCalendarEvent').off('click').on('click', function () {
         }
     });
 
-    $('#createEventTaskDialogModal').modal('show');
+    $('#createCalendarEventTaskDialogModal').modal('show');
 
-    $('#createEventAllDayUncheckedStartDate').val(moment().format("YYYY-MM-DD"));
-    $('#createEventAllDayCheckedStartDate').val(moment().format("YYYY-MM-DD"));
+    $('#createCalendarEventAllDayUncheckedStartDate').val(moment().format("YYYY-MM-DD"));
+    $('#createCalendarEventAllDayCheckedStartDate').val(moment().format("YYYY-MM-DD"));
 
-    $('#createEventAllDayUncheckedEndDate').val(moment().format("YYYY-MM-DD"));
-    $('#createEventAllDayCheckedEndDate').val(moment().format("YYYY-MM-DD"));
+    $('#createCalendarEventAllDayUncheckedEndDate').val(moment().format("YYYY-MM-DD"));
+    $('#createCalendarEventAllDayCheckedEndDate').val(moment().format("YYYY-MM-DD"));
 });
 
-$('#createEventAllDay').off('click').on('click', function () {
+$('#createCalendarEventAllDay').off('click').on('click', function () {
     if ($(this).is(':checked')) {
         $("#divCreateEventAllDayUnchecked").hide();
         $("#divCreateEventAllDayChecked").hide();
@@ -257,7 +257,7 @@ $('#createEventAllDay').off('click').on('click', function () {
     }
 });
 
-$('#createEventNotificationAllDayChecked').off('click').on('click', function () {
+$('#createCalendarEventNotificationAllDayChecked').off('click').on('click', function () {
     const timeIntervals = Array.from({ length: 96 }, (_, i) => {
         const hours = String(Math.floor(i / 4)).padStart(2, '0');
         const minutes = String((i % 4) * 15).padStart(2, '0');
@@ -274,19 +274,19 @@ $('#createEventNotificationAllDayChecked').off('click').on('click', function () 
 
     const htmlString = String.raw`
     <div class="divCreateEventNotificationAllDayCheckedRow">
-        <select class='form-control-sm createEventSelNotificationMethodAllDayChecked' style='width:20%;text-overflow:ellipsis;'>
+        <select class='form-control-sm createCalendarEventSelNotificationMethodAllDayChecked' style='width:20%;text-overflow:ellipsis;'>
             <option value='Email'>${localizer.Email}</option>
             <option value='Notification'>${localizer.Notification}</option>
         </select>
 
-        <input type='number' class='form-control-sm createEventSelNotificationNumberAllDayChecked' style='width:10%;text-overflow:ellipsis; background-color:#343a40; color:#fff; border-color:#6c757d;' min="0" max="28">
+        <input type='number' class='form-control-sm createCalendarEventSelNotificationNumberAllDayChecked' style='width:10%;text-overflow:ellipsis; background-color:#343a40; color:#fff; border-color:#6c757d;' min="0" max="28">
 
-        <select class='form-control-sm createEventSelNotificationTimeTypeAllDayChecked' style='width:15%;text-overflow:ellipsis;'>
+        <select class='form-control-sm createCalendarEventSelNotificationTimeTypeAllDayChecked' style='width:15%;text-overflow:ellipsis;'>
             <option value='Days' selected>${localizer.days}</option>
             <option value='Weeks'>${localizer.weeks}</option>
         </select>
         <label style="padding-left:5px;padding-right:5px;">${localizer["before at"]}</label>
-        <select class='form-control-sm createEventSelNotificationTimeAllDayChecked' style='width:11%;text-overflow:ellipsis;'>
+        <select class='form-control-sm createCalendarEventSelNotificationTimeAllDayChecked' style='width:11%;text-overflow:ellipsis;'>
             ${timeIntervals.map(time => time === "09:00" ? `<option value="${time}" selected>${time}</option>` : `<option value="${time}">${time}</option>`).join('')}
         </select>
         <a class='hover aCalendarDeleteNotificationAllDayChecked' href='#' style='width:10%;'>
@@ -301,7 +301,7 @@ $('#createEventNotificationAllDayChecked').off('click').on('click', function () 
     $(htmlString).insertBefore(this);
 });
 
-$('#createEventNotificationAllDayUnchecked').off('click').on('click', function () {
+$('#createCalendarEventNotificationAllDayUnchecked').off('click').on('click', function () {
     const localizer = {
         Email: "Email",
         Notification: "Notification",
@@ -313,14 +313,14 @@ $('#createEventNotificationAllDayUnchecked').off('click').on('click', function (
 
     const htmlString = String.raw`
     <div class="divCreateEventNotificationAllDayUncheckedRow" style="padding-bottom:5px;">
-        <select class='form-control-sm createEventSelNotificationMethodAllDayUnchecked' style='width:20%;text-overflow:ellipsis;'>
+        <select class='form-control-sm createCalendarEventSelNotificationMethodAllDayUnchecked' style='width:20%;text-overflow:ellipsis;'>
             <option value='Email'>${localizer.Email}</option>
             <option value='Notification'>${localizer.Notification}</option>
         </select>
 
-        <input type='number' class='form-control-sm createEventSelNotificationNumberAllDayUnchecked' style='width:10%;text-overflow:ellipsis; background-color:#343a40; color:#fff; border-color:#6c757d;' min="0" max="40320">
+        <input type='number' class='form-control-sm createCalendarEventSelNotificationNumberAllDayUnchecked' style='width:10%;text-overflow:ellipsis; background-color:#343a40; color:#fff; border-color:#6c757d;' min="0" max="40320">
 
-        <select class='form-control-sm createEventSelNotificationTimeTypeAllDayUnchecked' style='width:15%;text-overflow:ellipsis;'>
+        <select class='form-control-sm createCalendarEventSelNotificationTimeTypeAllDayUnchecked' style='width:15%;text-overflow:ellipsis;'>
             <option value='Minutes' selected>${localizer.minutes}</option>
             <option value='Hours'>${localizer.hours}</option>
             <option value='Days'>${localizer.days}</option>

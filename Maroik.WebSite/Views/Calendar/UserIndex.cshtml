@@ -74,7 +74,7 @@
                     </div>
                     <div class="card">
                         <div class="card-header">
-                            <h4 class="card-title">My calendars</h4>
+                            <h4 class="card-title">@localizer["My calendars"]</h4>
                         </div>
                         <div class="card-body">
                             <div id="myCalendars">
@@ -93,7 +93,7 @@
 
                     <div class="card">
                         <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
-                            <h4 class="card-title">Others calendars</h4>
+                            <h4 class="card-title">@localizer["Others calendars"]</h4>
                             <i class="fas fa-plus" id="dropdown-icon" style="cursor: pointer; margin-left: auto;"></i>
                             <div id="dropdown-content" style="display: none; position: absolute; top: 100%; right: 0; background-color: #343a40; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); z-index: 1000;">
                                 <a id="aCreateCalendar" href="#" class="dropdown-item">Create new calendar</a>
@@ -119,21 +119,15 @@
 
                 </div>
             </div>
-            <!-- /.col -->
             <div class="col-md-9">
                 <div class="card card-primary">
                     <div class="card-body p-0">
-                        <!-- THE CALENDAR -->
                         <div id="calendar"></div>
                     </div>
-                    <!-- /.card-body -->
                 </div>
-                <!-- /.card -->
             </div>
-            <!-- /.col -->
         </div>
-        <!-- /.row -->
-    </div><!-- /.container-fluid -->
+    </div>
 </section>
 
 @*<!--createCalendarDialogModal-->*@
@@ -321,34 +315,34 @@
     </div>
 </div>
 
-@*<!--createEventTaskDialogModal-->*@
-<div class="modal fade" tabindex="-1" role="dialog" id="createEventTaskDialogModal">
+@*<!--createCalendarEventTaskDialogModal-->*@
+<div class="modal fade" tabindex="-1" role="dialog" id="createCalendarEventTaskDialogModal">
     <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
-            <div id="createEventTaskTabs">
+            <div id="createCalendarEventTaskTabs">
                 @*<!--Tab EventTask-->*@
                 <ul>
-                    <li><a href="#createEventTaskTabs-1">@localizer["Add Event"].Value</a></li>
+                    <li><a href="#createCalendarEventTaskTabs-1">@localizer["Add Event"].Value</a></li>
                 </ul>
-                @*Tabs-1: Create Event Modal*@
-                <div id="createEventTaskTabs-1">
-                    <form id="formCreateEvent">
+                @*Tabs-1: Create Calendar Event Modal*@
+                <div id="createCalendarEventTaskTabs-1">
+                    <form id="formCreateCalendarEvent">
                         <div class="form-row">
                             <div class="form-group col-md-12 mb-3">
-                                <label for="createEventName">@localizer["Name"].Value</label>
-                                <input class="form-control form-control-sm" type="text" data-val="true" data-val-required="@localizer["Please enter Name"].Value" id="createEventName" name="createEventName" value="">
-                                <span class="field-validation-valid text-danger" data-valmsg-for="createEventName" data-valmsg-replace="true"></span>
+                                <label for="createCalendarEventName">@localizer["Name"].Value</label>
+                                <input class="form-control form-control-sm" type="text" data-val="true" data-val-required="@localizer["Please enter Name"].Value" id="createCalendarEventName" name="createCalendarEventName" value="">
+                                <span class="field-validation-valid text-danger" data-valmsg-for="createCalendarEventName" data-valmsg-replace="true"></span>
                             </div>
                         </div>
                         <div class="form-row">
                             <div class="form-group col-md-6 mb-3">
-                                <label for="createEventAllDay">@localizer["All day"].Value</label>
-                                <input class="form-control form-control-sm" type="checkbox" id="createEventAllDay" name="createEventAllDay" />
+                                <label for="createCalendarEventAllDay">@localizer["All day"].Value</label>
+                                <input class="form-control form-control-sm" type="checkbox" id="createCalendarEventAllDay" name="createCalendarEventAllDay" />
                             </div>
                             <div class="form-group col-md-6 mb-3">
-                                <label for="createEventRepeatCycle">@localizer["Repeat cycle"].Value</label>
+                                <label for="createCalendarEventRepeatCycle">@localizer["Repeat cycle"].Value</label>
                                 <br />
-                                <select id="createEventRepeatCycle" name="createEventRepeatCycle" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
+                                <select id="createCalendarEventRepeatCycle" name="createCalendarEventRepeatCycle" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
                                     <option value="DoesNotRepeat" select>@localizer["Does not repeat"].Value</option>
                                     @*
                                     <option value="Daily">@localizer["Daily"].Value</option>
@@ -363,28 +357,28 @@
                         <div id="divCreateEventAllDayChecked">
                             <div class="form-row">
                                 <div class="form-group col-md-6 mb-3">
-                                    <label for="createEventAllDayCheckedStartDate">@localizer["StartDate"].Value</label>
-                                    <input class="form-control form-control-sm" type="text" data-val="true" data-val-required="@localizer["Please enter StartDate"].Value" id="createEventAllDayCheckedStartDate" name="createEventAllDayCheckedStartDate" value="@(currentDate)" readonly>
-                                    <span class="field-validation-valid text-danger" data-valmsg-for="createEventAllDayCheckedStartDate" data-valmsg-replace="true"></span>
+                                    <label for="createCalendarEventAllDayCheckedStartDate">@localizer["StartDate"].Value</label>
+                                    <input class="form-control form-control-sm" type="text" data-val="true" data-val-required="@localizer["Please enter StartDate"].Value" id="createCalendarEventAllDayCheckedStartDate" name="createCalendarEventAllDayCheckedStartDate" value="@(currentDate)" readonly>
+                                    <span class="field-validation-valid text-danger" data-valmsg-for="createCalendarEventAllDayCheckedStartDate" data-valmsg-replace="true"></span>
                                 </div>
                                 <div class="form-group col-md-6 mb-3">
-                                    <label for="createEventAllDayCheckedEndDate">@localizer["EndDate"].Value</label>
-                                    <input class="form-control form-control-sm" type="text" data-val="true" data-val-required="@localizer["Please enter EndDate"].Value" id="createEventAllDayCheckedEndDate" name="createEventAllDayCheckedEndDate" value="@(currentDate)" readonly>
-                                    <span class="field-validation-valid text-danger" data-valmsg-for="createEventAllDayCheckedEndDate" data-valmsg-replace="true"></span>
+                                    <label for="createCalendarEventAllDayCheckedEndDate">@localizer["EndDate"].Value</label>
+                                    <input class="form-control form-control-sm" type="text" data-val="true" data-val-required="@localizer["Please enter EndDate"].Value" id="createCalendarEventAllDayCheckedEndDate" name="createCalendarEventAllDayCheckedEndDate" value="@(currentDate)" readonly>
+                                    <span class="field-validation-valid text-danger" data-valmsg-for="createCalendarEventAllDayCheckedEndDate" data-valmsg-replace="true"></span>
                                 </div>
                             </div>
                         </div>
                         <div id="divCreateEventAllDayUnchecked">
                             <div class="form-row">
                                 <div class="form-group col-md-6 mb-3">
-                                    <label for="createEventAllDayUncheckedStartDate">@localizer["StartDate"].Value</label>
-                                    <input class="form-control form-control-sm" type="text" data-val="true" data-val-required="@localizer["Please enter StartDate"].Value" id="createEventAllDayUncheckedStartDate" name="createEventAllDayUncheckedStartDate" value="@(currentDate)" readonly>
-                                    <span class="field-validation-valid text-danger" data-valmsg-for="createEventAllDayUncheckedStartDate" data-valmsg-replace="true"></span>
+                                    <label for="createCalendarEventAllDayUncheckedStartDate">@localizer["StartDate"].Value</label>
+                                    <input class="form-control form-control-sm" type="text" data-val="true" data-val-required="@localizer["Please enter StartDate"].Value" id="createCalendarEventAllDayUncheckedStartDate" name="createCalendarEventAllDayUncheckedStartDate" value="@(currentDate)" readonly>
+                                    <span class="field-validation-valid text-danger" data-valmsg-for="createCalendarEventAllDayUncheckedStartDate" data-valmsg-replace="true"></span>
                                 </div>
                                 <div class="form-group col-md-6 mb-3">
-                                    <label for="createEventAllDayUncheckedStartTime">@localizer["StartTime"].Value</label>
+                                    <label for="createCalendarEventAllDayUncheckedStartTime">@localizer["StartTime"].Value</label>
                                     <br />
-                                    <select id="createEventAllDayUncheckedStartTime" name="createEventAllDayUncheckedStartTime" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
+                                    <select id="createCalendarEventAllDayUncheckedStartTime" name="createCalendarEventAllDayUncheckedStartTime" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
                                         @foreach (var time in timeIntervals)
                                         {
                                             if (time == currentInterval)
@@ -401,14 +395,14 @@
                             </div>
                             <div class="form-row">
                                 <div class="form-group col-md-6 mb-3">
-                                    <label for="createEventAllDayUncheckedEndDate">@localizer["EndDate"].Value</label>
-                                    <input class="form-control form-control-sm" type="text" data-val="true" data-val-required="@localizer["Please enter EndDate"].Value" id="createEventAllDayUncheckedEndDate" name="createEventAllDayUncheckedEndDate" value="@(currentDate)" readonly>
-                                    <span class="field-validation-valid text-danger" data-valmsg-for="createEventAllDayUncheckedEndDate" data-valmsg-replace="true"></span>
+                                    <label for="createCalendarEventAllDayUncheckedEndDate">@localizer["EndDate"].Value</label>
+                                    <input class="form-control form-control-sm" type="text" data-val="true" data-val-required="@localizer["Please enter EndDate"].Value" id="createCalendarEventAllDayUncheckedEndDate" name="createCalendarEventAllDayUncheckedEndDate" value="@(currentDate)" readonly>
+                                    <span class="field-validation-valid text-danger" data-valmsg-for="createCalendarEventAllDayUncheckedEndDate" data-valmsg-replace="true"></span>
                                 </div>
                                 <div class="form-group col-md-6 mb-3">
-                                    <label for="createEventAllDayUncheckedEndTime">@localizer["EndTime"].Value</label>
+                                    <label for="createCalendarEventAllDayUncheckedEndTime">@localizer["EndTime"].Value</label>
                                     <br />
-                                    <select id="createEventAllDayUncheckedEndTime" name="createEventAllDayUncheckedEndTime" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
+                                    <select id="createCalendarEventAllDayUncheckedEndTime" name="createCalendarEventAllDayUncheckedEndTime" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
                                         @foreach (var time in timeIntervals)
                                         {
                                             if (time == currentInterval)
@@ -425,8 +419,8 @@
                             </div>
                             <div class="form-row">
                                 <div class="form-group col-md-6 mb-3">
-                                    <label for="createEventAllDayUncheckedStartTimeZone">@localizer["StartTimeZone"].Value</label>
-                                    <select id="createEventAllDayUncheckedStartTimeZone" name="createEventAllDayUncheckedStartTimeZone" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
+                                    <label for="createCalendarEventAllDayUncheckedStartTimeZone">@localizer["StartTimeZone"].Value</label>
+                                    <select id="createCalendarEventAllDayUncheckedStartTimeZone" name="createCalendarEventAllDayUncheckedStartTimeZone" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
                                         @foreach (TimeZoneInfo systemTimeZone in TimeZoneInfo.GetSystemTimeZones())
                                         {
                                             string systemTimeZoneIanaId = string.Empty;
@@ -448,8 +442,8 @@
                                     </select>
                                 </div>
                                 <div class="form-group col-md-6 mb-3">
-                                    <label for="createEventAllDayUncheckedEndTimeZone">@localizer["EndTimeZone"].Value</label>
-                                    <select id="createEventAllDayUncheckedEndTimeZone" name="createEventAllDayUncheckedEndTimeZone" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
+                                    <label for="createCalendarEventAllDayUncheckedEndTimeZone">@localizer["EndTimeZone"].Value</label>
+                                    <select id="createCalendarEventAllDayUncheckedEndTimeZone" name="createCalendarEventAllDayUncheckedEndTimeZone" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
                                         @foreach (TimeZoneInfo systemTimeZone in TimeZoneInfo.GetSystemTimeZones())
                                         {
                                             string systemTimeZoneIanaId = string.Empty;
@@ -475,32 +469,32 @@
 
                         <div class="form-row">
                             <div class="form-group col-md-12 mb-3">
-                                <label for="createEventLocation">@localizer["Location"].Value</label>
-                                <input class="form-control form-control-sm" type="text" data-val="true" data-val-required="@localizer["Please enter Location"].Value" id="createEventLocation" name="createEventLocation" value="">
-                                <span class="field-validation-valid text-danger" data-valmsg-for="createEventLocation" data-valmsg-replace="true"></span>
+                                <label for="createCalendarEventLocation">@localizer["Location"].Value</label>
+                                <input class="form-control form-control-sm" type="text" data-val="true" data-val-required="@localizer["Please enter Location"].Value" id="createCalendarEventLocation" name="createCalendarEventLocation" value="">
+                                <span class="field-validation-valid text-danger" data-valmsg-for="createCalendarEventLocation" data-valmsg-replace="true"></span>
                             </div>
                         </div>
 
                         <div class="form-row">
                             <div class="form-group col-md-12 mb-3">
-                                <label for="createEventDescription">@localizer["Description"].Value</label>
-                                <textarea class="form-control form-control-sm" id="createEventDescription" name="createEventDescription" maxlength="16384"></textarea> @*maxlength: 16KB*@
+                                <label for="createCalendarEventDescription">@localizer["Description"].Value</label>
+                                <textarea class="form-control form-control-sm" id="createCalendarEventDescription" name="createCalendarEventDescription" maxlength="16384"></textarea> @*maxlength: 16KB*@
                             </div>
                         </div>
 
                         <div class="form-row">
                             <div class="form-group col-md-12 mb-3">
-                                <label for="createEventAttachment">@localizer["Attachment (Only zip extension allowed.)"].Value</label>
+                                <label for="createCalendarEventAttachment">@localizer["Attachment (Only zip extension allowed.)"].Value</label>
                                 <br />
-                                <input type="file" id="createEventAttachment" name="createEventAttachment" accept=".zip" data-errorMessage="@localizer["File size must be smaller than 10MB."].Value">
+                                <input type="file" id="createCalendarEventAttachment" name="createCalendarEventAttachment" accept=".zip" data-errorMessage="@localizer["File size must be smaller than 10MB."].Value">
                             </div>
                         </div>
 
                         <div class="form-row">
                             <div class="form-group col-md-6 mb-3">
-                                <label for="createEventMyCalendar">@localizer["My Calendar"].Value</label>
+                                <label for="createCalendarEventMyCalendar">@localizer["My Calendar"].Value</label>
                                 <br />
-                                <select id="createEventMyCalendar" name="createEventMyCalendar" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
+                                <select id="createCalendarEventMyCalendar" name="createCalendarEventMyCalendar" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
                                     @foreach (Calendar calendar in Model.Calendars)
                                     {
                                         <option value="@calendar.Id">@calendar.Name</option>
@@ -508,9 +502,9 @@
                                 </select>
                             </div>
                             <div class="form-group col-md-6 mb-3">
-                                <label for="createEventStatus">@localizer["Status"].Value</label>
+                                <label for="createCalendarEventStatus">@localizer["Status"].Value</label>
                                 <br />
-                                <select id="createEventStatus" name="createEventStatus" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
+                                <select id="createCalendarEventStatus" name="createCalendarEventStatus" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
                                     <option value="Busy" select>@localizer["Busy"].Value</option>
                                     <option value="Free">@localizer["Free"].Value</option>
                                 </select>
@@ -519,24 +513,24 @@
 
                         <div id="divCreateEventNotificationAllDayChecked" class="form-row" style="display:none;">
                             <div class="form-group col-md-12 mb-3">
-                                <label for="createEventNotificationAllDayChecked">@localizer["Notification"].Value</label>
+                                <label for="createCalendarEventNotificationAllDayChecked">@localizer["Notification"].Value</label>
                                 <br />
 
                                 @*
                                 <div class="divCreateEventNotificationAllDayCheckedRow">
-                                    <select class='form-control-sm createEventSelNotificationMethodAllDayChecked' style='width:20%;text-overflow:ellipsis;'>
+                                    <select class='form-control-sm createCalendarEventSelNotificationMethodAllDayChecked' style='width:20%;text-overflow:ellipsis;'>
                                         <option value='Email'>@localizer["Email"].Value</option>
                                         <option value='Notification'>@localizer["Notification"].Value</option>
                                     </select>
 
-                                    <input type='number' class='form-control-sm createEventSelNotificationNumberAllDayChecked' style='width:10%;text-overflow:ellipsis; background-color:#343a40; color:#fff; border-color:#6c757d;' min="0" max="28">
+                                    <input type='number' class='form-control-sm createCalendarEventSelNotificationNumberAllDayChecked' style='width:10%;text-overflow:ellipsis; background-color:#343a40; color:#fff; border-color:#6c757d;' min="0" max="28">
 
-                                    <select class='form-control-sm createEventSelNotificationTimeTypeAllDayChecked' style='width:15%;text-overflow:ellipsis;'>
+                                    <select class='form-control-sm createCalendarEventSelNotificationTimeTypeAllDayChecked' style='width:15%;text-overflow:ellipsis;'>
                                         <option value='Days' selected>@localizer["days"].Value</option>
                                         <option value='Weeks'>@localizer["weeks"].Value</option>
                                     </select>
                                     <label style="padding-left:5px;padding-right:5px;">@localizer["before at"].Value</label>
-                                    <select class='form-control-sm createEventSelNotificationTimeAllDayChecked' style='width:11%;text-overflow:ellipsis;'>
+                                    <select class='form-control-sm createCalendarEventSelNotificationTimeAllDayChecked' style='width:11%;text-overflow:ellipsis;'>
                                         @foreach (var time in timeIntervals)
                                         {
                                             if (time == "09:00") // Default time
@@ -559,25 +553,25 @@
                                 </div>
                                 *@
 
-                                <input style="margin-top:20px;" class="btn btn-primary" type="button" id="createEventNotificationAllDayChecked" name="createEventNotificationAllDayChecked" value="@localizer["Add notification"].Value">
+                                <input style="margin-top:20px;" class="btn btn-primary" type="button" id="createCalendarEventNotificationAllDayChecked" name="createCalendarEventNotificationAllDayChecked" value="@localizer["Add notification"].Value">
                             </div>
                         </div>
 
                         <div id="divCreateEventNotificationAllDayUnchecked" class="form-row" style="display:none;">
                             <div class="form-group col-md-12 mb-3">
-                                <label for="createEventNotificationAllDayUnchecked">@localizer["Notification"].Value</label>
+                                <label for="createCalendarEventNotificationAllDayUnchecked">@localizer["Notification"].Value</label>
                                 <br />
 
                                 @*
                                 <div class="divCreateEventNotificationAllDayUncheckedRow" style="padding-bottom:5px;">
-                                    <select class='form-control-sm createEventSelNotificationMethodAllDayUnchecked' style='width:20%;text-overflow:ellipsis;'>
+                                    <select class='form-control-sm createCalendarEventSelNotificationMethodAllDayUnchecked' style='width:20%;text-overflow:ellipsis;'>
                                         <option value='Email'>@localizer["Email"].Value</option>
                                         <option value='Notification'>@localizer["Notification"].Value</option>
                                     </select>
 
-                                    <input type='number' class='form-control-sm createEventSelNotificationNumberAllDayUnchecked' style='width:10%;text-overflow:ellipsis; background-color:#343a40; color:#fff; border-color:#6c757d;' min="0" max="40320">
+                                    <input type='number' class='form-control-sm createCalendarEventSelNotificationNumberAllDayUnchecked' style='width:10%;text-overflow:ellipsis; background-color:#343a40; color:#fff; border-color:#6c757d;' min="0" max="40320">
 
-                                    <select class='form-control-sm createEventSelNotificationTimeTypeAllDayUnchecked' style='width:15%;text-overflow:ellipsis;'>
+                                    <select class='form-control-sm createCalendarEventSelNotificationTimeTypeAllDayUnchecked' style='width:15%;text-overflow:ellipsis;'>
                                         <option value='Minutes' selected>@localizer["minutes"].Value</option>
                                         <option value='Hours'>@localizer["hours"].Value</option>
                                         <option value='Days'>@localizer["days"].Value</option>
@@ -593,7 +587,7 @@
                                 </div>
                                 *@
 
-                                <input style="margin-top:20px;" class="btn btn-primary" type="button" id="createEventNotificationAllDayUnchecked" name="createEventNotificationAllDayUnchecked" value="@localizer["Add notification"].Value">
+                                <input style="margin-top:20px;" class="btn btn-primary" type="button" id="createCalendarEventNotificationAllDayUnchecked" name="createCalendarEventNotificationAllDayUnchecked" value="@localizer["Add notification"].Value">
                             </div>
                         </div>
 

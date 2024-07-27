@@ -3,7 +3,24 @@
 
 // Write your JavaScript code.
 
-$('#createEventDescription').summernote({
+let createCalendarEventUploadedFile;
+
+function CreateCalendarEventUploadedFile(obj, errorMessage) {
+    if (obj.files[0].size > 10485760) {
+        alert(errorMessage);
+        document.getElementById("createCalendarEventAttachment").value = "";
+        return false;
+    }
+    else {
+        createCalendarEventUploadedFile = obj.files[0];
+    }
+}
+
+$('#createCalendarEventAttachment').off('change').on('change', function () {
+    return CreateCalendarEventUploadedFile(this, $(this).attr('data-errorMessage'));
+});
+
+$('#createCalendarEventDescription').summernote({
     //height: 300,
     callbacks: {
         onImageUpload: function (files) {
@@ -30,9 +47,9 @@ $.datepicker.setDefaults({
 $(function () {
     $("#createCalendarTabs").tabs();
     $("#editCalendarTabs").tabs();
-    $("#createEventTaskTabs").tabs();
+    $("#createCalendarEventTaskTabs").tabs();
     //$("#editExpenditureTabs").tabs();
-    $("#createEventAllDayUncheckedStartDate").datepicker({
+    $("#createCalendarEventAllDayUncheckedStartDate").datepicker({
         showButtonPanel: true,
         beforeShow: function (input) {
             setTimeout(function () {
@@ -46,15 +63,15 @@ $(function () {
         },
         onSelect: function (selectedDate) {
             let startDate = $(this).datepicker('getDate');
-            let endDate = $("#createEventAllDayUncheckedEndDate").datepicker('getDate');
+            let endDate = $("#createCalendarEventAllDayUncheckedEndDate").datepicker('getDate');
             if (endDate && endDate < startDate) {
-                $("#createEventAllDayUncheckedEndDate").datepicker('setDate', startDate);
+                $("#createCalendarEventAllDayUncheckedEndDate").datepicker('setDate', startDate);
             }
-            $("#createEventAllDayUncheckedEndDate").datepicker('option', 'minDate', startDate);
+            $("#createCalendarEventAllDayUncheckedEndDate").datepicker('option', 'minDate', startDate);
         }
     });
 
-    $("#createEventAllDayUncheckedEndDate").datepicker({
+    $("#createCalendarEventAllDayUncheckedEndDate").datepicker({
         showButtonPanel: true,
         beforeShow: function (input) {
             setTimeout(function () {
@@ -68,14 +85,14 @@ $(function () {
         },
         onSelect: function (selectedDate) {
             let endDate = $(this).datepicker('getDate');
-            let startDate = $("#createEventAllDayUncheckedStartDate").datepicker('getDate');
+            let startDate = $("#createCalendarEventAllDayUncheckedStartDate").datepicker('getDate');
             if (startDate && endDate < startDate) {
                 $(this).datepicker('setDate', startDate);
             }
         }
     });
 
-    $("#createEventAllDayCheckedStartDate").datepicker({
+    $("#createCalendarEventAllDayCheckedStartDate").datepicker({
         showButtonPanel: true,
         beforeShow: function (input) {
             setTimeout(function () {
@@ -89,15 +106,15 @@ $(function () {
         },
         onSelect: function (selectedDate) {
             let startDate = $(this).datepicker('getDate');
-            let endDate = $("#createEventAllDayCheckedEndDate").datepicker('getDate');
+            let endDate = $("#createCalendarEventAllDayCheckedEndDate").datepicker('getDate');
             if (endDate && endDate < startDate) {
-                $("#createEventAllDayCheckedEndDate").datepicker('setDate', startDate);
+                $("#createCalendarEventAllDayCheckedEndDate").datepicker('setDate', startDate);
             }
-            $("#createEventAllDayCheckedEndDate").datepicker('option', 'minDate', startDate);
+            $("#createCalendarEventAllDayCheckedEndDate").datepicker('option', 'minDate', startDate);
         }
     });
 
-    $("#createEventAllDayCheckedEndDate").datepicker({
+    $("#createCalendarEventAllDayCheckedEndDate").datepicker({
         showButtonPanel: true,
         beforeShow: function (input) {
             setTimeout(function () {
@@ -111,7 +128,7 @@ $(function () {
         },
         onSelect: function (selectedDate) {
             let endDate = $(this).datepicker('getDate');
-            let startDate = $("#createEventAllDayCheckedStartDate").datepicker('getDate');
+            let startDate = $("#createCalendarEventAllDayCheckedStartDate").datepicker('getDate');
             if (startDate && endDate < startDate) {
                 $(this).datepicker('setDate', startDate);
             }
@@ -135,7 +152,7 @@ $(function () {
     $('<style type="text/css"> .ui-datepicker-close { display: none; } </style>').appendTo("head");
     $('<style type="text/css"> .ui-datepicker-current { display: none; } </style>').appendTo("head");
 
-    if ($("#createEventAllDay").is(':checked')) {
+    if ($("#createCalendarEventAllDay").is(':checked')) {
         $("#divCreateEventAllDayUnchecked").hide();
         $("#divCreateEventAllDayChecked").hide();
         $("#divCreateEventAllDayChecked").show();
@@ -301,13 +318,13 @@ $(function () {
             //let aaa = $('#calendarEventModel').val();
             //let bbb = JSON.parse($('#calendarEventModel').val());
 
-            $('#createEventTaskDialogModal').modal('show');
+            $('#createCalendarEventTaskDialogModal').modal('show');
 
-            $('#createEventAllDayUncheckedStartDate').val(moment.utc(arg.start).add('days', 1).format("YYYY-MM-DD"));
-            $('#createEventAllDayCheckedStartDate').val(moment.utc(arg.start).add('days', 1).format("YYYY-MM-DD"));
+            $('#createCalendarEventAllDayUncheckedStartDate').val(moment.utc(arg.start).add('days', 1).format("YYYY-MM-DD"));
+            $('#createCalendarEventAllDayCheckedStartDate').val(moment.utc(arg.start).add('days', 1).format("YYYY-MM-DD"));
 
-            $('#createEventAllDayUncheckedEndDate').val(moment.utc(arg.end).format("YYYY-MM-DD"));
-            $('#createEventAllDayCheckedEndDate').val(moment.utc(arg.end).format("YYYY-MM-DD"));
+            $('#createCalendarEventAllDayUncheckedEndDate').val(moment.utc(arg.end).format("YYYY-MM-DD"));
+            $('#createCalendarEventAllDayCheckedEndDate').val(moment.utc(arg.end).format("YYYY-MM-DD"));
 
             calendar.unselect();
         },
@@ -371,9 +388,9 @@ $(function () {
     })
 
     function ValidateInputAllDayChecked(row) {
-        let numberInput = row.find('.createEventSelNotificationNumberAllDayChecked');
+        let numberInput = row.find('.createCalendarEventSelNotificationNumberAllDayChecked');
         let value = numberInput.val().trim();
-        let timeType = row.find('.createEventSelNotificationTimeTypeAllDayChecked').val();
+        let timeType = row.find('.createCalendarEventSelNotificationTimeTypeAllDayChecked').val();
         let isValid = true;
         let errorMessage = '';
 
@@ -411,9 +428,9 @@ $(function () {
     }
 
     function ValidateInputAllDayUnchecked(row) {
-        let numberInput = row.find('.createEventSelNotificationNumberAllDayUnchecked');
+        let numberInput = row.find('.createCalendarEventSelNotificationNumberAllDayUnchecked');
         let value = numberInput.val().trim();
-        let timeType = row.find('.createEventSelNotificationTimeTypeAllDayUnchecked').val();
+        let timeType = row.find('.createCalendarEventSelNotificationTimeTypeAllDayUnchecked').val();
         let isValid = true;
         let errorMessage = '';
 
@@ -462,36 +479,36 @@ $(function () {
         return isValid;
     }
 
-    $(document).on('change', '.createEventSelNotificationTimeTypeAllDayChecked', function () {
+    $(document).on('change', '.createCalendarEventSelNotificationTimeTypeAllDayChecked', function () {
         let row = $(this).closest('.divCreateEventNotificationAllDayCheckedRow');
         ValidateInputAllDayChecked(row);
         row.find('.error-message').hide();
     });
 
-    $(document).on('input', '.createEventSelNotificationNumberAllDayChecked', function () {
+    $(document).on('input', '.createCalendarEventSelNotificationNumberAllDayChecked', function () {
         let row = $(this).closest('.divCreateEventNotificationAllDayCheckedRow');
         ValidateInputAllDayChecked(row);
         row.find('.error-message').hide();
     });
 
-    $(document).on('change', '.createEventSelNotificationTimeTypeAllDayUnchecked', function () {
+    $(document).on('change', '.createCalendarEventSelNotificationTimeTypeAllDayUnchecked', function () {
         let row = $(this).closest('.divCreateEventNotificationAllDayUncheckedRow');
         ValidateInputAllDayUnchecked(row);
         row.find('.error-message').hide();
     });
 
-    $(document).on('input', '.createEventSelNotificationNumberAllDayUnchecked', function () {
+    $(document).on('input', '.createCalendarEventSelNotificationNumberAllDayUnchecked', function () {
         let row = $(this).closest('.divCreateEventNotificationAllDayUncheckedRow');
         ValidateInputAllDayUnchecked(row);
         row.find('.error-message').hide();
     });
 
-    $('#formCreateEvent').off('submit').on('submit', function (event) {
+    $('#formCreateCalendarEvent').off('submit').on('submit', function (event) {
         event.preventDefault();
 
         let isValidForm = true;
 
-        if ($('#createEventAllDay').is(':checked')) {
+        if ($('#createCalendarEventAllDay').is(':checked')) {
             $('.divCreateEventNotificationAllDayCheckedRow').each(function () {
                 let isValidRow = ValidateInputAllDayChecked($(this));
                 isValidForm = isValidForm && isValidRow;
@@ -504,11 +521,116 @@ $(function () {
             });
         }
 
-        if (!$('#formCreateEvent').valid() && !isValidForm) {
+        if (!$('#formCreateCalendarEvent').valid() && !isValidForm) {
             return false;
         }
 
+        let calendarEventName = $('#createCalendarEventName').val();
+        let allDay = $('#createCalendarEventAllDay').is(':checked');
 
+        let startDate;
+        let endDate;
+
+        if ($('#createCalendarEventAllDay').is(':checked')) {
+            startDate = $('#createCalendarEventAllDayCheckedStartDate').val();
+            endDate = $('#createCalendarEventAllDayCheckedEndDate').val();
+        }
+        else {
+            startDate = $('#createCalendarEventAllDayUncheckedStartDate').val() + ' ' + $('#createCalendarEventAllDayUncheckedStartTime').val();
+            endDate = $('#createCalendarEventAllDayUncheckedEndDate').val() + ' ' + $('#createCalendarEventAllDayUncheckedEndTime').val();
+        }
+
+        let startDateTimeZoneIanaId;
+        let endDateTimeZoneIanaId;
+
+        if ($('#createCalendarEventAllDay').is(':checked')) {
+            startDateTimeZoneIanaId = '';
+            endDateTimeZoneIanaId = '';
+        }
+        else {
+            startDateTimeZoneIanaId = $('#createCalendarEventAllDayUncheckedStartTimeZone').val();
+            endDateTimeZoneIanaId = $('#createCalendarEventAllDayUncheckedEndTimeZone').val();
+        }
+
+        let location = $('#createCalendarEventLocation').val();
+        let description = $('#createCalendarEventDescription').val();
+
+        let calendarId = $('#createCalendarEventMyCalendar').val();
+        let status = $('#createCalendarEventStatus').val();
+
+        let calendarReminders = [];
+
+        if ($('#createCalendarEventAllDay').is(':checked')) {
+            $('.divCreateEventNotificationAllDayCheckedRow').each(function (index, value) {
+                let method = $(this).find('.createCalendarEventSelNotificationMethodAllDayChecked').val();
+                let number = $(this).find('.createCalendarEventSelNotificationNumberAllDayChecked').val();
+                let timeType = $(this).find('.createCalendarEventSelNotificationTimeTypeAllDayChecked').val();
+                let time = $(this).find('.createCalendarEventSelNotificationTimeAllDayChecked').val();
+
+                if (timeType === "Days") {
+                    calendarReminders.push({
+                        Method: method,
+                        MinutesBeforeEvent: null,
+                        HoursBeforeEvent: null,
+                        DaysBeforeEvent: number,
+                        WeeksBeforeEvent: null,
+                        TimesBeforeEvent: time 
+                    });
+                }
+                else if (timeType === "Weeks") {
+                    calendarReminders.push({
+                        Method: method,
+                        MinutesBeforeEvent: null,
+                        HoursBeforeEvent: null,
+                        DaysBeforeEvent: null,
+                        WeeksBeforeEvent: number,
+                        TimesBeforeEvent: time
+                    });
+                }
+            });
+        }
+        else {
+        }
+
+        let formData = new FormData();
+        formData.append('Title', calendarEventName);
+        formData.append('AllDay', allDay);
+
+        formData.append('StartDate', startDate);
+        formData.append('EndDate', endDate);
+
+        formData.append('StartDateTimeZoneIanaId', startDateTimeZoneIanaId);
+        formData.append('EndDateTimeZoneIanaId', endDateTimeZoneIanaId);
+
+        formData.append('Location', location);
+        formData.append('Description', description);
+
+        formData.append('CalendarEventUploadedFile', createCalendarEventUploadedFile);
+
+        formData.append('CalendarId', calendarId);
+        formData.append('Status', status);
+
+        formData.append('SerializedCalendarReminders', JSON.stringify(calendarReminders));
+
+        $.ajax({
+            url: '/Calendar/CreateCalendarEvent',
+            type: 'POST',
+            headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
+            dataType: 'json',
+            data: formData,
+            contentType: false,
+            processData: false,
+            success: function (data) {
+                if (data.result) {
+                    toastr.success(data.message);
+                }
+                else {
+                    toastr.error(data.error);
+                }
+            }
+        });
+
+        return false;
 
     });
 });
