@@ -590,6 +590,50 @@ $(function () {
             });
         }
         else {
+            $('.divCreateEventNotificationAllDayUncheckedRow').each(function (index, value) {
+                let method = $(this).find('.createCalendarEventSelNotificationMethodAllDayUnchecked').val();
+                let number = $(this).find('.createCalendarEventSelNotificationNumberAllDayUnchecked').val();
+                let timeType = $(this).find('.createCalendarEventSelNotificationTimeTypeAllDayUnchecked').val();
+
+                if (timeType === "Minutes") {
+                    calendarReminders.push({
+                        Method: method,
+                        MinutesBeforeEvent: number,
+                        HoursBeforeEvent: null,
+                        DaysBeforeEvent: null,
+                        WeeksBeforeEvent: null,
+                        TimesBeforeEvent: null
+                    });
+                }
+                else if (timeType === "Hours") {
+                    calendarReminders.push({
+                        Method: method,
+                        MinutesBeforeEvent: null,
+                        HoursBeforeEvent: number,
+                        DaysBeforeEvent: null,
+                        WeeksBeforeEvent: null,
+                        TimesBeforeEvent: null
+                    });
+                } else if (timeType === "Days") {
+                    calendarReminders.push({
+                        Method: method,
+                        MinutesBeforeEvent: null,
+                        HoursBeforeEvent: null,
+                        DaysBeforeEvent: number,
+                        WeeksBeforeEvent: null,
+                        TimesBeforeEvent: null
+                    });
+                } else if (timeType === "Weeks") {
+                    calendarReminders.push({
+                        Method: method,
+                        MinutesBeforeEvent: null,
+                        HoursBeforeEvent: null,
+                        DaysBeforeEvent: null,
+                        WeeksBeforeEvent: number,
+                        TimesBeforeEvent: null
+                    });
+                }
+            });
         }
 
         let formData = new FormData();

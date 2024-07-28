@@ -116,20 +116,142 @@ namespace Maroik.WebSite.Controllers
                     {
                         _ = HttpContext.Session.TryGetValue(Maroik.Common.Miscellaneous.Extensions.EnumHelper.GetDescription(Maroik.Common.Miscellaneous.Utilities.Session.Account), out byte[] resultByte);
 
-                        List<Dictionary<string, object>> calendarReminders = JsonConvert.DeserializeObject<List<Dictionary<string, object>>>(calendarEventInputViewModel.SerializedCalendarReminders);
+                        Account loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte));
 
-                        foreach (var reminder in calendarReminders)
+                        Calendar tempCalendarToValidate = (await _calendarRepository.GetCalendarsAsync(loginedAccount.Email)).Where(x => x.Id == calendarEventInputViewModel?.CalendarId).FirstOrDefault();
+
+                        if (tempCalendarToValidate is null)
                         {
-                            string method = reminder["Method"].ToString();
-                            int? minutesBeforeEvent = reminder["MinutesBeforeEvent"] != null ? (int?)Convert.ToInt32(reminder["MinutesBeforeEvent"]) : null;
-                            int? hoursBeforeEvent = reminder["HoursBeforeEvent"] != null ? (int?)Convert.ToInt32(reminder["HoursBeforeEvent"]) : null;
-                            int? daysBeforeEvent = reminder["DaysBeforeEvent"] != null ? (int?)Convert.ToInt32(reminder["DaysBeforeEvent"]) : null;
-                            int? weeksBeforeEvent = reminder["WeeksBeforeEvent"] != null ? (int?)Convert.ToInt32(reminder["WeeksBeforeEvent"]) : null;
-                            string timesBeforeEvent = reminder["TimesBeforeEvent"].ToString();
-
-                            // Your logic to handle each reminder
+                            return Json(new { result = false, error = _localizer["The calendar does not exists."].Value });
                         }
 
+
+                        #region CalendarEvent
+                        CalendarEvent calendarEvent = new CalendarEvent();
+
+                        if (calendarEventInputViewModel.AllDay)
+                        {
+                            DateTime tempStartDate = new DateTime(Convert.ToInt32(calendarEventInputViewModel.StartDate.Split("-")[0]), 
+                                Convert.ToInt32(calendarEventInputViewModel.StartDate.Split("-")[1]), 
+                                Convert.ToInt32(calendarEventInputViewModel.StartDate.Split("-")[2]), 0, 0, 0, DateTimeKind.Utc);
+
+                            DateTime tempEndDate = new DateTime(Convert.ToInt32(calendarEventInputViewModel.EndDate.Split("-")[0]),
+                                Convert.ToInt32(calendarEventInputViewModel.EndDate.Split("-")[1]),
+                                Convert.ToInt32(calendarEventInputViewModel.EndDate.Split("-")[2]), 0, 0, 0, DateTimeKind.Utc);
+
+                            calendarEvent.CalendarId = calendarEventInputViewModel.CalendarId;
+                            calendarEvent.Title = calendarEventInputViewModel.Title;
+                            calendarEvent.Description = calendarEventInputViewModel.Description;
+                            calendarEvent.AllDay = calendarEventInputViewModel.AllDay;
+                            calendarEvent.StartDate = tempStartDate;
+                            calendarEvent.EndDate = tempEndDate;
+                            calendarEvent.StartDateTimeZoneIanaId = null;
+                            calendarEvent.EndDateTimeZoneIanaId = null;
+                            calendarEvent.Location = calendarEventInputViewModel.Location;
+                            calendarEvent.Status = calendarEventInputViewModel.Status;
+                            //calendarEvent.RecurrenceId = 0;
+                            calendarEvent.Created = DateTime.UtcNow;
+                            calendarEvent.Updated = DateTime.UtcNow;
+
+                        }
+                        else
+                        {
+                            string[] temporaryStartDate = calendarEventInputViewModel.StartDate.Split(" ");
+                            string[] temporaryEndDate = calendarEventInputViewModel.EndDate.Split(" ");
+
+                            DateTime tempStartDate = new DateTime(Convert.ToInt32(temporaryStartDate[0].Split("-")[0]),
+                                Convert.ToInt32(temporaryStartDate[0].Split("-")[1]),
+                                Convert.ToInt32(temporaryStartDate[0].Split("-")[2]),
+                                Convert.ToInt32(temporaryStartDate[1].Split(":")[0]),
+                                Convert.ToInt32(temporaryStartDate[1].Split(":")[1]), 
+                                0, DateTimeKind.Unspecified);
+
+                            DateTime tempEndDate = new DateTime(Convert.ToInt32(temporaryEndDate[0].Split("-")[0]),
+                                Convert.ToInt32(temporaryEndDate[0].Split("-")[1]),
+                                Convert.ToInt32(temporaryEndDate[0].Split("-")[2]),
+                                Convert.ToInt32(temporaryStartDate[1].Split(":")[0]),
+                                Convert.ToInt32(temporaryStartDate[1].Split(":")[1]), 
+                                0, DateTimeKind.Unspecified);
+
+                            foreach (TimeZoneInfo systemTimeZone in TimeZoneInfo.GetSystemTimeZones())
+                            {
+                                string systemTimeZoneIanaId = string.Empty;
+
+                                if (systemTimeZone.HasIanaId)
+                                {
+                                    systemTimeZoneIanaId = systemTimeZone.Id;
+                                }
+                                else if (TimeZoneInfo.TryConvertWindowsIdToIanaId(systemTimeZone.Id, out string ianaId))
+                                {
+                                    systemTimeZoneIanaId = ianaId;
+                                }
+
+                                if (string.IsNullOrEmpty(systemTimeZoneIanaId))
+                                {
+                                    continue;
+                                }
+                                else if (systemTimeZoneIanaId == calendarEventInputViewModel.StartDateTimeZoneIanaId)
+                                {
+                                    tempStartDate = TimeZoneInfo.ConvertTime(tempStartDate, systemTimeZone, TimeZoneInfo.Utc);
+                                    break;
+                                }
+                            }
+
+                            foreach (TimeZoneInfo systemTimeZone in TimeZoneInfo.GetSystemTimeZones())
+                            {
+                                string systemTimeZoneIanaId = string.Empty;
+
+                                if (systemTimeZone.HasIanaId)
+                                {
+                                    systemTimeZoneIanaId = systemTimeZone.Id;
+                                }
+                                else if (TimeZoneInfo.TryConvertWindowsIdToIanaId(systemTimeZone.Id, out string ianaId))
+                                {
+                                    systemTimeZoneIanaId = ianaId;
+                                }
+
+                                if (string.IsNullOrEmpty(systemTimeZoneIanaId))
+                                {
+                                    continue;
+                                }
+                                else if (systemTimeZoneIanaId == calendarEventInputViewModel.EndDateTimeZoneIanaId)
+                                {
+                                    tempEndDate = TimeZoneInfo.ConvertTime(tempEndDate, systemTimeZone, TimeZoneInfo.Utc);
+                                    break;
+                                }
+                            }
+
+                            calendarEvent.CalendarId = calendarEventInputViewModel.CalendarId;
+                            calendarEvent.Title = calendarEventInputViewModel.Title;
+                            calendarEvent.Description = calendarEventInputViewModel.Description;
+                            calendarEvent.AllDay = calendarEventInputViewModel.AllDay;
+                            calendarEvent.StartDate = tempStartDate;
+                            calendarEvent.EndDate = tempEndDate;
+                            calendarEvent.StartDateTimeZoneIanaId = calendarEventInputViewModel.StartDateTimeZoneIanaId;
+                            calendarEvent.EndDateTimeZoneIanaId = calendarEventInputViewModel.EndDateTimeZoneIanaId;
+                            calendarEvent.Location = calendarEventInputViewModel.Location;
+                            calendarEvent.Status = calendarEventInputViewModel.Status;
+                            //calendarEvent.RecurrenceId = 0;
+                            calendarEvent.Created = DateTime.UtcNow;
+                            calendarEvent.Updated = DateTime.UtcNow;
+                        }
+
+
+                        #endregion
+
+                        //List<Dictionary<string, object>> calendarReminders = JsonConvert.DeserializeObject<List<Dictionary<string, object>>>(calendarEventInputViewModel.SerializedCalendarReminders);
+
+                        //foreach (var reminder in calendarReminders)
+                        //{
+                        //    string method = reminder["Method"].ToString();
+                        //    int? minutesBeforeEvent = reminder["MinutesBeforeEvent"] != null ? (int?)Convert.ToInt32(reminder["MinutesBeforeEvent"]) : null;
+                        //    int? hoursBeforeEvent = reminder["HoursBeforeEvent"] != null ? (int?)Convert.ToInt32(reminder["HoursBeforeEvent"]) : null;
+                        //    int? daysBeforeEvent = reminder["DaysBeforeEvent"] != null ? (int?)Convert.ToInt32(reminder["DaysBeforeEvent"]) : null;
+                        //    int? weeksBeforeEvent = reminder["WeeksBeforeEvent"] != null ? (int?)Convert.ToInt32(reminder["WeeksBeforeEvent"]) : null;
+                        //    string timesBeforeEvent = reminder["TimesBeforeEvent"].ToString();
+
+                        //    // Your logic to handle each reminder
+                        //}
 
                         //Calendar tempCalendar = calendarInputViewModel?.Calendars?.FirstOrDefault() ?? new Calendar();
                         //tempCalendar.AccountEmail = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email;
