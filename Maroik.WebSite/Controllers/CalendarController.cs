@@ -25,9 +25,10 @@ namespace Maroik.WebSite.Controllers
         private readonly IAssetRepository _assetRepository;
         private readonly IAccountRepository _accountRepository;
         private readonly ICalendarRepository _calendarRepository;
+        private readonly ICalendarEventRepository _calendarEventRepository;
         private readonly IHostEnvironment _hostEnvironment;
 
-        public CalendarController(IHtmlLocalizer<CalendarController> localizer, ILogger<CalendarController> logger, IHostEnvironment hostEnvironment, IIncomeRepository incomeRepository, IExpenditureRepository expenditureRepository, IAssetRepository assetRepository, IAccountRepository accountRepository, ICalendarRepository calendarRepository)
+        public CalendarController(IHtmlLocalizer<CalendarController> localizer, ILogger<CalendarController> logger, IHostEnvironment hostEnvironment, IIncomeRepository incomeRepository, IExpenditureRepository expenditureRepository, IAssetRepository assetRepository, IAccountRepository accountRepository, ICalendarRepository calendarRepository, ICalendarEventRepository calendarEventRepository)
         {
             _localizer = localizer;
             _logger = logger;
@@ -37,6 +38,7 @@ namespace Maroik.WebSite.Controllers
             _assetRepository = assetRepository;
             _accountRepository = accountRepository;
             _calendarRepository = calendarRepository;
+            _calendarEventRepository = calendarEventRepository;
         }
 
         #region Admin
@@ -124,7 +126,6 @@ namespace Maroik.WebSite.Controllers
                         {
                             return Json(new { result = false, error = _localizer["The calendar does not exists."].Value });
                         }
-
 
                         #region CalendarEvent
                         CalendarEvent calendarEvent = new CalendarEvent();
@@ -236,7 +237,7 @@ namespace Maroik.WebSite.Controllers
                             calendarEvent.Updated = DateTime.UtcNow;
                         }
 
-
+                        await _calendarEventRepository.CreateCalendarEventAsync(calendarEvent);
                         #endregion
 
                         //List<Dictionary<string, object>> calendarReminders = JsonConvert.DeserializeObject<List<Dictionary<string, object>>>(calendarEventInputViewModel.SerializedCalendarReminders);
