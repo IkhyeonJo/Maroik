@@ -170,8 +170,8 @@ namespace Maroik.WebSite.Controllers
                             DateTime tempEndDate = new DateTime(Convert.ToInt32(temporaryEndDate[0].Split("-")[0]),
                                 Convert.ToInt32(temporaryEndDate[0].Split("-")[1]),
                                 Convert.ToInt32(temporaryEndDate[0].Split("-")[2]),
-                                Convert.ToInt32(temporaryStartDate[1].Split(":")[0]),
-                                Convert.ToInt32(temporaryStartDate[1].Split(":")[1]), 
+                                Convert.ToInt32(temporaryEndDate[1].Split(":")[0]),
+                                Convert.ToInt32(temporaryEndDate[1].Split(":")[1]), 
                                 0, DateTimeKind.Unspecified);
 
                             foreach (TimeZoneInfo systemTimeZone in TimeZoneInfo.GetSystemTimeZones())
