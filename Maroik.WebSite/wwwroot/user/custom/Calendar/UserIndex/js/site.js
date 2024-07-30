@@ -279,7 +279,7 @@ $('#createCalendarEventNotificationAllDayChecked').off('click').on('click', func
             <option value='Notification'>${localizer.Notification}</option>
         </select>
 
-        <input type='number' class='form-control-sm createCalendarEventSelNotificationNumberAllDayChecked' style='width:10%;text-overflow:ellipsis; background-color:#343a40; color:#fff; border-color:#6c757d;' min="0" max="28">
+        <input type='number' class='form-control-sm createCalendarEventSelNotificationNumberAllDayChecked' style='width:20%;text-overflow:ellipsis; background-color:#343a40; color:#fff; border-color:#6c757d;' min="0" max="28">
 
         <select class='form-control-sm createCalendarEventSelNotificationTimeTypeAllDayChecked' style='width:15%;text-overflow:ellipsis;'>
             <option value='Days' selected>${localizer.days}</option>
@@ -318,7 +318,7 @@ $('#createCalendarEventNotificationAllDayUnchecked').off('click').on('click', fu
             <option value='Notification'>${localizer.Notification}</option>
         </select>
 
-        <input type='number' class='form-control-sm createCalendarEventSelNotificationNumberAllDayUnchecked' style='width:10%;text-overflow:ellipsis; background-color:#343a40; color:#fff; border-color:#6c757d;' min="0" max="40320">
+        <input type='number' class='form-control-sm createCalendarEventSelNotificationNumberAllDayUnchecked' style='width:20%;text-overflow:ellipsis; background-color:#343a40; color:#fff; border-color:#6c757d;' min="0" max="40320">
 
         <select class='form-control-sm createCalendarEventSelNotificationTimeTypeAllDayUnchecked' style='width:15%;text-overflow:ellipsis;'>
             <option value='Minutes' selected>${localizer.minutes}</option>

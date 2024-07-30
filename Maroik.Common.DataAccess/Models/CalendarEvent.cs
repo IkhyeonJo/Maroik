@@ -82,7 +82,7 @@ public partial class CalendarEvent
 
     public virtual ICollection<CalendarEventAttachedFile> CalendarEventAttachedFiles { get; set; } = new List<CalendarEventAttachedFile>();
 
-    public virtual ICollection<CalendarReminder> CalendarReminders { get; set; } = new List<CalendarReminder>();
+    public virtual ICollection<CalendarEventReminder> CalendarEventReminders { get; set; } = new List<CalendarEventReminder>();
 
     public virtual CalendarRecurrence Recurrence { get; set; }
 }

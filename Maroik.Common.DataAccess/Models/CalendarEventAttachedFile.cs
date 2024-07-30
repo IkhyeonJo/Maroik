@@ -37,15 +37,5 @@ public partial class CalendarEventAttachedFile
     /// </summary>
     public string Path { get; set; }
 
-    /// <summary>
-    /// 생성일
-    /// </summary>
-    public DateTime Created { get; set; }
-
-    /// <summary>
-    /// 업데이트일
-    /// </summary>
-    public DateTime Updated { get; set; }
-
     public virtual CalendarEvent CalendarEvent { get; set; }
 }

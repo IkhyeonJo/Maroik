@@ -33,7 +33,7 @@ namespace Maroik.Common.DataAccess.Data
 
         public virtual DbSet<CalendarRecurrence> CalendarRecurrences { get; set; }
 
-        public virtual DbSet<CalendarReminder> CalendarReminders { get; set; }
+        public virtual DbSet<CalendarEventReminder> CalendarReminders { get; set; }
 
         public virtual DbSet<Category> Categories { get; set; }
 
@@ -350,7 +350,6 @@ namespace Maroik.Common.DataAccess.Data
                     .HasComment("종료 날짜 및 시간")
                     .HasColumnType("datetime");
                 entity.Property(e => e.EndDateTimeZoneIanaId)
-                    .IsRequired()
                     .HasMaxLength(255)
                     .HasComment("종료 날짜 및 시간 (IANA TimeZone ID)");
                 entity.Property(e => e.Location)
@@ -363,7 +362,6 @@ namespace Maroik.Common.DataAccess.Data
                     .HasComment("시작 날짜 및 시간")
                     .HasColumnType("datetime");
                 entity.Property(e => e.StartDateTimeZoneIanaId)
-                    .IsRequired()
                     .HasMaxLength(255)
                     .HasComment("시작 날짜 및 시간 (IANA TimeZone ID)");
                 entity.Property(e => e.Status)
@@ -403,9 +401,6 @@ namespace Maroik.Common.DataAccess.Data
                 entity.Property(e => e.CalendarEventId)
                     .HasComment("부모 CalendarEvent Id")
                     .HasColumnType("int(11)");
-                entity.Property(e => e.Created)
-                    .HasMaxLength(6)
-                    .HasComment("생성일");
                 entity.Property(e => e.Extension)
                     .HasMaxLength(255)
                     .HasComment("확장자");
@@ -420,13 +415,49 @@ namespace Maroik.Common.DataAccess.Data
                 entity.Property(e => e.Size)
                     .HasComment("크기 (Byte)")
                     .HasColumnType("int(11)");
-                entity.Property(e => e.Updated)
-                    .HasMaxLength(6)
-                    .HasComment("업데이트일");
 
                 entity.HasOne(d => d.CalendarEvent).WithMany(p => p.CalendarEventAttachedFiles)
                     .HasForeignKey(d => d.CalendarEventId)
                     .HasConstraintName("CalendarEventAttachedFile_FK_0");
+            });
+
+            modelBuilder.Entity<CalendarEventReminder>(entity =>
+            {
+                entity.HasKey(e => e.Id).HasName("PRIMARY");
+
+                entity.ToTable("CalendarEventReminder", tb => tb.HasComment("Maroik.WebSite 달력 이벤트 알림"));
+
+                entity.HasIndex(e => e.CalendarEventId, "CalendarEventId");
+
+                entity.Property(e => e.Id)
+                    .HasComment("PK")
+                    .HasColumnType("int(11)");
+                entity.Property(e => e.CalendarEventId)
+                    .HasComment("부모 Calendar Event Id")
+                    .HasColumnType("int(11)");
+                entity.Property(e => e.DaysBeforeEvent)
+                    .HasComment("이벤트 발생 전 알림 시간 (일 단위)")
+                    .HasColumnType("int(11)");
+                entity.Property(e => e.HoursBeforeEvent)
+                    .HasComment("이벤트 발생 전 알림 시간 (시간 단위)")
+                    .HasColumnType("int(11)");
+                entity.Property(e => e.Method)
+                    .IsRequired()
+                    .HasMaxLength(255)
+                    .HasComment("알림 방법");
+                entity.Property(e => e.MinutesBeforeEvent)
+                    .HasComment("이벤트 발생 전 알림 시간 (분 단위)")
+                    .HasColumnType("int(11)");
+                entity.Property(e => e.TimesBeforeEvent)
+                    .HasComment("이벤트 발생 전 알림 시간 (시간분 단위)")
+                    .HasColumnType("time");
+                entity.Property(e => e.WeeksBeforeEvent)
+                    .HasComment("이벤트 발생 전 알림 시간 (주 단위)")
+                    .HasColumnType("int(11)");
+
+                entity.HasOne(d => d.CalendarEvent).WithMany(p => p.CalendarEventReminders)
+                    .HasForeignKey(d => d.CalendarEventId)
+                    .HasConstraintName("CalendarEventReminder_FK_0");
             });
 
             modelBuilder.Entity<CalendarRecurrence>(entity =>
@@ -467,51 +498,6 @@ namespace Maroik.Common.DataAccess.Data
                 entity.Property(e => e.Updated)
                     .HasMaxLength(6)
                     .HasComment("업데이트일");
-            });
-
-            modelBuilder.Entity<CalendarReminder>(entity =>
-            {
-                entity.HasKey(e => e.Id).HasName("PRIMARY");
-
-                entity.ToTable("CalendarReminder", tb => tb.HasComment("Maroik.WebSite 달력 알림"));
-
-                entity.HasIndex(e => e.CalendarEventId, "CalendarEventId");
-
-                entity.Property(e => e.Id)
-                    .HasComment("PK")
-                    .HasColumnType("int(11)");
-                entity.Property(e => e.CalendarEventId)
-                    .HasComment("부모 Calendar Event Id")
-                    .HasColumnType("int(11)");
-                entity.Property(e => e.Created)
-                    .HasMaxLength(6)
-                    .HasComment("생성일");
-                entity.Property(e => e.DaysBeforeEvent)
-                    .HasComment("이벤트 발생 전 알림 시간 (일 단위)")
-                    .HasColumnType("int(11)");
-                entity.Property(e => e.HoursBeforeEvent)
-                    .HasComment("이벤트 발생 전 알림 시간 (시간 단위)")
-                    .HasColumnType("int(11)");
-                entity.Property(e => e.Method)
-                    .IsRequired()
-                    .HasMaxLength(255)
-                    .HasComment("알림 방법");
-                entity.Property(e => e.MinutesBeforeEvent)
-                    .HasComment("이벤트 발생 전 알림 시간 (분 단위)")
-                    .HasColumnType("int(11)");
-                entity.Property(e => e.TimesBeforeEvent)
-                    .HasComment("이벤트 발생 전 알림 시간 (시간분 단위)")
-                    .HasColumnType("time");
-                entity.Property(e => e.Updated)
-                    .HasMaxLength(6)
-                    .HasComment("업데이트일");
-                entity.Property(e => e.WeeksBeforeEvent)
-                    .HasComment("이벤트 발생 전 알림 시간 (주 단위)")
-                    .HasColumnType("int(11)");
-
-                entity.HasOne(d => d.CalendarEvent).WithMany(p => p.CalendarReminders)
-                    .HasForeignKey(d => d.CalendarEventId)
-                    .HasConstraintName("CalendarReminder_FK_0");
             });
 
             modelBuilder.Entity<Category>(entity =>
@@ -810,10 +796,10 @@ namespace Maroik.Common.DataAccess.Data
                 entity.HasOne(d => d.Category).WithMany(p => p.SubCategories)
                     .HasForeignKey(d => d.CategoryId)
                     .HasConstraintName("SubCategory_FK_0");
-                #endregion
-
-                OnModelCreatingPartial(modelBuilder);
             });
+
+            OnModelCreatingPartial(modelBuilder);
+            #endregion
         }
 
         partial void OnModelCreatingPartial(ModelBuilder modelBuilder);

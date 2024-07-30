@@ -330,7 +330,7 @@
                         <div class="form-row">
                             <div class="form-group col-md-12 mb-3">
                                 <label for="createCalendarEventName">@localizer["Name"].Value</label>
-                                <input class="form-control form-control-sm" type="text" data-val="true" data-val-required="@localizer["Please enter Name"].Value" id="createCalendarEventName" name="createCalendarEventName" value="">
+                                <input class="form-control form-control-sm" type="text" data-val="true" data-val-required="@localizer["Please enter Name"].Value" id="createCalendarEventName" name="createCalendarEventName" value="" maxlength="100">
                                 <span class="field-validation-valid text-danger" data-valmsg-for="createCalendarEventName" data-valmsg-replace="true"></span>
                             </div>
                         </div>
@@ -523,9 +523,9 @@
                                         <option value='Notification'>@localizer["Notification"].Value</option>
                                     </select>
 
-                                    <input type='number' class='form-control-sm createCalendarEventSelNotificationNumberAllDayChecked' style='width:10%;text-overflow:ellipsis; background-color:#343a40; color:#fff; border-color:#6c757d;' min="0" max="28">
+                                    <input type='number' class='form-control-sm createCalendarEventSelNotificationNumberAllDayChecked' style='width:30%;text-overflow:ellipsis; background-color:#343a40; color:#fff; border-color:#6c757d;' min="0" max="28">
 
-                                    <select class='form-control-sm createCalendarEventSelNotificationTimeTypeAllDayChecked' style='width:15%;text-overflow:ellipsis;'>
+                                    <select class='form-control-sm createCalendarEventSelNotificationTimeTypeAllDayChecked' style='width:30%;text-overflow:ellipsis;'>
                                         <option value='Days' selected>@localizer["days"].Value</option>
                                         <option value='Weeks'>@localizer["weeks"].Value</option>
                                     </select>
@@ -569,9 +569,9 @@
                                         <option value='Notification'>@localizer["Notification"].Value</option>
                                     </select>
 
-                                    <input type='number' class='form-control-sm createCalendarEventSelNotificationNumberAllDayUnchecked' style='width:10%;text-overflow:ellipsis; background-color:#343a40; color:#fff; border-color:#6c757d;' min="0" max="40320">
+                                    <input type='number' class='form-control-sm createCalendarEventSelNotificationNumberAllDayUnchecked' style='width:30%;text-overflow:ellipsis; background-color:#343a40; color:#fff; border-color:#6c757d;' min="0" max="40320">
 
-                                    <select class='form-control-sm createCalendarEventSelNotificationTimeTypeAllDayUnchecked' style='width:15%;text-overflow:ellipsis;'>
+                                    <select class='form-control-sm createCalendarEventSelNotificationTimeTypeAllDayUnchecked' style='width:30%;text-overflow:ellipsis;'>
                                         <option value='Minutes' selected>@localizer["minutes"].Value</option>
                                         <option value='Hours'>@localizer["hours"].Value</option>
                                         <option value='Days'>@localizer["days"].Value</option>

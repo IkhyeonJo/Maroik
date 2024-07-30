@@ -27,6 +27,7 @@ $('#createCalendarEventDescription').summernote({
             for (let i = 0; i < files.length; i++) {
                 CreateUploadImageFile(files[i]);
             }
+            $("#createCalendarEventTaskDialogModal").css("overflow", "scroll");
         }
     }
 });
@@ -521,7 +522,7 @@ $(function () {
             });
         }
 
-        if (!$('#formCreateCalendarEvent').valid() && !isValidForm) {
+        if (!$('#formCreateCalendarEvent').valid() || !isValidForm) {
             return false;
         }
 
