@@ -80,9 +80,9 @@ public partial class CalendarEvent
 
     public virtual Calendar Calendar { get; set; }
 
-    public virtual ICollection<CalendarEventAttachedFile> CalendarEventAttachedFiles { get; set; } = new List<CalendarEventAttachedFile>();
+    public virtual ICollection<CalendarEventAttachedFile> CalendarEventAttachedFiles { get; set; } = [];
 
-    public virtual ICollection<CalendarEventReminder> CalendarEventReminders { get; set; } = new List<CalendarEventReminder>();
+    public virtual ICollection<CalendarEventReminder> CalendarEventReminders { get; set; } = [];
 
     public virtual CalendarRecurrence Recurrence { get; set; }
 }

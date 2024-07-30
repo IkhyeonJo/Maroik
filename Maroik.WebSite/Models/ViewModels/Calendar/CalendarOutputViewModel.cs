@@ -1,6 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
-
-namespace Maroik.WebSite.Models.ViewModels.Calendar
+﻿namespace Maroik.WebSite.Models.ViewModels.Calendar
 {
     public class CalendarOutputViewModel
     {

@@ -58,5 +58,5 @@ public partial class CalendarRecurrence
     /// </summary>
     public DateTime Updated { get; set; }
 
-    public virtual ICollection<CalendarEvent> CalendarEvents { get; set; } = new List<CalendarEvent>();
+    public virtual ICollection<CalendarEvent> CalendarEvents { get; set; } = [];
 }

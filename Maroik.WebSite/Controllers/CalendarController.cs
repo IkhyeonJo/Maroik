@@ -1,18 +1,10 @@
 ﻿using Ganss.Xss;
 using Maroik.Common.DataAccess.Contracts;
 using Maroik.Common.DataAccess.Models;
-using Maroik.Common.DataAccess.Services;
-using Maroik.Common.Miscellaneous.Extensions;
 using Maroik.Common.Miscellaneous.Utilities;
-using Maroik.WebSite.Models.ViewModels.Account;
-using Maroik.WebSite.Models.ViewModels.AccountBook;
 using Maroik.WebSite.Models.ViewModels.Calendar;
-using Maroik.WebSite.Models.ViewModels.DashBoard;
-using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Localization;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
-using Microsoft.Extensions.Hosting;
 using Newtonsoft.Json;
 using System.Text;
 
@@ -167,21 +159,21 @@ namespace Maroik.WebSite.Controllers
                                 return Json(new { result = false, error = _localizer["The calendar does not exists."].Value });
                             }
 
-                            if (!(loginedAccount.Role == Role.Admin || loginedAccount.Role == Role.User)) // 비 로그인 사용자인 경우
+                            if (loginedAccount.Role is not (Role.Admin or Role.User)) // 비 로그인 사용자인 경우
                             {
                                 return Json(new { result = false, error = _localizer["Please Login to create calendar event"].Value });
                             }
 
                             #region CalendarEvent
-                            CalendarEvent calendarEvent = new CalendarEvent();
+                            CalendarEvent calendarEvent = new();
 
                             if (calendarEventInputViewModel.AllDay)
                             {
-                                DateTime tempStartDate = new DateTime(Convert.ToInt32(calendarEventInputViewModel.StartDate.Split("-")[0]),
+                                DateTime tempStartDate = new(Convert.ToInt32(calendarEventInputViewModel.StartDate.Split("-")[0]),
                                     Convert.ToInt32(calendarEventInputViewModel.StartDate.Split("-")[1]),
                                     Convert.ToInt32(calendarEventInputViewModel.StartDate.Split("-")[2]), 0, 0, 0, DateTimeKind.Utc);
 
-                                DateTime tempEndDate = new DateTime(Convert.ToInt32(calendarEventInputViewModel.EndDate.Split("-")[0]),
+                                DateTime tempEndDate = new(Convert.ToInt32(calendarEventInputViewModel.EndDate.Split("-")[0]),
                                     Convert.ToInt32(calendarEventInputViewModel.EndDate.Split("-")[1]),
                                     Convert.ToInt32(calendarEventInputViewModel.EndDate.Split("-")[2]), 0, 0, 0, DateTimeKind.Utc);
 
@@ -205,14 +197,14 @@ namespace Maroik.WebSite.Controllers
                                 string[] temporaryStartDate = calendarEventInputViewModel.StartDate.Split(" ");
                                 string[] temporaryEndDate = calendarEventInputViewModel.EndDate.Split(" ");
 
-                                DateTime tempStartDate = new DateTime(Convert.ToInt32(temporaryStartDate[0].Split("-")[0]),
+                                DateTime tempStartDate = new(Convert.ToInt32(temporaryStartDate[0].Split("-")[0]),
                                     Convert.ToInt32(temporaryStartDate[0].Split("-")[1]),
                                     Convert.ToInt32(temporaryStartDate[0].Split("-")[2]),
                                     Convert.ToInt32(temporaryStartDate[1].Split(":")[0]),
                                     Convert.ToInt32(temporaryStartDate[1].Split(":")[1]),
                                     0, DateTimeKind.Unspecified);
 
-                                DateTime tempEndDate = new DateTime(Convert.ToInt32(temporaryEndDate[0].Split("-")[0]),
+                                DateTime tempEndDate = new(Convert.ToInt32(temporaryEndDate[0].Split("-")[0]),
                                     Convert.ToInt32(temporaryEndDate[0].Split("-")[1]),
                                     Convert.ToInt32(temporaryEndDate[0].Split("-")[2]),
                                     Convert.ToInt32(temporaryEndDate[1].Split(":")[0]),
@@ -330,26 +322,18 @@ namespace Maroik.WebSite.Controllers
                             #region CalendarReminder
                             List<Dictionary<string, object>> calendarReminders = JsonConvert.DeserializeObject<List<Dictionary<string, object>>>(calendarEventInputViewModel.SerializedCalendarReminders);
 
-                            foreach (var reminder in calendarReminders)
+                            foreach (Dictionary<string, object> reminder in calendarReminders)
                             {
                                 string method = reminder["Method"].ToString();
-                                int? minutesBeforeEvent = reminder["MinutesBeforeEvent"] != null ? (int?)Convert.ToInt32(reminder["MinutesBeforeEvent"]) : null;
-                                int? hoursBeforeEvent = reminder["HoursBeforeEvent"] != null ? (int?)Convert.ToInt32(reminder["HoursBeforeEvent"]) : null;
-                                int? daysBeforeEvent = reminder["DaysBeforeEvent"] != null ? (int?)Convert.ToInt32(reminder["DaysBeforeEvent"]) : null;
-                                int? weeksBeforeEvent = reminder["WeeksBeforeEvent"] != null ? (int?)Convert.ToInt32(reminder["WeeksBeforeEvent"]) : null;
-                                string tempTimesBeforeEvent = reminder["TimesBeforeEvent"] != null ? reminder["TimesBeforeEvent"].ToString() : null;
-                                TimeSpan? timesBeforeEvent;
-
-                                if (!string.IsNullOrEmpty(tempTimesBeforeEvent))
-                                {
-                                    timesBeforeEvent = new TimeSpan(Convert.ToInt32(tempTimesBeforeEvent.Split(":")[0]), Convert.ToInt32(tempTimesBeforeEvent.Split(":")[1]), 0);
-                                }
-                                else
-                                {
-                                    timesBeforeEvent = null;
-                                }
-
-                                CalendarEventReminder calendarEventReminder = new CalendarEventReminder()
+                                int? minutesBeforeEvent = reminder["MinutesBeforeEvent"] != null ? Convert.ToInt32(reminder["MinutesBeforeEvent"]) : null;
+                                int? hoursBeforeEvent = reminder["HoursBeforeEvent"] != null ? Convert.ToInt32(reminder["HoursBeforeEvent"]) : null;
+                                int? daysBeforeEvent = reminder["DaysBeforeEvent"] != null ? Convert.ToInt32(reminder["DaysBeforeEvent"]) : null;
+                                int? weeksBeforeEvent = reminder["WeeksBeforeEvent"] != null ? Convert.ToInt32(reminder["WeeksBeforeEvent"]) : null;
+                                string tempTimesBeforeEvent = reminder["TimesBeforeEvent"]?.ToString();
+                                TimeSpan? timesBeforeEvent = !string.IsNullOrEmpty(tempTimesBeforeEvent)
+                                    ? new TimeSpan(Convert.ToInt32(tempTimesBeforeEvent.Split(":")[0]), Convert.ToInt32(tempTimesBeforeEvent.Split(":")[1]), 0)
+                                    : null;
+                                CalendarEventReminder calendarEventReminder = new()
                                 {
                                     CalendarEventId = calendarEvent.Id,
                                     Method = method,
@@ -446,7 +430,7 @@ namespace Maroik.WebSite.Controllers
 
             Account loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte));
 
-            CalendarOutputViewModel calendarOutputViewModel = new CalendarOutputViewModel();
+            CalendarOutputViewModel calendarOutputViewModel = new();
 
             #region Load Calendar
             List<Calendar> calendars = await _calendarRepository.GetCalendarsAsync(loginedAccount.Email) ?? [];
@@ -488,14 +472,9 @@ namespace Maroik.WebSite.Controllers
                 {
                     Calendar tempCalendar = tempCalendars.Where(a => a.Id == id).FirstOrDefault();
 
-                    if (tempCalendar == null)
-                    {
-                        return Json(new { result = false, error = _localizer["Input is invalid"].Value });
-                    }
-                    else
-                    {
-                        return Json(new { result = true, calendar = tempCalendar });
-                    }
+                    return tempCalendar == null
+                        ? Json(new { result = false, error = _localizer["Input is invalid"].Value })
+                        : (IActionResult)Json(new { result = true, calendar = tempCalendar });
                 }
             }
             catch

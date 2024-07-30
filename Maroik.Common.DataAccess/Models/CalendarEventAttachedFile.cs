@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Maroik.Common.DataAccess.Models;
+﻿namespace Maroik.Common.DataAccess.Models;
 
 /// <summary>
 /// Maroik.WebSite 달력 이벤트 첨부파일
