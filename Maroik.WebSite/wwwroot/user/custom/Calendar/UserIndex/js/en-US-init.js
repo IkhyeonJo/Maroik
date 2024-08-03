@@ -1,9 +1,4 @@
-﻿// Please see documentation at https://docs.microsoft.com/aspnet/core/client-side/bundling-and-minification
-// for details on configuring this project to bundle and minify static web assets.
-
-// Write your JavaScript code.
-
-let createCalendarEventUploadedFile;
+﻿let createCalendarEventUploadedFile;
 
 function CreateCalendarEventUploadedFile(obj, errorMessage) {
     if (obj.files[0].size > 10485760) {
@@ -316,25 +311,37 @@ $(function () {
         selectable: true,
         selectMirror: true,
         select: function (arg) {
-            //let aaa = $('#calendarEventModel').val();
-            //let bbb = JSON.parse($('#calendarEventModel').val());
-
-            $('#createCalendarEventTaskDialogModal').modal('show');
-
-            $('#createCalendarEventAllDayUncheckedStartDate').val(moment.utc(arg.start).add('days', 1).format("YYYY-MM-DD"));
-            $('#createCalendarEventAllDayCheckedStartDate').val(moment.utc(arg.start).add('days', 1).format("YYYY-MM-DD"));
+            $('#createCalendarEventAllDayUncheckedStartDate').val(moment.utc(arg.start).add(1, 'days').format("YYYY-MM-DD"));
+            $('#createCalendarEventAllDayCheckedStartDate').val(moment.utc(arg.start).add(1, 'days').format("YYYY-MM-DD"));
 
             $('#createCalendarEventAllDayUncheckedEndDate').val(moment.utc(arg.end).format("YYYY-MM-DD"));
             $('#createCalendarEventAllDayCheckedEndDate').val(moment.utc(arg.end).format("YYYY-MM-DD"));
 
+            $('#createCalendarEventTaskDialogModal').modal('show');
+
             calendar.unselect();
         },
         eventClick: function (arg) {
-
-            alert("clicked event id: " + arg.event.id);
-
-            if (confirm('Are you sure you want to delete this event?')) {
-                arg.event.remove()
+            if (confirm('Are you sure you want to delete this calendar event?')) {
+                $.ajax({
+                    url: '/Calendar/DeleteCalendarEvent' + '?id=' + arg.event.id,
+                    type: 'POST',
+                    headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
+                    dataType: 'json',
+                    data: null,
+                    contentType: 'application/json; charset=utf-8',
+                    //async: false,
+                    //cache: false,
+                    success: function (data) {
+                        if (data.result) {
+                            arg.event.remove();
+                            toastr.success(data.message);
+                        }
+                        else {
+                            toastr.error(data.error);
+                        }
+                    }
+                });
             }
         }
     });
@@ -667,7 +674,58 @@ $(function () {
             processData: false,
             success: function (data) {
                 if (data.result) {
+
+                    calendar.removeAllEvents();
+
+                    let paramValue = {
+                        Calendars: []
+                    };
+
+                    $('#myCalendars input[type="checkbox"]:checked').each(function () {
+                        let calendarsArray = [
+                            { Id: Number($(this).closest('label').attr('id').replace('lblCalendar', '')) }
+                        ];
+
+                        for (let i = 0; i < calendarsArray.length; i++) {
+                            paramValue.Calendars.push(calendarsArray[i]);
+                        }
+                    });
+
+                    $.ajax({
+                        url: '/Calendar/GetCalendarEvents',
+                        method: 'POST',
+                        headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
+                        dataType: 'json',
+                        data: JSON.stringify(paramValue),
+                        contentType: 'application/json; charset=utf-8',
+                        //async: false,
+                        //cache: false,
+                        success: function (response) {
+                            if (response.result) {
+                                try {
+                                    let calendarEvents = JSON.parse(response.calendarEvents);
+
+                                    calendarEvents.forEach(item => {
+                                        calendar.addEvent({
+                                            id: item.Id,
+                                            title: item.Title,
+                                            start: '2024-08-25T15:30:00',
+                                            end: '2024-08-25T16:30:00',
+                                            allDay: false
+                                        });
+                                    });
+                                } catch {
+
+                                }
+                            } else {
+                                toastr.error(data.error);
+                            }
+                        }
+                    });
+
                     toastr.success(data.message);
+
+                    $('#createCalendarEventTaskDialogModal').modal('hide');
                 }
                 else {
                     toastr.error(data.error);

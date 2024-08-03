@@ -499,6 +499,57 @@ namespace Maroik.WebSite.Controllers
                 return Json(new { result = false, error = _localizer["Input is invalid"].Value });
             }
         }
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [RequiredHttpPostAccess(Role = Role.User)]
+        public async Task<IActionResult> GetCalendarEvents([FromBody] CalendarInputViewModel calendarInputViewModel)
+        {
+            try
+            {
+                if (ModelState.IsValid)
+                {
+                    try
+                    {
+                        List<CalendarEvent> calendarEvents = new List<CalendarEvent>();
+
+                        _ = HttpContext.Session.TryGetValue(Maroik.Common.Miscellaneous.Extensions.EnumHelper.GetDescription(Maroik.Common.Miscellaneous.Utilities.Session.Account), out byte[] resultByte);
+
+                        List<Calendar> tempCalendars = await _calendarRepository.GetCalendarsAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+
+                        IEnumerable<Calendar> tempInputCalendars = calendarInputViewModel?.Calendars ?? new List<Calendar>();
+
+                        foreach (Calendar tempInputCalendar in tempInputCalendars)
+                        {
+                            if ((tempCalendars?.Where(x => x.Id == tempInputCalendar.Id)?.FirstOrDefault() ?? new Calendar()).Id != 0)
+                            {
+                                calendarEvents.AddRange(await _calendarEventRepository.GetCalendarEventsAsync(tempInputCalendar.Id));
+                            }
+                        }
+
+                        if (calendarEvents.Count > 0)
+                        {
+                            return Json(new { result = true, calendarEvents = JsonConvert.SerializeObject(calendarEvents) });
+                        }
+                        else
+                        {
+                            return Json(new { result = false, error = _localizer["Input is invalid"].Value });
+                        }
+                    }
+                    catch
+                    {
+                        return Json(new { result = false, error = _localizer["Input is invalid"].Value });
+                    }
+                }
+                else
+                {
+                    return Json(new { result = false, error = _localizer["Input is invalid"].Value });
+                }
+            }
+            catch
+            {
+                return Json(new { result = false, error = _localizer["Input is invalid"].Value });
+            }
+        }
         #endregion
 
         #region Update
@@ -581,6 +632,43 @@ namespace Maroik.WebSite.Controllers
                 return Json(new { result = false, error = _localizer["Input is invalid"].Value });
             }
         }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [RequiredHttpPostAccess(Role = Role.User)]
+        public async Task<IActionResult> DeleteCalendarEvent(int id)
+        {
+            try
+            {
+                _ = HttpContext.Session.TryGetValue(Maroik.Common.Miscellaneous.Extensions.EnumHelper.GetDescription(Maroik.Common.Miscellaneous.Utilities.Session.Account), out byte[] resultByte);
+                
+                List<Calendar> tempCalendars = await _calendarRepository.GetCalendarsAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email) ?? [];
+
+                if (tempCalendars == null || tempCalendars.Count == 0)
+                {
+                    return Json(new { result = false, error = _localizer["No calendar exists"].Value });
+                }
+                else
+                {
+
+                    CalendarEvent tempCalendarEvent = await _calendarEventRepository.GetCalendarEventAsync(id);
+
+                    if ((tempCalendars?.Where(x => x.Id == tempCalendarEvent.CalendarId)?.FirstOrDefault()?.Id ?? 0) == 0)
+                    {
+                        return Json(new { result = false, error = _localizer["Input is invalid"].Value });
+                    }
+
+                    await _calendarEventRepository.DeleteCalendarEventAsync(tempCalendarEvent);
+
+                    return Json(new { result = true, message = _localizer["The calendar event has been successfully deleted."].Value });
+                }
+            }
+            catch
+            {
+                return Json(new { result = false, error = _localizer["Input is invalid"].Value });
+            }
+        }
+
         #endregion
 
         #endregion
