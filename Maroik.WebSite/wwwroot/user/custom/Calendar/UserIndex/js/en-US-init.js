@@ -709,13 +709,16 @@ $(function () {
                                         calendar.addEvent({
                                             id: item.Id,
                                             title: item.Title,
-                                            start: '2024-08-25T15:30:00',
-                                            end: '2024-08-25T16:30:00',
-                                            allDay: false,
+                                            allDay: item.AllDay,
+                                            //start: moment.utc(item.StartDate).toISOString(),
+                                            start: item.StartDate,
+                                            //end: moment.utc(item.EndDate).toISOString(),
+                                            end: item.EndDate,
+                                            backgroundColor: item.HtmlColorCode,
+                                            borderColor: item.HtmlColorCode,
+
                                             //classNames: ['custom-event-class'],
                                             //color: '#ff0000', // General color for the event
-                                            //backgroundColor: '#ffcc00', // Specific background color
-                                            //borderColor: '#000000', // Border color
                                             //textColor: '#0000ff', // Text color
                                             //editable: true, // Allows editing
                                             //startEditable: true, // Allows dragging to change start
@@ -731,7 +734,6 @@ $(function () {
                                             //    location: 'Conference Room A'
                                             //}
                                         });
-                                        //TODO
                                     });
                                 } catch {
 

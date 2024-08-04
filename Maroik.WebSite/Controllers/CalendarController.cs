@@ -510,9 +510,11 @@ namespace Maroik.WebSite.Controllers
                 {
                     try
                     {
-                        List<CalendarEvent> calendarEvents = new List<CalendarEvent>();
+                        List<CalendarEventOutputViewModel> calendarEvents = new List<CalendarEventOutputViewModel>();
 
                         _ = HttpContext.Session.TryGetValue(Maroik.Common.Miscellaneous.Extensions.EnumHelper.GetDescription(Maroik.Common.Miscellaneous.Utilities.Session.Account), out byte[] resultByte);
+
+                        Account loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte));
 
                         List<Calendar> tempCalendars = await _calendarRepository.GetCalendarsAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
 
@@ -522,7 +524,125 @@ namespace Maroik.WebSite.Controllers
                         {
                             if ((tempCalendars?.Where(x => x.Id == tempInputCalendar.Id)?.FirstOrDefault() ?? new Calendar()).Id != 0)
                             {
-                                calendarEvents.AddRange(await _calendarEventRepository.GetCalendarEventsAsync(tempInputCalendar.Id));
+                                foreach (CalendarEvent calendarEvent in await _calendarEventRepository.GetCalendarEventsAsync(tempInputCalendar.Id))
+                                {
+                                    var item = new CalendarEventOutputViewModel();
+
+                                    item.Id = calendarEvent.Id;
+                                    item.Title = calendarEvent.Title;
+                                    item.AllDay = calendarEvent.AllDay;
+
+                                    if (calendarEvent.AllDay)
+                                    {
+                                        foreach (TimeZoneInfo systemTimeZone in TimeZoneInfo.GetSystemTimeZones())
+                                        {
+                                            string systemTimeZoneIanaId = string.Empty;
+
+                                            if (systemTimeZone.HasIanaId)
+                                            {
+                                                systemTimeZoneIanaId = systemTimeZone.Id;
+                                            }
+                                            else if (TimeZoneInfo.TryConvertWindowsIdToIanaId(systemTimeZone.Id, out string ianaId))
+                                            {
+                                                systemTimeZoneIanaId = ianaId;
+                                            }
+
+                                            if (string.IsNullOrEmpty(systemTimeZoneIanaId))
+                                            {
+                                                continue;
+                                            }
+                                            else if (systemTimeZoneIanaId == loginedAccount.TimeZoneIanaId)
+                                            {
+                                                calendarEvent.StartDate = TimeZoneInfo.ConvertTime(calendarEvent.StartDate, TimeZoneInfo.Utc, systemTimeZone);
+                                                break;
+                                            }
+                                        }
+
+                                        foreach (TimeZoneInfo systemTimeZone in TimeZoneInfo.GetSystemTimeZones())
+                                        {
+                                            string systemTimeZoneIanaId = string.Empty;
+
+                                            if (systemTimeZone.HasIanaId)
+                                            {
+                                                systemTimeZoneIanaId = systemTimeZone.Id;
+                                            }
+                                            else if (TimeZoneInfo.TryConvertWindowsIdToIanaId(systemTimeZone.Id, out string ianaId))
+                                            {
+                                                systemTimeZoneIanaId = ianaId;
+                                            }
+
+                                            if (string.IsNullOrEmpty(systemTimeZoneIanaId))
+                                            {
+                                                continue;
+                                            }
+                                            else if (systemTimeZoneIanaId == loginedAccount.TimeZoneIanaId)
+                                            {
+                                                calendarEvent.EndDate = TimeZoneInfo.ConvertTime(calendarEvent.EndDate, TimeZoneInfo.Utc, systemTimeZone);
+                                                break;
+                                            }
+                                        }
+
+                                        item.StartDate = calendarEvent.StartDate;
+                                        item.EndDate = calendarEvent.EndDate;
+                                    }
+                                    else
+                                    {
+                                        foreach (TimeZoneInfo systemTimeZone in TimeZoneInfo.GetSystemTimeZones())
+                                        {
+                                            string systemTimeZoneIanaId = string.Empty;
+
+                                            if (systemTimeZone.HasIanaId)
+                                            {
+                                                systemTimeZoneIanaId = systemTimeZone.Id;
+                                            }
+                                            else if (TimeZoneInfo.TryConvertWindowsIdToIanaId(systemTimeZone.Id, out string ianaId))
+                                            {
+                                                systemTimeZoneIanaId = ianaId;
+                                            }
+
+                                            if (string.IsNullOrEmpty(systemTimeZoneIanaId))
+                                            {
+                                                continue;
+                                            }
+                                            else if (systemTimeZoneIanaId == calendarEvent.StartDateTimeZoneIanaId)
+                                            {
+                                                calendarEvent.StartDate = TimeZoneInfo.ConvertTime(calendarEvent.StartDate, TimeZoneInfo.Utc, systemTimeZone);
+                                                break;
+                                            }
+                                        }
+
+                                        foreach (TimeZoneInfo systemTimeZone in TimeZoneInfo.GetSystemTimeZones())
+                                        {
+                                            string systemTimeZoneIanaId = string.Empty;
+
+                                            if (systemTimeZone.HasIanaId)
+                                            {
+                                                systemTimeZoneIanaId = systemTimeZone.Id;
+                                            }
+                                            else if (TimeZoneInfo.TryConvertWindowsIdToIanaId(systemTimeZone.Id, out string ianaId))
+                                            {
+                                                systemTimeZoneIanaId = ianaId;
+                                            }
+
+                                            if (string.IsNullOrEmpty(systemTimeZoneIanaId))
+                                            {
+                                                continue;
+                                            }
+                                            else if (systemTimeZoneIanaId == calendarEvent.EndDateTimeZoneIanaId)
+                                            {
+                                                calendarEvent.EndDate = TimeZoneInfo.ConvertTime(calendarEvent.EndDate, TimeZoneInfo.Utc, systemTimeZone);
+                                                break;
+                                            }
+                                        }
+
+                                        item.StartDate = calendarEvent.StartDate;
+                                        item.EndDate = calendarEvent.EndDate;
+                                    }
+
+                                    item.HtmlColorCode = tempCalendars?.Where(x => x.Id == calendarEvent.CalendarId)?.FirstOrDefault()?.HtmlColorCode;
+
+                                    calendarEvents.Add(item);
+                                }
                             }
                         }
 
