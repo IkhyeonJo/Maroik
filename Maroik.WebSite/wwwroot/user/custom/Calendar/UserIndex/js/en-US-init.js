@@ -711,8 +711,27 @@ $(function () {
                                             title: item.Title,
                                             start: '2024-08-25T15:30:00',
                                             end: '2024-08-25T16:30:00',
-                                            allDay: false
+                                            allDay: false,
+                                            //classNames: ['custom-event-class'],
+                                            //color: '#ff0000', // General color for the event
+                                            //backgroundColor: '#ffcc00', // Specific background color
+                                            //borderColor: '#000000', // Border color
+                                            //textColor: '#0000ff', // Text color
+                                            //editable: true, // Allows editing
+                                            //startEditable: true, // Allows dragging to change start
+                                            //durationEditable: true, // Allows resizing to change duration
+                                            //resourceIds: ['a', 'b'], // Associated resource IDs
+                                            //url: 'https://www.example.com/event-details', // URL to open on click
+                                            //display: 'block', // Display as a block
+                                            //overlap: false, // Prevents overlap with other events
+                                            //groupId: 'unique-group-id', // Group ID for grouping related events
+                                            //extendedProps: {
+                                            //    description: 'This is a detailed description of the event.',
+                                            //    department: 'Sales',
+                                            //    location: 'Conference Room A'
+                                            //}
                                         });
+                                        //TODO
                                     });
                                 } catch {
 
