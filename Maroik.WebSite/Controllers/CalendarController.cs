@@ -583,7 +583,8 @@ namespace Maroik.WebSite.Controllers
                                         }
 
                                         item.StartDate = calendarEvent.StartDate;
-                                        item.EndDate = calendarEvent.EndDate;
+                                        DateTime tempEndDate = calendarEvent.EndDate.AddDays(1);
+                                        item.EndDate = new DateTime(tempEndDate.Year, tempEndDate.Month, tempEndDate.Day, 0, 0, 0, tempEndDate.Kind);
                                     }
                                     else
                                     {
@@ -636,7 +637,8 @@ namespace Maroik.WebSite.Controllers
                                         }
 
                                         item.StartDate = calendarEvent.StartDate;
-                                        item.EndDate = calendarEvent.EndDate;
+                                        DateTime tempEndDate = calendarEvent.EndDate.AddDays(1);
+                                        item.EndDate = new DateTime(tempEndDate.Year, tempEndDate.Month, tempEndDate.Day, 0, 0, 0, tempEndDate.Kind);
                                     }
 
                                     item.HtmlColorCode = tempCalendars?.Where(x => x.Id == calendarEvent.CalendarId)?.FirstOrDefault()?.HtmlColorCode;

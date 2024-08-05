@@ -288,7 +288,6 @@ $(function () {
         //            },
         //        }
         //    ],
-        timezone: $('#calendarTimeZoneIanaId').val(),
         navLinks: true, // can click day/week names to navigate views
         editable: true,
         droppable: true, // this allows things to be dropped onto the calendar !!!
@@ -710,9 +709,7 @@ $(function () {
                                             id: item.Id,
                                             title: item.Title,
                                             allDay: item.AllDay,
-                                            //start: moment.utc(item.StartDate).toISOString(),
                                             start: item.StartDate,
-                                            //end: moment.utc(item.EndDate).toISOString(),
                                             end: item.EndDate,
                                             backgroundColor: item.HtmlColorCode,
                                             borderColor: item.HtmlColorCode,
