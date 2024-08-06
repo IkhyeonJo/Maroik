@@ -701,40 +701,36 @@ $(function () {
                         //cache: false,
                         success: function (response) {
                             if (response.result) {
-                                try {
-                                    let calendarEvents = JSON.parse(response.calendarEvents);
+                                let calendarEvents = JSON.parse(response.calendarEvents);
 
-                                    calendarEvents.forEach(item => {
-                                        calendar.addEvent({
-                                            id: item.Id,
-                                            title: item.Title,
-                                            allDay: item.AllDay,
-                                            start: item.StartDate,
-                                            end: item.EndDate,
-                                            backgroundColor: item.HtmlColorCode,
-                                            borderColor: item.HtmlColorCode,
+                                calendarEvents.forEach(item => {
+                                    calendar.addEvent({
+                                        id: item.Id,
+                                        title: item.Title,
+                                        allDay: item.AllDay,
+                                        start: item.StartDate,
+                                        end: item.EndDate,
+                                        backgroundColor: item.HtmlColorCode,
+                                        borderColor: item.HtmlColorCode,
 
-                                            //classNames: ['custom-event-class'],
-                                            //color: '#ff0000', // General color for the event
-                                            //textColor: '#0000ff', // Text color
-                                            //editable: true, // Allows editing
-                                            //startEditable: true, // Allows dragging to change start
-                                            //durationEditable: true, // Allows resizing to change duration
-                                            //resourceIds: ['a', 'b'], // Associated resource IDs
-                                            //url: 'https://www.example.com/event-details', // URL to open on click
-                                            //display: 'block', // Display as a block
-                                            //overlap: false, // Prevents overlap with other events
-                                            //groupId: 'unique-group-id', // Group ID for grouping related events
-                                            //extendedProps: {
-                                            //    description: 'This is a detailed description of the event.',
-                                            //    department: 'Sales',
-                                            //    location: 'Conference Room A'
-                                            //}
-                                        });
+                                        //classNames: ['custom-event-class'],
+                                        //color: '#ff0000', // General color for the event
+                                        //textColor: '#0000ff', // Text color
+                                        //editable: true, // Allows editing
+                                        //startEditable: true, // Allows dragging to change start
+                                        //durationEditable: true, // Allows resizing to change duration
+                                        //resourceIds: ['a', 'b'], // Associated resource IDs
+                                        //url: 'https://www.example.com/event-details', // URL to open on click
+                                        //display: 'block', // Display as a block
+                                        //overlap: false, // Prevents overlap with other events
+                                        //groupId: 'unique-group-id', // Group ID for grouping related events
+                                        //extendedProps: {
+                                        //    description: 'This is a detailed description of the event.',
+                                        //    department: 'Sales',
+                                        //    location: 'Conference Room A'
+                                        //}
                                     });
-                                } catch {
-
-                                }
+                                });
                             } else {
                                 toastr.error(data.error);
                             }
