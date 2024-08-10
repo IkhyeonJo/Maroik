@@ -321,72 +321,27 @@ $(function () {
             calendar.unselect();
         },
         eventClick: function (arg) {
-            var eventEl = $(arg.el);
-            var offset = eventEl.offset();
-            var popup = $('#calendarEventPopup');
-            var currentEventId = popup.data('event-id');
-
-            // 현재 클릭된 이벤트와 팝업에 표시된 이벤트가 같다면 팝업을 숨김
-            if (popup.is(':visible') && currentEventId === arg.event.id) {
-                popup.hide();
-                return;
-            }
-
-            // 이벤트 데이터를 팝업에 채워 넣기
-            $('#popupEventTitle').text(arg.event.title || 'No Title'); // 제목이 없는 경우 기본값 설정
-            $('#popupEventStart').text(arg.event.start ? arg.event.start.toLocaleString() : 'No start time');
-            $('#popupEventEnd').text(arg.event.end ? arg.event.end.toLocaleString() : 'No end time');
-            $('#popupEventDescription').text(arg.event.extendedProps.description || 'No description'); // 설명이 없는 경우 기본값 설정
-
-            // 팝업 위치 설정 및 표시
-            popup.css({
-                top: offset.top + eventEl.outerHeight(),
-                left: offset.left + eventEl.outerWidth(),
-                display: 'block'
-            }).data('event-id', arg.event.id);  // 이벤트 ID를 데이터로 저장
-
-            // 팝업 외부 클릭 시 닫기
-            $(document).on('click', function (e) {
-                if (!$(e.target).closest('#calendarEventPopup, .fc-event').length) {
-                    popup.hide();
-                }
-            });
-
-            // Close 버튼 클릭 시 팝업 닫기
-            $('#closePopup').off('click').on('click', function () {
-                popup.hide();
-            });
-
-            // Edit 버튼 클릭 시
-            $('#editEvent').off('click').on('click', function () {
-                alert('Edit event with ID: ' + popup.data('event-id'));
-                popup.hide();
-            });
-
-            // Delete 버튼 클릭 시
-            $('#deleteEvent').off('click').on('click', function () {
-                if (confirm('Are you sure you want to delete this calendar event?')) {
-                    $.ajax({
-                        url: '/Calendar/DeleteCalendarEvent?id=' + popup.data('event-id'),
-                        type: 'POST',
-                        headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
-                        dataType: 'json',
-                        data: null,
-                        contentType: 'application/json; charset=utf-8',
-                        success: function (data) {
-                            if (data.result) {
-                                arg.event.remove();
-                                toastr.success(data.message);
-                            } else {
-                                toastr.error(data.error);
-                            }
+            if (confirm('Are you sure you want to delete this calendar event?')) {
+                $.ajax({
+                    url: '/Calendar/DeleteCalendarEvent' + '?id=' + arg.event.id,
+                    type: 'POST',
+                    headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
+                    dataType: 'json',
+                    data: null,
+                    contentType: 'application/json; charset=utf-8',
+                    //async: false,
+                    //cache: false,
+                    success: function (data) {
+                        if (data.result) {
+                            arg.event.remove();
+                            toastr.success(data.message);
                         }
-                    });
-                }
-                popup.hide();
-            });
-
-            return false;
+                        else {
+                            toastr.error(data.error);
+                        }
+                    }
+                });
+            }
         }
     });
 
