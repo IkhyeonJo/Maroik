@@ -155,6 +155,8 @@
         @*<!-- Custom Modal CSS -->*@
         <link rel="stylesheet" href="~/anonymous/custom/_Layout/css/site.css" asp-append-version="true">
     }
+
+    @await RenderSectionAsync("Styles", required: false)
 </head>
 @*
 <!--

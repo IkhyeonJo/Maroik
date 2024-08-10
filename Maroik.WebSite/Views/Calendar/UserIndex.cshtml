@@ -129,6 +129,22 @@
     </div>
 </section>
 
+<div id="calendarEventPopup" class="event-popup" style="display: none; position: absolute;">
+    <div class="popup-header">
+        <h5 id="popupEventTitle"></h5>
+        <button type="button" id="closePopup">&times;</button>
+    </div>
+    <div class="popup-body">
+        <p><strong>Start:</strong> <span id="popupEventStart"></span></p>
+        <p><strong>End:</strong> <span id="popupEventEnd"></span></p>
+        <p><strong>Description:</strong> <span id="popupEventDescription"></span></p>
+    </div>
+    <div class="popup-footer">
+        <button id="editEvent" class="btn btn-primary btn-sm">Edit</button>
+        <button id="deleteEvent" class="btn btn-danger btn-sm">Delete</button>
+    </div>
+</div>
+
 @*<!--createCalendarDialogModal-->*@
 <div class="modal fade" tabindex="-1" role="dialog" id="createCalendarDialogModal">
     <div class="modal-dialog modal-lg" role="document">
@@ -600,6 +616,25 @@
         </div>
     </div>
 </div>
+
+@section Styles {
+    @if (loginedAccount.Role == Role.Admin)
+    {
+        
+    }
+    else if (loginedAccount.Role == Role.User)
+    {
+        <link rel="stylesheet" href="~/user/custom/Calendar/UserIndex/css/site.css" asp-append-version="true">
+    }
+    else if (loginedAccount.Role == Role.Anonymous)
+    {
+        
+    }
+    else
+    {
+
+    }
+}
 
 @section Scripts {
     @if (loginedAccount.Role == Role.Admin)
