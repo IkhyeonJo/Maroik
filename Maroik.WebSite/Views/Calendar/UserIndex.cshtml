@@ -52,7 +52,55 @@
     string currentInterval = $"{currentTime.Hour:D2}:{nearestMinute:D2}";
     #endregion
 }
+<style>
+    .event-popup {
+        background-color: white; /* 팝업의 배경색을 흰색으로 설정 */
+        border: 1px solid #ccc; /* 테두리 설정 */
+        box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.2); /* 그림자 설정 */
+        width: 250px; /* 팝업의 너비 설정 */
+        z-index: 10000; /* z-index로 팝업이 다른 요소 위에 표시되도록 설정 */
+        padding: 10px; /* 내부 여백 설정 */
+        border-radius: 5px; /* 테두리를 둥글게 설정 */
+        color: black; /* 텍스트 색상 설정 */
+    }
 
+    .popup-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+    }
+
+        .popup-header h5 {
+            margin: 0;
+            font-size: 16px;
+        }
+
+    #closePopup {
+        background: none;
+        border: none;
+        font-size: 18px;
+        line-height: 1;
+        cursor: pointer;
+    }
+
+    .popup-body p {
+        margin: 5px 0;
+        font-size: 14px;
+    }
+
+    .popup-footer {
+        display: flex;
+        justify-content: flex-end;
+        gap: 5px;
+        margin-top: 10px;
+    }
+
+    .popup-body {
+        overflow: hidden; /* 텍스트나 내용이 넘칠 때 숨김 */
+        max-height: 200px; /* 팝업 내부 최대 높이 설정 */
+    }
+</style>
 @* @Html.Hidden("calendarEventModel", JsonConvert.SerializeObject(assets)) *@
 @Html.Hidden("calendarEventModel", null)
 <!-- Main content -->
@@ -128,6 +176,22 @@
         </div>
     </div>
 </section>
+
+<div id="calendarEventPopup" class="event-popup" style="display: none; position: absolute;">
+    <div class="popup-header">
+        <h5 id="popupEventTitle"></h5>
+        <button type="button" id="closePopup">&times;</button>
+    </div>
+    <div class="popup-body">
+        <p><strong>Start:</strong> <span id="popupEventStart"></span></p>
+        <p><strong>End:</strong> <span id="popupEventEnd"></span></p>
+        <p><strong>Description:</strong> <span id="popupEventDescription"></span></p>
+    </div>
+    <div class="popup-footer">
+        <button id="editEvent" class="btn btn-primary btn-sm">Edit</button>
+        <button id="deleteEvent" class="btn btn-danger btn-sm">Delete</button>
+    </div>
+</div>
 
 @*<!--createCalendarDialogModal-->*@
 <div class="modal fade" tabindex="-1" role="dialog" id="createCalendarDialogModal">
