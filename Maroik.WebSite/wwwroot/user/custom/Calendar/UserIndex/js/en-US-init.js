@@ -336,7 +336,7 @@ $(function () {
             $('#divCalendarEventPopupAllDayChecked').hide();
             $('#divCalendarEventPopupAllDayUnchecked').hide();
 
-            if (arg.event.allDay) {
+            if (arg.event.allDay === true) {
                 $('#calendarEventPopupStartAllDayChecked').text(arg.event.extendedProps.displayStartDate);
                 $('#calendarEventPopupEndAllDayChecked').text(arg.event.extendedProps.displayEndDate);
                 $('#divCalendarEventPopupAllDayChecked').show();
