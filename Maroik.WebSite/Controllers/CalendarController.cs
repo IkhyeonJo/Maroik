@@ -554,6 +554,7 @@ namespace Maroik.WebSite.Controllers
                                             else if (systemTimeZoneIanaId == loginedAccount.TimeZoneIanaId)
                                             {
                                                 calendarEvent.StartDate = TimeZoneInfo.ConvertTime(calendarEvent.StartDate, TimeZoneInfo.Utc, systemTimeZone);
+                                                item.DisplayStartDateTimeZone = string.Empty;
                                                 break;
                                             }
                                         }
@@ -578,10 +579,14 @@ namespace Maroik.WebSite.Controllers
                                             else if (systemTimeZoneIanaId == loginedAccount.TimeZoneIanaId)
                                             {
                                                 calendarEvent.EndDate = TimeZoneInfo.ConvertTime(calendarEvent.EndDate, TimeZoneInfo.Utc, systemTimeZone);
+                                                item.DisplayEndDateTimeZone = string.Empty;
                                                 break;
                                             }
                                         }
 
+                                        item.DisplayStartDate = calendarEvent.StartDate.ToString("yyyy-MM-dd");
+                                        item.DisplayEndDate = calendarEvent.EndDate.ToString("yyyy-MM-dd");
+                                        
                                         item.StartDate = calendarEvent.StartDate;
                                         DateTime tempEndDate = calendarEvent.EndDate.AddDays(1);
                                         item.EndDate = new DateTime(tempEndDate.Year, tempEndDate.Month, tempEndDate.Day, 0, 0, 0, tempEndDate.Kind);
@@ -608,6 +613,7 @@ namespace Maroik.WebSite.Controllers
                                             else if (systemTimeZoneIanaId == calendarEvent.StartDateTimeZoneIanaId)
                                             {
                                                 calendarEvent.StartDate = TimeZoneInfo.ConvertTime(calendarEvent.StartDate, TimeZoneInfo.Utc, systemTimeZone);
+                                                item.DisplayStartDateTimeZone = systemTimeZone.StandardName;
                                                 break;
                                             }
                                         }
@@ -632,9 +638,13 @@ namespace Maroik.WebSite.Controllers
                                             else if (systemTimeZoneIanaId == calendarEvent.EndDateTimeZoneIanaId)
                                             {
                                                 calendarEvent.EndDate = TimeZoneInfo.ConvertTime(calendarEvent.EndDate, TimeZoneInfo.Utc, systemTimeZone);
+                                                item.DisplayEndDateTimeZone = systemTimeZone.StandardName;
                                                 break;
                                             }
                                         }
+
+                                        item.DisplayStartDate = calendarEvent.StartDate.ToString("yyyy-MM-dd HH:mm:ss");
+                                        item.DisplayEndDate = calendarEvent.EndDate.ToString("yyyy-MM-dd HH:mm:ss");
 
                                         item.StartDate = calendarEvent.StartDate;
                                         DateTime tempEndDate = calendarEvent.EndDate.AddDays(1);

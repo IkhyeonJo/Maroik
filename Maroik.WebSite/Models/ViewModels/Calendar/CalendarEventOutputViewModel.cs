@@ -16,5 +16,9 @@
         public string Status { get; set; }
         public string SerializedCalendarReminders { get; set; }
         public string HtmlColorCode { get; set; }
+        public string DisplayStartDate { get; set; }
+        public string DisplayEndDate { get; set; }
+        public string DisplayStartDateTimeZone { get; set; }
+        public string DisplayEndDateTimeZone { get; set; }
     }
 }

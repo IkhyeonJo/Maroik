@@ -2,7 +2,7 @@
     background-color: white; /* 팝업의 배경색을 흰색으로 설정 */
     border: 1px solid #ccc; /* 테두리 설정 */
     box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.2); /* 그림자 설정 */
-    width: 250px; /* 팝업의 너비 설정 */
+    width: 200px; /* 팝업의 너비 설정 */
     z-index: 10000; /* z-index로 팝업이 다른 요소 위에 표시되도록 설정 */
     padding: 10px; /* 내부 여백 설정 */
     border-radius: 5px; /* 테두리를 둥글게 설정 */
@@ -21,7 +21,7 @@
         font-size: 16px;
     }
 
-#closePopup {
+#closeCalendarEventPopup {
     background: none;
     border: none;
     font-size: 18px;

@@ -332,11 +332,21 @@ $(function () {
                 return;
             }
 
-            // 이벤트 데이터를 팝업에 채워 넣기
-            $('#popupEventTitle').text(arg.event.title || 'No Title');
-            $('#popupEventStart').text(arg.event.start ? arg.event.start.toLocaleString() : 'No start time');
-            $('#popupEventEnd').text(arg.event.end ? arg.event.end.toLocaleString() : 'No end time');
-            $('#popupEventDescription').text(arg.event.extendedProps.description || 'No description');
+            $('#calendarEventPopupTitle').text(arg.event.title);
+            $('#divCalendarEventPopupAllDayChecked').hide();
+            $('#divCalendarEventPopupAllDayUnchecked').hide();
+
+            if (arg.event.allDay) {
+                $('#calendarEventPopupStartAllDayChecked').text(arg.event.extendedProps.displayStartDate);
+                $('#calendarEventPopupEndAllDayChecked').text(arg.event.extendedProps.displayEndDate);
+                $('#divCalendarEventPopupAllDayChecked').show();
+            } else {
+                $('#calendarEventPopupStartAllDayUnchecked').text(arg.event.extendedProps.displayStartDate);
+                $('#calendarEventPopupStartTimeZoneAllDayUnchecked').text(`(${arg.event.extendedProps.displayStartDateTimeZone})`);
+                $('#calendarEventPopupEndAllDayUnchecked').text(arg.event.extendedProps.displayEndDate);
+                $('#calendarEventPopupEndTimeZoneAllDayUnchecked').text(`(${arg.event.extendedProps.displayEndDateTimeZone})`);
+                $('#divCalendarEventPopupAllDayUnchecked').show();
+            }
 
             // 팝업 위치 설정 및 표시
             popup.css({
@@ -346,7 +356,7 @@ $(function () {
             }).data('event-id', arg.event.id);
 
             // 포커스를 팝업의 첫 번째 버튼으로 설정
-            $('#editEvent').focus();
+            $('#editCalendarEventPopup').focus();
 
             // 팝업 외부 클릭 시 닫기
             $(document).on('click', function (e) {
@@ -356,18 +366,18 @@ $(function () {
             });
 
             // Close 버튼 클릭 시 팝업 닫기
-            $('#closePopup').off('click').on('click', function () {
+            $('#closeCalendarEventPopup').off('click').on('click', function () {
                 popup.hide();
             });
 
             // Edit 버튼 클릭 시
-            $('#editEvent').off('click').on('click', function () {
+            $('#editCalendarEventPopup').off('click').on('click', function () {
                 alert('Edit event with ID: ' + popup.data('event-id'));
                 popup.hide();
             });
 
             // Delete 버튼 클릭 시
-            $('#deleteEvent').off('click').on('click', function () {
+            $('#deleteCalendarEventPopup').off('click').on('click', function () {
                 if (confirm('Are you sure you want to delete this calendar event?')) {
                     $.ajax({
                         url: '/Calendar/DeleteCalendarEvent?id=' + popup.data('event-id'),
@@ -760,6 +770,12 @@ $(function () {
                                         end: item.EndDate,
                                         backgroundColor: item.HtmlColorCode,
                                         borderColor: item.HtmlColorCode,
+                                        extendedProps: {
+                                            displayStartDate: item.DisplayStartDate,
+                                            displayEndDate: item.DisplayEndDate,
+                                            displayStartDateTimeZone: item.DisplayStartDateTimeZone,
+                                            displayEndDateTimeZone: item.DisplayEndDateTimeZone
+                                        }
 
                                         //classNames: ['custom-event-class'],
                                         //color: '#ff0000', // General color for the event

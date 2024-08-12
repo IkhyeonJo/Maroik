@@ -129,19 +129,25 @@
     </div>
 </section>
 
+@*<!--calendarEventPopup-->*@
 <div id="calendarEventPopup" class="event-popup" style="display: none; position: absolute;">
     <div class="popup-header">
-        <h5 id="popupEventTitle"></h5>
-        <button type="button" id="closePopup">&times;</button>
+        <h5 id="calendarEventPopupTitle"></h5>
+        <button type="button" id="closeCalendarEventPopup">&times;</button>
     </div>
-    <div class="popup-body">
-        <p><strong>Start:</strong> <span id="popupEventStart"></span></p>
-        <p><strong>End:</strong> <span id="popupEventEnd"></span></p>
-        <p><strong>Description:</strong> <span id="popupEventDescription"></span></p>
+    <div id="divCalendarEventPopupAllDayChecked" class="popup-body" style="display:none;">
+        <p><strong>Start:</strong> <span id="calendarEventPopupStartAllDayChecked"></span></p>
+        <p><strong>End:</strong> <span id="calendarEventPopupEndAllDayChecked"></span></p>
+    </div>
+    <div id="divCalendarEventPopupAllDayUnchecked" class="popup-body" style="display:none;">
+        <p><strong>Start:</strong> <span id="calendarEventPopupStartAllDayUnchecked"></span></p>
+        <p><span id="calendarEventPopupStartTimeZoneAllDayUnchecked"></span></p>
+        <p><strong>End:</strong> <span id="calendarEventPopupEndAllDayUnchecked"></span></p>
+        <p><span id="calendarEventPopupEndTimeZoneAllDayUnchecked"></span></p>
     </div>
     <div class="popup-footer">
-        <button id="editEvent" class="btn btn-primary btn-sm">Edit</button>
-        <button id="deleteEvent" class="btn btn-danger btn-sm">Delete</button>
+        <button id="editCalendarEventPopup" class="btn btn-primary btn-sm">Edit</button>
+        <button id="deleteCalendarEventPopup" class="btn btn-danger btn-sm">Delete</button>
     </div>
 </div>
 
