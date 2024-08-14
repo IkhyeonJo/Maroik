@@ -289,7 +289,7 @@ $('#createCalendarEventNotificationAllDayChecked').off('click').on('click', func
         <select class='form-control-sm createCalendarEventSelNotificationTimeAllDayChecked' style='width:11%;text-overflow:ellipsis;'>
             ${timeIntervals.map(time => time === "09:00" ? `<option value="${time}" selected>${time}</option>` : `<option value="${time}">${time}</option>`).join('')}
         </select>
-        <a class='hover aCalendarDeleteNotificationAllDayChecked' href='#' style='width:10%;'>
+        <a class='hover aCreateCalendarDeleteNotificationAllDayChecked' href='#' style='width:10%;'>
             <i class='fa fa-trash' aria-hidden='true' style='margin-left: 7px;'></i>
         </a>
 
@@ -326,7 +326,7 @@ $('#createCalendarEventNotificationAllDayUnchecked').off('click').on('click', fu
             <option value='Days'>${localizer.days}</option>
             <option value='Weeks'>${localizer.weeks}</option>
         </select>
-        <a class='hover aCalendarDeleteNotificationAllDayUnchecked' href='#' style='width:10%;'>
+        <a class='hover aCreateCalendarDeleteNotificationAllDayUnchecked' href='#' style='width:10%;'>
             <i class='fa fa-trash' aria-hidden='true' style='margin-left: 7px;'></i>
         </a>
 
@@ -338,11 +338,11 @@ $('#createCalendarEventNotificationAllDayUnchecked').off('click').on('click', fu
     $(htmlString).insertBefore(this);
 });
 
-$(document).on('click', '.aCalendarDeleteNotificationAllDayChecked', function () {
+$(document).on('click', '.aCreateCalendarDeleteNotificationAllDayChecked', function () {
     $(this).parent().remove();
 });
 
-$(document).on('click', '.aCalendarDeleteNotificationAllDayUnchecked', function () {
+$(document).on('click', '.aCreateCalendarDeleteNotificationAllDayUnchecked', function () {
     $(this).parent().remove();
 });
 
