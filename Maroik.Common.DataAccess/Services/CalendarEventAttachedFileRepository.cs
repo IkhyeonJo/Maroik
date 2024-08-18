@@ -3,6 +3,7 @@ using Maroik.Common.DataAccess.Data;
 using Maroik.Common.DataAccess.Models;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace Maroik.Common.DataAccess.Services
@@ -16,12 +17,22 @@ namespace Maroik.Common.DataAccess.Services
             _context = context;
         }
         /// <summary>
-        /// 등록된 모든 계정을 구합니다.
+        /// 등록된 모든 파일을 구합니다.
         /// </summary>
         /// <returns></returns>
         public async Task<List<CalendarEventAttachedFile>> GetAllAsync()
         {
             return await _context.CalendarEventAttachedFiles.ToListAsync();
+        }
+
+        /// <summary>
+        /// 한 첨부파일을 구합니다.
+        /// </summary>
+        /// <param name="calendarEventId"></param>
+        /// <returns></returns>
+        public async Task<CalendarEventAttachedFile> GetCalendarEventAttachedFileAsync(int calendarEventId)
+        {
+            return await _context.CalendarEventAttachedFiles.Where(x => x.CalendarEventId == calendarEventId).FirstOrDefaultAsync();
         }
 
         /// <summary>
@@ -44,6 +55,19 @@ namespace Maroik.Common.DataAccess.Services
         {
             _ = _context.CalendarEventAttachedFiles.Update(calendarEventAttachedFile);
             _ = await _context.SaveChangesAsync();
+        }
+
+        /// <summary>
+        /// 첨부파일들을 삭제합니다.
+        /// </summary>
+        /// <param name="calendarEventId"></param>
+        /// <returns></returns>
+        public async Task<int> DeleteCalendarEventAttachedFileAsync(int calendarEventId)
+        {
+            return await _context.Database.ExecuteSqlInterpolatedAsync
+            (
+                $"DELETE FROM CalendarEventAttachedFile WHERE CalendarEventId = {calendarEventId}"
+            );
         }
     }
 }

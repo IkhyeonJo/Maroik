@@ -21,7 +21,7 @@ namespace Maroik.Common.DataAccess.Services
         /// <summary>
         /// 해당 달력에 해당하는 모든 달력 이벤트를 구합니다.
         /// </summary>
-        /// <param name="email"></param>
+        /// <param name="calendarId"></param>
         /// <returns></returns>
         public async Task<IEnumerable<CalendarEvent>> GetCalendarEventsAsync(int calendarId)
         {
@@ -31,6 +31,7 @@ namespace Maroik.Common.DataAccess.Services
         /// <summary>
         /// 한 달력 이벤트를 구합니다.
         /// </summary>
+        /// <param name="id"></param>
         /// <returns></returns>
         public async Task<CalendarEvent> GetCalendarEventAsync(int id)
         {
@@ -45,6 +46,17 @@ namespace Maroik.Common.DataAccess.Services
         public async Task CreateCalendarEventAsync(CalendarEvent calendarEvent)
         {
             _ = await _context.CalendarEvents.AddAsync(calendarEvent);
+            _ = await _context.SaveChangesAsync();
+        }
+
+        /// <summary>
+        /// 달력 이벤트를 업데이트합니다.
+        /// </summary>
+        /// <param name="calendarEvent"></param>
+        /// <returns></returns>
+        public async Task UpdateCalendarEventAsync(CalendarEvent calendarEvent)
+        {
+            _ = _context.CalendarEvents.Update(calendarEvent);
             _ = await _context.SaveChangesAsync();
         }
 

@@ -2,6 +2,8 @@
 {
     public class CalendarEventInputViewModel
     {
+        public int Id { get; set; }
+        public int CalendarId { get; set; }
         public string Title { get; set; }
         public bool AllDay { get; set; }
         public string StartDate { get; set; }
@@ -11,7 +13,6 @@
         public string Location { get; set; }
         public string Description { get; set; }
         public IFormFile CalendarEventUploadedFile { get; set; }
-        public int CalendarId { get; set; }
         public string Status { get; set; }
         public string SerializedCalendarReminders { get; set; }
     }

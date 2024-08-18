@@ -623,6 +623,291 @@
     </div>
 </div>
 
+@*<!--editCalendarEventTaskDialogModal-->*@
+<div class="modal fade" tabindex="-1" role="dialog" id="editCalendarEventTaskDialogModal">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div id="editCalendarEventTaskTabs">
+                @*<!--Tab EventTask-->*@
+                <ul>
+                    <li><a href="#editCalendarEventTaskTabs-1">@localizer["Edit Event"].Value</a></li>
+                </ul>
+                @*Tabs-1: Edit Calendar Event Modal*@
+                <div id="editCalendarEventTaskTabs-1">
+                    <form id="formEditCalendarEvent">
+                        <input type="hidden" id="editCalendarEventId" />
+                        <div class="form-row">
+                            <div class="form-group col-md-12 mb-3">
+                                <label for="editCalendarEventName">@localizer["Name"].Value</label>
+                                <input class="form-control form-control-sm" type="text" data-val="true" data-val-required="@localizer["Please enter Name"].Value" id="editCalendarEventName" name="editCalendarEventName" value="" maxlength="100">
+                                <span class="field-validation-valid text-danger" data-valmsg-for="editCalendarEventName" data-valmsg-replace="true"></span>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group col-md-6 mb-3">
+                                <label for="editCalendarEventAllDay">@localizer["All day"].Value</label>
+                                <input class="form-control form-control-sm" type="checkbox" id="editCalendarEventAllDay" name="editCalendarEventAllDay" />
+                            </div>
+                            <div class="form-group col-md-6 mb-3">
+                                <label for="editCalendarEventRepeatCycle">@localizer["Repeat cycle"].Value</label>
+                                <br />
+                                <select id="editCalendarEventRepeatCycle" name="editCalendarEventRepeatCycle" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
+                                    <option value="DoesNotRepeat" select>@localizer["Does not repeat"].Value</option>
+                                    @*
+                                    <option value="Daily">@localizer["Daily"].Value</option>
+                                    <option value="WeeklyOnMonday">@localizer["Weekly on Monday"].Value</option>
+                                    <option value="MonthlyOnTheFirstMonday">@localizer["Monthly on the"].Value</option>
+                                    <option value="AnnuallyOnJune3">@localizer["Annually on June 3"].Value</option>
+                                    <option value="Custom...">@localizer["Custom..."].Value</option>
+                                    *@
+                                </select>
+                            </div>
+                        </div>
+                        <div id="divEditEventAllDayChecked">
+                            <div class="form-row">
+                                <div class="form-group col-md-6 mb-3">
+                                    <label for="editCalendarEventAllDayCheckedStartDate">@localizer["StartDate"].Value</label>
+                                    <input class="form-control form-control-sm" type="text" data-val="true" data-val-required="@localizer["Please enter StartDate"].Value" id="editCalendarEventAllDayCheckedStartDate" name="editCalendarEventAllDayCheckedStartDate" value="" readonly>
+                                    <span class="field-validation-valid text-danger" data-valmsg-for="editCalendarEventAllDayCheckedStartDate" data-valmsg-replace="true"></span>
+                                </div>
+                                <div class="form-group col-md-6 mb-3">
+                                    <label for="editCalendarEventAllDayCheckedEndDate">@localizer["EndDate"].Value</label>
+                                    <input class="form-control form-control-sm" type="text" data-val="true" data-val-required="@localizer["Please enter EndDate"].Value" id="editCalendarEventAllDayCheckedEndDate" name="editCalendarEventAllDayCheckedEndDate" value="" readonly>
+                                    <span class="field-validation-valid text-danger" data-valmsg-for="editCalendarEventAllDayCheckedEndDate" data-valmsg-replace="true"></span>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="divEditEventAllDayUnchecked">
+                            <div class="form-row">
+                                <div class="form-group col-md-6 mb-3">
+                                    <label for="editCalendarEventAllDayUncheckedStartDate">@localizer["StartDate"].Value</label>
+                                    <input class="form-control form-control-sm" type="text" data-val="true" data-val-required="@localizer["Please enter StartDate"].Value" id="editCalendarEventAllDayUncheckedStartDate" name="editCalendarEventAllDayUncheckedStartDate" value="" readonly>
+                                    <span class="field-validation-valid text-danger" data-valmsg-for="editCalendarEventAllDayUncheckedStartDate" data-valmsg-replace="true"></span>
+                                </div>
+                                <div class="form-group col-md-6 mb-3">
+                                    <label for="editCalendarEventAllDayUncheckedStartTime">@localizer["StartTime"].Value</label>
+                                    <br />
+                                    <select id="editCalendarEventAllDayUncheckedStartTime" name="editCalendarEventAllDayUncheckedStartTime" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
+                                        @foreach (var time in timeIntervals)
+                                        {
+                                            <option value="@time">@time</option>
+                                        }
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group col-md-6 mb-3">
+                                    <label for="editCalendarEventAllDayUncheckedEndDate">@localizer["EndDate"].Value</label>
+                                    <input class="form-control form-control-sm" type="text" data-val="true" data-val-required="@localizer["Please enter EndDate"].Value" id="editCalendarEventAllDayUncheckedEndDate" name="editCalendarEventAllDayUncheckedEndDate" value="" readonly>
+                                    <span class="field-validation-valid text-danger" data-valmsg-for="editCalendarEventAllDayUncheckedEndDate" data-valmsg-replace="true"></span>
+                                </div>
+                                <div class="form-group col-md-6 mb-3">
+                                    <label for="editCalendarEventAllDayUncheckedEndTime">@localizer["EndTime"].Value</label>
+                                    <br />
+                                    <select id="editCalendarEventAllDayUncheckedEndTime" name="editCalendarEventAllDayUncheckedEndTime" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
+                                        @foreach (var time in timeIntervals)
+                                        {
+                                            <option value="@time">@time</option>
+                                        }
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group col-md-6 mb-3">
+                                    <label for="editCalendarEventAllDayUncheckedStartTimeZone">@localizer["StartTimeZone"].Value</label>
+                                    <select id="editCalendarEventAllDayUncheckedStartTimeZone" name="editCalendarEventAllDayUncheckedStartTimeZone" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
+                                        @foreach (TimeZoneInfo systemTimeZone in TimeZoneInfo.GetSystemTimeZones())
+                                        {
+                                            string systemTimeZoneIanaId = string.Empty;
+
+                                            if (systemTimeZone.HasIanaId)
+                                            {
+                                                systemTimeZoneIanaId = systemTimeZone.Id;  // no conversion necessary
+                                            }
+                                            else if (TimeZoneInfo.TryConvertWindowsIdToIanaId(systemTimeZone.Id, out string ianaId))
+                                            {
+                                                systemTimeZoneIanaId = ianaId;  // use the converted ID
+                                            }
+
+                                            if (string.IsNullOrEmpty(systemTimeZoneIanaId))
+                                                continue;
+
+                                            <option value="@systemTimeZoneIanaId">@systemTimeZone.DisplayName</option>
+                                        }
+                                    </select>
+                                </div>
+                                <div class="form-group col-md-6 mb-3">
+                                    <label for="editCalendarEventAllDayUncheckedEndTimeZone">@localizer["EndTimeZone"].Value</label>
+                                    <select id="editCalendarEventAllDayUncheckedEndTimeZone" name="editCalendarEventAllDayUncheckedEndTimeZone" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
+                                        @foreach (TimeZoneInfo systemTimeZone in TimeZoneInfo.GetSystemTimeZones())
+                                        {
+                                            string systemTimeZoneIanaId = string.Empty;
+
+                                            if (systemTimeZone.HasIanaId)
+                                            {
+                                                systemTimeZoneIanaId = systemTimeZone.Id;  // no conversion necessary
+                                            }
+                                            else if (TimeZoneInfo.TryConvertWindowsIdToIanaId(systemTimeZone.Id, out string ianaId))
+                                            {
+                                                systemTimeZoneIanaId = ianaId;  // use the converted ID
+                                            }
+
+                                            if (string.IsNullOrEmpty(systemTimeZoneIanaId))
+                                                continue;
+
+                                            <option value="@systemTimeZoneIanaId">@systemTimeZone.DisplayName</option>
+                                        }
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group col-md-12 mb-3">
+                                <label for="editCalendarEventLocation">@localizer["Location"].Value</label>
+                                <input class="form-control form-control-sm" type="text" data-val="true" data-val-required="@localizer["Please enter Location"].Value" id="editCalendarEventLocation" name="editCalendarEventLocation" value="">
+                                <span class="field-validation-valid text-danger" data-valmsg-for="editCalendarEventLocation" data-valmsg-replace="true"></span>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group col-md-12 mb-3">
+                                <label for="editCalendarEventDescription">@localizer["Description"].Value</label>
+                                <textarea class="form-control form-control-sm" id="editCalendarEventDescription" name="editCalendarEventDescription" maxlength="16384"></textarea> @*maxlength: 16KB*@
+                            </div>
+                        </div>
+
+                        <div id="divEditCalendarEventAttachedFile" class="form-row" style="display:none;">
+                            <ul class="mailbox-attachments d-flex align-items-stretch clearfix">
+                                <li>
+                                    <span class="mailbox-attachment-icon"><i class="far fa-file"></i></span>
+
+                                    <div class="mailbox-attachment-info">
+                                        <a id="aEditCalendarEventAttachedFile" href="#" class="mailbox-attachment-name"><i class="fas fa-paperclip"></i></a>
+                                        <span class="mailbox-attachment-size clearfix mt-1">
+                                            <span id="spanEditCalendarEventAttachedFile">
+                                            </span>
+                                        </span>
+                                    </div>
+                                </li>
+                            </ul>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group col-md-12 mb-3">
+                                <label for="editCalendarEventAttachment">@localizer["Attachment (Only zip extension allowed.)"].Value</label>
+                                <br />
+                                <input type="file" id="editCalendarEventAttachment" name="editCalendarEventAttachment" accept=".zip" data-errorMessage="@localizer["File size must be smaller than 10MB."].Value">
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group col-md-6 mb-3">
+                                <label for="editCalendarEventMyCalendar">@localizer["My Calendar"].Value</label>
+                                <br />
+                                <select id="editCalendarEventMyCalendar" name="editCalendarEventMyCalendar" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;"></select>
+                            </div>
+                            <div class="form-group col-md-6 mb-3">
+                                <label for="editCalendarEventStatus">@localizer["Status"].Value</label>
+                                <br />
+                                <select id="editCalendarEventStatus" name="editCalendarEventStatus" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
+                                    <option value="Busy" select>@localizer["Busy"].Value</option>
+                                    <option value="Free">@localizer["Free"].Value</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div id="divEditEventNotificationAllDayChecked" class="form-row" style="display:none;">
+                            <div class="form-group col-md-12 mb-3">
+                                <label for="editCalendarEventNotificationAllDayChecked">@localizer["Notification"].Value</label>
+                                <br />
+
+                                @*
+                                <div class="divEditEventNotificationAllDayCheckedRow">
+                                <select class='form-control-sm editCalendarEventSelNotificationMethodAllDayChecked' style='width:20%;text-overflow:ellipsis;'>
+                                <option value='Email'>@localizer["Email"].Value</option>
+                                <option value='Notification'>@localizer["Notification"].Value</option>
+                                </select>
+
+                                <input type='number' class='form-control-sm editCalendarEventSelNotificationNumberAllDayChecked' style='width:30%;text-overflow:ellipsis; background-color:#343a40; color:#fff; border-color:#6c757d;' min="0" max="28">
+
+                                <select class='form-control-sm editCalendarEventSelNotificationTimeTypeAllDayChecked' style='width:30%;text-overflow:ellipsis;'>
+                                <option value='Days' selected>@localizer["days"].Value</option>
+                                <option value='Weeks'>@localizer["weeks"].Value</option>
+                                </select>
+                                <label style="padding-left:5px;padding-right:5px;">@localizer["before at"].Value</label>
+                                <select class='form-control-sm editCalendarEventSelNotificationTimeAllDayChecked' style='width:11%;text-overflow:ellipsis;'>
+                                @foreach (var time in timeIntervals)
+                                {
+                                if (time == "09:00") // Default time
+                                {
+                                <option value="@time" selected>@time</option>
+                                }
+                                else
+                                {
+                                <option value="@time">@time</option>
+                                }
+                                }
+                                </select>
+                                <a class='hover aEditCalendarDeleteNotificationAllDayChecked' href='#' style='width:10%;'>
+                                <i class='fa fa-trash' aria-hidden='true' style='margin-left: 7px;'></i>
+                                </a>
+
+                                <br />
+                                <div class="error-message" style="color: red; font-size: 0.9em; display: none;"></div>
+
+                                </div>
+                                *@
+
+                                <input style="margin-top:20px;" class="btn btn-primary" type="button" id="editCalendarEventNotificationAllDayChecked" name="editCalendarEventNotificationAllDayChecked" value="@localizer["Add notification"].Value">
+                            </div>
+                        </div>
+
+                        <div id="divEditEventNotificationAllDayUnchecked" class="form-row" style="display:none;">
+                            <div class="form-group col-md-12 mb-3">
+                                <label for="editCalendarEventNotificationAllDayUnchecked">@localizer["Notification"].Value</label>
+                                <br />
+
+                                @*
+                                <div class="divEditEventNotificationAllDayUncheckedRow" style="padding-bottom:5px;">
+                                <select class='form-control-sm editCalendarEventSelNotificationMethodAllDayUnchecked' style='width:20%;text-overflow:ellipsis;'>
+                                <option value='Email'>@localizer["Email"].Value</option>
+                                <option value='Notification'>@localizer["Notification"].Value</option>
+                                </select>
+
+                                <input type='number' class='form-control-sm editCalendarEventSelNotificationNumberAllDayUnchecked' style='width:30%;text-overflow:ellipsis; background-color:#343a40; color:#fff; border-color:#6c757d;' min="0" max="40320">
+
+                                <select class='form-control-sm editCalendarEventSelNotificationTimeTypeAllDayUnchecked' style='width:30%;text-overflow:ellipsis;'>
+                                <option value='Minutes' selected>@localizer["minutes"].Value</option>
+                                <option value='Hours'>@localizer["hours"].Value</option>
+                                <option value='Days'>@localizer["days"].Value</option>
+                                <option value='Weeks'>@localizer["weeks"].Value</option>
+                                </select>
+                                <a class='hover aEditCalendarDeleteNotificationAllDayUnchecked' href='#' style='width:10%;'>
+                                <i class='fa fa-trash' aria-hidden='true' style='margin-left: 7px;'></i>
+                                </a>
+
+                                <br />
+                                <div class="error-message" style="color: red; font-size: 0.9em; display: none;"></div>
+
+                                </div>
+                                *@
+
+                                <input style="margin-top:20px;" class="btn btn-primary" type="button" id="editCalendarEventNotificationAllDayUnchecked" name="editCalendarEventNotificationAllDayUnchecked" value="@localizer["Add notification"].Value">
+                            </div>
+                        </div>
+
+                        <div class="modal-footer justify-content-between">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">@localizer["Close"].Value</button>
+                            <input type="submit" class="btn btn-primary" value="@localizer["Save"].Value" />
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 @section Styles {
     @if (loginedAccount.Role == Role.Admin)
     {

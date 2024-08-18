@@ -24,7 +24,7 @@ namespace Maroik.Common.DataAccess.Services
         /// <returns></returns>
         public async Task<List<Calendar>> GetCalendarsAsync(string email)
         {
-            return await _context.Calendars.Where(x => x.AccountEmail == email).ToListAsync();
+            return await _context.Calendars.Where(x => x.AccountEmail == email).OrderBy(x => x.Name).ToListAsync();
         }
 
         /// <summary>

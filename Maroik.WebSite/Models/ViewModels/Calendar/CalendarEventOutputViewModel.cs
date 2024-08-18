@@ -1,8 +1,11 @@
-﻿namespace Maroik.WebSite.Models.ViewModels.Calendar
+﻿using Maroik.Common.DataAccess.Models;
+
+namespace Maroik.WebSite.Models.ViewModels.Calendar
 {
     public class CalendarEventOutputViewModel
     {
         public int Id { get; set; }
+        public int CalendarId { get; set; }
         public string Title { get; set; }
         public bool AllDay { get; set; }
         public DateTime StartDate { get; set; }
@@ -11,8 +14,8 @@
         public string EndDateTimeZoneIanaId { get; set; }
         public string Location { get; set; }
         public string Description { get; set; }
-        public IFormFile CalendarEventUploadedFile { get; set; }
-        public int CalendarId { get; set; }
+        public CalendarEventAttachedFile CalendarEventAttachedFile { get; set; }
+        public List<Maroik.Common.DataAccess.Models.Calendar> Calendars { get; set; }
         public string Status { get; set; }
         public string SerializedCalendarReminders { get; set; }
         public string HtmlColorCode { get; set; }

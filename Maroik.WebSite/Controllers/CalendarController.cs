@@ -282,7 +282,7 @@ namespace Maroik.WebSite.Controllers
                             {
                                 if (calendarEventInputViewModel.CalendarEventUploadedFile.Length is > 0 and <= 10485760) // calendarEventInputViewModel.CalendarEventUploadedFile Length : 파일 크기 0MB 이상, 10MB 이하
                                 {
-                                    int createdCalendarEventId = calendarEventInputViewModel.CalendarId; // 첨부파일 FK 해서 로직 추가할 것
+                                    int createdCalendarEventId = calendarEvent.Id;
 
                                     string calendarEventAttachedFilePath = Path.Combine(_hostEnvironment.ContentRootPath, "wwwroot", "upload", "Calendar", "UserIndex", "calendarEventAttachedFiles", $"{createdCalendarEventId}");
                                     if (!Directory.Exists(calendarEventAttachedFilePath))
@@ -499,6 +499,187 @@ namespace Maroik.WebSite.Controllers
                 return Json(new { result = false, error = _localizer["Input is invalid"].Value });
             }
         }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [RequiredHttpPostAccess(Role = Role.User)]
+        public async Task<IActionResult> IsCalendarEventExists(int id)
+        {
+            try
+            {
+                if (ModelState.IsValid)
+                {
+                    try
+                    {
+                        _ = HttpContext.Session.TryGetValue(Maroik.Common.Miscellaneous.Extensions.EnumHelper.GetDescription(Maroik.Common.Miscellaneous.Utilities.Session.Account), out byte[] resultByte);
+
+                        Account loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte));
+
+                        List<Calendar> calendars = await _calendarRepository.GetCalendarsAsync(loginedAccount.Email) ?? [];
+
+                        CalendarEvent tempCalendarEvent = await _calendarEventRepository.GetCalendarEventAsync(id);
+                        Calendar tempCalendar = calendars?.Where(x => x.Id == tempCalendarEvent.CalendarId)?.FirstOrDefault() ?? new Calendar();
+
+                        if (!(tempCalendarEvent.Id > 0))
+                        {
+                            return Json(new { result = false, error = _localizer["Input is invalid"].Value });
+                        }
+
+                        if (!(tempCalendar.Id > 0))
+                        {
+                            return Json(new { result = false, error = _localizer["Input is invalid"].Value });
+                        }
+
+                        CalendarEventOutputViewModel calendarEvent = new CalendarEventOutputViewModel
+                        {
+                            Id = tempCalendarEvent.Id,
+                            CalendarId = tempCalendarEvent.CalendarId,
+                            Title = tempCalendarEvent.Title,
+                            Description = tempCalendarEvent.Description,
+                            AllDay = tempCalendarEvent.AllDay
+                        };
+
+                        if (tempCalendarEvent.AllDay)
+                        {
+                            foreach (TimeZoneInfo systemTimeZone in TimeZoneInfo.GetSystemTimeZones())
+                            {
+                                string systemTimeZoneIanaId = string.Empty;
+
+                                if (systemTimeZone.HasIanaId)
+                                {
+                                    systemTimeZoneIanaId = systemTimeZone.Id;
+                                }
+                                else if (TimeZoneInfo.TryConvertWindowsIdToIanaId(systemTimeZone.Id, out string ianaId))
+                                {
+                                    systemTimeZoneIanaId = ianaId;
+                                }
+
+                                if (string.IsNullOrEmpty(systemTimeZoneIanaId))
+                                {
+                                    continue;
+                                }
+                                else if (systemTimeZoneIanaId == loginedAccount.TimeZoneIanaId)
+                                {
+                                    tempCalendarEvent.StartDate = TimeZoneInfo.ConvertTime(tempCalendarEvent.StartDate, TimeZoneInfo.Utc, systemTimeZone);
+                                    calendarEvent.StartDateTimeZoneIanaId = systemTimeZoneIanaId;
+                                    calendarEvent.DisplayStartDateTimeZone = string.Empty;
+                                    break;
+                                }
+                            }
+
+                            foreach (TimeZoneInfo systemTimeZone in TimeZoneInfo.GetSystemTimeZones())
+                            {
+                                string systemTimeZoneIanaId = string.Empty;
+
+                                if (systemTimeZone.HasIanaId)
+                                {
+                                    systemTimeZoneIanaId = systemTimeZone.Id;
+                                }
+                                else if (TimeZoneInfo.TryConvertWindowsIdToIanaId(systemTimeZone.Id, out string ianaId))
+                                {
+                                    systemTimeZoneIanaId = ianaId;
+                                }
+
+                                if (string.IsNullOrEmpty(systemTimeZoneIanaId))
+                                {
+                                    continue;
+                                }
+                                else if (systemTimeZoneIanaId == loginedAccount.TimeZoneIanaId)
+                                {
+                                    tempCalendarEvent.EndDate = TimeZoneInfo.ConvertTime(tempCalendarEvent.EndDate, TimeZoneInfo.Utc, systemTimeZone);
+                                    calendarEvent.EndDateTimeZoneIanaId = systemTimeZoneIanaId;
+                                    calendarEvent.DisplayEndDateTimeZone = string.Empty;
+                                    break;
+                                }
+                            }
+
+                            calendarEvent.DisplayStartDate = tempCalendarEvent.StartDate.ToString("yyyy-MM-dd");
+                            calendarEvent.DisplayEndDate = tempCalendarEvent.EndDate.ToString("yyyy-MM-dd");
+                        }
+                        else
+                        {
+                            foreach (TimeZoneInfo systemTimeZone in TimeZoneInfo.GetSystemTimeZones())
+                            {
+                                string systemTimeZoneIanaId = string.Empty;
+
+                                if (systemTimeZone.HasIanaId)
+                                {
+                                    systemTimeZoneIanaId = systemTimeZone.Id;
+                                }
+                                else if (TimeZoneInfo.TryConvertWindowsIdToIanaId(systemTimeZone.Id, out string ianaId))
+                                {
+                                    systemTimeZoneIanaId = ianaId;
+                                }
+
+                                if (string.IsNullOrEmpty(systemTimeZoneIanaId))
+                                {
+                                    continue;
+                                }
+                                else if (systemTimeZoneIanaId == tempCalendarEvent.StartDateTimeZoneIanaId)
+                                {
+                                    tempCalendarEvent.StartDate = TimeZoneInfo.ConvertTime(tempCalendarEvent.StartDate, TimeZoneInfo.Utc, systemTimeZone);
+                                    calendarEvent.StartDateTimeZoneIanaId = systemTimeZoneIanaId;
+                                    calendarEvent.DisplayStartDateTimeZone = systemTimeZone.StandardName;
+                                    break;
+                                }
+                            }
+
+                            foreach (TimeZoneInfo systemTimeZone in TimeZoneInfo.GetSystemTimeZones())
+                            {
+                                string systemTimeZoneIanaId = string.Empty;
+
+                                if (systemTimeZone.HasIanaId)
+                                {
+                                    systemTimeZoneIanaId = systemTimeZone.Id;
+                                }
+                                else if (TimeZoneInfo.TryConvertWindowsIdToIanaId(systemTimeZone.Id, out string ianaId))
+                                {
+                                    systemTimeZoneIanaId = ianaId;
+                                }
+
+                                if (string.IsNullOrEmpty(systemTimeZoneIanaId))
+                                {
+                                    continue;
+                                }
+                                else if (systemTimeZoneIanaId == tempCalendarEvent.EndDateTimeZoneIanaId)
+                                {
+                                    tempCalendarEvent.EndDate = TimeZoneInfo.ConvertTime(tempCalendarEvent.EndDate, TimeZoneInfo.Utc, systemTimeZone);
+                                    calendarEvent.EndDateTimeZoneIanaId = systemTimeZoneIanaId;
+                                    calendarEvent.DisplayEndDateTimeZone = systemTimeZone.StandardName;
+                                    break;
+                                }
+                            }
+
+                            calendarEvent.DisplayStartDate = tempCalendarEvent.StartDate.ToString("yyyy-MM-dd HH:mm");
+                            calendarEvent.DisplayEndDate = tempCalendarEvent.EndDate.ToString("yyyy-MM-dd HH:mm");
+                        }
+
+                        calendarEvent.Location = tempCalendarEvent.Location;
+                        calendarEvent.Status = tempCalendarEvent.Status;
+                        calendarEvent.CalendarEventAttachedFile = await _calendarEventAttachedFileRepository.GetCalendarEventAttachedFileAsync(tempCalendarEvent.Id);
+                        calendarEvent.Calendars = calendars.Select(x => new Calendar { Id = x.Id, Name = x.Name }).OrderBy(x => x.Name).ToList();
+                        calendarEvent.SerializedCalendarReminders = JsonConvert.SerializeObject((await _calendarReminderRepository.GetCalendarEventRemindersAsync(tempCalendarEvent.Id)).Select(x => new CalendarEventReminder { Method = x.Method, MinutesBeforeEvent = x.MinutesBeforeEvent, HoursBeforeEvent = x.HoursBeforeEvent, DaysBeforeEvent = x.DaysBeforeEvent, WeeksBeforeEvent = x.WeeksBeforeEvent, TimesBeforeEvent = x.TimesBeforeEvent }) ?? []);
+
+                        calendarEvent.HtmlColorCode = calendars?.Where(x => x.Id == tempCalendarEvent.CalendarId)?.FirstOrDefault()?.HtmlColorCode;
+
+                        return Json(new { result = true, calendarEvent });
+                    }
+                    catch
+                    {
+                        return Json(new { result = false, error = _localizer["Input is invalid"].Value });
+                    }
+                }
+                else
+                {
+                    return Json(new { result = false, error = _localizer["Input is invalid"].Value });
+                }
+            }
+            catch
+            {
+                return Json(new { result = false, error = _localizer["Input is invalid"].Value });
+            }
+        }
+
         [HttpPost]
         [ValidateAntiForgeryToken]
         [RequiredHttpPostAccess(Role = Role.User)]
@@ -643,8 +824,8 @@ namespace Maroik.WebSite.Controllers
                                             }
                                         }
 
-                                        item.DisplayStartDate = calendarEvent.StartDate.ToString("yyyy-MM-dd HH:mm:ss");
-                                        item.DisplayEndDate = calendarEvent.EndDate.ToString("yyyy-MM-dd HH:mm:ss");
+                                        item.DisplayStartDate = calendarEvent.StartDate.ToString("yyyy-MM-dd HH:mm");
+                                        item.DisplayEndDate = calendarEvent.EndDate.ToString("yyyy-MM-dd HH:mm");
 
                                         item.StartDate = calendarEvent.StartDate;
                                         DateTime tempEndDate = calendarEvent.EndDate.AddDays(1);
@@ -685,6 +866,8 @@ namespace Maroik.WebSite.Controllers
         #endregion
 
         #region Update
+
+        #region Calendar
         [HttpPost]
         [ValidateAntiForgeryToken]
         [RequiredHttpPostAccess(Role = Role.User)]
@@ -732,6 +915,295 @@ namespace Maroik.WebSite.Controllers
                 return Json(new { result = false, error = _localizer["Input is invalid"].Value });
             }
         }
+        #endregion
+
+        #region Calendar Event
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [RequiredHttpPostAccess(Role = Role.User)]
+        public async Task<IActionResult> UpdateCalendarEvent([FromForm] CalendarEventInputViewModel calendarEventInputViewModel)
+        {
+            try
+            {
+                if (ModelState.IsValid)
+                {
+                    calendarEventInputViewModel.Description ??= ""; // 내용이 아무것도 입력되지 않았다면
+
+                    #region HtmlSanitizer
+                    HtmlSanitizer sanitizer = new();
+                    _ = sanitizer.AllowedAttributes.Add("class");
+                    string sanitized = sanitizer.Sanitize(calendarEventInputViewModel.Description);
+                    calendarEventInputViewModel.Description = sanitized;
+                    #endregion
+
+                    if (calendarEventInputViewModel.Title.Length is not (> 0 and <= 100)) // 제목 길이
+                    {
+                        return Json(new { result = false, error = _localizer["Name length is must be between 1 and 100 characters."].Value });
+                    }
+
+                    if (calendarEventInputViewModel.Description.Length > 16384) // Description Maxlength: 16KB
+                    {
+                        return Json(new { result = false, error = _localizer["Description length is must be between 0 and 16384 characters."].Value });
+                    }
+
+                    if (calendarEventInputViewModel.CalendarEventUploadedFile != null) // 파일 첨부가 되었다면
+                    {
+                        if (!(Path.GetExtension(calendarEventInputViewModel.CalendarEventUploadedFile.FileName) == ".zip")) // zip 확장자만 가능
+                        {
+                            return Json(new { result = false, error = _localizer["Only zip extension allowed."].Value });
+                        }
+
+                        if (calendarEventInputViewModel.CalendarEventUploadedFile.Length is not (> 0 and <= 10485760)) // 10MB 이하만 가능
+                        {
+                            return Json(new { result = false, error = _localizer["uploaded file size must be smaller than 10MB."].Value });
+                        }
+                    }
+
+                    try
+                    {
+                        bool isAccountSessionExist = HttpContext.Session.TryGetValue(Maroik.Common.Miscellaneous.Extensions.EnumHelper.GetDescription(Maroik.Common.Miscellaneous.Utilities.Session.Account), out byte[] resultByte);
+
+                        if (isAccountSessionExist)
+                        {
+                            Account loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte));
+
+                            Calendar calendarToValidate = (await _calendarRepository.GetCalendarsAsync(loginedAccount.Email)).Where(x => x.Id == calendarEventInputViewModel?.CalendarId).FirstOrDefault();
+
+                            if (calendarToValidate is null)
+                            {
+                                return Json(new { result = false, error = _localizer["The calendar does not exists."].Value });
+                            }
+
+                            if (loginedAccount.Role is not (Role.Admin or Role.User)) // 비 로그인 사용자인 경우
+                            {
+                                return Json(new { result = false, error = _localizer["Please Login to update calendar event"].Value });
+                            }
+
+                            List<Calendar> calendars = await _calendarRepository.GetCalendarsAsync(loginedAccount.Email) ?? [];
+
+                            CalendarEvent calendarEvent = await _calendarEventRepository.GetCalendarEventAsync(calendarEventInputViewModel.Id);
+                            Calendar calendar = calendars?.Where(x => x.Id == calendarEvent.CalendarId)?.FirstOrDefault() ?? new Calendar();
+
+                            if (!(calendarEvent.Id > 0))
+                            {
+                                return Json(new { result = false, error = _localizer["Input is invalid"].Value });
+                            }
+
+                            if (!(calendar.Id > 0))
+                            {
+                                return Json(new { result = false, error = _localizer["Input is invalid"].Value });
+                            }
+
+                            #region CalendarEvent
+                            if (calendarEventInputViewModel.AllDay)
+                            {
+                                DateTime tempStartDate = new(Convert.ToInt32(calendarEventInputViewModel.StartDate.Split("-")[0]),
+                                    Convert.ToInt32(calendarEventInputViewModel.StartDate.Split("-")[1]),
+                                    Convert.ToInt32(calendarEventInputViewModel.StartDate.Split("-")[2]), 0, 0, 0, DateTimeKind.Utc);
+
+                                DateTime tempEndDate = new(Convert.ToInt32(calendarEventInputViewModel.EndDate.Split("-")[0]),
+                                    Convert.ToInt32(calendarEventInputViewModel.EndDate.Split("-")[1]),
+                                    Convert.ToInt32(calendarEventInputViewModel.EndDate.Split("-")[2]), 0, 0, 0, DateTimeKind.Utc);
+
+                                calendarEvent.CalendarId = calendarEventInputViewModel.CalendarId;
+                                calendarEvent.Title = calendarEventInputViewModel.Title;
+                                calendarEvent.Description = calendarEventInputViewModel.Description;
+                                calendarEvent.AllDay = calendarEventInputViewModel.AllDay;
+                                calendarEvent.StartDate = tempStartDate;
+                                calendarEvent.EndDate = tempEndDate;
+                                calendarEvent.StartDateTimeZoneIanaId = null;
+                                calendarEvent.EndDateTimeZoneIanaId = null;
+                                calendarEvent.Location = calendarEventInputViewModel.Location;
+                                calendarEvent.Status = calendarEventInputViewModel.Status;
+                                //calendarEvent.RecurrenceId = 0;
+                                calendarEvent.Updated = DateTime.UtcNow;
+
+                            }
+                            else
+                            {
+                                string[] temporaryStartDate = calendarEventInputViewModel.StartDate.Split(" ");
+                                string[] temporaryEndDate = calendarEventInputViewModel.EndDate.Split(" ");
+
+                                DateTime tempStartDate = new(Convert.ToInt32(temporaryStartDate[0].Split("-")[0]),
+                                    Convert.ToInt32(temporaryStartDate[0].Split("-")[1]),
+                                    Convert.ToInt32(temporaryStartDate[0].Split("-")[2]),
+                                    Convert.ToInt32(temporaryStartDate[1].Split(":")[0]),
+                                    Convert.ToInt32(temporaryStartDate[1].Split(":")[1]),
+                                    0, DateTimeKind.Unspecified);
+
+                                DateTime tempEndDate = new(Convert.ToInt32(temporaryEndDate[0].Split("-")[0]),
+                                    Convert.ToInt32(temporaryEndDate[0].Split("-")[1]),
+                                    Convert.ToInt32(temporaryEndDate[0].Split("-")[2]),
+                                    Convert.ToInt32(temporaryEndDate[1].Split(":")[0]),
+                                    Convert.ToInt32(temporaryEndDate[1].Split(":")[1]),
+                                    0, DateTimeKind.Unspecified);
+
+                                foreach (TimeZoneInfo systemTimeZone in TimeZoneInfo.GetSystemTimeZones())
+                                {
+                                    string systemTimeZoneIanaId = string.Empty;
+
+                                    if (systemTimeZone.HasIanaId)
+                                    {
+                                        systemTimeZoneIanaId = systemTimeZone.Id;
+                                    }
+                                    else if (TimeZoneInfo.TryConvertWindowsIdToIanaId(systemTimeZone.Id, out string ianaId))
+                                    {
+                                        systemTimeZoneIanaId = ianaId;
+                                    }
+
+                                    if (string.IsNullOrEmpty(systemTimeZoneIanaId))
+                                    {
+                                        continue;
+                                    }
+                                    else if (systemTimeZoneIanaId == calendarEventInputViewModel.StartDateTimeZoneIanaId)
+                                    {
+                                        tempStartDate = TimeZoneInfo.ConvertTime(tempStartDate, systemTimeZone, TimeZoneInfo.Utc);
+                                        break;
+                                    }
+                                }
+
+                                foreach (TimeZoneInfo systemTimeZone in TimeZoneInfo.GetSystemTimeZones())
+                                {
+                                    string systemTimeZoneIanaId = string.Empty;
+
+                                    if (systemTimeZone.HasIanaId)
+                                    {
+                                        systemTimeZoneIanaId = systemTimeZone.Id;
+                                    }
+                                    else if (TimeZoneInfo.TryConvertWindowsIdToIanaId(systemTimeZone.Id, out string ianaId))
+                                    {
+                                        systemTimeZoneIanaId = ianaId;
+                                    }
+
+                                    if (string.IsNullOrEmpty(systemTimeZoneIanaId))
+                                    {
+                                        continue;
+                                    }
+                                    else if (systemTimeZoneIanaId == calendarEventInputViewModel.EndDateTimeZoneIanaId)
+                                    {
+                                        tempEndDate = TimeZoneInfo.ConvertTime(tempEndDate, systemTimeZone, TimeZoneInfo.Utc);
+                                        break;
+                                    }
+                                }
+
+                                calendarEvent.CalendarId = calendarEventInputViewModel.CalendarId;
+                                calendarEvent.Title = calendarEventInputViewModel.Title;
+                                calendarEvent.Description = calendarEventInputViewModel.Description;
+                                calendarEvent.AllDay = calendarEventInputViewModel.AllDay;
+                                calendarEvent.StartDate = tempStartDate;
+                                calendarEvent.EndDate = tempEndDate;
+                                calendarEvent.StartDateTimeZoneIanaId = calendarEventInputViewModel.StartDateTimeZoneIanaId;
+                                calendarEvent.EndDateTimeZoneIanaId = calendarEventInputViewModel.EndDateTimeZoneIanaId;
+                                calendarEvent.Location = calendarEventInputViewModel.Location;
+                                calendarEvent.Status = calendarEventInputViewModel.Status;
+                                //calendarEvent.RecurrenceId = 0;
+                                calendarEvent.Updated = DateTime.UtcNow;
+                            }
+
+                            await _calendarEventRepository.UpdateCalendarEventAsync(calendarEvent);
+                            #endregion
+
+                            #region CalendarEventAttachedFile
+
+                            await _calendarEventAttachedFileRepository.DeleteCalendarEventAttachedFileAsync(calendarEvent.Id);
+
+                            if (calendarEventInputViewModel.CalendarEventUploadedFile != null) // 첨부 파일 존재 시,
+                            {
+                                if (calendarEventInputViewModel.CalendarEventUploadedFile.Length is > 0 and <= 10485760) // calendarEventInputViewModel.CalendarEventUploadedFile Length : 파일 크기 0MB 이상, 10MB 이하
+                                {
+                                    int updatedCalendarEventId = calendarEvent.Id;
+
+                                    string calendarEventAttachedFilePath = Path.Combine(_hostEnvironment.ContentRootPath, "wwwroot", "upload", "Calendar", "UserIndex", "calendarEventAttachedFiles", $"{updatedCalendarEventId}");
+                                    if (!Directory.Exists(calendarEventAttachedFilePath))
+                                    {
+                                        _ = Directory.CreateDirectory(calendarEventAttachedFilePath);
+                                    }
+
+                                    string guid = Guid.NewGuid().ToString().ToUpper();
+                                    string calendarEventAttachedFile = $"{guid}{Path.GetExtension(calendarEventInputViewModel.CalendarEventUploadedFile.FileName)}";
+                                    string filePath = Path.Combine(calendarEventAttachedFilePath, calendarEventAttachedFile);
+
+#pragma warning disable SCS0018 // Potential Path Traversal vulnerability was found where '{0}' in '{1}' may be tainted by user-controlled data from '{2}' in method '{3}'.
+                                    using (FileStream stream = new(filePath, FileMode.Create))
+#pragma warning restore SCS0018 // Potential Path Traversal vulnerability was found where '{0}' in '{1}' may be tainted by user-controlled data from '{2}' in method '{3}'.
+                                    {
+                                        await calendarEventInputViewModel.CalendarEventUploadedFile.CopyToAsync(stream);
+                                        await stream.FlushAsync();
+                                    }
+
+                                    await _calendarEventAttachedFileRepository.SaveCalendarEventAttachedFileAsync(new CalendarEventAttachedFile()
+                                    {
+                                        CalendarEventId = updatedCalendarEventId,
+                                        Size = Convert.ToInt32(calendarEventInputViewModel.CalendarEventUploadedFile.Length),
+                                        Name = Path.GetFileNameWithoutExtension(calendarEventInputViewModel.CalendarEventUploadedFile.FileName),
+                                        Extension = Path.GetExtension(calendarEventInputViewModel.CalendarEventUploadedFile.FileName),
+                                        Path = $"/upload/Calendar/UserIndex/calendarEventAttachedFiles/{updatedCalendarEventId}/{calendarEventAttachedFile}"
+                                    });
+                                }
+                                else
+                                {
+                                    return Ok(new { result = false, errorMessage = _localizer["File Size must be smaller than 10MB."].Value });
+                                }
+
+                            }
+                            #endregion
+
+                            #region CalendarReminder
+
+                            await _calendarReminderRepository.DeleteCalendarEventReminderAsync(calendarEvent.Id);
+
+                            List<Dictionary<string, object>> calendarReminders = JsonConvert.DeserializeObject<List<Dictionary<string, object>>>(calendarEventInputViewModel.SerializedCalendarReminders);
+
+                            foreach (Dictionary<string, object> reminder in calendarReminders)
+                            {
+                                string method = reminder["Method"].ToString();
+                                int? minutesBeforeEvent = reminder["MinutesBeforeEvent"] != null ? Convert.ToInt32(reminder["MinutesBeforeEvent"]) : null;
+                                int? hoursBeforeEvent = reminder["HoursBeforeEvent"] != null ? Convert.ToInt32(reminder["HoursBeforeEvent"]) : null;
+                                int? daysBeforeEvent = reminder["DaysBeforeEvent"] != null ? Convert.ToInt32(reminder["DaysBeforeEvent"]) : null;
+                                int? weeksBeforeEvent = reminder["WeeksBeforeEvent"] != null ? Convert.ToInt32(reminder["WeeksBeforeEvent"]) : null;
+                                string tempTimesBeforeEvent = reminder["TimesBeforeEvent"]?.ToString();
+                                TimeSpan? timesBeforeEvent = !string.IsNullOrEmpty(tempTimesBeforeEvent)
+                                    ? new TimeSpan(Convert.ToInt32(tempTimesBeforeEvent.Split(":")[0]), Convert.ToInt32(tempTimesBeforeEvent.Split(":")[1]), 0)
+                                    : null;
+                                CalendarEventReminder calendarEventReminder = new()
+                                {
+                                    CalendarEventId = calendarEvent.Id,
+                                    Method = method,
+                                    MinutesBeforeEvent = minutesBeforeEvent,
+                                    HoursBeforeEvent = hoursBeforeEvent,
+                                    DaysBeforeEvent = daysBeforeEvent,
+                                    WeeksBeforeEvent = weeksBeforeEvent,
+                                    TimesBeforeEvent = timesBeforeEvent != null ? TimeOnly.FromTimeSpan(timesBeforeEvent ?? new TimeSpan()) : null
+                                };
+
+                                await _calendarReminderRepository.CreateCalendarEventReminderAsync(calendarEventReminder);
+                            }
+                            #endregion
+
+                            return Json(new { result = true, message = _localizer["The calendar event has been successfully updated."].Value });
+                        }
+                        else
+                        {
+                            return Json(new { result = false, error = _localizer["Please Login to update calendar event"].Value });
+                        }
+                    }
+                    catch
+                    {
+                        return Json(new { result = false, error = _localizer["Input is invalid"].Value });
+                    }
+                }
+                else
+                {
+                    return Json(new { result = false, error = _localizer["Input is invalid"].Value });
+                }
+            }
+            catch
+            {
+                return Json(new { result = false, error = _localizer["Input is invalid"].Value });
+            }
+        }
+        #endregion
+
         #endregion
 
         #region Delete

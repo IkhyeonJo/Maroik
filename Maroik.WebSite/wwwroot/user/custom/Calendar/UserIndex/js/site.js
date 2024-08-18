@@ -28,6 +28,36 @@ function CreateUploadImageFile(file) {
     });
 }
 
+function EditUploadImageFile(file) {
+
+    formData = new FormData();
+    formData.append("summernoteImageFile", file);
+
+    $.ajax({
+        url: "/Calendar/UploadImageFile",
+        data: formData,
+        headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
+        type: 'POST',
+        enctype: 'multipart/form-data',
+        processData: false,
+        contentType: false,
+        dataType: 'json',
+        cache: false,
+        success: function (data) {
+            if (data.result) {
+                let imgNode = document.createElement('img');
+                imgNode.src = data.filePath;
+                imgNode.style.maxWidth = "170px";
+                imgNode.style.maxHeight = "209px";
+                $('#editCalendarEventDescription').summernote('insertNode', imgNode);
+            }
+            else {
+                alert(data.errorMessage);
+            }
+        }
+    });
+}
+
 function CreateCalendar() {
 
     if (!$('#formCreateCalendar').valid()) {
@@ -257,6 +287,27 @@ $('#createCalendarEventAllDay').off('click').on('click', function () {
     }
 });
 
+$('#editCalendarEventAllDay').off('click').on('click', function () {
+    if ($(this).is(':checked')) {
+        $("#divEditEventAllDayUnchecked").hide();
+        $("#divEditEventAllDayChecked").hide();
+        $("#divEditEventAllDayChecked").show();
+
+        $("#divEditEventNotificationAllDayUnchecked").hide();
+        $("#divEditEventNotificationAllDayChecked").hide();
+        $("#divEditEventNotificationAllDayChecked").show();
+    }
+    else {
+        $("#divEditEventAllDayUnchecked").hide();
+        $("#divEditEventAllDayChecked").hide();
+        $("#divEditEventAllDayUnchecked").show();
+
+        $("#divEditEventNotificationAllDayUnchecked").hide();
+        $("#divEditEventNotificationAllDayChecked").hide();
+        $("#divEditEventNotificationAllDayUnchecked").show();
+    }
+});
+
 $('#createCalendarEventNotificationAllDayChecked').off('click').on('click', function () {
     const timeIntervals = Array.from({ length: 96 }, (_, i) => {
         const hours = String(Math.floor(i / 4)).padStart(2, '0');
@@ -338,11 +389,100 @@ $('#createCalendarEventNotificationAllDayUnchecked').off('click').on('click', fu
     $(htmlString).insertBefore(this);
 });
 
+$('#editCalendarEventNotificationAllDayChecked').off('click').on('click', function () {
+    const timeIntervals = Array.from({ length: 96 }, (_, i) => {
+        const hours = String(Math.floor(i / 4)).padStart(2, '0');
+        const minutes = String((i % 4) * 15).padStart(2, '0');
+        return `${hours}:${minutes}`;
+    });
+
+    const localizer = {
+        Email: "Email",
+        Notification: "Notification",
+        days: "days",
+        weeks: "weeks",
+        "before at": "before at"
+    };
+
+    const htmlString = String.raw`
+    <div class="divEditEventNotificationAllDayCheckedRow">
+        <select class='form-control-sm editCalendarEventSelNotificationMethodAllDayChecked' style='width:20%;text-overflow:ellipsis;'>
+            <option value='Email'>${localizer.Email}</option>
+            <option value='Notification'>${localizer.Notification}</option>
+        </select>
+
+        <input type='number' class='form-control-sm editCalendarEventSelNotificationNumberAllDayChecked' style='width:20%;text-overflow:ellipsis; background-color:#343a40; color:#fff; border-color:#6c757d;' min="0" max="28">
+
+        <select class='form-control-sm editCalendarEventSelNotificationTimeTypeAllDayChecked' style='width:15%;text-overflow:ellipsis;'>
+            <option value='Days' selected>${localizer.days}</option>
+            <option value='Weeks'>${localizer.weeks}</option>
+        </select>
+        <label style="padding-left:5px;padding-right:5px;">${localizer["before at"]}</label>
+        <select class='form-control-sm editCalendarEventSelNotificationTimeAllDayChecked' style='width:11%;text-overflow:ellipsis;'>
+            ${timeIntervals.map(time => time === "09:00" ? `<option value="${time}" selected>${time}</option>` : `<option value="${time}">${time}</option>`).join('')}
+        </select>
+        <a class='hover aEditCalendarDeleteNotificationAllDayChecked' href='#' style='width:10%;'>
+            <i class='fa fa-trash' aria-hidden='true' style='margin-left: 7px;'></i>
+        </a>
+
+        <br />
+        <div class="error-message" style="color: red; font-size: 0.9em; display: none;"></div>
+    </div>
+`;
+
+    $(htmlString).insertBefore(this);
+});
+
+$('#editCalendarEventNotificationAllDayUnchecked').off('click').on('click', function () {
+    const localizer = {
+        Email: "Email",
+        Notification: "Notification",
+        minutes: "minutes",
+        hours: "hours",
+        days: "days",
+        weeks: "weeks"
+    };
+
+    const htmlString = String.raw`
+    <div class="divEditEventNotificationAllDayUncheckedRow" style="padding-bottom:5px;">
+        <select class='form-control-sm editCalendarEventSelNotificationMethodAllDayUnchecked' style='width:20%;text-overflow:ellipsis;'>
+            <option value='Email'>${localizer.Email}</option>
+            <option value='Notification'>${localizer.Notification}</option>
+        </select>
+
+        <input type='number' class='form-control-sm editCalendarEventSelNotificationNumberAllDayUnchecked' style='width:20%;text-overflow:ellipsis; background-color:#343a40; color:#fff; border-color:#6c757d;' min="0" max="40320">
+
+        <select class='form-control-sm editCalendarEventSelNotificationTimeTypeAllDayUnchecked' style='width:15%;text-overflow:ellipsis;'>
+            <option value='Minutes' selected>${localizer.minutes}</option>
+            <option value='Hours'>${localizer.hours}</option>
+            <option value='Days'>${localizer.days}</option>
+            <option value='Weeks'>${localizer.weeks}</option>
+        </select>
+        <a class='hover aEditCalendarDeleteNotificationAllDayUnchecked' href='#' style='width:10%;'>
+            <i class='fa fa-trash' aria-hidden='true' style='margin-left: 7px;'></i>
+        </a>
+
+        <br />
+        <div class="error-message" style="color: red; font-size: 0.9em; display: none;"></div>
+    </div>
+`;
+
+    $(htmlString).insertBefore(this);
+});
+
 $(document).on('click', '.aCreateCalendarDeleteNotificationAllDayChecked', function () {
     $(this).parent().remove();
 });
 
 $(document).on('click', '.aCreateCalendarDeleteNotificationAllDayUnchecked', function () {
+    $(this).parent().remove();
+});
+
+$(document).on('click', '.aEditCalendarDeleteNotificationAllDayChecked', function () {
+    $(this).parent().remove();
+});
+
+$(document).on('click', '.aEditCalendarDeleteNotificationAllDayUnchecked', function () {
     $(this).parent().remove();
 });
 
