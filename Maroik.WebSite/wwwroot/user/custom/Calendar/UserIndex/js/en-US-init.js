@@ -338,76 +338,6 @@ $(function () {
             right: 'dayGridMonth,dayGridWeek,dayGridDay'
         },
         themeSystem: 'bootstrap',
-        events: [
-            {
-                title: 'All Day Event',
-                start: new Date(y, m, 1),
-                backgroundColor: '#f56954', //red
-                borderColor: '#f56954', //red
-                allDay: true
-            },
-            {
-                title: 'Long Event',
-                start: new Date(y, m, d - 5),
-                end: new Date(y, m, d - 2),
-                backgroundColor: '#f39c12', //yellow
-                borderColor: '#f39c12' //yellow
-            },
-            {
-                title: 'Meeting',
-                start: new Date(y, m, d, 10, 30),
-                allDay: false,
-                backgroundColor: '#0073b7', //Blue
-                borderColor: '#0073b7' //Blue
-            },
-            {
-                title: 'Lunch',
-                start: new Date(y, m, d, 12, 0),
-                end: new Date(y, m, d, 14, 0),
-                allDay: false,
-                backgroundColor: '#00c0ef', //Info (aqua)
-                borderColor: '#00c0ef' //Info (aqua)
-            },
-            {
-                title: 'Birthday Party',
-                start: new Date(y, m, d + 1, 19, 0),
-                end: new Date(y, m, d + 1, 22, 30),
-                allDay: false,
-                backgroundColor: '#00a65a', //Success (green)
-                borderColor: '#00a65a' //Success (green)
-            },
-            {
-                title: 'Click for Google',
-                start: new Date(y, m, 28),
-                end: new Date(y, m, 29),
-                url: 'https://www.google.com/',
-                backgroundColor: '#3c8dbc', //Primary (light-blue)
-                borderColor: '#3c8dbc' //Primary (light-blue)
-            }
-        ],
-        //events:
-        //    [
-        //        {
-        //            id: 1,
-        //            title: 'First Event',
-        //            start: '2020-08-08T10:30:00',
-        //            end: '2020-08-08T11:30:00',
-        //            extendedProps: {
-        //                description: 'Test 1'
-        //            },
-        //            color: '#336e03'
-        //        },
-
-        //        {
-        //            id: 2,
-        //            title: 'Second Event',
-        //            start: '2020-08-08T15:30:00',
-        //            end: '2020-08-08T16:30:00',
-        //            extendedProps: {
-        //                description: 'Test 2'
-        //            },
-        //        }
-        //    ],
         navLinks: true, // can click day/week names to navigate views
         editable: true,
         droppable: true, // this allows things to be dropped onto the calendar !!!
@@ -736,16 +666,25 @@ $(function () {
         }
     });
 
-    calendar.addEvent({
-        id: 551,
-        title: 'Maroik',
-        start: '2024-06-25T15:30:00',
-        end: '2024-06-25T16:30:00',
-        allDay: false
+    JSON.parse($('#calendarEventOutputViewModels').val()).forEach(item => {
+        calendar.addEvent({
+            id: item.Id,
+            title: item.Title,
+            allDay: item.AllDay,
+            start: item.StartDate,
+            end: item.EndDate,
+            backgroundColor: item.HtmlColorCode,
+            borderColor: item.HtmlColorCode,
+            extendedProps: {
+                displayStartDate: item.DisplayStartDate,
+                displayEndDate: item.DisplayEndDate,
+                displayStartDateTimeZone: item.DisplayStartDateTimeZone,
+                displayEndDateTimeZone: item.DisplayEndDateTimeZone
+            }
+        });
     });
 
     calendar.render();
-    // $('#calendar').fullCalendar()
 
     /* ADDING EVENTS */
     let currColor = '#3c8dbc' //Red by default
@@ -784,6 +723,56 @@ $(function () {
         // Remove event from text input
         $('#new-event').val('')
     })
+
+    function RefreshCalendarEvents() {
+        calendar.removeAllEvents();
+
+        let paramValue = {
+            Calendars: []
+        };
+
+        $('#myCalendars input[type="checkbox"]:checked').each(function () {
+            let calendarsArray = [
+                { Id: Number($(this).closest('label').attr('id').replace('lblCalendar', '')) }
+            ];
+
+            for (let i = 0; i < calendarsArray.length; i++) {
+                paramValue.Calendars.push(calendarsArray[i]);
+            }
+        });
+
+        $.ajax({
+            url: '/Calendar/GetCalendarEvents',
+            method: 'POST',
+            headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
+            dataType: 'json',
+            data: JSON.stringify(paramValue),
+            contentType: 'application/json; charset=utf-8',
+            //async: false,
+            //cache: false,
+            success: function (response) {
+                if (response.result) {
+                    JSON.parse(response.calendarEvents).forEach(item => {
+                        calendar.addEvent({
+                            id: item.Id,
+                            title: item.Title,
+                            allDay: item.AllDay,
+                            start: item.StartDate,
+                            end: item.EndDate,
+                            backgroundColor: item.HtmlColorCode,
+                            borderColor: item.HtmlColorCode,
+                            extendedProps: {
+                                displayStartDate: item.DisplayStartDate,
+                                displayEndDate: item.DisplayEndDate,
+                                displayStartDateTimeZone: item.DisplayStartDateTimeZone,
+                                displayEndDateTimeZone: item.DisplayEndDateTimeZone
+                            }
+                        });
+                    });
+                }
+            }
+        });
+    }
 
     function ValidateCreateEventInputAllDayChecked(row) {
         let numberInput = row.find('.createCalendarEventSelNotificationNumberAllDayChecked');
@@ -967,6 +956,10 @@ $(function () {
         row.find('.error-message').text(errorMessage).toggle(!isValid);
         return isValid;
     }
+
+    $(document).on('change', '.chkCalendar', function () {
+        RefreshCalendarEvents();
+    });
 
     $(document).on('change', '.createCalendarEventSelNotificationTimeTypeAllDayChecked', function () {
         let row = $(this).closest('.divCreateEventNotificationAllDayCheckedRow');
@@ -1207,9 +1200,7 @@ $(function () {
                         //cache: false,
                         success: function (response) {
                             if (response.result) {
-                                let calendarEvents = JSON.parse(response.calendarEvents);
-
-                                calendarEvents.forEach(item => {
+                                JSON.parse(response.calendarEvents).forEach(item => {
                                     calendar.addEvent({
                                         id: item.Id,
                                         title: item.Title,
@@ -1224,23 +1215,6 @@ $(function () {
                                             displayStartDateTimeZone: item.DisplayStartDateTimeZone,
                                             displayEndDateTimeZone: item.DisplayEndDateTimeZone
                                         }
-
-                                        //classNames: ['custom-event-class'],
-                                        //color: '#ff0000', // General color for the event
-                                        //textColor: '#0000ff', // Text color
-                                        //editable: true, // Allows editing
-                                        //startEditable: true, // Allows dragging to change start
-                                        //durationEditable: true, // Allows resizing to change duration
-                                        //resourceIds: ['a', 'b'], // Associated resource IDs
-                                        //url: 'https://www.example.com/event-details', // URL to open on click
-                                        //display: 'block', // Display as a block
-                                        //overlap: false, // Prevents overlap with other events
-                                        //groupId: 'unique-group-id', // Group ID for grouping related events
-                                        //extendedProps: {
-                                        //    description: 'This is a detailed description of the event.',
-                                        //    department: 'Sales',
-                                        //    location: 'Conference Room A'
-                                        //}
                                     });
                                 });
                             } else {
@@ -1456,9 +1430,7 @@ $(function () {
                         //cache: false,
                         success: function (response) {
                             if (response.result) {
-                                let calendarEvents = JSON.parse(response.calendarEvents);
-
-                                calendarEvents.forEach(item => {
+                                JSON.parse(response.calendarEvents).forEach(item => {
                                     calendar.addEvent({
                                         id: item.Id,
                                         title: item.Title,
@@ -1473,23 +1445,6 @@ $(function () {
                                             displayStartDateTimeZone: item.DisplayStartDateTimeZone,
                                             displayEndDateTimeZone: item.DisplayEndDateTimeZone
                                         }
-
-                                        //classNames: ['custom-event-class'],
-                                        //color: '#ff0000', // General color for the event
-                                        //textColor: '#0000ff', // Text color
-                                        //editable: true, // Allows editing
-                                        //startEditable: true, // Allows dragging to change start
-                                        //durationEditable: true, // Allows resizing to change duration
-                                        //resourceIds: ['a', 'b'], // Associated resource IDs
-                                        //url: 'https://www.example.com/event-details', // URL to open on click
-                                        //display: 'block', // Display as a block
-                                        //overlap: false, // Prevents overlap with other events
-                                        //groupId: 'unique-group-id', // Group ID for grouping related events
-                                        //extendedProps: {
-                                        //    description: 'This is a detailed description of the event.',
-                                        //    department: 'Sales',
-                                        //    location: 'Conference Room A'
-                                        //}
                                     });
                                 });
                             } else {

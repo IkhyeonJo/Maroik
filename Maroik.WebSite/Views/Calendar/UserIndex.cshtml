@@ -53,9 +53,8 @@
     #endregion
 }
 
-@* @Html.Hidden("calendarEventModel", JsonConvert.SerializeObject(assets)) *@
-@Html.Hidden("calendarEventModel", null)
-<!-- Main content -->
+@Html.Hidden("calendarEventOutputViewModels", JsonConvert.SerializeObject(Model.CalendarEventOutputViewModels))
+
 <section class="content">
     <div class="container-fluid">
         <div class="row">
@@ -80,7 +79,7 @@
                                 @foreach (Calendar calendar in Model.Calendars)
                                 {
                                     <label id="@($"lblCalendar{calendar.Id}")" style="position: relative; border:1px solid #ccc; padding:10px; margin:0 0 10px; display:block">
-                                        <input type="checkbox" style="accent-color:@calendar.HtmlColorCode" checked />
+                                        <input type="checkbox" class="chkCalendar" style="accent-color:@calendar.HtmlColorCode" checked />
                                         <label style="padding-left:0.3em;">@calendar.Name</label>
                                         <i class="edit-calendar fas fa-edit" style="position: absolute; right: 40px; top: 50%; transform: translateY(-50%); cursor: pointer;"></i>
                                         <i class="delete-calendar fas fa-trash" style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); cursor: pointer;"></i>
