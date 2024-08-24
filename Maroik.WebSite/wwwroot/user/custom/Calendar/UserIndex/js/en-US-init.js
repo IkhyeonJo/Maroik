@@ -287,76 +287,15 @@ $(function () {
         $("#divEditEventNotificationAllDayUnchecked").show();
     }
 
-    function ini_events(element) {
-        element.each(function () {
-
-            let eventObject = {
-                title: $.trim($(this).text())
-            }
-
-            $(this).data('eventObject', eventObject)
-
-            $(this).draggable({
-                zIndex: 1070,
-                revert: true,
-                revertDuration: 0
-            })
-
-        })
-    }
-
-    ini_events($('#external-events div.external-event'))
-
-    let date = new Date()
-    let d = date.getDate(),
-        m = date.getMonth(),
-        y = date.getFullYear()
-
-    let Calendar = FullCalendar.Calendar;
-    let Draggable = FullCalendar.Draggable;
-
-    let containerEl = document.getElementById('external-events');
-    let checkbox = document.getElementById('drop-remove');
-    let calendarEl = document.getElementById('calendar');
-
-    new Draggable(containerEl, {
-        itemSelector: '.external-event',
-        eventData: function (eventEl) {
-            return {
-                title: eventEl.innerText,
-                backgroundColor: window.getComputedStyle(eventEl, null).getPropertyValue('background-color'),
-                borderColor: window.getComputedStyle(eventEl, null).getPropertyValue('background-color'),
-                textColor: window.getComputedStyle(eventEl, null).getPropertyValue('color'),
-            };
-        }
-    });
-
-    let calendar = new Calendar(calendarEl, {
+    let calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
         headerToolbar: {
             left: 'prevYear,prev,next,nextYear today',
             center: 'title',
             right: 'dayGridMonth,dayGridWeek,dayGridDay'
         },
         themeSystem: 'bootstrap',
-        navLinks: true, // can click day/week names to navigate views
+        navLinks: true,
         editable: true,
-        droppable: true, // this allows things to be dropped onto the calendar !!!
-        drop: function (info) {
-            // is the "remove after drop" checkbox checked?
-            if (checkbox.checked) {
-                // if so, remove the element from the "Draggable Events" list
-                info.draggedEl.parentNode.removeChild(info.draggedEl);
-            }
-        },
-        eventDrop: function (info) {
-            alert(info.event.title + " was dropped on id: " + info.event.id);
-            alert(info.event.title + " was dropped on " + info.oldEvent.start.toISOString());
-            alert(info.event.title + " was dropped on " + info.event.start.toISOString());
-
-            //if (!confirm("Are you sure about this change?")) {
-            //    info.revert();
-            //}
-        },
         selectable: true,
         selectMirror: true,
         select: function (arg) {
@@ -365,6 +304,31 @@ $(function () {
 
             $('#createCalendarEventAllDayUncheckedEndDate').val(moment.utc(arg.end).format("YYYY-MM-DD"));
             $('#createCalendarEventAllDayCheckedEndDate').val(moment.utc(arg.end).format("YYYY-MM-DD"));
+
+            $.ajax({
+                url: '/Calendar/GetCalendars',
+                method: 'POST',
+                headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
+                dataType: 'json',
+                data: null,
+                contentType: 'application/json; charset=utf-8',
+                async: false,
+                //cache: false,
+                success: function (response) {
+                    if (response.result) {
+                        $('#createCalendarEventMyCalendar').empty();
+
+                        $.each(response.calendars, function (index, calendar) {
+                            $('#createCalendarEventMyCalendar').append($('<option>', {
+                                value: calendar.id,
+                                text: calendar.name
+                            }));
+                        });
+
+                        $('#createCalendarEventMyCalendar').val(data.calendarEvent.calendarId);
+                    }
+                }
+            });
 
             $('#createCalendarEventTaskDialogModal').modal('show');
 
@@ -480,16 +444,31 @@ $(function () {
                                 $("#spanEditCalendarEventAttachedFile").text(`${Math.round(data.calendarEvent.calendarEventAttachedFile.size / 1024).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}KB`);
                             }
 
-                            $('#editCalendarEventMyCalendar').empty();
-                            $.each(data.calendarEvent.calendars, function (index, item) {
-                                $('#editCalendarEventMyCalendar').append(
-                                    $('<option>', {
-                                        value: item.id,
-                                        text: item.name
-                                    })
-                                );
+                            $.ajax({
+                                url: '/Calendar/GetCalendars',
+                                method: 'POST',
+                                headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
+                                dataType: 'json',
+                                data: null,
+                                contentType: 'application/json; charset=utf-8',
+                                async: false,
+                                //cache: false,
+                                success: function (response) {
+                                    if (response.result) {
+                                        $('#editCalendarEventMyCalendar').empty();
+
+                                        $.each(response.calendars, function (index, calendar) {
+                                            $('#editCalendarEventMyCalendar').append($('<option>', {
+                                                value: calendar.id,
+                                                text: calendar.name
+                                            }));
+                                        });
+
+                                        $('#editCalendarEventMyCalendar').val(data.calendarEvent.calendarId);
+                                    }
+                                }
                             });
-                            $('#editCalendarEventMyCalendar').val(data.calendarEvent.calendarId);
+
                             $('#editCalendarEventStatus').val(data.calendarEvent.status);
 
                             $('#divEditEventNotificationAllDayChecked').hide();
@@ -686,44 +665,6 @@ $(function () {
     });
 
     calendar.render();
-
-    /* ADDING EVENTS */
-    let currColor = '#3c8dbc' //Red by default
-    // Color chooser button
-    $('#color-chooser > li > a').off('click').on('click', function (e) {
-        e.preventDefault()
-        // Save color
-        currColor = $(this).css('color')
-        // Add color effect to button
-        $('#add-new-event').css({
-            'background-color': currColor,
-            'border-color': currColor
-        })
-    })
-    $('#add-new-event').off('click').on('click', function (e) {
-        e.preventDefault()
-        // Get value and make sure it is not null
-        let val = $('#new-event').val()
-        if (val.length == 0) {
-            return
-        }
-
-        // Create events
-        let event = $('<div />')
-        event.css({
-            'background-color': currColor,
-            'border-color': currColor,
-            'color': '#fff'
-        }).addClass('external-event')
-        event.text(val)
-        $('#external-events').prepend(event)
-
-        // Add draggable funtionality
-        ini_events(event)
-
-        // Remove event from text input
-        $('#new-event').val('')
-    })
 
     function RefreshCalendarEvents() {
         calendar.removeAllEvents();
