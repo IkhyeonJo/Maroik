@@ -460,6 +460,7 @@ namespace Maroik.WebSite.Controllers
                     var item = new CalendarEventOutputViewModel();
 
                     item.Id = calendarEvent.Id;
+                    item.CalendarId = calendarEvent.CalendarId;
                     item.Title = calendarEvent.Title;
                     item.AllDay = calendarEvent.AllDay;
 
@@ -850,6 +851,7 @@ namespace Maroik.WebSite.Controllers
                                     var item = new CalendarEventOutputViewModel();
 
                                     item.Id = calendarEvent.Id;
+                                    item.CalendarId = calendarEvent.CalendarId;
                                     item.Title = calendarEvent.Title;
                                     item.AllDay = calendarEvent.AllDay;
 

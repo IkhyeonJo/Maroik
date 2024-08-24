@@ -107,129 +107,8 @@ function CreateCalendar() {
     return false;
 }
 
-function UpdateCalendar() {
-
-    if (!$('#formEditCalendar').valid()) {
-        return false;
-    }
-
-    let editForm = $('#formEditCalendar');
-
-    let id = editForm.find('input[id="editCalendarId"]').val();
-    let name = editForm.find('input[id="editCalendarName"]').val();
-    let description = editForm.find('textarea[id="editCalendarDescription"]').val();
-    let htmlColorCode = editForm.find('input[id="editCalendarHtmlColorCode"]').val();
-    let timeZoneIanaId = editForm.find('select[id="editCalendarTimeZone"]').val();
-
-    let calendarsArray = [
-        { Id: id, Name: name, Description: description, HtmlColorCode: htmlColorCode, TimeZoneIanaId: timeZoneIanaId }
-    ];
-
-    let paramValue = {
-        Calendars: []
-    };
-
-    for (let i = 0; i < calendarsArray.length; i++) {
-        paramValue.Calendars.push(calendarsArray[i]);
-    }
-
-    $.ajax({
-        url: '/Calendar/UpdateCalendar',
-        type: 'POST',
-        headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
-        dataType: 'json',
-        data: JSON.stringify(paramValue),
-        contentType: 'application/json; charset=utf-8',
-        //async: false,
-        //cache: false,
-        success: function (data) {
-            if (data.result) {
-                $('#editCalendarDialogModal').modal('hide');
-
-                let label = $('#lblCalendar' + data.calendar.id).find('label');
-                if (label.length > 0) {
-                    label.text(data.calendar.name);
-                }
-
-                let checkbox = $('#lblCalendar' + data.calendar.id).find('input[type="checkbox"]');
-                if (checkbox.length > 0) {
-                    checkbox.css('accent-color', data.calendar.htmlColorCode);
-                }
-
-                toastr.success(data.message);
-            }
-            else {
-                toastr.error(data.error);
-            }
-        }
-    });
-    return false;
-}
-
-function DeleteCalendar() {
-    let selectedCalendarId = $('#confirmDeleteCalendarDialogModal').data('calendar-id');
-
-    $.ajax({
-        url: '/Calendar/IsCalendarExists' + '?id=' + selectedCalendarId,
-        type: 'POST',
-        headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
-        dataType: 'json',
-        data: null,
-        contentType: 'application/json; charset=utf-8',
-        //async: false,
-        //cache: false,
-        success: function (data) {
-            if (data.result) {
-
-                let calendarsArray = [
-                    { Id: data.calendar.id }
-                ];
-
-                let paramValue = {
-                    Calendars: []
-                };
-
-                for (let i = 0; i < calendarsArray.length; i++) {
-                    paramValue.Calendars.push(calendarsArray[i]);
-                }
-
-
-                $.ajax({
-                    url: '/Calendar/DeleteCalendar',
-                    type: 'POST',
-                    headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
-                    dataType: 'json',
-                    data: JSON.stringify(paramValue),
-                    contentType: 'application/json; charset=utf-8',
-                    //async: false,
-                    //cache: false,
-                    success: function (data) {
-                        if (data.result) {
-                            $('#confirmDeleteCalendarDialogModal').modal('hide');
-
-                            $('#lblCalendar' + data.calendar.id).remove();
-
-                            toastr.success(data.message);
-                        }
-                        else {
-                            toastr.error(data.error);
-                        }
-                    }
-                });
-            }
-            else {
-                toastr.error(data.error);
-            }
-        }
-    });
-}
-
 $('#formCreateCalendar').off('submit').on('submit', function () {
     return CreateCalendar();
-});
-
-$('#formEditCalendar').off('submit').on('submit', function () {
-    return UpdateCalendar();
 });
 
 $('#aCreateCalendarEvent').off('click').on('click', function () {
@@ -574,8 +453,4 @@ $(document).on('mouseenter', '.delete-calendar', function () {
 
 $(document).on('mouseleave', '.delete-calendar', function () {
     $(this).css('color', '');
-});
-
-$('#btnDeleteCalendar').off('click').on('click', function () {
-    DeleteCalendar();
 });
