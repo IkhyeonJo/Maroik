@@ -53,6 +53,18 @@
     #endregion
 }
 
+@Html.Hidden("localizerEmail", localizer["Email"].Value)
+@Html.Hidden("localizerNotification", localizer["Notification"].Value)
+@Html.Hidden("localizerMinutes", localizer["Minutes"].Value)
+@Html.Hidden("localizerHours", localizer["Hours"].Value)
+@Html.Hidden("localizerDays", localizer["Days"].Value)
+@Html.Hidden("localizerWeeks", localizer["Weeks"].Value)
+@Html.Hidden("localizerBeforeAt", localizer["BeforeAt"].Value)
+
+@Html.Hidden("localizerPrevText", localizer["PrevText"].Value)
+
+@Html.Hidden("localizerAugust", localizer["August"].Value)
+
 @Html.Hidden("calendarEventOutputViewModels", JsonConvert.SerializeObject(Model.CalendarEventOutputViewModels))
 
 <section class="content">
@@ -937,14 +949,6 @@
     }
     else if (loginedAccount.Role == Role.User)
     {
-        @if (currentCulture == "ko-KR")
-        {
-            <script src="~/user/custom/Calendar/UserIndex/js/ko-KR-init.js" asp-append-version="true"></script>
-        }
-        else if (currentCulture == "en-US")
-        {
-            <script src="~/user/custom/Calendar/UserIndex/js/en-US-init.js" asp-append-version="true"></script>
-        }
         <script src="~/user/custom/Calendar/UserIndex/js/site.js" asp-append-version="true"></script>
     }
     else if (loginedAccount.Role == Role.Anonymous)
