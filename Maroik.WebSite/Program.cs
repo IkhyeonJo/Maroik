@@ -59,6 +59,7 @@ builder.Services.AddScoped<IBoardRepository, BoardRepository>();
 builder.Services.AddScoped<IBoardAttachedFileRepository, BoardAttachedFileRepository>();
 builder.Services.AddScoped<IBoardCommentRepository, BoardCommentRepository>();
 builder.Services.AddScoped<ICalendarRepository, CalendarRepository>();
+builder.Services.AddScoped<IOtherCalendarRepository, OtherCalendarRepository>();
 builder.Services.AddScoped<ICalendarEventRepository, CalendarEventRepository>();
 builder.Services.AddScoped<ICalendarEventAttachedFileRepository, CalendarEventAttachedFileRepository>();
 builder.Services.AddScoped<ICalendarEventReminderRepository, CalendarEventReminderRepository>();

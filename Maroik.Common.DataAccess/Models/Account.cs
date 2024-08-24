@@ -95,4 +95,5 @@ public partial class Account
 
     public virtual ICollection<Asset> Assets { get; } = [];
     public virtual ICollection<Calendar> Calendars { get; } = [];
+    public virtual ICollection<OtherCalendar> OtherCalendars { get; } = [];
 }

@@ -27,6 +27,8 @@ namespace Maroik.Common.DataAccess.Data
 
         public virtual DbSet<Calendar> Calendars { get; set; }
 
+        public virtual DbSet<OtherCalendar> OtherCalendars { get; set; }
+
         public virtual DbSet<CalendarEvent> CalendarEvents { get; set; }
 
         public virtual DbSet<CalendarEventAttachedFile> CalendarEventAttachedFiles { get; set; }
@@ -321,6 +323,28 @@ namespace Maroik.Common.DataAccess.Data
                 _ = entity.HasOne(d => d.AccountEmailNavigation).WithMany(p => p.Calendars)
                     .HasForeignKey(d => d.AccountEmail)
                     .HasConstraintName("Calendar_FK_0");
+            });
+
+            _ = modelBuilder.Entity<OtherCalendar>(entity =>
+            {
+                _ = entity.HasKey(e => new { e.AccountEmail, e.CalendarId })
+                    .HasName("PRIMARY")
+                    .HasAnnotation("MySql:IndexPrefixLength", new[] { 0, 0 });
+
+                _ = entity.ToTable("OtherCalendar", tb => tb.HasComment("Maroik.WebSite 다른 달력"));
+
+                _ = entity.HasIndex(e => e.AccountEmail, "AccountEmail");
+
+                _ = entity.Property(e => e.AccountEmail).HasComment("계정 이메일 (ID)");
+                _ = entity.Property(e => e.CalendarId).HasComment("부모 Calendar Id").HasColumnType("int(11)");
+
+                _ = entity.HasOne(d => d.AccountEmailNavigation).WithMany(p => p.OtherCalendars)
+                    .HasForeignKey(d => d.AccountEmail)
+                    .HasConstraintName("OtherCalendar_FK_0");
+
+                _ = entity.HasOne(d => d.Calendar).WithMany(p => p.OtherCalendars)
+                    .HasForeignKey(d => d.CalendarId)
+                    .HasConstraintName("OtherCalendar_FK_1");
             });
 
             _ = modelBuilder.Entity<CalendarEvent>(entity =>

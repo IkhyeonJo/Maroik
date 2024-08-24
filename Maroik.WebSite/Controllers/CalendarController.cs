@@ -19,12 +19,13 @@ namespace Maroik.WebSite.Controllers
         private readonly IAssetRepository _assetRepository;
         private readonly IAccountRepository _accountRepository;
         private readonly ICalendarRepository _calendarRepository;
+        private readonly IOtherCalendarRepository _otherCalendarRepository;
         private readonly ICalendarEventRepository _calendarEventRepository;
         private readonly ICalendarEventAttachedFileRepository _calendarEventAttachedFileRepository;
         private readonly ICalendarEventReminderRepository _calendarReminderRepository;
         private readonly IHostEnvironment _hostEnvironment;
 
-        public CalendarController(IHtmlLocalizer<CalendarController> localizer, ILogger<CalendarController> logger, IHostEnvironment hostEnvironment, IIncomeRepository incomeRepository, IExpenditureRepository expenditureRepository, IAssetRepository assetRepository, IAccountRepository accountRepository, ICalendarRepository calendarRepository, ICalendarEventRepository calendarEventRepository, ICalendarEventAttachedFileRepository calendarEventAttachedFileRepository, ICalendarEventReminderRepository calendarReminderRepository)
+        public CalendarController(IHtmlLocalizer<CalendarController> localizer, ILogger<CalendarController> logger, IHostEnvironment hostEnvironment, IIncomeRepository incomeRepository, IExpenditureRepository expenditureRepository, IAssetRepository assetRepository, IAccountRepository accountRepository, ICalendarRepository calendarRepository, IOtherCalendarRepository otherCalendarRepository, ICalendarEventRepository calendarEventRepository, ICalendarEventAttachedFileRepository calendarEventAttachedFileRepository, ICalendarEventReminderRepository calendarReminderRepository)
         {
             _localizer = localizer;
             _logger = logger;
@@ -34,6 +35,7 @@ namespace Maroik.WebSite.Controllers
             _assetRepository = assetRepository;
             _accountRepository = accountRepository;
             _calendarRepository = calendarRepository;
+            _otherCalendarRepository = otherCalendarRepository;
             _calendarEventRepository = calendarEventRepository;
             _calendarEventAttachedFileRepository = calendarEventAttachedFileRepository;
             _calendarReminderRepository = calendarReminderRepository;
@@ -590,8 +592,13 @@ namespace Maroik.WebSite.Controllers
             }
             #endregion
 
+            #region Load OtherCalendar
+            List<OtherCalendar> otherCalendars = await _otherCalendarRepository.GetOtherCalendarsAsync(loginedAccount.Email) ?? [];
+            #endregion
+
             calendarOutputViewModel.Calendars = calendars;
             calendarOutputViewModel.CalendarEventOutputViewModels = calendarEventOutputViewModels;
+            calendarOutputViewModel.OtherCalendars = otherCalendars;
 
             return View(calendarOutputViewModel);
         }
