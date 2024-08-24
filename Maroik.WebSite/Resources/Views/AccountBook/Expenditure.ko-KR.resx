@@ -171,7 +171,7 @@
   <data name="PaymentMethod" xml:space="preserve">
     <value>결제수단</value>
   </data>
-  <data name="Please enter Contents" xml:space="preserve">
+  <data name="Please enter Content" xml:space="preserve">
     <value>내용을 입력해주세요.</value>
   </data>
   <data name="Please enter date" xml:space="preserve">

@@ -171,8 +171,8 @@
   <data name="PaymentMethod" xml:space="preserve">
     <value>PaymentMethod</value>
   </data>
-  <data name="Please enter Contents" xml:space="preserve">
-    <value>Please enter Contents</value>
+  <data name="Please enter Content" xml:space="preserve">
+    <value>Please enter Content</value>
   </data>
   <data name="Please enter date" xml:space="preserve">
     <value>Please enter date</value>
