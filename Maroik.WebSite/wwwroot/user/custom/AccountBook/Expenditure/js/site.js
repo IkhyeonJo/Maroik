@@ -1,4 +1,106 @@
-﻿let selectedRowColor = "table-primary";
+﻿const localizer = {
+    PrevText: $('#localizerPrevText').val(),
+    NextText: $('#localizerNextText').val(),
+    January: $('#localizerJanuary').val(),
+    February: $('#localizerFebruary').val(),
+    March: $('#localizerMarch').val(),
+    April: $('#localizerApril').val(),
+    May: $('#localizerMay').val(),
+    June: $('#localizerJune').val(),
+    July: $('#localizerJuly').val(),
+    August: $('#localizerAugust').val(),
+    September: $('#localizerSeptember').val(),
+    October: $('#localizerOctober').val(),
+    November: $('#localizerNovember').val(),
+    December: $('#localizerDecember').val(),
+    Jan: $('#localizerJan').val(),
+    Feb: $('#localizerFeb').val(),
+    Mar: $('#localizerMar').val(),
+    Apr: $('#localizerApr').val(),
+    Jun: $('#localizerJun').val(),
+    Jul: $('#localizerJul').val(),
+    Aug: $('#localizerAug').val(),
+    Sep: $('#localizerSep').val(),
+    Oct: $('#localizerOct').val(),
+    Nov: $('#localizerNov').val(),
+    Dec: $('#localizerDec').val(),
+    Sunday: $('#localizerSunday').val(),
+    Monday: $('#localizerMonday').val(),
+    Tuesday: $('#localizerTuesday').val(),
+    Wednesday: $('#localizerWednesday').val(),
+    Thursday: $('#localizerThursday').val(),
+    Friday: $('#localizerFriday').val(),
+    Saturday: $('#localizerSaturday').val(),
+    Sun: $('#localizerSun').val(),
+    Mon: $('#localizerMon').val(),
+    Tue: $('#localizerTue').val(),
+    Wed: $('#localizerWed').val(),
+    Thu: $('#localizerThu').val(),
+    Fri: $('#localizerFri').val(),
+    Sat: $('#localizerSat').val(),
+    Su: $('#localizerSu').val(),
+    Mo: $('#localizerMo').val(),
+    Tu: $('#localizerTu').val(),
+    We: $('#localizerWe').val(),
+    Th: $('#localizerTh').val(),
+    Fr: $('#localizerFr').val(),
+    Sa: $('#localizerSa').val(),
+    YearSuffix: $('#localizerYearSuffix').val()
+};
+
+$.datepicker.setDefaults({
+    dateFormat: 'yy-mm-dd',
+    prevText: localizer.prevText,
+    nextText: localizer.nextText,
+    monthNames: [localizer.January, localizer.February, localizer.March, localizer.April, localizer.May, localizer.June, localizer.July, localizer.August, localizer.September, localizer.October, localizer.November, localizer.December],
+    monthNamesShort: [localizer.Jan, localizer.Feb, localizer.Mar, localizer.Apr, localizer.May, localizer.Jun, localizer.Jul, localizer.Aug, localizer.Sep, localizer.Oct, localizer.Nov, localizer.Dec],
+    dayNames: [localizer.Sunday, localizer.Monday, localizer.Tuesday, localizer.Wednesday, localizer.Thursday, localizer.Friday, localizer.Saturday],
+    dayNamesShort: [localizer.Sun, localizer.Mon, localizer.Tue, localizer.Wed, localizer.Thu, localizer.Fri, localizer.Sat],
+    dayNamesMin: [localizer.Su, localizer.Mo, localizer.Tu, localizer.We, localizer.Th, localizer.Fr, localizer.Sa],
+    showMonthAfterYear: true,
+    yearSuffix: localizer.YearSuffix
+});
+
+const currentYear = $("#createExpenditureDate").val().split('-')[0];
+const currentMonth = $("#createExpenditureDate").val().split('-')[1];
+const currentDay = $("#createExpenditureDate").val().split('-')[2];
+
+$(function () {
+    $("#createExpenditureTabs").tabs();
+    $("#editExpenditureTabs").tabs();
+    $("#createExpenditureDate").datepicker({
+        showButtonPanel: true,
+        beforeShow: function (input) {
+            setTimeout(function () {
+
+            }, 1);
+        },
+        onChangeMonthYear: function (year, month, instance) {
+            setTimeout(function () {
+
+            }, 1);
+        }
+    });
+
+    $("#editExpenditureDate").datepicker({
+        showButtonPanel: true,
+        beforeShow: function (input) {
+            setTimeout(function () {
+
+            }, 1);
+        },
+        onChangeMonthYear: function (year, month, instance) {
+            setTimeout(function () {
+
+            }, 1);
+        }
+    });
+
+    $('<style type="text/css"> .ui-datepicker-close { display: none; } </style>').appendTo("head");
+    $('<style type="text/css"> .ui-datepicker-current { display: none; } </style>').appendTo("head");
+});
+
+let selectedRowColor = "table-primary";
 
 document.addEventListener("rowclick", e => {
     let selectedRow = e.detail;
