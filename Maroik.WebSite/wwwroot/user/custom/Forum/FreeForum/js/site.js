@@ -241,8 +241,6 @@ function DeleteBoard(detailBoardId) {
         dataType: 'json',
         data: null,
         contentType: 'application/json; charset=utf-8',
-        //async: false,
-        //cache: false,
         success: function (data) {
             if (data.result) {
 
@@ -257,8 +255,6 @@ function DeleteBoard(detailBoardId) {
                     dataType: 'json',
                     data: paramValue,
                     contentType: 'application/json; charset=utf-8',
-                    //async: false,
-                    //cache: false,
                     success: function (data) {
                         if (data.result) {
                             $('#confirmDeleteBoardDialogModal').modal('hide');
@@ -301,8 +297,6 @@ function WriteFreeComment(detailBoardId, detailCurrentPage, errorMessage) {
         dataType: 'json',
         data: paramValue,
         contentType: 'application/json; charset=utf-8',
-        //async: false,
-        //cache: false,
         success: function (data) {
             if (data.result) {
                 window.location.href = "/Forum/FreeForum?method=detail" + "&boardId=" + data.boardId + "&page=" + data.page;
@@ -323,8 +317,6 @@ function DeleteComment(commentId, boardId, page) {
         dataType: 'json',
         data: null,
         contentType: 'application/json; charset=utf-8',
-        //async: false,
-        //cache: false,
         success: function (data) {
             if (data.result) {
                 window.location.href = "/Forum/FreeForum?method=detail" + "&boardId=" + boardId + "&page=" + page;

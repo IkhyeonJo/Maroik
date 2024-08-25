@@ -104,48 +104,35 @@ document.addEventListener("rowclick", e => {
 
     $('#incomeGrid > table > tbody  > tr').each(function (index, tr) {
         $(this).removeClass(selectedRowColor);
-    }); // remove all selected row color
+    });
 
     $('#incomeGrid > table > tbody  > tr').each(function (index, tr) {
         if ((new String(selectedRowId).valueOf() === new String($(this).attr('data-id')).valueOf())) {
             $(this).addClass(selectedRowColor);
         }
-    }); // set selected row color class
+    });
 });
 
-// Triggered before grid starts loading. It's recommended to use event delegation in ajax scenarios.
 document.addEventListener("reloadstart", e => {
-    //e.detail.grid - grid's instance.
 });
 
-// Triggered after grid stop loading. It's recommended to use event delegation in ajax scenarios.
 document.addEventListener("reloadend", e => {
-    //e.detail.grid - grid's instance.
 });
 
-// Triggered after grid reload fails. It's recommended to use event delegation in ajax scenarios.
 document.addEventListener("reloadfail", e => {
-    //e.detail.reason - failed response promise reason.
-    //e.detail.grid - grid's instance.
-
-    // Preventing default stops failed promise from bubbling out.
 });
 
-// Triggered after grid configuration changes. It's recommended to use event delegation in ajax scenarios.
 document.addEventListener("gridconfigure", e => {
-    //e.detail.grid - grid's instance.
 });
 
 
 $(document).on("dblclick", "#incomeGrid > table > tbody  > tr", function () {
-    //console.log('dblclick-start');
     $('#incomeGrid > table > tbody  > tr').each(function (index, tr) {
 
-        if ($(this).attr("class").includes(selectedRowColor)) { // Get SelectedRow by Color
+        if ($(this).attr("class").includes(selectedRowColor)) {
             EditIncomeGridRow();
         }
     });
-    //console.log('dblclick-end');
 });
 $('#gridSearch').on('input', function () {
     const grid = new MvcGrid(document.querySelector(".mvc-grid"));
@@ -272,14 +259,12 @@ function CreateIncome() {
         dataType: 'json',
         data: paramValue,
         contentType: 'application/json; charset=utf-8',
-        //async: false,
-        //cache: false,
         success: function (data) {
             if (data.result) {
-                $('#createIncomeDialogModal').modal('hide'); // hide Modal
+                $('#createIncomeDialogModal').modal('hide');
 
-                const grid = new MvcGrid(document.querySelector(".mvc-grid")); //reload grid
-                grid.reload(); //reload grid
+                const grid = new MvcGrid(document.querySelector(".mvc-grid"));
+                grid.reload();
 
                 toastr.success(data.message);
             }
@@ -297,15 +282,15 @@ function EditIncomeGridRow(errorMessageSelectGridRow) {
     let selectedRowId = "";
 
     $('#incomeGrid > table > tbody  > tr').each(function (index, tr) {
-        if ($(this).attr("class").includes(selectedRowColor)) { // Get SelectedRow by Color
+        if ($(this).attr("class").includes(selectedRowColor)) {
             selectedRowId = $(this).attr("data-id");
         }
-    }); // Search Selected Row
+    });
 
     if (selectedRowId === "") {
         toastr.error(errorMessageSelectGridRow);
         return false;
-    } // check whether selected row exist or not
+    }
 
     $.ajax({
         url: '/AccountBook/IsIncomeExists' + '?id=' + selectedRowId,
@@ -314,8 +299,6 @@ function EditIncomeGridRow(errorMessageSelectGridRow) {
         dataType: 'json',
         data: null,
         contentType: 'application/json; charset=utf-8',
-        //async: false,
-        //cache: false,
         success: function (data) {
             if (data.result) {
 
@@ -426,14 +409,12 @@ function UpdateIncome() {
         dataType: 'json',
         data: paramValue,
         contentType: 'application/json; charset=utf-8',
-        //async: false,
-        //cache: false,
         success: function (data) {
             if (data.result) {
-                $('#editIncomeDialogModal').modal('hide'); // hide Modal
+                $('#editIncomeDialogModal').modal('hide');
 
-                const grid = new MvcGrid(document.querySelector(".mvc-grid")); //reload grid
-                grid.reload(); //reload grid
+                const grid = new MvcGrid(document.querySelector(".mvc-grid"));
+                grid.reload();
 
                 toastr.success(data.message);
             }
@@ -450,15 +431,15 @@ function ConfirmDeleteIncome(errorMessageSelectGridRow) {
     let selectedRowId = "";
 
     $('#incomeGrid > table > tbody  > tr').each(function (index, tr) {
-        if ($(this).attr("class").includes(selectedRowColor)) { // Get SelectedRow by Color
+        if ($(this).attr("class").includes(selectedRowColor)) {
             selectedRowId = $(this).attr("data-id");
         }
-    }); // Search Selected Row
+    });
 
     if (selectedRowId === "") {
         toastr.error(errorMessageSelectGridRow);
         return false;
-    } // check whether selected row exist or not
+    }
 
     $('#confirmDeleteIncomeDialogModal').modal({
         keyboard: false,
@@ -474,15 +455,15 @@ function DeleteIncome(errorMessageSelectGridRow) {
     let selectedRowId = "";
 
     $('#incomeGrid > table > tbody  > tr').each(function (index, tr) {
-        if ($(this).attr("class").includes(selectedRowColor)) { // Get SelectedRow by Color
+        if ($(this).attr("class").includes(selectedRowColor)) {
             selectedRowId = $(this).attr("data-id");
         }
-    }); // Search Selected Row
+    });
 
     if (selectedRowId === "") {
         toastr.error(errorMessageSelectGridRow);
         return false;
-    } // check whether selected row exist or not
+    }
 
     $.ajax({
         url: '/AccountBook/IsIncomeExists' + '?id=' + selectedRowId,
@@ -491,8 +472,6 @@ function DeleteIncome(errorMessageSelectGridRow) {
         dataType: 'json',
         data: null,
         contentType: 'application/json; charset=utf-8',
-        //async: false,
-        //cache: false,
         success: function (data) {
             if (data.result) {
 
@@ -507,14 +486,12 @@ function DeleteIncome(errorMessageSelectGridRow) {
                     dataType: 'json',
                     data: paramValue,
                     contentType: 'application/json; charset=utf-8',
-                    //async: false,
-                    //cache: false,
                     success: function (data) {
                         if (data.result) {
-                            $('#confirmDeleteIncomeDialogModal').modal('hide'); // hide Modal
+                            $('#confirmDeleteIncomeDialogModal').modal('hide');
 
-                            const grid = new MvcGrid(document.querySelector(".mvc-grid")); //reload grid
-                            grid.reload(); //reload grid
+                            const grid = new MvcGrid(document.querySelector(".mvc-grid"));
+                            grid.reload();
 
                             toastr.success(data.message);
                         }
@@ -560,8 +537,6 @@ function ChangeCreateIncomeAmountLabel(productName) {
         dataType: 'json',
         data: null,
         contentType: 'application/json; charset=utf-8',
-        //async: false,
-        //cache: false,
         success: function (data) {
             if (data.result) {
                 $('#labelCreateIncomeAmount').text(data.label);
@@ -581,8 +556,6 @@ function ChangeEditIncomeAmountLabel(productName) {
         dataType: 'json',
         data: null,
         contentType: 'application/json; charset=utf-8',
-        //async: false,
-        //cache: false,
         success: function (data) {
             if (data.result) {
                 $('#labelEditIncomeAmount').text(data.label);
