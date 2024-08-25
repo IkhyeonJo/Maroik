@@ -1,63 +1,39 @@
-﻿// Please see documentation at https://docs.microsoft.com/aspnet/core/client-side/bundling-and-minification
-// for details on configuring this project to bundle and minify static web assets.
+﻿let selectedRowColor = "table-primary";
 
-// Write your JavaScript code.
-
-let selectedRowColor = "table-primary";
-
-// Triggered when grid's row is clicked. It's recommended to use event delegation in ajax scenarios.
 document.addEventListener("rowclick", e => {
-    //e.detail.data - clicked row's data from columns.
-    //e.detail.grid - grid's instance.
-    //e.detail.originalEvent - original tr click event which triggered the rowclick.
-
     let selectedRow = e.detail;
     let selectedRowId = selectedRow.data.Id;
 
     $('#expenditureGrid > table > tbody  > tr').each(function (index, tr) {
         $(this).removeClass(selectedRowColor);
-    }); // remove all selected row color
+    });
 
     $('#expenditureGrid > table > tbody  > tr').each(function (index, tr) {
         if ((new String(selectedRowId).valueOf() === new String($(this).attr('data-id')).valueOf())) {
             $(this).addClass(selectedRowColor);
         }
-    }); // set selected row color class
+    });
 });
 
-// Triggered before grid starts loading. It's recommended to use event delegation in ajax scenarios.
 document.addEventListener("reloadstart", e => {
-    //e.detail.grid - grid's instance.
 });
 
-// Triggered after grid stop loading. It's recommended to use event delegation in ajax scenarios.
 document.addEventListener("reloadend", e => {
-    //e.detail.grid - grid's instance.
 });
 
-// Triggered after grid reload fails. It's recommended to use event delegation in ajax scenarios.
 document.addEventListener("reloadfail", e => {
-    //e.detail.reason - failed response promise reason.
-    //e.detail.grid - grid's instance.
-
-    // Preventing default stops failed promise from bubbling out.
 });
 
-// Triggered after grid configuration changes. It's recommended to use event delegation in ajax scenarios.
 document.addEventListener("gridconfigure", e => {
-    //e.detail.grid - grid's instance.
 });
 
 
 $(document).on("dblclick", "#expenditureGrid > table > tbody  > tr", function () {
-    //console.log('dblclick-start');
     $('#expenditureGrid > table > tbody  > tr').each(function (index, tr) {
-
-        if ($(this).attr("class").includes(selectedRowColor)) { // Get SelectedRow by Color
+        if ($(this).attr("class").includes(selectedRowColor)) {
             EditExpenditureGridRow();
         }
     });
-    //console.log('dblclick-end');
 });
 $('#gridSearch').on('input', function () {
     const grid = new MvcGrid(document.querySelector(".mvc-grid"));
@@ -241,14 +217,12 @@ function CreateExpenditure() {
         dataType: 'json',
         data: paramValue,
         contentType: 'application/json; charset=utf-8',
-        //async: false,
-        //cache: false,
         success: function (data) {
             if (data.result) {
-                $('#createExpenditureDialogModal').modal('hide'); // hide Modal
+                $('#createExpenditureDialogModal').modal('hide');
 
-                const grid = new MvcGrid(document.querySelector(".mvc-grid")); //reload grid
-                grid.reload(); //reload grid
+                const grid = new MvcGrid(document.querySelector(".mvc-grid"));
+                grid.reload();
 
                 toastr.success(data.message);
             }
@@ -266,15 +240,15 @@ function EditExpenditureGridRow(errorMessageSelectGridRow) {
     let selectedRowId = "";
 
     $('#expenditureGrid > table > tbody  > tr').each(function (index, tr) {
-        if ($(this).attr("class").includes(selectedRowColor)) { // Get SelectedRow by Color
+        if ($(this).attr("class").includes(selectedRowColor)) {
             selectedRowId = $(this).attr("data-id");
         }
-    }); // Search Selected Row
+    });
 
     if (selectedRowId === "") {
         toastr.error(errorMessageSelectGridRow);
         return false;
-    } // check whether selected row exist or not
+    }
 
     $.ajax({
         url: '/AccountBook/IsExpenditureExists' + '?id=' + selectedRowId,
@@ -283,8 +257,6 @@ function EditExpenditureGridRow(errorMessageSelectGridRow) {
         dataType: 'json',
         data: null,
         contentType: 'application/json; charset=utf-8',
-        //async: false,
-        //cache: false,
         success: function (data) {
             if (data.result) {
 
@@ -618,14 +590,12 @@ function UpdateExpenditure() {
         dataType: 'json',
         data: paramValue,
         contentType: 'application/json; charset=utf-8',
-        //async: false,
-        //cache: false,
         success: function (data) {
             if (data.result) {
-                $('#editExpenditureDialogModal').modal('hide'); // hide Modal
+                $('#editExpenditureDialogModal').modal('hide');
 
-                const grid = new MvcGrid(document.querySelector(".mvc-grid")); //reload grid
-                grid.reload(); //reload grid
+                const grid = new MvcGrid(document.querySelector(".mvc-grid"));
+                grid.reload();
 
                 toastr.success(data.message);
             }
@@ -642,15 +612,15 @@ function ConfirmDeleteExpenditure(errorMessageSelectGridRow) {
     let selectedRowId = "";
 
     $('#expenditureGrid > table > tbody  > tr').each(function (index, tr) {
-        if ($(this).attr("class").includes(selectedRowColor)) { // Get SelectedRow by Color
+        if ($(this).attr("class").includes(selectedRowColor)) {
             selectedRowId = $(this).attr("data-id");
         }
-    }); // Search Selected Row
+    });
 
     if (selectedRowId === "") {
         toastr.error(errorMessageSelectGridRow);
         return false;
-    } // check whether selected row exist or not
+    }
 
     $('#confirmDeleteExpenditureDialogModal').modal({
         keyboard: false,
@@ -666,15 +636,15 @@ function DeleteExpenditure(errorMessageSelectGridRow) {
     let selectedRowId = "";
 
     $('#expenditureGrid > table > tbody  > tr').each(function (index, tr) {
-        if ($(this).attr("class").includes(selectedRowColor)) { // Get SelectedRow by Color
+        if ($(this).attr("class").includes(selectedRowColor)) {
             selectedRowId = $(this).attr("data-id");
         }
-    }); // Search Selected Row
+    });
 
     if (selectedRowId === "") {
         toastr.error(errorMessageSelectGridRow);
         return false;
-    } // check whether selected row exist or not
+    }
 
     $.ajax({
         url: '/AccountBook/IsExpenditureExists' + '?id=' + selectedRowId,
@@ -683,8 +653,6 @@ function DeleteExpenditure(errorMessageSelectGridRow) {
         dataType: 'json',
         data: null,
         contentType: 'application/json; charset=utf-8',
-        //async: false,
-        //cache: false,
         success: function (data) {
             if (data.result) {
 
@@ -699,14 +667,12 @@ function DeleteExpenditure(errorMessageSelectGridRow) {
                     dataType: 'json',
                     data: paramValue,
                     contentType: 'application/json; charset=utf-8',
-                    //async: false,
-                    //cache: false,
                     success: function (data) {
                         if (data.result) {
-                            $('#confirmDeleteExpenditureDialogModal').modal('hide'); // hide Modal
+                            $('#confirmDeleteExpenditureDialogModal').modal('hide');
 
-                            const grid = new MvcGrid(document.querySelector(".mvc-grid")); //reload grid
-                            grid.reload(); //reload grid
+                            const grid = new MvcGrid(document.querySelector(".mvc-grid"));
+                            grid.reload();
 
                             toastr.success(data.message);
                         }
@@ -752,8 +718,6 @@ function ChangeCreateExpenditureAmountLabel(productName) {
         dataType: 'json',
         data: null,
         contentType: 'application/json; charset=utf-8',
-        //async: false,
-        //cache: false,
         success: function (data) {
             if (data.result) {
                 $('#labelCreateExpenditureAmount').text(data.label);
@@ -773,8 +737,6 @@ function ChangeEditExpenditureAmountLabel(productName) {
         dataType: 'json',
         data: null,
         contentType: 'application/json; charset=utf-8',
-        //async: false,
-        //cache: false,
         success: function (data) {
             if (data.result) {
                 $('#labelEditExpenditureAmount').text(data.label);
