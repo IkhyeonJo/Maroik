@@ -1,4 +1,33 @@
-﻿$('#year').off('change').on('change', function () {
+﻿const localizer = {
+    LaborIncome: $('#localizerLaborIncome').val(),
+    BusinessIncome: $('#localizerBusinessIncome').val(),
+    PensionIncome: $('#localizerPensionIncome').val(),
+    FinancialIncome: $('#localizerFinancialIncome').val(),
+    RentalIncome: $('#localizerRentalIncome').val(),
+    OtherIncome: $('#localizerOtherIncome').val(),
+    Deposit: $('#localizerDeposit').val(),
+    Investment: $('#localizerInvestment').val(),
+    PublicPension: $('#localizerPublicPension').val(),
+    DebtRepayment: $('#localizerDebtRepayment').val(),
+    Tax: $('#localizerTax').val(),
+    SocialInsurance: $('#localizerSocialInsurance').val(),
+    InterHouseholdTransferExpenses: $('#localizerInterHouseholdTransferExpenses').val(),
+    NonProfitOrganizationTransfer: $('#localizerNonProfitOrganizationTransfer').val(),
+    MealOrEatOutExpenses: $('#localizerMealOrEatOutExpenses').val(),
+    HousingOrSuppliesCost: $('#localizerHousingOrSuppliesCost').val(),
+    EducationExpenses: $('#localizerEducationExpenses').val(),
+    MedicalExpenses: $('#localizerMedicalExpenses').val(),
+    TransportationCost: $('#localizerTransportationCost').val(),
+    CommunicationCost: $('#localizerCommunicationCost').val(),
+    LeisureOrCulture: $('#localizerLeisureOrCulture').val(),
+    ClothingOrShoes: $('#localizerClothingOrShoes').val(),
+    PinMoney: $('#localizerPinMoney').val(),
+    ProtectionTypeInsurance: $('#localizerProtectionTypeInsurance').val(),
+    OtherExpenses: $('#localizerOtherExpenses').val(),
+    UnknownExpenditure: $('#localizerUnknownExpenditure').val()
+};
+
+$('#year').off('change').on('change', function () {
     window.location.href = "/DashBoard/UserIndex?year=" + $('#year').find(":selected").val() + "&month=" + $('#month').find(":selected").val();
 });
 
@@ -42,12 +71,12 @@ $(function () {
     let donutChartCanvasRegularIncome = $('#regularIncome').get(0).getContext('2d')
     let donutDataRegularIncome = {
         labels: [
-            'LaborIncome',
-            'BusinessIncome',
-            'PensionIncome',
-            'FinancialIncome',
-            'RentalIncome',
-            'OtherIncome',
+            localizer.LaborIncome,
+            localizer.BusinessIncome,
+            localizer.PensionIncome,
+            localizer.FinancialIncome,
+            localizer.RentalIncome,
+            localizer.OtherIncome,
         ],
         datasets: [
             {
@@ -75,8 +104,8 @@ $(function () {
     let donutChartCanvasIrregularIncome = $('#irregularIncome').get(0).getContext('2d')
     let donutDataIrregularIncome = {
         labels: [
-            'LaborIncome',
-            'OtherIncome',
+            localizer.LaborIncome,
+            localizer.OtherIncome,
         ],
         datasets: [
             {
@@ -104,8 +133,8 @@ $(function () {
     let donutChartCanvasRegularSavings = $('#regularSavings').get(0).getContext('2d')
     let donutDataRegularSavings = {
         labels: [
-            'Deposit',
-            'Investment',
+            localizer.Deposit,
+            localizer.Investment,
         ],
         datasets: [
             {
@@ -137,12 +166,12 @@ $(function () {
     let donutChartCanvasNonConsumerSpending = $('#nonConsumerSpending').get(0).getContext('2d')
     let donutDataNonConsumerSpending = {
         labels: [
-            'PublicPension',
-            'DebtRepayment',
-            'Tax',
-            'SocialInsurance',
-            'InterHouseholdTransferExpenses',
-            'NonProfitOrganizationTransfer',
+            localizer.PublicPension,
+            localizer.DebtRepayment,
+            localizer.Tax,
+            localizer.SocialInsurance,
+            localizer.InterHouseholdTransferExpenses,
+            localizer.NonProfitOrganizationTransfer,
         ],
         datasets: [
             {
@@ -180,18 +209,18 @@ $(function () {
     let donutChartCanvasConsumerSpending = $('#consumerSpending').get(0).getContext('2d')
     let donutDataConsumerSpending = {
         labels: [
-            'MealOrEatOutExpenses',
-            'HousingOrSuppliesCost',
-            'EducationExpenses',
-            'MedicalExpenses',
-            'TransportationCost',
-            'CommunicationCost',
-            'LeisureOrCulture',
-            'ClothingOrShoes',
-            'PinMoney',
-            'ProtectionTypeInsurance',
-            'OtherExpenses',
-            'UnknownExpenditure',
+            localizer.MealOrEatOutExpenses,
+            localizer.HousingOrSuppliesCost,
+            localizer.EducationExpenses,
+            localizer.MedicalExpenses,
+            localizer.TransportationCost,
+            localizer.CommunicationCost,
+            localizer.LeisureOrCulture,
+            localizer.ClothingOrShoes,
+            localizer.PinMoney,
+            localizer.ProtectionTypeInsurance,
+            localizer.OtherExpenses,
+            localizer.UnknownExpenditure,
         ],
         datasets: [
             {
