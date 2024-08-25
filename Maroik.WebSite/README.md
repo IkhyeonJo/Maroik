@@ -861,3 +861,9 @@ This will place the data in two columns, with the data on the left in the first 
 FullCalendar
 
 https://github.com/IkhyeonJo/Maroik/issues/37
+
+Javscript optimization Tip:
+// Please see documentation at https://docs.microsoft.com/aspnet/core/client-side/bundling-and-minification
+// for details on configuring this project to bundle and minify static web assets.
+
+// Write your JavaScript code.
