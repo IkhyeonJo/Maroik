@@ -6,6 +6,13 @@
  * Licensed under the terms of the MIT License
  * https://www.opensource.org/licenses/mit-license.php
  */
+
+const localizer0 = {
+    IRS: $('#localizerIRS').val(),
+    GPSOIGD: $('#localizerGPSOIGD').val(),
+    GCOBCFWMS: $('#localizerGCOBCFWMS').val()
+};
+
 class MvcGrid {
     constructor(container, options = {}) {
         const grid = this;
@@ -159,7 +166,7 @@ class MvcGrid {
                 headers: { "X-Requested-With": "XMLHttpRequest" }
             }).then(response => {
                 if (!response.ok) {
-                    throw new Error(`Invalid response status: ${response.status}`);
+                    throw new Error(`${localizer0.IRS}: ${response.status}`);
                 }
 
                 return response.text();
@@ -173,7 +180,7 @@ class MvcGrid {
                 if (template.content.firstElementChild.classList.contains("mvc-grid")) {
                     grid.element.outerHTML = response;
                 } else {
-                    throw new Error("Grid partial should only include grid declaration.");
+                    throw new Error(`${localizer0.GPSOIGD}`);
                 }
 
                 const newGrid = new MvcGrid(parent.children[i], {
@@ -229,7 +236,7 @@ class MvcGrid {
         const grid = element.closest(".mvc-grid");
 
         if (!grid) {
-            throw new Error("Grid can only be created from within mvc-grid structure.");
+            throw new Error(`${localizer0.GCOBCFWMS}`);
         }
 
         return grid;

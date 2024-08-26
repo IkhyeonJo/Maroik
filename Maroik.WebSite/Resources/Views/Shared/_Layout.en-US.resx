@@ -120,4 +120,58 @@
   <data name="Login" xml:space="preserve">
     <value>Login</value>
   </data>
+  <data name="Invalid response status" xml:space="preserve">
+    <value>Invalid response status</value>
+  </data>
+  <data name="Grid partial should only include grid declaration." xml:space="preserve">
+    <value>Grid partial should only include grid declaration.</value>
+  </data>
+  <data name="Grid can only be created from within mvc-grid structure." xml:space="preserve">
+    <value>Grid can only be created from within mvc-grid structure.</value>
+  </data>
+  <data name="equals" xml:space="preserve">
+    <value>Equals</value>
+  </data>
+  <data name="not-equals" xml:space="preserve">
+    <value>Not equals</value>
+  </data>
+  <data name="contains" xml:space="preserve">
+    <value>Contains</value>
+  </data>
+  <data name="starts-with" xml:space="preserve">
+    <value>Starts with</value>
+  </data>
+  <data name="ends-with" xml:space="preserve">
+    <value>Ends with</value>
+  </data>
+  <data name="less-than" xml:space="preserve">
+    <value>Less than</value>
+  </data>
+  <data name="greater-than" xml:space="preserve">
+    <value>Greater than</value>
+  </data>
+  <data name="less-than-or-equal" xml:space="preserve">
+    <value>Less than or equal</value>
+  </data>
+  <data name="greater-than-or-equal" xml:space="preserve">
+    <value>Greater than or equal</value>
+  </data>
+  <data name="earlier-than" xml:space="preserve">
+    <value>Earlier than</value>
+  </data>
+  <data name="later-than" xml:space="preserve">
+    <value>Later than</value>
+  </data>
+  <data name="earlier-than-or-equal" xml:space="preserve">
+    <value>Earlier than or equal</value>
+  </data>
+  <data name="later-than-or-equal" xml:space="preserve">
+    <value>Later than or equal</value>
+  </data>
+  <data name="and" xml:space="preserve">
+    <value>and</value>
+  </data>
+  <data name="or" xml:space="preserve">
+    <value>or</value>
+  </data>
 </root>

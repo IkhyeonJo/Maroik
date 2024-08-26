@@ -1,67 +1,43 @@
-﻿// Please see documentation at https://docs.microsoft.com/aspnet/core/client-side/bundling-and-minification
-// for details on configuring this project to bundle and minify static web assets.
-
-// Write your JavaScript code.
-$(function () {
+﻿$(function () {
     $("#createAccountTabs").tabs();
     $("#editAccountTabs").tabs();
 });
 
 let selectedRowColor = "table-primary";
 
-// Triggered when grid's row is clicked. It's recommended to use event delegation in ajax scenarios.
 document.addEventListener("rowclick", e => {
-    //e.detail.data - clicked row's data from columns.
-    //e.detail.grid - grid's instance.
-    //e.detail.originalEvent - original tr click event which triggered the rowclick.
-
     let selectedRow = e.detail;
     let selectedRowEmail = selectedRow.data.Email;
 
     $('#accountGrid > table > tbody  > tr').each(function (index, tr) {
         $(this).removeClass(selectedRowColor);
-    }); // remove all selected row color
+    });
 
     $('#accountGrid > table > tbody  > tr').each(function (index, tr) {
         if ((new String(selectedRowEmail).valueOf() === new String($(this).attr('data-email')).valueOf())) {
             $(this).addClass(selectedRowColor);
         }
-    }); // set selected row color class
+    });
 });
 
-// Triggered before grid starts loading. It's recommended to use event delegation in ajax scenarios.
 document.addEventListener("reloadstart", e => {
-    //e.detail.grid - grid's instance.
 });
 
-// Triggered after grid stop loading. It's recommended to use event delegation in ajax scenarios.
 document.addEventListener("reloadend", e => {
-    //e.detail.grid - grid's instance.
 });
 
-// Triggered after grid reload fails. It's recommended to use event delegation in ajax scenarios.
 document.addEventListener("reloadfail", e => {
-    //e.detail.reason - failed response promise reason.
-    //e.detail.grid - grid's instance.
-
-    // Preventing default stops failed promise from bubbling out.
 });
 
-// Triggered after grid configuration changes. It's recommended to use event delegation in ajax scenarios.
 document.addEventListener("gridconfigure", e => {
-    //e.detail.grid - grid's instance.
 });
-
 
 $(document).on("dblclick", "#accountGrid > table > tbody  > tr", function () {
-    //console.log('dblclick-start');
     $('#accountGrid > table > tbody  > tr').each(function (index, tr) {
-
-        if ($(this).attr("class").includes(selectedRowColor)) { // Get SelectedRow by Color
+        if ($(this).attr("class").includes(selectedRowColor)) {
             EditAccountGridRow();
         }
     });
-    //console.log('dblclick-end');
 });
 $('#gridSearch').on('input', function () {
     const grid = new MvcGrid(document.querySelector(".mvc-grid"));
@@ -100,14 +76,12 @@ function CreateAccount() {
         dataType: 'json',
         data: paramValue,
         contentType: 'application/json; charset=utf-8',
-        //async: false,
-        //cache: false,
         success: function (data) {
             if (data.result) {
-                $('#createAccountDialogModal').modal('hide'); // hide Modal
+                $('#createAccountDialogModal').modal('hide');
 
-                const grid = new MvcGrid(document.querySelector(".mvc-grid")); //reload grid
-                grid.reload(); //reload grid
+                const grid = new MvcGrid(document.querySelector(".mvc-grid"));
+                grid.reload();
 
                 toastr.success(data.message);
             }
@@ -125,15 +99,15 @@ function EditAccountGridRow(errorMessageSelectGridRow) {
     let selectedRowEmail = "";
 
     $('#accountGrid > table > tbody  > tr').each(function (index, tr) {
-        if ($(this).attr("class").includes(selectedRowColor)) { // Get SelectedRow by Color
+        if ($(this).attr("class").includes(selectedRowColor)) {
             selectedRowEmail = $(this).attr("data-email");
         }
-    }); // Search Selected Row
+    });
 
     if (selectedRowEmail === "") {
         toastr.error(errorMessageSelectGridRow);
         return false;
-    } // check whether selected row exist or not
+    }
 
     $.ajax({
         url: '/Management/IsAccountExists' + '?email=' + selectedRowEmail,
@@ -142,8 +116,6 @@ function EditAccountGridRow(errorMessageSelectGridRow) {
         dataType: 'json',
         data: null,
         contentType: 'application/json; charset=utf-8',
-        //async: false,
-        //cache: false,
         success: function (data) {
             if (data.result) {
 
@@ -210,14 +182,12 @@ function UpdateAccount() {
         dataType: 'json',
         data: paramValue,
         contentType: 'application/json; charset=utf-8',
-        //async: false,
-        //cache: false,
         success: function (data) {
             if (data.result) {
-                $('#editAccountDialogModal').modal('hide'); // hide Modal
+                $('#editAccountDialogModal').modal('hide');
 
-                const grid = new MvcGrid(document.querySelector(".mvc-grid")); //reload grid
-                grid.reload(); //reload grid
+                const grid = new MvcGrid(document.querySelector(".mvc-grid"));
+                grid.reload();
 
                 toastr.success(data.message);
             }
@@ -234,15 +204,15 @@ function ConfirmDeleteAccount(errorMessageSelectGridRow) {
     let selectedRowEmail = "";
 
     $('#accountGrid > table > tbody  > tr').each(function (index, tr) {
-        if ($(this).attr("class").includes(selectedRowColor)) { // Get SelectedRow by Color
+        if ($(this).attr("class").includes(selectedRowColor)) {
             selectedRowEmail = $(this).attr("data-email");
         }
-    }); // Search Selected Row
+    });
 
     if (selectedRowEmail === "") {
         toastr.error(errorMessageSelectGridRow);
         return false;
-    } // check whether selected row exist or not
+    }
 
     $('#confirmDeleteAccountDialogModal').modal({
         keyboard: false,
@@ -258,15 +228,15 @@ function DeleteAccount(errorMessageSelectGridRow) {
     let selectedRowEmail = "";
 
     $('#accountGrid > table > tbody  > tr').each(function (index, tr) {
-        if ($(this).attr("class").includes(selectedRowColor)) { // Get SelectedRow by Color
+        if ($(this).attr("class").includes(selectedRowColor)) {
             selectedRowEmail = $(this).attr("data-email");
         }
-    }); // Search Selected Row
+    });
 
     if (selectedRowEmail === "") {
         toastr.error(errorMessageSelectGridRow);
         return false;
-    } // check whether selected row exist or not
+    }
 
     $.ajax({
         url: '/Management/IsAccountExists' + '?email=' + selectedRowEmail,
@@ -275,8 +245,6 @@ function DeleteAccount(errorMessageSelectGridRow) {
         dataType: 'json',
         data: null,
         contentType: 'application/json; charset=utf-8',
-        //async: false,
-        //cache: false,
         success: function (data) {
             if (data.result) {
 
@@ -291,14 +259,12 @@ function DeleteAccount(errorMessageSelectGridRow) {
                     dataType: 'json',
                     data: paramValue,
                     contentType: 'application/json; charset=utf-8',
-                    //async: false,
-                    //cache: false,
                     success: function (data) {
                         if (data.result) {
-                            $('#confirmDeleteAccountDialogModal').modal('hide'); // hide Modal
+                            $('#confirmDeleteAccountDialogModal').modal('hide');
 
-                            const grid = new MvcGrid(document.querySelector(".mvc-grid")); //reload grid
-                            grid.reload(); //reload grid
+                            const grid = new MvcGrid(document.querySelector(".mvc-grid"));
+                            grid.reload();
 
                             toastr.success(data.message);
                         }

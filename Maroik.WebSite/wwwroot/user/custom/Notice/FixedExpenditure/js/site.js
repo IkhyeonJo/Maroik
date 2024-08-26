@@ -216,59 +216,40 @@ $(function () {
 
 let selectedRowColor = "table-primary";
 
-// Triggered when grid's row is clicked. It's recommended to use event delegation in ajax scenarios.
 document.addEventListener("rowclick", e => {
-    //e.detail.data - clicked row's data from columns.
-    //e.detail.grid - grid's instance.
-    //e.detail.originalEvent - original tr click event which triggered the rowclick.
-
     let selectedRow = e.detail;
     let selectedRowId = selectedRow.data.Id;
 
     $('#fixedExpenditureGrid > table > tbody  > tr').each(function (index, tr) {
         $(this).removeClass(selectedRowColor);
-    }); // remove all selected row color
+    });
 
     $('#fixedExpenditureGrid > table > tbody  > tr').each(function (index, tr) {
         if ((new String(selectedRowId).valueOf() === new String($(this).attr('data-id')).valueOf())) {
             $(this).addClass(selectedRowColor);
         }
-    }); // set selected row color class
+    });
 });
 
-// Triggered before grid starts loading. It's recommended to use event delegation in ajax scenarios.
 document.addEventListener("reloadstart", e => {
-    //e.detail.grid - grid's instance.
 });
 
-// Triggered after grid stop loading. It's recommended to use event delegation in ajax scenarios.
 document.addEventListener("reloadend", e => {
-    //e.detail.grid - grid's instance.
 });
 
-// Triggered after grid reload fails. It's recommended to use event delegation in ajax scenarios.
 document.addEventListener("reloadfail", e => {
-    //e.detail.reason - failed response promise reason.
-    //e.detail.grid - grid's instance.
-
-    // Preventing default stops failed promise from bubbling out.
 });
 
-// Triggered after grid configuration changes. It's recommended to use event delegation in ajax scenarios.
 document.addEventListener("gridconfigure", e => {
-    //e.detail.grid - grid's instance.
 });
 
 
 $(document).on("dblclick", "#fixedExpenditureGrid > table > tbody  > tr", function () {
-    //console.log('dblclick-start');
     $('#fixedExpenditureGrid > table > tbody  > tr').each(function (index, tr) {
-
-        if ($(this).attr("class").includes(selectedRowColor)) { // Get SelectedRow by Color
+        if ($(this).attr("class").includes(selectedRowColor)) {
             EditFixedExpenditureGridRow();
         }
     });
-    //console.log('dblclick-end');
 });
 $('#gridSearch').on('input', function () {
     const grid = new MvcGrid(document.querySelector(".mvc-grid"));
@@ -685,14 +666,12 @@ function CreateFixedExpenditure() {
         dataType: 'json',
         data: paramValue,
         contentType: 'application/json; charset=utf-8',
-        //async: false,
-        //cache: false,
         success: function (data) {
             if (data.result) {
-                $('#createFixedExpenditureDialogModal').modal('hide'); // hide Modal
+                $('#createFixedExpenditureDialogModal').modal('hide');
 
-                const grid = new MvcGrid(document.querySelector(".mvc-grid")); //reload grid
-                grid.reload(); //reload grid
+                const grid = new MvcGrid(document.querySelector(".mvc-grid"));
+                grid.reload();
 
                 toastr.success(data.message);
             }
@@ -710,15 +689,15 @@ function EditFixedExpenditureGridRow(errorMessageSelectGridRow) {
     let selectedRowId = "";
 
     $('#fixedExpenditureGrid > table > tbody  > tr').each(function (index, tr) {
-        if ($(this).attr("class").includes(selectedRowColor)) { // Get SelectedRow by Color
+        if ($(this).attr("class").includes(selectedRowColor)) {
             selectedRowId = $(this).attr("data-id");
         }
-    }); // Search Selected Row
+    });
 
     if (selectedRowId === "") {
         toastr.error(errorMessageSelectGridRow);
         return false;
-    } // check whether selected row exist or not
+    }
 
     $.ajax({
         url: '/Notice/IsFixedExpenditureExists' + '?id=' + selectedRowId,
@@ -727,8 +706,6 @@ function EditFixedExpenditureGridRow(errorMessageSelectGridRow) {
         dataType: 'json',
         data: null,
         contentType: 'application/json; charset=utf-8',
-        //async: false,
-        //cache: false,
         success: function (data) {
             if (data.result) {
 
@@ -1109,14 +1086,12 @@ function UpdateFixedExpenditure() {
         dataType: 'json',
         data: paramValue,
         contentType: 'application/json; charset=utf-8',
-        //async: false,
-        //cache: false,
         success: function (data) {
             if (data.result) {
-                $('#editFixedExpenditureDialogModal').modal('hide'); // hide Modal
+                $('#editFixedExpenditureDialogModal').modal('hide');
 
-                const grid = new MvcGrid(document.querySelector(".mvc-grid")); //reload grid
-                grid.reload(); //reload grid
+                const grid = new MvcGrid(document.querySelector(".mvc-grid"));
+                grid.reload();
 
                 toastr.success(data.message);
             }
@@ -1133,15 +1108,15 @@ function ConfirmDeleteFixedExpenditure(errorMessageSelectGridRow) {
     let selectedRowId = "";
 
     $('#fixedExpenditureGrid > table > tbody  > tr').each(function (index, tr) {
-        if ($(this).attr("class").includes(selectedRowColor)) { // Get SelectedRow by Color
+        if ($(this).attr("class").includes(selectedRowColor)) {
             selectedRowId = $(this).attr("data-id");
         }
-    }); // Search Selected Row
+    });
 
     if (selectedRowId === "") {
         toastr.error(errorMessageSelectGridRow);
         return false;
-    } // check whether selected row exist or not
+    }
 
     $('#confirmDeleteFixedExpenditureDialogModal').modal({
         keyboard: false,
@@ -1157,15 +1132,15 @@ function DeleteFixedExpenditure(errorMessageSelectGridRow) {
     let selectedRowId = "";
 
     $('#fixedExpenditureGrid > table > tbody  > tr').each(function (index, tr) {
-        if ($(this).attr("class").includes(selectedRowColor)) { // Get SelectedRow by Color
+        if ($(this).attr("class").includes(selectedRowColor)) {
             selectedRowId = $(this).attr("data-id");
         }
-    }); // Search Selected Row
+    });
 
     if (selectedRowId === "") {
         toastr.error(errorMessageSelectGridRow);
         return false;
-    } // check whether selected row exist or not
+    }
 
     $.ajax({
         url: '/Notice/IsFixedExpenditureExists' + '?id=' + selectedRowId,
@@ -1174,8 +1149,6 @@ function DeleteFixedExpenditure(errorMessageSelectGridRow) {
         dataType: 'json',
         data: null,
         contentType: 'application/json; charset=utf-8',
-        //async: false,
-        //cache: false,
         success: function (data) {
             if (data.result) {
 
@@ -1190,14 +1163,12 @@ function DeleteFixedExpenditure(errorMessageSelectGridRow) {
                     dataType: 'json',
                     data: paramValue,
                     contentType: 'application/json; charset=utf-8',
-                    //async: false,
-                    //cache: false,
                     success: function (data) {
                         if (data.result) {
-                            $('#confirmDeleteFixedExpenditureDialogModal').modal('hide'); // hide Modal
+                            $('#confirmDeleteFixedExpenditureDialogModal').modal('hide');
 
-                            const grid = new MvcGrid(document.querySelector(".mvc-grid")); //reload grid
-                            grid.reload(); //reload grid
+                            const grid = new MvcGrid(document.querySelector(".mvc-grid"));
+                            grid.reload();
 
                             toastr.success(data.message);
                         }
@@ -1243,8 +1214,6 @@ function ChangeCreateFixedExpenditureAmountLabel(productName) {
         dataType: 'json',
         data: null,
         contentType: 'application/json; charset=utf-8',
-        //async: false,
-        //cache: false,
         success: function (data) {
             if (data.result) {
                 $('#labelCreateFixedExpenditureAmount').text(data.label);
@@ -1264,8 +1233,6 @@ function ChangeEditFixedExpenditureAmountLabel(productName) {
         dataType: 'json',
         data: null,
         contentType: 'application/json; charset=utf-8',
-        //async: false,
-        //cache: false,
         success: function (data) {
             if (data.result) {
                 $('#labelEditFixedExpenditureAmount').text(data.label);

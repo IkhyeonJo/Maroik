@@ -1,9 +1,32 @@
-﻿// Please see documentation at https://docs.microsoft.com/aspnet/core/client-side/bundling-and-minification
-// for details on configuring this project to bundle and minify static web assets.
+﻿const localizer = {
+    SummernoteLang: $('#localizerSummernoteLang').val()
+};
 
-// Write your JavaScript code.
+$('#writeBoardContent').summernote({
+    height: 300,
+    lang: localizer.SummernoteLang,
+    callbacks: {
+        onImageUpload: function (files) {
+            for (let i = 0; i < files.length; i++) {
+                WriteUploadImageFile(files[i]);
+            }
+        }
+    }
+});
+
+$('#editBoardContent').summernote({
+    height: 300,
+    lang: localizer.SummernoteLang,
+    callbacks: {
+        onImageUpload: function (files) {
+            for (let i = 0; i < files.length; i++) {
+                EditUploadImageFile(files[i]);
+            }
+        }
+    }
+});
+
 let writeUploadedFile;
-
 let editUploadedFile;
 
 function WriteUploadFile(obj, errorMessage) {
@@ -220,8 +243,6 @@ function DeleteBoard(detailBoardId) {
         dataType: 'json',
         data: null,
         contentType: 'application/json; charset=utf-8',
-        //async: false,
-        //cache: false,
         success: function (data) {
             if (data.result) {
 
@@ -236,8 +257,6 @@ function DeleteBoard(detailBoardId) {
                     dataType: 'json',
                     data: paramValue,
                     contentType: 'application/json; charset=utf-8',
-                    //async: false,
-                    //cache: false,
                     success: function (data) {
                         if (data.result) {
                             $('#confirmDeleteBoardDialogModal').modal('hide');
@@ -280,8 +299,6 @@ function WritePrivateNoteComment(detailBoardId, detailCurrentPage, errorMessage)
         dataType: 'json',
         data: paramValue,
         contentType: 'application/json; charset=utf-8',
-        //async: false,
-        //cache: false,
         success: function (data) {
             if (data.result) {
                 window.location.href = "/Management/PrivateNote?method=detail" + "&boardId=" + data.boardId + "&page=" + data.page;
@@ -302,8 +319,6 @@ function DeleteComment(commentId, boardId, page) {
         dataType: 'json',
         data: null,
         contentType: 'application/json; charset=utf-8',
-        //async: false,
-        //cache: false,
         success: function (data) {
             if (data.result) {
                 window.location.href = "/Management/PrivateNote?method=detail" + "&boardId=" + boardId + "&page=" + page;

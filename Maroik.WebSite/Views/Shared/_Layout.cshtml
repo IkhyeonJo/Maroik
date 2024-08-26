@@ -176,6 +176,26 @@ to get the desired effect
     @Html.AntiForgeryToken()
     @*Language change return URI*@
     @Html.Hidden($"{nameof(returnUri)}",returnUri)
+    @*Language localizer*@
+    @Html.Hidden("localizerIRS", localizer["Invalid response status"].Value)
+    @Html.Hidden("localizerGPSOIGD", localizer["Grid partial should only include grid declaration."].Value)
+    @Html.Hidden("localizerGCOBCFWMS", localizer["Grid can only be created from within mvc-grid structure."].Value)
+    @Html.Hidden("localizerEquals", localizer["equals"].Value)
+    @Html.Hidden("localizerNotEquals", localizer["not-equals"].Value)
+    @Html.Hidden("localizerContains", localizer["contains"].Value)
+    @Html.Hidden("localizerStartsWith", localizer["starts-with"].Value)
+    @Html.Hidden("localizerEndsWith", localizer["ends-with"].Value)
+    @Html.Hidden("localizerLessThan", localizer["less-than"].Value)
+    @Html.Hidden("localizerGreaterThan", localizer["greater-than"].Value)
+    @Html.Hidden("localizerLessThanOrEqual", localizer["less-than-or-equal"].Value)
+    @Html.Hidden("localizerGreaterThanOrEqual", localizer["greater-than-or-equal"].Value)
+    @Html.Hidden("localizerEarlierThan", localizer["earlier-than"].Value)
+    @Html.Hidden("localizerLaterThan", localizer["later-than"].Value)
+    @Html.Hidden("localizerEarlierThanOrEqual", localizer["earlier-than-or-equal"].Value)
+    @Html.Hidden("localizerLaterThanOrEqual", localizer["later-than-or-equal"].Value)
+    @Html.Hidden("localizerAnd", localizer["and"].Value)
+    @Html.Hidden("localizerOr", localizer["or"].Value)
+
 
     <div class="wrapper">
 
@@ -228,16 +248,8 @@ to get the desired effect
                 <script src="~/admin/plugins/summernote/summernote-bs4.js" asp-append-version="true"></script>
                 <script src="~/admin/plugins/summernote/lang/summernote-ko-KR.min.js" asp-append-version="true"></script>
                 @*nonfactors.grid.mvc6\6.2.4*@
-                if (currentCulture == "ko-KR")
-                {
-                    <script src="~/admin/js/mvc-grid/mvc-grid-ko-KR.js" asp-append-version="true"></script>
-                    <script src="~/admin/js/mvc-grid/mvc-grid-ko-KR-lang.js" asp-append-version="true"></script>
-                }
-                else if (currentCulture == "en-US")
-                {
-                    <script src="~/admin/js/mvc-grid/mvc-grid-en-US.js" asp-append-version="true"></script>
-                    <script src="~/admin/js/mvc-grid/mvc-grid-en-US-lang.js" asp-append-version="true"></script>
-                }
+                <script src="~/admin/js/mvc-grid/mvc-grid-localizer0.js" asp-append-version="true"></script>
+                <script src="~/admin/js/mvc-grid/mvc-grid-localizer1.js" asp-append-version="true"></script>
                 <script src="~/admin/js/mvc-grid/mvc-grid-attribute.js" asp-append-version="true"></script>
                 <script src="~/admin/js/mvc-grid/mvc-grid.js" asp-append-version="true"></script>
 
@@ -267,16 +279,8 @@ to get the desired effect
                 <script src="~/user/plugins/summernote/summernote-bs4.js" asp-append-version="true"></script>
                 <script src="~/user/plugins/summernote/lang/summernote-ko-KR.min.js" asp-append-version="true"></script>
                 @*nonfactors.grid.mvc6\6.2.4*@
-                if (currentCulture == "ko-KR")
-                {
-                    <script src="~/user/js/mvc-grid/mvc-grid-ko-KR.js" asp-append-version="true"></script>
-                    <script src="~/user/js/mvc-grid/mvc-grid-ko-KR-lang.js" asp-append-version="true"></script>
-                }
-                else if (currentCulture == "en-US")
-                {
-                    <script src="~/user/js/mvc-grid/mvc-grid-en-US.js" asp-append-version="true"></script>
-                    <script src="~/user/js/mvc-grid/mvc-grid-en-US-lang.js" asp-append-version="true"></script>
-                }
+                <script src="~/user/js/mvc-grid/mvc-grid-localizer0.js" asp-append-version="true"></script>
+                <script src="~/user/js/mvc-grid/mvc-grid-localizer1.js" asp-append-version="true"></script>
                 <script src="~/user/js/mvc-grid/mvc-grid-attribute.js" asp-append-version="true"></script>
                 <script src="~/user/js/mvc-grid/mvc-grid.js" asp-append-version="true"></script>
 
@@ -304,16 +308,8 @@ to get the desired effect
                 @*<!-- Chart.js -->*@
                 <script src="~/anonymous/plugins/chart.js/Chart.min.js" asp-append-version="true"></script>
                 @*nonfactors.grid.mvc6\6.2.4*@
-                if (currentCulture == "ko-KR")
-                {
-                    <script src="~/anonymous/js/mvc-grid/mvc-grid-ko-KR.js" asp-append-version="true"></script>
-                    <script src="~/anonymous/js/mvc-grid/mvc-grid-ko-KR-lang.js" asp-append-version="true"></script>
-                }
-                else if (currentCulture == "en-US")
-                {
-                    <script src="~/anonymous/js/mvc-grid/mvc-grid-en-US.js" asp-append-version="true"></script>
-                    <script src="~/anonymous/js/mvc-grid/mvc-grid-en-US-lang.js" asp-append-version="true"></script>
-                }
+                <script src="~/anonymous/js/mvc-grid/mvc-grid-localizer0.js" asp-append-version="true"></script>
+                <script src="~/anonymous/js/mvc-grid/mvc-grid-localizer1.js" asp-append-version="true"></script>
                 <script src="~/anonymous/js/mvc-grid/mvc-grid-attribute.js" asp-append-version="true"></script>
                 <script src="~/anonymous/js/mvc-grid/mvc-grid.js" asp-append-version="true"></script>
 

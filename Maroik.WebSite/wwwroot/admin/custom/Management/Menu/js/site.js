@@ -1,8 +1,4 @@
-﻿// Please see documentation at https://docs.microsoft.com/aspnet/core/client-side/bundling-and-minification
-// for details on configuring this project to bundle and minify static web assets.
-
-// Write your JavaScript code.
-$(function () {
+﻿$(function () {
     $("#createMenuTabs").tabs();
     $("#editCategoryTabs").tabs();
     $("#editSubCategoryTabs").tabs();
@@ -10,12 +6,7 @@ $(function () {
 
 let selectedRowColor = "table-primary";
 
-// Triggered when grid's row is clicked. It's recommended to use event delegation in ajax scenarios.
 document.addEventListener("rowclick", e => {
-    //e.detail.data - clicked row's data from columns.
-    //e.detail.grid - grid's instance.
-    //e.detail.originalEvent - original tr click event which triggered the rowclick.
-
     let selectedRow = e.detail;
     let selectedRowId = selectedRow.data.Id;
     let selectedRowCategoryId = selectedRow.data.CategoryId;
@@ -26,48 +17,33 @@ document.addEventListener("rowclick", e => {
 
     $('#menuGrid > table > tbody  > tr').each(function (index, tr) {
         $(this).removeClass(selectedRowColor);
-    }); // remove all selected row color
+    });
 
     $('#menuGrid > table > tbody  > tr').each(function (index, tr) {
         if ((new String(selectedRowId).valueOf() === new String($(this).attr('data-id')).valueOf()) && (new String(selectedRowCategoryId).valueOf() === new String($(this).attr('data-categoryid')).valueOf())) {
             $(this).addClass(selectedRowColor);
         }
-    }); // set selected row color class
+    });
 });
 
-// Triggered before grid starts loading. It's recommended to use event delegation in ajax scenarios.
 document.addEventListener("reloadstart", e => {
-    //e.detail.grid - grid's instance.
 });
 
-// Triggered after grid stop loading. It's recommended to use event delegation in ajax scenarios.
 document.addEventListener("reloadend", e => {
-    //e.detail.grid - grid's instance.
 });
 
-// Triggered after grid reload fails. It's recommended to use event delegation in ajax scenarios.
 document.addEventListener("reloadfail", e => {
-    //e.detail.reason - failed response promise reason.
-    //e.detail.grid - grid's instance.
-
-    // Preventing default stops failed promise from bubbling out.
 });
 
-// Triggered after grid configuration changes. It's recommended to use event delegation in ajax scenarios.
 document.addEventListener("gridconfigure", e => {
-    //e.detail.grid - grid's instance.
 });
-
 
 $(document).on("dblclick", "#menuGrid > table > tbody  > tr", function () {
-    //console.log('dblclick-start');
     $('#menuGrid > table > tbody  > tr').each(function (index, tr) {
-
-        if ($(this).attr("class").includes(selectedRowColor)) { // Get SelectedRow by Color
+        if ($(this).attr("class").includes(selectedRowColor)) {
             EditMenuGridRow();
         }
     });
-    //console.log('dblclick-end');
 });
 $('#gridSearch').on('input', function () {
     const grid = new MvcGrid(document.querySelector(".mvc-grid"));
@@ -109,14 +85,12 @@ function CreateCategory() {
         dataType: 'json',
         data: paramValue,
         contentType: 'application/json; charset=utf-8',
-        //async: false,
-        //cache: false,
         success: function (data) {
             if (data.result) {
-                $('#createMenuDialogModal').modal('hide'); // hide Modal
+                $('#createMenuDialogModal').modal('hide');
 
-                const grid = new MvcGrid(document.querySelector(".mvc-grid")); //reload grid
-                grid.reload(); //reload grid
+                const grid = new MvcGrid(document.querySelector(".mvc-grid"));
+                grid.reload();
 
                 toastr.success(data.message);
             }
@@ -161,14 +135,12 @@ function CreateSubCategory() {
         dataType: 'json',
         data: paramValue,
         contentType: 'application/json; charset=utf-8',
-        //async: false,
-        //cache: false,
         success: function (data) {
             if (data.result) {
-                $('#createMenuDialogModal').modal('hide'); // hide Modal
+                $('#createMenuDialogModal').modal('hide');
 
-                const grid = new MvcGrid(document.querySelector(".mvc-grid")); //reload grid
-                grid.reload(); //reload grid
+                const grid = new MvcGrid(document.querySelector(".mvc-grid"));
+                grid.reload();
 
                 toastr.success(data.message);
             }
@@ -186,16 +158,16 @@ function EditMenuGridRow(errorMessageSelectGridRow) {
     let selectedRowCategoryId = "-1";
 
     $('#menuGrid > table > tbody  > tr').each(function (index, tr) {
-        if ($(this).attr("class").includes(selectedRowColor)) { // Get SelectedRow by Color
+        if ($(this).attr("class").includes(selectedRowColor)) {
             selectedRowId = $(this).attr("data-id");
             selectedRowCategoryId = $(this).attr("data-categoryid");
         }
-    }); // Search Selected Row
+    });
 
     if (selectedRowId === "-1") {
         toastr.error(errorMessageSelectGridRow);
         return false;
-    } // check whether selected row exist or not
+    }
 
     if (selectedRowCategoryId === "-1") {
 
@@ -206,8 +178,6 @@ function EditMenuGridRow(errorMessageSelectGridRow) {
             dataType: 'json',
             data: null,
             contentType: 'application/json; charset=utf-8',
-            //async: false,
-            //cache: false,
             success: function (data) {
                 if (data.result) {
 
@@ -235,7 +205,7 @@ function EditMenuGridRow(errorMessageSelectGridRow) {
                 }
             }
         });
-    } // Category
+    }
     else {
         $.ajax({
             url: '/Management/IsSubCategoryExists' + '?id=' + selectedRowId,
@@ -244,8 +214,6 @@ function EditMenuGridRow(errorMessageSelectGridRow) {
             dataType: 'json',
             data: null,
             contentType: 'application/json; charset=utf-8',
-            //async: false,
-            //cache: false,
             success: function (data) {
                 if (data.result) {
 
@@ -273,7 +241,7 @@ function EditMenuGridRow(errorMessageSelectGridRow) {
                 }
             }
         });
-    } // SubCategory
+    }
 }
 
 function UpdateCategory() {
@@ -310,14 +278,12 @@ function UpdateCategory() {
         dataType: 'json',
         data: paramValue,
         contentType: 'application/json; charset=utf-8',
-        //async: false,
-        //cache: false,
         success: function (data) {
             if (data.result) {
-                $('#editCategoryDialogModal').modal('hide'); // hide Modal
+                $('#editCategoryDialogModal').modal('hide');
 
-                const grid = new MvcGrid(document.querySelector(".mvc-grid")); //reload grid
-                grid.reload(); //reload grid
+                const grid = new MvcGrid(document.querySelector(".mvc-grid"));
+                grid.reload();
 
                 toastr.success(data.message);
             }
@@ -363,14 +329,12 @@ function UpdateSubCategory() {
         dataType: 'json',
         data: paramValue,
         contentType: 'application/json; charset=utf-8',
-        //async: false,
-        //cache: false,
         success: function (data) {
             if (data.result) {
-                $('#editSubCategoryDialogModal').modal('hide'); // hide Modal
+                $('#editSubCategoryDialogModal').modal('hide');
 
-                const grid = new MvcGrid(document.querySelector(".mvc-grid")); //reload grid
-                grid.reload(); //reload grid
+                const grid = new MvcGrid(document.querySelector(".mvc-grid"));
+                grid.reload();
 
                 toastr.success(data.message);
             }
@@ -387,15 +351,15 @@ function ConfirmDeleteMenu(errorMessageSelectGridRow) {
     let selectedRowId = "-1";
 
     $('#menuGrid > table > tbody  > tr').each(function (index, tr) {
-        if ($(this).attr("class").includes(selectedRowColor)) { // Get SelectedRow by Color
+        if ($(this).attr("class").includes(selectedRowColor)) {
             selectedRowId = $(this).attr("data-id");
         }
-    }); // Search Selected Row
+    });
 
     if (selectedRowId === "-1") {
         toastr.error(errorMessageSelectGridRow);
         return false;
-    } // check whether selected row exist or not
+    }
 
     $('#confirmDeleteMenuDialogModal').modal({
         keyboard: false,
@@ -411,16 +375,16 @@ function DeleteMenu(errorMessageSelectGridRow) {
     let selectedRowCategoryId = "-1";
 
     $('#menuGrid > table > tbody  > tr').each(function (index, tr) {
-        if ($(this).attr("class").includes(selectedRowColor)) { // Get SelectedRow by Color
+        if ($(this).attr("class").includes(selectedRowColor)) {
             selectedRowId = $(this).attr("data-id");
             selectedRowCategoryId = $(this).attr("data-categoryid");
         }
-    }); // Search Selected Row
+    });
 
     if (selectedRowId === "-1") {
         toastr.error(errorMessageSelectGridRow);
         return false;
-    } // check whether selected row exist or not
+    }
 
     if (selectedRowCategoryId === "-1") {
 
@@ -431,8 +395,6 @@ function DeleteMenu(errorMessageSelectGridRow) {
             dataType: 'json',
             data: null,
             contentType: 'application/json; charset=utf-8',
-            //async: false,
-            //cache: false,
             success: function (data) {
                 if (data.result) {
 
@@ -454,14 +416,12 @@ function DeleteMenu(errorMessageSelectGridRow) {
                         dataType: 'json',
                         data: paramValue,
                         contentType: 'application/json; charset=utf-8',
-                        //async: false,
-                        //cache: false,
                         success: function (data) {
                             if (data.result) {
-                                $('#confirmDeleteMenuDialogModal').modal('hide'); // hide Modal
+                                $('#confirmDeleteMenuDialogModal').modal('hide');
 
-                                const grid = new MvcGrid(document.querySelector(".mvc-grid")); //reload grid
-                                grid.reload(); //reload grid
+                                const grid = new MvcGrid(document.querySelector(".mvc-grid"));
+                                grid.reload();
 
                                 toastr.success(data.message);
                             }
@@ -476,7 +436,7 @@ function DeleteMenu(errorMessageSelectGridRow) {
                 }
             }
         });
-    } // Category
+    }
     else {
         $.ajax({
             url: '/Management/IsSubCategoryExists' + '?id=' + selectedRowId,
@@ -485,8 +445,6 @@ function DeleteMenu(errorMessageSelectGridRow) {
             dataType: 'json',
             data: null,
             contentType: 'application/json; charset=utf-8',
-            //async: false,
-            //cache: false,
             success: function (data) {
                 if (data.result) {
 
@@ -508,14 +466,12 @@ function DeleteMenu(errorMessageSelectGridRow) {
                         dataType: 'json',
                         data: paramValue,
                         contentType: 'application/json; charset=utf-8',
-                        //async: false,
-                        //cache: false,
                         success: function (data) {
                             if (data.result) {
-                                $('#confirmDeleteMenuDialogModal').modal('hide'); // hide Modal
+                                $('#confirmDeleteMenuDialogModal').modal('hide');
 
-                                const grid = new MvcGrid(document.querySelector(".mvc-grid")); //reload grid
-                                grid.reload(); //reload grid
+                                const grid = new MvcGrid(document.querySelector(".mvc-grid"));
+                                grid.reload();
 
                                 toastr.success(data.message);
                             }
@@ -530,7 +486,7 @@ function DeleteMenu(errorMessageSelectGridRow) {
                 }
             }
         });
-    } // SubCategory
+    }
 }
 
 function ExportExcelMenu() {
