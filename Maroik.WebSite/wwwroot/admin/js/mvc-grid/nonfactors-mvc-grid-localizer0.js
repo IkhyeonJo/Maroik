@@ -7,10 +7,10 @@
  * https://www.opensource.org/licenses/mit-license.php
  */
 
-const localizerNonFactors0 = {
-    IRS: $('#localizerNonFactorsIRS').val(),
-    GPSOIGD: $('#localizerNonFactorsGPSOIGD').val(),
-    GCOBCFWMS: $('#localizerNonFactorsGCOBCFWMS').val()
+const nonFactorsLocalizer0 = {
+    IRS: $('#NonFactorsLocalizerIRS').val(),
+    GPSOIGD: $('#NonFactorsLocalizerGPSOIGD').val(),
+    GCOBCFWMS: $('#NonFactorsLocalizerGCOBCFWMS').val()
 };
 
 class MvcGrid {
@@ -166,7 +166,7 @@ class MvcGrid {
                 headers: { "X-Requested-With": "XMLHttpRequest" }
             }).then(response => {
                 if (!response.ok) {
-                    throw new Error(`${localizerNonFactors0.IRS}: ${response.status}`);
+                    throw new Error(`${nonFactorsLocalizer0.IRS}: ${response.status}`);
                 }
 
                 return response.text();
@@ -180,7 +180,7 @@ class MvcGrid {
                 if (template.content.firstElementChild.classList.contains("mvc-grid")) {
                     grid.element.outerHTML = response;
                 } else {
-                    throw new Error(`${localizerNonFactors0.GPSOIGD}`);
+                    throw new Error(`${nonFactorsLocalizer0.GPSOIGD}`);
                 }
 
                 const newGrid = new MvcGrid(parent.children[i], {
@@ -236,7 +236,7 @@ class MvcGrid {
         const grid = element.closest(".mvc-grid");
 
         if (!grid) {
-            throw new Error(`${localizerNonFactors0.GCOBCFWMS}`);
+            throw new Error(`${nonFactorsLocalizer0.GCOBCFWMS}`);
         }
 
         return grid;

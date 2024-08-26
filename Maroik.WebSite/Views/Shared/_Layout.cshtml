@@ -176,25 +176,25 @@ to get the desired effect
     @Html.AntiForgeryToken()
     @*Language change return URI*@
     @Html.Hidden($"{nameof(returnUri)}",returnUri)
-    @*Language localizer*@
-    @Html.Hidden("localizerNonFactorsIRS", localizer["Invalid response status"].Value)
-    @Html.Hidden("localizerNonFactorsGPSOIGD", localizer["Grid partial should only include grid declaration."].Value)
-    @Html.Hidden("localizerNonFactorsGCOBCFWMS", localizer["Grid can only be created from within mvc-grid structure."].Value)
-    @Html.Hidden("localizerNonFactorsEquals", localizer["equals"].Value)
-    @Html.Hidden("localizerNonFactorsNotEquals", localizer["not-equals"].Value)
-    @Html.Hidden("localizerNonFactorsContains", localizer["contains"].Value)
-    @Html.Hidden("localizerNonFactorsStartsWith", localizer["starts-with"].Value)
-    @Html.Hidden("localizerNonFactorsEndsWith", localizer["ends-with"].Value)
-    @Html.Hidden("localizerNonFactorsLessThan", localizer["less-than"].Value)
-    @Html.Hidden("localizerNonFactorsGreaterThan", localizer["greater-than"].Value)
-    @Html.Hidden("localizerNonFactorsLessThanOrEqual", localizer["less-than-or-equal"].Value)
-    @Html.Hidden("localizerNonFactorsGreaterThanOrEqual", localizer["greater-than-or-equal"].Value)
-    @Html.Hidden("localizerNonFactorsEarlierThan", localizer["earlier-than"].Value)
-    @Html.Hidden("localizerNonFactorsLaterThan", localizer["later-than"].Value)
-    @Html.Hidden("localizerNonFactorsEarlierThanOrEqual", localizer["earlier-than-or-equal"].Value)
-    @Html.Hidden("localizerNonFactorsLaterThanOrEqual", localizer["later-than-or-equal"].Value)
-    @Html.Hidden("localizerNonFactorsAnd", localizer["and"].Value)
-    @Html.Hidden("localizerNonFactorsOr", localizer["or"].Value)
+    @*NonFactor localizer*@
+    @Html.Hidden("NonFactorsLocalizerIRS", localizer["Invalid response status"].Value)
+    @Html.Hidden("NonFactorsLocalizerGPSOIGD", localizer["Grid partial should only include grid declaration."].Value)
+    @Html.Hidden("NonFactorsLocalizerGCOBCFWMS", localizer["Grid can only be created from within mvc-grid structure."].Value)
+    @Html.Hidden("NonFactorsLocalizerEquals", localizer["equals"].Value)
+    @Html.Hidden("NonFactorsLocalizerNotEquals", localizer["not-equals"].Value)
+    @Html.Hidden("NonFactorsLocalizerContains", localizer["contains"].Value)
+    @Html.Hidden("NonFactorsLocalizerStartsWith", localizer["starts-with"].Value)
+    @Html.Hidden("NonFactorsLocalizerEndsWith", localizer["ends-with"].Value)
+    @Html.Hidden("NonFactorsLocalizerLessThan", localizer["less-than"].Value)
+    @Html.Hidden("NonFactorsLocalizerGreaterThan", localizer["greater-than"].Value)
+    @Html.Hidden("NonFactorsLocalizerLessThanOrEqual", localizer["less-than-or-equal"].Value)
+    @Html.Hidden("NonFactorsLocalizerGreaterThanOrEqual", localizer["greater-than-or-equal"].Value)
+    @Html.Hidden("NonFactorsLocalizerEarlierThan", localizer["earlier-than"].Value)
+    @Html.Hidden("NonFactorsLocalizerLaterThan", localizer["later-than"].Value)
+    @Html.Hidden("NonFactorsLocalizerEarlierThanOrEqual", localizer["earlier-than-or-equal"].Value)
+    @Html.Hidden("NonFactorsLocalizerLaterThanOrEqual", localizer["later-than-or-equal"].Value)
+    @Html.Hidden("NonFactorsLocalizerAnd", localizer["and"].Value)
+    @Html.Hidden("NonFactorsLocalizerOr", localizer["or"].Value)
 
 
     <div class="wrapper">
@@ -248,10 +248,10 @@ to get the desired effect
                 <script src="~/admin/plugins/summernote/summernote-bs4.js" asp-append-version="true"></script>
                 <script src="~/admin/plugins/summernote/lang/summernote-ko-KR.min.js" asp-append-version="true"></script>
                 @*nonfactors.grid.mvc6\6.2.4*@
-                <script src="~/admin/js/mvc-grid/mvc-grid-localizer0.js" asp-append-version="true"></script>
-                <script src="~/admin/js/mvc-grid/mvc-grid-localizer1.js" asp-append-version="true"></script>
-                <script src="~/admin/js/mvc-grid/mvc-grid-attribute.js" asp-append-version="true"></script>
-                <script src="~/admin/js/mvc-grid/mvc-grid.js" asp-append-version="true"></script>
+                <script src="~/admin/js/mvc-grid/nonfactors-mvc-grid-localizer0.js" asp-append-version="true"></script>
+                <script src="~/admin/js/mvc-grid/nonfactors-mvc-grid-localizer1.js" asp-append-version="true"></script>
+                <script src="~/admin/js/mvc-grid/nonfactors-mvc-grid-attribute.js" asp-append-version="true"></script>
+                <script src="~/admin/js/mvc-grid/nonfactors-mvc-grid.js" asp-append-version="true"></script>
 
                 <script src="~/admin/custom/_Layout/js/site.js" asp-append-version="true"></script>
             }
@@ -279,10 +279,10 @@ to get the desired effect
                 <script src="~/user/plugins/summernote/summernote-bs4.js" asp-append-version="true"></script>
                 <script src="~/user/plugins/summernote/lang/summernote-ko-KR.min.js" asp-append-version="true"></script>
                 @*nonfactors.grid.mvc6\6.2.4*@
-                <script src="~/user/js/mvc-grid/mvc-grid-localizer0.js" asp-append-version="true"></script>
-                <script src="~/user/js/mvc-grid/mvc-grid-localizer1.js" asp-append-version="true"></script>
-                <script src="~/user/js/mvc-grid/mvc-grid-attribute.js" asp-append-version="true"></script>
-                <script src="~/user/js/mvc-grid/mvc-grid.js" asp-append-version="true"></script>
+                <script src="~/user/js/mvc-grid/nonfactors-mvc-grid-localizer0.js" asp-append-version="true"></script>
+                <script src="~/user/js/mvc-grid/nonfactors-mvc-grid-localizer1.js" asp-append-version="true"></script>
+                <script src="~/user/js/mvc-grid/nonfactors-mvc-grid-attribute.js" asp-append-version="true"></script>
+                <script src="~/user/js/mvc-grid/nonfactors-mvc-grid.js" asp-append-version="true"></script>
 
                 <script src="~/user/custom/_Layout/js/site.js" asp-append-version="true"></script>
             }
@@ -308,10 +308,10 @@ to get the desired effect
                 @*<!-- Chart.js -->*@
                 <script src="~/anonymous/plugins/chart.js/Chart.min.js" asp-append-version="true"></script>
                 @*nonfactors.grid.mvc6\6.2.4*@
-                <script src="~/anonymous/js/mvc-grid/mvc-grid-localizer0.js" asp-append-version="true"></script>
-                <script src="~/anonymous/js/mvc-grid/mvc-grid-localizer1.js" asp-append-version="true"></script>
-                <script src="~/anonymous/js/mvc-grid/mvc-grid-attribute.js" asp-append-version="true"></script>
-                <script src="~/anonymous/js/mvc-grid/mvc-grid.js" asp-append-version="true"></script>
+                <script src="~/anonymous/js/mvc-grid/nonfactors-mvc-grid-localizer0.js" asp-append-version="true"></script>
+                <script src="~/anonymous/js/mvc-grid/nonfactors-mvc-grid-localizer1.js" asp-append-version="true"></script>
+                <script src="~/anonymous/js/mvc-grid/nonfactors-mvc-grid-attribute.js" asp-append-version="true"></script>
+                <script src="~/anonymous/js/mvc-grid/nonfactors-mvc-grid.js" asp-append-version="true"></script>
 
                 <script src="~/anonymous/custom/_Layout/js/site.js" asp-append-version="true"></script>
             }
