@@ -1,53 +1,53 @@
-const localizer1 = {
-    Equals: $('#localizerEquals').val(),
-    NotEquals: $('#localizerNotEquals').val(),
-    Contains: $('#localizerContains').val(),
-    StartsWith: $('#localizerStartsWith').val(),
-    EndsWith: $('#localizerEndsWith').val(),
-    LessThan: $('#localizerLessThan').val(),
-    GreaterThan: $('#localizerGreaterThan').val(),
-    LessThanOrEqual: $('#localizerLessThanOrEqual').val(),
-    GreaterThanOrEqual: $('#localizerGreaterThanOrEqual').val(),
-    EarlierThan: $('#localizerEarlierThan').val(),
-    LaterThan: $('#localizerLaterThan').val(),
-    EarlierThanOrEqual: $('#localizerEarlierThanOrEqual').val(),
-    LaterThanOrEqual: $('#localizerLaterThanOrEqual').val(),
-    And: $('#localizerAnd').val(),
-    Or: $('#localizerOr').val()
+const localizerNonFactors1 = {
+    Equals: $('#localizerNonFactorsEquals').val(),
+    NotEquals: $('#localizerNonFactorsNotEquals').val(),
+    Contains: $('#localizerNonFactorsContains').val(),
+    StartsWith: $('#localizerNonFactorsStartsWith').val(),
+    EndsWith: $('#localizerNonFactorsEndsWith').val(),
+    LessThan: $('#localizerNonFactorsLessThan').val(),
+    GreaterThan: $('#localizerNonFactorsGreaterThan').val(),
+    LessThanOrEqual: $('#localizerNonFactorsLessThanOrEqual').val(),
+    GreaterThanOrEqual: $('#localizerNonFactorsGreaterThanOrEqual').val(),
+    EarlierThan: $('#localizerNonFactorsEarlierThan').val(),
+    LaterThan: $('#localizerNonFactorsLaterThan').val(),
+    EarlierThanOrEqual: $('#localizerNonFactorsEarlierThanOrEqual').val(),
+    LaterThanOrEqual: $('#localizerNonFactorsLaterThanOrEqual').val(),
+    And: $('#localizerNonFactorsAnd').val(),
+    Or: $('#localizerNonFactorsOr').val()
 };
 
 MvcGrid.instances = [];
 MvcGrid.lang = {
     default: {
-        "equals": localizer1.Equals,
-        "not-equals": localizer1.NotEquals
+        "equals": localizerNonFactors1.Equals,
+        "not-equals": localizerNonFactors1.NotEquals
     },
     text: {
-        "contains": localizer1.Contains,
-        "equals": localizer1.Equals,
-        "not-equals": localizer1.NotEquals,
-        "starts-with": localizer1.StartsWith,
-        "ends-with": localizer1.EndsWith
+        "contains": localizerNonFactors1.Contains,
+        "equals": localizerNonFactors1.Equals,
+        "not-equals": localizerNonFactors1.NotEquals,
+        "starts-with": localizerNonFactors1.StartsWith,
+        "ends-with": localizerNonFactors1.EndsWith
     },
     number: {
-        "equals": localizer1.Equals,
-        "not-equals": localizer1.NotEquals,
-        "less-than": localizer1.LessThan,
-        "greater-than": localizer1.GreaterThan,
-        "less-than-or-equal": localizer1.LessThanOrEqual,
-        "greater-than-or-equal": localizer1.GreaterThanOrEqual
+        "equals": localizerNonFactors1.Equals,
+        "not-equals": localizerNonFactors1.NotEquals,
+        "less-than": localizerNonFactors1.LessThan,
+        "greater-than": localizerNonFactors1.GreaterThan,
+        "less-than-or-equal": localizerNonFactors1.LessThanOrEqual,
+        "greater-than-or-equal": localizerNonFactors1.GreaterThanOrEqual
     },
     date: {
-        "equals": localizer1.Equals,
-        "not-equals": localizer1.NotEquals,
-        "earlier-than": localizer1.EarlierThan,
-        "later-than": localizer1.LaterThan,
-        "earlier-than-or-equal": localizer1.EarlierThanOrEqual,
-        "later-than-or-equal": localizer1.LaterThanOrEqual
+        "equals": localizerNonFactors1.Equals,
+        "not-equals": localizerNonFactors1.NotEquals,
+        "earlier-than": localizerNonFactors1.EarlierThan,
+        "later-than": localizerNonFactors1.LaterThan,
+        "earlier-than-or-equal": localizerNonFactors1.EarlierThanOrEqual,
+        "later-than-or-equal": localizerNonFactors1.LaterThanOrEqual
     },
     guid: {
-        "equals": localizer1.Equals,
-        "not-equals": localizer1.NotEquals
+        "equals": localizerNonFactors1.Equals,
+        "not-equals": localizerNonFactors1.NotEquals
     },
     filter: {
         "apply": "&#10003;",
@@ -55,7 +55,7 @@ MvcGrid.lang = {
     },
     operator: {
         "select": "",
-        "and": localizer1.And,
-        "or": localizer1.Or
+        "and": localizerNonFactors1.And,
+        "or": localizerNonFactors1.Or
     }
 };
