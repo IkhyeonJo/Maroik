@@ -9,6 +9,57 @@
     List<Asset> assets = (await assetRepository.GetAssetsAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email)).Where(x => !x.Deleted).ToList();
 }
 
+@Html.Hidden("localizerPrevText", localizer["PrevText"].Value)
+@Html.Hidden("localizerNextText", localizer["NextText"].Value)
+@Html.Hidden("localizerJanuary", localizer["January"].Value)
+@Html.Hidden("localizerFebruary", localizer["February"].Value)
+@Html.Hidden("localizerMarch", localizer["March"].Value)
+@Html.Hidden("localizerApril", localizer["April"].Value)
+@Html.Hidden("localizerMay", localizer["May"].Value)
+@Html.Hidden("localizerJune", localizer["June"].Value)
+@Html.Hidden("localizerJuly", localizer["July"].Value)
+@Html.Hidden("localizerAugust", localizer["August"].Value)
+@Html.Hidden("localizerSeptember", localizer["September"].Value)
+@Html.Hidden("localizerOctober", localizer["October"].Value)
+@Html.Hidden("localizerNovember", localizer["November"].Value)
+@Html.Hidden("localizerDecember", localizer["December"].Value)
+@Html.Hidden("localizerJan", localizer["Jan"].Value)
+@Html.Hidden("localizerFeb", localizer["Feb"].Value)
+@Html.Hidden("localizerMar", localizer["Mar"].Value)
+@Html.Hidden("localizerApr", localizer["Apr"].Value)
+@Html.Hidden("localizerJun", localizer["Jun"].Value)
+@Html.Hidden("localizerJul", localizer["Jul"].Value)
+@Html.Hidden("localizerAug", localizer["Aug"].Value)
+@Html.Hidden("localizerSep", localizer["Sep"].Value)
+@Html.Hidden("localizerOct", localizer["Oct"].Value)
+@Html.Hidden("localizerNov", localizer["Nov"].Value)
+@Html.Hidden("localizerDec", localizer["Dec"].Value)
+@Html.Hidden("localizerSunday", localizer["Sunday"].Value)
+@Html.Hidden("localizerMonday", localizer["Monday"].Value)
+@Html.Hidden("localizerTuesday", localizer["Tuesday"].Value)
+@Html.Hidden("localizerWednesday", localizer["Wednesday"].Value)
+@Html.Hidden("localizerThursday", localizer["Thursday"].Value)
+@Html.Hidden("localizerFriday", localizer["Friday"].Value)
+@Html.Hidden("localizerSaturday", localizer["Saturday"].Value)
+@Html.Hidden("localizerSun", localizer["Sun"].Value)
+@Html.Hidden("localizerMon", localizer["Mon"].Value)
+@Html.Hidden("localizerTue", localizer["Tue"].Value)
+@Html.Hidden("localizerWed", localizer["Wed"].Value)
+@Html.Hidden("localizerThu", localizer["Thu"].Value)
+@Html.Hidden("localizerFri", localizer["Fri"].Value)
+@Html.Hidden("localizerSat", localizer["Sat"].Value)
+@Html.Hidden("localizerSu", localizer["Su"].Value)
+@Html.Hidden("localizerMo", localizer["Mo"].Value)
+@Html.Hidden("localizerTu", localizer["Tu"].Value)
+@Html.Hidden("localizerWe", localizer["We"].Value)
+@Html.Hidden("localizerTh", localizer["Th"].Value)
+@Html.Hidden("localizerFr", localizer["Fr"].Value)
+@Html.Hidden("localizerSa", localizer["Sa"].Value)
+@Html.Hidden("localizerYearSuffix", localizer["YearSuffix"]?.Value ?? "")
+@Html.Hidden("localizerNoMaturityDate", localizer["No MaturityDate"].Value)
+@Html.Hidden("localizerToday", localizer["Today"].Value)
+@Html.Hidden("localizerMaturityDateError", localizer["The maturity date cannot be earlier than the current date."].Value)
+
 <section class="content">
     <div class="card card-primary">
         <div class="card-header">
@@ -338,13 +389,5 @@
     </div>
 </div>
 @section Scripts{
-    @if (currentCulture == "ko-KR")
-    {
-        <script src="~/user/custom/Notice/FixedExpenditure/js/ko-KR-init.js" asp-append-version="true"></script>
-    }
-    else if (currentCulture == "en-US")
-    {
-        <script src="~/user/custom/Notice/FixedExpenditure/js/en-US-init.js" asp-append-version="true"></script>
-    }
     <script src="~/user/custom/Notice/FixedExpenditure/js/site.js" asp-append-version="true"></script>
 }

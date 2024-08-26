@@ -31,6 +31,8 @@
     List<Account> accounts = await accountRepository.GetAllAsync(); // 게시물에서 특별 계정 찾기 위한 용도
 }
 
+@Html.Hidden("localizerSummernoteLang", localizer["SummernoteLang"].Value)
+
 <section class="content">
     <div class="card card-primary">
         <div class="card-header">
@@ -573,18 +575,6 @@
     }
     else if (loginedAccount.Role == Role.User)
     {
-        if (currentCulture == "ko-KR")
-        {
-            <script src="~/user/custom/Management/PrivateNote/js/ko-KR-init.js" asp-append-version="true"></script>
-        }
-        else if (currentCulture == "en-US")
-        {
-            <script src="~/user/custom/Management/PrivateNote/js/en-US-init.js" asp-append-version="true"></script>
-        }
-        else
-        {
-
-        }
         <script src="~/user/custom/Management/PrivateNote/js/site.js" asp-append-version="true"></script>
     }
     else if (loginedAccount.Role == Role.Anonymous)

@@ -1,7 +1,218 @@
-﻿// Please see documentation at https://docs.microsoft.com/aspnet/core/client-side/bundling-and-minification
-// for details on configuring this project to bundle and minify static web assets.
+﻿const localizer = {
+    PrevText: $('#localizerPrevText').val(),
+    NextText: $('#localizerNextText').val(),
+    January: $('#localizerJanuary').val(),
+    February: $('#localizerFebruary').val(),
+    March: $('#localizerMarch').val(),
+    April: $('#localizerApril').val(),
+    May: $('#localizerMay').val(),
+    June: $('#localizerJune').val(),
+    July: $('#localizerJuly').val(),
+    August: $('#localizerAugust').val(),
+    September: $('#localizerSeptember').val(),
+    October: $('#localizerOctober').val(),
+    November: $('#localizerNovember').val(),
+    December: $('#localizerDecember').val(),
+    Jan: $('#localizerJan').val(),
+    Feb: $('#localizerFeb').val(),
+    Mar: $('#localizerMar').val(),
+    Apr: $('#localizerApr').val(),
+    Jun: $('#localizerJun').val(),
+    Jul: $('#localizerJul').val(),
+    Aug: $('#localizerAug').val(),
+    Sep: $('#localizerSep').val(),
+    Oct: $('#localizerOct').val(),
+    Nov: $('#localizerNov').val(),
+    Dec: $('#localizerDec').val(),
+    Sunday: $('#localizerSunday').val(),
+    Monday: $('#localizerMonday').val(),
+    Tuesday: $('#localizerTuesday').val(),
+    Wednesday: $('#localizerWednesday').val(),
+    Thursday: $('#localizerThursday').val(),
+    Friday: $('#localizerFriday').val(),
+    Saturday: $('#localizerSaturday').val(),
+    Sun: $('#localizerSun').val(),
+    Mon: $('#localizerMon').val(),
+    Tue: $('#localizerTue').val(),
+    Wed: $('#localizerWed').val(),
+    Thu: $('#localizerThu').val(),
+    Fri: $('#localizerFri').val(),
+    Sat: $('#localizerSat').val(),
+    Su: $('#localizerSu').val(),
+    Mo: $('#localizerMo').val(),
+    Tu: $('#localizerTu').val(),
+    We: $('#localizerWe').val(),
+    Th: $('#localizerTh').val(),
+    Fr: $('#localizerFr').val(),
+    Sa: $('#localizerSa').val(),
+    YearSuffix: $('#localizerYearSuffix').val(),
+    NoMaturityDate: $('#localizerNoMaturityDate').val(),
+    Today: $('#localizerToday').val(),
+    MaturityDateError: $('#localizerMaturityDateError').val(),
+};
 
-// Write your JavaScript code.
+$.datepicker.setDefaults({
+    dateFormat: 'yy-mm-dd',
+    prevText: localizer.prevText,
+    nextText: localizer.nextText,
+    monthNames: [localizer.January, localizer.February, localizer.March, localizer.April, localizer.May, localizer.June, localizer.July, localizer.August, localizer.September, localizer.October, localizer.November, localizer.December],
+    monthNamesShort: [localizer.Jan, localizer.Feb, localizer.Mar, localizer.Apr, localizer.May, localizer.Jun, localizer.Jul, localizer.Aug, localizer.Sep, localizer.Oct, localizer.Nov, localizer.Dec],
+    dayNames: [localizer.Sunday, localizer.Monday, localizer.Tuesday, localizer.Wednesday, localizer.Thursday, localizer.Friday, localizer.Saturday],
+    dayNamesShort: [localizer.Sun, localizer.Mon, localizer.Tue, localizer.Wed, localizer.Thu, localizer.Fri, localizer.Sat],
+    dayNamesMin: [localizer.Su, localizer.Mo, localizer.Tu, localizer.We, localizer.Th, localizer.Fr, localizer.Sa],
+    showMonthAfterYear: true,
+    yearSuffix: localizer.YearSuffix
+});
+
+$(function () {
+    $("#createFixedExpenditureTabs").tabs();
+    $("#editFixedExpenditureTabs").tabs();
+    $("#createFixedExpenditureMaturityDate").datepicker({
+        showButtonPanel: true,
+        beforeShow: function (input) {
+            setTimeout(function () {
+                let buttonPane = $(input)
+                    .datepicker("widget")
+                    .find(".ui-datepicker-buttonpane");
+
+                $("<button>", {
+                    text: localizer.NoMaturityDate,
+                    click: function () {
+                        $.datepicker._clearDate(input);
+                        $("#createFixedExpenditureMaturityDate").datepicker("setDate", new Date('9999', '11', '31'));
+                    }
+                }).appendTo(buttonPane).addClass("ui-datepicker-clear ui-state-default ui-priority-primary ui-corner-all");
+
+                $("<button>", {
+                    text: localizer.Today,
+                    click: function () {
+                        $.datepicker._clearDate(input);
+                        $("#createFixedExpenditureMaturityDate").datepicker("setDate", new Date());
+                    }
+                }).appendTo(buttonPane).addClass("ui-datepicker-clear ui-state-default ui-priority-primary ui-corner-all");
+
+            }, 1);
+        },
+        onChangeMonthYear: function (year, month, instance) {
+            setTimeout(function () {
+                let buttonPane = $(instance)
+                    .datepicker("widget")
+                    .find(".ui-datepicker-buttonpane");
+
+                $("<button>", {
+                    text: localizer.NoMaturityDate,
+                    click: function () {
+                        $.datepicker._clearDate(instance.input);
+                        $("#createFixedExpenditureMaturityDate").datepicker("setDate", new Date('9999', '11', '31'));
+                    }
+                }).appendTo(buttonPane).addClass("ui-datepicker-clear ui-state-default ui-priority-primary ui-corner-all");
+
+                $("<button>", {
+                    text: localizer.Today,
+                    click: function () {
+                        $.datepicker._clearDate(instance.input);
+                        $("#createFixedExpenditureMaturityDate").datepicker("setDate", new Date());
+                    }
+                }).appendTo(buttonPane).addClass("ui-datepicker-clear ui-state-default ui-priority-primary ui-corner-all");
+
+            }, 1);
+        },
+        onSelect: function (date) {
+            if (!date) {
+                date = '9999-12-31';
+            }
+            let tempCurrentDate = new Date();
+            let month = tempCurrentDate.getMonth() + 1;
+            let day = tempCurrentDate.getDate();
+
+            month = month >= 10 ? month : '0' + month;
+            day = day >= 10 ? day : '0' + day;
+
+            let currentDate = tempCurrentDate.getFullYear() + '-' + month + '-' + day;
+
+            if (date < currentDate) {
+                alert(localizer.MaturityDateError);
+                $("#createFixedExpenditureMaturityDate").datepicker("setDate", new Date());
+            }
+        }
+    });
+
+    $("#editFixedExpenditureMaturityDate").datepicker({
+        showButtonPanel: true,
+        beforeShow: function (input) {
+            setTimeout(function () {
+                let buttonPane = $(input)
+                    .datepicker("widget")
+                    .find(".ui-datepicker-buttonpane");
+
+                $("<button>", {
+                    text: localizer.NoMaturityDate,
+                    click: function () {
+                        $.datepicker._clearDate(input);
+                        $("#editFixedExpenditureMaturityDate").datepicker("setDate", new Date('9999', '11', '31'));
+                    }
+                }).appendTo(buttonPane).addClass("ui-datepicker-clear ui-state-default ui-priority-primary ui-corner-all");
+
+                $("<button>", {
+                    text: localizer.Today,
+                    click: function () {
+                        $.datepicker._clearDate(input);
+                        $("#editFixedExpenditureMaturityDate").datepicker("setDate", new Date());
+                    }
+                }).appendTo(buttonPane).addClass("ui-datepicker-clear ui-state-default ui-priority-primary ui-corner-all");
+
+            }, 1);
+        },
+        onChangeMonthYear: function (year, month, instance) {
+            setTimeout(function () {
+                let buttonPane = $(instance)
+                    .datepicker("widget")
+                    .find(".ui-datepicker-buttonpane");
+
+                $("<button>", {
+                    text: localizer.NoMaturityDate,
+                    click: function () {
+                        $.datepicker._clearDate(instance.input);
+                        $("#editFixedExpenditureMaturityDate").datepicker("setDate", new Date('9999', '11', '31'));
+                    }
+                }).appendTo(buttonPane).addClass("ui-datepicker-clear ui-state-default ui-priority-primary ui-corner-all");
+
+                $("<button>", {
+                    text: localizer.Today,
+                    click: function () {
+                        $.datepicker._clearDate(instance.input);
+                        $("#editFixedExpenditureMaturityDate").datepicker("setDate", new Date());
+                    }
+                }).appendTo(buttonPane).addClass("ui-datepicker-clear ui-state-default ui-priority-primary ui-corner-all");
+
+            }, 1);
+        },
+        onSelect: function (date) {
+            if (!date) {
+                date = '9999-12-31';
+            }
+            let tempCurrentDate = new Date();
+            let month = tempCurrentDate.getMonth() + 1;
+            let day = tempCurrentDate.getDate();
+
+            month = month >= 10 ? month : '0' + month;
+            day = day >= 10 ? day : '0' + day;
+
+            let currentDate = tempCurrentDate.getFullYear() + '-' + month + '-' + day;
+
+            if (date < currentDate) {
+                alert(localizer.MaturityDateError);
+                $("#editFixedExpenditureMaturityDate").datepicker("setDate", new Date());
+            }
+        }
+    });
+
+    $("#createFixedExpenditureMaturityDate").datepicker("setDate", new Date());
+    $("#editFixedExpenditureMaturityDate").datepicker("setDate", new Date());
+
+    $('<style type="text/css"> .ui-datepicker-close { display: none; } </style>').appendTo("head");
+    $('<style type="text/css"> .ui-datepicker-current { display: none; } </style>').appendTo("head");
+});
 
 let selectedRowColor = "table-primary";
 
