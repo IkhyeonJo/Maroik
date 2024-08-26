@@ -176,7 +176,7 @@ to get the desired effect
     @Html.AntiForgeryToken()
     @*Language change return URI*@
     @Html.Hidden($"{nameof(returnUri)}",returnUri)
-    @*NonFactor localizer*@
+    @*NonFactors localizer*@
     @Html.Hidden("NonFactorsLocalizerIRS", localizer["Invalid response status"].Value)
     @Html.Hidden("NonFactorsLocalizerGPSOIGD", localizer["Grid partial should only include grid declaration."].Value)
     @Html.Hidden("NonFactorsLocalizerGCOBCFWMS", localizer["Grid can only be created from within mvc-grid structure."].Value)
