@@ -1,19 +1,19 @@
 const nonFactorsLocalizer1 = {
-    Equals: $('#NonFactorsLocalizerEquals').val(),
-    NotEquals: $('#NonFactorsLocalizerNotEquals').val(),
-    Contains: $('#NonFactorsLocalizerContains').val(),
-    StartsWith: $('#NonFactorsLocalizerStartsWith').val(),
-    EndsWith: $('#NonFactorsLocalizerEndsWith').val(),
-    LessThan: $('#NonFactorsLocalizerLessThan').val(),
-    GreaterThan: $('#NonFactorsLocalizerGreaterThan').val(),
-    LessThanOrEqual: $('#NonFactorsLocalizerLessThanOrEqual').val(),
-    GreaterThanOrEqual: $('#NonFactorsLocalizerGreaterThanOrEqual').val(),
-    EarlierThan: $('#NonFactorsLocalizerEarlierThan').val(),
-    LaterThan: $('#NonFactorsLocalizerLaterThan').val(),
-    EarlierThanOrEqual: $('#NonFactorsLocalizerEarlierThanOrEqual').val(),
-    LaterThanOrEqual: $('#NonFactorsLocalizerLaterThanOrEqual').val(),
-    And: $('#NonFactorsLocalizerAnd').val(),
-    Or: $('#NonFactorsLocalizerOr').val()
+    Equals: $('#_localizerNonFactorsEquals').val(),
+    NotEquals: $('#_localizerNonFactorsNotEquals').val(),
+    Contains: $('#_localizerNonFactorsContains').val(),
+    StartsWith: $('#_localizerNonFactorsStartsWith').val(),
+    EndsWith: $('#_localizerNonFactorsEndsWith').val(),
+    LessThan: $('#_localizerNonFactorsLessThan').val(),
+    GreaterThan: $('#_localizerNonFactorsGreaterThan').val(),
+    LessThanOrEqual: $('#_localizerNonFactorsLessThanOrEqual').val(),
+    GreaterThanOrEqual: $('#_localizerNonFactorsGreaterThanOrEqual').val(),
+    EarlierThan: $('#_localizerNonFactorsEarlierThan').val(),
+    LaterThan: $('#_localizerNonFactorsLaterThan').val(),
+    EarlierThanOrEqual: $('#_localizerNonFactorsEarlierThanOrEqual').val(),
+    LaterThanOrEqual: $('#_localizerNonFactorsLaterThanOrEqual').val(),
+    And: $('#_localizerNonFactorsAnd').val(),
+    Or: $('#_localizerNonFactorsOr').val()
 };
 
 MvcGrid.instances = [];
