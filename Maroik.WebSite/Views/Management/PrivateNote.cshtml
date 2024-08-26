@@ -558,19 +558,6 @@
 @section Scripts{
     @if (loginedAccount.Role == Role.Admin)
     {
-
-        if (currentCulture == "ko-KR")
-        {
-            <script src="~/admin/custom/Management/PrivateNote/js/ko-KR-init.js" asp-append-version="true"></script>
-        }
-        else if (currentCulture == "en-US")
-        {
-            <script src="~/admin/custom/Management/PrivateNote/js/en-US-init.js" asp-append-version="true"></script>
-        }
-        else
-        {
-
-        }
         <script src="~/admin/custom/Management/PrivateNote/js/site.js" asp-append-version="true"></script>
     }
     else if (loginedAccount.Role == Role.User)
