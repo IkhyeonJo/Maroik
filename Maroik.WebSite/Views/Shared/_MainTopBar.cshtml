@@ -258,20 +258,10 @@
                 <a class="nav-link" data-toggle="dropdown" href="#">
                     <i class="fas fa-globe"></i>
                 </a>
-                @if (currentCulture == "en-US")
-                {
-                    <div class="dropdown-menu" role="menu">
-                        <a id="aChangeCultureEnUS" class="dropdown-item active" style="cursor: pointer;">English</a>
-                        <a id="aChangeCultureKoKR" class="dropdown-item" style="cursor: pointer;">한국어</a>
-                    </div>
-                }
-                else if (currentCulture == "ko-KR")
-                {
-                    <div class="dropdown-menu" role="menu">
-                        <a id="aChangeCultureEnUS" class="dropdown-item" style="cursor: pointer;">English</a>
-                        <a id="aChangeCultureKoKR" class="dropdown-item active" style="cursor: pointer;">한국어</a>
-                    </div>
-                }
+                <div class="dropdown-menu" role="menu">
+                    <a id="aChangeCultureEnUS" class="dropdown-item @(currentCulture == "en-US" ? "active" : "")" style="cursor: pointer;">English</a>
+                    <a id="aChangeCultureKoKR" class="dropdown-item @(currentCulture == "ko-KR" ? "active" : "")" style="cursor: pointer;">한국어</a>
+                </div>
             </li>
         }
         else if (Model.Role == Role.User)
@@ -310,20 +300,10 @@
                 <a class="nav-link" data-toggle="dropdown" href="#">
                     <i class="fas fa-globe"></i>
                 </a>
-                @if (currentCulture == "en-US")
-                {
-                    <div class="dropdown-menu" role="menu">
-                        <a id="aChangeCultureEnUS" class="dropdown-item active" style="cursor: pointer;">English</a>
-                        <a id="aChangeCultureKoKR" class="dropdown-item" style="cursor: pointer;">한국어</a>
-                    </div>
-                }
-                else if (currentCulture == "ko-KR")
-                {
-                    <div class="dropdown-menu" role="menu">
-                        <a id="aChangeCultureEnUS" class="dropdown-item" style="cursor: pointer;">English</a>
-                        <a id="aChangeCultureKoKR" class="dropdown-item active" style="cursor: pointer;">한국어</a>
-                    </div>
-                }
+                <div class="dropdown-menu" role="menu">
+                    <a id="aChangeCultureEnUS" class="dropdown-item @(currentCulture == "en-US" ? "active" : "")" style="cursor: pointer;">English</a>
+                    <a id="aChangeCultureKoKR" class="dropdown-item @(currentCulture == "ko-KR" ? "active" : "")" style="cursor: pointer;">한국어</a>
+                </div>
             </li>
         }
         else if (Model.Role == Role.Anonymous)
@@ -433,20 +413,10 @@
                     <button type="button" class="btn btn-info btn-block dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
                         <i class="fas fa-globe" style="padding-right:6px;"></i>@localizer["Language"]
                     </button>
-                    @if (currentCulture == "en-US")
-                    {
-                        <div class="dropdown-menu" role="menu">
-                            <a id="aChangeCultureEnUS" class="dropdown-item active" style="cursor: pointer;">English</a>
-                            <a id="aChangeCultureKoKR" class="dropdown-item" style="cursor: pointer;">한국어</a>
-                        </div>
-                    }
-                    else if (currentCulture == "ko-KR")
-                    {
-                        <div class="dropdown-menu" role="menu">
-                            <a id="aChangeCultureEnUS" class="dropdown-item" style="cursor: pointer;">English</a>
-                            <a id="aChangeCultureKoKR" class="dropdown-item active" style="cursor: pointer;">한국어</a>
-                        </div>
-                    }
+                    <div class="dropdown-menu" role="menu">
+                        <a id="aChangeCultureEnUS" class="dropdown-item @(currentCulture == "en-US" ? "active" : "")" style="cursor: pointer;">English</a>
+                        <a id="aChangeCultureKoKR" class="dropdown-item @(currentCulture == "ko-KR" ? "active" : "")" style="cursor: pointer;">한국어</a>
+                    </div>
                 </div>
             </li>
 
