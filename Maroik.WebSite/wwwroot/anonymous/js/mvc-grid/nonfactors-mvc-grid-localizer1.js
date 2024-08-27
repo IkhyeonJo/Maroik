@@ -1,4 +1,4 @@
-const nonFactorsLocalizer1 = {
+const _localizerNonFactors1 = {
     Equals: $('#_localizerNonFactorsEquals').val(),
     NotEquals: $('#_localizerNonFactorsNotEquals').val(),
     Contains: $('#_localizerNonFactorsContains').val(),
@@ -19,35 +19,35 @@ const nonFactorsLocalizer1 = {
 MvcGrid.instances = [];
 MvcGrid.lang = {
     default: {
-        "equals": nonFactorsLocalizer1.Equals,
-        "not-equals": nonFactorsLocalizer1.NotEquals
+        "equals": _localizerNonFactors1.Equals,
+        "not-equals": _localizerNonFactors1.NotEquals
     },
     text: {
-        "contains": nonFactorsLocalizer1.Contains,
-        "equals": nonFactorsLocalizer1.Equals,
-        "not-equals": nonFactorsLocalizer1.NotEquals,
-        "starts-with": nonFactorsLocalizer1.StartsWith,
-        "ends-with": nonFactorsLocalizer1.EndsWith
+        "contains": _localizerNonFactors1.Contains,
+        "equals": _localizerNonFactors1.Equals,
+        "not-equals": _localizerNonFactors1.NotEquals,
+        "starts-with": _localizerNonFactors1.StartsWith,
+        "ends-with": _localizerNonFactors1.EndsWith
     },
     number: {
-        "equals": nonFactorsLocalizer1.Equals,
-        "not-equals": nonFactorsLocalizer1.NotEquals,
-        "less-than": nonFactorsLocalizer1.LessThan,
-        "greater-than": nonFactorsLocalizer1.GreaterThan,
-        "less-than-or-equal": nonFactorsLocalizer1.LessThanOrEqual,
-        "greater-than-or-equal": nonFactorsLocalizer1.GreaterThanOrEqual
+        "equals": _localizerNonFactors1.Equals,
+        "not-equals": _localizerNonFactors1.NotEquals,
+        "less-than": _localizerNonFactors1.LessThan,
+        "greater-than": _localizerNonFactors1.GreaterThan,
+        "less-than-or-equal": _localizerNonFactors1.LessThanOrEqual,
+        "greater-than-or-equal": _localizerNonFactors1.GreaterThanOrEqual
     },
     date: {
-        "equals": nonFactorsLocalizer1.Equals,
-        "not-equals": nonFactorsLocalizer1.NotEquals,
-        "earlier-than": nonFactorsLocalizer1.EarlierThan,
-        "later-than": nonFactorsLocalizer1.LaterThan,
-        "earlier-than-or-equal": nonFactorsLocalizer1.EarlierThanOrEqual,
-        "later-than-or-equal": nonFactorsLocalizer1.LaterThanOrEqual
+        "equals": _localizerNonFactors1.Equals,
+        "not-equals": _localizerNonFactors1.NotEquals,
+        "earlier-than": _localizerNonFactors1.EarlierThan,
+        "later-than": _localizerNonFactors1.LaterThan,
+        "earlier-than-or-equal": _localizerNonFactors1.EarlierThanOrEqual,
+        "later-than-or-equal": _localizerNonFactors1.LaterThanOrEqual
     },
     guid: {
-        "equals": nonFactorsLocalizer1.Equals,
-        "not-equals": nonFactorsLocalizer1.NotEquals
+        "equals": _localizerNonFactors1.Equals,
+        "not-equals": _localizerNonFactors1.NotEquals
     },
     filter: {
         "apply": "&#10003;",
@@ -55,7 +55,7 @@ MvcGrid.lang = {
     },
     operator: {
         "select": "",
-        "and": nonFactorsLocalizer1.And,
-        "or": nonFactorsLocalizer1.Or
+        "and": _localizerNonFactors1.And,
+        "or": _localizerNonFactors1.Or
     }
 };
