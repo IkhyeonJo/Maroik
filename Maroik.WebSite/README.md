@@ -869,4 +869,4 @@ Javscript optimization Tip:
 // Write your JavaScript code.
 
 
-// TODO: Calendar UserIndex 동작 한 번 테스트하고 Admin Calendar 작업으로 넘어갈 것!
+// TODO: Calendar UserIndex 동작 한 번 테스트하고, Calendar (Controller/Model) 번역 작업 한 번 하고, Admin Calendar 작업으로 넘어갈 것!
