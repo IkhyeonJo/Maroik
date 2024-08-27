@@ -867,3 +867,6 @@ Javscript optimization Tip:
 // for details on configuring this project to bundle and minify static web assets.
 
 // Write your JavaScript code.
+
+
+// TODO: Calendar UserIndex [View Language 처리할 것!]
