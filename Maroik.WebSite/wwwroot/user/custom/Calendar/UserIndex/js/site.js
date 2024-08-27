@@ -7,8 +7,116 @@
     Weeks: $('#localizerWeeks').val(),
     BeforeAt: $('#localizerBeforeAt').val(),
     PrevText: $('#localizerPrevText').val(),
-    August: $('#localizerAugust').val()
+    NextText: $('#localizerNextText').val(),
+    January: $('#localizerJanuary').val(),
+    February: $('#localizerFebruary').val(),
+    March: $('#localizerMarch').val(),
+    April: $('#localizerApril').val(),
+    May: $('#localizerMay').val(),
+    June: $('#localizerJune').val(),
+    July: $('#localizerJuly').val(),
+    August: $('#localizerAugust').val(),
+    September: $('#localizerSeptember').val(),
+    October: $('#localizerOctober').val(),
+    November: $('#localizerNovember').val(),
+    December: $('#localizerDecember').val(),
+    Jan: $('#localizerJan').val(),
+    Feb: $('#localizerFeb').val(),
+    Mar: $('#localizerMar').val(),
+    Apr: $('#localizerApr').val(),
+    Jun: $('#localizerJun').val(),
+    Jul: $('#localizerJul').val(),
+    Aug: $('#localizerAug').val(),
+    Sep: $('#localizerSep').val(),
+    Oct: $('#localizerOct').val(),
+    Nov: $('#localizerNov').val(),
+    Dec: $('#localizerDec').val(),
+    Sunday: $('#localizerSunday').val(),
+    Monday: $('#localizerMonday').val(),
+    Tuesday: $('#localizerTuesday').val(),
+    Wednesday: $('#localizerWednesday').val(),
+    Thursday: $('#localizerThursday').val(),
+    Friday: $('#localizerFriday').val(),
+    Saturday: $('#localizerSaturday').val(),
+    Sun: $('#localizerSun').val(),
+    Mon: $('#localizerMon').val(),
+    Tue: $('#localizerTue').val(),
+    Wed: $('#localizerWed').val(),
+    Thu: $('#localizerThu').val(),
+    Fri: $('#localizerFri').val(),
+    Sat: $('#localizerSat').val(),
+    Su: $('#localizerSu').val(),
+    Mo: $('#localizerMo').val(),
+    Tu: $('#localizerTu').val(),
+    We: $('#localizerWe').val(),
+    Th: $('#localizerTh').val(),
+    Fr: $('#localizerFr').val(),
+    Sa: $('#localizerSa').val(),
+    YearSuffix: $('#localizerYearSuffix').val(),
+    IETFLanguageTag: $('#localizerIETFLanguageTag').val(),
+    Prev: $('#localizerPrev').val(),
+    Next: $('#localizerNext').val(),
+    PrevYear: $('#localizerPrevYear').val(),
+    NextYear: $('#localizerNextYear').val(),
+    Today: $('#localizerToday').val(),
+    Month: $('#localizerMonth').val(),
+    Week: $('#localizerWeek').val(),
+    Day: $('#localizerDay').val(),
+    List: $('#localizerList').val(),
+    DayGridMonth: $('#localizerDayGridMonth').val(),
+    DayGridWeek: $('#localizerDayGridWeek').val(),
+    DayGridDay: $('#localizerDayGridDay').val(),
+    TimeGridWeek: $('#localizerTimeGridWeek').val(),
+    TimeGridDay: $('#localizerTimeGridDay').val(),
+    ListYear: $('#localizerListYear').val(),
+    ListMonth: $('#localizerListMonth').val(),
+    ListWeek: $('#localizerListWeek').val(),
+    ListDay: $('#localizerListDay').val(),
+    ConfirmDelete: $('#localizerConfirmDelete').val(),
+    ThisFieldRequired: $('#localizerThisFieldRequired').val(),
+    ErrorInvalidNumber: $('#localizerErrorInvalidNumber').val(),
+    ErrorRangeMinute: $('#localizerErrorRangeMinute').val(),
+    ErrorRangeHour: $('#localizerErrorRangeHour').val(),
+    ErrorRangeDay: $('#localizerErrorRangeDay').val(),
+    ErrorRangeWeek: $('#localizerErrorRangeWeek').val()
 };
+
+$.datepicker.setDefaults({
+    dateFormat: 'yy-mm-dd',
+    prevText: localizer.prevText,
+    nextText: localizer.nextText,
+    monthNames: [localizer.January, localizer.February, localizer.March, localizer.April, localizer.May, localizer.June, localizer.July, localizer.August, localizer.September, localizer.October, localizer.November, localizer.December],
+    monthNamesShort: [localizer.Jan, localizer.Feb, localizer.Mar, localizer.Apr, localizer.May, localizer.Jun, localizer.Jul, localizer.Aug, localizer.Sep, localizer.Oct, localizer.Nov, localizer.Dec],
+    dayNames: [localizer.Sunday, localizer.Monday, localizer.Tuesday, localizer.Wednesday, localizer.Thursday, localizer.Friday, localizer.Saturday],
+    dayNamesShort: [localizer.Sun, localizer.Mon, localizer.Tue, localizer.Wed, localizer.Thu, localizer.Fri, localizer.Sat],
+    dayNamesMin: [localizer.Su, localizer.Mo, localizer.Tu, localizer.We, localizer.Th, localizer.Fr, localizer.Sa],
+    showMonthAfterYear: true,
+    yearSuffix: localizer.YearSuffix
+});
+
+$('#createCalendarEventDescription').summernote({
+    lang: localizer.IETFLanguageTag,
+    callbacks: {
+        onImageUpload: function (files) {
+            for (let i = 0; i < files.length; i++) {
+                CreateUploadImageFile(files[i]);
+            }
+            $("#createCalendarEventTaskDialogModal").css("overflow", "scroll");
+        }
+    }
+});
+
+$('#editCalendarEventDescription').summernote({
+    lang: localizer.IETFLanguageTag,
+    callbacks: {
+        onImageUpload: function (files) {
+            for (let i = 0; i < files.length; i++) {
+                EditUploadImageFile(files[i]);
+            }
+            $("#editCalendarEventTaskDialogModal").css("overflow", "scroll");
+        }
+    }
+});
 
 let createCalendarEventUploadedFile;
 let editCalendarEventUploadedFile;
@@ -24,22 +132,6 @@ function CreateCalendarEventUploadedFile(obj, errorMessage) {
     }
 }
 
-$('#createCalendarEventAttachment').off('change').on('change', function () {
-    return CreateCalendarEventUploadedFile(this, $(this).attr('data-errorMessage'));
-});
-
-$('#createCalendarEventDescription').summernote({
-    //height: 300,
-    callbacks: {
-        onImageUpload: function (files) {
-            for (let i = 0; i < files.length; i++) {
-                CreateUploadImageFile(files[i]);
-            }
-            $("#createCalendarEventTaskDialogModal").css("overflow", "scroll");
-        }
-    }
-});
-
 function EditCalendarEventUploadedFile(obj, errorMessage) {
     if (obj.files[0].size > 10485760) {
         alert(errorMessage);
@@ -51,47 +143,13 @@ function EditCalendarEventUploadedFile(obj, errorMessage) {
     }
 }
 
+$('#createCalendarEventAttachment').off('change').on('change', function () {
+    return CreateCalendarEventUploadedFile(this, $(this).attr('data-errorMessage'));
+});
+
 $('#editCalendarEventAttachment').off('change').on('change', function () {
     return EditCalendarEventUploadedFile(this, $(this).attr('data-errorMessage'));
 });
-
-$('#editCalendarEventDescription').summernote({
-    //height: 300,
-    callbacks: {
-        onImageUpload: function (files) {
-            for (let i = 0; i < files.length; i++) {
-                EditUploadImageFile(files[i]);
-            }
-            $("#editCalendarEventTaskDialogModal").css("overflow", "scroll");
-        }
-    }
-});
-
-$.datepicker.setDefaults({
-    dateFormat: 'yy-mm-dd',
-    prevText: localizer.PrevText,
-    nextText: 'Next Month',
-    monthNames: ['January', 'February', 'March', 'April', 'May', 'June', 'July', localizer.August, 'September', 'October', 'November', 'December'],
-    monthNamesShort: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
-    dayNames: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
-    dayNamesShort: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
-    dayNamesMin: ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'],
-    showMonthAfterYear: true,
-    yearSuffix: ''
-});
-
-//$.datepicker.setDefaults({
-//    dateFormat: 'yy-mm-dd',
-//    prevText: '이전 달',
-//    nextText: '다음 달',
-//    monthNames: ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월'],
-//    monthNamesShort: ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월'],
-//    dayNames: ['일', '월', '화', '수', '목', '금', '토'],
-//    dayNamesShort: ['일', '월', '화', '수', '목', '금', '토'],
-//    dayNamesMin: ['일', '월', '화', '수', '목', '금', '토'],
-//    showMonthAfterYear: true,
-//    yearSuffix: '년'
-//});
 
 $(function () {
     $("#createCalendarTabs").tabs();
@@ -103,12 +161,10 @@ $(function () {
         showButtonPanel: true,
         beforeShow: function (input) {
             setTimeout(function () {
-                // Custom logic before showing the datepicker for start date
             }, 1);
         },
         onChangeMonthYear: function (year, month, instance) {
             setTimeout(function () {
-                // Custom logic when the month/year changes in start date datepicker
             }, 1);
         },
         onSelect: function (selectedDate) {
@@ -125,12 +181,10 @@ $(function () {
         showButtonPanel: true,
         beforeShow: function (input) {
             setTimeout(function () {
-                // Custom logic before showing the datepicker for end date
             }, 1);
         },
         onChangeMonthYear: function (year, month, instance) {
             setTimeout(function () {
-                // Custom logic when the month/year changes in end date datepicker
             }, 1);
         },
         onSelect: function (selectedDate) {
@@ -146,12 +200,10 @@ $(function () {
         showButtonPanel: true,
         beforeShow: function (input) {
             setTimeout(function () {
-                // Custom logic before showing the datepicker for start date
             }, 1);
         },
         onChangeMonthYear: function (year, month, instance) {
             setTimeout(function () {
-                // Custom logic when the month/year changes in start date datepicker
             }, 1);
         },
         onSelect: function (selectedDate) {
@@ -168,12 +220,10 @@ $(function () {
         showButtonPanel: true,
         beforeShow: function (input) {
             setTimeout(function () {
-                // Custom logic before showing the datepicker for end date
             }, 1);
         },
         onChangeMonthYear: function (year, month, instance) {
             setTimeout(function () {
-                // Custom logic when the month/year changes in end date datepicker
             }, 1);
         },
         onSelect: function (selectedDate) {
@@ -189,12 +239,10 @@ $(function () {
         showButtonPanel: true,
         beforeShow: function (input) {
             setTimeout(function () {
-                // Custom logic before showing the datepicker for start date
             }, 1);
         },
         onChangeMonthYear: function (year, month, instance) {
             setTimeout(function () {
-                // Custom logic when the month/year changes in start date datepicker
             }, 1);
         },
         onSelect: function (selectedDate) {
@@ -211,12 +259,10 @@ $(function () {
         showButtonPanel: true,
         beforeShow: function (input) {
             setTimeout(function () {
-                // Custom logic before showing the datepicker for end date
             }, 1);
         },
         onChangeMonthYear: function (year, month, instance) {
             setTimeout(function () {
-                // Custom logic when the month/year changes in end date datepicker
             }, 1);
         },
         onSelect: function (selectedDate) {
@@ -232,12 +278,10 @@ $(function () {
         showButtonPanel: true,
         beforeShow: function (input) {
             setTimeout(function () {
-                // Custom logic before showing the datepicker for start date
             }, 1);
         },
         onChangeMonthYear: function (year, month, instance) {
             setTimeout(function () {
-                // Custom logic when the month/year changes in start date datepicker
             }, 1);
         },
         onSelect: function (selectedDate) {
@@ -254,12 +298,10 @@ $(function () {
         showButtonPanel: true,
         beforeShow: function (input) {
             setTimeout(function () {
-                // Custom logic before showing the datepicker for end date
             }, 1);
         },
         onChangeMonthYear: function (year, month, instance) {
             setTimeout(function () {
-                // Custom logic when the month/year changes in end date datepicker
             }, 1);
         },
         onSelect: function (selectedDate) {
@@ -313,10 +355,17 @@ $(function () {
     }
 
     let calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
+        locale: localizer.IETFLanguageTag,
         headerToolbar: {
             left: 'prevYear,prev,next,nextYear today',
             center: 'title',
             right: 'dayGridMonth,dayGridWeek,dayGridDay'
+        },
+        buttonText: {
+            today: localizer.Today,
+            dayGridMonth: localizer.Month,
+            dayGridWeek: localizer.Week,
+            dayGridDay: localizer.Day
         },
         themeSystem: 'bootstrap',
         navLinks: true,
@@ -338,7 +387,6 @@ $(function () {
                 data: null,
                 contentType: 'application/json; charset=utf-8',
                 async: false,
-                //cache: false,
                 success: function (response) {
                     if (response.result) {
                         $('#createCalendarEventMyCalendar').empty();
@@ -365,7 +413,6 @@ $(function () {
             var popup = $('#calendarEventPopup');
             var currentEventId = popup.data('event-id');
 
-            // 현재 클릭된 이벤트와 팝업에 표시된 이벤트가 같다면 팝업을 숨김
             if (popup.is(':visible') && currentEventId === arg.event.id) {
                 popup.hide();
                 return;
@@ -387,29 +434,24 @@ $(function () {
                 $('#divCalendarEventPopupAllDayUnchecked').show();
             }
 
-            // 팝업 위치 설정 및 표시
             popup.css({
                 top: offset.top + eventEl.outerHeight(),
                 left: offset.left + eventEl.outerWidth(),
                 display: 'block'
             }).data('event-id', arg.event.id);
 
-            // 포커스를 팝업의 첫 번째 버튼으로 설정
             $('#editCalendarEventPopup').focus();
 
-            // 팝업 외부 클릭 시 닫기
             $(document).on('click', function (e) {
                 if (!$(e.target).closest('#calendarEventPopup, .fc-event').length) {
                     popup.hide();
                 }
             });
 
-            // Close 버튼 클릭 시 팝업 닫기
             $('#closeCalendarEventPopup').off('click').on('click', function () {
                 popup.hide();
             });
 
-            // Edit 버튼 클릭 시
             $('#editCalendarEventPopup').off('click').on('click', function () {
 
                 $.ajax({
@@ -419,8 +461,6 @@ $(function () {
                     dataType: 'json',
                     data: null,
                     contentType: 'application/json; charset=utf-8',
-                    //async: false,
-                    //cache: false,
                     success: function (data) {
                         if (data.result) {
 
@@ -477,7 +517,6 @@ $(function () {
                                 data: null,
                                 contentType: 'application/json; charset=utf-8',
                                 async: false,
-                                //cache: false,
                                 success: function (response) {
                                     if (response.result) {
                                         $('#editCalendarEventMyCalendar').empty();
@@ -623,9 +662,8 @@ $(function () {
                 popup.hide();
             });
 
-            // Delete 버튼 클릭 시
             $('#deleteCalendarEventPopup').off('click').on('click', function () {
-                if (confirm('Are you sure you want to delete this calendar event?')) {
+                if (confirm(`${localizer.ConfirmDelete}`)) {
                     $.ajax({
                         url: '/Calendar/DeleteCalendarEvent?id=' + popup.data('event-id'),
                         type: 'POST',
@@ -695,8 +733,6 @@ $(function () {
             dataType: 'json',
             data: JSON.stringify(paramValue),
             contentType: 'application/json; charset=utf-8',
-            //async: false,
-            //cache: false,
             success: function (response) {
                 if (response.result) {
                     JSON.parse(response.calendarEvents).forEach(item => {
@@ -731,22 +767,22 @@ $(function () {
 
         if (value === '') {
             isValid = false;
-            errorMessage = 'This field is required';
+            errorMessage = `${localizer.ThisFieldRequired}`;
         } else if (isNaN(value)) {
             isValid = false;
-            errorMessage = 'Please enter a valid number';
+            errorMessage = `${localizer.ErrorInvalidNumber}`;
         } else {
             value = parseInt(value, 10);
             if (timeType === 'Days') {
                 if (value < 0 || value > 28) {
                     isValid = false;
-                    errorMessage = 'Must be between 0 and 28 days';
+                    errorMessage = `${localizer.ErrorRangeDay}`;
                 }
             }
             else if (timeType === 'Weeks') {
                 if (value < 0 || value > 4) {
                     isValid = false;
-                    errorMessage = 'Must be between 0 and 4 weeks';
+                    errorMessage = `${localizer.ErrorRangeWeek}`;
                 }
             }
         }
@@ -770,34 +806,34 @@ $(function () {
 
         if (value === '') {
             isValid = false;
-            errorMessage = 'This field is required';
+            errorMessage = `${localizer.ThisFieldRequired}`;
         } else if (isNaN(value)) {
             isValid = false;
-            errorMessage = 'Please enter a valid number';
+            errorMessage = `${localizer.ErrorInvalidNumber}`;
         } else {
             value = parseInt(value, 10);
             if (timeType === 'Minutes') {
                 if (value < 0 || value > 40320) {
                     isValid = false;
-                    errorMessage = 'Must be between 0 and 40,320 minutes';
+                    errorMessage = `${localizer.ErrorRangeMinute}`;
                 }
             }
             else if (timeType === 'Hours') {
                 if (value < 0 || value > 672) {
                     isValid = false;
-                    errorMessage = 'Must be between 0 and 672 hours';
+                    errorMessage = `${localizer.ErrorRangeHour}`;
                 }
             }
             else if (timeType === 'Days') {
                 if (value < 0 || value > 28) {
                     isValid = false;
-                    errorMessage = 'Must be between 0 and 28 days';
+                    errorMessage = `${localizer.ErrorRangeDay}`;
                 }
             }
             else if (timeType === 'Weeks') {
                 if (value < 0 || value > 4) {
                     isValid = false;
-                    errorMessage = 'Must be between 0 and 4 weeks';
+                    errorMessage = `${localizer.ErrorRangeWeek}`;
                 }
             }
         }
@@ -822,34 +858,34 @@ $(function () {
 
         if (value === '') {
             isValid = false;
-            errorMessage = 'This field is required';
+            errorMessage = `${localizer.ThisFieldRequired}`;
         } else if (isNaN(value)) {
             isValid = false;
-            errorMessage = 'Please enter a valid number';
+            errorMessage = `${localizer.ErrorInvalidNumber}`;
         } else {
             value = parseInt(value, 10);
             if (timeType === 'Minutes') {
                 if (value < 0 || value > 40320) {
                     isValid = false;
-                    errorMessage = 'Must be between 0 and 40,320 minutes';
+                    errorMessage = `${localizer.ErrorRangeMinute}`;
                 }
             }
             else if (timeType === 'Hours') {
                 if (value < 0 || value > 672) {
                     isValid = false;
-                    errorMessage = 'Must be between 0 and 672 hours';
+                    errorMessage = `${localizer.ErrorRangeHour}`;
                 }
             }
             else if (timeType === 'Days') {
                 if (value < 0 || value > 28) {
                     isValid = false;
-                    errorMessage = 'Must be between 0 and 28 days';
+                    errorMessage = `${localizer.ErrorRangeDay}`;
                 }
             }
             else if (timeType === 'Weeks') {
                 if (value < 0 || value > 4) {
                     isValid = false;
-                    errorMessage = 'Must be between 0 and 4 weeks';
+                    errorMessage = `${localizer.ErrorRangeWeek}`;
                 }
             }
         }
@@ -874,22 +910,22 @@ $(function () {
 
         if (value === '') {
             isValid = false;
-            errorMessage = 'This field is required';
+            errorMessage = `${localizer.ThisFieldRequired}`;
         } else if (isNaN(value)) {
             isValid = false;
-            errorMessage = 'Please enter a valid number';
+            errorMessage = `${localizer.ErrorInvalidNumber}`;
         } else {
             value = parseInt(value, 10);
             if (timeType === 'Days') {
                 if (value < 0 || value > 28) {
                     isValid = false;
-                    errorMessage = 'Must be between 0 and 28 days';
+                    errorMessage = `${localizer.ErrorRangeDay}`;
                 }
             }
             else if (timeType === 'Weeks') {
                 if (value < 0 || value > 4) {
                     isValid = false;
-                    errorMessage = 'Must be between 0 and 4 weeks';
+                    errorMessage = `${localizer.ErrorRangeWeek}`;
                 }
             }
         }
@@ -1144,8 +1180,6 @@ $(function () {
                         dataType: 'json',
                         data: JSON.stringify(paramValue),
                         contentType: 'application/json; charset=utf-8',
-                        //async: false,
-                        //cache: false,
                         success: function (response) {
                             if (response.result) {
                                 JSON.parse(response.calendarEvents).forEach(item => {
@@ -1375,8 +1409,6 @@ $(function () {
                         dataType: 'json',
                         data: JSON.stringify(paramValue),
                         contentType: 'application/json; charset=utf-8',
-                        //async: false,
-                        //cache: false,
                         success: function (response) {
                             if (response.result) {
                                 JSON.parse(response.calendarEvents).forEach(item => {
@@ -1450,8 +1482,6 @@ $(function () {
             dataType: 'json',
             data: JSON.stringify(paramValue),
             contentType: 'application/json; charset=utf-8',
-            //async: false,
-            //cache: false,
             success: function (data) {
                 if (data.result) {
                     $('#editCalendarDialogModal').modal('hide');
@@ -1497,8 +1527,6 @@ $(function () {
             dataType: 'json',
             data: null,
             contentType: 'application/json; charset=utf-8',
-            //async: false,
-            //cache: false,
             success: function (data) {
                 if (data.result) {
 
@@ -1522,8 +1550,6 @@ $(function () {
                         dataType: 'json',
                         data: JSON.stringify(paramValue),
                         contentType: 'application/json; charset=utf-8',
-                        //async: false,
-                        //cache: false,
                         success: function (data) {
                             if (data.result) {
                                 $('#confirmDeleteCalendarDialogModal').modal('hide');
@@ -1647,8 +1673,6 @@ function CreateCalendar() {
         dataType: 'json',
         data: JSON.stringify(paramValue),
         contentType: 'application/json; charset=utf-8',
-        //async: false,
-        //cache: false,
         success: function (data) {
             if (data.result) {
                 $('#createCalendarDialogModal').modal('hide');
@@ -1679,7 +1703,6 @@ $('#aCreateCalendarEvent').off('click').on('click', function () {
         data: null,
         contentType: 'application/json; charset=utf-8',
         async: false,
-        //cache: false,
         success: function (response) {
             if (response.result) {
                 $('#createCalendarEventMyCalendar').empty();
@@ -1921,8 +1944,6 @@ $(document).on('click', '.edit-calendar', function (e) {
         dataType: 'json',
         data: null,
         contentType: 'application/json; charset=utf-8',
-        //async: false,
-        //cache: false,
         success: function (data) {
             if (data.result) {
                 let formEditCalendar = $('#formEditCalendar');

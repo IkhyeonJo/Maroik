@@ -1,10 +1,10 @@
 ﻿const localizer = {
-    SummernoteLang: $('#localizerSummernoteLang').val()
+    IETFLanguageTag: $('#localizerIETFLanguageTag').val()
 };
 
 $('#writeBoardContent').summernote({
     height: 300,
-    lang: localizer.SummernoteLang,
+    lang: localizer.IETFLanguageTag,
     callbacks: {
         onImageUpload: function (files) {
             for (let i = 0; i < files.length; i++) {
@@ -16,7 +16,7 @@ $('#writeBoardContent').summernote({
 
 $('#editBoardContent').summernote({
     height: 300,
-    lang: localizer.SummernoteLang,
+    lang: localizer.IETFLanguageTag,
     callbacks: {
         onImageUpload: function (files) {
             for (let i = 0; i < files.length; i++) {

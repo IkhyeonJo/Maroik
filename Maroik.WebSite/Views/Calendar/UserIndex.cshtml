@@ -60,11 +60,79 @@
 @Html.Hidden("localizerDays", localizer["Days"].Value)
 @Html.Hidden("localizerWeeks", localizer["Weeks"].Value)
 @Html.Hidden("localizerBeforeAt", localizer["BeforeAt"].Value)
-
 @Html.Hidden("localizerPrevText", localizer["PrevText"].Value)
-
+@Html.Hidden("localizerNextText", localizer["NextText"].Value)
+@Html.Hidden("localizerJanuary", localizer["January"].Value)
+@Html.Hidden("localizerFebruary", localizer["February"].Value)
+@Html.Hidden("localizerMarch", localizer["March"].Value)
+@Html.Hidden("localizerApril", localizer["April"].Value)
+@Html.Hidden("localizerMay", localizer["May"].Value)
+@Html.Hidden("localizerJune", localizer["June"].Value)
+@Html.Hidden("localizerJuly", localizer["July"].Value)
 @Html.Hidden("localizerAugust", localizer["August"].Value)
-
+@Html.Hidden("localizerSeptember", localizer["September"].Value)
+@Html.Hidden("localizerOctober", localizer["October"].Value)
+@Html.Hidden("localizerNovember", localizer["November"].Value)
+@Html.Hidden("localizerDecember", localizer["December"].Value)
+@Html.Hidden("localizerJan", localizer["Jan"].Value)
+@Html.Hidden("localizerFeb", localizer["Feb"].Value)
+@Html.Hidden("localizerMar", localizer["Mar"].Value)
+@Html.Hidden("localizerApr", localizer["Apr"].Value)
+@Html.Hidden("localizerJun", localizer["Jun"].Value)
+@Html.Hidden("localizerJul", localizer["Jul"].Value)
+@Html.Hidden("localizerAug", localizer["Aug"].Value)
+@Html.Hidden("localizerSep", localizer["Sep"].Value)
+@Html.Hidden("localizerOct", localizer["Oct"].Value)
+@Html.Hidden("localizerNov", localizer["Nov"].Value)
+@Html.Hidden("localizerDec", localizer["Dec"].Value)
+@Html.Hidden("localizerSunday", localizer["Sunday"].Value)
+@Html.Hidden("localizerMonday", localizer["Monday"].Value)
+@Html.Hidden("localizerTuesday", localizer["Tuesday"].Value)
+@Html.Hidden("localizerWednesday", localizer["Wednesday"].Value)
+@Html.Hidden("localizerThursday", localizer["Thursday"].Value)
+@Html.Hidden("localizerFriday", localizer["Friday"].Value)
+@Html.Hidden("localizerSaturday", localizer["Saturday"].Value)
+@Html.Hidden("localizerSun", localizer["Sun"].Value)
+@Html.Hidden("localizerMon", localizer["Mon"].Value)
+@Html.Hidden("localizerTue", localizer["Tue"].Value)
+@Html.Hidden("localizerWed", localizer["Wed"].Value)
+@Html.Hidden("localizerThu", localizer["Thu"].Value)
+@Html.Hidden("localizerFri", localizer["Fri"].Value)
+@Html.Hidden("localizerSat", localizer["Sat"].Value)
+@Html.Hidden("localizerSu", localizer["Su"].Value)
+@Html.Hidden("localizerMo", localizer["Mo"].Value)
+@Html.Hidden("localizerTu", localizer["Tu"].Value)
+@Html.Hidden("localizerWe", localizer["We"].Value)
+@Html.Hidden("localizerTh", localizer["Th"].Value)
+@Html.Hidden("localizerFr", localizer["Fr"].Value)
+@Html.Hidden("localizerSa", localizer["Sa"].Value)
+@Html.Hidden("localizerYearSuffix", localizer["YearSuffix"]?.Value ?? "")
+@Html.Hidden("localizerIETFLanguageTag", localizer["IETFLanguageTag"].Value)
+@Html.Hidden("localizerPrev", localizer["Prev"].Value)
+@Html.Hidden("localizerNext", localizer["Next"].Value)
+@Html.Hidden("localizerPrevYear", localizer["PrevYear"].Value)
+@Html.Hidden("localizerNextYear", localizer["NextYear"].Value)
+@Html.Hidden("localizerToday", localizer["Today"].Value)
+@Html.Hidden("localizerMonth", localizer["Month"].Value)
+@Html.Hidden("localizerWeek", localizer["Week"].Value)
+@Html.Hidden("localizerDay", localizer["Day"].Value)
+@Html.Hidden("localizerList", localizer["List"].Value)
+@Html.Hidden("localizerDayGridMonth", localizer["DayGridMonth"].Value)
+@Html.Hidden("localizerDayGridWeek", localizer["DayGridWeek"].Value)
+@Html.Hidden("localizerDayGridDay", localizer["DayGridDay"].Value)
+@Html.Hidden("localizerTimeGridWeek", localizer["TimeGridWeek"].Value)
+@Html.Hidden("localizerTimeGridDay", localizer["TimeGridDay"].Value)
+@Html.Hidden("localizerListYear", localizer["ListYear"].Value)
+@Html.Hidden("localizerListMonth", localizer["ListMonth"].Value)
+@Html.Hidden("localizerListWeek", localizer["ListWeek"].Value)
+@Html.Hidden("localizerListDay", localizer["ListDay"].Value)
+@Html.Hidden("localizerConfirmDelete", localizer["ConfirmDelete"].Value)
+@Html.Hidden("localizerThisFieldRequired", localizer["ThisFieldRequired"].Value)
+@Html.Hidden("localizerErrorInvalidNumber", localizer["ErrorInvalidNumber"].Value)
+@Html.Hidden("localizerErrorRangeMinute", localizer["ErrorRangeMinute"].Value)
+@Html.Hidden("localizerErrorRangeHour", localizer["ErrorRangeHour"].Value)
+@Html.Hidden("localizerErrorRangeDay", localizer["ErrorRangeDay"].Value)
+@Html.Hidden("localizerErrorRangeWeek", localizer["ErrorRangeWeek"].Value)
 @Html.Hidden("calendarEventOutputViewModels", JsonConvert.SerializeObject(Model.CalendarEventOutputViewModels))
 
 <section class="content">
@@ -182,7 +250,7 @@
                         <div class="form-row">
                             <div class="form-group col-md-12 mb-3">
                                 <label for="createCalendarHtmlColorCode">@localizer["Color"].Value</label>
-                                <input class="form-control form-control-sm" type="color" data-val="true" data-val-required="@localizer["Please enter Color"].Value" id="createCalendarHtmlColorCode" name="createCalendarHtmlColorCode" value="">
+                                <input class="form-control form-control-sm" type="color" data-val="true" data-val-required="@localizer["Please select Color"].Value" id="createCalendarHtmlColorCode" name="createCalendarHtmlColorCode" value="">
                                 <span class="field-validation-valid text-danger" data-valmsg-for="createCalendarHtmlColorCode" data-valmsg-replace="true"></span>
                             </div>
                         </div>
@@ -268,7 +336,7 @@
                         <div class="form-row">
                             <div class="form-group col-md-12 mb-3">
                                 <label for="editCalendarHtmlColorCode">@localizer["Color"].Value</label>
-                                <input class="form-control form-control-sm" type="color" data-val="true" data-val-required="@localizer["Please enter Color"].Value" id="editCalendarHtmlColorCode" name="editCalendarHtmlColorCode" value="">
+                                <input class="form-control form-control-sm" type="color" data-val="true" data-val-required="@localizer["Please select Color"].Value" id="editCalendarHtmlColorCode" name="editCalendarHtmlColorCode" value="">
                                 <span class="field-validation-valid text-danger" data-valmsg-for="editCalendarHtmlColorCode" data-valmsg-replace="true"></span>
                             </div>
                         </div>
