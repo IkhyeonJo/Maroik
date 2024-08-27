@@ -174,8 +174,8 @@
                             <h4 class="card-title">@localizer["Other calendars"]</h4>
                             <i class="fas fa-plus" id="dropdown-icon" style="cursor: pointer; margin-left: auto;"></i>
                             <div id="dropdown-content" style="display: none; position: absolute; top: 100%; right: 0; background-color: #343a40; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); z-index: 1000;">
-                                <a id="aCreateCalendar" href="#" class="dropdown-item">Create new calendar</a>
-                                <a id="aBrowseCalendarsOfInterest" href="#" class="dropdown-item">Browse calendars of interest</a>
+                                <a id="aCreateCalendar" href="#" class="dropdown-item">@localizer["Create new calendar"]</a>
+                                <a id="aBrowseCalendarsOfInterest" href="#" class="dropdown-item">@localizer["Browse calendars of interest"]</a>
                             </div>
                         </div>
                         <div class="card-body">
@@ -205,18 +205,18 @@
         <button type="button" id="closeCalendarEventPopup">&times;</button>
     </div>
     <div id="divCalendarEventPopupAllDayChecked" class="popup-body" style="display:none;">
-        <p><strong>Start:</strong> <span id="calendarEventPopupStartAllDayChecked"></span></p>
-        <p><strong>End:</strong> <span id="calendarEventPopupEndAllDayChecked"></span></p>
+        <p><strong>@localizer["StartDate"].Value:</strong> <span id="calendarEventPopupStartAllDayChecked"></span></p>
+        <p><strong>@localizer["EndDate"].Value:</strong> <span id="calendarEventPopupEndAllDayChecked"></span></p>
     </div>
     <div id="divCalendarEventPopupAllDayUnchecked" class="popup-body" style="display:none;">
-        <p><strong>Start:</strong> <span id="calendarEventPopupStartAllDayUnchecked"></span></p>
+        <p><strong>@localizer["StartDate"].Value:</strong> <span id="calendarEventPopupStartAllDayUnchecked"></span></p>
         <p><span id="calendarEventPopupStartTimeZoneAllDayUnchecked"></span></p>
-        <p><strong>End:</strong> <span id="calendarEventPopupEndAllDayUnchecked"></span></p>
+        <p><strong>@localizer["EndDate"].Value:</strong> <span id="calendarEventPopupEndAllDayUnchecked"></span></p>
         <p><span id="calendarEventPopupEndTimeZoneAllDayUnchecked"></span></p>
     </div>
     <div class="popup-footer">
-        <button id="editCalendarEventPopup" class="btn btn-primary btn-sm">Edit</button>
-        <button id="deleteCalendarEventPopup" class="btn btn-danger btn-sm">Delete</button>
+        <button id="editCalendarEventPopup" class="btn btn-primary btn-sm">@localizer["Edit"].Value</button>
+        <button id="deleteCalendarEventPopup" class="btn btn-danger btn-sm">@localizer["Delete"].Value</button>
     </div>
 </div>
 
@@ -398,7 +398,7 @@
                 @localizer["Are you sure to delete?"].Value
             </div>
             <div class="modal-footer">
-                <button id="btnDeleteCalendar" type="button" class="btn btn-danger">@localizer["DELETE"].Value</button>
+                <button id="btnDeleteCalendar" type="button" class="btn btn-danger">@localizer["Delete"].Value</button>
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">@localizer["Close"].Value</button>
             </div>
         </div>
@@ -999,7 +999,7 @@
 @section Scripts {
     @if (loginedAccount.Role == Role.Admin)
     {
-        @* <script src="~/admin/custom/Forum/FreeForum/js/site.js" asp-append-version="true"></script> *@
+        @* <script src="~/admin/custom/Calendar/UserIndex/js/site.js" asp-append-version="true"></script> *@
     }
     else if (loginedAccount.Role == Role.User)
     {
@@ -1007,7 +1007,7 @@
     }
     else if (loginedAccount.Role == Role.Anonymous)
     {
-        @* <script src="~/anonymous/custom/Forum/FreeForum/js/site.js" asp-append-version="true"></script> *@
+        @* <script src="~/anonymous/custom/Calendar/UserIndex/js/site.js" asp-append-version="true"></script> *@
     }
     else
     {

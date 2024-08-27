@@ -357,4 +357,127 @@
   <data name="ErrorRangeWeek" xml:space="preserve">
     <value>Must be between 0 and 4 weeks</value>
   </data>
+  <data name="Create" xml:space="preserve">
+    <value>Create</value>
+  </data>
+  <data name="Event" xml:space="preserve">
+    <value>Event</value>
+  </data>
+  <data name="My calendars" xml:space="preserve">
+    <value>My calendars</value>
+  </data>
+  <data name="Other calendars" xml:space="preserve">
+    <value>Other calendars</value>
+  </data>
+  <data name="StartDate" xml:space="preserve">
+    <value>StartDate</value>
+  </data>
+  <data name="EndDate" xml:space="preserve">
+    <value>EndDate</value>
+  </data>
+  <data name="Edit" xml:space="preserve">
+    <value>Edit</value>
+  </data>
+  <data name="Delete" xml:space="preserve">
+    <value>Delete</value>
+  </data>
+  <data name="Add Calendar" xml:space="preserve">
+    <value>Add Calendar</value>
+  </data>
+  <data name="Name" xml:space="preserve">
+    <value>Name</value>
+  </data>
+  <data name="Please enter Name" xml:space="preserve">
+    <value>Please enter Name</value>
+  </data>
+  <data name="Description" xml:space="preserve">
+    <value>Description</value>
+  </data>
+  <data name="Color" xml:space="preserve">
+    <value>Color</value>
+  </data>
+  <data name="Please select Color" xml:space="preserve">
+    <value>Please select Color</value>
+  </data>
+  <data name="TimeZone" xml:space="preserve">
+    <value>TimeZone</value>
+  </data>
+  <data name="Close" xml:space="preserve">
+    <value>Close</value>
+  </data>
+  <data name="Save" xml:space="preserve">
+    <value>Save</value>
+  </data>
+  <data name="Edit Calendar" xml:space="preserve">
+    <value>Edit Calendar</value>
+  </data>
+  <data name="Are you sure to delete?" xml:space="preserve">
+    <value>Are you sure to delete?</value>
+  </data>
+  <data name="Add Event" xml:space="preserve">
+    <value>Add Event</value>
+  </data>
+  <data name="All day" xml:space="preserve">
+    <value>All day</value>
+  </data>
+  <data name="Repeat cycle" xml:space="preserve">
+    <value>Repeat cycle</value>
+  </data>
+  <data name="Does not repeat" xml:space="preserve">
+    <value>Does not repeat</value>
+  </data>
+  <data name="Please enter StartDate" xml:space="preserve">
+    <value>Please enter StartDate</value>
+  </data>
+  <data name="Please enter EndDate" xml:space="preserve">
+    <value>Please enter EndDate</value>
+  </data>
+  <data name="StartTime" xml:space="preserve">
+    <value>StartTime</value>
+  </data>
+  <data name="EndTime" xml:space="preserve">
+    <value>EndTime</value>
+  </data>
+  <data name="StartTimeZone" xml:space="preserve">
+    <value>StartTimeZone</value>
+  </data>
+  <data name="EndTimeZone" xml:space="preserve">
+    <value>EndTimeZone</value>
+  </data>
+  <data name="Location" xml:space="preserve">
+    <value>Location</value>
+  </data>
+  <data name="Please enter Location" xml:space="preserve">
+    <value>Please enter Location</value>
+  </data>
+  <data name="Attachment (Only zip extension allowed.)" xml:space="preserve">
+    <value>Attachment (Only zip extension allowed.)</value>
+  </data>
+  <data name="File size must be smaller than 10MB." xml:space="preserve">
+    <value>File size must be smaller than 10MB.</value>
+  </data>
+  <data name="My Calendar" xml:space="preserve">
+    <value>My Calendar</value>
+  </data>
+  <data name="Status" xml:space="preserve">
+    <value>Status</value>
+  </data>
+  <data name="Busy" xml:space="preserve">
+    <value>Busy</value>
+  </data>
+  <data name="Free" xml:space="preserve">
+    <value>Free</value>
+  </data>
+  <data name="Add notification" xml:space="preserve">
+    <value>Add notification</value>
+  </data>
+  <data name="Edit Event" xml:space="preserve">
+    <value>Edit Event</value>
+  </data>
+  <data name="Create new calendar" xml:space="preserve">
+    <value>Create new calendar</value>
+  </data>
+  <data name="Browse calendars of interest" xml:space="preserve">
+    <value>Browse calendars of interest</value>
+  </data>
 </root>
