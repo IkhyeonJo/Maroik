@@ -869,4 +869,5 @@ Javscript optimization Tip:
 // Write your JavaScript code.
 
 
-// TODO: Calendar UserIndex 동작 한 번 테스트하고, Admin Calendar 작업으로 넘어갈 것!
+// TODO: Calendar UserIndex 동작 한 번 테스트하고, Admin Calendar 작업으로 넘어갈 것! 
+// [Admin Calendar는 User Calendar에서 가져올 수 있어야 한다. Other Calendars로]
