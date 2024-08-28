@@ -41,21 +41,12 @@ namespace Maroik.WebSite.Controllers
             _calendarReminderRepository = calendarReminderRepository;
         }
 
-        #region Admin
-        [HttpGet]
-        public IActionResult AdminIndex()
-        {
-            return View();
-        }
-        #endregion
-
-        #region User
-
         #region Create
 
         #region Calendar
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [RequiredHttpPostAccess(Role = Role.Admin)]
         [RequiredHttpPostAccess(Role = Role.User)]
         public async Task<IActionResult> CreateCalendar([FromBody] CalendarInputViewModel calendarInputViewModel)
         {
@@ -107,6 +98,7 @@ namespace Maroik.WebSite.Controllers
         #region Calendar Event
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [RequiredHttpPostAccess(Role = Role.Admin)]
         [RequiredHttpPostAccess(Role = Role.User)]
         public async Task<IActionResult> CreateCalendarEvent([FromForm] CalendarEventInputViewModel calendarEventInputViewModel)
         {
@@ -286,7 +278,7 @@ namespace Maroik.WebSite.Controllers
                                 {
                                     int createdCalendarEventId = calendarEvent.Id;
 
-                                    string calendarEventAttachedFilePath = Path.Combine(_hostEnvironment.ContentRootPath, "wwwroot", "upload", "Calendar", "UserIndex", "calendarEventAttachedFiles", $"{createdCalendarEventId}");
+                                    string calendarEventAttachedFilePath = Path.Combine(_hostEnvironment.ContentRootPath, "wwwroot", "upload", "Calendar", $"{loginedAccount.Role}Index", "calendarEventAttachedFiles", $"{createdCalendarEventId}");
                                     if (!Directory.Exists(calendarEventAttachedFilePath))
                                     {
                                         _ = Directory.CreateDirectory(calendarEventAttachedFilePath);
@@ -377,6 +369,7 @@ namespace Maroik.WebSite.Controllers
         #region Summernote Image File Upload
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [RequiredHttpPostAccess(Role = Role.Admin)]
         [RequiredHttpPostAccess(Role = Role.User)]
         public async Task<IActionResult> UploadImageFile(IFormFile summernoteImageFile)
         {
@@ -390,8 +383,11 @@ namespace Maroik.WebSite.Controllers
                 {
                     if (Path.GetExtension(summernoteImageFile.FileName) is ".png" or ".jpg" or ".jpeg")
                     {
+                        _ = HttpContext.Session.TryGetValue(Maroik.Common.Miscellaneous.Extensions.EnumHelper.GetDescription(Maroik.Common.Miscellaneous.Utilities.Session.Account), out byte[] resultByte);
 
-                        string summernoteImagePath = Path.Combine(_hostEnvironment.ContentRootPath, "wwwroot", "upload", "Calendar", "UserIndex", "summernote", "images");
+                        Account loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte));
+
+                        string summernoteImagePath = Path.Combine(_hostEnvironment.ContentRootPath, "wwwroot", "upload", "Calendar", $"{loginedAccount.Role}Index", "summernote", "images");
                         if (!Directory.Exists(summernoteImagePath))
                         {
                             _ = Directory.CreateDirectory(summernoteImagePath);
@@ -425,6 +421,185 @@ namespace Maroik.WebSite.Controllers
         #endregion
 
         #region Read
+
+        [HttpGet]
+        public async Task<IActionResult> AdminIndex()
+        {
+            _ = HttpContext.Session.TryGetValue(Maroik.Common.Miscellaneous.Extensions.EnumHelper.GetDescription(Maroik.Common.Miscellaneous.Utilities.Session.Account), out byte[] resultByte);
+
+            Account loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte));
+
+            CalendarOutputViewModel calendarOutputViewModel = new();
+
+            #region Load Calendar
+            List<Calendar> calendars = await _calendarRepository.GetCalendarsAsync(loginedAccount.Email) ?? [];
+
+            if (calendars.Count == 0)
+            {
+                calendars.Add(new Calendar
+                {
+                    AccountEmail = loginedAccount.Email,
+                    Name = loginedAccount.Nickname,
+                    TimeZoneIanaId = loginedAccount.TimeZoneIanaId,
+                    HtmlColorCode = "#fc330e", // Default Html Color Code
+                    Created = DateTime.UtcNow,
+                    Updated = DateTime.UtcNow
+                });
+                await _calendarRepository.CreateCalendarAsync(calendars[0]);
+            }
+            #endregion
+
+            #region Load CalendarEvent
+            List<CalendarEventOutputViewModel> calendarEventOutputViewModels = [];
+
+            foreach (Calendar calendar in calendars)
+            {
+                foreach (CalendarEvent calendarEvent in await _calendarEventRepository.GetCalendarEventsAsync(calendar.Id) ?? [])
+                {
+                    var item = new CalendarEventOutputViewModel();
+
+                    item.Id = calendarEvent.Id;
+                    item.CalendarId = calendarEvent.CalendarId;
+                    item.Title = calendarEvent.Title;
+                    item.AllDay = calendarEvent.AllDay;
+
+                    if (calendarEvent.AllDay)
+                    {
+                        foreach (TimeZoneInfo systemTimeZone in TimeZoneInfo.GetSystemTimeZones())
+                        {
+                            string systemTimeZoneIanaId = string.Empty;
+
+                            if (systemTimeZone.HasIanaId)
+                            {
+                                systemTimeZoneIanaId = systemTimeZone.Id;
+                            }
+                            else if (TimeZoneInfo.TryConvertWindowsIdToIanaId(systemTimeZone.Id, out string ianaId))
+                            {
+                                systemTimeZoneIanaId = ianaId;
+                            }
+
+                            if (string.IsNullOrEmpty(systemTimeZoneIanaId))
+                            {
+                                continue;
+                            }
+                            else if (systemTimeZoneIanaId == loginedAccount.TimeZoneIanaId)
+                            {
+                                calendarEvent.StartDate = TimeZoneInfo.ConvertTime(calendarEvent.StartDate, TimeZoneInfo.Utc, systemTimeZone);
+                                item.DisplayStartDateTimeZone = string.Empty;
+                                break;
+                            }
+                        }
+
+                        foreach (TimeZoneInfo systemTimeZone in TimeZoneInfo.GetSystemTimeZones())
+                        {
+                            string systemTimeZoneIanaId = string.Empty;
+
+                            if (systemTimeZone.HasIanaId)
+                            {
+                                systemTimeZoneIanaId = systemTimeZone.Id;
+                            }
+                            else if (TimeZoneInfo.TryConvertWindowsIdToIanaId(systemTimeZone.Id, out string ianaId))
+                            {
+                                systemTimeZoneIanaId = ianaId;
+                            }
+
+                            if (string.IsNullOrEmpty(systemTimeZoneIanaId))
+                            {
+                                continue;
+                            }
+                            else if (systemTimeZoneIanaId == loginedAccount.TimeZoneIanaId)
+                            {
+                                calendarEvent.EndDate = TimeZoneInfo.ConvertTime(calendarEvent.EndDate, TimeZoneInfo.Utc, systemTimeZone);
+                                item.DisplayEndDateTimeZone = string.Empty;
+                                break;
+                            }
+                        }
+
+                        item.DisplayStartDate = calendarEvent.StartDate.ToString("yyyy-MM-dd");
+                        item.DisplayEndDate = calendarEvent.EndDate.ToString("yyyy-MM-dd");
+
+                        item.StartDate = calendarEvent.StartDate;
+                        DateTime tempEndDate = calendarEvent.EndDate.AddDays(1);
+                        item.EndDate = new DateTime(tempEndDate.Year, tempEndDate.Month, tempEndDate.Day, 0, 0, 0, tempEndDate.Kind);
+                    }
+                    else
+                    {
+                        foreach (TimeZoneInfo systemTimeZone in TimeZoneInfo.GetSystemTimeZones())
+                        {
+                            string systemTimeZoneIanaId = string.Empty;
+
+                            if (systemTimeZone.HasIanaId)
+                            {
+                                systemTimeZoneIanaId = systemTimeZone.Id;
+                            }
+                            else if (TimeZoneInfo.TryConvertWindowsIdToIanaId(systemTimeZone.Id, out string ianaId))
+                            {
+                                systemTimeZoneIanaId = ianaId;
+                            }
+
+                            if (string.IsNullOrEmpty(systemTimeZoneIanaId))
+                            {
+                                continue;
+                            }
+                            else if (systemTimeZoneIanaId == calendarEvent.StartDateTimeZoneIanaId)
+                            {
+                                calendarEvent.StartDate = TimeZoneInfo.ConvertTime(calendarEvent.StartDate, TimeZoneInfo.Utc, systemTimeZone);
+                                item.DisplayStartDateTimeZone = systemTimeZone.StandardName;
+                                break;
+                            }
+                        }
+
+                        foreach (TimeZoneInfo systemTimeZone in TimeZoneInfo.GetSystemTimeZones())
+                        {
+                            string systemTimeZoneIanaId = string.Empty;
+
+                            if (systemTimeZone.HasIanaId)
+                            {
+                                systemTimeZoneIanaId = systemTimeZone.Id;
+                            }
+                            else if (TimeZoneInfo.TryConvertWindowsIdToIanaId(systemTimeZone.Id, out string ianaId))
+                            {
+                                systemTimeZoneIanaId = ianaId;
+                            }
+
+                            if (string.IsNullOrEmpty(systemTimeZoneIanaId))
+                            {
+                                continue;
+                            }
+                            else if (systemTimeZoneIanaId == calendarEvent.EndDateTimeZoneIanaId)
+                            {
+                                calendarEvent.EndDate = TimeZoneInfo.ConvertTime(calendarEvent.EndDate, TimeZoneInfo.Utc, systemTimeZone);
+                                item.DisplayEndDateTimeZone = systemTimeZone.StandardName;
+                                break;
+                            }
+                        }
+
+                        item.DisplayStartDate = calendarEvent.StartDate.ToString("yyyy-MM-dd HH:mm");
+                        item.DisplayEndDate = calendarEvent.EndDate.ToString("yyyy-MM-dd HH:mm");
+
+                        item.StartDate = calendarEvent.StartDate;
+                        DateTime tempEndDate = calendarEvent.EndDate.AddDays(1);
+                        item.EndDate = new DateTime(tempEndDate.Year, tempEndDate.Month, tempEndDate.Day, 0, 0, 0, tempEndDate.Kind);
+                    }
+
+                    item.HtmlColorCode = calendar.HtmlColorCode;
+
+                    calendarEventOutputViewModels.Add(item);
+                }
+            }
+            #endregion
+
+            #region Load OtherCalendar
+            List<OtherCalendar> otherCalendars = await _otherCalendarRepository.GetOtherCalendarsAsync(loginedAccount.Email) ?? [];
+            #endregion
+
+            calendarOutputViewModel.Calendars = calendars;
+            calendarOutputViewModel.CalendarEventOutputViewModels = calendarEventOutputViewModels;
+            calendarOutputViewModel.OtherCalendars = otherCalendars;
+
+            return View(calendarOutputViewModel);
+        }
+
         [HttpGet]
         public async Task<IActionResult> UserIndex()
         {
@@ -602,8 +777,16 @@ namespace Maroik.WebSite.Controllers
 
             return View(calendarOutputViewModel);
         }
+
+        [HttpGet]
+        public IActionResult AnonymousIndex()
+        {
+            return View();
+        }
+
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [RequiredHttpPostAccess(Role = Role.Admin)]
         [RequiredHttpPostAccess(Role = Role.User)]
         public async Task<IActionResult> IsCalendarExists(int id)
         {
@@ -630,8 +813,10 @@ namespace Maroik.WebSite.Controllers
                 return Json(new { result = false, error = _localizer["Input is invalid"].Value });
             }
         }
+
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [RequiredHttpPostAccess(Role = Role.Admin)]
         [RequiredHttpPostAccess(Role = Role.User)]
         public async Task<IActionResult> GetCalendars()
         {
@@ -650,6 +835,7 @@ namespace Maroik.WebSite.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [RequiredHttpPostAccess(Role = Role.Admin)]
         [RequiredHttpPostAccess(Role = Role.User)]
         public async Task<IActionResult> IsCalendarEventExists(int id)
         {
@@ -830,6 +1016,7 @@ namespace Maroik.WebSite.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [RequiredHttpPostAccess(Role = Role.Admin)]
         [RequiredHttpPostAccess(Role = Role.User)]
         public async Task<IActionResult> GetCalendarEvents([FromBody] CalendarInputViewModel calendarInputViewModel)
         {
@@ -1019,6 +1206,7 @@ namespace Maroik.WebSite.Controllers
         #region Calendar
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [RequiredHttpPostAccess(Role = Role.Admin)]
         [RequiredHttpPostAccess(Role = Role.User)]
         public async Task<IActionResult> UpdateCalendar([FromBody] CalendarInputViewModel calendarInputViewModel)
         {
@@ -1069,6 +1257,7 @@ namespace Maroik.WebSite.Controllers
         #region Calendar Event
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [RequiredHttpPostAccess(Role = Role.Admin)]
         [RequiredHttpPostAccess(Role = Role.User)]
         public async Task<IActionResult> UpdateCalendarEvent([FromForm] CalendarEventInputViewModel calendarEventInputViewModel)
         {
@@ -1262,7 +1451,7 @@ namespace Maroik.WebSite.Controllers
                                 {
                                     int updatedCalendarEventId = calendarEvent.Id;
 
-                                    string calendarEventAttachedFilePath = Path.Combine(_hostEnvironment.ContentRootPath, "wwwroot", "upload", "Calendar", "UserIndex", "calendarEventAttachedFiles", $"{updatedCalendarEventId}");
+                                    string calendarEventAttachedFilePath = Path.Combine(_hostEnvironment.ContentRootPath, "wwwroot", "upload", "Calendar", $"{loginedAccount.Role}Index", "calendarEventAttachedFiles", $"{updatedCalendarEventId}");
                                     if (!Directory.Exists(calendarEventAttachedFilePath))
                                     {
                                         _ = Directory.CreateDirectory(calendarEventAttachedFilePath);
@@ -1358,6 +1547,7 @@ namespace Maroik.WebSite.Controllers
         #region Delete
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [RequiredHttpPostAccess(Role = Role.Admin)]
         [RequiredHttpPostAccess(Role = Role.User)]
         public async Task<IActionResult> DeleteCalendar([FromBody] CalendarInputViewModel calendarInputViewModel)
         {
@@ -1388,6 +1578,7 @@ namespace Maroik.WebSite.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [RequiredHttpPostAccess(Role = Role.Admin)]
         [RequiredHttpPostAccess(Role = Role.User)]
         public async Task<IActionResult> DeleteCalendarEvent(int id)
         {
@@ -1422,16 +1613,6 @@ namespace Maroik.WebSite.Controllers
             }
         }
 
-        #endregion
-
-        #endregion
-
-        #region Anonymous
-        [HttpGet]
-        public IActionResult AnonymousIndex()
-        {
-            return View();
-        }
         #endregion
     }
 }

@@ -978,39 +978,9 @@
 </div>
 
 @section Styles {
-    @if (loginedAccount.Role == Role.Admin)
-    {
-        
-    }
-    else if (loginedAccount.Role == Role.User)
-    {
-        <link rel="stylesheet" href="~/user/custom/Calendar/UserIndex/css/site.css" asp-append-version="true">
-    }
-    else if (loginedAccount.Role == Role.Anonymous)
-    {
-        
-    }
-    else
-    {
-
-    }
+    <link rel="stylesheet" href="~/user/custom/Calendar/UserIndex/css/site.css" asp-append-version="true">
 }
 
 @section Scripts {
-    @if (loginedAccount.Role == Role.Admin)
-    {
-        @* <script src="~/admin/custom/Calendar/UserIndex/js/site.js" asp-append-version="true"></script> *@
-    }
-    else if (loginedAccount.Role == Role.User)
-    {
-        <script src="~/user/custom/Calendar/UserIndex/js/site.js" asp-append-version="true"></script>
-    }
-    else if (loginedAccount.Role == Role.Anonymous)
-    {
-        @* <script src="~/anonymous/custom/Calendar/UserIndex/js/site.js" asp-append-version="true"></script> *@
-    }
-    else
-    {
-
-    }
+    <script src="~/user/custom/Calendar/UserIndex/js/site.js" asp-append-version="true"></script>
 }
