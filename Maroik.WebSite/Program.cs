@@ -202,6 +202,7 @@ app.UseStaticFiles(new StaticFileOptions
         context.Context.Request.Path.StartsWithSegments("/upload/Management/Profile/Avatar") ||
         context.Context.Request.Path.ToString().Contains("/upload/Management/Profile/default-avatar.jpg") ||
         context.Context.Request.Path.StartsWithSegments("/upload/Management/PrivateNote") ||
+        context.Context.Request.Path.StartsWithSegments("/upload/Calendar/AdminIndex") ||
         context.Context.Request.Path.StartsWithSegments("/upload/Calendar/UserIndex")) // (~/upload/Forum) [게시물] (~/upload/Management/Profile/Avatar) [댓글 게시판 이미지] 게시판 파일들은 모두 접근 허용, [사적 메모], (~/upload/Calendar/UserIndex) [달력]
         {
 

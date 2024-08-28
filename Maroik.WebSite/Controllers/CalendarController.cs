@@ -302,7 +302,7 @@ namespace Maroik.WebSite.Controllers
                                         Size = Convert.ToInt32(calendarEventInputViewModel.CalendarEventUploadedFile.Length),
                                         Name = Path.GetFileNameWithoutExtension(calendarEventInputViewModel.CalendarEventUploadedFile.FileName),
                                         Extension = Path.GetExtension(calendarEventInputViewModel.CalendarEventUploadedFile.FileName),
-                                        Path = $"/upload/Calendar/UserIndex/calendarEventAttachedFiles/{createdCalendarEventId}/{calendarEventAttachedFile}"
+                                        Path = $"/upload/Calendar/{loginedAccount.Role}Index/calendarEventAttachedFiles/{createdCalendarEventId}/{calendarEventAttachedFile}"
                                     });
                                 }
                                 else
@@ -403,7 +403,7 @@ namespace Maroik.WebSite.Controllers
                             await summernoteImageFile.CopyToAsync(stream);
                             await stream.FlushAsync();
                         }
-                        return Ok(new { result = true, filePath = $"/upload/Calendar/UserIndex/summernote/images/{imageFile}" });
+                        return Ok(new { result = true, filePath = $"/upload/Calendar/{loginedAccount.Role}Index/summernote/images/{imageFile}" });
                     }
                     else // 이미지 png 또는 jpg 또는 jpeg 외 확장자는 거절
                     {
@@ -1475,7 +1475,7 @@ namespace Maroik.WebSite.Controllers
                                         Size = Convert.ToInt32(calendarEventInputViewModel.CalendarEventUploadedFile.Length),
                                         Name = Path.GetFileNameWithoutExtension(calendarEventInputViewModel.CalendarEventUploadedFile.FileName),
                                         Extension = Path.GetExtension(calendarEventInputViewModel.CalendarEventUploadedFile.FileName),
-                                        Path = $"/upload/Calendar/UserIndex/calendarEventAttachedFiles/{updatedCalendarEventId}/{calendarEventAttachedFile}"
+                                        Path = $"/upload/Calendar/{loginedAccount.Role}Index/calendarEventAttachedFiles/{updatedCalendarEventId}/{calendarEventAttachedFile}"
                                     });
                                 }
                                 else
