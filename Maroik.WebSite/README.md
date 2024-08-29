@@ -870,4 +870,4 @@ Javscript optimization Tip:
 
 
 // TODO: Calendar UserIndex 동작 한 번 테스트하고, Admin Calendar 작업으로 넘어갈 것! 
-// [Admin Calendar는 User Calendar에서 가져올 수 있어야 한다. Other Calendars로]
+// [Admin Calendar는 User Calendar에서 가져올 수 있어야 한다. Other Calendars로, 또한 AnonymousIndex에 표시할 Calendar도 Admin에서 등록할 수 있어야 한다.]
