@@ -35,6 +35,8 @@ namespace Maroik.Common.DataAccess.Data
 
         public virtual DbSet<CalendarRecurrence> CalendarRecurrences { get; set; }
 
+        public virtual DbSet<CalendarShared> CalendarShareds { get; set; }
+
         public virtual DbSet<CalendarEventReminder> CalendarReminders { get; set; }
 
         public virtual DbSet<Category> Categories { get; set; }
@@ -522,6 +524,26 @@ namespace Maroik.Common.DataAccess.Data
                 _ = entity.Property(e => e.Updated)
                     .HasMaxLength(6)
                     .HasComment("업데이트일");
+            });
+
+            _ = modelBuilder.Entity<CalendarShared>(entity =>
+            {
+                _ = entity
+                    .HasNoKey()
+                    .ToTable("CalendarShared", tb => tb.HasComment("Maroik.WebSite 달력 공유"));
+
+                _ = entity.HasIndex(e => e.CalendarId, "CalendarId");
+
+                _ = entity.Property(e => e.Admin).HasComment("Admin 공유 여부");
+                _ = entity.Property(e => e.Anonymous).HasComment("Anonymous 공유 여부");
+                _ = entity.Property(e => e.CalendarId)
+                    .HasComment("부모 Calendar Id")
+                    .HasColumnType("int(11)");
+                _ = entity.Property(e => e.User).HasComment("User 공유 여부");
+
+                _ = entity.HasOne(d => d.Calendar).WithMany()
+                    .HasForeignKey(d => d.CalendarId)
+                    .HasConstraintName("CalendarShared_FK_0");
             });
 
             _ = modelBuilder.Entity<Category>(entity =>
