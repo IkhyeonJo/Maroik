@@ -528,21 +528,22 @@ namespace Maroik.Common.DataAccess.Data
 
             _ = modelBuilder.Entity<CalendarShared>(entity =>
             {
-                _ = entity
-                    .HasNoKey()
-                    .ToTable("CalendarShared", tb => tb.HasComment("Maroik.WebSite 달력 공유"));
+                _ = entity.HasKey(e => e.CalendarId).HasName("PRIMARY");
+
+                _ = entity.ToTable("CalendarShared", tb => tb.HasComment("Maroik.WebSite 달력 공유"));
 
                 _ = entity.HasIndex(e => e.CalendarId, "CalendarId");
 
-                _ = entity.Property(e => e.Admin).HasComment("Admin 공유 여부");
-                _ = entity.Property(e => e.Anonymous).HasComment("Anonymous 공유 여부");
                 _ = entity.Property(e => e.CalendarId)
+                    .ValueGeneratedNever()
                     .HasComment("부모 Calendar Id")
                     .HasColumnType("int(11)");
+                _ = entity.Property(e => e.Admin).HasComment("Admin 공유 여부");
+                _ = entity.Property(e => e.Anonymous).HasComment("Anonymous 공유 여부");
                 _ = entity.Property(e => e.User).HasComment("User 공유 여부");
 
-                _ = entity.HasOne(d => d.Calendar).WithMany()
-                    .HasForeignKey(d => d.CalendarId)
+                _ = entity.HasOne(d => d.Calendar).WithOne(p => p.CalendarShared)
+                    .HasForeignKey<CalendarShared>(d => d.CalendarId)
                     .HasConstraintName("CalendarShared_FK_0");
             });
 

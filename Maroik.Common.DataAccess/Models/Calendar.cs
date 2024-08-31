@@ -51,5 +51,8 @@ public partial class Calendar
     public virtual Account AccountEmailNavigation { get; set; }
 
     public virtual ICollection<CalendarEvent> CalendarEvents { get; set; } = [];
+
+    public virtual CalendarShared CalendarShared { get; set; }
+
     public virtual ICollection<OtherCalendar> OtherCalendars { get; set; } = [];
 }
