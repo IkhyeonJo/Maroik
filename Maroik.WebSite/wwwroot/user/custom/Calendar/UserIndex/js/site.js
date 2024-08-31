@@ -1679,6 +1679,21 @@ function CreateCalendar() {
 
                 $('#myCalendars').append(`<label id="lblCalendar${data.calendar.id}" style="position: relative; border:1px solid #ccc; padding:10px; margin:0 0 10px; display:block"><input type="checkbox" style="accent-color:${data.calendar.htmlColorCode}" checked /><label style="padding-left:0.5em;"> ${data.calendar.name}</label><i id="${data.calendar.id}" class="edit-calendar fas fa-edit" style="position: absolute; right: 40px; top: 50%; transform: translateY(-50%); cursor: pointer;"></i><i id="${data.calendar.id}" class="delete-calendar fas fa-trash" style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); cursor: pointer;"></i></label>`);
 
+                let calendars = $('#myCalendars label[id^="lblCalendar"]').get();
+
+                calendars.sort(function (a, b) {
+                    let nameA = $(a).find('label[style*="padding-left:0.3em"]').text().trim().toUpperCase();
+                    let nameB = $(b).find('label[style*="padding-left:0.3em"]').text().trim().toUpperCase();
+
+                    if (nameA < nameB) return -1;
+                    if (nameA > nameB) return 1;
+                    return 0;
+                });
+
+                $.each(calendars, function (index, label) {
+                    $('#myCalendars').append(label);
+                });
+
                 toastr.success(data.message);
             }
             else {
