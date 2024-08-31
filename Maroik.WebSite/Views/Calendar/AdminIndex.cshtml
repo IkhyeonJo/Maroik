@@ -176,6 +176,7 @@
                             <div id="dropdown-content" style="display: none; position: absolute; top: 100%; right: 0; background-color: #343a40; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); z-index: 1000;">
                                 <a id="aCreateCalendar" href="#" class="dropdown-item">@localizer["Create new calendar"]</a>
                                 <a id="aBrowseCalendarsOfInterest" href="#" class="dropdown-item">@localizer["Browse calendars of interest"]</a>
+                                <a id="aUpdateCalendarShared" href="#" class="dropdown-item">@localizer["Set Calendar Shared"]</a>
                             </div>
                         </div>
                         <div class="card-body">
@@ -963,6 +964,75 @@
                                 *@
 
                                 <input style="margin-top:20px;" class="btn btn-primary" type="button" id="editCalendarEventNotificationAllDayUnchecked" name="editCalendarEventNotificationAllDayUnchecked" value="@localizer["Add notification"].Value">
+                            </div>
+                        </div>
+
+                        <div class="modal-footer justify-content-between">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">@localizer["Close"].Value</button>
+                            <input type="submit" class="btn btn-primary" value="@localizer["Save"].Value" />
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@*<!--setCalendarSharedDialogModal-->*@
+<div class="modal fade" tabindex="-1" role="dialog" id="setCalendarSharedDialogModal">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div id="setCalendarSharedTabs">
+                @*<!--Tab CalendarShared-->*@
+                <ul>
+                    <li><a href="#setCalendarSharedTabs-1">@localizer["Set Calendar Shared"].Value</a></li>
+                </ul>
+                @*Tabs-1: Set Calendar Shared Modal*@
+                <div id="setCalendarSharedTabs-1">
+                    <form id="formUpdateCalendarShared">
+
+                        <div class="form-row">
+                            <div class="form-group col-md-3 mb-3 text-center">
+                                <label style="word-break: break-all;">@localizer["Name"].Value</label>
+                            </div>
+                            <div class="form-group col-md-3 mb-3 text-center">
+                                <label>@localizer["Admin"].Value</label>
+                            </div>
+                            <div class="form-group col-md-3 mb-3 text-center">
+                                <label>@localizer["User"].Value</label>
+                            </div>
+                            <div class="form-group col-md-3 mb-3 text-center">
+                                <label>@localizer["Guest"].Value</label>
+                            </div>
+                        </div>
+                        
+                        <div class="form-row" style="margin-top: 20px;">
+                            <div class="form-group col-md-3 mb-3 text-center">
+                                <label style="word-break: break-all;">대한민국 공휴일</label>
+                            </div>
+                            <div class="form-group col-md-3 mb-3 text-center">
+                                <input class="form-control form-control-sm" type="checkbox" />
+                            </div>
+                            <div class="form-group col-md-3 mb-3 text-center">
+                                <input class="form-control form-control-sm" type="checkbox" />
+                            </div>
+                            <div class="form-group col-md-3 mb-3 text-center">
+                                <input class="form-control form-control-sm" type="checkbox" />
+                            </div>
+                        </div>
+
+                        <div class="form-row" style="margin-top: 20px;">
+                            <div class="form-group col-md-3 mb-3 text-center">
+                                <label style="word-break: break-all;">대한민국</label>
+                            </div>
+                            <div class="form-group col-md-3 mb-3 text-center">
+                                <input class="form-control form-control-sm" type="checkbox" />
+                            </div>
+                            <div class="form-group col-md-3 mb-3 text-center">
+                                <input class="form-control form-control-sm" type="checkbox" />
+                            </div>
+                            <div class="form-group col-md-3 mb-3 text-center">
+                                <input class="form-control form-control-sm" type="checkbox" />
                             </div>
                         </div>
 

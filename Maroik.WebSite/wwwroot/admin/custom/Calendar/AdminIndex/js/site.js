@@ -156,6 +156,7 @@ $(function () {
     $("#editCalendarTabs").tabs();
     $("#createCalendarEventTaskTabs").tabs();
     $("#editCalendarEventTaskTabs").tabs();
+    $('#setCalendarSharedTabs').tabs();
 
     $("#createCalendarEventAllDayUncheckedStartDate").datepicker({
         showButtonPanel: true,
@@ -1929,6 +1930,10 @@ $('#dropdown-content a').click(function () {
 
 $('#aCreateCalendar').off('click').on('click', function () {
     $('#createCalendarDialogModal').modal('show');
+});
+
+$('#aUpdateCalendarShared').off('click').on('click', function () {
+    $('#setCalendarSharedDialogModal').modal('show');
 });
 
 $(document).on('click', '.edit-calendar', function (e) {
