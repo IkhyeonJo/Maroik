@@ -1504,9 +1504,25 @@ $(function () {
                         }
                     });
 
+                    setTimeout(function () {
+                        let calendars = $('#myCalendars label[id^="lblCalendar"]').get();
+
+                        calendars.sort(function (a, b) {
+                            let nameA = $(a).text().trim().toUpperCase();
+                            let nameB = $(b).text().trim().toUpperCase();
+
+                            if (nameA < nameB) return -1;
+                            if (nameA > nameB) return 1;
+                            return 0;
+                        });
+
+                        $.each(calendars, function (index, label) {
+                            $('#myCalendars').append(label);
+                        });
+                    }, 0);
+
                     toastr.success(data.message);
-                }
-                else {
+                } else {
                     toastr.error(data.error);
                 }
             }
