@@ -871,4 +871,3 @@ Javscript optimization Tip:
 
 // TODO: Calendar UserIndex 동작 한 번 테스트하고, Admin Calendar 작업으로 넘어갈 것! 
 // [Admin Calendar는 User Calendar에서 가져올 수 있어야 한다. Other Calendars로, 또한 AnonymousIndex에 표시할 Calendar도 Admin에서 등록할 수 있어야 한다.]
-// Admin, User, Guest 달력 생성 시, 나의 달력들이 이름 순으로 정렬되지 않는 버그를 해결하여야 한다.
