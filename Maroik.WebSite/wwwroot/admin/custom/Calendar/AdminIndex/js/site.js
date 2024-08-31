@@ -1699,8 +1699,8 @@ function CreateCalendar() {
                 let calendars = $('#myCalendars label[id^="lblCalendar"]').get();
 
                 calendars.sort(function (a, b) {
-                    let nameA = $(a).find('label[style*="padding-left:0.3em"]').text().trim().toUpperCase();
-                    let nameB = $(b).find('label[style*="padding-left:0.3em"]').text().trim().toUpperCase();
+                    let nameA = $(a).text().trim().toUpperCase();
+                    let nameB = $(b).text().trim().toUpperCase();
 
                     if (nameA < nameB) return -1;
                     if (nameA > nameB) return 1;
