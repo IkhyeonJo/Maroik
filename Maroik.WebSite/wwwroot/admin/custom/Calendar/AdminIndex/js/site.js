@@ -1933,7 +1933,79 @@ $('#aCreateCalendar').off('click').on('click', function () {
 });
 
 $('#aUpdateCalendarShared').off('click').on('click', function () {
+
+    $.ajax({
+        url: '/Calendar/GetCalendarShareds',
+        method: 'POST',
+        headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
+        dataType: 'json',
+        data: null,
+        contentType: 'application/json; charset=utf-8',
+        async: false,
+        success: function (response) {
+            if (response.result) {
+                let htmlString = '';
+                $.each(response.setCalendarShareds, function (index, setCalendarShared) {
+                    htmlString += String.raw`
+                        <div class="form-row setCalendarShared" style="margin-top: 20px;">
+                            <div id="divSetCalendarShared${setCalendarShared.id}" class="form-group col-md-3 mb-3 text-center">
+                                <label class="shareToCalendar" style="word-break: break-all;">${setCalendarShared.name}</label>
+                            </div>
+                            <div class="form-group col-md-3 mb-3 text-center">
+                                <input class="form-control form-control-sm shareToAdmin" type="checkbox" ${setCalendarShared.admin === true ? "checked" : ""}/>
+                            </div>
+                            <div class="form-group col-md-3 mb-3 text-center">
+                                <input class="form-control form-control-sm shareToUser" type="checkbox" ${setCalendarShared.user === true ? "checked" : ""}/>
+                            </div>
+                            <div class="form-group col-md-3 mb-3 text-center">
+                                <input class="form-control form-control-sm shareToGuest" type="checkbox" ${setCalendarShared.guest === true ? "checked" : ""}/>
+                            </div>
+                        </div>
+
+                    `;
+                });
+
+                $('#divSetCalendarShared').html(htmlString);
+            }
+        }
+    });
+
     $('#setCalendarSharedDialogModal').modal('show');
+});
+
+$('#formUpdateCalendarShared').off('submit').on('submit', function (event) {
+    event.preventDefault();
+
+    let calendarBeShared = [];
+
+    $('#divSetCalendarShared > .setCalendarShared').each(function (index, value) {
+        calendarBeShared.push({
+            CalendarId: $(this).find('.shareToCalendar').parent().attr('id').replace("divSetCalendarShared", ""),
+            Admin: $(this).find('.shareToAdmin').prop('checked'),
+            User: $(this).find('.shareToUser').prop('checked'),
+            Anonymous: $(this).find('.shareToGuest').prop('checked')
+        });
+    });
+
+    $.ajax({
+        url: '/Calendar/UpdateCalendarShared',
+        type: 'POST',
+        headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
+        dataType: 'json',
+        data: JSON.stringify(calendarBeShared),
+        contentType: 'application/json; charset=utf-8',
+        success: function (data) {
+            if (data.result) {
+                $('#setCalendarSharedDialogModal').modal('hide');
+                toastr.success(data.message);
+            }
+            else {
+                toastr.error(data.error);
+            }
+        }
+    });
+
+    return false;
 });
 
 $(document).on('click', '.edit-calendar', function (e) {

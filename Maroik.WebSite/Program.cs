@@ -63,6 +63,7 @@ builder.Services.AddScoped<IOtherCalendarRepository, OtherCalendarRepository>();
 builder.Services.AddScoped<ICalendarEventRepository, CalendarEventRepository>();
 builder.Services.AddScoped<ICalendarEventAttachedFileRepository, CalendarEventAttachedFileRepository>();
 builder.Services.AddScoped<ICalendarEventReminderRepository, CalendarEventReminderRepository>();
+builder.Services.AddScoped<ICalendarSharedRepository, CalendarSharedRepository>();
 #endregion
 
 #region LOCAL

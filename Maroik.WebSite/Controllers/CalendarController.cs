@@ -23,9 +23,10 @@ namespace Maroik.WebSite.Controllers
         private readonly ICalendarEventRepository _calendarEventRepository;
         private readonly ICalendarEventAttachedFileRepository _calendarEventAttachedFileRepository;
         private readonly ICalendarEventReminderRepository _calendarReminderRepository;
+        private readonly ICalendarSharedRepository _calendarSharedRepository;
         private readonly IHostEnvironment _hostEnvironment;
 
-        public CalendarController(IHtmlLocalizer<CalendarController> localizer, ILogger<CalendarController> logger, IHostEnvironment hostEnvironment, IIncomeRepository incomeRepository, IExpenditureRepository expenditureRepository, IAssetRepository assetRepository, IAccountRepository accountRepository, ICalendarRepository calendarRepository, IOtherCalendarRepository otherCalendarRepository, ICalendarEventRepository calendarEventRepository, ICalendarEventAttachedFileRepository calendarEventAttachedFileRepository, ICalendarEventReminderRepository calendarReminderRepository)
+        public CalendarController(IHtmlLocalizer<CalendarController> localizer, ILogger<CalendarController> logger, IHostEnvironment hostEnvironment, IIncomeRepository incomeRepository, IExpenditureRepository expenditureRepository, IAssetRepository assetRepository, IAccountRepository accountRepository, ICalendarRepository calendarRepository, IOtherCalendarRepository otherCalendarRepository, ICalendarEventRepository calendarEventRepository, ICalendarEventAttachedFileRepository calendarEventAttachedFileRepository, ICalendarEventReminderRepository calendarReminderRepository, ICalendarSharedRepository calendarSharedRepository)
         {
             _localizer = localizer;
             _logger = logger;
@@ -39,6 +40,7 @@ namespace Maroik.WebSite.Controllers
             _calendarEventRepository = calendarEventRepository;
             _calendarEventAttachedFileRepository = calendarEventAttachedFileRepository;
             _calendarReminderRepository = calendarReminderRepository;
+            _calendarSharedRepository = calendarSharedRepository;
         }
 
         #region Create
@@ -1199,6 +1201,60 @@ namespace Maroik.WebSite.Controllers
                 return Json(new { result = false, error = _localizer["Input is invalid"].Value });
             }
         }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [RequiredHttpPostAccess(Role = Role.Admin)]
+        public async Task<IActionResult> GetCalendarShareds()
+        {
+            try
+            {
+                _ = HttpContext.Session.TryGetValue(Maroik.Common.Miscellaneous.Extensions.EnumHelper.GetDescription(Maroik.Common.Miscellaneous.Utilities.Session.Account), out byte[] resultByte);
+                List<Calendar> calendars = (await _calendarRepository.GetCalendarsAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email) ?? [])?.ToList();
+                List<CalendarShared> calendarShareds = (await _calendarSharedRepository.GetCalendarSharedAsync() ?? [])?.ToList();
+
+                foreach (Calendar calendar in calendars) 
+                {
+                    CalendarShared calendarShared = calendarShareds?.Where(x => x.CalendarId == calendar.Id)?.FirstOrDefault() ?? new CalendarShared();
+
+                    if (!(calendarShared.CalendarId > 0))
+                    {
+                        await _calendarSharedRepository.CreateCalendarSharedAsync(new CalendarShared() { CalendarId = calendar.Id, Admin = false, User = false, Anonymous = false });
+                    }
+                }
+
+                List<CalendarShared> tempCalendarShareds = new List<CalendarShared>();
+
+                foreach (CalendarShared calendarShared in (await _calendarSharedRepository.GetCalendarSharedAsync() ?? [])?.ToList())
+                {
+                    var item = calendars.Where(x => x.Id == calendarShared.CalendarId).FirstOrDefault() ?? new Calendar();
+
+                    if (item.Id > 0)
+                    {
+                        tempCalendarShareds.Add(calendarShared);
+                    }
+                }
+
+                var setCalendarShareds = (from calendar in calendars
+                                    join sharedCalendar in tempCalendarShareds
+                                    on calendar.Id equals sharedCalendar.CalendarId
+                                    select new
+                                    {
+                                        Id = sharedCalendar.CalendarId,
+                                        Name = calendar.Name,
+                                        Admin = sharedCalendar.Admin,
+                                        User = sharedCalendar.User,
+                                        Guest = sharedCalendar.Anonymous
+                                    }).OrderBy(x => x.Name).ToList();
+
+
+                return Json(new { result = true, setCalendarShareds });
+            }
+            catch
+            {
+                return Json(new { result = false, error = _localizer["Input is invalid"].Value });
+            }
+        }
         #endregion
 
         #region Update
@@ -1524,6 +1580,42 @@ namespace Maroik.WebSite.Controllers
                         {
                             return Json(new { result = false, error = _localizer["Please Login to update calendar event"].Value });
                         }
+                    }
+                    catch
+                    {
+                        return Json(new { result = false, error = _localizer["Input is invalid"].Value });
+                    }
+                }
+                else
+                {
+                    return Json(new { result = false, error = _localizer["Input is invalid"].Value });
+                }
+            }
+            catch
+            {
+                return Json(new { result = false, error = _localizer["Input is invalid"].Value });
+            }
+        }
+        #endregion
+
+        #region Calendar Shared
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [RequiredHttpPostAccess(Role = Role.Admin)]
+        public async Task<IActionResult> UpdateCalendarShared([FromBody] IEnumerable<CalendarShared> calendarShareds)
+        {
+            try
+            {
+                if (ModelState.IsValid)
+                {
+                    try
+                    {
+                        foreach (CalendarShared calendarShared in calendarShareds)
+                        {
+                            await _calendarSharedRepository.UpdateCalendarSharedAsync(calendarShared);
+                        }
+
+                        return Json(new { result = true, message = _localizer["The calendar shared has been successfully updated."].Value });
                     }
                     catch
                     {
