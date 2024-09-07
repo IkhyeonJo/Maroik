@@ -40,9 +40,9 @@ services:
           - ASPNETCORE_ENVIRONMENT=Production
           - ASPNETCORE_URLS=https://+:443;http://+:80
           - ASPNETCORE_Kestrel__Certificates__Default__Password=Passw0rd
-          - ASPNETCORE_Kestrel__Certificates__Default__Path=/https/maroik.pfx
+          - ASPNETCORE_Kestrel__Certificates__Default__Path=/etc/ssl/maroik.pfx
         volumes:
-          - ./Maroik.WebSite/:/https:ro
+          - ./Maroik.SSL/maroik.pfx:/etc/ssl/maroik.pfx:ro
         depends_on :
           - mariadb  
 
@@ -60,8 +60,8 @@ services:
           - ASPNETCORE_ENVIRONMENT=Production
           - ASPNETCORE_URLS=https://+:5001
           - ASPNETCORE_Kestrel__Certificates__Default__Password=Passw0rd
-          - ASPNETCORE_Kestrel__Certificates__Default__Path=/https/maroik.pfx
+          - ASPNETCORE_Kestrel__Certificates__Default__Path=/etc/ssl/maroik.pfx
         volumes:
-          - ./Maroik.WebAPI/:/https:ro
+          - ./Maroik.SSL/maroik.pfx:/etc/ssl/maroik.pfx:ro
         depends_on :
           - mariadb  
