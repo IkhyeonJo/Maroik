@@ -21,13 +21,6 @@ namespace Maroik.Common.DataAccess.Contracts
         public Task CreateOtherCalendarAsync(OtherCalendar otherCalendar);
 
         /// <summary>
-        /// 다른 달력을 업데이트합니다.
-        /// </summary>
-        /// <param name="otherCalendar"></param>
-        /// <returns></returns>
-        public Task UpdateOtherCalendarAsync(OtherCalendar otherCalendar);
-
-        /// <summary>
         /// 다른 달력을 삭제합니다.
         /// </summary>
         /// <param name="otherCalendar"></param>

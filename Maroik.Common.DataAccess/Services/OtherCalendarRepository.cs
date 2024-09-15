@@ -39,17 +39,6 @@ namespace Maroik.Common.DataAccess.Services
         }
 
         /// <summary>
-        /// 다른 달력을 업데이트합니다.
-        /// </summary>
-        /// <param name="otherCalendar"></param>
-        /// <returns></returns>
-        public async Task UpdateOtherCalendarAsync(OtherCalendar otherCalendar)
-        {
-            _ = _context.OtherCalendars.Update(otherCalendar);
-            _ = await _context.SaveChangesAsync();
-        }
-
-        /// <summary>
         /// 다른 달력을 삭제합니다.
         /// </summary>
         /// <param name="otherCalendar"></param>

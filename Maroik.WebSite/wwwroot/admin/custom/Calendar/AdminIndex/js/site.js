@@ -156,6 +156,7 @@ $(function () {
     $("#editCalendarTabs").tabs();
     $("#createCalendarEventTaskTabs").tabs();
     $("#editCalendarEventTaskTabs").tabs();
+    $('#browseCalendarsOfInterestTabs').tabs();
     $('#setCalendarSharedTabs').tabs();
 
     $("#createCalendarEventAllDayUncheckedStartDate").datepicker({
@@ -1961,6 +1962,84 @@ $('#dropdown-content a').click(function () {
 
 $('#aCreateCalendar').off('click').on('click', function () {
     $('#createCalendarDialogModal').modal('show');
+});
+
+$('#aBrowseCalendarsOfInterest').off('click').on('click', function () {
+    $('#allCheckBrowseCalendarsOfInterest').prop('checked', false);
+
+    $.ajax({
+        url: '/Calendar/GetBrowseCalendarsOfInterest',
+        method: 'POST',
+        headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
+        dataType: 'json',
+        data: null,
+        contentType: 'application/json; charset=utf-8',
+        async: false,
+        success: function (response) {
+            if (response.result) {
+                let htmlString = '';
+                $.each(response.browseCalendarsOfInterests, function (index, browseCalendarsOfInterest) {
+                    htmlString += String.raw`
+                        <div class="form-row browseCalendarsOfInterest" style="margin-top: 20px;">
+                            <div id="divBrowseCalendarsOfInterest${browseCalendarsOfInterest.id}" class="form-group col-md-3 mb-3 text-center">
+                                <input class="form-control form-control-sm checkBoxBrowseCalendarsOfInterest" type="checkbox" />
+                            </div>
+                            <div class="form-group col-md-9 mb-9 text-center">
+                                <label style="word-break: break-all;">${browseCalendarsOfInterest.name}</label>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                $('#divBrowseCalendarsOfInterest').html(htmlString);
+            }
+        }
+    });
+
+    $('#browseCalendarsOfInterestDialogModal').modal('show');
+});
+
+$('#allCheckBrowseCalendarsOfInterest').off('change').on('change', function () {
+    $('.checkBoxBrowseCalendarsOfInterest').prop('checked', $(this).prop('checked'));
+});
+
+$(document).on('change', '.checkBoxBrowseCalendarsOfInterest', function () {
+    $('#allCheckBrowseCalendarsOfInterest').prop('checked', $('.checkBoxBrowseCalendarsOfInterest').length === $('.checkBoxBrowseCalendarsOfInterest:checked').length);
+});
+
+$('#formUpdateBrowseCalendarsOfInterest').off('submit').on('submit', function (event) {
+    event.preventDefault();
+
+    let calendarBeOtherCalendar = [];
+
+    $('#divBrowseCalendarsOfInterest > .browseCalendarsOfInterest').each(function (index, element) {
+        let checkBox = $(element).find('.checkBoxBrowseCalendarsOfInterest');
+        if (checkBox.is(':checked')) {
+            calendarBeOtherCalendar.push({
+                CalendarId: checkBox.parent().attr('id').replace("divBrowseCalendarsOfInterest", "")
+            });
+        }
+    });
+
+    $.ajax({
+        url: '/Calendar/UpdateOtherCalendar',
+        type: 'POST',
+        headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
+        dataType: 'json',
+        data: JSON.stringify(calendarBeOtherCalendar),
+        contentType: 'application/json; charset=utf-8',
+        success: function (data) {
+            if (data.result) {
+                $('#browseCalendarsOfInterestDialogModal').modal('hide');
+                toastr.success(data.message);
+            }
+            else {
+                toastr.error(data.error);
+            }
+        }
+    });
+
+    return false;
 });
 
 $('#aUpdateCalendarShared').off('click').on('click', function () {

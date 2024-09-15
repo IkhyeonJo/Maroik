@@ -1255,6 +1255,62 @@ namespace Maroik.WebSite.Controllers
                 return Json(new { result = false, error = _localizer["Input is invalid"].Value });
             }
         }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [RequiredHttpPostAccess(Role = Role.Admin)]
+        public async Task<IActionResult> GetBrowseCalendarsOfInterest()
+        {
+            try
+            {
+                bool isAccountSessionExist = HttpContext.Session.TryGetValue(Maroik.Common.Miscellaneous.Extensions.EnumHelper.GetDescription(Maroik.Common.Miscellaneous.Utilities.Session.Account), out byte[] resultByte);
+
+                if (isAccountSessionExist)
+                {
+                    Account loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte));
+
+                    if (loginedAccount.Role is not (Role.Admin or Role.User)) // 비 로그인 사용자인 경우
+                    {
+                        return Json(new { result = false, error = _localizer["Login required."].Value });
+                    }
+
+                    List<Calendar> calendars = (await _calendarRepository.GetCalendarsAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email) ?? [])?.ToList();
+                    List<CalendarShared> calendarShareds = await _calendarSharedRepository.GetCalendarSharedAsync() ?? [];
+
+                    switch (loginedAccount.Role)
+                    {
+                        case Role.Admin:
+                            calendarShareds = calendarShareds.Where(x => x.Admin).ToList();
+                            break;
+                        case Role.User:
+                            calendarShareds = calendarShareds.Where(x => x.User).ToList();
+                            break;
+                        default:
+                            return Json(new { result = false, error = _localizer["Input is invalid"].Value });
+                    }
+
+                    var browseCalendarsOfInterests = (from calendar in calendars
+                                                     join calendarShared in calendarShareds
+                                                     on calendar.Id equals calendarShared.CalendarId
+                                                     select new
+                                                     {
+                                                         calendar.Id,
+                                                         calendar.Name
+                                                     }).OrderBy(x => x.Name).ToList();
+
+
+                    return Json(new { result = true, browseCalendarsOfInterests });
+                }
+                else
+                {
+                    return Json(new { result = false, error = _localizer["Please Login to update calendar event"].Value });
+                }
+            }
+            catch
+            {
+                return Json(new { result = false, error = _localizer["Input is invalid"].Value });
+            }
+        }
         #endregion
 
         #region Update
@@ -1616,6 +1672,66 @@ namespace Maroik.WebSite.Controllers
                         }
 
                         return Json(new { result = true, message = _localizer["The calendar shared has been successfully updated."].Value });
+                    }
+                    catch
+                    {
+                        return Json(new { result = false, error = _localizer["Input is invalid"].Value });
+                    }
+                }
+                else
+                {
+                    return Json(new { result = false, error = _localizer["Input is invalid"].Value });
+                }
+            }
+            catch
+            {
+                return Json(new { result = false, error = _localizer["Input is invalid"].Value });
+            }
+        }
+        #endregion
+
+        #region Other Calendar
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [RequiredHttpPostAccess(Role = Role.Admin)]
+        public async Task<IActionResult> UpdateOtherCalendar([FromBody] IEnumerable<OtherCalendar> otherCalendars)
+        {
+            try
+            {
+                if (ModelState.IsValid)
+                {
+                    try
+                    {
+                        bool isAccountSessionExist = HttpContext.Session.TryGetValue(Maroik.Common.Miscellaneous.Extensions.EnumHelper.GetDescription(Maroik.Common.Miscellaneous.Utilities.Session.Account), out byte[] resultByte);
+
+                        if (isAccountSessionExist)
+                        {
+                            Account loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte));
+
+                            if (loginedAccount.Role is not (Role.Admin or Role.User)) // 비 로그인 사용자인 경우
+                            {
+                                return Json(new { result = false, error = _localizer["Login required."].Value });
+                            }
+
+                            // Delete previous otherCalendars
+                            foreach (OtherCalendar previousOtherCalendar in await _otherCalendarRepository.GetOtherCalendarsAsync(loginedAccount.Email) ?? [])
+                            {
+                                await _otherCalendarRepository.DeleteOtherCalendarAsync(previousOtherCalendar);
+                            }
+
+                            // Create new otherCalendars
+                            foreach (OtherCalendar otherCalendar in otherCalendars)
+                            {
+                                otherCalendar.AccountEmail = loginedAccount.Email;
+                                await _otherCalendarRepository.CreateOtherCalendarAsync(otherCalendar);
+                            }
+
+                            return Json(new { result = true, message = _localizer["The calendar shared has been successfully updated."].Value });
+                        }
+                        else
+                        {
+                            return Json(new { result = false, error = _localizer["Login required."].Value });
+                        }
                     }
                     catch
                     {
