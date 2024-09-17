@@ -1,63 +1,138 @@
-﻿// Please see documentation at https://docs.microsoft.com/aspnet/core/client-side/bundling-and-minification
-// for details on configuring this project to bundle and minify static web assets.
+﻿const localizer = {
+    PrevText: $('#localizerPrevText').val(),
+    NextText: $('#localizerNextText').val(),
+    January: $('#localizerJanuary').val(),
+    February: $('#localizerFebruary').val(),
+    March: $('#localizerMarch').val(),
+    April: $('#localizerApril').val(),
+    May: $('#localizerMay').val(),
+    June: $('#localizerJune').val(),
+    July: $('#localizerJuly').val(),
+    August: $('#localizerAugust').val(),
+    September: $('#localizerSeptember').val(),
+    October: $('#localizerOctober').val(),
+    November: $('#localizerNovember').val(),
+    December: $('#localizerDecember').val(),
+    Jan: $('#localizerJan').val(),
+    Feb: $('#localizerFeb').val(),
+    Mar: $('#localizerMar').val(),
+    Apr: $('#localizerApr').val(),
+    Jun: $('#localizerJun').val(),
+    Jul: $('#localizerJul').val(),
+    Aug: $('#localizerAug').val(),
+    Sep: $('#localizerSep').val(),
+    Oct: $('#localizerOct').val(),
+    Nov: $('#localizerNov').val(),
+    Dec: $('#localizerDec').val(),
+    Sunday: $('#localizerSunday').val(),
+    Monday: $('#localizerMonday').val(),
+    Tuesday: $('#localizerTuesday').val(),
+    Wednesday: $('#localizerWednesday').val(),
+    Thursday: $('#localizerThursday').val(),
+    Friday: $('#localizerFriday').val(),
+    Saturday: $('#localizerSaturday').val(),
+    Sun: $('#localizerSun').val(),
+    Mon: $('#localizerMon').val(),
+    Tue: $('#localizerTue').val(),
+    Wed: $('#localizerWed').val(),
+    Thu: $('#localizerThu').val(),
+    Fri: $('#localizerFri').val(),
+    Sat: $('#localizerSat').val(),
+    Su: $('#localizerSu').val(),
+    Mo: $('#localizerMo').val(),
+    Tu: $('#localizerTu').val(),
+    We: $('#localizerWe').val(),
+    Th: $('#localizerTh').val(),
+    Fr: $('#localizerFr').val(),
+    Sa: $('#localizerSa').val(),
+    YearSuffix: $('#localizerYearSuffix').val()
+};
 
-// Write your JavaScript code.
+$.datepicker.setDefaults({
+    dateFormat: 'yy-mm-dd',
+    prevText: localizer.prevText,
+    nextText: localizer.nextText,
+    monthNames: [localizer.January, localizer.February, localizer.March, localizer.April, localizer.May, localizer.June, localizer.July, localizer.August, localizer.September, localizer.October, localizer.November, localizer.December],
+    monthNamesShort: [localizer.Jan, localizer.Feb, localizer.Mar, localizer.Apr, localizer.May, localizer.Jun, localizer.Jul, localizer.Aug, localizer.Sep, localizer.Oct, localizer.Nov, localizer.Dec],
+    dayNames: [localizer.Sunday, localizer.Monday, localizer.Tuesday, localizer.Wednesday, localizer.Thursday, localizer.Friday, localizer.Saturday],
+    dayNamesShort: [localizer.Sun, localizer.Mon, localizer.Tue, localizer.Wed, localizer.Thu, localizer.Fri, localizer.Sat],
+    dayNamesMin: [localizer.Su, localizer.Mo, localizer.Tu, localizer.We, localizer.Th, localizer.Fr, localizer.Sa],
+    showMonthAfterYear: true,
+    yearSuffix: localizer.YearSuffix
+});
+
+$(function () {
+    $("#createIncomeTabs").tabs();
+    $("#editIncomeTabs").tabs();
+    $("#createIncomeDate").datepicker({
+        showButtonPanel: true,
+        beforeShow: function (input) {
+            setTimeout(function () {
+
+            }, 1);
+        },
+        onChangeMonthYear: function (year, month, instance) {
+            setTimeout(function () {
+
+            }, 1);
+        }
+    });
+
+    $("#editIncomeDate").datepicker({
+        showButtonPanel: true,
+        beforeShow: function (input) {
+            setTimeout(function () {
+
+            }, 1);
+        },
+        onChangeMonthYear: function (year, month, instance) {
+            setTimeout(function () {
+
+            }, 1);
+        }
+    });
+
+    $('<style type="text/css"> .ui-datepicker-close { display: none; } </style>').appendTo("head");
+    $('<style type="text/css"> .ui-datepicker-current { display: none; } </style>').appendTo("head");
+});
 
 let selectedRowColor = "table-primary";
 
-// Triggered when grid's row is clicked. It's recommended to use event delegation in ajax scenarios.
 document.addEventListener("rowclick", e => {
-    //e.detail.data - clicked row's data from columns.
-    //e.detail.grid - grid's instance.
-    //e.detail.originalEvent - original tr click event which triggered the rowclick.
-
     let selectedRow = e.detail;
     let selectedRowId = selectedRow.data.Id;
 
     $('#incomeGrid > table > tbody  > tr').each(function (index, tr) {
         $(this).removeClass(selectedRowColor);
-    }); // remove all selected row color
+    });
 
     $('#incomeGrid > table > tbody  > tr').each(function (index, tr) {
         if ((new String(selectedRowId).valueOf() === new String($(this).attr('data-id')).valueOf())) {
             $(this).addClass(selectedRowColor);
         }
-    }); // set selected row color class
+    });
 });
 
-// Triggered before grid starts loading. It's recommended to use event delegation in ajax scenarios.
 document.addEventListener("reloadstart", e => {
-    //e.detail.grid - grid's instance.
 });
 
-// Triggered after grid stop loading. It's recommended to use event delegation in ajax scenarios.
 document.addEventListener("reloadend", e => {
-    //e.detail.grid - grid's instance.
 });
 
-// Triggered after grid reload fails. It's recommended to use event delegation in ajax scenarios.
 document.addEventListener("reloadfail", e => {
-    //e.detail.reason - failed response promise reason.
-    //e.detail.grid - grid's instance.
-
-    // Preventing default stops failed promise from bubbling out.
 });
 
-// Triggered after grid configuration changes. It's recommended to use event delegation in ajax scenarios.
 document.addEventListener("gridconfigure", e => {
-    //e.detail.grid - grid's instance.
 });
 
 
 $(document).on("dblclick", "#incomeGrid > table > tbody  > tr", function () {
-    //console.log('dblclick-start');
     $('#incomeGrid > table > tbody  > tr').each(function (index, tr) {
 
-        if ($(this).attr("class").includes(selectedRowColor)) { // Get SelectedRow by Color
+        if ($(this).attr("class").includes(selectedRowColor)) {
             EditIncomeGridRow();
         }
     });
-    //console.log('dblclick-end');
 });
 $('#gridSearch').on('input', function () {
     const grid = new MvcGrid(document.querySelector(".mvc-grid"));
@@ -184,14 +259,12 @@ function CreateIncome() {
         dataType: 'json',
         data: paramValue,
         contentType: 'application/json; charset=utf-8',
-        //async: false,
-        //cache: false,
         success: function (data) {
             if (data.result) {
-                $('#createIncomeDialogModal').modal('hide'); // hide Modal
+                $('#createIncomeDialogModal').modal('hide');
 
-                const grid = new MvcGrid(document.querySelector(".mvc-grid")); //reload grid
-                grid.reload(); //reload grid
+                const grid = new MvcGrid(document.querySelector(".mvc-grid"));
+                grid.reload();
 
                 toastr.success(data.message);
             }
@@ -209,15 +282,15 @@ function EditIncomeGridRow(errorMessageSelectGridRow) {
     let selectedRowId = "";
 
     $('#incomeGrid > table > tbody  > tr').each(function (index, tr) {
-        if ($(this).attr("class").includes(selectedRowColor)) { // Get SelectedRow by Color
+        if ($(this).attr("class").includes(selectedRowColor)) {
             selectedRowId = $(this).attr("data-id");
         }
-    }); // Search Selected Row
+    });
 
     if (selectedRowId === "") {
         toastr.error(errorMessageSelectGridRow);
         return false;
-    } // check whether selected row exist or not
+    }
 
     $.ajax({
         url: '/AccountBook/IsIncomeExists' + '?id=' + selectedRowId,
@@ -226,8 +299,6 @@ function EditIncomeGridRow(errorMessageSelectGridRow) {
         dataType: 'json',
         data: null,
         contentType: 'application/json; charset=utf-8',
-        //async: false,
-        //cache: false,
         success: function (data) {
             if (data.result) {
 
@@ -338,14 +409,12 @@ function UpdateIncome() {
         dataType: 'json',
         data: paramValue,
         contentType: 'application/json; charset=utf-8',
-        //async: false,
-        //cache: false,
         success: function (data) {
             if (data.result) {
-                $('#editIncomeDialogModal').modal('hide'); // hide Modal
+                $('#editIncomeDialogModal').modal('hide');
 
-                const grid = new MvcGrid(document.querySelector(".mvc-grid")); //reload grid
-                grid.reload(); //reload grid
+                const grid = new MvcGrid(document.querySelector(".mvc-grid"));
+                grid.reload();
 
                 toastr.success(data.message);
             }
@@ -362,15 +431,15 @@ function ConfirmDeleteIncome(errorMessageSelectGridRow) {
     let selectedRowId = "";
 
     $('#incomeGrid > table > tbody  > tr').each(function (index, tr) {
-        if ($(this).attr("class").includes(selectedRowColor)) { // Get SelectedRow by Color
+        if ($(this).attr("class").includes(selectedRowColor)) {
             selectedRowId = $(this).attr("data-id");
         }
-    }); // Search Selected Row
+    });
 
     if (selectedRowId === "") {
         toastr.error(errorMessageSelectGridRow);
         return false;
-    } // check whether selected row exist or not
+    }
 
     $('#confirmDeleteIncomeDialogModal').modal({
         keyboard: false,
@@ -386,15 +455,15 @@ function DeleteIncome(errorMessageSelectGridRow) {
     let selectedRowId = "";
 
     $('#incomeGrid > table > tbody  > tr').each(function (index, tr) {
-        if ($(this).attr("class").includes(selectedRowColor)) { // Get SelectedRow by Color
+        if ($(this).attr("class").includes(selectedRowColor)) {
             selectedRowId = $(this).attr("data-id");
         }
-    }); // Search Selected Row
+    });
 
     if (selectedRowId === "") {
         toastr.error(errorMessageSelectGridRow);
         return false;
-    } // check whether selected row exist or not
+    }
 
     $.ajax({
         url: '/AccountBook/IsIncomeExists' + '?id=' + selectedRowId,
@@ -403,8 +472,6 @@ function DeleteIncome(errorMessageSelectGridRow) {
         dataType: 'json',
         data: null,
         contentType: 'application/json; charset=utf-8',
-        //async: false,
-        //cache: false,
         success: function (data) {
             if (data.result) {
 
@@ -419,14 +486,12 @@ function DeleteIncome(errorMessageSelectGridRow) {
                     dataType: 'json',
                     data: paramValue,
                     contentType: 'application/json; charset=utf-8',
-                    //async: false,
-                    //cache: false,
                     success: function (data) {
                         if (data.result) {
-                            $('#confirmDeleteIncomeDialogModal').modal('hide'); // hide Modal
+                            $('#confirmDeleteIncomeDialogModal').modal('hide');
 
-                            const grid = new MvcGrid(document.querySelector(".mvc-grid")); //reload grid
-                            grid.reload(); //reload grid
+                            const grid = new MvcGrid(document.querySelector(".mvc-grid"));
+                            grid.reload();
 
                             toastr.success(data.message);
                         }
@@ -472,8 +537,6 @@ function ChangeCreateIncomeAmountLabel(productName) {
         dataType: 'json',
         data: null,
         contentType: 'application/json; charset=utf-8',
-        //async: false,
-        //cache: false,
         success: function (data) {
             if (data.result) {
                 $('#labelCreateIncomeAmount').text(data.label);
@@ -493,8 +556,6 @@ function ChangeEditIncomeAmountLabel(productName) {
         dataType: 'json',
         data: null,
         contentType: 'application/json; charset=utf-8',
-        //async: false,
-        //cache: false,
         success: function (data) {
             if (data.result) {
                 $('#labelEditIncomeAmount').text(data.label);

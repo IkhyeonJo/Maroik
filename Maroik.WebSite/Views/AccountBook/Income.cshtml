@@ -16,6 +16,54 @@
     int currentSecond = currentTime.Second;
 }
 
+@Html.Hidden("localizerPrevText", localizer["PrevText"].Value)
+@Html.Hidden("localizerNextText", localizer["NextText"].Value)
+@Html.Hidden("localizerJanuary", localizer["January"].Value)
+@Html.Hidden("localizerFebruary", localizer["February"].Value)
+@Html.Hidden("localizerMarch", localizer["March"].Value)
+@Html.Hidden("localizerApril", localizer["April"].Value)
+@Html.Hidden("localizerMay", localizer["May"].Value)
+@Html.Hidden("localizerJune", localizer["June"].Value)
+@Html.Hidden("localizerJuly", localizer["July"].Value)
+@Html.Hidden("localizerAugust", localizer["August"].Value)
+@Html.Hidden("localizerSeptember", localizer["September"].Value)
+@Html.Hidden("localizerOctober", localizer["October"].Value)
+@Html.Hidden("localizerNovember", localizer["November"].Value)
+@Html.Hidden("localizerDecember", localizer["December"].Value)
+@Html.Hidden("localizerJan", localizer["Jan"].Value)
+@Html.Hidden("localizerFeb", localizer["Feb"].Value)
+@Html.Hidden("localizerMar", localizer["Mar"].Value)
+@Html.Hidden("localizerApr", localizer["Apr"].Value)
+@Html.Hidden("localizerJun", localizer["Jun"].Value)
+@Html.Hidden("localizerJul", localizer["Jul"].Value)
+@Html.Hidden("localizerAug", localizer["Aug"].Value)
+@Html.Hidden("localizerSep", localizer["Sep"].Value)
+@Html.Hidden("localizerOct", localizer["Oct"].Value)
+@Html.Hidden("localizerNov", localizer["Nov"].Value)
+@Html.Hidden("localizerDec", localizer["Dec"].Value)
+@Html.Hidden("localizerSunday", localizer["Sunday"].Value)
+@Html.Hidden("localizerMonday", localizer["Monday"].Value)
+@Html.Hidden("localizerTuesday", localizer["Tuesday"].Value)
+@Html.Hidden("localizerWednesday", localizer["Wednesday"].Value)
+@Html.Hidden("localizerThursday", localizer["Thursday"].Value)
+@Html.Hidden("localizerFriday", localizer["Friday"].Value)
+@Html.Hidden("localizerSaturday", localizer["Saturday"].Value)
+@Html.Hidden("localizerSun", localizer["Sun"].Value)
+@Html.Hidden("localizerMon", localizer["Mon"].Value)
+@Html.Hidden("localizerTue", localizer["Tue"].Value)
+@Html.Hidden("localizerWed", localizer["Wed"].Value)
+@Html.Hidden("localizerThu", localizer["Thu"].Value)
+@Html.Hidden("localizerFri", localizer["Fri"].Value)
+@Html.Hidden("localizerSat", localizer["Sat"].Value)
+@Html.Hidden("localizerSu", localizer["Su"].Value)
+@Html.Hidden("localizerMo", localizer["Mo"].Value)
+@Html.Hidden("localizerTu", localizer["Tu"].Value)
+@Html.Hidden("localizerWe", localizer["We"].Value)
+@Html.Hidden("localizerTh", localizer["Th"].Value)
+@Html.Hidden("localizerFr", localizer["Fr"].Value)
+@Html.Hidden("localizerSa", localizer["Sa"].Value)
+@Html.Hidden("localizerYearSuffix", localizer["YearSuffix"]?.Value ?? "")
+
 <section class="content">
     <div class="card card-primary">
         <div class="card-header">
@@ -63,7 +111,7 @@
                             <div class="form-group col-md-6 mb-3">
                                 <label for="createIncomeMainClass">@localizer["MainClass"].Value</label>
                                 <br />
-                                <select id="createIncomeMainClass" name="createIncomeMainClass" style="max-width:90%;">
+                                <select id="createIncomeMainClass" name="createIncomeMainClass" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
                                     <option value="RegularIncome" selected="selected">@localizer["정기수입"].Value</option>
                                     <option value="IrregularIncome">@localizer["비정기수입"].Value</option>
                                 </select>
@@ -71,7 +119,7 @@
                             <div class="form-group col-md-6 mb-3">
                                 <label for="createIncomeSubClass">@localizer["SubClass"].Value</label>
                                 <br />
-                                <select id="createIncomeSubClass" name="createIncomeSubClass" style="max-width:90%;">
+                                <select id="createIncomeSubClass" name="createIncomeSubClass" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
                                     <option value="LaborIncome" selected="selected">@localizer["근로수입"].Value</option>
                                     <option value="BusinessIncome">@localizer["사업수입"].Value</option>
                                     <option value="PensionIncome">@localizer["연금수입"].Value</option>
@@ -101,7 +149,7 @@
                             <div class="form-group col-md-6 mb-3">
                                 <label for="createIncomeHour">@localizer["Hour"].Value</label>
                                 <br />
-                                <select id="createIncomeHour" name="createIncomeHour" style="max-width:90%;">
+                                <select id="createIncomeHour" name="createIncomeHour" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
                                     @for (int i = 0; i < 24; i++)
                                     {
                                         if (i == currentHour)
@@ -120,7 +168,7 @@
                             <div class="form-group col-md-6 mb-3">
                                 <label for="createIncomeMinute">@localizer["Minute"].Value</label>
                                 <br />
-                                <select id="createIncomeMinute" name="createIncomeMinute" style="max-width:90%;">
+                                <select id="createIncomeMinute" name="createIncomeMinute" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
                                     @for (int i = 0; i < 60; i++)
                                     {
                                         if (i == currentMinute)
@@ -137,7 +185,7 @@
                             <div class="form-group col-md-6 mb-3">
                                 <label for="createIncomeSecond">@localizer["Second"].Value</label>
                                 <br />
-                                <select id="createIncomeSecond" name="createIncomeSecond" style="max-width:90%;">
+                                <select id="createIncomeSecond" name="createIncomeSecond" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
                                     @for (int i = 0; i < 60; i++)
                                     {
                                         if (i == currentSecond)
@@ -156,7 +204,7 @@
                             <div class="form-group col-md-6 mb-3">
                                 <label for="createIncomeDepositMyAssetProductName">@localizer["DepositMyAssetProductName"].Value</label>
                                 <br />
-                                <select id="createIncomeDepositMyAssetProductName" name="createIncomeDepositMyAssetProductName" style="max-width:90%;width:210px;text-overflow:ellipsis;">
+                                <select id="createIncomeDepositMyAssetProductName" name="createIncomeDepositMyAssetProductName" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
                                     @foreach (Asset item in assets)
                                     {
                                         if (assets.First() == item)
@@ -204,7 +252,7 @@
                             <div class="form-group col-md-6 mb-3">
                                 <label for="editIncomeMainClass">@localizer["MainClass"].Value</label>
                                 <br />
-                                <select id="editIncomeMainClass" name="editIncomeMainClass" style="max-width:90%;">
+                                <select id="editIncomeMainClass" name="editIncomeMainClass" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
                                     <option value="RegularIncome">@localizer["정기수입"].Value</option>
                                     <option value="IrregularIncome">@localizer["비정기수입"].Value</option>
                                 </select>
@@ -212,7 +260,7 @@
                             <div class="form-group col-md-6 mb-3">
                                 <label for="editIncomeSubClass">@localizer["SubClass"].Value</label>
                                 <br />
-                                <select id="editIncomeSubClass" name="editIncomeSubClass" style="max-width:90%;">
+                                <select id="editIncomeSubClass" name="editIncomeSubClass" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
                                     <option value="LaborIncome">@localizer["근로수입"].Value</option>
                                     <option value="BusinessIncome">@localizer["사업수입"].Value</option>
                                     <option value="PensionIncome">@localizer["연금수입"].Value</option>
@@ -242,7 +290,7 @@
                             <div class="form-group col-md-6 mb-3">
                                 <label for="editIncomeHour">@localizer["Hour"].Value</label>
                                 <br />
-                                <select id="editIncomeHour" name="editIncomeHour" style="max-width:90%;">
+                                <select id="editIncomeHour" name="editIncomeHour" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
                                     <option value="0" selected="selected">0</option>
                                     @for (int i = 1; i < 24; i++)
                                     {
@@ -255,7 +303,7 @@
                             <div class="form-group col-md-6 mb-3">
                                 <label for="editIncomeMinute">@localizer["Minute"].Value</label>
                                 <br />
-                                <select id="editIncomeMinute" name="editIncomeMinute" style="max-width:90%;">
+                                <select id="editIncomeMinute" name="editIncomeMinute" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
                                     <option value="0" selected="selected">0</option>
                                     @for (int i = 1; i < 60; i++)
                                     {
@@ -266,7 +314,7 @@
                             <div class="form-group col-md-6 mb-3">
                                 <label for="editIncomeSecond">@localizer["Second"].Value</label>
                                 <br />
-                                <select id="editIncomeSecond" name="editIncomeSecond" style="max-width:90%;">
+                                <select id="editIncomeSecond" name="editIncomeSecond" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
                                     <option value="0" selected="selected">0</option>
                                     @for (int i = 1; i < 60; i++)
                                     {
@@ -279,7 +327,7 @@
                             <div class="form-group col-md-6 mb-3">
                                 <label for="editIncomeDepositMyAssetProductName">@localizer["DepositMyAssetProductName"].Value</label>
                                 <br />
-                                <select id="editIncomeDepositMyAssetProductName" name="editIncomeDepositMyAssetProductName" style="max-width:90%;width:210px;text-overflow:ellipsis;">
+                                <select id="editIncomeDepositMyAssetProductName" name="editIncomeDepositMyAssetProductName" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
                                     @foreach (Asset item in assets)
                                     {
                                         <option value="@item.ProductName">@item.ProductName</option>
@@ -317,13 +365,5 @@
     </div>
 </div>
 @section Scripts{
-    @if (currentCulture == "ko-KR")
-    {
-        <script src="~/user/custom/AccountBook/Income/js/ko-KR-init.js" asp-append-version="true"></script>
-    }
-    else if (currentCulture == "en-US")
-    {
-        <script src="~/user/custom/AccountBook/Income/js/en-US-init.js" asp-append-version="true"></script>
-    }
     <script src="~/user/custom/AccountBook/Income/js/site.js" asp-append-version="true"></script>
 }

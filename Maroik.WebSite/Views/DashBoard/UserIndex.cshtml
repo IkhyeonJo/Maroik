@@ -204,6 +204,33 @@
     }
 }
 
+@Html.Hidden("localizerLaborIncome", localizer["LaborIncome"].Value)
+@Html.Hidden("localizerBusinessIncome", localizer["BusinessIncome"].Value)
+@Html.Hidden("localizerPensionIncome", localizer["PensionIncome"].Value)
+@Html.Hidden("localizerFinancialIncome", localizer["FinancialIncome"].Value)
+@Html.Hidden("localizerRentalIncome", localizer["RentalIncome"].Value)
+@Html.Hidden("localizerOtherIncome", localizer["OtherIncome"].Value)
+@Html.Hidden("localizerDeposit", localizer["Deposit"].Value)
+@Html.Hidden("localizerInvestment", localizer["Investment"].Value)
+@Html.Hidden("localizerPublicPension", localizer["PublicPension"].Value)
+@Html.Hidden("localizerDebtRepayment", localizer["DebtRepayment"].Value)
+@Html.Hidden("localizerTax", localizer["Tax"].Value)
+@Html.Hidden("localizerSocialInsurance", localizer["SocialInsurance"].Value)
+@Html.Hidden("localizerInterHouseholdTransferExpenses", localizer["InterHouseholdTransferExpenses"].Value)
+@Html.Hidden("localizerNonProfitOrganizationTransfer", localizer["NonProfitOrganizationTransfer"].Value)
+@Html.Hidden("localizerMealOrEatOutExpenses", localizer["MealOrEatOutExpenses"].Value)
+@Html.Hidden("localizerHousingOrSuppliesCost", localizer["HousingOrSuppliesCost"].Value)
+@Html.Hidden("localizerEducationExpenses", localizer["EducationExpenses"].Value)
+@Html.Hidden("localizerMedicalExpenses", localizer["MedicalExpenses"].Value)
+@Html.Hidden("localizerTransportationCost", localizer["TransportationCost"].Value)
+@Html.Hidden("localizerCommunicationCost", localizer["CommunicationCost"].Value)
+@Html.Hidden("localizerLeisureOrCulture", localizer["LeisureOrCulture"].Value)
+@Html.Hidden("localizerClothingOrShoes", localizer["ClothingOrShoes"].Value)
+@Html.Hidden("localizerPinMoney", localizer["PinMoney"].Value)
+@Html.Hidden("localizerProtectionTypeInsurance", localizer["ProtectionTypeInsurance"].Value)
+@Html.Hidden("localizerOtherExpenses", localizer["OtherExpenses"].Value)
+@Html.Hidden("localizerUnknownExpenditure", localizer["UnknownExpenditure"].Value)
+
 @*수입*@
 @*정기수입*@
 @Html.Hidden($"{nameof(regularIncomeLaborIncome)}", regularIncomeLaborIncome.TrimTrailingZeros())
@@ -1323,12 +1350,5 @@
     </div>
 </section>
 @section Scripts {
-    @if (currentCulture == "ko-KR")
-    {
-        <script src="~/user/custom/DashBoard/UserIndex/js/ko-KR-site.js" asp-append-version="true"></script>
-    }
-    else if (currentCulture == "en-US")
-    {
-        <script src="~/user/custom/DashBoard/UserIndex/js/en-US-site.js" asp-append-version="true"></script>
-    }
+    <script src="~/user/custom/DashBoard/UserIndex/js/site.js" asp-append-version="true"></script>
 }

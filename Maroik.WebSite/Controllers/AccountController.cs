@@ -279,7 +279,7 @@ namespace Maroik.WebSite.Controllers
                             Subject = _localizer["Maroik Email Confirmation"].Value
                         };
                         loginInputViewModel.RegistrationToken = new RSA(RSAType.RSA2, Encoding.UTF8, RSA.privateKey, RSA.publicKey).Sign(loginInputViewModel.RegistrationToken); // 암호화
-                        mail.Body = _mailRepository.GetMailConfirmationBody(loginInputViewModel, _localizer["Welcome to Maroik WebSite"].Value, _localizer["Click the link below to verify your Email"].Value, _localizer["If this link does not work, please copy & paste this link to your Internet URL"].Value);
+                        mail.Body = _mailRepository.GetMailConfirmationBody(loginInputViewModel, _localizer["Welcome to Maroik"].Value, _localizer["Click the link below to verify your Email"].Value, _localizer["If this link does not work, please copy & paste this link to your Internet URL"].Value);
                         mail.ToMailIds =
                         [
                             loginInputViewModel.Email
@@ -343,7 +343,7 @@ namespace Maroik.WebSite.Controllers
                             {
                                 account.RegistrationToken = GUIDToken.Generate();
                             }
-                            mail.Body = _mailRepository.GetMailConfirmationBody(new LoginInputViewModel() { RegistrationToken = new RSA(RSAType.RSA2, Encoding.UTF8, RSA.privateKey, RSA.publicKey).Sign(account.RegistrationToken) }, _localizer["Welcome to Maroik WebSite"].Value, _localizer["Click the link below to verify your Email"].Value, _localizer["If this link does not work, please copy & paste this link to your Internet URL"].Value);
+                            mail.Body = _mailRepository.GetMailConfirmationBody(new LoginInputViewModel() { RegistrationToken = new RSA(RSAType.RSA2, Encoding.UTF8, RSA.privateKey, RSA.publicKey).Sign(account.RegistrationToken) }, _localizer["Welcome to Maroik"].Value, _localizer["Click the link below to verify your Email"].Value, _localizer["If this link does not work, please copy & paste this link to your Internet URL"].Value);
                             mail.ToMailIds =
                             [
                                 account.Email
@@ -440,7 +440,7 @@ namespace Maroik.WebSite.Controllers
                             Mail mail = new()
                             {
                                 Subject = _localizer["Maroik Email Confirmation"].Value,
-                                Body = _mailRepository.GetMailConfirmationBody(new LoginInputViewModel() { RegistrationToken = new RSA(RSAType.RSA2, Encoding.UTF8, RSA.privateKey, RSA.publicKey).Sign(account.RegistrationToken) }, _localizer["Welcome to Maroik WebSite"].Value, _localizer["Click the link below to verify your Email"].Value, _localizer["If this link does not work, please copy & paste this link to your Internet URL"].Value),
+                                Body = _mailRepository.GetMailConfirmationBody(new LoginInputViewModel() { RegistrationToken = new RSA(RSAType.RSA2, Encoding.UTF8, RSA.privateKey, RSA.publicKey).Sign(account.RegistrationToken) }, _localizer["Welcome to Maroik"].Value, _localizer["Click the link below to verify your Email"].Value, _localizer["If this link does not work, please copy & paste this link to your Internet URL"].Value),
                                 ToMailIds =
                                 [
                                     account.Email
@@ -689,7 +689,7 @@ namespace Maroik.WebSite.Controllers
                         Mail mail = new()
                         {
                             Subject = _localizer["Maroik Reset Password"].Value,
-                            Body = _mailRepository.GetMailResetPasswordBody(new LoginInputViewModel() { ResetPasswordToken = new RSA(RSAType.RSA2, Encoding.UTF8, RSA.privateKey, RSA.publicKey).Sign(resetPasswordToken) }, _localizer["Welcome to Maroik WebSite"].Value, _localizer["Click the link below to reset your password"].Value, _localizer["If this link does not work, please copy & paste this link to your Internet URL"].Value),
+                            Body = _mailRepository.GetMailResetPasswordBody(new LoginInputViewModel() { ResetPasswordToken = new RSA(RSAType.RSA2, Encoding.UTF8, RSA.privateKey, RSA.publicKey).Sign(resetPasswordToken) }, _localizer["Welcome to Maroik"].Value, _localizer["Click the link below to reset your password"].Value, _localizer["If this link does not work, please copy & paste this link to your Internet URL"].Value),
                             ToMailIds =
                             [
                                 account.Email

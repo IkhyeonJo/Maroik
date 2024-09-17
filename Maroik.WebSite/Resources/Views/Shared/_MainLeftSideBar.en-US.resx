@@ -129,6 +129,9 @@
   <data name="Asset" xml:space="preserve">
     <value>Asset</value>
   </data>
+  <data name="Calendar" xml:space="preserve">
+    <value>Calendar</value>
+  </data>
   <data name="Chart" xml:space="preserve">
     <value>Chart</value>
   </data>

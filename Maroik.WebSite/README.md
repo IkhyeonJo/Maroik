@@ -855,3 +855,19 @@ html
 </div>
 
 This will place the data in two columns, with the data on the left in the first column and the additional data on the right in the second column. Adjust the content of the second column (<div> containing the right side data) according to your requirements.
+
+
+
+FullCalendar
+
+https://github.com/IkhyeonJo/Maroik/issues/37
+
+Javscript optimization Tip:
+// Please see documentation at https://docs.microsoft.com/aspnet/core/client-side/bundling-and-minification
+// for details on configuring this project to bundle and minify static web assets.
+
+// Write your JavaScript code.
+
+
+// TODO: Calendar UserIndex 동작 한 번 테스트하고, Admin Calendar 작업으로 넘어갈 것! 
+// [Admin Calendar는 User Calendar에서 가져올 수 있어야 한다. Other Calendars로, 또한 AnonymousIndex에 표시할 Calendar도 Admin에서 등록할 수 있어야 한다.]

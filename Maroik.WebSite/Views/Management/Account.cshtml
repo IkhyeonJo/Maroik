@@ -72,7 +72,7 @@
                             <div class="form-group col-md-6 mb-3">
                                 <label for="createAccountTimeZone">@localizer["TimeZone"].Value</label>
                                 <br />
-                                <select id="createAccountTimeZone" name="createAccountTimeZone" style="max-width:90%;">
+                                <select id="createAccountTimeZone" name="createAccountTimeZone" style="max-width:100%;text-overflow:ellipsis;">
                                     @foreach (TimeZoneInfo systemTimeZone in TimeZoneInfo.GetSystemTimeZones())
                                     {
                                         string systemTimeZoneIanaId = string.Empty;
@@ -89,7 +89,7 @@
                                         if (string.IsNullOrEmpty(systemTimeZoneIanaId))
                                             continue;
 
-                                        <option value="@systemTimeZoneIanaId">@systemTimeZoneIanaId</option>
+                                        <option value="@systemTimeZoneIanaId">@systemTimeZone.DisplayName</option>
                                     }
                                 </select>
                             </div>
@@ -171,7 +171,7 @@
                             <div class="form-group col-md-6 mb-3">
                                 <label for="editAccountTimeZone">@localizer["TimeZone"].Value</label>
                                 <br />
-                                <select id="editAccountTimeZone" name="editAccountTimeZone" style="max-width:90%;">
+                                <select id="editAccountTimeZone" name="editAccountTimeZone" style="max-width:100%;text-overflow:ellipsis;">
                                     @foreach (TimeZoneInfo systemTimeZone in TimeZoneInfo.GetSystemTimeZones())
                                     {
                                         string systemTimeZoneIanaId = string.Empty;
@@ -188,7 +188,7 @@
                                         if (string.IsNullOrEmpty(systemTimeZoneIanaId))
                                             continue;
 
-                                        <option value="@systemTimeZoneIanaId">@systemTimeZoneIanaId</option>
+                                        <option value="@systemTimeZoneIanaId">@systemTimeZone.DisplayName</option>
                                     }
                                 </select>
                             </div>

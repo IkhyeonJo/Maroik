@@ -198,4 +198,7 @@
   <data name="Writer" xml:space="preserve">
     <value>Writer</value>
   </data>
+  <data name="IETFLanguageTag" xml:space="preserve">
+    <value>en-US</value>
+  </data>
 </root>

@@ -213,4 +213,145 @@
   <data name="정기수입" xml:space="preserve">
     <value>Regular income</value>
   </data>
+  <data name="PrevText" xml:space="preserve">
+    <value>PrevText</value>
+  </data>
+  <data name="NextText" xml:space="preserve">
+    <value>NextText</value>
+  </data>
+  <data name="January" xml:space="preserve">
+    <value>January</value>
+  </data>
+  <data name="February" xml:space="preserve">
+    <value>February</value>
+  </data>
+  <data name="March" xml:space="preserve">
+    <value>March</value>
+  </data>
+  <data name="April" xml:space="preserve">
+    <value>April</value>
+  </data>
+  <data name="May" xml:space="preserve">
+    <value>May</value>
+  </data>
+  <data name="June" xml:space="preserve">
+    <value>June</value>
+  </data>
+  <data name="July" xml:space="preserve">
+    <value>July</value>
+  </data>
+  <data name="August" xml:space="preserve">
+    <value>August</value>
+  </data>
+  <data name="September" xml:space="preserve">
+    <value>September</value>
+  </data>
+  <data name="October" xml:space="preserve">
+    <value>October</value>
+  </data>
+  <data name="November" xml:space="preserve">
+    <value>November</value>
+  </data>
+  <data name="December" xml:space="preserve">
+    <value>December</value>
+  </data>
+  <data name="Jan" xml:space="preserve">
+    <value>Jan</value>
+  </data>
+  <data name="Feb" xml:space="preserve">
+    <value>Feb</value>
+  </data>
+  <data name="Mar" xml:space="preserve">
+    <value>Mar</value>
+  </data>
+  <data name="Apr" xml:space="preserve">
+    <value>Apr</value>
+  </data>
+  <data name="Jun" xml:space="preserve">
+    <value>Jun</value>
+  </data>
+    <data name="Jul" xml:space="preserve">
+    <value>Jul</value>
+  </data>
+  <data name="Aug" xml:space="preserve">
+    <value>Aug</value>
+  </data>
+  <data name="Sep" xml:space="preserve">
+    <value>Sep</value>
+  </data>
+  <data name="Oct" xml:space="preserve">
+    <value>Oct</value>
+  </data>
+  <data name="Nov" xml:space="preserve">
+    <value>Nov</value>
+  </data>
+  <data name="Dec" xml:space="preserve">
+    <value>Dec</value>
+  </data>
+  <data name="Sunday" xml:space="preserve">
+    <value>Sunday</value>
+  </data>
+  <data name="Monday" xml:space="preserve">
+    <value>Monday</value>
+  </data>
+  <data name="Tuesday" xml:space="preserve">
+    <value>Tuesday</value>
+  </data>
+  <data name="Wednesday" xml:space="preserve">
+    <value>Wednesday</value>
+  </data>
+  <data name="Thursday" xml:space="preserve">
+    <value>Thursday</value>
+  </data>
+  <data name="Friday" xml:space="preserve">
+    <value>Friday</value>
+  </data>
+  <data name="Saturday" xml:space="preserve">
+    <value>Saturday</value>
+  </data>
+  <data name="Sun" xml:space="preserve">
+    <value>Sun</value>
+  </data>
+  <data name="Mon" xml:space="preserve">
+    <value>Mon</value>
+  </data>
+  <data name="Tue" xml:space="preserve">
+    <value>Tue</value>
+  </data>
+  <data name="Wed" xml:space="preserve">
+    <value>Wed</value>
+  </data>
+  <data name="Thu" xml:space="preserve">
+    <value>Thu</value>
+  </data>
+  <data name="Fri" xml:space="preserve">
+    <value>Fri</value>
+  </data>
+  <data name="Sat" xml:space="preserve">
+    <value>Sat</value>
+  </data>
+  <data name="Su" xml:space="preserve">
+    <value>Su</value>
+  </data>
+  <data name="Mo" xml:space="preserve">
+    <value>Mo</value>
+  </data>
+  <data name="Tu" xml:space="preserve">
+    <value>Tu</value>
+  </data>
+  <data name="We" xml:space="preserve">
+    <value>We</value>
+  </data>
+  <data name="Th" xml:space="preserve">
+    <value>Th</value>
+  </data>
+  <data name="Fr" xml:space="preserve">
+    <value>Fr</value>
+  </data>
+  <data name="Sa" xml:space="preserve">
+    <value>Sa</value>
+  </data>
+  <data name="YearSuffix" xml:space="preserve">
+    <value></value>
+  </data>
 </root>

@@ -37,7 +37,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Cache-Control" content="No-Cache">*@
     @*Prevent Web Cache*@
-    <title>Maroik WebSite</title>
+    <title>Maroik</title>
 
     @if (loginedAccount.Role == Role.Admin)
     {
@@ -69,12 +69,14 @@
         <link rel="stylesheet" href="~/admin/plugins/summernote/summernote-bs4.min.css" asp-append-version="true">
         @*<!-- Jquery-ui -->*@
         <link rel="stylesheet" href="~/admin/plugins/jquery-ui/jquery-ui.min.css" asp-append-version="true">
+        @*<!-- fullCalendar -->*@
+        <link rel="stylesheet" href="~/admin/plugins/fullcalendar/main.css" asp-append-version="true">
         @*<!-- Toastr -->*@
         <link rel="stylesheet" href="~/admin/plugins/toastr/toastr.min.css" asp-append-version="true">
         @*<!-- Jquery-confirm -->*@
         <link rel="stylesheet" href="~/admin/lib/jquery-confirm/jquery-confirm.min.css" asp-append-version="true">
         @*<!-- Custom Modal CSS -->*@
-        <link rel="stylesheet" href="~/admin/custom/_Layout/css/modal.css" asp-append-version="true">
+        <link rel="stylesheet" href="~/admin/custom/_Layout/css/site.css" asp-append-version="true">
     }
     else if (loginedAccount.Role == Role.User)
     {
@@ -106,12 +108,14 @@
         <link rel="stylesheet" href="~/user/plugins/summernote/summernote-bs4.min.css" asp-append-version="true">
         @*<!-- Jquery-ui -->*@
         <link rel="stylesheet" href="~/user/plugins/jquery-ui/jquery-ui.min.css" asp-append-version="true">
+        @*<!-- fullCalendar -->*@
+        <link rel="stylesheet" href="~/user/plugins/fullcalendar/main.css" asp-append-version="true">
         @*<!-- Toastr -->*@
         <link rel="stylesheet" href="~/user/plugins/toastr/toastr.min.css" asp-append-version="true">
         @*<!-- Jquery-confirm -->*@
         <link rel="stylesheet" href="~/user/lib/jquery-confirm/jquery-confirm.min.css" asp-append-version="true">
         @*<!-- Custom Modal CSS -->*@
-        <link rel="stylesheet" href="~/user/custom/_Layout/css/modal.css" asp-append-version="true">
+        <link rel="stylesheet" href="~/user/custom/_Layout/css/site.css" asp-append-version="true">
     }
     else if (loginedAccount.Role == Role.Anonymous)
     {
@@ -142,13 +146,17 @@
         <link rel="stylesheet" href="~/anonymous/plugins/summernote/summernote-bs4.min.css" asp-append-version="true">
         @*<!-- Jquery-ui -->*@
         <link rel="stylesheet" href="~/anonymous/plugins/jquery-ui/jquery-ui.min.css" asp-append-version="true">
+        @*<!-- fullCalendar -->*@
+        <link rel="stylesheet" href="~/anonymous/plugins/fullcalendar/main.css" asp-append-version="true">
         @*<!-- Toastr -->*@
         <link rel="stylesheet" href="~/anonymous/plugins/toastr/toastr.min.css" asp-append-version="true">
         @*<!-- Jquery-confirm -->*@
         <link rel="stylesheet" href="~/anonymous/lib/jquery-confirm/jquery-confirm.min.css" asp-append-version="true">
         @*<!-- Custom Modal CSS -->*@
-        <link rel="stylesheet" href="~/anonymous/custom/_Layout/css/modal.css" asp-append-version="true">
+        <link rel="stylesheet" href="~/anonymous/custom/_Layout/css/site.css" asp-append-version="true">
     }
+
+    @await RenderSectionAsync("Styles", required: false)
 </head>
 @*
 <!--
@@ -168,6 +176,26 @@ to get the desired effect
     @Html.AntiForgeryToken()
     @*Language change return URI*@
     @Html.Hidden($"{nameof(returnUri)}",returnUri)
+    @*NonFactors localizer*@
+    @Html.Hidden("_localizerNonFactorsIRS", localizer["Invalid response status"].Value)
+    @Html.Hidden("_localizerNonFactorsGPSOIGD", localizer["Grid partial should only include grid declaration."].Value)
+    @Html.Hidden("_localizerNonFactorsGCOBCFWMS", localizer["Grid can only be created from within mvc-grid structure."].Value)
+    @Html.Hidden("_localizerNonFactorsEquals", localizer["equals"].Value)
+    @Html.Hidden("_localizerNonFactorsNotEquals", localizer["not-equals"].Value)
+    @Html.Hidden("_localizerNonFactorsContains", localizer["contains"].Value)
+    @Html.Hidden("_localizerNonFactorsStartsWith", localizer["starts-with"].Value)
+    @Html.Hidden("_localizerNonFactorsEndsWith", localizer["ends-with"].Value)
+    @Html.Hidden("_localizerNonFactorsLessThan", localizer["less-than"].Value)
+    @Html.Hidden("_localizerNonFactorsGreaterThan", localizer["greater-than"].Value)
+    @Html.Hidden("_localizerNonFactorsLessThanOrEqual", localizer["less-than-or-equal"].Value)
+    @Html.Hidden("_localizerNonFactorsGreaterThanOrEqual", localizer["greater-than-or-equal"].Value)
+    @Html.Hidden("_localizerNonFactorsEarlierThan", localizer["earlier-than"].Value)
+    @Html.Hidden("_localizerNonFactorsLaterThan", localizer["later-than"].Value)
+    @Html.Hidden("_localizerNonFactorsEarlierThanOrEqual", localizer["earlier-than-or-equal"].Value)
+    @Html.Hidden("_localizerNonFactorsLaterThanOrEqual", localizer["later-than-or-equal"].Value)
+    @Html.Hidden("_localizerNonFactorsAnd", localizer["and"].Value)
+    @Html.Hidden("_localizerNonFactorsOr", localizer["or"].Value)
+
 
     <div class="wrapper">
 
@@ -211,24 +239,19 @@ to get the desired effect
                 <script src="~/admin/plugins/bootstrap/js/bootstrap.bundle.min.js" asp-append-version="true"></script>
                 @*<!-- AdminLTE -->*@
                 <script src="~/admin/dist/js/adminlte.js" asp-append-version="true"></script>
+                @*<!-- fullCalendar 2.2.5 -->*@
+                <script src="~/admin/plugins/moment/moment.min.js" asp-append-version="true"></script>
+                <script src="~/admin/plugins/fullcalendar/main.js" asp-append-version="true"></script>
                 @*<!-- Toastr -->*@
                 <script src="~/admin/plugins/toastr/toastr.min.js" asp-append-version="true"></script>
                 @*<!-- summernote.js -->*@
                 <script src="~/admin/plugins/summernote/summernote-bs4.js" asp-append-version="true"></script>
                 <script src="~/admin/plugins/summernote/lang/summernote-ko-KR.min.js" asp-append-version="true"></script>
                 @*nonfactors.grid.mvc6\6.2.4*@
-                if (currentCulture == "ko-KR")
-                {
-                    <script src="~/admin/js/mvc-grid/mvc-grid-ko-KR.js" asp-append-version="true"></script>
-                    <script src="~/admin/js/mvc-grid/mvc-grid-ko-KR-lang.js" asp-append-version="true"></script>
-                }
-                else if (currentCulture == "en-US")
-                {
-                    <script src="~/admin/js/mvc-grid/mvc-grid-en-US.js" asp-append-version="true"></script>
-                    <script src="~/admin/js/mvc-grid/mvc-grid-en-US-lang.js" asp-append-version="true"></script>
-                }
-                <script src="~/admin/js/mvc-grid/mvc-grid-attribute.js" asp-append-version="true"></script>
-                <script src="~/admin/js/mvc-grid/mvc-grid.js" asp-append-version="true"></script>
+                <script src="~/admin/js/mvc-grid/nonfactors-mvc-grid-localizer0.js" asp-append-version="true"></script>
+                <script src="~/admin/js/mvc-grid/nonfactors-mvc-grid-localizer1.js" asp-append-version="true"></script>
+                <script src="~/admin/js/mvc-grid/nonfactors-mvc-grid-attribute.js" asp-append-version="true"></script>
+                <script src="~/admin/js/mvc-grid/nonfactors-mvc-grid.js" asp-append-version="true"></script>
 
                 <script src="~/admin/custom/_Layout/js/site.js" asp-append-version="true"></script>
             }
@@ -245,6 +268,9 @@ to get the desired effect
                 <script src="~/user/plugins/bootstrap/js/bootstrap.bundle.min.js" asp-append-version="true"></script>
                 @*<!-- AdminLTE -->*@
                 <script src="~/user/dist/js/adminlte.js" asp-append-version="true"></script>
+                @*<!-- fullCalendar 2.2.5 -->*@
+                <script src="~/user/plugins/moment/moment.min.js" asp-append-version="true"></script>
+                <script src="~/user/plugins/fullcalendar/main.js" asp-append-version="true"></script>
                 @*<!-- Toastr -->*@
                 <script src="~/user/plugins/toastr/toastr.min.js" asp-append-version="true"></script>
                 @*<!-- Chart.js -->*@
@@ -253,18 +279,10 @@ to get the desired effect
                 <script src="~/user/plugins/summernote/summernote-bs4.js" asp-append-version="true"></script>
                 <script src="~/user/plugins/summernote/lang/summernote-ko-KR.min.js" asp-append-version="true"></script>
                 @*nonfactors.grid.mvc6\6.2.4*@
-                if (currentCulture == "ko-KR")
-                {
-                    <script src="~/user/js/mvc-grid/mvc-grid-ko-KR.js" asp-append-version="true"></script>
-                    <script src="~/user/js/mvc-grid/mvc-grid-ko-KR-lang.js" asp-append-version="true"></script>
-                }
-                else if (currentCulture == "en-US")
-                {
-                    <script src="~/user/js/mvc-grid/mvc-grid-en-US.js" asp-append-version="true"></script>
-                    <script src="~/user/js/mvc-grid/mvc-grid-en-US-lang.js" asp-append-version="true"></script>
-                }
-                <script src="~/user/js/mvc-grid/mvc-grid-attribute.js" asp-append-version="true"></script>
-                <script src="~/user/js/mvc-grid/mvc-grid.js" asp-append-version="true"></script>
+                <script src="~/user/js/mvc-grid/nonfactors-mvc-grid-localizer0.js" asp-append-version="true"></script>
+                <script src="~/user/js/mvc-grid/nonfactors-mvc-grid-localizer1.js" asp-append-version="true"></script>
+                <script src="~/user/js/mvc-grid/nonfactors-mvc-grid-attribute.js" asp-append-version="true"></script>
+                <script src="~/user/js/mvc-grid/nonfactors-mvc-grid.js" asp-append-version="true"></script>
 
                 <script src="~/user/custom/_Layout/js/site.js" asp-append-version="true"></script>
             }
@@ -282,23 +300,21 @@ to get the desired effect
                 <script src="~/anonymous/plugins/bootstrap/js/bootstrap.bundle.min.js" asp-append-version="true"></script>
                 @*<!-- AdminLTE -->*@
                 <script src="~/anonymous/dist/js/adminlte.js" asp-append-version="true"></script>
+                @*<!-- fullCalendar 2.2.5 -->*@
+                <script src="~/anonymous/plugins/moment/moment.min.js" asp-append-version="true"></script>
+                <script src="~/anonymous/plugins/fullcalendar/main.js" asp-append-version="true"></script>
                 @*<!-- Toastr -->*@
                 <script src="~/anonymous/plugins/toastr/toastr.min.js" asp-append-version="true"></script>
                 @*<!-- Chart.js -->*@
                 <script src="~/anonymous/plugins/chart.js/Chart.min.js" asp-append-version="true"></script>
+                @*<!-- summernote.js -->*@
+                <script src="~/anonymous/plugins/summernote/summernote-bs4.js" asp-append-version="true"></script>
+                <script src="~/anonymous/plugins/summernote/lang/summernote-ko-KR.min.js" asp-append-version="true"></script>
                 @*nonfactors.grid.mvc6\6.2.4*@
-                if (currentCulture == "ko-KR")
-                {
-                    <script src="~/anonymous/js/mvc-grid/mvc-grid-ko-KR.js" asp-append-version="true"></script>
-                    <script src="~/anonymous/js/mvc-grid/mvc-grid-ko-KR-lang.js" asp-append-version="true"></script>
-                }
-                else if (currentCulture == "en-US")
-                {
-                    <script src="~/anonymous/js/mvc-grid/mvc-grid-en-US.js" asp-append-version="true"></script>
-                    <script src="~/anonymous/js/mvc-grid/mvc-grid-en-US-lang.js" asp-append-version="true"></script>
-                }
-                <script src="~/anonymous/js/mvc-grid/mvc-grid-attribute.js" asp-append-version="true"></script>
-                <script src="~/anonymous/js/mvc-grid/mvc-grid.js" asp-append-version="true"></script>
+                <script src="~/anonymous/js/mvc-grid/nonfactors-mvc-grid-localizer0.js" asp-append-version="true"></script>
+                <script src="~/anonymous/js/mvc-grid/nonfactors-mvc-grid-localizer1.js" asp-append-version="true"></script>
+                <script src="~/anonymous/js/mvc-grid/nonfactors-mvc-grid-attribute.js" asp-append-version="true"></script>
+                <script src="~/anonymous/js/mvc-grid/nonfactors-mvc-grid.js" asp-append-version="true"></script>
 
                 <script src="~/anonymous/custom/_Layout/js/site.js" asp-append-version="true"></script>
             }

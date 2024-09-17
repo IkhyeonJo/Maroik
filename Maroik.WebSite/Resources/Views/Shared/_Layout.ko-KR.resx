@@ -120,4 +120,58 @@
   <data name="Login" xml:space="preserve">
     <value>로그인</value>
   </data>
+  <data name="Invalid response status" xml:space="preserve">
+    <value>유효하지 않은 상태</value>
+  </data>
+  <data name="Grid partial should only include grid declaration." xml:space="preserve">
+    <value>부분 그리드는 오직 그리드 선언만 포함되어야 합니다.</value>
+  </data>
+  <data name="Grid can only be created from within mvc-grid structure." xml:space="preserve">
+    <value>그리드는 mvc-grid 구조 안에서만 생성되어야 합니다.</value>
+  </data>
+  <data name="equals" xml:space="preserve">
+    <value>같음</value>
+  </data>
+  <data name="not-equals" xml:space="preserve">
+    <value>같지 않음</value>
+  </data>
+  <data name="contains" xml:space="preserve">
+    <value>포함</value>
+  </data>
+  <data name="starts-with" xml:space="preserve">
+    <value>~으로 시작</value>
+  </data>
+  <data name="ends-with" xml:space="preserve">
+    <value>~으로 종료</value>
+  </data>
+  <data name="less-than" xml:space="preserve">
+    <value>미만</value>
+  </data>
+  <data name="greater-than" xml:space="preserve">
+    <value>초과</value>
+  </data>
+  <data name="less-than-or-equal" xml:space="preserve">
+    <value>이하</value>
+  </data>
+  <data name="greater-than-or-equal" xml:space="preserve">
+    <value>이상</value>
+  </data>
+  <data name="earlier-than" xml:space="preserve">
+    <value>이전</value>
+  </data>
+  <data name="later-than" xml:space="preserve">
+    <value>이후</value>
+  </data>
+  <data name="earlier-than-or-equal" xml:space="preserve">
+    <value>이전 또는 같음</value>
+  </data>
+  <data name="later-than-or-equal" xml:space="preserve">
+    <value>이후 또는 같음</value>
+  </data>
+  <data name="and" xml:space="preserve">
+    <value>그리고</value>
+  </data>
+  <data name="or" xml:space="preserve">
+    <value>또는</value>
+  </data>
 </root>

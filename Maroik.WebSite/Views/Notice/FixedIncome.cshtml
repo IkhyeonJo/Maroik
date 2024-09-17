@@ -9,6 +9,57 @@
     List<Asset> assets = (await assetRepository.GetAssetsAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email)).Where(x => !x.Deleted).ToList();
 }
 
+@Html.Hidden("localizerPrevText", localizer["PrevText"].Value)
+@Html.Hidden("localizerNextText", localizer["NextText"].Value)
+@Html.Hidden("localizerJanuary", localizer["January"].Value)
+@Html.Hidden("localizerFebruary", localizer["February"].Value)
+@Html.Hidden("localizerMarch", localizer["March"].Value)
+@Html.Hidden("localizerApril", localizer["April"].Value)
+@Html.Hidden("localizerMay", localizer["May"].Value)
+@Html.Hidden("localizerJune", localizer["June"].Value)
+@Html.Hidden("localizerJuly", localizer["July"].Value)
+@Html.Hidden("localizerAugust", localizer["August"].Value)
+@Html.Hidden("localizerSeptember", localizer["September"].Value)
+@Html.Hidden("localizerOctober", localizer["October"].Value)
+@Html.Hidden("localizerNovember", localizer["November"].Value)
+@Html.Hidden("localizerDecember", localizer["December"].Value)
+@Html.Hidden("localizerJan", localizer["Jan"].Value)
+@Html.Hidden("localizerFeb", localizer["Feb"].Value)
+@Html.Hidden("localizerMar", localizer["Mar"].Value)
+@Html.Hidden("localizerApr", localizer["Apr"].Value)
+@Html.Hidden("localizerJun", localizer["Jun"].Value)
+@Html.Hidden("localizerJul", localizer["Jul"].Value)
+@Html.Hidden("localizerAug", localizer["Aug"].Value)
+@Html.Hidden("localizerSep", localizer["Sep"].Value)
+@Html.Hidden("localizerOct", localizer["Oct"].Value)
+@Html.Hidden("localizerNov", localizer["Nov"].Value)
+@Html.Hidden("localizerDec", localizer["Dec"].Value)
+@Html.Hidden("localizerSunday", localizer["Sunday"].Value)
+@Html.Hidden("localizerMonday", localizer["Monday"].Value)
+@Html.Hidden("localizerTuesday", localizer["Tuesday"].Value)
+@Html.Hidden("localizerWednesday", localizer["Wednesday"].Value)
+@Html.Hidden("localizerThursday", localizer["Thursday"].Value)
+@Html.Hidden("localizerFriday", localizer["Friday"].Value)
+@Html.Hidden("localizerSaturday", localizer["Saturday"].Value)
+@Html.Hidden("localizerSun", localizer["Sun"].Value)
+@Html.Hidden("localizerMon", localizer["Mon"].Value)
+@Html.Hidden("localizerTue", localizer["Tue"].Value)
+@Html.Hidden("localizerWed", localizer["Wed"].Value)
+@Html.Hidden("localizerThu", localizer["Thu"].Value)
+@Html.Hidden("localizerFri", localizer["Fri"].Value)
+@Html.Hidden("localizerSat", localizer["Sat"].Value)
+@Html.Hidden("localizerSu", localizer["Su"].Value)
+@Html.Hidden("localizerMo", localizer["Mo"].Value)
+@Html.Hidden("localizerTu", localizer["Tu"].Value)
+@Html.Hidden("localizerWe", localizer["We"].Value)
+@Html.Hidden("localizerTh", localizer["Th"].Value)
+@Html.Hidden("localizerFr", localizer["Fr"].Value)
+@Html.Hidden("localizerSa", localizer["Sa"].Value)
+@Html.Hidden("localizerYearSuffix", localizer["YearSuffix"]?.Value ?? "")
+@Html.Hidden("localizerNoMaturityDate", localizer["No MaturityDate"].Value)
+@Html.Hidden("localizerToday", localizer["Today"].Value)
+@Html.Hidden("localizerMaturityDateError", localizer["The maturity date cannot be earlier than the current date."].Value)
+
 <section class="content">
     <div class="card card-primary">
         <div class="card-header">
@@ -60,7 +111,7 @@
                             <div class="form-group col-md-6 mb-3">
                                 <label for="createFixedIncomeMainClass">@localizer["MainClass"].Value</label>
                                 <br />
-                                <select id="createFixedIncomeMainClass" name="createFixedIncomeMainClass" style="max-width:90%;">
+                                <select id="createFixedIncomeMainClass" name="createFixedIncomeMainClass" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
                                     <option value="RegularIncome" selected="selected">@localizer["정기수입"].Value</option>
                                     <option value="IrregularIncome">@localizer["비정기수입"].Value</option>
                                 </select>
@@ -68,7 +119,7 @@
                             <div class="form-group col-md-6 mb-3">
                                 <label for="createFixedIncomeSubClass">@localizer["SubClass"].Value</label>
                                 <br />
-                                <select id="createFixedIncomeSubClass" name="createFixedIncomeSubClass" style="max-width:90%;">
+                                <select id="createFixedIncomeSubClass" name="createFixedIncomeSubClass" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
                                     <option value="LaborIncome" selected="selected">@localizer["근로수입"].Value</option>
                                     <option value="BusinessIncome">@localizer["사업수입"].Value</option>
                                     <option value="PensionIncome">@localizer["연금수입"].Value</option>
@@ -93,7 +144,7 @@
                             <div class="form-group col-md-6 mb-3">
                                 <label for="createFixedIncomeDepositMonth">@localizer["DepositMonth"].Value</label>
                                 <br />
-                                <select id="createFixedIncomeDepositMonth" name="createFixedIncomeDepositMonth" style="max-width:90%;">
+                                <select id="createFixedIncomeDepositMonth" name="createFixedIncomeDepositMonth" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
                                     <option value="1" selected="selected">1</option>
                                     @for (int i = 2; i <= 12; i++)
                                     {
@@ -105,7 +156,7 @@
                             <div class="form-group col-md-6 mb-3">
                                 <label for="createFixedIncomeDepositDay">@localizer["DepositDay"].Value</label>
                                 <br />
-                                <select id="createFixedIncomeDepositDay" name="createFixedIncomeDepositDay" style="max-width:90%;">
+                                <select id="createFixedIncomeDepositDay" name="createFixedIncomeDepositDay" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
                                     <option value="1" selected="selected">1</option>
                                     @for (int i = 2; i <= 31; i++)
                                     {
@@ -129,7 +180,7 @@
                             <div class="form-group col-md-6 mb-3">
                                 <label for="createFixedIncomeDepositMyAssetProductName">@localizer["DepositMyAssetProductName"].Value</label>
                                 <br />
-                                <select id="createFixedIncomeDepositMyAssetProductName" name="createFixedIncomeDepositMyAssetProductName" style="max-width:90%;width:210px;text-overflow:ellipsis;">
+                                <select id="createFixedIncomeDepositMyAssetProductName" name="createFixedIncomeDepositMyAssetProductName" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
                                     @foreach (Asset item in assets)
                                     {
                                         if (assets.First() == item)
@@ -172,7 +223,7 @@
                             <div class="form-group col-md-6 mb-3">
                                 <label for="editFixedIncomeMainClass">@localizer["MainClass"].Value</label>
                                 <br />
-                                <select id="editFixedIncomeMainClass" name="editFixedIncomeMainClass" style="max-width:90%;">
+                                <select id="editFixedIncomeMainClass" name="editFixedIncomeMainClass" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
                                     <option value="RegularIncome">@localizer["정기수입"].Value</option>
                                     <option value="IrregularIncome">@localizer["비정기수입"].Value</option>
                                 </select>
@@ -180,7 +231,7 @@
                             <div class="form-group col-md-6 mb-3">
                                 <label for="editFixedIncomeSubClass">@localizer["SubClass"].Value</label>
                                 <br />
-                                <select id="editFixedIncomeSubClass" name="editFixedIncomeSubClass" style="max-width:90%;">
+                                <select id="editFixedIncomeSubClass" name="editFixedIncomeSubClass" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
                                     <option value="LaborIncome">@localizer["근로수입"].Value</option>
                                     <option value="BusinessIncome">@localizer["사업수입"].Value</option>
                                     <option value="PensionIncome">@localizer["연금수입"].Value</option>
@@ -205,7 +256,7 @@
                             <div class="form-group col-md-6 mb-3">
                                 <label for="editFixedIncomeDepositMonth">@localizer["DepositMonth"].Value</label>
                                 <br />
-                                <select id="editFixedIncomeDepositMonth" name="editFixedIncomeDepositMonth" style="max-width:90%;">
+                                <select id="editFixedIncomeDepositMonth" name="editFixedIncomeDepositMonth" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
                                     <option value="1" selected="selected">1</option>
                                     @for (int i = 2; i <= 12; i++)
                                     {
@@ -217,7 +268,7 @@
                             <div class="form-group col-md-6 mb-3">
                                 <label for="editFixedIncomeDepositDay">@localizer["DepositDay"].Value</label>
                                 <br />
-                                <select id="editFixedIncomeDepositDay" name="editFixedIncomeDepositDay" style="max-width:90%;">
+                                <select id="editFixedIncomeDepositDay" name="editFixedIncomeDepositDay" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
                                     <option value="1" selected="selected">1</option>
                                     @for (int i = 2; i <= 31; i++)
                                     {
@@ -241,7 +292,7 @@
                             <div class="form-group col-md-6 mb-3">
                                 <label for="editFixedIncomeDepositMyAssetProductName">@localizer["DepositMyAssetProductName"].Value</label>
                                 <br />
-                                <select id="editFixedIncomeDepositMyAssetProductName" name="editFixedIncomeDepositMyAssetProductName" style="max-width:90%;width:210px;text-overflow:ellipsis;">
+                                <select id="editFixedIncomeDepositMyAssetProductName" name="editFixedIncomeDepositMyAssetProductName" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
                                     @foreach (Asset item in assets)
                                     {
                                         <option value="@item.ProductName">@item.ProductName</option>
@@ -281,13 +332,5 @@
     </div>
 </div>
 @section Scripts{
-    @if (currentCulture == "ko-KR")
-    {
-        <script src="~/user/custom/Notice/FixedIncome/js/ko-KR-init.js" asp-append-version="true"></script>
-    }
-    else if (currentCulture == "en-US")
-    {
-        <script src="~/user/custom/Notice/FixedIncome/js/en-US-init.js" asp-append-version="true"></script>
-    }
     <script src="~/user/custom/Notice/FixedIncome/js/site.js" asp-append-version="true"></script>
 }

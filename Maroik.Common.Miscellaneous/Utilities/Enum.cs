@@ -45,4 +45,12 @@ namespace Maroik.Common.Miscellaneous.Utilities
         [Description("PrivateNote")]
         PrivateNote
     }
+
+    public enum CalendarType
+    {
+        [Description("My")]
+        My,
+        [Description("Other")]
+        Other
+    }
 }

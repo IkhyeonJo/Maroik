@@ -198,4 +198,7 @@
   <data name="Writer" xml:space="preserve">
     <value>작성자</value>
   </data>
+  <data name="IETFLanguageTag" xml:space="preserve">
+    <value>ko-KR</value>
+  </data>
 </root>
