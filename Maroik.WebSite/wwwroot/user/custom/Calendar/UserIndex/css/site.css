@@ -29,6 +29,14 @@
     cursor: pointer;
 }
 
+#closeOtherCalendarEventPopup {
+    background: none;
+    border: none;
+    font-size: 18px;
+    line-height: 1;
+    cursor: pointer;
+}
+
 .popup-body p {
     margin: 5px 0;
     font-size: 14px;

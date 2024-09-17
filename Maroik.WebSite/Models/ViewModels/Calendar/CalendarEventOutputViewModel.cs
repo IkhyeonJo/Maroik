@@ -23,5 +23,6 @@ namespace Maroik.WebSite.Models.ViewModels.Calendar
         public string DisplayEndDate { get; set; }
         public string DisplayStartDateTimeZone { get; set; }
         public string DisplayEndDateTimeZone { get; set; }
+        public string CalendarType { get; set; }
     }
 }

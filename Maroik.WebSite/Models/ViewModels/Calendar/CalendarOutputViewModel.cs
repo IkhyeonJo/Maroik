@@ -4,6 +4,7 @@
     {
         public IEnumerable<Maroik.Common.DataAccess.Models.Calendar> Calendars { get; set; } = [];
         public IEnumerable<CalendarEventOutputViewModel> CalendarEventOutputViewModels { get; set; } = [];
-        public IEnumerable<Maroik.Common.DataAccess.Models.OtherCalendar> OtherCalendars { get; set; } = [];
+        public IEnumerable<Maroik.Common.DataAccess.Models.Calendar> OtherCalendars { get; set; } = [];
+        public IEnumerable<CalendarEventOutputViewModel> OtherCalendarEventOutputViewModels { get; set; } = [];
     }
 }

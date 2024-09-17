@@ -81,6 +81,8 @@
     ErrorRangeWeek: $('#localizerErrorRangeWeek').val()
 };
 
+let calendar;
+
 $.datepicker.setDefaults({
     dateFormat: 'yy-mm-dd',
     prevText: localizer.prevText,
@@ -156,6 +158,8 @@ $(function () {
     $("#editCalendarTabs").tabs();
     $("#createCalendarEventTaskTabs").tabs();
     $("#editCalendarEventTaskTabs").tabs();
+    $("#viewCalendarEventTaskTabs").tabs();
+    $('#browseCalendarsOfInterestTabs').tabs();
 
     $("#createCalendarEventAllDayUncheckedStartDate").datepicker({
         showButtonPanel: true,
@@ -354,7 +358,7 @@ $(function () {
         $("#divEditEventNotificationAllDayUnchecked").show();
     }
 
-    let calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
+    calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
         locale: localizer.IETFLanguageTag,
         headerToolbar: {
             left: 'prevYear,prev,next,nextYear today',
@@ -408,167 +412,169 @@ $(function () {
             calendar.unselect();
         },
         eventClick: function (arg) {
-            var eventEl = $(arg.el);
-            var offset = eventEl.offset();
-            var popup = $('#calendarEventPopup');
-            var currentEventId = popup.data('event-id');
+            if (arg.event.extendedProps.calendarType === 'My') {
 
-            if (popup.is(':visible') && currentEventId === arg.event.id) {
-                popup.hide();
-                return;
-            }
+                let eventEl = $(arg.el);
+                let offset = eventEl.offset();
+                let popup = $('#calendarEventPopup');
+                let currentEventId = popup.data('event-id');
 
-            $('#calendarEventPopupTitle').text(arg.event.title);
-            $('#divCalendarEventPopupAllDayChecked').hide();
-            $('#divCalendarEventPopupAllDayUnchecked').hide();
-
-            if (arg.event.allDay === true) {
-                $('#calendarEventPopupStartAllDayChecked').text(arg.event.extendedProps.displayStartDate);
-                $('#calendarEventPopupEndAllDayChecked').text(arg.event.extendedProps.displayEndDate);
-                $('#divCalendarEventPopupAllDayChecked').show();
-            } else {
-                $('#calendarEventPopupStartAllDayUnchecked').text(arg.event.extendedProps.displayStartDate);
-                $('#calendarEventPopupStartTimeZoneAllDayUnchecked').text(`(${arg.event.extendedProps.displayStartDateTimeZone})`);
-                $('#calendarEventPopupEndAllDayUnchecked').text(arg.event.extendedProps.displayEndDate);
-                $('#calendarEventPopupEndTimeZoneAllDayUnchecked').text(`(${arg.event.extendedProps.displayEndDateTimeZone})`);
-                $('#divCalendarEventPopupAllDayUnchecked').show();
-            }
-
-            popup.css({
-                top: offset.top + eventEl.outerHeight(),
-                left: offset.left + eventEl.outerWidth(),
-                display: 'block'
-            }).data('event-id', arg.event.id);
-
-            $('#editCalendarEventPopup').focus();
-
-            $(document).on('click', function (e) {
-                if (!$(e.target).closest('#calendarEventPopup, .fc-event').length) {
+                if (popup.is(':visible') && currentEventId === arg.event.id) {
                     popup.hide();
+                    return;
                 }
-            });
 
-            $('#closeCalendarEventPopup').off('click').on('click', function () {
-                popup.hide();
-            });
+                $('#calendarEventPopupTitle').text(arg.event.title);
+                $('#divCalendarEventPopupAllDayChecked').hide();
+                $('#divCalendarEventPopupAllDayUnchecked').hide();
 
-            $('#editCalendarEventPopup').off('click').on('click', function () {
+                if (arg.event.allDay === true) {
+                    $('#calendarEventPopupStartAllDayChecked').text(arg.event.extendedProps.displayStartDate);
+                    $('#calendarEventPopupEndAllDayChecked').text(arg.event.extendedProps.displayEndDate);
+                    $('#divCalendarEventPopupAllDayChecked').show();
+                } else {
+                    $('#calendarEventPopupStartAllDayUnchecked').text(arg.event.extendedProps.displayStartDate);
+                    $('#calendarEventPopupStartTimeZoneAllDayUnchecked').text(`(${arg.event.extendedProps.displayStartDateTimeZone})`);
+                    $('#calendarEventPopupEndAllDayUnchecked').text(arg.event.extendedProps.displayEndDate);
+                    $('#calendarEventPopupEndTimeZoneAllDayUnchecked').text(`(${arg.event.extendedProps.displayEndDateTimeZone})`);
+                    $('#divCalendarEventPopupAllDayUnchecked').show();
+                }
 
-                $.ajax({
-                    url: '/Calendar/IsCalendarEventExists' + '?id=' + popup.data('event-id'),
-                    type: 'POST',
-                    headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
-                    dataType: 'json',
-                    data: null,
-                    contentType: 'application/json; charset=utf-8',
-                    success: function (data) {
-                        if (data.result) {
+                popup.css({
+                    top: offset.top + eventEl.outerHeight(),
+                    left: offset.left + eventEl.outerWidth(),
+                    display: 'block'
+                }).data('event-id', arg.event.id);
 
-                            let formEditCalendarEvent = $('#formEditCalendarEvent');
+                $('#editCalendarEventPopup').focus();
 
-                            formEditCalendarEvent.find('input[id="editCalendarEventId"]').val(data.calendarEvent.id);
-                            formEditCalendarEvent.find('input[id="editCalendarEventName"]').val(data.calendarEvent.title);
-                            formEditCalendarEvent.find('input[id="editCalendarEventAllDay"]').val(data.calendarEvent.allDay);
+                $(document).on('click', function (e) {
+                    if (!$(e.target).closest('#calendarEventPopup, .fc-event').length) {
+                        popup.hide();
+                    }
+                });
 
-                            $('#divEditEventAllDayChecked').hide();
-                            $('#divEditEventAllDayUnchecked').hide();
+                $('#closeCalendarEventPopup').off('click').on('click', function () {
+                    popup.hide();
+                });
 
-                            if (data.calendarEvent.allDay === true) {
-                                $('#divEditEventAllDayChecked').show();
-                                formEditCalendarEvent.find('input[id="editCalendarEventAllDay"]').prop('checked', true);
-                                formEditCalendarEvent.find('input[id="editCalendarEventAllDayCheckedStartDate"]').val(data.calendarEvent.displayStartDate);
-                                formEditCalendarEvent.find('input[id="editCalendarEventAllDayCheckedEndDate"]').val(data.calendarEvent.displayEndDate);
+                $('#editCalendarEventPopup').off('click').on('click', function () {
 
-                            }
-                            else {
-                                $('#divEditEventAllDayUnchecked').show();
+                    $.ajax({
+                        url: '/Calendar/IsCalendarEventExists' + '?id=' + popup.data('event-id'),
+                        type: 'POST',
+                        headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
+                        dataType: 'json',
+                        data: null,
+                        contentType: 'application/json; charset=utf-8',
+                        success: function (data) {
+                            if (data.result) {
 
-                                formEditCalendarEvent.find('input[id="editCalendarEventAllDay"]').prop('checked', false);
+                                let formEditCalendarEvent = $('#formEditCalendarEvent');
 
-                                formEditCalendarEvent.find('input[id="editCalendarEventAllDayUncheckedStartDate"]').val(data.calendarEvent.displayStartDate.split(' ')[0]);
-                                formEditCalendarEvent.find('select[id="editCalendarEventAllDayUncheckedStartTime"]').val(data.calendarEvent.displayStartDate.split(' ')[1].substring(0, 5));
-                                formEditCalendarEvent.find('select[id="editCalendarEventAllDayUncheckedStartTimeZone"]').val(data.calendarEvent.startDateTimeZoneIanaId);
+                                formEditCalendarEvent.find('input[id="editCalendarEventId"]').val(data.calendarEvent.id);
+                                formEditCalendarEvent.find('input[id="editCalendarEventName"]').val(data.calendarEvent.title);
+                                formEditCalendarEvent.find('input[id="editCalendarEventAllDay"]').val(data.calendarEvent.allDay);
 
-                                formEditCalendarEvent.find('input[id="editCalendarEventAllDayUncheckedEndDate"]').val(data.calendarEvent.displayEndDate.split(' ')[0]);
-                                formEditCalendarEvent.find('select[id="editCalendarEventAllDayUncheckedEndTime"]').val(data.calendarEvent.displayEndDate.split(' ')[1].substring(0, 5));
-                                formEditCalendarEvent.find('select[id="editCalendarEventAllDayUncheckedEndTimeZone"]').val(data.calendarEvent.endDateTimeZoneIanaId);
-                            }
+                                $('#divEditEventAllDayChecked').hide();
+                                $('#divEditEventAllDayUnchecked').hide();
 
-                            formEditCalendarEvent.find('input[id="editCalendarEventLocation"]').val(data.calendarEvent.location);
-                            formEditCalendarEvent.find('textarea[id="editCalendarEventDescription"]').summernote('code', data.calendarEvent.description);
+                                if (data.calendarEvent.allDay === true) {
+                                    $('#divEditEventAllDayChecked').show();
+                                    formEditCalendarEvent.find('input[id="editCalendarEventAllDay"]').prop('checked', true);
+                                    formEditCalendarEvent.find('input[id="editCalendarEventAllDayCheckedStartDate"]').val(data.calendarEvent.displayStartDate);
+                                    formEditCalendarEvent.find('input[id="editCalendarEventAllDayCheckedEndDate"]').val(data.calendarEvent.displayEndDate);
 
-                            $('#divEditCalendarEventAttachedFile').hide();
+                                }
+                                else {
+                                    $('#divEditEventAllDayUnchecked').show();
 
-                            if (data.calendarEvent.calendarEventAttachedFile !== null) {
-                                $('#divEditCalendarEventAttachedFile').show();
+                                    formEditCalendarEvent.find('input[id="editCalendarEventAllDay"]').prop('checked', false);
 
-                                $("#aEditCalendarEventAttachedFile").attr("href", data.calendarEvent.calendarEventAttachedFile.path);
-                                $("#aEditCalendarEventAttachedFile").attr("download", `${data.calendarEvent.calendarEventAttachedFile.name}${data.calendarEvent.calendarEventAttachedFile.extension}`);
-                                $("#aEditCalendarEventAttachedFile").text(`${data.calendarEvent.calendarEventAttachedFile.name}${data.calendarEvent.calendarEventAttachedFile.extension}`);
+                                    formEditCalendarEvent.find('input[id="editCalendarEventAllDayUncheckedStartDate"]').val(data.calendarEvent.displayStartDate.split(' ')[0]);
+                                    formEditCalendarEvent.find('select[id="editCalendarEventAllDayUncheckedStartTime"]').val(data.calendarEvent.displayStartDate.split(' ')[1].substring(0, 5));
+                                    formEditCalendarEvent.find('select[id="editCalendarEventAllDayUncheckedStartTimeZone"]').val(data.calendarEvent.startDateTimeZoneIanaId);
 
-                                $("#spanEditCalendarEventAttachedFile").text(`${Math.round(data.calendarEvent.calendarEventAttachedFile.size / 1024).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}KB`);
-                            }
+                                    formEditCalendarEvent.find('input[id="editCalendarEventAllDayUncheckedEndDate"]').val(data.calendarEvent.displayEndDate.split(' ')[0]);
+                                    formEditCalendarEvent.find('select[id="editCalendarEventAllDayUncheckedEndTime"]').val(data.calendarEvent.displayEndDate.split(' ')[1].substring(0, 5));
+                                    formEditCalendarEvent.find('select[id="editCalendarEventAllDayUncheckedEndTimeZone"]').val(data.calendarEvent.endDateTimeZoneIanaId);
+                                }
 
-                            $.ajax({
-                                url: '/Calendar/GetCalendars',
-                                method: 'POST',
-                                headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
-                                dataType: 'json',
-                                data: null,
-                                contentType: 'application/json; charset=utf-8',
-                                async: false,
-                                success: function (response) {
-                                    if (response.result) {
-                                        $('#editCalendarEventMyCalendar').empty();
+                                formEditCalendarEvent.find('input[id="editCalendarEventLocation"]').val(data.calendarEvent.location);
+                                formEditCalendarEvent.find('textarea[id="editCalendarEventDescription"]').summernote('code', data.calendarEvent.description);
 
-                                        $.each(response.calendars, function (index, calendar) {
-                                            $('#editCalendarEventMyCalendar').append($('<option>', {
-                                                value: calendar.id,
-                                                text: calendar.name
-                                            }));
+                                $('#divEditCalendarEventAttachedFile').hide();
+
+                                if (data.calendarEvent.calendarEventAttachedFile !== null) {
+                                    $('#divEditCalendarEventAttachedFile').show();
+
+                                    $("#aEditCalendarEventAttachedFile").attr("href", data.calendarEvent.calendarEventAttachedFile.path);
+                                    $("#aEditCalendarEventAttachedFile").attr("download", `${data.calendarEvent.calendarEventAttachedFile.name}${data.calendarEvent.calendarEventAttachedFile.extension}`);
+                                    $("#aEditCalendarEventAttachedFile").text(`${data.calendarEvent.calendarEventAttachedFile.name}${data.calendarEvent.calendarEventAttachedFile.extension}`);
+
+                                    $("#spanEditCalendarEventAttachedFile").text(`${Math.round(data.calendarEvent.calendarEventAttachedFile.size / 1024).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}KB`);
+                                }
+
+                                $.ajax({
+                                    url: '/Calendar/GetCalendars',
+                                    method: 'POST',
+                                    headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
+                                    dataType: 'json',
+                                    data: null,
+                                    contentType: 'application/json; charset=utf-8',
+                                    async: false,
+                                    success: function (response) {
+                                        if (response.result) {
+                                            $('#editCalendarEventMyCalendar').empty();
+
+                                            $.each(response.calendars, function (index, calendar) {
+                                                $('#editCalendarEventMyCalendar').append($('<option>', {
+                                                    value: calendar.id,
+                                                    text: calendar.name
+                                                }));
+                                            });
+
+                                            $('#editCalendarEventMyCalendar').val(data.calendarEvent.calendarId);
+                                        }
+                                    }
+                                });
+
+                                $('#editCalendarEventStatus').val(data.calendarEvent.status);
+
+                                $('#divEditEventNotificationAllDayChecked').hide();
+                                $('#divEditEventNotificationAllDayUnchecked').hide();
+
+                                if (data.calendarEvent.allDay === true) {
+                                    $("#divEditEventNotificationAllDayChecked .divEditEventNotificationAllDayCheckedRow").remove();
+                                    $('#divEditEventNotificationAllDayChecked').show();
+
+                                    if (data.calendarEvent.serializedCalendarReminders !== '[]') {
+                                        const timeIntervals = Array.from({ length: 96 }, (_, i) => {
+                                            const hours = String(Math.floor(i / 4)).padStart(2, '0');
+                                            const minutes = String((i % 4) * 15).padStart(2, '0');
+                                            return `${hours}:${minutes}`;
                                         });
 
-                                        $('#editCalendarEventMyCalendar').val(data.calendarEvent.calendarId);
-                                    }
-                                }
-                            });
+                                        JSON.parse(data.calendarEvent.serializedCalendarReminders).forEach(reminder => {
 
-                            $('#editCalendarEventStatus').val(data.calendarEvent.status);
-
-                            $('#divEditEventNotificationAllDayChecked').hide();
-                            $('#divEditEventNotificationAllDayUnchecked').hide();
-
-                            if (data.calendarEvent.allDay === true) {
-                                $("#divEditEventNotificationAllDayChecked .divEditEventNotificationAllDayCheckedRow").remove();
-                                $('#divEditEventNotificationAllDayChecked').show();
-
-                                if (data.calendarEvent.serializedCalendarReminders !== '[]') {
-                                    const timeIntervals = Array.from({ length: 96 }, (_, i) => {
-                                        const hours = String(Math.floor(i / 4)).padStart(2, '0');
-                                        const minutes = String((i % 4) * 15).padStart(2, '0');
-                                        return `${hours}:${minutes}`;
-                                    });
-
-                                    JSON.parse(data.calendarEvent.serializedCalendarReminders).forEach(reminder => {
-
-                                        const selectedMethodOption = `
+                                            const selectedMethodOption = `
                                             <option value='Email' ${reminder.Method === 'Email' ? 'selected' : ''}>${localizer.Email}</option>
                                             <option value='Notification' ${reminder.Method === 'Notification' ? 'selected' : ''}>${localizer.Notification}</option>
                                         `;
 
-                                        let value = reminder.DaysBeforeEvent !== null ? reminder.DaysBeforeEvent : reminder.WeeksBeforeEvent;
-                                        let max = reminder.DaysBeforeEvent !== null ? 28 : 4;
-                                        let selectedDays = reminder.DaysBeforeEvent !== null ? 'selected' : '';
-                                        let selectedWeeks = reminder.WeeksBeforeEvent !== null ? 'selected' : '';
+                                            let value = reminder.DaysBeforeEvent !== null ? reminder.DaysBeforeEvent : reminder.WeeksBeforeEvent;
+                                            let max = reminder.DaysBeforeEvent !== null ? 28 : 4;
+                                            let selectedDays = reminder.DaysBeforeEvent !== null ? 'selected' : '';
+                                            let selectedWeeks = reminder.WeeksBeforeEvent !== null ? 'selected' : '';
 
-                                        const selNotificationTimeTypeAllDayChecked = `
+                                            const selNotificationTimeTypeAllDayChecked = `
                                         <input type='number' class='form-control-sm editCalendarEventSelNotificationNumberAllDayChecked' style='width:20%;text-overflow:ellipsis; background-color:#343a40; color:#fff; border-color:#6c757d;' min="0" max="${max}" value="${value}">
                                         <select class='form-control-sm editCalendarEventSelNotificationTimeTypeAllDayChecked' style='width:15%;text-overflow:ellipsis;'>
                                             <option value='Days' ${selectedDays}>${localizer.Days}</option>
                                             <option value='Weeks' ${selectedWeeks}>${localizer.Weeks}</option>
                                         </select>`;
 
-                                        const htmlString = String.raw`
+                                            const htmlString = String.raw`
                                         <div class="divEditEventNotificationAllDayCheckedRow">
                                             <select class='form-control-sm editCalendarEventSelNotificationMethodAllDayChecked' style='width:20%;text-overflow:ellipsis;'>
                                                 ${selectedMethodOption}
@@ -589,32 +595,32 @@ $(function () {
                                         </div>
                                     `;
 
-                                        $(htmlString).insertBefore('#editCalendarEventNotificationAllDayChecked');
-                                    });
+                                            $(htmlString).insertBefore('#editCalendarEventNotificationAllDayChecked');
+                                        });
+                                    }
                                 }
-                            }
-                            else {
-                                $("#divEditEventNotificationAllDayUnchecked .divEditEventNotificationAllDayUncheckedRow").remove();
-                                $('#divEditEventNotificationAllDayUnchecked').show();
+                                else {
+                                    $("#divEditEventNotificationAllDayUnchecked .divEditEventNotificationAllDayUncheckedRow").remove();
+                                    $('#divEditEventNotificationAllDayUnchecked').show();
 
-                                if (data.calendarEvent.serializedCalendarReminders !== '[]') {
+                                    if (data.calendarEvent.serializedCalendarReminders !== '[]') {
 
-                                    JSON.parse(data.calendarEvent.serializedCalendarReminders).forEach(reminder => {
+                                        JSON.parse(data.calendarEvent.serializedCalendarReminders).forEach(reminder => {
 
-                                        const selectedMethodOption = `
+                                            const selectedMethodOption = `
                                             <option value='Email' ${reminder.Method === 'Email' ? 'selected' : ''}>${localizer.Email}</option>
                                             <option value='Notification' ${reminder.Method === 'Notification' ? 'selected' : ''}>${localizer.Notification}</option>
                                         `;
 
-                                        let value = reminder.MinutesBeforeEvent !== null ? reminder.MinutesBeforeEvent : reminder.HoursBeforeEvent !== null ? reminder.HoursBeforeEvent : reminder.DaysBeforeEvent !== null ? reminder.DaysBeforeEvent : reminder.WeeksBeforeEvent;
-                                        let max = reminder.MinutesBeforeEvent !== null ? 40320 : reminder.HoursBeforeEvent !== null ? 672 : reminder.DaysBeforeEvent !== null ? 28 : 4;
+                                            let value = reminder.MinutesBeforeEvent !== null ? reminder.MinutesBeforeEvent : reminder.HoursBeforeEvent !== null ? reminder.HoursBeforeEvent : reminder.DaysBeforeEvent !== null ? reminder.DaysBeforeEvent : reminder.WeeksBeforeEvent;
+                                            let max = reminder.MinutesBeforeEvent !== null ? 40320 : reminder.HoursBeforeEvent !== null ? 672 : reminder.DaysBeforeEvent !== null ? 28 : 4;
 
-                                        let selectedMinutes = reminder.MinutesBeforeEvent !== null ? 'selected' : '';
-                                        let selectedHours = reminder.HoursBeforeEvent !== null ? 'selected' : '';
-                                        let selectedDays = reminder.DaysBeforeEvent !== null ? 'selected' : '';
-                                        let selectedWeeks = reminder.WeeksBeforeEvent !== null ? 'selected' : '';
+                                            let selectedMinutes = reminder.MinutesBeforeEvent !== null ? 'selected' : '';
+                                            let selectedHours = reminder.HoursBeforeEvent !== null ? 'selected' : '';
+                                            let selectedDays = reminder.DaysBeforeEvent !== null ? 'selected' : '';
+                                            let selectedWeeks = reminder.WeeksBeforeEvent !== null ? 'selected' : '';
 
-                                        const selNotificationTimeTypeAllDayUnchecked = `
+                                            const selNotificationTimeTypeAllDayUnchecked = `
                                         <input type='number' class='form-control-sm editCalendarEventSelNotificationNumberAllDayUnchecked' style='width:20%;text-overflow:ellipsis; background-color:#343a40; color:#fff; border-color:#6c757d;' min="0" max="${max}" value="${value}">
                                         <select class='form-control-sm editCalendarEventSelNotificationTimeTypeAllDayUnchecked' style='width:15%;text-overflow:ellipsis;'>
                                             <option value='Minutes' ${selectedMinutes}>${localizer.Minutes}</option>
@@ -623,7 +629,7 @@ $(function () {
                                             <option value='Weeks' ${selectedWeeks}>${localizer.Weeks}</option>
                                         </select>`;
 
-                                        const htmlString = String.raw`
+                                            const htmlString = String.raw`
                                         <div class="divEditEventNotificationAllDayUncheckedRow" style="padding-bottom:5px;">
                                             <select class='form-control-sm editCalendarEventSelNotificationMethodAllDayUnchecked' style='width:20%;text-overflow:ellipsis;'>
                                                 ${selectedMethodOption}
@@ -640,32 +646,99 @@ $(function () {
                                         </div>
                                     `;
 
-                                        $(htmlString).insertBefore('#editCalendarEventNotificationAllDayUnchecked');
-                                    });
+                                            $(htmlString).insertBefore('#editCalendarEventNotificationAllDayUnchecked');
+                                        });
+                                    }
+                                }
+
+                                $('#editCalendarEventTaskDialogModal').modal({
+                                    keyboard: false,
+                                    backdrop: "static"
+                                });
+
+                                $('#editCalendarEventTaskDialogModal').modal('toggle');
+                                $('#editCalendarEventTaskDialogModal').modal('show');
+                            }
+                            else {
+                                toastr.error(data.error);
+                            }
+                        }
+                    });
+
+                    popup.hide();
+                });
+
+                $('#deleteCalendarEventPopup').off('click').on('click', function () {
+                    if (confirm(`${localizer.ConfirmDelete}`)) {
+                        $.ajax({
+                            url: '/Calendar/DeleteCalendarEvent?id=' + popup.data('event-id'),
+                            type: 'POST',
+                            headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
+                            dataType: 'json',
+                            data: null,
+                            contentType: 'application/json; charset=utf-8',
+                            success: function (data) {
+                                if (data.result) {
+                                    arg.event.remove();
+                                    toastr.success(data.message);
+                                } else {
+                                    toastr.error(data.error);
                                 }
                             }
+                        });
+                    }
+                    popup.hide();
+                });
 
-                            $('#editCalendarEventTaskDialogModal').modal({
-                                keyboard: false,
-                                backdrop: "static"
-                            });
+                return false;
+            } else if (arg.event.extendedProps.calendarType === 'Other') {
+                let eventEl = $(arg.el);
+                let offset = eventEl.offset();
+                let popup = $('#otherCalendarEventPopup');
+                let currentEventId = popup.data('event-id');
 
-                            $('#editCalendarEventTaskDialogModal').modal('toggle');
-                            $('#editCalendarEventTaskDialogModal').modal('show');
-                        }
-                        else {
-                            toastr.error(data.error);
-                        }
+                if (popup.is(':visible') && currentEventId === arg.event.id) {
+                    popup.hide();
+                    return;
+                }
+
+                $('#otherCalendarEventPopupTitle').text(arg.event.title);
+                $('#divOtherCalendarEventPopupAllDayChecked').hide();
+                $('#divOtherCalendarEventPopupAllDayUnchecked').hide();
+
+                if (arg.event.allDay === true) {
+                    $('#otherCalendarEventPopupStartAllDayChecked').text(arg.event.extendedProps.displayStartDate);
+                    $('#otherCalendarEventPopupEndAllDayChecked').text(arg.event.extendedProps.displayEndDate);
+                    $('#divOtherCalendarEventPopupAllDayChecked').show();
+                } else {
+                    $('#otherCalendarEventPopupStartAllDayUnchecked').text(arg.event.extendedProps.displayStartDate);
+                    $('#otherCalendarEventPopupStartTimeZoneAllDayUnchecked').text(`(${arg.event.extendedProps.displayStartDateTimeZone})`);
+                    $('#otherCalendarEventPopupEndAllDayUnchecked').text(arg.event.extendedProps.displayEndDate);
+                    $('#otherCalendarEventPopupEndTimeZoneAllDayUnchecked').text(`(${arg.event.extendedProps.displayEndDateTimeZone})`);
+                    $('#divOtherCalendarEventPopupAllDayUnchecked').show();
+                }
+
+                popup.css({
+                    top: offset.top + eventEl.outerHeight(),
+                    left: offset.left + eventEl.outerWidth(),
+                    display: 'block'
+                }).data('event-id', arg.event.id);
+
+                $('#viewOtherCalendarEventPopup').focus();
+
+                $(document).on('click', function (e) {
+                    if (!$(e.target).closest('#otherCalendarEventPopup, .fc-event').length) {
+                        popup.hide();
                     }
                 });
 
-                popup.hide();
-            });
+                $('#closeOtherCalendarEventPopup').off('click').on('click', function () {
+                    popup.hide();
+                });
 
-            $('#deleteCalendarEventPopup').off('click').on('click', function () {
-                if (confirm(`${localizer.ConfirmDelete}`)) {
+                $('#viewOtherCalendarEventPopup').off('click').on('click', function () {
                     $.ajax({
-                        url: '/Calendar/DeleteCalendarEvent?id=' + popup.data('event-id'),
+                        url: '/Calendar/IsOtherCalendarEventExists' + '?id=' + popup.data('event-id'),
                         type: 'POST',
                         headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
                         dataType: 'json',
@@ -673,18 +746,202 @@ $(function () {
                         contentType: 'application/json; charset=utf-8',
                         success: function (data) {
                             if (data.result) {
-                                arg.event.remove();
-                                toastr.success(data.message);
-                            } else {
+
+                                let formViewCalendarEvent = $('#formViewCalendarEvent');
+
+                                formViewCalendarEvent.find('input[id="viewCalendarEventId"]').val(data.calendarEvent.id);
+                                formViewCalendarEvent.find('input[id="viewCalendarEventName"]').val(data.calendarEvent.title);
+                                formViewCalendarEvent.find('input[id="viewCalendarEventAllDay"]').val(data.calendarEvent.allDay);
+
+                                $('#divViewEventAllDayChecked').hide();
+                                $('#divViewEventAllDayUnchecked').hide();
+
+                                if (data.calendarEvent.allDay === true) {
+                                    $('#divViewEventAllDayChecked').show();
+                                    formViewCalendarEvent.find('input[id="viewCalendarEventAllDay"]').prop('checked', true);
+                                    formViewCalendarEvent.find('input[id="viewCalendarEventAllDayCheckedStartDate"]').val(data.calendarEvent.displayStartDate);
+                                    formViewCalendarEvent.find('input[id="viewCalendarEventAllDayCheckedEndDate"]').val(data.calendarEvent.displayEndDate);
+
+                                }
+                                else {
+                                    $('#divViewEventAllDayUnchecked').show();
+
+                                    formViewCalendarEvent.find('input[id="viewCalendarEventAllDay"]').prop('checked', false);
+
+                                    formViewCalendarEvent.find('input[id="viewCalendarEventAllDayUncheckedStartDate"]').val(data.calendarEvent.displayStartDate.split(' ')[0]);
+                                    formViewCalendarEvent.find('select[id="viewCalendarEventAllDayUncheckedStartTime"]').val(data.calendarEvent.displayStartDate.split(' ')[1].substring(0, 5));
+                                    formViewCalendarEvent.find('select[id="viewCalendarEventAllDayUncheckedStartTimeZone"]').val(data.calendarEvent.startDateTimeZoneIanaId);
+
+                                    formViewCalendarEvent.find('input[id="viewCalendarEventAllDayUncheckedEndDate"]').val(data.calendarEvent.displayEndDate.split(' ')[0]);
+                                    formViewCalendarEvent.find('select[id="viewCalendarEventAllDayUncheckedEndTime"]').val(data.calendarEvent.displayEndDate.split(' ')[1].substring(0, 5));
+                                    formViewCalendarEvent.find('select[id="viewCalendarEventAllDayUncheckedEndTimeZone"]').val(data.calendarEvent.endDateTimeZoneIanaId);
+                                }
+
+                                formViewCalendarEvent.find('input[id="viewCalendarEventLocation"]').val(data.calendarEvent.location);
+                                formViewCalendarEvent.find('textarea[id="viewCalendarEventDescription"]').summernote('code', data.calendarEvent.description);
+                                formViewCalendarEvent.find('textarea[id="viewCalendarEventDescription"]').summernote('disable');
+
+                                $('#divViewCalendarEventAttachedFile').hide();
+
+                                if (data.calendarEvent.calendarEventAttachedFile !== null) {
+                                    $('#divViewCalendarEventAttachedFile').show();
+
+                                    $("#aViewCalendarEventAttachedFile").attr("href", data.calendarEvent.calendarEventAttachedFile.path);
+                                    $("#aViewCalendarEventAttachedFile").attr("download", `${data.calendarEvent.calendarEventAttachedFile.name}${data.calendarEvent.calendarEventAttachedFile.extension}`);
+                                    $("#aViewCalendarEventAttachedFile").text(`${data.calendarEvent.calendarEventAttachedFile.name}${data.calendarEvent.calendarEventAttachedFile.extension}`);
+
+                                    $("#spanViewCalendarEventAttachedFile").text(`${Math.round(data.calendarEvent.calendarEventAttachedFile.size / 1024).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}KB`);
+                                }
+
+
+                                $.ajax({
+                                    url: '/Calendar/GetOtherCalendars',
+                                    method: 'POST',
+                                    headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
+                                    dataType: 'json',
+                                    data: null,
+                                    contentType: 'application/json; charset=utf-8',
+                                    async: false,
+                                    success: function (response) {
+                                        if (response.result) {
+                                            $('#viewCalendarEventMyCalendar').empty();
+
+                                            $.each(response.tempOtherCalendars, function (index, tempOtherCalendar) {
+                                                $('#viewCalendarEventMyCalendar').append($('<option>', {
+                                                    value: tempOtherCalendar.id,
+                                                    text: tempOtherCalendar.name
+                                                }));
+                                            });
+
+                                            $('#viewCalendarEventMyCalendar').val(data.calendarEvent.calendarId);
+                                        }
+                                    }
+                                });
+
+                                $('#viewCalendarEventStatus').val(data.calendarEvent.status);
+
+                                $('#divViewEventNotificationAllDayChecked').hide();
+                                $('#divViewEventNotificationAllDayUnchecked').hide();
+
+                                if (data.calendarEvent.allDay === true) {
+                                    $("#divViewEventNotificationAllDayChecked .divViewEventNotificationAllDayCheckedRow").remove();
+                                    $('#divViewEventNotificationAllDayChecked').show();
+
+                                    if (data.calendarEvent.serializedCalendarReminders !== '[]') {
+                                        const timeIntervals = Array.from({ length: 96 }, (_, i) => {
+                                            const hours = String(Math.floor(i / 4)).padStart(2, '0');
+                                            const minutes = String((i % 4) * 15).padStart(2, '0');
+                                            return `${hours}:${minutes}`;
+                                        });
+
+                                        JSON.parse(data.calendarEvent.serializedCalendarReminders).forEach(reminder => {
+
+                                            const selectedMethodOption = `
+                                                <option value='Email' ${reminder.Method === 'Email' ? 'selected' : ''}>${localizer.Email}</option>
+                                                <option value='Notification' ${reminder.Method === 'Notification' ? 'selected' : ''}>${localizer.Notification}</option>
+                                            `;
+
+                                            let value = reminder.DaysBeforeEvent !== null ? reminder.DaysBeforeEvent : reminder.WeeksBeforeEvent;
+                                            let max = reminder.DaysBeforeEvent !== null ? 28 : 4;
+                                            let selectedDays = reminder.DaysBeforeEvent !== null ? 'selected' : '';
+                                            let selectedWeeks = reminder.WeeksBeforeEvent !== null ? 'selected' : '';
+
+                                            const selNotificationTimeTypeAllDayChecked = `
+                                            <input type='number' class='form-control-sm viewCalendarEventSelNotificationNumberAllDayChecked' style='width:20%;text-overflow:ellipsis; background-color:#343a40; color:#fff; border-color:#6c757d;' min="0" max="${max}" value="${value}" disabled>
+                                            <select class='form-control-sm viewCalendarEventSelNotificationTimeTypeAllDayChecked' style='width:15%;text-overflow:ellipsis;' disabled>
+                                                <option value='Days' ${selectedDays}>${localizer.Days}</option>
+                                                <option value='Weeks' ${selectedWeeks}>${localizer.Weeks}</option>
+                                            </select>`;
+
+                                            const htmlString = String.raw`
+                                                <div class="divViewEventNotificationAllDayCheckedRow">
+                                                    <select class='form-control-sm viewCalendarEventSelNotificationMethodAllDayChecked' style='width:20%;text-overflow:ellipsis;' disabled>
+                                                        ${selectedMethodOption}
+                                                    </select>
+
+                                                    ${selNotificationTimeTypeAllDayChecked}
+
+                                                    <label style="padding-left:5px;padding-right:5px;">${localizer.BeforeAt}</label>
+                                                    <select class='form-control-sm viewCalendarEventSelNotificationTimeAllDayChecked' style='width:11%;text-overflow:ellipsis;' disabled>
+                                                        ${timeIntervals.map(time => time === `${reminder.TimesBeforeEvent.substring(0, 5)}` ? `<option value="${time}" selected>${time}</option>` : `<option value="${time}">${time}</option>`).join('')}
+                                                    </select>
+
+                                                    <br />
+                                                    <div class="error-message" style="color: red; font-size: 0.9em; display: none;"></div>
+                                                </div>
+                                            `;
+
+                                            $(htmlString).insertBefore('#viewCalendarEventNotificationAllDayChecked');
+                                        });
+                                    }
+                                }
+                                else {
+                                    $("#divViewEventNotificationAllDayUnchecked .divViewEventNotificationAllDayUncheckedRow").remove();
+                                    $('#divViewEventNotificationAllDayUnchecked').show();
+
+                                    if (data.calendarEvent.serializedCalendarReminders !== '[]') {
+
+                                        JSON.parse(data.calendarEvent.serializedCalendarReminders).forEach(reminder => {
+
+                                            const selectedMethodOption = `
+                                                <option value='Email' ${reminder.Method === 'Email' ? 'selected' : ''}>${localizer.Email}</option>
+                                                <option value='Notification' ${reminder.Method === 'Notification' ? 'selected' : ''}>${localizer.Notification}</option>
+                                            `;
+
+                                            let value = reminder.MinutesBeforeEvent !== null ? reminder.MinutesBeforeEvent : reminder.HoursBeforeEvent !== null ? reminder.HoursBeforeEvent : reminder.DaysBeforeEvent !== null ? reminder.DaysBeforeEvent : reminder.WeeksBeforeEvent;
+                                            let max = reminder.MinutesBeforeEvent !== null ? 40320 : reminder.HoursBeforeEvent !== null ? 672 : reminder.DaysBeforeEvent !== null ? 28 : 4;
+
+                                            let selectedMinutes = reminder.MinutesBeforeEvent !== null ? 'selected' : '';
+                                            let selectedHours = reminder.HoursBeforeEvent !== null ? 'selected' : '';
+                                            let selectedDays = reminder.DaysBeforeEvent !== null ? 'selected' : '';
+                                            let selectedWeeks = reminder.WeeksBeforeEvent !== null ? 'selected' : '';
+
+                                            const selNotificationTimeTypeAllDayUnchecked = `
+                                            <input type='number' class='form-control-sm viewCalendarEventSelNotificationNumberAllDayUnchecked' style='width:20%;text-overflow:ellipsis; background-color:#343a40; color:#fff; border-color:#6c757d;' min="0" max="${max}" value="${value}" disabled>
+                                            <select class='form-control-sm viewCalendarEventSelNotificationTimeTypeAllDayUnchecked' style='width:15%;text-overflow:ellipsis;' disabled>
+                                                <option value='Minutes' ${selectedMinutes}>${localizer.Minutes}</option>
+                                                <option value='Hours' ${selectedHours}>${localizer.Hours}</option>
+                                                <option value='Days' ${selectedDays}>${localizer.Days}</option>
+                                                <option value='Weeks' ${selectedWeeks}>${localizer.Weeks}</option>
+                                            </select>`;
+
+                                            const htmlString = String.raw`
+                                                <div class="divViewEventNotificationAllDayUncheckedRow" style="padding-bottom:5px;">
+                                                    <select class='form-control-sm viewCalendarEventSelNotificationMethodAllDayUnchecked' style='width:20%;text-overflow:ellipsis;' disabled>
+                                                        ${selectedMethodOption}
+                                                    </select>
+
+                                                    ${selNotificationTimeTypeAllDayUnchecked}
+
+                                                    <br />
+                                                    <div class="error-message" style="color: red; font-size: 0.9em; display: none;"></div>
+                                                </div>
+                                            `;
+
+                                            $(htmlString).insertBefore('#viewCalendarEventNotificationAllDayUnchecked');
+                                        });
+                                    }
+                                }
+
+                                $('#viewCalendarEventTaskDialogModal').modal({
+                                    keyboard: false,
+                                    backdrop: "static"
+                                });
+
+                                $('#viewCalendarEventTaskDialogModal').modal('toggle');
+                                $('#viewCalendarEventTaskDialogModal').modal('show');
+                            }
+                            else {
                                 toastr.error(data.error);
                             }
                         }
                     });
-                }
-                popup.hide();
-            });
 
-            return false;
+                    popup.hide();
+                });
+
+                return false;
+            }
         }
     });
 
@@ -702,7 +959,28 @@ $(function () {
                 displayStartDate: item.DisplayStartDate,
                 displayEndDate: item.DisplayEndDate,
                 displayStartDateTimeZone: item.DisplayStartDateTimeZone,
-                displayEndDateTimeZone: item.DisplayEndDateTimeZone
+                displayEndDateTimeZone: item.DisplayEndDateTimeZone,
+                calendarType: 'My'
+            }
+        });
+    });
+
+    JSON.parse($('#otherCalendarEventOutputViewModels').val()).forEach(item => {
+        calendar.addEvent({
+            id: item.Id,
+            title: item.Title,
+            allDay: item.AllDay,
+            start: item.StartDate,
+            end: item.EndDate,
+            backgroundColor: item.HtmlColorCode,
+            borderColor: item.HtmlColorCode,
+            extendedProps: {
+                calendarId: item.CalendarId,
+                displayStartDate: item.DisplayStartDate,
+                displayEndDate: item.DisplayEndDate,
+                displayStartDateTimeZone: item.DisplayStartDateTimeZone,
+                displayEndDateTimeZone: item.DisplayEndDateTimeZone,
+                calendarType: 'Other'
             }
         });
     });
@@ -719,6 +997,16 @@ $(function () {
         $('#myCalendars input[type="checkbox"]:checked').each(function () {
             let calendarsArray = [
                 { Id: Number($(this).closest('label').attr('id').replace('lblCalendar', '')) }
+            ];
+
+            for (let i = 0; i < calendarsArray.length; i++) {
+                paramValue.Calendars.push(calendarsArray[i]);
+            }
+        });
+
+        $('#otherCalendars input[type="checkbox"]:checked').each(function () {
+            let calendarsArray = [
+                { Id: Number($(this).closest('label').attr('id').replace('lblOtherCalendar', '')) }
             ];
 
             for (let i = 0; i < calendarsArray.length; i++) {
@@ -749,7 +1037,8 @@ $(function () {
                                 displayStartDate: item.DisplayStartDate,
                                 displayEndDate: item.DisplayEndDate,
                                 displayStartDateTimeZone: item.DisplayStartDateTimeZone,
-                                displayEndDateTimeZone: item.DisplayEndDateTimeZone
+                                displayEndDateTimeZone: item.DisplayEndDateTimeZone,
+                                calendarType: item.CalendarType
                             }
                         });
                     });
@@ -942,6 +1231,10 @@ $(function () {
     }
 
     $(document).on('change', '.chkCalendar', function () {
+        RefreshCalendarEvents();
+    });
+
+    $(document).on('change', '.chkOtherCalendar', function () {
         RefreshCalendarEvents();
     });
 
@@ -1173,6 +1466,16 @@ $(function () {
                         }
                     });
 
+                    $('#otherCalendars input[type="checkbox"]:checked').each(function () {
+                        let calendarsArray = [
+                            { Id: Number($(this).closest('label').attr('id').replace('lblOtherCalendar', '')) }
+                        ];
+
+                        for (let i = 0; i < calendarsArray.length; i++) {
+                            paramValue.Calendars.push(calendarsArray[i]);
+                        }
+                    });
+
                     $.ajax({
                         url: '/Calendar/GetCalendarEvents',
                         method: 'POST',
@@ -1196,7 +1499,8 @@ $(function () {
                                             displayStartDate: item.DisplayStartDate,
                                             displayEndDate: item.DisplayEndDate,
                                             displayStartDateTimeZone: item.DisplayStartDateTimeZone,
-                                            displayEndDateTimeZone: item.DisplayEndDateTimeZone
+                                            displayEndDateTimeZone: item.DisplayEndDateTimeZone,
+                                            calendarType: item.CalendarType
                                         }
                                     });
                                 });
@@ -1402,6 +1706,16 @@ $(function () {
                         }
                     });
 
+                    $('#otherCalendars input[type="checkbox"]:checked').each(function () {
+                        let calendarsArray = [
+                            { Id: Number($(this).closest('label').attr('id').replace('lblOtherCalendar', '')) }
+                        ];
+
+                        for (let i = 0; i < calendarsArray.length; i++) {
+                            paramValue.Calendars.push(calendarsArray[i]);
+                        }
+                    });
+
                     $.ajax({
                         url: '/Calendar/GetCalendarEvents',
                         method: 'POST',
@@ -1425,7 +1739,8 @@ $(function () {
                                             displayStartDate: item.DisplayStartDate,
                                             displayEndDate: item.DisplayEndDate,
                                             displayStartDateTimeZone: item.DisplayStartDateTimeZone,
-                                            displayEndDateTimeZone: item.DisplayEndDateTimeZone
+                                            displayEndDateTimeZone: item.DisplayEndDateTimeZone,
+                                            calendarType: item.CalendarType
                                         }
                                     });
                                 });
@@ -1521,8 +1836,7 @@ $(function () {
                     }, 0);
 
                     toastr.success(data.message);
-                }
-                else {
+                } else {
                     toastr.error(data.error);
                 }
             }
@@ -1961,6 +2275,174 @@ $('#dropdown-content a').click(function () {
 
 $('#aCreateCalendar').off('click').on('click', function () {
     $('#createCalendarDialogModal').modal('show');
+});
+
+$('#aBrowseCalendarsOfInterest').off('click').on('click', function () {
+    $.ajax({
+        url: '/Calendar/GetBrowseCalendarsOfInterest',
+        method: 'POST',
+        headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
+        dataType: 'json',
+        data: null,
+        contentType: 'application/json; charset=utf-8',
+        async: false,
+        success: function (response) {
+            if (response.result) {
+                let htmlString = '';
+                $.each(response.browseCalendarsOfInterests, function (index, browseCalendarsOfInterest) {
+                    htmlString += String.raw`
+                        <div class="form-row browseCalendarsOfInterest" style="margin-top: 20px;">
+                            <div id="divBrowseCalendarsOfInterest${browseCalendarsOfInterest.id}" class="form-group col-md-3 mb-3 text-center">
+                                <input class="form-control form-control-sm checkBoxBrowseCalendarsOfInterest" type="checkbox" ${browseCalendarsOfInterest.checked === true ? "checked" : ""}/>
+                            </div>
+                            <div class="form-group col-md-9 mb-9 text-center">
+                                <label style="word-break: break-all;">${browseCalendarsOfInterest.name}</label>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                $('#divBrowseCalendarsOfInterest').html(htmlString);
+            }
+        }
+    });
+
+    if ($('.checkBoxBrowseCalendarsOfInterest').length === 0) {
+        $('#allCheckBrowseCalendarsOfInterest').prop('checked', false);
+    }
+    else {
+        $('#allCheckBrowseCalendarsOfInterest').prop('checked', $('.checkBoxBrowseCalendarsOfInterest').length === $('.checkBoxBrowseCalendarsOfInterest:checked').length);
+    }
+
+    $('#browseCalendarsOfInterestDialogModal').modal('show');
+});
+
+$('#allCheckBrowseCalendarsOfInterest').off('change').on('change', function () {
+    $('.checkBoxBrowseCalendarsOfInterest').prop('checked', $(this).prop('checked'));
+});
+
+$(document).on('change', '.checkBoxBrowseCalendarsOfInterest', function () {
+    $('#allCheckBrowseCalendarsOfInterest').prop('checked', $('.checkBoxBrowseCalendarsOfInterest').length === $('.checkBoxBrowseCalendarsOfInterest:checked').length);
+});
+
+$('#formUpdateBrowseCalendarsOfInterest').off('submit').on('submit', function (event) {
+    event.preventDefault();
+
+    let calendarBeOtherCalendar = [];
+
+    $('#divBrowseCalendarsOfInterest > .browseCalendarsOfInterest').each(function (index, element) {
+        let checkBox = $(element).find('.checkBoxBrowseCalendarsOfInterest');
+        if (checkBox.is(':checked')) {
+            calendarBeOtherCalendar.push({
+                CalendarId: checkBox.parent().attr('id').replace("divBrowseCalendarsOfInterest", "")
+            });
+        }
+    });
+
+    $.ajax({
+        url: '/Calendar/UpdateOtherCalendar',
+        type: 'POST',
+        headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
+        dataType: 'json',
+        data: JSON.stringify(calendarBeOtherCalendar),
+        contentType: 'application/json; charset=utf-8',
+        success: function (data) {
+            if (data.result) {
+
+                $.ajax({
+                    url: '/Calendar/GetOtherCalendars',
+                    method: 'POST',
+                    headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
+                    dataType: 'json',
+                    data: null,
+                    contentType: 'application/json; charset=utf-8',
+                    async: false,
+                    success: function (response) {
+                        if (response.result) {
+                            let htmlString = '';
+                
+                            $.each(response.tempOtherCalendars, function (index, otherCalendar) {
+                                htmlString += String.raw`
+                                    <label id="lblOtherCalendar${otherCalendar.id}" style="position: relative; border:1px solid #ccc; padding:10px; margin:0 0 10px; display:block">
+                                        <input type="checkbox" class="chkOtherCalendar" style="accent-color:${otherCalendar.htmlColorCode}" checked />
+                                        <label style="padding-left:0.3em;">${otherCalendar.name}</label>
+                                    </label>
+                                `;
+                            });
+                
+                            $('#otherCalendars').html(htmlString);
+
+                            calendar.removeAllEvents();
+
+                            let paramValue = {
+                                Calendars: []
+                            };
+
+                            $('#myCalendars input[type="checkbox"]:checked').each(function () {
+                                let calendarsArray = [
+                                    { Id: Number($(this).closest('label').attr('id').replace('lblCalendar', '')) }
+                                ];
+
+                                for (let i = 0; i < calendarsArray.length; i++) {
+                                    paramValue.Calendars.push(calendarsArray[i]);
+                                }
+                            });
+
+                            $('#otherCalendars input[type="checkbox"]:checked').each(function () {
+                                let calendarsArray = [
+                                    { Id: Number($(this).closest('label').attr('id').replace('lblOtherCalendar', '')) }
+                                ];
+
+                                for (let i = 0; i < calendarsArray.length; i++) {
+                                    paramValue.Calendars.push(calendarsArray[i]);
+                                }
+                            });
+
+                            $.ajax({
+                                url: '/Calendar/GetCalendarEvents',
+                                method: 'POST',
+                                headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
+                                dataType: 'json',
+                                data: JSON.stringify(paramValue),
+                                contentType: 'application/json; charset=utf-8',
+                                success: function (response) {
+                                    if (response.result) {
+                                        JSON.parse(response.calendarEvents).forEach(item => {
+                                            calendar.addEvent({
+                                                id: item.Id,
+                                                title: item.Title,
+                                                allDay: item.AllDay,
+                                                start: item.StartDate,
+                                                end: item.EndDate,
+                                                backgroundColor: item.HtmlColorCode,
+                                                borderColor: item.HtmlColorCode,
+                                                extendedProps: {
+                                                    calendarId: item.CalendarId,
+                                                    displayStartDate: item.DisplayStartDate,
+                                                    displayEndDate: item.DisplayEndDate,
+                                                    displayStartDateTimeZone: item.DisplayStartDateTimeZone,
+                                                    displayEndDateTimeZone: item.DisplayEndDateTimeZone,
+                                                    calendarType: item.CalendarType
+                                                }
+                                            });
+                                        });
+                                    }
+                                }
+                            });
+                        }
+                    }
+                });
+
+                $('#browseCalendarsOfInterestDialogModal').modal('hide');
+                toastr.success(data.message);
+            }
+            else {
+                toastr.error(data.error);
+            }
+        }
+    });
+    
+    return false;
 });
 
 $(document).on('click', '.edit-calendar', function (e) {

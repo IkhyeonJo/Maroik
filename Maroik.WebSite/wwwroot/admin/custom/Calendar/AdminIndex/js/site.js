@@ -409,10 +409,10 @@ $(function () {
             calendar.unselect();
         },
         eventClick: function (arg) {
-            var eventEl = $(arg.el);
-            var offset = eventEl.offset();
-            var popup = $('#calendarEventPopup');
-            var currentEventId = popup.data('event-id');
+            let eventEl = $(arg.el);
+            let offset = eventEl.offset();
+            let popup = $('#calendarEventPopup');
+            let currentEventId = popup.data('event-id');
 
             if (popup.is(':visible') && currentEventId === arg.event.id) {
                 popup.hide();
