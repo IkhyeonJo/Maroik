@@ -177,24 +177,24 @@ to get the desired effect
     @*Language change return URI*@
     @Html.Hidden($"{nameof(returnUri)}",returnUri)
     @*NonFactors localizer*@
-    @Html.Hidden("_localizerNonFactorsIRS", localizer["Invalid response status"].Value)
-    @Html.Hidden("_localizerNonFactorsGPSOIGD", localizer["Grid partial should only include grid declaration."].Value)
-    @Html.Hidden("_localizerNonFactorsGCOBCFWMS", localizer["Grid can only be created from within mvc-grid structure."].Value)
-    @Html.Hidden("_localizerNonFactorsEquals", localizer["equals"].Value)
-    @Html.Hidden("_localizerNonFactorsNotEquals", localizer["not-equals"].Value)
-    @Html.Hidden("_localizerNonFactorsContains", localizer["contains"].Value)
-    @Html.Hidden("_localizerNonFactorsStartsWith", localizer["starts-with"].Value)
-    @Html.Hidden("_localizerNonFactorsEndsWith", localizer["ends-with"].Value)
-    @Html.Hidden("_localizerNonFactorsLessThan", localizer["less-than"].Value)
-    @Html.Hidden("_localizerNonFactorsGreaterThan", localizer["greater-than"].Value)
-    @Html.Hidden("_localizerNonFactorsLessThanOrEqual", localizer["less-than-or-equal"].Value)
-    @Html.Hidden("_localizerNonFactorsGreaterThanOrEqual", localizer["greater-than-or-equal"].Value)
-    @Html.Hidden("_localizerNonFactorsEarlierThan", localizer["earlier-than"].Value)
-    @Html.Hidden("_localizerNonFactorsLaterThan", localizer["later-than"].Value)
-    @Html.Hidden("_localizerNonFactorsEarlierThanOrEqual", localizer["earlier-than-or-equal"].Value)
-    @Html.Hidden("_localizerNonFactorsLaterThanOrEqual", localizer["later-than-or-equal"].Value)
-    @Html.Hidden("_localizerNonFactorsAnd", localizer["and"].Value)
-    @Html.Hidden("_localizerNonFactorsOr", localizer["or"].Value)
+    <input id="_localizerNonFactorsIRS" type="hidden" value="@(localizer["Invalid response status"].Value)" />
+    <input id="_localizerNonFactorsGPSOIGD" type="hidden" value="@(localizer["Grid partial should only include grid declaration."].Value)" />
+    <input id="_localizerNonFactorsGCOBCFWMS" type="hidden" value="@(localizer["Grid can only be created from within mvc-grid structure."].Value)" />
+    <input id="_localizerNonFactorsEquals" type="hidden" value="@(localizer["equals"].Value)" />
+    <input id="_localizerNonFactorsNotEquals" type="hidden" value="@(localizer["not-equals"].Value)" />
+    <input id="_localizerNonFactorsContains" type="hidden" value="@(localizer["contains"].Value)" />
+    <input id="_localizerNonFactorsStartsWith" type="hidden" value="@(localizer["starts-with"].Value)" />
+    <input id="_localizerNonFactorsEndsWith" type="hidden" value="@(localizer["ends-with"].Value)" />
+    <input id="_localizerNonFactorsLessThan" type="hidden" value="@(localizer["less-than"].Value)" />
+    <input id="_localizerNonFactorsGreaterThan" type="hidden" value="@(localizer["greater-than"].Value)" />
+    <input id="_localizerNonFactorsLessThanOrEqual" type="hidden" value="@(localizer["less-than-or-equal"].Value)" />
+    <input id="_localizerNonFactorsGreaterThanOrEqual" type="hidden" value="@(localizer["greater-than-or-equal"].Value)" />
+    <input id="_localizerNonFactorsEarlierThan" type="hidden" value="@(localizer["earlier-than"].Value)" />
+    <input id="_localizerNonFactorsLaterThan" type="hidden" value="@(localizer["later-than"].Value)" />
+    <input id="_localizerNonFactorsEarlierThanOrEqual" type="hidden" value="@(localizer["earlier-than-or-equal"].Value)" />
+    <input id="_localizerNonFactorsLaterThanOrEqual" type="hidden" value="@(localizer["later-than-or-equal"].Value)" />
+    <input id="_localizerNonFactorsAnd" type="hidden" value="@(localizer["and"].Value)" />
+    <input id="_localizerNonFactorsOr" type="hidden" value="@(localizer["or"].Value)" />
 
 
     <div class="wrapper">
