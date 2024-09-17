@@ -7,6 +7,12 @@ namespace Maroik.Common.DataAccess.Contracts
     public interface IOtherCalendarRepository
     {
         /// <summary>
+        /// 모든 다른 달력을 구합니다.
+        /// </summary>
+        /// <returns></returns>
+        public Task<List<OtherCalendar>> GetAllOtherCalendarsAsync();
+
+        /// <summary>
         /// 로그인 계정에 해당하는 모든 다른 달력을 구합니다.
         /// </summary>
         /// <param name="email"></param>

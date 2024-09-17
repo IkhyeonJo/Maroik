@@ -2077,7 +2077,7 @@ namespace Maroik.WebSite.Controllers
 
                         Account loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte));
 
-                        List<OtherCalendar> otherCalendars = await _otherCalendarRepository.GetOtherCalendarsAsync(loginedAccount.Email ?? "");
+                        List<OtherCalendar> otherCalendars = await _otherCalendarRepository.GetAllOtherCalendarsAsync() ?? [];
 
                         foreach (CalendarShared tempCalendarShared in calendarShareds.Where(x => !x.User || !x.Anonymous).ToList())
                         {
