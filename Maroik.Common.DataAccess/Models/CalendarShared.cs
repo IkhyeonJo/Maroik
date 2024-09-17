@@ -11,11 +11,6 @@ public partial class CalendarShared
     public int CalendarId { get; set; }
 
     /// <summary>
-    /// Admin 공유 여부
-    /// </summary>
-    public bool Admin { get; set; }
-
-    /// <summary>
     /// User 공유 여부
     /// </summary>
     public bool User { get; set; }

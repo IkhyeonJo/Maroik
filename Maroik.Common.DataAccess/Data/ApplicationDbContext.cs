@@ -538,7 +538,6 @@ namespace Maroik.Common.DataAccess.Data
                     .ValueGeneratedNever()
                     .HasComment("부모 Calendar Id")
                     .HasColumnType("int(11)");
-                _ = entity.Property(e => e.Admin).HasComment("Admin 공유 여부");
                 _ = entity.Property(e => e.Anonymous).HasComment("Anonymous 공유 여부");
                 _ = entity.Property(e => e.User).HasComment("User 공유 여부");
 

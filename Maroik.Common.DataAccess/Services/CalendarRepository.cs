@@ -18,6 +18,15 @@ namespace Maroik.Common.DataAccess.Services
         }
 
         /// <summary>
+        /// 모든 달력을 구합니다.
+        /// </summary>
+        /// <returns></returns>
+        public async Task<List<Calendar>> GetAllCalendarsAsync()
+        {
+            return await _context.Calendars.OrderBy(x => x.Name).ToListAsync();
+        }
+
+        /// <summary>
         /// 로그인 계정에 해당하는 모든 달력을 구합니다.
         /// </summary>
         /// <param name="email"></param>

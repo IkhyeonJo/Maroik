@@ -837,6 +837,36 @@ namespace Maroik.WebSite.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [RequiredHttpPostAccess(Role = Role.User)]
+        public async Task<IActionResult> GetOtherCalendars()
+        {
+            try
+            {
+                _ = HttpContext.Session.TryGetValue(Maroik.Common.Miscellaneous.Extensions.EnumHelper.GetDescription(Maroik.Common.Miscellaneous.Utilities.Session.Account), out byte[] resultByte);
+
+                List<Calendar> calendars = await _calendarRepository.GetAllCalendarsAsync();
+                List<OtherCalendar> otherCalendars = (await _otherCalendarRepository.GetOtherCalendarsAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email) ?? [])?.ToList();
+
+                var tempOtherCalendars = (from calendar in calendars
+                                          join otherCalendar in otherCalendars
+                                          on calendar.Id equals otherCalendar.CalendarId
+                                          select new Calendar()
+                                          {
+                                              Id = calendar.Id,
+                                              Name = calendar.Name,
+                                              HtmlColorCode = calendar.HtmlColorCode,
+                                          }).OrderBy(x => x.Name).ToList();
+
+                return Json(new { result = true, tempOtherCalendars });
+            }
+            catch
+            {
+                return Json(new { result = false, error = _localizer["Input is invalid"].Value });
+            }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
         [RequiredHttpPostAccess(Role = Role.Admin)]
         [RequiredHttpPostAccess(Role = Role.User)]
         public async Task<IActionResult> IsCalendarEventExists(int id)
@@ -1219,7 +1249,7 @@ namespace Maroik.WebSite.Controllers
 
                     if (!(calendarShared.CalendarId > 0))
                     {
-                        await _calendarSharedRepository.CreateCalendarSharedAsync(new CalendarShared() { CalendarId = calendar.Id, Admin = false, User = false, Anonymous = false });
+                        await _calendarSharedRepository.CreateCalendarSharedAsync(new CalendarShared() { CalendarId = calendar.Id, User = false, Anonymous = false });
                     }
                 }
 
@@ -1242,7 +1272,6 @@ namespace Maroik.WebSite.Controllers
                                     {
                                         Id = sharedCalendar.CalendarId,
                                         Name = calendar.Name,
-                                        Admin = sharedCalendar.Admin,
                                         User = sharedCalendar.User,
                                         Guest = sharedCalendar.Anonymous
                                     }).OrderBy(x => x.Name).ToList();
@@ -1258,7 +1287,7 @@ namespace Maroik.WebSite.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [RequiredHttpPostAccess(Role = Role.Admin)]
+        [RequiredHttpPostAccess(Role = Role.User)]
         public async Task<IActionResult> GetBrowseCalendarsOfInterest()
         {
             try
@@ -1276,12 +1305,10 @@ namespace Maroik.WebSite.Controllers
 
                     List<Calendar> calendars = (await _calendarRepository.GetCalendarsAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email) ?? [])?.ToList();
                     List<CalendarShared> calendarShareds = await _calendarSharedRepository.GetCalendarSharedAsync() ?? [];
+                    List<OtherCalendar> otherCalendars = await _otherCalendarRepository.GetOtherCalendarsAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
 
                     switch (loginedAccount.Role)
                     {
-                        case Role.Admin:
-                            calendarShareds = calendarShareds.Where(x => x.Admin).ToList();
-                            break;
                         case Role.User:
                             calendarShareds = calendarShareds.Where(x => x.User).ToList();
                             break;
@@ -1292,10 +1319,15 @@ namespace Maroik.WebSite.Controllers
                     var browseCalendarsOfInterests = (from calendar in calendars
                                                      join calendarShared in calendarShareds
                                                      on calendar.Id equals calendarShared.CalendarId
+                                                     // Left Join otherCalendars based on calendar.Id
+                                                     join otherCalendar in otherCalendars
+                                                     on calendar.Id equals otherCalendar.CalendarId into otherCalendarGroup
+                                                     from otherCalendar in otherCalendarGroup.DefaultIfEmpty() // Left Join
                                                      select new
                                                      {
                                                          calendar.Id,
-                                                         calendar.Name
+                                                         calendar.Name,
+                                                         Checked = otherCalendar != null // otherCalendar가 존재하면 true, 없으면 false
                                                      }).OrderBy(x => x.Name).ToList();
 
 
@@ -1670,6 +1702,26 @@ namespace Maroik.WebSite.Controllers
                         {
                             await _calendarSharedRepository.UpdateCalendarSharedAsync(calendarShared);
                         }
+
+                        #region Processing of Other Calendar
+                        _ = HttpContext.Session.TryGetValue(Maroik.Common.Miscellaneous.Extensions.EnumHelper.GetDescription(Maroik.Common.Miscellaneous.Utilities.Session.Account), out byte[] resultByte);
+
+                        Account loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte));
+
+                        List<OtherCalendar> otherCalendars = await _otherCalendarRepository.GetOtherCalendarsAsync(loginedAccount.Email ?? "");
+
+                        foreach (CalendarShared tempCalendarShared in calendarShareds.Where(x => !x.User || !x.Anonymous).ToList())
+                        {
+                            try
+                            {
+                                await _otherCalendarRepository.DeleteOtherCalendarAsync(otherCalendars.Where(x => x.CalendarId == tempCalendarShared.CalendarId).FirstOrDefault() ?? new OtherCalendar());
+                            }
+                            catch
+                            {
+
+                            }
+                        }
+                        #endregion
 
                         return Json(new { result = true, message = _localizer["The calendar shared has been successfully updated."].Value });
                     }
