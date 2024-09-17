@@ -174,4 +174,13 @@
   <data name="The calendar event has been successfully deleted." xml:space="preserve">
     <value>달력 이벤트가 성공적으로 삭제되었습니다.</value>
   </data>
+  <data name="The other calendar has been successfully updated." xml:space="preserve">
+    <value>다른 달력이 성공적으로 수정되었습니다.</value>
+  </data>
+  <data name="Login required." xml:space="preserve">
+    <value>로그인이 요구됩니다.</value>
+  </data>
+  <data name="The calendar shared has been successfully updated." xml:space="preserve">
+    <value>공유 달력이 성공적으로 수정되었습니다.</value>
+  </data>
 </root>

@@ -480,4 +480,10 @@
   <data name="Browse calendars of interest" xml:space="preserve">
     <value>관심분야와 관련된 캘린더</value>
   </data>
+  <data name="View Event" xml:space="preserve">
+    <value>이벤트 보기</value>
+  </data>
+  <data name="View" xml:space="preserve">
+    <value>보기</value>
+  </data>
 </root>

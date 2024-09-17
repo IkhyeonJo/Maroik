@@ -174,4 +174,13 @@
   <data name="The calendar event has been successfully deleted." xml:space="preserve">
     <value>The calendar event has been successfully deleted.</value>
   </data>
+  <data name="The other calendar has been successfully updated." xml:space="preserve">
+    <value>The other calendar has been successfully updated.</value>
+  </data>
+  <data name="Login required." xml:space="preserve">
+    <value>Login required.</value>
+  </data>
+  <data name="The calendar shared has been successfully updated." xml:space="preserve">
+    <value>The calendar shared has been successfully updated.</value>
+  </data>
 </root>

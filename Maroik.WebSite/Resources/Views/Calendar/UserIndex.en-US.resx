@@ -480,4 +480,10 @@
   <data name="Browse calendars of interest" xml:space="preserve">
     <value>Browse calendars of interest</value>
   </data>
+  <data name="View Event" xml:space="preserve">
+    <value>View Event</value>
+  </data>
+  <data name="View" xml:space="preserve">
+    <value>View</value>
+  </data>
 </root>
