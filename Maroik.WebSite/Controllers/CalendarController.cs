@@ -2079,7 +2079,7 @@ namespace Maroik.WebSite.Controllers
 
                         List<OtherCalendar> otherCalendars = await _otherCalendarRepository.GetAllOtherCalendarsAsync() ?? [];
 
-                        foreach (CalendarShared tempCalendarShared in calendarShareds.Where(x => !x.User || !x.Anonymous).ToList())
+                        foreach (CalendarShared tempCalendarShared in calendarShareds.Where(x => !x.User).ToList())
                         {
                             try
                             {
