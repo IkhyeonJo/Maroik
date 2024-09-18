@@ -360,13 +360,11 @@ $(function () {
         headerToolbar: {
             left: 'prevYear,prev,next,nextYear today',
             center: 'title',
-            right: 'dayGridMonth,dayGridWeek,dayGridDay'
+            right: 'dayGridMonth'
         },
         buttonText: {
             today: localizer.Today,
-            dayGridMonth: localizer.Month,
-            dayGridWeek: localizer.Week,
-            dayGridDay: localizer.Day
+            dayGridMonth: localizer.Month
         },
         themeSystem: 'bootstrap',
         navLinks: true,
