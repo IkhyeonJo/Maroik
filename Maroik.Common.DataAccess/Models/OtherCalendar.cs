@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-
-namespace Maroik.Common.DataAccess.Models;
+﻿namespace Maroik.Common.DataAccess.Models;
 
 /// <summary>
 /// Maroik.WebSite 달력
@@ -19,6 +16,6 @@ public partial class OtherCalendar
     public int CalendarId { get; set; }
 
     public virtual Account AccountEmailNavigation { get; set; }
-    
+
     public virtual Calendar Calendar { get; set; }
 }

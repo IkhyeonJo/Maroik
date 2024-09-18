@@ -459,12 +459,13 @@ namespace Maroik.WebSite.Controllers
             {
                 foreach (CalendarEvent calendarEvent in await _calendarEventRepository.GetCalendarEventsAsync(calendar.Id) ?? [])
                 {
-                    var item = new CalendarEventOutputViewModel();
-
-                    item.Id = calendarEvent.Id;
-                    item.CalendarId = calendarEvent.CalendarId;
-                    item.Title = calendarEvent.Title;
-                    item.AllDay = calendarEvent.AllDay;
+                    CalendarEventOutputViewModel item = new()
+                    {
+                        Id = calendarEvent.Id,
+                        CalendarId = calendarEvent.CalendarId,
+                        Title = calendarEvent.Title,
+                        AllDay = calendarEvent.AllDay
+                    };
 
                     if (calendarEvent.AllDay)
                     {
@@ -632,12 +633,13 @@ namespace Maroik.WebSite.Controllers
             {
                 foreach (CalendarEvent calendarEvent in await _calendarEventRepository.GetCalendarEventsAsync(calendar.Id) ?? [])
                 {
-                    var item = new CalendarEventOutputViewModel();
-
-                    item.Id = calendarEvent.Id;
-                    item.CalendarId = calendarEvent.CalendarId;
-                    item.Title = calendarEvent.Title;
-                    item.AllDay = calendarEvent.AllDay;
+                    CalendarEventOutputViewModel item = new()
+                    {
+                        Id = calendarEvent.Id,
+                        CalendarId = calendarEvent.CalendarId,
+                        Title = calendarEvent.Title,
+                        AllDay = calendarEvent.AllDay
+                    };
 
                     if (calendarEvent.AllDay)
                     {
@@ -766,18 +768,18 @@ namespace Maroik.WebSite.Controllers
             #endregion
 
             #region Load OtherCalendar
-            List<Calendar> otherCalendars = new List<Calendar>();
+            List<Calendar> otherCalendars = [];
 
             List<Calendar> allCalendars = await _calendarRepository.GetAllCalendarsAsync() ?? [];
 
             var tempOtherCalendars = (from calendar in allCalendars
-                                      join otherCalendar in (await _otherCalendarRepository.GetOtherCalendarsAsync(loginedAccount.Email) ?? [])
+                                      join otherCalendar in await _otherCalendarRepository.GetOtherCalendarsAsync(loginedAccount.Email) ?? []
                                       on calendar.Id equals otherCalendar.CalendarId
                                       select new
                                       {
-                                          Id = calendar.Id,
-                                          Name = calendar.Name,
-                                          HtmlColorCode = calendar.HtmlColorCode
+                                          calendar.Id,
+                                          calendar.Name,
+                                          calendar.HtmlColorCode
                                       }).OrderBy(x => x.Name).ToList();
 
             foreach (var tempOtherCalendar in tempOtherCalendars)
@@ -793,12 +795,13 @@ namespace Maroik.WebSite.Controllers
             {
                 foreach (CalendarEvent otherCalendarEvent in await _calendarEventRepository.GetCalendarEventsAsync(otherCalendar.Id) ?? [])
                 {
-                    var item = new CalendarEventOutputViewModel();
-
-                    item.Id = otherCalendarEvent.Id;
-                    item.CalendarId = otherCalendarEvent.CalendarId;
-                    item.Title = otherCalendarEvent.Title;
-                    item.AllDay = otherCalendarEvent.AllDay;
+                    CalendarEventOutputViewModel item = new()
+                    {
+                        Id = otherCalendarEvent.Id,
+                        CalendarId = otherCalendarEvent.CalendarId,
+                        Title = otherCalendarEvent.Title,
+                        AllDay = otherCalendarEvent.AllDay
+                    };
 
                     if (otherCalendarEvent.AllDay)
                     {
@@ -937,7 +940,7 @@ namespace Maroik.WebSite.Controllers
         [HttpGet]
         public async Task<IActionResult> AnonymousIndex()
         {
-            Account loginedAccount = new Account() { Role = Role.Anonymous, TimeZoneIanaId = "UTC" };
+            Account loginedAccount = new() { Role = Role.Anonymous, TimeZoneIanaId = "UTC" };
 
             CalendarOutputViewModel calendarOutputViewModel = new();
 
@@ -947,13 +950,13 @@ namespace Maroik.WebSite.Controllers
             List<Calendar> allCalendars = await _calendarRepository.GetAllCalendarsAsync() ?? [];
 
             var tempOtherCalendars = (from calendar in allCalendars
-                                      join calendarShared in ((await _calendarSharedRepository?.GetCalendarSharedAsync())?.Where(x => x.Anonymous)?.ToList() ?? [])
+                                      join calendarShared in (await _calendarSharedRepository?.GetCalendarSharedAsync())?.Where(x => x.Anonymous)?.ToList() ?? []
                                       on calendar.Id equals calendarShared.CalendarId
                                       select new
                                       {
-                                          Id = calendar.Id,
-                                          Name = calendar.Name,
-                                          HtmlColorCode = calendar.HtmlColorCode
+                                          calendar.Id,
+                                          calendar.Name,
+                                          calendar.HtmlColorCode
                                       }).OrderBy(x => x.Name).ToList();
 
             foreach (var tempOtherCalendar in tempOtherCalendars)
@@ -969,12 +972,13 @@ namespace Maroik.WebSite.Controllers
             {
                 foreach (CalendarEvent otherCalendarEvent in await _calendarEventRepository.GetCalendarEventsAsync(otherCalendar.Id) ?? [])
                 {
-                    var item = new CalendarEventOutputViewModel();
-
-                    item.Id = otherCalendarEvent.Id;
-                    item.CalendarId = otherCalendarEvent.CalendarId;
-                    item.Title = otherCalendarEvent.Title;
-                    item.AllDay = otherCalendarEvent.AllDay;
+                    CalendarEventOutputViewModel item = new()
+                    {
+                        Id = otherCalendarEvent.Id,
+                        CalendarId = otherCalendarEvent.CalendarId,
+                        Title = otherCalendarEvent.Title,
+                        AllDay = otherCalendarEvent.AllDay
+                    };
 
                     if (otherCalendarEvent.AllDay)
                     {
@@ -1172,29 +1176,29 @@ namespace Maroik.WebSite.Controllers
                     List<Calendar> calendars = await _calendarRepository.GetAllCalendarsAsync();
                     List<OtherCalendar> otherCalendars = (await _otherCalendarRepository.GetOtherCalendarsAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email) ?? [])?.ToList();
 
-                    var tempOtherCalendars = (from calendar in calendars
-                                              join otherCalendar in otherCalendars
-                                              on calendar.Id equals otherCalendar.CalendarId
-                                              select new Calendar()
-                                              {
-                                                  Id = calendar.Id,
-                                                  Name = calendar.Name,
-                                                  HtmlColorCode = calendar.HtmlColorCode,
-                                              }).OrderBy(x => x.Name).ToList();
+                    List<Calendar> tempOtherCalendars = (from calendar in calendars
+                                                         join otherCalendar in otherCalendars
+                                                         on calendar.Id equals otherCalendar.CalendarId
+                                                         select new Calendar()
+                                                         {
+                                                             Id = calendar.Id,
+                                                             Name = calendar.Name,
+                                                             HtmlColorCode = calendar.HtmlColorCode,
+                                                         }).OrderBy(x => x.Name).ToList();
 
                     return Json(new { result = true, tempOtherCalendars });
                 }
                 else
                 {
                     List<Calendar> tempOtherCalendars = [];
-                    var temporaryOtherCalendars = (from calendar in (await _calendarRepository.GetAllCalendarsAsync() ?? [])
-                                                   join calendarShared in ((await _calendarSharedRepository?.GetCalendarSharedAsync())?.Where(x => x.Anonymous)?.ToList() ?? [])
+                    var temporaryOtherCalendars = (from calendar in await _calendarRepository.GetAllCalendarsAsync() ?? []
+                                                   join calendarShared in (await _calendarSharedRepository?.GetCalendarSharedAsync())?.Where(x => x.Anonymous)?.ToList() ?? []
                                                    on calendar.Id equals calendarShared.CalendarId
                                                    select new
                                                    {
-                                                       Id = calendar.Id,
-                                                       Name = calendar.Name,
-                                                       HtmlColorCode = calendar.HtmlColorCode
+                                                       calendar.Id,
+                                                       calendar.Name,
+                                                       calendar.HtmlColorCode
                                                    }).OrderBy(x => x.Name).ToList();
 
                     foreach (var tempOtherCalendar in temporaryOtherCalendars)
@@ -1242,7 +1246,7 @@ namespace Maroik.WebSite.Controllers
                             return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                         }
 
-                        CalendarEventOutputViewModel calendarEvent = new CalendarEventOutputViewModel
+                        CalendarEventOutputViewModel calendarEvent = new()
                         {
                             Id = tempCalendarEvent.Id,
                             CalendarId = tempCalendarEvent.CalendarId,
@@ -1413,23 +1417,23 @@ namespace Maroik.WebSite.Controllers
                         if (isAccountSessionExist)
                         {
                             loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte));
-                            calendars = (from calendar in (await _calendarRepository.GetAllCalendarsAsync() ?? [])
-                                         join otherCalendar in (await _otherCalendarRepository.GetOtherCalendarsAsync(loginedAccount.Email) ?? [])
+                            calendars = (from calendar in await _calendarRepository.GetAllCalendarsAsync() ?? []
+                                         join otherCalendar in await _otherCalendarRepository.GetOtherCalendarsAsync(loginedAccount.Email) ?? []
                                          on calendar.Id equals otherCalendar.CalendarId
                                          select calendar).ToList();
                         }
                         else
                         {
                             loginedAccount = new Account() { Role = Role.Anonymous, TimeZoneIanaId = "UTC" };
-                            calendars = new List<Calendar>();
-                            var temporaryOtherCalendars = (from calendar in (await _calendarRepository.GetAllCalendarsAsync() ?? [])
-                                                           join calendarShared in ((await _calendarSharedRepository?.GetCalendarSharedAsync())?.Where(x => x.Anonymous)?.ToList() ?? [])
+                            calendars = [];
+                            var temporaryOtherCalendars = (from calendar in await _calendarRepository.GetAllCalendarsAsync() ?? []
+                                                           join calendarShared in (await _calendarSharedRepository?.GetCalendarSharedAsync())?.Where(x => x.Anonymous)?.ToList() ?? []
                                                            on calendar.Id equals calendarShared.CalendarId
                                                            select new
                                                            {
-                                                               Id = calendar.Id,
-                                                               Name = calendar.Name,
-                                                               HtmlColorCode = calendar.HtmlColorCode
+                                                               calendar.Id,
+                                                               calendar.Name,
+                                                               calendar.HtmlColorCode
                                                            }).OrderBy(x => x.Name).ToList();
 
                             foreach (var tempOtherCalendar in temporaryOtherCalendars)
@@ -1451,7 +1455,7 @@ namespace Maroik.WebSite.Controllers
                             return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                         }
 
-                        CalendarEventOutputViewModel calendarEvent = new CalendarEventOutputViewModel
+                        CalendarEventOutputViewModel calendarEvent = new()
                         {
                             Id = tempCalendarEvent.Id,
                             CalendarId = tempCalendarEvent.CalendarId,
@@ -1614,7 +1618,7 @@ namespace Maroik.WebSite.Controllers
                 {
                     try
                     {
-                        List<CalendarEventOutputViewModel> calendarEvents = new List<CalendarEventOutputViewModel>();
+                        List<CalendarEventOutputViewModel> calendarEvents = [];
 
                         bool isAccountSessionExist = HttpContext.Session.TryGetValue(Maroik.Common.Miscellaneous.Extensions.EnumHelper.GetDescription(Maroik.Common.Miscellaneous.Utilities.Session.Account), out byte[] resultByte);
 
@@ -1630,16 +1634,16 @@ namespace Maroik.WebSite.Controllers
 
                             tempCalendars = await _calendarRepository.GetCalendarsAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
 
-                            tempOtherCalendars = new List<Calendar>();
+                            tempOtherCalendars = [];
 
-                            var otherCalendars = (from calendar in (await _calendarRepository.GetAllCalendarsAsync() ?? [])
-                                                  join otherCalendar in (await _otherCalendarRepository.GetOtherCalendarsAsync(loginedAccount.Email) ?? [])
+                            var otherCalendars = (from calendar in await _calendarRepository.GetAllCalendarsAsync() ?? []
+                                                  join otherCalendar in await _otherCalendarRepository.GetOtherCalendarsAsync(loginedAccount.Email) ?? []
                                                   on calendar.Id equals otherCalendar.CalendarId
                                                   select new
                                                   {
-                                                      Id = calendar.Id,
-                                                      Name = calendar.Name,
-                                                      HtmlColorCode = calendar.HtmlColorCode
+                                                      calendar.Id,
+                                                      calendar.Name,
+                                                      calendar.HtmlColorCode
                                                   }).OrderBy(x => x.Name).ToList();
 
                             foreach (var tempOtherCalendar in otherCalendars)
@@ -1651,18 +1655,18 @@ namespace Maroik.WebSite.Controllers
                         {
                             loginedAccount = new Account() { Role = Role.Anonymous, TimeZoneIanaId = "UTC" };
 
-                            tempCalendars = new List<Calendar>();
+                            tempCalendars = [];
 
-                            tempOtherCalendars = new List<Calendar>();
+                            tempOtherCalendars = [];
 
-                            var temporaryOtherCalendars = (from calendar in (await _calendarRepository.GetAllCalendarsAsync() ?? [])
-                                                           join calendarShared in ((await _calendarSharedRepository?.GetCalendarSharedAsync())?.Where(x => x.Anonymous)?.ToList() ?? [])
+                            var temporaryOtherCalendars = (from calendar in await _calendarRepository.GetAllCalendarsAsync() ?? []
+                                                           join calendarShared in (await _calendarSharedRepository?.GetCalendarSharedAsync())?.Where(x => x.Anonymous)?.ToList() ?? []
                                                            on calendar.Id equals calendarShared.CalendarId
                                                            select new
                                                            {
-                                                               Id = calendar.Id,
-                                                               Name = calendar.Name,
-                                                               HtmlColorCode = calendar.HtmlColorCode
+                                                               calendar.Id,
+                                                               calendar.Name,
+                                                               calendar.HtmlColorCode
                                                            }).OrderBy(x => x.Name).ToList();
 
                             foreach (var tempOtherCalendar in temporaryOtherCalendars)
@@ -1671,7 +1675,7 @@ namespace Maroik.WebSite.Controllers
                             }
                         }
 
-                        IEnumerable<Calendar> tempInputCalendars = calendarInputViewModel?.Calendars ?? new List<Calendar>();
+                        IEnumerable<Calendar> tempInputCalendars = calendarInputViewModel?.Calendars ?? [];
 
                         foreach (Calendar tempInputCalendar in tempInputCalendars)
                         {
@@ -1680,12 +1684,13 @@ namespace Maroik.WebSite.Controllers
                             {
                                 foreach (CalendarEvent calendarEvent in await _calendarEventRepository.GetCalendarEventsAsync(tempInputCalendar.Id))
                                 {
-                                    var item = new CalendarEventOutputViewModel();
-
-                                    item.Id = calendarEvent.Id;
-                                    item.CalendarId = calendarEvent.CalendarId;
-                                    item.Title = calendarEvent.Title;
-                                    item.AllDay = calendarEvent.AllDay;
+                                    CalendarEventOutputViewModel item = new()
+                                    {
+                                        Id = calendarEvent.Id,
+                                        CalendarId = calendarEvent.CalendarId,
+                                        Title = calendarEvent.Title,
+                                        AllDay = calendarEvent.AllDay
+                                    };
 
                                     if (calendarEvent.AllDay)
                                     {
@@ -1741,7 +1746,7 @@ namespace Maroik.WebSite.Controllers
 
                                         item.DisplayStartDate = calendarEvent.StartDate.ToString("yyyy-MM-dd");
                                         item.DisplayEndDate = calendarEvent.EndDate.ToString("yyyy-MM-dd");
-                                        
+
                                         item.StartDate = calendarEvent.StartDate;
                                         DateTime tempEndDate = calendarEvent.EndDate.AddDays(1);
                                         item.EndDate = new DateTime(tempEndDate.Year, tempEndDate.Month, tempEndDate.Day, 0, 0, 0, tempEndDate.Kind);
@@ -1822,14 +1827,9 @@ namespace Maroik.WebSite.Controllers
                             }
                         }
 
-                        if (calendarEvents.Count > 0)
-                        {
-                            return Json(new { result = true, calendarEvents = JsonConvert.SerializeObject(calendarEvents) });
-                        }
-                        else
-                        {
-                            return Json(new { result = false, error = _localizer["Input is invalid"].Value });
-                        }
+                        return calendarEvents.Count > 0
+                            ? Json(new { result = true, calendarEvents = JsonConvert.SerializeObject(calendarEvents) })
+                            : (IActionResult)Json(new { result = false, error = _localizer["Input is invalid"].Value });
                     }
                     catch
                     {
@@ -1858,7 +1858,7 @@ namespace Maroik.WebSite.Controllers
                 List<Calendar> calendars = (await _calendarRepository.GetCalendarsAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email) ?? [])?.ToList();
                 List<CalendarShared> calendarShareds = (await _calendarSharedRepository.GetCalendarSharedAsync() ?? [])?.ToList();
 
-                foreach (Calendar calendar in calendars) 
+                foreach (Calendar calendar in calendars)
                 {
                     CalendarShared calendarShared = calendarShareds?.Where(x => x.CalendarId == calendar.Id)?.FirstOrDefault() ?? new CalendarShared();
 
@@ -1868,11 +1868,11 @@ namespace Maroik.WebSite.Controllers
                     }
                 }
 
-                List<CalendarShared> tempCalendarShareds = new List<CalendarShared>();
+                List<CalendarShared> tempCalendarShareds = [];
 
                 foreach (CalendarShared calendarShared in (await _calendarSharedRepository.GetCalendarSharedAsync() ?? [])?.ToList())
                 {
-                    var item = calendars.Where(x => x.Id == calendarShared.CalendarId).FirstOrDefault() ?? new Calendar();
+                    Calendar item = calendars.Where(x => x.Id == calendarShared.CalendarId).FirstOrDefault() ?? new Calendar();
 
                     if (item.Id > 0)
                     {
@@ -1881,15 +1881,15 @@ namespace Maroik.WebSite.Controllers
                 }
 
                 var setCalendarShareds = (from calendar in calendars
-                                    join sharedCalendar in tempCalendarShareds
-                                    on calendar.Id equals sharedCalendar.CalendarId
-                                    select new
-                                    {
-                                        Id = sharedCalendar.CalendarId,
-                                        Name = calendar.Name,
-                                        User = sharedCalendar.User,
-                                        Guest = sharedCalendar.Anonymous
-                                    }).OrderBy(x => x.Name).ToList();
+                                          join sharedCalendar in tempCalendarShareds
+                                          on calendar.Id equals sharedCalendar.CalendarId
+                                          select new
+                                          {
+                                              Id = sharedCalendar.CalendarId,
+                                              calendar.Name,
+                                              sharedCalendar.User,
+                                              Guest = sharedCalendar.Anonymous
+                                          }).OrderBy(x => x.Name).ToList();
 
 
                 return Json(new { result = true, setCalendarShareds });
@@ -1932,18 +1932,18 @@ namespace Maroik.WebSite.Controllers
                     }
 
                     var browseCalendarsOfInterests = (from calendar in allCalendars
-                                                     join calendarShared in calendarShareds
-                                                     on calendar.Id equals calendarShared.CalendarId
-                                                     // Left Join otherCalendars based on calendar.Id
-                                                     join otherCalendar in otherCalendars
-                                                     on calendar.Id equals otherCalendar.CalendarId into otherCalendarGroup
-                                                     from otherCalendar in otherCalendarGroup.DefaultIfEmpty() // Left Join
-                                                     select new
-                                                     {
-                                                         calendar.Id,
-                                                         calendar.Name,
-                                                         Checked = otherCalendar != null // otherCalendar가 존재하면 true, 없으면 false
-                                                     }).OrderBy(x => x.Name).ToList();
+                                                      join calendarShared in calendarShareds
+                                                      on calendar.Id equals calendarShared.CalendarId
+                                                      // Left Join otherCalendars based on calendar.Id
+                                                      join otherCalendar in otherCalendars
+                                                      on calendar.Id equals otherCalendar.CalendarId into otherCalendarGroup
+                                                      from otherCalendar in otherCalendarGroup.DefaultIfEmpty() // Left Join
+                                                      select new
+                                                      {
+                                                          calendar.Id,
+                                                          calendar.Name,
+                                                          Checked = otherCalendar != null // otherCalendar가 존재하면 true, 없으면 false
+                                                      }).OrderBy(x => x.Name).ToList();
 
 
                     return Json(new { result = true, browseCalendarsOfInterests });
@@ -2202,7 +2202,7 @@ namespace Maroik.WebSite.Controllers
 
                             #region CalendarEventAttachedFile
 
-                            await _calendarEventAttachedFileRepository.DeleteCalendarEventAttachedFileAsync(calendarEvent.Id);
+                            _ = await _calendarEventAttachedFileRepository.DeleteCalendarEventAttachedFileAsync(calendarEvent.Id);
 
                             if (calendarEventInputViewModel.CalendarEventUploadedFile != null) // 첨부 파일 존재 시,
                             {
@@ -2247,7 +2247,7 @@ namespace Maroik.WebSite.Controllers
 
                             #region CalendarReminder
 
-                            await _calendarReminderRepository.DeleteCalendarEventReminderAsync(calendarEvent.Id);
+                            _ = await _calendarReminderRepository.DeleteCalendarEventReminderAsync(calendarEvent.Id);
 
                             List<Dictionary<string, object>> calendarReminders = JsonConvert.DeserializeObject<List<Dictionary<string, object>>>(calendarEventInputViewModel.SerializedCalendarReminders);
 
@@ -2460,7 +2460,7 @@ namespace Maroik.WebSite.Controllers
             try
             {
                 _ = HttpContext.Session.TryGetValue(Maroik.Common.Miscellaneous.Extensions.EnumHelper.GetDescription(Maroik.Common.Miscellaneous.Utilities.Session.Account), out byte[] resultByte);
-                
+
                 List<Calendar> tempCalendars = await _calendarRepository.GetCalendarsAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email) ?? [];
 
                 if (tempCalendars == null || tempCalendars.Count == 0)
