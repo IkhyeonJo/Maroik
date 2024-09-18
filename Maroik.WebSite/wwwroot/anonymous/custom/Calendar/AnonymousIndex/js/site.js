@@ -98,7 +98,7 @@ $(function () {
             dayGridMonth: localizer.Month
         },
         themeSystem: 'bootstrap',
-        navLinks: true,
+        navLinks: false,
         editable: true,
         selectable: true,
         selectMirror: true,
