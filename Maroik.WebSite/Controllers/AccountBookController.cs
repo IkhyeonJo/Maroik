@@ -38,7 +38,7 @@ namespace Maroik.WebSite.Controllers
             _fixedExpenditureRepository = fixedExpenditureRepository;
         }
 
-        #region 자산
+        #region Asset
 
         #region Create
         [HttpPost]
@@ -378,7 +378,7 @@ namespace Maroik.WebSite.Controllers
 
         #endregion
 
-        #region 수입
+        #region Income
 
         #region Create
         [HttpPost]
@@ -867,7 +867,7 @@ namespace Maroik.WebSite.Controllers
 
         #endregion
 
-        #region 지출
+        #region Expenditure
 
         #region Create
         [HttpPost]

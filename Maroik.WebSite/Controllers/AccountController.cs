@@ -32,7 +32,7 @@ namespace Maroik.WebSite.Controllers
             _mailRepository = mailRepository;
         }
 
-        #region 동의서
+        #region ConsentForm
         [HttpGet]
         public IActionResult ConsentForm()
         {
@@ -61,7 +61,7 @@ namespace Maroik.WebSite.Controllers
         }
         #endregion
 
-        #region 로그인
+        #region Login
         [HttpGet]
         public IActionResult Login()
         {
@@ -163,7 +163,7 @@ namespace Maroik.WebSite.Controllers
         }
         #endregion
 
-        #region 로그아웃
+        #region Logout
         [HttpGet]
         public IActionResult Logout()
         {
@@ -172,7 +172,7 @@ namespace Maroik.WebSite.Controllers
         }
         #endregion
 
-        #region 계정 생성
+        #region Register
         [HttpGet]
         public IActionResult Register()
         {
@@ -514,7 +514,7 @@ namespace Maroik.WebSite.Controllers
         }
         #endregion
 
-        #region 이메일 확인
+        #region ConfirmEmail
         [HttpGet]
         public async Task<IActionResult> ConfirmEmail(string registrationToken)
         {
@@ -627,7 +627,7 @@ namespace Maroik.WebSite.Controllers
         }
         #endregion
 
-        #region 비밀번호 초기화
+        #region ForgotPassword
         [HttpGet]
         public IActionResult ForgotPassword()
         {

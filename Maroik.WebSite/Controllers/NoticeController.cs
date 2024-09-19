@@ -41,7 +41,7 @@ namespace Maroik.WebSite.Controllers
             _fixedExpenditureRepository = fixedExpenditureRepository;
         }
 
-        #region 고정 수입
+        #region FixedIncome
 
         #region Create
         [HttpPost]
@@ -657,7 +657,7 @@ namespace Maroik.WebSite.Controllers
 
         #endregion
 
-        #region 고정 지출
+        #region FixedExpenditure
 
         #region Create
         [HttpPost]
