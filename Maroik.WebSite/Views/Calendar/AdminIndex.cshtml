@@ -53,6 +53,7 @@
     #endregion
 }
 
+@Html.Hidden("loginedAccountTimeZoneIanaId", loginedAccount.TimeZoneIanaId)
 @Html.Hidden("localizerEmail", localizer["Email"].Value)
 @Html.Hidden("localizerNotification", localizer["Notification"].Value)
 @Html.Hidden("localizerMinutes", localizer["Minutes"].Value)

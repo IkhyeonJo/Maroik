@@ -405,6 +405,9 @@ $(function () {
                 }
             });
 
+            $('#createCalendarEventAllDayUncheckedStartTimeZone').val($('#loginedAccountTimeZoneIanaId').val());
+            $('#createCalendarEventAllDayUncheckedEndTimeZone').val($('#loginedAccountTimeZoneIanaId').val());
+
             $('#createCalendarEventTaskDialogModal').modal('show');
 
             calendar.unselect();
@@ -2060,6 +2063,9 @@ $('#aCreateCalendarEvent').off('click').on('click', function () {
             }
         }
     });
+
+    $('#createCalendarEventAllDayUncheckedStartTimeZone').val($('#loginedAccountTimeZoneIanaId').val());
+    $('#createCalendarEventAllDayUncheckedEndTimeZone').val($('#loginedAccountTimeZoneIanaId').val());
 
     $('#createCalendarEventTaskDialogModal').modal('show');
 

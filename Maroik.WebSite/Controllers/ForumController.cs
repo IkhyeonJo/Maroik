@@ -33,7 +33,7 @@ namespace Maroik.WebSite.Controllers
             _boardCommentRepository = boardCommentRepository;
         }
 
-        #region 자유게시판
+        #region FreeForum
 
         #region Create
 

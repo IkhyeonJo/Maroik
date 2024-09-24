@@ -44,6 +44,8 @@ namespace Maroik.WebSite.Controllers
             _calendarSharedRepository = calendarSharedRepository;
         }
 
+        #region Calendar
+
         #region Create
 
         #region Calendar
@@ -2487,6 +2489,8 @@ namespace Maroik.WebSite.Controllers
                 return Json(new { result = false, error = _localizer["Input is invalid"].Value });
             }
         }
+
+        #endregion
 
         #endregion
     }
