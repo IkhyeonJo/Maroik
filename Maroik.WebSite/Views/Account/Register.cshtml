@@ -3,6 +3,7 @@
 @model LoginOutputViewModel
 
 @{
+    string currentCulture = Context.Features.Get<Microsoft.AspNetCore.Localization.IRequestCultureFeature>().RequestCulture.Culture.Name;
     bool repeatEmailSend = ViewBag.RepeatEmailSend ?? false;
     bool resendEmail = ViewBag.ResendEmail ?? false;
     string resentEmailAddress = ViewBag.ResentEmailAddress ?? "";
@@ -11,6 +12,7 @@
 
 @if (resendEmail == false)
 {
+    <input id="_currentCulture" type="hidden" value="@(currentCulture)" />
     <div class="register-box">
         <div class="card card-outline card-primary">
             <div class="card-header text-center">

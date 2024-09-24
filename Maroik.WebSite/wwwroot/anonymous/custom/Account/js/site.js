@@ -1,4 +1,10 @@
-﻿function ShowRegisterLoading() {
+﻿$(function () {
+    if ($('#_currentCulture').val() === 'ko-KR') {
+        $('#TimeZoneIanaId').val('Asia/Seoul');
+    }
+});
+
+function ShowRegisterLoading() {
     if (!$('#registerForm').valid()) {
         $('#loading').hide();
         return false;
