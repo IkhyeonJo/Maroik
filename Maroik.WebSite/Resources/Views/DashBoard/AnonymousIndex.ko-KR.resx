@@ -120,8 +120,8 @@
   <data name="All posts can be read freely without registering as a separate member. It is disclosed so that there is no hindrance to learning without logging in." xml:space="preserve">
     <value>게시물은 별도의 회원 가입 없이도 모든 글은 자유롭게 읽을 수 있습니다. 로그인 없이도 학습에 아무 지장이 없도록 공개합니다.</value>
   </data>
-  <data name="Also, when logging in, it is made possible to create a personal account book." xml:space="preserve">
-    <value>또한 로그인 시, 개인 가계부 작성이 가능하도록 만들어져 있습니다.</value>
+  <data name="Additionally, when you log in, you can manage your personal schedule and create a household account book." xml:space="preserve">
+    <value>또한 로그인 시, 개인 일정 관리 및 가계부 작성이 가능하도록 만들어져 있습니다.</value>
   </data>
   <data name="However, for posting, membership registration and login are required due to advertisements or posts that violate social justice." xml:space="preserve">
     <value>그러나 게시물 작성에 대해서는 광고나 사회 정의에 위반되는 글로 인해 회원 가입 및 로그인 과정이 필요합니다.</value>
