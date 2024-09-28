@@ -66,3 +66,25 @@ services:
           - ./Maroik.SSL/localhost.pfx:/etc/ssl/localhost.pfx:ro
         depends_on :
           - mariadb  
+
+    maroik.filestorage:
+        build :
+         context : .
+         dockerfile : Maroik.FileStorage/Dockerfile
+        container_name: Maroik.FileStorage
+        networks :
+          - backend          
+        expose:
+          - "80"
+          - "443"
+        environment :
+          - DBHOST=mariadb
+          - ASPNETCORE_ENVIRONMENT=DockerComposeLocalDebug
+          - ASPNETCORE_URLS=https://+:443;http://+:80
+          - ASPNETCORE_Kestrel__Certificates__Default__Password=Passw0rd
+          - ASPNETCORE_Kestrel__Certificates__Default__Path=/etc/ssl/localhost.pfx
+        volumes:
+          - ./Maroik.SSL/localhost.pfx:/etc/ssl/localhost.pfx:ro
+          - ./Maroik.FileStorage/upload/:/app/upload:rw
+        depends_on :
+          - mariadb  
