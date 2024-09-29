@@ -1,14 +1,16 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using System.Security.AccessControl;
 
 [ApiController]
-[Route("api/files")]
-public class FilesController : ControllerBase
+[Route("api/[controller]")]
+public class FileController : ControllerBase
 {
     private readonly string _uploadPath = "/app/upload";
 
-    [HttpPost]
-    public async Task<IActionResult> UploadFile([FromForm] IFormFile file, [FromForm] string param1, [FromForm] string param2)
+    [AllowAnonymous]
+    [HttpPost("upload")]
+    public async Task<IActionResult> Upload([FromForm] IFormFile file, [FromForm] string param1, [FromForm] string param2)
     {
         try
         {
@@ -40,8 +42,9 @@ public class FilesController : ControllerBase
         return BadRequest("Invalid file");
     }
 
-    [HttpGet("{fileName}")]
-    public IActionResult DownloadFile(string fileName)
+    [AllowAnonymous]
+    [HttpPost("download")]
+    public IActionResult Download(string fileName)
     {
         var filePath = Path.Combine(_uploadPath, fileName);
 
@@ -54,8 +57,9 @@ public class FilesController : ControllerBase
         return NotFound();
     }
 
-    [HttpDelete("{fileName}")]
-    public IActionResult DeleteFile(string fileName)
+    [AllowAnonymous]
+    [HttpPost("delete")]
+    public IActionResult Delete(string fileName)
     {
         var filePath = Path.Combine(_uploadPath, fileName);
 
