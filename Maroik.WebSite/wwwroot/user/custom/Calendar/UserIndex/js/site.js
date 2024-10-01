@@ -1,4 +1,14 @@
-﻿const localizer = {
+﻿function base64ToBlob(base64, mime) {
+    const byteCharacters = atob(base64);
+    const byteNumbers = new Array(byteCharacters.length);
+    for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);
+    }
+    const byteArray = new Uint8Array(byteNumbers);
+    return new Blob([byteArray], { type: mime });
+}
+
+const localizer = {
     Email: $('#localizerEmail').val(),
     Notification: $('#localizerNotification').val(),
     Minutes: $('#localizerMinutes').val(),
@@ -1931,11 +1941,18 @@ function CreateUploadImageFile(file) {
         cache: false,
         success: function (data) {
             if (data.result) {
-                let imgNode = document.createElement('img');
-                imgNode.src = data.filePath;
+                const imgURL = URL.createObjectURL(base64ToBlob(data.file.fileContents, data.file.contentType));
+                const imgNode = document.createElement('img');
+                imgNode.src = imgURL;
                 imgNode.style.maxWidth = "170px";
                 imgNode.style.maxHeight = "209px";
+                imgNode.setAttribute('data-filePath', data.filePath);
+
                 $('#createCalendarEventDescription').summernote('insertNode', imgNode);
+
+                imgNode.onload = function () {
+                    URL.revokeObjectURL(imgURL);
+                };
             }
             else {
                 alert(data.errorMessage);
@@ -1962,7 +1979,7 @@ function EditUploadImageFile(file) {
         success: function (data) {
             if (data.result) {
                 let imgNode = document.createElement('img');
-                imgNode.src = data.filePath;
+                imgNode.src = 'data:image/jpeg;base64,' + btoa(String.fromCharCode.apply(null, new Uint8Array(data.file)));
                 imgNode.style.maxWidth = "170px";
                 imgNode.style.maxHeight = "209px";
                 $('#editCalendarEventDescription').summernote('insertNode', imgNode);

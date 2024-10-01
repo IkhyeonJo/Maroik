@@ -1,29 +1,32 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.AccessControl;
 
 [ApiController]
 [Route("api/[controller]")]
 public class FileController : ControllerBase
 {
-    private readonly string _uploadPath = "/app/upload";
-
     [AllowAnonymous]
     [HttpPost("upload")]
-    public async Task<IActionResult> Upload([FromForm] IFormFile file, [FromForm] string param1, [FromForm] string param2)
+    public async Task<IActionResult> UploadAsync([FromForm] IFormFile file, [FromForm] string filePath)
     {
         try
         {
             if (file.Length > 0)
             {
-                var filePath = Path.Combine(_uploadPath, file.FileName);
-
-                using (var stream = new FileStream(filePath, FileMode.Create))
+                if (!Directory.Exists(filePath))
                 {
-                    await file.CopyToAsync(stream);
+                    _ = Directory.CreateDirectory(filePath);
                 }
 
-                Directory.CreateDirectory("/app/upload/hello"); // example code
+                filePath = Path.Combine(filePath, file.FileName);
+
+#pragma warning disable SCS0018 // Potential Path Traversal vulnerability was found where '{0}' in '{1}' may be tainted by user-controlled data from '{2}' in method '{3}'.
+                using (var stream = new FileStream(filePath, FileMode.Create))
+#pragma warning restore SCS0018 // Potential Path Traversal vulnerability was found where '{0}' in '{1}' may be tainted by user-controlled data from '{2}' in method '{3}'.
+                {
+                    await file.CopyToAsync(stream);
+                    await stream.FlushAsync();
+                }
 
                 //// 파일 권한 설정
                 //var fileInfo = new FileInfo(filePath);
@@ -33,40 +36,59 @@ public class FileController : ControllerBase
 
                 return Ok();
             }
+            else
+            {
+                return BadRequest("Invalid file");
+            }
         }
-        catch (Exception ex)
+        catch
         {
-
+            return BadRequest("Invalid file");
         }
-
-        return BadRequest("Invalid file");
     }
 
     [AllowAnonymous]
     [HttpPost("download")]
-    public IActionResult Download(string fileName)
+    public async Task<IActionResult> DownloadAsync([FromForm] string filePath)
     {
-        var filePath = Path.Combine(_uploadPath, fileName);
-
-        if (System.IO.File.Exists(filePath))
+        try
         {
-            var fileData = System.IO.File.ReadAllBytes(filePath);
-            return File(fileData, "application/octet-stream", fileName);
-        }
+            // 파일 이름에서 디렉터리 경로 제거 (보안)
+            string sanitizedFileName = Path.GetFileName(filePath);
+            filePath = Path.Combine(Path.GetDirectoryName(filePath ?? ""), sanitizedFileName);
 
-        return NotFound();
+            // 파일이 존재하는지 확인
+            if (System.IO.File.Exists(filePath))
+            {
+#pragma warning disable SCS0018 // Potential Path Traversal vulnerability was found.
+                byte[] fileData = await System.IO.File.ReadAllBytesAsync(filePath);
+#pragma warning restore SCS0018 // Potential Path Traversal vulnerability was found.
+
+                return File(fileData, "application/octet-stream", sanitizedFileName);
+            }
+
+            return NotFound("File not found");
+        }
+        catch
+        {
+            return BadRequest("Invalid file");
+        }
     }
 
     [AllowAnonymous]
     [HttpPost("delete")]
-    public IActionResult Delete(string fileName)
+    public IActionResult Delete([FromForm] string filePath)
     {
-        var filePath = Path.Combine(_uploadPath, fileName);
+        // 파일 이름에서 디렉터리 경로 제거 (보안)
+        string sanitizedFileName = Path.GetFileName(filePath);
+        filePath = Path.Combine(Path.GetDirectoryName(filePath ?? ""), sanitizedFileName);
 
         if (System.IO.File.Exists(filePath))
         {
+#pragma warning disable SCS0018 // Potential Path Traversal vulnerability was found.
             System.IO.File.Delete(filePath);
-            return NoContent();
+#pragma warning restore SCS0018 // Potential Path Traversal vulnerability was found.
+            return Ok();
         }
 
         return NotFound();

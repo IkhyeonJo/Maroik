@@ -3,6 +3,7 @@ using Maroik.Common.DataAccess.Contracts;
 using Maroik.Common.DataAccess.Models;
 using Maroik.Common.Miscellaneous.Extensions;
 using Maroik.Common.Miscellaneous.Utilities;
+using Maroik.WebSite.Contracts;
 using Maroik.WebSite.Models.ViewModels.Calendar;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Localization;
@@ -26,8 +27,9 @@ namespace Maroik.WebSite.Controllers
         private readonly ICalendarEventReminderRepository _calendarReminderRepository;
         private readonly ICalendarSharedRepository _calendarSharedRepository;
         private readonly IHostEnvironment _hostEnvironment;
+        private readonly IFileRepository _fileRepository;
 
-        public CalendarController(IHtmlLocalizer<CalendarController> localizer, ILogger<CalendarController> logger, IHostEnvironment hostEnvironment, IIncomeRepository incomeRepository, IExpenditureRepository expenditureRepository, IAssetRepository assetRepository, IAccountRepository accountRepository, ICalendarRepository calendarRepository, IOtherCalendarRepository otherCalendarRepository, ICalendarEventRepository calendarEventRepository, ICalendarEventAttachedFileRepository calendarEventAttachedFileRepository, ICalendarEventReminderRepository calendarReminderRepository, ICalendarSharedRepository calendarSharedRepository)
+        public CalendarController(IHtmlLocalizer<CalendarController> localizer, ILogger<CalendarController> logger, IHostEnvironment hostEnvironment, IIncomeRepository incomeRepository, IExpenditureRepository expenditureRepository, IAssetRepository assetRepository, IAccountRepository accountRepository, ICalendarRepository calendarRepository, IOtherCalendarRepository otherCalendarRepository, ICalendarEventRepository calendarEventRepository, ICalendarEventAttachedFileRepository calendarEventAttachedFileRepository, ICalendarEventReminderRepository calendarReminderRepository, ICalendarSharedRepository calendarSharedRepository, IFileRepository fileRepository)
         {
             _localizer = localizer;
             _logger = logger;
@@ -42,6 +44,7 @@ namespace Maroik.WebSite.Controllers
             _calendarEventAttachedFileRepository = calendarEventAttachedFileRepository;
             _calendarReminderRepository = calendarReminderRepository;
             _calendarSharedRepository = calendarSharedRepository;
+            _fileRepository = fileRepository;
         }
 
         #region Calendar
@@ -116,6 +119,7 @@ namespace Maroik.WebSite.Controllers
                     #region HtmlSanitizer
                     HtmlSanitizer sanitizer = new();
                     _ = sanitizer.AllowedAttributes.Add("class");
+                    _ = sanitizer.AllowedAttributes.Add("data-filePath");
                     string sanitized = sanitizer.Sanitize(calendarEventInputViewModel.Description);
                     calendarEventInputViewModel.Description = sanitized;
                     #endregion
@@ -392,23 +396,14 @@ namespace Maroik.WebSite.Controllers
 
                         Account loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte));
 
-                        string summernoteImagePath = Path.Combine(_hostEnvironment.ContentRootPath, "wwwroot", "upload", "Calendar", $"{loginedAccount.Role}Index", "summernote", "images");
-                        if (!Directory.Exists(summernoteImagePath))
-                        {
-                            _ = Directory.CreateDirectory(summernoteImagePath);
-                        }
+                        string summernoteImagePath = Path.Combine("upload", "Calendar", $"{loginedAccount.Role}Index", "summernote", "images");
 
                         string imageFile = $"{Guid.NewGuid().ToString().ToUpper()}{Path.GetExtension(summernoteImageFile.FileName)}";
                         string filePath = Path.Combine(summernoteImagePath, imageFile);
 
-#pragma warning disable SCS0018 // Potential Path Traversal vulnerability was found where '{0}' in '{1}' may be tainted by user-controlled data from '{2}' in method '{3}'.
-                        using (FileStream stream = new(filePath, FileMode.Create))
-#pragma warning restore SCS0018 // Potential Path Traversal vulnerability was found where '{0}' in '{1}' may be tainted by user-controlled data from '{2}' in method '{3}'.
-                        {
-                            await summernoteImageFile.CopyToAsync(stream);
-                            await stream.FlushAsync();
-                        }
-                        return Ok(new { result = true, filePath = $"/upload/Calendar/{loginedAccount.Role}Index/summernote/images/{imageFile}" });
+                        return Ok(await _fileRepository.UploadAsync(summernoteImageFile, filePath)
+                            ? new { result = true, file = File(await _fileRepository.DownloadAsync(filePath), summernoteImageFile.ContentType, imageFile), filePath }
+                            : new { result = false, error = _localizer["Input is invalid"].Value });
                     }
                     else // 이미지 png 또는 jpg 또는 jpeg 외 확장자는 거절
                     {
