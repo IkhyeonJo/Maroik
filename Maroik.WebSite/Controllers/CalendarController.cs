@@ -1,4 +1,5 @@
 ﻿using Ganss.Xss;
+using HtmlAgilityPack;
 using Maroik.Common.DataAccess.Contracts;
 using Maroik.Common.DataAccess.Models;
 using Maroik.Common.Miscellaneous.Extensions;
@@ -7,6 +8,7 @@ using Maroik.WebSite.Contracts;
 using Maroik.WebSite.Models.ViewModels.Calendar;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Localization;
+using Microsoft.AspNetCore.StaticFiles;
 using Newtonsoft.Json;
 using System.Text;
 
@@ -1247,9 +1249,41 @@ namespace Maroik.WebSite.Controllers
                             Id = tempCalendarEvent.Id,
                             CalendarId = tempCalendarEvent.CalendarId,
                             Title = tempCalendarEvent.Title,
-                            Description = tempCalendarEvent.Description,
                             AllDay = tempCalendarEvent.AllDay
                         };
+
+                        HtmlDocument htmlDocument = new HtmlDocument();
+                        htmlDocument.LoadHtml(tempCalendarEvent.Description);
+
+                        foreach (HtmlNode imgTag in htmlDocument.DocumentNode.Descendants("img") ?? new List<HtmlNode>()) 
+                        {
+                            string filePath = imgTag.GetAttributeValue("alt", "");
+
+                            // 파일을 다운로드하는 메서드
+                            byte[] fileData = await _fileRepository.DownloadAsync(filePath);
+
+                            if (fileData != null)
+                            {
+                                // ContentType을 추출하기 위한 FileExtensionContentTypeProvider 사용
+                                var provider = new FileExtensionContentTypeProvider();
+                                string contentType;
+
+                                // 기본 contentType은 "application/octet-stream"으로 설정
+                                if (!provider.TryGetContentType(filePath, out contentType))
+                                {
+                                    contentType = "application/octet-stream";
+                                }
+
+                                // 파일 데이터를 Base64로 변환
+                                string base64Data = Convert.ToBase64String(fileData);
+
+                                // img 태그에 base64 데이터 저장 (src에 넣는 대신 data-file 속성 사용)
+                                imgTag.SetAttributeValue("data-file", base64Data);
+                                imgTag.SetAttributeValue("data-contenttype", contentType);
+                            }
+                        }
+
+                        calendarEvent.Description = htmlDocument.DocumentNode.OuterHtml;
 
                         if (tempCalendarEvent.AllDay)
                         {
@@ -1456,9 +1490,41 @@ namespace Maroik.WebSite.Controllers
                             Id = tempCalendarEvent.Id,
                             CalendarId = tempCalendarEvent.CalendarId,
                             Title = tempCalendarEvent.Title,
-                            Description = tempCalendarEvent.Description,
                             AllDay = tempCalendarEvent.AllDay
                         };
+
+                        HtmlDocument htmlDocument = new HtmlDocument();
+                        htmlDocument.LoadHtml(tempCalendarEvent.Description);
+
+                        foreach (HtmlNode imgTag in htmlDocument.DocumentNode.Descendants("img") ?? new List<HtmlNode>())
+                        {
+                            string filePath = imgTag.GetAttributeValue("alt", "");
+
+                            // 파일을 다운로드하는 메서드
+                            byte[] fileData = await _fileRepository.DownloadAsync(filePath);
+
+                            if (fileData != null)
+                            {
+                                // ContentType을 추출하기 위한 FileExtensionContentTypeProvider 사용
+                                var provider = new FileExtensionContentTypeProvider();
+                                string contentType;
+
+                                // 기본 contentType은 "application/octet-stream"으로 설정
+                                if (!provider.TryGetContentType(filePath, out contentType))
+                                {
+                                    contentType = "application/octet-stream";
+                                }
+
+                                // 파일 데이터를 Base64로 변환
+                                string base64Data = Convert.ToBase64String(fileData);
+
+                                // img 태그에 base64 데이터 저장 (src에 넣는 대신 data-file 속성 사용)
+                                imgTag.SetAttributeValue("data-file", base64Data);
+                                imgTag.SetAttributeValue("data-contenttype", contentType);
+                            }
+                        }
+
+                        calendarEvent.Description = htmlDocument.DocumentNode.OuterHtml;
 
                         if (tempCalendarEvent.AllDay)
                         {

@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.StaticFiles;
 
 [ApiController]
 [Route("api/[controller]")]
@@ -64,7 +65,17 @@ public class FileController : ControllerBase
                 byte[] fileData = await System.IO.File.ReadAllBytesAsync(filePath);
 #pragma warning restore SCS0018 // Potential Path Traversal vulnerability was found.
 
-                return File(fileData, "application/octet-stream", sanitizedFileName);
+                // 파일 확장자에 맞는 Content-Type을 가져오기 위한 FileExtensionContentTypeProvider 사용
+                var provider = new FileExtensionContentTypeProvider();
+                string contentType;
+
+                // contentType 설정 (없을 경우 기본값 "application/octet-stream" 설정)
+                if (!provider.TryGetContentType(sanitizedFileName, out contentType))
+                {
+                    contentType = "application/octet-stream";
+                }
+
+                return File(fileData, contentType, sanitizedFileName);
             }
 
             return NotFound("File not found");
