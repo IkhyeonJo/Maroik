@@ -119,7 +119,6 @@ namespace Maroik.WebSite.Controllers
                     #region HtmlSanitizer
                     HtmlSanitizer sanitizer = new();
                     _ = sanitizer.AllowedAttributes.Add("class");
-                    _ = sanitizer.AllowedAttributes.Add("data-filePath");
                     string sanitized = sanitizer.Sanitize(calendarEventInputViewModel.Description);
                     calendarEventInputViewModel.Description = sanitized;
                     #endregion

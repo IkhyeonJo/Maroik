@@ -1946,7 +1946,7 @@ function CreateUploadImageFile(file) {
                 imgNode.src = imgURL;
                 imgNode.style.maxWidth = "170px";
                 imgNode.style.maxHeight = "209px";
-                imgNode.setAttribute('data-filePath', data.filePath);
+                imgNode.setAttribute('alt', data.filePath);
 
                 $('#createCalendarEventDescription').summernote('insertNode', imgNode);
 
