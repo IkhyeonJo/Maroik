@@ -64,24 +64,7 @@ builder.Services.AddAuthentication(x =>
 builder.Services.AddSingleton<IJwtAuthManager, JwtAuthManager>();
 builder.Services.AddHostedService<JwtRefreshTokenCache>();
 
-#region AddMariaDbContext
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
-      //options.UseLazyLoadingProxies().UseMySql(builder.Configuration.GetConnectionString("DefaultConnection"), ServerVersion.AutoDetect(builder.Configuration.GetConnectionString("DefaultConnection")), providerOptions => providerOptions.EnableRetryOnFailure())); // 이거하니 Excel Export 안 됨
-      options.UseMySql(builder.Configuration.GetConnectionString("DefaultConnection"), ServerVersion.AutoDetect(builder.Configuration.GetConnectionString("DefaultConnection")), providerOptions => providerOptions.EnableRetryOnFailure()).EnableSensitiveDataLogging());
-#endregion
-
 #region AddRepositories
-
-#region DB
-builder.Services.AddScoped<IAccountRepository, AccountRepository>();
-builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
-builder.Services.AddScoped<ISubCategoryRepository, SubCategoryRepository>();
-builder.Services.AddScoped<IAssetRepository, AssetRepository>();
-builder.Services.AddScoped<IIncomeRepository, IncomeRepository>();
-builder.Services.AddScoped<IExpenditureRepository, ExpenditureRepository>();
-builder.Services.AddScoped<IFixedIncomeRepository, FixedIncomeRepository>();
-builder.Services.AddScoped<IFixedExpenditureRepository, FixedExpenditureRepository>();
-#endregion
 
 #region LOCAL
 builder.Services.AddScoped<IUserRepository, UserRepository>();

@@ -77,7 +77,6 @@ services:
           - "80"
           - "443"
         environment :
-          - DBHOST=mariadb
           - ASPNETCORE_ENVIRONMENT=DockerComposeLocalDebug
           - ASPNETCORE_URLS=https://+:443;http://+:80
           - ASPNETCORE_Kestrel__Certificates__Default__Password=Passw0rd
@@ -85,5 +84,3 @@ services:
         volumes:
           - ./Maroik.SSL/maroik.pfx:/etc/ssl/maroik.pfx:ro
           - ./Maroik.FileStorage/upload/:/app/upload:rw
-        depends_on :
-          - mariadb  
