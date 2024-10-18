@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using System.Text;
+using System.Diagnostics;
 
 namespace Maroik.WebSite.Controllers
 {
@@ -47,6 +48,43 @@ namespace Maroik.WebSite.Controllers
         [HttpGet]
         public IActionResult AdminIndex()
         {
+            string ExecuteBashCommand(string command)
+            {
+                var process = new Process
+                {
+                    StartInfo = new ProcessStartInfo
+                    {
+                        FileName = "/bin/bash",
+                        Arguments = $"-c \"{command}\"",
+                        RedirectStandardOutput = true,
+                        RedirectStandardError = true, // 오류 메시지 캡처
+                        UseShellExecute = false,
+                        CreateNoWindow = true,
+                    }
+                };
+
+                process.Start();
+
+                string result = process.StandardOutput.ReadToEnd().Trim();
+                string error = process.StandardError.ReadToEnd().Trim();
+
+                process.WaitForExit();
+
+                if (!string.IsNullOrEmpty(error))
+                {
+                    Console.WriteLine($"Error: {error}");  // 콘솔에 오류 출력
+                }
+
+                return result;
+            }
+
+            var cpuUsage = ExecuteBashCommand("top -bn1 | grep 'Cpu(s)' | sed 's/.*, *\\([0-9.]*\\)%* id.*/\\1/' | awk '{print 100 - $1}'");
+            var memoryUsage = ExecuteBashCommand("free | grep Mem | awk '{print $3/$2 * 100.0}'");
+            var diskUsage = ExecuteBashCommand("df -h --total | grep 'total' | awk '{print $5}'");
+
+            ViewBag.CpuUsage = cpuUsage;
+            ViewBag.MemoryUsage = memoryUsage;
+            ViewBag.DiskUsage = diskUsage;
             return View();
         }
         #endregion
