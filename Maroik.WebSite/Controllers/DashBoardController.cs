@@ -9,6 +9,8 @@ using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using System.Text;
 using System.Diagnostics;
+using OfficeOpenXml.FormulaParsing.Excel.Functions.Math;
+using System.Security.Cryptography;
 
 namespace Maroik.WebSite.Controllers
 {
@@ -48,43 +50,75 @@ namespace Maroik.WebSite.Controllers
         [HttpGet]
         public IActionResult AdminIndex()
         {
-            string ExecuteBashCommand(string command)
-            {
-                var process = new Process
-                {
-                    StartInfo = new ProcessStartInfo
-                    {
-                        FileName = "/bin/bash",
-                        Arguments = $"-c \"{command}\"",
-                        RedirectStandardOutput = true,
-                        RedirectStandardError = true, // 오류 메시지 캡처
-                        UseShellExecute = false,
-                        CreateNoWindow = true,
-                    }
-                };
+            // CPU Model 
+            string cpuModelName = ServerSetting.ExecuteBashCommand("cat /proc/cpuinfo | grep 'model name' | uniq | awk -F': ' '{print $2}'");
 
-                process.Start();
+            // CPU 사용량 (퍼센트)
+            string cpuUsage = ServerSetting.ExecuteBashCommand("ps -eo %cpu --no-headers | awk '{sum += $1} END {print sum}'");
 
-                string result = process.StandardOutput.ReadToEnd().Trim();
-                string error = process.StandardError.ReadToEnd().Trim();
+            // 각 프로세스의 CPU 사용률 (%)
+            string cpuUsageList = ServerSetting.ExecuteBashCommand("ps -eo pid,%cpu,comm --sort=-%cpu");
 
-                process.WaitForExit();
+            // 1분, 5분, 15분 평균 부하 (Load Average)
+            string loadAverage = ServerSetting.ExecuteBashCommand("uptime | awk -F 'load average:' '{ print $2 }' | sed 's/,//g'");
 
-                if (!string.IsNullOrEmpty(error))
-                {
-                    Console.WriteLine($"Error: {error}");  // 콘솔에 오류 출력
-                }
+            // 사용 가능한 RAM (GB)
+            string availableRAM = ServerSetting.ExecuteBashCommand("free -h | grep 'Mem' | awk '{print $7}'");
 
-                return result;
-            }
+            // RAM 사용량 (Percentage)
+            string memoryUsage = ServerSetting.ExecuteBashCommand("ps -eo %mem --no-headers | awk '{sum += $1} END {print sum}'");
 
-            var cpuUsage = ExecuteBashCommand("top -bn1 | grep 'Cpu(s)' | sed 's/.*, *\\([0-9.]*\\)%* id.*/\\1/' | awk '{print 100 - $1}'");
-            var memoryUsage = ExecuteBashCommand("free | grep Mem | awk '{print $3/$2 * 100.0}'");
-            var diskUsage = ExecuteBashCommand("df -h --total | grep 'total' | awk '{print $5}'");
+            // 각 프로세스의 메모리 사용률 (%)
+            string memoryUsageList = ServerSetting.ExecuteBashCommand("ps -eo pid,%mem,comm --sort=-%mem");
+
+            // 사용 가능한 스왑 메모리 (GB)
+            string availableSwap = ServerSetting.ExecuteBashCommand("free -h | grep 'Swap' | awk '{print $4}'");
+
+            // 디스크 사용 공간 (GB)
+            string diskUsageGB = ServerSetting.ExecuteBashCommand("df -BG / | grep '/' | awk '{print $3}' | sed 's/G//'");
+
+            // 디스크 여유 공간 (GB)
+            string freeDiskSpace = ServerSetting.ExecuteBashCommand("df -h / | grep '/' | awk '{print $4}'");
+
+            // 디스크 사용량 (퍼센트)
+            string diskUsage = ServerSetting.ExecuteBashCommand("df -h / | grep '/' | awk '{print $5}'");
+
+            //Device: 디스크 장치의 이름(예: loop0, sda, sdb, sdc 등).
+            //rrqm / s: 초당 읽기 요청 병합 수. (읽기 요청이 디스크에 보내지기 전에 병합된 요청 수)
+            //wrqm / s: 초당 쓰기 요청 병합 수. (쓰기 요청이 병합된 수)
+            //r / s: 초당 읽기 요청 수.
+            //w / s: 초당 쓰기 요청 수.
+            //rsec / s: 초당 읽기 섹터 수.
+            //wsec / s: 초당 쓰기 섹터 수.
+            //avgrq - sz: 평균 요청 크기(읽기와 쓰기 요청의 섹터 크기).
+            //avgqu - sz: 평균 대기 큐 크기.
+            //await: 요청이 대기하는 평균 시간(ms).
+            //svctm: 서비스 시간(ms).
+            //% util: 디스크가 사용되는 시간의 비율(%).
+
+            //Device: 디스크 장치의 이름.
+            //tps: 초당 전송 수. (읽기 및 쓰기 요청의 총합)
+            //kB_read / s: 초당 읽은 데이터의 양(KB).
+            //kB_wrtn / s: 초당 쓴 데이터의 양(KB).
+            //kB_dscd / s: 초당 삭제된 데이터의 양(KB).
+            //kB_read: 총 읽은 데이터(KB).
+            //kB_wrtn: 총 쓴 데이터(KB).
+            //kB_dscd: 총 삭제된 데이터(KB).
+
+            // 디스크 I/O 통계 가져오기
+            string diskIOStats = ServerSetting.ExecuteBashCommand("iostat -d -k 1 2 | tail -n +4 | head -n -1");
+
+            // 네트워크 수신 속도 (KiB/s)
+            string networkIn = ServerSetting.ExecuteBashCommand("cat /proc/net/dev | grep 'eth0' | awk '{print $2 / 1024}'");
+
+            // 네트워크 송신 속도 (KiB/s)
+            string networkOut = ServerSetting.ExecuteBashCommand("cat /proc/net/dev | grep 'eth0' | awk '{print $10 / 1024}'");
 
             ViewBag.CpuUsage = cpuUsage;
+            ViewBag.CpuModelName = cpuModelName;
             ViewBag.MemoryUsage = memoryUsage;
             ViewBag.DiskUsage = diskUsage;
+
             return View();
         }
         #endregion

@@ -3,6 +3,10 @@
 
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
 
+# Package update and install procps
+RUN apt-get update && apt-get install -y procps
+RUN apt-get install sysstat -y
+
 EXPOSE 5000
 EXPOSE 5001
 
