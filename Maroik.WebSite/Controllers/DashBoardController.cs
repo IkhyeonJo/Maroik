@@ -21,6 +21,8 @@ namespace Maroik.WebSite.Controllers
         private readonly IExpenditureRepository _expenditureRepository;
         private readonly IAssetRepository _assetRepository;
         private readonly IAccountRepository _accountRepository;
+        private readonly string _hostResourceFilePath = "/app/Maroik.Log/HostResourceInfo.txt";
+        private readonly string _dockerResourceFilePath = "/app/Maroik.Log/DockerResourceInfo.txt";
 
         public DashBoardController(ILogger<DashBoardController> logger, IIncomeRepository incomeRepository, IExpenditureRepository expenditureRepository, IAssetRepository assetRepository, IAccountRepository accountRepository)
         {
@@ -50,28 +52,21 @@ namespace Maroik.WebSite.Controllers
         [HttpGet]
         public IActionResult AdminIndex()
         {
-            const string hostResourceFile = "/app/Maroik.Log/HostResourceInfo.txt";
-            const string dockerResourceFile = "/app/Maroik.Log/DockerResourceInfo.txt";
+            string hostResourceFileText = string.Empty;
+            string dockerResourceFileText = string.Empty;
 
-            string cpuUsage = "";
-            string cpuModelName = "";
-            string memoryUsage = "";
-            string diskUsage = "";
-
-            if (System.IO.File.Exists(hostResourceFile))
+            if (System.IO.File.Exists(_hostResourceFilePath))
             {
-                cpuUsage = System.IO.File.ReadAllText(hostResourceFile);
+                hostResourceFileText = System.IO.File.ReadAllText(_hostResourceFilePath);
             }
 
-            if (System.IO.File.Exists(dockerResourceFile))
+            if (System.IO.File.Exists(_dockerResourceFilePath))
             {
-                cpuModelName = System.IO.File.ReadAllText(dockerResourceFile);
+                dockerResourceFileText = System.IO.File.ReadAllText(_dockerResourceFilePath);
             }
 
-            ViewBag.CpuUsage = cpuUsage;
-            ViewBag.CpuModelName = cpuModelName;
-            ViewBag.MemoryUsage = memoryUsage;
-            ViewBag.DiskUsage = diskUsage;
+            ViewBag.HostResourceFileText = hostResourceFileText;
+            ViewBag.DockerResourceFileText = dockerResourceFileText;
 
             return View();
         }
