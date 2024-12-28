@@ -1,6 +1,7 @@
 #!/bin/bash
 
 # Set Maroik Logs
+rm -rf /home/peter-cho/Maroik/Maroik.Log
 mkdir -p /home/peter-cho/Maroik/Maroik.Log
 chmod 777 /home/peter-cho/Maroik/Maroik.Log
 
