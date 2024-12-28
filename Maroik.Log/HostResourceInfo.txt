@@ -1,1 +1,62 @@
-HostResourceInfo.txt
+Host CPU Information:
+CPU Model: Intel(R) Core(TM) i5-7200U CPU @ 2.50GHz
+Host Memory Information:
+               total        used        free      shared  buff/cache   available
+Mem:           7.5Gi       508Mi       695Mi        50Mi       6.4Gi       6.7Gi
+Swap:          4.0Gi       0.0Ki       4.0Gi
+Host Disk Information:
+Filesystem                         Size  Used Avail Use% Mounted on
+tmpfs                              773M  1.9M  771M   1% /run
+/dev/mapper/ubuntu--vg-ubuntu--lv   58G   15G   40G  27% /
+tmpfs                              3.8G     0  3.8G   0% /dev/shm
+tmpfs                              5.0M     0  5.0M   0% /run/lock
+/dev/sda2                          2.0G  360M  1.5G  20% /boot
+tmpfs                              773M  4.0K  773M   1% /run/user/1000
+overlay                             58G   15G   40G  27% /var/lib/docker/overlay2/797ff38bd6e114d42dc201afe28ee2029682c62ec4eef35885c331135c8bfacb/merged
+overlay                             58G   15G   40G  27% /var/lib/docker/overlay2/c9d34293aa8825c4e0682875ef578e4de514007276cad9f782b440ada6aac452/merged
+overlay                             58G   15G   40G  27% /var/lib/docker/overlay2/9d63fa24544fba70dbec49e29f7ebcd43e295bf57639bc133a0d70c4a6d9767a/merged
+overlay                             58G   15G   40G  27% /var/lib/docker/overlay2/427d50d21de4aa5b37471df7247f8674262b99e458c22d8780f1d7706bedb8a2/merged
+/dev/sdb1                          466G  3.0G  463G   1% /home/peter-cho/512GB
+Host Network Information:
+1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN group default qlen 1000
+    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+    inet 127.0.0.1/8 scope host lo
+       valid_lft forever preferred_lft forever
+    inet6 ::1/128 scope host 
+       valid_lft forever preferred_lft forever
+2: enp1s0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP group default qlen 1000
+    link/ether 54:e1:ad:6f:dd:8a brd ff:ff:ff:ff:ff:ff
+    inet 192.168.0.5/24 metric 100 brd 192.168.0.255 scope global dynamic enp1s0
+       valid_lft 5566sec preferred_lft 5566sec
+    inet6 fe80::56e1:adff:fe6f:dd8a/64 scope link 
+       valid_lft forever preferred_lft forever
+3: wlp2s0: <BROADCAST,MULTICAST> mtu 1500 qdisc noop state DOWN group default qlen 1000
+    link/ether 1c:4d:70:20:0c:3d brd ff:ff:ff:ff:ff:ff
+5: docker0: <NO-CARRIER,BROADCAST,MULTICAST,UP> mtu 1500 qdisc noqueue state DOWN group default 
+    link/ether 02:42:8e:a2:ff:ef brd ff:ff:ff:ff:ff:ff
+    inet 172.17.0.1/16 brd 172.17.255.255 scope global docker0
+       valid_lft forever preferred_lft forever
+    inet6 fe80::42:8eff:fea2:ffef/64 scope link 
+       valid_lft forever preferred_lft forever
+25: br-96a15b0b9d29: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue state UP group default 
+    link/ether 02:42:ea:2b:7e:bb brd ff:ff:ff:ff:ff:ff
+    inet 172.19.0.1/16 brd 172.19.255.255 scope global br-96a15b0b9d29
+       valid_lft forever preferred_lft forever
+    inet6 fe80::42:eaff:fe2b:7ebb/64 scope link 
+       valid_lft forever preferred_lft forever
+49: veth354282e@if48: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue master br-96a15b0b9d29 state UP group default 
+    link/ether 52:77:13:1e:12:18 brd ff:ff:ff:ff:ff:ff link-netnsid 6
+    inet6 fe80::5077:13ff:fe1e:1218/64 scope link 
+       valid_lft forever preferred_lft forever
+51: veth5fc0817@if50: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue master br-96a15b0b9d29 state UP group default 
+    link/ether 92:bf:ae:15:ab:d3 brd ff:ff:ff:ff:ff:ff link-netnsid 5
+    inet6 fe80::90bf:aeff:fe15:abd3/64 scope link 
+       valid_lft forever preferred_lft forever
+53: veth9295968@if52: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue master br-96a15b0b9d29 state UP group default 
+    link/ether 0e:05:11:15:da:c8 brd ff:ff:ff:ff:ff:ff link-netnsid 7
+    inet6 fe80::c05:11ff:fe15:dac8/64 scope link 
+       valid_lft forever preferred_lft forever
+55: vethcac88c5@if54: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue master br-96a15b0b9d29 state UP group default 
+    link/ether 16:8f:f9:35:01:1a brd ff:ff:ff:ff:ff:ff link-netnsid 8
+    inet6 fe80::148f:f9ff:fe35:11a/64 scope link 
+       valid_lft forever preferred_lft forever
