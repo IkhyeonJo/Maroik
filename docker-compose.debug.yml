@@ -33,7 +33,7 @@ services:
         networks :
           - backend          
         ports:
-          - 80:80
+          - 8081:80
           - 443:443
         environment :
           - DBHOST=mariadb
