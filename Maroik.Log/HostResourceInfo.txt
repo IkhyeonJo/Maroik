@@ -1,5 +1,6 @@
 Host CPU Information:
 CPU Model: Intel(R) Core(TM) i5-7200U CPU @ 2.50GHz
+CPU Usage: 0.0831947%
 Host Memory Information:
                total        used        free      shared  buff/cache   available
 Mem:           7.5Gi       508Mi       695Mi        50Mi       6.4Gi       6.7Gi
