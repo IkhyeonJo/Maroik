@@ -1,4 +1,5 @@
 ﻿@{
+
     string hostResourceFileText = ((ViewBag.HostResourceFileText as string) ?? "");
     string dockerResourceFileText = ((ViewBag.DockerResourceFileText as string) ?? "");
 
@@ -24,37 +25,39 @@
     string dockerContainerStatus = ExtractSection(dockerResourceFileText, "Docker Container Status:", "Docker Resource Usage:");
     string dockerResourceUsage = ExtractSection(dockerResourceFileText, "Docker Resource Usage:");
 
-    // Parse container status
-    var containerLines = dockerContainerStatus.Split('\n', StringSplitOptions.RemoveEmptyEntries);
-    var resourceLines = dockerResourceUsage.Split('\n', StringSplitOptions.RemoveEmptyEntries);
+    var result = new List<string> { "Name||CPU %||MEM Usage / LIMIT" };
 
-    // Dictionary to map container ID to resource usage details
-    var resourceMap = new Dictionary<string, string[]>();
-
-    for (int i = 1; i < resourceLines.Length; i++)
+    try
     {
-        var columns = resourceLines[i].Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
-        resourceMap[columns[0]] = columns;
-    }
+        // Parse container status
+        var containerLines = dockerContainerStatus.Split('\n', StringSplitOptions.RemoveEmptyEntries);
+        var resourceLines = dockerResourceUsage.Split('\n', StringSplitOptions.RemoveEmptyEntries);
 
-    var result = new List<string> { "Container ID||Name||CPU %||MEM Usage / LIMIT||MEM %||NET I/O||BLOCK I/O" };
+        // Dictionary to map container ID to resource usage details
+        var resourceMap = new Dictionary<string, string[]>();
 
-    for (int i = 1; i < containerLines.Length; i++)
-    {
-        var columns = containerLines[i].Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
-        string containerId = columns[0];
-        string name = columns[^1];
-
-        if (resourceMap.TryGetValue(containerId, out var resourceDetails))
+        for (int i = 1; i < resourceLines.Length; i++)
         {
-            string cpu = resourceDetails[2];
-            string memUsage = resourceDetails[3] + " " + resourceDetails[4] + " " + resourceDetails[5];
-            string memPercent = resourceDetails[6];
-            string netIo = "↓ " + resourceDetails[7] + " " + resourceDetails[8] + " " + "↑ " + resourceDetails[9];
-            string blockIo = resourceDetails[10] + " " + resourceDetails[11] + " " + resourceDetails[12];
-
-            result.Add($"{containerId}||{name}||{cpu}||{memUsage}||{memPercent}||{netIo}||{blockIo}");
+            var columns = resourceLines[i].Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+            resourceMap[columns[0]] = columns;
         }
+
+        for (int i = 1; i < resourceLines.Length; i++)
+        {
+            var columns = resourceLines[i].Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+            string containerName = columns[0];
+
+            if (resourceMap.TryGetValue(containerName, out var resourceDetails))
+            {
+                string cpu = resourceDetails[1];
+                string memUsage = resourceDetails[2] + " " + resourceDetails[3] + " " + resourceDetails[4];
+
+                result.Add($"{containerName}||{cpu}||{memUsage}");
+            }
+        }
+    }
+    catch
+    {
     }
 }
 
@@ -153,7 +156,7 @@
                         <div class="col-md-12">
                             <div class="card">
                                 <div class="card-header">
-                                    <h5 class="card-title">@(dockerContainerInfo[1])</h5>
+                                    <h5 class="card-title">@(dockerContainerInfo[0])</h5>
                                     <div class="card-tools">
                                         <button type="button" class="btn btn-tool" data-card-widget="collapse">
                                             <i class="fas fa-minus"></i>
@@ -167,31 +170,15 @@
 
                                             <div class="info-box-content">
                                                 <span class="info-box-text">CPU %</span>
-                                                <span class="info-box-number">@(dockerContainerInfo[2])</span>
+                                                <span class="info-box-number">@(dockerContainerInfo[1])</span>
                                             </div>
                                         </div>
                                         <div class="info-box mb-3 bg-success">
                                             <span class="info-box-icon"><i class="fas fa-memory"></i></span>
 
                                             <div class="info-box-content">
-                                                <span class="info-box-text">MEM Usage / LIMIT (MEM %)</span>
-                                                <span class="info-box-number">@(dockerContainerInfo[3]) (@(dockerContainerInfo[4]))</span>
-                                            </div>
-                                        </div>
-                                        <div class="info-box mb-3 bg-danger">
-                                            <span class="info-box-icon"><i class="fas fa-hdd"></i></span>
-
-                                            <div class="info-box-content">
-                                                <span class="info-box-text">BLOCK I/O</span>
-                                                <span class="info-box-number">@(dockerContainerInfo[6])</span>
-                                            </div>
-                                        </div>
-                                        <div class="info-box mb-3 bg-warning">
-                                            <span class="info-box-icon"><i class="fas fa-network-wired"></i></span>
-
-                                            <div class="info-box-content">
-                                                <span class="info-box-text">NET I/O</span>
-                                                <span class="info-box-number">@(dockerContainerInfo[5])</span>
+                                                <span class="info-box-text">MEM Usage / LIMIT</span>
+                                                <span class="info-box-number">@(dockerContainerInfo[2])</span>
                                             </div>
                                         </div>
                                     </div>
