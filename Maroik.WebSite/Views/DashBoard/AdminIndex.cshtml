@@ -19,8 +19,7 @@
 
     string hostCpuInfo = ExtractSection(hostResourceFileText, "Host CPU Information:", "Host Memory Information:");
     string hostMemoryInfo = ExtractSection(hostResourceFileText, "Host Memory Information:", "Host Disk Information:");
-    string hostDiskInfo = ExtractSection(hostResourceFileText, "Host Disk Information:", "Host Network Information:");
-    string hostNetworkInfo = ExtractSection(hostResourceFileText, "Host Network Information:");
+    string hostDiskInfo = ExtractSection(hostResourceFileText, "Host Disk Information:");
 
     string dockerContainerStatus = ExtractSection(dockerResourceFileText, "Docker Container Status:", "Docker Resource Usage:");
     string dockerResourceUsage = ExtractSection(dockerResourceFileText, "Docker Resource Usage:");
@@ -64,8 +63,8 @@
 <div class="content">
     <div class="container-fluid">
         <div class="row">
-            <div class="col-12 col-sm-6 col-md-3">
-                <div class="info-box">
+            <div class="col-12 col-sm-6 col-md-4">
+                <div class="info-box mb-4">
                     <span class="info-box-icon bg-info elevation-1"><i class="fas fa-cog"></i></span>
 
                     <div class="info-box-content">
@@ -85,8 +84,8 @@
                     </div>
                 </div>
             </div>
-            <div class="col-12 col-sm-6 col-md-3">
-                <div class="info-box mb-3">
+            <div class="col-12 col-sm-6 col-md-4">
+                <div class="info-box mb-4">
                     <span class="info-box-icon bg-success elevation-1"><i class="fas fa-memory"></i></span>
 
                     <div class="info-box-content">
@@ -107,8 +106,8 @@
             </div>
             <div class="clearfix hidden-md-up"></div>
 
-            <div class="col-12 col-sm-6 col-md-3">
-                <div class="info-box mb-3">
+            <div class="col-12 col-sm-6 col-md-4">
+                <div class="info-box mb-4">
                     <span class="info-box-icon bg-danger elevation-1"><i class="fas fa-hdd"></i></span>
 
                     <div class="info-box-content">
@@ -122,22 +121,6 @@
                                     string diskUsageLimit = temp[1].Trim().ToString() + " / " + temp[0].Trim().ToString();
                                 }
                                 <span class="info-box-number">@(diskUsageLimit)</span>
-                            </text>
-                        }
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-12 col-sm-6 col-md-3">
-                <div class="info-box mb-3">
-                    <span class="info-box-icon bg-warning elevation-1"><i class="fas fa-network-wired"></i></span>
-
-                    <div class="info-box-content">
-                        <span class="info-box-text">NET I/O</span>
-                        @if (!string.IsNullOrEmpty(hostNetworkInfo))
-                        {
-                            <text>
-                                <span class="info-box-number">@(hostNetworkInfo.Replace("Network: ", "").Replace("RX:", "↓").Replace("TX:", "↑"))</span>
                             </text>
                         }
                     </div>

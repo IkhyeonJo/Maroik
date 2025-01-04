@@ -13,6 +13,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "4.Crontab", "4.Crontab", "{
 	ProjectSection(SolutionItems) = preProject
 		Maroik.Crontab\DBBackup.sh = Maroik.Crontab\DBBackup.sh
 		Maroik.Crontab\InitCron = Maroik.Crontab\InitCron
+		Maroik.Crontab\ResourceInfo.sh = Maroik.Crontab\ResourceInfo.sh
 		Maroik.Crontab\UploadFileBackUp.sh = Maroik.Crontab\UploadFileBackUp.sh
 	EndProjectSection
 EndProject
