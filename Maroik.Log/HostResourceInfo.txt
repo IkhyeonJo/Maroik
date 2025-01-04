@@ -4,5 +4,3 @@ Host Memory Information:
 Memory: 15Gi / 1.1Gi
 Host Disk Information:
 Disk: 3.0T / 667G
-Host Network Information:
-Network: RX: 10711.43 Mbps / TX: 63.67 Mbps
