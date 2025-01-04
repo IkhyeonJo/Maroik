@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# Set Maroik Logs
+mkdir -p /home/peter-cho/Maroik/Maroik.Log
+chmod 777 /home/peter-cho/Maroik/Maroik.Log
+
 # apt upgrade auto restart services
 sudo sed -i 's/#$nrconf{restart} = '"'"'i'"'"';/$nrconf{restart} = '"'"'a'"'"';/g' /etc/needrestart/needrestart.conf
 

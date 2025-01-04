@@ -8,6 +8,9 @@ using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using System.Text;
+using System.Diagnostics;
+using OfficeOpenXml.FormulaParsing.Excel.Functions.Math;
+using System.Security.Cryptography;
 
 namespace Maroik.WebSite.Controllers
 {
@@ -18,6 +21,8 @@ namespace Maroik.WebSite.Controllers
         private readonly IExpenditureRepository _expenditureRepository;
         private readonly IAssetRepository _assetRepository;
         private readonly IAccountRepository _accountRepository;
+        private readonly string _hostResourceFilePath = "/app/Maroik.Log/HostResourceInfo.txt";
+        private readonly string _dockerResourceFilePath = "/app/Maroik.Log/DockerResourceInfo.txt";
 
         public DashBoardController(ILogger<DashBoardController> logger, IIncomeRepository incomeRepository, IExpenditureRepository expenditureRepository, IAssetRepository assetRepository, IAccountRepository accountRepository)
         {
@@ -47,6 +52,22 @@ namespace Maroik.WebSite.Controllers
         [HttpGet]
         public IActionResult AdminIndex()
         {
+            string hostResourceFileText = string.Empty;
+            string dockerResourceFileText = string.Empty;
+
+            if (System.IO.File.Exists(_hostResourceFilePath))
+            {
+                hostResourceFileText = System.IO.File.ReadAllText(_hostResourceFilePath);
+            }
+
+            if (System.IO.File.Exists(_dockerResourceFilePath))
+            {
+                dockerResourceFileText = System.IO.File.ReadAllText(_dockerResourceFilePath);
+            }
+
+            ViewBag.HostResourceFileText = hostResourceFileText;
+            ViewBag.DockerResourceFileText = dockerResourceFileText;
+
             return View();
         }
         #endregion

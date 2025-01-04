@@ -1,245 +1,206 @@
-﻿<div class="content">
+﻿@{
+    string hostResourceFileText = ((ViewBag.HostResourceFileText as string) ?? "");
+    string dockerResourceFileText = ((ViewBag.DockerResourceFileText as string) ?? "");
+
+    string ExtractSection(string input, string startMarker, string endMarker = null)
+    {
+        try
+        {
+            int startIndex = input.IndexOf(startMarker) + startMarker.Length;
+            int endIndex = endMarker != null ? input.IndexOf(endMarker, startIndex) : input.Length;
+            return input.Substring(startIndex, endIndex - startIndex).Trim();
+        }
+        catch
+        {
+            return "";
+        }
+    }
+
+    string hostCpuInfo = ExtractSection(hostResourceFileText, "Host CPU Information:", "Host Memory Information:");
+    string hostMemoryInfo = ExtractSection(hostResourceFileText, "Host Memory Information:", "Host Disk Information:");
+    string hostDiskInfo = ExtractSection(hostResourceFileText, "Host Disk Information:", "Host Network Information:");
+    string hostNetworkInfo = ExtractSection(hostResourceFileText, "Host Network Information:");
+
+    string dockerContainerStatus = ExtractSection(dockerResourceFileText, "Docker Container Status:", "Docker Resource Usage:");
+    string dockerResourceUsage = ExtractSection(dockerResourceFileText, "Docker Resource Usage:");
+
+    // Parse container status
+    var containerLines = dockerContainerStatus.Split('\n', StringSplitOptions.RemoveEmptyEntries);
+    var resourceLines = dockerResourceUsage.Split('\n', StringSplitOptions.RemoveEmptyEntries);
+
+    // Dictionary to map container ID to resource usage details
+    var resourceMap = new Dictionary<string, string[]>();
+
+    for (int i = 1; i < resourceLines.Length; i++)
+    {
+        var columns = resourceLines[i].Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+        resourceMap[columns[0]] = columns;
+    }
+
+    var result = new List<string> { "Container ID||Name||CPU %||MEM Usage / LIMIT||MEM %||NET I/O||BLOCK I/O" };
+
+    for (int i = 1; i < containerLines.Length; i++)
+    {
+        var columns = containerLines[i].Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+        string containerId = columns[0];
+        string name = columns[^1];
+
+        if (resourceMap.TryGetValue(containerId, out var resourceDetails))
+        {
+            string cpu = resourceDetails[2];
+            string memUsage = resourceDetails[3] + " " + resourceDetails[4] + " " + resourceDetails[5];
+            string memPercent = resourceDetails[6];
+            string netIo = "↓ " + resourceDetails[7] + " " + resourceDetails[8] + " " + "↑ " + resourceDetails[9];
+            string blockIo = resourceDetails[10] + " " + resourceDetails[11] + " " + resourceDetails[12];
+
+            result.Add($"{containerId}||{name}||{cpu}||{memUsage}||{memPercent}||{netIo}||{blockIo}");
+        }
+    }
+}
+
+<div class="content">
     <div class="container-fluid">
         <div class="row">
-            <div class="col-lg-6">
-                <div class="card">
-                    <div class="card-header border-0">
-                        <div class="d-flex justify-content-between">
-                            <h3 class="card-title">@localizer["Online Store Visitors"]</h3>
-                            <a href="javascript:void(0);">View Report</a>
-                        </div>
-                    </div>
-                    <div class="card-body">
-                        <div class="d-flex">
-                            <p class="d-flex flex-column">
-                                <span class="text-bold text-lg">820</span>
-                                <span>Visitors Over Time</span>
-                            </p>
-                            <p class="ml-auto d-flex flex-column text-right">
-                                <span class="text-success">
-                                    <i class="fas fa-arrow-up"></i> 12.5%
-                                </span>
-                                <span class="text-muted">Since last week</span>
-                            </p>
-                        </div>
+            <div class="col-12 col-sm-6 col-md-3">
+                <div class="info-box">
+                    <span class="info-box-icon bg-info elevation-1"><i class="fas fa-cog"></i></span>
 
-                        <div class="position-relative mb-4">
-                            <canvas id="visitors-chart" height="200"></canvas>
-                        </div>
-
-                        <div class="d-flex flex-row justify-content-end">
-                            <span class="mr-2">
-                                <i class="fas fa-square text-primary"></i> This Week
-                            </span>
-
-                            <span>
-                                <i class="fas fa-square text-gray"></i> Last Week
-                            </span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="card">
-                    <div class="card-header border-0">
-                        <h3 class="card-title">Products</h3>
-                        <div class="card-tools">
-                            <a href="#" class="btn btn-tool btn-sm">
-                                <i class="fas fa-download"></i>
-                            </a>
-                            <a href="#" class="btn btn-tool btn-sm">
-                                <i class="fas fa-bars"></i>
-                            </a>
-                        </div>
-                    </div>
-                    <div class="card-body table-responsive p-0">
-                        <table class="table table-striped table-valign-middle">
-                            <thead>
-                                <tr>
-                                    <th>Product</th>
-                                    <th>Price</th>
-                                    <th>Sales</th>
-                                    <th>More</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td>
-                                        <img src="~/admin/dist/img/default-150x150.png" alt="Product 1" class="img-circle img-size-32 mr-2">
-                                        Some Product
-                                    </td>
-                                    <td>$13 USD</td>
-                                    <td>
-                                        <small class="text-success mr-1">
-                                            <i class="fas fa-arrow-up"></i>
-                                            12%
-                                        </small>
-                                        12,000 Sold
-                                    </td>
-                                    <td>
-                                        <a href="#" class="text-muted">
-                                            <i class="fas fa-search"></i>
-                                        </a>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>
-                                        <img src="~/admin/dist/img/default-150x150.png" alt="Product 1" class="img-circle img-size-32 mr-2">
-                                        Another Product
-                                    </td>
-                                    <td>$29 USD</td>
-                                    <td>
-                                        <small class="text-warning mr-1">
-                                            <i class="fas fa-arrow-down"></i>
-                                            0.5%
-                                        </small>
-                                        123,234 Sold
-                                    </td>
-                                    <td>
-                                        <a href="#" class="text-muted">
-                                            <i class="fas fa-search"></i>
-                                        </a>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>
-                                        <img src="~/admin/dist/img/default-150x150.png" alt="Product 1" class="img-circle img-size-32 mr-2">
-                                        Amazing Product
-                                    </td>
-                                    <td>$1,230 USD</td>
-                                    <td>
-                                        <small class="text-danger mr-1">
-                                            <i class="fas fa-arrow-down"></i>
-                                            3%
-                                        </small>
-                                        198 Sold
-                                    </td>
-                                    <td>
-                                        <a href="#" class="text-muted">
-                                            <i class="fas fa-search"></i>
-                                        </a>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>
-                                        <img src="~/admin/dist/img/default-150x150.png" alt="Product 1" class="img-circle img-size-32 mr-2">
-                                        Perfect Item
-                                        <span class="badge bg-danger">NEW</span>
-                                    </td>
-                                    <td>$199 USD</td>
-                                    <td>
-                                        <small class="text-success mr-1">
-                                            <i class="fas fa-arrow-up"></i>
-                                            63%
-                                        </small>
-                                        87 Sold
-                                    </td>
-                                    <td>
-                                        <a href="#" class="text-muted">
-                                            <i class="fas fa-search"></i>
-                                        </a>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
+                    <div class="info-box-content">
+                        <span class="info-box-text">CPU %</span>
+                        <span class="info-box-number">
+                            @if (!string.IsNullOrEmpty(hostCpuInfo))
+                            {
+                                if (double.TryParse(new string(hostCpuInfo.Where(c => char.IsDigit(c) || c == '.').ToArray()), out double numericValue))
+                                {
+                                    <text>
+                                        @(numericValue.ToString("0.0"))
+                                        <small>%</small>
+                                    </text>
+                                }
+                            }
+                        </span>
                     </div>
                 </div>
             </div>
-            <div class="col-lg-6">
-                <div class="card">
-                    <div class="card-header border-0">
-                        <div class="d-flex justify-content-between">
-                            <h3 class="card-title">Sales</h3>
-                            <a href="javascript:void(0);">View Report</a>
-                        </div>
-                    </div>
-                    <div class="card-body">
-                        <div class="d-flex">
-                            <p class="d-flex flex-column">
-                                <span class="text-bold text-lg">$18,230.00</span>
-                                <span>Sales Over Time</span>
-                            </p>
-                            <p class="ml-auto d-flex flex-column text-right">
-                                <span class="text-success">
-                                    <i class="fas fa-arrow-up"></i> 33.1%
-                                </span>
-                                <span class="text-muted">Since last month</span>
-                            </p>
-                        </div>
+            <div class="col-12 col-sm-6 col-md-3">
+                <div class="info-box mb-3">
+                    <span class="info-box-icon bg-success elevation-1"><i class="fas fa-memory"></i></span>
 
-                        <div class="position-relative mb-4">
-                            <canvas id="sales-chart" height="200"></canvas>
-                        </div>
+                    <div class="info-box-content">
+                        <span class="info-box-text">MEM Usage / LIMIT</span>
+                        @if (!string.IsNullOrEmpty(hostMemoryInfo))
+                        {
+                            <text>
+                                @{
+                                    string[] temp = hostMemoryInfo.Replace("Memory: ", "").Split('/');
 
-                        <div class="d-flex flex-row justify-content-end">
-                            <span class="mr-2">
-                                <i class="fas fa-square text-primary"></i> This year
-                            </span>
-
-                            <span>
-                                <i class="fas fa-square text-gray"></i> Last year
-                            </span>
-                        </div>
+                                    string memUsageLimit = temp[1].Trim().ToString() + " / " + temp[0].Trim().ToString();
+                                }
+                                <span class="info-box-number">@(memUsageLimit)</span>
+                            </text>
+                        }
                     </div>
                 </div>
+            </div>
+            <div class="clearfix hidden-md-up"></div>
 
-                <div class="card">
-                    <div class="card-header border-0">
-                        <h3 class="card-title">Online Store Overview</h3>
-                        <div class="card-tools">
-                            <a href="#" class="btn btn-sm btn-tool">
-                                <i class="fas fa-download"></i>
-                            </a>
-                            <a href="#" class="btn btn-sm btn-tool">
-                                <i class="fas fa-bars"></i>
-                            </a>
-                        </div>
+            <div class="col-12 col-sm-6 col-md-3">
+                <div class="info-box mb-3">
+                    <span class="info-box-icon bg-danger elevation-1"><i class="fas fa-hdd"></i></span>
+
+                    <div class="info-box-content">
+                        <span class="info-box-text">Disk Usage / LIMIT</span>
+                        @if (!string.IsNullOrEmpty(hostDiskInfo))
+                        {
+                            <text>
+                                @{
+                                    string[] temp = hostDiskInfo.Replace("Disk: ", "").Split('/');
+
+                                    string diskUsageLimit = temp[1].Trim().ToString() + " / " + temp[0].Trim().ToString();
+                                }
+                                <span class="info-box-number">@(diskUsageLimit)</span>
+                            </text>
+                        }
                     </div>
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-center border-bottom mb-3">
-                            <p class="text-success text-xl">
-                                <i class="ion ion-ios-refresh-empty"></i>
-                            </p>
-                            <p class="d-flex flex-column text-right">
-                                <span class="font-weight-bold">
-                                    <i class="ion ion-android-arrow-up text-success"></i> 12%
-                                </span>
-                                <span class="text-muted">CONVERSION RATE</span>
-                            </p>
-                        </div>
-                        <div class="d-flex justify-content-between align-items-center border-bottom mb-3">
-                            <p class="text-warning text-xl">
-                                <i class="ion ion-ios-cart-outline"></i>
-                            </p>
-                            <p class="d-flex flex-column text-right">
-                                <span class="font-weight-bold">
-                                    <i class="ion ion-android-arrow-up text-warning"></i> 0.8%
-                                </span>
-                                <span class="text-muted">SALES RATE</span>
-                            </p>
-                        </div>
-                        <div class="d-flex justify-content-between align-items-center mb-0">
-                            <p class="text-danger text-xl">
-                                <i class="ion ion-ios-people-outline"></i>
-                            </p>
-                            <p class="d-flex flex-column text-right">
-                                <span class="font-weight-bold">
-                                    <i class="ion ion-android-arrow-down text-danger"></i> 1%
-                                </span>
-                                <span class="text-muted">REGISTRATION RATE</span>
-                            </p>
-                        </div>
+                </div>
+            </div>
+
+            <div class="col-12 col-sm-6 col-md-3">
+                <div class="info-box mb-3">
+                    <span class="info-box-icon bg-warning elevation-1"><i class="fas fa-network-wired"></i></span>
+
+                    <div class="info-box-content">
+                        <span class="info-box-text">NET I/O</span>
+                        @if (!string.IsNullOrEmpty(hostNetworkInfo))
+                        {
+                            <text>
+                                <span class="info-box-number">@(hostNetworkInfo.Replace("Network: ", "").Replace("RX:", "↓").Replace("TX:", "↑"))</span>
+                            </text>
+                        }
                     </div>
                 </div>
             </div>
         </div>
+
+        @if (result.Count > 1)
+        {
+            for (int i = 1; i < result.Count; i++)
+            {
+                string[] dockerContainerInfo = result[i].Split("||");
+
+                <text>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="card-title">@(dockerContainerInfo[1])</h5>
+                                    <div class="card-tools">
+                                        <button type="button" class="btn btn-tool" data-card-widget="collapse">
+                                            <i class="fas fa-minus"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="info-box mb-3 bg-info">
+                                            <span class="info-box-icon"><i class="fas fa-cog"></i></span>
+
+                                            <div class="info-box-content">
+                                                <span class="info-box-text">CPU %</span>
+                                                <span class="info-box-number">@(dockerContainerInfo[2])</span>
+                                            </div>
+                                        </div>
+                                        <div class="info-box mb-3 bg-success">
+                                            <span class="info-box-icon"><i class="fas fa-memory"></i></span>
+
+                                            <div class="info-box-content">
+                                                <span class="info-box-text">MEM Usage / LIMIT (MEM %)</span>
+                                                <span class="info-box-number">@(dockerContainerInfo[3]) (@(dockerContainerInfo[4]))</span>
+                                            </div>
+                                        </div>
+                                        <div class="info-box mb-3 bg-danger">
+                                            <span class="info-box-icon"><i class="fas fa-hdd"></i></span>
+
+                                            <div class="info-box-content">
+                                                <span class="info-box-text">BLOCK I/O</span>
+                                                <span class="info-box-number">@(dockerContainerInfo[6])</span>
+                                            </div>
+                                        </div>
+                                        <div class="info-box mb-3 bg-warning">
+                                            <span class="info-box-icon"><i class="fas fa-network-wired"></i></span>
+
+                                            <div class="info-box-content">
+                                                <span class="info-box-text">NET I/O</span>
+                                                <span class="info-box-number">@(dockerContainerInfo[5])</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </text>
+            }
+        }
     </div>
 </div>
-
-@section Scripts{
-    @*<!-- OPTIONAL SCRIPTS -->*@
-    <script src="~/admin/plugins/chart.js/Chart.min.js"></script>
-    @*<!-- AdminLTE for demo purposes -->*@
-    @*<script src="~/admin/dist/js/demo.js"></script>*@
-    @*<!-- AdminLTE dashboard demo (This is only for demo purposes) -->*@
-    <script src="~/admin/dist/js/pages/dashboard3.js"></script>
-}

@@ -43,6 +43,7 @@ services:
           - ASPNETCORE_Kestrel__Certificates__Default__Path=/etc/ssl/localhost.pfx
         volumes:
           - ./Maroik.SSL/localhost.pfx:/etc/ssl/localhost.pfx:ro
+          - ./Maroik.Log/:/app/Maroik.Log:rw
         depends_on :
           - mariadb  
 
