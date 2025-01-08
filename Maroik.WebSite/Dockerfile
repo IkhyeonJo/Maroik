@@ -11,7 +11,7 @@ WORKDIR /src
 COPY ["Maroik.WebSite/Maroik.WebSite.csproj", "Maroik.WebSite/"]
 COPY ["Maroik.Common.DataAccess/Maroik.Common.DataAccess.csproj", "Maroik.Common.DataAccess/"]
 COPY ["Maroik.Common.Miscellaneous/Maroik.Common.Miscellaneous.csproj", "Maroik.Common.Miscellaneous/"]
-RUN dotnet restore "Maroik.WebSite/Maroik.WebSite.csproj"
+RUN dotnet restore "Maroik.WebSite/Maroik.WebSite.csproj" --disable-parallel
 COPY . .
 WORKDIR "/src/Maroik.WebSite"
 RUN dotnet build "Maroik.WebSite.csproj" -c Release -o /app/build
