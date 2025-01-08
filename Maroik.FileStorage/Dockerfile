@@ -12,7 +12,7 @@ COPY ["Maroik.FileStorage/Maroik.FileStorage.csproj", "Maroik.FileStorage/"]
 COPY ["Maroik.Common.DataAccess/Maroik.Common.DataAccess.csproj", "Maroik.Common.DataAccess/"]
 COPY ["Maroik.Common.Miscellaneous/Maroik.Common.Miscellaneous.csproj", "Maroik.Common.Miscellaneous/"]
 
-RUN dotnet restore "Maroik.FileStorage/Maroik.FileStorage.csproj"
+RUN dotnet restore "Maroik.FileStorage/Maroik.FileStorage.csproj" --disable-parallel
 COPY . .
 WORKDIR "/src/Maroik.FileStorage"
 RUN dotnet build "Maroik.FileStorage.csproj" -c Release -o /app/build

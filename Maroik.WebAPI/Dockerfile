@@ -12,7 +12,7 @@ COPY ["Maroik.WebAPI/Maroik.WebAPI.csproj", "Maroik.WebAPI/"]
 COPY ["Maroik.Common.DataAccess/Maroik.Common.DataAccess.csproj", "Maroik.Common.DataAccess/"]
 COPY ["Maroik.Common.Miscellaneous/Maroik.Common.Miscellaneous.csproj", "Maroik.Common.Miscellaneous/"]
 
-RUN dotnet restore "Maroik.WebAPI/Maroik.WebAPI.csproj"
+RUN dotnet restore "Maroik.WebAPI/Maroik.WebAPI.csproj" --disable-parallel
 COPY . .
 WORKDIR "/src/Maroik.WebAPI"
 RUN dotnet build "Maroik.WebAPI.csproj" -c Release -o /app/build
