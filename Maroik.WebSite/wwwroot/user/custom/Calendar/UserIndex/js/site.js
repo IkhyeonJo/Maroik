@@ -531,6 +531,9 @@ $(function () {
                                         imgTag.onload = function () {
                                             URL.revokeObjectURL(imgURL);
                                         };
+                                        imgTag.onerror = function () {
+                                            URL.revokeObjectURL(imgURL);
+                                        };
 
                                         imgTag.removeAttribute('data-file');
                                         imgTag.removeAttribute('data-contenttype');
@@ -833,6 +836,9 @@ $(function () {
                                         imgTag.src = imgURL;
 
                                         imgTag.onload = function () {
+                                            URL.revokeObjectURL(imgURL);
+                                        };
+                                        imgTag.onerror = function () {
                                             URL.revokeObjectURL(imgURL);
                                         };
 
@@ -2007,6 +2013,9 @@ function CreateUploadImageFile(file) {
                 imgNode.onload = function () {
                     URL.revokeObjectURL(imgURL);
                 };
+                imgNode.onerror = function () {
+                    URL.revokeObjectURL(imgURL);
+                };
             }
             else {
                 alert(data.errorMessage);
@@ -2042,6 +2051,9 @@ function EditUploadImageFile(file) {
                 $('#editCalendarEventDescription').summernote('insertNode', imgNode);
 
                 imgNode.onload = function () {
+                    URL.revokeObjectURL(imgURL);
+                };
+                imgNode.onerror = function () {
                     URL.revokeObjectURL(imgURL);
                 };
             }
