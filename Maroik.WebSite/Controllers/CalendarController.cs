@@ -127,6 +127,19 @@ namespace Maroik.WebSite.Controllers
                     calendarEventInputViewModel.Description = sanitized;
                     #endregion
 
+                    #region Decrypt img tag file path
+                    HtmlDocument htmlDocument = new HtmlDocument();
+                    htmlDocument.LoadHtml(calendarEventInputViewModel.Description);
+
+                    foreach (HtmlNode imgTag in htmlDocument.DocumentNode.Descendants("img") ?? new List<HtmlNode>())
+                    {
+                        string encryptedFilePath = imgTag.GetAttributeValue("alt", "");
+                        imgTag.SetAttributeValue("alt", _rsa.Decrypt(encryptedFilePath));
+                    }
+
+                    calendarEventInputViewModel.Description = htmlDocument.DocumentNode.OuterHtml;
+                    #endregion
+
                     if (calendarEventInputViewModel.Title.Length is not (> 0 and <= 100)) // 제목 길이
                     {
                         return Json(new { result = false, error = _localizer["Name length is must be between 1 and 100 characters."].Value });
@@ -405,7 +418,7 @@ namespace Maroik.WebSite.Controllers
                         string filePath = Path.Combine(summernoteImagePath, imageFile);
 
                         return Ok(await _fileRepository.UploadAsync(summernoteImageFile, filePath)
-                            ? new { result = true, file = File(await _fileRepository.DownloadAsync(filePath), summernoteImageFile.ContentType, imageFile), filePath }
+                            ? new { result = true, file = File(await _fileRepository.DownloadAsync(filePath), summernoteImageFile.ContentType, imageFile), filePath = _rsa.Encrypt(filePath) }
                             : new { result = false, error = _localizer["Input is invalid"].Value });
                     }
                     else // 이미지 png 또는 jpg 또는 jpeg 외 확장자는 거절
@@ -1282,6 +1295,7 @@ namespace Maroik.WebSite.Controllers
                                 // img 태그에 base64 데이터 저장 (src에 넣는 대신 data-file 속성 사용)
                                 imgTag.SetAttributeValue("data-file", base64Data);
                                 imgTag.SetAttributeValue("data-contenttype", contentType);
+                                imgTag.SetAttributeValue("alt", _rsa.Encrypt(filePath));
                             }
                         }
 
@@ -1523,6 +1537,7 @@ namespace Maroik.WebSite.Controllers
                                 // img 태그에 base64 데이터 저장 (src에 넣는 대신 data-file 속성 사용)
                                 imgTag.SetAttributeValue("data-file", base64Data);
                                 imgTag.SetAttributeValue("data-contenttype", contentType);
+                                imgTag.SetAttributeValue("alt", _rsa.Encrypt(filePath));
                             }
                         }
 
@@ -2095,6 +2110,19 @@ namespace Maroik.WebSite.Controllers
                     _ = sanitizer.AllowedAttributes.Add("class");
                     string sanitized = sanitizer.Sanitize(calendarEventInputViewModel.Description);
                     calendarEventInputViewModel.Description = sanitized;
+                    #endregion
+
+                    #region Decrypt img tag file path
+                    HtmlDocument htmlDocument = new HtmlDocument();
+                    htmlDocument.LoadHtml(calendarEventInputViewModel.Description);
+
+                    foreach (HtmlNode imgTag in htmlDocument.DocumentNode.Descendants("img") ?? new List<HtmlNode>())
+                    {
+                        string encryptedFilePath = imgTag.GetAttributeValue("alt", "");
+                        imgTag.SetAttributeValue("alt", _rsa.Decrypt(encryptedFilePath));
+                    }
+
+                    calendarEventInputViewModel.Description = htmlDocument.DocumentNode.OuterHtml;
                     #endregion
 
                     if (calendarEventInputViewModel.Title.Length is not (> 0 and <= 100)) // 제목 길이
