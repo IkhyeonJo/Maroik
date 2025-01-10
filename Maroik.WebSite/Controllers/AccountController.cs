@@ -15,6 +15,7 @@ namespace Maroik.WebSite.Controllers
 {
     public class AccountController : Controller
     {
+        private readonly RSA _rsa;
         private readonly IHtmlLocalizer<AccountController> _localizer;
         private readonly ILogger<AccountController> _logger;
         private readonly IAccountRepository _accountRepository;
@@ -24,6 +25,7 @@ namespace Maroik.WebSite.Controllers
 
         public AccountController(IHtmlLocalizer<AccountController> localizer, ILogger<AccountController> logger, IAccountRepository accountRepository, ICategoryRepository categoryRepository, ISubCategoryRepository subCategoryRepository, IMailRepository mailRepository)
         {
+            _rsa = new RSA(RSAType.RSA2, Encoding.UTF8, RSA.privateKey, RSA.publicKey);
             _localizer = localizer;
             _logger = logger;
             _accountRepository = accountRepository;
@@ -104,7 +106,7 @@ namespace Maroik.WebSite.Controllers
                     return View();
                 }
 
-                if (!new RSA(RSAType.RSA2, Encoding.UTF8, RSA.privateKey, RSA.publicKey).Verify(loginInputViewModel.Password ?? "", tempAccount.HashedPassword)) // wrong password
+                if (!_rsa.Verify(loginInputViewModel.Password ?? "", tempAccount.HashedPassword)) // wrong password
                 {
                     tempAccount.LoginAttempt++;
 
@@ -234,7 +236,7 @@ namespace Maroik.WebSite.Controllers
                                 new Account()
                                 {
                                     Email = loginInputViewModel.Email,
-                                    HashedPassword = new RSA(RSAType.RSA2, Encoding.UTF8, RSA.privateKey, RSA.publicKey).Sign(loginInputViewModel.Password), // 암호화
+                                    HashedPassword = _rsa.Sign(loginInputViewModel.Password), // 암호화
                                     Nickname = loginInputViewModel.Nickname,
                                     AvatarImagePath = "/upload/Management/Profile/default-avatar.jpg",
                                     Role = Role.User,
@@ -278,7 +280,7 @@ namespace Maroik.WebSite.Controllers
                         {
                             Subject = _localizer["Maroik Email Confirmation"].Value
                         };
-                        loginInputViewModel.RegistrationToken = new RSA(RSAType.RSA2, Encoding.UTF8, RSA.privateKey, RSA.publicKey).Sign(loginInputViewModel.RegistrationToken); // 암호화
+                        loginInputViewModel.RegistrationToken = _rsa.Sign(loginInputViewModel.RegistrationToken); // 암호화
                         mail.Body = _mailRepository.GetMailConfirmationBody(loginInputViewModel, _localizer["Welcome to Maroik"].Value, _localizer["Click the link below to verify your Email"].Value, _localizer["If this link does not work, please copy & paste this link to your Internet URL"].Value);
                         mail.ToMailIds =
                         [
@@ -296,7 +298,7 @@ namespace Maroik.WebSite.Controllers
                                     new Account()
                                     {
                                         Email = loginInputViewModel.Email,
-                                        HashedPassword = new RSA(RSAType.RSA2, Encoding.UTF8, RSA.privateKey, RSA.publicKey).Sign(loginInputViewModel.Password), // 암호화
+                                        HashedPassword = _rsa.Sign(loginInputViewModel.Password), // 암호화
                                         Nickname = loginInputViewModel.Nickname,
                                         AvatarImagePath = "/upload/Management/Profile/default-avatar.jpg",
                                         Role = Role.User,
@@ -343,7 +345,7 @@ namespace Maroik.WebSite.Controllers
                             {
                                 account.RegistrationToken = GUIDToken.Generate();
                             }
-                            mail.Body = _mailRepository.GetMailConfirmationBody(new LoginInputViewModel() { RegistrationToken = new RSA(RSAType.RSA2, Encoding.UTF8, RSA.privateKey, RSA.publicKey).Sign(account.RegistrationToken) }, _localizer["Welcome to Maroik"].Value, _localizer["Click the link below to verify your Email"].Value, _localizer["If this link does not work, please copy & paste this link to your Internet URL"].Value);
+                            mail.Body = _mailRepository.GetMailConfirmationBody(new LoginInputViewModel() { RegistrationToken = _rsa.Sign(account.RegistrationToken) }, _localizer["Welcome to Maroik"].Value, _localizer["Click the link below to verify your Email"].Value, _localizer["If this link does not work, please copy & paste this link to your Internet URL"].Value);
                             mail.ToMailIds =
                             [
                                 account.Email
@@ -440,7 +442,7 @@ namespace Maroik.WebSite.Controllers
                             Mail mail = new()
                             {
                                 Subject = _localizer["Maroik Email Confirmation"].Value,
-                                Body = _mailRepository.GetMailConfirmationBody(new LoginInputViewModel() { RegistrationToken = new RSA(RSAType.RSA2, Encoding.UTF8, RSA.privateKey, RSA.publicKey).Sign(account.RegistrationToken) }, _localizer["Welcome to Maroik"].Value, _localizer["Click the link below to verify your Email"].Value, _localizer["If this link does not work, please copy & paste this link to your Internet URL"].Value),
+                                Body = _mailRepository.GetMailConfirmationBody(new LoginInputViewModel() { RegistrationToken = _rsa.Sign(account.RegistrationToken) }, _localizer["Welcome to Maroik"].Value, _localizer["Click the link below to verify your Email"].Value, _localizer["If this link does not work, please copy & paste this link to your Internet URL"].Value),
                                 ToMailIds =
                                 [
                                     account.Email
@@ -541,13 +543,11 @@ namespace Maroik.WebSite.Controllers
                 Account account = null;
 
                 #region 1.	입력된 token[암호화 됨]이랑 모든 계정에 저장된 토큰 해쉬화 후 비교해서 해당 계정 찾아낸다.
-                RSA rsaHelper = new(RSAType.RSA2, Encoding.UTF8, RSA.privateKey, RSA.publicKey);
-
                 foreach (Account tempAccount in await _accountRepository.GetAllAsync())
                 {
                     try
                     {
-                        if (rsaHelper.Verify(tempAccount.RegistrationToken, registrationToken)) // 암호화된 토큰과 DB 사용자 토큰이 같다
+                        if (_rsa.Verify(tempAccount.RegistrationToken, registrationToken)) // 암호화된 토큰과 DB 사용자 토큰이 같다
                         {
                             account = tempAccount;
                             break;
@@ -689,7 +689,7 @@ namespace Maroik.WebSite.Controllers
                         Mail mail = new()
                         {
                             Subject = _localizer["Maroik Reset Password"].Value,
-                            Body = _mailRepository.GetMailResetPasswordBody(new LoginInputViewModel() { ResetPasswordToken = new RSA(RSAType.RSA2, Encoding.UTF8, RSA.privateKey, RSA.publicKey).Sign(resetPasswordToken) }, _localizer["Welcome to Maroik"].Value, _localizer["Click the link below to reset your password"].Value, _localizer["If this link does not work, please copy & paste this link to your Internet URL"].Value),
+                            Body = _mailRepository.GetMailResetPasswordBody(new LoginInputViewModel() { ResetPasswordToken = _rsa.Sign(resetPasswordToken) }, _localizer["Welcome to Maroik"].Value, _localizer["Click the link below to reset your password"].Value, _localizer["If this link does not work, please copy & paste this link to your Internet URL"].Value),
                             ToMailIds =
                             [
                                 account.Email
@@ -759,13 +759,11 @@ namespace Maroik.WebSite.Controllers
                 Account account = null;
 
                 #region 1.	입력된 token[암호화 됨]이랑 모든 계정에 저장된 토큰 해쉬화 후 비교해서 해당 계정 찾아낸다.
-                RSA rsaHelper = new(RSAType.RSA2, Encoding.UTF8, RSA.privateKey, RSA.publicKey);
-
                 foreach (Account tempAccount in await _accountRepository.GetAllAsync())
                 {
                     try
                     {
-                        if (rsaHelper.Verify(tempAccount.ResetPasswordToken, resetPasswordToken)) // 암호화된 토큰과 DB 사용자 토큰이 같다
+                        if (_rsa.Verify(tempAccount.ResetPasswordToken, resetPasswordToken)) // 암호화된 토큰과 DB 사용자 토큰이 같다
                         {
                             account = tempAccount;
                             break;
@@ -826,13 +824,11 @@ namespace Maroik.WebSite.Controllers
                 Account account = null;
 
                 #region 1.	입력된 token[암호화 됨]이랑 모든 계정에 저장된 토큰 해쉬화 후 비교해서 해당 계정 찾아낸다.
-                RSA rsaHelper = new(RSAType.RSA2, Encoding.UTF8, RSA.privateKey, RSA.publicKey);
-
                 foreach (Account tempAccount in await _accountRepository.GetAllAsync())
                 {
                     try
                     {
-                        if (rsaHelper.Verify(tempAccount.ResetPasswordToken, loginInputViewModel.ResetPasswordToken)) // 암호화된 토큰과 DB 사용자 토큰이 같다
+                        if (_rsa.Verify(tempAccount.ResetPasswordToken, loginInputViewModel.ResetPasswordToken)) // 암호화된 토큰과 DB 사용자 토큰이 같다
                         {
                             account = tempAccount;
                             break;
@@ -873,7 +869,7 @@ namespace Maroik.WebSite.Controllers
                 else
                 {
                     account.ResetPasswordToken = null;
-                    account.HashedPassword = new RSA(RSAType.RSA2, Encoding.UTF8, RSA.privateKey, RSA.publicKey).Sign(loginInputViewModel.Password); // 암호화
+                    account.HashedPassword = this._rsa.Sign(loginInputViewModel.Password); // 암호화
                     account.Locked = false; // 잠금 해제
                     account.LoginAttempt = 0; // 로그인 시도 횟수 초기화
                     account.Updated = DateTime.UtcNow;

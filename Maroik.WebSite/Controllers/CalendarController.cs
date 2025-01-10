@@ -16,6 +16,7 @@ namespace Maroik.WebSite.Controllers
 {
     public class CalendarController : Controller
     {
+        private readonly RSA _rsa;
         private readonly IHtmlLocalizer<CalendarController> _localizer;
         private readonly ILogger<CalendarController> _logger;
         private readonly IIncomeRepository _incomeRepository;
@@ -33,6 +34,7 @@ namespace Maroik.WebSite.Controllers
 
         public CalendarController(IHtmlLocalizer<CalendarController> localizer, ILogger<CalendarController> logger, IHostEnvironment hostEnvironment, IIncomeRepository incomeRepository, IExpenditureRepository expenditureRepository, IAssetRepository assetRepository, IAccountRepository accountRepository, ICalendarRepository calendarRepository, IOtherCalendarRepository otherCalendarRepository, ICalendarEventRepository calendarEventRepository, ICalendarEventAttachedFileRepository calendarEventAttachedFileRepository, ICalendarEventReminderRepository calendarReminderRepository, ICalendarSharedRepository calendarSharedRepository, IFileRepository fileRepository)
         {
+            _rsa = new RSA(RSAType.RSA2, Encoding.UTF8, RSA.privateKey, RSA.publicKey);
             _localizer = localizer;
             _logger = logger;
             _hostEnvironment = hostEnvironment;

@@ -8,11 +8,13 @@ namespace Maroik.FileStorage.Services
 {
     public class UserRepository : IUserRepository
     {
+        private readonly RSA _rsa;
         private readonly ILogger<UserRepository> _logger;
         private readonly IAccountRepository _accountRepository;
 
         public UserRepository(ILogger<UserRepository> logger, IAccountRepository accountRepository)
         {
+            _rsa = new RSA(RSAType.RSA2, Encoding.UTF8, RSA.privateKey, RSA.publicKey);
             _logger = logger;
             _accountRepository = accountRepository;
         }
@@ -47,7 +49,7 @@ namespace Maroik.FileStorage.Services
                 return false;
             }
 
-            if (!new RSA(RSAType.RSA2, Encoding.UTF8, RSA.privateKey, RSA.publicKey).Verify(password ?? "", tempAccount.HashedPassword)) // wrong password
+            if (!_rsa.Verify(password ?? "", tempAccount.HashedPassword)) // wrong password
             {
                 tempAccount.LoginAttempt++;
 
