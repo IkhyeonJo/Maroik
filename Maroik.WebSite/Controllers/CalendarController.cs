@@ -303,23 +303,12 @@ namespace Maroik.WebSite.Controllers
                                 {
                                     int createdCalendarEventId = calendarEvent.Id;
 
-                                    string calendarEventAttachedFilePath = Path.Combine(_hostEnvironment.ContentRootPath, "wwwroot", "upload", "Calendar", $"{loginedAccount.Role}Index", "calendarEventAttachedFiles", $"{createdCalendarEventId}");
-                                    if (!Directory.Exists(calendarEventAttachedFilePath))
-                                    {
-                                        _ = Directory.CreateDirectory(calendarEventAttachedFilePath);
-                                    }
-
+                                    string calendarEventAttachedFilePath = Path.Combine("upload", "Calendar", $"{loginedAccount.Role}Index", "calendarEventAttachedFiles", $"{createdCalendarEventId}");
                                     string guid = Guid.NewGuid().ToString().ToUpper();
                                     string calendarEventAttachedFile = $"{guid}{Path.GetExtension(calendarEventInputViewModel.CalendarEventUploadedFile.FileName)}";
                                     string filePath = Path.Combine(calendarEventAttachedFilePath, calendarEventAttachedFile);
 
-#pragma warning disable SCS0018 // Potential Path Traversal vulnerability was found where '{0}' in '{1}' may be tainted by user-controlled data from '{2}' in method '{3}'.
-                                    using (FileStream stream = new(filePath, FileMode.Create))
-#pragma warning restore SCS0018 // Potential Path Traversal vulnerability was found where '{0}' in '{1}' may be tainted by user-controlled data from '{2}' in method '{3}'.
-                                    {
-                                        await calendarEventInputViewModel.CalendarEventUploadedFile.CopyToAsync(stream);
-                                        await stream.FlushAsync();
-                                    }
+                                    await _fileRepository.UploadAsync(calendarEventInputViewModel.CalendarEventUploadedFile, filePath);
 
                                     await _calendarEventAttachedFileRepository.SaveCalendarEventAttachedFileAsync(new CalendarEventAttachedFile()
                                     {
@@ -327,7 +316,7 @@ namespace Maroik.WebSite.Controllers
                                         Size = Convert.ToInt32(calendarEventInputViewModel.CalendarEventUploadedFile.Length),
                                         Name = Path.GetFileNameWithoutExtension(calendarEventInputViewModel.CalendarEventUploadedFile.FileName),
                                         Extension = Path.GetExtension(calendarEventInputViewModel.CalendarEventUploadedFile.FileName),
-                                        Path = $"/upload/Calendar/{loginedAccount.Role}Index/calendarEventAttachedFiles/{createdCalendarEventId}/{calendarEventAttachedFile}"
+                                        Path = $"upload/Calendar/{loginedAccount.Role}Index/calendarEventAttachedFiles/{createdCalendarEventId}/{calendarEventAttachedFile}"
                                     });
                                 }
                                 else
@@ -1419,6 +1408,29 @@ namespace Maroik.WebSite.Controllers
                         calendarEvent.Location = tempCalendarEvent.Location;
                         calendarEvent.Status = tempCalendarEvent.Status;
                         calendarEvent.CalendarEventAttachedFile = await _calendarEventAttachedFileRepository.GetCalendarEventAttachedFileAsync(tempCalendarEvent.Id);
+
+                        if (!string.IsNullOrEmpty(calendarEvent?.CalendarEventAttachedFile?.Path ?? ""))
+                        {
+                            byte[] fileData = await _fileRepository.DownloadAsync(calendarEvent?.CalendarEventAttachedFile?.Path ?? "");
+
+                            if (fileData != null)
+                            {
+                                // ContentType을 추출하기 위한 FileExtensionContentTypeProvider 사용
+                                var provider = new FileExtensionContentTypeProvider();
+                                string contentType;
+
+                                // 기본 contentType은 "application/octet-stream"으로 설정
+                                if (!provider.TryGetContentType(calendarEvent?.CalendarEventAttachedFile?.Path ?? "", out contentType))
+                                {
+                                    contentType = "application/octet-stream";
+                                }
+
+                                // 파일 데이터를 Base64로 변환
+                                calendarEvent.CalendarEventAttachedFileBase64Data = Convert.ToBase64String(fileData);
+                                calendarEvent.CalendarEventAttachedFileContentType = contentType;
+                            }
+                        }
+
                         calendarEvent.Calendars = calendars.Select(x => new Calendar { Id = x.Id, Name = x.Name }).OrderBy(x => x.Name).ToList();
                         calendarEvent.SerializedCalendarReminders = JsonConvert.SerializeObject((await _calendarReminderRepository.GetCalendarEventRemindersAsync(tempCalendarEvent.Id)).Select(x => new CalendarEventReminder { Method = x.Method, MinutesBeforeEvent = x.MinutesBeforeEvent, HoursBeforeEvent = x.HoursBeforeEvent, DaysBeforeEvent = x.DaysBeforeEvent, WeeksBeforeEvent = x.WeeksBeforeEvent, TimesBeforeEvent = x.TimesBeforeEvent }) ?? []);
 
@@ -1661,6 +1673,29 @@ namespace Maroik.WebSite.Controllers
                         calendarEvent.Location = tempCalendarEvent.Location;
                         calendarEvent.Status = tempCalendarEvent.Status;
                         calendarEvent.CalendarEventAttachedFile = await _calendarEventAttachedFileRepository.GetCalendarEventAttachedFileAsync(tempCalendarEvent.Id);
+
+                        if (!string.IsNullOrEmpty(calendarEvent?.CalendarEventAttachedFile?.Path ?? ""))
+                        {
+                            byte[] fileData = await _fileRepository.DownloadAsync(calendarEvent?.CalendarEventAttachedFile?.Path ?? "");
+
+                            if (fileData != null)
+                            {
+                                // ContentType을 추출하기 위한 FileExtensionContentTypeProvider 사용
+                                var provider = new FileExtensionContentTypeProvider();
+                                string contentType;
+
+                                // 기본 contentType은 "application/octet-stream"으로 설정
+                                if (!provider.TryGetContentType(calendarEvent?.CalendarEventAttachedFile?.Path ?? "", out contentType))
+                                {
+                                    contentType = "application/octet-stream";
+                                }
+
+                                // 파일 데이터를 Base64로 변환
+                                calendarEvent.CalendarEventAttachedFileBase64Data = Convert.ToBase64String(fileData);
+                                calendarEvent.CalendarEventAttachedFileContentType = contentType;
+                            }
+                        }
+
                         calendarEvent.Calendars = calendars.Select(x => new Calendar { Id = x.Id, Name = x.Name }).OrderBy(x => x.Name).ToList();
                         calendarEvent.SerializedCalendarReminders = JsonConvert.SerializeObject((await _calendarReminderRepository.GetCalendarEventRemindersAsync(tempCalendarEvent.Id)).Select(x => new CalendarEventReminder { Method = x.Method, MinutesBeforeEvent = x.MinutesBeforeEvent, HoursBeforeEvent = x.HoursBeforeEvent, DaysBeforeEvent = x.DaysBeforeEvent, WeeksBeforeEvent = x.WeeksBeforeEvent, TimesBeforeEvent = x.TimesBeforeEvent }) ?? []);
 
@@ -2302,23 +2337,12 @@ namespace Maroik.WebSite.Controllers
                                 {
                                     int updatedCalendarEventId = calendarEvent.Id;
 
-                                    string calendarEventAttachedFilePath = Path.Combine(_hostEnvironment.ContentRootPath, "wwwroot", "upload", "Calendar", $"{loginedAccount.Role}Index", "calendarEventAttachedFiles", $"{updatedCalendarEventId}");
-                                    if (!Directory.Exists(calendarEventAttachedFilePath))
-                                    {
-                                        _ = Directory.CreateDirectory(calendarEventAttachedFilePath);
-                                    }
-
+                                    string calendarEventAttachedFilePath = Path.Combine("upload", "Calendar", $"{loginedAccount.Role}Index", "calendarEventAttachedFiles", $"{updatedCalendarEventId}");
                                     string guid = Guid.NewGuid().ToString().ToUpper();
                                     string calendarEventAttachedFile = $"{guid}{Path.GetExtension(calendarEventInputViewModel.CalendarEventUploadedFile.FileName)}";
                                     string filePath = Path.Combine(calendarEventAttachedFilePath, calendarEventAttachedFile);
 
-#pragma warning disable SCS0018 // Potential Path Traversal vulnerability was found where '{0}' in '{1}' may be tainted by user-controlled data from '{2}' in method '{3}'.
-                                    using (FileStream stream = new(filePath, FileMode.Create))
-#pragma warning restore SCS0018 // Potential Path Traversal vulnerability was found where '{0}' in '{1}' may be tainted by user-controlled data from '{2}' in method '{3}'.
-                                    {
-                                        await calendarEventInputViewModel.CalendarEventUploadedFile.CopyToAsync(stream);
-                                        await stream.FlushAsync();
-                                    }
+                                    await _fileRepository.UploadAsync(calendarEventInputViewModel.CalendarEventUploadedFile, filePath);
 
                                     await _calendarEventAttachedFileRepository.SaveCalendarEventAttachedFileAsync(new CalendarEventAttachedFile()
                                     {
@@ -2326,7 +2350,7 @@ namespace Maroik.WebSite.Controllers
                                         Size = Convert.ToInt32(calendarEventInputViewModel.CalendarEventUploadedFile.Length),
                                         Name = Path.GetFileNameWithoutExtension(calendarEventInputViewModel.CalendarEventUploadedFile.FileName),
                                         Extension = Path.GetExtension(calendarEventInputViewModel.CalendarEventUploadedFile.FileName),
-                                        Path = $"/upload/Calendar/{loginedAccount.Role}Index/calendarEventAttachedFiles/{updatedCalendarEventId}/{calendarEventAttachedFile}"
+                                        Path = $"upload/Calendar/{loginedAccount.Role}Index/calendarEventAttachedFiles/{updatedCalendarEventId}/{calendarEventAttachedFile}"
                                     });
                                 }
                                 else

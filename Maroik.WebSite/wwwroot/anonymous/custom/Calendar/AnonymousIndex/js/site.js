@@ -1,4 +1,14 @@
-﻿const localizer = {
+﻿function base64ToBlob(base64, mime) {
+    const byteCharacters = atob(base64);
+    const byteNumbers = new Array(byteCharacters.length);
+    for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);
+    }
+    const byteArray = new Uint8Array(byteNumbers);
+    return new Blob([byteArray], { type: mime });
+}
+
+const localizer = {
     Email: $('#localizerEmail').val(),
     Notification: $('#localizerNotification').val(),
     Minutes: $('#localizerMinutes').val(),
@@ -198,8 +208,11 @@ $(function () {
                                 if (data.calendarEvent.calendarEventAttachedFile !== null) {
                                     $('#divViewCalendarEventAttachedFile').show();
 
-                                    $("#aViewCalendarEventAttachedFile").attr("href", data.calendarEvent.calendarEventAttachedFile.path);
-                                    $("#aViewCalendarEventAttachedFile").attr("download", `${data.calendarEvent.calendarEventAttachedFile.name}${data.calendarEvent.calendarEventAttachedFile.extension}`);
+                                    $("#aViewCalendarEventAttachedFile").attr("href", '#');
+                                    $("#aViewCalendarEventAttachedFile").attr("data-file", data.calendarEvent.calendarEventAttachedFileBase64Data);
+                                    $("#aViewCalendarEventAttachedFile").attr("data-contenttype", data.calendarEvent.calendarEventAttachedFileContentType);
+                                    $("#aViewCalendarEventAttachedFile").attr("data-name", `${data.calendarEvent.calendarEventAttachedFile.name}${data.calendarEvent.calendarEventAttachedFile.extension}`);
+
                                     $("#aViewCalendarEventAttachedFile").text(`${data.calendarEvent.calendarEventAttachedFile.name}${data.calendarEvent.calendarEventAttachedFile.extension}`);
 
                                     $("#spanViewCalendarEventAttachedFile").text(`${Math.round(data.calendarEvent.calendarEventAttachedFile.size / 1024).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}KB`);
@@ -435,4 +448,25 @@ $(function () {
     $(document).on('change', '.chkOtherCalendar', function () {
         RefreshCalendarEvents();
     });
+});
+
+$('#aViewCalendarEventAttachedFile').off('click').on('click', function (event) {
+    event.preventDefault();
+    let base64Data = $(this).attr('data-file');
+    let contentType = $(this).attr('data-contenttype');
+    let name = $(this).attr('data-name')
+
+    if (base64Data && contentType) {
+        let blob = base64ToBlob(base64Data, contentType);
+        let url = URL.createObjectURL(blob);
+        let a = document.createElement('a');
+        try {
+            a.href = url;
+            a.download = name;
+            a.click();
+        } finally {
+            setTimeout(() => URL.revokeObjectURL(url), 100);
+            a.remove();
+        }
+    }
 });

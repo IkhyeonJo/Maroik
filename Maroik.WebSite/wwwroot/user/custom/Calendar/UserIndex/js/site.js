@@ -549,8 +549,11 @@ $(function () {
                                 if (data.calendarEvent.calendarEventAttachedFile !== null) {
                                     $('#divEditCalendarEventAttachedFile').show();
 
-                                    $("#aEditCalendarEventAttachedFile").attr("href", data.calendarEvent.calendarEventAttachedFile.path);
-                                    $("#aEditCalendarEventAttachedFile").attr("download", `${data.calendarEvent.calendarEventAttachedFile.name}${data.calendarEvent.calendarEventAttachedFile.extension}`);
+                                    $("#aEditCalendarEventAttachedFile").attr("href", '#');
+                                    $("#aEditCalendarEventAttachedFile").attr("data-file", data.calendarEvent.calendarEventAttachedFileBase64Data);
+                                    $("#aEditCalendarEventAttachedFile").attr("data-contenttype", data.calendarEvent.calendarEventAttachedFileContentType);
+                                    $("#aEditCalendarEventAttachedFile").attr("data-name",`${data.calendarEvent.calendarEventAttachedFile.name}${data.calendarEvent.calendarEventAttachedFile.extension}`);
+
                                     $("#aEditCalendarEventAttachedFile").text(`${data.calendarEvent.calendarEventAttachedFile.name}${data.calendarEvent.calendarEventAttachedFile.extension}`);
 
                                     $("#spanEditCalendarEventAttachedFile").text(`${Math.round(data.calendarEvent.calendarEventAttachedFile.size / 1024).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}KB`);
@@ -857,8 +860,11 @@ $(function () {
                                 if (data.calendarEvent.calendarEventAttachedFile !== null) {
                                     $('#divViewCalendarEventAttachedFile').show();
 
-                                    $("#aViewCalendarEventAttachedFile").attr("href", data.calendarEvent.calendarEventAttachedFile.path);
-                                    $("#aViewCalendarEventAttachedFile").attr("download", `${data.calendarEvent.calendarEventAttachedFile.name}${data.calendarEvent.calendarEventAttachedFile.extension}`);
+                                    $("#aViewCalendarEventAttachedFile").attr("href", '#');
+                                    $("#aViewCalendarEventAttachedFile").attr("data-file", data.calendarEvent.calendarEventAttachedFileBase64Data);
+                                    $("#aViewCalendarEventAttachedFile").attr("data-contenttype", data.calendarEvent.calendarEventAttachedFileContentType);
+                                    $("#aViewCalendarEventAttachedFile").attr("data-name", `${data.calendarEvent.calendarEventAttachedFile.name}${data.calendarEvent.calendarEventAttachedFile.extension}`);
+
                                     $("#aViewCalendarEventAttachedFile").text(`${data.calendarEvent.calendarEventAttachedFile.name}${data.calendarEvent.calendarEventAttachedFile.extension}`);
 
                                     $("#spanViewCalendarEventAttachedFile").text(`${Math.round(data.calendarEvent.calendarEventAttachedFile.size / 1024).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}KB`);
@@ -2607,4 +2613,46 @@ $(document).on('mouseenter', '.delete-calendar', function () {
 
 $(document).on('mouseleave', '.delete-calendar', function () {
     $(this).css('color', '');
+});
+
+$('#aEditCalendarEventAttachedFile').off('click').on('click', function (event) {
+    event.preventDefault();
+    let base64Data = $(this).attr('data-file');
+    let contentType = $(this).attr('data-contenttype');
+    let name = $(this).attr('data-name')
+
+    if (base64Data && contentType) {
+        let blob = base64ToBlob(base64Data, contentType);
+        let url = URL.createObjectURL(blob);
+        let a = document.createElement('a');
+        try {
+            a.href = url;
+            a.download = name;
+            a.click();
+        } finally {
+            setTimeout(() => URL.revokeObjectURL(url), 100);
+            a.remove();
+        }
+    }
+});
+
+$('#aViewCalendarEventAttachedFile').off('click').on('click', function (event) {
+    event.preventDefault();
+    let base64Data = $(this).attr('data-file');
+    let contentType = $(this).attr('data-contenttype');
+    let name = $(this).attr('data-name')
+
+    if (base64Data && contentType) {
+        let blob = base64ToBlob(base64Data, contentType);
+        let url = URL.createObjectURL(blob);
+        let a = document.createElement('a');
+        try {
+            a.href = url;
+            a.download = name;
+            a.click();
+        } finally {
+            setTimeout(() => URL.revokeObjectURL(url), 100);
+            a.remove();
+        }
+    }
 });

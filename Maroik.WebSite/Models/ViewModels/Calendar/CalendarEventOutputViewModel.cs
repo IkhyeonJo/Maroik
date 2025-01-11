@@ -15,6 +15,8 @@ namespace Maroik.WebSite.Models.ViewModels.Calendar
         public string Location { get; set; }
         public string Description { get; set; }
         public CalendarEventAttachedFile CalendarEventAttachedFile { get; set; }
+        public string CalendarEventAttachedFileBase64Data { get; set; }
+        public string CalendarEventAttachedFileContentType { get; set; }
         public List<Maroik.Common.DataAccess.Models.Calendar> Calendars { get; set; }
         public string Status { get; set; }
         public string SerializedCalendarReminders { get; set; }
