@@ -408,7 +408,7 @@ namespace Maroik.WebSite.Controllers
 
                         return Ok(await _fileRepository.UploadAsync(summernoteImageFile, filePath)
                             ? new { result = true, file = File(await _fileRepository.DownloadAsync(filePath), summernoteImageFile.ContentType, imageFile), filePath = _rsa.Encrypt(filePath) }
-                            : new { result = false, error = _localizer["Input is invalid"].Value });
+                            : new { result = false, errorMessage = _localizer["Input is invalid"].Value });
                     }
                     else // 이미지 png 또는 jpg 또는 jpeg 외 확장자는 거절
                     {
