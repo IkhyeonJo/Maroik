@@ -1,12 +1,15 @@
 ﻿using Ganss.Xss;
+using HtmlAgilityPack;
 using Maroik.Common.DataAccess.Contracts;
 using Maroik.Common.DataAccess.Models;
 using Maroik.Common.Miscellaneous.Extensions;
 using Maroik.Common.Miscellaneous.Utilities;
+using Maroik.WebSite.Contracts;
 using Maroik.WebSite.Models;
 using Maroik.WebSite.Models.ViewModels.Forum;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Localization;
+using Microsoft.AspNetCore.StaticFiles;
 using Newtonsoft.Json;
 using System.Text;
 
@@ -14,6 +17,7 @@ namespace Maroik.WebSite.Controllers
 {
     public class ForumController : Controller
     {
+        private readonly RSA _rsa;
         private readonly IHtmlLocalizer<ForumController> _localizer;
         private readonly ILogger<ForumController> _logger;
         private readonly IHostEnvironment _hostEnvironment;
@@ -21,9 +25,11 @@ namespace Maroik.WebSite.Controllers
         private readonly IBoardAttachedFileRepository _boardAttachedFileRepository;
         private readonly IAccountRepository _accountRepository;
         private readonly IBoardCommentRepository _boardCommentRepository;
+        private readonly IFileRepository _fileRepository;
 
-        public ForumController(IHtmlLocalizer<ForumController> localizer, ILogger<ForumController> logger, IBoardRepository boardRepository, IHostEnvironment hostEnvironment, IBoardAttachedFileRepository boardAttachedFileRepository, IAccountRepository accountRepository, IBoardCommentRepository boardCommentRepository)
+        public ForumController(IHtmlLocalizer<ForumController> localizer, ILogger<ForumController> logger, IBoardRepository boardRepository, IHostEnvironment hostEnvironment, IBoardAttachedFileRepository boardAttachedFileRepository, IAccountRepository accountRepository, IBoardCommentRepository boardCommentRepository, IFileRepository fileRepository)
         {
+            _rsa = new RSA(RSAType.RSA2, Encoding.UTF8, RSA.privateKey, RSA.publicKey);
             _localizer = localizer;
             _logger = logger;
             _boardRepository = boardRepository;
@@ -31,6 +37,7 @@ namespace Maroik.WebSite.Controllers
             _boardAttachedFileRepository = boardAttachedFileRepository;
             _accountRepository = accountRepository;
             _boardCommentRepository = boardCommentRepository;
+            _fileRepository = fileRepository;
         }
 
         #region FreeForum
@@ -57,6 +64,19 @@ namespace Maroik.WebSite.Controllers
                     _ = sanitizer.AllowedAttributes.Add("class");
                     string sanitized = sanitizer.Sanitize(boardInputViewModel.Content);
                     boardInputViewModel.Content = sanitized;
+                    #endregion
+
+                    #region Decrypt img tag file path
+                    HtmlDocument htmlDocument = new HtmlDocument();
+                    htmlDocument.LoadHtml(boardInputViewModel.Content);
+
+                    foreach (HtmlNode imgTag in htmlDocument.DocumentNode.Descendants("img") ?? new List<HtmlNode>())
+                    {
+                        string encryptedFilePath = imgTag.GetAttributeValue("alt", "");
+                        imgTag.SetAttributeValue("alt", _rsa.Decrypt(encryptedFilePath));
+                    }
+
+                    boardInputViewModel.Content = htmlDocument.DocumentNode.OuterHtml;
                     #endregion
 
                     if (boardInputViewModel.Title.Length is not (> 0 and <= 100)) // 제목 길이
@@ -287,23 +307,14 @@ namespace Maroik.WebSite.Controllers
                     if (Path.GetExtension(summernoteImageFile.FileName) is ".png" or ".jpg" or ".jpeg")
                     {
 
-                        string summernoteImagePath = Path.Combine(_hostEnvironment.ContentRootPath, "wwwroot", "upload", "Forum", EnumHelper.GetDescription(BoardType.FreeForum), "summernote", "images");
-                        if (!Directory.Exists(summernoteImagePath))
-                        {
-                            _ = Directory.CreateDirectory(summernoteImagePath);
-                        }
+                        string summernoteImagePath = Path.Combine("upload", "Forum", EnumHelper.GetDescription(BoardType.FreeForum), "summernote", "images");
 
                         string imageFile = $"{Guid.NewGuid().ToString().ToUpper()}{Path.GetExtension(summernoteImageFile.FileName)}";
                         string filePath = Path.Combine(summernoteImagePath, imageFile);
 
-#pragma warning disable SCS0018 // Potential Path Traversal vulnerability was found where '{0}' in '{1}' may be tainted by user-controlled data from '{2}' in method '{3}'.
-                        using (FileStream stream = new(filePath, FileMode.Create))
-#pragma warning restore SCS0018 // Potential Path Traversal vulnerability was found where '{0}' in '{1}' may be tainted by user-controlled data from '{2}' in method '{3}'.
-                        {
-                            await summernoteImageFile.CopyToAsync(stream);
-                            await stream.FlushAsync();
-                        }
-                        return Ok(new { result = true, filePath = $"/upload/Forum/{EnumHelper.GetDescription(BoardType.FreeForum)}/summernote/images/{imageFile}" });
+                        return Ok(await _fileRepository.UploadAsync(summernoteImageFile, filePath)
+                            ? new { result = true, file = File(await _fileRepository.DownloadAsync(filePath), summernoteImageFile.ContentType, imageFile), filePath = _rsa.Encrypt(filePath) }
+                            : new { result = false, errorMessage = _localizer["Input is invalid"].Value });
                     }
                     else // 이미지 png 또는 jpg 또는 jpeg 외 확장자는 거절
                     {
@@ -374,8 +385,43 @@ namespace Maroik.WebSite.Controllers
                     await _boardRepository.UpdateBoardAsync(freeBoard);
                     BoardAttachedFile boardAttachedFile = boardAttachedFiles.FirstOrDefault(m => m.BoardId == boardId);
 
+                    #region Encrypt img tag file path
+                    HtmlDocument htmlDocument = new HtmlDocument();
+                    htmlDocument.LoadHtml(freeBoard.Content);
 
-                    freeForumOutputViewModel.BoardOutputViewModel = new BoardOutputViewModel()
+                    foreach (HtmlNode imgTag in htmlDocument.DocumentNode.Descendants("img") ?? new List<HtmlNode>())
+                    {
+                        string filePath = imgTag.GetAttributeValue("alt", "");
+
+                        // 파일을 다운로드하는 메서드
+                        byte[] fileData = await _fileRepository.DownloadAsync(filePath);
+
+                        if (fileData != null)
+                        {
+                            // ContentType을 추출하기 위한 FileExtensionContentTypeProvider 사용
+                            var provider = new FileExtensionContentTypeProvider();
+                            string contentType;
+
+                            // 기본 contentType은 "application/octet-stream"으로 설정
+                            if (!provider.TryGetContentType(filePath, out contentType))
+                            {
+                                contentType = "application/octet-stream";
+                            }
+
+                            // 파일 데이터를 Base64로 변환
+                            string base64Data = Convert.ToBase64String(fileData);
+
+                            // img 태그에 base64 데이터 저장 (src에 넣는 대신 data-file 속성 사용)
+                            imgTag.SetAttributeValue("data-file", base64Data);
+                            imgTag.SetAttributeValue("data-contenttype", contentType);
+                            imgTag.SetAttributeValue("alt", _rsa.Encrypt(filePath));
+                        }
+                    }
+
+                    freeBoard.Content = htmlDocument.DocumentNode.OuterHtml;
+                    #endregion
+                    
+                    freeForumOutputViewModel.BoardOutputViewModel = new Maroik.WebSite.Models.ViewModels.Forum.BoardOutputViewModel()
                     {
                         Title = freeBoard.Title,
                         Writer = freeBoard.Writer,
@@ -427,8 +473,43 @@ namespace Maroik.WebSite.Controllers
 
                     BoardAttachedFile boardAttachedFile = boardAttachedFiles.FirstOrDefault(m => m.BoardId == boardId);
 
+                    #region Encrypt img tag file path
+                    HtmlDocument htmlDocument = new HtmlDocument();
+                    htmlDocument.LoadHtml(freeBoard.Content);
 
-                    freeForumOutputViewModel.BoardOutputViewModel = new BoardOutputViewModel()
+                    foreach (HtmlNode imgTag in htmlDocument.DocumentNode.Descendants("img") ?? new List<HtmlNode>())
+                    {
+                        string filePath = imgTag.GetAttributeValue("alt", "");
+
+                        // 파일을 다운로드하는 메서드
+                        byte[] fileData = await _fileRepository.DownloadAsync(filePath);
+
+                        if (fileData != null)
+                        {
+                            // ContentType을 추출하기 위한 FileExtensionContentTypeProvider 사용
+                            var provider = new FileExtensionContentTypeProvider();
+                            string contentType;
+
+                            // 기본 contentType은 "application/octet-stream"으로 설정
+                            if (!provider.TryGetContentType(filePath, out contentType))
+                            {
+                                contentType = "application/octet-stream";
+                            }
+
+                            // 파일 데이터를 Base64로 변환
+                            string base64Data = Convert.ToBase64String(fileData);
+
+                            // img 태그에 base64 데이터 저장 (src에 넣는 대신 data-file 속성 사용)
+                            imgTag.SetAttributeValue("data-file", base64Data);
+                            imgTag.SetAttributeValue("data-contenttype", contentType);
+                            imgTag.SetAttributeValue("alt", _rsa.Encrypt(filePath));
+                        }
+                    }
+
+                    freeBoard.Content = htmlDocument.DocumentNode.OuterHtml;
+                    #endregion
+
+                    freeForumOutputViewModel.BoardOutputViewModel = new Maroik.WebSite.Models.ViewModels.Forum.BoardOutputViewModel()
                     {
                         Title = freeBoard.Title,
                         Writer = freeBoard.Writer,
@@ -583,6 +664,19 @@ namespace Maroik.WebSite.Controllers
                     _ = sanitizer.AllowedAttributes.Add("class");
                     string sanitized = sanitizer.Sanitize(boardInputViewModel.Content);
                     boardInputViewModel.Content = sanitized;
+                    #endregion
+
+                    #region Decrypt img tag file path
+                    HtmlDocument htmlDocument = new HtmlDocument();
+                    htmlDocument.LoadHtml(boardInputViewModel.Content);
+
+                    foreach (HtmlNode imgTag in htmlDocument.DocumentNode.Descendants("img") ?? new List<HtmlNode>())
+                    {
+                        string encryptedFilePath = imgTag.GetAttributeValue("alt", "");
+                        imgTag.SetAttributeValue("alt", _rsa.Decrypt(encryptedFilePath));
+                    }
+
+                    boardInputViewModel.Content = htmlDocument.DocumentNode.OuterHtml;
                     #endregion
 
                     if (boardInputViewModel.Title.Length is not (> 0 and <= 100)) // 제목 길이
