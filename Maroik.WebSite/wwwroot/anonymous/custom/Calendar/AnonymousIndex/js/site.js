@@ -200,7 +200,37 @@ $(function () {
                                 }
 
                                 formViewCalendarEvent.find('input[id="viewCalendarEventLocation"]').val(data.calendarEvent.location);
-                                formViewCalendarEvent.find('textarea[id="viewCalendarEventDescription"]').summernote('code', data.calendarEvent.description);
+
+                                const parser = new DOMParser();
+                                const htmlDoc = parser.parseFromString(data.calendarEvent.description, 'text/html');
+
+                                const imgTags = htmlDoc.querySelectorAll('img[data-file]');
+
+                                imgTags.forEach(function (imgTag) {
+                                    const base64Data = imgTag.getAttribute('data-file');
+                                    const contentType = imgTag.getAttribute('data-contenttype');
+
+                                    if (base64Data && contentType) {
+                                        const blob = base64ToBlob(base64Data, contentType);
+                                        const imgURL = URL.createObjectURL(blob);
+
+                                        imgTag.src = imgURL;
+
+                                        imgTag.onload = function () {
+                                            URL.revokeObjectURL(imgURL);
+                                        };
+                                        imgTag.onerror = function () {
+                                            URL.revokeObjectURL(imgURL);
+                                        };
+
+                                        imgTag.removeAttribute('data-file');
+                                        imgTag.removeAttribute('data-contenttype');
+                                    }
+                                });
+
+                                const updatedHtml = htmlDoc.body.innerHTML;
+
+                                formViewCalendarEvent.find('textarea[id="viewCalendarEventDescription"]').summernote('code', updatedHtml);
                                 formViewCalendarEvent.find('textarea[id="viewCalendarEventDescription"]').summernote('disable');
 
                                 $('#divViewCalendarEventAttachedFile').hide();
