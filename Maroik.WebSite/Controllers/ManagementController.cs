@@ -1580,7 +1580,7 @@ namespace Maroik.WebSite.Controllers
                                 {
                                     int createdBoardId = board.Id; // 첨부파일 FK 해서 로직 추가할 것
 
-                                    string boardAttachedFilePath = Path.Combine("upload", "Forum", EnumHelper.GetDescription(BoardType.FreeForum), "boardAttachedFiles", $"{createdBoardId}");
+                                    string boardAttachedFilePath = Path.Combine("upload", "Management", EnumHelper.GetDescription(BoardType.PrivateNote), "boardAttachedFiles", $"{createdBoardId}");
 
                                     string guid = Guid.NewGuid().ToString().ToUpper();
                                     string attachedFile = $"{guid}{Path.GetExtension(boardInputViewModel.UploadedFile.FileName)}";
