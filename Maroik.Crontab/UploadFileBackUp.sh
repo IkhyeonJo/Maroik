@@ -24,7 +24,7 @@ os.system(f'sudo tar cfJ /home/peter-cho/Maroik/{website_backup_upload_file_name
 os.system(f'sudo rm -rf /home/peter-cho/Maroik/{website_backup_upload_file_name}')
 
 file_storage_backup_upload_file_name = f'file-storage-upload-{current_date}'
-os.system(f'sudo docker cp Maroik.FileStorage:/app/wwwroot/upload /home/peter-cho/Maroik/{file_storage_backup_upload_file_name}')
+os.system(f'sudo docker cp Maroik.FileStorage:/app/upload /home/peter-cho/Maroik/{file_storage_backup_upload_file_name}')
 os.system(f'sudo tar cfJ /home/peter-cho/Maroik/{file_storage_backup_upload_file_name}.tar.xz /home/peter-cho/Maroik/{file_storage_backup_upload_file_name}')
 os.system(f'sudo rm -rf /home/peter-cho/Maroik/{file_storage_backup_upload_file_name}')
 
