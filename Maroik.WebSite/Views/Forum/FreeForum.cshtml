@@ -135,7 +135,7 @@
                                 <span class="mailbox-attachment-icon"><i class="far fa-file"></i></span>
 
                                 <div class="mailbox-attachment-info">
-                                    <a href="@Model.BoardOutputViewModel.BoardAttachedFilePath" class="mailbox-attachment-name" download="@($"{Model.BoardOutputViewModel.BoardAttachedFileName}{Model.BoardOutputViewModel.BoardAttachedFileExtension}")"><i class="fas fa-paperclip"></i>@Model.BoardOutputViewModel.BoardAttachedFileName@Model.BoardOutputViewModel.BoardAttachedFileExtension</a>
+                                    <a id="aDetailBoardAttachedFile" href="#" class="mailbox-attachment-name" data-file="@Model.BoardOutputViewModel.BoardAttachedFileBase64Data" data-contenttype="@Model.BoardOutputViewModel.BoardAttachedFileContentType" data-name="@($"{Model.BoardOutputViewModel.BoardAttachedFileName}{Model.BoardOutputViewModel.BoardAttachedFileExtension}")"><i class="fas fa-paperclip"></i>@Model.BoardOutputViewModel.BoardAttachedFileName@Model.BoardOutputViewModel.BoardAttachedFileExtension</a>
                                     <span class="mailbox-attachment-size clearfix mt-1">
                                         <span>
                                             @(
@@ -262,7 +262,7 @@
                     @if (loginedAccount.Role == Role.Anonymous)
                     {
                         <form id="formWriteFreeComment">
-                            <img class="img-fluid img-circle img-sm" src="/upload/Management/Profile/default-avatar.jpg">
+                            <img class="img-fluid img-circle img-sm" src="~/upload/Management/Profile/default-avatar.jpg">
                             <div class="img-push">
                                 <input id="writeFreeCommentContent" type="text" class="form-control form-control-sm" placeholder="@localizer["Only logged in users can write comments."].Value">
                             </div>
@@ -316,7 +316,7 @@
                                     <span class="mailbox-attachment-icon"><i class="far fa-file"></i></span>
 
                                     <div class="mailbox-attachment-info">
-                                        <a href="@Model.BoardOutputViewModel.BoardAttachedFilePath" class="mailbox-attachment-name" download="@($"{Model.BoardOutputViewModel.BoardAttachedFileName}{Model.BoardOutputViewModel.BoardAttachedFileExtension}")"><i class="fas fa-paperclip"></i>@Model.BoardOutputViewModel.BoardAttachedFileName@Model.BoardOutputViewModel.BoardAttachedFileExtension</a>
+                                        <a id="aEditBoardAttachedFile" href="#" class="mailbox-attachment-name" data-file="@Model.BoardOutputViewModel.BoardAttachedFileBase64Data" data-contenttype="@Model.BoardOutputViewModel.BoardAttachedFileContentType" data-name="@($"{Model.BoardOutputViewModel.BoardAttachedFileName}{Model.BoardOutputViewModel.BoardAttachedFileExtension}")"><i class="fas fa-paperclip"></i>@Model.BoardOutputViewModel.BoardAttachedFileName@Model.BoardOutputViewModel.BoardAttachedFileExtension</a>
                                         <span class="mailbox-attachment-size clearfix mt-1">
                                             <span>
                                                 @(

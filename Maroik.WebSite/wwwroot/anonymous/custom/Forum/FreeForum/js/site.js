@@ -91,4 +91,48 @@ $(function () {
         $('#detailBoardContent').html(updatedHtml);
         $('#detailBoardContent').show();
     }
-})
+
+    if ($('#aDetailBoardAttachedFile').length > 0) {
+        $('#aDetailBoardAttachedFile').off('click').on('click', function (event) {
+            event.preventDefault();
+            let base64Data = $(this).attr('data-file');
+            let contentType = $(this).attr('data-contenttype');
+            let name = $(this).attr('data-name')
+
+            if (base64Data && contentType) {
+                let blob = base64ToBlob(base64Data, contentType);
+                let url = URL.createObjectURL(blob);
+                let a = document.createElement('a');
+                try {
+                    a.href = url;
+                    a.download = name;
+                    a.click();
+                } finally {
+                    setTimeout(() => URL.revokeObjectURL(url), 100);
+                    a.remove();
+                }
+            }
+        });
+    } else if ($('#aEditBoardAttachedFile').length > 0) {
+        $('#aEditBoardAttachedFile').off('click').on('click', function (event) {
+            event.preventDefault();
+            let base64Data = $(this).attr('data-file');
+            let contentType = $(this).attr('data-contenttype');
+            let name = $(this).attr('data-name')
+
+            if (base64Data && contentType) {
+                let blob = base64ToBlob(base64Data, contentType);
+                let url = URL.createObjectURL(blob);
+                let a = document.createElement('a');
+                try {
+                    a.href = url;
+                    a.download = name;
+                    a.click();
+                } finally {
+                    setTimeout(() => URL.revokeObjectURL(url), 100);
+                    a.remove();
+                }
+            }
+        });
+    }
+});
