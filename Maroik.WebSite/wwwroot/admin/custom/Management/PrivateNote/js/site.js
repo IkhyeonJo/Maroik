@@ -1,4 +1,14 @@
-﻿const localizer = {
+﻿function base64ToBlob(base64, mime) {
+    const byteCharacters = atob(base64);
+    const byteNumbers = new Array(byteCharacters.length);
+    for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);
+    }
+    const byteArray = new Uint8Array(byteNumbers);
+    return new Blob([byteArray], { type: mime });
+}
+
+const localizer = {
     IETFLanguageTag: $('#localizerIETFLanguageTag').val()
 };
 
@@ -95,11 +105,21 @@ function WriteUploadImageFile(file) {
         cache: false,
         success: function (data) {
             if (data.result) {
-                let imgNode = document.createElement('img');
-                imgNode.src = data.filePath;
+                const imgURL = URL.createObjectURL(base64ToBlob(data.file.fileContents, data.file.contentType));
+                const imgNode = document.createElement('img');
+                imgNode.src = imgURL;
                 imgNode.style.maxWidth = "170px";
                 imgNode.style.maxHeight = "209px";
+                imgNode.setAttribute('alt', data.filePath);
+
                 $('#writeBoardContent').summernote('insertNode', imgNode);
+
+                imgNode.onload = function () {
+                    URL.revokeObjectURL(imgURL);
+                };
+                imgNode.onerror = function () {
+                    URL.revokeObjectURL(imgURL);
+                };
             }
             else {
                 alert(data.errorMessage);
@@ -125,11 +145,21 @@ function EditUploadImageFile(file) {
         cache: false,
         success: function (data) {
             if (data.result) {
-                let imgNode = document.createElement('img');
-                imgNode.src = data.filePath;
+                const imgURL = URL.createObjectURL(base64ToBlob(data.file.fileContents, data.file.contentType));
+                const imgNode = document.createElement('img');
+                imgNode.src = imgURL;
                 imgNode.style.maxWidth = "170px";
                 imgNode.style.maxHeight = "209px";
+                imgNode.setAttribute('alt', data.filePath);
+
                 $('#editBoardContent').summernote('insertNode', imgNode);
+
+                imgNode.onload = function () {
+                    URL.revokeObjectURL(imgURL);
+                };
+                imgNode.onerror = function () {
+                    URL.revokeObjectURL(imgURL);
+                };
             }
             else {
                 alert(data.errorMessage);
@@ -391,4 +421,68 @@ $('#writeUploadedFile').off('change').on('change', function () {
 
 $('#editUploadedFile').off('change').on('change', function () {
     return EditUploadFile(this, $(this).attr('data-errorMessage'));
+});
+
+$(function () {
+    if ($('#detailBoardContent').length > 0) {
+        const parser = new DOMParser();
+        const htmlDoc = parser.parseFromString($('#detailBoardContent').html(), 'text/html');
+
+        const imgTags = htmlDoc.querySelectorAll('img[data-file]');
+
+        imgTags.forEach(function (imgTag) {
+            const base64Data = imgTag.getAttribute('data-file');
+            const contentType = imgTag.getAttribute('data-contenttype');
+
+            if (base64Data && contentType) {
+                const blob = base64ToBlob(base64Data, contentType);
+                const imgURL = URL.createObjectURL(blob);
+
+                imgTag.src = imgURL;
+
+                imgTag.onload = function () {
+                    URL.revokeObjectURL(imgURL);
+                };
+                imgTag.onerror = function () {
+                    URL.revokeObjectURL(imgURL);
+                };
+
+                imgTag.removeAttribute('data-file');
+                imgTag.removeAttribute('data-contenttype');
+            }
+        });
+
+        const updatedHtml = htmlDoc.body.innerHTML;
+        $('#detailBoardContent').html(updatedHtml);
+    } else if ($('#editBoardContent').length > 0) {
+        const parser = new DOMParser();
+        const htmlDoc = parser.parseFromString($('#editBoardContent').summernote('code'), 'text/html');
+
+        const imgTags = htmlDoc.querySelectorAll('img[data-file]');
+
+        imgTags.forEach(function (imgTag) {
+            const base64Data = imgTag.getAttribute('data-file');
+            const contentType = imgTag.getAttribute('data-contenttype');
+
+            if (base64Data && contentType) {
+                const blob = base64ToBlob(base64Data, contentType);
+                const imgURL = URL.createObjectURL(blob);
+
+                imgTag.src = imgURL;
+
+                imgTag.onload = function () {
+                    URL.revokeObjectURL(imgURL);
+                };
+                imgTag.onerror = function () {
+                    URL.revokeObjectURL(imgURL);
+                };
+
+                imgTag.removeAttribute('data-file');
+                imgTag.removeAttribute('data-contenttype');
+            }
+        });
+
+        const updatedHtml = htmlDoc.body.innerHTML;
+        $('#editBoardContent').summernote('code', updatedHtml);
+    }
 });
