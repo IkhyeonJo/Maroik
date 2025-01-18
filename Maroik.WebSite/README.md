@@ -871,3 +871,80 @@ Javscript optimization Tip:
 
 // TODO: Calendar UserIndex 동작 한 번 테스트하고, Admin Calendar 작업으로 넘어갈 것! 
 // [Admin Calendar는 User Calendar에서 가져올 수 있어야 한다. Other Calendars로, 또한 AnonymousIndex에 표시할 Calendar도 Admin에서 등록할 수 있어야 한다.]
+
+
+
+File Storage API 사용법:
+
+private readonly HttpClient _httpClient;
+, HttpClient httpClient
+_httpClient = httpClient;
+
+[HttpPost]
+[ValidateAntiForgeryToken]
+[RequiredHttpPostAccess(Role = Role.Admin)]
+[RequiredHttpPostAccess(Role = Role.User)]
+public async Task<IActionResult> UploadImageFile(IFormFile summernoteImageFile)
+{
+    IFormFile file = summernoteImageFile;
+    if (file == null || file.Length == 0)
+        return BadRequest("No file provided.");
+
+    var fileName = Path.GetFileName(file.FileName);
+
+    using (var memoryStream = new MemoryStream())
+    {
+        await file.CopyToAsync(memoryStream);
+        memoryStream.Position = 0;
+
+        // 멀티파트 폼 데이터를 사용하여 파일 서버에 전송
+        var content = new MultipartFormDataContent();
+        var fileContent = new StreamContent(memoryStream);
+        fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(file.ContentType);
+        content.Add(fileContent, "file", fileName);
+
+        // 추가 파라미터 추가
+        content.Add(new StringContent("value1"), "param1");
+        content.Add(new StringContent("value2"), "param2");
+
+        var response = await _httpClient.PostAsync("http://Maroik.FileStorage/api/files", content);
+
+        if (response.IsSuccessStatusCode)
+        {
+            var url = $"http://Maroik.FileStorage/api/files/1115444444.png"; // 호출할 API URL
+
+            using (var httpClient = new HttpClient())
+            {
+                var response0 = await httpClient.GetAsync(url); // 파일 다운로드 요청
+
+                if (response0.IsSuccessStatusCode)
+                {
+                    var fileData = await response0.Content.ReadAsByteArrayAsync(); // 파일 데이터 읽기
+
+                    // byte[]를 MemoryStream으로 변환
+                    using (var memoryStream0 = new MemoryStream(fileData))
+                    {
+                        // 파일 저장 경로 설정
+                        var savePath = Path.Combine(_hostEnvironment.ContentRootPath, "wwwroot", "upload", "Calendar", "sample.png"); // 저장할 경로
+
+                        using (var fileStream = new FileStream(savePath, FileMode.Create, FileAccess.Write))
+                        {
+                            // MemoryStream의 내용을 파일로 복사
+                            await memoryStream0.CopyToAsync(fileStream);
+                        }
+                    }
+                }
+                else
+                {
+                    Console.WriteLine($"Error downloading file: {response0.StatusCode}");
+                }
+            }
+
+            return Ok(new { Message = "File uploaded successfully" });
+        }
+        else
+        {
+            return StatusCode((int)response.StatusCode, new { Message = "File upload failed" });
+        }
+    }
+}

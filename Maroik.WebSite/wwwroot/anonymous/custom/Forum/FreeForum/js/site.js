@@ -1,4 +1,14 @@
-﻿$(function () {
+﻿function base64ToBlob(base64, mime) {
+    const byteCharacters = atob(base64);
+    const byteNumbers = new Array(byteCharacters.length);
+    for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);
+    }
+    const byteArray = new Uint8Array(byteNumbers);
+    return new Blob([byteArray], { type: mime });
+}
+
+$(function () {
 
     if ($('#free_forum_detail_updated').length > 0) {
         let utcDateStr = $('#free_forum_detail_updated').text();
@@ -48,4 +58,81 @@
     $('#formWriteFreeComment').off('keydown').on('keydown', function (event) {
         return event.key != 'Enter';
     });
-})
+
+    if ($('#detailBoardContent').length > 0 && $('#detailBoardContent').is(":hidden")) {
+        const parser = new DOMParser();
+        const htmlDoc = parser.parseFromString($('#detailBoardContent').html(), 'text/html');
+
+        const imgTags = htmlDoc.querySelectorAll('img[data-file]');
+
+        imgTags.forEach(function (imgTag) {
+            const base64Data = imgTag.getAttribute('data-file');
+            const contentType = imgTag.getAttribute('data-contenttype');
+
+            if (base64Data && contentType) {
+                const blob = base64ToBlob(base64Data, contentType);
+                const imgURL = URL.createObjectURL(blob);
+
+                imgTag.src = imgURL;
+
+                imgTag.onload = function () {
+                    URL.revokeObjectURL(imgURL);
+                };
+                imgTag.onerror = function () {
+                    URL.revokeObjectURL(imgURL);
+                };
+
+                imgTag.removeAttribute('data-file');
+                imgTag.removeAttribute('data-contenttype');
+            }
+        });
+
+        const updatedHtml = htmlDoc.body.innerHTML;
+        $('#detailBoardContent').html(updatedHtml);
+        $('#detailBoardContent').show();
+    }
+
+    if ($('#aDetailBoardAttachedFile').length > 0) {
+        $('#aDetailBoardAttachedFile').off('click').on('click', function (event) {
+            event.preventDefault();
+            let base64Data = $(this).attr('data-file');
+            let contentType = $(this).attr('data-contenttype');
+            let name = $(this).attr('data-name')
+
+            if (base64Data && contentType) {
+                let blob = base64ToBlob(base64Data, contentType);
+                let url = URL.createObjectURL(blob);
+                let a = document.createElement('a');
+                try {
+                    a.href = url;
+                    a.download = name;
+                    a.click();
+                } finally {
+                    setTimeout(() => URL.revokeObjectURL(url), 100);
+                    a.remove();
+                }
+            }
+        });
+    } else if ($('#aEditBoardAttachedFile').length > 0) {
+        $('#aEditBoardAttachedFile').off('click').on('click', function (event) {
+            event.preventDefault();
+            let base64Data = $(this).attr('data-file');
+            let contentType = $(this).attr('data-contenttype');
+            let name = $(this).attr('data-name')
+
+            if (base64Data && contentType) {
+                let blob = base64ToBlob(base64Data, contentType);
+                let url = URL.createObjectURL(blob);
+                let a = document.createElement('a');
+                try {
+                    a.href = url;
+                    a.download = name;
+                    a.click();
+                } finally {
+                    setTimeout(() => URL.revokeObjectURL(url), 100);
+                    a.remove();
+                }
+            }
+        });
+    }
+});

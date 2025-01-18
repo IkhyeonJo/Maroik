@@ -18,10 +18,15 @@ for garbage_tar_xz_file in garbage_tar_xz_files:
     os.remove(garbage_tar_xz_file)
 
 current_date = str(datetime.today().strftime("%Y%m%d"))
-backup_upload_file_name = f'upload-{current_date}'
-os.system(f'sudo docker cp Maroik.WebSite:/app/wwwroot/upload /home/peter-cho/Maroik/{backup_upload_file_name}')
-os.system(f'sudo tar cfJ /home/peter-cho/Maroik/{backup_upload_file_name}.tar.xz /home/peter-cho/Maroik/{backup_upload_file_name}')
-os.system(f'sudo rm -rf /home/peter-cho/Maroik/{backup_upload_file_name}')
+website_backup_upload_file_name = f'website-upload-{current_date}'
+os.system(f'sudo docker cp Maroik.WebSite:/app/wwwroot/upload /home/peter-cho/Maroik/{website_backup_upload_file_name}')
+os.system(f'sudo tar cfJ /home/peter-cho/Maroik/{website_backup_upload_file_name}.tar.xz /home/peter-cho/Maroik/{website_backup_upload_file_name}')
+os.system(f'sudo rm -rf /home/peter-cho/Maroik/{website_backup_upload_file_name}')
+
+file_storage_backup_upload_file_name = f'file-storage-upload-{current_date}'
+os.system(f'sudo docker cp Maroik.FileStorage:/app/wwwroot/upload /home/peter-cho/Maroik/{file_storage_backup_upload_file_name}')
+os.system(f'sudo tar cfJ /home/peter-cho/Maroik/{file_storage_backup_upload_file_name}.tar.xz /home/peter-cho/Maroik/{file_storage_backup_upload_file_name}')
+os.system(f'sudo rm -rf /home/peter-cho/Maroik/{file_storage_backup_upload_file_name}')
 
 msg = MIMEMultipart()
 
@@ -33,7 +38,8 @@ body = MIMEText(f'Maroik.WebSite Upload File Backup ({current_date})', _charset=
 msg.attach(body)
 
 files = list()
-files.append(f'/home/peter-cho/Maroik/{backup_upload_file_name}.tar.xz')
+files.append(f'/home/peter-cho/Maroik/{website_backup_upload_file_name}.tar.xz')
+files.append(f'/home/peter-cho/Maroik/{file_storage_backup_upload_file_name}.tar.xz')
 
 for f in files:
     part = MIMEBase('application', "octet-stream")

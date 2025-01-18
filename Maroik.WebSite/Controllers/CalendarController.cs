@@ -1,11 +1,14 @@
 ﻿using Ganss.Xss;
+using HtmlAgilityPack;
 using Maroik.Common.DataAccess.Contracts;
 using Maroik.Common.DataAccess.Models;
 using Maroik.Common.Miscellaneous.Extensions;
 using Maroik.Common.Miscellaneous.Utilities;
+using Maroik.WebSite.Contracts;
 using Maroik.WebSite.Models.ViewModels.Calendar;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Localization;
+using Microsoft.AspNetCore.StaticFiles;
 using Newtonsoft.Json;
 using System.Text;
 
@@ -13,6 +16,7 @@ namespace Maroik.WebSite.Controllers
 {
     public class CalendarController : Controller
     {
+        private readonly RSA _rsa;
         private readonly IHtmlLocalizer<CalendarController> _localizer;
         private readonly ILogger<CalendarController> _logger;
         private readonly IIncomeRepository _incomeRepository;
@@ -26,9 +30,11 @@ namespace Maroik.WebSite.Controllers
         private readonly ICalendarEventReminderRepository _calendarReminderRepository;
         private readonly ICalendarSharedRepository _calendarSharedRepository;
         private readonly IHostEnvironment _hostEnvironment;
+        private readonly IFileRepository _fileRepository;
 
-        public CalendarController(IHtmlLocalizer<CalendarController> localizer, ILogger<CalendarController> logger, IHostEnvironment hostEnvironment, IIncomeRepository incomeRepository, IExpenditureRepository expenditureRepository, IAssetRepository assetRepository, IAccountRepository accountRepository, ICalendarRepository calendarRepository, IOtherCalendarRepository otherCalendarRepository, ICalendarEventRepository calendarEventRepository, ICalendarEventAttachedFileRepository calendarEventAttachedFileRepository, ICalendarEventReminderRepository calendarReminderRepository, ICalendarSharedRepository calendarSharedRepository)
+        public CalendarController(IHtmlLocalizer<CalendarController> localizer, ILogger<CalendarController> logger, IHostEnvironment hostEnvironment, IIncomeRepository incomeRepository, IExpenditureRepository expenditureRepository, IAssetRepository assetRepository, IAccountRepository accountRepository, ICalendarRepository calendarRepository, IOtherCalendarRepository otherCalendarRepository, ICalendarEventRepository calendarEventRepository, ICalendarEventAttachedFileRepository calendarEventAttachedFileRepository, ICalendarEventReminderRepository calendarReminderRepository, ICalendarSharedRepository calendarSharedRepository, IFileRepository fileRepository)
         {
+            _rsa = new RSA(RSAType.RSA2, Encoding.UTF8, RSA.privateKey, RSA.publicKey);
             _localizer = localizer;
             _logger = logger;
             _hostEnvironment = hostEnvironment;
@@ -42,6 +48,7 @@ namespace Maroik.WebSite.Controllers
             _calendarEventAttachedFileRepository = calendarEventAttachedFileRepository;
             _calendarReminderRepository = calendarReminderRepository;
             _calendarSharedRepository = calendarSharedRepository;
+            _fileRepository = fileRepository;
         }
 
         #region Calendar
@@ -118,6 +125,19 @@ namespace Maroik.WebSite.Controllers
                     _ = sanitizer.AllowedAttributes.Add("class");
                     string sanitized = sanitizer.Sanitize(calendarEventInputViewModel.Description);
                     calendarEventInputViewModel.Description = sanitized;
+                    #endregion
+
+                    #region Decrypt img tag file path
+                    HtmlDocument htmlDocument = new HtmlDocument();
+                    htmlDocument.LoadHtml(calendarEventInputViewModel.Description);
+
+                    foreach (HtmlNode imgTag in htmlDocument.DocumentNode.Descendants("img") ?? new List<HtmlNode>())
+                    {
+                        string encryptedFilePath = imgTag.GetAttributeValue("alt", "");
+                        imgTag.SetAttributeValue("alt", _rsa.Decrypt(encryptedFilePath));
+                    }
+
+                    calendarEventInputViewModel.Description = htmlDocument.DocumentNode.OuterHtml;
                     #endregion
 
                     if (calendarEventInputViewModel.Title.Length is not (> 0 and <= 100)) // 제목 길이
@@ -283,23 +303,12 @@ namespace Maroik.WebSite.Controllers
                                 {
                                     int createdCalendarEventId = calendarEvent.Id;
 
-                                    string calendarEventAttachedFilePath = Path.Combine(_hostEnvironment.ContentRootPath, "wwwroot", "upload", "Calendar", $"{loginedAccount.Role}Index", "calendarEventAttachedFiles", $"{createdCalendarEventId}");
-                                    if (!Directory.Exists(calendarEventAttachedFilePath))
-                                    {
-                                        _ = Directory.CreateDirectory(calendarEventAttachedFilePath);
-                                    }
-
+                                    string calendarEventAttachedFilePath = Path.Combine("upload", "Calendar", $"{loginedAccount.Role}Index", "calendarEventAttachedFiles", $"{createdCalendarEventId}");
                                     string guid = Guid.NewGuid().ToString().ToUpper();
                                     string calendarEventAttachedFile = $"{guid}{Path.GetExtension(calendarEventInputViewModel.CalendarEventUploadedFile.FileName)}";
                                     string filePath = Path.Combine(calendarEventAttachedFilePath, calendarEventAttachedFile);
 
-#pragma warning disable SCS0018 // Potential Path Traversal vulnerability was found where '{0}' in '{1}' may be tainted by user-controlled data from '{2}' in method '{3}'.
-                                    using (FileStream stream = new(filePath, FileMode.Create))
-#pragma warning restore SCS0018 // Potential Path Traversal vulnerability was found where '{0}' in '{1}' may be tainted by user-controlled data from '{2}' in method '{3}'.
-                                    {
-                                        await calendarEventInputViewModel.CalendarEventUploadedFile.CopyToAsync(stream);
-                                        await stream.FlushAsync();
-                                    }
+                                    await _fileRepository.UploadAsync(calendarEventInputViewModel.CalendarEventUploadedFile, filePath);
 
                                     await _calendarEventAttachedFileRepository.SaveCalendarEventAttachedFileAsync(new CalendarEventAttachedFile()
                                     {
@@ -307,7 +316,7 @@ namespace Maroik.WebSite.Controllers
                                         Size = Convert.ToInt32(calendarEventInputViewModel.CalendarEventUploadedFile.Length),
                                         Name = Path.GetFileNameWithoutExtension(calendarEventInputViewModel.CalendarEventUploadedFile.FileName),
                                         Extension = Path.GetExtension(calendarEventInputViewModel.CalendarEventUploadedFile.FileName),
-                                        Path = $"/upload/Calendar/{loginedAccount.Role}Index/calendarEventAttachedFiles/{createdCalendarEventId}/{calendarEventAttachedFile}"
+                                        Path = $"upload/Calendar/{loginedAccount.Role}Index/calendarEventAttachedFiles/{createdCalendarEventId}/{calendarEventAttachedFile}"
                                     });
                                 }
                                 else
@@ -392,23 +401,14 @@ namespace Maroik.WebSite.Controllers
 
                         Account loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte));
 
-                        string summernoteImagePath = Path.Combine(_hostEnvironment.ContentRootPath, "wwwroot", "upload", "Calendar", $"{loginedAccount.Role}Index", "summernote", "images");
-                        if (!Directory.Exists(summernoteImagePath))
-                        {
-                            _ = Directory.CreateDirectory(summernoteImagePath);
-                        }
+                        string summernoteImagePath = Path.Combine("upload", "Calendar", $"{loginedAccount.Role}Index", "summernote", "images");
 
                         string imageFile = $"{Guid.NewGuid().ToString().ToUpper()}{Path.GetExtension(summernoteImageFile.FileName)}";
                         string filePath = Path.Combine(summernoteImagePath, imageFile);
 
-#pragma warning disable SCS0018 // Potential Path Traversal vulnerability was found where '{0}' in '{1}' may be tainted by user-controlled data from '{2}' in method '{3}'.
-                        using (FileStream stream = new(filePath, FileMode.Create))
-#pragma warning restore SCS0018 // Potential Path Traversal vulnerability was found where '{0}' in '{1}' may be tainted by user-controlled data from '{2}' in method '{3}'.
-                        {
-                            await summernoteImageFile.CopyToAsync(stream);
-                            await stream.FlushAsync();
-                        }
-                        return Ok(new { result = true, filePath = $"/upload/Calendar/{loginedAccount.Role}Index/summernote/images/{imageFile}" });
+                        return Ok(await _fileRepository.UploadAsync(summernoteImageFile, filePath)
+                            ? new { result = true, file = File(await _fileRepository.DownloadAsync(filePath), summernoteImageFile.ContentType, imageFile), filePath = _rsa.Encrypt(filePath) }
+                            : new { result = false, errorMessage = _localizer["Input is invalid"].Value });
                     }
                     else // 이미지 png 또는 jpg 또는 jpeg 외 확장자는 거절
                     {
@@ -1253,9 +1253,42 @@ namespace Maroik.WebSite.Controllers
                             Id = tempCalendarEvent.Id,
                             CalendarId = tempCalendarEvent.CalendarId,
                             Title = tempCalendarEvent.Title,
-                            Description = tempCalendarEvent.Description,
                             AllDay = tempCalendarEvent.AllDay
                         };
+
+                        HtmlDocument htmlDocument = new HtmlDocument();
+                        htmlDocument.LoadHtml(tempCalendarEvent.Description);
+
+                        foreach (HtmlNode imgTag in htmlDocument.DocumentNode.Descendants("img") ?? new List<HtmlNode>()) 
+                        {
+                            string filePath = imgTag.GetAttributeValue("alt", "");
+
+                            // 파일을 다운로드하는 메서드
+                            byte[] fileData = await _fileRepository.DownloadAsync(filePath);
+
+                            if (fileData != null)
+                            {
+                                // ContentType을 추출하기 위한 FileExtensionContentTypeProvider 사용
+                                var provider = new FileExtensionContentTypeProvider();
+                                string contentType;
+
+                                // 기본 contentType은 "application/octet-stream"으로 설정
+                                if (!provider.TryGetContentType(filePath, out contentType))
+                                {
+                                    contentType = "application/octet-stream";
+                                }
+
+                                // 파일 데이터를 Base64로 변환
+                                string base64Data = Convert.ToBase64String(fileData);
+
+                                // img 태그에 base64 데이터 저장 (src에 넣는 대신 data-file 속성 사용)
+                                imgTag.SetAttributeValue("data-file", base64Data);
+                                imgTag.SetAttributeValue("data-contenttype", contentType);
+                                imgTag.SetAttributeValue("alt", _rsa.Encrypt(filePath));
+                            }
+                        }
+
+                        calendarEvent.Description = htmlDocument.DocumentNode.OuterHtml;
 
                         if (tempCalendarEvent.AllDay)
                         {
@@ -1375,6 +1408,29 @@ namespace Maroik.WebSite.Controllers
                         calendarEvent.Location = tempCalendarEvent.Location;
                         calendarEvent.Status = tempCalendarEvent.Status;
                         calendarEvent.CalendarEventAttachedFile = await _calendarEventAttachedFileRepository.GetCalendarEventAttachedFileAsync(tempCalendarEvent.Id);
+
+                        if (!string.IsNullOrEmpty(calendarEvent?.CalendarEventAttachedFile?.Path ?? ""))
+                        {
+                            byte[] fileData = await _fileRepository.DownloadAsync(calendarEvent?.CalendarEventAttachedFile?.Path ?? "");
+
+                            if (fileData != null)
+                            {
+                                // ContentType을 추출하기 위한 FileExtensionContentTypeProvider 사용
+                                var provider = new FileExtensionContentTypeProvider();
+                                string contentType;
+
+                                // 기본 contentType은 "application/octet-stream"으로 설정
+                                if (!provider.TryGetContentType(calendarEvent?.CalendarEventAttachedFile?.Path ?? "", out contentType))
+                                {
+                                    contentType = "application/octet-stream";
+                                }
+
+                                // 파일 데이터를 Base64로 변환
+                                calendarEvent.CalendarEventAttachedFileBase64Data = Convert.ToBase64String(fileData);
+                                calendarEvent.CalendarEventAttachedFileContentType = contentType;
+                            }
+                        }
+
                         calendarEvent.Calendars = calendars.Select(x => new Calendar { Id = x.Id, Name = x.Name }).OrderBy(x => x.Name).ToList();
                         calendarEvent.SerializedCalendarReminders = JsonConvert.SerializeObject((await _calendarReminderRepository.GetCalendarEventRemindersAsync(tempCalendarEvent.Id)).Select(x => new CalendarEventReminder { Method = x.Method, MinutesBeforeEvent = x.MinutesBeforeEvent, HoursBeforeEvent = x.HoursBeforeEvent, DaysBeforeEvent = x.DaysBeforeEvent, WeeksBeforeEvent = x.WeeksBeforeEvent, TimesBeforeEvent = x.TimesBeforeEvent }) ?? []);
 
@@ -1462,9 +1518,42 @@ namespace Maroik.WebSite.Controllers
                             Id = tempCalendarEvent.Id,
                             CalendarId = tempCalendarEvent.CalendarId,
                             Title = tempCalendarEvent.Title,
-                            Description = tempCalendarEvent.Description,
                             AllDay = tempCalendarEvent.AllDay
                         };
+
+                        HtmlDocument htmlDocument = new HtmlDocument();
+                        htmlDocument.LoadHtml(tempCalendarEvent.Description);
+
+                        foreach (HtmlNode imgTag in htmlDocument.DocumentNode.Descendants("img") ?? new List<HtmlNode>())
+                        {
+                            string filePath = imgTag.GetAttributeValue("alt", "");
+
+                            // 파일을 다운로드하는 메서드
+                            byte[] fileData = await _fileRepository.DownloadAsync(filePath);
+
+                            if (fileData != null)
+                            {
+                                // ContentType을 추출하기 위한 FileExtensionContentTypeProvider 사용
+                                var provider = new FileExtensionContentTypeProvider();
+                                string contentType;
+
+                                // 기본 contentType은 "application/octet-stream"으로 설정
+                                if (!provider.TryGetContentType(filePath, out contentType))
+                                {
+                                    contentType = "application/octet-stream";
+                                }
+
+                                // 파일 데이터를 Base64로 변환
+                                string base64Data = Convert.ToBase64String(fileData);
+
+                                // img 태그에 base64 데이터 저장 (src에 넣는 대신 data-file 속성 사용)
+                                imgTag.SetAttributeValue("data-file", base64Data);
+                                imgTag.SetAttributeValue("data-contenttype", contentType);
+                                imgTag.SetAttributeValue("alt", _rsa.Encrypt(filePath));
+                            }
+                        }
+
+                        calendarEvent.Description = htmlDocument.DocumentNode.OuterHtml;
 
                         if (tempCalendarEvent.AllDay)
                         {
@@ -1584,6 +1673,29 @@ namespace Maroik.WebSite.Controllers
                         calendarEvent.Location = tempCalendarEvent.Location;
                         calendarEvent.Status = tempCalendarEvent.Status;
                         calendarEvent.CalendarEventAttachedFile = await _calendarEventAttachedFileRepository.GetCalendarEventAttachedFileAsync(tempCalendarEvent.Id);
+
+                        if (!string.IsNullOrEmpty(calendarEvent?.CalendarEventAttachedFile?.Path ?? ""))
+                        {
+                            byte[] fileData = await _fileRepository.DownloadAsync(calendarEvent?.CalendarEventAttachedFile?.Path ?? "");
+
+                            if (fileData != null)
+                            {
+                                // ContentType을 추출하기 위한 FileExtensionContentTypeProvider 사용
+                                var provider = new FileExtensionContentTypeProvider();
+                                string contentType;
+
+                                // 기본 contentType은 "application/octet-stream"으로 설정
+                                if (!provider.TryGetContentType(calendarEvent?.CalendarEventAttachedFile?.Path ?? "", out contentType))
+                                {
+                                    contentType = "application/octet-stream";
+                                }
+
+                                // 파일 데이터를 Base64로 변환
+                                calendarEvent.CalendarEventAttachedFileBase64Data = Convert.ToBase64String(fileData);
+                                calendarEvent.CalendarEventAttachedFileContentType = contentType;
+                            }
+                        }
+
                         calendarEvent.Calendars = calendars.Select(x => new Calendar { Id = x.Id, Name = x.Name }).OrderBy(x => x.Name).ToList();
                         calendarEvent.SerializedCalendarReminders = JsonConvert.SerializeObject((await _calendarReminderRepository.GetCalendarEventRemindersAsync(tempCalendarEvent.Id)).Select(x => new CalendarEventReminder { Method = x.Method, MinutesBeforeEvent = x.MinutesBeforeEvent, HoursBeforeEvent = x.HoursBeforeEvent, DaysBeforeEvent = x.DaysBeforeEvent, WeeksBeforeEvent = x.WeeksBeforeEvent, TimesBeforeEvent = x.TimesBeforeEvent }) ?? []);
 
@@ -2035,6 +2147,19 @@ namespace Maroik.WebSite.Controllers
                     calendarEventInputViewModel.Description = sanitized;
                     #endregion
 
+                    #region Decrypt img tag file path
+                    HtmlDocument htmlDocument = new HtmlDocument();
+                    htmlDocument.LoadHtml(calendarEventInputViewModel.Description);
+
+                    foreach (HtmlNode imgTag in htmlDocument.DocumentNode.Descendants("img") ?? new List<HtmlNode>())
+                    {
+                        string encryptedFilePath = imgTag.GetAttributeValue("alt", "");
+                        imgTag.SetAttributeValue("alt", _rsa.Decrypt(encryptedFilePath));
+                    }
+
+                    calendarEventInputViewModel.Description = htmlDocument.DocumentNode.OuterHtml;
+                    #endregion
+
                     if (calendarEventInputViewModel.Title.Length is not (> 0 and <= 100)) // 제목 길이
                     {
                         return Json(new { result = false, error = _localizer["Name length is must be between 1 and 100 characters."].Value });
@@ -2212,23 +2337,12 @@ namespace Maroik.WebSite.Controllers
                                 {
                                     int updatedCalendarEventId = calendarEvent.Id;
 
-                                    string calendarEventAttachedFilePath = Path.Combine(_hostEnvironment.ContentRootPath, "wwwroot", "upload", "Calendar", $"{loginedAccount.Role}Index", "calendarEventAttachedFiles", $"{updatedCalendarEventId}");
-                                    if (!Directory.Exists(calendarEventAttachedFilePath))
-                                    {
-                                        _ = Directory.CreateDirectory(calendarEventAttachedFilePath);
-                                    }
-
+                                    string calendarEventAttachedFilePath = Path.Combine("upload", "Calendar", $"{loginedAccount.Role}Index", "calendarEventAttachedFiles", $"{updatedCalendarEventId}");
                                     string guid = Guid.NewGuid().ToString().ToUpper();
                                     string calendarEventAttachedFile = $"{guid}{Path.GetExtension(calendarEventInputViewModel.CalendarEventUploadedFile.FileName)}";
                                     string filePath = Path.Combine(calendarEventAttachedFilePath, calendarEventAttachedFile);
 
-#pragma warning disable SCS0018 // Potential Path Traversal vulnerability was found where '{0}' in '{1}' may be tainted by user-controlled data from '{2}' in method '{3}'.
-                                    using (FileStream stream = new(filePath, FileMode.Create))
-#pragma warning restore SCS0018 // Potential Path Traversal vulnerability was found where '{0}' in '{1}' may be tainted by user-controlled data from '{2}' in method '{3}'.
-                                    {
-                                        await calendarEventInputViewModel.CalendarEventUploadedFile.CopyToAsync(stream);
-                                        await stream.FlushAsync();
-                                    }
+                                    await _fileRepository.UploadAsync(calendarEventInputViewModel.CalendarEventUploadedFile, filePath);
 
                                     await _calendarEventAttachedFileRepository.SaveCalendarEventAttachedFileAsync(new CalendarEventAttachedFile()
                                     {
@@ -2236,7 +2350,7 @@ namespace Maroik.WebSite.Controllers
                                         Size = Convert.ToInt32(calendarEventInputViewModel.CalendarEventUploadedFile.Length),
                                         Name = Path.GetFileNameWithoutExtension(calendarEventInputViewModel.CalendarEventUploadedFile.FileName),
                                         Extension = Path.GetExtension(calendarEventInputViewModel.CalendarEventUploadedFile.FileName),
-                                        Path = $"/upload/Calendar/{loginedAccount.Role}Index/calendarEventAttachedFiles/{updatedCalendarEventId}/{calendarEventAttachedFile}"
+                                        Path = $"upload/Calendar/{loginedAccount.Role}Index/calendarEventAttachedFiles/{updatedCalendarEventId}/{calendarEventAttachedFile}"
                                     });
                                 }
                                 else

@@ -1,0 +1,6 @@
+Host CPU Information:
+CPU Usage: 0.6639%
+Host Memory Information:
+Memory: 15Gi / 1.1Gi
+Host Disk Information:
+Disk: 3.0T / 667G

@@ -68,6 +68,8 @@ builder.Services.AddScoped<ICalendarSharedRepository, CalendarSharedRepository>(
 
 #region LOCAL
 builder.Services.AddScoped<IMailRepository, MailRepository>();
+builder.Services.AddScoped<IFileRepository, FileRepository>();
+builder.Services.AddHttpClient();
 #endregion
 
 #endregion
@@ -193,79 +195,7 @@ app.UseSession(); // 8. 세션 미들웨어 (UseSession)는 세션 상태를 설
 #endregion
 
 #region 권한 없이 wwwroot에 접근하려고 하면 초기 화면으로 돌려보냄
-app.UseStaticFiles(new StaticFileOptions
-{
-    OnPrepareResponse = context =>
-    {
-        bool isAccountSessionExist = context.Context.Session.TryGetValue(Maroik.Common.Miscellaneous.Extensions.EnumHelper.GetDescription(Maroik.Common.Miscellaneous.Utilities.Session.Account), out _); // 로그인이 되어 계정 세션이 생겼는지 확인
-
-        if (context.Context.Request.Path.StartsWithSegments("/upload/Forum") ||
-        context.Context.Request.Path.StartsWithSegments("/upload/Management/Profile/Avatar") ||
-        context.Context.Request.Path.ToString().Contains("/upload/Management/Profile/default-avatar.jpg") ||
-        context.Context.Request.Path.StartsWithSegments("/upload/Management/PrivateNote") ||
-        context.Context.Request.Path.StartsWithSegments("/upload/Calendar/AdminIndex") ||
-        context.Context.Request.Path.StartsWithSegments("/upload/Calendar/UserIndex")) // (~/upload/Forum) [게시물] (~/upload/Management/Profile/Avatar) [댓글 게시판 이미지] 게시판 파일들은 모두 접근 허용, [사적 메모], (~/upload/Calendar/UserIndex) [달력]
-        {
-
-        }
-        else if (isAccountSessionExist == false && !context.Context.Request.Path.StartsWithSegments("/anonymous")) // 로그인이 안 된 상태인가? 그렇다면 ~/anonymous 자원에만 접근 허용
-        {
-            context.Context.Response.StatusCode = (int)HttpStatusCode.Unauthorized; // 권한 없음 
-            context.Context.Response.ContentLength = 0; // 내용 길이 없음
-            context.Context.Response.Body = Stream.Null; // 내용 없음
-            context.Context.Response.Redirect("/"); // 로그인 화면으로
-        }
-        else if (isAccountSessionExist == true)
-        {
-            _ = context.Context.Session.TryGetValue(Maroik.Common.Miscellaneous.Extensions.EnumHelper.GetDescription(Maroik.Common.Miscellaneous.Utilities.Session.Account), out byte[] resultByte);
-            Account loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)); // Get Session
-
-            if (loginedAccount.Role == Role.Admin && !context.Context.Request.Path.StartsWithSegments("/admin")) // 로그인이 되었고 권한이 Admin인가? 그렇다면 ~/admin 자원에만 접근 허용
-            {
-                #region Profile Image 이거나, Profile 아바타 파일 접근 허용
-                if (context.Context.Request.Path.ToString().Contains("/upload/Management/Profile/default-avatar.jpg") || context.Context.Request.Path.ToString().Contains($"/upload/Management/Profile/Avatar/"))
-                {
-
-                }
-                #endregion
-
-                #region 그 외 접근 차단
-                else
-                {
-                    context.Context.Response.StatusCode = (int)HttpStatusCode.Unauthorized; // 권한 없음 
-                    context.Context.Response.ContentLength = 0; // 내용 길이 없음
-                    context.Context.Response.Body = Stream.Null; // 내용 없음
-                    context.Context.Response.Redirect("/"); // 로그인 화면으로
-                }
-                #endregion
-
-            }
-            else if (loginedAccount.Role == Role.User && !context.Context.Request.Path.StartsWithSegments("/user")) // 로그인이 되었고 권한이 User인가? 그렇다면 ~/user 자원에만 접근 허용
-            {
-                #region Profile Image 이거나, Profile 아바타 파일 접근 허용
-                if (context.Context.Request.Path.ToString().Contains("/upload/Management/Profile/default-avatar.jpg") || context.Context.Request.Path.ToString().Contains($"/upload/Management/Profile/Avatar/"))
-                {
-
-                }
-                #endregion
-
-                #region 그 외 접근 차단
-                else
-                {
-                    context.Context.Response.StatusCode = (int)HttpStatusCode.Unauthorized; // 권한 없음 
-                    context.Context.Response.ContentLength = 0; // 내용 길이 없음
-                    context.Context.Response.Body = Stream.Null; // 내용 없음
-                    context.Context.Response.Redirect("/"); // 로그인 화면으로
-                }
-                #endregion
-            }
-            else
-            {
-
-            }
-        }
-    }
-});
+app.UseStaticFiles();
 #endregion
 
 #region Default HTTP Header Setting
@@ -303,7 +233,7 @@ app.Use(async (context, next) =>
     context.Response.Headers.Append("Cross-Origin-Embedder-Policy", "require-corp");
     context.Response.Headers.Append("Cross-Origin-Opener-Policy", "same-origin");
     context.Response.Headers.Append("Permissions-Policy", "accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()");
-    context.Response.Headers.Append("Content-Security-Policy", $"img-src 'self'; connect-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; object-src 'none'; base-uri 'none'; report-uri {ServerSetting.DomainName}; form-action 'self'; frame-ancestors 'none'"); // [https://csper.io/blog/no-more-unsafe-inline] [https://csp-evaluator.withgoogle.com/?csp=https://www.maroik.com]
+    context.Response.Headers.Append("Content-Security-Policy", $"img-src 'self' blob:; connect-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; object-src 'none'; base-uri 'none'; report-uri {ServerSetting.DomainName}; form-action 'self'; frame-ancestors 'none'"); // [https://csper.io/blog/no-more-unsafe-inline] [https://csp-evaluator.withgoogle.com/?csp=https://www.maroik.com]
     #endregion
     await next();
 });
