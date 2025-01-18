@@ -59,7 +59,7 @@ $(function () {
         return event.key != 'Enter';
     });
 
-    if ($('#detailBoardContent').length > 0) {
+    if ($('#detailBoardContent').length > 0 && $('#detailBoardContent').is(":hidden")) {
         const parser = new DOMParser();
         const htmlDoc = parser.parseFromString($('#detailBoardContent').html(), 'text/html');
 
@@ -89,5 +89,6 @@ $(function () {
 
         const updatedHtml = htmlDoc.body.innerHTML;
         $('#detailBoardContent').html(updatedHtml);
+        $('#detailBoardContent').show();
     }
 })

@@ -424,7 +424,7 @@ $('#editUploadedFile').off('change').on('change', function () {
 });
 
 $(function () {
-    if ($('#detailBoardContent').length > 0) {
+    if ($('#detailBoardContent').length > 0 && $('#detailBoardContent').is(":hidden")) {
         const parser = new DOMParser();
         const htmlDoc = parser.parseFromString($('#detailBoardContent').html(), 'text/html');
 
@@ -454,7 +454,8 @@ $(function () {
 
         const updatedHtml = htmlDoc.body.innerHTML;
         $('#detailBoardContent').html(updatedHtml);
-    } else if ($('#editBoardContent').length > 0) {
+        $('#detailBoardContent').show();
+    } else if ($('#editBoardContent').length > 0 && $('#divEditBoardContent').is(":hidden")) {
         const parser = new DOMParser();
         const htmlDoc = parser.parseFromString($('#editBoardContent').summernote('code'), 'text/html');
 
@@ -484,5 +485,6 @@ $(function () {
 
         const updatedHtml = htmlDoc.body.innerHTML;
         $('#editBoardContent').summernote('code', updatedHtml);
+        $('#divEditBoardContent').show();
     }
 });

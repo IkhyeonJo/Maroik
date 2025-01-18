@@ -388,9 +388,11 @@ namespace Maroik.WebSite.Controllers
                     #region Encrypt img tag file path
                     HtmlDocument htmlDocument = new HtmlDocument();
                     htmlDocument.LoadHtml(freeBoard.Content);
+                    bool isImgTagIncluded = false;
 
                     foreach (HtmlNode imgTag in htmlDocument.DocumentNode.Descendants("img") ?? new List<HtmlNode>())
                     {
+                        isImgTagIncluded = true;
                         string filePath = imgTag.GetAttributeValue("alt", "");
 
                         // 파일을 다운로드하는 메서드
@@ -431,7 +433,8 @@ namespace Maroik.WebSite.Controllers
                         BoardAttachedFileName = boardAttachedFile?.Name ?? "",
                         BoardAttachedFileExtension = boardAttachedFile?.Extension ?? "",
                         BoardAttachedFileSize = boardAttachedFile?.Size ?? 0,
-                        BoardAttachedFilePath = boardAttachedFile?.Path ?? ""
+                        BoardAttachedFilePath = boardAttachedFile?.Path ?? "",
+                        IsImgTagIncluded = isImgTagIncluded
                     };
 
                     return View(freeForumOutputViewModel);
@@ -476,9 +479,11 @@ namespace Maroik.WebSite.Controllers
                     #region Encrypt img tag file path
                     HtmlDocument htmlDocument = new HtmlDocument();
                     htmlDocument.LoadHtml(freeBoard.Content);
+                    bool isImgTagIncluded = false;
 
                     foreach (HtmlNode imgTag in htmlDocument.DocumentNode.Descendants("img") ?? new List<HtmlNode>())
                     {
+                        isImgTagIncluded = true;
                         string filePath = imgTag.GetAttributeValue("alt", "");
 
                         // 파일을 다운로드하는 메서드
@@ -520,7 +525,8 @@ namespace Maroik.WebSite.Controllers
                         BoardAttachedFileName = boardAttachedFile?.Name ?? "",
                         BoardAttachedFileExtension = boardAttachedFile?.Extension ?? "",
                         BoardAttachedFileSize = boardAttachedFile?.Size ?? 0,
-                        BoardAttachedFilePath = boardAttachedFile?.Path ?? ""
+                        BoardAttachedFilePath = boardAttachedFile?.Path ?? "",
+                        IsImgTagIncluded = isImgTagIncluded
                     };
 
                     return View(freeForumOutputViewModel);
