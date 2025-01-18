@@ -195,7 +195,13 @@ app.UseSession(); // 8. 세션 미들웨어 (UseSession)는 세션 상태를 설
 #endregion
 
 #region 권한 없이 wwwroot에 접근하려고 하면 초기 화면으로 돌려보냄
-app.UseStaticFiles();
+app.UseStaticFiles(new StaticFileOptions
+{
+    OnPrepareResponse = ctx =>
+    {
+        ctx.Context.Response.Headers["X-Content-Type-Options"] = "nosniff";
+    }
+});
 #endregion
 
 #region Default HTTP Header Setting
