@@ -1580,23 +1580,13 @@ namespace Maroik.WebSite.Controllers
                                 {
                                     int createdBoardId = board.Id; // 첨부파일 FK 해서 로직 추가할 것
 
-                                    string boardAttachedFilePath = Path.Combine(_hostEnvironment.ContentRootPath, "wwwroot", "upload", "Management", EnumHelper.GetDescription(BoardType.PrivateNote), "boardAttachedFiles", $"{createdBoardId}");
-                                    if (!Directory.Exists(boardAttachedFilePath))
-                                    {
-                                        _ = Directory.CreateDirectory(boardAttachedFilePath);
-                                    }
+                                    string boardAttachedFilePath = Path.Combine("upload", "Forum", EnumHelper.GetDescription(BoardType.FreeForum), "boardAttachedFiles", $"{createdBoardId}");
 
                                     string guid = Guid.NewGuid().ToString().ToUpper();
                                     string attachedFile = $"{guid}{Path.GetExtension(boardInputViewModel.UploadedFile.FileName)}";
                                     string filePath = Path.Combine(boardAttachedFilePath, attachedFile);
 
-#pragma warning disable SCS0018 // Potential Path Traversal vulnerability was found where '{0}' in '{1}' may be tainted by user-controlled data from '{2}' in method '{3}'.
-                                    using (FileStream stream = new(filePath, FileMode.Create))
-#pragma warning restore SCS0018 // Potential Path Traversal vulnerability was found where '{0}' in '{1}' may be tainted by user-controlled data from '{2}' in method '{3}'.
-                                    {
-                                        await boardInputViewModel.UploadedFile.CopyToAsync(stream);
-                                        await stream.FlushAsync();
-                                    }
+                                    await _fileRepository.UploadAsync(boardInputViewModel.UploadedFile, filePath);
 
                                     await _boardAttachedFileRepository.SaveBoardAttachedFileAsync(new BoardAttachedFile()
                                     {
@@ -1604,7 +1594,7 @@ namespace Maroik.WebSite.Controllers
                                         Size = Convert.ToInt32(boardInputViewModel.UploadedFile.Length),
                                         Name = Path.GetFileNameWithoutExtension(boardInputViewModel.UploadedFile.FileName),
                                         Extension = Path.GetExtension(boardInputViewModel.UploadedFile.FileName),
-                                        Path = $"/upload/Management/{EnumHelper.GetDescription(BoardType.PrivateNote)}/boardAttachedFiles/{createdBoardId}/{attachedFile}"
+                                        Path = $"upload/Management/{EnumHelper.GetDescription(BoardType.PrivateNote)}/boardAttachedFiles/{createdBoardId}/{attachedFile}"
                                     });
                                 }
                                 else
@@ -1866,6 +1856,28 @@ namespace Maroik.WebSite.Controllers
                         IsImgTagIncluded = isImgTagIncluded
                     };
 
+                    if (!string.IsNullOrEmpty(privateNoteOutputViewModel?.BoardOutputViewModel?.BoardAttachedFilePath ?? ""))
+                    {
+                        byte[] fileData = await _fileRepository.DownloadAsync(privateNoteOutputViewModel?.BoardOutputViewModel?.BoardAttachedFilePath ?? "");
+
+                        if (fileData != null)
+                        {
+                            // ContentType을 추출하기 위한 FileExtensionContentTypeProvider 사용
+                            var provider = new FileExtensionContentTypeProvider();
+                            string contentType;
+
+                            // 기본 contentType은 "application/octet-stream"으로 설정
+                            if (!provider.TryGetContentType(privateNoteOutputViewModel?.BoardOutputViewModel?.BoardAttachedFilePath ?? "", out contentType))
+                            {
+                                contentType = "application/octet-stream";
+                            }
+
+                            // 파일 데이터를 Base64로 변환
+                            privateNoteOutputViewModel.BoardOutputViewModel.BoardAttachedFileBase64Data = Convert.ToBase64String(fileData);
+                            privateNoteOutputViewModel.BoardOutputViewModel.BoardAttachedFileContentType = contentType;
+                        }
+                    }
+
                     return View(privateNoteOutputViewModel);
                 }
                 catch
@@ -1957,6 +1969,28 @@ namespace Maroik.WebSite.Controllers
                         BoardAttachedFilePath = attachedFile?.Path ?? "",
                         IsImgTagIncluded = isImgTagIncluded
                     };
+
+                    if (!string.IsNullOrEmpty(privateNoteOutputViewModel?.BoardOutputViewModel?.BoardAttachedFilePath ?? ""))
+                    {
+                        byte[] fileData = await _fileRepository.DownloadAsync(privateNoteOutputViewModel?.BoardOutputViewModel?.BoardAttachedFilePath ?? "");
+
+                        if (fileData != null)
+                        {
+                            // ContentType을 추출하기 위한 FileExtensionContentTypeProvider 사용
+                            var provider = new FileExtensionContentTypeProvider();
+                            string contentType;
+
+                            // 기본 contentType은 "application/octet-stream"으로 설정
+                            if (!provider.TryGetContentType(privateNoteOutputViewModel?.BoardOutputViewModel?.BoardAttachedFilePath ?? "", out contentType))
+                            {
+                                contentType = "application/octet-stream";
+                            }
+
+                            // 파일 데이터를 Base64로 변환
+                            privateNoteOutputViewModel.BoardOutputViewModel.BoardAttachedFileBase64Data = Convert.ToBase64String(fileData);
+                            privateNoteOutputViewModel.BoardOutputViewModel.BoardAttachedFileContentType = contentType;
+                        }
+                    }
 
                     return View(privateNoteOutputViewModel);
                 }
@@ -2178,7 +2212,7 @@ namespace Maroik.WebSite.Controllers
                                 {
                                     int createdBoardId = boardInputViewModel.Id; // 첨부파일 FK 해서 로직 추가할 것
 
-                                    string boardAttachedFilePath = Path.Combine(_hostEnvironment.ContentRootPath, "wwwroot", "upload", "Management", EnumHelper.GetDescription(BoardType.PrivateNote), "boardAttachedFiles", $"{createdBoardId}");
+                                    string boardAttachedFilePath = Path.Combine("upload", "Management", EnumHelper.GetDescription(BoardType.PrivateNote), "boardAttachedFiles", $"{createdBoardId}");
                                     if (!Directory.Exists(boardAttachedFilePath))
                                     {
                                         _ = Directory.CreateDirectory(boardAttachedFilePath);
@@ -2188,18 +2222,12 @@ namespace Maroik.WebSite.Controllers
                                     string attachedFile = $"{guid}{Path.GetExtension(boardInputViewModel.UploadedFile.FileName)}";
                                     string filePath = Path.Combine(boardAttachedFilePath, attachedFile);
 
-#pragma warning disable SCS0018 // Potential Path Traversal vulnerability was found where '{0}' in '{1}' may be tainted by user-controlled data from '{2}' in method '{3}'.
-                                    using (FileStream stream = new(filePath, FileMode.Create))
-#pragma warning restore SCS0018 // Potential Path Traversal vulnerability was found where '{0}' in '{1}' may be tainted by user-controlled data from '{2}' in method '{3}'.
-                                    {
-                                        await boardInputViewModel.UploadedFile.CopyToAsync(stream);
-                                        await stream.FlushAsync();
-                                    }
+                                    await _fileRepository.UploadAsync(boardInputViewModel.UploadedFile, filePath);
 
                                     previousBoardAttachedFile.Size = Convert.ToInt32(boardInputViewModel.UploadedFile.Length);
                                     previousBoardAttachedFile.Name = Path.GetFileNameWithoutExtension(boardInputViewModel.UploadedFile.FileName);
                                     previousBoardAttachedFile.Extension = Path.GetExtension(boardInputViewModel.UploadedFile.FileName);
-                                    previousBoardAttachedFile.Path = $"/upload/Management/{EnumHelper.GetDescription(BoardType.PrivateNote)}/boardAttachedFiles/{createdBoardId}/{attachedFile}";
+                                    previousBoardAttachedFile.Path = $"upload/Management/{EnumHelper.GetDescription(BoardType.PrivateNote)}/boardAttachedFiles/{createdBoardId}/{attachedFile}";
 
                                     await _boardAttachedFileRepository.UpdateBoardAttachedFileAsync(previousBoardAttachedFile);
 
@@ -2233,23 +2261,13 @@ namespace Maroik.WebSite.Controllers
                                 {
                                     int createdBoardId = boardInputViewModel.Id; // 첨부파일 FK 해서 로직 추가할 것
 
-                                    string boardAttachedFilePath = Path.Combine(_hostEnvironment.ContentRootPath, "wwwroot", "upload", "Management", EnumHelper.GetDescription(BoardType.PrivateNote), "boardAttachedFiles", $"{createdBoardId}");
-                                    if (!Directory.Exists(boardAttachedFilePath))
-                                    {
-                                        _ = Directory.CreateDirectory(boardAttachedFilePath);
-                                    }
+                                    string boardAttachedFilePath = Path.Combine("upload", "Management", EnumHelper.GetDescription(BoardType.PrivateNote), "boardAttachedFiles", $"{createdBoardId}");
 
                                     string guid = Guid.NewGuid().ToString().ToUpper();
                                     string attachedFile = $"{guid}{Path.GetExtension(boardInputViewModel.UploadedFile.FileName)}";
                                     string filePath = Path.Combine(boardAttachedFilePath, attachedFile);
 
-#pragma warning disable SCS0018 // Potential Path Traversal vulnerability was found where '{0}' in '{1}' may be tainted by user-controlled data from '{2}' in method '{3}'.
-                                    using (FileStream stream = new(filePath, FileMode.Create))
-#pragma warning restore SCS0018 // Potential Path Traversal vulnerability was found where '{0}' in '{1}' may be tainted by user-controlled data from '{2}' in method '{3}'.
-                                    {
-                                        await boardInputViewModel.UploadedFile.CopyToAsync(stream);
-                                        await stream.FlushAsync();
-                                    }
+                                    await _fileRepository.UploadAsync(boardInputViewModel.UploadedFile, filePath);
 
                                     await _boardAttachedFileRepository.SaveBoardAttachedFileAsync(new BoardAttachedFile()
                                     {
@@ -2257,7 +2275,7 @@ namespace Maroik.WebSite.Controllers
                                         Size = Convert.ToInt32(boardInputViewModel.UploadedFile.Length),
                                         Name = Path.GetFileNameWithoutExtension(boardInputViewModel.UploadedFile.FileName),
                                         Extension = Path.GetExtension(boardInputViewModel.UploadedFile.FileName),
-                                        Path = $"/upload/Management/{EnumHelper.GetDescription(BoardType.PrivateNote)}/boardAttachedFiles/{createdBoardId}/{attachedFile}"
+                                        Path = $"upload/Management/{EnumHelper.GetDescription(BoardType.PrivateNote)}/boardAttachedFiles/{createdBoardId}/{attachedFile}"
                                     });
 
                                     return Json(new { result = true, message = _localizer["The board has been successfully updated."].Value });
