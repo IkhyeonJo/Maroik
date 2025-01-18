@@ -1817,9 +1817,11 @@ namespace Maroik.WebSite.Controllers
                     #region Encrypt img tag file path
                     HtmlDocument htmlDocument = new HtmlDocument();
                     htmlDocument.LoadHtml(privateNoteBoard.Content);
+                    bool isImgTagIncluded = false;
 
                     foreach (HtmlNode imgTag in htmlDocument.DocumentNode.Descendants("img") ?? new List<HtmlNode>())
                     {
+                        isImgTagIncluded = true;
                         string filePath = imgTag.GetAttributeValue("alt", "");
 
                         // 파일을 다운로드하는 메서드
@@ -1860,7 +1862,8 @@ namespace Maroik.WebSite.Controllers
                         BoardAttachedFileName = attachedFile?.Name ?? "",
                         BoardAttachedFileExtension = attachedFile?.Extension ?? "",
                         BoardAttachedFileSize = attachedFile?.Size ?? 0,
-                        BoardAttachedFilePath = attachedFile?.Path ?? ""
+                        BoardAttachedFilePath = attachedFile?.Path ?? "",
+                        IsImgTagIncluded = isImgTagIncluded
                     };
 
                     return View(privateNoteOutputViewModel);
@@ -1905,9 +1908,11 @@ namespace Maroik.WebSite.Controllers
                     #region Encrypt img tag file path
                     HtmlDocument htmlDocument = new HtmlDocument();
                     htmlDocument.LoadHtml(privateNoteBoard.Content);
+                    bool isImgTagIncluded = false;
 
                     foreach (HtmlNode imgTag in htmlDocument.DocumentNode.Descendants("img") ?? new List<HtmlNode>())
                     {
+                        isImgTagIncluded = true;
                         string filePath = imgTag.GetAttributeValue("alt", "");
 
                         // 파일을 다운로드하는 메서드
@@ -1949,7 +1954,8 @@ namespace Maroik.WebSite.Controllers
                         BoardAttachedFileName = attachedFile?.Name ?? "",
                         BoardAttachedFileExtension = attachedFile?.Extension ?? "",
                         BoardAttachedFileSize = attachedFile?.Size ?? 0,
-                        BoardAttachedFilePath = attachedFile?.Path ?? ""
+                        BoardAttachedFilePath = attachedFile?.Path ?? "",
+                        IsImgTagIncluded = isImgTagIncluded
                     };
 
                     return View(privateNoteOutputViewModel);

@@ -27,5 +27,6 @@ namespace Maroik.WebSite.Models.ViewModels.Management
         public int BoardAttachedFileSize { get; set; }
 
         public string BoardAttachedFilePath { get; set; }
+        public bool IsImgTagIncluded { get; set; }
     }
 }
