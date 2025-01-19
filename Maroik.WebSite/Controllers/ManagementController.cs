@@ -92,7 +92,9 @@ namespace Maroik.WebSite.Controllers
                         string guid = Guid.NewGuid().ToString().ToUpper();
                         string avatarFile = $"{guid}{Path.GetExtension(profileAvatarFile.FileName)}";
                         string filePath = Path.Combine(avatarPath, avatarFile);
+#pragma warning disable SCS0018 // Potential Path Traversal vulnerability was found where '{0}' in '{1}' may be tainted by user-controlled data from '{2}' in method '{3}'.
                         using (FileStream stream = new(filePath, FileMode.Create))
+#pragma warning restore SCS0018 // Potential Path Traversal vulnerability was found where '{0}' in '{1}' may be tainted by user-controlled data from '{2}' in method '{3}'.
                         {
                             await profileAvatarFile.CopyToAsync(stream);
                             await stream.FlushAsync();
