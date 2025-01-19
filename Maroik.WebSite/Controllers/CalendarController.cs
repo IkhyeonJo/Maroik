@@ -128,13 +128,13 @@ namespace Maroik.WebSite.Controllers
                     #endregion
 
                     #region Decrypt img tag file path
-                    HtmlDocument htmlDocument = new HtmlDocument();
+                    HtmlDocument htmlDocument = new();
                     htmlDocument.LoadHtml(calendarEventInputViewModel.Description);
 
-                    foreach (HtmlNode imgTag in htmlDocument.DocumentNode.Descendants("img") ?? new List<HtmlNode>())
+                    foreach (HtmlNode imgTag in htmlDocument.DocumentNode.Descendants("img") ?? [])
                     {
                         string encryptedFilePath = imgTag.GetAttributeValue("alt", "");
-                        imgTag.SetAttributeValue("alt", _rsa.Decrypt(encryptedFilePath));
+                        _ = imgTag.SetAttributeValue("alt", _rsa.Decrypt(encryptedFilePath));
                     }
 
                     calendarEventInputViewModel.Description = htmlDocument.DocumentNode.OuterHtml;
@@ -308,7 +308,7 @@ namespace Maroik.WebSite.Controllers
                                     string calendarEventAttachedFile = $"{guid}{Path.GetExtension(calendarEventInputViewModel.CalendarEventUploadedFile.FileName)}";
                                     string filePath = Path.Combine(calendarEventAttachedFilePath, calendarEventAttachedFile);
 
-                                    await _fileRepository.UploadAsync(calendarEventInputViewModel.CalendarEventUploadedFile, filePath);
+                                    _ = await _fileRepository.UploadAsync(calendarEventInputViewModel.CalendarEventUploadedFile, filePath);
 
                                     await _calendarEventAttachedFileRepository.SaveCalendarEventAttachedFileAsync(new CalendarEventAttachedFile()
                                     {
@@ -1256,10 +1256,10 @@ namespace Maroik.WebSite.Controllers
                             AllDay = tempCalendarEvent.AllDay
                         };
 
-                        HtmlDocument htmlDocument = new HtmlDocument();
+                        HtmlDocument htmlDocument = new();
                         htmlDocument.LoadHtml(tempCalendarEvent.Description);
 
-                        foreach (HtmlNode imgTag in htmlDocument.DocumentNode.Descendants("img") ?? new List<HtmlNode>()) 
+                        foreach (HtmlNode imgTag in htmlDocument.DocumentNode.Descendants("img") ?? [])
                         {
                             string filePath = imgTag.GetAttributeValue("alt", "");
 
@@ -1269,11 +1269,10 @@ namespace Maroik.WebSite.Controllers
                             if (fileData != null)
                             {
                                 // ContentType을 추출하기 위한 FileExtensionContentTypeProvider 사용
-                                var provider = new FileExtensionContentTypeProvider();
-                                string contentType;
+                                FileExtensionContentTypeProvider provider = new();
 
                                 // 기본 contentType은 "application/octet-stream"으로 설정
-                                if (!provider.TryGetContentType(filePath, out contentType))
+                                if (!provider.TryGetContentType(filePath, out string contentType))
                                 {
                                     contentType = "application/octet-stream";
                                 }
@@ -1282,9 +1281,9 @@ namespace Maroik.WebSite.Controllers
                                 string base64Data = Convert.ToBase64String(fileData);
 
                                 // img 태그에 base64 데이터 저장 (src에 넣는 대신 data-file 속성 사용)
-                                imgTag.SetAttributeValue("data-file", base64Data);
-                                imgTag.SetAttributeValue("data-contenttype", contentType);
-                                imgTag.SetAttributeValue("alt", _rsa.Encrypt(filePath));
+                                _ = imgTag.SetAttributeValue("data-file", base64Data);
+                                _ = imgTag.SetAttributeValue("data-contenttype", contentType);
+                                _ = imgTag.SetAttributeValue("alt", _rsa.Encrypt(filePath));
                             }
                         }
 
@@ -1416,11 +1415,10 @@ namespace Maroik.WebSite.Controllers
                             if (fileData != null)
                             {
                                 // ContentType을 추출하기 위한 FileExtensionContentTypeProvider 사용
-                                var provider = new FileExtensionContentTypeProvider();
-                                string contentType;
+                                FileExtensionContentTypeProvider provider = new();
 
                                 // 기본 contentType은 "application/octet-stream"으로 설정
-                                if (!provider.TryGetContentType(calendarEvent?.CalendarEventAttachedFile?.Path ?? "", out contentType))
+                                if (!provider.TryGetContentType(calendarEvent?.CalendarEventAttachedFile?.Path ?? "", out string contentType))
                                 {
                                     contentType = "application/octet-stream";
                                 }
@@ -1521,10 +1519,10 @@ namespace Maroik.WebSite.Controllers
                             AllDay = tempCalendarEvent.AllDay
                         };
 
-                        HtmlDocument htmlDocument = new HtmlDocument();
+                        HtmlDocument htmlDocument = new();
                         htmlDocument.LoadHtml(tempCalendarEvent.Description);
 
-                        foreach (HtmlNode imgTag in htmlDocument.DocumentNode.Descendants("img") ?? new List<HtmlNode>())
+                        foreach (HtmlNode imgTag in htmlDocument.DocumentNode.Descendants("img") ?? [])
                         {
                             string filePath = imgTag.GetAttributeValue("alt", "");
 
@@ -1534,11 +1532,10 @@ namespace Maroik.WebSite.Controllers
                             if (fileData != null)
                             {
                                 // ContentType을 추출하기 위한 FileExtensionContentTypeProvider 사용
-                                var provider = new FileExtensionContentTypeProvider();
-                                string contentType;
+                                FileExtensionContentTypeProvider provider = new();
 
                                 // 기본 contentType은 "application/octet-stream"으로 설정
-                                if (!provider.TryGetContentType(filePath, out contentType))
+                                if (!provider.TryGetContentType(filePath, out string contentType))
                                 {
                                     contentType = "application/octet-stream";
                                 }
@@ -1547,9 +1544,9 @@ namespace Maroik.WebSite.Controllers
                                 string base64Data = Convert.ToBase64String(fileData);
 
                                 // img 태그에 base64 데이터 저장 (src에 넣는 대신 data-file 속성 사용)
-                                imgTag.SetAttributeValue("data-file", base64Data);
-                                imgTag.SetAttributeValue("data-contenttype", contentType);
-                                imgTag.SetAttributeValue("alt", _rsa.Encrypt(filePath));
+                                _ = imgTag.SetAttributeValue("data-file", base64Data);
+                                _ = imgTag.SetAttributeValue("data-contenttype", contentType);
+                                _ = imgTag.SetAttributeValue("alt", _rsa.Encrypt(filePath));
                             }
                         }
 
@@ -1681,11 +1678,10 @@ namespace Maroik.WebSite.Controllers
                             if (fileData != null)
                             {
                                 // ContentType을 추출하기 위한 FileExtensionContentTypeProvider 사용
-                                var provider = new FileExtensionContentTypeProvider();
-                                string contentType;
+                                FileExtensionContentTypeProvider provider = new();
 
                                 // 기본 contentType은 "application/octet-stream"으로 설정
-                                if (!provider.TryGetContentType(calendarEvent?.CalendarEventAttachedFile?.Path ?? "", out contentType))
+                                if (!provider.TryGetContentType(calendarEvent?.CalendarEventAttachedFile?.Path ?? "", out string contentType))
                                 {
                                     contentType = "application/octet-stream";
                                 }
@@ -2148,13 +2144,13 @@ namespace Maroik.WebSite.Controllers
                     #endregion
 
                     #region Decrypt img tag file path
-                    HtmlDocument htmlDocument = new HtmlDocument();
+                    HtmlDocument htmlDocument = new();
                     htmlDocument.LoadHtml(calendarEventInputViewModel.Description);
 
-                    foreach (HtmlNode imgTag in htmlDocument.DocumentNode.Descendants("img") ?? new List<HtmlNode>())
+                    foreach (HtmlNode imgTag in htmlDocument.DocumentNode.Descendants("img") ?? [])
                     {
                         string encryptedFilePath = imgTag.GetAttributeValue("alt", "");
-                        imgTag.SetAttributeValue("alt", _rsa.Decrypt(encryptedFilePath));
+                        _ = imgTag.SetAttributeValue("alt", _rsa.Decrypt(encryptedFilePath));
                     }
 
                     calendarEventInputViewModel.Description = htmlDocument.DocumentNode.OuterHtml;
@@ -2342,7 +2338,7 @@ namespace Maroik.WebSite.Controllers
                                     string calendarEventAttachedFile = $"{guid}{Path.GetExtension(calendarEventInputViewModel.CalendarEventUploadedFile.FileName)}";
                                     string filePath = Path.Combine(calendarEventAttachedFilePath, calendarEventAttachedFile);
 
-                                    await _fileRepository.UploadAsync(calendarEventInputViewModel.CalendarEventUploadedFile, filePath);
+                                    _ = await _fileRepository.UploadAsync(calendarEventInputViewModel.CalendarEventUploadedFile, filePath);
 
                                     await _calendarEventAttachedFileRepository.SaveCalendarEventAttachedFileAsync(new CalendarEventAttachedFile()
                                     {

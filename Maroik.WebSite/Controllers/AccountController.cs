@@ -869,7 +869,7 @@ namespace Maroik.WebSite.Controllers
                 else
                 {
                     account.ResetPasswordToken = null;
-                    account.HashedPassword = this._rsa.Sign(loginInputViewModel.Password); // 암호화
+                    account.HashedPassword = _rsa.Sign(loginInputViewModel.Password); // 암호화
                     account.Locked = false; // 잠금 해제
                     account.LoginAttempt = 0; // 로그인 시도 횟수 초기화
                     account.Updated = DateTime.UtcNow;
