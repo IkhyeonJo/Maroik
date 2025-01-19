@@ -1,21 +1,21 @@
 ﻿using Ganss.Xss;
+using HtmlAgilityPack;
 using Maroik.Common.DataAccess.Contracts;
 using Maroik.Common.DataAccess.Models;
 using Maroik.Common.Miscellaneous.Extensions;
 using Maroik.Common.Miscellaneous.Utilities;
+using Maroik.WebSite.Contracts;
 using Maroik.WebSite.Models;
 using Maroik.WebSite.Models.ViewModels.Management;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Localization;
+using Microsoft.AspNetCore.StaticFiles;
 using Newtonsoft.Json;
 using OfficeOpenXml;
 using System.Data;
 using System.Net.Mail;
 using System.Text;
 using System.Text.RegularExpressions;
-using Maroik.WebSite.Contracts;
-using HtmlAgilityPack;
-using Microsoft.AspNetCore.StaticFiles;
 
 namespace Maroik.WebSite.Controllers
 {
@@ -92,10 +92,7 @@ namespace Maroik.WebSite.Controllers
                         string guid = Guid.NewGuid().ToString().ToUpper();
                         string avatarFile = $"{guid}{Path.GetExtension(profileAvatarFile.FileName)}";
                         string filePath = Path.Combine(avatarPath, avatarFile);
-
-#pragma warning disable SCS0018 // Potential Path Traversal vulnerability was found where '{0}' in '{1}' may be tainted by user-controlled data from '{2}' in method '{3}'.
                         using (FileStream stream = new(filePath, FileMode.Create))
-#pragma warning restore SCS0018 // Potential Path Traversal vulnerability was found where '{0}' in '{1}' may be tainted by user-controlled data from '{2}' in method '{3}'.
                         {
                             await profileAvatarFile.CopyToAsync(stream);
                             await stream.FlushAsync();
@@ -1497,13 +1494,13 @@ namespace Maroik.WebSite.Controllers
                     #endregion
 
                     #region Decrypt img tag file path
-                    HtmlDocument htmlDocument = new HtmlDocument();
+                    HtmlDocument htmlDocument = new();
                     htmlDocument.LoadHtml(boardInputViewModel.Content);
 
-                    foreach (HtmlNode imgTag in htmlDocument.DocumentNode.Descendants("img") ?? new List<HtmlNode>())
+                    foreach (HtmlNode imgTag in htmlDocument.DocumentNode.Descendants("img") ?? [])
                     {
                         string encryptedFilePath = imgTag.GetAttributeValue("alt", "");
-                        imgTag.SetAttributeValue("alt", _rsa.Decrypt(encryptedFilePath));
+                        _ = imgTag.SetAttributeValue("alt", _rsa.Decrypt(encryptedFilePath));
                     }
 
                     boardInputViewModel.Content = htmlDocument.DocumentNode.OuterHtml;
@@ -1586,7 +1583,7 @@ namespace Maroik.WebSite.Controllers
                                     string attachedFile = $"{guid}{Path.GetExtension(boardInputViewModel.UploadedFile.FileName)}";
                                     string filePath = Path.Combine(boardAttachedFilePath, attachedFile);
 
-                                    await _fileRepository.UploadAsync(boardInputViewModel.UploadedFile, filePath);
+                                    _ = await _fileRepository.UploadAsync(boardInputViewModel.UploadedFile, filePath);
 
                                     await _boardAttachedFileRepository.SaveBoardAttachedFileAsync(new BoardAttachedFile()
                                     {
@@ -1805,11 +1802,11 @@ namespace Maroik.WebSite.Controllers
                     BoardAttachedFile attachedFile = boardAttachedFiles.FirstOrDefault(m => m.BoardId == boardId);
 
                     #region Encrypt img tag file path
-                    HtmlDocument htmlDocument = new HtmlDocument();
+                    HtmlDocument htmlDocument = new();
                     htmlDocument.LoadHtml(privateNoteBoard.Content);
                     bool isImgTagIncluded = false;
 
-                    foreach (HtmlNode imgTag in htmlDocument.DocumentNode.Descendants("img") ?? new List<HtmlNode>())
+                    foreach (HtmlNode imgTag in htmlDocument.DocumentNode.Descendants("img") ?? [])
                     {
                         isImgTagIncluded = true;
                         string filePath = imgTag.GetAttributeValue("alt", "");
@@ -1820,11 +1817,10 @@ namespace Maroik.WebSite.Controllers
                         if (fileData != null)
                         {
                             // ContentType을 추출하기 위한 FileExtensionContentTypeProvider 사용
-                            var provider = new FileExtensionContentTypeProvider();
-                            string contentType;
+                            FileExtensionContentTypeProvider provider = new();
 
                             // 기본 contentType은 "application/octet-stream"으로 설정
-                            if (!provider.TryGetContentType(filePath, out contentType))
+                            if (!provider.TryGetContentType(filePath, out string contentType))
                             {
                                 contentType = "application/octet-stream";
                             }
@@ -1833,9 +1829,9 @@ namespace Maroik.WebSite.Controllers
                             string base64Data = Convert.ToBase64String(fileData);
 
                             // img 태그에 base64 데이터 저장 (src에 넣는 대신 data-file 속성 사용)
-                            imgTag.SetAttributeValue("data-file", base64Data);
-                            imgTag.SetAttributeValue("data-contenttype", contentType);
-                            imgTag.SetAttributeValue("alt", _rsa.Encrypt(filePath));
+                            _ = imgTag.SetAttributeValue("data-file", base64Data);
+                            _ = imgTag.SetAttributeValue("data-contenttype", contentType);
+                            _ = imgTag.SetAttributeValue("alt", _rsa.Encrypt(filePath));
                         }
                     }
 
@@ -1863,11 +1859,10 @@ namespace Maroik.WebSite.Controllers
                         if (fileData != null)
                         {
                             // ContentType을 추출하기 위한 FileExtensionContentTypeProvider 사용
-                            var provider = new FileExtensionContentTypeProvider();
-                            string contentType;
+                            FileExtensionContentTypeProvider provider = new();
 
                             // 기본 contentType은 "application/octet-stream"으로 설정
-                            if (!provider.TryGetContentType(privateNoteOutputViewModel?.BoardOutputViewModel?.BoardAttachedFilePath ?? "", out contentType))
+                            if (!provider.TryGetContentType(privateNoteOutputViewModel?.BoardOutputViewModel?.BoardAttachedFilePath ?? "", out string contentType))
                             {
                                 contentType = "application/octet-stream";
                             }
@@ -1918,11 +1913,11 @@ namespace Maroik.WebSite.Controllers
                     BoardAttachedFile attachedFile = boardAttachedFiles.FirstOrDefault(m => m.BoardId == boardId);
 
                     #region Encrypt img tag file path
-                    HtmlDocument htmlDocument = new HtmlDocument();
+                    HtmlDocument htmlDocument = new();
                     htmlDocument.LoadHtml(privateNoteBoard.Content);
                     bool isImgTagIncluded = false;
 
-                    foreach (HtmlNode imgTag in htmlDocument.DocumentNode.Descendants("img") ?? new List<HtmlNode>())
+                    foreach (HtmlNode imgTag in htmlDocument.DocumentNode.Descendants("img") ?? [])
                     {
                         isImgTagIncluded = true;
                         string filePath = imgTag.GetAttributeValue("alt", "");
@@ -1933,11 +1928,10 @@ namespace Maroik.WebSite.Controllers
                         if (fileData != null)
                         {
                             // ContentType을 추출하기 위한 FileExtensionContentTypeProvider 사용
-                            var provider = new FileExtensionContentTypeProvider();
-                            string contentType;
+                            FileExtensionContentTypeProvider provider = new();
 
                             // 기본 contentType은 "application/octet-stream"으로 설정
-                            if (!provider.TryGetContentType(filePath, out contentType))
+                            if (!provider.TryGetContentType(filePath, out string contentType))
                             {
                                 contentType = "application/octet-stream";
                             }
@@ -1946,9 +1940,9 @@ namespace Maroik.WebSite.Controllers
                             string base64Data = Convert.ToBase64String(fileData);
 
                             // img 태그에 base64 데이터 저장 (src에 넣는 대신 data-file 속성 사용)
-                            imgTag.SetAttributeValue("data-file", base64Data);
-                            imgTag.SetAttributeValue("data-contenttype", contentType);
-                            imgTag.SetAttributeValue("alt", _rsa.Encrypt(filePath));
+                            _ = imgTag.SetAttributeValue("data-file", base64Data);
+                            _ = imgTag.SetAttributeValue("data-contenttype", contentType);
+                            _ = imgTag.SetAttributeValue("alt", _rsa.Encrypt(filePath));
                         }
                     }
 
@@ -1977,11 +1971,10 @@ namespace Maroik.WebSite.Controllers
                         if (fileData != null)
                         {
                             // ContentType을 추출하기 위한 FileExtensionContentTypeProvider 사용
-                            var provider = new FileExtensionContentTypeProvider();
-                            string contentType;
+                            FileExtensionContentTypeProvider provider = new();
 
                             // 기본 contentType은 "application/octet-stream"으로 설정
-                            if (!provider.TryGetContentType(privateNoteOutputViewModel?.BoardOutputViewModel?.BoardAttachedFilePath ?? "", out contentType))
+                            if (!provider.TryGetContentType(privateNoteOutputViewModel?.BoardOutputViewModel?.BoardAttachedFilePath ?? "", out string contentType))
                             {
                                 contentType = "application/octet-stream";
                             }
@@ -2140,13 +2133,13 @@ namespace Maroik.WebSite.Controllers
                     #endregion
 
                     #region Decrypt img tag file path
-                    HtmlDocument htmlDocument = new HtmlDocument();
+                    HtmlDocument htmlDocument = new();
                     htmlDocument.LoadHtml(boardInputViewModel.Content);
 
-                    foreach (HtmlNode imgTag in htmlDocument.DocumentNode.Descendants("img") ?? new List<HtmlNode>())
+                    foreach (HtmlNode imgTag in htmlDocument.DocumentNode.Descendants("img") ?? [])
                     {
                         string encryptedFilePath = imgTag.GetAttributeValue("alt", "");
-                        imgTag.SetAttributeValue("alt", _rsa.Decrypt(encryptedFilePath));
+                        _ = imgTag.SetAttributeValue("alt", _rsa.Decrypt(encryptedFilePath));
                     }
 
                     boardInputViewModel.Content = htmlDocument.DocumentNode.OuterHtml;
@@ -2222,7 +2215,7 @@ namespace Maroik.WebSite.Controllers
                                     string attachedFile = $"{guid}{Path.GetExtension(boardInputViewModel.UploadedFile.FileName)}";
                                     string filePath = Path.Combine(boardAttachedFilePath, attachedFile);
 
-                                    await _fileRepository.UploadAsync(boardInputViewModel.UploadedFile, filePath);
+                                    _ = await _fileRepository.UploadAsync(boardInputViewModel.UploadedFile, filePath);
 
                                     previousBoardAttachedFile.Size = Convert.ToInt32(boardInputViewModel.UploadedFile.Length);
                                     previousBoardAttachedFile.Name = Path.GetFileNameWithoutExtension(boardInputViewModel.UploadedFile.FileName);
@@ -2267,7 +2260,7 @@ namespace Maroik.WebSite.Controllers
                                     string attachedFile = $"{guid}{Path.GetExtension(boardInputViewModel.UploadedFile.FileName)}";
                                     string filePath = Path.Combine(boardAttachedFilePath, attachedFile);
 
-                                    await _fileRepository.UploadAsync(boardInputViewModel.UploadedFile, filePath);
+                                    _ = await _fileRepository.UploadAsync(boardInputViewModel.UploadedFile, filePath);
 
                                     await _boardAttachedFileRepository.SaveBoardAttachedFileAsync(new BoardAttachedFile()
                                     {

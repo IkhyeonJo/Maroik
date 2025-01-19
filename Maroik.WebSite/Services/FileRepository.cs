@@ -11,9 +11,9 @@ public class FileRepository : IFileRepository
         using MultipartFormDataContent content = [];
         content.Add(new StringContent(filePath), "filePath");
 
-        var response = await httpClient.PostAsync($"http://{_fileStorageDomain}/api/File/download", content);
+        HttpResponseMessage response = await httpClient.PostAsync($"http://{_fileStorageDomain}/api/File/download", content);
 
-        response.EnsureSuccessStatusCode(); // 성공 여부 확인
+        _ = response.EnsureSuccessStatusCode(); // 성공 여부 확인
         return await response.Content.ReadAsByteArrayAsync(); // 파일 데이터 반환
     }
 
@@ -47,7 +47,7 @@ public class FileRepository : IFileRepository
                 content.Add(new StringContent(Path.GetDirectoryName(filePath ?? "")), "filePath");
 
                 HttpResponseMessage response = await httpClient.PostAsync($"http://{_fileStorageDomain}/api/File/upload", content);
-                response.EnsureSuccessStatusCode(); // 상태 코드 확인
+                _ = response.EnsureSuccessStatusCode(); // 상태 코드 확인
 
                 return response.StatusCode == HttpStatusCode.OK;
             }
@@ -70,6 +70,6 @@ public class FileRepository : IFileRepository
 
         HttpResponseMessage response = await httpClient.PostAsync($"http://{_fileStorageDomain}/api/File/delete", content);
 
-        response.EnsureSuccessStatusCode();
+        _ = response.EnsureSuccessStatusCode();
     }
 }

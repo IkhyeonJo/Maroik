@@ -8,9 +8,6 @@ using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using System.Text;
-using System.Diagnostics;
-using OfficeOpenXml.FormulaParsing.Excel.Functions.Math;
-using System.Security.Cryptography;
 
 namespace Maroik.WebSite.Controllers
 {

@@ -1,6 +1,5 @@
 using Maroik.Common.DataAccess.Contracts;
 using Maroik.Common.DataAccess.Data;
-using Maroik.Common.DataAccess.Models;
 using Maroik.Common.DataAccess.Services;
 using Maroik.Common.Miscellaneous.Utilities;
 using Maroik.WebSite.Contracts;
@@ -14,10 +13,7 @@ using Microsoft.AspNetCore.Mvc.Razor;
 using Microsoft.AspNetCore.Rewrite;
 using Microsoft.AspNetCore.Session;
 using Microsoft.EntityFrameworkCore;
-using Newtonsoft.Json;
 using System.Globalization;
-using System.Net;
-using System.Text;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
