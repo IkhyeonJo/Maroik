@@ -12,21 +12,21 @@
     @if (Model.Role == Role.Admin)
     {
         <a asp-controller="DashBoard" asp-action="AdminIndex" class="brand-link">
-            <img src="~/admin/dist/img/AdminLTELogo.png" alt="AdminLTE Logo" class="brand-image img-circle elevation-3" style="opacity: .8">
+            <img src="~/admin/dist/img/MaroikLogo.png" alt="Maroik Logo" class="brand-image img-circle elevation-3" style="opacity: .8">
             <span class="brand-text font-weight-light">Maroik</span>
         </a>
     }
     else if (Model.Role == Role.User)
     {
         <a asp-controller="DashBoard" asp-action="UserIndex" class="brand-link">
-            <img src="~/user/dist/img/AdminLTELogo.png" alt="AdminLTE Logo" class="brand-image img-circle elevation-3" style="opacity: .8">
+            <img src="~/user/dist/img/MaroikLogo.png" alt="Maroik Logo" class="brand-image img-circle elevation-3" style="opacity: .8">
             <span class="brand-text font-weight-light">Maroik</span>
         </a>
     }
     else if (Model.Role == Role.Anonymous)
     {
         <a asp-controller="DashBoard" asp-action="AnonymousIndex" class="brand-link">
-            <img src="~/anonymous/dist/img/AdminLTELogo.png" alt="AdminLTE Logo" class="brand-image img-circle elevation-3" style="opacity: .8">
+            <img src="~/anonymous/dist/img/MaroikLogo.png" alt="Maroik Logo" class="brand-image img-circle elevation-3" style="opacity: .8">
             <span class="brand-text font-weight-light">Maroik</span>
         </a>
     }
