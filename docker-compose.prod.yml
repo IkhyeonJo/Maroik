@@ -39,10 +39,11 @@ services:
           - DBHOST=mariadb
           - ASPNETCORE_ENVIRONMENT=Production
           - ASPNETCORE_URLS=https://+:443;http://+:80
-          - ASPNETCORE_Kestrel__Certificates__Default__Password=Passw0rd
-          - ASPNETCORE_Kestrel__Certificates__Default__Path=/etc/ssl/maroik.pfx
+          - ASPNETCORE_Kestrel__Certificates__Default__Path=/etc/ssl/fullchain1.pem
+          - ASPNETCORE_Kestrel__Certificates__Default__KeyPath=/etc/ssl/privkey1.pem
         volumes:
-          - ./Maroik.SSL/maroik.pfx:/etc/ssl/maroik.pfx:ro
+          - ./Maroik.SSL/fullchain1.pem:/etc/ssl/fullchain1.pem:ro
+          - ./Maroik.SSL/privkey1.pem:/etc/ssl/privkey1.pem:ro
           - ./Maroik.Log/:/app/Maroik.Log:rw
         depends_on :
           - mariadb  
@@ -60,10 +61,11 @@ services:
           - DBHOST=mariadb
           - ASPNETCORE_ENVIRONMENT=Production
           - ASPNETCORE_URLS=https://+:5001
-          - ASPNETCORE_Kestrel__Certificates__Default__Password=Passw0rd
-          - ASPNETCORE_Kestrel__Certificates__Default__Path=/etc/ssl/maroik.pfx
+          - ASPNETCORE_Kestrel__Certificates__Default__Path=/etc/ssl/fullchain1.pem
+          - ASPNETCORE_Kestrel__Certificates__Default__KeyPath=/etc/ssl/privkey1.pem
         volumes:
-          - ./Maroik.SSL/maroik.pfx:/etc/ssl/maroik.pfx:ro
+          - ./Maroik.SSL/fullchain1.pem:/etc/ssl/fullchain1.pem:ro
+          - ./Maroik.SSL/privkey1.pem:/etc/ssl/privkey1.pem:ro
         depends_on :
           - mariadb  
 
@@ -80,8 +82,9 @@ services:
         environment :
           - ASPNETCORE_ENVIRONMENT=DockerComposeLocalDebug
           - ASPNETCORE_URLS=https://+:443;http://+:80
-          - ASPNETCORE_Kestrel__Certificates__Default__Password=Passw0rd
-          - ASPNETCORE_Kestrel__Certificates__Default__Path=/etc/ssl/maroik.pfx
+          - ASPNETCORE_Kestrel__Certificates__Default__Path=/etc/ssl/fullchain1.pem
+          - ASPNETCORE_Kestrel__Certificates__Default__KeyPath=/etc/ssl/privkey1.pem
         volumes:
-          - ./Maroik.SSL/maroik.pfx:/etc/ssl/maroik.pfx:ro
+          - ./Maroik.SSL/fullchain1.pem:/etc/ssl/fullchain1.pem:ro
+          - ./Maroik.SSL/privkey1.pem:/etc/ssl/privkey1.pem:ro
           - ./Maroik.FileStorage/upload/:/app/upload:rw
