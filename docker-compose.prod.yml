@@ -80,7 +80,7 @@ services:
           - "80"
           - "443"
         environment :
-          - ASPNETCORE_ENVIRONMENT=DockerComposeLocalDebug
+          - ASPNETCORE_ENVIRONMENT=Production
           - ASPNETCORE_URLS=https://+:443;http://+:80
           - ASPNETCORE_Kestrel__Certificates__Default__Path=/etc/ssl/fullchain1.pem
           - ASPNETCORE_Kestrel__Certificates__Default__KeyPath=/etc/ssl/privkey1.pem
