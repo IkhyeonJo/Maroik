@@ -45,3 +45,11 @@
     overflow: hidden;
     max-height: 200px;
 }
+
+.fc-event {
+    cursor: pointer;
+  }
+  
+  .fc-event .fc-event-title {
+    cursor: pointer;
+  }

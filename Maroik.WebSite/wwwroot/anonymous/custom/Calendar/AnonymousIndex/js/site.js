@@ -109,7 +109,7 @@ $(function () {
         },
         themeSystem: 'bootstrap',
         navLinks: false,
-        editable: true,
+        editable: false,
         selectable: true,
         selectMirror: true,
         eventClick: function (arg) {

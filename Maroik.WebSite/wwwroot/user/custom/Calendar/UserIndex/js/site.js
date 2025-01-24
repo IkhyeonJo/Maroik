@@ -381,7 +381,7 @@ $(function () {
         },
         themeSystem: 'bootstrap',
         navLinks: false,
-        editable: true,
+        editable: false,
         selectable: true,
         selectMirror: true,
         select: function (arg) {
