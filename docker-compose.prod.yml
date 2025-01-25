@@ -7,6 +7,7 @@ networks:
   backend:
 
 services:
+  # Please refer AWS Route3 auto-certbot
   certbot:
     image: certbot/dns-route53
     container_name: certbot
