@@ -1,104 +1,100 @@
 ﻿version: "3"
 
 volumes:
-      datasource:
+  datasource:
 
 networks:       
-       backend:
+  backend:
 
 services:
-    certbot:
-        image: certbot/dns-route53
-        container_name: certbot
-        environment:
-          - AWS_ACCESS_KEY_ID=***REMOVED***
-          - AWS_SECRET_ACCESS_KEY=***REMOVED***
-        volumes:
-          - ./Maroik.SSL/fullchain1.pem:/etc/letsencrypt/live/maroik.com/fullchain.pem:rw
-          - ./Maroik.SSL/privkey1.pem:/etc/letsencrypt/live/maroik.com/privkey.pem:rw
-        command: >
-          sh -c "certbot certonly --dns-route53 --dns-route53-propagation-seconds 30
-          --email ***REMOVED***m --agree-tos --no-eff-email
-          -d maroik.com -d *.maroik.com &&
-          trap exit TERM; while :; do sleep 60d & wait $${!}; certbot renew; done;"
-    mariadb:
-        # https://stackoverflow.com/questions/49959601/configure-time-zone-to-mysql-docker-container
-        # The mariadb:10.3 docker container interprets the TZ environment variable, although it's not mentioned on the Readme.md for the docker image. In my case providing the value of America\New_York worked perfectly.
-        image: "mariadb:10.3"
-        container_name: Maroik.MariaDB
-        volumes:
-          - datasource:/var/lib/mysql
-          - ./Maroik.MariaDB/SQL_Init_Script:/docker-entrypoint-initdb.d
-        networks:
-          - backend
-        environment:
-          - MYSQL_ROOT_PASSWORD=***REMOVED***
-          - bind-address=0.0.0.0
-        command:
-          - mysqld
-          - --character-set-server=utf8mb4
-          - --collation-server=utf8mb4_unicode_ci
+  certbot:
+    image: certbot/dns-route53
+    container_name: certbot
+    environment:
+      - AWS_ACCESS_KEY_ID=***REMOVED***
+      - AWS_SECRET_ACCESS_KEY=***REMOVED***
+    volumes:
+      - ./Maroik.SSL:/etc/letsencrypt:rw
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot certonly --dns-route53 --email ***REMOVED***m --agree-tos --no-eff-email -d maroik.com -d '*.maroik.com' && docker restart maroik.website maroik.webapi maroik.filestorage; sleep 12h & wait $${!}; done;'"
 
-    maroik.website:
-        build :
-         context : .
-         dockerfile : Maroik.WebSite/Dockerfile
-        container_name: Maroik.WebSite
-        networks :
-          - backend          
-        ports:
-          - 80:80
-          - 443:443
-        environment :
-          - DBHOST=mariadb
-          - ASPNETCORE_ENVIRONMENT=Production
-          - ASPNETCORE_URLS=https://+:443;http://+:80
-          - ASPNETCORE_Kestrel__Certificates__Default__Path=/etc/ssl/fullchain1.pem
-          - ASPNETCORE_Kestrel__Certificates__Default__KeyPath=/etc/ssl/privkey1.pem
-        volumes:
-          - ./Maroik.SSL/fullchain1.pem:/etc/ssl/fullchain1.pem:ro
-          - ./Maroik.SSL/privkey1.pem:/etc/ssl/privkey1.pem:ro
-          - ./Maroik.Log/:/app/Maroik.Log:rw
-        depends_on :
-          - mariadb  
+  mariadb:
+    # https://stackoverflow.com/questions/49959601/configure-time-zone-to-mysql-docker-container
+    # The mariadb:10.3 docker container interprets the TZ environment variable, although it's not mentioned on the Readme.md for the docker image. In my case providing the value of America\New_York worked perfectly.
+    image: "mariadb:10.3"
+    container_name: Maroik.MariaDB
+    volumes:
+      - datasource:/var/lib/mysql
+      - ./Maroik.MariaDB/SQL_Init_Script:/docker-entrypoint-initdb.d
+    networks:
+      - backend
+    environment:
+      - MYSQL_ROOT_PASSWORD=***REMOVED***
+      - bind-address=0.0.0.0
+    command:
+      - mysqld
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
 
-    maroik.webapi:
-        build :
-         context : .
-         dockerfile : Maroik.WebAPI/Dockerfile
-        container_name: Maroik.WebAPI
-        networks :
-          - backend          
-        ports:
-          - 5001:5001
-        environment :
-          - DBHOST=mariadb
-          - ASPNETCORE_ENVIRONMENT=Production
-          - ASPNETCORE_URLS=https://+:5001
-          - ASPNETCORE_Kestrel__Certificates__Default__Path=/etc/ssl/fullchain1.pem
-          - ASPNETCORE_Kestrel__Certificates__Default__KeyPath=/etc/ssl/privkey1.pem
-        volumes:
-          - ./Maroik.SSL/fullchain1.pem:/etc/ssl/fullchain1.pem:ro
-          - ./Maroik.SSL/privkey1.pem:/etc/ssl/privkey1.pem:ro
-        depends_on :
-          - mariadb  
+  maroik.website:
+    build :
+      context : .
+      dockerfile : Maroik.WebSite/Dockerfile
+    container_name: Maroik.WebSite
+    networks :
+      - backend          
+    ports:
+      - 80:80
+      - 443:443
+    environment :
+      - DBHOST=mariadb
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=https://+:443;http://+:80
+      - ASPNETCORE_Kestrel__Certificates__Default__Path=/etc/letsencrypt/live/maroik.com/fullchain.pem
+      - ASPNETCORE_Kestrel__Certificates__Default__KeyPath=/etc/letsencrypt/live/maroik.com/privkey.pem
+    volumes:
+      - ./Maroik.SSL:/etc/letsencrypt:rw
+      - ./Maroik.Log/:/app/Maroik.Log:rw
+    restart: always
+    depends_on :
+      - mariadb  
 
-    maroik.filestorage:
-        build :
-         context : .
-         dockerfile : Maroik.FileStorage/Dockerfile
-        container_name: Maroik.FileStorage
-        networks :
-          - backend          
-        expose:
-          - "80"
-          - "443"
-        environment :
-          - ASPNETCORE_ENVIRONMENT=Production
-          - ASPNETCORE_URLS=https://+:443;http://+:80
-          - ASPNETCORE_Kestrel__Certificates__Default__Path=/etc/ssl/fullchain1.pem
-          - ASPNETCORE_Kestrel__Certificates__Default__KeyPath=/etc/ssl/privkey1.pem
-        volumes:
-          - ./Maroik.SSL/fullchain1.pem:/etc/ssl/fullchain1.pem:ro
-          - ./Maroik.SSL/privkey1.pem:/etc/ssl/privkey1.pem:ro
-          - ./Maroik.FileStorage/upload/:/app/upload:rw
+  maroik.webapi:
+    build :
+      context : .
+      dockerfile : Maroik.WebAPI/Dockerfile
+    container_name: Maroik.WebAPI
+    networks :
+      - backend          
+    ports:
+      - 5001:5001
+    environment :
+      - DBHOST=mariadb
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=https://+:5001
+      - ASPNETCORE_Kestrel__Certificates__Default__Path=/etc/letsencrypt/live/maroik.com/fullchain.pem
+      - ASPNETCORE_Kestrel__Certificates__Default__KeyPath=/etc/letsencrypt/live/maroik.com/privkey.pem
+    volumes:
+      - ./Maroik.SSL:/etc/letsencrypt:rw
+    restart: always
+    depends_on :
+      - mariadb  
+
+  maroik.filestorage:
+    build :
+      context : .
+      dockerfile : Maroik.FileStorage/Dockerfile
+    container_name: Maroik.FileStorage
+    networks :
+      - backend          
+    expose:
+      - "80"
+      - "443"
+    environment :
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=https://+:443;http://+:80
+      - ASPNETCORE_Kestrel__Certificates__Default__Path=/etc/letsencrypt/live/maroik.com/fullchain.pem
+      - ASPNETCORE_Kestrel__Certificates__Default__KeyPath=/etc/letsencrypt/live/maroik.com/privkey.pem
+    volumes:
+      - ./Maroik.SSL:/etc/letsencrypt:rw
+      - ./Maroik.FileStorage/upload/:/app/upload:rw
+    restart: always
