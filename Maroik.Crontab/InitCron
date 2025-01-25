@@ -1,3 +1,4 @@
 0 * * * * /bin/bash /home/peter-cho/Maroik/Maroik.Crontab/DBBackup.sh
 0 * * * * /bin/bash /home/peter-cho/Maroik/Maroik.Crontab/UploadFileBackUp.sh
 * * * * * /bin/bash /home/peter-cho/Maroik/Maroik.Crontab/ResourceInfo.sh
+0 0 1 * * docker restart Maroik.FileStorage Maroik.WebSite Maroik.WebAPI

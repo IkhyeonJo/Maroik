@@ -16,7 +16,7 @@ services:
       - AWS_SECRET_ACCESS_KEY=***REMOVED***
     volumes:
       - ./Maroik.SSL:/etc/letsencrypt:rw
-    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot certonly --dns-route53 --email ***REMOVED***m --agree-tos --no-eff-email -d maroik.com -d '*.maroik.com' && docker restart Maroik.WebSite Maroik.WebAPI Maroik.FileStorage; sleep 12h & wait $${!}; done;'"
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot certonly --dns-route53 --email ***REMOVED***m --agree-tos --no-eff-email -d maroik.com -d '*.maroik.com'; sleep 30d & wait $${!}; done;'"
 
   mariadb:
     # https://stackoverflow.com/questions/49959601/configure-time-zone-to-mysql-docker-container
