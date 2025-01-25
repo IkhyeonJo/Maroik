@@ -26,7 +26,7 @@ sudo apt upgrade -y
 sudo apt install docker-compose -y
 
 # Start Docker Compose
-sudo docker-compose -f /home/peter-cho/Maroik/docker-compose.prod.yml up -d
+sudo docker-compose -f /home/peter-cho/Maroik/docker-compose.prod.yml up -d --build
 
 # Install Python 3
 sudo apt install python3 -y
