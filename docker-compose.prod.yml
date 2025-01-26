@@ -10,7 +10,7 @@ services:
   # Please refer AWS Route3 auto-certbot
   certbot:
     image: certbot/dns-route53
-    container_name: certbot
+    container_name: Maroik.CertBot
     environment:
       - AWS_ACCESS_KEY_ID=***REMOVED***
       - AWS_SECRET_ACCESS_KEY=***REMOVED***
