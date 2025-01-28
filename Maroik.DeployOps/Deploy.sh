@@ -15,11 +15,18 @@ sudo systemctl restart systemd-logind
 sudo apt update -y
 sudo apt upgrade -y
 
+## Enable HTTPS nextcloud
+#sudo nextcloud.enable-https self-signed
+
+## Change nextcloud ports
+#sudo snap set nextcloud ports.http=8079
+#sudo snap set nextcloud ports.https=8080
+
 # Install Docker Compose
 sudo apt install docker-compose -y
 
 # Start Docker Compose
-sudo docker-compose -f /home/peter-cho/Maroik/docker-compose.prod.yml up -d --build
+sudo docker-compose -f /home/peter-cho/Maroik/docker-compose.prod.yml up -d
 
 # Install Python 3
 sudo apt install python3 -y
@@ -27,20 +34,18 @@ sudo apt install python3 -y
 # Set permissions for scripts
 chmod 777 /home/peter-cho/Maroik/Maroik.Crontab/*.sh
 
-# Run ManageCertificate.sh using /bin/bash
-/bin/bash /home/peter-cho/Maroik/Maroik.Crontab/ManageCertificate.sh
-
 # Set up cron jobs
 sudo crontab /home/peter-cho/Maroik/Maroik.Crontab/InitCron
 
 # Reload cron service
 sudo systemctl reload cron
 
-# only port 80, 443, 5001 allowed by ufw
+# only port 80, 443, 5001, 8080 allowed by ufw
 sudo apt install ufw -y
 sudo ufw allow 80
 sudo ufw allow 443
 sudo ufw allow 5001
+#sudo ufw allow 8080
 sudo ufw enable
 
 # Adds the current user to the "docker" group, 
