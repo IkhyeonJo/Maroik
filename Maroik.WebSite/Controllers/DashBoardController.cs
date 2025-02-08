@@ -20,14 +20,16 @@ namespace Maroik.WebSite.Controllers
         private readonly IAccountRepository _accountRepository;
         private readonly string _hostResourceFilePath = "/app/Maroik.Log/HostResourceInfo.txt";
         private readonly string _dockerResourceFilePath = "/app/Maroik.Log/DockerResourceInfo.txt";
+        private readonly HttpClient _httpClient;
 
-        public DashBoardController(ILogger<DashBoardController> logger, IIncomeRepository incomeRepository, IExpenditureRepository expenditureRepository, IAssetRepository assetRepository, IAccountRepository accountRepository)
+        public DashBoardController(ILogger<DashBoardController> logger, IIncomeRepository incomeRepository, IExpenditureRepository expenditureRepository, IAssetRepository assetRepository, IAccountRepository accountRepository, HttpClient httpClient)
         {
             _logger = logger;
             _incomeRepository = incomeRepository;
             _expenditureRepository = expenditureRepository;
             _assetRepository = assetRepository;
             _accountRepository = accountRepository;
+            _httpClient = httpClient;
         }
 
         #region 언어 변경
@@ -277,7 +279,7 @@ namespace Maroik.WebSite.Controllers
 
         #region Anonymous
         [HttpGet]
-        public IActionResult AnonymousIndex()
+        public async Task<IActionResult> AnonymousIndex()
         {
             bool isAccountSessionExist = HttpContext.Session.TryGetValue(Maroik.Common.Miscellaneous.Extensions.EnumHelper.GetDescription(Maroik.Common.Miscellaneous.Utilities.Session.Account), out byte[] resultByte);
 
@@ -299,6 +301,20 @@ namespace Maroik.WebSite.Controllers
             }
             else
             {
+                //// Make the POST request to FastAPI endpoint
+                //var response = await _httpClient.PostAsync("http://Maroik.AI:8000/hello/", null);
+
+                //if (response.IsSuccessStatusCode)
+                //{
+                //    // Read the response as a string
+                //    var aa = await response.Content.ReadAsStringAsync();
+                //}
+                //else
+                //{
+                //    var bb = "Error: " + response.StatusCode;
+                //}
+
+
                 return View();
             }
         }
