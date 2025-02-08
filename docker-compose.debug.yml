@@ -88,4 +88,18 @@ services:
         volumes:
           - ./Maroik.SSL/localhost1.pem:/etc/ssl/localhost1.pem:ro
           - ./Maroik.SSL/localhostprivkey1.pem:/etc/ssl/localhostprivkey1.pem:ro
-          - ./Maroik.FileStorage/upload/:/app/upload:rw
+    maroik.ai:
+        build:
+          context: .
+          dockerfile: Maroik.AI/Dockerfile
+        container_name: Maroik.AI
+        networks:
+          - backend
+        expose:
+          - "8000"
+        environment:
+          - DBHOST=mariadb
+        volumes:
+          - ./Maroik.AI:/app/
+        depends_on:
+          - mariadb
