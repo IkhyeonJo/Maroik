@@ -314,6 +314,26 @@ namespace Maroik.WebSite.Controllers
                 //    var bb = "Error: " + response.StatusCode;
                 //}
 
+                //var requestData = new
+                //{
+                //    name = "John Doe",
+                //    age = 30
+                //};
+
+                //var json = System.Text.Json.JsonSerializer.Serialize(requestData);
+                //var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+                //var response = await _httpClient.PostAsync("http://Maroik.AI:8000/hellowithparameter/", content);
+
+                //if (response.IsSuccessStatusCode)
+                //{
+                //    var responseString = await response.Content.ReadAsStringAsync();
+                //    Console.WriteLine("Response: " + responseString);
+                //}
+                //else
+                //{
+                //    Console.WriteLine("Error: " + response.StatusCode);
+                //}
 
                 return View();
             }
