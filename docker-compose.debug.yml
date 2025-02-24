@@ -98,7 +98,7 @@ services:
         expose:
           - "8000"
         environment:
-          - DBHOST=mariadb
+          - DBPASSWORD=***REMOVED***
         volumes:
           - ./Maroik.AI:/app/
         depends_on:

@@ -88,3 +88,18 @@ services:
           - ./Maroik.SSL/fullchain1.pem:/etc/ssl/fullchain1.pem:ro
           - ./Maroik.SSL/privkey1.pem:/etc/ssl/privkey1.pem:ro
           - ./Maroik.FileStorage/upload/:/app/upload:rw
+    maroik.ai:
+        build:
+          context: .
+          dockerfile: Maroik.AI/Dockerfile
+        container_name: Maroik.AI
+        networks:
+          - backend
+        expose:
+          - "8000"
+        environment:
+          - DBPASSWORD=***REMOVED***
+        volumes:
+          - ./Maroik.AI:/app/
+        depends_on:
+          - mariadb
