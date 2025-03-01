@@ -301,61 +301,6 @@ namespace Maroik.WebSite.Controllers
             }
             else
             {
-                //// Make the POST request to FastAPI endpoint
-                //var response = await _httpClient.PostAsync("http://Maroik.AI:8000/hello/", null);
-
-                //if (response.IsSuccessStatusCode)
-                //{
-                //    // Read the response as a string
-                //    var aa = await response.Content.ReadAsStringAsync();
-                //}
-                //else
-                //{
-                //    var bb = "Error: " + response.StatusCode;
-                //}
-
-                //var requestData = new
-                //{
-                //    name = "John Doe",
-                //    age = 30
-                //};
-
-                //var json = System.Text.Json.JsonSerializer.Serialize(requestData);
-                //var content = new StringContent(json, Encoding.UTF8, "application/json");
-
-                //var response = await _httpClient.PostAsync("http://Maroik.AI:8000/hellowithparameter/", content);
-
-                //if (response.IsSuccessStatusCode)
-                //{
-                //    var responseString = await response.Content.ReadAsStringAsync();
-                //    Console.WriteLine("Response: " + responseString);
-                //}
-                //else
-                //{
-                //    Console.WriteLine("Error: " + response.StatusCode);
-                //}
-
-                var requestData = new
-                {
-                    start_date = "2023-12-31",
-                    end_date = "2024-01-31"
-                };
-
-                var json = System.Text.Json.JsonSerializer.Serialize(requestData);
-                var content = new StringContent(json, Encoding.UTF8, "application/json");
-
-                var response = await _httpClient.PostAsync("http://Maroik.AI:8000/train_model/", content);
-
-                if (response.IsSuccessStatusCode)
-                {
-                    var responseString = await response.Content.ReadAsStringAsync();
-                    Console.WriteLine("Response: " + responseString);
-                }
-                else
-                {
-                    Console.WriteLine("Error: " + response.StatusCode);
-                }
-
                 return View();
             }
         }
