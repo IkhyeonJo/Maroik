@@ -20,16 +20,14 @@ namespace Maroik.WebSite.Controllers
         private readonly IAccountRepository _accountRepository;
         private readonly string _hostResourceFilePath = "/app/Maroik.Log/HostResourceInfo.txt";
         private readonly string _dockerResourceFilePath = "/app/Maroik.Log/DockerResourceInfo.txt";
-        private readonly HttpClient _httpClient;
 
-        public DashBoardController(ILogger<DashBoardController> logger, IIncomeRepository incomeRepository, IExpenditureRepository expenditureRepository, IAssetRepository assetRepository, IAccountRepository accountRepository, HttpClient httpClient)
+        public DashBoardController(ILogger<DashBoardController> logger, IIncomeRepository incomeRepository, IExpenditureRepository expenditureRepository, IAssetRepository assetRepository, IAccountRepository accountRepository)
         {
             _logger = logger;
             _incomeRepository = incomeRepository;
             _expenditureRepository = expenditureRepository;
             _assetRepository = assetRepository;
             _accountRepository = accountRepository;
-            _httpClient = httpClient;
         }
 
         #region 언어 변경
@@ -279,7 +277,7 @@ namespace Maroik.WebSite.Controllers
 
         #region Anonymous
         [HttpGet]
-        public async Task<IActionResult> AnonymousIndex()
+        public IActionResult AnonymousIndex()
         {
             bool isAccountSessionExist = HttpContext.Session.TryGetValue(Maroik.Common.Miscellaneous.Extensions.EnumHelper.GetDescription(Maroik.Common.Miscellaneous.Utilities.Session.Account), out byte[] resultByte);
 

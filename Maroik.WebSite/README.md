@@ -949,7 +949,21 @@ public async Task<IActionResult> UploadImageFile(IFormFile summernoteImageFile)
     }
 }
 
+--EXAMPLE OF FASTAPI--
 
+private readonly HttpClient _httpClient;
+
+public DashBoardController(ILogger<DashBoardController> logger, IIncomeRepository incomeRepository, IExpenditureRepository expenditureRepository, IAssetRepository assetRepository, IAccountRepository accountRepository, HttpClient httpClient)
+{
+    _logger = logger;
+    _incomeRepository = incomeRepository;
+    _expenditureRepository = expenditureRepository;
+    _assetRepository = assetRepository;
+    _accountRepository = accountRepository;
+    _httpClient = httpClient;
+}
+
+public async Task<IActionResult> AnonymousIndex()
 
 //// Make the POST request to FastAPI endpoint
 //var response = await _httpClient.PostAsync("http://Maroik.AI:8000/hello/", null);
