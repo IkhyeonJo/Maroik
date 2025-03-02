@@ -100,6 +100,6 @@ services:
         environment:
           - DBPASSWORD=***REMOVED***
         volumes:
-          - ./Maroik.AI:/app/Maroik.AI:rw
+          - ./Maroik.AI:/app/
         depends_on:
           - mariadb
