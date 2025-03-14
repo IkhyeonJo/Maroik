@@ -124,7 +124,7 @@
     <value>생성일</value>
   </data>
   <data name="Deleted" xml:space="preserve">
-    <value>삭제여부</value>
+    <value>삭제</value>
   </data>
   <data name="Item" xml:space="preserve">
     <value>항목</value>

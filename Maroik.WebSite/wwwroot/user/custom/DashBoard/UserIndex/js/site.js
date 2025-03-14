@@ -86,6 +86,12 @@ $(function () {
     let donutOptionsRegularIncome = {
         maintainAspectRatio: false,
         responsive: true,
+        legend: {
+            labels: {
+                fontColor: '#fff',
+                fontSize: 15
+            }
+        }
     }
 
     new Chart(donutChartCanvasRegularIncome, {
@@ -115,6 +121,12 @@ $(function () {
     let donutOptionsIrregularIncome = {
         maintainAspectRatio: false,
         responsive: true,
+        legend: {
+            labels: {
+                fontColor: '#fff',
+                fontSize: 15
+            }
+        }
     }
 
     new Chart(donutChartCanvasIrregularIncome, {
@@ -144,6 +156,12 @@ $(function () {
     let donutOptionsRegularSavings = {
         maintainAspectRatio: false,
         responsive: true,
+        legend: {
+            labels: {
+                fontColor: '#fff',
+                fontSize: 15
+            }
+        }
     }
 
     new Chart(donutChartCanvasRegularSavings, {
@@ -181,6 +199,12 @@ $(function () {
     let donutOptionsNonConsumerSpending = {
         maintainAspectRatio: false,
         responsive: true,
+        legend: {
+            labels: {
+                fontColor: '#fff',
+                fontSize: 15
+            }
+        }
     }
 
     new Chart(donutChartCanvasNonConsumerSpending, {
@@ -230,6 +254,12 @@ $(function () {
     let donutOptionsConsumerSpending = {
         maintainAspectRatio: false,
         responsive: true,
+        legend: {
+            labels: {
+                fontColor: '#fff',
+                fontSize: 15
+            }
+        }
     }
 
     new Chart(donutChartCanvasConsumerSpending, {
