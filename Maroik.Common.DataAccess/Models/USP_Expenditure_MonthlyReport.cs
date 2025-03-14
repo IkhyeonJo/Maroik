@@ -5,8 +5,6 @@
         public string MainClass { get; set; }
         public decimal? SumValue { get; set; }
         public long? CountValue { get; set; }
-        public decimal? ModeValue { get; set; }
-        public long? ModeCount { get; set; }
         public decimal? MinValue { get; set; }
         public decimal? MaxValue { get; set; }
         public decimal? RangeValue { get; set; }

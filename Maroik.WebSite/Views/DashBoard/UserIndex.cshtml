@@ -3,6 +3,7 @@
 @model UserIndexOutputViewModel
 
 @{
+
     int startYear = Convert.ToInt32((ViewBag.StartYear as string) ?? "");
     int endYear = DateTime.UtcNow.Year;
     int selectedYear = Convert.ToInt32((ViewBag.SelectedYear as string) ?? "");
@@ -25,6 +26,9 @@
     double percetageOfRegularIncomeRentalIncome = 0;
     double percetageOfRegularIncomeOtherIncome = 0;
 
+    decimal? regularIncomeModeValue = null;
+    long? regularIncomeModeCount = null;
+
     decimal irregularIncomeTotal = 0;
     decimal irregularIncomeLaborIncome = 0;
     decimal irregularIncomeOtherIncome = 0;
@@ -32,12 +36,18 @@
     double percentageOfIrregularIncomeLaborIncome = 0;
     double percentageOfIrregularIncomeOtherIncome = 0;
 
+    decimal? irregularIncomeModeValue = null;
+    long? irregularIncomeModeCount = null;
+
     decimal regularSavingsTotal = 0;
     decimal regularSavingsDeposit = 0;
     decimal regularSavingsInvestment = 0;
 
     double percentageOfRegularSavingsDeposit = 0;
     double percentageOfRegularSavingsInvestment = 0;
+
+    decimal? regularSavingsModeValue = null;
+    long? regularSavingsModeCount = null;
 
     decimal nonConsumerSpendingTotal = 0;
     decimal nonConsumerSpendingPublicPension = 0;
@@ -53,6 +63,9 @@
     double percentageOfNonConsumerSpendingSocialInsurance = 0;
     double percentageOfNonConsumerSpendingInterHouseholdTranserExpenses = 0;
     double percentageOfNonConsumerSpendingNonProfitOrganizationTransfer = 0;
+
+    decimal? nonConsumerSpendingModeValue = null;
+    long? nonConsumerSpendingModeCount = null;
 
     decimal consumerSpendingTotal = 0;
     decimal consumerSpendingMealOrEatOutExpenses = 0;
@@ -81,6 +94,9 @@
     double percentageOfConsumerSpendingOtherExpenses = 0;
     double percentageOfConsumerSpendingUnknownExpenditure = 0;
 
+    decimal? consumerSpendingModeValue = null;
+    long? consumerSpendingModeCount = null;
+
     if (Model.DefaultMonetaryUnit != null)
     {
         #region 수입
@@ -106,6 +122,14 @@
             percetageOfRegularIncomeOtherIncome = ((double)(100)) * (((double)regularIncomeOtherIncome) / ((double)regularIncomeTotal));
         }
 
+        var regularIncomeModeGroup = regularIncome
+            ?.GroupBy(x => x.Amount)
+            ?.OrderByDescending(g => g.Count()) // 빈도 수 기준 내림차순 정렬
+            ?.ThenBy(g => g.Key) // 빈도 수가 같다면 Amount 기준 오름차순 정렬
+            ?.FirstOrDefault() ?? null;
+
+        regularIncomeModeValue = regularIncomeModeGroup?.Key ?? null; // 최빈값 (가장 자주 등장하는 최소 Amount 값)
+        regularIncomeModeCount = regularIncomeModeGroup?.Count() ?? null;  // 최빈값의 갯수
         #endregion
 
         #region 대분류 = '비정기수입'
@@ -121,6 +145,14 @@
             percentageOfIrregularIncomeOtherIncome = ((double)(100)) * (((double)irregularIncomeOtherIncome) / ((double)irregularIncomeTotal));
         }
 
+        var irregularIncomeModeGroup = irregularIncome
+            ?.GroupBy(x => x.Amount)
+            ?.OrderByDescending(g => g.Count()) // 빈도 수 기준 내림차순 정렬
+            ?.ThenBy(g => g.Key) // 빈도 수가 같다면 Amount 기준 오름차순 정렬
+            ?.FirstOrDefault() ?? null;
+
+        irregularIncomeModeValue = irregularIncomeModeGroup?.Key ?? null; // 최빈값 (가장 자주 등장하는 최소 Amount 값)
+        irregularIncomeModeCount = irregularIncomeModeGroup?.Count() ?? null;  // 최빈값의 갯수
         #endregion
 
         #endregion
@@ -140,6 +172,14 @@
             percentageOfRegularSavingsInvestment = ((double)(100)) * (((double)regularSavingsInvestment) / ((double)regularSavingsTotal));
         }
 
+        var regularSavingsModeGroup = regularSavings
+            ?.GroupBy(x => x.Amount)
+            ?.OrderByDescending(g => g.Count()) // 빈도 수 기준 내림차순 정렬
+            ?.ThenBy(g => g.Key) // 빈도 수가 같다면 Amount 기준 오름차순 정렬
+            ?.FirstOrDefault() ?? null;
+
+        regularSavingsModeValue = regularSavingsModeGroup?.Key ?? null; // 최빈값 (가장 자주 등장하는 최소 Amount 값)
+        regularSavingsModeCount = regularSavingsModeGroup?.Count() ?? null;  // 최빈값의 갯수
         #endregion
 
         #region 대분류 = '비소비지출'
@@ -163,6 +203,14 @@
             percentageOfNonConsumerSpendingNonProfitOrganizationTransfer = ((double)(100)) * (((double)nonConsumerSpendingNonProfitOrganizationTransfer) / ((double)nonConsumerSpendingTotal));
         }
 
+        var nonConsumerSpendingModeGroup = nonConsumerSpending
+            ?.GroupBy(x => x.Amount)
+            ?.OrderByDescending(g => g.Count()) // 빈도 수 기준 내림차순 정렬
+            ?.ThenBy(g => g.Key) // 빈도 수가 같다면 Amount 기준 오름차순 정렬
+            ?.FirstOrDefault() ?? null;
+
+        nonConsumerSpendingModeValue = nonConsumerSpendingModeGroup?.Key ?? null; // 최빈값 (가장 자주 등장하는 최소 Amount 값)
+        nonConsumerSpendingModeCount = nonConsumerSpendingModeGroup?.Count() ?? null;  // 최빈값의 갯수
         #endregion
 
         #region 대분류 = '소비지출'
@@ -198,6 +246,14 @@
             percentageOfConsumerSpendingUnknownExpenditure = ((double)(100)) * (((double)consumerSpendingUnknownExpenditure) / ((double)consumerSpendingTotal));
         }
 
+        var consumerSpendingModeGroup = consumerSpending
+            ?.GroupBy(x => x.Amount)
+            ?.OrderByDescending(g => g.Count()) // 빈도 수 기준 내림차순 정렬
+            ?.ThenBy(g => g.Key) // 빈도 수가 같다면 Amount 기준 오름차순 정렬
+            ?.FirstOrDefault() ?? null;
+
+        consumerSpendingModeValue = consumerSpendingModeGroup?.Key ?? null; // 최빈값 (가장 자주 등장하는 최소 Amount 값)
+        consumerSpendingModeCount = consumerSpendingModeGroup?.Count() ?? null;  // 최빈값의 갯수
         #endregion
 
         #endregion
@@ -407,22 +463,22 @@
                                                 <span>@localizer["Count"]: @USP_Income_MonthlyReport_Result.CountValue<br /></span>
                                             }
 
-                                            @if (USP_Income_MonthlyReport_Result.ModeValue == null)
+                                            @if (regularIncomeModeValue == null)
                                             {
                                                 <span>@localizer["Mode"]: @localizer["None"]<br /></span>
                                             }
                                             else
                                             {
-                                                <span>@localizer["Mode"]: @USP_Income_MonthlyReport_Result.ModeValue.TrimTrailingZeros()<br /></span>
+                                                <span>@localizer["Mode"]: @regularIncomeModeValue.TrimTrailingZeros()<br /></span>
                                             }
 
-                                            @if (USP_Income_MonthlyReport_Result.ModeCount == null)
+                                            @if (regularIncomeModeCount == null)
                                             {
                                                 <span>@localizer["Mode Count"]: @localizer["None"]<br /></span>
                                             }
                                             else
                                             {
-                                                <span>@localizer["Mode Count"]: @USP_Income_MonthlyReport_Result.ModeCount<br /></span>
+                                                <span>@localizer["Mode Count"]: @regularIncomeModeCount<br /></span>
                                             }
 
                                             @if (USP_Income_MonthlyReport_Result.MinValue == null)
@@ -581,22 +637,22 @@
                                                 <span>@localizer["Count"]: @USP_Income_MonthlyReport_Result.CountValue<br /></span>
                                             }
 
-                                            @if (USP_Income_MonthlyReport_Result.ModeValue == null)
+                                            @if (irregularIncomeModeValue == null)
                                             {
                                                 <span>@localizer["Mode"]: @localizer["None"]<br /></span>
                                             }
                                             else
                                             {
-                                                <span>@localizer["Mode"]: @USP_Income_MonthlyReport_Result.ModeValue.TrimTrailingZeros()<br /></span>
+                                                <span>@localizer["Mode"]: @irregularIncomeModeValue.TrimTrailingZeros()<br /></span>
                                             }
 
-                                            @if (USP_Income_MonthlyReport_Result.ModeCount == null)
+                                            @if (irregularIncomeModeCount == null)
                                             {
                                                 <span>@localizer["Mode Count"]: @localizer["None"]<br /></span>
                                             }
                                             else
                                             {
-                                                <span>@localizer["Mode Count"]: @USP_Income_MonthlyReport_Result.ModeCount<br /></span>
+                                                <span>@localizer["Mode Count"]: @irregularIncomeModeCount<br /></span>
                                             }
 
                                             @if (USP_Income_MonthlyReport_Result.MinValue == null)
@@ -805,22 +861,22 @@
                                                 <span>@localizer["Count"]: @USP_Expenditure_MonthlyReport_Result.CountValue<br /></span>
                                             }
 
-                                            @if (USP_Expenditure_MonthlyReport_Result.ModeValue == null)
+                                            @if (regularSavingsModeValue == null)
                                             {
                                                 <span>@localizer["Mode"]: @localizer["None"]<br /></span>
                                             }
                                             else
                                             {
-                                                <span>@localizer["Mode"]: @USP_Expenditure_MonthlyReport_Result.ModeValue.TrimTrailingZeros()<br /></span>
+                                                <span>@localizer["Mode"]: @regularSavingsModeValue.TrimTrailingZeros()<br /></span>
                                             }
 
-                                            @if (USP_Expenditure_MonthlyReport_Result.ModeCount == null)
+                                            @if (regularSavingsModeCount == null)
                                             {
                                                 <span>@localizer["Mode Count"]: @localizer["None"]<br /></span>
                                             }
                                             else
                                             {
-                                                <span>@localizer["Mode Count"]: @USP_Expenditure_MonthlyReport_Result.ModeCount<br /></span>
+                                                <span>@localizer["Mode Count"]: @regularSavingsModeCount<br /></span>
                                             }
 
                                             @if (USP_Expenditure_MonthlyReport_Result.MinValue == null)
@@ -968,22 +1024,22 @@
                                                 <span>@localizer["Count"]: @USP_Expenditure_MonthlyReport_Result.CountValue<br /></span>
                                             }
 
-                                            @if (USP_Expenditure_MonthlyReport_Result.ModeValue == null)
+                                            @if (nonConsumerSpendingModeValue == null)
                                             {
                                                 <span>@localizer["Mode"]: @localizer["None"]<br /></span>
                                             }
                                             else
                                             {
-                                                <span>@localizer["Mode"]: @USP_Expenditure_MonthlyReport_Result.ModeValue.TrimTrailingZeros()<br /></span>
+                                                <span>@localizer["Mode"]: @nonConsumerSpendingModeValue.TrimTrailingZeros()<br /></span>
                                             }
 
-                                            @if (USP_Expenditure_MonthlyReport_Result.ModeCount == null)
+                                            @if (nonConsumerSpendingModeCount == null)
                                             {
                                                 <span>@localizer["Mode Count"]: @localizer["None"]<br /></span>
                                             }
                                             else
                                             {
-                                                <span>@localizer["Mode Count"]: @USP_Expenditure_MonthlyReport_Result.ModeCount<br /></span>
+                                                <span>@localizer["Mode Count"]: @nonConsumerSpendingModeCount<br /></span>
                                             }
 
                                             @if (USP_Expenditure_MonthlyReport_Result.MinValue == null)
@@ -1152,22 +1208,22 @@
                                                 <span>@localizer["Count"]: @USP_Expenditure_MonthlyReport_Result.CountValue<br /></span>
                                             }
 
-                                            @if (USP_Expenditure_MonthlyReport_Result.ModeValue == null)
+                                            @if (consumerSpendingModeValue == null)
                                             {
                                                 <span>@localizer["Mode"]: @localizer["None"]<br /></span>
                                             }
                                             else
                                             {
-                                                <span>@localizer["Mode"]: @USP_Expenditure_MonthlyReport_Result.ModeValue.TrimTrailingZeros()<br /></span>
+                                                <span>@localizer["Mode"]: @consumerSpendingModeValue.TrimTrailingZeros()<br /></span>
                                             }
 
-                                            @if (USP_Expenditure_MonthlyReport_Result.ModeCount == null)
+                                            @if (consumerSpendingModeCount == null)
                                             {
                                                 <span>@localizer["Mode Count"]: @localizer["None"]<br /></span>
                                             }
                                             else
                                             {
-                                                <span>@localizer["Mode Count"]: @USP_Expenditure_MonthlyReport_Result.ModeCount<br /></span>
+                                                <span>@localizer["Mode Count"]: @consumerSpendingModeCount<br /></span>
                                             }
 
                                             @if (USP_Expenditure_MonthlyReport_Result.MinValue == null)
