@@ -5,21 +5,15 @@ I'm currently interested in make ASP.NET Core MVC WebApplication!
 
 Docker, AdminLTE, MariaDB, Session Login, RESTful API, HTTPS etc.
 
-# How to run this project (Windows OS / Mac OS)
+# How to run this project (Windows OS)
 ## 0. Install Visual Studio 2023 or higher -> Execute [Maroik.sln] -> Visual Studio will ask you about to Install setup files. Install all required setup files to run this project 
 ## 1. Open [1.Web] folder in Solution Explorer -> right-click [docker-compose] in Solution Explorer -> click "Set as Startup Project" -> Press F5 Button
 ## 2. [Note] To completely debug Maroik.Website, you must set of /Maroik/Maroik.WebSite/[appsettings.DockerComposeLocalDebug.json & appsettings.Development]'s Mail Account Configuration.
 
-# How to run this project (Ubuntu (Linux))
-## 0. Open [Maroik] folder with Visual Studio Code
-## 1. You will be asked to enter a password to run the sudo command in the TERMINAL of visual studio code. Enter the password to run the sudo command.
-## 2. Wait till all process is done
-## 3. Visual Studio Code may have recommended you to install the Workspace Recommended Extensions. Install all of them.
-## 4. Wait till all process is done
-## 5. Go to [Run and Debug] -> Choose the following configuration name. [Docker: Maroik.WebSite] -> Press F5
-## 6. Answer "Yes" to all requests.
-## 7. Open Web browser and access to [https://localhost] 
-## 8. [Note] To completely debug Maroik.Website, you must set of /Maroik/Maroik.WebSite/[appsettings.DockerComposeLocalDebug.json & appsettings.Development]'s Mail Account Configuration.
+# How to run this project (Ubuntu (Linux) / Mac OS)
+## 0. Install Rider JETBRAINS IDE
+## 1. Start debug mode with docker-compose.debug.yml.
+## 2. [Note] To completely debug Maroik.Website, you must set of /Maroik/Maroik.WebSite/[appsettings.DockerComposeLocalDebug.json & appsettings.Development]'s Mail Account Configuration.
 
 # How to deploy to Ubuntu Server 22.04.3
 ## 0. You must set this value [Maroik -> Maroik.WebSite -> appsettings.Production.json -> DomainName (According to Server Domain [If you don't have server domain, just set your server Public IP address])] & Mail Account
@@ -33,10 +27,10 @@ Docker, AdminLTE, MariaDB, Session Login, RESTful API, HTTPS etc.
 # Login Account
 
 ## Admin Account ID: ***REMOVED***m
-## Admin Account Password: rhdiddl12!
+## Admin Account Password: ghfkddl12gh!
 
 ## User Account ID: ***REMOVED***
-## User Account Password: rhdiddl12!
+## User Account Password: ghfkddl12gh!
 
 # Login
 ![Login](https://user-images.githubusercontent.com/20404991/132020270-488a1ab7-448c-44d9-938a-40ce32d6d364.jpg)
