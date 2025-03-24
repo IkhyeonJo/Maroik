@@ -1,7 +1,0 @@
-{
-    "recommendations": [
-        "ms-dotnettools.csdevkit",
-        "ms-vscode.vs-keybindings",
-        "ms-azuretools.vscode-docker"
-    ]
-}
