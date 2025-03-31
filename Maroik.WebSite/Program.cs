@@ -2,6 +2,7 @@ using Maroik.Common.DataAccess.Contracts;
 using Maroik.Common.DataAccess.Data;
 using Maroik.Common.DataAccess.Services;
 using Maroik.Common.Miscellaneous.Utilities;
+using Maroik.WebSite.Extensions;
 using Maroik.WebSite.Contracts;
 using Maroik.WebSite.Services;
 using Maroik.WebSite.Utilities;
@@ -183,21 +184,10 @@ app.UseRewriter(new RewriteOptions()
 app.UseRouting(); // 5. 요청을 라우팅하기위한 미들웨어 라우팅 (UseRouting)
 app.UseCors();
 
-
 #region Login
 app.UseAuthentication(); // 6.인증 미들웨어(UseAuthentication)는 보안 자원에 대한 액세스가 허용되기 전에 사용자 인증을 시도합니다.
 app.UseAuthorization(); // 7. 권한 미들웨어 (UseAuthorization)는 사용자가 보안 자원에 액세스 할 수있는 권한을 부여합니다.
 app.UseSession(); // 8. 세션 미들웨어 (UseSession)는 세션 상태를 설정하고 유지합니다. 앱이 세션 상태를 사용하는 경우 쿠키 정책 미들웨어 이후 및 MVC 미들웨어 전에 세션 미들웨어를 호출하십시오.
-#endregion
-
-#region 권한 없이 wwwroot에 접근하려고 하면 초기 화면으로 돌려보냄
-app.UseStaticFiles(new StaticFileOptions
-{
-    OnPrepareResponse = ctx =>
-    {
-        ctx.Context.Response.Headers["X-Content-Type-Options"] = "nosniff";
-    }
-});
 #endregion
 
 #region Default HTTP Header Setting
@@ -254,5 +244,7 @@ app.UseRequestLocalization(localizationOptions);
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=DashBoard}/{action=AnonymousIndex}/{id?}");
+
+app.MapStaticAssets();
 
 app.Run();
