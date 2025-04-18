@@ -29,20 +29,44 @@ namespace Maroik.Common.DataAccess.Services
         }
 
         /// <summary>
+        /// 로그인 계정에 해당하는 금년 지출을 구합니다.
+        /// </summary>
+        /// <param name="email"></param>
+        /// <param name="year"></param>
+        /// <param name="timeZoneIanaId"></param>
+        /// <returns></returns>
+        public async Task<List<Expenditure>> GetCurrentYearExpendituresAsync(string email, string year, string timeZoneIanaId)
+        {
+            return await _context.Expenditures.FromSqlInterpolated
+            (
+                $"""
+                 SELECT *
+                                             FROM Expenditure
+                                             WHERE 
+                                             DATE_FORMAT(CONVERT_TZ(Created, 'UTC', {timeZoneIanaId}), '%Y') = {year}
+                                             AND AccountEmail = {email}
+                 """
+            ).ToListAsync();
+        }
+
+        /// <summary>
         /// 로그인 계정에 해당하는 금년월 지출을 구합니다.
         /// </summary>
         /// <param name="email"></param>
         /// <param name="yearMonth"></param>
+        /// <param name="timeZoneIanaId"></param>
         /// <returns></returns>
         public async Task<List<Expenditure>> GetCurrentYearMonthExpendituresAsync(string email, string yearMonth, string timeZoneIanaId)
         {
             return await _context.Expenditures.FromSqlInterpolated
                     (
-                        @$"SELECT *
-                            FROM Expenditure
-                            WHERE 
-                            DATE_FORMAT(CONVERT_TZ(Created, 'UTC', {timeZoneIanaId}), '%Y-%m') = {yearMonth}
-                            AND AccountEmail = {email}"
+                        $"""
+                         SELECT *
+                                                     FROM Expenditure
+                                                     WHERE 
+                                                     DATE_FORMAT(CONVERT_TZ(Created, 'UTC', {timeZoneIanaId}), '%Y-%m') = {yearMonth}
+                                                     AND AccountEmail = {email}
+                         """
                     ).ToListAsync();
         }
 
@@ -77,19 +101,6 @@ namespace Maroik.Common.DataAccess.Services
         {
             _ = _context.Expenditures.Remove(expenditure);
             _ = await _context.SaveChangesAsync();
-        }
-
-        /// <summary>
-        /// 로그인 계정에 해당하는 금년월 지출 통계를 구합니다.
-        /// </summary>
-        /// <param name="email"></param>
-        /// <param name="yearMonth"></param>
-        /// <param name="timeZoneIanaId"></param>
-        /// <param name="monetaryUnit"></param>
-        /// <returns></returns>
-        public async Task<List<USP_Expenditure_MonthlyReport>> GetCurrentYearMonthExpendituresMonthlyReportAsync(string email, string yearMonth, string timeZoneIanaId, string monetaryUnit)
-        {
-            return await _context.USP_Expenditure_MonthlyReports.FromSqlRaw("CALL USP_Expenditure_MonthlyReport(@yearMonth, @email, @timeZoneIanaId, @monetaryUnit)", new MySqlParameter("@yearMonth", yearMonth), new MySqlParameter("@email", email), new MySqlParameter("@timeZoneIanaId", timeZoneIanaId), new MySqlParameter("@monetaryUnit", monetaryUnit)).ToListAsync();
         }
 
         /// <summary>

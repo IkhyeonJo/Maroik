@@ -264,4 +264,16 @@
   <data name="Variance" xml:space="preserve">
     <value>Variance</value>
   </data>
+  <data name="YearIncome" xml:space="preserve">
+    <value>Year Income</value>
+  </data>
+  <data name="MonthIncome" xml:space="preserve">
+    <value>Month Income</value>
+  </data>
+  <data name="YearExpenditure" xml:space="preserve">
+    <value>Year Expenditure</value>
+  </data>
+  <data name="MonthExpenditure" xml:space="preserve">
+    <value>Month Expenditure</value>
+  </data>
 </root>

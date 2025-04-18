@@ -14,7 +14,6 @@ namespace Maroik.Common.DataAccess.Data
             ChangeTracker.AutoDetectChangesEnabled = false;
         }
 
-        #region (For Migration) DbSet<T>'s T is Table.
         public virtual DbSet<Account> Accounts { get; set; }
 
         public virtual DbSet<Asset> Assets { get; set; }
@@ -50,13 +49,7 @@ namespace Maroik.Common.DataAccess.Data
         public virtual DbSet<Income> Incomes { get; set; }
 
         public virtual DbSet<SubCategory> SubCategories { get; set; }
-        #endregion
-
-        #region (For Migration) DbSet<T>'s T is Stored Procedure.
-        public virtual DbSet<USP_Expenditure_MonthlyReport> USP_Expenditure_MonthlyReports { get; set; }
-        public virtual DbSet<USP_Income_MonthlyReport> USP_Income_MonthlyReports { get; set; }
-        #endregion
-
+        
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             base.OnConfiguring(optionsBuilder);
@@ -64,12 +57,6 @@ namespace Maroik.Common.DataAccess.Data
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            #region (For Migration) Entity<T>'s T is Stored Procedure.
-            _ = modelBuilder.Entity<USP_Expenditure_MonthlyReport>().HasNoKey();
-            _ = modelBuilder.Entity<USP_Income_MonthlyReport>().HasNoKey();
-            #endregion
-
-            #region (For Migration) Entity<T>'s T is Table.
             _ = modelBuilder
                 .UseCollation("utf8mb4_general_ci")
                 .HasCharSet("utf8mb4");
@@ -843,7 +830,6 @@ namespace Maroik.Common.DataAccess.Data
                     .HasForeignKey(d => d.CategoryId)
                     .HasConstraintName("SubCategory_FK_0");
             });
-            #endregion
 
             OnModelCreatingPartial(modelBuilder);
         }
