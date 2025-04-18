@@ -12,12 +12,22 @@ namespace Maroik.Common.DataAccess.Contracts
         /// <param name="email"></param>
         /// <returns></returns>
         public Task<List<Income>> GetIncomesAsync(string email);
+        
+        /// <summary>
+        /// 로그인 계정에 해당하는 금년 수입을 구합니다.
+        /// </summary>
+        /// <param name="email"></param>
+        /// <param name="year"></param>
+        /// <param name="timeZoneIanaId"></param>
+        /// <returns></returns>
+        public Task<List<Income>> GetCurrentYearIncomesAsync(string email, string year, string timeZoneIanaId);
 
         /// <summary>
         /// 로그인 계정에 해당하는 금년월 수입을 구합니다.
         /// </summary>
         /// <param name="email"></param>
         /// <param name="yearMonth"></param>
+        /// <param name="timeZoneIanaId"></param>
         /// <returns></returns>
         public Task<List<Income>> GetCurrentYearMonthIncomesAsync(string email, string yearMonth, string timeZoneIanaId);
 
@@ -41,15 +51,5 @@ namespace Maroik.Common.DataAccess.Contracts
         /// <param name="income"></param>
         /// <returns></returns>
         public Task DeleteIncomeAsync(Income income);
-
-        /// <summary>
-        /// 로그인 계정에 해당하는 금년월 수입 통계를 구합니다.
-        /// </summary>
-        /// <param name="email"></param>
-        /// <param name="yearMonth"></param>
-        /// <param name="timeZoneIanaId"></param>
-        /// <param name="monetaryUnit"></param>
-        /// <returns></returns>
-        public Task<List<USP_Income_MonthlyReport>> GetCurrentYearMonthIncomesMonthlyReportAsync(string email, string yearMonth, string timeZoneIanaId, string monetaryUnit);
     }
 }

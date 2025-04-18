@@ -14,10 +14,20 @@ namespace Maroik.Common.DataAccess.Contracts
         public Task<List<Expenditure>> GetExpendituresAsync(string email);
 
         /// <summary>
+        /// 로그인 계정에 해당하는 금년 지출을 구합니다.
+        /// </summary>
+        /// <param name="email"></param>
+        /// <param name="year"></param>
+        /// <param name="timeZoneIanaId"></param>
+        /// <returns></returns>
+        public Task<List<Expenditure>> GetCurrentYearExpendituresAsync(string email, string year, string timeZoneIanaId);
+        
+        /// <summary>
         /// 로그인 계정에 해당하는 금년월 지출을 구합니다.
         /// </summary>
         /// <param name="email"></param>
         /// <param name="yearMonth"></param>
+        /// <param name="timeZoneIanaId"></param>
         /// <returns></returns>
         public Task<List<Expenditure>> GetCurrentYearMonthExpendituresAsync(string email, string yearMonth, string timeZoneIanaId);
 
@@ -41,16 +51,6 @@ namespace Maroik.Common.DataAccess.Contracts
         /// <param name="expenditure"></param>
         /// <returns></returns>
         public Task DeleteExpenditureAsync(Expenditure expenditure);
-
-        /// <summary>
-        /// 로그인 계정에 해당하는 금년월 지출 통계를 구합니다.
-        /// </summary>
-        /// <param name="email"></param>
-        /// <param name="yearMonth"></param>
-        /// <param name="timeZoneIanaId"></param>
-        /// <param name="monetaryUnit"></param>
-        /// <returns></returns>
-        public Task<List<USP_Expenditure_MonthlyReport>> GetCurrentYearMonthExpendituresMonthlyReportAsync(string email, string yearMonth, string timeZoneIanaId, string monetaryUnit);
 
         /// <summary>
         /// 내입금자산명을 업데이트합니다.

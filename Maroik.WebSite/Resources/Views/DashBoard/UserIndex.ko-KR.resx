@@ -264,4 +264,16 @@
   <data name="Variance" xml:space="preserve">
     <value>분산</value>
   </data>
+  <data name="YearIncome" xml:space="preserve">
+    <value>연 수입</value>
+  </data>
+  <data name="MonthIncome" xml:space="preserve">
+    <value>월 수입</value>
+  </data>
+  <data name="YearExpenditure" xml:space="preserve">
+    <value>연 지출</value>
+  </data>
+  <data name="MonthExpenditure" xml:space="preserve">
+    <value>월 지출</value>
+  </data>
 </root>
