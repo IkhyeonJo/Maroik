@@ -102,3 +102,4 @@ services:
           - ./Maroik.AI:/app/
         depends_on:
           - postgresql
+        restart: always
