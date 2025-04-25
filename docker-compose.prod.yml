@@ -30,8 +30,8 @@ services:
         networks :
           - backend          
         ports:
-          - 80:80
-          - 443:443
+          - "80:80"
+          - "443:443"
         environment :
           - DBHOST=postgresql
           - ASPNETCORE_ENVIRONMENT=Production
