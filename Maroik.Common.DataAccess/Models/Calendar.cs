@@ -11,7 +11,7 @@ public partial class Calendar
     /// <summary>
     /// PK
     /// </summary>
-    public int Id { get; set; }
+    public long Id { get; set; }
 
     /// <summary>
     /// 계정 이메일 (ID)
@@ -50,9 +50,10 @@ public partial class Calendar
 
     public virtual Account AccountEmailNavigation { get; set; }
 
-    public virtual ICollection<CalendarEvent> CalendarEvents { get; set; } = [];
+    public virtual ICollection<CalendarEvent> CalendarEvents { get; set; } = new List<CalendarEvent>();
 
     public virtual CalendarShared CalendarShared { get; set; }
 
-    public virtual ICollection<OtherCalendar> OtherCalendars { get; set; } = [];
+    public virtual ICollection<Account> AccountEmails { get; set; } = new List<Account>();
+    public virtual ICollection<OtherCalendar> OtherCalendars { get; set; } 
 }

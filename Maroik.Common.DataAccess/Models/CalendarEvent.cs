@@ -11,12 +11,12 @@ public partial class CalendarEvent
     /// <summary>
     /// PK
     /// </summary>
-    public int Id { get; set; }
+    public long Id { get; set; }
 
     /// <summary>
     /// 부모 Calendar Id
     /// </summary>
-    public int CalendarId { get; set; }
+    public long CalendarId { get; set; }
 
     /// <summary>
     /// 제목
@@ -66,7 +66,7 @@ public partial class CalendarEvent
     /// <summary>
     /// 반복 규칙 ID (옵션)
     /// </summary>
-    public int? RecurrenceId { get; set; }
+    public long? RecurrenceId { get; set; }
 
     /// <summary>
     /// 생성일
@@ -80,9 +80,9 @@ public partial class CalendarEvent
 
     public virtual Calendar Calendar { get; set; }
 
-    public virtual ICollection<CalendarEventAttachedFile> CalendarEventAttachedFiles { get; set; } = [];
+    public virtual ICollection<CalendarEventAttachedFile> CalendarEventAttachedFiles { get; set; } = new List<CalendarEventAttachedFile>();
 
-    public virtual ICollection<CalendarEventReminder> CalendarEventReminders { get; set; } = [];
+    public virtual ICollection<CalendarEventReminder> CalendarEventReminders { get; set; } = new List<CalendarEventReminder>();
 
     public virtual CalendarRecurrence Recurrence { get; set; }
 }

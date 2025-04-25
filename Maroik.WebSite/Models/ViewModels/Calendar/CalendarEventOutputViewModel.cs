@@ -4,8 +4,8 @@ namespace Maroik.WebSite.Models.ViewModels.Calendar
 {
     public class CalendarEventOutputViewModel
     {
-        public int Id { get; set; }
-        public int CalendarId { get; set; }
+        public long Id { get; set; }
+        public long CalendarId { get; set; }
         public string Title { get; set; }
         public bool AllDay { get; set; }
         public DateTime StartDate { get; set; }

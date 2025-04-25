@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace Maroik.Common.DataAccess.Models;
 
@@ -10,7 +11,7 @@ public partial class FixedIncome
     /// <summary>
     /// PK
     /// </summary>
-    public int Id { get; set; }
+    public long Id { get; set; }
 
     /// <summary>
     /// 계정 이메일 (ID)
@@ -45,12 +46,12 @@ public partial class FixedIncome
     /// <summary>
     /// 입금월
     /// </summary>
-    public byte DepositMonth { get; set; }
+    public short DepositMonth { get; set; }
 
     /// <summary>
     /// 입금일
     /// </summary>
-    public byte DepositDay { get; set; }
+    public short DepositDay { get; set; }
 
     /// <summary>
     /// 만기일

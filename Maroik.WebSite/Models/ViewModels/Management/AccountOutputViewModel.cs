@@ -27,7 +27,7 @@ namespace Maroik.WebSite.Models.ViewModels.Management
         public bool Locked { get; set; }
         [Required(ErrorMessage = "Please enter LoginAttempt")]
         [Display(Name = "LoginAttempt")]
-        public int LoginAttempt { get; set; }
+        public long LoginAttempt { get; set; }
         [Required(ErrorMessage = "Please enter EmailConfirmed")]
         [Display(Name = "EmailConfirmed")]
         public bool EmailConfirmed { get; set; }

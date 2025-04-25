@@ -32,7 +32,7 @@ builder.WebHost.ConfigureKestrel(serverOptions =>
 });
 
 #region ServerSettings
-ServerSetting.MaxLoginAttempt = Convert.ToInt32(builder.Configuration.GetSection("ServerSetting")["MaxLoginAttempt"]);
+ServerSetting.MaxLoginAttempt = Convert.ToByte(builder.Configuration.GetSection("ServerSetting")["MaxLoginAttempt"]);
 #endregion
 
 // Add services to the container.
@@ -66,8 +66,11 @@ builder.Services.AddHostedService<JwtRefreshTokenCache>();
 
 #region AddMariaDbContext
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-      //options.UseLazyLoadingProxies().UseMySql(builder.Configuration.GetConnectionString("DefaultConnection"), ServerVersion.AutoDetect(builder.Configuration.GetConnectionString("DefaultConnection")), providerOptions => providerOptions.EnableRetryOnFailure())); // 이거하니 Excel Export 안 됨
-      options.UseMySql(builder.Configuration.GetConnectionString("DefaultConnection"), ServerVersion.AutoDetect(builder.Configuration.GetConnectionString("DefaultConnection")), providerOptions => providerOptions.EnableRetryOnFailure()).EnableSensitiveDataLogging());
+    options.UseNpgsql(
+        builder.Configuration.GetConnectionString("DefaultConnection"),
+        npgsqlOptions => npgsqlOptions.EnableRetryOnFailure()
+    ).EnableSensitiveDataLogging()
+);
 #endregion
 
 #region AddRepositories

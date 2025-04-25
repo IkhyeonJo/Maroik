@@ -6,10 +6,10 @@ namespace Maroik.WebSite.Models.ViewModels.Management
     {
         [Required(ErrorMessage = "Please enter Id")]
         [Display(Name = "Id")]
-        public int Id { get; set; }
+        public long Id { get; set; }
         [Required(ErrorMessage = "Please enter CategoryId")]
         [Display(Name = "CategoryId")]
-        public int? CategoryId { get; set; }
+        public long? CategoryId { get; set; }
         [Required(ErrorMessage = "Please enter Name")]
         [Display(Name = "Name")]
         public string Name { get; set; }
@@ -30,6 +30,6 @@ namespace Maroik.WebSite.Models.ViewModels.Management
         public string Role { get; set; }
         [Required(ErrorMessage = "Please enter Order")]
         [Display(Name = "Order")]
-        public int Order { get; set; }
+        public long Order { get; set; }
     }
 }

@@ -301,7 +301,7 @@ namespace Maroik.WebSite.Controllers
                             {
                                 if (calendarEventInputViewModel.CalendarEventUploadedFile.Length is > 0 and <= 10485760) // calendarEventInputViewModel.CalendarEventUploadedFile Length : 파일 크기 0MB 이상, 10MB 이하
                                 {
-                                    int createdCalendarEventId = calendarEvent.Id;
+                                    var createdCalendarEventId = calendarEvent.Id;
 
                                     string calendarEventAttachedFilePath = Path.Combine("upload", "Calendar", $"{loginedAccount.Role}Index", "calendarEventAttachedFiles", $"{createdCalendarEventId}");
                                     string guid = Guid.NewGuid().ToString().ToUpper();
@@ -2331,7 +2331,7 @@ namespace Maroik.WebSite.Controllers
                             {
                                 if (calendarEventInputViewModel.CalendarEventUploadedFile.Length is > 0 and <= 10485760) // calendarEventInputViewModel.CalendarEventUploadedFile Length : 파일 크기 0MB 이상, 10MB 이하
                                 {
-                                    int updatedCalendarEventId = calendarEvent.Id;
+                                    var updatedCalendarEventId = calendarEvent.Id;
 
                                     string calendarEventAttachedFilePath = Path.Combine("upload", "Calendar", $"{loginedAccount.Role}Index", "calendarEventAttachedFiles", $"{updatedCalendarEventId}");
                                     string guid = Guid.NewGuid().ToString().ToUpper();

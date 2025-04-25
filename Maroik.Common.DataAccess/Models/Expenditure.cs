@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace Maroik.Common.DataAccess.Models;
 
@@ -10,7 +11,7 @@ public partial class Expenditure
     /// <summary>
     /// PK
     /// </summary>
-    public int Id { get; set; }
+    public long Id { get; set; }
 
     /// <summary>
     /// 계정 이메일 (ID)

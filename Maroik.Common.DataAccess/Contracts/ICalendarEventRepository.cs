@@ -11,14 +11,14 @@ namespace Maroik.Common.DataAccess.Contracts
         /// </summary>
         /// <param name="calendarId"></param>
         /// <returns></returns>
-        public Task<IEnumerable<CalendarEvent>> GetCalendarEventsAsync(int calendarId);
+        public Task<IEnumerable<CalendarEvent>> GetCalendarEventsAsync(long calendarId);
 
         /// <summary>
         /// 한 달력 이벤트를 구합니다.
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
-        public Task<CalendarEvent> GetCalendarEventAsync(int id);
+        public Task<CalendarEvent> GetCalendarEventAsync(long id);
 
         /// <summary>
         /// 달력 이벤트를 생성합니다.

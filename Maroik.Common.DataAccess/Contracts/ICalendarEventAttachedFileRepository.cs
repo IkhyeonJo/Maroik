@@ -17,7 +17,7 @@ namespace Maroik.Common.DataAccess.Contracts
         /// </summary>
         /// <param name="calendarEventId"></param>
         /// <returns></returns>
-        public Task<CalendarEventAttachedFile> GetCalendarEventAttachedFileAsync(int calendarEventId);
+        public Task<CalendarEventAttachedFile> GetCalendarEventAttachedFileAsync(long calendarEventId);
 
         /// <summary>
         /// 첨부파일을 저장합니다.
@@ -38,6 +38,6 @@ namespace Maroik.Common.DataAccess.Contracts
         /// </summary>
         /// <param name="calendarEventId"></param>
         /// <returns></returns>
-        public Task<int> DeleteCalendarEventAttachedFileAsync(int calendarEventId);
+        public Task<int> DeleteCalendarEventAttachedFileAsync(long calendarEventId);
     }
 }

@@ -11,7 +11,7 @@ namespace Maroik.Common.DataAccess.Contracts
         /// </summary>
         /// <param name="calendarEventId"></param>
         /// <returns></returns>
-        public Task<IEnumerable<CalendarEventReminder>> GetCalendarEventRemindersAsync(int calendarEventId);
+        public Task<IEnumerable<CalendarEventReminder>> GetCalendarEventRemindersAsync(long calendarEventId);
 
         /// <summary>
         /// 달력 이벤트 알림을 생성합니다.
@@ -25,6 +25,6 @@ namespace Maroik.Common.DataAccess.Contracts
         /// </summary>
         /// <param name="calendarEventId"></param>
         /// <returns></returns>
-        public Task<int> DeleteCalendarEventReminderAsync(int calendarEventId);
+        public Task<int> DeleteCalendarEventReminderAsync(long calendarEventId);
     }
 }

@@ -22,7 +22,7 @@ namespace Maroik.Common.DataAccess.Services
         /// </summary>
         /// <param name="calendarId"></param>
         /// <returns></returns>
-        public async Task<IEnumerable<CalendarEvent>> GetCalendarEventsAsync(int calendarId)
+        public async Task<IEnumerable<CalendarEvent>> GetCalendarEventsAsync(long calendarId)
         {
             return await _context.CalendarEvents.Where(x => x.CalendarId == calendarId).ToListAsync();
         }
@@ -32,7 +32,7 @@ namespace Maroik.Common.DataAccess.Services
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
-        public async Task<CalendarEvent> GetCalendarEventAsync(int id)
+        public async Task<CalendarEvent> GetCalendarEventAsync(long id)
         {
             return await _context.CalendarEvents.Where(x => x.Id == id).FirstOrDefaultAsync();
         }

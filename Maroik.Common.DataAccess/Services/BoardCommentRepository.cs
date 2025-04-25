@@ -21,7 +21,7 @@ namespace Maroik.Common.DataAccess.Services
         /// 한 게시물의 모든 댓글을 구합니다.
         /// </summary>
         /// <returns></returns>
-        public async Task<IEnumerable<BoardComment>> GetOneBoardCommentsAsync(int boardId)
+        public async Task<IEnumerable<BoardComment>> GetOneBoardCommentsAsync(long boardId)
         {
             return await _context.BoardComments.Where(x => x.BoardId == boardId).OrderBy(m => m.Order).ToListAsync();
         }

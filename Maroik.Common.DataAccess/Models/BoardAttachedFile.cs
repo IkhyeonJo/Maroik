@@ -1,4 +1,7 @@
-﻿namespace Maroik.Common.DataAccess.Models;
+﻿using System;
+using System.Collections.Generic;
+
+namespace Maroik.Common.DataAccess.Models;
 
 /// <summary>
 /// Maroik.WebSite 게시판 첨부 파일
@@ -8,17 +11,17 @@ public partial class BoardAttachedFile
     /// <summary>
     /// PK
     /// </summary>
-    public int Id { get; set; }
+    public long Id { get; set; }
 
     /// <summary>
     /// 부모 Board Id
     /// </summary>
-    public int BoardId { get; set; }
+    public long BoardId { get; set; }
 
     /// <summary>
     /// 크기 (Byte)
     /// </summary>
-    public int Size { get; set; }
+    public long Size { get; set; }
 
     /// <summary>
     /// 이름

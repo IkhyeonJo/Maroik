@@ -32,7 +32,7 @@ builder.WebHost.ConfigureKestrel(serverOptions =>
 });
 
 #region ServerSettings
-ServerSetting.MaxLoginAttempt = Convert.ToInt32(builder.Configuration.GetSection("ServerSetting")["MaxLoginAttempt"]);
+ServerSetting.MaxLoginAttempt = Convert.ToByte(builder.Configuration.GetSection("ServerSetting")["MaxLoginAttempt"]);
 #endregion
 
 // Add services to the container.

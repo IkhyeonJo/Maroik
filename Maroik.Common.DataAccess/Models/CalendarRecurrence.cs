@@ -11,7 +11,7 @@ public partial class CalendarRecurrence
     /// <summary>
     /// PK
     /// </summary>
-    public int Id { get; set; }
+    public long Id { get; set; }
 
     /// <summary>
     /// 반복 주기
@@ -21,7 +21,7 @@ public partial class CalendarRecurrence
     /// <summary>
     /// 반복 간격
     /// </summary>
-    public int Interval { get; set; }
+    public long Interval { get; set; }
 
     /// <summary>
     /// 반복 요일
@@ -31,17 +31,17 @@ public partial class CalendarRecurrence
     /// <summary>
     /// 매월 반복일 (1~31, 옵션)
     /// </summary>
-    public int? DayOfMonth { get; set; }
+    public long? DayOfMonth { get; set; }
 
     /// <summary>
     /// 매년 반복월 (1~12, 옵션)
     /// </summary>
-    public int? MonthOfYear { get; set; }
+    public long? MonthOfYear { get; set; }
 
     /// <summary>
     /// 반복 횟수 (옵션)
     /// </summary>
-    public int? Count { get; set; }
+    public long? Count { get; set; }
 
     /// <summary>
     /// 반복 종료 날짜 (옵션)
@@ -58,5 +58,5 @@ public partial class CalendarRecurrence
     /// </summary>
     public DateTime Updated { get; set; }
 
-    public virtual ICollection<CalendarEvent> CalendarEvents { get; set; } = [];
+    public virtual ICollection<CalendarEvent> CalendarEvents { get; set; } = new List<CalendarEvent>();
 }

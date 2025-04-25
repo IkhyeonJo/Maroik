@@ -70,11 +70,13 @@ namespace Maroik.Common.DataAccess.Services
         public async Task<int> UpdateMyDepositAssetWithProductNameAsync(string accountEmail, string oldMyDepositAsset, string newMyDepositAsset)
         {
             return await _context.Database.ExecuteSqlInterpolatedAsync
-                    (
-                        @$"UPDATE FixedExpenditure
-                           SET MyDepositAsset = {newMyDepositAsset}
-                           WHERE MyDepositAsset = {oldMyDepositAsset} AND AccountEmail = {accountEmail}"
-                    );
+            (
+                $"""
+                 UPDATE "FixedExpenditure"
+                 SET "MyDepositAsset" = {newMyDepositAsset}
+                 WHERE "MyDepositAsset" = {oldMyDepositAsset} AND "AccountEmail" = {accountEmail}
+                 """
+            );
         }
     }
 }

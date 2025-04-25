@@ -6,7 +6,7 @@ namespace Maroik.WebSite.Models.ViewModels.Notice
     {
         [Required(ErrorMessage = "Please enter Id")]
         [Display(Name = "Id")]
-        public int Id { get; set; }
+        public long Id { get; set; }
         [Required(ErrorMessage = "Please enter MainClass")]
         [Display(Name = "MainClass")]
         public string MainClass { get; set; }
@@ -29,10 +29,10 @@ namespace Maroik.WebSite.Models.ViewModels.Notice
         public string MyDepositAsset { get; set; }
         [Required(ErrorMessage = "Please enter DepositMonth")]
         [Display(Name = "DepositMonth")]
-        public byte DepositMonth { get; set; }
+        public short DepositMonth { get; set; }
         [Required(ErrorMessage = "Please enter DepositDay")]
         [Display(Name = "DepositDay")]
-        public byte DepositDay { get; set; }
+        public short DepositDay { get; set; }
         [Required(ErrorMessage = "Please enter MaturityDate")]
         [Display(Name = "MaturityDate")]
         public string MaturityDate { get; set; }

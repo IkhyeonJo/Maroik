@@ -19,28 +19,15 @@ for garbage_sql_file in garbage_sql_files:
 
 current_date = str(datetime.today().strftime("%Y%m%d"))
 backup_sql_file_name = f'Init-{current_date}.sql'
-os.system(f'sudo docker exec Maroik.MariaDB /usr/bin/mysqldump -u root --password=***REMOVED*** --routines Maroik > /home/peter-cho/Maroik/{backup_sql_file_name}')
-
-with open(f'/home/peter-cho/Maroik/{backup_sql_file_name}', 'r', encoding='utf-8') as original:
-    data = original.read()
-
-new_add_line = '''DROP DATABASE IF EXISTS Maroik;
-
-CREATE DATABASE Maroik default charset=utf8mb4 collate utf8mb4_general_ci;
-
-USE Maroik;
-
-'''
-with open(f'/home/peter-cho/Maroik/{backup_sql_file_name}', 'w', encoding='utf-8') as modified:
-    modified.write(new_add_line + data)
+os.system(f'sudo docker exec -i Maroik.PostgreSQL /bin/bash -c "PGPASSWORD=***REMOVED*** pg_dump --username postgres \"Maroik\"" > /home/peter-cho/Maroik/{backup_sql_file_name}')
 
 msg = MIMEMultipart()
 
 msg['From'] = '***REMOVED***'
 msg['To'] = '***REMOVED***'
 msg['Date'] = formatdate(localtime=True)
-msg['Subject'] = Header(s=f'Maroik MariaDB SQL Backup ({current_date})', charset='utf-8')
-body = MIMEText(f'Maroik MariaDB SQL Backup ({current_date})', _charset='utf-8')
+msg['Subject'] = Header(s=f'Maroik PostgreSQL SQL Backup ({current_date})', charset='utf-8')
+body = MIMEText(f'Maroik PostgreSQL SQL Backup ({current_date})', _charset='utf-8')
 msg.attach(body)
 
 files = list()

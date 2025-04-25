@@ -1,4 +1,7 @@
-﻿namespace Maroik.Common.DataAccess.Models;
+﻿using System;
+using System.Collections.Generic;
+
+namespace Maroik.Common.DataAccess.Models;
 
 /// <summary>
 /// 서브 카테고리 /*Maroik.WebSite의 로그인 후 접근 가능한 좌측 SideBar 설정 시 사용*/
@@ -8,12 +11,12 @@ public partial class SubCategory
     /// <summary>
     /// ID
     /// </summary>
-    public int Id { get; set; }
+    public long Id { get; set; }
 
     /// <summary>
     /// 부모 카테고리 ID
     /// </summary>
-    public int CategoryId { get; set; }
+    public long CategoryId { get; set; }
 
     /// <summary>
     /// 이름
@@ -43,7 +46,7 @@ public partial class SubCategory
     /// <summary>
     /// 출력 순서
     /// </summary>
-    public int Order { get; set; }
+    public long Order { get; set; }
 
     public virtual Category Category { get; set; }
 }

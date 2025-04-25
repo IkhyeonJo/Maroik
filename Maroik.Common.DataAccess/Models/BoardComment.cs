@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace Maroik.Common.DataAccess.Models;
 
@@ -10,17 +11,17 @@ public partial class BoardComment
     /// <summary>
     /// PK
     /// </summary>
-    public int Id { get; set; }
+    public long Id { get; set; }
 
     /// <summary>
     /// 게시물 Id
     /// </summary>
-    public int BoardId { get; set; }
+    public long BoardId { get; set; }
 
     /// <summary>
     /// 순서
     /// </summary>
-    public int Order { get; set; }
+    public long Order { get; set; }
 
     /// <summary>
     /// 계정 아바타 이미지 경로
