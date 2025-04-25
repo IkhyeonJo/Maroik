@@ -7,7 +7,6 @@ using Maroik.WebSite.Models.ViewModels.Account;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Localization;
 using Microsoft.EntityFrameworkCore;
-using MySqlConnector;
 using Newtonsoft.Json;
 using System.Text;
 
@@ -253,21 +252,6 @@ namespace Maroik.WebSite.Controllers
                                     Deleted = false
                                 }
                                 );
-                        }
-                        catch (DbUpdateException e)
-                        {
-                            if (((MySqlException)e.InnerException).ErrorCode == MySqlErrorCode.DuplicateKeyEntry)
-                            {
-                                Console.WriteLine(_localizer["Input is invalid"].Value); // ActivityLog 등으로 로그 남겨야 한다..
-                                TempData["Error"] = $"'{loginInputViewModel.Nickname}' {_localizer["is a Nickname that already exists."].Value} {_localizer["Please enter another Nickname."].Value}";
-                                return View();
-                            }
-                            else
-                            {
-                                Console.WriteLine(_localizer["Input is invalid"].Value); // ActivityLog 등으로 로그 남겨야 한다..
-                                TempData["Error"] = _localizer["Error occurred while processing about account registration"].Value;
-                                return View();
-                            }
                         }
                         catch
                         {

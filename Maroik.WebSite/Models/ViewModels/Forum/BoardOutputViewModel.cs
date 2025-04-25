@@ -12,12 +12,12 @@ namespace Maroik.WebSite.Models.ViewModels.Forum
         public string Writer { get; set; }
         public DateTime Created { get; set; }
         public DateTime Updated { get; set; }
-        public int Views { get; set; }
+        public long Views { get; set; }
         public string BoardAttachedFileName { get; set; }
         public string BoardAttachedFileBase64Data { get; set; }
         public string BoardAttachedFileContentType { get; set; }
         public string BoardAttachedFileExtension { get; set; }
-        public int BoardAttachedFileSize { get; set; }
+        public long BoardAttachedFileSize { get; set; }
         public string BoardAttachedFilePath { get; set; }
         public bool IsImgTagIncluded { get; set; }
     }

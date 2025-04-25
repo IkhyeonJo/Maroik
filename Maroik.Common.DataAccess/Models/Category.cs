@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace Maroik.Common.DataAccess.Models;
 
@@ -10,7 +11,7 @@ public partial class Category
     /// <summary>
     /// ID
     /// </summary>
-    public int Id { get; set; }
+    public long Id { get; set; }
 
     /// <summary>
     /// 이름
@@ -45,7 +46,7 @@ public partial class Category
     /// <summary>
     /// 출력 순서
     /// </summary>
-    public int Order { get; set; }
+    public long Order { get; set; }
 
-    public virtual ICollection<SubCategory> SubCategories { get; } = [];
+    public virtual ICollection<SubCategory> SubCategories { get; set; } = new List<SubCategory>();
 }

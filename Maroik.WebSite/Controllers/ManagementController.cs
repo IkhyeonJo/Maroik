@@ -210,7 +210,8 @@ namespace Maroik.WebSite.Controllers
         public async Task<IActionResult> UpdateProfilePassword([FromBody] ProfileInputViewModel profileInputViewModel)
         {
             _ = ModelState.Remove(nameof(profileInputViewModel.Nickname));
-
+            _ = ModelState.Remove(nameof(profileInputViewModel.TimeZoneIanaId));
+            
             if (ModelState.IsValid)
             {
                 try
@@ -1825,7 +1826,7 @@ namespace Maroik.WebSite.Controllers
                                         .Length is
                                     > 0 and <= 10485760) // boardInputViewModel.UploadedFile Length : 파일 크기 0MB 이상, 10MB 이하
                                 {
-                                    int createdBoardId = board.Id; // 첨부파일 FK 해서 로직 추가할 것
+                                    var createdBoardId = board.Id; // 첨부파일 FK 해서 로직 추가할 것
 
                                     string boardAttachedFilePath = Path.Combine("upload", "Management",
                                         EnumHelper.GetDescription(BoardType.PrivateNote), "boardAttachedFiles",

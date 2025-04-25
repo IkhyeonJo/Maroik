@@ -7,23 +7,20 @@ networks:
        backend:
 
 services:
-    mariadb:
-        # https://stackoverflow.com/questions/49959601/configure-time-zone-to-mysql-docker-container
-        # The mariadb:10.3 docker container interprets the TZ environment variable, although it's not mentioned on the Readme.md for the docker image. In my case providing the value of America\New_York worked perfectly.
-        image: "mariadb:10.3"
-        container_name: Maroik.MariaDB
-        volumes:
-          - datasource:/var/lib/mysql
-          - ./Maroik.MariaDB/SQL_Init_Script:/docker-entrypoint-initdb.d
-        networks:
-          - backend
-        environment:
-          - MYSQL_ROOT_PASSWORD=***REMOVED***
-          - bind-address=0.0.0.0
-        command:
-          - mysqld
-          - --character-set-server=utf8mb4
-          - --collation-server=utf8mb4_unicode_ci
+    postgresql:
+      image: postgres:17
+      container_name: Maroik.PostgreSQL
+      environment:
+        POSTGRES_USER: postgres
+        POSTGRES_PASSWORD: ***REMOVED***
+        POSTGRES_DB: Maroik
+      volumes:
+        - datasource:/var/lib/postgresql/data
+        - ./Maroik.DB/PostgreSQL/SQL_Init_Script:/docker-entrypoint-initdb.d
+      ports:
+        - "5433:5432"
+      networks:
+        - backend
 
     maroik.website:
         build :
@@ -33,10 +30,10 @@ services:
         networks :
           - backend          
         ports:
-          - 80:80
-          - 443:443
+          - "80:80"
+          - "443:443"
         environment :
-          - DBHOST=mariadb
+          - DBHOST=postgresql
           - ASPNETCORE_ENVIRONMENT=Production
           - ASPNETCORE_URLS=https://+:443;http://+:80
           - ASPNETCORE_Kestrel__Certificates__Default__Path=/etc/ssl/fullchain1.pem
@@ -46,7 +43,7 @@ services:
           - ./Maroik.SSL/privkey1.pem:/etc/ssl/privkey1.pem:ro
           - ./Maroik.Log/:/app/Maroik.Log:rw
         depends_on :
-          - mariadb  
+          - postgresql  
 
     maroik.webapi:
         build :
@@ -58,7 +55,7 @@ services:
         ports:
           - 5001:5001
         environment :
-          - DBHOST=mariadb
+          - DBHOST=postgresql
           - ASPNETCORE_ENVIRONMENT=Production
           - ASPNETCORE_URLS=https://+:5001
           - ASPNETCORE_Kestrel__Certificates__Default__Path=/etc/ssl/fullchain1.pem
@@ -67,7 +64,7 @@ services:
           - ./Maroik.SSL/fullchain1.pem:/etc/ssl/fullchain1.pem:ro
           - ./Maroik.SSL/privkey1.pem:/etc/ssl/privkey1.pem:ro
         depends_on :
-          - mariadb  
+          - postgresql  
 
     maroik.filestorage:
         build :
@@ -88,6 +85,7 @@ services:
           - ./Maroik.SSL/fullchain1.pem:/etc/ssl/fullchain1.pem:ro
           - ./Maroik.SSL/privkey1.pem:/etc/ssl/privkey1.pem:ro
           - ./Maroik.FileStorage/upload/:/app/upload:rw
+          
     maroik.ai:
         build:
           context: .
@@ -102,4 +100,5 @@ services:
         volumes:
           - ./Maroik.AI:/app/
         depends_on:
-          - mariadb
+          - postgresql
+        restart: always

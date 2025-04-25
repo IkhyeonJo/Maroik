@@ -1,4 +1,7 @@
-﻿namespace Maroik.Common.DataAccess.Models;
+﻿using System;
+using System.Collections.Generic;
+
+namespace Maroik.Common.DataAccess.Models;
 
 /// <summary>
 /// Maroik.WebSite 달력 공유
@@ -8,7 +11,7 @@ public partial class CalendarShared
     /// <summary>
     /// 부모 Calendar Id
     /// </summary>
-    public int CalendarId { get; set; }
+    public long CalendarId { get; set; }
 
     /// <summary>
     /// User 공유 여부

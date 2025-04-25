@@ -6,7 +6,7 @@ namespace Maroik.WebSite.Models.ViewModels.DashBoard
     {
         [Required(ErrorMessage = "Please enter Id")]
         [Display(Name = "Id")]
-        public int Id { get; set; }
+        public long Id { get; set; }
         [Required(ErrorMessage = "Please enter MainClass")]
         [Display(Name = "MainClass")]
         public string MainClass { get; set; }

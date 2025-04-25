@@ -4,14 +4,14 @@ using System.Collections.Generic;
 namespace Maroik.Common.DataAccess.Models;
 
 /// <summary>
-/// Maroik.WebSite 게시판
+/// Maroik.WebSite Board
 /// </summary>
 public partial class Board
 {
     /// <summary>
     /// PK
     /// </summary>
-    public int Id { get; set; }
+    public long Id { get; set; }
 
     /// <summary>
     /// 형태 (자유)
@@ -46,7 +46,7 @@ public partial class Board
     /// <summary>
     /// 조회수
     /// </summary>
-    public int View { get; set; }
+    public long View { get; set; }
 
     /// <summary>
     /// 삭제 여부
@@ -63,7 +63,7 @@ public partial class Board
     /// </summary>
     public bool Noticed { get; set; }
 
-    public virtual ICollection<BoardAttachedFile> BoardAttachedFiles { get; } = [];
+    public virtual ICollection<BoardAttachedFile> BoardAttachedFiles { get; set; } = new List<BoardAttachedFile>();
 
-    public virtual ICollection<BoardComment> BoardComments { get; } = [];
+    public virtual ICollection<BoardComment> BoardComments { get; set; } = new List<BoardComment>();
 }

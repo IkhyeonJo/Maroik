@@ -51,7 +51,7 @@ public partial class Account
     /// <summary>
     /// 로그인 시도 횟수
     /// </summary>
-    public int LoginAttempt { get; set; }
+    public byte LoginAttempt { get; set; }
 
     /// <summary>
     /// 이메일 확인 여부
@@ -93,7 +93,10 @@ public partial class Account
     /// </summary>
     public bool Deleted { get; set; }
 
-    public virtual ICollection<Asset> Assets { get; } = [];
-    public virtual ICollection<Calendar> Calendars { get; } = [];
-    public virtual ICollection<OtherCalendar> OtherCalendars { get; } = [];
+    public virtual ICollection<Asset> Assets { get; set; } = new List<Asset>();
+
+    public virtual ICollection<Calendar> Calendars { get; set; } = new List<Calendar>();
+
+    public virtual ICollection<Calendar> CalendarsNavigation { get; set; } = new List<Calendar>();
+    public virtual ICollection<OtherCalendar> OtherCalendars { get; set; } 
 }

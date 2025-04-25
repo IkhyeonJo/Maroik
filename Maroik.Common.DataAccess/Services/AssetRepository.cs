@@ -69,17 +69,22 @@ namespace Maroik.Common.DataAccess.Services
         public async Task<int> UpdateAssetWithProductNameAsync(Asset asset, string originalProductName)
         {
             return await _context.Database.ExecuteSqlInterpolatedAsync
-                    (
-                        @$"UPDATE Asset
-                           SET ProductName = {asset.ProductName},
-                               Item = {asset.Item},
-                               Amount = {asset.Amount},
-                               MonetaryUnit = {asset.MonetaryUnit},
-                               Note = {asset.Note},
-                               Deleted = {asset.Deleted},
-                               Updated = {asset.Updated}
-                           WHERE ProductName = {originalProductName} AND AccountEmail = {asset.AccountEmail}"
-                    );
+            (
+                $"""
+                 UPDATE "Asset"
+                 SET 
+                     "ProductName" = {asset.ProductName},
+                     "Item" = {asset.Item},
+                     "Amount" = {asset.Amount},
+                     "MonetaryUnit" = {asset.MonetaryUnit},
+                     "Note" = {asset.Note},
+                     "Deleted" = {asset.Deleted},
+                     "Updated" = {asset.Updated}
+                 WHERE 
+                     "ProductName" = {originalProductName}
+                     AND "AccountEmail" = {asset.AccountEmail}
+                 """
+            );
         }
     }
 }

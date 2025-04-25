@@ -55,11 +55,11 @@ public partial class Asset
 
     public virtual Account AccountEmailNavigation { get; set; }
 
-    public virtual ICollection<Expenditure> Expenditures { get; } = [];
+    public virtual ICollection<Expenditure> Expenditures { get; set; } = new List<Expenditure>();
 
-    public virtual ICollection<FixedExpenditure> FixedExpenditures { get; } = [];
+    public virtual ICollection<FixedExpenditure> FixedExpenditures { get; set; } = new List<FixedExpenditure>();
 
-    public virtual ICollection<FixedIncome> FixedIncomes { get; } = [];
+    public virtual ICollection<FixedIncome> FixedIncomes { get; set; } = new List<FixedIncome>();
 
-    public virtual ICollection<Income> Incomes { get; } = [];
+    public virtual ICollection<Income> Incomes { get; set; } = new List<Income>();
 }

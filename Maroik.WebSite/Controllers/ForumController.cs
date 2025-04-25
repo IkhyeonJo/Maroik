@@ -148,7 +148,7 @@ namespace Maroik.WebSite.Controllers
                             {
                                 if (boardInputViewModel.UploadedFile.Length is > 0 and <= 10485760) // boardInputViewModel.UploadedFile Length : 파일 크기 0MB 이상, 10MB 이하
                                 {
-                                    int createdBoardId = board.Id; // 첨부파일 FK 해서 로직 추가할 것
+                                    var createdBoardId = board.Id; // 첨부파일 FK 해서 로직 추가할 것
 
                                     string boardAttachedFilePath = Path.Combine("upload", "Forum", EnumHelper.GetDescription(BoardType.FreeForum), "boardAttachedFiles", $"{createdBoardId}");
 

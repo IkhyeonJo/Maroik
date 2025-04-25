@@ -22,7 +22,7 @@ string cookiePrefix = "__Secure-";
 
 #region ServerSettings
 ServerSetting.DomainName = builder.Configuration.GetSection("ServerSetting")["DomainName"];
-ServerSetting.MaxLoginAttempt = Convert.ToInt32(builder.Configuration.GetSection("ServerSetting")["MaxLoginAttempt"]);
+ServerSetting.MaxLoginAttempt = Convert.ToByte(builder.Configuration.GetSection("ServerSetting")["MaxLoginAttempt"]);
 ServerSetting.SessionExpireMinutes = Convert.ToInt32(builder.Configuration.GetSection("ServerSetting")["SessionExpireMinutes"]);
 ServerSetting.SmtpUserName = builder.Configuration.GetSection("ServerSetting").GetSection("SmtpOptions")["smtpUserName"];
 ServerSetting.SmtpPassword = builder.Configuration.GetSection("ServerSetting").GetSection("SmtpOptions")["smtpPassword"];
@@ -37,8 +37,11 @@ ServerSetting.NoticeMaturityDateDay = Convert.ToInt32(builder.Configuration.GetS
 
 #region AddMariaDbContext
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-      //options.UseLazyLoadingProxies().UseMySql(builder.Configuration.GetConnectionString("DefaultConnection"), ServerVersion.AutoDetect(builder.Configuration.GetConnectionString("DefaultConnection")), providerOptions => providerOptions.EnableRetryOnFailure())); // 이거하니 Excel Export 안 됨
-      options.UseMySql(builder.Configuration.GetConnectionString("DefaultConnection"), ServerVersion.AutoDetect(builder.Configuration.GetConnectionString("DefaultConnection")), providerOptions => providerOptions.EnableRetryOnFailure()).EnableSensitiveDataLogging());
+    options.UseNpgsql(
+        builder.Configuration.GetConnectionString("DefaultConnection"),
+        npgsqlOptions => npgsqlOptions.EnableRetryOnFailure()
+    ).EnableSensitiveDataLogging()
+);
 #endregion
 
 #region AddRepositories
@@ -146,6 +149,9 @@ builder.Services.AddControllersWithViews(options =>
 });
 
 WebApplication app = builder.Build();
+
+AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true); // https://stackoverflow.com/questions/69961449/net6-and-datetime-problem-cannot-write-datetime-with-kind-utc-to-postgresql-ty
+
 //1.Exception / error handling
 
 //앱이 개발환경에서 실행되는 경우

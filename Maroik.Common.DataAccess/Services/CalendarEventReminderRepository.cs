@@ -22,9 +22,9 @@ namespace Maroik.Common.DataAccess.Services
         /// </summary>
         /// <param name="calendarEventId"></param>
         /// <returns></returns>
-        public async Task<IEnumerable<CalendarEventReminder>> GetCalendarEventRemindersAsync(int calendarEventId)
+        public async Task<IEnumerable<CalendarEventReminder>> GetCalendarEventRemindersAsync(long calendarEventId)
         {
-            return await _context.CalendarReminders.Where(x => x.CalendarEventId == calendarEventId).ToListAsync();
+            return await _context.CalendarEventReminders.Where(x => x.CalendarEventId == calendarEventId).ToListAsync();
         }
 
         /// <summary>
@@ -34,7 +34,7 @@ namespace Maroik.Common.DataAccess.Services
         /// <returns></returns>
         public async Task CreateCalendarEventReminderAsync(CalendarEventReminder calendarEventReminder)
         {
-            _ = await _context.CalendarReminders.AddAsync(calendarEventReminder);
+            _ = await _context.CalendarEventReminders.AddAsync(calendarEventReminder);
             _ = await _context.SaveChangesAsync();
         }
 
@@ -43,11 +43,10 @@ namespace Maroik.Common.DataAccess.Services
         /// </summary>
         /// <param name="calendarEventId"></param>
         /// <returns></returns>
-        public async Task<int> DeleteCalendarEventReminderAsync(int calendarEventId)
+        public async Task<int> DeleteCalendarEventReminderAsync(long calendarEventId)
         {
-            return await _context.Database.ExecuteSqlInterpolatedAsync
-            (
-                $"DELETE FROM CalendarEventReminder WHERE CalendarEventId = {calendarEventId}"
+            return await _context.Database.ExecuteSqlInterpolatedAsync(
+                $"""DELETE FROM "CalendarEventReminder" WHERE "CalendarEventId" = {calendarEventId}"""
             );
         }
     }

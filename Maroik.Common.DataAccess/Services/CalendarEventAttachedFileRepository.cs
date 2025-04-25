@@ -30,7 +30,7 @@ namespace Maroik.Common.DataAccess.Services
         /// </summary>
         /// <param name="calendarEventId"></param>
         /// <returns></returns>
-        public async Task<CalendarEventAttachedFile> GetCalendarEventAttachedFileAsync(int calendarEventId)
+        public async Task<CalendarEventAttachedFile> GetCalendarEventAttachedFileAsync(long calendarEventId)
         {
             return await _context.CalendarEventAttachedFiles.Where(x => x.CalendarEventId == calendarEventId).FirstOrDefaultAsync();
         }
@@ -62,11 +62,11 @@ namespace Maroik.Common.DataAccess.Services
         /// </summary>
         /// <param name="calendarEventId"></param>
         /// <returns></returns>
-        public async Task<int> DeleteCalendarEventAttachedFileAsync(int calendarEventId)
+        public async Task<int> DeleteCalendarEventAttachedFileAsync(long calendarEventId)
         {
             return await _context.Database.ExecuteSqlInterpolatedAsync
             (
-                $"DELETE FROM CalendarEventAttachedFile WHERE CalendarEventId = {calendarEventId}"
+                $"""DELETE FROM "CalendarEventAttachedFile" WHERE "CalendarEventId" = {calendarEventId}"""
             );
         }
     }

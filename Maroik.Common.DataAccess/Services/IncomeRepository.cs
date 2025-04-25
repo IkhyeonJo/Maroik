@@ -2,7 +2,6 @@ using Maroik.Common.DataAccess.Contracts;
 using Maroik.Common.DataAccess.Data;
 using Maroik.Common.DataAccess.Models;
 using Microsoft.EntityFrameworkCore;
-using MySqlConnector;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -34,10 +33,10 @@ namespace Maroik.Common.DataAccess.Services
             (
                 $"""
                  SELECT *
-                                             FROM Income
-                                             WHERE 
-                                             DATE_FORMAT(CONVERT_TZ(Created, 'UTC', {timeZoneIanaId}), '%Y') = {year}
-                                             AND AccountEmail = {email}
+                 FROM "Income"
+                 WHERE 
+                     TO_CHAR("Created" AT TIME ZONE 'UTC' AT TIME ZONE {timeZoneIanaId}, 'YYYY') = {year}
+                     AND "AccountEmail" = {email}
                  """
             ).ToListAsync();
         }
@@ -52,15 +51,15 @@ namespace Maroik.Common.DataAccess.Services
         public async Task<List<Income>> GetCurrentYearMonthIncomesAsync(string email, string yearMonth, string timeZoneIanaId)
         {
             return await context.Incomes.FromSqlInterpolated
-                    (
-                        $"""
-                         SELECT *
-                                                     FROM Income
-                                                     WHERE 
-                                                     DATE_FORMAT(CONVERT_TZ(Created, 'UTC', {timeZoneIanaId}), '%Y-%m') = {yearMonth}
-                                                     AND AccountEmail = {email}
-                         """
-                    ).ToListAsync();
+            (
+                $"""
+                 SELECT *
+                 FROM "Income"
+                 WHERE 
+                     TO_CHAR("Created" AT TIME ZONE 'UTC' AT TIME ZONE {timeZoneIanaId}, 'YYYY-MM') = {yearMonth}
+                     AND "AccountEmail" = {email}
+                 """
+            ).ToListAsync();
         }
 
         /// <summary>
