@@ -253,6 +253,21 @@ namespace Maroik.WebSite.Controllers
                                 }
                                 );
                         }
+                        catch (DbUpdateException e)
+                        {
+                            if (((Npgsql.NpgsqlException)e.InnerException).SqlState == Npgsql.PostgresErrorCodes.UniqueViolation)
+                            {
+                                Console.WriteLine(_localizer["Input is invalid"].Value); // ActivityLog 등으로 로그 남겨야 한다..
+                                TempData["Error"] = $"'{loginInputViewModel.Nickname}' {_localizer["is a Nickname that already exists."].Value} {_localizer["Please enter another Nickname."].Value}";
+                                return View();
+                            }
+                            else
+                            {
+                                Console.WriteLine(_localizer["Input is invalid"].Value); // ActivityLog 등으로 로그 남겨야 한다..
+                                TempData["Error"] = _localizer["Error occurred while processing about account registration"].Value;
+                                return View();
+                            }
+                        }
                         catch
                         {
                             Console.WriteLine(_localizer["Input is invalid"].Value); // ActivityLog 등으로 로그 남겨야 한다..
