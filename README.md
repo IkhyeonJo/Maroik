@@ -1,5 +1,5 @@
 # Maroik
-Welcome to Maroik!!
+Welcome to Maroik!
 
 I'm currently interested in make ASP.NET Core MVC WebApplication!
 
