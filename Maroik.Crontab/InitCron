@@ -1,4 +1,4 @@
 0 * * * * /bin/bash /home/peter-cho/Maroik/Maroik.Crontab/DBBackup.sh
 0 * * * * /bin/bash /home/peter-cho/Maroik/Maroik.Crontab/UploadFileBackUp.sh
 * * * * * /bin/bash /home/peter-cho/Maroik/Maroik.Crontab/ResourceInfo.sh
-0 3 * * * /bin/bash /home/peter-cho/Maroik/Maroik.Crontab/CertbotScript.sh renew
+0 3 1 2,4,6,8,10,12 * /bin/bash /home/peter-cho/Maroik/Maroik.Crontab/CertbotScript.sh renew
