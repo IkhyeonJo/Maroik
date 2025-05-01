@@ -36,11 +36,11 @@ services:
           - DBHOST=postgresql
           - ASPNETCORE_ENVIRONMENT=Production
           - ASPNETCORE_URLS=https://+:443;http://+:80
-          - ASPNETCORE_Kestrel__Certificates__Default__Path=/etc/ssl/fullchain.pem
-          - ASPNETCORE_Kestrel__Certificates__Default__KeyPath=/etc/ssl/privkey.pem
+          - ASPNETCORE_Kestrel__Certificates__Default__Path=/etc/ssl/fullchain1.pem
+          - ASPNETCORE_Kestrel__Certificates__Default__KeyPath=/etc/ssl/privkey1.pem
         volumes:
-          - ./Maroik.SSL/fullchain.pem:/etc/ssl/fullchain.pem:ro
-          - ./Maroik.SSL/privkey.pem:/etc/ssl/privkey.pem:ro
+          - ./Maroik.SSL/fullchain1.pem:/etc/ssl/fullchain1.pem:ro
+          - ./Maroik.SSL/privkey1.pem:/etc/ssl/privkey1.pem:ro
           - ./Maroik.Log/:/app/Maroik.Log:rw
         depends_on :
           - postgresql  
@@ -58,11 +58,11 @@ services:
           - DBHOST=postgresql
           - ASPNETCORE_ENVIRONMENT=Production
           - ASPNETCORE_URLS=https://+:5001
-          - ASPNETCORE_Kestrel__Certificates__Default__Path=/etc/ssl/fullchain.pem
-          - ASPNETCORE_Kestrel__Certificates__Default__KeyPath=/etc/ssl/privkey.pem
+          - ASPNETCORE_Kestrel__Certificates__Default__Path=/etc/ssl/fullchain1.pem
+          - ASPNETCORE_Kestrel__Certificates__Default__KeyPath=/etc/ssl/privkey1.pem
         volumes:
-          - ./Maroik.SSL/fullchain.pem:/etc/ssl/fullchain.pem:ro
-          - ./Maroik.SSL/privkey.pem:/etc/ssl/privkey.pem:ro
+          - ./Maroik.SSL/fullchain1.pem:/etc/ssl/fullchain1.pem:ro
+          - ./Maroik.SSL/privkey1.pem:/etc/ssl/privkey1.pem:ro
         depends_on :
           - postgresql  
 
@@ -79,11 +79,11 @@ services:
         environment :
           - ASPNETCORE_ENVIRONMENT=Production
           - ASPNETCORE_URLS=https://+:443;http://+:80
-          - ASPNETCORE_Kestrel__Certificates__Default__Path=/etc/ssl/fullchain.pem
-          - ASPNETCORE_Kestrel__Certificates__Default__KeyPath=/etc/ssl/privkey.pem
+          - ASPNETCORE_Kestrel__Certificates__Default__Path=/etc/ssl/fullchain1.pem
+          - ASPNETCORE_Kestrel__Certificates__Default__KeyPath=/etc/ssl/privkey1.pem
         volumes:
-          - ./Maroik.SSL/fullchain.pem:/etc/ssl/fullchain.pem:ro
-          - ./Maroik.SSL/privkey.pem:/etc/ssl/privkey.pem:ro
+          - ./Maroik.SSL/fullchain1.pem:/etc/ssl/fullchain1.pem:ro
+          - ./Maroik.SSL/privkey1.pem:/etc/ssl/privkey1.pem:ro
           - ./Maroik.FileStorage/upload/:/app/upload:rw
           
     maroik.ai:

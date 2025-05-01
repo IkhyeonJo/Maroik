@@ -36,11 +36,11 @@ services:
           - DBHOST=postgresql
           - ASPNETCORE_ENVIRONMENT=DockerComposeLocalDebug
           - ASPNETCORE_URLS=https://+:443;http://+:80
-          - ASPNETCORE_Kestrel__Certificates__Default__Path=/etc/ssl/localhost.pem
-          - ASPNETCORE_Kestrel__Certificates__Default__KeyPath=/etc/ssl/localhostprivkey.pem
+          - ASPNETCORE_Kestrel__Certificates__Default__Path=/etc/ssl/localhost1.pem
+          - ASPNETCORE_Kestrel__Certificates__Default__KeyPath=/etc/ssl/localhostprivkey1.pem
         volumes:
-          - ./Maroik.SSL/localhost.pem:/etc/ssl/localhost.pem:ro
-          - ./Maroik.SSL/localhostprivkey.pem:/etc/ssl/localhostprivkey.pem:ro
+          - ./Maroik.SSL/localhost1.pem:/etc/ssl/localhost1.pem:ro
+          - ./Maroik.SSL/localhostprivkey1.pem:/etc/ssl/localhostprivkey1.pem:ro
           - ./Maroik.Log/:/app/Maroik.Log:rw
         depends_on :
           - postgresql  
@@ -59,11 +59,11 @@ services:
           - DBHOST=postgresql
           - ASPNETCORE_ENVIRONMENT=DockerComposeLocalDebug
           - ASPNETCORE_URLS=https://+:5001;http://+:5000
-          - ASPNETCORE_Kestrel__Certificates__Default__Path=/etc/ssl/localhost.pem
-          - ASPNETCORE_Kestrel__Certificates__Default__KeyPath=/etc/ssl/localhostprivkey.pem
+          - ASPNETCORE_Kestrel__Certificates__Default__Path=/etc/ssl/localhost1.pem
+          - ASPNETCORE_Kestrel__Certificates__Default__KeyPath=/etc/ssl/localhostprivkey1.pem
         volumes:
-          - ./Maroik.SSL/localhost.pem:/etc/ssl/localhost.pem:ro
-          - ./Maroik.SSL/localhostprivkey.pem:/etc/ssl/localhostprivkey.pem:ro
+          - ./Maroik.SSL/localhost1.pem:/etc/ssl/localhost1.pem:ro
+          - ./Maroik.SSL/localhostprivkey1.pem:/etc/ssl/localhostprivkey1.pem:ro
         depends_on :
           - postgresql  
 
@@ -80,11 +80,11 @@ services:
         environment :
           - ASPNETCORE_ENVIRONMENT=DockerComposeLocalDebug
           - ASPNETCORE_URLS=https://+:443;http://+:80
-          - ASPNETCORE_Kestrel__Certificates__Default__Path=/etc/ssl/localhost.pem
-          - ASPNETCORE_Kestrel__Certificates__Default__KeyPath=/etc/ssl/localhostprivkey.pem
+          - ASPNETCORE_Kestrel__Certificates__Default__Path=/etc/ssl/localhost1.pem
+          - ASPNETCORE_Kestrel__Certificates__Default__KeyPath=/etc/ssl/localhostprivkey1.pem
         volumes:
-          - ./Maroik.SSL/localhost.pem:/etc/ssl/localhost.pem:ro
-          - ./Maroik.SSL/localhostprivkey.pem:/etc/ssl/localhostprivkey.pem:ro
+          - ./Maroik.SSL/localhost1.pem:/etc/ssl/localhost1.pem:ro
+          - ./Maroik.SSL/localhostprivkey1.pem:/etc/ssl/localhostprivkey1.pem:ro
           - ./Maroik.FileStorage/upload/:/app/upload:rw
 
     maroik.ai:
