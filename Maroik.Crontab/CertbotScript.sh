@@ -2,7 +2,7 @@
 
 DOMAIN="maroik.com"
 EMAIL="***REMOVED***m"
-PEM_DIR="/etc/letsencrypt/live/$DOMAIN"
+PEM_DIR="/home/peter-cho/Maroik/Maroik.SSL/conf/live/$DOMAIN"
 TARGET_DIR="/home/peter-cho/Maroik/Maroik.SSL"
 
 issue_wildcard() {
@@ -17,10 +17,6 @@ issue_wildcard() {
     -m $EMAIL
 
   if [ -f "$PEM_DIR/fullchain.pem" ]; then
-    cp "$PEM_DIR/fullchain.pem" "$TARGET_DIR/fullchain1.pem"
-    cp "$PEM_DIR/privkey.pem"   "$TARGET_DIR/privkey1.pem"
-    cp "$PEM_DIR/cert.pem"      "$TARGET_DIR/cert1.pem"
-    cp "$PEM_DIR/chain.pem"     "$TARGET_DIR/chain1.pem"
     echo "PEM files moved to $TARGET_DIR"
   else
     echo "No certificate issued. Please check logs."
@@ -31,14 +27,8 @@ renew() {
   docker-compose -f /home/peter-cho/Maroik/docker-compose.prod.yml run --rm certbot renew --dns-route53
 
   if [ -f "$PEM_DIR/fullchain.pem" ]; then
-    cp "$PEM_DIR/fullchain.pem" "$TARGET_DIR/fullchain1.pem"
-    cp "$PEM_DIR/privkey.pem"   "$TARGET_DIR/privkey1.pem"
-    cp "$PEM_DIR/cert.pem"      "$TARGET_DIR/cert1.pem"
-    cp "$PEM_DIR/chain.pem"     "$TARGET_DIR/chain1.pem"
-    
     docker-compose -f /home/peter-cho/Maroik/docker-compose.prod.yml restart
-    
-    echo "Renewed PEM files moved to $TARGET_DIR and docker-compose restarted"
+    echo "Renewed PEM files and docker-compose restarted"
   else
     echo "No certificate renewal required."
   fi
