@@ -1,12 +1,6 @@
 Docker Container Status:
-CONTAINER ID   IMAGE                       COMMAND                  CREATED         STATUS         PORTS                                                                      NAMES
-e1da7a8c3cd3   maroik_maroik.webapi        "dotnet Maroik.WebAP…"   5 minutes ago   Up 5 minutes   5000/tcp, 0.0.0.0:5001->5001/tcp, :::5001->5001/tcp                        Maroik.WebAPI
-44edf10160fd   maroik_maroik.website       "dotnet Maroik.WebSi…"   5 minutes ago   Up 5 minutes   0.0.0.0:80->80/tcp, :::80->80/tcp, 0.0.0.0:443->443/tcp, :::443->443/tcp   Maroik.WebSite
-8ed565d4ef70   maroik_maroik.filestorage   "dotnet Maroik.FileS…"   5 minutes ago   Up 5 minutes   80/tcp, 443/tcp                                                            Maroik.FileStorage
-0dd6203e3731   mariadb:10.3                "docker-entrypoint.s…"   5 minutes ago   Up 5 minutes   3306/tcp                                                                   Maroik.MariaDB
+NAMES       STATUS
+Maroik.AI   Up 48 seconds
 Docker Resource Usage:
-CONTAINER ID   NAME                 CPU %     MEM USAGE / LIMIT    MEM %     NET I/O           BLOCK I/O        PIDS
-e1da7a8c3cd3   Maroik.WebAPI        0.03%     32.88MiB / 7.54GiB   0.43%     3.4kB / 1.09kB    0B / 8.19kB      19
-44edf10160fd   Maroik.WebSite       0.02%     45.3MiB / 7.54GiB    0.59%     6.11kB / 5.16kB   0B / 8.19kB      19
-8ed565d4ef70   Maroik.FileStorage   0.21%     32.69MiB / 7.54GiB   0.42%     3.86kB / 1.09kB   0B / 8.19kB      19
-0dd6203e3731   Maroik.MariaDB       0.19%     121.6MiB / 7.54GiB   1.57%     1.59kB / 0B       131MB / 91.4MB   30
+NAME        CPU %     MEM USAGE / LIMIT
+Maroik.AI   0.87%     44.93MiB / 15.49GiB
