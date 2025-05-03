@@ -7,7 +7,7 @@
     string currentCulture = Context.Features.Get<Microsoft.AspNetCore.Localization.IRequestCultureFeature>().RequestCulture.Culture.Name;
     Context.Session.TryGetValue(Maroik.Common.Miscellaneous.Extensions.EnumHelper.GetDescription(Maroik.Common.Miscellaneous.Utilities.Session.Account), out byte[] resultByte);
     string loginedAccountTimeZoneIanaId = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId;
-    List<Asset> assets = (await assetRepository.GetAssetsAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email)).Where(x => !x.Deleted).ToList();
+    List<Asset> assets = (await assetRepository.GetAssetsAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email)).Where(x => !x.Deleted).OrderBy(x => x.ProductName).ToList();
 
     DateTime currentTime = DateTime.UtcNow.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId);
     string currentDate = currentTime.ToString("yyyy-MM-dd");
@@ -205,7 +205,7 @@
                                 <label for="createIncomeDepositMyAssetProductName">@localizer["DepositMyAssetProductName"].Value</label>
                                 <br />
                                 <select id="createIncomeDepositMyAssetProductName" name="createIncomeDepositMyAssetProductName" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
-                                    @foreach (var item in assets.OrderBy(x => x.ProductName).ToList())
+                                    @foreach (var item in assets)
                                     {
                                         if (assets.First() == item)
                                         {
@@ -328,7 +328,7 @@
                                 <label for="editIncomeDepositMyAssetProductName">@localizer["DepositMyAssetProductName"].Value</label>
                                 <br />
                                 <select id="editIncomeDepositMyAssetProductName" name="editIncomeDepositMyAssetProductName" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
-                                    @foreach (var item in assets.OrderBy(x => x.ProductName).ToList())
+                                    @foreach (var item in assets)
                                     {
                                         <option value="@item.ProductName">@item.ProductName</option>
                                     }

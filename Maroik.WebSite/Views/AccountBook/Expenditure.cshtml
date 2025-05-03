@@ -8,7 +8,7 @@
 
     Context.Session.TryGetValue(Maroik.Common.Miscellaneous.Extensions.EnumHelper.GetDescription(Maroik.Common.Miscellaneous.Utilities.Session.Account), out byte[] resultByte);
     string loginedAccountTimeZoneIanaId = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId;
-    List<Asset> assets = (await assetRepository.GetAssetsAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email)).Where(x => !x.Deleted).ToList();
+    List<Asset> assets = (await assetRepository.GetAssetsAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email)).Where(x => !x.Deleted).OrderBy(x => x.ProductName).ToList();
 
     DateTime currentTime = DateTime.UtcNow.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId);
     string currentDate = currentTime.ToString("yyyy-MM-dd");
@@ -224,7 +224,7 @@
                                 <label for="createExpenditurePaymentMethod">@localizer["PaymentMethod"].Value</label>
                                 <br />
                                 <select id="createExpenditurePaymentMethod" name="createExpenditurePaymentMethod" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
-                                    @foreach (var item in assets.OrderBy(x => x.ProductName).ToList())
+                                    @foreach (var item in assets)
                                     {
                                         if (assets.First() == item)
                                         {
@@ -248,7 +248,7 @@
                                 <label for="createExpenditureMyDepositAsset">@localizer["MyDepositAsset"].Value</label>
                                 <br />
                                 <select id="createExpenditureMyDepositAsset" name="createExpenditureMyDepositAsset" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
-                                    @foreach (var item in assets.OrderBy(x => x.ProductName).ToList())
+                                    @foreach (var item in assets)
                                     {
                                         <option value="@item.ProductName">@item.ProductName</option>
                                     }
@@ -377,7 +377,7 @@
                                 <label for="editExpenditurePaymentMethod">@localizer["PaymentMethod"].Value</label>
                                 <br />
                                 <select id="editExpenditurePaymentMethod" name="editExpenditurePaymentMethod" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
-                                    @foreach (var item in assets.OrderBy(x => x.ProductName).ToList())
+                                    @foreach (var item in assets)
                                     {
                                         <option value="@item.ProductName">@item.ProductName</option>
                                     }
@@ -393,7 +393,7 @@
                                 <label for="editExpenditureMyDepositAsset">@localizer["MyDepositAsset"].Value</label>
                                 <br />
                                 <select id="editExpenditureMyDepositAsset" name="editExpenditureMyDepositAsset" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
-                                    @foreach (var item in assets.OrderBy(x => x.ProductName).ToList())
+                                    @foreach (var item in assets)
                                     {
                                         <option value="@item.ProductName">@item.ProductName</option>
                                     }
