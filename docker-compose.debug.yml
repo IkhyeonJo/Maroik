@@ -103,3 +103,13 @@ services:
         depends_on:
           - postgresql
         restart: always
+
+    certbot:
+      image: certbot/dns-route53
+      container_name: certbot
+      volumes:
+        - ./Maroik.SSL/conf:/etc/letsencrypt
+        - ./Maroik.SSL/logs:/var/log/letsencrypt
+        - ./.aws:/root/.aws:ro
+      environment:
+        - AWS_PROFILE=default
