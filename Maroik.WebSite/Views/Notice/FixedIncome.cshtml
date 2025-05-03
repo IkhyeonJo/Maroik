@@ -181,7 +181,7 @@
                                 <label for="createFixedIncomeDepositMyAssetProductName">@localizer["DepositMyAssetProductName"].Value</label>
                                 <br />
                                 <select id="createFixedIncomeDepositMyAssetProductName" name="createFixedIncomeDepositMyAssetProductName" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
-                                    @foreach (Asset item in assets)
+                                    @foreach (var item in assets.OrderBy(x => x.ProductName).ToList())
                                     {
                                         if (assets.First() == item)
                                         {
@@ -293,7 +293,7 @@
                                 <label for="editFixedIncomeDepositMyAssetProductName">@localizer["DepositMyAssetProductName"].Value</label>
                                 <br />
                                 <select id="editFixedIncomeDepositMyAssetProductName" name="editFixedIncomeDepositMyAssetProductName" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
-                                    @foreach (Asset item in assets)
+                                    @foreach (var item in assets.OrderBy(x => x.ProductName).ToList())
                                     {
                                         <option value="@item.ProductName">@item.ProductName</option>
                                     }
