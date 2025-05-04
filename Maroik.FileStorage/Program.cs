@@ -1,38 +1,21 @@
-using Maroik.Common.DataAccess.Contracts;
-using Maroik.Common.DataAccess.Data;
-using Maroik.Common.DataAccess.Services;
 using Maroik.Common.Miscellaneous.Utilities;
 using Maroik.FileStorage.Contracts;
 using Maroik.FileStorage.Infrastructure;
 using Maroik.FileStorage.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Rewrite;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Security.Authentication;
 using System.Text;
+using System.Security.Cryptography.X509Certificates;
 
-WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
-
-builder.WebHost.ConfigureKestrel(serverOptions =>
-{
-    serverOptions.ConfigureEndpointDefaults(listenOptions =>
-    {
-        serverOptions.Limits.MinRequestBodyDataRate = new MinDataRate(100, TimeSpan.FromSeconds(10));
-        serverOptions.Limits.MinResponseDataRate = new MinDataRate(100, TimeSpan.FromSeconds(10));
-        serverOptions.Limits.KeepAliveTimeout = TimeSpan.FromMinutes(2);
-        serverOptions.Limits.RequestHeadersTimeout = TimeSpan.FromMinutes(1);
-        serverOptions.ConfigureHttpsDefaults(listenOptions =>
-        {
-            listenOptions.SslProtocols = SslProtocols.Tls12;
-        });
-    });
-});
+var builder = WebApplication.CreateBuilder(args);
 
 #region ServerSettings
 ServerSetting.MaxLoginAttempt = Convert.ToByte(builder.Configuration.GetSection("ServerSetting")["MaxLoginAttempt"]);
+ServerSetting.DockerCertPath = builder.Configuration.GetSection("ServerSetting")["DockerCertPath"];
+ServerSetting.DockerKeyPath = builder.Configuration.GetSection("ServerSetting")["DockerKeyPath"];
 #endregion
 
 // Add services to the container.
@@ -85,7 +68,7 @@ builder.Services.AddSwaggerGen(c =>
         Description = "Enter JWT Bearer token **_only_**",
         In = ParameterLocation.Header,
         Type = SecuritySchemeType.Http,
-        Scheme = "bearer", // must be lower case
+        Scheme = "bearer", // must be lower-case
         BearerFormat = "JWT",
         Reference = new OpenApiReference
         {
@@ -96,17 +79,111 @@ builder.Services.AddSwaggerGen(c =>
     c.AddSecurityDefinition(securityScheme.Reference.Id, securityScheme);
     c.AddSecurityRequirement(new OpenApiSecurityRequirement
     {
-                    {securityScheme, Array.Empty<string>()}
+                    {securityScheme, []}
     });
 });
 
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll",
-        builder => { _ = builder.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader(); });
+        policyBuilder => { _ = policyBuilder.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader(); });
 });
 
-WebApplication app = builder.Build();
+#region HotReload SSL
+// Certificate loading function definition using X509CertificateLoader
+X509Certificate2 LoadCertificate(string certPath, string keyPath)
+{
+    try
+    {
+        // Read certificate and key as string (pem format)
+        var certPem = File.ReadAllText(certPath);
+        var keyPem = File.ReadAllText(keyPath);
+
+        // Create the certificate using X509Certificate2.CreateFromPem
+        var certificate = X509Certificate2.CreateFromPem(certPem, keyPem);
+        return certificate;
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Failed to load certificate from {certPath} and {keyPath}: {ex.Message}");
+        throw;
+    }
+}
+
+if (!string.IsNullOrEmpty(ServerSetting.DockerCertPath) && !string.IsNullOrEmpty(ServerSetting.DockerKeyPath))
+{
+    var certPath = ServerSetting.DockerCertPath;
+    var keyPath = ServerSetting.DockerKeyPath;
+
+    // Load certificate
+    var currentCert = LoadCertificate(certPath, keyPath);
+    
+    // Configure Kestrel SSL settings
+    builder.WebHost.ConfigureKestrel(serverOptions =>
+    {
+        serverOptions.ConfigureEndpointDefaults(_ =>
+        {
+            serverOptions.Limits.MinRequestBodyDataRate = new MinDataRate(100, TimeSpan.FromSeconds(10));
+            serverOptions.Limits.MinResponseDataRate = new MinDataRate(100, TimeSpan.FromSeconds(10));
+            serverOptions.Limits.KeepAliveTimeout = TimeSpan.FromMinutes(2);
+            serverOptions.Limits.RequestHeadersTimeout = TimeSpan.FromMinutes(1);
+            serverOptions.ConfigureHttpsDefaults(options =>
+            {
+                options.SslProtocols = SslProtocols.Tls12;
+                options.ServerCertificateSelector = (_, _) => currentCert;
+            });
+        });
+    });
+
+    
+
+    // Set up file system watcher to detect certificate changes
+    var watcher = new FileSystemWatcher(Path.GetDirectoryName(certPath)!);
+    watcher.Filter = "*.pem";
+    watcher.NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.Size;
+
+    watcher.Changed += (_, e) =>
+    {
+        try
+        {
+            Console.WriteLine($"Certificate change detected: {e.FullPath}");
+
+            // Dispose the previous certificate before loading a new one
+            currentCert?.Dispose();
+
+            // Reload the certificate on change
+            currentCert = LoadCertificate(certPath, keyPath);
+
+            Console.WriteLine("Certificate reloaded.");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Failed to load certificate: {ex.Message}");
+        }
+    };
+
+    watcher.EnableRaisingEvents = true;
+}
+else
+{
+    builder.WebHost.ConfigureKestrel(serverOptions =>
+    {
+        serverOptions.ConfigureEndpointDefaults(_ =>
+        {
+            serverOptions.Limits.MinRequestBodyDataRate = new MinDataRate(100, TimeSpan.FromSeconds(10));
+            serverOptions.Limits.MinResponseDataRate = new MinDataRate(100, TimeSpan.FromSeconds(10));
+            serverOptions.Limits.KeepAliveTimeout = TimeSpan.FromMinutes(2);
+            serverOptions.Limits.RequestHeadersTimeout = TimeSpan.FromMinutes(1);
+            serverOptions.ConfigureHttpsDefaults(options =>
+            {
+                options.SslProtocols = SslProtocols.Tls12;
+            });
+        });
+    });
+}
+#endregion
+
+var app = builder.Build();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
