@@ -15,6 +15,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "3.Crontab", "3.Crontab", "{
 		Maroik.Crontab\InitCron = Maroik.Crontab\InitCron
 		Maroik.Crontab\ResourceInfo.sh = Maroik.Crontab\ResourceInfo.sh
 		Maroik.Crontab\UploadFileBackUp.sh = Maroik.Crontab\UploadFileBackUp.sh
+		Maroik.Crontab\CertbotScript.sh = Maroik.Crontab\CertbotScript.sh
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "0.DB", "0.DB", "{CD016BBE-CCB8-48AF-B586-330D23431A8A}"

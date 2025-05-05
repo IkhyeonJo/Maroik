@@ -36,11 +36,10 @@ services:
           - DBHOST=postgresql
           - ASPNETCORE_ENVIRONMENT=Production
           - ASPNETCORE_URLS=https://+:443;http://+:80
-          - ASPNETCORE_Kestrel__Certificates__Default__Path=/etc/ssl/fullchain1.pem
-          - ASPNETCORE_Kestrel__Certificates__Default__KeyPath=/etc/ssl/privkey1.pem
+          - ASPNETCORE_Kestrel__Certificates__Default__Path=/etc/letsencrypt/live/maroik.com/fullchain.pem
+          - ASPNETCORE_Kestrel__Certificates__Default__KeyPath=/etc/letsencrypt/live/maroik.com/privkey.pem
         volumes:
-          - ./Maroik.SSL/fullchain1.pem:/etc/ssl/fullchain1.pem:ro
-          - ./Maroik.SSL/privkey1.pem:/etc/ssl/privkey1.pem:ro
+          - ./Maroik.SSL/conf:/etc/letsencrypt:ro
           - ./Maroik.Log/:/app/Maroik.Log:rw
         depends_on :
           - postgresql  
@@ -58,11 +57,10 @@ services:
           - DBHOST=postgresql
           - ASPNETCORE_ENVIRONMENT=Production
           - ASPNETCORE_URLS=https://+:5001
-          - ASPNETCORE_Kestrel__Certificates__Default__Path=/etc/ssl/fullchain1.pem
-          - ASPNETCORE_Kestrel__Certificates__Default__KeyPath=/etc/ssl/privkey1.pem
+          - ASPNETCORE_Kestrel__Certificates__Default__Path=/etc/letsencrypt/live/maroik.com/fullchain.pem
+          - ASPNETCORE_Kestrel__Certificates__Default__KeyPath=/etc/letsencrypt/live/maroik.com/privkey.pem
         volumes:
-          - ./Maroik.SSL/fullchain1.pem:/etc/ssl/fullchain1.pem:ro
-          - ./Maroik.SSL/privkey1.pem:/etc/ssl/privkey1.pem:ro
+          - ./Maroik.SSL/conf:/etc/letsencrypt:ro
         depends_on :
           - postgresql  
 
@@ -79,11 +77,10 @@ services:
         environment :
           - ASPNETCORE_ENVIRONMENT=Production
           - ASPNETCORE_URLS=https://+:443;http://+:80
-          - ASPNETCORE_Kestrel__Certificates__Default__Path=/etc/ssl/fullchain1.pem
-          - ASPNETCORE_Kestrel__Certificates__Default__KeyPath=/etc/ssl/privkey1.pem
+          - ASPNETCORE_Kestrel__Certificates__Default__Path=/etc/letsencrypt/live/maroik.com/fullchain.pem
+          - ASPNETCORE_Kestrel__Certificates__Default__KeyPath=/etc/letsencrypt/live/maroik.com/privkey.pem
         volumes:
-          - ./Maroik.SSL/fullchain1.pem:/etc/ssl/fullchain1.pem:ro
-          - ./Maroik.SSL/privkey1.pem:/etc/ssl/privkey1.pem:ro
+          - ./Maroik.SSL/conf:/etc/letsencrypt:ro
           - ./Maroik.FileStorage/upload/:/app/upload:rw
           
     maroik.ai:
@@ -102,3 +99,13 @@ services:
         depends_on:
           - postgresql
         restart: always
+        
+    certbot:
+        image: certbot/dns-route53
+        container_name: certbot
+        volumes:
+          - ./Maroik.SSL/conf:/etc/letsencrypt
+          - ./Maroik.SSL/logs:/var/log/letsencrypt
+          - ./.aws:/root/.aws:ro
+        environment:
+          - AWS_PROFILE=default

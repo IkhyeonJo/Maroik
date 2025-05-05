@@ -31,6 +31,9 @@ sudo docker-compose -f /home/peter-cho/Maroik/docker-compose.prod.yml up -d
 # Install Python 3
 sudo apt install python3 -y
 
+# Set permissions for certs 
+chmod 777 /home/peter-cho/Maroik/Maroik.SSL/*.pem
+
 # Set permissions for scripts
 chmod 777 /home/peter-cho/Maroik/Maroik.Crontab/*.sh
 
