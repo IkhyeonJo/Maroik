@@ -6,7 +6,7 @@
     string currentCulture = Context.Features.Get<Microsoft.AspNetCore.Localization.IRequestCultureFeature>().RequestCulture.Culture.Name;
     Context.Session.TryGetValue(Maroik.Common.Miscellaneous.Extensions.EnumHelper.GetDescription(Maroik.Common.Miscellaneous.Utilities.Session.Account), out byte[] resultByte);
 
-    List<Asset> assets = (await assetRepository.GetAssetsAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email)).Where(x => !x.Deleted).ToList();
+    List<Asset> assets = (await assetRepository.GetAssetsAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte ?? [])).Email)).Where(x => !x.Deleted).OrderBy(x => x.ProductName).ToList();
 }
 
 @Html.Hidden("localizerPrevText", localizer["PrevText"].Value)
@@ -181,7 +181,7 @@
                                 <label for="createFixedIncomeDepositMyAssetProductName">@localizer["DepositMyAssetProductName"].Value</label>
                                 <br />
                                 <select id="createFixedIncomeDepositMyAssetProductName" name="createFixedIncomeDepositMyAssetProductName" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
-                                    @foreach (Asset item in assets)
+                                    @foreach (var item in assets)
                                     {
                                         if (assets.First() == item)
                                         {
@@ -293,7 +293,7 @@
                                 <label for="editFixedIncomeDepositMyAssetProductName">@localizer["DepositMyAssetProductName"].Value</label>
                                 <br />
                                 <select id="editFixedIncomeDepositMyAssetProductName" name="editFixedIncomeDepositMyAssetProductName" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
-                                    @foreach (Asset item in assets)
+                                    @foreach (var item in assets)
                                     {
                                         <option value="@item.ProductName">@item.ProductName</option>
                                     }
