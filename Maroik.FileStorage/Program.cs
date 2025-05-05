@@ -1,31 +1,38 @@
+using Maroik.Common.DataAccess.Contracts;
+using Maroik.Common.DataAccess.Data;
+using Maroik.Common.DataAccess.Services;
 using Maroik.Common.Miscellaneous.Utilities;
 using Maroik.FileStorage.Contracts;
 using Maroik.FileStorage.Infrastructure;
 using Maroik.FileStorage.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Rewrite;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Security.Authentication;
 using System.Text;
-using System.Security.Cryptography.X509Certificates;
-using System.Security.Cryptography;
-using System.Diagnostics;
-using System.Runtime.InteropServices;
 
-X509Certificate2 currentCert;
-string previousHash;
-object certLock = new();
-var isReloading = false;
-// ReSharper disable once TooWideLocalVariableScope
-System.Timers.Timer certTimer;
+WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
-var builder = WebApplication.CreateBuilder(args);
+builder.WebHost.ConfigureKestrel(serverOptions =>
+{
+    serverOptions.ConfigureEndpointDefaults(listenOptions =>
+    {
+        serverOptions.Limits.MinRequestBodyDataRate = new MinDataRate(100, TimeSpan.FromSeconds(10));
+        serverOptions.Limits.MinResponseDataRate = new MinDataRate(100, TimeSpan.FromSeconds(10));
+        serverOptions.Limits.KeepAliveTimeout = TimeSpan.FromMinutes(2);
+        serverOptions.Limits.RequestHeadersTimeout = TimeSpan.FromMinutes(1);
+        serverOptions.ConfigureHttpsDefaults(listenOptions =>
+        {
+            listenOptions.SslProtocols = SslProtocols.Tls12;
+        });
+    });
+});
 
 #region ServerSettings
 ServerSetting.MaxLoginAttempt = Convert.ToByte(builder.Configuration.GetSection("ServerSetting")["MaxLoginAttempt"]);
-ServerSetting.DockerCertPath = builder.Configuration.GetSection("ServerSetting")["DockerCertPath"];
-ServerSetting.DockerKeyPath = builder.Configuration.GetSection("ServerSetting")["DockerKeyPath"];
 #endregion
 
 // Add services to the container.
@@ -78,7 +85,7 @@ builder.Services.AddSwaggerGen(c =>
         Description = "Enter JWT Bearer token **_only_**",
         In = ParameterLocation.Header,
         Type = SecuritySchemeType.Http,
-        Scheme = "bearer", // must be lower-case
+        Scheme = "bearer", // must be lower case
         BearerFormat = "JWT",
         Reference = new OpenApiReference
         {
@@ -89,203 +96,17 @@ builder.Services.AddSwaggerGen(c =>
     c.AddSecurityDefinition(securityScheme.Reference.Id, securityScheme);
     c.AddSecurityRequirement(new OpenApiSecurityRequirement
     {
-                    {securityScheme, []}
+                    {securityScheme, Array.Empty<string>()}
     });
 });
 
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll",
-        policyBuilder => { _ = policyBuilder.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader(); });
+        builder => { _ = builder.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader(); });
 });
 
-#region HotReload SSL
-string ComputeFileHash(string filePath)
-{
-    using var sha256 = SHA256.Create();
-    using var stream = new FileStream(
-        filePath,
-        FileMode.Open,
-        FileAccess.Read,
-        FileShare.ReadWrite,
-        bufferSize: 8192,
-        FileOptions.SequentialScan);
-
-    var hashBytes = sha256.ComputeHash(stream);
-    return Convert.ToHexString(hashBytes); // .NET 5+
-}
-string GetLinkTarget(string linkPath)
-{
-    try
-    {
-        var startInfo = new ProcessStartInfo
-        {
-            FileName = "readlink",
-            Arguments = linkPath,
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            UseShellExecute = false,
-            CreateNoWindow = true
-        };
-
-        using var process = Process.Start(startInfo);
-        var output = process?.StandardOutput.ReadToEnd().Trim();
-        var error = process?.StandardError.ReadToEnd().Trim();
-        process?.WaitForExit();
-
-        if (process?.ExitCode != 0)
-        {
-            throw new Exception($"readlink failed: {error}");
-        }
-
-        return output;
-    }
-    catch (Exception ex)
-    {
-        Console.Error.WriteLine($"Error resolving link: {ex.Message}");
-        return null;
-    }
-}
-// Certificate loading function definition using X509CertificateLoader
-X509Certificate2 LoadCertificate(string certPath, string keyPath)
-{
-    try
-    {
-        var linkCertPem = "";
-        var linkKeyPem = "";
-        
-        // Read certificate and key as string (pem format)
-        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-        {
-            linkCertPem = File.ReadAllText(certPath);
-            linkKeyPem = File.ReadAllText(keyPath);
-        }
-        else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux) || RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
-        {
-            linkCertPem = GetLinkTarget(certPath);
-            linkKeyPem = GetLinkTarget(keyPath);   
-        }
-
-        var realCertName = Path.GetFileName(linkCertPem);
-        var realKeyName = Path.GetFileName(linkKeyPem);
-
-        var realCertPath = certPath.Replace("/live/", "/archive/").Replace("cert.pem", realCertName);
-        var realKeyPath = keyPath.Replace("/live/", "/archive/").Replace("privkey.pem", realKeyName);
-
-        var realCertPem = File.ReadAllText(realCertPath);
-        var realKeyPem = File.ReadAllText(realKeyPath);
-
-        // Create the certificate using X509Certificate2.CreateFromPem
-        var cert = X509Certificate2.CreateFromPem(realCertPem);
-
-        // Load private key from PEM manually
-        using ECDsa ecdsaPrivateKey = ECDsa.Create();
-        ecdsaPrivateKey.ImportFromPem(realKeyPem);
-
-        // Combine certificate plus private key
-        var certWithKey = cert.CopyWithPrivateKey(ecdsaPrivateKey);
-
-        return certWithKey;
-    }
-    catch (Exception ex)
-    {
-        Console.WriteLine($"Failed to load certificate from {certPath} and {keyPath}: {ex.Message}");
-        throw;
-    }
-}
-
-if (!string.IsNullOrEmpty(ServerSetting.DockerCertPath) && !string.IsNullOrEmpty(ServerSetting.DockerKeyPath))
-{
-    var certPath = ServerSetting.DockerCertPath;
-    var keyPath = ServerSetting.DockerKeyPath;
-
-    // Load certificate
-    currentCert = LoadCertificate(certPath, keyPath);
-    previousHash = ComputeFileHash(certPath);
-
-    // Configure Kestrel SSL settings
-    builder.WebHost.ConfigureKestrel(serverOptions =>
-    {
-        serverOptions.ConfigureEndpointDefaults(_ =>
-        {
-            serverOptions.Limits.MinRequestBodyDataRate = new MinDataRate(100, TimeSpan.FromSeconds(10));
-            serverOptions.Limits.MinResponseDataRate = new MinDataRate(100, TimeSpan.FromSeconds(10));
-            serverOptions.Limits.KeepAliveTimeout = TimeSpan.FromMinutes(2);
-            serverOptions.Limits.RequestHeadersTimeout = TimeSpan.FromMinutes(1);
-            serverOptions.ConfigureHttpsDefaults(options =>
-            {
-                options.SslProtocols = SslProtocols.Tls12;
-                options.ServerCertificateSelector = (_, _) =>
-                {
-                    lock (certLock)
-                    {
-                        return currentCert!;
-                    }
-                };
-            });
-        });
-    });
-
-    certTimer = new System.Timers.Timer(TimeSpan.FromHours(1).TotalMilliseconds); // for debug [TimeSpan.FromSeconds(5)]
-    certTimer.AutoReset = true;
-
-    certTimer.Elapsed += (_, _) =>
-    {
-        if (isReloading) return;
-        isReloading = true;
-
-        try
-        {
-            var currentHash = ComputeFileHash(certPath);
-            if (currentHash != previousHash)
-            {
-                Console.WriteLine("Certificate file, reloading...");
-
-                var newCert = LoadCertificate(certPath, keyPath);
-
-                lock (certLock)
-                {
-                    currentCert?.Dispose();
-                    currentCert = newCert;
-                    previousHash = currentHash;
-                }
-
-                Console.WriteLine("Certificate reloaded successfully.");
-            }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Failed to reload certificate: {ex.Message}");
-        }
-        finally
-        {
-            isReloading = false;
-        }
-    };
-
-    certTimer.Start();
-    Console.WriteLine("Certificate polling started.");
-}
-else
-{
-    builder.WebHost.ConfigureKestrel(serverOptions =>
-    {
-        serverOptions.ConfigureEndpointDefaults(_ =>
-        {
-            serverOptions.Limits.MinRequestBodyDataRate = new MinDataRate(100, TimeSpan.FromSeconds(10));
-            serverOptions.Limits.MinResponseDataRate = new MinDataRate(100, TimeSpan.FromSeconds(10));
-            serverOptions.Limits.KeepAliveTimeout = TimeSpan.FromMinutes(2);
-            serverOptions.Limits.RequestHeadersTimeout = TimeSpan.FromMinutes(1);
-            serverOptions.ConfigureHttpsDefaults(options =>
-            {
-                options.SslProtocols = SslProtocols.Tls12;
-            });
-        });
-    });
-}
-#endregion
-
-var app = builder.Build();
+WebApplication app = builder.Build();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
