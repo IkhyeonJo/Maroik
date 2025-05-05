@@ -17,11 +17,11 @@ using System.Security.Cryptography.X509Certificates;
 using System.Security.Cryptography;
 
 X509Certificate2 currentCert;
+string previousHash;
 object certLock = new();
 var isReloading = false;
 // ReSharper disable once TooWideLocalVariableScope
 System.Timers.Timer certTimer;
-DateTime lastWriteTime;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -123,6 +123,20 @@ builder.Services.AddCors(options =>
 });
 
 #region HotReload SSL
+string ComputeFileHash(string filePath)
+{
+    using var sha256 = SHA256.Create();
+    using var stream = new FileStream(
+        filePath,
+        FileMode.Open,
+        FileAccess.Read,
+        FileShare.ReadWrite,
+        bufferSize: 8192,
+        FileOptions.SequentialScan);
+
+    var hashBytes = sha256.ComputeHash(stream);
+    return Convert.ToHexString(hashBytes); // .NET 5+
+}
 // Certificate loading function definition using X509CertificateLoader
 X509Certificate2 LoadCertificate(string certPath, string keyPath)
 {
@@ -167,7 +181,8 @@ if (!string.IsNullOrEmpty(ServerSetting.DockerCertPath) && !string.IsNullOrEmpty
 
     // Load certificate
     currentCert = LoadCertificate(certPath, keyPath);
-    
+    previousHash = ComputeFileHash(certPath);
+
     // Configure Kestrel SSL settings
     builder.WebHost.ConfigureKestrel(serverOptions =>
     {
@@ -191,8 +206,6 @@ if (!string.IsNullOrEmpty(ServerSetting.DockerCertPath) && !string.IsNullOrEmpty
         });
     });
 
-    lastWriteTime = File.GetLastWriteTimeUtc(certPath);
-
     certTimer = new System.Timers.Timer(TimeSpan.FromHours(1).TotalMilliseconds); // for debug [TimeSpan.FromSeconds(5)]
     certTimer.AutoReset = true;
 
@@ -203,10 +216,10 @@ if (!string.IsNullOrEmpty(ServerSetting.DockerCertPath) && !string.IsNullOrEmpty
 
         try
         {
-            var newWriteTime = File.GetLastWriteTimeUtc(certPath);
-            if (newWriteTime != lastWriteTime)
+            var currentHash = ComputeFileHash(certPath);
+            if (currentHash != previousHash)
             {
-                Console.WriteLine($"[Timer] Certificate file updated at {newWriteTime}, reloading...");
+                Console.WriteLine("Certificate file, reloading...");
 
                 var newCert = LoadCertificate(certPath, keyPath);
 
@@ -214,15 +227,14 @@ if (!string.IsNullOrEmpty(ServerSetting.DockerCertPath) && !string.IsNullOrEmpty
                 {
                     currentCert?.Dispose();
                     currentCert = newCert;
-                    lastWriteTime = newWriteTime;
+                    previousHash = currentHash;
                 }
-
-                Console.WriteLine("[Timer] Certificate reloaded successfully.");
+                Console.WriteLine("Certificate reloaded successfully.");
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"[Timer] Failed to reload certificate: {ex.Message}");
+            Console.WriteLine($"Failed to reload certificate: {ex.Message}");
         }
         finally
         {
@@ -231,7 +243,7 @@ if (!string.IsNullOrEmpty(ServerSetting.DockerCertPath) && !string.IsNullOrEmpty
     };
 
     certTimer.Start();
-    Console.WriteLine("[Init] Certificate polling started.");
+    Console.WriteLine("Certificate polling started.");
 }
 else
 {
