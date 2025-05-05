@@ -18,7 +18,8 @@ using System.Security.Cryptography;
 
 X509Certificate2 currentCert;
 object certLock = new();
-bool isReloading = false;
+var isReloading = false;
+// ReSharper disable once TooWideLocalVariableScope
 System.Timers.Timer certTimer;
 DateTime lastWriteTime;
 
