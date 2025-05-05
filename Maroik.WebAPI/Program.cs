@@ -62,7 +62,7 @@ builder.Services.AddAuthentication(x =>
 builder.Services.AddSingleton<IJwtAuthManager, JwtAuthManager>();
 builder.Services.AddHostedService<JwtRefreshTokenCache>();
 
-#region AddMariaDbContext
+#region AddDbContext
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(
         builder.Configuration.GetConnectionString("DefaultConnection"),

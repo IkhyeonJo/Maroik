@@ -48,7 +48,7 @@ ServerSetting.DockerCertPath = builder.Configuration.GetSection("ServerSetting")
 ServerSetting.DockerKeyPath = builder.Configuration.GetSection("ServerSetting")["DockerKeyPath"];
 #endregion
 
-#region AddMariaDbContext
+#region AddDbContext
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(
         builder.Configuration.GetConnectionString("DefaultConnection"),
