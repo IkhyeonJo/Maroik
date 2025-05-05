@@ -36,8 +36,6 @@ services:
           - DBHOST=postgresql
           - ASPNETCORE_ENVIRONMENT=Production
           - ASPNETCORE_URLS=https://+:443;http://+:80
-          - ASPNETCORE_Kestrel__Certificates__Default__Path=/etc/letsencrypt/live/maroik.com/fullchain.pem
-          - ASPNETCORE_Kestrel__Certificates__Default__KeyPath=/etc/letsencrypt/live/maroik.com/privkey.pem
         volumes:
           - ./Maroik.SSL/conf:/etc/letsencrypt:ro
           - ./Maroik.Log/:/app/Maroik.Log:rw
@@ -57,8 +55,6 @@ services:
           - DBHOST=postgresql
           - ASPNETCORE_ENVIRONMENT=Production
           - ASPNETCORE_URLS=https://+:5001
-          - ASPNETCORE_Kestrel__Certificates__Default__Path=/etc/letsencrypt/live/maroik.com/fullchain.pem
-          - ASPNETCORE_Kestrel__Certificates__Default__KeyPath=/etc/letsencrypt/live/maroik.com/privkey.pem
         volumes:
           - ./Maroik.SSL/conf:/etc/letsencrypt:ro
         depends_on :
@@ -77,8 +73,6 @@ services:
         environment :
           - ASPNETCORE_ENVIRONMENT=Production
           - ASPNETCORE_URLS=https://+:443;http://+:80
-          - ASPNETCORE_Kestrel__Certificates__Default__Path=/etc/letsencrypt/live/maroik.com/fullchain.pem
-          - ASPNETCORE_Kestrel__Certificates__Default__KeyPath=/etc/letsencrypt/live/maroik.com/privkey.pem
         volumes:
           - ./Maroik.SSL/conf:/etc/letsencrypt:ro
           - ./Maroik.FileStorage/upload/:/app/upload:rw

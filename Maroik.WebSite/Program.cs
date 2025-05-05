@@ -16,6 +16,13 @@ using Microsoft.AspNetCore.Session;
 using Microsoft.EntityFrameworkCore;
 using System.Globalization;
 using System.Security.Cryptography.X509Certificates;
+using System.Security.Cryptography;
+
+X509Certificate2 currentCert;
+object certLock = new();
+bool isReloading = false;
+System.Timers.Timer certTimer;
+DateTime lastWriteTime;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -158,12 +165,29 @@ X509Certificate2 LoadCertificate(string certPath, string keyPath)
     try
     {
         // Read certificate and key as string (pem format)
-        var certPem = File.ReadAllText(certPath);
-        var keyPem = File.ReadAllText(keyPath);
+        var linkCertPem = File.ReadAllText(certPath);
+        var linkKeyPem = File.ReadAllText(keyPath);
+
+        var realCertName = Path.GetFileName(linkCertPem);
+        var realKeyName = Path.GetFileName(linkKeyPem);
+
+        var realCertPath = certPath.Replace("/live/", "/archive/").Replace("cert.pem", realCertName);
+        var realKeyPath = keyPath.Replace("/live/", "/archive/").Replace("privkey.pem", realKeyName);
+
+        var realCertPem = File.ReadAllText(realCertPath);
+        var realKeyPem = File.ReadAllText(realKeyPath);
 
         // Create the certificate using X509Certificate2.CreateFromPem
-        var certificate = X509Certificate2.CreateFromPem(certPem, keyPem);
-        return certificate;
+        var cert = X509Certificate2.CreateFromPem(realCertPem);
+
+        // Load private key from PEM manually
+        using ECDsa ecdsaPrivateKey = ECDsa.Create();
+        ecdsaPrivateKey.ImportFromPem(realKeyPem);
+
+        // Combine certificate + private key
+        var certWithKey = cert.CopyWithPrivateKey(ecdsaPrivateKey);
+
+        return certWithKey;
     }
     catch (Exception ex)
     {
@@ -178,43 +202,64 @@ if (!string.IsNullOrEmpty(ServerSetting.DockerCertPath) && !string.IsNullOrEmpty
     var keyPath = ServerSetting.DockerKeyPath;
 
     // Load certificate
-    var currentCert = LoadCertificate(certPath, keyPath);
+    currentCert = LoadCertificate(certPath, keyPath);
 
     // Configure Kestrel SSL settings
     builder.WebHost.ConfigureKestrel(options =>
     {
         options.ConfigureHttpsDefaults(https =>
         {
-            https.ServerCertificateSelector = (_, _) => currentCert;
+            https.ServerCertificateSelector = (_, _) =>
+            {
+                lock (certLock)
+                {
+                    return currentCert!;
+                }
+            };
         });
     });
 
-    // Set up file system watcher to detect certificate changes
-    var watcher = new FileSystemWatcher(Path.GetDirectoryName(certPath)!);
-    watcher.Filter = "*.pem";
-    watcher.NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.Size;
+    lastWriteTime = File.GetLastWriteTimeUtc(certPath);
 
-    watcher.Changed += (_, e) =>
+    certTimer = new System.Timers.Timer(TimeSpan.FromHours(1).TotalMilliseconds); // for debug [TimeSpan.FromSeconds(5)]
+    certTimer.AutoReset = true;
+
+    certTimer.Elapsed += (_, _) =>
     {
+        if (isReloading) return;
+        isReloading = true;
+
         try
         {
-            Console.WriteLine($"Certificate change detected: {e.FullPath}");
+            var newWriteTime = File.GetLastWriteTimeUtc(certPath);
+            if (newWriteTime != lastWriteTime)
+            {
+                Console.WriteLine($"[Timer] Certificate file updated at {newWriteTime}, reloading...");
 
-            // Dispose the previous certificate before loading a new one
-            currentCert?.Dispose();
+                var newCert = LoadCertificate(certPath, keyPath);
 
-            // Reload the certificate on change
-            currentCert = LoadCertificate(certPath, keyPath);
+                lock (certLock)
+                {
+                    currentCert?.Dispose();
+                    currentCert = newCert;
+                    lastWriteTime = newWriteTime;
+                }
 
-            Console.WriteLine("Certificate reloaded.");
+                Console.WriteLine("[Timer] Certificate reloaded successfully.");
+            }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Failed to load certificate: {ex.Message}");
+            Console.WriteLine($"[Timer] Failed to reload certificate: {ex.Message}");
+        }
+        finally
+        {
+            isReloading = false;
         }
     };
 
-    watcher.EnableRaisingEvents = true;
+    certTimer.Start();
+    Console.WriteLine("[Init] Certificate polling started.");
 }
 #endregion
 
