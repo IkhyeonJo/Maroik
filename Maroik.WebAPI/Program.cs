@@ -147,7 +147,7 @@ X509Certificate2 LoadCertificate(string certPath, string keyPath)
         using ECDsa ecdsaPrivateKey = ECDsa.Create();
         ecdsaPrivateKey.ImportFromPem(realKeyPem);
 
-        // Combine certificate + private key
+        // Combine certificate plus private key
         var certWithKey = cert.CopyWithPrivateKey(ecdsaPrivateKey);
 
         return certWithKey;
