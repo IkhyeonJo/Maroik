@@ -8,8 +8,8 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Security.Authentication;
 using System.Text;
-using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
+using System.Security.Cryptography;
 
 X509Certificate2 currentCert;
 object certLock = new();
