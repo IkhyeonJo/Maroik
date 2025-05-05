@@ -17,6 +17,8 @@ using Microsoft.EntityFrameworkCore;
 using System.Globalization;
 using System.Security.Cryptography.X509Certificates;
 using System.Security.Cryptography;
+using System.Diagnostics;
+using System.Runtime.InteropServices;
 
 X509Certificate2 currentCert;
 string previousHash;
@@ -174,14 +176,57 @@ string ComputeFileHash(string filePath)
     var hashBytes = sha256.ComputeHash(stream);
     return Convert.ToHexString(hashBytes); // .NET 5+
 }
+string GetLinkTarget(string linkPath)
+{
+    try
+    {
+        var startInfo = new ProcessStartInfo
+        {
+            FileName = "readlink",
+            Arguments = linkPath,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false,
+            CreateNoWindow = true
+        };
+
+        using var process = Process.Start(startInfo);
+        var output = process?.StandardOutput.ReadToEnd().Trim();
+        var error = process?.StandardError.ReadToEnd().Trim();
+        process?.WaitForExit();
+
+        if (process?.ExitCode != 0)
+        {
+            throw new Exception($"readlink failed: {error}");
+        }
+
+        return output;
+    }
+    catch (Exception ex)
+    {
+        Console.Error.WriteLine($"Error resolving link: {ex.Message}");
+        return null;
+    }
+}
 // Certificate loading function definition using X509CertificateLoader
 X509Certificate2 LoadCertificate(string certPath, string keyPath)
 {
     try
     {
+        var linkCertPem = "";
+        var linkKeyPem = "";
+        
         // Read certificate and key as string (pem format)
-        var linkCertPem = File.ReadAllText(certPath);
-        var linkKeyPem = File.ReadAllText(keyPath);
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+        {
+            linkCertPem = File.ReadAllText(certPath);
+            linkKeyPem = File.ReadAllText(keyPath);
+        }
+        else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux) || RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+        {
+            linkCertPem = GetLinkTarget(certPath);
+            linkKeyPem = GetLinkTarget(keyPath);   
+        }
 
         var realCertName = Path.GetFileName(linkCertPem);
         var realKeyName = Path.GetFileName(linkKeyPem);
