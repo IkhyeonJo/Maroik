@@ -163,12 +163,9 @@ X509Certificate2 LoadCertificate(string certPath, string keyPath)
 
 if (!string.IsNullOrEmpty(ServerSetting.DockerCertPath) && !string.IsNullOrEmpty(ServerSetting.DockerKeyPath))
 {
-    var certPath = ServerSetting.DockerCertPath;
-    var keyPath = ServerSetting.DockerKeyPath;
-
     // Load certificate
-    currentCert = LoadCertificate(certPath, keyPath);
-    previousHash = ComputeFileHash(certPath);
+    currentCert = LoadCertificate(ServerSetting.DockerCertPath, ServerSetting.DockerKeyPath);
+    previousHash = ComputeFileHash(ServerSetting.DockerCertPath);
 
     // Configure Kestrel SSL settings
     builder.WebHost.ConfigureKestrel(serverOptions =>
@@ -203,12 +200,13 @@ if (!string.IsNullOrEmpty(ServerSetting.DockerCertPath) && !string.IsNullOrEmpty
 
         try
         {
-            var currentHash = ComputeFileHash(certPath);
+            var currentHash = ComputeFileHash(ServerSetting.DockerCertPath);
+            // ReSharper disable once InvertIf
             if (currentHash != previousHash)
             {
                 Console.WriteLine("Certificate file, reloading...");
 
-                var newCert = LoadCertificate(certPath, keyPath);
+                var newCert = LoadCertificate(ServerSetting.DockerCertPath, ServerSetting.DockerKeyPath);
 
                 lock (certLock)
                 {
