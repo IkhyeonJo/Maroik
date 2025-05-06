@@ -20,7 +20,8 @@ using System.Security.Cryptography;
 using System.Runtime.InteropServices;
 
 X509Certificate2 currentCert;
-string previousHash;
+string previousCertHash;
+string previousCertKeyHash;
 object certLock = new();
 var isReloading = false;
 // ReSharper disable once TooWideLocalVariableScope
@@ -228,7 +229,8 @@ if (!string.IsNullOrEmpty(ServerSetting.DockerCertPath) && !string.IsNullOrEmpty
 {
     // Load certificate
     currentCert = LoadCertificate(ServerSetting.DockerCertPath, ServerSetting.DockerKeyPath);
-    previousHash = ComputeFileHash(ServerSetting.DockerCertPath);
+    previousCertHash = ComputeFileHash(ServerSetting.DockerCertPath);
+    previousCertKeyHash = ComputeFileHash(ServerSetting.DockerKeyPath);
     
     // Configure Kestrel SSL settings
     builder.WebHost.ConfigureKestrel(options =>
@@ -255,9 +257,11 @@ if (!string.IsNullOrEmpty(ServerSetting.DockerCertPath) && !string.IsNullOrEmpty
 
         try
         {
-            var currentHash = ComputeFileHash(ServerSetting.DockerCertPath);
+            var currentCertHash = ComputeFileHash(ServerSetting.DockerCertPath);
+            var currentCertKeyHash = ComputeFileHash(ServerSetting.DockerKeyPath);
             // ReSharper disable once InvertIf
-            if (currentHash != previousHash)
+            if (currentCertHash != previousCertHash &&
+                currentCertKeyHash != previousCertKeyHash)
             {
                 Console.WriteLine("Certificate file, reloading...");
 
@@ -267,7 +271,8 @@ if (!string.IsNullOrEmpty(ServerSetting.DockerCertPath) && !string.IsNullOrEmpty
                 {
                     currentCert?.Dispose();
                     currentCert = newCert;
-                    previousHash = currentHash;
+                    previousCertHash = currentCertHash;
+                    previousCertKeyHash = currentCertKeyHash;
                 }
                 Console.WriteLine("Certificate reloaded successfully.");
             }
