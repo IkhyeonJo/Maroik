@@ -146,7 +146,7 @@ X509Certificate2 LoadCertificate(string certPath, string keyPath)
         var cert = X509Certificate2.CreateFromPem(realCertPem);
 
         // Load private key from PEM manually
-        using ECDsa ecdsaPrivateKey = ECDsa.Create();
+        using var ecdsaPrivateKey = ECDsa.Create();
         ecdsaPrivateKey.ImportFromPem(realKeyPem);
 
         // Combine certificate plus private key
