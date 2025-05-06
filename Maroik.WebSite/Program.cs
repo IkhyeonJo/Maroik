@@ -17,7 +17,6 @@ using Microsoft.EntityFrameworkCore;
 using System.Globalization;
 using System.Security.Cryptography.X509Certificates;
 using System.Security.Cryptography;
-using System.Diagnostics;
 using System.Runtime.InteropServices;
 
 X509Certificate2 currentCert;
@@ -161,7 +160,7 @@ builder.Services.AddControllersWithViews(options =>
     options.Filters.Add(new AutoValidateAntiforgeryTokenAttribute()); // Globally enables token validation for all requests except for GET, HEAD, OPTIONS, and TRACE
 });
 
-#region HotReload SSL
+#region Hot Swap Cert
 string ComputeFileHash(string filePath)
 {
     using var sha256 = SHA256.Create();
