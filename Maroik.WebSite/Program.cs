@@ -15,10 +15,21 @@ using Microsoft.AspNetCore.Rewrite;
 using Microsoft.AspNetCore.Session;
 using Microsoft.EntityFrameworkCore;
 using System.Globalization;
+using System.Security.Cryptography.X509Certificates;
+using System.Security.Cryptography;
+using System.Diagnostics;
+using System.Runtime.InteropServices;
 
-WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
+X509Certificate2 currentCert;
+string previousHash;
+object certLock = new();
+var isReloading = false;
+// ReSharper disable once TooWideLocalVariableScope
+System.Timers.Timer certTimer;
 
-string cookiePrefix = "__Secure-";
+var builder = WebApplication.CreateBuilder(args);
+
+const string cookiePrefix = "__Secure-";
 
 #region ServerSettings
 ServerSetting.DomainName = builder.Configuration.GetSection("ServerSetting")["DomainName"];
@@ -33,9 +44,11 @@ ServerSetting.FromEmail = builder.Configuration.GetSection("ServerSetting").GetS
 ServerSetting.FromFullName = builder.Configuration.GetSection("ServerSetting").GetSection("SmtpOptions")["fromFullName"];
 ServerSetting.IsDefault = Convert.ToBoolean(builder.Configuration.GetSection("ServerSetting").GetSection("SmtpOptions")["IsDefault"]);
 ServerSetting.NoticeMaturityDateDay = Convert.ToInt32(builder.Configuration.GetSection("ServerSetting")["NoticeMaturityDateDay"]);
+ServerSetting.DockerCertPath = builder.Configuration.GetSection("ServerSetting")["DockerCertPath"];
+ServerSetting.DockerKeyPath = builder.Configuration.GetSection("ServerSetting")["DockerKeyPath"];
 #endregion
 
-#region AddMariaDbContext
+#region AddDbContext
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(
         builder.Configuration.GetConnectionString("DefaultConnection"),
@@ -83,7 +96,7 @@ builder.Services.AddSession(options =>
     options.Cookie.Name = $"{cookiePrefix}{SessionDefaults.CookieName}";
     options.Cookie.HttpOnly = true;
     options.Cookie.IsEssential = true;
-    options.Cookie.Domain = ServerSetting.DomainName.Replace("https://", "").Replace("/", "").ToString();
+    options.Cookie.Domain = ServerSetting.DomainName?.Replace("https://", "").Replace("/", "");
     options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
     options.Cookie.SameSite = SameSiteMode.Strict;
 });
@@ -95,7 +108,7 @@ builder.Services.AddAntiforgery(options =>
     options.Cookie.Name = $"{cookiePrefix}{AntiforgeryOptions.DefaultCookiePrefix}";
     options.Cookie.HttpOnly = true;
     options.Cookie.IsEssential = true;
-    options.Cookie.Domain = ServerSetting.DomainName.Replace("https://", "").Replace("/", "").ToString();
+    options.Cookie.Domain = ServerSetting.DomainName?.Replace("https://", "").Replace("/", "");
     options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
     options.Cookie.SameSite = SameSiteMode.Strict;
 });
@@ -105,9 +118,9 @@ builder.Services.AddAntiforgery(options =>
 builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(
-        builder =>
+        corsPolicyBuilder =>
         {
-            _ = builder.WithOrigins(ServerSetting.DomainName.Replace("/", "").ToString());
+            _ = corsPolicyBuilder.WithOrigins(ServerSetting.DomainName?.Replace("/", "") ?? string.Empty);
         });
 });
 #endregion
@@ -120,8 +133,8 @@ builder.Services.AddHsts(options => // https://blog.elmah.io/the-asp-net-core-se
     options.IncludeSubDomains = true;
     options.MaxAge = TimeSpan.FromDays(365);
     options.Preload = true;
-    options.ExcludedHosts.Add(ServerSetting.DomainName.Replace("https://", "").Replace("/", "").ToString());
-    options.ExcludedHosts.Add(ServerSetting.DomainName.Replace("https://", "").Replace("/", "").Replace("www.", "").ToString());
+    options.ExcludedHosts.Add(ServerSetting.DomainName?.Replace("https://", "").Replace("/", ""));
+    options.ExcludedHosts.Add(ServerSetting.DomainName?.Replace("https://", "").Replace("/", "").Replace("www.", ""));
 });
 
 #region Multi-Language
@@ -148,7 +161,136 @@ builder.Services.AddControllersWithViews(options =>
     options.Filters.Add(new AutoValidateAntiforgeryTokenAttribute()); // Globally enables token validation for all requests except for GET, HEAD, OPTIONS, and TRACE
 });
 
-WebApplication app = builder.Build();
+#region HotReload SSL
+string ComputeFileHash(string filePath)
+{
+    using var sha256 = SHA256.Create();
+    using var stream = new FileStream(
+        filePath,
+        FileMode.Open,
+        FileAccess.Read,
+        FileShare.ReadWrite,
+        bufferSize: 8192,
+        FileOptions.SequentialScan);
+
+    var hashBytes = sha256.ComputeHash(stream);
+    return Convert.ToHexString(hashBytes); // .NET 5+
+}
+// Certificate loading function definition using X509CertificateLoader
+X509Certificate2 LoadCertificate(string certPath, string keyPath)
+{
+    try
+    {
+        var realCertPem = "";
+        var realKeyPem = "";
+        
+        // Read certificate and key as string (pem format)
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+        {
+            var linkCertPem = File.ReadAllText(certPath);
+            var linkKeyPem = File.ReadAllText(keyPath);
+            
+            var realCertName = Path.GetFileName(linkCertPem);
+            var realKeyName = Path.GetFileName(linkKeyPem);
+
+            var realCertPath = certPath.Replace("/live/", "/archive/").Replace("cert.pem", realCertName);
+            var realKeyPath = keyPath.Replace("/live/", "/archive/").Replace("privkey.pem", realKeyName);
+
+            realCertPem = File.ReadAllText(realCertPath);
+            realKeyPem = File.ReadAllText(realKeyPath);
+            
+        }
+        else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux) || RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+        {
+            realCertPem = File.ReadAllText(certPath);
+            realKeyPem = File.ReadAllText(keyPath);
+        }
+        
+        // Create the certificate using X509Certificate2.CreateFromPem
+        var cert = X509Certificate2.CreateFromPem(realCertPem);
+
+        // Load private key from PEM manually
+        using ECDsa ecdsaPrivateKey = ECDsa.Create();
+        ecdsaPrivateKey.ImportFromPem(realKeyPem);
+
+        // Combine certificate plus private key
+        var certWithKey = cert.CopyWithPrivateKey(ecdsaPrivateKey);
+
+        return certWithKey;
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Failed to load certificate from {certPath} and {keyPath}: {ex.Message}");
+        throw;
+    }
+}
+
+if (!string.IsNullOrEmpty(ServerSetting.DockerCertPath) && !string.IsNullOrEmpty(ServerSetting.DockerKeyPath))
+{
+    var certPath = ServerSetting.DockerCertPath;
+    var keyPath = ServerSetting.DockerKeyPath;
+
+    // Load certificate
+    currentCert = LoadCertificate(certPath, keyPath);
+    previousHash = ComputeFileHash(certPath);
+    
+    // Configure Kestrel SSL settings
+    builder.WebHost.ConfigureKestrel(options =>
+    {
+        options.ConfigureHttpsDefaults(https =>
+        {
+            https.ServerCertificateSelector = (_, _) =>
+            {
+                lock (certLock)
+                {
+                    return currentCert!;
+                }
+            };
+        });
+    });
+
+    certTimer = new System.Timers.Timer(TimeSpan.FromHours(1).TotalMilliseconds); // for debug [TimeSpan.FromSeconds(5)]
+    certTimer.AutoReset = true;
+
+    certTimer.Elapsed += (_, _) =>
+    {
+        if (isReloading) return;
+        isReloading = true;
+
+        try
+        {
+            var currentHash = ComputeFileHash(certPath);
+            if (currentHash != previousHash)
+            {
+                Console.WriteLine("Certificate file, reloading...");
+
+                var newCert = LoadCertificate(certPath, keyPath);
+
+                lock (certLock)
+                {
+                    currentCert?.Dispose();
+                    currentCert = newCert;
+                    previousHash = currentHash;
+                }
+                Console.WriteLine("Certificate reloaded successfully.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Failed to reload certificate: {ex.Message}");
+        }
+        finally
+        {
+            isReloading = false;
+        }
+    };
+
+    certTimer.Start();
+    Console.WriteLine("Certificate polling started.");
+}
+#endregion
+
+var app = builder.Build();
 
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true); // https://stackoverflow.com/questions/69961449/net6-and-datetime-problem-cannot-write-datetime-with-kind-utc-to-postgresql-ty
 
@@ -219,7 +361,7 @@ app.Use(async (context, next) =>
             NoStore = true // For resolve logout back button problem
         };
     context.Response.Headers[Microsoft.Net.Http.Headers.HeaderNames.Vary] =
-        new string[] { "Accept-Encoding" };
+        new [] { "Accept-Encoding" };
 
     #region Security Headers [https://blog.elmah.io/the-asp-net-core-security-headers-guide/]
     context.Response.Headers.Append("Strict-Transport-Security", "max-age=63072000; includeSubDomains; preload");

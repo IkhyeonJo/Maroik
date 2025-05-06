@@ -14,5 +14,7 @@ namespace Maroik.Common.Miscellaneous.Utilities
         public static byte MaxLoginAttempt { get; set; }
         public static int SessionExpireMinutes { get; set; }
         public static int NoticeMaturityDateDay { get; set; }
+        public static string? DockerCertPath { get; set; }
+        public static string? DockerKeyPath { get; set; }
     }
 }
