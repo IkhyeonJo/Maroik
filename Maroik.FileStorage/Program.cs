@@ -10,7 +10,6 @@ using System.Security.Authentication;
 using System.Text;
 using System.Security.Cryptography.X509Certificates;
 using System.Security.Cryptography;
-using System.Diagnostics;
 using System.Runtime.InteropServices;
 
 X509Certificate2 currentCert;
@@ -99,7 +98,7 @@ builder.Services.AddCors(options =>
         policyBuilder => { _ = policyBuilder.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader(); });
 });
 
-#region HotReload SSL
+#region Hot Swap Cert
 string ComputeFileHash(string filePath)
 {
     using var sha256 = SHA256.Create();
