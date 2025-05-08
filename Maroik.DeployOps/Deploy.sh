@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # Set Maroik Logs
-mkdir -p /home/peter-cho/Maroik/Maroik.Log
-chmod 777 /home/peter-cho/Maroik/Maroik.Log
+mkdir -p /home/ubuntu/Maroik/Maroik.Log
+chmod 777 /home/ubuntu/Maroik/Maroik.Log
 
 # apt upgrade auto restart services
 sudo sed -i 's/#$nrconf{restart} = '"'"'i'"'"';/$nrconf{restart} = '"'"'a'"'"';/g' /etc/needrestart/needrestart.conf
@@ -26,19 +26,19 @@ sudo apt upgrade -y
 sudo apt install docker-compose -y
 
 # Start Docker Compose
-sudo docker-compose -f /home/peter-cho/Maroik/docker-compose.prod.yml up -d
+sudo docker-compose -f /home/ubuntu/Maroik/docker-compose.prod.yml up -d
 
 # Install Python 3
 sudo apt install python3 -y
 
 # Set permissions for certs 
-chmod 777 /home/peter-cho/Maroik/Maroik.SSL/*.pem
+chmod 777 /home/ubuntu/Maroik/Maroik.SSL/*.pem
 
 # Set permissions for scripts
-chmod 777 /home/peter-cho/Maroik/Maroik.Crontab/*.sh
+chmod 777 /home/ubuntu/Maroik/Maroik.Crontab/*.sh
 
 # Set up cron jobs
-sudo crontab /home/peter-cho/Maroik/Maroik.Crontab/InitCron
+sudo crontab /home/ubuntu/Maroik/Maroik.Crontab/InitCron
 
 # Reload cron service
 sudo systemctl reload cron

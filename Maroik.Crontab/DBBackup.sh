@@ -13,13 +13,13 @@ from email.mime.text import MIMEText
 from email.utils import formatdate
 from datetime import datetime
 
-garbage_sql_files = glob.glob('/home/peter-cho/Maroik/*.sql')
+garbage_sql_files = glob.glob('/home/ubuntu/Maroik/*.sql')
 for garbage_sql_file in garbage_sql_files:
     os.remove(garbage_sql_file)
 
 current_date = str(datetime.today().strftime("%Y%m%d"))
 backup_sql_file_name = f'Init-{current_date}.sql'
-os.system(f'sudo docker exec -i Maroik.PostgreSQL /bin/bash -c "PGPASSWORD=***REMOVED*** pg_dump --username postgres \"Maroik\"" > /home/peter-cho/Maroik/{backup_sql_file_name}')
+os.system(f'sudo docker exec -i Maroik.PostgreSQL /bin/bash -c "PGPASSWORD=***REMOVED*** pg_dump --username postgres \"Maroik\"" > /home/ubuntu/Maroik/{backup_sql_file_name}')
 
 msg = MIMEMultipart()
 
@@ -31,7 +31,7 @@ body = MIMEText(f'Maroik PostgreSQL SQL Backup ({current_date})', _charset='utf-
 msg.attach(body)
 
 files = list()
-files.append(os.path.expanduser(f'/home/peter-cho/Maroik/{backup_sql_file_name}'))
+files.append(os.path.expanduser(f'/home/ubuntu/Maroik/{backup_sql_file_name}'))
 
 for f in files:
     part = MIMEBase('application', "octet-stream")

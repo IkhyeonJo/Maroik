@@ -13,20 +13,20 @@ from email.mime.text import MIMEText
 from email.utils import formatdate
 from datetime import datetime
 
-garbage_tar_xz_files = glob.glob('/home/peter-cho/Maroik/*.tar.xz')
+garbage_tar_xz_files = glob.glob('/home/ubuntu/Maroik/*.tar.xz')
 for garbage_tar_xz_file in garbage_tar_xz_files:
     os.remove(garbage_tar_xz_file)
 
 current_date = str(datetime.today().strftime("%Y%m%d"))
 website_backup_upload_file_name = f'website-upload-{current_date}'
-os.system(f'sudo docker cp Maroik.WebSite:/app/wwwroot/upload /home/peter-cho/Maroik/{website_backup_upload_file_name}')
-os.system(f'sudo tar cfJ /home/peter-cho/Maroik/{website_backup_upload_file_name}.tar.xz /home/peter-cho/Maroik/{website_backup_upload_file_name}')
-os.system(f'sudo rm -rf /home/peter-cho/Maroik/{website_backup_upload_file_name}')
+os.system(f'sudo docker cp Maroik.WebSite:/app/wwwroot/upload /home/ubuntu/Maroik/{website_backup_upload_file_name}')
+os.system(f'sudo tar cfJ /home/ubuntu/Maroik/{website_backup_upload_file_name}.tar.xz /home/ubuntu/Maroik/{website_backup_upload_file_name}')
+os.system(f'sudo rm -rf /home/ubuntu/Maroik/{website_backup_upload_file_name}')
 
 file_storage_backup_upload_file_name = f'file-storage-upload-{current_date}'
-os.system(f'sudo docker cp Maroik.FileStorage:/app/upload /home/peter-cho/Maroik/{file_storage_backup_upload_file_name}')
-os.system(f'sudo tar cfJ /home/peter-cho/Maroik/{file_storage_backup_upload_file_name}.tar.xz /home/peter-cho/Maroik/{file_storage_backup_upload_file_name}')
-os.system(f'sudo rm -rf /home/peter-cho/Maroik/{file_storage_backup_upload_file_name}')
+os.system(f'sudo docker cp Maroik.FileStorage:/app/upload /home/ubuntu/Maroik/{file_storage_backup_upload_file_name}')
+os.system(f'sudo tar cfJ /home/ubuntu/Maroik/{file_storage_backup_upload_file_name}.tar.xz /home/ubuntu/Maroik/{file_storage_backup_upload_file_name}')
+os.system(f'sudo rm -rf /home/ubuntu/Maroik/{file_storage_backup_upload_file_name}')
 
 msg = MIMEMultipart()
 
@@ -38,8 +38,8 @@ body = MIMEText(f'Maroik.WebSite Upload File Backup ({current_date})', _charset=
 msg.attach(body)
 
 files = list()
-files.append(f'/home/peter-cho/Maroik/{website_backup_upload_file_name}.tar.xz')
-files.append(f'/home/peter-cho/Maroik/{file_storage_backup_upload_file_name}.tar.xz')
+files.append(f'/home/ubuntu/Maroik/{website_backup_upload_file_name}.tar.xz')
+files.append(f'/home/ubuntu/Maroik/{file_storage_backup_upload_file_name}.tar.xz')
 
 for f in files:
     part = MIMEBase('application', "octet-stream")

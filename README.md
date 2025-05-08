@@ -18,9 +18,9 @@ Docker, AdminLTE, PostgreSQL, Session Login, RESTful API, HTTPS etc.
 # How to deploy to Ubuntu Server 22.04.3
 ## 0. You must set this value [Maroik -> Maroik.WebSite -> appsettings.Production.json -> DomainName (According to Server Domain [If you don't have server domain, just set your server Public IP address])] & Mail Account
 ## 1. To Backup your .sql & Upload file frequently, please set [Maroik -> Maroik.Crontab -> DBBackup.sh] [Maroik -> Maroik.Crontab -> UploadFileBackup.sh] file's email address & password
-## 2. To Deploy Maroik service, Copy Maroik folder to your ubuntu server [path:(/home/peter-cho/)] (Default Path is '/home/peter-cho/')
+## 2. To Deploy Maroik service, Copy Maroik folder to your ubuntu server [path:(/home/ubuntu/)] (Default Path is '/home/ubuntu/')
 ## 3. Open Ubuntu Server 22.04.3's port 80, 443, 5001
-## 4. Execute this command [chmod 777 /home/peter-cho/Maroik/Maroik.DeployOps/Deploy.sh && /home/peter-cho/Maroik/Maroik.DeployOps/Deploy.sh]
+## 4. Execute this command [chmod 777 /home/ubuntu/Maroik/Maroik.DeployOps/Deploy.sh && /home/ubuntu/Maroik/Maroik.DeployOps/Deploy.sh]
 ## 5. For more detail information, please read 홈서버 구축.pptx which is located /Maroik/Docs/HomeServer/홈서버 구축.pptx
 ## 6. [Note] If you set number 1, the Maroik.WebSite Upload File Backup, Maroik.FileStorage Upload File Backup and Maroik PostgreSQL SQL Backup delivered by mail are server backups, you can overwrite them in the \Maroik\Maroik.WebSite\wwwroot\upload, \Maroik\Maroik.FileStorage\upload and \Maroik\Maroik.DB\PostgreSQL\SQL_Init_Script folders respectively.
                    

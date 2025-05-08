@@ -4,7 +4,7 @@ DOMAIN="maroik.com"
 EMAIL="***REMOVED***m"
 
 issue_wildcard() {
-  docker-compose -f /home/peter-cho/Maroik/docker-compose.prod.yml run --rm certbot certonly \
+  docker-compose -f /home/ubuntu/Maroik/docker-compose.prod.yml run --rm certbot certonly \
     --dns-route53 \
     --config-dir /etc/letsencrypt \
     --work-dir /etc/letsencrypt \
@@ -16,7 +16,7 @@ issue_wildcard() {
 }
 
 issue_wildcard_force() {
-  docker-compose -f /home/peter-cho/Maroik/docker-compose.prod.yml run --rm certbot certonly \
+  docker-compose -f /home/ubuntu/Maroik/docker-compose.prod.yml run --rm certbot certonly \
     --dns-route53 \
     --config-dir /etc/letsencrypt \
     --work-dir /etc/letsencrypt \
@@ -29,13 +29,13 @@ issue_wildcard_force() {
 }
 
 renew() {
-  docker-compose -f /home/peter-cho/Maroik/docker-compose.prod.yml run --rm certbot renew --dns-route53 --deploy-hook "
+  docker-compose -f /home/ubuntu/Maroik/docker-compose.prod.yml run --rm certbot renew --dns-route53 --deploy-hook "
     echo 'Renewed PEM files'
   "
 }
 
 renew_force() {
-  docker-compose -f /home/peter-cho/Maroik/docker-compose.prod.yml run --rm certbot renew --dns-route53 --force-renewal --deploy-hook "
+  docker-compose -f /home/ubuntu/Maroik/docker-compose.prod.yml run --rm certbot renew --dns-route53 --force-renewal --deploy-hook "
     echo 'Renewed PEM files'
   "
 }

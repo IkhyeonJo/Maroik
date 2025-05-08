@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Bring down the Docker containers defined in docker-compose.prod.yml
-sudo docker-compose -f /home/peter-cho/Maroik/docker-compose.prod.yml down
+sudo docker-compose -f /home/ubuntu/Maroik/docker-compose.prod.yml down
 
 # Stop and remove all Docker containers
 sudo docker stop $(docker ps -a -q)
