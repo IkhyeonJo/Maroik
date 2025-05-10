@@ -1,6 +1,6 @@
 #!/bin/bash
 
-SHARED_DIR="/home/peter-cho/Maroik/Maroik.Log"
+SHARED_DIR="/home/ubuntu/Maroik/Maroik.Log"
 HOST_OUTPUT_FILE="$SHARED_DIR/HostResourceInfo.txt"
 DOCKER_OUTPUT_FILE="$SHARED_DIR/DockerResourceInfo.txt"
 
