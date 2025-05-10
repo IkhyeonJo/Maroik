@@ -1,6 +1,6 @@
 #!/bin/bash
 
-SHARED_DIR="/home/ubuntu/Maroik/Maroik.Log"
+SHARED_DIR="/home/peter-cho/Maroik/Maroik.Log"
 HOST_OUTPUT_FILE="$SHARED_DIR/HostResourceInfo.txt"
 DOCKER_OUTPUT_FILE="$SHARED_DIR/DockerResourceInfo.txt"
 
@@ -15,13 +15,22 @@ echo "CPU Usage: $CPU_USAGE%" >> $HOST_OUTPUT_FILE
 
 # Host Memory Information (Total / Usage)
 echo "Host Memory Information:" >> $HOST_OUTPUT_FILE
-MEMORY_USAGE=$(free -h | awk '/^Mem:/ {print $2 " / " $3}')
+MEMORY_USAGE=$(LC_ALL=C free -h | awk '$1 == "Mem:" {print $2 " / " $3}')
 echo "Memory: $MEMORY_USAGE" >> $HOST_OUTPUT_FILE
 
 # Host Disk Information (Total / Usage)
 echo "Host Disk Information:" >> $HOST_OUTPUT_FILE
-DISK_USAGE=$(df -h --total | awk '/^total/ {print $2 " / " $3}')
-echo "Disk: $DISK_USAGE" >> $HOST_OUTPUT_FILE
+TOTAL=0
+USED=0
+while read -r filesystem size used rest; do
+  if [[ "$size" =~ ^[0-9]+$ ]] && [[ "$used" =~ ^[0-9]+$ ]]; then
+    TOTAL=$((TOTAL + size))
+    USED=$((USED + used))
+  fi
+done < <(df -B1 | tail -n +2)
+TOTAL_HUMAN=$(numfmt --to=iec --suffix=B "$TOTAL")
+USED_HUMAN=$(numfmt --to=iec --suffix=B "$USED")
+echo "Disk: $TOTAL_HUMAN / $USED_HUMAN" >> $HOST_OUTPUT_FILE
 
 # Docker container status and resource usage information
 echo "Docker Container Status:" > $DOCKER_OUTPUT_FILE
