@@ -46,6 +46,10 @@
     max-height: 200px;
 }
 
+.fc-dayGridMonth-button {
+    display: none !important;
+}
+
 .fc-event {
     cursor: pointer;
   }
