@@ -1019,3 +1019,6 @@ else
 {
     Console.WriteLine("Error: " + response.StatusCode);
 }
+
+Mail server: Zoho mail
+SMTP Server: Brevo
