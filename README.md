@@ -26,11 +26,11 @@ Docker, AdminLTE, PostgreSQL, Session Login, RESTful API, HTTPS etc.
                    
 # Login Account
 
-## Admin Account ID: ***REMOVED***m
-## Admin Account Password: ghfkddl12gh!
+## Admin Account ID: admin@maroik.com
+## Admin Account Password: rhdiddl12!
 
-## User Account ID: ***REMOVED***
-## User Account Password: ghfkddl12gh!
+## User Account ID: user@maroik.com
+## User Account Password: rhdiddl12!
 
 # Login
 ![Login](https://user-images.githubusercontent.com/20404991/132020270-488a1ab7-448c-44d9-938a-40ce32d6d364.jpg)
