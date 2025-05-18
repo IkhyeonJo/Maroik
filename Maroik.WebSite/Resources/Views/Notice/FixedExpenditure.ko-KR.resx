@@ -180,7 +180,7 @@
   <data name="Please select grid row" xml:space="preserve">
     <value>행을 선택해주세요.</value>
   </data>
-  <data name="Red row" xml:space="preserve">
+  <data name="Red Row" xml:space="preserve">
     <value>적색 행</value>
   </data>
   <data name="Save" xml:space="preserve">
@@ -201,8 +201,8 @@
   <data name="WithdrawalMonth" xml:space="preserve">
     <value>출금월</value>
   </data>
-  <data name="Yellow Row" xml:space="preserve">
-    <value>황색 행</value>
+  <data name="LightBlue Row" xml:space="preserve">
+    <value>하늘색 행</value>
   </data>
   <data name="가구간 이전지출" xml:space="preserve">
     <value>가구간 이전지출</value>
