@@ -54,6 +54,14 @@
     max-height: 200px;
 }
 
+.fc-day-sun {
+    background-color: rgba(80, 180, 255, 0.15);
+}
+
+.fc-day-sat {
+    background-color: rgba(80, 180, 255, 0.15);
+}
+
 .fc-dayGridMonth-button {
     display: none !important;
 }
