@@ -25,6 +25,22 @@ sudo apt upgrade -y
 # Install Docker Compose
 sudo apt install docker-compose -y
 
+# Set permissions for scripts
+chmod 777 /home/ubuntu/Maroik/Maroik.Crontab/*.sh
+
+CERT_PATH="/home/ubuntu/Maroik/Maroik.SSL/conf"
+TARGET_SCRIPT="/home/ubuntu/Maroik/Maroik.Crontab/CertbotScript.sh"
+PARAM="issue_wildcard"
+
+# check directory
+if [ ! -d "$CERT_PATH" ]; then
+  echo "[INFO] Directory $CERT_PATH not found."
+  echo "[INFO] Running $TARGET_SCRIPT with parameter '$PARAM'..."
+  bash "$TARGET_SCRIPT" "$PARAM"
+else
+  echo "[INFO] Directory $CERT_PATH already exists. No action taken."
+fi
+
 # Start Docker Compose
 sudo docker-compose -f /home/ubuntu/Maroik/docker-compose.prod.yml up -d
 
@@ -33,9 +49,6 @@ sudo apt install python3 -y
 
 # Set permissions for certs 
 chmod 777 /home/ubuntu/Maroik/Maroik.SSL/*.pem
-
-# Set permissions for scripts
-chmod 777 /home/ubuntu/Maroik/Maroik.Crontab/*.sh
 
 # Set up cron jobs
 sudo crontab /home/ubuntu/Maroik/Maroik.Crontab/InitCron
