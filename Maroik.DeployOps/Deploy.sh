@@ -43,12 +43,45 @@ sudo crontab /home/ubuntu/Maroik/Maroik.Crontab/InitCron
 # Reload cron service
 sudo systemctl reload cron
 
-# only port 80, 443, 5001, 8080 allowed by ufw
+# only port 80, 443, [5001, 8080] allowed by ufw
 sudo apt install ufw -y
-sudo ufw allow 80
-sudo ufw allow 443
-sudo ufw allow 5001
-#sudo ufw allow 8080
+
+sudo ufw reset
+sudo ufw default deny incoming
+sudo ufw default allow outgoing
+
+CF_IPV4=$(curl -s https://www.cloudflare.com/ips-v4)
+CF_IPV6=$(curl -s https://www.cloudflare.com/ips-v6)
+
+# Cloudflare IPv4 allow for ports 80, 443, [5001, 8080]
+for ip in $CF_IPV4; do
+  sudo ufw allow from $ip to any port 80 proto tcp
+  sudo ufw allow from $ip to any port 443 proto tcp
+  #sudo ufw allow from $ip to any port 5001 proto tcp
+  #sudo ufw allow from $ip to any port 8080 proto tcp
+done
+
+# Cloudflare IPv6 allow for ports 80, 443, [5001, 8080]
+for ip in $CF_IPV6; do
+  sudo ufw allow from $ip to any port 80 proto tcp
+  sudo ufw allow from $ip to any port 443 proto tcp
+  #sudo ufw allow from $ip to any port 5001 proto tcp
+  #sudo ufw allow from $ip to any port 8080 proto tcp
+done
+
+# Ping (ICMP Echo Request) block
+if ! grep -q '^net.ipv4.icmp_echo_ignore_all = 1' /etc/sysctl.conf; then
+  sudo tee -a /etc/sysctl.conf > /dev/null <<EOF
+
+# Ping block (ICMP Echo Request ignore)
+net.ipv4.icmp_echo_ignore_all = 1
+EOF
+fi
+
+# Apply sysctl settings
+sudo sysctl -p
+
+# Enable UFW
 sudo ufw enable
 
 # Adds the current user to the "docker" group, 
