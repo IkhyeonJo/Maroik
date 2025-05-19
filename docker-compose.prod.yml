@@ -95,11 +95,9 @@ services:
         restart: always
         
     certbot:
-        image: certbot/dns-route53
+        image: certbot/dns-cloudflare
         container_name: certbot
         volumes:
           - ./Maroik.SSL/conf:/etc/letsencrypt
           - ./Maroik.SSL/logs:/var/log/letsencrypt
-          - ./.aws:/root/.aws:ro
-        environment:
-          - AWS_PROFILE=default
+          - ./Maroik.SSL/cloudflare.ini:/etc/letsencrypt/cloudflare.ini:ro
