@@ -58,7 +58,7 @@ sudo systemctl reload cron
 
 # only port 80, 443, [5001, 8080] allowed by ufw
 sudo apt install ufw -y
-
+sudo ufw --force reset
 sudo ufw default deny incoming
 sudo ufw default allow outgoing
 
@@ -94,7 +94,7 @@ fi
 sudo sysctl -p
 
 # Enable UFW
-sudo ufw enable
+sudo ufw --force enable
 
 # Adds the current user to the "docker" group, 
 sudo usermod -a -G docker $USER
