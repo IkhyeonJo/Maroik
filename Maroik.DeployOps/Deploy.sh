@@ -59,7 +59,6 @@ sudo systemctl reload cron
 # only port 80, 443, [5001, 8080] allowed by ufw
 sudo apt install ufw -y
 
-sudo ufw reset
 sudo ufw default deny incoming
 sudo ufw default allow outgoing
 
