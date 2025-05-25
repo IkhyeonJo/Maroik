@@ -35,10 +35,8 @@ PARAM="issue_wildcard"
 # check directory
 if [ ! -d "$CERT_PATH" ]; then
   echo "[INFO] Directory $CERT_PATH not found."
-  echo "[INFO] Running $TARGET_SCRIPT with parameter '$PARAM'..."
-  bash "$TARGET_SCRIPT" "$PARAM"
-else
-  echo "[INFO] Directory $CERT_PATH already exists. No action taken."
+  echo "[INFO] Please run $TARGET_SCRIPT with parameter '$PARAM'... manually."
+  exit 0
 fi
 
 # Start Docker Compose
