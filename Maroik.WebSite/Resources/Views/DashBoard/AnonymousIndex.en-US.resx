@@ -138,4 +138,7 @@
   <data name="Welcome to Maroik!" xml:space="preserve">
     <value>Welcome to Maroik!</value>
   </data>
+  <data name="Contact: admin@maroik.com" xml:space="preserve">
+    <value>Contact: admin@maroik.com</value>
+  </data>
 </root>

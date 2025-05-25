@@ -138,4 +138,7 @@
   <data name="Welcome to Maroik!" xml:space="preserve">
     <value>Maroik에 오신 것을 환영합니다!</value>
   </data>
+  <data name="Contact: admin@maroik.com" xml:space="preserve">
+    <value>연락처: admin@maroik.com</value>
+  </data>
 </root>
