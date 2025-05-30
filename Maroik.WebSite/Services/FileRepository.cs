@@ -13,41 +13,41 @@ public class FileRepository : IFileRepository
 
         HttpResponseMessage response = await httpClient.PostAsync($"http://{_fileStorageDomain}/api/File/download", content);
 
-        _ = response.EnsureSuccessStatusCode(); // ¼º°ø ¿©ºÎ È®ÀÎ
-        return await response.Content.ReadAsByteArrayAsync(); // ÆÄÀÏ µ¥ÀÌÅÍ ¹İÈ¯
+        _ = response.EnsureSuccessStatusCode(); // ì„±ê³µ ì—¬ë¶€ í™•ì¸
+        return await response.Content.ReadAsByteArrayAsync(); // íŒŒì¼ ë°ì´í„° ë°˜í™˜
     }
 
     public async Task<bool> UploadAsync(IFormFile formFile, string filePath)
     {
         try
         {
-            // 1. ÆÄÀÏ ÀÌ¸§À» ¾ÈÀüÇÏ°Ô Ã³¸®ÇÏ¿© °æ·Î Å½»ö Ãë¾à¼º ¹æÁö
-            string sanitizedFileName = Path.GetFileName(filePath); // »ç¿ëÀÚ°¡ ÀÔ·ÂÇÑ ÆÄÀÏ ÀÌ¸§¿¡¼­ µğ·ºÅä¸® °æ·Î Á¦°Å
+            // 1. íŒŒì¼ ì´ë¦„ì„ ì•ˆì „í•˜ê²Œ ì²˜ë¦¬í•˜ì—¬ ê²½ë¡œ íƒìƒ‰ ì·¨ì•½ì„± ë°©ì§€
+            string sanitizedFileName = Path.GetFileName(filePath); // ì‚¬ìš©ìê°€ ì…ë ¥í•œ íŒŒì¼ ì´ë¦„ì—ì„œ ë””ë ‰í† ë¦¬ ê²½ë¡œ ì œê±°
 
-            // 2. ÆÄÀÏÀ» ¸Ş¸ğ¸® ½ºÆ®¸²¿¡ ÀúÀåÇÏ°í ¿ÜºÎ ¼­¹ö·Î ¾÷·Îµå
+            // 2. íŒŒì¼ì„ ë©”ëª¨ë¦¬ ìŠ¤íŠ¸ë¦¼ì— ì €ì¥í•˜ê³  ì™¸ë¶€ ì„œë²„ë¡œ ì—…ë¡œë“œ
             if (formFile != null && formFile.Length > 0)
             {
                 using MemoryStream memoryStream = new();
-                // IFormFile µ¥ÀÌÅÍ¸¦ ¸Ş¸ğ¸® ½ºÆ®¸²¿¡ º¹»ç
+                // IFormFile ë°ì´í„°ë¥¼ ë©”ëª¨ë¦¬ ìŠ¤íŠ¸ë¦¼ì— ë³µì‚¬
                 await formFile.CopyToAsync(memoryStream);
-                memoryStream.Position = 0; // ½ºÆ®¸²ÀÇ ½ÃÀÛ À§Ä¡·Î µ¹¾Æ°¡±â
+                memoryStream.Position = 0; // ìŠ¤íŠ¸ë¦¼ì˜ ì‹œì‘ ìœ„ì¹˜ë¡œ ëŒì•„ê°€ê¸°
 
-                // HttpClient·Î ¿ÜºÎ ÆÄÀÏ ¼­¹ö¿¡ ÆÄÀÏ ¾÷·Îµå
+                // HttpClientë¡œ ì™¸ë¶€ íŒŒì¼ ì„œë²„ì— íŒŒì¼ ì—…ë¡œë“œ
                 using HttpClient httpClient = new();
                 using MultipartFormDataContent content = [];
 
-                // ¸Ş¸ğ¸® ½ºÆ®¸²À» ByteArrayContent·Î º¯È¯ÇÏ¿© ¾÷·Îµå ÁØºñ
+                // ë©”ëª¨ë¦¬ ìŠ¤íŠ¸ë¦¼ì„ ByteArrayContentë¡œ ë³€í™˜í•˜ì—¬ ì—…ë¡œë“œ ì¤€ë¹„
                 StreamContent fileContent = new(memoryStream);
                 fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(formFile.ContentType);
 
-                // MultipartFormDataContent¿¡ ÆÄÀÏ Ãß°¡
+                // MultipartFormDataContentì— íŒŒì¼ ì¶”ê°€
                 content.Add(fileContent, "file", sanitizedFileName);
 
-                // Ãß°¡ ÆÄ¶ó¹ÌÅÍ Ãß°¡
+                // ì¶”ê°€ íŒŒë¼ë¯¸í„° ì¶”ê°€
                 content.Add(new StringContent(Path.GetDirectoryName(filePath ?? "")), "filePath");
 
                 HttpResponseMessage response = await httpClient.PostAsync($"http://{_fileStorageDomain}/api/File/upload", content);
-                _ = response.EnsureSuccessStatusCode(); // »óÅÂ ÄÚµå È®ÀÎ
+                _ = response.EnsureSuccessStatusCode(); // ìƒíƒœ ì½”ë“œ í™•ì¸
 
                 return response.StatusCode == HttpStatusCode.OK;
             }
