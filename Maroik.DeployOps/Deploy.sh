@@ -1,8 +1,22 @@
 #!/bin/bash
 
+# Target upload directories
+paths=(
+  "/home/ubuntu/Maroik/Maroik.WebSite/wwwroot/upload"
+  "/home/ubuntu/Maroik/Maroik.FileStorage/upload"
+)
+
+for path in "${paths[@]}"; do
+  # Remove executable permission from all files (set to 644: rw-r--r--)
+  find "$path" -type f -exec chmod 644 {} \;
+
+  # Set 755 permission on all directories (rwxr-xr-x)
+  find "$path" -type d -exec chmod 755 {} \;
+done
+
 # Set Maroik Logs
 mkdir -p /home/ubuntu/Maroik/Maroik.Log
-chmod 777 /home/ubuntu/Maroik/Maroik.Log
+chmod 755 /home/ubuntu/Maroik/Maroik.Log
 
 # apt upgrade auto restart services
 sudo sed -i 's/#$nrconf{restart} = '"'"'i'"'"';/$nrconf{restart} = '"'"'a'"'"';/g' /etc/needrestart/needrestart.conf
@@ -26,7 +40,7 @@ sudo apt upgrade -y
 sudo apt install docker-compose -y
 
 # Set permissions for scripts
-chmod 777 /home/ubuntu/Maroik/Maroik.Crontab/*.sh
+chmod 755 /home/ubuntu/Maroik/Maroik.Crontab/*.sh
 
 CERT_PATH="/home/ubuntu/Maroik/Maroik.SSL/conf"
 TARGET_SCRIPT="/home/ubuntu/Maroik/Maroik.Crontab/CertbotScript.sh"
@@ -45,8 +59,6 @@ sudo docker-compose -f /home/ubuntu/Maroik/docker-compose.prod.yml up -d
 # Install Python 3
 sudo apt install python3 -y
 
-# Set permissions for certs 
-chmod 777 /home/ubuntu/Maroik/Maroik.SSL/*.pem
 
 # Set up cron jobs
 sudo crontab /home/ubuntu/Maroik/Maroik.Crontab/InitCron
