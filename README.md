@@ -1,48 +1,184 @@
-# Maroik
-Welcome to Maroik!
+# Maroik [https://www.maroik.com]
 
-I'm currently interested in make ASP.NET Core MVC WebApplication!
+# Contact: admin@maroik.com
 
-Docker, AdminLTE, PostgreSQL, Session Login, RESTful API, HTTPS etc.
+## Introduction
+Maroik is a modern web application built with ASP.NET Core MVC, featuring a comprehensive set of tools for personal and business management. It includes features such as expense tracking, calendar management, bulletin boards, and role-based user management.
 
-# How to run this project (Windows OS)
-## 0. Install Visual Studio 2023 or higher -> Execute [Maroik.sln] -> Visual Studio will ask you about to Install setup files. Install all required setup files to run this project 
-## 1. Open [1.Web] folder in Solution Explorer -> right-click [docker-compose] in Solution Explorer -> click "Set as Startup Project" -> Press F5 Button
-## 2. [Note] To completely debug Maroik.Website, you must set of /Maroik/Maroik.WebSite/[appsettings.DockerComposeLocalDebug.json & appsettings.Development]'s Mail Account Configuration.
+## Key Features
 
-# How to run this project (Ubuntu (Linux) / Mac OS)
-## 0. Install Rider JETBRAINS IDE
-## 1. Start debug mode with docker-compose.debug.yml.
-## 2. [Note] To completely debug Maroik.Website, you must set of /Maroik/Maroik.WebSite/[appsettings.DockerComposeLocalDebug.json & appsettings.Development]'s Mail Account Configuration.
+### 1. Personal Finance Management
+- Expense tracking and categorization
+- Income recording
+- Budget management
+- Financial reports and analytics
+- Export to CSV/Excel
 
-# How to deploy to Ubuntu Server 22.04.3
-## 0. You must set this value [Maroik -> Maroik.WebSite -> appsettings.Production.json -> DomainName (According to Server Domain [If you don't have server domain, just set your server Public IP address])] & Mail Account
-## 1. To Backup your .sql & Upload file frequently, please set [Maroik -> Maroik.Crontab -> DBBackup.sh] [Maroik -> Maroik.Crontab -> UploadFileBackup.sh] file's email address & password
-## 2. To Deploy Maroik service, Copy Maroik folder to your ubuntu server [path:(/home/ubuntu/)] (Default Path is '/home/ubuntu/')
-## 3. Open Ubuntu Server 22.04.3's port 80, 443, 5001
-## 4. Execute this command [chmod 777 /home/ubuntu/Maroik/Maroik.DeployOps/Deploy.sh && /home/ubuntu/Maroik/Maroik.DeployOps/Deploy.sh]
-## 5. For more detail information, please read 홈서버 구축.pptx which is located /Maroik/Docs/HomeServer/홈서버 구축.pptx
-## 6. [Note] If you set number 1, the Maroik.WebSite Upload File Backup, Maroik.FileStorage Upload File Backup and Maroik PostgreSQL SQL Backup delivered by mail are server backups, you can overwrite them in the \Maroik\Maroik.WebSite\wwwroot\upload, \Maroik\Maroik.FileStorage\upload and \Maroik\Maroik.DB\PostgreSQL\SQL_Init_Script folders respectively.
-                   
-# Login Account
+### 2. Calendar and Schedule Management
+- Daily/Weekly/Monthly calendar view
+- Event creation and management
+- Recurring events support
+- Calendar sharing between users
+- Event reminders
 
-## Admin Account ID: admin@maroik.com
-## Admin Account Password: rhdiddl12!
+### 3. Bulletin Board System
+- Multiple board categories
+- Post creation, editing, and deletion
+- Comment system
+- File attachments
+- Search functionality
 
-## User Account ID: user@maroik.com
-## User Account Password: rhdiddl12!
+### 4. User Management
+- Role-based access control (Admin/User)
+- User profile management
+- Session-based authentication
+- Password management
+- Login activity tracking
 
-# Login
+### 5. Admin Dashboard
+- User management
+- System settings
+- Backup management
+- Log monitoring
+- Analytics dashboard
+
+## Technologies Used
+
+### Backend
+- ASP.NET Core MVC 9.0
+  - Minimal APIs
+  - Hot Reload
+  - Improved performance
+  - Enhanced routing
+  - Better dependency injection
+- PostgreSQL 17
+- Entity Framework Core 9.0
+  - Improved query performance
+  - Better async support
+  - Enhanced change tracking
+- RESTful API
+  - OpenAPI/Swagger integration
+  - API versioning
+  - Rate limiting
+  - Request validation
+- Docker
+  - Multi-stage builds
+  - Container orchestration
+  - Environment isolation
+- Authentication & Authorization
+  - Session Authentication
+  - JWT Authentication
+  - Role-based access control
+  - OAuth2/OpenID Connect
+- Cross-Origin Resource Sharing (CORS)
+- API Documentation
+  - Swagger/OpenAPI
+  - API Explorer
+  - API versioning support
+
+### Frontend
+- AdminLTE 3
+- Bootstrap 5.3
+- jQuery 3.7
+- HTML5/CSS3
+- JavaScript ES2024
+- NonfactorGrid
+- Chart.js 4.4
+- Font Awesome 6
+- DataTables
+- SweetAlert2
+
+### Development Tools
+- Visual Studio 2023
+- JetBrains Rider
+- Git
+- Docker Compose
+- Postman
+
+## Project Structure
+```
+Maroik/
+├── Maroik.AI/              # AI-related features
+├── Maroik.Common/          # Common data access and utilities
+├── Maroik.Crontab/         # Scheduled tasks management
+├── Maroik.DB/             # Database configuration
+├── Maroik.DeployOps/      # Deployment scripts
+├── Maroik.FileStorage/    # File storage management
+├── Maroik.Log/            # Logging system
+├── Maroik.SSL/            # SSL/TLS certificate management
+├── Maroik.WebAPI/         # RESTful API endpoints
+└── Maroik.WebSite/        # Frontend website
+```
+
+## Getting Started
+
+### Prerequisites
+- .NET 9.0 SDK or later
+- Docker and Docker Compose
+- Visual Studio 2023 (Windows) or JetBrains Rider (Linux/Mac)
+
+### Running the Project
+
+#### Windows
+1. Install Visual Studio 2023 or higher
+2. Open Maroik.sln
+3. Set docker-compose as startup project
+4. Press F5 to run in debug mode
+
+#### Linux/Mac
+1. Install JetBrains Rider
+2. Start debug mode with docker-compose.debug.yml
+3. Configure mail settings in appsettings files
+
+## Deployment
+
+### Ubuntu Server 22.04.3
+1. Configure appsettings.Production.json with domain name and mail settings
+2. Set email credentials in DBBackup.sh and UploadFileBackup.sh
+3. Copy Maroik folder to /home/ubuntu/
+4. Open ports 80, 443, 5001
+5. Run Deploy.sh script
+
+## Default Accounts
+
+### Admin Account
+- ID: admin@maroik.com
+- Password: rhdiddl12!
+
+### User Account
+- ID: user@maroik.com
+- Password: rhdiddl12!
+
+## Screenshots
+
+### Login
 ![Login](https://user-images.githubusercontent.com/20404991/132020270-488a1ab7-448c-44d9-938a-40ce32d6d364.jpg)
 
-# User-DashBoard
+### User Dashboard
 ![User-DashBoard](https://user-images.githubusercontent.com/20404991/132020299-e5adb366-9041-44f9-ad56-f2bb606028d5.jpg)
 
-# NonfactorGrid
+### NonfactorGrid
 ![NonfactorGrid](https://user-images.githubusercontent.com/20404991/132020455-e66897ef-ece8-4e71-b323-6ebb72f6b110.jpg)
 
-# UserProfile
+### User Profile
 ![UserProfile](https://user-images.githubusercontent.com/20404991/132020484-4b633287-a1b1-48b0-8340-ae3ead83235a.jpg)
 
-# WebAPI
+### WebAPI
 ![WebAPI](https://user-images.githubusercontent.com/20404991/132020514-13951172-3bcd-48a5-bfe0-a8328cdb766a.jpg)
+
+## Contributing
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+## Support
+For issues and questions, please use the GitHub issue tracker.
+
+## License
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Special Notes
+- All backup files are automatically sent via email and can overwrite upload folders and SQL script folders when needed.
+- Mail account configuration is required for deployment.
