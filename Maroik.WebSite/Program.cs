@@ -82,6 +82,7 @@ builder.Services.AddScoped<ICalendarSharedRepository, CalendarSharedRepository>(
 #region LOCAL
 builder.Services.AddScoped<IMailRepository, MailRepository>();
 builder.Services.AddScoped<IFileRepository, FileRepository>();
+builder.Services.AddScoped<IClamavRepository, ClamavRepository>();
 builder.Services.AddHttpClient();
 #endregion
 

@@ -18,6 +18,7 @@ using ImageMagick;
 using System.Net.Mail;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Diagnostics;
 
 namespace Maroik.WebSite.Controllers
 {
@@ -34,13 +35,14 @@ namespace Maroik.WebSite.Controllers
         private readonly IBoardAttachedFileRepository _boardAttachedFileRepository;
         private readonly IBoardCommentRepository _boardCommentRepository;
         private readonly IFileRepository _fileRepository;
+        private readonly IClamavRepository _clamavRepository;
 
         public ManagementController(IHtmlLocalizer<ManagementController> localizer,
             ILogger<ManagementController> logger, IBoardRepository boardRepository,
             IBoardAttachedFileRepository boardAttachedFileRepository, IBoardCommentRepository boardCommentRepository,
             IAccountRepository accountRepository, IHostEnvironment hostEnvironment,
             ICategoryRepository categoryRepository, ISubCategoryRepository subCategoryRepository,
-            IFileRepository fileRepository)
+            IFileRepository fileRepository, IClamavRepository clamavRepository)
         {
             _rsa = new RSA(RSAType.RSA2, Encoding.UTF8, RSA.privateKey, RSA.publicKey);
             _localizer = localizer;
@@ -53,6 +55,7 @@ namespace Maroik.WebSite.Controllers
             _subCategoryRepository = subCategoryRepository;
             _boardCommentRepository = boardCommentRepository;
             _fileRepository = fileRepository;
+            _clamavRepository = clamavRepository;
         }
 
         #region Profile
@@ -91,67 +94,101 @@ namespace Maroik.WebSite.Controllers
         [RequiredHttpPostAccess(Role = Role.User)]
         public async Task<IActionResult> UpdateProfileAvatar(ProfileInputViewModel profileInputViewModel)
         {
-            if (profileInputViewModel.ProfileAvatarFiles == null) // 파일 없을 시
+            if (profileInputViewModel.ProfileAvatarFiles == null || profileInputViewModel.ProfileAvatarFiles.Count == 0)
             {
                 return Ok(new { result = false, errorMessage = _localizer["Please attach a file"].Value });
             }
-            else
+
+            IFormFile file = profileInputViewModel.ProfileAvatarFiles[0];
+
+            if (file.Length <= 0 || file.Length > 10 * 1024 * 1024)
             {
-                IFormFile profileAvatarFile = profileInputViewModel.ProfileAvatarFiles[0];
-                if (profileAvatarFile.Length is > 0
-                    and <= 10485760) // profileAvatarFile Length : 파일 크기 0MB 이상, 10MB 이하)
-                {
-                    if (Path.GetExtension(profileAvatarFile.FileName) is ".png" or ".jpg" or ".jpeg")
-                    {
-                        _ = HttpContext.Session.TryGetValue(
-                            Maroik.Common.Miscellaneous.Extensions.EnumHelper.GetDescription(Maroik.Common.Miscellaneous
-                                .Utilities.Session.Account), out byte[] resultByte);
-                        string avatarPath = Path.Combine(_hostEnvironment.ContentRootPath, "wwwroot", "upload",
-                            "Management", "Profile", "Avatar");
-                        if (!Directory.Exists(avatarPath))
-                        {
-                            _ = Directory.CreateDirectory(avatarPath);
-                        }
+                return Ok(new { result = false, errorMessage = _localizer["File Size must be smaller than 10MB."].Value });
+            }
 
-                        string guid = Guid.NewGuid().ToString().ToUpper();
-                        string avatarFile = $"{guid}{Path.GetExtension(profileAvatarFile.FileName)}";
-                        string filePath = Path.Combine(avatarPath, avatarFile);
-#pragma warning disable SCS0018 // Potential Path Traversal vulnerability was found where '{0}' in '{1}' may be tainted by user-controlled data from '{2}' in method '{3}'.
-                        using (FileStream stream = new(filePath, FileMode.Create))
-#pragma warning restore SCS0018 // Potential Path Traversal vulnerability was found where '{0}' in '{1}' may be tainted by user-controlled data from '{2}' in method '{3}'.
-                        {
-                            await profileAvatarFile.CopyToAsync(stream);
-                            await stream.FlushAsync();
-                        }
+            var allowedExtensions = new[] { ".jpg", ".jpeg", ".png" };
+            var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
+            if (!allowedExtensions.Contains(extension))
+            {
+                return Ok(new { result = false, errorMessage = _localizer["Only .jpg or jpeg or .png file allowed"].Value });
+            }
 
-                        try
-                        {
-                            Account tempAccount = await _accountRepository.GetAccountByEmailAsync(JsonConvert
-                                .DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
-                            tempAccount.AvatarImagePath = $"/upload/Management/Profile/Avatar/{avatarFile}";
-                            await _accountRepository.UpdateAccountAsync(tempAccount);
-                            return Ok(new { result = true });
-                        }
-                        catch
-                        {
-                            return Ok(new { result = false, errorMessage = _localizer["Input is invalid"].Value });
-                        }
-                    }
-                    else // 이미지 png 또는 jpg 외 확장자는 거절
-                    {
-                        return Ok(new
-                        {
-                            result = false, errorMessage = _localizer["Only .jpg or jpeg or .png file allowed"].Value
-                        });
-                    }
-                }
-                else // fileSizeLimitationErrorMessage
+            // ClamAV 검사 전 메모리 스트림 복사
+            using var memoryStream = new MemoryStream();
+            await file.CopyToAsync(memoryStream);
+            memoryStream.Position = 0;
+
+            if (!await _clamavRepository.ScanWithClamavAsync(memoryStream))
+            {
+                return BadRequest("File may be infected with a virus.");
+            }
+
+            // 이미지 유효성 확인 (Magick.NET 사용, SVG 차단 포함)
+            memoryStream.Position = 0;
+            try
+            {
+                using var image = new MagickImage(memoryStream);
+                if (image.Format == MagickFormat.Svg)
                 {
-                    return Ok(new
-                        { result = false, errorMessage = _localizer["File Size must be smaller than 10MB."].Value });
+                    return Ok(new { result = false, errorMessage = _localizer["SVG format is not allowed"].Value });
                 }
-                // process uploaded files 
-                // Don't rely on or trust the FileName property without validation.
+            }
+            catch
+            {
+                return Ok(new { result = false, errorMessage = _localizer["Invalid image file."].Value });
+            }
+
+            _ = HttpContext.Session.TryGetValue(
+                EnumHelper.GetDescription(Session.Account),
+                out byte[] resultByte);
+
+            string avatarPath = Path.Combine(_hostEnvironment.ContentRootPath, "wwwroot", "upload", "Management", "Profile", "Avatar");
+            if (!Directory.Exists(avatarPath))
+            {
+                Directory.CreateDirectory(avatarPath);
+            }
+
+            string guid = Guid.NewGuid().ToString().ToUpper();
+            string avatarFile = $"{guid}{extension}";
+            string filePath = Path.Combine(avatarPath, avatarFile);
+
+        #pragma warning disable SCS0018
+            await using (var stream = new FileStream(filePath, FileMode.Create))
+        #pragma warning restore SCS0018
+            {
+                memoryStream.Position = 0;
+                await memoryStream.CopyToAsync(stream);
+                await stream.FlushAsync();
+            }
+
+            // 실행 권한 제거 (chmod 644)
+            var chmod = new ProcessStartInfo
+            {
+                FileName = "/bin/chmod",
+                Arguments = $"644 \"{filePath}\"",
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                CreateNoWindow = true
+            };
+            using (var process = Process.Start(chmod))
+            {
+                await process?.WaitForExitAsync()!;
+            }
+
+            try
+            {
+                Account tempAccount = await _accountRepository.GetAccountByEmailAsync(
+                    JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+
+                tempAccount.AvatarImagePath = $"/upload/Management/Profile/Avatar/{avatarFile}";
+                await _accountRepository.UpdateAccountAsync(tempAccount);
+
+                return Ok(new { result = true });
+            }
+            catch
+            {
+                return Ok(new { result = false, errorMessage = _localizer["Input is invalid"].Value });
             }
         }
 
