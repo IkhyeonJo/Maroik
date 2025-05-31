@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Mvc.Localization;
 using Microsoft.AspNetCore.StaticFiles;
 using Newtonsoft.Json;
 using System.Text;
+using ImageMagick;
 
 namespace Maroik.WebSite.Controllers
 {
@@ -387,38 +388,59 @@ namespace Maroik.WebSite.Controllers
         [RequiredHttpPostAccess(Role = Role.User)]
         public async Task<IActionResult> UploadImageFile(IFormFile summernoteImageFile)
         {
-            if (summernoteImageFile == null) // 파일 없을 시
+            if (summernoteImageFile == null)
             {
                 return Ok(new { result = false, errorMessage = _localizer["Please attach a file."].Value });
             }
+
+            if (summernoteImageFile.Length <= 0 || summernoteImageFile.Length > 10 * 1024 * 1024)
+            {
+                return Ok(new { result = false, errorMessage = _localizer["File Size must be smaller than 10MB."].Value });
+            }
+
+            // 확장자 검사
+            var ext = Path.GetExtension(summernoteImageFile.FileName).ToLowerInvariant();
+            if (ext != ".png" && ext != ".jpg" && ext != ".jpeg")
+            {
+                return Ok(new { result = false, errorMessage = _localizer["Only .jpg, .jpeg or .png file allowed."].Value });
+            }
+
+            try
+            {
+                // 실제 이미지 여부 검사 (Magick.NET)
+                using var image = new MagickImage(summernoteImageFile.OpenReadStream());
+                // Magick.NET에서 예외가 발생하면 이미지가 아니거나 허용되지 않는 포맷임
+            }
+            catch (MagickException)
+            {
+                return Ok(new { result = false, errorMessage = _localizer["Invalid image file."].Value });
+            }
+
+            _ = HttpContext.Session.TryGetValue(
+                Maroik.Common.Miscellaneous.Extensions.EnumHelper.GetDescription(Maroik.Common.Miscellaneous.Utilities.Session.Account),
+                out byte[] resultByte);
+
+            var loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte));
+
+            string summernoteImagePath = Path.Combine("upload", "Calendar", $"{loginedAccount.Role}Index", "summernote", "images");
+            string imageFile = $"{Guid.NewGuid():N}{ext}";
+            string filePath = Path.Combine(summernoteImagePath, imageFile);
+
+            var uploadResult = await _fileRepository.UploadAsync(summernoteImageFile, filePath);
+
+            if (uploadResult)
+            {
+                var fileStream = await _fileRepository.DownloadAsync(filePath);
+                return Ok(new
+                {
+                    result = true,
+                    file = File(fileStream, summernoteImageFile.ContentType, imageFile),
+                    filePath = _rsa.Encrypt(filePath)
+                });
+            }
             else
             {
-                if (summernoteImageFile.Length is > 0 and <= 10485760) // imageFile Length : 파일 크기 0MB 이상, 10MB 이하
-                {
-                    if (Path.GetExtension(summernoteImageFile.FileName) is ".png" or ".jpg" or ".jpeg")
-                    {
-                        _ = HttpContext.Session.TryGetValue(Maroik.Common.Miscellaneous.Extensions.EnumHelper.GetDescription(Maroik.Common.Miscellaneous.Utilities.Session.Account), out byte[] resultByte);
-
-                        Account loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte));
-
-                        string summernoteImagePath = Path.Combine("upload", "Calendar", $"{loginedAccount.Role}Index", "summernote", "images");
-
-                        string imageFile = $"{Guid.NewGuid().ToString().ToUpper()}{Path.GetExtension(summernoteImageFile.FileName)}";
-                        string filePath = Path.Combine(summernoteImagePath, imageFile);
-
-                        return Ok(await _fileRepository.UploadAsync(summernoteImageFile, filePath)
-                            ? new { result = true, file = File(await _fileRepository.DownloadAsync(filePath), summernoteImageFile.ContentType, imageFile), filePath = _rsa.Encrypt(filePath) }
-                            : new { result = false, errorMessage = _localizer["Input is invalid"].Value });
-                    }
-                    else // 이미지 png 또는 jpg 또는 jpeg 외 확장자는 거절
-                    {
-                        return Ok(new { result = false, errorMessage = _localizer["Only .jpg or jpeg or .png file allowed."].Value });
-                    }
-                }
-                else
-                {
-                    return Ok(new { result = false, errorMessage = _localizer["File Size must be smaller than 10MB."].Value });
-                }
+                return Ok(new { result = false, errorMessage = _localizer["Input is invalid"].Value });
             }
         }
         #endregion
