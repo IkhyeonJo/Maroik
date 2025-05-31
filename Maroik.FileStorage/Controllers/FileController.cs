@@ -69,7 +69,7 @@ namespace Maroik.FileStorage.Controllers
                 if (!await _clamavRepository.ScanWithClamavAsync(memoryStream))
                     return BadRequest("File may be infected with a virus.");
 
-                // ✅ .zip 확장자인 경우 암호화 여부 검사
+                // .zip 확장자인 경우 암호화 여부 검사
                 if (Path.GetExtension(fileName).Equals(".zip", StringComparison.OrdinalIgnoreCase))
                 {
                     // 스트림 위치를 리셋
