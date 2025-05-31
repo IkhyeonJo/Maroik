@@ -7,6 +7,14 @@ networks:
        backend:
 
 services:
+    clamav:
+      image: clamav/clamav:latest
+      container_name: Maroik.Clamav
+      expose:
+        - "3310:3310"
+      networks:
+        - backend
+
     postgresql:
       image: postgres:17
       container_name: Maroik.PostgreSQL
@@ -17,7 +25,7 @@ services:
       volumes:
         - datasource:/var/lib/postgresql/data
         - ./Maroik.DB/PostgreSQL/SQL_Init_Script:/docker-entrypoint-initdb.d
-      ports:
+      expose:
         - "5433:5432"
       networks:
         - backend

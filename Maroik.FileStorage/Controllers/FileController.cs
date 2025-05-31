@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.StaticFiles;
 using System.Diagnostics;
+using Maroik.FileStorage.Contracts;
 
 namespace Maroik.FileStorage.Controllers
 {
@@ -9,38 +10,53 @@ namespace Maroik.FileStorage.Controllers
     [Route("api/[controller]")]
     public class FileController : ControllerBase
     {
+        private readonly IClamavRepository _clamavRepository;
+
+        public FileController(IClamavRepository clamavRepository)
+        {
+            _clamavRepository = clamavRepository;
+        }
+        
         [AllowAnonymous]
         [HttpPost("upload")]
         public async Task<IActionResult> UploadAsync([FromForm] IFormFile file, [FromForm] string filePath)
         {
             try
             {
-                if (file.Length <= 0) return BadRequest("Invalid file");
-                // 경로 탐색 취약점 방지 (파일 이름을 안전한 문자열로 변환)
-                var fileName = Path.GetFileName(file.FileName);  // 파일 이름만 가져오기
-                var safeFilePath = Path.Combine(filePath, fileName);  // 파일 경로를 안전하게 결합
+                if (file is not { Length: > 0 })
+                    return BadRequest("Invalid file.");
 
-                // 디렉토리 확인 및 생성
+                // 파일 이름 추출 및 경로 보호
+                var fileName = Path.GetFileName(file.FileName);
+                var safeFilePath = Path.Combine(filePath, fileName);
+
+                // ClamAV 검사 전 메모리 스트림 복사
+                using var memoryStream = new MemoryStream();
+                await file.CopyToAsync(memoryStream);
+
+                if (!await _clamavRepository.ScanWithClamavAsync(memoryStream))
+                    return BadRequest("File may be infected with a virus.");
+
+                // 디렉터리 없으면 생성
                 if (!Directory.Exists(filePath))
-                {
-                    _ = Directory.CreateDirectory(filePath);
-                }
+                    Directory.CreateDirectory(filePath);
 
-                // 파일 저장
+                // 디스크 저장
 #pragma warning disable SCS0018
                 await using (var stream = new FileStream(safeFilePath, FileMode.Create))
 #pragma warning restore SCS0018
                 {
-                    await file.CopyToAsync(stream);
+                    memoryStream.Position = 0;
+                    await memoryStream.CopyToAsync(stream);
                     await stream.FlushAsync();
                 }
 
-                // 파일 권한 설정: 실행 권한 제거 (chmod 644)
+                // 파일 권한 설정 (644)
                 var chmod = new ProcessStartInfo
                 {
                     FileName = "/bin/chmod",
 #pragma warning disable SCS0001
-                    Arguments = $"644 \"{safeFilePath}\"", // 파일에 실행 권한 제거
+                    Arguments = $"644 \"{safeFilePath}\"",
 #pragma warning restore SCS0001
                     RedirectStandardOutput = true,
                     RedirectStandardError = true,
@@ -53,8 +69,7 @@ namespace Maroik.FileStorage.Controllers
                     await process?.WaitForExitAsync()!;
                 }
 
-                return Ok("파일 업로드 및 실행 권한 제거 완료.");
-
+                return Ok("File upload and execution permissions removed.");
             }
             catch
             {

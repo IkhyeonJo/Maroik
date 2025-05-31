@@ -61,6 +61,7 @@ builder.Services.AddHostedService<JwtRefreshTokenCache>();
 
 #region LOCAL
 builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IClamavRepository, ClamavRepository>();
 #endregion
 
 #endregion
