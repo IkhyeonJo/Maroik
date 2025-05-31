@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.StaticFiles;
 using System.Diagnostics;
 using Maroik.FileStorage.Contracts;
+using ICSharpCode.SharpZipLib.Zip;
 
 namespace Maroik.FileStorage.Controllers
 {
@@ -26,50 +27,96 @@ namespace Maroik.FileStorage.Controllers
                 if (file is not { Length: > 0 })
                     return BadRequest("Invalid file.");
 
-                // 파일 이름 추출 및 경로 보호
                 var fileName = Path.GetFileName(file.FileName);
-                var safeFilePath = Path.Combine(filePath, fileName);
+                var safeDirectory = Path.GetFullPath(filePath);
+                var safeFilePath = Path.Combine(safeDirectory, fileName);
+                
+                // extension check
+                var allowedExt = new[] { ".zip", ".jpg", ".jpeg", ".png" };
+                if (!allowedExt.Contains(Path.GetExtension(fileName).ToLowerInvariant()))
+                    return BadRequest("Unsupported file extension.");
 
-                // ClamAV 검사 전 메모리 스트림 복사
+                // file size check
+                if (file.Length > 10 * 1024 * 1024) // 10MB
+                    return BadRequest("File too large.");
+
                 using var memoryStream = new MemoryStream();
                 await file.CopyToAsync(memoryStream);
+                
+                bool IsAllowedFileType(Stream stream, string tempFileName)
+                {
+                    stream.Position = 0;
+                    var buffer = new byte[8];
+                    _ = stream.Read(buffer, 0, buffer.Length);
+                    stream.Position = 0;
 
+                    var ext = Path.GetExtension(tempFileName).ToLowerInvariant();
+
+                    return ext switch
+                    {
+                        ".zip" => buffer.Take(4).SequenceEqual(new byte[] { 0x50, 0x4B, 0x03, 0x04 }),
+                        ".jpg" or ".jpeg" => buffer[0] == 0xFF && buffer[1] == 0xD8, // JPEG
+                        ".png" => buffer.Take(8).SequenceEqual(new byte[] { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A }),
+                        _ => false
+                    };
+                }
+
+                // 파일 종류별 Magic Header 검사
+                if (!IsAllowedFileType(memoryStream, fileName))
+                    return BadRequest("Invalid or unsupported file format.");
+                
+                // ClamAV 바이러스 검사
                 if (!await _clamavRepository.ScanWithClamavAsync(memoryStream))
                     return BadRequest("File may be infected with a virus.");
 
-                // 디렉터리 없으면 생성
-                if (!Directory.Exists(filePath))
-                    Directory.CreateDirectory(filePath);
-
-                // 디스크 저장
-#pragma warning disable SCS0018
-                await using (var stream = new FileStream(safeFilePath, FileMode.Create))
-#pragma warning restore SCS0018
+                // ✅ .zip 확장자인 경우 암호화 여부 검사
+                if (Path.GetExtension(fileName).Equals(".zip", StringComparison.OrdinalIgnoreCase))
                 {
+                    // 스트림 위치를 리셋
                     memoryStream.Position = 0;
-                    await memoryStream.CopyToAsync(stream);
-                    await stream.FlushAsync();
+                    
+                    // 스트림 복사본 만들기 (메모리 사용량 증가 주의)
+                    using var msCopy = new MemoryStream();
+                    await memoryStream.CopyToAsync(msCopy);
+                    msCopy.Position = 0;
+                    
+                    // 이제 zip 검사
+                    using var zipFile = new ZipFile(msCopy);
+                    foreach (ZipEntry entry in zipFile)
+                    {
+                        if (entry.IsCrypted)
+                            return BadRequest("Encrypted ZIP files are not allowed.");
+                    }
                 }
+                
+                if (!Directory.Exists(safeDirectory))
+                    Directory.CreateDirectory(safeDirectory);
 
-                // 파일 권한 설정 (644)
+                // 저장
+        #pragma warning disable SCS0018
+                await using var stream = new FileStream(safeFilePath, FileMode.Create);
+        #pragma warning restore SCS0018
+                memoryStream.Position = 0;
+                await memoryStream.CopyToAsync(stream);
+                await stream.FlushAsync();
+
+                // 실행 권한 제거 (chmod 644)
                 var chmod = new ProcessStartInfo
                 {
                     FileName = "/bin/chmod",
-#pragma warning disable SCS0001
+        #pragma warning disable SCS0001
                     Arguments = $"644 \"{safeFilePath}\"",
-#pragma warning restore SCS0001
+        #pragma warning restore SCS0001
                     RedirectStandardOutput = true,
                     RedirectStandardError = true,
                     UseShellExecute = false,
                     CreateNoWindow = true
                 };
 
-                using (var process = Process.Start(chmod))
-                {
-                    await process?.WaitForExitAsync()!;
-                }
+                using var chmodProcess = Process.Start(chmod);
+                await chmodProcess!.WaitForExitAsync();
 
-                return Ok("File upload and execution permissions removed.");
+                return Ok("File uploaded successfully.");
             }
             catch
             {
