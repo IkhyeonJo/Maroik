@@ -11,7 +11,7 @@ services:
       image: clamav/clamav:latest
       container_name: Maroik.Clamav
       expose:
-        - "3310:3310"
+        - "3310"
       networks:
         - backend
   
@@ -26,7 +26,7 @@ services:
         - datasource:/var/lib/postgresql/data
         - ./Maroik.DB/PostgreSQL/SQL_Init_Script:/docker-entrypoint-initdb.d
       expose:
-        - "5433:5432"
+        - "5432"
       networks:
         - backend
 
