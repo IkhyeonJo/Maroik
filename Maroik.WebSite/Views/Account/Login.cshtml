@@ -16,11 +16,11 @@
             <p class="login-box-msg">@localizer["Sign in to start your session"]</p>
             <form id="loginForm" class="form-horizontal" method="post" asp-controller="Account" asp-action="Login">
                 <div class="form-group has-feedback">
-                    <input asp-for="Email" type="email" class="form-control" placeholder="@localizer["Email"]" />
+                    <input asp-for="Email" type="email" class="form-control" placeholder="@localizer["Email"]" value="demo@maroik.com"/>
                     <span asp-validation-for="Email" class="text-danger"></span>
                 </div>
                 <div class="form-group has-feedback">
-                    <input id="Password" name="Password" maxlength="100" type="password" class="form-control" placeholder="@localizer["Password"]" />
+                    <input id="Password" name="Password" maxlength="100" type="password" class="form-control" placeholder="@localizer["Password"]" value="demoO12!!"/>
                 </div>
                 <div class="row">
                     <div class="col-6 input-group-prepend">

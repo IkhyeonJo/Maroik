@@ -74,6 +74,14 @@ namespace Maroik.WebSite.Controllers
             var currentLoginUser = await accountRepository.GetAccountByEmailAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte ?? [])).Email);
             var assets = (await assetRepository.GetAssetsAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte ?? [])).Email)) ?? [];
 
+            #region For Demo User [Only Demo purpose]
+            if (currentLoginUser?.Email == "demo@maroik.com")
+            {
+                year = "2025";
+                month = "06";
+            }
+            #endregion
+            
             #region Year & Month
             if (string.IsNullOrEmpty(year))
             {
