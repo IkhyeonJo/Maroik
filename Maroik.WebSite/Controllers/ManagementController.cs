@@ -165,7 +165,9 @@ namespace Maroik.WebSite.Controllers
             var chmod = new ProcessStartInfo
             {
                 FileName = "/bin/chmod",
+#pragma warning disable SCS0001
                 Arguments = $"644 \"{filePath}\"",
+#pragma warning restore SCS0001
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
                 UseShellExecute = false,
