@@ -52,7 +52,7 @@ ServerSetting.DockerKeyPath = builder.Configuration.GetSection("ServerSetting")[
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(
         builder.Configuration.GetConnectionString("DefaultConnection"),
-        npgsqlOptions => npgsqlOptions.EnableRetryOnFailure()
+        npgsqlOptions => npgsqlOptions.EnableRetryOnFailure(0) // 0으로 설정하여 비활성화
     ).EnableSensitiveDataLogging()
 );
 #endregion

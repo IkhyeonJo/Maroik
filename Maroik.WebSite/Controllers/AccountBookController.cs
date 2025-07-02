@@ -10,6 +10,7 @@ using DocumentFormat.OpenXml;
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Spreadsheet;
 using System.Text;
+using Maroik.Common.DataAccess.Data;
 
 namespace Maroik.WebSite.Controllers
 {
@@ -25,13 +26,15 @@ namespace Maroik.WebSite.Controllers
         private readonly IIncomeRepository _incomeRepository;
         private readonly IExpenditureRepository _expenditureRepository;
         private readonly IFixedExpenditureRepository _fixedExpenditureRepository;
+        private readonly ApplicationDbContext _context;
 
         public AccountBookController(IHtmlLocalizer<AccountBookController> localizer,
             ILogger<AccountBookController> logger, IAccountRepository accountRepository,
             IHostEnvironment hostEnvironment, ICategoryRepository categoryRepository,
             ISubCategoryRepository subCategoryRepository, IAssetRepository assetRepository,
             IIncomeRepository incomeRepository, IExpenditureRepository expenditureRepository,
-            IFixedExpenditureRepository fixedExpenditureRepository)
+            IFixedExpenditureRepository fixedExpenditureRepository,
+            ApplicationDbContext context)
         {
             _localizer = localizer;
             _logger = logger;
@@ -43,6 +46,7 @@ namespace Maroik.WebSite.Controllers
             _incomeRepository = incomeRepository;
             _expenditureRepository = expenditureRepository;
             _fixedExpenditureRepository = fixedExpenditureRepository;
+            _context = context;
         }
 
         #region Asset
@@ -235,6 +239,7 @@ namespace Maroik.WebSite.Controllers
         [RequiredHttpPostAccess(Role = Role.User)]
         public async Task<IActionResult> UpdateAsset([FromBody] AssetInputViewModel assetInputViewModel)
         {
+            await using var transaction = await _context.Database.BeginTransactionAsync();
             try
             {
                 _ = ModelState.Remove(nameof(assetInputViewModel.MonetaryUnit));
@@ -294,7 +299,8 @@ namespace Maroik.WebSite.Controllers
                                 _ = await _expenditureRepository.UpdateMyDepositAssetWithProductNameAsync(
                                     tempAsset.AccountEmail, assetInputViewModel.OriginalProductName,
                                     assetInputViewModel.ProductName);
-
+                                
+                                await transaction.CommitAsync();
                                 return Json(new
                                 {
                                     result = true,
@@ -480,6 +486,7 @@ namespace Maroik.WebSite.Controllers
         [RequiredHttpPostAccess(Role = Role.User)]
         public async Task<IActionResult> CreateIncome([FromBody] IncomeInputViewModel incomeInputViewModel)
         {
+            await using var transaction = await _context.Database.BeginTransactionAsync();
             try
             {
                 if (ModelState.IsValid)
@@ -532,7 +539,7 @@ namespace Maroik.WebSite.Controllers
                         }
 
                         #endregion
-
+                        
                         #region 수입 생성
 
                         await _incomeRepository.CreateIncomeAsync
@@ -564,11 +571,11 @@ namespace Maroik.WebSite.Controllers
                         await _assetRepository.UpdateAssetAsync(tempAsset);
 
                         #endregion
-
+                        await transaction.CommitAsync();
                         return Json(new
                             { result = true, message = _localizer["The income has been successfully created."].Value });
                     }
-                    catch
+                    catch (Exception ex)
                     {
                         return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                     }
@@ -751,6 +758,7 @@ namespace Maroik.WebSite.Controllers
         [RequiredHttpPostAccess(Role = Role.User)]
         public async Task<IActionResult> UpdateIncome([FromBody] IncomeInputViewModel incomeInputViewModel)
         {
+            await using var transaction = await _context.Database.BeginTransactionAsync();
             try
             {
                 if (ModelState.IsValid)
@@ -888,6 +896,7 @@ namespace Maroik.WebSite.Controllers
 
                                 #endregion
 
+                                await transaction.CommitAsync();
                                 return Json(new
                                 {
                                     result = true,
@@ -923,6 +932,7 @@ namespace Maroik.WebSite.Controllers
         [RequiredHttpPostAccess(Role = Role.User)]
         public async Task<IActionResult> DeleteIncome([FromBody] IncomeInputViewModel incomeInputViewModel)
         {
+            await using var transaction = await _context.Database.BeginTransactionAsync();
             try
             {
                 _ = HttpContext.Session.TryGetValue(
@@ -980,6 +990,7 @@ namespace Maroik.WebSite.Controllers
 
                         #endregion
 
+                        await transaction.CommitAsync();
                         return Json(new
                             { result = true, message = _localizer["The income has been successfully deleted."].Value });
                     }
@@ -1124,6 +1135,7 @@ namespace Maroik.WebSite.Controllers
         public async Task<IActionResult> CreateExpenditure(
             [FromBody] ExpenditureInputViewModel expenditureInputViewModel)
         {
+            await using var transaction = await _context.Database.BeginTransactionAsync();
             try
             {
                 if (ModelState.IsValid)
@@ -1245,6 +1257,7 @@ namespace Maroik.WebSite.Controllers
 
                                 #endregion
 
+                                await transaction.CommitAsync();
                                 return Json(new
                                 {
                                     result = true,
@@ -1343,6 +1356,7 @@ namespace Maroik.WebSite.Controllers
 
                                 #endregion
 
+                                await transaction.CommitAsync();
                                 return Json(new
                                 {
                                     result = true,
@@ -1400,6 +1414,7 @@ namespace Maroik.WebSite.Controllers
 
                                 #endregion
 
+                                await transaction.CommitAsync();
                                 return Json(new
                                 {
                                     result = true,
@@ -1477,6 +1492,7 @@ namespace Maroik.WebSite.Controllers
 
                                 #endregion
 
+                                await transaction.CommitAsync();
                                 return Json(new
                                 {
                                     result = true,
@@ -1688,6 +1704,7 @@ namespace Maroik.WebSite.Controllers
         public async Task<IActionResult> UpdateExpenditure(
             [FromBody] ExpenditureInputViewModel expenditureInputViewModel)
         {
+            await using var transaction = await _context.Database.BeginTransactionAsync();
             try
             {
                 if (ModelState.IsValid)
@@ -1906,6 +1923,7 @@ namespace Maroik.WebSite.Controllers
                                         #endregion
                                     }
 
+                                    await transaction.CommitAsync();
                                     return Json(new
                                     {
                                         result = true,
@@ -2535,6 +2553,7 @@ namespace Maroik.WebSite.Controllers
                                         #endregion
                                     }
 
+                                    await transaction.CommitAsync();
                                     return Json(new
                                     {
                                         result = true,
@@ -2853,6 +2872,7 @@ namespace Maroik.WebSite.Controllers
                                         #endregion
                                     }
 
+                                    await transaction.CommitAsync();
                                     return Json(new
                                     {
                                         result = true,
@@ -3482,6 +3502,7 @@ namespace Maroik.WebSite.Controllers
                                         #endregion
                                     }
 
+                                    await transaction.CommitAsync();
                                     return Json(new
                                     {
                                         result = true,
@@ -3650,7 +3671,7 @@ namespace Maroik.WebSite.Controllers
 
                                         #endregion
                                     }
-
+                                    await transaction.CommitAsync();
                                     return Json(new
                                     {
                                         result = true,
@@ -3776,7 +3797,7 @@ namespace Maroik.WebSite.Controllers
 
                                         #endregion
                                     }
-
+                                    await transaction.CommitAsync();
                                     return Json(new
                                     {
                                         result = true,
@@ -3986,7 +4007,7 @@ namespace Maroik.WebSite.Controllers
 
                                         #endregion
                                     }
-
+                                    await transaction.CommitAsync();
                                     return Json(new
                                     {
                                         result = true,
@@ -4147,7 +4168,7 @@ namespace Maroik.WebSite.Controllers
 
                                         #endregion
                                     }
-
+                                    await transaction.CommitAsync();
                                     return Json(new
                                     {
                                         result = true,
@@ -4209,6 +4230,7 @@ namespace Maroik.WebSite.Controllers
         public async Task<IActionResult> DeleteExpenditure(
             [FromBody] ExpenditureInputViewModel expenditureInputViewModel)
         {
+            await using var transaction = await _context.Database.BeginTransactionAsync();
             try
             {
                 _ = HttpContext.Session.TryGetValue(
@@ -4293,6 +4315,7 @@ namespace Maroik.WebSite.Controllers
 
                             #endregion
 
+                            await transaction.CommitAsync();
                             return Json(new
                             {
                                 result = true,
@@ -4319,6 +4342,7 @@ namespace Maroik.WebSite.Controllers
 
                             #endregion
 
+                            await transaction.CommitAsync();
                             return Json(new
                             {
                                 result = true,
