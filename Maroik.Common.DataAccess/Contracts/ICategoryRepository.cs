@@ -10,7 +10,7 @@ namespace Maroik.Common.DataAccess.Contracts
         /// 모든 카테고리들을 구합니다.
         /// </summary>
         /// <returns></returns>
-        public IEnumerable<Category> GetCategory();
+        public Task<IEnumerable<Category>> GetCategoryAsync();
         /// <summary>
         /// 권한에 따른 카테고리들을 구합니다.
         /// </summary>

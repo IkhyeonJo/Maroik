@@ -10,7 +10,7 @@ namespace Maroik.Common.DataAccess.Contracts
         /// 모든 서브카테고리들을 구합니다.
         /// </summary>
         /// <returns></returns>
-        public IEnumerable<SubCategory> GetSubCategory();
+        public Task<IEnumerable<SubCategory>> GetSubCategoryAsync();
         /// <summary>
         /// 권한에 따른 서브카테고리들을 구합니다.
         /// </summary>
@@ -26,13 +26,13 @@ namespace Maroik.Common.DataAccess.Contracts
         /// <summary>
         /// 서브카테고리를 업데이트합니다.
         /// </summary>
-        /// <param name="category"></param>
+        /// <param name="subCategory"></param>
         /// <returns></returns>
         public Task UpdateSubCategoryAsync(SubCategory subCategory);
         /// <summary>
         /// 서브카테고리를 제거합니다.
         /// </summary>
-        /// <param name="category"></param>
+        /// <param name="subCategory"></param>
         /// <returns></returns>
         public Task DeleteSubCategoryAsync(SubCategory subCategory);
     }

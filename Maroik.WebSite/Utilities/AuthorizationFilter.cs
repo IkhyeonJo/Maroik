@@ -21,10 +21,10 @@ namespace Maroik.WebSite.Utilities
         }
 
         // Do something before the action executes.
-        public override void OnActionExecuting(ActionExecutingContext context)
+        public override async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
         {
-            IEnumerable<Category> categories = _categoryRepository.GetCategory();
-            IEnumerable<SubCategory> subCategories = _subCategoryRepository.GetSubCategory();
+            var categories = await _categoryRepository.GetCategoryAsync();
+            var subCategories = await _subCategoryRepository.GetSubCategoryAsync();
 
             DbCache.AdminCategories = from adminCategory in categories
                                       where adminCategory.Role == Role.Admin
@@ -62,42 +62,42 @@ namespace Maroik.WebSite.Utilities
                 {
                     if (currentControllerName == "Exception" && currentActionName == "Error") // 예외처리 자원 접근 허용 (Error)
                     {
-                        base.OnActionExecuting(context); // Do Action!!
+                        await next(); // Do Action!!
                         return;
                     }
                     else if (currentControllerName == "Account" && currentActionName == "Login") // 로그인 페이지인 경우
                     {
-                        base.OnActionExecuting(context); // Do Action!!
+                        await next(); // Do Action!!
                         return;
                     }
                     else if (currentControllerName == "Account" && currentActionName == "Register") // 회원가입 페이지인 경우
                     {
-                        base.OnActionExecuting(context); // Do Action!!
+                        await next(); // Do Action!!
                         return;
                     }
                     else if (currentControllerName == "Account" && currentActionName == "ConfirmEmail") // 이메일 인증 페이지인 경우
                     {
-                        base.OnActionExecuting(context); // Do Action!!
+                        await next(); // Do Action!!
                         return;
                     }
                     else if (currentControllerName == "Account" && currentActionName == "ConsentForm") // 동의서 페이지인 경우
                     {
-                        base.OnActionExecuting(context); // Do Action!!
+                        await next(); // Do Action!!
                         return;
                     }
                     else if (currentControllerName == "Account" && currentActionName == "ForgotPassword") // 비밀번호 찾기 페이지인 경우
                     {
-                        base.OnActionExecuting(context); // Do Action!!
+                        await next(); // Do Action!!
                         return;
                     }
                     else if (currentControllerName == "Account" && currentActionName == "ResetPassword") // 비밀번호 초기화 페이지인 경우
                     {
-                        base.OnActionExecuting(context); // Do Action!!
+                        await next(); // Do Action!!
                         return;
                     }
                     else if (currentControllerName == "Account" && currentActionName == "Logout") // 로그아웃인 경우
                     {
-                        base.OnActionExecuting(context); // Do Action!!
+                        await next(); // Do Action!!
                         return;
                     }
 
@@ -113,7 +113,7 @@ namespace Maroik.WebSite.Utilities
                     {
                         if (singleCategory.Controller == currentControllerName && singleCategory.Action == currentActionName)
                         {
-                            base.OnActionExecuting(context); // Do Action!!
+                            await next(); // Do Action!!
                             return;
                         }
                     }
@@ -133,7 +133,7 @@ namespace Maroik.WebSite.Utilities
                         {
                             if (nonSingleCategory.Controller == currentControllerName && nonSingleCategorysSubCategory.Action == currentActionName)
                             {
-                                base.OnActionExecuting(context); // Do Action!!
+                                await next(); // Do Action!!
                                 return;
                             }
                         }
@@ -147,17 +147,17 @@ namespace Maroik.WebSite.Utilities
                 {
                     if (currentControllerName == "Exception" && currentActionName == "Error") // 예외처리 자원 접근 허용 (Error)
                     {
-                        base.OnActionExecuting(context); // Do Action!!
+                        await next(); // Do Action!!
                         return;
                     }
                     else if (currentControllerName == "Account" && currentActionName == "Logout") // 로그아웃
                     {
-                        base.OnActionExecuting(context); // Do Action!!
+                        await next(); // Do Action!!
                         return;
                     }
                     else if (currentControllerName == "DashBoard" && currentActionName == "AnonymousIndex") // 초기 화면
                     {
-                        base.OnActionExecuting(context); // Do Action!!
+                        await next(); // Do Action!!
                         return;
                     }
 
@@ -178,7 +178,7 @@ namespace Maroik.WebSite.Utilities
                         {
                             if (singleCategory.Controller == currentControllerName && singleCategory.Action == currentActionName)
                             {
-                                base.OnActionExecuting(context); // Do Action!!
+                                await next(); // Do Action!!
                                 return;
                             }
                         }
@@ -198,7 +198,7 @@ namespace Maroik.WebSite.Utilities
                             {
                                 if (nonSingleCategory.Controller == currentControllerName && nonSingleCategorysSubCategory.Action == currentActionName)
                                 {
-                                    base.OnActionExecuting(context); // Do Action!!
+                                    await next(); // Do Action!!
                                     return;
                                 }
                             }
@@ -223,7 +223,7 @@ namespace Maroik.WebSite.Utilities
                         {
                             if (singleCategory.Controller == currentControllerName && singleCategory.Action == currentActionName)
                             {
-                                base.OnActionExecuting(context); // Do Action!!
+                                await next(); // Do Action!!
                                 return;
                             }
                         }
@@ -243,7 +243,7 @@ namespace Maroik.WebSite.Utilities
                             {
                                 if (nonSingleCategory.Controller == currentControllerName && nonSingleCategorysSubCategory.Action == currentActionName)
                                 {
-                                    base.OnActionExecuting(context); // Do Action!!
+                                    await next(); // Do Action!!
                                     return;
                                 }
                             }
@@ -272,7 +272,7 @@ namespace Maroik.WebSite.Utilities
                     {
                         if (currentControllerName == existingHttpPostMethod.DeclaringType.Name.Replace("Controller", "") && currentActionName == existingHttpPostMethod.Name) // (POST로 보낸) 현 Controller 명과 Action 명이 Account Controller의 NonAction Attribute가 없고 HttpPost & ValidateAntiForgeryToken Attribute를 가진 Method(Action) 명과 같다면
                         {
-                            base.OnActionExecuting(context); // Do Action!!
+                            await next(); // Do Action!!
                             return;
                         }
                     }
@@ -297,7 +297,7 @@ namespace Maroik.WebSite.Utilities
                                         {
                                             if ((namedArgument.MemberName == nameof(RequiredHttpPostAccessAttribute.Role)) && ((namedArgument.TypedValue.Value as string) == Role.Anonymous))
                                             {
-                                                base.OnActionExecuting(context); // Do Action!!
+                                                await next(); // Do Action!!
                                                 return;
                                             }
                                         }
@@ -338,7 +338,7 @@ namespace Maroik.WebSite.Utilities
                                             {
                                                 if ((namedArgument.MemberName == nameof(RequiredHttpPostAccessAttribute.Role)) && ((namedArgument.TypedValue.Value as string) == loginedAccount.Role))
                                                 {
-                                                    base.OnActionExecuting(context); // Do Action!!
+                                                    await next(); // Do Action!!
                                                     return;
                                                 }
                                             }
@@ -373,7 +373,7 @@ namespace Maroik.WebSite.Utilities
                                             {
                                                 if ((namedArgument.MemberName == nameof(RequiredHttpPostAccessAttribute.Role)) && ((namedArgument.TypedValue.Value as string) == loginedAccount.Role))
                                                 {
-                                                    base.OnActionExecuting(context); // Do Action!!
+                                                    await next(); // Do Action!!
                                                     return;
                                                 }
                                             }
@@ -390,36 +390,11 @@ namespace Maroik.WebSite.Utilities
             }
             else // (PATCH / DELETE 등 방식은 다 거부)
             {
-                //base.OnActionExecuting(context); // Do Action!!
+                //await next(); // Do Action!!
                 //context.Result = new UnauthorizedObjectResult("Access is not allowed [Only Allowed GET/POST Method]");
                 context.Result = new RedirectResult("/DashBoard/AnonymousIndex");
                 return;
             }
-            // Do something before the action executes.
-            //        ...
-            //if (needToRedirect)
-            //        {
-            //            ...
-            //   filterContext.Result = new RedirectResult(url);
-            //            return;
-            //        }
-            //        ...
-
-            //var controllerName = routeData.Values["controller"];
-            //var actionName = routeData.Values["action"];
-            //var message = String.Format("{0} controller:{1} action:{2}", methodName, controllerName, actionName);
-            //Debug.WriteLine(message, "Action Filter Log");
-
-            //string actionName = context.ActionDescriptor.ac;
-            //string controllerName = filterContext.ActionDescriptor.ControllerDescriptor.ControllerName
-            //base.OnActionExecuting(filterContext);
-        }
-
-        // Do something after the action executes.
-        public override void OnActionExecuted(ActionExecutedContext context)
-        {
-            // Do something after the action executes.
-
         }
     }
 }

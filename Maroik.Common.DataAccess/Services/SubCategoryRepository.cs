@@ -21,9 +21,9 @@ namespace Maroik.Common.DataAccess.Services
         /// 모든 서브카테고리들을 구합니다.
         /// </summary>
         /// <returns></returns>
-        public IEnumerable<SubCategory> GetSubCategory()
+        public async Task<IEnumerable<SubCategory>> GetSubCategoryAsync()
         {
-            return _context.SubCategories.ToList();
+            return await _context.SubCategories.ToListAsync();
         }
         /// <summary>
         /// 권한에 따른 서브카테고리들을 구합니다.

@@ -21,9 +21,9 @@ namespace Maroik.Common.DataAccess.Services
         /// 모든 카테고리들을 구합니다.
         /// </summary>
         /// <returns></returns>
-        public IEnumerable<Category> GetCategory()
+        public async Task<IEnumerable<Category>> GetCategoryAsync()
         {
-            return _context.Categories.ToList();
+            return await _context.Categories.ToListAsync();
         }
         /// <summary>
         /// 권한에 따른 카테고리들을 구합니다.
