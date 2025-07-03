@@ -1,6 +1,11 @@
-﻿using Ganss.Xss;
+﻿using DocumentFormat.OpenXml;
+using DocumentFormat.OpenXml.Packaging;
+using DocumentFormat.OpenXml.Spreadsheet;
+using Ganss.Xss;
 using HtmlAgilityPack;
+using ImageMagick;
 using Maroik.Common.DataAccess.Contracts;
+using Maroik.Common.DataAccess.Data;
 using Maroik.Common.DataAccess.Models;
 using Maroik.Common.Miscellaneous.Extensions;
 using Maroik.Common.Miscellaneous.Utilities;
@@ -11,14 +16,10 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Localization;
 using Microsoft.AspNetCore.StaticFiles;
 using Newtonsoft.Json;
-using DocumentFormat.OpenXml;
-using DocumentFormat.OpenXml.Packaging;
-using DocumentFormat.OpenXml.Spreadsheet;
-using ImageMagick;
+using System.Diagnostics;
 using System.Net.Mail;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Diagnostics;
 
 namespace Maroik.WebSite.Controllers
 {
@@ -36,13 +37,15 @@ namespace Maroik.WebSite.Controllers
         private readonly IBoardCommentRepository _boardCommentRepository;
         private readonly IFileRepository _fileRepository;
         private readonly IClamavRepository _clamavRepository;
+        private readonly ApplicationDbContext _context;
 
         public ManagementController(IHtmlLocalizer<ManagementController> localizer,
             ILogger<ManagementController> logger, IBoardRepository boardRepository,
             IBoardAttachedFileRepository boardAttachedFileRepository, IBoardCommentRepository boardCommentRepository,
             IAccountRepository accountRepository, IHostEnvironment hostEnvironment,
             ICategoryRepository categoryRepository, ISubCategoryRepository subCategoryRepository,
-            IFileRepository fileRepository, IClamavRepository clamavRepository)
+            IFileRepository fileRepository, IClamavRepository clamavRepository,
+            ApplicationDbContext context)
         {
             _rsa = new RSA(RSAType.RSA2, Encoding.UTF8, RSA.privateKey, RSA.publicKey);
             _localizer = localizer;
@@ -56,6 +59,7 @@ namespace Maroik.WebSite.Controllers
             _boardCommentRepository = boardCommentRepository;
             _fileRepository = fileRepository;
             _clamavRepository = clamavRepository;
+            _context = context;
         }
 
         #region Profile
@@ -1811,6 +1815,7 @@ namespace Maroik.WebSite.Controllers
                         }
                     }
 
+                    await using var transaction = await _context.Database.BeginTransactionAsync();
                     try
                     {
                         bool isAccountSessionExist = HttpContext.Session.TryGetValue(
@@ -1901,7 +1906,7 @@ namespace Maroik.WebSite.Controllers
                             }
 
                             #endregion
-
+                            await transaction.CommitAsync();
                             return Json(new
                             {
                                 result = true, message = _localizer["The board has been successfully created."].Value
@@ -2598,7 +2603,7 @@ namespace Maroik.WebSite.Controllers
                             });
                         }
                     }
-
+                    await using var transaction = await _context.Database.BeginTransactionAsync();
                     try
                     {
                         bool isAccountSessionExist = HttpContext.Session.TryGetValue(
@@ -2675,7 +2680,7 @@ namespace Maroik.WebSite.Controllers
 
                                     await _boardAttachedFileRepository.UpdateBoardAttachedFileAsync(
                                         previousBoardAttachedFile);
-
+                                    await transaction.CommitAsync();
                                     return Json(new
                                     {
                                         result = true,
@@ -2705,7 +2710,7 @@ namespace Maroik.WebSite.Controllers
 
                                 await _boardAttachedFileRepository.UpdateBoardAttachedFileAsync(
                                     previousBoardAttachedFile);
-
+                                await transaction.CommitAsync();
                                 return Json(new
                                 {
                                     result = true,
@@ -2747,7 +2752,7 @@ namespace Maroik.WebSite.Controllers
                                             Path =
                                                 $"upload/Management/{EnumHelper.GetDescription(BoardType.PrivateNote)}/boardAttachedFiles/{createdBoardId}/{attachedFile}"
                                         });
-
+                                    await transaction.CommitAsync();
                                     return Json(new
                                     {
                                         result = true,
@@ -2770,6 +2775,7 @@ namespace Maroik.WebSite.Controllers
 
                             else
                             {
+                                await transaction.CommitAsync();
                                 return Json(new
                                 {
                                     result = true,

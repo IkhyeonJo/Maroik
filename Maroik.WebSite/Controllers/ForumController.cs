@@ -1,6 +1,8 @@
 ﻿using Ganss.Xss;
 using HtmlAgilityPack;
+using ImageMagick;
 using Maroik.Common.DataAccess.Contracts;
+using Maroik.Common.DataAccess.Data;
 using Maroik.Common.DataAccess.Models;
 using Maroik.Common.Miscellaneous.Extensions;
 using Maroik.Common.Miscellaneous.Utilities;
@@ -12,7 +14,6 @@ using Microsoft.AspNetCore.Mvc.Localization;
 using Microsoft.AspNetCore.StaticFiles;
 using Newtonsoft.Json;
 using System.Text;
-using ImageMagick;
 
 namespace Maroik.WebSite.Controllers
 {
@@ -27,8 +28,9 @@ namespace Maroik.WebSite.Controllers
         private readonly IAccountRepository _accountRepository;
         private readonly IBoardCommentRepository _boardCommentRepository;
         private readonly IFileRepository _fileRepository;
+        private readonly ApplicationDbContext _context;
 
-        public ForumController(IHtmlLocalizer<ForumController> localizer, ILogger<ForumController> logger, IBoardRepository boardRepository, IHostEnvironment hostEnvironment, IBoardAttachedFileRepository boardAttachedFileRepository, IAccountRepository accountRepository, IBoardCommentRepository boardCommentRepository, IFileRepository fileRepository)
+        public ForumController(IHtmlLocalizer<ForumController> localizer, ILogger<ForumController> logger, IBoardRepository boardRepository, IHostEnvironment hostEnvironment, IBoardAttachedFileRepository boardAttachedFileRepository, IAccountRepository accountRepository, IBoardCommentRepository boardCommentRepository, IFileRepository fileRepository, ApplicationDbContext context)
         {
             _rsa = new RSA(RSAType.RSA2, Encoding.UTF8, RSA.privateKey, RSA.publicKey);
             _localizer = localizer;
@@ -39,6 +41,7 @@ namespace Maroik.WebSite.Controllers
             _accountRepository = accountRepository;
             _boardCommentRepository = boardCommentRepository;
             _fileRepository = fileRepository;
+            _context = context;
         }
 
         #region FreeForum
@@ -102,7 +105,7 @@ namespace Maroik.WebSite.Controllers
                             return Json(new { result = false, error = _localizer["uploaded file size must be smaller than 10MB."].Value });
                         }
                     }
-
+                    await using var transaction = await _context.Database.BeginTransactionAsync();
                     try
                     {
                         bool isAccountSessionExist = HttpContext.Session.TryGetValue(Maroik.Common.Miscellaneous.Extensions.EnumHelper.GetDescription(Maroik.Common.Miscellaneous.Utilities.Session.Account), out byte[] resultByte);
@@ -175,7 +178,7 @@ namespace Maroik.WebSite.Controllers
 
                             }
                             #endregion
-
+                            await transaction.CommitAsync();
                             return Json(new { result = true, message = _localizer["The board has been successfully created."].Value });
                         }
                         else
@@ -762,7 +765,7 @@ namespace Maroik.WebSite.Controllers
                             return Json(new { result = false, error = _localizer["uploaded file size must be smaller than 10MB."].Value });
                         }
                     }
-
+                    await using var transaction = await _context.Database.BeginTransactionAsync();
                     try
                     {
                         bool isAccountSessionExist = HttpContext.Session.TryGetValue(Maroik.Common.Miscellaneous.Extensions.EnumHelper.GetDescription(Maroik.Common.Miscellaneous.Utilities.Session.Account), out byte[] resultByte);
@@ -814,7 +817,7 @@ namespace Maroik.WebSite.Controllers
                                     previousBoardAttachedFile.Path = $"upload/Forum/{EnumHelper.GetDescription(BoardType.FreeForum)}/boardAttachedFiles/{createdBoardId}/{boardAttachedFile}";
 
                                     await _boardAttachedFileRepository.UpdateBoardAttachedFileAsync(previousBoardAttachedFile);
-
+                                    await transaction.CommitAsync();
                                     return Json(new { result = true, message = _localizer["The board has been successfully updated."].Value });
                                 }
                                 else
@@ -833,7 +836,7 @@ namespace Maroik.WebSite.Controllers
                                 previousBoardAttachedFile.Path = "";
 
                                 await _boardAttachedFileRepository.UpdateBoardAttachedFileAsync(previousBoardAttachedFile);
-
+                                await transaction.CommitAsync();
                                 return Json(new { result = true, message = _localizer["The board has been successfully updated."].Value });
                             }
                             #endregion
@@ -861,7 +864,7 @@ namespace Maroik.WebSite.Controllers
                                         Extension = Path.GetExtension(boardInputViewModel.UploadedFile.FileName),
                                         Path = $"upload/Forum/{EnumHelper.GetDescription(BoardType.FreeForum)}/boardAttachedFiles/{createdBoardId}/{boardAttachedFile}"
                                     });
-
+                                    await transaction.CommitAsync();
                                     return Json(new { result = true, message = _localizer["The board has been successfully updated."].Value });
                                 }
                                 else
@@ -874,6 +877,7 @@ namespace Maroik.WebSite.Controllers
                             #region 기존 첨부 파일 X && 신 첨부 파일 X
                             else
                             {
+                                await transaction.CommitAsync();
                                 return Json(new { result = true, message = _localizer["The board has been successfully updated."].Value });
                             }
                             #endregion

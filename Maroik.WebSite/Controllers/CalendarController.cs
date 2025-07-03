@@ -1,6 +1,8 @@
 ﻿using Ganss.Xss;
 using HtmlAgilityPack;
+using ImageMagick;
 using Maroik.Common.DataAccess.Contracts;
+using Maroik.Common.DataAccess.Data;
 using Maroik.Common.DataAccess.Models;
 using Maroik.Common.Miscellaneous.Extensions;
 using Maroik.Common.Miscellaneous.Utilities;
@@ -11,7 +13,6 @@ using Microsoft.AspNetCore.Mvc.Localization;
 using Microsoft.AspNetCore.StaticFiles;
 using Newtonsoft.Json;
 using System.Text;
-using ImageMagick;
 
 namespace Maroik.WebSite.Controllers
 {
@@ -32,13 +33,15 @@ namespace Maroik.WebSite.Controllers
         private readonly ICalendarSharedRepository _calendarSharedRepository;
         private readonly IHostEnvironment _hostEnvironment;
         private readonly IFileRepository _fileRepository;
+        private readonly ApplicationDbContext _context;
 
-        public CalendarController(IHtmlLocalizer<CalendarController> localizer, ILogger<CalendarController> logger, IHostEnvironment hostEnvironment, IIncomeRepository incomeRepository, IExpenditureRepository expenditureRepository, IAssetRepository assetRepository, IAccountRepository accountRepository, ICalendarRepository calendarRepository, IOtherCalendarRepository otherCalendarRepository, ICalendarEventRepository calendarEventRepository, ICalendarEventAttachedFileRepository calendarEventAttachedFileRepository, ICalendarEventReminderRepository calendarReminderRepository, ICalendarSharedRepository calendarSharedRepository, IFileRepository fileRepository)
+        public CalendarController(IHtmlLocalizer<CalendarController> localizer, ILogger<CalendarController> logger, IHostEnvironment hostEnvironment, ApplicationDbContext context, IIncomeRepository incomeRepository, IExpenditureRepository expenditureRepository, IAssetRepository assetRepository, IAccountRepository accountRepository, ICalendarRepository calendarRepository, IOtherCalendarRepository otherCalendarRepository, ICalendarEventRepository calendarEventRepository, ICalendarEventAttachedFileRepository calendarEventAttachedFileRepository, ICalendarEventReminderRepository calendarReminderRepository, ICalendarSharedRepository calendarSharedRepository, IFileRepository fileRepository)
         {
             _rsa = new RSA(RSAType.RSA2, Encoding.UTF8, RSA.privateKey, RSA.publicKey);
             _localizer = localizer;
             _logger = logger;
             _hostEnvironment = hostEnvironment;
+            _context = context;
             _incomeRepository = incomeRepository;
             _expenditureRepository = expenditureRepository;
             _assetRepository = assetRepository;
@@ -164,6 +167,7 @@ namespace Maroik.WebSite.Controllers
                         }
                     }
 
+                    await using var transaction = await _context.Database.BeginTransactionAsync();
                     try
                     {
                         bool isAccountSessionExist = HttpContext.Session.TryGetValue(Maroik.Common.Miscellaneous.Extensions.EnumHelper.GetDescription(Maroik.Common.Miscellaneous.Utilities.Session.Account), out byte[] resultByte);
@@ -357,6 +361,7 @@ namespace Maroik.WebSite.Controllers
                             }
                             #endregion
 
+                            await transaction.CommitAsync();
                             return Json(new { result = true, message = _localizer["The calendar event has been successfully created."].Value });
                         }
                         else
@@ -2201,6 +2206,7 @@ namespace Maroik.WebSite.Controllers
                         }
                     }
 
+                    await using var transaction = await _context.Database.BeginTransactionAsync();
                     try
                     {
                         bool isAccountSessionExist = HttpContext.Session.TryGetValue(Maroik.Common.Miscellaneous.Extensions.EnumHelper.GetDescription(Maroik.Common.Miscellaneous.Utilities.Session.Account), out byte[] resultByte);
@@ -2411,6 +2417,7 @@ namespace Maroik.WebSite.Controllers
                             }
                             #endregion
 
+                            await transaction.CommitAsync();
                             return Json(new { result = true, message = _localizer["The calendar event has been successfully updated."].Value });
                         }
                         else
@@ -2445,6 +2452,7 @@ namespace Maroik.WebSite.Controllers
             {
                 if (ModelState.IsValid)
                 {
+                    await using var transaction = await _context.Database.BeginTransactionAsync();
                     try
                     {
                         foreach (CalendarShared calendarShared in calendarShareds)
@@ -2471,7 +2479,7 @@ namespace Maroik.WebSite.Controllers
                             }
                         }
                         #endregion
-
+                        await transaction.CommitAsync();
                         return Json(new { result = true, message = _localizer["The calendar shared has been successfully updated."].Value });
                     }
                     catch
@@ -2501,6 +2509,7 @@ namespace Maroik.WebSite.Controllers
             {
                 if (ModelState.IsValid)
                 {
+                    await using var transaction = await _context.Database.BeginTransactionAsync();
                     try
                     {
                         bool isAccountSessionExist = HttpContext.Session.TryGetValue(Maroik.Common.Miscellaneous.Extensions.EnumHelper.GetDescription(Maroik.Common.Miscellaneous.Utilities.Session.Account), out byte[] resultByte);
@@ -2526,7 +2535,7 @@ namespace Maroik.WebSite.Controllers
                                 otherCalendar.AccountEmail = loginedAccount.Email;
                                 await _otherCalendarRepository.CreateOtherCalendarAsync(otherCalendar);
                             }
-
+                            await transaction.CommitAsync();
                             return Json(new { result = true, message = _localizer["The other calendar has been successfully updated."].Value });
                         }
                         else
