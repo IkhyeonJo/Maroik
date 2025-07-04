@@ -575,7 +575,7 @@ namespace Maroik.WebSite.Controllers
                         return Json(new
                             { result = true, message = _localizer["The income has been successfully created."].Value });
                     }
-                    catch (Exception ex)
+                    catch
                     {
                         return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                     }
