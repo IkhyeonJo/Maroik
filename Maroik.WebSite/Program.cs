@@ -395,7 +395,7 @@ app.UseRequestLocalization(localizationOptions);
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=DashBoard}/{action=AnonymousIndex}/{id?}");
-
+app.UseMiddleware<RoleBasedStaticFileMiddleware>();
 app.MapStaticAssets();
 
 app.Run();
