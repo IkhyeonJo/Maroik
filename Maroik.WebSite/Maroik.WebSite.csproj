@@ -38,8 +38,4 @@
     <ProjectReference Include="..\Maroik.Common.Miscellaneous\Maroik.Common.Miscellaneous.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Views\Calendar\" />
-  </ItemGroup>
-
 </Project>
