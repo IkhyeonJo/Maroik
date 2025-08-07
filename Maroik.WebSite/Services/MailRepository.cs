@@ -19,7 +19,7 @@ namespace Maroik.WebSite.Services
         public string GetMailConfirmationBody(LoginInputViewModel loginInputViewModel, string title, string content0, string content1)
         {
             string url = $"{ServerSetting.DomainName}Account/ConfirmEmail?registrationToken={Uri.EscapeDataString(loginInputViewModel.RegistrationToken)}";
-            return @$"<div style='text-align:centre;'>
+            return @$"<div style='text-align:center;'>
                         <h1>{title}<h1>
                         <h3>{content0}<h3>
                         <h3>{content1}<h3>
@@ -37,7 +37,7 @@ namespace Maroik.WebSite.Services
         public string GetMailResetPasswordBody(LoginInputViewModel loginInputViewModel, string title, string content0, string content1)
         {
             string url = $"{ServerSetting.DomainName}Account/ResetPassword?resetPasswordToken={Uri.EscapeDataString(loginInputViewModel.ResetPasswordToken)}";
-            return @$"<div style='text-align:centre;'>
+            return @$"<div style='text-align:center;'>
                         <h1>{title}<h1>
                         <h3>{content0}<h3>
                         <h3>{content1}<h3>
