@@ -84,24 +84,7 @@ services:
         volumes:
           - ./Maroik.SSL/conf:/etc/letsencrypt:ro
           - ./Maroik.FileStorage/upload/:/app/upload:rw
-          
-    maroik.ai:
-        build:
-          context: .
-          dockerfile: Maroik.AI/Dockerfile
-        container_name: Maroik.AI
-        networks:
-          - backend
-        expose:
-          - "8000"
-        environment:
-          - DBPASSWORD=***REMOVED***
-        volumes:
-          - ./Maroik.AI:/app/
-        depends_on:
-          - postgresql
-        restart: always
-        
+
     certbot:
         image: certbot/dns-cloudflare
         container_name: certbot
