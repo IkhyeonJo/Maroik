@@ -19,19 +19,11 @@ namespace Maroik.WebAPI.Infrastructure
         (ClaimsPrincipal, JwtSecurityToken) DecodeJwtToken(string token);
     }
 
-    public class JwtAuthManager : IJwtAuthManager
+    public class JwtAuthManager(JwtTokenConfig jwtTokenConfig) : IJwtAuthManager
     {
         public IImmutableDictionary<string, RefreshToken> UsersRefreshTokensReadOnlyDictionary => _usersRefreshTokens.ToImmutableDictionary();
-        private readonly ConcurrentDictionary<string, RefreshToken> _usersRefreshTokens;  // can store in a database or a distributed cache
-        private readonly JwtTokenConfig _jwtTokenConfig;
-        private readonly byte[] _secret;
-
-        public JwtAuthManager(JwtTokenConfig jwtTokenConfig)
-        {
-            _jwtTokenConfig = jwtTokenConfig;
-            _usersRefreshTokens = new ConcurrentDictionary<string, RefreshToken>();
-            _secret = Encoding.ASCII.GetBytes(jwtTokenConfig.Secret);
-        }
+        private readonly ConcurrentDictionary<string, RefreshToken> _usersRefreshTokens = new();  // can store in a database or a distributed cache
+        private readonly byte[] _secret = Encoding.ASCII.GetBytes(jwtTokenConfig.Secret);
 
         // optional: clean up expired refresh tokens
         public void RemoveExpiredRefreshTokens(DateTime now)
@@ -57,25 +49,23 @@ namespace Maroik.WebAPI.Infrastructure
         {
             bool shouldAddAudienceClaim = string.IsNullOrWhiteSpace(claims?.FirstOrDefault(x => x.Type == JwtRegisteredClaimNames.Aud)?.Value);
             JwtSecurityToken jwtToken = new(
-                _jwtTokenConfig.Issuer,
-                shouldAddAudienceClaim ? _jwtTokenConfig.Audience : string.Empty,
+                jwtTokenConfig.Issuer,
+                shouldAddAudienceClaim ? jwtTokenConfig.Audience : string.Empty,
                 claims,
-                expires: now.AddMinutes(_jwtTokenConfig.AccessTokenExpiration),
+                expires: now.AddMinutes(jwtTokenConfig.AccessTokenExpiration),
                 signingCredentials: new SigningCredentials(new SymmetricSecurityKey(_secret), SecurityAlgorithms.HmacSha256Signature));
-            string accessToken = new JwtSecurityTokenHandler().WriteToken(jwtToken);
+            new JwtSecurityTokenHandler().WriteToken(jwtToken);
 
             RefreshToken refreshToken = new()
             {
                 UserName = username,
                 TokenString = GenerateRefreshTokenString(),
-                ExpireAt = now.AddMinutes(_jwtTokenConfig.RefreshTokenExpiration)
+                ExpireAt = now.AddMinutes(jwtTokenConfig.RefreshTokenExpiration)
             };
             _ = _usersRefreshTokens.AddOrUpdate(refreshToken.TokenString, refreshToken, (_, _) => refreshToken);
 
             return new JwtAuthResult
             {
-                AccessToken = accessToken,
-                RefreshToken = refreshToken
             };
         }
 
@@ -111,10 +101,10 @@ namespace Maroik.WebAPI.Infrastructure
                     new TokenValidationParameters
                     {
                         ValidateIssuer = true,
-                        ValidIssuer = _jwtTokenConfig.Issuer,
+                        ValidIssuer = jwtTokenConfig.Issuer,
                         ValidateIssuerSigningKey = true,
                         IssuerSigningKey = new SymmetricSecurityKey(_secret),
-                        ValidAudience = _jwtTokenConfig.Audience,
+                        ValidAudience = jwtTokenConfig.Audience,
                         ValidateAudience = true,
                         ValidateLifetime = true,
                         ClockSkew = TimeSpan.FromMinutes(1)
@@ -132,25 +122,18 @@ namespace Maroik.WebAPI.Infrastructure
         }
     }
 
-    public class JwtAuthResult
-    {
-        [JsonPropertyName("accessToken")]
-        public string AccessToken { get; set; }
-
-        [JsonPropertyName("refreshToken")]
-        public RefreshToken RefreshToken { get; set; }
-    }
+    public class JwtAuthResult;
 
     public class RefreshToken
     {
         [JsonPropertyName("username")]
-        public string UserName { get; set; }    // can be used for usage tracking
+        public string UserName { get; init; }    // can be used for usage tracking
         // can optionally include other metadata, such as user agent, ip address, device name, and so on
 
         [JsonPropertyName("tokenString")]
-        public string TokenString { get; set; }
+        public string TokenString { get; init; }
 
         [JsonPropertyName("expireAt")]
-        public DateTime ExpireAt { get; set; }
+        public DateTime ExpireAt { get; init; }
     }
 }

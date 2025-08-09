@@ -5,18 +5,18 @@ namespace Maroik.WebAPI.Infrastructure
     public class JwtTokenConfig
     {
         [JsonPropertyName("secret")]
-        public string Secret { get; set; }
+        public string Secret { get; init; }
 
         [JsonPropertyName("issuer")]
-        public string Issuer { get; set; }
+        public string Issuer { get; init; }
 
         [JsonPropertyName("audience")]
-        public string Audience { get; set; }
+        public string Audience { get; init; }
 
         [JsonPropertyName("accessTokenExpiration")]
-        public int AccessTokenExpiration { get; set; }
+        public int AccessTokenExpiration { get; init; }
 
         [JsonPropertyName("refreshTokenExpiration")]
-        public int RefreshTokenExpiration { get; set; }
+        public int RefreshTokenExpiration { get; init; }
     }
 }

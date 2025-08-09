@@ -1,7 +1,6 @@
-namespace Maroik.WebAPI.Contracts
+namespace Maroik.WebAPI.Contracts;
+
+public interface IUserRepository
 {
-    public interface IUserRepository
-    {
-        public Task<bool> IsValidUserCredentialsAsync(string email, string password);
-    }
+    public Task<bool> IsValidUserCredentialsAsync(string email, string password);
 }
