@@ -51,8 +51,8 @@
             fixedIncomeOutputViewModels.Add(new FixedIncomeOutputViewModel()
             {
                 Id = item.Id,
-                MainClass = localizer[item.MainClass.ToString()].Value,
-                SubClass = localizer[item.SubClass.ToString()].Value,
+                MainClass = Localizer[item.MainClass.ToString()].Value,
+                SubClass = Localizer[item.SubClass.ToString()].Value,
                 Content = item.Content,
                 Amount = item.Amount,
                 DepositMonth = item.DepositMonth,
@@ -88,8 +88,8 @@
             fixedExpenditureOutputViewModels.Add(new FixedExpenditureOutputViewModel()
             {
                 Id = item.Id,
-                MainClass = localizer[item.MainClass.ToString()].Value,
-                SubClass = localizer[item.SubClass.ToString()].Value,
+                MainClass = Localizer[item.MainClass.ToString()].Value,
+                SubClass = Localizer[item.SubClass.ToString()].Value,
                 Content = item.Content,
                 Amount = item.Amount,
                 PaymentMethod = item.PaymentMethod,
@@ -274,23 +274,23 @@
                         <span class="badge badge-warning navbar-badge">@(fixedIncomesNoticedCount + fixedIncomesExpiredCount + fixedExpenditureNoticedCount + fixedExpenditureExpiredCount)</span>
                     </a>
                     <div class="dropdown-menu dropdown-menu-lg dropdown-menu-right">
-                        <span class="dropdown-item dropdown-header">@(fixedIncomesNoticedCount + fixedIncomesExpiredCount + fixedExpenditureNoticedCount + fixedExpenditureExpiredCount) @localizer["Notifications"].Value</span>
+                        <span class="dropdown-item dropdown-header">@(fixedIncomesNoticedCount + fixedIncomesExpiredCount + fixedExpenditureNoticedCount + fixedExpenditureExpiredCount) @Localizer["Notifications"].Value</span>
                         <div class="dropdown-divider"></div>
                         @if (fixedIncomesNoticedCount + fixedIncomesExpiredCount > 0)
                         {
                             <a href="@Url.Action("FixedIncome", "Notice")" class="dropdown-item">
-                                <i class="fas fa-file mr-2"></i>[@(fixedIncomesNoticedCount + fixedIncomesExpiredCount)] @localizer["FixedIncome new message"].Value
+                                <i class="fas fa-file mr-2"></i>[@(fixedIncomesNoticedCount + fixedIncomesExpiredCount)] @Localizer["FixedIncome new message"].Value
                             </a>
                             <div class="dropdown-divider"></div>
                         }
                         @if (fixedExpenditureNoticedCount + fixedExpenditureExpiredCount > 0)
                         {
                             <a href="@Url.Action("FixedExpenditure", "Notice")" class="dropdown-item">
-                                <i class="fas fa-file mr-2"></i>[@(fixedExpenditureNoticedCount + fixedExpenditureExpiredCount)] @localizer["FixedExpenditure new message"].Value
+                                <i class="fas fa-file mr-2"></i>[@(fixedExpenditureNoticedCount + fixedExpenditureExpiredCount)] @Localizer["FixedExpenditure new message"].Value
                             </a>
                             <div class="dropdown-divider"></div>
                         }
-                        <span class="dropdown-item dropdown-footer">@localizer["Notifications"].Value</span>
+                        <span class="dropdown-item dropdown-footer">@Localizer["Notifications"].Value</span>
                     </div>
                 </li>
             }
@@ -336,7 +336,7 @@
                         <img src="@Model.AvatarImagePath" class="img-circle elevation-2" alt="User Image">
                         <p>
                             @Model.Nickname
-                            <small>@localizer["Member since"] @Model.Created.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId).ToString("d")</small>
+                            <small>@Localizer["Member since"] @Model.Created.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId).ToString("d")</small>
                         </p>
                     </li>
                     @*
@@ -358,8 +358,8 @@
                 *@
                     @*<!-- Menu Footer-->*@
                     <li class="user-footer">
-                        <a asp-controller="Management" asp-action="Profile" class="btn btn-default btn-flat">@localizer["Profile"]</a>
-                        <a asp-controller="Account" asp-action="Logout" class="btn btn-default btn-flat float-right">@localizer["Sign out"]</a>
+                        <a asp-controller="Management" asp-action="Profile" class="btn btn-default btn-flat">@Localizer["Profile"]</a>
+                        <a asp-controller="Account" asp-action="Logout" class="btn btn-default btn-flat float-right">@Localizer["Sign out"]</a>
                     </li>
                 </ul>
             </li>
@@ -377,7 +377,7 @@
                         <img src="@Model.AvatarImagePath" class="img-circle elevation-2" alt="User Image">
                         <p>
                             @Model.Nickname
-                            <small>@localizer["Member since"] @Model.Created.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId).ToString("d")</small>
+                            <small>@Localizer["Member since"] @Model.Created.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId).ToString("d")</small>
                         </p>
                     </li>
                     @*
@@ -399,8 +399,8 @@
                 *@
                     @*<!-- Menu Footer-->*@
                     <li class="user-footer">
-                        <a asp-controller="Management" asp-action="Profile" class="btn btn-default btn-flat">@localizer["Profile"]</a>
-                        <a asp-controller="Account" asp-action="Logout" class="btn btn-default btn-flat float-right">@localizer["Sign out"]</a>
+                        <a asp-controller="Management" asp-action="Profile" class="btn btn-default btn-flat">@Localizer["Profile"]</a>
+                        <a asp-controller="Account" asp-action="Logout" class="btn btn-default btn-flat float-right">@Localizer["Sign out"]</a>
                     </li>
                 </ul>
             </li>
@@ -411,7 +411,7 @@
             <li class="nav-item dropdown">
                 <div class="btn-group" style="padding-right:10px;">
                     <button type="button" class="btn btn-info btn-block dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
-                        <i class="fas fa-globe" style="padding-right:6px;"></i>@localizer["Language"]
+                        <i class="fas fa-globe" style="padding-right:6px;"></i>@Localizer["Language"]
                     </button>
                     <div class="dropdown-menu" role="menu">
                         <a id="aChangeCultureEnUS" class="dropdown-item @(currentCulture == "en-US" ? "active" : "")" style="cursor: pointer;">English</a>
@@ -423,7 +423,7 @@
             @*<!-- Login Button -->*@
             <li class="nav-item dropdown">
                 <button id="btnMainTopBarLogin" class="btn btn-primary btn-block">
-                    <i class="fas fa-sign-in-alt" style="padding-right:6px;"></i>@localizer["Login"]
+                    <i class="fas fa-sign-in-alt" style="padding-right:6px;"></i>@Localizer["Login"]
                 </button>
             </li>
         }

@@ -42,12 +42,12 @@
     List<Account> accounts = await accountRepository.GetAllAsync(); // 게시물에서 특별 계정 찾기 위한 용도
 }
 
-@Html.Hidden("localizerIETFLanguageTag", localizer["IETFLanguageTag"].Value)
+@Html.Hidden("localizerIETFLanguageTag", Localizer["IETFLanguageTag"].Value)
 
 <section class="content">
     <div class="card card-primary">
         <div class="card-header">
-            <h3 class="card-title">@localizer["Free Forum"].Value</h3>
+            <h3 class="card-title">@Localizer["Free Forum"].Value</h3>
         </div>
         <div class="card-body">
             @if (Model.Method == "write")
@@ -55,12 +55,12 @@
                 <form id="formWriteBoard">
                     <div asp-validation-summary="ModelOnly" class="text-danger"></div>
                     <div class="form-group">
-                        <label for="writeBoardTitle">@localizer["Title"].Value</label>
-                        <input class="form-control" type="text" data-val="true" data-val-required="@localizer["Title is required"].Value" id="writeBoardTitle" name="writeBoardTitle" value="" required maxlength="100">
+                        <label for="writeBoardTitle">@Localizer["Title"].Value</label>
+                        <input class="form-control" type="text" data-val="true" data-val-required="@Localizer["Title is required"].Value" id="writeBoardTitle" name="writeBoardTitle" value="" required maxlength="100">
                         <span class="field-validation-valid text-danger" data-valmsg-for="writeBoardTitle" data-valmsg-replace="true"></span>
                     </div>
                     <div class="form-group">
-                        <label for="writeBoardContent" class="control-label">@localizer["Content"].Value</label>
+                        <label for="writeBoardContent" class="control-label">@Localizer["Content"].Value</label>
                         <textarea name="writeBoardContent" id="writeBoardContent" maxlength="16384"></textarea> @*maxlength: 16KB*@
                     </div>
 
@@ -69,7 +69,7 @@
                         <div class="form-group">
                             <div class="custom-control custom-checkbox">
                                 <input class="custom-control-input" type="checkbox" id="writeBoardNoticed" />
-                                <label for="writeBoardNoticed" class="custom-control-label">@localizer["Noticed"].Value</label>
+                                <label for="writeBoardNoticed" class="custom-control-label">@Localizer["Noticed"].Value</label>
                             </div>
                         </div>
                     }
@@ -77,42 +77,42 @@
                     <div class="form-group">
                         <div class="custom-control custom-checkbox">
                             <input class="custom-control-input" type="checkbox" id="writeBoardLocked" />
-                            <label for="writeBoardLocked" class="custom-control-label">@localizer["Locked"].Value</label>
+                            <label for="writeBoardLocked" class="custom-control-label">@Localizer["Locked"].Value</label>
                         </div>
                     </div>
 
                     <div class="form-group">
-                        <input type="file" id="writeUploadedFile" name="writeUploadedFile" accept=".zip" data-errorMessage="@localizer["File size must be smaller than 10MB."].Value">
-                        <p class="help-block">@localizer["Only zip extension allowed."].Value</p>
+                        <input type="file" id="writeUploadedFile" name="writeUploadedFile" accept=".zip" data-errorMessage="@Localizer["File size must be smaller than 10MB."].Value">
+                        <p class="help-block">@Localizer["Only zip extension allowed."].Value</p>
                     </div>
 
                     <div class="form-group">
                         <div class="float-right">
-                            <button id="btnFreeForumShowWriteBoardLoading" type="submit" class="btn btn-primary">@localizer["Write"].Value</button>
+                            <button id="btnFreeForumShowWriteBoardLoading" type="submit" class="btn btn-primary">@Localizer["Write"].Value</button>
                         </div>
-                        <a asp-controller="Forum" asp-action="FreeForum" class="btn btn-default">@localizer["List"].Value</a>
+                        <a asp-controller="Forum" asp-action="FreeForum" class="btn btn-default">@Localizer["List"].Value</a>
                     </div>
                 </form>
             }
             else if (Model.Method == "detail")
             {
                 <div class="mailbox-read-info">
-                    <h5>@localizer["Title"].Value: @Model.BoardOutputViewModel.Title</h5>
+                    <h5>@Localizer["Title"].Value: @Model.BoardOutputViewModel.Title</h5>
                     <h6>
-                        @localizer["Writer"].Value: @Model.BoardOutputViewModel.Writer
+                        @Localizer["Writer"].Value: @Model.BoardOutputViewModel.Writer
                     </h6>
-                    <span class="mailbox-read-time float-left">@localizer["Views"].Value: @Model.BoardOutputViewModel.Views</span>
+                    <span class="mailbox-read-time float-left">@Localizer["Views"].Value: @Model.BoardOutputViewModel.Views</span>
 
                     @if (loginedAccount.Role == Role.Admin || loginedAccount.Role == Role.User)
                     {
                         <span class="mailbox-read-time float-right">
-                            @localizer["Updated"].Value: [<span id="free_forum_detail_updated">@Model.BoardOutputViewModel.Updated.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId)</span>]
+                            @Localizer["Updated"].Value: [<span id="free_forum_detail_updated">@Model.BoardOutputViewModel.Updated.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId)</span>]
                         </span>
                     }
                     else if (loginedAccount.Role == Role.Anonymous)
                     {
                         <span class="mailbox-read-time float-right">
-                            @localizer["Updated"].Value: [<span id="free_forum_detail_updated">@Model.BoardOutputViewModel.Updated.ToString("yyyy-MM-ddTHH:mm:ssZ")</span>]
+                            @Localizer["Updated"].Value: [<span id="free_forum_detail_updated">@Model.BoardOutputViewModel.Updated.ToString("yyyy-MM-ddTHH:mm:ssZ")</span>]
                         </span>
                     }
                     else
@@ -153,14 +153,14 @@
                     <div class="float-right">
                         @if (loginedAccount.Nickname == Model.BoardOutputViewModel.Writer)@*방문한 사람이 작성자인 경우*@
                         {
-                            <button id="btnFreeForumModify" type="button" class="btn btn-primary" data-link="@Url.Action("FreeForum", "Forum", new { method = "edit", boardId = Model.DetailBoardId, page = Model.DetailCurrentPage })">@localizer["Modify"].Value</button>
+                            <button id="btnFreeForumModify" type="button" class="btn btn-primary" data-link="@Url.Action("FreeForum", "Forum", new { method = "edit", boardId = Model.DetailBoardId, page = Model.DetailCurrentPage })">@Localizer["Modify"].Value</button>
                         }
                         @if ((loginedAccount.Nickname == Model.BoardOutputViewModel.Writer) || loginedAccount.Role == Role.Admin)@*방문한 사람이 작성자 또는 관리자인 경우*@
                         {
-                            <button id="btnFreeForumConfirmDeleteBoard" type="button" class="btn btn-danger">@localizer["Delete"].Value</button>
+                            <button id="btnFreeForumConfirmDeleteBoard" type="button" class="btn btn-danger">@Localizer["Delete"].Value</button>
                         }
                     </div>
-                    <button id="btnFreeForumList" type="button" class="btn btn-default" data-link="@Url.Action("FreeForum", "Forum", new { page = Model.DetailCurrentPage })">@localizer["List"].Value</button>
+                    <button id="btnFreeForumList" type="button" class="btn btn-default" data-link="@Url.Action("FreeForum", "Forum", new { page = Model.DetailCurrentPage })">@Localizer["List"].Value</button>
                 </div>
 
                 <div class="card-footer card-comments">
@@ -188,13 +188,13 @@
                                             @if (loginedAccount.Role == Role.Admin || loginedAccount.Role == Role.User)
                                             {
                                                 <span class="text-muted float-middle">
-                                                    @localizer["Created"].Value: [<span class="free_forum_detail_comment_created">@comment.Created.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId)</span>] 
+                                                    @Localizer["Created"].Value: [<span class="free_forum_detail_comment_created">@comment.Created.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId)</span>] 
                                                 </span>
                                             }
                                             else if (loginedAccount.Role == Role.Anonymous)
                                             {
                                                 <span class="text-muted float-middle">
-                                                    @localizer["Created"].Value: [<span class="free_forum_detail_comment_created">@comment.Created.ToString("yyyy-MM-ddTHH:mm:ssZ")</span>]
+                                                    @Localizer["Created"].Value: [<span class="free_forum_detail_comment_created">@comment.Created.ToString("yyyy-MM-ddTHH:mm:ssZ")</span>]
                                                 </span>
                                             }
                                             else
@@ -204,7 +204,7 @@
 
                                             @if (loginedAccount.Nickname == comment.Writer || loginedAccount.Role == Role.Admin)@*작성자 또는 관리자인 경우*@
                                             {
-                                                <span class="text-muted float-right" style="margin: 0px 0px 0px 3px"><a class="hover aFreeForumDeleteComment" href="#" data-commentId="@(comment.Id)" data-detailBoardId="@(Model.DetailBoardId)" data-detailCurrentPage="@(Model.DetailCurrentPage)">@localizer["Delete"].Value</a></span>
+                                                <span class="text-muted float-right" style="margin: 0px 0px 0px 3px"><a class="hover aFreeForumDeleteComment" href="#" data-commentId="@(comment.Id)" data-detailBoardId="@(Model.DetailBoardId)" data-detailCurrentPage="@(Model.DetailCurrentPage)">@Localizer["Delete"].Value</a></span>
                                             }
                                         </span>
                                         @(HttpUtility.HtmlDecode(comment.Content))
@@ -231,13 +231,13 @@
                                             @if (loginedAccount.Role == Role.Admin || loginedAccount.Role == Role.User)
                                             {
                                                 <span class="text-muted float-middle">
-                                                    @localizer["Created"].Value: [<span class="free_forum_detail_comment_created">@comment.Created.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId)</span>]
+                                                    @Localizer["Created"].Value: [<span class="free_forum_detail_comment_created">@comment.Created.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId)</span>]
                                                 </span>
                                             }
                                             else if (loginedAccount.Role == Role.Anonymous)
                                             {
                                                 <span class="text-muted float-middle">
-                                                    @localizer["Created"].Value: [<span class="free_forum_detail_comment_created">@comment.Created.ToString("yyyy-MM-ddTHH:mm:ssZ")</span>]
+                                                    @Localizer["Created"].Value: [<span class="free_forum_detail_comment_created">@comment.Created.ToString("yyyy-MM-ddTHH:mm:ssZ")</span>]
                                                 </span>
                                             }
                                             else
@@ -247,7 +247,7 @@
 
                                             @if (loginedAccount.Nickname == comment.Writer || loginedAccount.Role == Role.Admin)@*작성자 또는 관리자인 경우*@
                                             {
-                                                <span class="text-muted float-right" style="margin: 0px 0px 0px 3px"><a class="hover aFreeForumDeleteComment" href="#" data-commentId="@(comment.Id)" data-detailBoardId="@(Model.DetailBoardId)" data-detailCurrentPage="@(Model.DetailCurrentPage)">@localizer["Delete"].Value</a></span>
+                                                <span class="text-muted float-right" style="margin: 0px 0px 0px 3px"><a class="hover aFreeForumDeleteComment" href="#" data-commentId="@(comment.Id)" data-detailBoardId="@(Model.DetailBoardId)" data-detailCurrentPage="@(Model.DetailCurrentPage)">@Localizer["Delete"].Value</a></span>
                                             }
                                         </span>
                                         @(HttpUtility.HtmlDecode(comment.Content))
@@ -264,16 +264,16 @@
                         <form id="formWriteFreeComment">
                             <img class="img-fluid img-circle img-sm" src="~/upload/Management/Profile/default-avatar.jpg">
                             <div class="img-push">
-                                <input id="writeFreeCommentContent" type="text" class="form-control form-control-sm" placeholder="@localizer["Only logged in users can write comments."].Value">
+                                <input id="writeFreeCommentContent" type="text" class="form-control form-control-sm" placeholder="@Localizer["Only logged in users can write comments."].Value">
                             </div>
                         </form>
                     }
                     else
                     {
-                        <form id="formWriteFreeComment" data-detailBoardId="@(Model.DetailBoardId)" data-detailCurrentPage="@(Model.DetailCurrentPage)" data-errorMessage="@localizer["Please write the content."].Value">
+                        <form id="formWriteFreeComment" data-detailBoardId="@(Model.DetailBoardId)" data-detailCurrentPage="@(Model.DetailCurrentPage)" data-errorMessage="@Localizer["Please write the content."].Value">
                             <img class="img-fluid img-circle img-sm" src="@loginedAccount.AvatarImagePath">
                             <div class="img-push">
-                                <input id="writeFreeCommentContent" type="text" class="form-control form-control-sm" placeholder="@localizer["Press enter to post comment."].Value">
+                                <input id="writeFreeCommentContent" type="text" class="form-control form-control-sm" placeholder="@Localizer["Press enter to post comment."].Value">
                             </div>
                         </form>
                     }
@@ -284,8 +284,8 @@
                 <form id="formEditBoard" data-editBoardId="@(Model.EditBoardId)" data-editCurrentPage="@(Model.EditCurrentPage)">
                     <div asp-validation-summary="ModelOnly" class="text-danger"></div>
                     <div class="form-group">
-                        <label for="editBoardTitle">@localizer["Title"].Value</label>
-                        <input class="form-control" type="text" data-val="true" data-val-required="@localizer["Title is required"].Value" id="editBoardTitle" name="editBoardTitle" value="@Model.BoardOutputViewModel.Title" required maxlength="100">
+                        <label for="editBoardTitle">@Localizer["Title"].Value</label>
+                        <input class="form-control" type="text" data-val="true" data-val-required="@Localizer["Title is required"].Value" id="editBoardTitle" name="editBoardTitle" value="@Model.BoardOutputViewModel.Title" required maxlength="100">
                         <span class="field-validation-valid text-danger" data-valmsg-for="editBoardTitle" data-valmsg-replace="true"></span>
                     </div>
                     <div id="divEditBoardContent" class="form-group" style="@(Model.BoardOutputViewModel.IsImgTagIncluded ? "display:none;" : "")">
@@ -303,7 +303,7 @@
                             {
                                 <input class="custom-control-input" type="checkbox" id="editBoardLocked" />
                             }
-                            <label for="editBoardLocked" class="custom-control-label">@localizer["Locked"].Value</label>
+                            <label for="editBoardLocked" class="custom-control-label">@Localizer["Locked"].Value</label>
                         </div>
                     </div>
 
@@ -331,15 +331,15 @@
                     </div>
 
                     <div class="form-group">
-                        <input type="file" id="editUploadedFile" name="editUploadedFile" accept=".zip" data-errorMessage="@localizer["File size must be smaller than 10MB."].Value">
-                        <p class="help-block">@localizer["Only zip extension allowed."].Value</p>
+                        <input type="file" id="editUploadedFile" name="editUploadedFile" accept=".zip" data-errorMessage="@Localizer["File size must be smaller than 10MB."].Value">
+                        <p class="help-block">@Localizer["Only zip extension allowed."].Value</p>
                     </div>
 
                     <div class="form-group">
                         <div class="float-right">
-                            <button id="btnFreeForumSubmitModify" type="submit" class="btn btn-primary">@localizer["Modify"].Value</button>
+                            <button id="btnFreeForumSubmitModify" type="submit" class="btn btn-primary">@Localizer["Modify"].Value</button>
                         </div>
-                        <a asp-controller="Forum" asp-action="FreeForum" class="btn btn-default">@localizer["List"].Value</a>
+                        <a asp-controller="Forum" asp-action="FreeForum" class="btn btn-default">@Localizer["List"].Value</a>
                     </div>
                 </form>
             }
@@ -348,25 +348,25 @@
                 <nav class="navbar-expand navbar-dark" style="position: relative; display: block !important; overflow-x: auto; overflow-y:hidden; align-items: center ">
                     <ul class="navbar-nav">
                         <li class="nav-item" style="padding-bottom: 10px; padding-right: 7px;">
-                            <button id="btnFreeForumWrite" type="button" class="btn btn-success btn-block btn-sm" style="width: 100px !important;"><i class="fas fa-edit" style="padding-right:3px;"></i> @localizer["Write"].Value</button>
+                            <button id="btnFreeForumWrite" type="button" class="btn btn-success btn-block btn-sm" style="width: 100px !important;"><i class="fas fa-edit" style="padding-right:3px;"></i> @Localizer["Write"].Value</button>
                         </li>
                         <li class="nav-item ml-auto">
                             <div class="input-group input-group-sm">
                                 <select id="searchType" name="searchType" style="margin: 0px 3px 0px 0px;">
                                     @if (selectedSearchType == "Title")
                                     {
-                                        <option value="Title" selected>@localizer["Title"].Value</option>
-                                        <option value="Writer">@localizer["Writer"]</option>
+                                        <option value="Title" selected>@Localizer["Title"].Value</option>
+                                        <option value="Writer">@Localizer["Writer"]</option>
                                     }
                                     else if (selectedSearchType == "Writer")
                                     {
-                                        <option value="Title">@localizer["Title"].Value</option>
-                                        <option value="Writer" selected>@localizer["Writer"]</option>
+                                        <option value="Title">@Localizer["Title"].Value</option>
+                                        <option value="Writer" selected>@Localizer["Writer"]</option>
                                     }
                                     else
                                     {
-                                        <option value="Title">@localizer["Title"].Value</option>
-                                        <option value="Writer">@localizer["Writer"]</option>
+                                        <option value="Title">@Localizer["Title"].Value</option>
+                                        <option value="Writer">@Localizer["Writer"]</option>
                                     }
                                 </select>
                                 <input class="form-control" type="text" id="btnFreeForumSearchText" value="@typedSearchText">
@@ -383,12 +383,12 @@
                     <table id="tblFreeForum" class="table table-striped table-bordered table-hover">
                         <thead>
                             <tr>
-                                <th>@localizer["Type"].Value</th>
-                                <th>@localizer["Title"].Value</th>
-                                <th>@localizer["Writer"].Value</th>
-                                <th>@localizer["Created"].Value</th>
-                                <th>@localizer["Views"].Value</th>
-                                <th>@localizer["Attachment"].Value</th>
+                                <th>@Localizer["Type"].Value</th>
+                                <th>@Localizer["Title"].Value</th>
+                                <th>@Localizer["Writer"].Value</th>
+                                <th>@Localizer["Created"].Value</th>
+                                <th>@Localizer["Views"].Value</th>
+                                <th>@Localizer["Attachment"].Value</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -398,7 +398,7 @@
                                 List<BoardAttachedFile> boardAttachedFilesWithName = (await boardAttachedFileRepository.GetAllAsync()).Where(m => m.BoardId == noticeBoard.Id).Where(m => !string.IsNullOrEmpty(m.Name)).ToList();
 
                                 <tr style="background-color: lightgray;">
-                                    <td style="color:green;font-weight:bold;">@localizer["Notice"]</td>
+                                    <td style="color:green;font-weight:bold;">@Localizer["Notice"]</td>
                                     @if (noticeBoard.Locked)
                                     {
                                         @if (loginedAccount.Nickname == noticeBoard.Writer || loginedAccount.Role == Role.Admin)@*작성자 또는 관리자인 경우*@
@@ -407,7 +407,7 @@
                                         }
                                         else
                                         {
-                                            <td><i class="fa fa-lock" aria-hidden="true"></i><span style="font-weight:bold; color:green;"> @localizer["Only a writer and admin can see it."].Value</span></td>
+                                            <td><i class="fa fa-lock" aria-hidden="true"></i><span style="font-weight:bold; color:green;"> @Localizer["Only a writer and admin can see it."].Value</span></td>
                                         }
                                     }
                                     else
@@ -447,7 +447,7 @@
                                 List<BoardAttachedFile> attachedFilesWithName = (await boardAttachedFileRepository.GetAllAsync()).Where(m => m.BoardId == board.Id).Where(m => !string.IsNullOrEmpty(m.Name)).ToList();
 
                                 <tr>
-                                    <td>@localizer["Free Forum"]</td>
+                                    <td>@Localizer["Free Forum"]</td>
                                     @if (board.Locked)
                                     {
                                         @if (loginedAccount.Nickname == board.Writer || loginedAccount.Role == Role.Admin)@*작성자 또는 관리자인 경우*@
@@ -456,7 +456,7 @@
                                         }
                                         else
                                         {
-                                            <td><i class="fa fa-lock" aria-hidden="true"></i> @localizer["Only a writer and admin can see it."].Value</td>
+                                            <td><i class="fa fa-lock" aria-hidden="true"></i> @Localizer["Only a writer and admin can see it."].Value</td>
                                         }
                                     }
                                     else
@@ -550,11 +550,11 @@
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-body">
-                @localizer["Are you sure to delete?"].Value
+                @Localizer["Are you sure to delete?"].Value
             </div>
             <div class="modal-footer">
-                <button id="btnFreeForumDeleteBoard" type="button" class="btn btn-danger" data-boardId="@Model.DetailBoardId">@localizer["Delete"].Value</button>
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">@localizer["Close"].Value</button>
+                <button id="btnFreeForumDeleteBoard" type="button" class="btn btn-danger" data-boardId="@Model.DetailBoardId">@Localizer["Delete"].Value</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">@Localizer["Close"].Value</button>
             </div>
         </div>
     </div>
