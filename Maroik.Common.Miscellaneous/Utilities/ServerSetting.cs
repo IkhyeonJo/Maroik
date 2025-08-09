@@ -10,7 +10,6 @@ public static class ServerSetting
     public static bool SmtpSsl { get; set; }
     public static string? FromEmail { get; set; }
     public static string? FromFullName { get; set; }
-    public static bool IsDefault { get; set; }
     public static byte MaxLoginAttempt { get; set; }
     public static int SessionExpireMinutes { get; set; }
     public static int NoticeMaturityDateDay { get; set; }

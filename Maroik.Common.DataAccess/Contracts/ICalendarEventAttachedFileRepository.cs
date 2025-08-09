@@ -20,13 +20,6 @@ public interface ICalendarEventAttachedFileRepository
     public Task SaveCalendarEventAttachedFileAsync(CalendarEventAttachedFile calendarEventAttachedFile);
 
     /// <summary>
-    /// 첨부파일을 업데이트합니다.
-    /// </summary>
-    /// <param name="calendarEventAttachedFile"></param>
-    /// <returns></returns>
-    public Task UpdateCalendarEventAttachedFileAsync(CalendarEventAttachedFile calendarEventAttachedFile);
-
-    /// <summary>
     /// 첨부파일들을 삭제합니다.
     /// </summary>
     /// <param name="calendarEventId"></param>

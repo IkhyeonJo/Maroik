@@ -32,17 +32,6 @@ public class CalendarEventAttachedFileRepository(ApplicationDbContext context)
     }
 
     /// <summary>
-    /// 첨부파일을 업데이트합니다.
-    /// </summary>
-    /// <param name="calendarEventAttachedFile"></param>
-    /// <returns></returns>
-    public async Task UpdateCalendarEventAttachedFileAsync(CalendarEventAttachedFile calendarEventAttachedFile)
-    {
-        _ = context.CalendarEventAttachedFiles.Update(calendarEventAttachedFile);
-        _ = await context.SaveChangesAsync();
-    }
-
-    /// <summary>
     /// 첨부파일들을 삭제합니다.
     /// </summary>
     /// <param name="calendarEventId"></param>

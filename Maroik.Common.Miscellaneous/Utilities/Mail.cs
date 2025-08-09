@@ -13,5 +13,6 @@ public class Mail
     public string Subject { get; init; } = "";
     public string Body { get; set; } = "";
     public static bool IsBodyHtml => true;
-    public List<string> Attachments { get; set; } = [];
+
+    //public List<string> Attachments { get; set; } = [];
 }

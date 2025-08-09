@@ -22,7 +22,9 @@ public class JwtRefreshTokenCache(IJwtAuthManager jwtAuthManager) : IHostedServi
         return Task.CompletedTask;
     }
 
+#pragma warning disable CA1816
     public void Dispose()
+#pragma warning restore CA1816
     {
         _timer?.Dispose();
     }

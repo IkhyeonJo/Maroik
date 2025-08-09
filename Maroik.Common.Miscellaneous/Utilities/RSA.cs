@@ -24,42 +24,44 @@ namespace Maroik.Common.Miscellaneous.Utilities;
 /// </summary>
 public class Rsa
 {
-    public static readonly string PublicKey = """
-                                              MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAsl8ck2CrGSBElRMNBa8l
-                                              yE1mTPl6nY53L3V6b2GMJysT3cV+ISsCPvC3mjIQExFRLtNpx79uT9t6huKdi8Sr
-                                              BeHdQLwwF+qwbpFLMWgz5yJ4YmUjamXaOU9Q6NsfTzkhqLzzE3zv678hdogtAcqW
-                                              a72n7QERAjDKBij6COILmBptJtHwgOnMgZpyKk2CcRgzRJjLPrCU3LfiyLYXz7hS
-                                              IjrKUUJkDrik/yt+mNVNLQsqeQB7jTwDmrMCdHFAoRH0R44lMcW6Bu3gqUVhdsWM
-                                              3VGjmpRAIYm/gtBYlZhQ1ckS4uxrAmSgMM6iZ39yf7vPIVUHAwQV/W84NQlocwwX
-                                              oQIDAQAB
-                                              """;
-    public static readonly string PrivateKey = """
-                                               MIIEpQIBAAKCAQEAsl8ck2CrGSBElRMNBa8lyE1mTPl6nY53L3V6b2GMJysT3cV+
-                                               ISsCPvC3mjIQExFRLtNpx79uT9t6huKdi8SrBeHdQLwwF+qwbpFLMWgz5yJ4YmUj
-                                               amXaOU9Q6NsfTzkhqLzzE3zv678hdogtAcqWa72n7QERAjDKBij6COILmBptJtHw
-                                               gOnMgZpyKk2CcRgzRJjLPrCU3LfiyLYXz7hSIjrKUUJkDrik/yt+mNVNLQsqeQB7
-                                               jTwDmrMCdHFAoRH0R44lMcW6Bu3gqUVhdsWM3VGjmpRAIYm/gtBYlZhQ1ckS4uxr
-                                               AmSgMM6iZ39yf7vPIVUHAwQV/W84NQlocwwXoQIDAQABAoIBAQCHbFjIuAMPL4WC
-                                               XRVs9F5OJh1+YYcragepO5s6RyhecIFDxfaN/hZVbPMomcvEfkhRsedE5V0+Ohdb
-                                               o2ATxrxF2gbeaEJnViKfv6YEG+YUHQKjScBKvouhKUv3jq3Fu02Hy/UNHbUWGmWw
-                                               lZD+JC5yHGsLMN0V+a7YYHH9HonI7zrgmzG8ud7Zjw5WRnPWRefutJx/lCML8vAD
-                                               5tvhkII+JWiifrSF3F1tK4Kq49egLUYlI7xByaJED/58Xknx8FLysKwAGpEY6UTB
-                                               gsyKBCbFgFHX9mawrNQ2yxYh7RG60m8emOiQKmvfwaRdWfsY9YloqAUVUAzFE29d
-                                               EMAS/qv1AoGBANhi2ETvoRxHnZAWnFu4FTth3B3MJPFRsVA5eXfIJPEcDZbRV8lv
-                                               Qujdgs3fhC5Em/LU0wSa4S/z85MuUwVxaoQLLIK09G9vlo25YTnRCpCRmKVaVYc3
-                                               SrobRiWoTpY1Dq+vq6GYup8DRIcpWo//n8g2R6wxn8KXAl1oHWyQuA23AoGBANMG
-                                               rLwzpEgtR7e9+4GcUbjKEv/WrJ13ZHVvOamnWhCMOJ568dE0DakGe70/+seeIXwm
-                                               azp25/bZku7FOLC6Ti73XPRQm9bBC200Fd2bSFHlICi2Exwi1AlVADcmoMd0dFf9
-                                               NGRBpXTKVgM7Jd16raD2uVaSVDIdzWtFBrYlFgVnAoGBAM+FXGwgdJ6ugAmj5aiA
-                                               zrv4iiV5lyRoeGi79iZOKD+j69RsSIjCz6SMa9oNNrM40Wb9fLK55qUajMrmbnCV
-                                               6NVh8foYmSQWHIkm9HuCY2Nqfr519/iJqnz5kziiRVwA3mjXTP7ZfoDpnVsS6euX
-                                               +CEHDY2yucjhEj+Kjk2ELT/ZAoGAf03XhvHgeWpXiZEi2N3krwW40H5BQ/1yrSWc
-                                               M6yxuKnevjyNBRfR5dXzcAfY0fOjX7INngd9iH1ZFpID0RmTcOHpQbofST7MFeUG
-                                               C9pRlpYTAHxWqvKX18lfh+XVuH2YcjxeDt1LY1ls6iYUgbgwZppw1LkR8enosn3B
-                                               vsBAuKECgYEAzHTJNiXihMzbxk9GLNhALNNVsc8aS1wsVpThCK7Eqz8hUgEHoDKL
-                                               RqoMA0zpFiGuqxAcXk8FpAzUMdxgXKNwWYxSAPEmBgUdfJQk63f+icq2I96kVnWr
-                                               N3rZi5QlO2mf69+Tv8/GMec0/c4ORS2oT+Wm2yV0nfJaLptlbxUgIEg=
-                                               """;
+    public const string PublicKey = """
+                                    MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAsl8ck2CrGSBElRMNBa8l
+                                    yE1mTPl6nY53L3V6b2GMJysT3cV+ISsCPvC3mjIQExFRLtNpx79uT9t6huKdi8Sr
+                                    BeHdQLwwF+qwbpFLMWgz5yJ4YmUjamXaOU9Q6NsfTzkhqLzzE3zv678hdogtAcqW
+                                    a72n7QERAjDKBij6COILmBptJtHwgOnMgZpyKk2CcRgzRJjLPrCU3LfiyLYXz7hS
+                                    IjrKUUJkDrik/yt+mNVNLQsqeQB7jTwDmrMCdHFAoRH0R44lMcW6Bu3gqUVhdsWM
+                                    3VGjmpRAIYm/gtBYlZhQ1ckS4uxrAmSgMM6iZ39yf7vPIVUHAwQV/W84NQlocwwX
+                                    oQIDAQAB
+                                    """;
+
+    public const string PrivateKey = """
+                                     MIIEpQIBAAKCAQEAsl8ck2CrGSBElRMNBa8lyE1mTPl6nY53L3V6b2GMJysT3cV+
+                                     ISsCPvC3mjIQExFRLtNpx79uT9t6huKdi8SrBeHdQLwwF+qwbpFLMWgz5yJ4YmUj
+                                     amXaOU9Q6NsfTzkhqLzzE3zv678hdogtAcqWa72n7QERAjDKBij6COILmBptJtHw
+                                     gOnMgZpyKk2CcRgzRJjLPrCU3LfiyLYXz7hSIjrKUUJkDrik/yt+mNVNLQsqeQB7
+                                     jTwDmrMCdHFAoRH0R44lMcW6Bu3gqUVhdsWM3VGjmpRAIYm/gtBYlZhQ1ckS4uxr
+                                     AmSgMM6iZ39yf7vPIVUHAwQV/W84NQlocwwXoQIDAQABAoIBAQCHbFjIuAMPL4WC
+                                     XRVs9F5OJh1+YYcragepO5s6RyhecIFDxfaN/hZVbPMomcvEfkhRsedE5V0+Ohdb
+                                     o2ATxrxF2gbeaEJnViKfv6YEG+YUHQKjScBKvouhKUv3jq3Fu02Hy/UNHbUWGmWw
+                                     lZD+JC5yHGsLMN0V+a7YYHH9HonI7zrgmzG8ud7Zjw5WRnPWRefutJx/lCML8vAD
+                                     5tvhkII+JWiifrSF3F1tK4Kq49egLUYlI7xByaJED/58Xknx8FLysKwAGpEY6UTB
+                                     gsyKBCbFgFHX9mawrNQ2yxYh7RG60m8emOiQKmvfwaRdWfsY9YloqAUVUAzFE29d
+                                     EMAS/qv1AoGBANhi2ETvoRxHnZAWnFu4FTth3B3MJPFRsVA5eXfIJPEcDZbRV8lv
+                                     Qujdgs3fhC5Em/LU0wSa4S/z85MuUwVxaoQLLIK09G9vlo25YTnRCpCRmKVaVYc3
+                                     SrobRiWoTpY1Dq+vq6GYup8DRIcpWo//n8g2R6wxn8KXAl1oHWyQuA23AoGBANMG
+                                     rLwzpEgtR7e9+4GcUbjKEv/WrJ13ZHVvOamnWhCMOJ568dE0DakGe70/+seeIXwm
+                                     azp25/bZku7FOLC6Ti73XPRQm9bBC200Fd2bSFHlICi2Exwi1AlVADcmoMd0dFf9
+                                     NGRBpXTKVgM7Jd16raD2uVaSVDIdzWtFBrYlFgVnAoGBAM+FXGwgdJ6ugAmj5aiA
+                                     zrv4iiV5lyRoeGi79iZOKD+j69RsSIjCz6SMa9oNNrM40Wb9fLK55qUajMrmbnCV
+                                     6NVh8foYmSQWHIkm9HuCY2Nqfr519/iJqnz5kziiRVwA3mjXTP7ZfoDpnVsS6euX
+                                     +CEHDY2yucjhEj+Kjk2ELT/ZAoGAf03XhvHgeWpXiZEi2N3krwW40H5BQ/1yrSWc
+                                     M6yxuKnevjyNBRfR5dXzcAfY0fOjX7INngd9iH1ZFpID0RmTcOHpQbofST7MFeUG
+                                     C9pRlpYTAHxWqvKX18lfh+XVuH2YcjxeDt1LY1ls6iYUgbgwZppw1LkR8enosn3B
+                                     vsBAuKECgYEAzHTJNiXihMzbxk9GLNhALNNVsc8aS1wsVpThCK7Eqz8hUgEHoDKL
+                                     RqoMA0zpFiGuqxAcXk8FpAzUMdxgXKNwWYxSAPEmBgUdfJQk63f+icq2I96kVnWr
+                                     N3rZi5QlO2mf69+Tv8/GMec0/c4ORS2oT+Wm2yV0nfJaLptlbxUgIEg=
+                                     """;
+
     private readonly RSA? _privateKeyRsaProvider;
     private readonly RSA? _publicKeyRsaProvider;
     private readonly HashAlgorithmName _hashAlgorithmName;
@@ -150,7 +152,7 @@ public class Rsa
 
     #region 使用私钥创建RSA实例
 
-    private RSA CreateRsaProviderFromPrivateKey(string privateKey)
+    private static RSA CreateRsaProviderFromPrivateKey(string privateKey)
     {
         var privateKeyBits = Convert.FromBase64String(privateKey);
 
@@ -197,7 +199,7 @@ public class Rsa
 
     #region 使用公钥创建RSA实例
 
-    private RSA? CreateRsaProviderFromPublicKey(string publicKeyString)
+    private static RSA? CreateRsaProviderFromPublicKey(string publicKeyString)
     {
         // encoded OID sequence for  PKCS #1 rsaEncryption szOID_RSA_RSA = "1.2.840.113549.1.1.1"
         byte[] seqOid = [0x30, 0x0D, 0x06, 0x09, 0x2A, 0x86, 0x48, 0x86, 0xF7, 0x0D, 0x01, 0x01, 0x01, 0x05, 0x00];
@@ -317,7 +319,7 @@ public class Rsa
 
     #region 导入密钥算法
 
-    private int GetIntegerSize(BinaryReader binr)
+    private static int GetIntegerSize(BinaryReader binr)
     {
         var bt = binr.ReadByte();
         if (bt != 0x02)

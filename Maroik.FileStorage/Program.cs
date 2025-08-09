@@ -32,7 +32,7 @@ ServerSetting.DockerKeyPath = builder.Configuration.GetSection("ServerSetting")[
 
 builder.Services.AddControllers();
 
-JwtTokenConfig jwtTokenConfig = builder.Configuration.GetSection("jwtTokenConfig").Get<JwtTokenConfig>();
+var jwtTokenConfig = builder.Configuration.GetSection("jwtTokenConfig").Get<JwtTokenConfig>();
 builder.Services.AddSingleton(jwtTokenConfig);
 builder.Services.AddAuthentication(x =>
 {

@@ -59,10 +59,10 @@ namespace Maroik.WebSite.Services
                 mailMessage.Subject = mail.Subject;
                 mailMessage.Body = mail.Body;
                 mailMessage.IsBodyHtml = Mail.IsBodyHtml;
-                mail.Attachments.ForEach(x =>
-                {
-                    mailMessage.Attachments.Add(new Attachment(x));
-                });
+                // mail.Attachments.ForEach(x =>
+                // {
+                //     mailMessage.Attachments.Add(new Attachment(x));
+                // });
 
                 using SmtpClient smtp = new(mail.SmtpHost, mail.SmtpPort);
                 smtp.Credentials = new System.Net.NetworkCredential(mail.SmtpUserName, mail.SmtpPassword);

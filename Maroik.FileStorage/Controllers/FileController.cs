@@ -75,10 +75,9 @@ public class FileController(IClamavRepository clamavRepository) : ControllerBase
                     
                 // 이제 zip 검사
                 using var zipFile = new ZipFile(msCopy);
-                foreach (ZipEntry entry in zipFile)
+                if (zipFile.Cast<ZipEntry>().Any(entry => entry.IsCrypted))
                 {
-                    if (entry.IsCrypted)
-                        return BadRequest("Encrypted ZIP files are not allowed.");
+                    return BadRequest("Encrypted ZIP files are not allowed.");
                 }
             }
                 
