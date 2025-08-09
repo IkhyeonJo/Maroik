@@ -1,17 +1,16 @@
-﻿namespace Maroik.Common.Miscellaneous.Extensions
+﻿namespace Maroik.Common.Miscellaneous.Extensions;
+
+public static class DateTimeExtension
 {
-    public static class DateTimeExtension
+    public static DateTime ConvertTimeByTimeZoneIanaId(this DateTime value, string timeZoneIanaId)
     {
-        public static DateTime ConvertTimeByTimeZoneIanaId(this DateTime value, string timeZoneIanaId)
+        try
         {
-            try
-            {
-                return TimeZoneInfo.ConvertTimeBySystemTimeZoneId(value, timeZoneIanaId);
-            }
-            catch
-            {
-                return value;
-            }
+            return TimeZoneInfo.ConvertTimeBySystemTimeZoneId(value, timeZoneIanaId);
+        }
+        catch
+        {
+            return value;
         }
     }
 }

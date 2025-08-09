@@ -6,78 +6,77 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace Maroik.Common.DataAccess.Services
+namespace Maroik.Common.DataAccess.Services;
+
+public class AssetRepository(ApplicationDbContext context) : IAssetRepository
 {
-    public class AssetRepository(ApplicationDbContext context) : IAssetRepository
+    /// <summary>
+    /// 로그인 계정에 해당하는 모든 자산을 구합니다.
+    /// </summary>
+    /// <param name="email"></param>
+    /// <returns></returns>
+    public async Task<List<Asset>> GetAssetsAsync(string email)
     {
-        /// <summary>
-        /// 로그인 계정에 해당하는 모든 자산을 구합니다.
-        /// </summary>
-        /// <param name="email"></param>
-        /// <returns></returns>
-        public async Task<List<Asset>> GetAssetsAsync(string email)
-        {
-            return await context.Assets.Where(x => x.AccountEmail == email).ToListAsync();
-        }
+        return await context.Assets.Where(x => x.AccountEmail == email).ToListAsync();
+    }
 
-        /// <summary>
-        /// 로그인 계정에 해당하는 특정 자산을 구합니다.
-        /// </summary>
-        /// <param name="email"></param>
-        /// <param name="productName"></param>
-        /// <returns></returns>
-        public async Task<Asset> GetAssetAsync(string email, string productName)
-        {
-            return await context.Assets.FirstOrDefaultAsync(a => a.AccountEmail == email && a.ProductName == productName);
-        }
+    /// <summary>
+    /// 로그인 계정에 해당하는 특정 자산을 구합니다.
+    /// </summary>
+    /// <param name="email"></param>
+    /// <param name="productName"></param>
+    /// <returns></returns>
+    public async Task<Asset> GetAssetAsync(string email, string productName)
+    {
+        return await context.Assets.FirstOrDefaultAsync(a => a.AccountEmail == email && a.ProductName == productName);
+    }
 
-        /// <summary>
-        /// 자산을 생성합니다.
-        /// </summary>
-        /// <param name="asset"></param>
-        /// <returns></returns>
-        public async Task CreateAssetAsync(Asset asset)
-        {
-            _ = await context.Assets.AddAsync(asset);
-            _ = await context.SaveChangesAsync();
-        }
+    /// <summary>
+    /// 자산을 생성합니다.
+    /// </summary>
+    /// <param name="asset"></param>
+    /// <returns></returns>
+    public async Task CreateAssetAsync(Asset asset)
+    {
+        _ = await context.Assets.AddAsync(asset);
+        _ = await context.SaveChangesAsync();
+    }
 
-        /// <summary>
-        /// 자산을 업데이트합니다.
-        /// </summary>
-        /// <param name="asset"></param>
-        /// <returns></returns>
-        public async Task UpdateAssetAsync(Asset asset)
-        {
-            _ = context.Assets.Update(asset);
-            _ = await context.SaveChangesAsync();
-        }
+    /// <summary>
+    /// 자산을 업데이트합니다.
+    /// </summary>
+    /// <param name="asset"></param>
+    /// <returns></returns>
+    public async Task UpdateAssetAsync(Asset asset)
+    {
+        _ = context.Assets.Update(asset);
+        _ = await context.SaveChangesAsync();
+    }
 
-        /// <summary>
-        /// 자산명을 포함하여 자산을 업데이트합니다.
-        /// </summary>
-        /// <param name="asset"></param>
-        /// <param name="originalProductName"></param>
-        /// <returns></returns>
-        public async Task<int> UpdateAssetWithProductNameAsync(Asset asset, string originalProductName)
-        {
-            return await context.Database.ExecuteSqlInterpolatedAsync
-            (
-                $"""
-                 UPDATE "Asset"
-                 SET 
-                     "ProductName" = {asset.ProductName},
-                     "Item" = {asset.Item},
-                     "Amount" = {asset.Amount},
-                     "MonetaryUnit" = {asset.MonetaryUnit},
-                     "Note" = {asset.Note},
-                     "Deleted" = {asset.Deleted},
-                     "Updated" = {asset.Updated}
-                 WHERE 
-                     "ProductName" = {originalProductName}
-                     AND "AccountEmail" = {asset.AccountEmail}
-                 """
-            );
-        }
+    /// <summary>
+    /// 자산명을 포함하여 자산을 업데이트합니다.
+    /// </summary>
+    /// <param name="asset"></param>
+    /// <param name="originalProductName"></param>
+    /// <returns></returns>
+    public async Task<int> UpdateAssetWithProductNameAsync(Asset asset, string originalProductName)
+    {
+        return await context.Database.ExecuteSqlInterpolatedAsync
+        (
+            $"""
+             UPDATE "Asset"
+             SET 
+                 "ProductName" = {asset.ProductName},
+                 "Item" = {asset.Item},
+                 "Amount" = {asset.Amount},
+                 "MonetaryUnit" = {asset.MonetaryUnit},
+                 "Note" = {asset.Note},
+                 "Deleted" = {asset.Deleted},
+                 "Updated" = {asset.Updated}
+             WHERE 
+                 "ProductName" = {originalProductName}
+                 AND "AccountEmail" = {asset.AccountEmail}
+             """
+        );
     }
 }
