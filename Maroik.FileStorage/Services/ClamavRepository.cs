@@ -1,49 +1,46 @@
-﻿using Maroik.Common.DataAccess.Contracts;
-using Maroik.Common.Miscellaneous.Utilities;
-using Maroik.FileStorage.Contracts;
-using System.Text;
+﻿using Maroik.FileStorage.Contracts;
 using System.Net;
 using System.Net.Sockets;
 
-namespace Maroik.FileStorage.Services
+namespace Maroik.FileStorage.Services;
+
+public class ClamavRepository : IClamavRepository
 {
-    public class ClamavRepository : IClamavRepository
+    private const string ClamavStorageDomain = "Maroik.Clamav";
+
+    public async Task<bool> ScanWithClamavAsync(Stream fileStream)
     {
-        private readonly string _clamavStorageDomain = "Maroik.Clamav";
-
-        public async Task<bool> ScanWithClamavAsync(Stream fileStream)
+        try
         {
-            try
+            fileStream.Position = 0;
+
+            using var client = new TcpClient(ClamavStorageDomain, 3310);
+            await using var stream = client.GetStream();
+            await using var writer = new StreamWriter(stream, leaveOpen: true);
+            writer.AutoFlush = true;
+
+            await writer.WriteLineAsync("nINSTREAM");
+
+            var buffer = new byte[2048];
+            int bytesRead;
+            while ((bytesRead = await fileStream.ReadAsync(buffer)) > 0)
             {
-                fileStream.Position = 0;
-
-                using var client = new TcpClient(_clamavStorageDomain, 3310);
-                using var stream = client.GetStream();
-                using var writer = new StreamWriter(stream, leaveOpen: true) { AutoFlush = true };
-
-                await writer.WriteLineAsync("nINSTREAM");
-
-                byte[] buffer = new byte[2048];
-                int bytesRead;
-                while ((bytesRead = await fileStream.ReadAsync(buffer, 0, buffer.Length)) > 0)
-                {
-                    byte[] lengthPrefix = BitConverter.GetBytes(IPAddress.HostToNetworkOrder(bytesRead));
-                    await stream.WriteAsync(lengthPrefix, 0, lengthPrefix.Length);
-                    await stream.WriteAsync(buffer, 0, bytesRead);
-                }
-
-                byte[] zero = BitConverter.GetBytes(0);
-                await stream.WriteAsync(zero, 0, zero.Length);
-
-                using var reader = new StreamReader(stream);
-                string response = await reader.ReadLineAsync() ?? string.Empty;
-
-                return response.Contains("OK");
+                var lengthPrefix = BitConverter.GetBytes(IPAddress.HostToNetworkOrder(bytesRead));
+                await stream.WriteAsync(lengthPrefix);
+                await stream.WriteAsync(buffer.AsMemory(0, bytesRead));
             }
-            catch
-            {
-                return false;
-            }
+
+            var zero = BitConverter.GetBytes(0);
+            await stream.WriteAsync(zero);
+
+            using var reader = new StreamReader(stream);
+            var response = await reader.ReadLineAsync() ?? string.Empty;
+
+            return response.Contains("OK");
+        }
+        catch
+        {
+            return false;
         }
     }
 }

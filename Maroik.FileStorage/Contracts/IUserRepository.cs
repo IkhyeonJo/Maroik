@@ -1,7 +1,6 @@
-namespace Maroik.FileStorage.Contracts
+namespace Maroik.FileStorage.Contracts;
+
+public interface IUserRepository
 {
-    public interface IUserRepository
-    {
-        public Task<bool> IsValidUserCredentialsAsync(string email, string password);
-    }
+    public Task<bool> IsValidUserCredentialsAsync(string email, string password);
 }

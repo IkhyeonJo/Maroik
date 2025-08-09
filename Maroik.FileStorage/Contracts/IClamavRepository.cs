@@ -1,7 +1,6 @@
-namespace Maroik.FileStorage.Contracts
+namespace Maroik.FileStorage.Contracts;
+
+public interface IClamavRepository
 {
-    public interface IClamavRepository
-    {
-        public Task<bool> ScanWithClamavAsync(Stream fileStream);
-    }
+    public Task<bool> ScanWithClamavAsync(Stream fileStream);
 }

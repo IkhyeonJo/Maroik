@@ -1,22 +1,21 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace Maroik.FileStorage.Infrastructure
+namespace Maroik.FileStorage.Infrastructure;
+
+public class JwtTokenConfig
 {
-    public class JwtTokenConfig
-    {
-        [JsonPropertyName("secret")]
-        public string Secret { get; set; }
+    [JsonPropertyName("secret")]
+    public string Secret { get; init; }
 
-        [JsonPropertyName("issuer")]
-        public string Issuer { get; set; }
+    [JsonPropertyName("issuer")]
+    public string Issuer { get; init; }
 
-        [JsonPropertyName("audience")]
-        public string Audience { get; set; }
+    [JsonPropertyName("audience")]
+    public string Audience { get; init; }
 
-        [JsonPropertyName("accessTokenExpiration")]
-        public int AccessTokenExpiration { get; set; }
+    [JsonPropertyName("accessTokenExpiration")]
+    public int AccessTokenExpiration { get; init; }
 
-        [JsonPropertyName("refreshTokenExpiration")]
-        public int RefreshTokenExpiration { get; set; }
-    }
+    [JsonPropertyName("refreshTokenExpiration")]
+    public int RefreshTokenExpiration { get; init; }
 }
