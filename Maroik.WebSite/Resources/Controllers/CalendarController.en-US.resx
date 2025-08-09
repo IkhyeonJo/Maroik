@@ -183,4 +183,12 @@
   <data name="The calendar shared has been successfully updated." xml:space="preserve">
     <value>The calendar shared has been successfully updated.</value>
   </data>
+  <data name="Only .jpg, .jpeg or .png file allowed." xml:space="preserve">
+    <value>Only .jpg, .jpeg or .png file allowed.</value>
+    <comment>Only .jpg, .jpeg or .png file allowed.</comment>
+  </data>
+  <data name="Invalid image file." xml:space="preserve">
+    <value>Invalid image file.</value>
+    <comment>Invalid image file.</comment>
+  </data>
 </root>

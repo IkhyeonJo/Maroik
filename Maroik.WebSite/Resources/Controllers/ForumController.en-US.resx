@@ -168,4 +168,24 @@
   <data name="You do not have permission to delete." xml:space="preserve">
     <value>You do not have permission to delete.</value>
   </data>
+  <data name="Please enter a boardComment." xml:space="preserve">
+    <value>Please enter a boardComment.</value>
+    <comment>Please enter a boardComment.</comment>
+  </data>
+  <data name="Please Login to write boardComment." xml:space="preserve">
+    <value>Please Login to write boardComment.</value>
+    <comment>Please Login to write boardComment.</comment>
+  </data>
+  <data name="Only .jpg, .jpeg or .png file allowed." xml:space="preserve">
+    <value>Only .jpg, .jpeg or .png file allowed.</value>
+    <comment>Only .jpg, .jpeg or .png file allowed.</comment>
+  </data>
+  <data name="Invalid image file." xml:space="preserve">
+    <value>Invalid image file.</value>
+    <comment>Invalid image file.</comment>
+  </data>
+  <data name="Please Login to edit board" xml:space="preserve">
+    <value>Please Login to edit board</value>
+    <comment>Please Login to edit board</comment>
+  </data>
 </root>

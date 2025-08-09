@@ -309,4 +309,16 @@
   <data name="You do not have permission to delete." xml:space="preserve">
     <value>You do not have permission to delete.</value>
   </data>
+  <data name="SVG format is not allowed" xml:space="preserve">
+    <value>SVG format is not allowed</value>
+    <comment>SVG format is not allowed</comment>
+  </data>
+  <data name="Invalid image file." xml:space="preserve">
+    <value>Invalid image file.</value>
+    <comment>Invalid image file.</comment>
+  </data>
+  <data name="Only .jpg, .jpeg or .png file allowed." xml:space="preserve">
+    <value>Only .jpg, .jpeg or .png file allowed.</value>
+    <comment>Only .jpg, .jpeg or .png file allowed.</comment>
+  </data>
 </root>
