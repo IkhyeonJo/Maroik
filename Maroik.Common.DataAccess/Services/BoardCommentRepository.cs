@@ -6,48 +6,56 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace Maroik.Common.DataAccess.Services;
-
-public class BoardCommentRepository(ApplicationDbContext context) : IBoardCommentRepository
+namespace Maroik.Common.DataAccess.Services
 {
-    /// <summary>
-    /// 한 게시물의 모든 댓글을 구합니다.
-    /// </summary>
-    /// <returns></returns>
-    public async Task<IEnumerable<BoardComment>> GetOneBoardCommentsAsync(long boardId)
+    public class BoardCommentRepository : IBoardCommentRepository
     {
-        return await context.BoardComments.Where(x => x.BoardId == boardId).OrderBy(m => m.Order).ToListAsync();
-    }
+        private readonly ApplicationDbContext _context;
 
-    /// <summary>
-    /// 한 댓글을 구합니다.
-    /// </summary>
-    /// <returns></returns>
-    public async Task<BoardComment> GetBoardCommentAsync(int id)
-    {
-        return await context.BoardComments.Where(x => x.Id == id).FirstOrDefaultAsync();
-    }
+        public BoardCommentRepository(ApplicationDbContext context)
+        {
+            _context = context;
+        }
 
-    /// <summary>
-    /// 댓글을 생성합니다.
-    /// </summary>
-    /// <param name="boardComment"></param>
-    /// <returns></returns>
-    public async Task WriteBoardCommentAsync(BoardComment boardComment)
-    {
-        _ = await context.BoardComments.AddAsync(boardComment);
-        _ = await context.SaveChangesAsync();
-    }
+        /// <summary>
+        /// 한 게시물의 모든 댓글을 구합니다.
+        /// </summary>
+        /// <returns></returns>
+        public async Task<IEnumerable<BoardComment>> GetOneBoardCommentsAsync(long boardId)
+        {
+            return await _context.BoardComments.Where(x => x.BoardId == boardId).OrderBy(m => m.Order).ToListAsync();
+        }
 
-    /// <summary>
-    /// 댓글을 삭제합니다.
-    /// </summary>
-    /// <param name="boardComment"></param>
-    /// <returns></returns>
-    public async Task DeleteBoardCommentAsync(BoardComment boardComment)
-    {
-        _ = context.BoardComments.Update(boardComment);
-        _ = await context.SaveChangesAsync();
-    }
+        /// <summary>
+        /// 한 댓글을 구합니다.
+        /// </summary>
+        /// <returns></returns>
+        public async Task<BoardComment> GetBoardCommentAsync(int id)
+        {
+            return await _context.BoardComments.Where(x => x.Id == id).FirstOrDefaultAsync();
+        }
 
+        /// <summary>
+        /// 댓글을 생성합니다.
+        /// </summary>
+        /// <param name="boardComment"></param>
+        /// <returns></returns>
+        public async Task WriteBoardCommentAsync(BoardComment boardComment)
+        {
+            _ = await _context.BoardComments.AddAsync(boardComment);
+            _ = await _context.SaveChangesAsync();
+        }
+
+        /// <summary>
+        /// 댓글을 삭제합니다.
+        /// </summary>
+        /// <param name="boardComment"></param>
+        /// <returns></returns>
+        public async Task DeleteBoardCommentAsync(BoardComment boardComment)
+        {
+            _ = _context.BoardComments.Update(boardComment);
+            _ = await _context.SaveChangesAsync();
+        }
+
+    }
 }

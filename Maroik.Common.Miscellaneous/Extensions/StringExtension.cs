@@ -1,9 +1,10 @@
-﻿namespace Maroik.Common.Miscellaneous.Extensions;
-
-public static class StringExtension
+﻿namespace Maroik.Common.Miscellaneous.Extensions
 {
-    public static string GetAmountLabel(this string? value, string? monetaryUnit)
+    public static class StringExtension
     {
-        return $"{value ?? ""} ({monetaryUnit ?? ""})";
+        public static string GetAmountLabel(this string value, string monetaryUnit)
+        {
+            return $"{value ?? ""} ({monetaryUnit ?? ""})";
+        }
     }
 }

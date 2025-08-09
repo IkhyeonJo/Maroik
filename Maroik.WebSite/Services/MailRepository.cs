@@ -58,15 +58,15 @@ namespace Maroik.WebSite.Services
                 mail.ToMailIds.ForEach(mailMessage.To.Add);
                 mailMessage.Subject = mail.Subject;
                 mailMessage.Body = mail.Body;
-                mailMessage.IsBodyHtml = Mail.IsBodyHtml;
-                // mail.Attachments.ForEach(x =>
-                // {
-                //     mailMessage.Attachments.Add(new Attachment(x));
-                // });
+                mailMessage.IsBodyHtml = mail.IsBodyHTML;
+                mail.Attachments.ForEach(x =>
+                {
+                    mailMessage.Attachments.Add(new Attachment(x));
+                });
 
                 using SmtpClient smtp = new(mail.SmtpHost, mail.SmtpPort);
                 smtp.Credentials = new System.Net.NetworkCredential(mail.SmtpUserName, mail.SmtpPassword);
-                smtp.EnableSsl = mail.SmtpSsl;
+                smtp.EnableSsl = mail.SmtpSSL;
                 await smtp.SendMailAsync(mailMessage);
                 return EnumHelper.GetDescription(AccountMessage.MailSent);
             }

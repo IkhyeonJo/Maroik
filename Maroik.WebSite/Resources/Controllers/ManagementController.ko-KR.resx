@@ -309,16 +309,4 @@
   <data name="You do not have permission to delete." xml:space="preserve">
     <value>삭제할 권한이 없습니다.</value>
   </data>
-  <data name="SVG format is not allowed" xml:space="preserve">
-    <value>SVG 형식은 불가합니다.</value>
-    <comment>SVG 형식은 불가합니다.</comment>
-  </data>
-  <data name="Invalid image file." xml:space="preserve">
-    <value>유효하지 않은 이미지 파일입니다.</value>
-    <comment>유효하지 않은 이미지 파일입니다.</comment>
-  </data>
-  <data name="Only .jpg, .jpeg or .png file allowed." xml:space="preserve">
-    <value>.jpg, .jpeg or .png 파일만 허용됩니다.</value>
-    <comment>.jpg, .jpeg or .png 파일만 허용됩니다.</comment>
-  </data>
 </root>

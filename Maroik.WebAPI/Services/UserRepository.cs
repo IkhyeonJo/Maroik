@@ -6,14 +6,22 @@ using System.Text;
 
 namespace Maroik.WebAPI.Services
 {
-    public class UserRepository(ILogger<UserRepository> logger, IAccountRepository accountRepository)
-        : IUserRepository
+    public class UserRepository : IUserRepository
     {
-        private readonly Rsa _rsa = new(RsaType.Rsa2, Encoding.UTF8, Rsa.PrivateKey, Rsa.PublicKey);
+        private readonly RSA _rsa;
+        private readonly ILogger<UserRepository> _logger;
+        private readonly IAccountRepository _accountRepository;
+
+        public UserRepository(ILogger<UserRepository> logger, IAccountRepository accountRepository)
+        {
+            _rsa = new RSA(RSAType.RSA2, Encoding.UTF8, RSA.privateKey, RSA.publicKey);
+            _logger = logger;
+            _accountRepository = accountRepository;
+        }
 
         public async Task<bool> IsValidUserCredentialsAsync(string email, string password)
         {
-            logger.LogInformation($"Validating user [{email}]");
+            _logger.LogInformation($"Validating user [{email}]");
             if (string.IsNullOrWhiteSpace(email))
             {
                 return false;
@@ -24,7 +32,7 @@ namespace Maroik.WebAPI.Services
                 return false;
             }
 
-            var tempAccount = await accountRepository.GetAccountByEmailAsync(email);
+            Maroik.Common.DataAccess.Models.Account tempAccount = await _accountRepository.GetAccountByEmailAsync(email);
 
             if (tempAccount == null)
             {
@@ -41,7 +49,7 @@ namespace Maroik.WebAPI.Services
                 return false;
             }
 
-            if (!_rsa.Verify(password, tempAccount.HashedPassword)) // wrong password
+            if (!_rsa.Verify(password ?? "", tempAccount.HashedPassword)) // wrong password
             {
                 tempAccount.LoginAttempt++;
 
@@ -49,21 +57,26 @@ namespace Maroik.WebAPI.Services
                 {
                     tempAccount.Locked = true;
                     tempAccount.Message = EnumHelper.GetDescription(AccountMessage.AccountLocked);
-                    await accountRepository.UpdateAccountAsync(tempAccount);
+                    await _accountRepository.UpdateAccountAsync(tempAccount);
                     return false;
                 }
                 else
                 {
-                    await accountRepository.UpdateAccountAsync(tempAccount);
+                    await _accountRepository.UpdateAccountAsync(tempAccount);
                     return false;
                 }
             }
 
-            if (!tempAccount.EmailConfirmed || !tempAccount.AgreedServiceTerms) return false;
-            tempAccount.LoginAttempt = 0;
-            await accountRepository.UpdateAccountAsync(tempAccount);
-            return true;
-
+            if (tempAccount.EmailConfirmed == true && tempAccount.AgreedServiceTerms == true)
+            {
+                tempAccount.LoginAttempt = 0;
+                await _accountRepository.UpdateAccountAsync(tempAccount);
+                return true;
+            }
+            else
+            {
+                return false;
+            }
         }
     }
 }

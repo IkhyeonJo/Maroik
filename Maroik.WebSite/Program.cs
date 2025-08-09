@@ -39,10 +39,10 @@ ServerSetting.SmtpUserName = builder.Configuration.GetSection("ServerSetting").G
 ServerSetting.SmtpPassword = builder.Configuration.GetSection("ServerSetting").GetSection("SmtpOptions")["smtpPassword"];
 ServerSetting.SmtpHost = builder.Configuration.GetSection("ServerSetting").GetSection("SmtpOptions")["smtpHost"];
 ServerSetting.SmtpPort = Convert.ToInt32(builder.Configuration.GetSection("ServerSetting").GetSection("SmtpOptions")["smtpPort"]);
-ServerSetting.SmtpSsl = Convert.ToBoolean(builder.Configuration.GetSection("ServerSetting").GetSection("SmtpOptions")["smtpSSL"]);
+ServerSetting.SmtpSSL = Convert.ToBoolean(builder.Configuration.GetSection("ServerSetting").GetSection("SmtpOptions")["smtpSSL"]);
 ServerSetting.FromEmail = builder.Configuration.GetSection("ServerSetting").GetSection("SmtpOptions")["fromEmail"];
 ServerSetting.FromFullName = builder.Configuration.GetSection("ServerSetting").GetSection("SmtpOptions")["fromFullName"];
-//Convert.ToBoolean(builder.Configuration.GetSection("ServerSetting").GetSection("SmtpOptions")["IsDefault"]);
+ServerSetting.IsDefault = Convert.ToBoolean(builder.Configuration.GetSection("ServerSetting").GetSection("SmtpOptions")["IsDefault"]);
 ServerSetting.NoticeMaturityDateDay = Convert.ToInt32(builder.Configuration.GetSection("ServerSetting")["NoticeMaturityDateDay"]);
 ServerSetting.DockerCertPath = builder.Configuration.GetSection("ServerSetting")["DockerCertPath"];
 ServerSetting.DockerKeyPath = builder.Configuration.GetSection("ServerSetting")["DockerKeyPath"];
@@ -147,8 +147,8 @@ builder.Services.Configure<RequestLocalizationOptions>(
     {
         List<CultureInfo> supportedCultures =
         [
-                        new("en-US"),
-                        new("ko-KR")
+                        new CultureInfo("en-US"),
+                        new CultureInfo("ko-KR")
         ];
         opt.DefaultRequestCulture = new RequestCulture("en-US");
         opt.SupportedCultures = supportedCultures;
@@ -158,7 +158,7 @@ builder.Services.Configure<RequestLocalizationOptions>(
 
 builder.Services.AddControllersWithViews(options =>
 {
-    _ = options.Filters.Add<AuthorizationFilter>(); // An instance
+    _ = options.Filters.Add(typeof(AuthorizationFilter)); // An instance
     options.Filters.Add(new AutoValidateAntiforgeryTokenAttribute()); // Globally enables token validation for all requests except for GET, HEAD, OPTIONS, and TRACE
 });
 
@@ -320,7 +320,7 @@ AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true); // https://s
 app.UseCookiePolicy(new CookiePolicyOptions
 {
     HttpOnly = HttpOnlyPolicy.Always,
-    Secure = CookieSecurePolicy.Always
+    Secure = CookieSecurePolicy.Always,
 });
 
 app.UseExceptionHandler("/Exception/Error");
@@ -356,17 +356,15 @@ app.UseResponseCaching();
 app.Use(async (context, next) =>
 {
     context.Response.GetTypedHeaders().CacheControl =
-        new Microsoft.Net.Http.Headers.CacheControlHeaderValue
+        new Microsoft.Net.Http.Headers.CacheControlHeaderValue()
         {
             //Public = true,
             //MaxAge = TimeSpan.FromSeconds(10),
-            NoCache = true, // To resolve a logout back button problem
-            NoStore = true // To resolve a logout back button problem
+            NoCache = true, // For resolve logout back button problem
+            NoStore = true // For resolve logout back button problem
         };
     context.Response.Headers[Microsoft.Net.Http.Headers.HeaderNames.Vary] =
-#pragma warning disable CA1861
         new [] { "Accept-Encoding" };
-#pragma warning restore CA1861
 
     #region Security Headers [https://blog.elmah.io/the-asp-net-core-security-headers-guide/]
     context.Response.Headers.Append("Strict-Transport-Security", "max-age=63072000; includeSubDomains; preload");
@@ -387,7 +385,7 @@ app.Use(async (context, next) =>
 
 #region Multi-Language
 string[] supportedCultures = ["en-US", "ko-KR"];
-var localizationOptions = new RequestLocalizationOptions().SetDefaultCulture(supportedCultures[0])
+RequestLocalizationOptions localizationOptions = new RequestLocalizationOptions().SetDefaultCulture(supportedCultures[0])
     .AddSupportedCultures(supportedCultures)
     .AddSupportedUICultures(supportedCultures);
 

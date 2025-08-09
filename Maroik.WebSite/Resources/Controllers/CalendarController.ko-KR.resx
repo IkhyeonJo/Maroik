@@ -183,12 +183,4 @@
   <data name="The calendar shared has been successfully updated." xml:space="preserve">
     <value>공유 달력이 성공적으로 수정되었습니다.</value>
   </data>
-  <data name="Only .jpg, .jpeg or .png file allowed." xml:space="preserve">
-    <value>파일 확장자 jpg 또는 jpeg 또는 png 만 허용됩니다.</value>
-    <comment>파일 확장자 jpg 또는 jpeg 또는 png 만 허용됩니다.</comment>
-  </data>
-  <data name="Invalid image file." xml:space="preserve">
-    <value>유효하지 않은 이미지 파일입니다.</value>
-    <comment>유효하지 않은 이미지 파일입니다.</comment>
-  </data>
 </root>

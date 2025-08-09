@@ -1,31 +1,36 @@
-﻿namespace Maroik.FileStorage.Infrastructure;
-
-public class JwtRefreshTokenCache(IJwtAuthManager jwtAuthManager) : IHostedService, IDisposable
+﻿namespace Maroik.FileStorage.Infrastructure
 {
-    private Timer _timer;
-
-    public Task StartAsync(CancellationToken stoppingToken)
+    public class JwtRefreshTokenCache : IHostedService, IDisposable
     {
-        // remove expired refresh tokens from the cache every minute
-        _timer = new Timer(DoWork, null, TimeSpan.Zero, TimeSpan.FromMinutes(1));
-        return Task.CompletedTask;
-    }
+        private Timer _timer;
+        private readonly IJwtAuthManager _jwtAuthManager;
 
-    private void DoWork(object state)
-    {
-        jwtAuthManager.RemoveExpiredRefreshTokens(DateTime.UtcNow);
-    }
+        public JwtRefreshTokenCache(IJwtAuthManager jwtAuthManager)
+        {
+            _jwtAuthManager = jwtAuthManager;
+        }
 
-    public Task StopAsync(CancellationToken stoppingToken)
-    {
-        _ = _timer?.Change(Timeout.Infinite, 0);
-        return Task.CompletedTask;
-    }
+        public Task StartAsync(CancellationToken stoppingToken)
+        {
+            // remove expired refresh tokens from cache every minute
+            _timer = new Timer(DoWork, null, TimeSpan.Zero, TimeSpan.FromMinutes(1));
+            return Task.CompletedTask;
+        }
 
-#pragma warning disable CA1816
-    public void Dispose()
-#pragma warning restore CA1816
-    {
-        _timer?.Dispose();
+        private void DoWork(object state)
+        {
+            _jwtAuthManager.RemoveExpiredRefreshTokens(DateTime.UtcNow);
+        }
+
+        public Task StopAsync(CancellationToken stoppingToken)
+        {
+            _ = (_timer?.Change(Timeout.Infinite, 0));
+            return Task.CompletedTask;
+        }
+
+        public void Dispose()
+        {
+            _timer?.Dispose();
+        }
     }
 }

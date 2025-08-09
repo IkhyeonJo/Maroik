@@ -6,15 +6,15 @@
     .Grid(Model)
     .Build(columns =>
     {
-        columns.Add(model => model.Id).Titled(Localizer[nameof(Maroik.WebSite.Models.ViewModels.Management.MenuOutputViewModel.Id)]);
-        columns.Add(model => model.CategoryId).Titled(Localizer[nameof(Maroik.WebSite.Models.ViewModels.Management.MenuOutputViewModel.CategoryId)]);
-        columns.Add(model => model.Name).Titled(Localizer[nameof(Maroik.WebSite.Models.ViewModels.Management.MenuOutputViewModel.Name)]);
-        columns.Add(model => model.DisplayName).Titled(Localizer[nameof(Maroik.WebSite.Models.ViewModels.Management.MenuOutputViewModel.DisplayName)]);
-        columns.Add(model => model.IconPath).Titled(Localizer[nameof(Maroik.WebSite.Models.ViewModels.Management.MenuOutputViewModel.IconPath)]);
-        columns.Add(model => model.Controller).Titled(Localizer[nameof(Maroik.WebSite.Models.ViewModels.Management.MenuOutputViewModel.Controller)]);
-        columns.Add(model => model.Action).Titled(Localizer[nameof(Maroik.WebSite.Models.ViewModels.Management.MenuOutputViewModel.Action)]);
-        columns.Add(model => model.Role).Titled(Localizer[nameof(Maroik.WebSite.Models.ViewModels.Management.MenuOutputViewModel.Role)]);
-        columns.Add(model => model.Order).Titled(Localizer[nameof(Maroik.WebSite.Models.ViewModels.Management.MenuOutputViewModel.Order)]);
+        columns.Add(model => model.Id).Titled(localizer[nameof(Maroik.WebSite.Models.ViewModels.Management.MenuOutputViewModel.Id)]);
+        columns.Add(model => model.CategoryId).Titled(localizer[nameof(Maroik.WebSite.Models.ViewModels.Management.MenuOutputViewModel.CategoryId)]);
+        columns.Add(model => model.Name).Titled(localizer[nameof(Maroik.WebSite.Models.ViewModels.Management.MenuOutputViewModel.Name)]);
+        columns.Add(model => model.DisplayName).Titled(localizer[nameof(Maroik.WebSite.Models.ViewModels.Management.MenuOutputViewModel.DisplayName)]);
+        columns.Add(model => model.IconPath).Titled(localizer[nameof(Maroik.WebSite.Models.ViewModels.Management.MenuOutputViewModel.IconPath)]);
+        columns.Add(model => model.Controller).Titled(localizer[nameof(Maroik.WebSite.Models.ViewModels.Management.MenuOutputViewModel.Controller)]);
+        columns.Add(model => model.Action).Titled(localizer[nameof(Maroik.WebSite.Models.ViewModels.Management.MenuOutputViewModel.Action)]);
+        columns.Add(model => model.Role).Titled(localizer[nameof(Maroik.WebSite.Models.ViewModels.Management.MenuOutputViewModel.Role)]);
+        columns.Add(model => model.Order).Titled(localizer[nameof(Maroik.WebSite.Models.ViewModels.Management.MenuOutputViewModel.Order)]);
 
     })
     .Id("menuGrid")
@@ -24,7 +24,7 @@
     //.RowAttributed(model => new { @class = model.IsWorking == true ? "working" : null, data_id = model.Id })
     .RowAttributed(model => new { @class = "table-inactive", data_id = model.Id, data_categoryid = model.CategoryId ?? -1 })
     .Using(GridFilterMode.Row)
-    .Empty(Localizer["No data found"])
+    .Empty(localizer["No data found"])
     .Filterable()
     .Sortable()
     .Pageable(pager => {

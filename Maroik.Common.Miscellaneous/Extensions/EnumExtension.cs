@@ -1,18 +1,27 @@
 ﻿using System.ComponentModel;
+using System.Reflection;
 
-namespace Maroik.Common.Miscellaneous.Extensions;
-
-public static class EnumHelper
+namespace Maroik.Common.Miscellaneous.Extensions
 {
-    public static string GetDescription(Enum en)
+    public static class EnumHelper
     {
-        var type = en.GetType();
+        public static string GetDescription(Enum en)
+        {
+            Type type = en.GetType();
 
-        var memInfo = type.GetMember(en.ToString());
+            MemberInfo[] memInfo = type.GetMember(en.ToString());
 
-        if (memInfo.Length <= 0) return en.ToString();
-        var attrs = memInfo[0].GetCustomAttributes(typeof(DescriptionAttribute), false);
+            if (memInfo != null && memInfo.Length > 0)
+            {
+                object[] attrs = memInfo[0].GetCustomAttributes(typeof(DescriptionAttribute), false);
 
-        return attrs.Length > 0 ? ((DescriptionAttribute)attrs[0]).Description : en.ToString();
+                if (attrs != null && attrs.Length > 0)
+                {
+                    return ((DescriptionAttribute)attrs[0]).Description;
+                }
+            }
+
+            return en.ToString();
+        }
     }
 }

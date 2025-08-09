@@ -1,18 +1,29 @@
-﻿using System.Globalization;
-
-namespace Maroik.Common.Miscellaneous.Extensions;
-
-public static class DecimalExtension
+﻿namespace Maroik.Common.Miscellaneous.Extensions
 {
-    public static string TrimTrailingZeros(this decimal value)
+    public static class DecimalExtension
     {
-        try
+        public static string TrimTrailingZeros(this decimal value)
         {
-            return value % 1 == 0 ? ((int)value).ToString() : value.ToString(CultureInfo.InvariantCulture).TrimEnd('0').TrimEnd('.');
+            try
+            {
+                return value % 1 == 0 ? ((int)value).ToString() : value.ToString().TrimEnd('0').TrimEnd('.');
+            }
+            catch
+            {
+                return default(decimal).ToString();
+            }
         }
-        catch
+
+        public static string TrimTrailingZeros(this decimal? value)
         {
-            return default(decimal).ToString(CultureInfo.InvariantCulture);
+            try
+            {
+                return value % 1 == 0 ? ((int)(value ?? 0)).ToString() : (value ?? 0).ToString().TrimEnd('0').TrimEnd('.');
+            }
+            catch
+            {
+                return default(decimal).ToString();
+            }
         }
     }
 }

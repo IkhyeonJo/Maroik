@@ -2,21 +2,28 @@
 using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics;
 
-namespace Maroik.WebSite.Controllers;
-
-public class ExceptionController : Controller
+namespace Maroik.WebSite.Controllers
 {
-
-    [HttpGet]
-    public IActionResult AccessDenied()
+    public class ExceptionController : Controller
     {
-        return View();
-    }
+        private readonly ILogger<ExceptionController> _logger;
 
-    [HttpGet]
-    [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-    public IActionResult Error()
-    {
-        return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+        public ExceptionController(ILogger<ExceptionController> logger)
+        {
+            _logger = logger;
+        }
+
+        [HttpGet]
+        public IActionResult AccessDenied()
+        {
+            return View();
+        }
+
+        [HttpGet]
+        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+        public IActionResult Error()
+        {
+            return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+        }
     }
 }

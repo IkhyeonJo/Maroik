@@ -1,6 +1,6 @@
 namespace Maroik.Common.Miscellaneous.Utilities;
 
-public abstract class GuidToken
+public class GUIDToken
 {
     public static string Generate()
     {
@@ -12,9 +12,9 @@ public abstract class GuidToken
 
         #region Basic example of creating a unique token containing a time stamp: https: //stackoverflow.com/questions/14643735/how-to-generate-a-unique-token-which-expires-after-24-hours
 
-        var time = BitConverter.GetBytes(DateTime.UtcNow.ToBinary());
-        var key = Guid.NewGuid().ToByteArray();
-        var token = Convert.ToBase64String(time.Concat(key).ToArray());
+        byte[] time = BitConverter.GetBytes(DateTime.UtcNow.ToBinary());
+        byte[] key = Guid.NewGuid().ToByteArray();
+        string token = Convert.ToBase64String(time.Concat(key).ToArray());
 
         #endregion
 
@@ -23,10 +23,15 @@ public abstract class GuidToken
 
     public static bool IsTokenAlive(string token)
     {
-        var data = Convert.FromBase64String(token);
-        var when = DateTime.FromBinary(BitConverter.ToInt64(data, 0));
-        return when >= DateTime.UtcNow.AddHours(-24); // how to generate a unique token which expires after 24 hours?
-        // token dead
-        // token alive 
+        byte[] data = Convert.FromBase64String(token);
+        DateTime when = DateTime.FromBinary(BitConverter.ToInt64(data, 0));
+        if (when < DateTime.UtcNow.AddHours(-24)) // how to generate a unique token which expires after 24 hours?
+        {
+            return false; // token dead
+        }
+        else
+        {
+            return true; // token alive 
+        }
     }
 }

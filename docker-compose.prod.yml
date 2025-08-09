@@ -50,6 +50,24 @@ services:
         depends_on :
           - postgresql  
 
+    # maroik.webapi:
+    #     build :
+    #      context : .
+    #      dockerfile : Maroik.WebAPI/Dockerfile
+    #     container_name: Maroik.WebAPI
+    #     networks :
+    #       - backend          
+    #     ports:
+    #       - 5001:5001
+    #     environment :
+    #       - DBHOST=postgresql
+    #       - ASPNETCORE_ENVIRONMENT=Production
+    #       - ASPNETCORE_URLS=https://+:5001
+    #     volumes:
+    #       - ./Maroik.SSL/conf:/etc/letsencrypt:ro
+    #     depends_on :
+    #       - postgresql  
+
     maroik.filestorage:
         build :
          context : .
