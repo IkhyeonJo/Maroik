@@ -18,7 +18,7 @@ public class AccountController(
     IMailRepository mailRepository)
     : Controller
 {
-    private readonly RSA _rsa = new(RSAType.RSA2, Encoding.UTF8, RSA.privateKey, RSA.publicKey);
+    private readonly Rsa _rsa = new(RsaType.Rsa2, Encoding.UTF8, Rsa.PrivateKey, Rsa.PublicKey);
 
     #region ConsentForm
 
@@ -223,7 +223,7 @@ public class AccountController(
 
             if (account == null) // 입력된 ID로 생성된 Record가 없다.
             {
-                var registrationToken = GUIDToken.Generate();
+                var registrationToken = GuidToken.Generate();
                 loginInputViewModel.RegistrationToken = registrationToken;
                 try
                 {
@@ -358,7 +358,7 @@ public class AccountController(
                 };
                 if (string.IsNullOrEmpty(account.RegistrationToken))
                 {
-                    account.RegistrationToken = GUIDToken.Generate();
+                    account.RegistrationToken = GuidToken.Generate();
                 }
 
                 mail.Body = mailRepository.GetMailConfirmationBody(
@@ -604,7 +604,7 @@ public class AccountController(
 
         #region 2.	해당 계정을 Token으로 찾지 못했다. 또는 해당 계정의 Token 만료 되었다.
 
-        if (account == null || !GUIDToken.IsTokenAlive(account.RegistrationToken))
+        if (account == null || !GuidToken.IsTokenAlive(account.RegistrationToken))
         {
             ViewBag.InvalidToken = true;
             ViewBag.AccountCreated = false;
@@ -712,7 +712,7 @@ public class AccountController(
             // 이메일 인증 됨
             case true:
             {
-                var resetPasswordToken = GUIDToken.Generate();
+                var resetPasswordToken = GuidToken.Generate();
                 try
                 {
                     #region 메일 전송
@@ -811,7 +811,7 @@ public class AccountController(
 
         #region 2.	해당 계정을 Token으로 찾지 못했다. 또는 해당 계정의 Token 만료 되었다. 또는 해당 계정의 EmailConfirmd가 false이다. (이메일 인증을 하지 않았다.)
 
-        if (account == null || !GUIDToken.IsTokenAlive(account.ResetPasswordToken) || !account.EmailConfirmed)
+        if (account == null || !GuidToken.IsTokenAlive(account.ResetPasswordToken) || !account.EmailConfirmed)
         {
             ViewBag.FailToResetPassword = true;
             return View();
@@ -860,7 +860,7 @@ public class AccountController(
 
         #region 2.	해당 계정을 Token으로 찾지 못했다. 또는 해당 계정의 Token 만료 되었다. 또는 해당 계정의 EmailConfirmd가 false이다. (이메일 인증을 하지 않았다.)
 
-        if (account == null || !GUIDToken.IsTokenAlive(account.ResetPasswordToken) || !account.EmailConfirmed)
+        if (account == null || !GuidToken.IsTokenAlive(account.ResetPasswordToken) || !account.EmailConfirmed)
         {
             ViewBag.FailToResetPassword = true;
             return View();

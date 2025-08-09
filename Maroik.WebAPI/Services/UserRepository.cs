@@ -8,13 +8,13 @@ namespace Maroik.WebAPI.Services
 {
     public class UserRepository : IUserRepository
     {
-        private readonly RSA _rsa;
+        private readonly Rsa _rsa;
         private readonly ILogger<UserRepository> _logger;
         private readonly IAccountRepository _accountRepository;
 
         public UserRepository(ILogger<UserRepository> logger, IAccountRepository accountRepository)
         {
-            _rsa = new RSA(RSAType.RSA2, Encoding.UTF8, RSA.privateKey, RSA.publicKey);
+            _rsa = new Rsa(RsaType.Rsa2, Encoding.UTF8, Rsa.PrivateKey, Rsa.PublicKey);
             _logger = logger;
             _accountRepository = accountRepository;
         }

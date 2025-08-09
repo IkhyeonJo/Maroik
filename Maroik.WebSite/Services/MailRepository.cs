@@ -58,7 +58,7 @@ namespace Maroik.WebSite.Services
                 mail.ToMailIds.ForEach(mailMessage.To.Add);
                 mailMessage.Subject = mail.Subject;
                 mailMessage.Body = mail.Body;
-                mailMessage.IsBodyHtml = mail.IsBodyHTML;
+                mailMessage.IsBodyHtml = Mail.IsBodyHtml;
                 mail.Attachments.ForEach(x =>
                 {
                     mailMessage.Attachments.Add(new Attachment(x));
@@ -66,7 +66,7 @@ namespace Maroik.WebSite.Services
 
                 using SmtpClient smtp = new(mail.SmtpHost, mail.SmtpPort);
                 smtp.Credentials = new System.Net.NetworkCredential(mail.SmtpUserName, mail.SmtpPassword);
-                smtp.EnableSsl = mail.SmtpSSL;
+                smtp.EnableSsl = mail.SmtpSsl;
                 await smtp.SendMailAsync(mailMessage);
                 return EnumHelper.GetDescription(AccountMessage.MailSent);
             }

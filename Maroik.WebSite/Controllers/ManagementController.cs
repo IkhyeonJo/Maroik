@@ -38,7 +38,7 @@ public class ManagementController(
     ApplicationDbContext context)
     : Controller
 {
-    private readonly RSA _rsa = new(RSAType.RSA2, Encoding.UTF8, RSA.privateKey, RSA.publicKey);
+    private readonly Rsa _rsa = new(RsaType.Rsa2, Encoding.UTF8, Rsa.PrivateKey, Rsa.PublicKey);
 
     #region Profile
 
