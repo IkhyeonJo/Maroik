@@ -8,15 +8,8 @@ using System.Threading.Tasks;
 
 namespace Maroik.Common.DataAccess.Services
 {
-    public class FixedExpenditureRepository : IFixedExpenditureRepository
+    public class FixedExpenditureRepository(ApplicationDbContext context) : IFixedExpenditureRepository
     {
-        private readonly ApplicationDbContext _context;
-
-        public FixedExpenditureRepository(ApplicationDbContext context)
-        {
-            _context = context;
-        }
-
         /// <summary>
         /// 로그인 계정에 해당하는 모든 고정지출을 구합니다.
         /// </summary>
@@ -24,7 +17,7 @@ namespace Maroik.Common.DataAccess.Services
         /// <returns></returns>
         public async Task<List<FixedExpenditure>> GetFixedExpendituresAsync(string email)
         {
-            return await _context.FixedExpenditures.Where(x => x.AccountEmail == email).ToListAsync();
+            return await context.FixedExpenditures.Where(x => x.AccountEmail == email).ToListAsync();
         }
 
         /// <summary>
@@ -34,8 +27,8 @@ namespace Maroik.Common.DataAccess.Services
         /// <returns></returns>
         public async Task CreateFixedExpenditureAsync(FixedExpenditure fixedExpenditure)
         {
-            _ = await _context.FixedExpenditures.AddAsync(fixedExpenditure);
-            _ = await _context.SaveChangesAsync();
+            _ = await context.FixedExpenditures.AddAsync(fixedExpenditure);
+            _ = await context.SaveChangesAsync();
         }
 
         /// <summary>
@@ -45,8 +38,8 @@ namespace Maroik.Common.DataAccess.Services
         /// <returns></returns>
         public async Task UpdateFixedExpenditureAsync(FixedExpenditure fixedExpenditure)
         {
-            _ = _context.FixedExpenditures.Update(fixedExpenditure);
-            _ = await _context.SaveChangesAsync();
+            _ = context.FixedExpenditures.Update(fixedExpenditure);
+            _ = await context.SaveChangesAsync();
         }
 
         /// <summary>
@@ -56,8 +49,8 @@ namespace Maroik.Common.DataAccess.Services
         /// <returns></returns>
         public async Task DeleteFixedExpenditureAsync(FixedExpenditure fixedExpenditure)
         {
-            _ = _context.FixedExpenditures.Remove(fixedExpenditure);
-            _ = await _context.SaveChangesAsync();
+            _ = context.FixedExpenditures.Remove(fixedExpenditure);
+            _ = await context.SaveChangesAsync();
         }
 
         /// <summary>
@@ -69,7 +62,7 @@ namespace Maroik.Common.DataAccess.Services
         /// <returns></returns>
         public async Task<int> UpdateMyDepositAssetWithProductNameAsync(string accountEmail, string oldMyDepositAsset, string newMyDepositAsset)
         {
-            return await _context.Database.ExecuteSqlInterpolatedAsync
+            return await context.Database.ExecuteSqlInterpolatedAsync
             (
                 $"""
                  UPDATE "FixedExpenditure"

@@ -8,22 +8,15 @@ using System.Threading.Tasks;
 
 namespace Maroik.Common.DataAccess.Services
 {
-    public class BoardCommentRepository : IBoardCommentRepository
+    public class BoardCommentRepository(ApplicationDbContext context) : IBoardCommentRepository
     {
-        private readonly ApplicationDbContext _context;
-
-        public BoardCommentRepository(ApplicationDbContext context)
-        {
-            _context = context;
-        }
-
         /// <summary>
         /// 한 게시물의 모든 댓글을 구합니다.
         /// </summary>
         /// <returns></returns>
         public async Task<IEnumerable<BoardComment>> GetOneBoardCommentsAsync(long boardId)
         {
-            return await _context.BoardComments.Where(x => x.BoardId == boardId).OrderBy(m => m.Order).ToListAsync();
+            return await context.BoardComments.Where(x => x.BoardId == boardId).OrderBy(m => m.Order).ToListAsync();
         }
 
         /// <summary>
@@ -32,7 +25,7 @@ namespace Maroik.Common.DataAccess.Services
         /// <returns></returns>
         public async Task<BoardComment> GetBoardCommentAsync(int id)
         {
-            return await _context.BoardComments.Where(x => x.Id == id).FirstOrDefaultAsync();
+            return await context.BoardComments.Where(x => x.Id == id).FirstOrDefaultAsync();
         }
 
         /// <summary>
@@ -42,8 +35,8 @@ namespace Maroik.Common.DataAccess.Services
         /// <returns></returns>
         public async Task WriteBoardCommentAsync(BoardComment boardComment)
         {
-            _ = await _context.BoardComments.AddAsync(boardComment);
-            _ = await _context.SaveChangesAsync();
+            _ = await context.BoardComments.AddAsync(boardComment);
+            _ = await context.SaveChangesAsync();
         }
 
         /// <summary>
@@ -53,8 +46,8 @@ namespace Maroik.Common.DataAccess.Services
         /// <returns></returns>
         public async Task DeleteBoardCommentAsync(BoardComment boardComment)
         {
-            _ = _context.BoardComments.Update(boardComment);
-            _ = await _context.SaveChangesAsync();
+            _ = context.BoardComments.Update(boardComment);
+            _ = await context.SaveChangesAsync();
         }
 
     }

@@ -7,21 +7,15 @@ using System.Threading.Tasks;
 
 namespace Maroik.Common.DataAccess.Services
 {
-    public class BoardAttachedFileRepository : IBoardAttachedFileRepository
+    public class BoardAttachedFileRepository(ApplicationDbContext context) : IBoardAttachedFileRepository
     {
-        private readonly ApplicationDbContext _context;
-
-        public BoardAttachedFileRepository(ApplicationDbContext context)
-        {
-            _context = context;
-        }
         /// <summary>
         /// 등록된 모든 계정을 구합니다.
         /// </summary>
         /// <returns></returns>
         public async Task<List<BoardAttachedFile>> GetAllAsync()
         {
-            return await _context.BoardAttachedFiles.ToListAsync();
+            return await context.BoardAttachedFiles.ToListAsync();
         }
 
         /// <summary>
@@ -31,8 +25,8 @@ namespace Maroik.Common.DataAccess.Services
         /// <returns></returns>
         public async Task SaveBoardAttachedFileAsync(BoardAttachedFile boardAttachedFile)
         {
-            _ = await _context.BoardAttachedFiles.AddAsync(boardAttachedFile);
-            _ = await _context.SaveChangesAsync();
+            _ = await context.BoardAttachedFiles.AddAsync(boardAttachedFile);
+            _ = await context.SaveChangesAsync();
         }
 
         /// <summary>
@@ -42,8 +36,8 @@ namespace Maroik.Common.DataAccess.Services
         /// <returns></returns>
         public async Task UpdateBoardAttachedFileAsync(BoardAttachedFile boardAttachedFile)
         {
-            _ = _context.BoardAttachedFiles.Update(boardAttachedFile);
-            _ = await _context.SaveChangesAsync();
+            _ = context.BoardAttachedFiles.Update(boardAttachedFile);
+            _ = await context.SaveChangesAsync();
         }
     }
 }

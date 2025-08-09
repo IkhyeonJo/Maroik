@@ -1,17 +1,10 @@
 using Maroik.Common.DataAccess.Models;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace Maroik.Common.DataAccess.Contracts
 {
     public interface ICalendarEventAttachedFileRepository
     {
-        /// <summary>
-        /// 등록된 모든 파일을 구합니다.
-        /// </summary>
-        /// <returns></returns>
-        public Task<List<CalendarEventAttachedFile>> GetAllAsync();
-
         /// <summary>
         /// 한 첨부파일을 구합니다.
         /// </summary>

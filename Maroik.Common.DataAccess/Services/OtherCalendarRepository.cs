@@ -8,22 +8,15 @@ using System.Threading.Tasks;
 
 namespace Maroik.Common.DataAccess.Services
 {
-    public class OtherCalendarRepository : IOtherCalendarRepository
+    public class OtherCalendarRepository(ApplicationDbContext context) : IOtherCalendarRepository
     {
-        private readonly ApplicationDbContext _context;
-
-        public OtherCalendarRepository(ApplicationDbContext context)
-        {
-            _context = context;
-        }
-
         /// <summary>
         /// 모든 다른 달력을 구합니다.
         /// </summary>
         /// <returns></returns>
         public async Task<List<OtherCalendar>> GetAllOtherCalendarsAsync()
         {
-            return await _context.OtherCalendars.OrderBy(x => x.CalendarId).ToListAsync();
+            return await context.OtherCalendars.OrderBy(x => x.CalendarId).ToListAsync();
         }
 
         /// <summary>
@@ -33,7 +26,7 @@ namespace Maroik.Common.DataAccess.Services
         /// <returns></returns>
         public async Task<List<OtherCalendar>> GetOtherCalendarsAsync(string email)
         {
-            return await _context.OtherCalendars.Where(x => x.AccountEmail == email).OrderBy(x => x.CalendarId).ToListAsync();
+            return await context.OtherCalendars.Where(x => x.AccountEmail == email).OrderBy(x => x.CalendarId).ToListAsync();
         }
 
         /// <summary>
@@ -43,8 +36,8 @@ namespace Maroik.Common.DataAccess.Services
         /// <returns></returns>
         public async Task CreateOtherCalendarAsync(OtherCalendar otherCalendar)
         {
-            _ = await _context.OtherCalendars.AddAsync(otherCalendar);
-            _ = await _context.SaveChangesAsync();
+            _ = await context.OtherCalendars.AddAsync(otherCalendar);
+            _ = await context.SaveChangesAsync();
         }
 
         /// <summary>
@@ -54,8 +47,8 @@ namespace Maroik.Common.DataAccess.Services
         /// <returns></returns>
         public async Task DeleteOtherCalendarAsync(OtherCalendar otherCalendar)
         {
-            _ = _context.OtherCalendars.Remove(otherCalendar);
-            _ = await _context.SaveChangesAsync();
+            _ = context.OtherCalendars.Remove(otherCalendar);
+            _ = await context.SaveChangesAsync();
         }
     }
 }

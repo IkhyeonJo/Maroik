@@ -8,22 +8,15 @@ using System.Threading.Tasks;
 
 namespace Maroik.Common.DataAccess.Services
 {
-    public class CalendarSharedRepository : ICalendarSharedRepository
+    public class CalendarSharedRepository(ApplicationDbContext context) : ICalendarSharedRepository
     {
-        private readonly ApplicationDbContext _context;
-
-        public CalendarSharedRepository(ApplicationDbContext context)
-        {
-            _context = context;
-        }
-
         /// <summary>
         /// 모든 공유 달력을 구합니다.
         /// </summary>
         /// <returns></returns>
         public async Task<List<CalendarShared>> GetCalendarSharedAsync()
         {
-            return await _context.CalendarShareds.OrderBy(x => x.CalendarId).ToListAsync();
+            return await context.CalendarShareds.OrderBy(x => x.CalendarId).ToListAsync();
         }
 
         /// <summary>
@@ -33,8 +26,8 @@ namespace Maroik.Common.DataAccess.Services
         /// <returns></returns>
         public async Task CreateCalendarSharedAsync(CalendarShared calendarShared)
         {
-            _ = await _context.CalendarShareds.AddAsync(calendarShared);
-            _ = await _context.SaveChangesAsync();
+            _ = await context.CalendarShareds.AddAsync(calendarShared);
+            _ = await context.SaveChangesAsync();
         }
 
         /// <summary>
@@ -44,8 +37,8 @@ namespace Maroik.Common.DataAccess.Services
         /// <returns></returns>
         public async Task UpdateCalendarSharedAsync(CalendarShared calendarShared)
         {
-            _ = _context.CalendarShareds.Update(calendarShared);
-            _ = await _context.SaveChangesAsync();
+            _ = context.CalendarShareds.Update(calendarShared);
+            _ = await context.SaveChangesAsync();
         }
     }
 }

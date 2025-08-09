@@ -8,22 +8,15 @@ using System.Threading.Tasks;
 
 namespace Maroik.Common.DataAccess.Services
 {
-    public class BoardRepository : IBoardRepository
+    public class BoardRepository(ApplicationDbContext context) : IBoardRepository
     {
-        private readonly ApplicationDbContext _context;
-
-        public BoardRepository(ApplicationDbContext context)
-        {
-            _context = context;
-        }
-
         /// <summary>
         /// 한 종류의 모든 게시물을 구합니다.
         /// </summary>
         /// <returns></returns>
         public async Task<IEnumerable<Board>> GetOneTypeBoardsAsync(string type)
         {
-            return await _context.Boards.Where(x => x.Type == type).ToListAsync();
+            return await context.Boards.Where(x => x.Type == type).ToListAsync();
         }
 
         /// <summary>
@@ -33,8 +26,8 @@ namespace Maroik.Common.DataAccess.Services
         /// <returns></returns>
         public async Task WriteBoardAsync(Board board)
         {
-            _ = await _context.Boards.AddAsync(board);
-            _ = await _context.SaveChangesAsync();
+            _ = await context.Boards.AddAsync(board);
+            _ = await context.SaveChangesAsync();
         }
 
         /// <summary>
@@ -44,8 +37,8 @@ namespace Maroik.Common.DataAccess.Services
         /// <returns></returns>
         public async Task UpdateBoardAsync(Board board)
         {
-            _ = _context.Boards.Update(board);
-            _ = await _context.SaveChangesAsync();
+            _ = context.Boards.Update(board);
+            _ = await context.SaveChangesAsync();
         }
 
         /// <summary>
@@ -55,8 +48,8 @@ namespace Maroik.Common.DataAccess.Services
         /// <returns></returns>
         public async Task DeleteBoardAsync(Board board)
         {
-            _ = _context.Boards.Update(board);
-            _ = await _context.SaveChangesAsync();
+            _ = context.Boards.Update(board);
+            _ = await context.SaveChangesAsync();
         }
 
     }

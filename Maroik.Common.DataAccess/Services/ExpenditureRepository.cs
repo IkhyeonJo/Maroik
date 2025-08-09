@@ -8,15 +8,8 @@ using System.Threading.Tasks;
 
 namespace Maroik.Common.DataAccess.Services
 {
-    public class ExpenditureRepository : IExpenditureRepository
+    public class ExpenditureRepository(ApplicationDbContext context) : IExpenditureRepository
     {
-        private readonly ApplicationDbContext _context;
-
-        public ExpenditureRepository(ApplicationDbContext context)
-        {
-            _context = context;
-        }
-
         /// <summary>
         /// 로그인 계정에 해당하는 모든 지출을 구합니다.
         /// </summary>
@@ -24,7 +17,7 @@ namespace Maroik.Common.DataAccess.Services
         /// <returns></returns>
         public async Task<List<Expenditure>> GetExpendituresAsync(string email)
         {
-            return await _context.Expenditures.Where(x => x.AccountEmail == email).ToListAsync();
+            return await context.Expenditures.Where(x => x.AccountEmail == email).ToListAsync();
         }
 
         /// <summary>
@@ -36,7 +29,7 @@ namespace Maroik.Common.DataAccess.Services
         /// <returns></returns>
         public async Task<List<Expenditure>> GetCurrentYearExpendituresAsync(string email, string year, string timeZoneIanaId)
         {
-            return await _context.Expenditures.FromSqlInterpolated
+            return await context.Expenditures.FromSqlInterpolated
             (
                 $"""
                  SELECT *
@@ -57,7 +50,7 @@ namespace Maroik.Common.DataAccess.Services
         /// <returns></returns>
         public async Task<List<Expenditure>> GetCurrentYearMonthExpendituresAsync(string email, string yearMonth, string timeZoneIanaId)
         {
-            return await _context.Expenditures.FromSqlInterpolated
+            return await context.Expenditures.FromSqlInterpolated
             (
                 $"""
                  SELECT *
@@ -76,8 +69,8 @@ namespace Maroik.Common.DataAccess.Services
         /// <returns></returns>
         public async Task CreateExpenditureAsync(Expenditure expenditure)
         {
-            _ = await _context.Expenditures.AddAsync(expenditure);
-            _ = await _context.SaveChangesAsync();
+            _ = await context.Expenditures.AddAsync(expenditure);
+            _ = await context.SaveChangesAsync();
         }
 
         /// <summary>
@@ -87,8 +80,8 @@ namespace Maroik.Common.DataAccess.Services
         /// <returns></returns>
         public async Task UpdateExpenditureAsync(Expenditure expenditure)
         {
-            _ = _context.Expenditures.Update(expenditure);
-            _ = await _context.SaveChangesAsync();
+            _ = context.Expenditures.Update(expenditure);
+            _ = await context.SaveChangesAsync();
         }
 
         /// <summary>
@@ -98,8 +91,8 @@ namespace Maroik.Common.DataAccess.Services
         /// <returns></returns>
         public async Task DeleteExpenditureAsync(Expenditure expenditure)
         {
-            _ = _context.Expenditures.Remove(expenditure);
-            _ = await _context.SaveChangesAsync();
+            _ = context.Expenditures.Remove(expenditure);
+            _ = await context.SaveChangesAsync();
         }
 
         /// <summary>
@@ -111,7 +104,7 @@ namespace Maroik.Common.DataAccess.Services
         /// <returns></returns>
         public async Task<int> UpdateMyDepositAssetWithProductNameAsync(string accountEmail, string oldMyDepositAsset, string newMyDepositAsset)
         {
-            return await _context.Database.ExecuteSqlInterpolatedAsync
+            return await context.Database.ExecuteSqlInterpolatedAsync
             (
                 $"""
                   UPDATE "Expenditure"

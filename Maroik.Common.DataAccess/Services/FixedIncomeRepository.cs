@@ -8,15 +8,8 @@ using System.Threading.Tasks;
 
 namespace Maroik.Common.DataAccess.Services
 {
-    public class FixedIncomeRepository : IFixedIncomeRepository
+    public class FixedIncomeRepository(ApplicationDbContext context) : IFixedIncomeRepository
     {
-        private readonly ApplicationDbContext _context;
-
-        public FixedIncomeRepository(ApplicationDbContext context)
-        {
-            _context = context;
-        }
-
         /// <summary>
         /// 로그인 계정에 해당하는 모든 고정수입을 구합니다.
         /// </summary>
@@ -24,7 +17,7 @@ namespace Maroik.Common.DataAccess.Services
         /// <returns></returns>
         public async Task<List<FixedIncome>> GetFixedIncomesAsync(string email)
         {
-            return await _context.FixedIncomes.Where(x => x.AccountEmail == email).ToListAsync();
+            return await context.FixedIncomes.Where(x => x.AccountEmail == email).ToListAsync();
         }
 
         /// <summary>
@@ -34,8 +27,8 @@ namespace Maroik.Common.DataAccess.Services
         /// <returns></returns>
         public async Task CreateFixedIncomeAsync(FixedIncome fixedIncome)
         {
-            _ = await _context.FixedIncomes.AddAsync(fixedIncome);
-            _ = await _context.SaveChangesAsync();
+            _ = await context.FixedIncomes.AddAsync(fixedIncome);
+            _ = await context.SaveChangesAsync();
         }
 
         /// <summary>
@@ -45,8 +38,8 @@ namespace Maroik.Common.DataAccess.Services
         /// <returns></returns>
         public async Task UpdateFixedIncomeAsync(FixedIncome fixedIncome)
         {
-            _ = _context.FixedIncomes.Update(fixedIncome);
-            _ = await _context.SaveChangesAsync();
+            _ = context.FixedIncomes.Update(fixedIncome);
+            _ = await context.SaveChangesAsync();
         }
 
         /// <summary>
@@ -56,8 +49,8 @@ namespace Maroik.Common.DataAccess.Services
         /// <returns></returns>
         public async Task DeleteFixedIncomeAsync(FixedIncome fixedIncome)
         {
-            _ = _context.FixedIncomes.Remove(fixedIncome);
-            _ = await _context.SaveChangesAsync();
+            _ = context.FixedIncomes.Remove(fixedIncome);
+            _ = await context.SaveChangesAsync();
         }
     }
 }

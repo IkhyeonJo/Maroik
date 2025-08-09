@@ -8,15 +8,8 @@ using System.Threading.Tasks;
 
 namespace Maroik.Common.DataAccess.Services
 {
-    public class CalendarEventRepository : ICalendarEventRepository
+    public class CalendarEventRepository(ApplicationDbContext context) : ICalendarEventRepository
     {
-        private readonly ApplicationDbContext _context;
-
-        public CalendarEventRepository(ApplicationDbContext context)
-        {
-            _context = context;
-        }
-
         /// <summary>
         /// 해당 달력에 해당하는 모든 달력 이벤트를 구합니다.
         /// </summary>
@@ -24,7 +17,7 @@ namespace Maroik.Common.DataAccess.Services
         /// <returns></returns>
         public async Task<IEnumerable<CalendarEvent>> GetCalendarEventsAsync(long calendarId)
         {
-            return await _context.CalendarEvents.Where(x => x.CalendarId == calendarId).ToListAsync();
+            return await context.CalendarEvents.Where(x => x.CalendarId == calendarId).ToListAsync();
         }
 
         /// <summary>
@@ -34,7 +27,7 @@ namespace Maroik.Common.DataAccess.Services
         /// <returns></returns>
         public async Task<CalendarEvent> GetCalendarEventAsync(long id)
         {
-            return await _context.CalendarEvents.Where(x => x.Id == id).FirstOrDefaultAsync();
+            return await context.CalendarEvents.Where(x => x.Id == id).FirstOrDefaultAsync();
         }
 
         /// <summary>
@@ -44,8 +37,8 @@ namespace Maroik.Common.DataAccess.Services
         /// <returns></returns>
         public async Task CreateCalendarEventAsync(CalendarEvent calendarEvent)
         {
-            _ = await _context.CalendarEvents.AddAsync(calendarEvent);
-            _ = await _context.SaveChangesAsync();
+            _ = await context.CalendarEvents.AddAsync(calendarEvent);
+            _ = await context.SaveChangesAsync();
         }
 
         /// <summary>
@@ -55,8 +48,8 @@ namespace Maroik.Common.DataAccess.Services
         /// <returns></returns>
         public async Task UpdateCalendarEventAsync(CalendarEvent calendarEvent)
         {
-            _ = _context.CalendarEvents.Update(calendarEvent);
-            _ = await _context.SaveChangesAsync();
+            _ = context.CalendarEvents.Update(calendarEvent);
+            _ = await context.SaveChangesAsync();
         }
 
         /// <summary>
@@ -66,8 +59,8 @@ namespace Maroik.Common.DataAccess.Services
         /// <returns></returns>
         public async Task DeleteCalendarEventAsync(CalendarEvent calendarEvent)
         {
-            _ = _context.CalendarEvents.Remove(calendarEvent);
-            _ = await _context.SaveChangesAsync();
+            _ = context.CalendarEvents.Remove(calendarEvent);
+            _ = await context.SaveChangesAsync();
         }
     }
 }

@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using Maroik.Common.DataAccess.Models;
+﻿using Maroik.Common.DataAccess.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace Maroik.Common.DataAccess.Data;
@@ -14,7 +12,9 @@ public partial class ApplicationDbContext : DbContext
     public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
         : base(options)
     {
+        // ReSharper disable once VirtualMemberCallInConstructor
         ChangeTracker.QueryTrackingBehavior = QueryTrackingBehavior.NoTracking;
+        // ReSharper disable once VirtualMemberCallInConstructor
         ChangeTracker.AutoDetectChangesEnabled = false;
     }
 

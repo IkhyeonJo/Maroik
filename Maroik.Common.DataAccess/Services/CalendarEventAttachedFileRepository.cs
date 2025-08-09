@@ -2,29 +2,14 @@ using Maroik.Common.DataAccess.Contracts;
 using Maroik.Common.DataAccess.Data;
 using Maroik.Common.DataAccess.Models;
 using Microsoft.EntityFrameworkCore;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
 namespace Maroik.Common.DataAccess.Services
 {
-    public class CalendarEventAttachedFileRepository : ICalendarEventAttachedFileRepository
+    public class CalendarEventAttachedFileRepository(ApplicationDbContext context)
+        : ICalendarEventAttachedFileRepository
     {
-        private readonly ApplicationDbContext _context;
-
-        public CalendarEventAttachedFileRepository(ApplicationDbContext context)
-        {
-            _context = context;
-        }
-        /// <summary>
-        /// 등록된 모든 파일을 구합니다.
-        /// </summary>
-        /// <returns></returns>
-        public async Task<List<CalendarEventAttachedFile>> GetAllAsync()
-        {
-            return await _context.CalendarEventAttachedFiles.ToListAsync();
-        }
-
         /// <summary>
         /// 한 첨부파일을 구합니다.
         /// </summary>
@@ -32,7 +17,7 @@ namespace Maroik.Common.DataAccess.Services
         /// <returns></returns>
         public async Task<CalendarEventAttachedFile> GetCalendarEventAttachedFileAsync(long calendarEventId)
         {
-            return await _context.CalendarEventAttachedFiles.Where(x => x.CalendarEventId == calendarEventId).FirstOrDefaultAsync();
+            return await context.CalendarEventAttachedFiles.Where(x => x.CalendarEventId == calendarEventId).FirstOrDefaultAsync();
         }
 
         /// <summary>
@@ -42,8 +27,8 @@ namespace Maroik.Common.DataAccess.Services
         /// <returns></returns>
         public async Task SaveCalendarEventAttachedFileAsync(CalendarEventAttachedFile calendarEventAttachedFile)
         {
-            _ = await _context.CalendarEventAttachedFiles.AddAsync(calendarEventAttachedFile);
-            _ = await _context.SaveChangesAsync();
+            _ = await context.CalendarEventAttachedFiles.AddAsync(calendarEventAttachedFile);
+            _ = await context.SaveChangesAsync();
         }
 
         /// <summary>
@@ -53,8 +38,8 @@ namespace Maroik.Common.DataAccess.Services
         /// <returns></returns>
         public async Task UpdateCalendarEventAttachedFileAsync(CalendarEventAttachedFile calendarEventAttachedFile)
         {
-            _ = _context.CalendarEventAttachedFiles.Update(calendarEventAttachedFile);
-            _ = await _context.SaveChangesAsync();
+            _ = context.CalendarEventAttachedFiles.Update(calendarEventAttachedFile);
+            _ = await context.SaveChangesAsync();
         }
 
         /// <summary>
@@ -64,7 +49,7 @@ namespace Maroik.Common.DataAccess.Services
         /// <returns></returns>
         public async Task<int> DeleteCalendarEventAttachedFileAsync(long calendarEventId)
         {
-            return await _context.Database.ExecuteSqlInterpolatedAsync
+            return await context.Database.ExecuteSqlInterpolatedAsync
             (
                 $"""DELETE FROM "CalendarEventAttachedFile" WHERE "CalendarEventId" = {calendarEventId}"""
             );

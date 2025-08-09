@@ -8,22 +8,15 @@ using System.Threading.Tasks;
 
 namespace Maroik.Common.DataAccess.Services
 {
-    public class CategoryRepository : ICategoryRepository
+    public class CategoryRepository(ApplicationDbContext context) : ICategoryRepository
     {
-        private readonly ApplicationDbContext _context;
-
-        public CategoryRepository(ApplicationDbContext context)
-        {
-            _context = context;
-        }
-
         /// <summary>
         /// 모든 카테고리들을 구합니다.
         /// </summary>
         /// <returns></returns>
         public async Task<IEnumerable<Category>> GetCategoryAsync()
         {
-            return await _context.Categories.ToListAsync();
+            return await context.Categories.ToListAsync();
         }
         /// <summary>
         /// 권한에 따른 카테고리들을 구합니다.
@@ -32,7 +25,7 @@ namespace Maroik.Common.DataAccess.Services
         /// <returns></returns>
         public async Task<IEnumerable<Category>> GetCategoryByRoleAsync(string role)
         {
-            return await _context.Categories
+            return await context.Categories
                     .Where(a => a.Role == role)
                     .OrderBy(a => a.Order)
                     .ToListAsync();
@@ -44,8 +37,8 @@ namespace Maroik.Common.DataAccess.Services
         /// <returns></returns>
         public async Task CreateCategoryAsync(Category category)
         {
-            _ = await _context.Categories.AddAsync(category);
-            _ = await _context.SaveChangesAsync();
+            _ = await context.Categories.AddAsync(category);
+            _ = await context.SaveChangesAsync();
         }
         /// <summary>
         /// 카테고리를 업데이트합니다.
@@ -54,8 +47,8 @@ namespace Maroik.Common.DataAccess.Services
         /// <returns></returns>
         public async Task UpdateCategoryAsync(Category category)
         {
-            _ = _context.Categories.Update(category);
-            _ = await _context.SaveChangesAsync();
+            _ = context.Categories.Update(category);
+            _ = await context.SaveChangesAsync();
         }
         /// <summary>
         /// 카테고리를 제거합니다.
@@ -64,8 +57,8 @@ namespace Maroik.Common.DataAccess.Services
         /// <returns></returns>
         public async Task DeleteCategoryAsync(Category category)
         {
-            _ = _context.Categories.Remove(category);
-            _ = await _context.SaveChangesAsync();
+            _ = context.Categories.Remove(category);
+            _ = await context.SaveChangesAsync();
         }
     }
 }
