@@ -687,4 +687,202 @@ ge Preview Enhancements */
 
 #file-preview-icon i {
     font-size: 5rem;
+}/* Mobile 
+Responsive Design */
+@media (max-width: 768px) {
+    /* Toolbar responsive layout */
+    .file-manager-toolbar .row {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .file-manager-toolbar .col-md-8,
+    .file-manager-toolbar .col-md-4 {
+        width: 100%;
+        max-width: 100%;
+    }
+    
+    /* Button groups stack vertically on mobile */
+    .file-manager-toolbar .d-flex {
+        flex-wrap: wrap;
+        gap: 5px;
+    }
+    
+    .file-manager-toolbar .btn-group {
+        margin-right: 0 !important;
+        margin-bottom: 5px;
+    }
+    
+    /* Smaller buttons on mobile */
+    .btn-group-sm .btn {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.75rem;
+    }
+    
+    /* Search input full width on mobile */
+    .file-manager-toolbar .input-group {
+        width: 100% !important;
+        margin-bottom: 10px;
+    }
+    
+    /* File grid responsive */
+    .file-grid .file-item {
+        width: calc(50% - 10px) !important;
+        margin: 5px !important;
+    }
+    
+    /* File icons smaller on mobile */
+    .file-icon {
+        font-size: 32px !important;
+    }
+    
+    .file-name {
+        font-size: 11px !important;
+    }
+    
+    /* Progress container responsive */
+    .progress-container {
+        margin: 10px 0;
+    }
+    
+    .progress-item {
+        padding: 8px;
+    }
+    
+    .progress-info {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 5px;
+    }
+    
+    .progress-actions {
+        align-self: flex-end;
+    }
+    
+    /* Modal responsive */
+    .modal-dialog {
+        margin: 10px;
+        max-width: calc(100% - 20px);
+    }
+    
+    .modal-body .row {
+        flex-direction: column;
+    }
+    
+    .modal-body .col-md-3,
+    .modal-body .col-md-9 {
+        width: 100%;
+        max-width: 100%;
+    }
+    
+    #file-preview-icon {
+        margin-bottom: 15px;
+    }
+    
+    /* Context menu responsive */
+    .context-menu {
+        min-width: 140px;
+        font-size: 14px;
+    }
+    
+    .context-menu-item {
+        padding: 10px 15px;
+    }
+    
+    /* Breadcrumb responsive */
+    .breadcrumb-nav {
+        font-size: 12px;
+    }
+    
+    .breadcrumb-nav .breadcrumb-item {
+        margin-right: 5px;
+    }
+}
+
+@media (max-width: 480px) {
+    /* Extra small screens */
+    .file-grid .file-item {
+        width: calc(50% - 6px) !important;
+        margin: 3px !important;
+        padding: 6px !important;
+    }
+    
+    .file-icon {
+        font-size: 28px !important;
+        margin-bottom: 4px !important;
+    }
+    
+    .file-name {
+        font-size: 10px !important;
+    }
+    
+    /* Smaller buttons */
+    .btn-group-sm .btn {
+        padding: 0.2rem 0.4rem;
+        font-size: 0.7rem;
+    }
+    
+    /* Hide some button text on very small screens */
+    .btn-group-sm .btn i + * {
+        display: none;
+    }
+    
+    /* Progress items more compact */
+    .progress-item {
+        padding: 6px;
+        margin-bottom: 8px;
+    }
+    
+    .progress-info .file-name {
+        font-size: 12px;
+        font-weight: normal;
+    }
+    
+    /* Modal adjustments */
+    .modal-dialog {
+        margin: 5px;
+        max-width: calc(100% - 10px);
+    }
+    
+    .modal-header .modal-title {
+        font-size: 16px;
+    }
+    
+    .modal-body {
+        padding: 15px;
+    }
+    
+    .table-sm td {
+        padding: 0.2rem;
+        font-size: 12px;
+    }
+}
+
+/* Touch-friendly improvements */
+@media (hover: none) and (pointer: coarse) {
+    /* Larger touch targets */
+    .file-item {
+        min-height: 80px;
+        padding: 10px !important;
+    }
+    
+    .btn {
+        min-height: 38px;
+        padding: 8px 12px;
+    }
+    
+    .context-menu-item {
+        min-height: 44px;
+        padding: 12px 20px;
+    }
+    
+    /* Remove hover effects on touch devices */
+    .file-item:hover {
+        transform: none;
+        box-shadow: none;
+    }
+    
+    .btn:hover {
+        transform: none;
+    }
 }
