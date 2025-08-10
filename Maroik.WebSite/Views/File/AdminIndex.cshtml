@@ -63,10 +63,10 @@
                                 <button type="button" class="btn btn-secondary" id="btn-move">
                                     <i class="fas fa-cut"></i> Cut
                                 </button>
-                                <button type="button" class="btn btn-outline-primary" id="btn-download">
+                                <button type="button" class="btn btn-primary" id="btn-download">
                                     <i class="fas fa-download"></i> Download
                                 </button>
-                                <button type="button" class="btn btn-outline-info" id="btn-details">
+                                <button type="button" class="btn btn-info" id="btn-details">
                                     <i class="fas fa-info-circle"></i> Details
                                 </button>
                             </div>
@@ -93,15 +93,7 @@
                                     </button>
                                 </div>
                             </div>
-                            <!-- View Toggle -->
-                            <div class="btn-group btn-group-sm" role="group">
-                                <button type="button" class="btn btn-outline-secondary active" id="btn-grid-view">
-                                    <i class="fas fa-th"></i>
-                                </button>
-                                <button type="button" class="btn btn-outline-secondary" id="btn-list-view">
-                                    <i class="fas fa-bars"></i>
-                                </button>
-                            </div>
+
                         </div>
                     </div>
                 </div>
@@ -122,6 +114,20 @@
                 <i class="fas fa-cloud-upload-alt fa-3x text-muted"></i>
                 <p class="text-muted mt-2">Drop files here to upload or click to select files</p>
                 <input type="file" id="file-input" multiple style="display: none;">
+            </div>
+
+            <!-- Progress Bar Container -->
+            <div class="progress-container" id="progress-container" style="display: none;">
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="card-title mb-0">
+                            <i class="fas fa-tasks mr-2"></i>File Operations
+                        </h6>
+                    </div>
+                    <div class="card-body" id="progress-list">
+                        <!-- Progress items will be added here dynamically -->
+                    </div>
+                </div>
             </div>
 
             <!-- File Content Area -->
@@ -185,6 +191,9 @@
     <hr class="my-1">
     <div class="context-menu-item" data-action="download">
         <i class="fas fa-download mr-2"></i>Download
+    </div>
+    <div class="context-menu-item" data-action="details">
+        <i class="fas fa-info-circle mr-2"></i>Details
     </div>
     <div class="context-menu-item" data-action="delete">
         <i class="fas fa-trash mr-2 text-danger"></i>Delete
@@ -309,9 +318,6 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-outline-primary" id="btn-open-location">
-                    <i class="fas fa-folder-open mr-1"></i>Open Location
-                </button>
                 <button type="button" class="btn btn-primary" id="btn-download-from-details">
                     <i class="fas fa-download mr-1"></i>Download
                 </button>

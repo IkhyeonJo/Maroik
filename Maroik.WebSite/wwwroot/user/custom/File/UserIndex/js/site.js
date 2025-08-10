@@ -12,9 +12,7 @@ $(document).ready(function () {
         }
 
         initializeEvents() {
-            // View mode toggle
-            $('#btn-grid-view').on('click', () => this.setViewMode('grid'));
-            $('#btn-list-view').on('click', () => this.setViewMode('list'));
+
 
             // Toolbar buttons
             $('#btn-upload').on('click', () => this.showUploadZone());
@@ -59,18 +57,9 @@ $(document).ready(function () {
         }
 
         setViewMode(mode) {
-            viewMode = mode;
+            viewMode = 'grid'; // Always use grid mode
             const $content = $('#file-content');
-            
-            if (mode === 'grid') {
-                $content.removeClass('file-list').addClass('file-grid');
-                $('#btn-grid-view').addClass('active');
-                $('#btn-list-view').removeClass('active');
-            } else {
-                $content.removeClass('file-grid').addClass('file-list');
-                $('#btn-list-view').addClass('active');
-                $('#btn-grid-view').removeClass('active');
-            }
+            $content.removeClass('file-list').addClass('file-grid');
         }
 
         selectItem(e) {
@@ -154,6 +143,9 @@ $(document).ready(function () {
                     break;
                 case 'download':
                     this.downloadSelected();
+                    break;
+                case 'details':
+                    this.showFileDetails();
                     break;
                 case 'delete':
                     this.deleteSelected();
@@ -376,14 +368,8 @@ $(document).ready(function () {
 
         handleFileUpload(files) {
             Array.from(files).forEach(file => {
-                console.log('Uploading file:', file.name);
-                toastr.info(`Uploading ${file.name}...`);
-                
-                // Simulate upload progress
-                setTimeout(() => {
-                    toastr.success(`${file.name} uploaded successfully!`);
-                    this.loadDirectory(currentPath); // Refresh directory
-                }, 2000);
+                const operationId = this.createProgressItem(file.name, 'upload', this.formatFileSize(file.size));
+                this.simulateFileOperation(operationId, 'upload', file.name);
             });
         }
 
@@ -583,9 +569,9 @@ $(document).ready(function () {
         }
 
         downloadFile(filePath) {
-            // Simulate file download
-            console.log('Downloading:', filePath);
-            toastr.success(`Download started for ${filePath.split('/').pop()}`);
+            const fileName = filePath.split('/').pop();
+            const operationId = this.createProgressItem(fileName, 'download');
+            this.simulateFileOperation(operationId, 'download', fileName);
         }
 
         showFileDetails() {
@@ -674,17 +660,9 @@ $(document).ready(function () {
             // Update icon
             $('#file-preview-icon i').attr('class', iconClass + ' fa-5x');
             
-            // Check if it's an image for preview
-            const isImage = ['jpg', 'jpeg', 'png', 'gif'].includes(fileData.name.split('.').pop().toLowerCase());
-            if (isImage) {
-                $('#file-preview-image').show();
-                $('#file-preview-icon').hide();
-                // In real app, would set actual image src
-                $('#file-preview-image img').attr('src', '/path/to/placeholder-image.jpg');
-            } else {
-                $('#file-preview-image').hide();
-                $('#file-preview-icon').show();
-            }
+            // Always show icon, never load actual images
+            $('#file-preview-image').hide();
+            $('#file-preview-icon').show();
             
             // Update details
             $('#detail-name').text(fileData.name);
@@ -790,8 +768,163 @@ $(document).ready(function () {
                 this.moveSelected();
             }
         }
+        // Progress Bar Management Methods
+        createProgressItem(fileName, operation, size = null) {
+            const operationId = `op_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+            const progressHtml = `
+                <div class="progress-item mb-3" id="${operationId}">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <div class="progress-info">
+                            <i class="fas fa-${operation === 'upload' ? 'upload' : 'download'} mr-2"></i>
+                            <span class="file-name">${fileName}</span>
+                            ${size ? `<small class="text-muted ml-2">(${size})</small>` : ''}
+                        </div>
+                        <div class="progress-actions">
+                            <span class="progress-percentage">0%</span>
+                            <button type="button" class="btn btn-sm btn-outline-danger ml-2" onclick="fileManager.cancelOperation('${operationId}')">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="progress" style="height: 8px;">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated bg-${operation === 'upload' ? 'success' : 'info'}" 
+                             role="progressbar" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+                        </div>
+                    </div>
+                    <div class="progress-status">
+                        <small class="text-muted">
+                            <span class="status-text">Starting ${operation}...</span>
+                            <span class="speed-info ml-2"></span>
+                        </small>
+                    </div>
+                </div>
+            `;
+
+            // Show progress container if hidden
+            const $progressContainer = $('#progress-container');
+            if ($progressContainer.is(':hidden')) {
+                $progressContainer.slideDown();
+            }
+
+            // Add progress item
+            $('#progress-list').append(progressHtml);
+
+            return operationId;
+        }
+
+        updateProgress(operationId, percentage, speed = null) {
+            const $progressItem = $(`#${operationId}`);
+            if ($progressItem.length === 0) return;
+
+            const $progressBar = $progressItem.find('.progress-bar');
+            const $percentage = $progressItem.find('.progress-percentage');
+            const $statusText = $progressItem.find('.status-text');
+            const $speedInfo = $progressItem.find('.speed-info');
+
+            // Update progress bar
+            $progressBar.css('width', `${percentage}%`).attr('aria-valuenow', percentage);
+            $percentage.text(`${Math.round(percentage)}%`);
+
+            // Update status text
+            if (percentage < 100) {
+                $statusText.text(`${$progressItem.find('.fa-upload').length ? 'Uploading' : 'Downloading'}...`);
+            } else {
+                $statusText.text(`${$progressItem.find('.fa-upload').length ? 'Upload' : 'Download'} complete`);
+                $progressBar.removeClass('progress-bar-animated');
+            }
+
+            // Update speed info
+            if (speed) {
+                $speedInfo.text(`${speed}/s`);
+            }
+
+            // Auto-remove completed operations after 3 seconds
+            if (percentage >= 100) {
+                setTimeout(() => {
+                    this.removeOperation(operationId);
+                }, 3000);
+            }
+        }
+
+        setOperationError(operationId, errorMessage) {
+            const $progressItem = $(`#${operationId}`);
+            if ($progressItem.length === 0) return;
+
+            const $progressBar = $progressItem.find('.progress-bar');
+            const $statusText = $progressItem.find('.status-text');
+
+            $progressBar.removeClass('bg-success bg-info progress-bar-animated').addClass('bg-danger');
+            $statusText.text(`Error: ${errorMessage}`).addClass('text-danger');
+
+            // Auto-remove error operations after 5 seconds
+            setTimeout(() => {
+                this.removeOperation(operationId);
+            }, 5000);
+        }
+
+        cancelOperation(operationId) {
+            this.setOperationError(operationId, 'Operation cancelled');
+        }
+
+        removeOperation(operationId) {
+            const $progressItem = $(`#${operationId}`);
+            $progressItem.slideUp(() => {
+                $progressItem.remove();
+
+                // Hide progress container if no operations
+                if ($('#progress-list').children().length === 0) {
+                    $('#progress-container').slideUp();
+                }
+            });
+        }
+
+        simulateFileOperation(operationId, operation, fileName) {
+            let progress = 0;
+            const increment = Math.random() * 15 + 5; // Random increment between 5-20%
+            const baseDelay = 200; // Base delay in ms
+            
+            const updateProgress = () => {
+                progress += increment + (Math.random() * 10 - 5); // Add some randomness
+                progress = Math.min(progress, 100);
+                
+                // Generate fake speed
+                const speeds = ['1.2 MB', '850 KB', '2.1 MB', '650 KB', '1.8 MB'];
+                const randomSpeed = speeds[Math.floor(Math.random() * speeds.length)];
+                
+                this.updateProgress(operationId, progress, randomSpeed);
+                
+                if (progress < 100) {
+                    // Variable delay to simulate network fluctuations
+                    const delay = baseDelay + (Math.random() * 300);
+                    setTimeout(updateProgress, delay);
+                } else {
+                    // Operation completed
+                    toastr.success(`${fileName} ${operation}ed successfully!`);
+                    
+                    // Refresh directory if upload
+                    if (operation === 'upload') {
+                        setTimeout(() => {
+                            this.loadDirectory(currentPath);
+                        }, 1000);
+                    }
+                }
+            };
+            
+            // Start progress updates
+            setTimeout(updateProgress, 100);
+        }
+
+        formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+
     }
 
     // Initialize File Manager
-    new FileManager();
+    const fileManager = new FileManager();
 });
