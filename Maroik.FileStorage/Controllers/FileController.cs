@@ -157,21 +157,5 @@ namespace Maroik.FileStorage.Controllers
                 return BadRequest("Invalid file");
             }
         }
-
-        [AllowAnonymous]
-        [HttpPost("delete")]
-        public IActionResult Delete([FromForm] string filePath)
-        {
-            // 파일 이름에서 디렉터리 경로 제거 (보안)
-            var sanitizedFileName = Path.GetFileName(filePath);
-            filePath = Path.Combine(Path.GetDirectoryName(filePath ?? "") ?? string.Empty, sanitizedFileName);
-
-            if (!System.IO.File.Exists(filePath)) return NotFound();
-#pragma warning disable SCS0018 // Potential Path Traversal vulnerability was found.
-            System.IO.File.Delete(filePath);
-#pragma warning restore SCS0018 // Potential Path Traversal vulnerability was found.
-            return Ok();
-
-        }
     }
 }

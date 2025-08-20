@@ -61,15 +61,4 @@ public class FileRepository : IFileRepository
             return false;
         }
     }
-
-    public async Task DeleteAsync(string filePath)
-    {
-        using HttpClient httpClient = new();
-        using MultipartFormDataContent content = [];
-        content.Add(new StringContent(filePath), "filePath");
-
-        HttpResponseMessage response = await httpClient.PostAsync($"http://{_fileStorageDomain}/api/File/delete", content);
-
-        _ = response.EnsureSuccessStatusCode();
-    }
 }
