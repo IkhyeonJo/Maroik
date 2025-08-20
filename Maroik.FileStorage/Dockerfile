@@ -4,13 +4,10 @@
 FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS base
 
 EXPOSE 80
-EXPOSE 443
 
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 WORKDIR /src
 COPY ["Maroik.FileStorage/Maroik.FileStorage.csproj", "Maroik.FileStorage/"]
-COPY ["Maroik.Common.DataAccess/Maroik.Common.DataAccess.csproj", "Maroik.Common.DataAccess/"]
-COPY ["Maroik.Common.Miscellaneous/Maroik.Common.Miscellaneous.csproj", "Maroik.Common.Miscellaneous/"]
 
 RUN dotnet restore "Maroik.FileStorage/Maroik.FileStorage.csproj" --disable-parallel
 COPY . .

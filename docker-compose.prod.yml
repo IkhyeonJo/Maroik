@@ -59,12 +59,10 @@ services:
           - backend          
         expose:
           - "80"
-          - "443"
         environment :
           - ASPNETCORE_ENVIRONMENT=Production
-          - ASPNETCORE_URLS=https://+:443;http://+:80
+          - ASPNETCORE_URLS=http://+:80
         volumes:
-          - ./Maroik.SSL/conf:/etc/letsencrypt:ro
           - ./Maroik.FileStorage/upload/:/app/upload:rw
 
     certbot:
