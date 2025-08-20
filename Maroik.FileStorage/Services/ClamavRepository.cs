@@ -1,7 +1,4 @@
-﻿using Maroik.Common.DataAccess.Contracts;
-using Maroik.Common.Miscellaneous.Utilities;
-using Maroik.FileStorage.Contracts;
-using System.Text;
+﻿using Maroik.FileStorage.Contracts;
 using System.Net;
 using System.Net.Sockets;
 
