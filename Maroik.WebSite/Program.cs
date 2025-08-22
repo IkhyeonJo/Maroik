@@ -18,6 +18,7 @@ using System.Globalization;
 using System.Security.Cryptography.X509Certificates;
 using System.Security.Cryptography;
 using System.Runtime.InteropServices;
+using StackExchange.Redis;
 
 X509Certificate2 currentCert;
 string previousCertHash;
@@ -88,8 +89,20 @@ builder.Services.AddHttpClient();
 
 #endregion
 
+#region REDIS
+builder.Services.AddSingleton<IConnectionMultiplexer>(provider =>
+{
+    var connectionString = builder.Configuration.GetConnectionString("Redis");
+    return ConnectionMultiplexer.Connect(connectionString!);
+});
+#endregion
+
 #region AddSession
-builder.Services.AddDistributedMemoryCache(); // Session Storage
+builder.Services.AddStackExchangeRedisCache(options =>
+{
+    options.Configuration = builder.Configuration.GetConnectionString("Redis");
+    options.InstanceName = "MaroikWebSite";
+});
 
 builder.Services.AddSession(options =>
 {
