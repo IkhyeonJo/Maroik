@@ -9,7 +9,14 @@ namespace Maroik.WebSite.Services
 {
     public class ClamavRepository : IClamavRepository
     {
-        private readonly string _clamavStorageDomain = "Maroik.Clamav";
+        private readonly string _clamavHost;
+        private readonly int _clamavPort;
+
+        public ClamavRepository(IConfiguration configuration)
+        {
+            _clamavHost = configuration["Clamav:Host"] ?? throw new ArgumentNullException("Clamav:Host");
+            _clamavPort = configuration.GetValue<int>("Clamav:Port");
+        }
 
         public async Task<bool> ScanWithClamavAsync(Stream fileStream)
         {
@@ -17,7 +24,7 @@ namespace Maroik.WebSite.Services
             {
                 fileStream.Position = 0;
 
-                using var client = new TcpClient(_clamavStorageDomain, 3310);
+                using var client = new TcpClient(_clamavHost, _clamavPort);
                 using var stream = client.GetStream();
                 using var writer = new StreamWriter(stream, leaveOpen: true) { AutoFlush = true };
 

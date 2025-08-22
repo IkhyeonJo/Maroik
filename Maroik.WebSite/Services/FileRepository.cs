@@ -3,7 +3,12 @@ using System.Net;
 
 public class FileRepository : IFileRepository
 {
-    private readonly string _fileStorageDomain = "Maroik.FileStorage";
+    private readonly string _fileStorageBaseUrl;
+
+    public FileRepository(IConfiguration configuration)
+    {
+        _fileStorageBaseUrl = configuration["FileStorage:BaseUrl"]?.TrimEnd('/') ?? throw new ArgumentNullException("FileStorage:BaseUrl");
+    }
 
     public async Task<byte[]> DownloadAsync(string filePath)
     {
@@ -11,7 +16,7 @@ public class FileRepository : IFileRepository
         using MultipartFormDataContent content = [];
         content.Add(new StringContent(filePath), "filePath");
 
-        HttpResponseMessage response = await httpClient.PostAsync($"http://{_fileStorageDomain}/api/File/download", content);
+        HttpResponseMessage response = await httpClient.PostAsync($"{_fileStorageBaseUrl}/api/File/download", content);
 
         _ = response.EnsureSuccessStatusCode(); // 성공 여부 확인
         return await response.Content.ReadAsByteArrayAsync(); // 파일 데이터 반환
@@ -46,7 +51,7 @@ public class FileRepository : IFileRepository
                 // 추가 파라미터 추가
                 content.Add(new StringContent(Path.GetDirectoryName(filePath ?? "")), "filePath");
 
-                HttpResponseMessage response = await httpClient.PostAsync($"http://{_fileStorageDomain}/api/File/upload", content);
+                HttpResponseMessage response = await httpClient.PostAsync($"{_fileStorageBaseUrl}/api/File/upload", content);
                 _ = response.EnsureSuccessStatusCode(); // 상태 코드 확인
 
                 return response.StatusCode == HttpStatusCode.OK;
