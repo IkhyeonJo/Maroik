@@ -3,18 +3,18 @@ using Microsoft.AspNetCore.Mvc.Localization;
 
 namespace Maroik.WebSite.Controllers
 {
-    public class FileController : Controller
+    public class DriveController : Controller
     {
-        private readonly IHtmlLocalizer<FileController> _localizer;
-        private readonly ILogger<FileController> _logger;
+        private readonly IHtmlLocalizer<DriveController> _localizer;
+        private readonly ILogger<DriveController> _logger;
 
-        public FileController(IHtmlLocalizer<FileController> localizer, ILogger<FileController> logger)
+        public DriveController(IHtmlLocalizer<DriveController> localizer, ILogger<DriveController> logger)
         {
             _localizer = localizer;
             _logger = logger;
         }
 
-        #region File
+        #region Drive
 
         #region Read
         [HttpGet]

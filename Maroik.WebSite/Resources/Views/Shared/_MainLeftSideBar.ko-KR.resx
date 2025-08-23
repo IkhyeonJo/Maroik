@@ -162,8 +162,8 @@
   <data name="Income" xml:space="preserve">
     <value>수입</value>
   </data>
-  <data name="File" xml:space="preserve">
-    <value>파일</value>
+  <data name="Drive" xml:space="preserve">
+    <value>드라이브</value>
   </data>
   <data name="Management" xml:space="preserve">
     <value>관리</value>
