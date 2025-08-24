@@ -37,7 +37,7 @@ namespace Maroik.WebSite.Controllers
 
         public CalendarController(IHtmlLocalizer<CalendarController> localizer, ILogger<CalendarController> logger, IHostEnvironment hostEnvironment, ApplicationDbContext context, IIncomeRepository incomeRepository, IExpenditureRepository expenditureRepository, IAssetRepository assetRepository, IAccountRepository accountRepository, ICalendarRepository calendarRepository, IOtherCalendarRepository otherCalendarRepository, ICalendarEventRepository calendarEventRepository, ICalendarEventAttachedFileRepository calendarEventAttachedFileRepository, ICalendarEventReminderRepository calendarReminderRepository, ICalendarSharedRepository calendarSharedRepository, IFileRepository fileRepository)
         {
-            _rsa = new RSA(RSAType.RSA2, Encoding.UTF8, RSA.privateKey, RSA.publicKey);
+            _rsa = new RSA(ServerSetting.RSAAlgorithm, Encoding.UTF8, ServerSetting.RSAPrivateKey, ServerSetting.RSAPublicKey);
             _localizer = localizer;
             _logger = logger;
             _hostEnvironment = hostEnvironment;

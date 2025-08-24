@@ -47,6 +47,10 @@ ServerSetting.IsDefault = Convert.ToBoolean(builder.Configuration.GetSection("Se
 ServerSetting.NoticeMaturityDateDay = Convert.ToInt32(builder.Configuration.GetSection("ServerSetting")["NoticeMaturityDateDay"]);
 ServerSetting.DockerCertPath = builder.Configuration.GetSection("ServerSetting")["DockerCertPath"];
 ServerSetting.DockerKeyPath = builder.Configuration.GetSection("ServerSetting")["DockerKeyPath"];
+ServerSetting.RSAPrivateKey = builder.Configuration.GetSection("ServerSetting")["RSAPrivateKey"];
+ServerSetting.RSAPublicKey = builder.Configuration.GetSection("ServerSetting")["RSAPublicKey"];
+string rsaAlgorithmString = builder.Configuration.GetSection("ServerSetting")["RSAAlgorithm"] ?? "RSA2";
+ServerSetting.RSAAlgorithm = Enum.TryParse<RSAType>(rsaAlgorithmString, out var rsaType) ? rsaType : RSAType.RSA2;
 #endregion
 
 #region AddDbContext

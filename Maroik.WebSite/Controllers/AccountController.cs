@@ -25,7 +25,7 @@ namespace Maroik.WebSite.Controllers
 
         public AccountController(IHtmlLocalizer<AccountController> localizer, ILogger<AccountController> logger, IAccountRepository accountRepository, ICategoryRepository categoryRepository, ISubCategoryRepository subCategoryRepository, IMailRepository mailRepository, IPasswordService passwordService)
         {
-            _rsa = new RSA(RSAType.RSA2, Encoding.UTF8, RSA.privateKey, RSA.publicKey);
+            _rsa = new RSA(ServerSetting.RSAAlgorithm, Encoding.UTF8, ServerSetting.RSAPrivateKey, ServerSetting.RSAPublicKey);
             _localizer = localizer;
             _logger = logger;
             _accountRepository = accountRepository;

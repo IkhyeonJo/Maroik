@@ -48,7 +48,7 @@ namespace Maroik.WebSite.Controllers
             IFileRepository fileRepository, IClamavRepository clamavRepository,
             ApplicationDbContext context, IPasswordService passwordService)
         {
-            _rsa = new RSA(RSAType.RSA2, Encoding.UTF8, RSA.privateKey, RSA.publicKey);
+            _rsa = new RSA(ServerSetting.RSAAlgorithm, Encoding.UTF8, ServerSetting.RSAPrivateKey, ServerSetting.RSAPublicKey);
             _localizer = localizer;
             _logger = logger;
             _boardRepository = boardRepository;
