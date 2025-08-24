@@ -21,8 +21,9 @@ namespace Maroik.WebSite.Controllers
         private readonly ICategoryRepository _categoryRepository;
         private readonly ISubCategoryRepository _subCategoryRepository;
         private readonly IMailRepository _mailRepository;
+        private readonly IPasswordService _passwordService;
 
-        public AccountController(IHtmlLocalizer<AccountController> localizer, ILogger<AccountController> logger, IAccountRepository accountRepository, ICategoryRepository categoryRepository, ISubCategoryRepository subCategoryRepository, IMailRepository mailRepository)
+        public AccountController(IHtmlLocalizer<AccountController> localizer, ILogger<AccountController> logger, IAccountRepository accountRepository, ICategoryRepository categoryRepository, ISubCategoryRepository subCategoryRepository, IMailRepository mailRepository, IPasswordService passwordService)
         {
             _rsa = new RSA(RSAType.RSA2, Encoding.UTF8, RSA.privateKey, RSA.publicKey);
             _localizer = localizer;
@@ -31,6 +32,7 @@ namespace Maroik.WebSite.Controllers
             _categoryRepository = categoryRepository;
             _subCategoryRepository = subCategoryRepository;
             _mailRepository = mailRepository;
+            _passwordService = passwordService;
         }
 
         #region ConsentForm
@@ -105,7 +107,7 @@ namespace Maroik.WebSite.Controllers
                     return View();
                 }
 
-                if (!_rsa.Verify(loginInputViewModel.Password ?? "", tempAccount.HashedPassword)) // wrong password
+                if (!_passwordService.VerifyPassword(loginInputViewModel.Password ?? "", tempAccount.HashedPassword)) // wrong password
                 {
                     tempAccount.LoginAttempt++;
 
@@ -235,7 +237,7 @@ namespace Maroik.WebSite.Controllers
                                 new Account()
                                 {
                                     Email = loginInputViewModel.Email,
-                                    HashedPassword = _rsa.Sign(loginInputViewModel.Password), // 암호화
+                                    HashedPassword = _passwordService.HashPassword(loginInputViewModel.Password),
                                     Nickname = loginInputViewModel.Nickname,
                                     AvatarImagePath = "/upload/Management/Profile/default-avatar.jpg",
                                     Role = Role.User,
@@ -297,7 +299,7 @@ namespace Maroik.WebSite.Controllers
                                     new Account()
                                     {
                                         Email = loginInputViewModel.Email,
-                                        HashedPassword = _rsa.Sign(loginInputViewModel.Password), // 암호화
+                                        HashedPassword = _passwordService.HashPassword(loginInputViewModel.Password),
                                         Nickname = loginInputViewModel.Nickname,
                                         AvatarImagePath = "/upload/Management/Profile/default-avatar.jpg",
                                         Role = Role.User,
@@ -546,7 +548,7 @@ namespace Maroik.WebSite.Controllers
                 {
                     try
                     {
-                        if (_rsa.Verify(tempAccount.RegistrationToken, registrationToken)) // 암호화된 토큰과 DB 사용자 토큰이 같다
+                        if (_rsa.Verify(tempAccount.RegistrationToken, registrationToken)) // RSA 토큰 검증
                         {
                             account = tempAccount;
                             break;
@@ -762,7 +764,7 @@ namespace Maroik.WebSite.Controllers
                 {
                     try
                     {
-                        if (_rsa.Verify(tempAccount.ResetPasswordToken, resetPasswordToken)) // 암호화된 토큰과 DB 사용자 토큰이 같다
+                        if (_rsa.Verify(tempAccount.ResetPasswordToken, resetPasswordToken)) // RSA 토큰 검증
                         {
                             account = tempAccount;
                             break;
@@ -827,7 +829,7 @@ namespace Maroik.WebSite.Controllers
                 {
                     try
                     {
-                        if (_rsa.Verify(tempAccount.ResetPasswordToken, loginInputViewModel.ResetPasswordToken)) // 암호화된 토큰과 DB 사용자 토큰이 같다
+                        if (_rsa.Verify(tempAccount.ResetPasswordToken, loginInputViewModel.ResetPasswordToken)) // RSA 토큰 검증
                         {
                             account = tempAccount;
                             break;
@@ -868,7 +870,7 @@ namespace Maroik.WebSite.Controllers
                 else
                 {
                     account.ResetPasswordToken = null;
-                    account.HashedPassword = _rsa.Sign(loginInputViewModel.Password); // 암호화
+                    account.HashedPassword = _passwordService.HashPassword(loginInputViewModel.Password);
                     account.Locked = false; // 잠금 해제
                     account.LoginAttempt = 0; // 로그인 시도 횟수 초기화
                     account.Updated = DateTime.UtcNow;
