@@ -16,5 +16,8 @@ namespace Maroik.Common.Miscellaneous.Utilities
         public static int NoticeMaturityDateDay { get; set; }
         public static string? DockerCertPath { get; set; }
         public static string? DockerKeyPath { get; set; }
+        public static string? RSAPrivateKey { get; set; }
+        public static string? RSAPublicKey { get; set; }
+        public static RSAType RSAAlgorithm { get; set; }
     }
 }

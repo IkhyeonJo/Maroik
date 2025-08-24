@@ -37,6 +37,7 @@ namespace Maroik.WebSite.Controllers
         private readonly IBoardCommentRepository _boardCommentRepository;
         private readonly IFileRepository _fileRepository;
         private readonly IClamavRepository _clamavRepository;
+        private readonly IPasswordService _passwordService;
         private readonly ApplicationDbContext _context;
 
         public ManagementController(IHtmlLocalizer<ManagementController> localizer,
@@ -45,9 +46,9 @@ namespace Maroik.WebSite.Controllers
             IAccountRepository accountRepository, IHostEnvironment hostEnvironment,
             ICategoryRepository categoryRepository, ISubCategoryRepository subCategoryRepository,
             IFileRepository fileRepository, IClamavRepository clamavRepository,
-            ApplicationDbContext context)
+            ApplicationDbContext context, IPasswordService passwordService)
         {
-            _rsa = new RSA(RSAType.RSA2, Encoding.UTF8, RSA.privateKey, RSA.publicKey);
+            _rsa = new RSA(ServerSetting.RSAAlgorithm, Encoding.UTF8, ServerSetting.RSAPrivateKey, ServerSetting.RSAPublicKey);
             _localizer = localizer;
             _logger = logger;
             _boardRepository = boardRepository;
@@ -60,6 +61,7 @@ namespace Maroik.WebSite.Controllers
             _fileRepository = fileRepository;
             _clamavRepository = clamavRepository;
             _context = context;
+            _passwordService = passwordService;
         }
 
         #region Profile
@@ -265,9 +267,9 @@ namespace Maroik.WebSite.Controllers
                     Account tempAccount = await _accountRepository.GetAccountByEmailAsync(JsonConvert
                         .DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
 
-                    if (_rsa.Verify(profileInputViewModel.Password ?? "", tempAccount.HashedPassword)) // right password
+                    if (_passwordService.VerifyPassword(profileInputViewModel.Password ?? "", tempAccount.HashedPassword)) // right password
                     {
-                        tempAccount.HashedPassword = _rsa.Sign(profileInputViewModel.NewPassword);
+                        tempAccount.HashedPassword = _passwordService.HashPassword(profileInputViewModel.NewPassword);
                         await _accountRepository.UpdateAccountAsync(tempAccount);
                         return Json(new
                             { result = true, message = _localizer["Password change successfully done."].Value });
@@ -427,7 +429,7 @@ namespace Maroik.WebSite.Controllers
                         new Account()
                         {
                             Email = accountInputViewModel.Email,
-                            HashedPassword = _rsa.Sign(accountInputViewModel.Password), // 암호화
+                            HashedPassword = _passwordService.HashPassword(accountInputViewModel.Password),
                             Nickname = accountInputViewModel.Nickname,
                             AvatarImagePath = "/upload/Management/Profile/default-avatar.jpg",
                             Role = accountInputViewModel.Role,
@@ -605,7 +607,7 @@ namespace Maroik.WebSite.Controllers
                     }
 
                     tempAccount.Email = accountInputViewModel.Email;
-                    tempAccount.HashedPassword = _rsa.Sign(accountInputViewModel.Password); // 암호화
+                    tempAccount.HashedPassword = _passwordService.HashPassword(accountInputViewModel.Password);
                     tempAccount.Role = accountInputViewModel.Role;
                     tempAccount.TimeZoneIanaId = accountInputViewModel.TimeZoneIanaId;
                     tempAccount.Locked = accountInputViewModel.Locked;
