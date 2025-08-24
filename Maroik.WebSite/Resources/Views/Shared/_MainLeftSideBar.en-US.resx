@@ -162,8 +162,8 @@
   <data name="Income" xml:space="preserve">
     <value>Income</value>
   </data>
-  <data name="File" xml:space="preserve">
-    <value>File</value>
+  <data name="Drive" xml:space="preserve">
+    <value>Drive</value>
   </data>
   <data name="Management" xml:space="preserve">
     <value>Management</value>

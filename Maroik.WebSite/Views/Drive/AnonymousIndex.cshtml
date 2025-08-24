@@ -1,7 +1,7 @@
-@section Styles {
-    <link rel="stylesheet" href="~/user/plugins/datatables-bs4/css/dataTables.bootstrap4.min.css" asp-append-version="true">
-    <link rel="stylesheet" href="~/user/plugins/datatables-responsive/css/responsive.bootstrap4.min.css" asp-append-version="true">
-    <link rel="stylesheet" href="~/user/custom/File/UserIndex/css/site.css" asp-append-version="true">
+﻿@section Styles {
+    <link rel="stylesheet" href="~/anonymous/plugins/datatables-bs4/css/dataTables.bootstrap4.min.css" asp-append-version="true">
+    <link rel="stylesheet" href="~/anonymous/plugins/datatables-responsive/css/responsive.bootstrap4.min.css" asp-append-version="true">
+    <link rel="stylesheet" href="~/anonymous/custom/Drive/AnonymousIndex/css/site.css" asp-append-version="true">
 }
 
 <section class="content">
@@ -9,9 +9,8 @@
         <div class="card-header">
             <h3 class="card-title">
                 <i class="fas fa-folder-open"></i>
-                File Manager
+                Public Drive
             </h3>
-
         </div>
         <div class="card-body">
             <!-- Toolbar -->
@@ -89,7 +88,6 @@
                                     </button>
                                 </div>
                             </div>
-
                         </div>
                     </div>
                 </div>
@@ -121,48 +119,48 @@
                         </h6>
                     </div>
                     <div class="card-body" id="progress-list">
-                        <!-- Progress items will be added here dynamically -->
+                        @* Progress items will be added here dynamically *@
                     </div>
                 </div>
             </div>
 
             <!-- File Content Area -->
             <div id="file-content" class="file-grid">
-                <!-- Sample folders and files -->
-                <div class="file-item folder-item" data-name="Documents" data-type="folder" data-path="/Documents">
+                @* Sample folders and files *@
+                <div class="file-item folder-item" data-name="Public Documents" data-type="folder" data-path="/Public Documents">
                     <div class="text-center">
                         <i class="fas fa-folder file-icon folder-icon"></i>
-                        <div class="file-name">Documents</div>
+                        <div class="file-name">Public Documents</div>
                     </div>
                 </div>
-                <div class="file-item folder-item" data-name="Images" data-type="folder" data-path="/Images">
+                <div class="file-item folder-item" data-name="Shared Images" data-type="folder" data-path="/Shared Images">
                     <div class="text-center">
                         <i class="fas fa-folder file-icon folder-icon"></i>
-                        <div class="file-name">Images</div>
+                        <div class="file-name">Shared Images</div>
                     </div>
                 </div>
-                <div class="file-item folder-item" data-name="Downloads" data-type="folder" data-path="/Downloads">
+                <div class="file-item folder-item" data-name="Public Downloads" data-type="folder" data-path="/Public Downloads">
                     <div class="text-center">
                         <i class="fas fa-folder file-icon folder-icon"></i>
-                        <div class="file-name">Downloads</div>
+                        <div class="file-name">Public Downloads</div>
                     </div>
                 </div>
-                <div class="file-item file-type" data-name="document.pdf" data-type="file" data-path="/document.pdf">
+                <div class="file-item file-type" data-name="readme.txt" data-type="file" data-path="/readme.txt">
+                    <div class="text-center">
+                        <i class="fas fa-file-alt file-icon text-secondary"></i>
+                        <div class="file-name">readme.txt</div>
+                    </div>
+                </div>
+                <div class="file-item file-type" data-name="sample.pdf" data-type="file" data-path="/sample.pdf">
                     <div class="text-center">
                         <i class="fas fa-file-pdf file-icon text-danger"></i>
-                        <div class="file-name">document.pdf</div>
+                        <div class="file-name">sample.pdf</div>
                     </div>
                 </div>
-                <div class="file-item file-type" data-name="image.jpg" data-type="file" data-path="/image.jpg">
+                <div class="file-item file-type" data-name="demo.jpg" data-type="file" data-path="/demo.jpg">
                     <div class="text-center">
                         <i class="fas fa-file-image file-icon text-success"></i>
-                        <div class="file-name">image.jpg</div>
-                    </div>
-                </div>
-                <div class="file-item file-type" data-name="spreadsheet.xlsx" data-type="file" data-path="/spreadsheet.xlsx">
-                    <div class="text-center">
-                        <i class="fas fa-file-excel file-icon text-success"></i>
-                        <div class="file-name">spreadsheet.xlsx</div>
+                        <div class="file-name">demo.jpg</div>
                     </div>
                 </div>
             </div>
@@ -324,5 +322,5 @@
 </div>
 
 @section Scripts {
-    <script src="~/user/custom/File/UserIndex/js/site.js" asp-append-version="true"></script>
+    <script src="~/anonymous/custom/Drive/AnonymousIndex/js/site.js" asp-append-version="true"></script>
 }
