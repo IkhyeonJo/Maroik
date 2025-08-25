@@ -94,34 +94,8 @@ builder.Services.AddHttpClient();
 
 #endregion
 
-#region REDIS
-builder.Services.AddSingleton<IConnectionMultiplexer>(provider =>
-{
-    var connectionString = builder.Configuration.GetConnectionString("Redis");
-    return ConnectionMultiplexer.Connect(connectionString!);
-});
-#endregion
-
 #region AddSession
-builder.Services.AddStackExchangeRedisCache(options =>
-{
-    options.Configuration = builder.Configuration.GetConnectionString("Redis");
-    options.InstanceName = "MaroikWebSite";
-
-    // Redis 연결 안정성을 위한 추가 설정
-    options.ConfigurationOptions = new StackExchange.Redis.ConfigurationOptions
-    {
-        EndPoints = { builder.Configuration.GetConnectionString("Redis")! },
-        AbortOnConnectFail = false,
-        ConnectTimeout = 10000,
-        SyncTimeout = 10000,
-        AsyncTimeout = 10000,
-        ConnectRetry = 3,
-        ReconnectRetryPolicy = new ExponentialRetry(1000),
-        KeepAlive = 60
-    };
-});
-
+builder.Services.AddDistributedMemoryCache(); // Session Storage
 builder.Services.AddSession(options =>
 {
     options.IdleTimeout = TimeSpan.FromMinutes(ServerSetting.SessionExpireMinutes);
