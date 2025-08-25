@@ -94,21 +94,8 @@ builder.Services.AddHttpClient();
 
 #endregion
 
-#region REDIS
-builder.Services.AddSingleton<IConnectionMultiplexer>(provider =>
-{
-    var connectionString = builder.Configuration.GetConnectionString("Redis");
-    return ConnectionMultiplexer.Connect(connectionString!);
-});
-#endregion
-
 #region AddSession
-builder.Services.AddStackExchangeRedisCache(options =>
-{
-    options.Configuration = builder.Configuration.GetConnectionString("Redis");
-    options.InstanceName = "MaroikWebSite";
-});
-
+builder.Services.AddDistributedMemoryCache(); // Session Storage
 builder.Services.AddSession(options =>
 {
     options.IdleTimeout = TimeSpan.FromMinutes(ServerSetting.SessionExpireMinutes);
@@ -354,9 +341,9 @@ app.UseRouting(); // 5. 요청을 라우팅하기위한 미들웨어 라우팅 (
 app.UseCors();
 
 #region Login
-app.UseAuthentication(); // 6.인증 미들웨어(UseAuthentication)는 보안 자원에 대한 액세스가 허용되기 전에 사용자 인증을 시도합니다.
-app.UseAuthorization(); // 7. 권한 미들웨어 (UseAuthorization)는 사용자가 보안 자원에 액세스 할 수있는 권한을 부여합니다.
-app.UseSession(); // 8. 세션 미들웨어 (UseSession)는 세션 상태를 설정하고 유지합니다. 앱이 세션 상태를 사용하는 경우 쿠키 정책 미들웨어 이후 및 MVC 미들웨어 전에 세션 미들웨어를 호출하십시오.
+app.UseSession(); // 6. 세션 미들웨어 (UseSession)는 세션 상태를 설정하고 유지합니다. 앱이 세션 상태를 사용하는 경우 쿠키 정책 미들웨어 이후 및 MVC 미들웨어 전에 세션 미들웨어를 호출하십시오.
+app.UseAuthentication(); // 7.인증 미들웨어(UseAuthentication)는 보안 자원에 대한 액세스가 허용되기 전에 사용자 인증을 시도합니다.
+app.UseAuthorization(); // 8. 권한 미들웨어 (UseAuthorization)는 사용자가 보안 자원에 액세스 할 수있는 권한을 부여합니다.
 #endregion
 
 #region Default HTTP Header Setting

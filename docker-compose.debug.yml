@@ -2,24 +2,11 @@
 
 volumes:
       datasource:
-      redis-data:
     
 networks:       
        backend:
 
 services:
-    redis:
-      image: redis:7-alpine
-      container_name: Maroik.Redis
-      restart: unless-stopped
-      expose:
-        - "6379"
-      volumes:
-        - redis-data:/data
-      networks:
-        - backend
-      command: redis-server --appendonly yes
-      
     clamav:
       image: clamav/clamav:latest
       container_name: Maroik.Clamav
@@ -65,7 +52,6 @@ services:
           - ./Maroik.Log/:/app/Maroik.Log:rw
         depends_on :
           - postgresql  
-          - redis
 
     maroik.filestorage:
         build :
