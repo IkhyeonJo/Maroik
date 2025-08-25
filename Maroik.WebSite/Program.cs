@@ -95,6 +95,7 @@ builder.Services.AddHttpClient();
 #endregion
 
 //#region REDIS
+// NuGet: Microsoft.Extensions.Caching.StackExchangeRedis
 //builder.Services.AddSingleton<IConnectionMultiplexer>(provider =>
 //{
 //    var connectionString = builder.Configuration.GetConnectionString("Redis");
@@ -103,6 +104,7 @@ builder.Services.AddHttpClient();
 //#endregion
 
 #region AddSession
+// NuGet: Microsoft.Extensions.Caching.StackExchangeRedis
 //builder.Services.AddStackExchangeRedisCache(options =>
 //{
 //    options.Configuration = builder.Configuration.GetConnectionString("Redis");
