@@ -6,7 +6,7 @@ using System.Net.Mail;
 
 namespace Maroik.WebSite.Services
 {
-    public class MailRepository : IMailRepository
+    public class MailClient : IMailClient
     {
         /// <summary>
         /// 계정 비밀번호 초기화 메일의 HttpBody 부분을 구합니다.

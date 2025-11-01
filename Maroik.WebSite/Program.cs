@@ -63,8 +63,6 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 #endregion
 
 #region AddRepositories
-
-#region DB
 builder.Services.AddScoped<IAccountRepository, AccountRepository>();
 builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
 builder.Services.AddScoped<ISubCategoryRepository, SubCategoryRepository>();
@@ -84,14 +82,15 @@ builder.Services.AddScoped<ICalendarEventReminderRepository, CalendarEventRemind
 builder.Services.AddScoped<ICalendarSharedRepository, CalendarSharedRepository>();
 #endregion
 
-#region LOCAL
-builder.Services.AddScoped<IMailRepository, MailRepository>();
-builder.Services.AddScoped<IFileRepository, FileRepository>();
-builder.Services.AddScoped<IClamavRepository, ClamavRepository>();
+#region AddServices
 builder.Services.AddScoped<IPasswordService, PasswordService>();
-builder.Services.AddHttpClient();
 #endregion
 
+#region AddClients
+builder.Services.AddScoped<IMailClient, MailClient>();
+builder.Services.AddScoped<IFileClient, FileClient>();
+builder.Services.AddScoped<IClamavClient, ClamavClient>();
+builder.Services.AddHttpClient();
 #endregion
 
 //#region REDIS

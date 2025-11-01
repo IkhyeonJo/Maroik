@@ -7,12 +7,12 @@ using System.Net.Sockets;
 
 namespace Maroik.WebSite.Services
 {
-    public class ClamavRepository : IClamavRepository
+    public class ClamavClient : IClamavClient
     {
         private readonly string _clamavHost;
         private readonly int _clamavPort;
 
-        public ClamavRepository(IConfiguration configuration)
+        public ClamavClient(IConfiguration configuration)
         {
             _clamavHost = configuration["Clamav:Host"] ?? throw new ArgumentNullException("Clamav:Host");
             _clamavPort = configuration.GetValue<int>("Clamav:Port");

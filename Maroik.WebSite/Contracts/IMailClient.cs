@@ -3,7 +3,7 @@ using Maroik.WebSite.Models.ViewModels.Account;
 
 namespace Maroik.WebSite.Contracts
 {
-    public interface IMailRepository
+    public interface IMailClient
     {
         /// <summary>
         /// 계정 비밀번호 초기화 메일의 HttpBody 부분을 구합니다.

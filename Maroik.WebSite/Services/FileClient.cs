@@ -1,11 +1,11 @@
 using Maroik.WebSite.Contracts;
 using System.Net;
 
-public class FileRepository : IFileRepository
+public class FileClient : IFileClient
 {
     private readonly string _fileStorageBaseUrl;
 
-    public FileRepository(IConfiguration configuration)
+    public FileClient(IConfiguration configuration)
     {
         _fileStorageBaseUrl = configuration["FileStorage:BaseUrl"]?.TrimEnd('/') ?? throw new ArgumentNullException("FileStorage:BaseUrl");
     }

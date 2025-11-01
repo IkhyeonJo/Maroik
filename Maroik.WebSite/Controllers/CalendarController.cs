@@ -32,10 +32,10 @@ namespace Maroik.WebSite.Controllers
         private readonly ICalendarEventReminderRepository _calendarReminderRepository;
         private readonly ICalendarSharedRepository _calendarSharedRepository;
         private readonly IHostEnvironment _hostEnvironment;
-        private readonly IFileRepository _fileRepository;
+        private readonly IFileClient _fileClient;
         private readonly ApplicationDbContext _context;
 
-        public CalendarController(IHtmlLocalizer<CalendarController> localizer, ILogger<CalendarController> logger, IHostEnvironment hostEnvironment, ApplicationDbContext context, IIncomeRepository incomeRepository, IExpenditureRepository expenditureRepository, IAssetRepository assetRepository, IAccountRepository accountRepository, ICalendarRepository calendarRepository, IOtherCalendarRepository otherCalendarRepository, ICalendarEventRepository calendarEventRepository, ICalendarEventAttachedFileRepository calendarEventAttachedFileRepository, ICalendarEventReminderRepository calendarReminderRepository, ICalendarSharedRepository calendarSharedRepository, IFileRepository fileRepository)
+        public CalendarController(IHtmlLocalizer<CalendarController> localizer, ILogger<CalendarController> logger, IHostEnvironment hostEnvironment, ApplicationDbContext context, IIncomeRepository incomeRepository, IExpenditureRepository expenditureRepository, IAssetRepository assetRepository, IAccountRepository accountRepository, ICalendarRepository calendarRepository, IOtherCalendarRepository otherCalendarRepository, ICalendarEventRepository calendarEventRepository, ICalendarEventAttachedFileRepository calendarEventAttachedFileRepository, ICalendarEventReminderRepository calendarReminderRepository, ICalendarSharedRepository calendarSharedRepository, IFileClient fileClient)
         {
             _rsa = new RSA(ServerSetting.RSAAlgorithm, Encoding.UTF8, ServerSetting.RSAPrivateKey, ServerSetting.RSAPublicKey);
             _localizer = localizer;
@@ -52,7 +52,7 @@ namespace Maroik.WebSite.Controllers
             _calendarEventAttachedFileRepository = calendarEventAttachedFileRepository;
             _calendarReminderRepository = calendarReminderRepository;
             _calendarSharedRepository = calendarSharedRepository;
-            _fileRepository = fileRepository;
+            _fileClient = fileClient;
         }
 
         #region Calendar
@@ -313,7 +313,7 @@ namespace Maroik.WebSite.Controllers
                                     string calendarEventAttachedFile = $"{guid}{Path.GetExtension(calendarEventInputViewModel.CalendarEventUploadedFile.FileName)}";
                                     string filePath = Path.Combine(calendarEventAttachedFilePath, calendarEventAttachedFile);
 
-                                    _ = await _fileRepository.UploadAsync(calendarEventInputViewModel.CalendarEventUploadedFile, filePath);
+                                    _ = await _fileClient.UploadAsync(calendarEventInputViewModel.CalendarEventUploadedFile, filePath);
 
                                     await _calendarEventAttachedFileRepository.SaveCalendarEventAttachedFileAsync(new CalendarEventAttachedFile()
                                     {
@@ -431,11 +431,11 @@ namespace Maroik.WebSite.Controllers
             string imageFile = $"{Guid.NewGuid():N}{ext}";
             string filePath = Path.Combine(summernoteImagePath, imageFile);
 
-            var uploadResult = await _fileRepository.UploadAsync(summernoteImageFile, filePath);
+            var uploadResult = await _fileClient.UploadAsync(summernoteImageFile, filePath);
 
             if (uploadResult)
             {
-                var fileStream = await _fileRepository.DownloadAsync(filePath);
+                var fileStream = await _fileClient.DownloadAsync(filePath);
                 return Ok(new
                 {
                     result = true,
@@ -1291,7 +1291,7 @@ namespace Maroik.WebSite.Controllers
                             string filePath = imgTag.GetAttributeValue("alt", "");
 
                             // 파일을 다운로드하는 메서드
-                            byte[] fileData = await _fileRepository.DownloadAsync(filePath);
+                            byte[] fileData = await _fileClient.DownloadAsync(filePath);
 
                             if (fileData != null)
                             {
@@ -1437,7 +1437,7 @@ namespace Maroik.WebSite.Controllers
 
                         if (!string.IsNullOrEmpty(calendarEvent?.CalendarEventAttachedFile?.Path ?? ""))
                         {
-                            byte[] fileData = await _fileRepository.DownloadAsync(calendarEvent?.CalendarEventAttachedFile?.Path ?? "");
+                            byte[] fileData = await _fileClient.DownloadAsync(calendarEvent?.CalendarEventAttachedFile?.Path ?? "");
 
                             if (fileData != null)
                             {
@@ -1554,7 +1554,7 @@ namespace Maroik.WebSite.Controllers
                             string filePath = imgTag.GetAttributeValue("alt", "");
 
                             // 파일을 다운로드하는 메서드
-                            byte[] fileData = await _fileRepository.DownloadAsync(filePath);
+                            byte[] fileData = await _fileClient.DownloadAsync(filePath);
 
                             if (fileData != null)
                             {
@@ -1700,7 +1700,7 @@ namespace Maroik.WebSite.Controllers
 
                         if (!string.IsNullOrEmpty(calendarEvent?.CalendarEventAttachedFile?.Path ?? ""))
                         {
-                            byte[] fileData = await _fileRepository.DownloadAsync(calendarEvent?.CalendarEventAttachedFile?.Path ?? "");
+                            byte[] fileData = await _fileClient.DownloadAsync(calendarEvent?.CalendarEventAttachedFile?.Path ?? "");
 
                             if (fileData != null)
                             {
@@ -2366,7 +2366,7 @@ namespace Maroik.WebSite.Controllers
                                     string calendarEventAttachedFile = $"{guid}{Path.GetExtension(calendarEventInputViewModel.CalendarEventUploadedFile.FileName)}";
                                     string filePath = Path.Combine(calendarEventAttachedFilePath, calendarEventAttachedFile);
 
-                                    _ = await _fileRepository.UploadAsync(calendarEventInputViewModel.CalendarEventUploadedFile, filePath);
+                                    _ = await _fileClient.UploadAsync(calendarEventInputViewModel.CalendarEventUploadedFile, filePath);
 
                                     await _calendarEventAttachedFileRepository.SaveCalendarEventAttachedFileAsync(new CalendarEventAttachedFile()
                                     {

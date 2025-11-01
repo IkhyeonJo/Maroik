@@ -27,10 +27,10 @@ namespace Maroik.WebSite.Controllers
         private readonly IBoardAttachedFileRepository _boardAttachedFileRepository;
         private readonly IAccountRepository _accountRepository;
         private readonly IBoardCommentRepository _boardCommentRepository;
-        private readonly IFileRepository _fileRepository;
+        private readonly IFileClient _fileClient;
         private readonly ApplicationDbContext _context;
 
-        public ForumController(IHtmlLocalizer<ForumController> localizer, ILogger<ForumController> logger, IBoardRepository boardRepository, IHostEnvironment hostEnvironment, IBoardAttachedFileRepository boardAttachedFileRepository, IAccountRepository accountRepository, IBoardCommentRepository boardCommentRepository, IFileRepository fileRepository, ApplicationDbContext context)
+        public ForumController(IHtmlLocalizer<ForumController> localizer, ILogger<ForumController> logger, IBoardRepository boardRepository, IHostEnvironment hostEnvironment, IBoardAttachedFileRepository boardAttachedFileRepository, IAccountRepository accountRepository, IBoardCommentRepository boardCommentRepository, IFileClient fileClient, ApplicationDbContext context)
         {
             _rsa = new RSA(ServerSetting.RSAAlgorithm, Encoding.UTF8, ServerSetting.RSAPrivateKey, ServerSetting.RSAPublicKey);
             _localizer = localizer;
@@ -40,7 +40,7 @@ namespace Maroik.WebSite.Controllers
             _boardAttachedFileRepository = boardAttachedFileRepository;
             _accountRepository = accountRepository;
             _boardCommentRepository = boardCommentRepository;
-            _fileRepository = fileRepository;
+            _fileClient = fileClient;
             _context = context;
         }
 
@@ -160,7 +160,7 @@ namespace Maroik.WebSite.Controllers
                                     string boardAttachedFile = $"{guid}{Path.GetExtension(boardInputViewModel.UploadedFile.FileName)}";
                                     string filePath = Path.Combine(boardAttachedFilePath, boardAttachedFile);
 
-                                    _ = await _fileRepository.UploadAsync(boardInputViewModel.UploadedFile, filePath);
+                                    _ = await _fileClient.UploadAsync(boardInputViewModel.UploadedFile, filePath);
 
                                     await _boardAttachedFileRepository.SaveBoardAttachedFileAsync(new BoardAttachedFile()
                                     {
@@ -328,11 +328,11 @@ namespace Maroik.WebSite.Controllers
             string imageFile = $"{Guid.NewGuid():N}{ext}";
             string filePath = Path.Combine(summernoteImagePath, imageFile);
 
-            var uploadResult = await _fileRepository.UploadAsync(summernoteImageFile, filePath);
+            var uploadResult = await _fileClient.UploadAsync(summernoteImageFile, filePath);
 
             if (uploadResult)
             {
-                var fileStream = await _fileRepository.DownloadAsync(filePath);
+                var fileStream = await _fileClient.DownloadAsync(filePath);
                 return Ok(new
                 {
                     result = true,
@@ -414,7 +414,7 @@ namespace Maroik.WebSite.Controllers
                         string filePath = imgTag.GetAttributeValue("alt", "");
 
                         // 파일을 다운로드하는 메서드
-                        byte[] fileData = await _fileRepository.DownloadAsync(filePath);
+                        byte[] fileData = await _fileClient.DownloadAsync(filePath);
 
                         if (fileData != null)
                         {
@@ -456,7 +456,7 @@ namespace Maroik.WebSite.Controllers
 
                     if (!string.IsNullOrEmpty(freeForumOutputViewModel?.BoardOutputViewModel?.BoardAttachedFilePath ?? ""))
                     {
-                        byte[] fileData = await _fileRepository.DownloadAsync(freeForumOutputViewModel?.BoardOutputViewModel?.BoardAttachedFilePath ?? "");
+                        byte[] fileData = await _fileClient.DownloadAsync(freeForumOutputViewModel?.BoardOutputViewModel?.BoardAttachedFilePath ?? "");
 
                         if (fileData != null)
                         {
@@ -525,7 +525,7 @@ namespace Maroik.WebSite.Controllers
                         string filePath = imgTag.GetAttributeValue("alt", "");
 
                         // 파일을 다운로드하는 메서드
-                        byte[] fileData = await _fileRepository.DownloadAsync(filePath);
+                        byte[] fileData = await _fileClient.DownloadAsync(filePath);
 
                         if (fileData != null)
                         {
@@ -568,7 +568,7 @@ namespace Maroik.WebSite.Controllers
 
                     if (!string.IsNullOrEmpty(freeForumOutputViewModel?.BoardOutputViewModel?.BoardAttachedFilePath ?? ""))
                     {
-                        byte[] fileData = await _fileRepository.DownloadAsync(freeForumOutputViewModel?.BoardOutputViewModel?.BoardAttachedFilePath ?? "");
+                        byte[] fileData = await _fileClient.DownloadAsync(freeForumOutputViewModel?.BoardOutputViewModel?.BoardAttachedFilePath ?? "");
 
                         if (fileData != null)
                         {
@@ -809,7 +809,7 @@ namespace Maroik.WebSite.Controllers
                                     string boardAttachedFile = $"{guid}{Path.GetExtension(boardInputViewModel.UploadedFile.FileName)}";
                                     string filePath = Path.Combine(boardAttachedFilePath, boardAttachedFile);
 
-                                    _ = await _fileRepository.UploadAsync(boardInputViewModel.UploadedFile, filePath);
+                                    _ = await _fileClient.UploadAsync(boardInputViewModel.UploadedFile, filePath);
 
                                     previousBoardAttachedFile.Size = Convert.ToInt32(boardInputViewModel.UploadedFile.Length);
                                     previousBoardAttachedFile.Name = Path.GetFileNameWithoutExtension(boardInputViewModel.UploadedFile.FileName);
@@ -854,7 +854,7 @@ namespace Maroik.WebSite.Controllers
                                     string boardAttachedFile = $"{guid}{Path.GetExtension(boardInputViewModel.UploadedFile.FileName)}";
                                     string filePath = Path.Combine(boardAttachedFilePath, boardAttachedFile);
 
-                                    _ = await _fileRepository.UploadAsync(boardInputViewModel.UploadedFile, filePath);
+                                    _ = await _fileClient.UploadAsync(boardInputViewModel.UploadedFile, filePath);
 
                                     await _boardAttachedFileRepository.SaveBoardAttachedFileAsync(new BoardAttachedFile()
                                     {

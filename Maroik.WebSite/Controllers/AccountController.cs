@@ -20,10 +20,10 @@ namespace Maroik.WebSite.Controllers
         private readonly IAccountRepository _accountRepository;
         private readonly ICategoryRepository _categoryRepository;
         private readonly ISubCategoryRepository _subCategoryRepository;
-        private readonly IMailRepository _mailRepository;
+        private readonly IMailClient _mailClient;
         private readonly IPasswordService _passwordService;
 
-        public AccountController(IHtmlLocalizer<AccountController> localizer, ILogger<AccountController> logger, IAccountRepository accountRepository, ICategoryRepository categoryRepository, ISubCategoryRepository subCategoryRepository, IMailRepository mailRepository, IPasswordService passwordService)
+        public AccountController(IHtmlLocalizer<AccountController> localizer, ILogger<AccountController> logger, IAccountRepository accountRepository, ICategoryRepository categoryRepository, ISubCategoryRepository subCategoryRepository, IMailClient mailClient, IPasswordService passwordService)
         {
             _rsa = new RSA(ServerSetting.RSAAlgorithm, Encoding.UTF8, ServerSetting.RSAPrivateKey, ServerSetting.RSAPublicKey);
             _localizer = localizer;
@@ -31,7 +31,7 @@ namespace Maroik.WebSite.Controllers
             _accountRepository = accountRepository;
             _categoryRepository = categoryRepository;
             _subCategoryRepository = subCategoryRepository;
-            _mailRepository = mailRepository;
+            _mailClient = mailClient;
             _passwordService = passwordService;
         }
 
@@ -282,12 +282,12 @@ namespace Maroik.WebSite.Controllers
                             Subject = _localizer["Maroik Email Confirmation"].Value
                         };
                         loginInputViewModel.RegistrationToken = _rsa.Sign(loginInputViewModel.RegistrationToken); // 암호화
-                        mail.Body = _mailRepository.GetMailConfirmationBody(loginInputViewModel, _localizer["Welcome to Maroik"].Value, _localizer["Click the link below to verify your Email"].Value, _localizer["If this link does not work, please copy & paste this link to your Internet URL"].Value);
+                        mail.Body = _mailClient.GetMailConfirmationBody(loginInputViewModel, _localizer["Welcome to Maroik"].Value, _localizer["Click the link below to verify your Email"].Value, _localizer["If this link does not work, please copy & paste this link to your Internet URL"].Value);
                         mail.ToMailIds =
                         [
                             loginInputViewModel.Email
                         ];
-                        string result = await _mailRepository.SendMailAsync(mail);
+                        string result = await _mailClient.SendMailAsync(mail);
                         if (result != EnumHelper.GetDescription(AccountMessage.MailSent)) // 메일 전송 오류 발생 했을 시..
                         {
                             Console.WriteLine(result); // ActivityLog 등으로 로그 남겨야 한다..
@@ -346,12 +346,12 @@ namespace Maroik.WebSite.Controllers
                             {
                                 account.RegistrationToken = GUIDToken.Generate();
                             }
-                            mail.Body = _mailRepository.GetMailConfirmationBody(new LoginInputViewModel() { RegistrationToken = _rsa.Sign(account.RegistrationToken) }, _localizer["Welcome to Maroik"].Value, _localizer["Click the link below to verify your Email"].Value, _localizer["If this link does not work, please copy & paste this link to your Internet URL"].Value);
+                            mail.Body = _mailClient.GetMailConfirmationBody(new LoginInputViewModel() { RegistrationToken = _rsa.Sign(account.RegistrationToken) }, _localizer["Welcome to Maroik"].Value, _localizer["Click the link below to verify your Email"].Value, _localizer["If this link does not work, please copy & paste this link to your Internet URL"].Value);
                             mail.ToMailIds =
                             [
                                 account.Email
                             ];
-                            string result = await _mailRepository.SendMailAsync(mail);
+                            string result = await _mailClient.SendMailAsync(mail);
                             if (result != EnumHelper.GetDescription(AccountMessage.MailSent)) // 메일 전송 오류 발생 했을 시..
                             {
                                 Console.WriteLine(result); // ActivityLog 등으로 로그 남겨야 한다..
@@ -443,13 +443,13 @@ namespace Maroik.WebSite.Controllers
                             Mail mail = new()
                             {
                                 Subject = _localizer["Maroik Email Confirmation"].Value,
-                                Body = _mailRepository.GetMailConfirmationBody(new LoginInputViewModel() { RegistrationToken = _rsa.Sign(account.RegistrationToken) }, _localizer["Welcome to Maroik"].Value, _localizer["Click the link below to verify your Email"].Value, _localizer["If this link does not work, please copy & paste this link to your Internet URL"].Value),
+                                Body = _mailClient.GetMailConfirmationBody(new LoginInputViewModel() { RegistrationToken = _rsa.Sign(account.RegistrationToken) }, _localizer["Welcome to Maroik"].Value, _localizer["Click the link below to verify your Email"].Value, _localizer["If this link does not work, please copy & paste this link to your Internet URL"].Value),
                                 ToMailIds =
                                 [
                                     account.Email
                                 ]
                             };
-                            string result = await _mailRepository.SendMailAsync(mail);
+                            string result = await _mailClient.SendMailAsync(mail);
                             if (result != EnumHelper.GetDescription(AccountMessage.MailSent)) // 메일 전송 오류 발생 했을 시..
                             {
                                 Console.WriteLine(result); // ActivityLog 등으로 로그 남겨야 한다..
@@ -690,13 +690,13 @@ namespace Maroik.WebSite.Controllers
                         Mail mail = new()
                         {
                             Subject = _localizer["Maroik Reset Password"].Value,
-                            Body = _mailRepository.GetMailResetPasswordBody(new LoginInputViewModel() { ResetPasswordToken = _rsa.Sign(resetPasswordToken) }, _localizer["Welcome to Maroik"].Value, _localizer["Click the link below to reset your password"].Value, _localizer["If this link does not work, please copy & paste this link to your Internet URL"].Value),
+                            Body = _mailClient.GetMailResetPasswordBody(new LoginInputViewModel() { ResetPasswordToken = _rsa.Sign(resetPasswordToken) }, _localizer["Welcome to Maroik"].Value, _localizer["Click the link below to reset your password"].Value, _localizer["If this link does not work, please copy & paste this link to your Internet URL"].Value),
                             ToMailIds =
                             [
                                 account.Email
                             ]
                         };
-                        string result = await _mailRepository.SendMailAsync(mail);
+                        string result = await _mailClient.SendMailAsync(mail);
                         if (result != EnumHelper.GetDescription(AccountMessage.MailSent)) // 메일 전송 오류 발생 했을 시..
                         {
                             Console.WriteLine(result); // ActivityLog 등으로 로그 남겨야 한다..
