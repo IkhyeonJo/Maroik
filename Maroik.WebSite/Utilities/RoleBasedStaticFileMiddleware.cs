@@ -20,7 +20,7 @@ public class RoleBasedStaticFileMiddleware
 
         if (!string.IsNullOrEmpty(path))
         {
-            _ = context.Session.TryGetValue(Maroik.Common.Miscellaneous.Extensions.EnumHelper.GetDescription(Maroik.Common.Miscellaneous.Utilities.Session.Account), out byte[] resultByte);
+            _ = context.Session.TryGetValue(Maroik.Common.Miscellaneous.Utilities.EnumHelper.GetDescription(Maroik.Common.Miscellaneous.Utilities.Session.Account), out byte[] resultByte);
             string userRole = null;
 
             if (resultByte != null)

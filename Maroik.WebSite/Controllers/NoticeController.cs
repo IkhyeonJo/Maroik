@@ -66,7 +66,7 @@ public class NoticeController : Controller
                 {
                     fixedIncomeInputViewModel.Amount = Math.Abs(fixedIncomeInputViewModel.Amount);
                     _ = HttpContext.Session.TryGetValue(
-                        Maroik.Common.Miscellaneous.Extensions.EnumHelper.GetDescription(Maroik.Common.Miscellaneous
+                        Maroik.Common.Miscellaneous.Utilities.EnumHelper.GetDescription(Maroik.Common.Miscellaneous
                             .Utilities.Session.Account), out byte[] resultByte);
 
                     #region Validation of MainClass & SubClass Value
@@ -214,7 +214,7 @@ public class NoticeController : Controller
             #region FixedIncomes
 
             _ = HttpContext.Session.TryGetValue(
-                Maroik.Common.Miscellaneous.Extensions.EnumHelper.GetDescription(Maroik.Common.Miscellaneous
+                Maroik.Common.Miscellaneous.Utilities.EnumHelper.GetDescription(Maroik.Common.Miscellaneous
                     .Utilities.Session.Account), out byte[] resultByte);
 
             string loginedAccountTimeZoneIanaId = JsonConvert
@@ -365,7 +365,7 @@ public class NoticeController : Controller
         try
         {
             _ = HttpContext.Session.TryGetValue(
-                Maroik.Common.Miscellaneous.Extensions.EnumHelper.GetDescription(Maroik.Common.Miscellaneous
+                Maroik.Common.Miscellaneous.Utilities.EnumHelper.GetDescription(Maroik.Common.Miscellaneous
                     .Utilities.Session.Account), out byte[] resultByte);
 
             List<FixedIncome> tempFixedIncomes =
@@ -420,7 +420,7 @@ public class NoticeController : Controller
             string label = _localizer["Amount"].Value;
 
             _ = HttpContext.Session.TryGetValue(
-                Maroik.Common.Miscellaneous.Extensions.EnumHelper.GetDescription(Maroik.Common.Miscellaneous
+                Maroik.Common.Miscellaneous.Utilities.EnumHelper.GetDescription(Maroik.Common.Miscellaneous
                     .Utilities.Session.Account), out byte[] resultByte);
 
             Asset asset =
@@ -459,7 +459,7 @@ public class NoticeController : Controller
                 {
                     fixedIncomeInputViewModel.Amount = Math.Abs(fixedIncomeInputViewModel.Amount);
                     _ = HttpContext.Session.TryGetValue(
-                        Maroik.Common.Miscellaneous.Extensions.EnumHelper.GetDescription(Maroik.Common.Miscellaneous
+                        Maroik.Common.Miscellaneous.Utilities.EnumHelper.GetDescription(Maroik.Common.Miscellaneous
                             .Utilities.Session.Account), out byte[] resultByte);
 
                     #region Validation of MainClass & SubClass Value
@@ -627,7 +627,7 @@ public class NoticeController : Controller
         try
         {
             _ = HttpContext.Session.TryGetValue(
-                Maroik.Common.Miscellaneous.Extensions.EnumHelper.GetDescription(Maroik.Common.Miscellaneous
+                Maroik.Common.Miscellaneous.Utilities.EnumHelper.GetDescription(Maroik.Common.Miscellaneous
                     .Utilities.Session.Account), out byte[] resultByte);
 
             List<FixedIncome> tempFixedIncomes =
@@ -681,7 +681,7 @@ public class NoticeController : Controller
 
         var account = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(HttpContext.Session
             .TryGetValue(
-                Maroik.Common.Miscellaneous.Extensions.EnumHelper.GetDescription(Maroik.Common.Miscellaneous
+                Maroik.Common.Miscellaneous.Utilities.EnumHelper.GetDescription(Maroik.Common.Miscellaneous
                     .Utilities.Session.Account), out byte[] resultByte)
             ? resultByte
             : Array.Empty<byte>()));
@@ -839,7 +839,7 @@ public class NoticeController : Controller
             {
                 fixedExpenditureInputViewModel.Amount = Math.Abs(fixedExpenditureInputViewModel.Amount);
                 _ = HttpContext.Session.TryGetValue(
-                    Maroik.Common.Miscellaneous.Extensions.EnumHelper.GetDescription(Maroik.Common.Miscellaneous
+                    Maroik.Common.Miscellaneous.Utilities.EnumHelper.GetDescription(Maroik.Common.Miscellaneous
                         .Utilities.Session.Account), out byte[] resultByte);
 
                 #region 대분류 = '정기저축'
@@ -1178,7 +1178,7 @@ public class NoticeController : Controller
             #region FixedExpenditures
 
             _ = HttpContext.Session.TryGetValue(
-                Maroik.Common.Miscellaneous.Extensions.EnumHelper.GetDescription(Maroik.Common.Miscellaneous
+                Maroik.Common.Miscellaneous.Utilities.EnumHelper.GetDescription(Maroik.Common.Miscellaneous
                     .Utilities.Session.Account), out byte[] resultByte);
 
             string loginedAccountTimeZoneIanaId = JsonConvert
@@ -1332,7 +1332,7 @@ public class NoticeController : Controller
         try
         {
             _ = HttpContext.Session.TryGetValue(
-                Maroik.Common.Miscellaneous.Extensions.EnumHelper.GetDescription(Maroik.Common.Miscellaneous
+                Maroik.Common.Miscellaneous.Utilities.EnumHelper.GetDescription(Maroik.Common.Miscellaneous
                     .Utilities.Session.Account), out byte[] resultByte);
 
             List<FixedExpenditure> tempFixedExpenditures =
@@ -1389,7 +1389,7 @@ public class NoticeController : Controller
             string label = _localizer["Amount"].Value;
 
             _ = HttpContext.Session.TryGetValue(
-                Maroik.Common.Miscellaneous.Extensions.EnumHelper.GetDescription(Maroik.Common.Miscellaneous
+                Maroik.Common.Miscellaneous.Utilities.EnumHelper.GetDescription(Maroik.Common.Miscellaneous
                     .Utilities.Session.Account), out byte[] resultByte);
 
             Asset asset =
@@ -1426,7 +1426,7 @@ public class NoticeController : Controller
             {
                 fixedExpenditureInputViewModel.Amount = Math.Abs(fixedExpenditureInputViewModel.Amount);
                 _ = HttpContext.Session.TryGetValue(
-                    Maroik.Common.Miscellaneous.Extensions.EnumHelper.GetDescription(Maroik.Common.Miscellaneous
+                    Maroik.Common.Miscellaneous.Utilities.EnumHelper.GetDescription(Maroik.Common.Miscellaneous
                         .Utilities.Session.Account), out byte[] resultByte);
 
                 #region 대분류 = '정기저축'
@@ -1782,7 +1782,7 @@ public class NoticeController : Controller
         try
         {
             _ = HttpContext.Session.TryGetValue(
-                Maroik.Common.Miscellaneous.Extensions.EnumHelper.GetDescription(Maroik.Common.Miscellaneous
+                Maroik.Common.Miscellaneous.Utilities.EnumHelper.GetDescription(Maroik.Common.Miscellaneous
                     .Utilities.Session.Account), out byte[] resultByte);
 
             List<FixedExpenditure> tempFixedExpenditures =
@@ -1835,7 +1835,7 @@ public class NoticeController : Controller
         #region FixedExpenditures
 
         _ = HttpContext.Session.TryGetValue(
-            Maroik.Common.Miscellaneous.Extensions.EnumHelper.GetDescription(Maroik.Common.Miscellaneous.Utilities
+            Maroik.Common.Miscellaneous.Utilities.EnumHelper.GetDescription(Maroik.Common.Miscellaneous.Utilities
                 .Session.Account), out byte[] resultByte);
 
         string loginedAccountTimeZoneIanaId = JsonConvert

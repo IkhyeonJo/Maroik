@@ -7,7 +7,7 @@
 @{
     string returnUri = string.IsNullOrWhiteSpace(Context.Request.Path) ? "/" :
     $"{Context.Request.Path.Value}{Context.Request.QueryString}";
-    Context.Session.TryGetValue(Maroik.Common.Miscellaneous.Extensions.EnumHelper.GetDescription(Maroik.Common.Miscellaneous.Utilities.Session.Account), out byte[] resultByte);
+    Context.Session.TryGetValue(Maroik.Common.Miscellaneous.Utilities.EnumHelper.GetDescription(Maroik.Common.Miscellaneous.Utilities.Session.Account), out byte[] resultByte);
     string currentCulture = Context.Features.Get<Microsoft.AspNetCore.Localization.IRequestCultureFeature>().RequestCulture.Culture.Name;
     Account loginedAccount = new Account();
 

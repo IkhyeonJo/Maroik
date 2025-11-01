@@ -63,7 +63,7 @@ public class AccountBookController : Controller
             if (ModelState.IsValid)
             {
                 _ = HttpContext.Session.TryGetValue(
-                    Maroik.Common.Miscellaneous.Extensions.EnumHelper.GetDescription(Maroik.Common.Miscellaneous
+                    Maroik.Common.Miscellaneous.Utilities.EnumHelper.GetDescription(Maroik.Common.Miscellaneous
                         .Utilities.Session.Account), out byte[] resultByte);
 
                 if (await _assetRepository.GetAssetAsync(
@@ -142,7 +142,7 @@ public class AccountBookController : Controller
             #region Assets
 
             _ = HttpContext.Session.TryGetValue(
-                Maroik.Common.Miscellaneous.Extensions.EnumHelper.GetDescription(Maroik.Common.Miscellaneous
+                Maroik.Common.Miscellaneous.Utilities.EnumHelper.GetDescription(Maroik.Common.Miscellaneous
                     .Utilities.Session.Account), out byte[] resultByte);
 
             string loginedAccountTimeZoneIanaId = JsonConvert
@@ -211,7 +211,7 @@ public class AccountBookController : Controller
         try
         {
             _ = HttpContext.Session.TryGetValue(
-                Maroik.Common.Miscellaneous.Extensions.EnumHelper.GetDescription(Maroik.Common.Miscellaneous
+                Maroik.Common.Miscellaneous.Utilities.EnumHelper.GetDescription(Maroik.Common.Miscellaneous
                     .Utilities.Session.Account), out byte[] resultByte);
 
             Asset tempAsset = await _assetRepository.GetAssetAsync(
@@ -266,7 +266,7 @@ public class AccountBookController : Controller
                     #endregion
 
                     _ = HttpContext.Session.TryGetValue(
-                        Maroik.Common.Miscellaneous.Extensions.EnumHelper.GetDescription(Maroik.Common.Miscellaneous
+                        Maroik.Common.Miscellaneous.Utilities.EnumHelper.GetDescription(Maroik.Common.Miscellaneous
                             .Utilities.Session.Account), out byte[] resultByte);
 
                     Asset tempAsset = await _assetRepository.GetAssetAsync(
@@ -341,7 +341,7 @@ public class AccountBookController : Controller
         try
         {
             _ = HttpContext.Session.TryGetValue(
-                Maroik.Common.Miscellaneous.Extensions.EnumHelper.GetDescription(Maroik.Common.Miscellaneous
+                Maroik.Common.Miscellaneous.Utilities.EnumHelper.GetDescription(Maroik.Common.Miscellaneous
                     .Utilities.Session.Account), out byte[] resultByte);
 
             Asset tempAsset = await _assetRepository.GetAssetAsync(
@@ -381,7 +381,7 @@ public class AccountBookController : Controller
         List<AssetOutputViewModel> assetOutputViewModels = new List<AssetOutputViewModel>();
 
         _ = HttpContext.Session.TryGetValue(
-            Maroik.Common.Miscellaneous.Extensions.EnumHelper.GetDescription(Maroik.Common.Miscellaneous.Utilities
+            Maroik.Common.Miscellaneous.Utilities.EnumHelper.GetDescription(Maroik.Common.Miscellaneous.Utilities
                 .Session.Account), out byte[] resultByte);
         string loginedAccountTimeZoneIanaId = JsonConvert
             .DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId;
@@ -495,7 +495,7 @@ public class AccountBookController : Controller
                 {
                     incomeInputViewModel.Amount = Math.Abs(incomeInputViewModel.Amount);
                     _ = HttpContext.Session.TryGetValue(
-                        Maroik.Common.Miscellaneous.Extensions.EnumHelper.GetDescription(Maroik.Common.Miscellaneous
+                        Maroik.Common.Miscellaneous.Utilities.EnumHelper.GetDescription(Maroik.Common.Miscellaneous
                             .Utilities.Session.Account), out byte[] resultByte);
 
                     #region Validate ProductName's Deletion
@@ -605,7 +605,7 @@ public class AccountBookController : Controller
             #region Incomes
 
             _ = HttpContext.Session.TryGetValue(
-                Maroik.Common.Miscellaneous.Extensions.EnumHelper.GetDescription(Maroik.Common.Miscellaneous
+                Maroik.Common.Miscellaneous.Utilities.EnumHelper.GetDescription(Maroik.Common.Miscellaneous
                     .Utilities.Session.Account), out byte[] resultByte);
 
             string loginedAccountTimeZoneIanaId = JsonConvert
@@ -685,7 +685,7 @@ public class AccountBookController : Controller
         try
         {
             _ = HttpContext.Session.TryGetValue(
-                Maroik.Common.Miscellaneous.Extensions.EnumHelper.GetDescription(Maroik.Common.Miscellaneous
+                Maroik.Common.Miscellaneous.Utilities.EnumHelper.GetDescription(Maroik.Common.Miscellaneous
                     .Utilities.Session.Account), out byte[] resultByte);
             string loginedAccountTimeZoneIanaId = JsonConvert
                 .DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId;
@@ -728,7 +728,7 @@ public class AccountBookController : Controller
             string label = _localizer["Amount"].Value;
 
             _ = HttpContext.Session.TryGetValue(
-                Maroik.Common.Miscellaneous.Extensions.EnumHelper.GetDescription(Maroik.Common.Miscellaneous
+                Maroik.Common.Miscellaneous.Utilities.EnumHelper.GetDescription(Maroik.Common.Miscellaneous
                     .Utilities.Session.Account), out byte[] resultByte);
 
             Asset asset =
@@ -767,7 +767,7 @@ public class AccountBookController : Controller
                 {
                     incomeInputViewModel.Amount = Math.Abs(incomeInputViewModel.Amount);
                     _ = HttpContext.Session.TryGetValue(
-                        Maroik.Common.Miscellaneous.Extensions.EnumHelper.GetDescription(Maroik.Common.Miscellaneous
+                        Maroik.Common.Miscellaneous.Utilities.EnumHelper.GetDescription(Maroik.Common.Miscellaneous
                             .Utilities.Session.Account), out byte[] resultByte);
 
                     #region Validation of MainClass & SubClass Value
@@ -936,7 +936,7 @@ public class AccountBookController : Controller
         try
         {
             _ = HttpContext.Session.TryGetValue(
-                Maroik.Common.Miscellaneous.Extensions.EnumHelper.GetDescription(Maroik.Common.Miscellaneous
+                Maroik.Common.Miscellaneous.Utilities.EnumHelper.GetDescription(Maroik.Common.Miscellaneous
                     .Utilities.Session.Account), out byte[] resultByte);
 
             List<Income> tempIncomes = await _incomeRepository.GetIncomesAsync(JsonConvert
@@ -1018,7 +1018,7 @@ public class AccountBookController : Controller
         #region Incomes
 
         _ = HttpContext.Session.TryGetValue(
-            Maroik.Common.Miscellaneous.Extensions.EnumHelper.GetDescription(Maroik.Common.Miscellaneous.Utilities
+            Maroik.Common.Miscellaneous.Utilities.EnumHelper.GetDescription(Maroik.Common.Miscellaneous.Utilities
                 .Session.Account), out byte[] resultByte);
         string loginedAccountTimeZoneIanaId = JsonConvert
             .DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId;
@@ -1142,7 +1142,7 @@ public class AccountBookController : Controller
             {
                 expenditureInputViewModel.Amount = Math.Abs(expenditureInputViewModel.Amount);
                 _ = HttpContext.Session.TryGetValue(
-                    Maroik.Common.Miscellaneous.Extensions.EnumHelper.GetDescription(Maroik.Common.Miscellaneous
+                    Maroik.Common.Miscellaneous.Utilities.EnumHelper.GetDescription(Maroik.Common.Miscellaneous
                         .Utilities.Session.Account), out byte[] resultByte);
 
                 #region Validate ProductName's Deletion
@@ -1546,7 +1546,7 @@ public class AccountBookController : Controller
             #region Expenditures
 
             _ = HttpContext.Session.TryGetValue(
-                Maroik.Common.Miscellaneous.Extensions.EnumHelper.GetDescription(Maroik.Common.Miscellaneous
+                Maroik.Common.Miscellaneous.Utilities.EnumHelper.GetDescription(Maroik.Common.Miscellaneous
                     .Utilities.Session.Account), out byte[] resultByte);
 
             string loginedAccountTimeZoneIanaId = JsonConvert
@@ -1629,7 +1629,7 @@ public class AccountBookController : Controller
         try
         {
             _ = HttpContext.Session.TryGetValue(
-                Maroik.Common.Miscellaneous.Extensions.EnumHelper.GetDescription(Maroik.Common.Miscellaneous
+                Maroik.Common.Miscellaneous.Utilities.EnumHelper.GetDescription(Maroik.Common.Miscellaneous
                     .Utilities.Session.Account), out byte[] resultByte);
             string loginedAccountTimeZoneIanaId = JsonConvert
                 .DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId;
@@ -1673,7 +1673,7 @@ public class AccountBookController : Controller
             string label = _localizer["Amount"].Value;
 
             _ = HttpContext.Session.TryGetValue(
-                Maroik.Common.Miscellaneous.Extensions.EnumHelper.GetDescription(Maroik.Common.Miscellaneous
+                Maroik.Common.Miscellaneous.Utilities.EnumHelper.GetDescription(Maroik.Common.Miscellaneous
                     .Utilities.Session.Account), out byte[] resultByte);
 
             Asset asset =
@@ -1711,7 +1711,7 @@ public class AccountBookController : Controller
             {
                 expenditureInputViewModel.Amount = Math.Abs(expenditureInputViewModel.Amount);
                 _ = HttpContext.Session.TryGetValue(
-                    Maroik.Common.Miscellaneous.Extensions.EnumHelper.GetDescription(Maroik.Common.Miscellaneous
+                    Maroik.Common.Miscellaneous.Utilities.EnumHelper.GetDescription(Maroik.Common.Miscellaneous
                         .Utilities.Session.Account), out byte[] resultByte);
 
                 #region 대분류 = '정기저축'
@@ -4234,7 +4234,7 @@ public class AccountBookController : Controller
         try
         {
             _ = HttpContext.Session.TryGetValue(
-                Maroik.Common.Miscellaneous.Extensions.EnumHelper.GetDescription(Maroik.Common.Miscellaneous
+                Maroik.Common.Miscellaneous.Utilities.EnumHelper.GetDescription(Maroik.Common.Miscellaneous
                     .Utilities.Session.Account), out byte[] resultByte);
 
             List<Expenditure> tempExpenditures =
@@ -4374,7 +4374,7 @@ public class AccountBookController : Controller
         #region Expenditures
 
         _ = HttpContext.Session.TryGetValue(
-            Maroik.Common.Miscellaneous.Extensions.EnumHelper.GetDescription(Maroik.Common.Miscellaneous.Utilities
+            Maroik.Common.Miscellaneous.Utilities.EnumHelper.GetDescription(Maroik.Common.Miscellaneous.Utilities
                 .Session.Account), out byte[] resultByte);
         string loginedAccountTimeZoneIanaId = JsonConvert
             .DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId;
