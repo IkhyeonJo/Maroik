@@ -6,7 +6,7 @@ using Maroik.Common.DataAccess.Data;
 using Maroik.Common.DataAccess.Models;
 using Maroik.Common.Miscellaneous.Extensions;
 using Maroik.Common.Miscellaneous.Utilities;
-using Maroik.WebSite.Contracts;
+using Maroik.WebSite.Contracts.Clients;
 using Maroik.WebSite.Models;
 using Maroik.WebSite.Models.ViewModels.Forum;
 using Microsoft.AspNetCore.Mvc;

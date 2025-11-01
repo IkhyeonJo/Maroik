@@ -1,10 +1,10 @@
 using Maroik.Common.Miscellaneous.Extensions;
 using Maroik.Common.Miscellaneous.Utilities;
-using Maroik.WebSite.Contracts;
+using Maroik.WebSite.Contracts.Clients;
 using Maroik.WebSite.Models.ViewModels.Account;
 using System.Net.Mail;
 
-namespace Maroik.WebSite.Services
+namespace Maroik.WebSite.Clients
 {
     public class MailClient : IMailClient
     {

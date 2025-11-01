@@ -1,11 +1,8 @@
-﻿using Maroik.Common.DataAccess.Contracts;
-using Maroik.Common.Miscellaneous.Utilities;
-using Maroik.WebSite.Contracts;
-using System.Text;
+﻿using Maroik.WebSite.Contracts.Clients;
 using System.Net;
 using System.Net.Sockets;
 
-namespace Maroik.WebSite.Services
+namespace Maroik.WebSite.Clients
 {
     public class ClamavClient : IClamavClient
     {

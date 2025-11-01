@@ -1,7 +1,7 @@
 using Maroik.Common.Miscellaneous.Utilities;
 using Maroik.WebSite.Models.ViewModels.Account;
 
-namespace Maroik.WebSite.Contracts
+namespace Maroik.WebSite.Contracts.Clients
 {
     public interface IMailClient
     {

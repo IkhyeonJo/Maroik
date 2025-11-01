@@ -1,4 +1,4 @@
-namespace Maroik.WebSite.Contracts;
+namespace Maroik.WebSite.Contracts.Services;
 
 public interface IPasswordService
 {
