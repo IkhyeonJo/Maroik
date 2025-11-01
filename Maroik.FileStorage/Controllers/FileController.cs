@@ -11,11 +11,11 @@ namespace Maroik.FileStorage.Controllers
     [Route("api/[controller]")]
     public class FileController : ControllerBase
     {
-        private readonly IClamavRepository _clamavRepository;
+        private readonly IClamavClient _clamavClient;
 
-        public FileController(IClamavRepository clamavRepository)
+        public FileController(IClamavClient clamavClient)
         {
-            _clamavRepository = clamavRepository;
+            _clamavClient = clamavClient;
         }
         
         [AllowAnonymous]
@@ -66,7 +66,7 @@ namespace Maroik.FileStorage.Controllers
                     return BadRequest("Invalid or unsupported file format.");
                 
                 // ClamAV 바이러스 검사
-                if (!await _clamavRepository.ScanWithClamavAsync(memoryStream))
+                if (!await _clamavClient.ScanWithClamavAsync(memoryStream))
                     return BadRequest("File may be infected with a virus.");
 
                 // .zip 확장자인 경우 암호화 여부 검사

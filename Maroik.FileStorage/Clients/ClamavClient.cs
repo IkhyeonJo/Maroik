@@ -2,9 +2,9 @@
 using System.Net;
 using System.Net.Sockets;
 
-namespace Maroik.FileStorage.Services
+namespace Maroik.FileStorage.Clients
 {
-    public class ClamavRepository : IClamavRepository
+    public class ClamavClient : IClamavClient
     {
         private readonly string _clamavStorageDomain = "Maroik.Clamav";
 
