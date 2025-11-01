@@ -6,65 +6,65 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace Maroik.Common.DataAccess.Services
+namespace Maroik.Common.DataAccess.Repositories
 {
-    public class SubCategoryRepository : ISubCategoryRepository
+    public class CategoryRepository : ICategoryRepository
     {
         private readonly ApplicationDbContext _context;
 
-        public SubCategoryRepository(ApplicationDbContext context)
+        public CategoryRepository(ApplicationDbContext context)
         {
             _context = context;
         }
 
         /// <summary>
-        /// 모든 서브카테고리들을 구합니다.
+        /// 모든 카테고리들을 구합니다.
         /// </summary>
         /// <returns></returns>
-        public async Task<IEnumerable<SubCategory>> GetSubCategoryAsync()
+        public async Task<IEnumerable<Category>> GetCategoryAsync()
         {
-            return await _context.SubCategories.ToListAsync();
+            return await _context.Categories.ToListAsync();
         }
         /// <summary>
-        /// 권한에 따른 서브카테고리들을 구합니다.
+        /// 권한에 따른 카테고리들을 구합니다.
         /// </summary>
         /// <param name="role"></param>
         /// <returns></returns>
-        public async Task<IEnumerable<SubCategory>> GetSubCategoryByRoleAsync(string role)
+        public async Task<IEnumerable<Category>> GetCategoryByRoleAsync(string role)
         {
-            return await _context.SubCategories
+            return await _context.Categories
                     .Where(a => a.Role == role)
                     .OrderBy(a => a.Order)
                     .ToListAsync();
         }
         /// <summary>
-        /// 서브카테고리를 생성합니다.
-        /// </summary>
-        /// <param name="subCategory"></param>
-        /// <returns></returns>
-        public async Task CreateSubCategoryAsync(SubCategory subCategory)
-        {
-            _ = await _context.SubCategories.AddAsync(subCategory);
-            _ = await _context.SaveChangesAsync();
-        }
-        /// <summary>
-        /// 서브카테고리를 업데이트합니다.
+        /// 카테고리를 생성합니다.
         /// </summary>
         /// <param name="category"></param>
         /// <returns></returns>
-        public async Task UpdateSubCategoryAsync(SubCategory subCategory)
+        public async Task CreateCategoryAsync(Category category)
         {
-            _ = _context.SubCategories.Update(subCategory);
+            _ = await _context.Categories.AddAsync(category);
             _ = await _context.SaveChangesAsync();
         }
         /// <summary>
-        /// 서브카테고리를 제거합니다.
+        /// 카테고리를 업데이트합니다.
         /// </summary>
         /// <param name="category"></param>
         /// <returns></returns>
-        public async Task DeleteSubCategoryAsync(SubCategory subCategory)
+        public async Task UpdateCategoryAsync(Category category)
         {
-            _ = _context.SubCategories.Remove(subCategory);
+            _ = _context.Categories.Update(category);
+            _ = await _context.SaveChangesAsync();
+        }
+        /// <summary>
+        /// 카테고리를 제거합니다.
+        /// </summary>
+        /// <param name="category"></param>
+        /// <returns></returns>
+        public async Task DeleteCategoryAsync(Category category)
+        {
+            _ = _context.Categories.Remove(category);
             _ = await _context.SaveChangesAsync();
         }
     }

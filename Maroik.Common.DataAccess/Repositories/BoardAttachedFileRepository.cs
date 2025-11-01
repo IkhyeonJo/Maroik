@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace Maroik.Common.DataAccess.Services
+namespace Maroik.Common.DataAccess.Repositories
 {
     public class BoardAttachedFileRepository : IBoardAttachedFileRepository
     {

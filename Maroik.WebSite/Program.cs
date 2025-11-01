@@ -1,6 +1,6 @@
 using Maroik.Common.DataAccess.Contracts;
 using Maroik.Common.DataAccess.Data;
-using Maroik.Common.DataAccess.Services;
+using Maroik.Common.DataAccess.Repositories;
 using Maroik.Common.Miscellaneous.Utilities;
 using Maroik.WebSite.Extensions;
 using Maroik.WebSite.Contracts;

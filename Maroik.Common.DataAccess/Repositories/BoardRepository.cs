@@ -6,7 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace Maroik.Common.DataAccess.Services
+namespace Maroik.Common.DataAccess.Repositories
 {
     public class BoardRepository : IBoardRepository
     {
