@@ -1,8 +1,7 @@
-﻿namespace Maroik.Common.Miscellaneous.Utilities
+﻿namespace Maroik.Common.Miscellaneous.Utilities;
+
+[AttributeUsage(AttributeTargets.Method, AllowMultiple = true)]
+public class RequiredHttpPostAccessAttribute : Attribute
 {
-    [AttributeUsage(AttributeTargets.Method, AllowMultiple = true)]
-    public class RequiredHttpPostAccessAttribute : Attribute
-    {
-        public string Role { get; set; } = string.Empty;
-    }
+    public string Role { get; set; } = string.Empty;
 }

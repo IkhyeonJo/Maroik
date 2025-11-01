@@ -1,8 +1,7 @@
-namespace Maroik.WebSite.Contracts.Clients
+namespace Maroik.WebSite.Contracts.Clients;
+
+public interface IFileClient
 {
-    public interface IFileClient
-    {
-        public Task<byte[]> DownloadAsync(string filePath);
-        public Task<bool> UploadAsync(IFormFile formFile, string filePath);
-    }
+    public Task<byte[]> DownloadAsync(string filePath);
+    public Task<bool> UploadAsync(IFormFile formFile, string filePath);
 }

@@ -3,46 +3,45 @@ using Maroik.Common.Miscellaneous.Utilities;
 using Newtonsoft.Json;
 using System.Text;
 
-namespace Maroik.WebSite.Utilities
+namespace Maroik.WebSite.Utilities;
+
+public class RoleBasedStaticFileMiddleware
 {
-    public class RoleBasedStaticFileMiddleware
+    private readonly RequestDelegate _next;
+
+    public RoleBasedStaticFileMiddleware(RequestDelegate next)
     {
-        private readonly RequestDelegate _next;
+        _next = next;
+    }
 
-        public RoleBasedStaticFileMiddleware(RequestDelegate next)
+    public async Task InvokeAsync(HttpContext context)
+    {
+        var path = context.Request.Path.Value;
+
+        if (!string.IsNullOrEmpty(path))
         {
-            _next = next;
-        }
+            _ = context.Session.TryGetValue(Maroik.Common.Miscellaneous.Extensions.EnumHelper.GetDescription(Maroik.Common.Miscellaneous.Utilities.Session.Account), out byte[] resultByte);
+            string userRole = null;
 
-        public async Task InvokeAsync(HttpContext context)
-        {
-            var path = context.Request.Path.Value;
-
-            if (!string.IsNullOrEmpty(path))
+            if (resultByte != null)
             {
-                _ = context.Session.TryGetValue(Maroik.Common.Miscellaneous.Extensions.EnumHelper.GetDescription(Maroik.Common.Miscellaneous.Utilities.Session.Account), out byte[] resultByte);
-                string userRole = null;
-
-                if (resultByte != null)
-                {
-                    Account loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte));
-                    userRole = loginedAccount.Role;
-                }
-
-                if (path.StartsWith("/admin/") && userRole != Role.Admin)
-                {
-                    context.Response.StatusCode = 403;
-                    return;
-                }
-
-                if (path.StartsWith("/user/") && userRole != Role.User)
-                {
-                    context.Response.StatusCode = 403;
-                    return;
-                }
+                Account loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte));
+                userRole = loginedAccount.Role;
             }
 
-            await _next(context);
+            if (path.StartsWith("/admin/") && userRole != Role.Admin)
+            {
+                context.Response.StatusCode = 403;
+                return;
+            }
+
+            if (path.StartsWith("/user/") && userRole != Role.User)
+            {
+                context.Response.StatusCode = 403;
+                return;
+            }
         }
+
+        await _next(context);
     }
 }

@@ -2,52 +2,51 @@
 using System.Net;
 using System.Net.Sockets;
 
-namespace Maroik.WebSite.Clients
+namespace Maroik.WebSite.Clients;
+
+public class ClamavClient : IClamavClient
 {
-    public class ClamavClient : IClamavClient
+    private readonly string _clamavHost;
+    private readonly int _clamavPort;
+
+    public ClamavClient(IConfiguration configuration)
     {
-        private readonly string _clamavHost;
-        private readonly int _clamavPort;
+        _clamavHost = configuration["Clamav:Host"] ?? throw new ArgumentNullException("Clamav:Host");
+        _clamavPort = configuration.GetValue<int>("Clamav:Port");
+    }
 
-        public ClamavClient(IConfiguration configuration)
+    public async Task<bool> ScanWithClamavAsync(Stream fileStream)
+    {
+        try
         {
-            _clamavHost = configuration["Clamav:Host"] ?? throw new ArgumentNullException("Clamav:Host");
-            _clamavPort = configuration.GetValue<int>("Clamav:Port");
+            fileStream.Position = 0;
+
+            using var client = new TcpClient(_clamavHost, _clamavPort);
+            using var stream = client.GetStream();
+            using var writer = new StreamWriter(stream, leaveOpen: true) { AutoFlush = true };
+
+            await writer.WriteLineAsync("nINSTREAM");
+
+            byte[] buffer = new byte[2048];
+            int bytesRead;
+            while ((bytesRead = await fileStream.ReadAsync(buffer, 0, buffer.Length)) > 0)
+            {
+                byte[] lengthPrefix = BitConverter.GetBytes(IPAddress.HostToNetworkOrder(bytesRead));
+                await stream.WriteAsync(lengthPrefix, 0, lengthPrefix.Length);
+                await stream.WriteAsync(buffer, 0, bytesRead);
+            }
+
+            byte[] zero = BitConverter.GetBytes(0);
+            await stream.WriteAsync(zero, 0, zero.Length);
+
+            using var reader = new StreamReader(stream);
+            string response = await reader.ReadLineAsync() ?? string.Empty;
+
+            return response.Contains("OK");
         }
-
-        public async Task<bool> ScanWithClamavAsync(Stream fileStream)
+        catch
         {
-            try
-            {
-                fileStream.Position = 0;
-
-                using var client = new TcpClient(_clamavHost, _clamavPort);
-                using var stream = client.GetStream();
-                using var writer = new StreamWriter(stream, leaveOpen: true) { AutoFlush = true };
-
-                await writer.WriteLineAsync("nINSTREAM");
-
-                byte[] buffer = new byte[2048];
-                int bytesRead;
-                while ((bytesRead = await fileStream.ReadAsync(buffer, 0, buffer.Length)) > 0)
-                {
-                    byte[] lengthPrefix = BitConverter.GetBytes(IPAddress.HostToNetworkOrder(bytesRead));
-                    await stream.WriteAsync(lengthPrefix, 0, lengthPrefix.Length);
-                    await stream.WriteAsync(buffer, 0, bytesRead);
-                }
-
-                byte[] zero = BitConverter.GetBytes(0);
-                await stream.WriteAsync(zero, 0, zero.Length);
-
-                using var reader = new StreamReader(stream);
-                string response = await reader.ReadLineAsync() ?? string.Empty;
-
-                return response.Contains("OK");
-            }
-            catch
-            {
-                return false;
-            }
+            return false;
         }
     }
 }
