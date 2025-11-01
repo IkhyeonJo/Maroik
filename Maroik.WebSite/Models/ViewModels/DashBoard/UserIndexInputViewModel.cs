@@ -1,7 +1,6 @@
-﻿namespace Maroik.WebSite.Models.ViewModels.DashBoard
+﻿namespace Maroik.WebSite.Models.ViewModels.DashBoard;
+
+public class UserIndexInputViewModel
 {
-    public class UserIndexInputViewModel
-    {
-        public string DefaultMonetaryUnit { get; set; }
-    }
+    public string DefaultMonetaryUnit { get; set; }
 }

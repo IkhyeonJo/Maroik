@@ -1,11 +1,13 @@
-using Maroik.WebSite.Contracts;
+using Maroik.WebSite.Contracts.Clients;
 using System.Net;
 
-public class FileRepository : IFileRepository
+namespace Maroik.WebSite.Clients;
+
+public class FileClient : IFileClient
 {
     private readonly string _fileStorageBaseUrl;
 
-    public FileRepository(IConfiguration configuration)
+    public FileClient(IConfiguration configuration)
     {
         _fileStorageBaseUrl = configuration["FileStorage:BaseUrl"]?.TrimEnd('/') ?? throw new ArgumentNullException("FileStorage:BaseUrl");
     }

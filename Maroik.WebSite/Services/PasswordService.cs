@@ -1,4 +1,4 @@
-using Maroik.WebSite.Contracts;
+using Maroik.WebSite.Contracts.Services;
 
 namespace Maroik.WebSite.Services;
 
