@@ -85,6 +85,13 @@ const $createCalendarDialogModal = $('#createCalendarDialogModal');
 const $aCreateCalendarEvent = $('#aCreateCalendarEvent');
 const $createCalendarEventNotificationAllDayChecked = $('#createCalendarEventNotificationAllDayChecked');
 const $createCalendarEventNotificationAllDayUnchecked = $('#createCalendarEventNotificationAllDayUnchecked');
+const $formUpdateCalendarShared = $('#formUpdateCalendarShared');
+const $setCalendarSharedDialogModal = $('#setCalendarSharedDialogModal');
+const $divSetCalendarShared = $('#divSetCalendarShared');
+const $aUpdateCalendarShared = $('#aUpdateCalendarShared');
+const $aCreateCalendar = $('#aCreateCalendar');
+const $dropdownContent = $('#dropdown-content');
+const $dropdownIcon = $('#dropdown-icon');
 const $__RequestVerificationToken = $('input[name="__RequestVerificationToken"]');
 const maxFileSize = 10485760;
 const maxMinutesBeforeEvent = 40320;
@@ -1734,7 +1741,7 @@ $(function () {
 
 function CreateUploadImageFile(file) {
 
-    formData = new FormData();
+    let formData = new FormData();
     formData.append("summernoteImageFile", file);
 
     $.ajax({
@@ -1774,7 +1781,7 @@ function CreateUploadImageFile(file) {
 
 function EditUploadImageFile(file) {
 
-    formData = new FormData();
+    let formData = new FormData();
     formData.append("summernoteImageFile", file);
 
     $.ajax({
@@ -2084,41 +2091,41 @@ $editCalendarEventNotificationAllDayUnchecked.off('click').on('click', function 
     $(htmlString).insertBefore(this);
 });
 
-$(document).on('click', '.aCreateCalendarDeleteNotificationAllDayChecked', function () {
+$(document).off('click', '.aCreateCalendarDeleteNotificationAllDayChecked').on('click', '.aCreateCalendarDeleteNotificationAllDayChecked', function () {
     $(this).parent().remove();
 });
 
-$(document).on('click', '.aCreateCalendarDeleteNotificationAllDayUnchecked', function () {
+$(document).off('click', '.aCreateCalendarDeleteNotificationAllDayUnchecked').on('click', '.aCreateCalendarDeleteNotificationAllDayUnchecked', function () {
     $(this).parent().remove();
 });
 
-$(document).on('click', '.aEditCalendarDeleteNotificationAllDayChecked', function () {
+$(document).off('click', '.aEditCalendarDeleteNotificationAllDayChecked').on('click', '.aEditCalendarDeleteNotificationAllDayChecked', function () {
     $(this).parent().remove();
 });
 
-$(document).on('click', '.aEditCalendarDeleteNotificationAllDayUnchecked', function () {
+$(document).off('click', '.aEditCalendarDeleteNotificationAllDayUnchecked').on('click', '.aEditCalendarDeleteNotificationAllDayUnchecked', function () {
     $(this).parent().remove();
 });
 
-$('#dropdown-icon').click(function () {
-    $('#dropdown-content').toggle();
+$dropdownIcon.off('click').on('click', function () {
+    $dropdownContent.toggle();
 });
 
-$(window).click(function (event) {
-    if (!$(event.target).closest($('#dropdown-icon').add('#dropdown-content')).length) {
-        $('#dropdown-content').hide();
+$(window).off('click.dropdown').on('click.dropdown', function (event) {
+    if (!$(event.target).closest($dropdownIcon.add($dropdownContent)).length) {
+        $dropdownContent.hide();
     }
 });
 
-$('#dropdown-content').find('a').off('click').on('click', function () {
-    $('#dropdown-content').hide();
+$dropdownContent.find('a').off('click').on('click', function () {
+    $dropdownContent.hide();
 });
 
-$('#aCreateCalendar').off('click').on('click', function () {
+$aCreateCalendar.off('click').on('click', function () {
     $createCalendarDialogModal.modal('show');
 });
 
-$('#aUpdateCalendarShared').off('click').on('click', function () {
+$aUpdateCalendarShared.off('click').on('click', function () {
 
     $.ajax({
         url: '/Calendar/GetCalendarShareds',
@@ -2148,20 +2155,20 @@ $('#aUpdateCalendarShared').off('click').on('click', function () {
                     `;
                 });
 
-                $('#divSetCalendarShared').html(htmlString);
+                $divSetCalendarShared.html(htmlString);
             }
         }
     });
 
-    $('#setCalendarSharedDialogModal').modal('show');
+    $setCalendarSharedDialogModal.modal('show');
 });
 
-$('#formUpdateCalendarShared').off('submit').on('submit', function (event) {
+$formUpdateCalendarShared.off('submit').on('submit', function (event) {
     event.preventDefault();
 
     let calendarBeShared = [];
     
-    $('#divSetCalendarShared').children('.setCalendarShared').each(function () {
+    $divSetCalendarShared.children('.setCalendarShared').each(function () {
         calendarBeShared.push({
             CalendarId: $(this).find('.shareToCalendar').parent().attr('id').replace("divSetCalendarShared", ""),
             User: $(this).find('.shareToUser').prop('checked'),
@@ -2178,7 +2185,7 @@ $('#formUpdateCalendarShared').off('submit').on('submit', function (event) {
         contentType: 'application/json; charset=utf-8',
         success: function (data) {
             if (data.result) {
-                $('#setCalendarSharedDialogModal').modal('hide');
+                $setCalendarSharedDialogModal.modal('hide');
                 toastr.success(data.message);
             }
             else {
