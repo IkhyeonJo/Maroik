@@ -1,5 +1,5 @@
-﻿$(document).on("ajaxError", function () {
-    window.location.href = "/DashBoard/AnonymousIndex";
+﻿$(document).off('ajaxError.globalHandler').on('ajaxError.globalHandler', function () {
+    window.location.href = '/DashBoard/AnonymousIndex';
 });
 
 function ChangeCulture(culture) {
@@ -11,16 +11,16 @@ function ChangeCulture(culture) {
     $.ajax({
         url: '/DashBoard/CultureManagement',
         type: 'POST',
-        headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
+        headers: { 'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val() },
         dataType: 'json',
         data: paramValue,
         contentType: 'application/json; charset=utf-8',
         success: function (data) {
             if (data.result) {
-                window.location.href = $("#returnUri").val();
+                window.location.href = $('#returnUri').val();
             }
             else {
-                window.location.href = $("#returnUri").val();
+                window.location.href = $('#returnUri').val();
             }
         }
     });
