@@ -58,7 +58,7 @@ const $editCalendarEventAllDayUncheckedStartTimeZone = $('#editCalendarEventAllD
 const $editCalendarEventAllDayUncheckedEndTime = $('#editCalendarEventAllDayUncheckedEndTime');
 const $editCalendarEventAllDayUncheckedEndTimeZone = $('#editCalendarEventAllDayUncheckedEndTimeZone');
 const $editCalendarEventLocation = $('#editCalendarEventLocation');
-const $spanEditCalendarEventAttachedFile = $("#spanEditCalendarEventAttachedFile");
+const $spanEditCalendarEventAttachedFile = $('#spanEditCalendarEventAttachedFile');
 const $editCalendarEventStatus = $('#editCalendarEventStatus');
 const $editCalendarEventNotificationAllDayUnchecked = $('#editCalendarEventNotificationAllDayUnchecked');
 const $deleteCalendarEventPopup = $('#deleteCalendarEventPopup');
@@ -488,12 +488,12 @@ $(function () {
             $createCalendarEventAllDayCheckedStartDate.val(moment.utc(arg.start).add(1, 'days').format('YYYY-MM-DD'));
 
             $createCalendarEventAllDayUncheckedEndDate.val(moment.utc(arg.end).format('YYYY-MM-DD'));
-            $createCalendarEventAllDayCheckedEndDate.val(moment.utc(arg.end).format("YYYY-MM-DD"));
+            $createCalendarEventAllDayCheckedEndDate.val(moment.utc(arg.end).format('YYYY-MM-DD'));
 
             $.ajax({
                 url: '/Calendar/GetCalendars',
                 method: 'POST',
-                headers: { "RequestVerificationToken": $__RequestVerificationToken.val() },
+                headers: { 'RequestVerificationToken': $__RequestVerificationToken.val() },
                 dataType: 'json',
                 data: null,
                 contentType: 'application/json; charset=utf-8',
@@ -571,7 +571,7 @@ $(function () {
                 $.ajax({
                     url: '/Calendar/IsCalendarEventExists' + '?id=' + popup.data('event-id'),
                     type: 'POST',
-                    headers: { "RequestVerificationToken": $__RequestVerificationToken.val() },
+                    headers: { 'RequestVerificationToken': $__RequestVerificationToken.val() },
                     dataType: 'json',
                     data: null,
                     contentType: 'application/json; charset=utf-8',
@@ -656,7 +656,7 @@ $(function () {
                             $.ajax({
                                 url: '/Calendar/GetCalendars',
                                 method: 'POST',
-                                headers: { "RequestVerificationToken": $__RequestVerificationToken.val() },
+                                headers: { 'RequestVerificationToken': $__RequestVerificationToken.val() },
                                 dataType: 'json',
                                 data: null,
                                 contentType: 'application/json; charset=utf-8',
@@ -810,7 +810,7 @@ $(function () {
                     $.ajax({
                         url: '/Calendar/DeleteCalendarEvent?id=' + popup.data('event-id'),
                         type: 'POST',
-                        headers: { "RequestVerificationToken": $__RequestVerificationToken.val() },
+                        headers: { 'RequestVerificationToken': $__RequestVerificationToken.val() },
                         dataType: 'json',
                         data: null,
                         contentType: 'application/json; charset=utf-8',
@@ -872,7 +872,7 @@ $(function () {
         $.ajax({
             url: '/Calendar/GetCalendarEvents',
             method: 'POST',
-            headers: { "RequestVerificationToken": $__RequestVerificationToken.val() },
+            headers: { 'RequestVerificationToken': $__RequestVerificationToken.val() },
             dataType: 'json',
             data: JSON.stringify(paramValue),
             contentType: 'application/json; charset=utf-8',
@@ -1292,7 +1292,7 @@ $(function () {
         $.ajax({
             url: '/Calendar/CreateCalendarEvent',
             type: 'POST',
-            headers: { "RequestVerificationToken": $__RequestVerificationToken.val() },
+            headers: { 'RequestVerificationToken': $__RequestVerificationToken.val() },
             dataType: 'json',
             data: formData,
             contentType: false,
@@ -1318,7 +1318,7 @@ $(function () {
                     $.ajax({
                         url: '/Calendar/GetCalendarEvents',
                         method: 'POST',
-                        headers: { "RequestVerificationToken": $__RequestVerificationToken.val() },
+                        headers: { 'RequestVerificationToken': $__RequestVerificationToken.val() },
                         dataType: 'json',
                         data: JSON.stringify(paramValue),
                         contentType: 'application/json; charset=utf-8',
@@ -1520,7 +1520,7 @@ $(function () {
         $.ajax({
             url: '/Calendar/UpdateCalendarEvent',
             type: 'POST',
-            headers: { "RequestVerificationToken": $__RequestVerificationToken.val() },
+            headers: { 'RequestVerificationToken': $__RequestVerificationToken.val() },
             dataType: 'json',
             data: formData,
             contentType: false,
@@ -1547,7 +1547,7 @@ $(function () {
                     $.ajax({
                         url: '/Calendar/GetCalendarEvents',
                         method: 'POST',
-                        headers: { "RequestVerificationToken": $__RequestVerificationToken.val() },
+                        headers: { 'RequestVerificationToken': $__RequestVerificationToken.val() },
                         dataType: 'json',
                         data: JSON.stringify(paramValue),
                         contentType: 'application/json; charset=utf-8',
@@ -1618,7 +1618,7 @@ $(function () {
         $.ajax({
             url: '/Calendar/UpdateCalendar',
             type: 'POST',
-            headers: { "RequestVerificationToken": $__RequestVerificationToken.val() },
+            headers: { 'RequestVerificationToken': $__RequestVerificationToken.val() },
             dataType: 'json',
             data: JSON.stringify(paramValue),
             contentType: 'application/json; charset=utf-8',
@@ -1680,7 +1680,7 @@ $(function () {
         $.ajax({
             url: '/Calendar/IsCalendarExists' + '?id=' + selectedCalendarId,
             type: 'POST',
-            headers: { "RequestVerificationToken": $__RequestVerificationToken.val() },
+            headers: { 'RequestVerificationToken': $__RequestVerificationToken.val() },
             dataType: 'json',
             data: null,
             contentType: 'application/json; charset=utf-8',
@@ -1703,7 +1703,7 @@ $(function () {
                     $.ajax({
                         url: '/Calendar/DeleteCalendar',
                         type: 'POST',
-                        headers: { "RequestVerificationToken": $__RequestVerificationToken.val() },
+                        headers: { 'RequestVerificationToken': $__RequestVerificationToken.val() },
                         dataType: 'json',
                         data: JSON.stringify(paramValue),
                         contentType: 'application/json; charset=utf-8',
@@ -1747,7 +1747,7 @@ function CreateUploadImageFile(file) {
     $.ajax({
         url: "/Calendar/UploadImageFile",
         data: formData,
-        headers: { "RequestVerificationToken": $__RequestVerificationToken.val() },
+        headers: { 'RequestVerificationToken': $__RequestVerificationToken.val() },
         type: 'POST',
         enctype: 'multipart/form-data',
         processData: false,
@@ -1787,7 +1787,7 @@ function EditUploadImageFile(file) {
     $.ajax({
         url: "/Calendar/UploadImageFile",
         data: formData,
-        headers: { "RequestVerificationToken": $__RequestVerificationToken.val() },
+        headers: { 'RequestVerificationToken': $__RequestVerificationToken.val() },
         type: 'POST',
         enctype: 'multipart/form-data',
         processData: false,
@@ -1845,7 +1845,7 @@ function CreateCalendar() {
     $.ajax({
         url: '/Calendar/CreateCalendar',
         type: 'POST',
-        headers: { "RequestVerificationToken": $__RequestVerificationToken.val() },
+        headers: { 'RequestVerificationToken': $__RequestVerificationToken.val() },
         dataType: 'json',
         data: JSON.stringify(paramValue),
         contentType: 'application/json; charset=utf-8',
@@ -1889,7 +1889,7 @@ $aCreateCalendarEvent.off('click').on('click', function () {
     $.ajax({
         url: '/Calendar/GetCalendars',
         method: 'POST',
-        headers: { "RequestVerificationToken": $__RequestVerificationToken.val() },
+        headers: { 'RequestVerificationToken': $__RequestVerificationToken.val() },
         dataType: 'json',
         data: null,
         contentType: 'application/json; charset=utf-8',
@@ -2130,7 +2130,7 @@ $aUpdateCalendarShared.off('click').on('click', function () {
     $.ajax({
         url: '/Calendar/GetCalendarShareds',
         method: 'POST',
-        headers: { "RequestVerificationToken": $__RequestVerificationToken.val() },
+        headers: { 'RequestVerificationToken': $__RequestVerificationToken.val() },
         dataType: 'json',
         data: null,
         contentType: 'application/json; charset=utf-8',
@@ -2179,7 +2179,7 @@ $formUpdateCalendarShared.off('submit').on('submit', function (event) {
     $.ajax({
         url: '/Calendar/UpdateCalendarShared',
         type: 'POST',
-        headers: { "RequestVerificationToken": $__RequestVerificationToken.val() },
+        headers: { 'RequestVerificationToken': $__RequestVerificationToken.val() },
         dataType: 'json',
         data: JSON.stringify(calendarBeShared),
         contentType: 'application/json; charset=utf-8',
@@ -2206,7 +2206,7 @@ $(document).off('click', '.edit-calendar').on('click', '.edit-calendar', functio
     $.ajax({
         url: '/Calendar/IsCalendarExists' + '?id=' + selectedCalendarId,
         type: 'POST',
-        headers: { "RequestVerificationToken": $__RequestVerificationToken.val() },
+        headers: { 'RequestVerificationToken': $__RequestVerificationToken.val() },
         dataType: 'json',
         data: null,
         contentType: 'application/json; charset=utf-8',
