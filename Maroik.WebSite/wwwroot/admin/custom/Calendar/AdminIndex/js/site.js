@@ -643,10 +643,10 @@ $(function () {
                             if (data.calendarEvent.calendarEventAttachedFile !== null) {
                                 $divEditCalendarEventAttachedFile.show();
 
-                                $aEditCalendarEventAttachedFile.attr("href", '#');
-                                $aEditCalendarEventAttachedFile.attr("data-file", data.calendarEvent.calendarEventAttachedFileBase64Data);
-                                $aEditCalendarEventAttachedFile.attr("data-contenttype", data.calendarEvent.calendarEventAttachedFileContentType);
-                                $aEditCalendarEventAttachedFile.attr("data-name", `${data.calendarEvent.calendarEventAttachedFile.name}${data.calendarEvent.calendarEventAttachedFile.extension}`);
+                                $aEditCalendarEventAttachedFile.attr('href', '#');
+                                $aEditCalendarEventAttachedFile.attr('data-file', data.calendarEvent.calendarEventAttachedFileBase64Data);
+                                $aEditCalendarEventAttachedFile.attr('data-contenttype', data.calendarEvent.calendarEventAttachedFileContentType);
+                                $aEditCalendarEventAttachedFile.attr('data-name', `${data.calendarEvent.calendarEventAttachedFile.name}${data.calendarEvent.calendarEventAttachedFile.extension}`);
 
                                 $aEditCalendarEventAttachedFile.text(`${data.calendarEvent.calendarEventAttachedFile.name}${data.calendarEvent.calendarEventAttachedFile.extension}`);
 
@@ -683,7 +683,7 @@ $(function () {
                             $divEditEventNotificationAllDayUnchecked.hide();
 
                             if (data.calendarEvent.allDay === true) {
-                                $divEditEventNotificationAllDayChecked.find(".divEditEventNotificationAllDayCheckedRow").remove();
+                                $divEditEventNotificationAllDayChecked.find('.divEditEventNotificationAllDayCheckedRow').remove();
                                 $divEditEventNotificationAllDayChecked.show();
 
                                 if (data.calendarEvent.serializedCalendarReminders !== '[]') {
@@ -706,30 +706,30 @@ $(function () {
                                         let selectedWeeks = reminder.WeeksBeforeEvent !== null ? 'selected' : '';
 
                                         const selNotificationTimeTypeAllDayChecked = `
-                                        <input type='number' class='form-control-sm editCalendarEventSelNotificationNumberAllDayChecked' style='width:20%;text-overflow:ellipsis; background-color:#343a40; color:#fff; border-color:#6c757d;' min="0" max="${max}" value="${value}">
+                                        <input type='number' class='form-control-sm editCalendarEventSelNotificationNumberAllDayChecked' style='width:20%;text-overflow:ellipsis; background-color:#343a40; color:#fff; border-color:#6c757d;' min='0' max='${max}' value='${value}'>
                                         <select class='form-control-sm editCalendarEventSelNotificationTimeTypeAllDayChecked' style='width:15%;text-overflow:ellipsis;'>
                                             <option value='Days' ${selectedDays}>${localizer.Days}</option>
                                             <option value='Weeks' ${selectedWeeks}>${localizer.Weeks}</option>
                                         </select>`;
 
                                         const htmlString = String.raw`
-                                        <div class="divEditEventNotificationAllDayCheckedRow">
+                                        <div class='divEditEventNotificationAllDayCheckedRow'>
                                             <select class='form-control-sm editCalendarEventSelNotificationMethodAllDayChecked' style='width:20%;text-overflow:ellipsis;'>
                                                 ${selectedMethodOption}
                                             </select>
 
                                             ${selNotificationTimeTypeAllDayChecked}
 
-                                            <label style="padding-left:5px;padding-right:5px;">${localizer.BeforeAt}</label>
+                                            <label style='padding-left:5px;padding-right:5px;'>${localizer.BeforeAt}</label>
                                             <select class='form-control-sm editCalendarEventSelNotificationTimeAllDayChecked' style='width:11%;text-overflow:ellipsis;'>
-                                                ${timeIntervals.map(time => time === `${reminder.TimesBeforeEvent.substring(0, 5)}` ? `<option value="${time}" selected>${time}</option>` : `<option value="${time}">${time}</option>`).join('')}
+                                                ${timeIntervals.map(time => time === `${reminder.TimesBeforeEvent.substring(0, 5)}` ? `<option value='${time}' selected>${time}</option>` : `<option value='${time}'>${time}</option>`).join('')}
                                             </select>
                                             <a class='hover aEditCalendarDeleteNotificationAllDayChecked' href='#' style='width:10%;'>
                                                 <i class='fa fa-trash' aria-hidden='true' style='margin-left: 7px;'></i>
                                             </a>
 
                                             <br />
-                                            <div class="error-message" style="color: red; font-size: 0.9em; display: none;"></div>
+                                            <div class='error-message' style='color: red; font-size: 0.9em; display: none;'></div>
                                         </div>
                                     `;
                                         $(htmlString).insertBefore($editCalendarEventNotificationAllDayChecked);
@@ -758,7 +758,7 @@ $(function () {
                                         let selectedWeeks = reminder.WeeksBeforeEvent !== null ? 'selected' : '';
 
                                         const selNotificationTimeTypeAllDayUnchecked = `
-                                        <input type='number' class='form-control-sm editCalendarEventSelNotificationNumberAllDayUnchecked' style='width:20%;text-overflow:ellipsis; background-color:#343a40; color:#fff; border-color:#6c757d;' min="0" max="${max}" value="${value}">
+                                        <input type='number' class='form-control-sm editCalendarEventSelNotificationNumberAllDayUnchecked' style='width:20%;text-overflow:ellipsis; background-color:#343a40; color:#fff; border-color:#6c757d;' min='0' max='${max}' value='${value}'>
                                         <select class='form-control-sm editCalendarEventSelNotificationTimeTypeAllDayUnchecked' style='width:15%;text-overflow:ellipsis;'>
                                             <option value='Minutes' ${selectedMinutes}>${localizer.Minutes}</option>
                                             <option value='Hours' ${selectedHours}>${localizer.Hours}</option>
@@ -767,7 +767,7 @@ $(function () {
                                         </select>`;
 
                                         const htmlString = String.raw`
-                                        <div class="divEditEventNotificationAllDayUncheckedRow" style="padding-bottom:5px;">
+                                        <div class='divEditEventNotificationAllDayUncheckedRow' style='padding-bottom:5px;'>
                                             <select class='form-control-sm editCalendarEventSelNotificationMethodAllDayUnchecked' style='width:20%;text-overflow:ellipsis;'>
                                                 ${selectedMethodOption}
                                             </select>
@@ -779,7 +779,7 @@ $(function () {
                                             </a>
 
                                             <br />
-                                            <div class="error-message" style="color: red; font-size: 0.9em; display: none;"></div>
+                                            <div class='error-message' style='color: red; font-size: 0.9em; display: none;'></div>
                                         </div>
                                     `;
 
@@ -790,7 +790,7 @@ $(function () {
 
                             $editCalendarEventTaskDialogModal.modal({
                                 keyboard: false,
-                                backdrop: "static"
+                                backdrop: 'static'
                             });
 
                             $editCalendarEventTaskDialogModal.modal('toggle');
@@ -1200,7 +1200,7 @@ $(function () {
                 let timeType = $(this).find('.createCalendarEventSelNotificationTimeTypeAllDayChecked').val();
                 let time = $(this).find('.createCalendarEventSelNotificationTimeAllDayChecked').val();
 
-                if (timeType === "Days") {
+                if (timeType === 'Days') {
                     calendarReminders.push({
                         Method: method,
                         MinutesBeforeEvent: null,
@@ -1210,7 +1210,7 @@ $(function () {
                         TimesBeforeEvent: time 
                     });
                 }
-                else if (timeType === "Weeks") {
+                else if (timeType === 'Weeks') {
                     calendarReminders.push({
                         Method: method,
                         MinutesBeforeEvent: null,
@@ -1228,7 +1228,7 @@ $(function () {
                 let number = $(this).find('.createCalendarEventSelNotificationNumberAllDayUnchecked').val();
                 let timeType = $(this).find('.createCalendarEventSelNotificationTimeTypeAllDayUnchecked').val();
 
-                if (timeType === "Minutes") {
+                if (timeType === 'Minutes') {
                     calendarReminders.push({
                         Method: method,
                         MinutesBeforeEvent: number,
@@ -1238,7 +1238,7 @@ $(function () {
                         TimesBeforeEvent: null
                     });
                 }
-                else if (timeType === "Hours") {
+                else if (timeType === 'Hours') {
                     calendarReminders.push({
                         Method: method,
                         MinutesBeforeEvent: null,
@@ -1247,7 +1247,7 @@ $(function () {
                         WeeksBeforeEvent: null,
                         TimesBeforeEvent: null
                     });
-                } else if (timeType === "Days") {
+                } else if (timeType === 'Days') {
                     calendarReminders.push({
                         Method: method,
                         MinutesBeforeEvent: null,
@@ -1256,7 +1256,7 @@ $(function () {
                         WeeksBeforeEvent: null,
                         TimesBeforeEvent: null
                     });
-                } else if (timeType === "Weeks") {
+                } else if (timeType === 'Weeks') {
                     calendarReminders.push({
                         Method: method,
                         MinutesBeforeEvent: null,
@@ -1427,7 +1427,7 @@ $(function () {
                 let timeType = $(this).find('.editCalendarEventSelNotificationTimeTypeAllDayChecked').val();
                 let time = $(this).find('.editCalendarEventSelNotificationTimeAllDayChecked').val();
 
-                if (timeType === "Days") {
+                if (timeType === 'Days') {
                     calendarReminders.push({
                         Method: method,
                         MinutesBeforeEvent: null,
@@ -1437,7 +1437,7 @@ $(function () {
                         TimesBeforeEvent: time
                     });
                 }
-                else if (timeType === "Weeks") {
+                else if (timeType === 'Weeks') {
                     calendarReminders.push({
                         Method: method,
                         MinutesBeforeEvent: null,
@@ -1455,7 +1455,7 @@ $(function () {
                 let number = $(this).find('.editCalendarEventSelNotificationNumberAllDayUnchecked').val();
                 let timeType = $(this).find('.editCalendarEventSelNotificationTimeTypeAllDayUnchecked').val();
 
-                if (timeType === "Minutes") {
+                if (timeType === 'Minutes') {
                     calendarReminders.push({
                         Method: method,
                         MinutesBeforeEvent: number,
@@ -1465,7 +1465,7 @@ $(function () {
                         TimesBeforeEvent: null
                     });
                 }
-                else if (timeType === "Hours") {
+                else if (timeType === 'Hours') {
                     calendarReminders.push({
                         Method: method,
                         MinutesBeforeEvent: null,
@@ -1474,7 +1474,7 @@ $(function () {
                         WeeksBeforeEvent: null,
                         TimesBeforeEvent: null
                     });
-                } else if (timeType === "Days") {
+                } else if (timeType === 'Days') {
                     calendarReminders.push({
                         Method: method,
                         MinutesBeforeEvent: null,
@@ -1483,7 +1483,7 @@ $(function () {
                         WeeksBeforeEvent: null,
                         TimesBeforeEvent: null
                     });
-                } else if (timeType === "Weeks") {
+                } else if (timeType === 'Weeks') {
                     calendarReminders.push({
                         Method: method,
                         MinutesBeforeEvent: null,
@@ -1625,7 +1625,7 @@ $(function () {
             success: function (data) {
                 if (data.result) {
                     $editCalendarDialogModal.modal('hide');
-                    let $lblCalendarId = $("#lblCalendar" + data.calendar.id);
+                    let $lblCalendarId = $('#lblCalendar' + data.calendar.id);
 
                     let label = $lblCalendarId.find('label');
                     if (label.length > 0) {
@@ -1742,10 +1742,10 @@ $(function () {
 function CreateUploadImageFile(file) {
 
     let formData = new FormData();
-    formData.append("summernoteImageFile", file);
+    formData.append('summernoteImageFile', file);
 
     $.ajax({
-        url: "/Calendar/UploadImageFile",
+        url: '/Calendar/UploadImageFile',
         data: formData,
         headers: { 'RequestVerificationToken': $__RequestVerificationToken.val() },
         type: 'POST',
@@ -1759,8 +1759,8 @@ function CreateUploadImageFile(file) {
                 const imgURL = URL.createObjectURL(base64ToBlob(data.file.fileContents, data.file.contentType));
                 const imgNode = document.createElement('img');
                 imgNode.src = imgURL;
-                imgNode.style.maxWidth = "170px";
-                imgNode.style.maxHeight = "209px";
+                imgNode.style.maxWidth = '170px';
+                imgNode.style.maxHeight = '209px';
                 imgNode.setAttribute('alt', data.filePath);
 
                 $createCalendarEventDescription.summernote('insertNode', imgNode);
@@ -1782,10 +1782,10 @@ function CreateUploadImageFile(file) {
 function EditUploadImageFile(file) {
 
     let formData = new FormData();
-    formData.append("summernoteImageFile", file);
+    formData.append('summernoteImageFile', file);
 
     $.ajax({
-        url: "/Calendar/UploadImageFile",
+        url: '/Calendar/UploadImageFile',
         data: formData,
         headers: { 'RequestVerificationToken': $__RequestVerificationToken.val() },
         type: 'POST',
@@ -1799,8 +1799,8 @@ function EditUploadImageFile(file) {
                 const imgURL = URL.createObjectURL(base64ToBlob(data.file.fileContents, data.file.contentType));
                 const imgNode = document.createElement('img');
                 imgNode.src = imgURL;
-                imgNode.style.maxWidth = "170px";
-                imgNode.style.maxHeight = "209px";
+                imgNode.style.maxWidth = '170px';
+                imgNode.style.maxHeight = '209px';
                 imgNode.setAttribute('alt', data.filePath);
 
                 $editCalendarEventDescription.summernote('insertNode', imgNode);
@@ -1853,7 +1853,7 @@ function CreateCalendar() {
             if (data.result) {
                 $createCalendarDialogModal.modal('hide');
 
-                $myCalendars.append(`<label id="lblCalendar${data.calendar.id}" style="position: relative; border:1px solid #ccc; padding:10px; margin:0 0 10px; display:block"><input type="checkbox" style="accent-color:${data.calendar.htmlColorCode}" checked /><label style="padding-left:0.5em;"> ${data.calendar.name}</label><i id="${data.calendar.id}" class="edit-calendar fas fa-edit" style="position: absolute; right: 40px; top: 50%; transform: translateY(-50%); cursor: pointer;"></i><i id="${data.calendar.id}" class="delete-calendar fas fa-trash" style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); cursor: pointer;"></i></label>`);
+                $myCalendars.append(`<label id='lblCalendar${data.calendar.id}' style='position: relative; border:1px solid #ccc; padding:10px; margin:0 0 10px; display:block'><input type='checkbox' style='accent-color:${data.calendar.htmlColorCode}' checked /><label style='padding-left:0.5em;'> ${data.calendar.name}</label><i id='${data.calendar.id}' class='edit-calendar fas fa-edit' style='position: absolute; right: 40px; top: 50%; transform: translateY(-50%); cursor: pointer;'></i><i id='${data.calendar.id}' class='delete-calendar fas fa-trash' style='position: absolute; right: 15px; top: 50%; transform: translateY(-50%); cursor: pointer;'></i></label>`);
 
                 let calendars = $myCalendars.find('label[id^="lblCalendar"]').get();
 
@@ -1913,11 +1913,11 @@ $aCreateCalendarEvent.off('click').on('click', function () {
 
     $createCalendarEventTaskDialogModal.modal('show');
 
-    $createCalendarEventAllDayUncheckedStartDate.val(moment().format("YYYY-MM-DD"));
-    $createCalendarEventAllDayCheckedStartDate.val(moment().format("YYYY-MM-DD"));
+    $createCalendarEventAllDayUncheckedStartDate.val(moment().format('YYYY-MM-DD'));
+    $createCalendarEventAllDayCheckedStartDate.val(moment().format('YYYY-MM-DD'));
 
-    $createCalendarEventAllDayUncheckedEndDate.val(moment().format("YYYY-MM-DD"));
-    $createCalendarEventAllDayCheckedEndDate.val(moment().format("YYYY-MM-DD"));
+    $createCalendarEventAllDayUncheckedEndDate.val(moment().format('YYYY-MM-DD'));
+    $createCalendarEventAllDayCheckedEndDate.val(moment().format('YYYY-MM-DD'));
 });
 
 $createCalendarEventAllDay.off('click').on('click', function () {
@@ -1970,28 +1970,28 @@ $createCalendarEventNotificationAllDayChecked.off('click').on('click', function 
     });
 
     const htmlString = String.raw`
-    <div class="divCreateEventNotificationAllDayCheckedRow">
+    <div class='divCreateEventNotificationAllDayCheckedRow'>
         <select class='form-control-sm createCalendarEventSelNotificationMethodAllDayChecked' style='width:20%;text-overflow:ellipsis;'>
             <option value='Email'>${localizer.Email}</option>
             <option value='Notification'>${localizer.Notification}</option>
         </select>
 
-        <input type='number' class='form-control-sm createCalendarEventSelNotificationNumberAllDayChecked' style='width:20%;text-overflow:ellipsis; background-color:#343a40; color:#fff; border-color:#6c757d;' min="0" max="${maxDaysBeforeEvent}">
+        <input type='number' class='form-control-sm createCalendarEventSelNotificationNumberAllDayChecked' style='width:20%;text-overflow:ellipsis; background-color:#343a40; color:#fff; border-color:#6c757d;' min='0' max='${maxDaysBeforeEvent}'>
 
         <select class='form-control-sm createCalendarEventSelNotificationTimeTypeAllDayChecked' style='width:15%;text-overflow:ellipsis;'>
             <option value='Days' selected>${localizer.Days}</option>
             <option value='Weeks'>${localizer.Weeks}</option>
         </select>
-        <label style="padding-left:5px;padding-right:5px;">${localizer.BeforeAt}</label>
+        <label style='padding-left:5px;padding-right:5px;'>${localizer.BeforeAt}</label>
         <select class='form-control-sm createCalendarEventSelNotificationTimeAllDayChecked' style='width:11%;text-overflow:ellipsis;'>
-            ${timeIntervals.map(time => time === `${defaultBeforeAt}` ? `<option value="${time}" selected>${time}</option>` : `<option value="${time}">${time}</option>`).join('')}
+            ${timeIntervals.map(time => time === `${defaultBeforeAt}` ? `<option value='${time}' selected>${time}</option>` : `<option value='${time}'>${time}</option>`).join('')}
         </select>
         <a class='hover aCreateCalendarDeleteNotificationAllDayChecked' href='#' style='width:10%;'>
             <i class='fa fa-trash' aria-hidden='true' style='margin-left: 7px;'></i>
         </a>
 
         <br />
-        <div class="error-message" style="color: red; font-size: 0.9em; display: none;"></div>
+        <div class='error-message' style='color: red; font-size: 0.9em; display: none;'></div>
     </div>
 `;
 
@@ -2000,13 +2000,13 @@ $createCalendarEventNotificationAllDayChecked.off('click').on('click', function 
 
 $createCalendarEventNotificationAllDayUnchecked.off('click').on('click', function () {
     const htmlString = String.raw`
-    <div class="divCreateEventNotificationAllDayUncheckedRow" style="padding-bottom:5px;">
+    <div class='divCreateEventNotificationAllDayUncheckedRow' style='padding-bottom:5px;'>
         <select class='form-control-sm createCalendarEventSelNotificationMethodAllDayUnchecked' style='width:20%;text-overflow:ellipsis;'>
             <option value='Email'>${localizer.Email}</option>
             <option value='Notification'>${localizer.Notification}</option>
         </select>
 
-        <input type='number' class='form-control-sm createCalendarEventSelNotificationNumberAllDayUnchecked' style='width:20%;text-overflow:ellipsis; background-color:#343a40; color:#fff; border-color:#6c757d;' min="0" max="${maxMinutesBeforeEvent}">
+        <input type='number' class='form-control-sm createCalendarEventSelNotificationNumberAllDayUnchecked' style='width:20%;text-overflow:ellipsis; background-color:#343a40; color:#fff; border-color:#6c757d;' min='0' max='${maxMinutesBeforeEvent}'>
 
         <select class='form-control-sm createCalendarEventSelNotificationTimeTypeAllDayUnchecked' style='width:15%;text-overflow:ellipsis;'>
             <option value='Minutes' selected>${localizer.Minutes}</option>
@@ -2019,7 +2019,7 @@ $createCalendarEventNotificationAllDayUnchecked.off('click').on('click', functio
         </a>
 
         <br />
-        <div class="error-message" style="color: red; font-size: 0.9em; display: none;"></div>
+        <div class='error-message' style='color: red; font-size: 0.9em; display: none;'></div>
     </div>
 `;
 
@@ -2034,28 +2034,28 @@ $editCalendarEventNotificationAllDayChecked.off('click').on('click', function ()
     });
 
     const htmlString = String.raw`
-    <div class="divEditEventNotificationAllDayCheckedRow">
+    <div class='divEditEventNotificationAllDayCheckedRow'>
         <select class='form-control-sm editCalendarEventSelNotificationMethodAllDayChecked' style='width:20%;text-overflow:ellipsis;'>
             <option value='Email'>${localizer.Email}</option>
             <option value='Notification'>${localizer.Notification}</option>
         </select>
 
-        <input type='number' class='form-control-sm editCalendarEventSelNotificationNumberAllDayChecked' style='width:20%;text-overflow:ellipsis; background-color:#343a40; color:#fff; border-color:#6c757d;' min="0" max="${maxDaysBeforeEvent}">
+        <input type='number' class='form-control-sm editCalendarEventSelNotificationNumberAllDayChecked' style='width:20%;text-overflow:ellipsis; background-color:#343a40; color:#fff; border-color:#6c757d;' min='0' max='${maxDaysBeforeEvent}'>
 
         <select class='form-control-sm editCalendarEventSelNotificationTimeTypeAllDayChecked' style='width:15%;text-overflow:ellipsis;'>
             <option value='Days' selected>${localizer.Days}</option>
             <option value='Weeks'>${localizer.Weeks}</option>
         </select>
-        <label style="padding-left:5px;padding-right:5px;">${localizer.BeforeAt}</label>
+        <label style='padding-left:5px;padding-right:5px;'>${localizer.BeforeAt}</label>
         <select class='form-control-sm editCalendarEventSelNotificationTimeAllDayChecked' style='width:11%;text-overflow:ellipsis;'>
-            ${timeIntervals.map(time => time === `${defaultBeforeAt}` ? `<option value="${time}" selected>${time}</option>` : `<option value="${time}">${time}</option>`).join('')}
+            ${timeIntervals.map(time => time === `${defaultBeforeAt}` ? `<option value='${time}' selected>${time}</option>` : `<option value='${time}'>${time}</option>`).join('')}
         </select>
         <a class='hover aEditCalendarDeleteNotificationAllDayChecked' href='#' style='width:10%;'>
             <i class='fa fa-trash' aria-hidden='true' style='margin-left: 7px;'></i>
         </a>
 
         <br />
-        <div class="error-message" style="color: red; font-size: 0.9em; display: none;"></div>
+        <div class='error-message' style='color: red; font-size: 0.9em; display: none;'></div>
     </div>
 `;
 
@@ -2065,13 +2065,13 @@ $editCalendarEventNotificationAllDayChecked.off('click').on('click', function ()
 $editCalendarEventNotificationAllDayUnchecked.off('click').on('click', function () {
 
     const htmlString = String.raw`
-    <div class="divEditEventNotificationAllDayUncheckedRow" style="padding-bottom:5px;">
+    <div class='divEditEventNotificationAllDayUncheckedRow' style='padding-bottom:5px;'>
         <select class='form-control-sm editCalendarEventSelNotificationMethodAllDayUnchecked' style='width:20%;text-overflow:ellipsis;'>
             <option value='Email'>${localizer.Email}</option>
             <option value='Notification'>${localizer.Notification}</option>
         </select>
 
-        <input type='number' class='form-control-sm editCalendarEventSelNotificationNumberAllDayUnchecked' style='width:20%;text-overflow:ellipsis; background-color:#343a40; color:#fff; border-color:#6c757d;' min="0" max="${maxMinutesBeforeEvent}">
+        <input type='number' class='form-control-sm editCalendarEventSelNotificationNumberAllDayUnchecked' style='width:20%;text-overflow:ellipsis; background-color:#343a40; color:#fff; border-color:#6c757d;' min='0' max='${maxMinutesBeforeEvent}'>
 
         <select class='form-control-sm editCalendarEventSelNotificationTimeTypeAllDayUnchecked' style='width:15%;text-overflow:ellipsis;'>
             <option value='Minutes' selected>${localizer.Minutes}</option>
@@ -2084,7 +2084,7 @@ $editCalendarEventNotificationAllDayUnchecked.off('click').on('click', function 
         </a>
 
         <br />
-        <div class="error-message" style="color: red; font-size: 0.9em; display: none;"></div>
+        <div class='error-message' style='color: red; font-size: 0.9em; display: none;'></div>
     </div>
 `;
 
@@ -2140,15 +2140,15 @@ $aUpdateCalendarShared.off('click').on('click', function () {
                 let htmlString = '';
                 $.each(response.setCalendarShareds, function (index, setCalendarShared) {
                     htmlString += String.raw`
-                        <div class="form-row setCalendarShared" style="margin-top: 20px;">
-                            <div id="divSetCalendarShared${setCalendarShared.id}" class="form-group col-md-4 mb-4 text-center">
-                                <label class="shareToCalendar" style="word-break: break-all;">${setCalendarShared.name}</label>
+                        <div class='form-row setCalendarShared' style='margin-top: 20px;'>
+                            <div id='divSetCalendarShared${setCalendarShared.id}' class='form-group col-md-4 mb-4 text-center'>
+                                <label class='shareToCalendar' style='word-break: break-all;'>${setCalendarShared.name}</label>
                             </div>
-                            <div class="form-group col-md-4 mb-4 text-center">
-                                <input class="form-control form-control-sm shareToUser" type="checkbox" ${setCalendarShared.user === true ? "checked" : ""}/>
+                            <div class='form-group col-md-4 mb-4 text-center'>
+                                <input class='form-control form-control-sm shareToUser' type='checkbox' ${setCalendarShared.user === true ? 'checked' : ''}/>
                             </div>
-                            <div class="form-group col-md-4 mb-4 text-center">
-                                <input class="form-control form-control-sm shareToGuest" type="checkbox" ${setCalendarShared.guest === true ? "checked" : ""}/>
+                            <div class='form-group col-md-4 mb-4 text-center'>
+                                <input class='form-control form-control-sm shareToGuest' type='checkbox' ${setCalendarShared.guest === true ? 'checked' : ''}/>
                             </div>
                         </div>
 
@@ -2170,7 +2170,7 @@ $formUpdateCalendarShared.off('submit').on('submit', function (event) {
     
     $divSetCalendarShared.children('.setCalendarShared').each(function () {
         calendarBeShared.push({
-            CalendarId: $(this).find('.shareToCalendar').parent().attr('id').replace("divSetCalendarShared", ""),
+            CalendarId: $(this).find('.shareToCalendar').parent().attr('id').replace('divSetCalendarShared', ''),
             User: $(this).find('.shareToUser').prop('checked'),
             Anonymous: $(this).find('.shareToGuest').prop('checked')
         });
@@ -2201,7 +2201,7 @@ $(document).off('click', '.edit-calendar').on('click', '.edit-calendar', functio
     e.preventDefault();
     e.stopPropagation();
 
-    let selectedCalendarId = $(this).parent().attr('id').replace("lblCalendar", "");
+    let selectedCalendarId = $(this).parent().attr('id').replace('lblCalendar', '');
 
     $.ajax({
         url: '/Calendar/IsCalendarExists' + '?id=' + selectedCalendarId,
@@ -2220,7 +2220,7 @@ $(document).off('click', '.edit-calendar').on('click', '.edit-calendar', functio
 
                 $editCalendarDialogModal.modal({
                     keyboard: false,
-                    backdrop: "static"
+                    backdrop: 'static'
                 });
 
                 $editCalendarDialogModal.modal('toggle');
@@ -2245,12 +2245,12 @@ $(document).off('click', '.delete-calendar').on('click', '.delete-calendar', fun
     e.preventDefault();
     e.stopPropagation();
 
-    let calendarId = $(this).parent().attr('id').replace("lblCalendar", "");
+    let calendarId = $(this).parent().attr('id').replace('lblCalendar', '');
     $confirmDeleteCalendarDialogModal.data('calendar-id', calendarId);
 
     $confirmDeleteCalendarDialogModal.modal({
         keyboard: false,
-        backdrop: "static"
+        backdrop: 'static'
     });
 
     $confirmDeleteCalendarDialogModal.modal('toggle');
