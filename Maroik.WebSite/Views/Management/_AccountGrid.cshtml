@@ -28,7 +28,7 @@
     .AppendCss("table-hover")
     //.Attributed(new { data_type = "individuals" })
     //.RowAttributed(model => new { @class = model.IsWorking == true ? "working" : null, data_id = model.Id })
-    .RowAttributed(model => new { @class = "table-inactive", data_email = model.Email})
+    .RowAttributed(model => new { @class = "table-inactive clsGridRow", data_email = model.Email})
     .Using(GridFilterMode.Row)
     .Empty(localizer["No data found"])
     .Filterable()
