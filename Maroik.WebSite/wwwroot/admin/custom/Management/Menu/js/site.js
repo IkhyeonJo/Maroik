@@ -1,10 +1,14 @@
-﻿$(function () {
-    $("#createMenuTabs").tabs();
-    $("#editCategoryTabs").tabs();
-    $("#editSubCategoryTabs").tabs();
-});
+﻿const $createMenuTabs = $("#createMenuTabs");
+const $editCategoryTabs = $("#editCategoryTabs");
+const $editSubCategoryTabs = $("#editSubCategoryTabs");
+const $gridSearch = $('#gridSearch');
+const selectedRowColor = "table-primary";
 
-let selectedRowColor = "table-primary";
+$(function () {
+    $createMenuTabs.tabs();
+    $editCategoryTabs.tabs();
+    $editSubCategoryTabs.tabs();
+});
 
 document.addEventListener("rowclick", e => {
     let selectedRow = e.detail;
@@ -15,41 +19,41 @@ document.addEventListener("rowclick", e => {
         selectedRowCategoryId = "-1";
     }
 
-    $('#menuGrid > table > tbody  > tr').each(function (index, tr) {
+    let $clsGridRow = $('.clsGridRow');
+
+    $clsGridRow.each(function () {
         $(this).removeClass(selectedRowColor);
     });
 
-    $('#menuGrid > table > tbody  > tr').each(function (index, tr) {
-        if ((new String(selectedRowId).valueOf() === new String($(this).attr('data-id')).valueOf()) && (new String(selectedRowCategoryId).valueOf() === new String($(this).attr('data-categoryid')).valueOf())) {
+    $clsGridRow.each(function () {
+        if ((String(selectedRowId).valueOf() === String($(this).attr('data-id')).valueOf()) && (String(selectedRowCategoryId).valueOf() === String($(this).attr('data-categoryid')).valueOf())) {
             $(this).addClass(selectedRowColor);
         }
     });
 });
 
-document.addEventListener("reloadstart", e => {
+document.addEventListener("reloadstart", _ => {
 });
 
-document.addEventListener("reloadend", e => {
+document.addEventListener("reloadend", _ => {
 });
 
-document.addEventListener("reloadfail", e => {
+document.addEventListener("reloadfail", _ => {
 });
 
-document.addEventListener("gridconfigure", e => {
+document.addEventListener("gridconfigure", _ => {
 });
 
-$(document).on("dblclick", "#menuGrid > table > tbody  > tr", function () {
-    $('#menuGrid > table > tbody  > tr').each(function (index, tr) {
+$(document).on("dblclick", ".clsGridRow", function () {
+    $('.clsGridRow').each(function () {
         if ($(this).attr("class").includes(selectedRowColor)) {
             EditMenuGridRow();
         }
     });
 });
-$('#gridSearch').on('input', function () {
+$gridSearch.on('input', function () {
     const grid = new MvcGrid(document.querySelector(".mvc-grid"));
-
     grid.url.searchParams.set("wholeSearch", this.value);
-
     grid.reload();
 });
 
@@ -59,14 +63,13 @@ function CreateCategory() {
         return false;
     }
 
-    let createForm = $('#formCreateCategory');
-    let name = createForm.find('input[id="createCategoryName"]').val();
-    let displayName = createForm.find('input[id="createCategoryDisplayName"]').val();
-    let iconPath = createForm.find('input[id="createCategoryIconPath"]').val();
-    let controller = createForm.find('input[id="createCategoryController"]').val();
-    let action = createForm.find('input[id="createCategoryAction"]').val();
-    let role = createForm.find('select[id="createCategoryRole"]').val();
-    let order = createForm.find('input[id="createCategoryOrder"]').val();
+    let name = $('#createCategoryName').val();
+    let displayName = $('#createCategoryDisplayName').val();
+    let iconPath = $('#createCategoryIconPath').val();
+    let controller = $('#createCategoryController').val();
+    let action = $('#createCategoryAction').val();
+    let role = $('#createCategoryRole').val();
+    let order = $('#createCategoryOrder').val();
 
     let paramValue = JSON.stringify({
         Name: name,
@@ -157,7 +160,7 @@ function EditMenuGridRow(errorMessageSelectGridRow) {
     let selectedRowId = "-1";
     let selectedRowCategoryId = "-1";
 
-    $('#menuGrid > table > tbody  > tr').each(function (index, tr) {
+    $('#menuGrid > table > tbody  > tr').each(function () {
         if ($(this).attr("class").includes(selectedRowColor)) {
             selectedRowId = $(this).attr("data-id");
             selectedRowCategoryId = $(this).attr("data-categoryid");
@@ -350,7 +353,7 @@ function ConfirmDeleteMenu(errorMessageSelectGridRow) {
 
     let selectedRowId = "-1";
 
-    $('#menuGrid > table > tbody  > tr').each(function (index, tr) {
+    $('#menuGrid > table > tbody  > tr').each(function () {
         if ($(this).attr("class").includes(selectedRowColor)) {
             selectedRowId = $(this).attr("data-id");
         }
@@ -374,7 +377,7 @@ function DeleteMenu(errorMessageSelectGridRow) {
     let selectedRowId = "-1";
     let selectedRowCategoryId = "-1";
 
-    $('#menuGrid > table > tbody  > tr').each(function (index, tr) {
+    $('#menuGrid > table > tbody  > tr').each(function () {
         if ($(this).attr("class").includes(selectedRowColor)) {
             selectedRowId = $(this).attr("data-id");
             selectedRowCategoryId = $(this).attr("data-categoryid");
