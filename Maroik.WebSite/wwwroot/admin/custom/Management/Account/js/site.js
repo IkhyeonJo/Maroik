@@ -28,6 +28,7 @@ const $editAccountDialogModal = $('#editAccountDialogModal');
 const $confirmDeleteAccountDialogModal = $('#confirmDeleteAccountDialogModal');
 
 let selectedRowColor = "table-primary";
+
 $(function () {
     $createAccountTabs.tabs();
     $editAccountTabs.tabs();
