@@ -26,8 +26,7 @@ const $btnExportExcelAccount = $('#btnExportExcelAccount');
 const $btnDeleteAccount = $('#btnDeleteAccount');
 const $editAccountDialogModal = $('#editAccountDialogModal');
 const $confirmDeleteAccountDialogModal = $('#confirmDeleteAccountDialogModal');
-
-let selectedRowColor = "table-primary";
+const selectedRowColor = "table-primary";
 
 $(function () {
     $createAccountTabs.tabs();
