@@ -180,11 +180,13 @@ public class CalendarController : Controller
 
                         if (tempCalendarToValidate is null)
                         {
+                            await transaction.RollbackAsync();
                             return Json(new { result = false, error = _localizer["The calendar does not exists."].Value });
                         }
 
                         if (loginedAccount.Role is not (Role.Admin or Role.User)) // 비 로그인 사용자인 경우
                         {
+                            await transaction.RollbackAsync();
                             return Json(new { result = false, error = _localizer["Please Login to create calendar event"].Value });
                         }
 
@@ -326,6 +328,7 @@ public class CalendarController : Controller
                             }
                             else
                             {
+                                await transaction.RollbackAsync();
                                 return Ok(new { result = false, errorMessage = _localizer["File Size must be smaller than 10MB."].Value });
                             }
 
@@ -366,11 +369,13 @@ public class CalendarController : Controller
                     }
                     else
                     {
+                        await transaction.RollbackAsync();
                         return Json(new { result = false, error = _localizer["Please Login to create calendar event"].Value });
                     }
                 }
                 catch
                 {
+                    await transaction.RollbackAsync();
                     return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                 }
             }
@@ -2219,11 +2224,13 @@ public class CalendarController : Controller
 
                         if (calendarToValidate is null)
                         {
+                            await transaction.RollbackAsync();
                             return Json(new { result = false, error = _localizer["The calendar does not exists."].Value });
                         }
 
                         if (loginedAccount.Role is not (Role.Admin or Role.User)) // 비 로그인 사용자인 경우
                         {
+                            await transaction.RollbackAsync();
                             return Json(new { result = false, error = _localizer["Please Login to update calendar event"].Value });
                         }
 
@@ -2234,11 +2241,13 @@ public class CalendarController : Controller
 
                         if (!(calendarEvent.Id > 0))
                         {
+                            await transaction.RollbackAsync();
                             return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                         }
 
                         if (!(calendar.Id > 0))
                         {
+                            await transaction.RollbackAsync();
                             return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                         }
 
@@ -2379,6 +2388,7 @@ public class CalendarController : Controller
                             }
                             else
                             {
+                                await transaction.RollbackAsync();
                                 return Ok(new { result = false, errorMessage = _localizer["File Size must be smaller than 10MB."].Value });
                             }
 
@@ -2422,11 +2432,13 @@ public class CalendarController : Controller
                     }
                     else
                     {
+                        await transaction.RollbackAsync();
                         return Json(new { result = false, error = _localizer["Please Login to update calendar event"].Value });
                     }
                 }
                 catch
                 {
+                    await transaction.RollbackAsync();
                     return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                 }
             }
@@ -2484,6 +2496,7 @@ public class CalendarController : Controller
                 }
                 catch
                 {
+                    await transaction.RollbackAsync();
                     return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                 }
             }
@@ -2520,6 +2533,7 @@ public class CalendarController : Controller
 
                         if (loginedAccount.Role is not (Role.Admin or Role.User)) // 비 로그인 사용자인 경우
                         {
+                            await transaction.RollbackAsync();
                             return Json(new { result = false, error = _localizer["Login required."].Value });
                         }
 
@@ -2540,11 +2554,13 @@ public class CalendarController : Controller
                     }
                     else
                     {
+                        await transaction.RollbackAsync();
                         return Json(new { result = false, error = _localizer["Login required."].Value });
                     }
                 }
                 catch
                 {
+                    await transaction.RollbackAsync();
                     return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                 }
             }

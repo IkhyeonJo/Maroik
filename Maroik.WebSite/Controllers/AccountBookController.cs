@@ -260,6 +260,7 @@ public class AccountBookController : Controller
                         "OtherPhysicalAsset" or
                         "InsuranceAsset"))
                     {
+                        await transaction.RollbackAsync();
                         return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                     }
 
@@ -275,6 +276,7 @@ public class AccountBookController : Controller
 
                     if (tempAsset == null)
                     {
+                        await transaction.RollbackAsync();
                         return Json(new
                         {
                             result = false, error = _localizer["Fail to find the asset by given product name"].Value
@@ -309,22 +311,26 @@ public class AccountBookController : Controller
                         }
                         else
                         {
+                            await transaction.RollbackAsync();
                             return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                         }
                     }
                 }
                 catch
                 {
+                    await transaction.RollbackAsync();
                     return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                 }
             }
             else
             {
+                await transaction.RollbackAsync();
                 return Json(new { result = false, error = _localizer["Input is invalid"].Value });
             }
         }
         catch
         {
+            await transaction.RollbackAsync();
             return Json(new { result = false, error = _localizer["Input is invalid"].Value });
         }
     }
@@ -505,6 +511,7 @@ public class AccountBookController : Controller
                         incomeInputViewModel.DepositMyAssetProductName);
                     if (tempAssetToValidate.Deleted)
                     {
+                        await transaction.RollbackAsync();
                         return Json(new
                         {
                             result = false,
@@ -526,6 +533,7 @@ public class AccountBookController : Controller
                             "RentalIncome" or
                             "OtherIncome"))
                         {
+                            await transaction.RollbackAsync();
                             return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                         }
                     }
@@ -534,6 +542,7 @@ public class AccountBookController : Controller
                         if (incomeInputViewModel.SubClass is not ("LaborIncome" or
                             "OtherIncome"))
                         {
+                            await transaction.RollbackAsync();
                             return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                         }
                     }
@@ -571,22 +580,26 @@ public class AccountBookController : Controller
                     await _assetRepository.UpdateAssetAsync(tempAsset);
 
                     #endregion
+
                     await transaction.CommitAsync();
                     return Json(new
                         { result = true, message = _localizer["The income has been successfully created."].Value });
                 }
                 catch
                 {
+                    await transaction.RollbackAsync();
                     return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                 }
             }
             else
             {
+                await transaction.RollbackAsync();
                 return Json(new { result = false, error = _localizer["Input is invalid"].Value });
             }
         }
         catch
         {
+            await transaction.RollbackAsync();
             return Json(new { result = false, error = _localizer["Input is invalid"].Value });
         }
     }
@@ -781,6 +794,7 @@ public class AccountBookController : Controller
                             "RentalIncome" or
                             "OtherIncome"))
                         {
+                            await transaction.RollbackAsync();
                             return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                         }
                     }
@@ -789,6 +803,7 @@ public class AccountBookController : Controller
                         if (incomeInputViewModel.SubClass is not ("LaborIncome" or
                             "OtherIncome"))
                         {
+                            await transaction.RollbackAsync();
                             return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                         }
                     }
@@ -802,6 +817,7 @@ public class AccountBookController : Controller
 
                     if (tempIncomes == null)
                     {
+                        await transaction.RollbackAsync();
                         return Json(new { result = false, error = _localizer["No income exists"].Value });
                     }
                     else
@@ -811,6 +827,7 @@ public class AccountBookController : Controller
 
                         if (tempIncome == null)
                         {
+                            await transaction.RollbackAsync();
                             return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                         }
                         else
@@ -822,6 +839,7 @@ public class AccountBookController : Controller
                                     .Email, tempIncome.DepositMyAssetProductName);
                             if (tempAssetToValidate.Deleted)
                             {
+                                await transaction.RollbackAsync();
                                 return Json(new
                                 {
                                     result = false,
@@ -909,16 +927,19 @@ public class AccountBookController : Controller
                 }
                 catch
                 {
+                    await transaction.RollbackAsync();
                     return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                 }
             }
             else
             {
+                await transaction.RollbackAsync();
                 return Json(new { result = false, error = _localizer["Input is invalid"].Value });
             }
         }
         catch
         {
+            await transaction.RollbackAsync();
             return Json(new { result = false, error = _localizer["Input is invalid"].Value });
         }
     }
@@ -944,6 +965,7 @@ public class AccountBookController : Controller
 
             if (tempIncomes == null)
             {
+                await transaction.RollbackAsync();
                 return Json(new { result = false, error = _localizer["Input is invalid"].Value });
             }
             else
@@ -952,6 +974,7 @@ public class AccountBookController : Controller
 
                 if (tempIncome == null)
                 {
+                    await transaction.RollbackAsync();
                     return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                 }
                 else
@@ -963,6 +986,7 @@ public class AccountBookController : Controller
                         tempIncome.DepositMyAssetProductName);
                     if (tempAssetToValidate.Deleted)
                     {
+                        await transaction.RollbackAsync();
                         return Json(new
                         {
                             result = false,
@@ -998,6 +1022,7 @@ public class AccountBookController : Controller
         }
         catch
         {
+            await transaction.RollbackAsync();
             return Json(new { result = false, error = _localizer["Input is invalid"].Value });
         }
     }
@@ -1152,6 +1177,7 @@ public class AccountBookController : Controller
                     expenditureInputViewModel.PaymentMethod);
                 if (tempExpenditureAssetToValidate.Deleted)
                 {
+                    await transaction.RollbackAsync();
                     return Json(new
                     {
                         result = false,
@@ -1167,6 +1193,7 @@ public class AccountBookController : Controller
                         expenditureInputViewModel.MyDepositAsset);
                     if (tempIncomeAssetToValidate.Deleted)
                     {
+                        await transaction.RollbackAsync();
                         return Json(new
                         {
                             result = false,
@@ -1188,6 +1215,7 @@ public class AccountBookController : Controller
                         {
                             if (expenditureInputViewModel.PaymentMethod == expenditureInputViewModel.MyDepositAsset)
                             {
+                                await transaction.RollbackAsync();
                                 return Json(new
                                 {
                                     result = false,
@@ -1205,11 +1233,13 @@ public class AccountBookController : Controller
 
                             if (expenditureAsset == null || incomeAsset == null)
                             {
+                                await transaction.RollbackAsync();
                                 return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                             }
 
                             if (expenditureAsset.MonetaryUnit != incomeAsset.MonetaryUnit)
                             {
+                                await transaction.RollbackAsync();
                                 return Json(new
                                 {
                                     result = false,
@@ -1266,11 +1296,13 @@ public class AccountBookController : Controller
                         }
                         catch
                         {
+                            await transaction.RollbackAsync();
                             return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                         }
                     }
                     else
                     {
+                        await transaction.RollbackAsync();
                         return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                     }
                 }
@@ -1287,6 +1319,7 @@ public class AccountBookController : Controller
                         {
                             if (expenditureInputViewModel.PaymentMethod == expenditureInputViewModel.MyDepositAsset)
                             {
+                                await transaction.RollbackAsync();
                                 return Json(new
                                 {
                                     result = false,
@@ -1304,11 +1337,13 @@ public class AccountBookController : Controller
 
                             if (expenditureAsset == null || incomeAsset == null)
                             {
+                                await transaction.RollbackAsync();
                                 return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                             }
 
                             if (expenditureAsset.MonetaryUnit != incomeAsset.MonetaryUnit)
                             {
+                                await transaction.RollbackAsync();
                                 return Json(new
                                 {
                                     result = false,
@@ -1365,6 +1400,7 @@ public class AccountBookController : Controller
                         }
                         catch
                         {
+                            await transaction.RollbackAsync();
                             return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                         }
                     }
@@ -1381,6 +1417,7 @@ public class AccountBookController : Controller
 
                             if (expenditureAsset == null)
                             {
+                                await transaction.RollbackAsync();
                                 return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                             }
 
@@ -1423,11 +1460,13 @@ public class AccountBookController : Controller
                         }
                         catch
                         {
+                            await transaction.RollbackAsync();
                             return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                         }
                     }
                     else
                     {
+                        await transaction.RollbackAsync();
                         return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                     }
                 }
@@ -1459,6 +1498,7 @@ public class AccountBookController : Controller
 
                             if (expenditureAsset == null)
                             {
+                                await transaction.RollbackAsync();
                                 return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                             }
 
@@ -1501,11 +1541,13 @@ public class AccountBookController : Controller
                         }
                         catch
                         {
+                            await transaction.RollbackAsync();
                             return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                         }
                     }
                     else
                     {
+                        await transaction.RollbackAsync();
                         return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                     }
                 }
@@ -1516,6 +1558,7 @@ public class AccountBookController : Controller
 
                 else
                 {
+                    await transaction.RollbackAsync();
                     return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                 }
 
@@ -1523,11 +1566,13 @@ public class AccountBookController : Controller
             }
             else
             {
+                await transaction.RollbackAsync();
                 return Json(new { result = false, error = _localizer["Input is invalid"].Value });
             }
         }
         catch
         {
+            await transaction.RollbackAsync();
             return Json(new { result = false, error = _localizer["Input is invalid"].Value });
         }
     }
@@ -1724,6 +1769,7 @@ public class AccountBookController : Controller
                         {
                             if (expenditureInputViewModel.PaymentMethod == expenditureInputViewModel.MyDepositAsset)
                             {
+                                await transaction.RollbackAsync();
                                 return Json(new
                                 {
                                     result = false,
@@ -1741,11 +1787,13 @@ public class AccountBookController : Controller
 
                             if (expenditureAsset == null || incomeAsset == null)
                             {
+                                await transaction.RollbackAsync();
                                 return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                             }
 
                             if (expenditureAsset.MonetaryUnit != incomeAsset.MonetaryUnit)
                             {
+                                await transaction.RollbackAsync();
                                 return Json(new
                                 {
                                     result = false,
@@ -1785,6 +1833,7 @@ public class AccountBookController : Controller
                                         .Email, previousTempExpenditure.PaymentMethod);
                             if (tempExpenditureAssetToValidate.Deleted)
                             {
+                                await transaction.RollbackAsync();
                                 return Json(new
                                 {
                                     result = false,
@@ -1803,6 +1852,7 @@ public class AccountBookController : Controller
                                         previousTempExpenditure.MyDepositAsset);
                                 if (tempIncomeAssetToValidate.Deleted)
                                 {
+                                    await transaction.RollbackAsync();
                                     return Json(new
                                     {
                                         result = false,
@@ -2567,6 +2617,7 @@ public class AccountBookController : Controller
 
                             else
                             {
+                                await transaction.RollbackAsync();
                                 return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                             }
 
@@ -2574,11 +2625,13 @@ public class AccountBookController : Controller
                         }
                         catch
                         {
+                            await transaction.RollbackAsync();
                             return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                         }
                     }
                     else
                     {
+                        await transaction.RollbackAsync();
                         return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                     }
                 }
@@ -2595,6 +2648,7 @@ public class AccountBookController : Controller
                         {
                             if (expenditureInputViewModel.PaymentMethod == expenditureInputViewModel.MyDepositAsset)
                             {
+                                await transaction.RollbackAsync();
                                 return Json(new
                                 {
                                     result = false,
@@ -2612,11 +2666,13 @@ public class AccountBookController : Controller
 
                             if (expenditureAsset == null || incomeAsset == null)
                             {
+                                await transaction.RollbackAsync();
                                 return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                             }
 
                             if (expenditureAsset.MonetaryUnit != incomeAsset.MonetaryUnit)
                             {
+                                await transaction.RollbackAsync();
                                 return Json(new
                                 {
                                     result = false,
@@ -2656,6 +2712,7 @@ public class AccountBookController : Controller
                                         .Email, previousTempExpenditure.PaymentMethod);
                             if (tempExpenditureAssetToValidate.Deleted)
                             {
+                                await transaction.RollbackAsync();
                                 return Json(new
                                 {
                                     result = false,
@@ -2674,6 +2731,7 @@ public class AccountBookController : Controller
                                         previousTempExpenditure.MyDepositAsset);
                                 if (tempIncomeAssetToValidate.Deleted)
                                 {
+                                    await transaction.RollbackAsync();
                                     return Json(new
                                     {
                                         result = false,
@@ -3516,6 +3574,7 @@ public class AccountBookController : Controller
 
                             else
                             {
+                                await transaction.RollbackAsync();
                                 return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                             }
 
@@ -3523,6 +3582,7 @@ public class AccountBookController : Controller
                         }
                         catch
                         {
+                            await transaction.RollbackAsync();
                             return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                         }
                     }
@@ -3563,6 +3623,7 @@ public class AccountBookController : Controller
                                         .Email, previousTempExpenditure.PaymentMethod);
                             if (tempExpenditureAssetToValidate.Deleted)
                             {
+                                await transaction.RollbackAsync();
                                 return Json(new
                                 {
                                     result = false,
@@ -3581,6 +3642,7 @@ public class AccountBookController : Controller
                                         previousTempExpenditure.MyDepositAsset);
                                 if (tempIncomeAssetToValidate.Deleted)
                                 {
+                                    await transaction.RollbackAsync();
                                     return Json(new
                                     {
                                         result = false,
@@ -3811,6 +3873,7 @@ public class AccountBookController : Controller
 
                             else
                             {
+                                await transaction.RollbackAsync();
                                 return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                             }
 
@@ -3818,11 +3881,13 @@ public class AccountBookController : Controller
                         }
                         catch
                         {
+                            await transaction.RollbackAsync();
                             return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                         }
                     }
                     else
                     {
+                        await transaction.RollbackAsync();
                         return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                     }
                 }
@@ -3878,6 +3943,7 @@ public class AccountBookController : Controller
                                         .Email, previousTempExpenditure.PaymentMethod);
                             if (tempExpenditureAssetToValidate.Deleted)
                             {
+                                await transaction.RollbackAsync();
                                 return Json(new
                                 {
                                     result = false,
@@ -3896,6 +3962,7 @@ public class AccountBookController : Controller
                                         previousTempExpenditure.MyDepositAsset);
                                 if (tempIncomeAssetToValidate.Deleted)
                                 {
+                                    await transaction.RollbackAsync();
                                     return Json(new
                                     {
                                         result = false,
@@ -4182,6 +4249,7 @@ public class AccountBookController : Controller
 
                             else
                             {
+                                await transaction.RollbackAsync();
                                 return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                             }
 
@@ -4189,11 +4257,13 @@ public class AccountBookController : Controller
                         }
                         catch
                         {
+                            await transaction.RollbackAsync();
                             return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                         }
                     }
                     else
                     {
+                        await transaction.RollbackAsync();
                         return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                     }
                 }
@@ -4204,6 +4274,7 @@ public class AccountBookController : Controller
 
                 else
                 {
+                    await transaction.RollbackAsync();
                     return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                 }
 
@@ -4211,11 +4282,13 @@ public class AccountBookController : Controller
             }
             else
             {
+                await transaction.RollbackAsync();
                 return Json(new { result = false, error = _localizer["Input is invalid"].Value });
             }
         }
         catch
         {
+            await transaction.RollbackAsync();
             return Json(new { result = false, error = _localizer["Input is invalid"].Value });
         }
     }
@@ -4243,6 +4316,7 @@ public class AccountBookController : Controller
 
             if (tempExpenditures == null)
             {
+                await transaction.RollbackAsync();
                 return Json(new { result = false, error = _localizer["Input is invalid"].Value });
             }
             else
@@ -4251,6 +4325,7 @@ public class AccountBookController : Controller
                     .FirstOrDefault();
                 if (tempExpenditure == null)
                 {
+                    await transaction.RollbackAsync();
                     return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                 }
                 else
@@ -4262,6 +4337,7 @@ public class AccountBookController : Controller
                         tempExpenditure.PaymentMethod);
                     if (tempExpenditureAssetToValidate.Deleted)
                     {
+                        await transaction.RollbackAsync();
                         return Json(new
                         {
                             result = false,
@@ -4277,6 +4353,7 @@ public class AccountBookController : Controller
                             tempExpenditure.MyDepositAsset);
                         if (tempIncomeAssetToValidate.Deleted)
                         {
+                            await transaction.RollbackAsync();
                             return Json(new
                             {
                                 result = false,
@@ -4354,6 +4431,7 @@ public class AccountBookController : Controller
         }
         catch
         {
+            await transaction.RollbackAsync();
             return Json(new { result = false, error = _localizer["Input is invalid"].Value });
         }
     }
