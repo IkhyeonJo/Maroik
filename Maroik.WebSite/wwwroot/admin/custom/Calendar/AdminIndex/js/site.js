@@ -1759,8 +1759,8 @@ function CreateUploadImageFile(file) {
                 const imgURL = URL.createObjectURL(base64ToBlob(data.file.fileContents, data.file.contentType));
                 const imgNode = document.createElement('img');
                 imgNode.src = imgURL;
-                imgNode.style.maxWidth = '170px';
-                imgNode.style.maxHeight = '209px';
+                imgNode.style.maxWidth = "170px";
+                imgNode.style.maxHeight = "209px";
                 imgNode.setAttribute('alt', data.filePath);
 
                 $createCalendarEventDescription.summernote('insertNode', imgNode);
@@ -1799,8 +1799,8 @@ function EditUploadImageFile(file) {
                 const imgURL = URL.createObjectURL(base64ToBlob(data.file.fileContents, data.file.contentType));
                 const imgNode = document.createElement('img');
                 imgNode.src = imgURL;
-                imgNode.style.maxWidth = '170px';
-                imgNode.style.maxHeight = '209px';
+                imgNode.style.maxWidth = "170px";
+                imgNode.style.maxHeight = "209px";
                 imgNode.setAttribute('alt', data.filePath);
 
                 $editCalendarEventDescription.summernote('insertNode', imgNode);
@@ -2197,7 +2197,7 @@ $formUpdateCalendarShared.off('submit').on('submit', function (event) {
     return false;
 });
 
-$(document).off('click', '.edit-calendar').on('click', '.edit-calendar', function (e) {
+$(document).off('click.calendar', '.edit-calendar').on('click.calendar', '.edit-calendar', function (e) {
     e.preventDefault();
     e.stopPropagation();
 
@@ -2233,15 +2233,15 @@ $(document).off('click', '.edit-calendar').on('click', '.edit-calendar', functio
     });
 });
 
-$(document).off('mouseenter', '.edit-calendar').on('mouseenter', '.edit-calendar', function () {
+$(document).off('mouseenter.calendar', '.edit-calendar').on('mouseenter.calendar', '.edit-calendar', function () {
     $(this).css('color', 'blue');
 });
 
-$(document).off('mouseleave', '.edit-calendar').on('mouseleave', '.edit-calendar', function () {
+$(document).off('mouseleave.calendar', '.edit-calendar').on('mouseleave.calendar', '.edit-calendar', function () {
     $(this).css('color', '');
 });
 
-$(document).off('click', '.delete-calendar').on('click', '.delete-calendar', function (e) {
+$(document).off('click.calendar', '.delete-calendar').on('click.calendar', '.delete-calendar', function (e) {
     e.preventDefault();
     e.stopPropagation();
 
@@ -2257,11 +2257,11 @@ $(document).off('click', '.delete-calendar').on('click', '.delete-calendar', fun
     $confirmDeleteCalendarDialogModal.modal('show');
 });
 
-$(document).off('mouseenter', '.delete-calendar').on('mouseenter', '.delete-calendar', function () {
+$(document).off('mouseenter.calendar', '.delete-calendar').on('mouseenter.calendar', '.delete-calendar', function () {
     $(this).css('color', 'blue');
 });
 
-$(document).off('mouseleave', '.delete-calendar').on('mouseleave', '.delete-calendar', function () {
+$(document).off('mouseleave.calendar', '.delete-calendar').on('mouseleave.calendar', '.delete-calendar', function () {
     $(this).css('color', '');
 });
 

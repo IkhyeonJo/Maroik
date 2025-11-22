@@ -33,7 +33,7 @@ $(function () {
     $editAccountTabs.tabs();
 });
 
-document.addEventListener("rowclick", e => {
+$(document).off('rowclick.gridRow').on('rowclick.gridRow', e => {
     let selectedRow = e.detail;
     let selectedRowEmail = selectedRow.data.Email;
 
@@ -50,29 +50,29 @@ document.addEventListener("rowclick", e => {
     });
 });
 
-document.addEventListener("reloadstart", _ => {
+$(document).off('reloadstart.gridRow').on('reloadstart.gridRow', _ => {
 });
 
-document.addEventListener("reloadend", _ => {
+$(document).off('reloadend.gridRow').on('reloadend.gridRow', _ => {
 });
 
-document.addEventListener("reloadfail", _ => {
+$(document).off('reloadfail.gridRow').on('reloadfail.gridRow', _ => {
 });
 
-document.addEventListener("gridconfigure", _ => {
+$(document).off('gridconfigure.gridRow').on('gridconfigure.gridRow', _ => {
 });
 
-$(document).on("dblclick", ".clsGridRow", function () {
+$(document).off('dblclick.gridRow', '.clsGridRow').on('dblclick.gridRow', '.clsGridRow', function () {
     $('.clsGridRow').each(function () {
-        if ($(this).attr("class").includes(selectedRowColor)) {
+        if ($(this).attr('class').includes(selectedRowColor)) {
             EditAccountGridRow();
         }
     });
 });
 
-$gridSearch.on('input', function () {
-    const grid = new MvcGrid(document.querySelector(".mvc-grid"));
-    grid.url.searchParams.set("wholeSearch", this.value);
+$gridSearch.off('input').on('input', function () {
+    const grid = new MvcGrid(document.querySelector('.mvc-grid'));
+    grid.url.searchParams.set('wholeSearch', this.value);
     grid.reload();
 });
 
@@ -99,7 +99,7 @@ function CreateAccount() {
     $.ajax({
         url: '/Management/CreateAccount',
         type: 'POST',
-        headers: { "RequestVerificationToken": $__RequestVerificationToken.val() },
+        headers: { 'RequestVerificationToken': $__RequestVerificationToken.val() },
         dataType: 'json',
         data: paramValue,
         contentType: 'application/json; charset=utf-8',
@@ -107,7 +107,7 @@ function CreateAccount() {
             if (data.result) {
                 $createAccountDialogModal.modal('hide');
 
-                const grid = new MvcGrid(document.querySelector(".mvc-grid"));
+                const grid = new MvcGrid(document.querySelector('.mvc-grid'));
                 grid.reload();
 
                 toastr.success(data.message);
@@ -126,8 +126,8 @@ function EditAccountGridRow(errorMessageSelectGridRow) {
     let selectedRowEmail = "";
 
     $('.clsGridRow').each(function () {
-        if ($(this).attr("class").includes(selectedRowColor)) {
-            selectedRowEmail = $(this).attr("data-email");
+        if ($(this).attr('class').includes(selectedRowColor)) {
+            selectedRowEmail = $(this).attr('data-email');
         }
     });
 
@@ -139,7 +139,7 @@ function EditAccountGridRow(errorMessageSelectGridRow) {
     $.ajax({
         url: '/Management/IsAccountExists' + '?email=' + selectedRowEmail,
         type: 'POST',
-        headers: { "RequestVerificationToken": $__RequestVerificationToken.val() },
+        headers: { 'RequestVerificationToken': $__RequestVerificationToken.val() },
         dataType: 'json',
         data: null,
         contentType: 'application/json; charset=utf-8',
@@ -150,11 +150,11 @@ function EditAccountGridRow(errorMessageSelectGridRow) {
                 $editAccountNickname.val(data.account.nickname);
                 $editAccountRole.val(data.account.role).change();
                 $editAccountTimeZone.val(data.account.timeZoneIanaId).change();
-                $editAccountLocked.prop("checked", data.account.locked);
-                $editAccountEmailConfirmed.prop("checked", data.account.emailConfirmed);
-                $editAccountAgreedServiceTerms.prop("checked", data.account.agreedServiceTerms);
+                $editAccountLocked.prop('checked', data.account.locked);
+                $editAccountEmailConfirmed.prop('checked', data.account.emailConfirmed);
+                $editAccountAgreedServiceTerms.prop('checked', data.account.agreedServiceTerms);
                 $editMessage.val(data.account.message);
-                $editAccountDeleted.prop("checked", data.account.deleted);
+                $editAccountDeleted.prop('checked', data.account.deleted);
 
                 $editAccountDialogModal.modal({
                     keyboard: false,
@@ -180,11 +180,11 @@ function UpdateAccount() {
     let password = $editAccountPassword.val();
     let role = $editAccountRole.val();
     let timeZoneIanaId = $editAccountTimeZone.val();
-    let locked = $editAccountLocked.is(":checked");
-    let emailConfirmed = $editAccountEmailConfirmed.is(":checked");
-    let agreedServiceTerms = $editAccountAgreedServiceTerms.is(":checked");
+    let locked = $editAccountLocked.is(':checked');
+    let emailConfirmed = $editAccountEmailConfirmed.is(':checked');
+    let agreedServiceTerms = $editAccountAgreedServiceTerms.is(':checked');
     let message = $editMessage.val();
-    let deleted = $editAccountDeleted.is(":checked");
+    let deleted = $editAccountDeleted.is(':checked');
 
     let paramValue = JSON.stringify({
         Email: email,
@@ -201,7 +201,7 @@ function UpdateAccount() {
     $.ajax({
         url: '/Management/UpdateAccount',
         type: 'POST',
-        headers: { "RequestVerificationToken": $__RequestVerificationToken.val() },
+        headers: { 'RequestVerificationToken': $__RequestVerificationToken.val() },
         dataType: 'json',
         data: paramValue,
         contentType: 'application/json; charset=utf-8',
@@ -209,7 +209,7 @@ function UpdateAccount() {
             if (data.result) {
                 $editAccountDialogModal.modal('hide');
 
-                const grid = new MvcGrid(document.querySelector(".mvc-grid"));
+                const grid = new MvcGrid(document.querySelector('.mvc-grid'));
                 grid.reload();
 
                 toastr.success(data.message);
@@ -227,8 +227,8 @@ function ConfirmDeleteAccount(errorMessageSelectGridRow) {
     let selectedRowEmail = "";
 
     $('.clsGridRow').each(function () {
-        if ($(this).attr("class").includes(selectedRowColor)) {
-            selectedRowEmail = $(this).attr("data-email");
+        if ($(this).attr('class').includes(selectedRowColor)) {
+            selectedRowEmail = $(this).attr('data-email');
         }
     });
 
@@ -251,8 +251,8 @@ function DeleteAccount(errorMessageSelectGridRow) {
     let selectedRowEmail = "";
 
     $('.clsGridRow').each(function () {
-        if ($(this).attr("class").includes(selectedRowColor)) {
-            selectedRowEmail = $(this).attr("data-email");
+        if ($(this).attr('class').includes(selectedRowColor)) {
+            selectedRowEmail = $(this).attr('data-email');
         }
     });
 
@@ -264,7 +264,7 @@ function DeleteAccount(errorMessageSelectGridRow) {
     $.ajax({
         url: '/Management/IsAccountExists' + '?email=' + selectedRowEmail,
         type: 'POST',
-        headers: { "RequestVerificationToken": $__RequestVerificationToken.val() },
+        headers: { 'RequestVerificationToken': $__RequestVerificationToken.val() },
         dataType: 'json',
         data: null,
         contentType: 'application/json; charset=utf-8',
@@ -278,7 +278,7 @@ function DeleteAccount(errorMessageSelectGridRow) {
                 $.ajax({
                     url: '/Management/DeleteAccount',
                     type: 'POST',
-                    headers: { "RequestVerificationToken": $__RequestVerificationToken.val() },
+                    headers: { 'RequestVerificationToken': $__RequestVerificationToken.val() },
                     dataType: 'json',
                     data: paramValue,
                     contentType: 'application/json; charset=utf-8',
@@ -286,7 +286,7 @@ function DeleteAccount(errorMessageSelectGridRow) {
                         if (data.result) {
                             $confirmDeleteAccountDialogModal.modal('hide');
 
-                            const grid = new MvcGrid(document.querySelector(".mvc-grid"));
+                            const grid = new MvcGrid(document.querySelector('.mvc-grid'));
                             grid.reload();
 
                             toastr.success(data.message);
@@ -305,9 +305,9 @@ function DeleteAccount(errorMessageSelectGridRow) {
 }
 
 function ExportExcelAccount() {
-    let form = document.createElement("form");
-    let element1 = document.createElement("input");
-    let element2 = document.createElement("input");
+    let form = document.createElement('form');
+    let element1 = document.createElement('input');
+    let element2 = document.createElement('input');
 
     form.method = "POST";
     form.action = "/Management/ExportExcelAccount";

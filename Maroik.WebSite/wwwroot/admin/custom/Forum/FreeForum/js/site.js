@@ -30,6 +30,7 @@ const $aEditBoardAttachedFile = $('#aEditBoardAttachedFile');
 const $aFreeForumDeleteComment = $('.aFreeForumDeleteComment');
 const $__RequestVerificationToken = $('input[name="__RequestVerificationToken"]');
 const maxFileSize = 10485760;
+const boardHeight = 300;
 
 function base64ToBlob(base64, mime) {
     const byteCharacters = atob(base64);
@@ -46,7 +47,7 @@ const localizer = {
 };
 
 $writeBoardContent.summernote({
-    height: 300,
+    height: boardHeight,
     lang: localizer.IETFLanguageTag,
     callbacks: {
         onImageUpload: function (files) {
@@ -58,7 +59,7 @@ $writeBoardContent.summernote({
 });
 
 $editBoardContent.summernote({
-    height: 300,
+    height: boardHeight,
     lang: localizer.IETFLanguageTag,
     callbacks: {
         onImageUpload: function (files) {
@@ -95,7 +96,7 @@ function EditUploadFile(obj, errorMessage) {
 }
 
 function SearchBoard() {
-    window.location.href = '/Forum/FreeForum?searchType=' + $searchType.val() + '&searchText=' + $btnFreeForumSearchText.val();
+    window.location.href = "/Forum/FreeForum?searchType=" + $searchType.val() + "&searchText=" + $btnFreeForumSearchText.val();
 }
 
 
@@ -141,8 +142,8 @@ function WriteUploadImageFile(file) {
                 const imgURL = URL.createObjectURL(base64ToBlob(data.file.fileContents, data.file.contentType));
                 const imgNode = document.createElement('img');
                 imgNode.src = imgURL;
-                imgNode.style.maxWidth = '170px';
-                imgNode.style.maxHeight = '209px';
+                imgNode.style.maxWidth = "170px";
+                imgNode.style.maxHeight = "209px";
                 imgNode.setAttribute('alt', data.filePath);
 
                 $writeBoardContent.summernote('insertNode', imgNode);
@@ -181,8 +182,8 @@ function EditUploadImageFile(file) {
                 const imgURL = URL.createObjectURL(base64ToBlob(data.file.fileContents, data.file.contentType));
                 const imgNode = document.createElement('img');
                 imgNode.src = imgURL;
-                imgNode.style.maxWidth = '170px';
-                imgNode.style.maxHeight = '209px';
+                imgNode.style.maxWidth = "170px";
+                imgNode.style.maxHeight = "209px";
                 imgNode.setAttribute('alt', data.filePath);
 
                 $editBoardContent.summernote('insertNode', imgNode);
@@ -230,7 +231,7 @@ function WriteBoard() {
         success: function (data) {
             if (data.result) {
                 alert(data.message);
-                window.location.href = '/Forum/FreeForum';
+                window.location.href = "/Forum/FreeForum";
             }
             else {
                 toastr.error(data.error);
@@ -271,7 +272,7 @@ function EditBoard(editBoardId, editCurrentPage) {
         success: function (data) {
             if (data.result) {
                 alert(data.message);
-                window.location.href = '/Forum/FreeForum?method=detail' + '&boardId=' + editBoardId + '&page=' + editCurrentPage;
+                window.location.href = "/Forum/FreeForum?method=detail" + "&boardId=" + editBoardId + "&page=" + editCurrentPage;
             }
             else {
                 toastr.error(data.error);
@@ -320,7 +321,7 @@ function DeleteBoard(detailBoardId) {
                         if (data.result) {
                             $confirmDeleteBoardDialogModal.modal('hide');
                             alert(data.message);
-                            window.location.href = '/Forum/FreeForum';
+                            window.location.href = "/Forum/FreeForum";
                         }
                         else {
                             toastr.error(data.error);
@@ -359,7 +360,7 @@ function WriteFreeComment(detailBoardId, detailCurrentPage, errorMessage) {
         contentType: 'application/json; charset=utf-8',
         success: function (data) {
             if (data.result) {
-                window.location.href = '/Forum/FreeForum?method=detail' + '&boardId=' + data.boardId + '&page=' + data.page;
+                window.location.href = "/Forum/FreeForum?method=detail" + "&boardId=" + data.boardId + "&page=" + data.page;
             }
             else {
                 toastr.error(data.error);
@@ -379,7 +380,7 @@ function DeleteComment(commentId, boardId, page) {
         contentType: 'application/json; charset=utf-8',
         success: function (data) {
             if (data.result) {
-                window.location.href = '/Forum/FreeForum?method=detail' + '&boardId=' + boardId + '&page=' + page;
+                window.location.href = "/Forum/FreeForum?method=detail" + "&boardId=" + boardId + "&page=" + page;
             }
             else {
                 toastr.error(data.error);
@@ -409,7 +410,7 @@ $btnFreeForumSubmitModify.off('click').on('click', function () {
 });
 
 $btnFreeForumWrite.off('click').on('click', function () {
-    location.href = '/Forum/FreeForum?method=write';
+    location.href = "/Forum/FreeForum?method=write";
 });
 
 $btnFreeForumSearchBoard.off('click').on('click', function () {

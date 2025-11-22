@@ -29,6 +29,7 @@ const $btnPrivateNoteModify = $('#btnPrivateNoteModify');
 const $btnPrivateNoteShowWriteBoardLoading = $('#btnPrivateNoteShowWriteBoardLoading');
 const $__RequestVerificationToken = $('input[name="__RequestVerificationToken"]');
 const maxFileSize = 10485760;
+const boardHeight = 300;
 
 function base64ToBlob(base64, mime) {
     const byteCharacters = atob(base64);
@@ -45,7 +46,7 @@ const localizer = {
 };
 
 $writeBoardContent.summernote({
-    height: 300,
+    height: boardHeight,
     lang: localizer.IETFLanguageTag,
     callbacks: {
         onImageUpload: function (files) {
@@ -57,7 +58,7 @@ $writeBoardContent.summernote({
 });
 
 $editBoardContent.summernote({
-    height: 300,
+    height: boardHeight,
     lang: localizer.IETFLanguageTag,
     callbacks: {
         onImageUpload: function (files) {
