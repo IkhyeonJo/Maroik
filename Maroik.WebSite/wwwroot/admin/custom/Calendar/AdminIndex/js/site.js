@@ -556,7 +556,7 @@ $(function () {
 
             $editCalendarEventPopup.focus();
 
-            $(document).off('click.calendarEventPopup').on('click.calendarEventPopup', function (e) {
+            $(document).off('click.Calendar').on('click.Calendar', function (e) {
                 if (!$(e.target).closest($calendarEventPopup.add('.fc-event')).length) {
                     popup.hide();
                 }
@@ -1084,53 +1084,53 @@ $(function () {
         return isValid;
     }
 
-    $(document).off('change', '.chkCalendar').on('change', '.chkCalendar', function () {
+    $(document).off('change.Calendar', '.chkCalendar').on('change.Calendar', '.chkCalendar', function () {
         RefreshCalendarEvents();
     });
 
-    $(document).off('change', '.createCalendarEventSelNotificationTimeTypeAllDayChecked').on('change', '.createCalendarEventSelNotificationTimeTypeAllDayChecked', function () {
+    $(document).off('change.Calendar', '.createCalendarEventSelNotificationTimeTypeAllDayChecked').on('change.Calendar', '.createCalendarEventSelNotificationTimeTypeAllDayChecked', function () {
         let row = $(this).closest('.divCreateEventNotificationAllDayCheckedRow');
         ValidateCreateEventInputAllDayChecked(row);
         row.find('.error-message').hide();
     });
 
-    $(document).off('input', '.createCalendarEventSelNotificationNumberAllDayChecked').on('input', '.createCalendarEventSelNotificationNumberAllDayChecked', function () {
+    $(document).off('input.Calendar', '.createCalendarEventSelNotificationNumberAllDayChecked').on('input.Calendar', '.createCalendarEventSelNotificationNumberAllDayChecked', function () {
         let row = $(this).closest('.divCreateEventNotificationAllDayCheckedRow');
         ValidateCreateEventInputAllDayChecked(row);
         row.find('.error-message').hide();
     });
 
-    $(document).off('change', '.createCalendarEventSelNotificationTimeTypeAllDayUnchecked').on('change', '.createCalendarEventSelNotificationTimeTypeAllDayUnchecked', function () {
+    $(document).off('change.Calendar', '.createCalendarEventSelNotificationTimeTypeAllDayUnchecked').on('change.Calendar', '.createCalendarEventSelNotificationTimeTypeAllDayUnchecked', function () {
         let row = $(this).closest('.divCreateEventNotificationAllDayUncheckedRow');
         ValidateCreateEventInputAllDayUnchecked(row);
         row.find('.error-message').hide();
     });
 
-    $(document).off('input', '.createCalendarEventSelNotificationNumberAllDayUnchecked').on('input', '.createCalendarEventSelNotificationNumberAllDayUnchecked', function () {
+    $(document).off('input.Calendar', '.createCalendarEventSelNotificationNumberAllDayUnchecked').on('input.Calendar', '.createCalendarEventSelNotificationNumberAllDayUnchecked', function () {
         let row = $(this).closest('.divCreateEventNotificationAllDayUncheckedRow');
         ValidateCreateEventInputAllDayUnchecked(row);
         row.find('.error-message').hide();
     });
 
-    $(document).off('change', '.editCalendarEventSelNotificationTimeTypeAllDayChecked').on('change', '.editCalendarEventSelNotificationTimeTypeAllDayChecked', function () {
+    $(document).off('change.Calendar', '.editCalendarEventSelNotificationTimeTypeAllDayChecked').on('change.Calendar', '.editCalendarEventSelNotificationTimeTypeAllDayChecked', function () {
         let row = $(this).closest('.divEditEventNotificationAllDayCheckedRow');
         ValidateEditEventInputAllDayChecked(row);
         row.find('.error-message').hide();
     });
 
-    $(document).off('input', '.editCalendarEventSelNotificationNumberAllDayChecked').on('input', '.editCalendarEventSelNotificationNumberAllDayChecked', function () {
+    $(document).off('input.Calendar', '.editCalendarEventSelNotificationNumberAllDayChecked').on('input.Calendar', '.editCalendarEventSelNotificationNumberAllDayChecked', function () {
         let row = $(this).closest('.divEditEventNotificationAllDayCheckedRow');
         ValidateEditEventInputAllDayChecked(row);
         row.find('.error-message').hide();
     });
 
-    $(document).off('change', '.editCalendarEventSelNotificationTimeTypeAllDayUnchecked').on('change', '.editCalendarEventSelNotificationTimeTypeAllDayUnchecked', function () {
+    $(document).off('change.Calendar', '.editCalendarEventSelNotificationTimeTypeAllDayUnchecked').on('change.Calendar', '.editCalendarEventSelNotificationTimeTypeAllDayUnchecked', function () {
         let row = $(this).closest('.divEditEventNotificationAllDayUncheckedRow');
         ValidateEditEventInputAllDayUnchecked(row);
         row.find('.error-message').hide();
     });
 
-    $(document).off('input', '.editCalendarEventSelNotificationNumberAllDayUnchecked').on('input', '.editCalendarEventSelNotificationNumberAllDayUnchecked', function () {
+    $(document).off('input.Calendar', '.editCalendarEventSelNotificationNumberAllDayUnchecked').on('input.Calendar', '.editCalendarEventSelNotificationNumberAllDayUnchecked', function () {
         let row = $(this).closest('.divEditEventNotificationAllDayUncheckedRow');
         ValidateEditEventInputAllDayUnchecked(row);
         row.find('.error-message').hide();
@@ -2091,19 +2091,19 @@ $editCalendarEventNotificationAllDayUnchecked.off('click').on('click', function 
     $(htmlString).insertBefore(this);
 });
 
-$(document).off('click', '.aCreateCalendarDeleteNotificationAllDayChecked').on('click', '.aCreateCalendarDeleteNotificationAllDayChecked', function () {
+$(document).off('click.Calendar', '.aCreateCalendarDeleteNotificationAllDayChecked').on('click.Calendar', '.aCreateCalendarDeleteNotificationAllDayChecked', function () {
     $(this).parent().remove();
 });
 
-$(document).off('click', '.aCreateCalendarDeleteNotificationAllDayUnchecked').on('click', '.aCreateCalendarDeleteNotificationAllDayUnchecked', function () {
+$(document).off('click.Calendar', '.aCreateCalendarDeleteNotificationAllDayUnchecked').on('click.Calendar', '.aCreateCalendarDeleteNotificationAllDayUnchecked', function () {
     $(this).parent().remove();
 });
 
-$(document).off('click', '.aEditCalendarDeleteNotificationAllDayChecked').on('click', '.aEditCalendarDeleteNotificationAllDayChecked', function () {
+$(document).off('click.Calendar', '.aEditCalendarDeleteNotificationAllDayChecked').on('click.Calendar', '.aEditCalendarDeleteNotificationAllDayChecked', function () {
     $(this).parent().remove();
 });
 
-$(document).off('click', '.aEditCalendarDeleteNotificationAllDayUnchecked').on('click', '.aEditCalendarDeleteNotificationAllDayUnchecked', function () {
+$(document).off('click.Calendar', '.aEditCalendarDeleteNotificationAllDayUnchecked').on('click.Calendar', '.aEditCalendarDeleteNotificationAllDayUnchecked', function () {
     $(this).parent().remove();
 });
 
@@ -2111,7 +2111,7 @@ $dropdownIcon.off('click').on('click', function () {
     $dropdownContent.toggle();
 });
 
-$(window).off('click.dropdown').on('click.dropdown', function (event) {
+$(window).off('click.Calendar').on('click.Calendar', function (event) {
     if (!$(event.target).closest($dropdownIcon.add($dropdownContent)).length) {
         $dropdownContent.hide();
     }
@@ -2197,7 +2197,7 @@ $formUpdateCalendarShared.off('submit').on('submit', function (event) {
     return false;
 });
 
-$(document).off('click.calendar', '.edit-calendar').on('click.calendar', '.edit-calendar', function (e) {
+$(document).off('click.Calendar', '.edit-calendar').on('click.Calendar', '.edit-calendar', function (e) {
     e.preventDefault();
     e.stopPropagation();
 
@@ -2233,15 +2233,15 @@ $(document).off('click.calendar', '.edit-calendar').on('click.calendar', '.edit-
     });
 });
 
-$(document).off('mouseenter.calendar', '.edit-calendar').on('mouseenter.calendar', '.edit-calendar', function () {
+$(document).off('mouseenter.Calendar', '.edit-calendar').on('mouseenter.Calendar', '.edit-calendar', function () {
     $(this).css('color', 'blue');
 });
 
-$(document).off('mouseleave.calendar', '.edit-calendar').on('mouseleave.calendar', '.edit-calendar', function () {
+$(document).off('mouseleave.Calendar', '.edit-calendar').on('mouseleave.Calendar', '.edit-calendar', function () {
     $(this).css('color', '');
 });
 
-$(document).off('click.calendar', '.delete-calendar').on('click.calendar', '.delete-calendar', function (e) {
+$(document).off('click.Calendar', '.delete-calendar').on('click.Calendar', '.delete-calendar', function (e) {
     e.preventDefault();
     e.stopPropagation();
 
@@ -2257,11 +2257,11 @@ $(document).off('click.calendar', '.delete-calendar').on('click.calendar', '.del
     $confirmDeleteCalendarDialogModal.modal('show');
 });
 
-$(document).off('mouseenter.calendar', '.delete-calendar').on('mouseenter.calendar', '.delete-calendar', function () {
+$(document).off('mouseenter.Calendar', '.delete-calendar').on('mouseenter.Calendar', '.delete-calendar', function () {
     $(this).css('color', 'blue');
 });
 
-$(document).off('mouseleave.calendar', '.delete-calendar').on('mouseleave.calendar', '.delete-calendar', function () {
+$(document).off('mouseleave.Calendar', '.delete-calendar').on('mouseleave.Calendar', '.delete-calendar', function () {
     $(this).css('color', '');
 });
 

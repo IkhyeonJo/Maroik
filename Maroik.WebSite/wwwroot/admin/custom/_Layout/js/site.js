@@ -1,4 +1,4 @@
-﻿$(document).off('ajaxError.globalHandler').on('ajaxError.globalHandler', function () {
+﻿$(document).off('ajaxError._Layout').on('ajaxError._Layout', function () {
     window.location.href = '/DashBoard/AnonymousIndex';
 });
 

@@ -33,7 +33,7 @@ $(function () {
     $editAccountTabs.tabs();
 });
 
-$(document).off('rowclick.gridRow').on('rowclick.gridRow', e => {
+$(document).off('rowclick.Account').on('rowclick.Account', e => {
     let selectedRow = e.detail;
     let selectedRowEmail = selectedRow.data.Email;
 
@@ -50,19 +50,19 @@ $(document).off('rowclick.gridRow').on('rowclick.gridRow', e => {
     });
 });
 
-$(document).off('reloadstart.gridRow').on('reloadstart.gridRow', _ => {
+$(document).off('reloadstart.Account').on('reloadstart.Account', _ => {
 });
 
-$(document).off('reloadend.gridRow').on('reloadend.gridRow', _ => {
+$(document).off('reloadend.Account').on('reloadend.Account', _ => {
 });
 
-$(document).off('reloadfail.gridRow').on('reloadfail.gridRow', _ => {
+$(document).off('reloadfail.Account').on('reloadfail.Account', _ => {
 });
 
-$(document).off('gridconfigure.gridRow').on('gridconfigure.gridRow', _ => {
+$(document).off('gridconfigure.Account').on('gridconfigure.Account', _ => {
 });
 
-$(document).off('dblclick.gridRow', '.clsGridRow').on('dblclick.gridRow', '.clsGridRow', function () {
+$(document).off('dblclick.Account', '.clsGridRow').on('dblclick.Account', '.clsGridRow', function () {
     $('.clsGridRow').each(function () {
         if ($(this).attr('class').includes(selectedRowColor)) {
             EditAccountGridRow();

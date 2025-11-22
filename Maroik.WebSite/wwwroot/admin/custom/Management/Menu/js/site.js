@@ -53,7 +53,7 @@ $(function () {
     $editSubCategoryTabs.tabs();
 });
 
-$(document).off('rowclick.gridRow').on('rowclick.gridRow', e => {
+$(document).off('rowclick.Menu').on('rowclick.Menu', e => {
     let selectedRow = e.detail;
     let selectedRowId = selectedRow.data.Id;
     let selectedRowCategoryId = selectedRow.data.CategoryId;
@@ -75,19 +75,19 @@ $(document).off('rowclick.gridRow').on('rowclick.gridRow', e => {
     });
 });
 
-$(document).off('reloadstart.gridRow').on('reloadstart.gridRow', _ => {
+$(document).off('reloadstart.Menu').on('reloadstart.Menu', _ => {
 });
 
-$(document).off('reloadend.gridRow').on('reloadend.gridRow', _ => {
+$(document).off('reloadend.Menu').on('reloadend.Menu', _ => {
 });
 
-$(document).off('reloadfail.gridRow').on('reloadfail.gridRow', _ => {
+$(document).off('reloadfail.Menu').on('reloadfail.Menu', _ => {
 });
 
-$(document).off('gridconfigure.gridRow').on('gridconfigure.gridRow', _ => {
+$(document).off('gridconfigure.Menu').on('gridconfigure.Menu', _ => {
 });
 
-$(document).off('dblclick.gridRow', '.clsGridRow').on('dblclick.gridRow', '.clsGridRow', function () {
+$(document).off('dblclick.Menu', '.clsGridRow').on('dblclick.Menu', '.clsGridRow', function () {
     $('.clsGridRow').each(function () {
         if ($(this).attr('class').includes(selectedRowColor)) {
             EditMenuGridRow();
