@@ -2,7 +2,6 @@
 const $editCategoryTabs = $('#editCategoryTabs');
 const $editSubCategoryTabs = $('#editSubCategoryTabs');
 const $gridSearch = $('#gridSearch');
-const selectedRowColor = 'table-primary';
 const $formCreateCategory = $('#formCreateCategory');
 const $createCategoryName = $('#createCategoryName');
 const $createCategoryDisplayName = $('#createCategoryDisplayName');
@@ -46,6 +45,7 @@ const $btnEditMenuGridRow = $('#btnEditMenuGridRow');
 const $btnConfirmDeleteMenu = $('#btnConfirmDeleteMenu');
 const $btnExportExcelMenu = $('#btnExportExcelMenu');
 const $btnDeleteMenu = $('#btnDeleteMenu');
+const selectedRowColor = 'table-primary';
 
 $(function () {
     $createMenuTabs.tabs();
