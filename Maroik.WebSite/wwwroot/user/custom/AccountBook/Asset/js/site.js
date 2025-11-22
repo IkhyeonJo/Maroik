@@ -42,7 +42,7 @@ $(document).on("dblclick", "#assetGrid > table > tbody  > tr", function () {
 });
 
 $('#gridSearch').on('input', function () {
-    const grid = new MvcGrid(document.querySelector(".mvc-grid"));
+    const grid = new MvcGrid(document.querySelector('.mvc-grid'));
 
     grid.url.searchParams.set("wholeSearch", this.value);
 
@@ -82,7 +82,7 @@ function CreateAsset() {
             if (data.result) {
                 $('#createAssetDialogModal').modal('hide');
 
-                const grid = new MvcGrid(document.querySelector(".mvc-grid"));
+                const grid = new MvcGrid(document.querySelector('.mvc-grid'));
                 grid.reload();
 
                 toastr.success(data.message);
@@ -183,7 +183,7 @@ function UpdateAsset() {
             if (data.result) {
                 $('#editAssetDialogModal').modal('hide');
 
-                const grid = new MvcGrid(document.querySelector(".mvc-grid"));
+                const grid = new MvcGrid(document.querySelector('.mvc-grid'));
                 grid.reload();
 
                 toastr.success(data.message);
@@ -260,7 +260,7 @@ function DeleteAsset(errorMessageSelectGridRow) {
                         if (data.result) {
                             $('#confirmDeleteAssetDialogModal').modal('hide');
 
-                            const grid = new MvcGrid(document.querySelector(".mvc-grid"));
+                            const grid = new MvcGrid(document.querySelector('.mvc-grid'));
                             grid.reload();
 
                             toastr.success(data.message);

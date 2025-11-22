@@ -135,7 +135,7 @@ $(document).on("dblclick", "#incomeGrid > table > tbody  > tr", function () {
     });
 });
 $('#gridSearch').on('input', function () {
-    const grid = new MvcGrid(document.querySelector(".mvc-grid"));
+    const grid = new MvcGrid(document.querySelector('.mvc-grid'));
 
     grid.url.searchParams.set("wholeSearch", this.value);
 
@@ -263,7 +263,7 @@ function CreateIncome() {
             if (data.result) {
                 $('#createIncomeDialogModal').modal('hide');
 
-                const grid = new MvcGrid(document.querySelector(".mvc-grid"));
+                const grid = new MvcGrid(document.querySelector('.mvc-grid'));
                 grid.reload();
 
                 toastr.success(data.message);
@@ -413,7 +413,7 @@ function UpdateIncome() {
             if (data.result) {
                 $('#editIncomeDialogModal').modal('hide');
 
-                const grid = new MvcGrid(document.querySelector(".mvc-grid"));
+                const grid = new MvcGrid(document.querySelector('.mvc-grid'));
                 grid.reload();
 
                 toastr.success(data.message);
@@ -490,7 +490,7 @@ function DeleteIncome(errorMessageSelectGridRow) {
                         if (data.result) {
                             $('#confirmDeleteIncomeDialogModal').modal('hide');
 
-                            const grid = new MvcGrid(document.querySelector(".mvc-grid"));
+                            const grid = new MvcGrid(document.querySelector('.mvc-grid'));
                             grid.reload();
 
                             toastr.success(data.message);

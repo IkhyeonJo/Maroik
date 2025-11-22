@@ -253,7 +253,7 @@ $(document).on("dblclick", "#fixedIncomeGrid > table > tbody  > tr", function ()
     });
 });
 $('#gridSearch').on('input', function () {
-    const grid = new MvcGrid(document.querySelector(".mvc-grid"));
+    const grid = new MvcGrid(document.querySelector('.mvc-grid'));
 
     grid.url.searchParams.set("wholeSearch", this.value);
 
@@ -485,7 +485,7 @@ function CreateFixedIncome() {
             if (data.result) {
                 $('#createFixedIncomeDialogModal').modal('hide');
 
-                const grid = new MvcGrid(document.querySelector(".mvc-grid"));
+                const grid = new MvcGrid(document.querySelector('.mvc-grid'));
                 grid.reload();
 
                 toastr.success(data.message);
@@ -682,7 +682,7 @@ function UpdateFixedIncome() {
             if (data.result) {
                 $('#editFixedIncomeDialogModal').modal('hide');
 
-                const grid = new MvcGrid(document.querySelector(".mvc-grid"));
+                const grid = new MvcGrid(document.querySelector('.mvc-grid'));
                 grid.reload();
 
                 toastr.success(data.message);
@@ -760,7 +760,7 @@ function DeleteFixedIncome(errorMessageSelectGridRow) {
                         if (data.result) {
                             $('#confirmDeleteFixedIncomeDialogModal').modal('hide');
 
-                            const grid = new MvcGrid(document.querySelector(".mvc-grid"));
+                            const grid = new MvcGrid(document.querySelector('.mvc-grid'));
                             grid.reload();
 
                             toastr.success(data.message);

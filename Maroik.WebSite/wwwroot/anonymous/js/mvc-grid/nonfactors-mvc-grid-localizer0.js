@@ -233,7 +233,7 @@ class MvcGrid {
         return map;
     }
     findGrid(element) {
-        const grid = element.closest(".mvc-grid");
+        const grid = element.closest('.mvc-grid');
 
         if (!grid) {
             throw new Error(`${_localizerNonFactors0.GCOBCFWMS}`);
