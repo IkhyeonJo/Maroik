@@ -1859,6 +1859,7 @@ public class ManagementController : Controller
                         }
                         else // 비로그인 사용자인 경우
                         {
+                            await transaction.RollbackAsync();
                             return Json(new
                                 { result = false, error = _localizer["Please Login to write board"].Value });
                         }
@@ -1900,6 +1901,7 @@ public class ManagementController : Controller
                             }
                             else
                             {
+                                await transaction.RollbackAsync();
                                 return Ok(new
                                 {
                                     result = false,
@@ -1917,12 +1919,14 @@ public class ManagementController : Controller
                     }
                     else
                     {
+                        await transaction.RollbackAsync();
                         return Json(new
                             { result = false, error = _localizer["Please Login to write board"].Value });
                     }
                 }
                 catch
                 {
+                    await transaction.RollbackAsync();
                     return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                 }
             }
@@ -2630,6 +2634,7 @@ public class ManagementController : Controller
 
                         if (tempPrivateNoteBoard.Writer != loginedAccount.Nickname)
                         {
+                            await transaction.RollbackAsync();
                             return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                         }
 
@@ -2692,6 +2697,7 @@ public class ManagementController : Controller
                             }
                             else
                             {
+                                await transaction.RollbackAsync();
                                 return Ok(new
                                 {
                                     result = false,
@@ -2764,6 +2770,7 @@ public class ManagementController : Controller
                             }
                             else
                             {
+                                await transaction.RollbackAsync();
                                 return Ok(new
                                 {
                                     result = false,
@@ -2792,11 +2799,13 @@ public class ManagementController : Controller
                     }
                     else
                     {
+                        await transaction.RollbackAsync();
                         return Json(new { result = false, error = _localizer["Please Login to edit board"].Value });
                     }
                 }
                 catch
                 {
+                    await transaction.RollbackAsync();
                     return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                 }
             }

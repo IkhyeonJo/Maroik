@@ -142,6 +142,7 @@ public class ForumController : Controller
                         }
                         else // 비로그인 사용자인 경우
                         {
+                            await transaction.RollbackAsync();
                             return Json(new { result = false, error = _localizer["Please Login to write board"].Value });
                         }
 
@@ -173,6 +174,7 @@ public class ForumController : Controller
                             }
                             else
                             {
+                                await transaction.RollbackAsync();
                                 return Ok(new { result = false, errorMessage = _localizer["File Size must be smaller than 10MB."].Value });
                             }
 
@@ -183,11 +185,13 @@ public class ForumController : Controller
                     }
                     else
                     {
+                        await transaction.RollbackAsync();
                         return Json(new { result = false, error = _localizer["Please Login to write board"].Value });
                     }
                 }
                 catch
                 {
+                    await transaction.RollbackAsync();
                     return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                 }
             }
@@ -781,6 +785,7 @@ public class ForumController : Controller
 
                         if (tempFreeBoard.Writer != loginedAccount.Nickname)
                         {
+                            await transaction.RollbackAsync();
                             return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                         }
 
@@ -822,6 +827,7 @@ public class ForumController : Controller
                             }
                             else
                             {
+                                await transaction.RollbackAsync();
                                 return Ok(new { result = false, errorMessage = _localizer["File Size must be smaller than 10MB."].Value });
                             }
                         }
@@ -869,6 +875,7 @@ public class ForumController : Controller
                             }
                             else
                             {
+                                await transaction.RollbackAsync();
                                 return Ok(new { result = false, errorMessage = _localizer["File Size must be smaller than 10MB."].Value });
                             }
                         }
@@ -886,11 +893,13 @@ public class ForumController : Controller
                     }
                     else
                     {
+                        await transaction.RollbackAsync();
                         return Json(new { result = false, error = _localizer["Please Login to edit board"].Value });
                     }
                 }
                 catch
                 {
+                    await transaction.RollbackAsync();
                     return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                 }
             }

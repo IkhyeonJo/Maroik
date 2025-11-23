@@ -138,7 +138,7 @@ $(document).on("dblclick", "#expenditureGrid > table > tbody  > tr", function ()
     });
 });
 $('#gridSearch').on('input', function () {
-    const grid = new MvcGrid(document.querySelector(".mvc-grid"));
+    const grid = new MvcGrid(document.querySelector('.mvc-grid'));
 
     grid.url.searchParams.set("wholeSearch", this.value);
 
@@ -323,7 +323,7 @@ function CreateExpenditure() {
             if (data.result) {
                 $('#createExpenditureDialogModal').modal('hide');
 
-                const grid = new MvcGrid(document.querySelector(".mvc-grid"));
+                const grid = new MvcGrid(document.querySelector('.mvc-grid'));
                 grid.reload();
 
                 toastr.success(data.message);
@@ -696,7 +696,7 @@ function UpdateExpenditure() {
             if (data.result) {
                 $('#editExpenditureDialogModal').modal('hide');
 
-                const grid = new MvcGrid(document.querySelector(".mvc-grid"));
+                const grid = new MvcGrid(document.querySelector('.mvc-grid'));
                 grid.reload();
 
                 toastr.success(data.message);
@@ -773,7 +773,7 @@ function DeleteExpenditure(errorMessageSelectGridRow) {
                         if (data.result) {
                             $('#confirmDeleteExpenditureDialogModal').modal('hide');
 
-                            const grid = new MvcGrid(document.querySelector(".mvc-grid"));
+                            const grid = new MvcGrid(document.querySelector('.mvc-grid'));
                             grid.reload();
 
                             toastr.success(data.message);

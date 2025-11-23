@@ -67,9 +67,7 @@ Maroik is a modern web application built with ASP.NET Core MVC, featuring a comp
   - Environment isolation
 - Authentication & Authorization
   - Session Authentication
-  - JWT Authentication
   - Role-based access control
-  - OAuth2/OpenID Connect
 - Cross-Origin Resource Sharing (CORS)
 - API Documentation
   - Swagger/OpenAPI
@@ -162,9 +160,6 @@ Maroik/
 
 ### User Profile
 ![UserProfile](https://user-images.githubusercontent.com/20404991/132020484-4b633287-a1b1-48b0-8340-ae3ead83235a.jpg)
-
-### WebAPI
-![WebAPI](https://user-images.githubusercontent.com/20404991/132020514-13951172-3bcd-48a5-bfe0-a8328cdb766a.jpg)
 
 ## Contributing
 1. Fork the repository
