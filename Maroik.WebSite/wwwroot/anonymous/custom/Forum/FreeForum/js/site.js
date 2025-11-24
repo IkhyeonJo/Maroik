@@ -1,4 +1,16 @@
-﻿function base64ToBlob(base64, mime) {
+﻿const $freeForumDetailUpdated = $('#free_forum_detail_updated');
+const $tblFreeForum = $('#tblFreeForum');
+const $searchType = $('#searchType');
+const $btnFreeForumSearchText = $('#btnFreeForumSearchText');
+const $btnFreeForumSearchBoard = $('#btnFreeForumSearchBoard');
+const $btnFreeForumWrite = $('#btnFreeForumWrite');
+const $btnFreeForumList = $('#btnFreeForumList');
+const $formWriteFreeComment = $('#formWriteFreeComment');
+const $detailBoardContent = $('#detailBoardContent');
+const $aDetailBoardAttachedFile = $('#aDetailBoardAttachedFile');
+const $aEditBoardAttachedFile = $('#aEditBoardAttachedFile');
+
+function base64ToBlob(base64, mime) {
     const byteCharacters = atob(base64);
     const byteNumbers = new Array(byteCharacters.length);
     for (let i = 0; i < byteCharacters.length; i++) {
@@ -10,14 +22,14 @@
 
 $(function () {
 
-    if ($('#free_forum_detail_updated').length > 0) {
-        let utcDateStr = $('#free_forum_detail_updated').text();
+    if ($freeForumDetailUpdated.length > 0) {
+        let utcDateStr = $freeForumDetailUpdated.text();
         let utcDate = new Date(utcDateStr);
         let localDateStr = utcDate.toLocaleString();
-        $('#free_forum_detail_updated').text(localDateStr);
+        $freeForumDetailUpdated.text(localDateStr);
     }
-
-    $('#tblFreeForum tbody tr .free_forum_board_created').each(function () {
+    
+    $tblFreeForum.find('tbody').children('tr').find('.free_forum_board_created').each(function () {
         let $element = $(this);
         let $span = $element.find('span');
         let utcDateStr = $span.length > 0 ? $span.html() : $element.text();
@@ -34,34 +46,34 @@ $(function () {
     });
 
     function SearchBoard() {
-        window.location.href = "/Forum/FreeForum?searchType=" + $('#searchType').val() + "&searchText=" + $('#btnFreeForumSearchText').val();
+        window.location.href = "/Forum/FreeForum?searchType=" + $searchType.val() + "&searchText=" + $btnFreeForumSearchText.val();
     }
 
-    $('#btnFreeForumSearchBoard').off('click').on('click', function () {
+    $btnFreeForumSearchBoard.off('click').on('click', function () {
         SearchBoard();
     });
 
-    $('#btnFreeForumWrite').off('click').on('click', function () {
+    $btnFreeForumWrite.off('click').on('click', function () {
         location.href = "/Forum/FreeForum?method=write";
     });
 
-    $('#btnFreeForumList').off('click').on('click', function () {
+    $btnFreeForumList.off('click').on('click', function () {
         location.href = $(this).attr("data-link");
     });
 
-    $('#btnFreeForumSearchText').off('keypress').on('keypress', function (event) {
+    $btnFreeForumSearchText.off('keypress').on('keypress', function (event) {
         if (event.keyCode === 13 || event.which === 13) {
             SearchBoard();
         }
     });
 
-    $('#formWriteFreeComment').off('keydown').on('keydown', function (event) {
-        return event.key != 'Enter';
+    $formWriteFreeComment.off('keydown').on('keydown', function (event) {
+        return event.key !== 'Enter';
     });
 
-    if ($('#detailBoardContent').length > 0 && $('#detailBoardContent').is(":hidden")) {
+    if ($detailBoardContent.length > 0 && $detailBoardContent.is(":hidden")) {
         const parser = new DOMParser();
-        const htmlDoc = parser.parseFromString($('#detailBoardContent').html(), 'text/html');
+        const htmlDoc = parser.parseFromString($detailBoardContent.html(), 'text/html');
 
         const imgTags = htmlDoc.querySelectorAll('img[data-file]');
 
@@ -88,12 +100,12 @@ $(function () {
         });
 
         const updatedHtml = htmlDoc.body.innerHTML;
-        $('#detailBoardContent').html(updatedHtml);
-        $('#detailBoardContent').show();
+        $detailBoardContent.html(updatedHtml);
+        $detailBoardContent.show();
     }
 
-    if ($('#aDetailBoardAttachedFile').length > 0) {
-        $('#aDetailBoardAttachedFile').off('click').on('click', function (event) {
+    if ($aDetailBoardAttachedFile.length > 0) {
+        $aDetailBoardAttachedFile.off('click').on('click', function (event) {
             event.preventDefault();
             let base64Data = $(this).attr('data-file');
             let contentType = $(this).attr('data-contenttype');
@@ -113,8 +125,8 @@ $(function () {
                 }
             }
         });
-    } else if ($('#aEditBoardAttachedFile').length > 0) {
-        $('#aEditBoardAttachedFile').off('click').on('click', function (event) {
+    } else if ($aEditBoardAttachedFile.length > 0) {
+        $aEditBoardAttachedFile.off('click').on('click', function (event) {
             event.preventDefault();
             let base64Data = $(this).attr('data-file');
             let contentType = $(this).attr('data-contenttype');
