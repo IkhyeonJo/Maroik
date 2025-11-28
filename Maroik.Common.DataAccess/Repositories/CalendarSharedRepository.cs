@@ -18,7 +18,7 @@ public class CalendarSharedRepository : ICalendarSharedRepository
     }
 
     /// <summary>
-    /// 모든 공유 달력을 구합니다.
+    /// Gets all shared calendars.
     /// </summary>
     /// <returns></returns>
     public async Task<List<CalendarShared>> GetCalendarSharedAsync()
@@ -27,7 +27,7 @@ public class CalendarSharedRepository : ICalendarSharedRepository
     }
 
     /// <summary>
-    /// 공유 달력을 생성합니다.
+    /// Creates a shared calendar.
     /// </summary>
     /// <param name="calendarShared"></param>
     /// <returns></returns>
@@ -38,7 +38,7 @@ public class CalendarSharedRepository : ICalendarSharedRepository
     }
 
     /// <summary>
-    /// 공유 달력을 업데이트합니다.
+    /// Updates a shared calendar.
     /// </summary>
     /// <param name="calendarShared"></param>
     /// <returns></returns>

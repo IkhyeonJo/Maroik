@@ -18,7 +18,7 @@ public class CalendarEventReminderRepository : ICalendarEventReminderRepository
     }
 
     /// <summary>
-    /// 해당 달력 이벤트에 해당하는 모든 달력 이벤트 알림을 구합니다.
+    /// Gets all calendar event reminders for the calendar event.
     /// </summary>
     /// <param name="calendarEventId"></param>
     /// <returns></returns>
@@ -28,7 +28,7 @@ public class CalendarEventReminderRepository : ICalendarEventReminderRepository
     }
 
     /// <summary>
-    /// 달력 이벤트 알림을 생성합니다.
+    /// Creates a calendar event reminder.
     /// </summary>
     /// <param name="calendarEventReminder"></param>
     /// <returns></returns>
@@ -39,7 +39,7 @@ public class CalendarEventReminderRepository : ICalendarEventReminderRepository
     }
 
     /// <summary>
-    /// 달력 이벤트 알림들을 삭제합니다.
+    /// Deletes calendar event reminders.
     /// </summary>
     /// <param name="calendarEventId"></param>
     /// <returns></returns>

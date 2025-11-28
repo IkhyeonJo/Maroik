@@ -51,51 +51,51 @@ public class AuthorizationFilter : ActionFilterAttribute
                                          select anonymousSubCategory;
 
 
-        string currentControllerName = context.ActionDescriptor.RouteValues["controller"].ToString(); // 실행 전 Controller 이름
-        string currentActionName = context.ActionDescriptor.RouteValues["action"].ToString(); // 실행 전 Action 이름
+        string currentControllerName = context.ActionDescriptor.RouteValues["controller"].ToString(); // Controller name before execution
+        string currentActionName = context.ActionDescriptor.RouteValues["action"].ToString(); // Action name before execution
         string currentRequestMethod = context.HttpContext.Request.Method; // GET HTTP METHOD
-        bool isAccountSessionExist = context.HttpContext.Session.TryGetValue(Maroik.Common.Miscellaneous.Utilities.EnumHelper.GetDescription(Maroik.Common.Miscellaneous.Utilities.Session.Account), out _); // 로그인이 되어 계정 세션이 생겼는지 확인
+        bool isAccountSessionExist = context.HttpContext.Session.TryGetValue(Maroik.Common.Miscellaneous.Utilities.EnumHelper.GetDescription(Maroik.Common.Miscellaneous.Utilities.Session.Account), out _); // Check if account session exists after login
 
-        if (currentRequestMethod.ToUpper() == "GET") // GET 방식 (페이지 접근만 차단!!)
+        if (currentRequestMethod.ToUpper() == "GET") // GET method (block page access only!!)
         {
-            if (isAccountSessionExist == false) // 로그인이 안 된 상태이면
+            if (isAccountSessionExist == false) // If not logged in
             {
-                if (currentControllerName == "Exception" && currentActionName == "Error") // 예외처리 자원 접근 허용 (Error)
+                if (currentControllerName == "Exception" && currentActionName == "Error") // Allow exception resource access (Error)
                 {
                     await next(); // Do Action!!
                     return;
                 }
-                else if (currentControllerName == "Account" && currentActionName == "Login") // 로그인 페이지인 경우
+                else if (currentControllerName == "Account" && currentActionName == "Login") // If login page
                 {
                     await next(); // Do Action!!
                     return;
                 }
-                else if (currentControllerName == "Account" && currentActionName == "Register") // 회원가입 페이지인 경우
+                else if (currentControllerName == "Account" && currentActionName == "Register") // If registration page
                 {
                     await next(); // Do Action!!
                     return;
                 }
-                else if (currentControllerName == "Account" && currentActionName == "ConfirmEmail") // 이메일 인증 페이지인 경우
+                else if (currentControllerName == "Account" && currentActionName == "ConfirmEmail") // If email confirmation page
                 {
                     await next(); // Do Action!!
                     return;
                 }
-                else if (currentControllerName == "Account" && currentActionName == "ConsentForm") // 동의서 페이지인 경우
+                else if (currentControllerName == "Account" && currentActionName == "ConsentForm") // If consent form page
                 {
                     await next(); // Do Action!!
                     return;
                 }
-                else if (currentControllerName == "Account" && currentActionName == "ForgotPassword") // 비밀번호 찾기 페이지인 경우
+                else if (currentControllerName == "Account" && currentActionName == "ForgotPassword") // If forgot password page
                 {
                     await next(); // Do Action!!
                     return;
                 }
-                else if (currentControllerName == "Account" && currentActionName == "ResetPassword") // 비밀번호 초기화 페이지인 경우
+                else if (currentControllerName == "Account" && currentActionName == "ResetPassword") // If password reset page
                 {
                     await next(); // Do Action!!
                     return;
                 }
-                else if (currentControllerName == "Account" && currentActionName == "Logout") // 로그아웃인 경우
+                else if (currentControllerName == "Account" && currentActionName == "Logout") // If logout
                 {
                     await next(); // Do Action!!
                     return;
@@ -104,10 +104,10 @@ public class AuthorizationFilter : ActionFilterAttribute
                 IEnumerable<Category> anonymousCategories = DbCache.AnonymousCategories;
                 IEnumerable<SubCategory> anonymousSubCategories = DbCache.AnonymousSubCategories;
 
-                #region SubCategory가 없는 Category일 경우
+                #region If Category without SubCategory
                 IEnumerable<Category> singleCategories = from anonymousCategory in anonymousCategories
                                                          where !string.IsNullOrEmpty(anonymousCategory.Action)
-                                                         select anonymousCategory; // 서브 카테고리 없는 카테고리 모음.
+                                                         select anonymousCategory; // Collection of categories without sub-categories
 
                 foreach (Category singleCategory in singleCategories)
                 {
@@ -119,10 +119,10 @@ public class AuthorizationFilter : ActionFilterAttribute
                 }
                 #endregion
 
-                #region SubCategory가 있는 Category일 경우
+                #region If Category with SubCategory
                 IEnumerable<Category> nonSingleCategories = from anonymousCategory in anonymousCategories
                                                             where string.IsNullOrEmpty(anonymousCategory.Action)
-                                                            select anonymousCategory; // 서브 카테고리 있는 카테고리 모음.
+                                                            select anonymousCategory; // Collection of categories with sub-categories
 
                 foreach (Category nonSingleCategory in nonSingleCategories)
                 {
@@ -143,19 +143,19 @@ public class AuthorizationFilter : ActionFilterAttribute
                 context.Result = new RedirectResult("/DashBoard/AnonymousIndex");
                 return;
             }
-            else if (isAccountSessionExist == true) // 로그인이 된 상태라면
+            else if (isAccountSessionExist == true) // If logged in
             {
-                if (currentControllerName == "Exception" && currentActionName == "Error") // 예외처리 자원 접근 허용 (Error)
+                if (currentControllerName == "Exception" && currentActionName == "Error") // Allow exception resource access (Error)
                 {
                     await next(); // Do Action!!
                     return;
                 }
-                else if (currentControllerName == "Account" && currentActionName == "Logout") // 로그아웃
+                else if (currentControllerName == "Account" && currentActionName == "Logout") // Logout
                 {
                     await next(); // Do Action!!
                     return;
                 }
-                else if (currentControllerName == "DashBoard" && currentActionName == "AnonymousIndex") // 초기 화면
+                else if (currentControllerName == "DashBoard" && currentActionName == "AnonymousIndex") // Initial screen
                 {
                     await next(); // Do Action!!
                     return;
@@ -164,15 +164,15 @@ public class AuthorizationFilter : ActionFilterAttribute
                 _ = context.HttpContext.Session.TryGetValue(Maroik.Common.Miscellaneous.Utilities.EnumHelper.GetDescription(Maroik.Common.Miscellaneous.Utilities.Session.Account), out byte[] resultByte);
                 Account loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)); // Get Session
 
-                if (loginedAccount.Role == Role.Admin) // 로그인한 사용자 권한이 Admin일 경우
+                if (loginedAccount.Role == Role.Admin) // If logged-in user has Admin role
                 {
                     IEnumerable<Category> adminCategories = DbCache.AdminCategories;
                     IEnumerable<SubCategory> adminSubCategories = DbCache.AdminSubCategories;
 
-                    #region SubCategory가 없는 Category일 경우
+                    #region If Category without SubCategory
                     IEnumerable<Category> singleCategories = from adminCategory in adminCategories
                                                              where !string.IsNullOrEmpty(adminCategory.Action)
-                                                             select adminCategory; // 서브 카테고리 없는 카테고리 모음.
+                                                             select adminCategory; // Collection of categories without sub-categories
 
                     foreach (Category singleCategory in singleCategories)
                     {
@@ -184,10 +184,10 @@ public class AuthorizationFilter : ActionFilterAttribute
                     }
                     #endregion
 
-                    #region SubCategory가 있는 Category일 경우
+                    #region If Category with SubCategory
                     IEnumerable<Category> nonSingleCategories = from adminCategory in adminCategories
                                                                 where string.IsNullOrEmpty(adminCategory.Action)
-                                                                select adminCategory; // 서브 카테고리 있는 카테고리 모음.
+                                                                select adminCategory; // Collection of categories with sub-categories
 
                     foreach (Category nonSingleCategory in nonSingleCategories)
                     {
@@ -204,20 +204,20 @@ public class AuthorizationFilter : ActionFilterAttribute
                         }
                     }
                     #endregion
-                    //context.Result = new UnauthorizedObjectResult("User is unauthorized"); // 다 검사했는데도 나오지 않은 경우는 DB에 없는 경우이다.
+                    //context.Result = new UnauthorizedObjectResult("User is unauthorized"); // If not found after all checks, it doesn't exist in DB
                     context.Result = new RedirectResult("/DashBoard/AnonymousIndex");
                     return;
-                    //DB Category & SubCategory 다 뽑아 현재 Access한 Controller & Action과 다 맞는지 비교하고 맞으면 넘어가고 아니면 UnAuthroizedObjectReslut 출력 (Action 취소!!)
+                    //Extract all DB Categories & SubCategories, compare with current accessed Controller & Action, proceed if match or output UnauthorizedObjectResult (Cancel Action!!)
                 }
-                else if (loginedAccount.Role == Role.User) // 로그인한 사용자 권한이 User일 경우
+                else if (loginedAccount.Role == Role.User) // If logged-in user has User role
                 {
                     IEnumerable<Category> userCategories = DbCache.UserCategories;
                     IEnumerable<SubCategory> userSubCategories = DbCache.UserSubCategories;
 
-                    #region SubCategory가 없는 Category일 경우
+                    #region If Category without SubCategory
                     IEnumerable<Category> singleCategories = from userCategory in userCategories
                                                              where !string.IsNullOrEmpty(userCategory.Action)
-                                                             select userCategory; // 서브 카테고리 없는 카테고리 모음.
+                                                             select userCategory; // Collection of categories without sub-categories
 
                     foreach (Category singleCategory in singleCategories)
                     {
@@ -229,10 +229,10 @@ public class AuthorizationFilter : ActionFilterAttribute
                     }
                     #endregion
 
-                    #region SubCategory가 있는 Category일 경우
+                    #region If Category with SubCategory
                     IEnumerable<Category> nonSingleCategories = from userCategory in userCategories
                                                                 where string.IsNullOrEmpty(userCategory.Action)
-                                                                select userCategory; // 서브 카테고리 있는 카테고리 모음.
+                                                                select userCategory; // Collection of categories with sub-categories
 
                     foreach (Category nonSingleCategory in nonSingleCategories)
                     {
@@ -249,28 +249,28 @@ public class AuthorizationFilter : ActionFilterAttribute
                         }
                     }
                     #endregion
-                    //context.Result = new UnauthorizedObjectResult("User is unauthorized"); // 다 검사했는데도 나오지 않은 경우는 DB에 없는 경우이다.
+                    //context.Result = new UnauthorizedObjectResult("User is unauthorized"); // If not found after all checks, it doesn't exist in DB
                     context.Result = new RedirectResult("/DashBoard/AnonymousIndex");
                     return;
-                    //DB Category & SubCategory 다 뽑아 현재 Access한 Controller & Action과 다 맞는지 비교하고 맞으면 넘어가고 아니면 UnAuthroizedObjectReslut 출력 (Action 취소!!)
+                    //Extract all DB Categories & SubCategories, compare with current accessed Controller & Action, proceed if match or output UnauthorizedObjectResult (Cancel Action!!)
                 }
             }
         }
-        else if (currentRequestMethod.ToUpper() == "POST") // POST 방식
+        else if (currentRequestMethod.ToUpper() == "POST") // POST method
         {
             IEnumerable<Type> existingControllers = Assembly.GetExecutingAssembly().GetTypes()
                 .Where(type => typeof(Controller).IsAssignableFrom(type)); //filter controllers
 
-            if (isAccountSessionExist == false) // 로그인이 안 된 상태이면
+            if (isAccountSessionExist == false) // If not logged in
             {
                 IEnumerable<MethodInfo> existingHttpPostMethods = existingControllers
-                .Where(type => type.Name == "AccountController") // AccountController 체크
-                .SelectMany(type => type.GetMethods()) // Method 들을 구한다
-                .Where(method => method.IsPublic && !method.IsDefined(typeof(NonActionAttribute)) && method.IsDefined(typeof(HttpPostAttribute)) && method.IsDefined(typeof(ValidateAntiForgeryTokenAttribute))); // Method에서 접근 제한자가 Public이고 Attribute가 NonAction으로 되지 않고, HttpPost 및 ValidateAntiForgeryToken으로 된 메소드들을 구한다.
+                .Where(type => type.Name == "AccountController") // Check AccountController
+                .SelectMany(type => type.GetMethods()) // Get methods
+                .Where(method => method.IsPublic && !method.IsDefined(typeof(NonActionAttribute)) && method.IsDefined(typeof(HttpPostAttribute)) && method.IsDefined(typeof(ValidateAntiForgeryTokenAttribute))); // Get methods with public access modifier, without NonAction attribute, with HttpPost and ValidateAntiForgeryToken attributes
 
                 foreach (MethodInfo existingHttpPostMethod in existingHttpPostMethods)
                 {
-                    if (currentControllerName == existingHttpPostMethod.DeclaringType.Name.Replace("Controller", "") && currentActionName == existingHttpPostMethod.Name) // (POST로 보낸) 현 Controller 명과 Action 명이 Account Controller의 NonAction Attribute가 없고 HttpPost & ValidateAntiForgeryToken Attribute를 가진 Method(Action) 명과 같다면
+                    if (currentControllerName == existingHttpPostMethod.DeclaringType.Name.Replace("Controller", "") && currentActionName == existingHttpPostMethod.Name) // If current Controller and Action names (sent via POST) match Account Controller's Method(Action) name without NonAction attribute and with HttpPost & ValidateAntiForgeryToken attributes
                     {
                         await next(); // Do Action!!
                         return;
@@ -281,13 +281,13 @@ public class AuthorizationFilter : ActionFilterAttribute
                 foreach (Category anonymousCategory in anonymousCategories)
                 {
                     existingHttpPostMethods = existingControllers
-                    .Where(type => type.Name == $"{anonymousCategory.Controller}Controller") // 권한 AnonymousCategory일 때 등록 된 Category의 Controller 이름만 접근 가능
-                    .SelectMany(type => type.GetMethods()) // Method 들을 구한다
-                    .Where(method => method.IsPublic && !method.IsDefined(typeof(NonActionAttribute)) && method.IsDefined(typeof(HttpPostAttribute)) && method.IsDefined(typeof(ValidateAntiForgeryTokenAttribute)) && method.IsDefined(typeof(RequiredHttpPostAccessAttribute))); // Method에서 접근 제한자가 Public이고 Attribute가 NonAction으로 되지 않고, HttpPost 및 ValidateAntiForgeryToken가 있고 RequiredHttpPostAccess로 된 메소드들을 구한다.
+                    .Where(type => type.Name == $"{anonymousCategory.Controller}Controller") // When permission is AnonymousCategory, only registered Category's Controller name is accessible
+                    .SelectMany(type => type.GetMethods()) // Get methods
+                    .Where(method => method.IsPublic && !method.IsDefined(typeof(NonActionAttribute)) && method.IsDefined(typeof(HttpPostAttribute)) && method.IsDefined(typeof(ValidateAntiForgeryTokenAttribute)) && method.IsDefined(typeof(RequiredHttpPostAccessAttribute))); // Get methods with public access modifier, without NonAction attribute, with HttpPost, ValidateAntiForgeryToken, and RequiredHttpPostAccess attributes
 
                     foreach (MethodInfo existingHttpPostMethod in existingHttpPostMethods)
                     {
-                        if (currentControllerName == existingHttpPostMethod.DeclaringType.Name.Replace("Controller", "") && currentActionName == existingHttpPostMethod.Name) // (POST로 보낸) 현 Controller 명과 Action 명이 Account Controller의 NonAction Attribute가 없고 HttpPost & ValidateAntiForgeryToken Attribute를 가진 Method(Action) 명과 같다면
+                        if (currentControllerName == existingHttpPostMethod.DeclaringType.Name.Replace("Controller", "") && currentActionName == existingHttpPostMethod.Name) // If current Controller and Action names (sent via POST) match Account Controller's Method(Action) name without NonAction attribute and with HttpPost & ValidateAntiForgeryToken attributes
                         {
                             foreach (CustomAttributeData customAttribute in existingHttpPostMethod.CustomAttributes)
                             {
@@ -307,28 +307,28 @@ public class AuthorizationFilter : ActionFilterAttribute
                     }
                 }
 
-                //context.Result = new UnauthorizedObjectResult("Access is not allowed"); // 다 검사 했는데도 없으면 실행 불가!
+                //context.Result = new UnauthorizedObjectResult("Access is not allowed"); // If not found after all checks, execution is not allowed!
                 context.Result = new RedirectResult("/DashBoard/AnonymousIndex");
                 return;
             }
-            else if (isAccountSessionExist == true) // 로그인이 된 상태라면
+            else if (isAccountSessionExist == true) // If logged in
             {
                 _ = context.HttpContext.Session.TryGetValue(Maroik.Common.Miscellaneous.Utilities.EnumHelper.GetDescription(Maroik.Common.Miscellaneous.Utilities.Session.Account), out byte[] resultByte);
                 Account loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)); // Get Session
 
-                if (loginedAccount.Role == Role.Admin) // 로그인한 사용자 권한이 Admin일 경우
+                if (loginedAccount.Role == Role.Admin) // If logged-in user has Admin role
                 {
                     IEnumerable<Category> adminCategories = DbCache.AdminCategories;
                     foreach (Category adminCategory in adminCategories)
                     {
                         IEnumerable<MethodInfo> existingHttpPostMethods = existingControllers
-                        .Where(type => type.Name == $"{adminCategory.Controller}Controller") // 권한 Admin일 때 등록 된 Category의 Controller 이름만 접근 가능
-                        .SelectMany(type => type.GetMethods()) // Method 들을 구한다
-                        .Where(method => method.IsPublic && !method.IsDefined(typeof(NonActionAttribute)) && method.IsDefined(typeof(HttpPostAttribute)) && method.IsDefined(typeof(ValidateAntiForgeryTokenAttribute)) && method.IsDefined(typeof(RequiredHttpPostAccessAttribute))); // Method에서 접근 제한자가 Public이고 Attribute가 NonAction으로 되지 않고, HttpPost 및 ValidateAntiForgeryToken가 있고 RequiredHttpPostAccess로 된 메소드들을 구한다.
+                        .Where(type => type.Name == $"{adminCategory.Controller}Controller") // When permission is Admin, only registered Category's Controller name is accessible
+                        .SelectMany(type => type.GetMethods()) // Get methods
+                        .Where(method => method.IsPublic && !method.IsDefined(typeof(NonActionAttribute)) && method.IsDefined(typeof(HttpPostAttribute)) && method.IsDefined(typeof(ValidateAntiForgeryTokenAttribute)) && method.IsDefined(typeof(RequiredHttpPostAccessAttribute))); // Get methods with public access modifier, without NonAction attribute, with HttpPost, ValidateAntiForgeryToken, and RequiredHttpPostAccess attributes
 
                         foreach (MethodInfo existingHttpPostMethod in existingHttpPostMethods)
                         {
-                            if (currentControllerName == existingHttpPostMethod.DeclaringType.Name.Replace("Controller", "") && currentActionName == existingHttpPostMethod.Name) // (POST로 보낸) 현 Controller 명과 Action 명이 Account Controller의 NonAction Attribute가 없고 HttpPost & ValidateAntiForgeryToken Attribute를 가진 Method(Action) 명과 같다면
+                            if (currentControllerName == existingHttpPostMethod.DeclaringType.Name.Replace("Controller", "") && currentActionName == existingHttpPostMethod.Name) // If current Controller and Action names (sent via POST) match Account Controller's Method(Action) name without NonAction attribute and with HttpPost & ValidateAntiForgeryToken attributes
                             {
                                 foreach (CustomAttributeData customAttribute in existingHttpPostMethod.CustomAttributes)
                                 {
@@ -347,23 +347,23 @@ public class AuthorizationFilter : ActionFilterAttribute
                             }
                         }
                     }
-                    //context.Result = new UnauthorizedObjectResult("Access is not allowed"); // 다 검사 했는데도 없으면 실행 불가!
+                    //context.Result = new UnauthorizedObjectResult("Access is not allowed"); // If not found after all checks, execution is not allowed!
                     context.Result = new RedirectResult("/DashBoard/AnonymousIndex");
                     return;
                 }
-                else if (loginedAccount.Role == Role.User) // 로그인한 사용자 권한이 User일 경우
+                else if (loginedAccount.Role == Role.User) // If logged-in user has User role
                 {
                     IEnumerable<Category> userCategories = DbCache.UserCategories;
                     foreach (Category userCategory in userCategories)
                     {
                         IEnumerable<MethodInfo> existingHttpPostMethods = existingControllers
-                        .Where(type => type.Name == $"{userCategory.Controller}Controller") // 권한 User일 때 등록 된 Category의 Controller 이름만 접근 가능
-                        .SelectMany(type => type.GetMethods()) // Method 들을 구한다
-                        .Where(method => method.IsPublic && !method.IsDefined(typeof(NonActionAttribute)) && method.IsDefined(typeof(HttpPostAttribute)) && method.IsDefined(typeof(ValidateAntiForgeryTokenAttribute)) && method.IsDefined(typeof(RequiredHttpPostAccessAttribute))); // Method에서 접근 제한자가 Public이고 Attribute가 NonAction으로 되지 않고, HttpPost 및 ValidateAntiForgeryToken가 있고 RequiredHttpPostAccess로 된 메소드들을 구한다.
+                        .Where(type => type.Name == $"{userCategory.Controller}Controller") // When permission is User, only registered Category's Controller name is accessible
+                        .SelectMany(type => type.GetMethods()) // Get methods
+                        .Where(method => method.IsPublic && !method.IsDefined(typeof(NonActionAttribute)) && method.IsDefined(typeof(HttpPostAttribute)) && method.IsDefined(typeof(ValidateAntiForgeryTokenAttribute)) && method.IsDefined(typeof(RequiredHttpPostAccessAttribute))); // Get methods with public access modifier, without NonAction attribute, with HttpPost, ValidateAntiForgeryToken, and RequiredHttpPostAccess attributes
 
                         foreach (MethodInfo existingHttpPostMethod in existingHttpPostMethods)
                         {
-                            if (currentControllerName == existingHttpPostMethod.DeclaringType.Name.Replace("Controller", "") && currentActionName == existingHttpPostMethod.Name) // (POST로 보낸) 현 Controller 명과 Action 명이 Account Controller의 NonAction Attribute가 없고 HttpPost & ValidateAntiForgeryToken Attribute를 가진 Method(Action) 명과 같다면
+                            if (currentControllerName == existingHttpPostMethod.DeclaringType.Name.Replace("Controller", "") && currentActionName == existingHttpPostMethod.Name) // If current Controller and Action names (sent via POST) match Account Controller's Method(Action) name without NonAction attribute and with HttpPost & ValidateAntiForgeryToken attributes
                             {
                                 foreach (CustomAttributeData customAttribute in existingHttpPostMethod.CustomAttributes)
                                 {
@@ -382,13 +382,13 @@ public class AuthorizationFilter : ActionFilterAttribute
                             }
                         }
                     }
-                    //context.Result = new UnauthorizedObjectResult("Access is not allowed"); // 다 검사 했는데도 없으면 실행 불가!
+                    //context.Result = new UnauthorizedObjectResult("Access is not allowed"); // If not found after all checks, execution is not allowed!
                     context.Result = new RedirectResult("/DashBoard/AnonymousIndex");
                     return;
                 }
             }
         }
-        else // (PATCH / DELETE 등 방식은 다 거부)
+        else // (Reject all methods like PATCH / DELETE etc.)
         {
             //await next(); // Do Action!!
             //context.Result = new UnauthorizedObjectResult("Access is not allowed [Only Allowed GET/POST Method]");

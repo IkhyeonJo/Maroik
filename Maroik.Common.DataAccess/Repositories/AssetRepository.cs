@@ -18,7 +18,7 @@ public class AssetRepository : IAssetRepository
     }
 
     /// <summary>
-    /// 로그인 계정에 해당하는 모든 자산을 구합니다.
+    /// Gets all assets for the logged-in account.
     /// </summary>
     /// <param name="email"></param>
     /// <returns></returns>
@@ -28,7 +28,7 @@ public class AssetRepository : IAssetRepository
     }
 
     /// <summary>
-    /// 로그인 계정에 해당하는 특정 자산을 구합니다.
+    /// Gets a specific asset for the logged-in account.
     /// </summary>
     /// <param name="email"></param>
     /// <param name="productName"></param>
@@ -39,7 +39,7 @@ public class AssetRepository : IAssetRepository
     }
 
     /// <summary>
-    /// 자산을 생성합니다.
+    /// Creates an asset.
     /// </summary>
     /// <param name="asset"></param>
     /// <returns></returns>
@@ -50,7 +50,7 @@ public class AssetRepository : IAssetRepository
     }
 
     /// <summary>
-    /// 자산을 업데이트합니다.
+    /// Updates an asset.
     /// </summary>
     /// <param name="asset"></param>
     /// <returns></returns>
@@ -61,7 +61,7 @@ public class AssetRepository : IAssetRepository
     }
 
     /// <summary>
-    /// 자산명을 포함하여 자산을 업데이트합니다.
+    /// Updates an asset including asset name.
     /// </summary>
     /// <param name="asset"></param>
     /// <param name="originalProductName"></param>

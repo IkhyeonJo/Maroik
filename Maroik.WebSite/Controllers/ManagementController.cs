@@ -120,7 +120,7 @@ public class ManagementController : Controller
             return Ok(new { result = false, errorMessage = _localizer["Only .jpg or jpeg or .png file allowed"].Value });
         }
 
-        // ClamAV 검사 전 메모리 스트림 복사
+        // Copy memory stream before ClamAV scan
         using var memoryStream = new MemoryStream();
         await file.CopyToAsync(memoryStream);
         memoryStream.Position = 0;
@@ -130,7 +130,7 @@ public class ManagementController : Controller
             return BadRequest("File may be infected with a virus.");
         }
 
-        // 이미지 유효성 확인 (Magick.NET 사용, SVG 차단 포함)
+        // Validate image (using Magick.NET, including SVG blocking)
         memoryStream.Position = 0;
         try
         {
@@ -168,7 +168,7 @@ public class ManagementController : Controller
             await stream.FlushAsync();
         }
 
-        // 실행 권한 제거 (chmod 644)
+        // Remove execute permission (chmod 644)
         var chmod = new ProcessStartInfo
         {
             FileName = "/bin/chmod",
@@ -316,7 +316,7 @@ public class ManagementController : Controller
 
             if (ModelState.IsValid)
             {
-                #region Email 형식 체크
+                #region Email format check
 
                 static bool IsValidEmail(string email)
                 {
@@ -355,18 +355,18 @@ public class ManagementController : Controller
                     return true;
                 }
 
-                if (!IsValidEmail(accountInputViewModel.Email)) // 유효하지 않은 메일 형식
+                if (!IsValidEmail(accountInputViewModel.Email)) // Invalid email format
                 {
                     return Json(new { result = false, error = _localizer["Invalid email form"].Value });
                 }
 
                 #endregion
 
-                #region Password 형식 체크
+                #region Password format check
 
                 if (!new Regex(
                             "^((?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])|(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[^a-zA-Z0-9])|(?=.*?[A-Z])(?=.*?[0-9])(?=.*?[^a-zA-Z0-9])|(?=.*?[a-z])(?=.*?[0-9])(?=.*?[^a-zA-Z0-9])).{8,}$")
-                        .IsMatch(accountInputViewModel.Password)) // 유효하지 않은 비밀번호 형식
+                        .IsMatch(accountInputViewModel.Password)) // Invalid password format
                 {
                     return Json(new
                     {
@@ -379,7 +379,7 @@ public class ManagementController : Controller
 
                 #endregion
 
-                #region Nickname 형식 체크
+                #region Nickname format check
 
                 if (string.IsNullOrEmpty(accountInputViewModel.Nickname))
                 {
@@ -395,7 +395,7 @@ public class ManagementController : Controller
 
                 #endregion
 
-                #region Role 체크
+                #region Role check
 
                 if (accountInputViewModel.Role is not (Role.Admin or Role.User))
                 {
@@ -404,7 +404,7 @@ public class ManagementController : Controller
 
                 #endregion
 
-                #region TimeZone 형식 체크
+                #region TimeZone format check
 
                 if (string.IsNullOrEmpty(accountInputViewModel.TimeZoneIanaId))
                 {
@@ -413,7 +413,7 @@ public class ManagementController : Controller
 
                 #endregion
 
-                #region 이미 입력된 이메일로 계정이 있는 지 확인
+                #region Check if account exists with the entered email
 
                 if (await _accountRepository.GetAccountByEmailAsync(accountInputViewModel.Email) != null)
                 {
@@ -423,7 +423,7 @@ public class ManagementController : Controller
 
                 #endregion
 
-                #region 계정 생성
+                #region Create account
 
                 await _accountRepository.CreateAccountAsync
                 (
@@ -1273,7 +1273,7 @@ public class ManagementController : Controller
             MenuOutputViewModel selectedCategory = menuOutputViewModels.Where(a => a.Id == id).FirstOrDefault();
             if (selectedCategory == null)
             {
-                throw new Exception(); // DB에서 못 찾음
+                throw new Exception(); // Not found in DB
             }
 
             return Json(new
@@ -1357,7 +1357,7 @@ public class ManagementController : Controller
             MenuOutputViewModel selectedCategory = menuOutputViewModels.Where(a => a.Id == id).FirstOrDefault();
             if (selectedCategory == null)
             {
-                throw new Exception(); // DB에서 못 찾음
+                throw new Exception(); // Not found in DB
             }
 
             return Json(new
@@ -1756,7 +1756,7 @@ public class ManagementController : Controller
 
             if (ModelState.IsValid)
             {
-                boardInputViewModel.Content ??= ""; // 내용이 아무것도 입력되지 않았다면
+                boardInputViewModel.Content ??= ""; // If no content was entered
 
                 #region HtmlSanitizer
 
@@ -1782,7 +1782,7 @@ public class ManagementController : Controller
 
                 #endregion
 
-                if (boardInputViewModel.Title.Length is not (> 0 and <= 100)) // 제목 길이
+                if (boardInputViewModel.Title.Length is not (> 0 and <= 100)) // Title length
                 {
                     return Json(new
                     {
@@ -1800,15 +1800,15 @@ public class ManagementController : Controller
                     });
                 }
 
-                if (boardInputViewModel.UploadedFile != null) // 파일 첨부가 되었다면
+                if (boardInputViewModel.UploadedFile != null) // If a file was attached
                 {
-                    if (!(Path.GetExtension(boardInputViewModel.UploadedFile.FileName) == ".zip")) // zip 확장자만 가능
+                    if (!(Path.GetExtension(boardInputViewModel.UploadedFile.FileName) == ".zip")) // Only zip extension allowed
                     {
                         return Json(new
                             { result = false, error = _localizer["Only zip extension allowed."].Value });
                     }
 
-                    if (boardInputViewModel.UploadedFile.Length is not (> 0 and <= 10485760)) // 10MB 이하만 가능
+                    if (boardInputViewModel.UploadedFile.Length is not (> 0 and <= 10485760)) // Only 10MB or less allowed
                     {
                         return Json(new
                         {
@@ -1832,9 +1832,9 @@ public class ManagementController : Controller
                                 Encoding.Default.GetString(resultByte)); // Get Session
                         Board board = new();
 
-                        if (loginedAccount.Role == Role.Admin) // 관리자인 경우
+                        if (loginedAccount.Role == Role.Admin) // If administrator
                         {
-                            board.Type = EnumHelper.GetDescription(BoardType.PrivateNote); // 사적 메모
+                            board.Type = EnumHelper.GetDescription(BoardType.PrivateNote); // Private note
                             board.Title = boardInputViewModel.Title;
                             board.Content = boardInputViewModel.Content;
                             board.Writer = loginedAccount.Nickname;
@@ -1845,9 +1845,9 @@ public class ManagementController : Controller
                             //board.Locked = boardInputViewModel.Locked;
                             board.Noticed = boardInputViewModel.Noticed;
                         }
-                        else if (loginedAccount.Role == Role.User) // 일반 사용자인 경우
+                        else if (loginedAccount.Role == Role.User) // If regular user
                         {
-                            board.Type = EnumHelper.GetDescription(BoardType.PrivateNote); // 사적 메모
+                            board.Type = EnumHelper.GetDescription(BoardType.PrivateNote); // Private note
                             board.Title = boardInputViewModel.Title;
                             board.Content = boardInputViewModel.Content;
                             board.Writer = loginedAccount.Nickname;
@@ -1857,7 +1857,7 @@ public class ManagementController : Controller
                             board.Deleted = false;
                             //board.Locked = boardInputViewModel.Locked;
                         }
-                        else // 비로그인 사용자인 경우
+                        else // If non-logged in user
                         {
                             await transaction.RollbackAsync();
                             return Json(new
@@ -1866,15 +1866,15 @@ public class ManagementController : Controller
 
                         await _boardRepository.WriteBoardAsync(board);
 
-                        #region 첨부 파일 저장
+                        #region Save attached file
 
-                        if (boardInputViewModel.UploadedFile != null) // 첨부 파일 존재 시,
+                        if (boardInputViewModel.UploadedFile != null) // If attached file exists
                         {
                             if (boardInputViewModel.UploadedFile
                                     .Length is
-                                > 0 and <= 10485760) // boardInputViewModel.UploadedFile Length : 파일 크기 0MB 이상, 10MB 이하
+                                > 0 and <= 10485760) // boardInputViewModel.UploadedFile Length : file size 0MB or more, 10MB or less
                             {
-                                var createdBoardId = board.Id; // 첨부파일 FK 해서 로직 추가할 것
+                                var createdBoardId = board.Id; // Add logic for attached file FK
 
                                 string boardAttachedFilePath = Path.Combine("upload", "Management",
                                     EnumHelper.GetDescription(BoardType.PrivateNote), "boardAttachedFiles",
@@ -2060,7 +2060,7 @@ public class ManagementController : Controller
             return Ok(new { result = false, errorMessage = _localizer["File Size must be smaller than 10MB."].Value });
         }
 
-        // 확장자 검사
+        // Extension check
         var ext = Path.GetExtension(summernoteImageFile.FileName).ToLowerInvariant();
         if (ext != ".png" && ext != ".jpg" && ext != ".jpeg")
         {
@@ -2069,9 +2069,9 @@ public class ManagementController : Controller
 
         try
         {
-            // 실제 이미지 여부 검사 (Magick.NET)
+            // Check if it's an actual image (Magick.NET)
             using var image = new MagickImage(summernoteImageFile.OpenReadStream());
-            // Magick.NET에서 예외가 발생하면 이미지가 아니거나 허용되지 않는 포맷임
+            // If Magick.NET throws an exception, it's not an image or an unsupported format
         }
         catch (MagickException)
         {
@@ -2117,11 +2117,11 @@ public class ManagementController : Controller
     public async Task<IActionResult> PrivateNote(string method = "list", int? boardId = null, int page = 1,
         string searchType = "", string searchText = "")
     {
-        if (method == "write") // 글쓰기 (write)
+        if (method == "write") // Write
         {
             PrivateNoteOutputViewModel privateNoteOutputViewModel = new();
 
-            #region 게시판 글쓰기
+            #region Write board
 
             privateNoteOutputViewModel.Method = method;
 
@@ -2129,15 +2129,15 @@ public class ManagementController : Controller
 
             bool isAccountSessionExist = HttpContext.Session.TryGetValue(
                 Maroik.Common.Miscellaneous.Utilities.EnumHelper.GetDescription(Maroik.Common.Miscellaneous
-                    .Utilities.Session.Account), out _); // 로그인이 되어 계정 세션이 생겼는지 확인
+                    .Utilities.Session.Account), out _); // Check if account session exists after login
 
             return isAccountSessionExist ? View(privateNoteOutputViewModel) : RedirectToAction("Login", "Account");
         }
-        else if (method == "detail") // 상세보기 (detail)
+        else if (method == "detail") // Detail view
         {
             _ = HttpContext.Session.TryGetValue(
                 Maroik.Common.Miscellaneous.Utilities.EnumHelper.GetDescription(Maroik.Common.Miscellaneous
-                    .Utilities.Session.Account), out byte[] resultByte); // 작성자 또는 관리자인 경우
+                    .Utilities.Session.Account), out byte[] resultByte); // If writer or administrator
             Account loginedAccount =
                 JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)); // Get Session
 
@@ -2186,24 +2186,24 @@ public class ManagementController : Controller
                     isImgTagIncluded = true;
                     string filePath = imgTag.GetAttributeValue("alt", "");
 
-                    // 파일을 다운로드하는 메서드
+                    // Method to download file
                     byte[] fileData = await _fileClient.DownloadAsync(filePath);
 
                     if (fileData != null)
                     {
-                        // ContentType을 추출하기 위한 FileExtensionContentTypeProvider 사용
+                        // Use FileExtensionContentTypeProvider to extract ContentType
                         FileExtensionContentTypeProvider provider = new();
 
-                        // 기본 contentType은 "application/octet-stream"으로 설정
+                        // Set default contentType to "application/octet-stream"
                         if (!provider.TryGetContentType(filePath, out string contentType))
                         {
                             contentType = "application/octet-stream";
                         }
 
-                        // 파일 데이터를 Base64로 변환
+                        // Convert file data to Base64
                         string base64Data = Convert.ToBase64String(fileData);
 
-                        // img 태그에 base64 데이터 저장 (src에 넣는 대신 data-file 속성 사용)
+                        // Store base64 data in img tag (use data-file attribute instead of src)
                         _ = imgTag.SetAttributeValue("data-file", base64Data);
                         _ = imgTag.SetAttributeValue("data-contenttype", contentType);
                         _ = imgTag.SetAttributeValue("alt", _rsa.Encrypt(filePath));
@@ -2237,10 +2237,10 @@ public class ManagementController : Controller
 
                     if (fileData != null)
                     {
-                        // ContentType을 추출하기 위한 FileExtensionContentTypeProvider 사용
+                        // Use FileExtensionContentTypeProvider to extract ContentType
                         FileExtensionContentTypeProvider provider = new();
 
-                        // 기본 contentType은 "application/octet-stream"으로 설정
+                        // Set default contentType to "application/octet-stream"
                         if (!provider.TryGetContentType(
                                 privateNoteOutputViewModel?.BoardOutputViewModel?.BoardAttachedFilePath ?? "",
                                 out string contentType))
@@ -2248,7 +2248,7 @@ public class ManagementController : Controller
                             contentType = "application/octet-stream";
                         }
 
-                        // 파일 데이터를 Base64로 변환
+                        // Convert file data to Base64
                         privateNoteOutputViewModel.BoardOutputViewModel.BoardAttachedFileBase64Data =
                             Convert.ToBase64String(fileData);
                         privateNoteOutputViewModel.BoardOutputViewModel.BoardAttachedFileContentType = contentType;
@@ -2262,7 +2262,7 @@ public class ManagementController : Controller
                 return RedirectToAction("PrivateNote", "Management");
             }
         }
-        else if (method == "edit") // 수정 (edit)
+        else if (method == "edit") // Edit
         {
             if (boardId == null)
             {
@@ -2292,7 +2292,7 @@ public class ManagementController : Controller
             {
                 Board privateNoteBoard = privateNoteBoards.FirstOrDefault(m => m.Id == boardId);
 
-                if (privateNoteBoard.Writer != loginedAccount.Nickname) // 작성자와 로그인한 사용자가 같지 않으면
+                if (privateNoteBoard.Writer != loginedAccount.Nickname) // If writer and logged-in user are not the same
                 {
                     return RedirectToAction("PrivateNote", "Management");
                 }
@@ -2310,24 +2310,24 @@ public class ManagementController : Controller
                     isImgTagIncluded = true;
                     string filePath = imgTag.GetAttributeValue("alt", "");
 
-                    // 파일을 다운로드하는 메서드
+                    // Method to download file
                     byte[] fileData = await _fileClient.DownloadAsync(filePath);
 
                     if (fileData != null)
                     {
-                        // ContentType을 추출하기 위한 FileExtensionContentTypeProvider 사용
+                        // Use FileExtensionContentTypeProvider to extract ContentType
                         FileExtensionContentTypeProvider provider = new();
 
-                        // 기본 contentType은 "application/octet-stream"으로 설정
+                        // Set default contentType to "application/octet-stream"
                         if (!provider.TryGetContentType(filePath, out string contentType))
                         {
                             contentType = "application/octet-stream";
                         }
 
-                        // 파일 데이터를 Base64로 변환
+                        // Convert file data to Base64
                         string base64Data = Convert.ToBase64String(fileData);
 
-                        // img 태그에 base64 데이터 저장 (src에 넣는 대신 data-file 속성 사용)
+                        // Store base64 data in img tag (use data-file attribute instead of src)
                         _ = imgTag.SetAttributeValue("data-file", base64Data);
                         _ = imgTag.SetAttributeValue("data-contenttype", contentType);
                         _ = imgTag.SetAttributeValue("alt", _rsa.Encrypt(filePath));
@@ -2362,10 +2362,10 @@ public class ManagementController : Controller
 
                     if (fileData != null)
                     {
-                        // ContentType을 추출하기 위한 FileExtensionContentTypeProvider 사용
+                        // Use FileExtensionContentTypeProvider to extract ContentType
                         FileExtensionContentTypeProvider provider = new();
 
-                        // 기본 contentType은 "application/octet-stream"으로 설정
+                        // Set default contentType to "application/octet-stream"
                         if (!provider.TryGetContentType(
                                 privateNoteOutputViewModel?.BoardOutputViewModel?.BoardAttachedFilePath ?? "",
                                 out string contentType))
@@ -2373,7 +2373,7 @@ public class ManagementController : Controller
                             contentType = "application/octet-stream";
                         }
 
-                        // 파일 데이터를 Base64로 변환
+                        // Convert file data to Base64
                         privateNoteOutputViewModel.BoardOutputViewModel.BoardAttachedFileBase64Data =
                             Convert.ToBase64String(fileData);
                         privateNoteOutputViewModel.BoardOutputViewModel.BoardAttachedFileContentType = contentType;
@@ -2387,7 +2387,7 @@ public class ManagementController : Controller
                 return RedirectToAction("PrivateNote", "Management");
             }
         }
-        else // 목록 (list)
+        else // List
         {
             bool isAccountSessionExist = HttpContext.Session.TryGetValue(
                 Maroik.Common.Miscellaneous.Utilities.EnumHelper.GetDescription(Maroik.Common.Miscellaneous
@@ -2395,7 +2395,7 @@ public class ManagementController : Controller
             Account loginedAccount =
                 JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)); // Get Session
 
-            #region 게시판 기본 페이징 로직
+            #region Board default paging logic
 
             const int pageSize = 5;
             if (page < 1)
@@ -2405,7 +2405,7 @@ public class ManagementController : Controller
 
             #endregion
 
-            #region 관련된 모든 게시판 데이터 가져오는 로직
+            #region Logic to get all related board data
 
             IEnumerable<Board> privateNoteBoards =
                 await _boardRepository.GetOneTypeBoardsAsync(EnumHelper.GetDescription(BoardType.PrivateNote));
@@ -2414,17 +2414,17 @@ public class ManagementController : Controller
 
             #endregion
 
-            #region 검색어 로직
+            #region Search keyword logic
 
             if (searchType == "Title" && !string.IsNullOrEmpty(searchText))
             {
-                if (isAccountSessionExist) // 로그인이 되어 있다면
+                if (isAccountSessionExist) // If logged in
                 {
-                    if (loginedAccount.Role == Role.Admin) // 관리자는 모든 게시물을 볼 수 있음
+                    if (loginedAccount.Role == Role.Admin) // Administrator can see all posts
                     {
                         privateNoteBoards = privateNoteBoards.Where(a => a.Title.Contains(searchText));
                     }
-                    else if (loginedAccount.Role == Role.User) // 사용자는 보통 글 + 자신이 쓴 비밀글만 볼 수 있음
+                    else if (loginedAccount.Role == Role.User) // User can see regular posts + their own private posts
                     {
                         List<Board> searchPrivateNoteBoards = [];
                         List<Board> noLockedPrivateNoteBoards = privateNoteBoards
@@ -2437,14 +2437,14 @@ public class ManagementController : Controller
 
                         privateNoteBoards = searchPrivateNoteBoards;
                     }
-                    else // 로그인 시, Admin 또는 User 권한이 없다면 버그임
+                    else // If logged in but has neither Admin nor User role, it's a bug
                     {
                     }
                 }
-                else // 로그인이 되지 않았다면
+                else // If not logged in
                 {
                     privateNoteBoards = privateNoteBoards.Where(a => a.Title.Contains(searchText))
-                        .Where(a => !a.Locked); // 비 로그인 시, 비밀글은 검색 되지 않도록 해야함
+                        .Where(a => !a.Locked); // When not logged in, private posts should not be searchable
                 }
             }
             else if (searchType == "Writer" && !string.IsNullOrEmpty(searchText))
@@ -2456,25 +2456,25 @@ public class ManagementController : Controller
 
             PrivateNoteOutputViewModel privateNoteOutputViewModel = new();
 
-            #region 공지사항
+            #region Notice
 
             privateNoteOutputViewModel.NoticeBoards = [];
 
             #endregion
 
-            #region 게시판 목록
+            #region Board list
 
             privateNoteOutputViewModel.Method = "list";
 
             #endregion
 
-            #region 게시판 페이징 로직
+            #region Board paging logic
 
             privateNoteOutputViewModel.Pager = new Pager(privateNoteBoards.Count(), page, pageSize);
 
             #endregion
 
-            #region 게시판 데이터 로직
+            #region Board data logic
 
             privateNoteOutputViewModel.Boards = privateNoteBoards.Skip((page - 1) * pageSize)
                 .Take(privateNoteOutputViewModel.Pager.PageSize).ToList();
@@ -2549,7 +2549,7 @@ public class ManagementController : Controller
 
             if (ModelState.IsValid)
             {
-                boardInputViewModel.Content ??= ""; // 내용이 아무것도 입력되지 않았다면
+                boardInputViewModel.Content ??= ""; // If no content was entered
 
                 #region HtmlSanitizer
 
@@ -2575,7 +2575,7 @@ public class ManagementController : Controller
 
                 #endregion
 
-                if (boardInputViewModel.Title.Length is not (> 0 and <= 100)) // 제목 길이
+                if (boardInputViewModel.Title.Length is not (> 0 and <= 100)) // Title length
                 {
                     return Json(new
                     {
@@ -2593,15 +2593,15 @@ public class ManagementController : Controller
                     });
                 }
 
-                if (boardInputViewModel.UploadedFile != null) // 파일 첨부가 되었다면
+                if (boardInputViewModel.UploadedFile != null) // If a file was attached
                 {
-                    if (!(Path.GetExtension(boardInputViewModel.UploadedFile.FileName) == ".zip")) // zip 확장자만 가능
+                    if (!(Path.GetExtension(boardInputViewModel.UploadedFile.FileName) == ".zip")) // Only zip extension allowed
                     {
                         return Json(new
                             { result = false, error = _localizer["Only zip extension allowed."].Value });
                     }
 
-                    if (boardInputViewModel.UploadedFile.Length is not (> 0 and <= 10485760)) // 10MB 이하만 가능
+                    if (boardInputViewModel.UploadedFile.Length is not (> 0 and <= 10485760)) // Only 10MB or less allowed
                     {
                         return Json(new
                         {
@@ -2650,17 +2650,17 @@ public class ManagementController : Controller
                         BoardAttachedFile previousBoardAttachedFile =
                             boardAttachedFiles?.FirstOrDefault(m => m.BoardId == boardInputViewModel.Id);
 
-                        #region 첨부 파일 저장
+                        #region Save attached file
 
-                        #region 기존 첨부 파일 O && 신 첨부 파일 O
+                        #region Existing attached file exists && New attached file exists
 
                         if (previousBoardAttachedFile != null && boardInputViewModel.UploadedFile != null)
                         {
                             if (boardInputViewModel.UploadedFile
                                     .Length is
-                                > 0 and <= 10485760) // boardInputViewModel.UploadedFile Length : 파일 크기 0MB 이상, 10MB 이하
+                                > 0 and <= 10485760) // boardInputViewModel.UploadedFile Length : file size 0MB or more, 10MB or less
                             {
-                                int createdBoardId = boardInputViewModel.Id; // 첨부파일 FK 해서 로직 추가할 것
+                                int createdBoardId = boardInputViewModel.Id; // Add logic for attached file FK
 
                                 string boardAttachedFilePath = Path.Combine("upload", "Management",
                                     EnumHelper.GetDescription(BoardType.PrivateNote), "boardAttachedFiles",
@@ -2708,7 +2708,7 @@ public class ManagementController : Controller
 
                         #endregion
 
-                        #region 기존 첨부 파일 O && 신 첨부 파일 X
+                        #region Existing attached file exists && New attached file does not exist
 
                         else if (previousBoardAttachedFile != null && boardInputViewModel.UploadedFile == null)
                         {
@@ -2729,15 +2729,15 @@ public class ManagementController : Controller
 
                         #endregion
 
-                        #region 기존 첨부 파일 X && 신 첨부 파일 O
+                        #region Existing attached file does not exist && New attached file exists
 
                         else if (previousBoardAttachedFile == null && boardInputViewModel.UploadedFile != null)
                         {
                             if (boardInputViewModel.UploadedFile
                                     .Length is
-                                > 0 and <= 10485760) // boardInputViewModel.UploadedFile Length : 파일 크기 0MB 이상, 10MB 이하
+                                > 0 and <= 10485760) // boardInputViewModel.UploadedFile Length : file size 0MB or more, 10MB or less
                             {
-                                int createdBoardId = boardInputViewModel.Id; // 첨부파일 FK 해서 로직 추가할 것
+                                int createdBoardId = boardInputViewModel.Id; // Add logic for attached file FK
 
                                 string boardAttachedFilePath = Path.Combine("upload", "Management",
                                     EnumHelper.GetDescription(BoardType.PrivateNote), "boardAttachedFiles",
@@ -2781,7 +2781,7 @@ public class ManagementController : Controller
 
                         #endregion
 
-                        #region 기존 첨부 파일 X && 신 첨부 파일 X
+                        #region Existing attached file does not exist && New attached file does not exist
 
                         else
                         {
@@ -2862,9 +2862,9 @@ public class ManagementController : Controller
                 }
                 else
                 {
-                    if (loginedAccount.Nickname == tempPrivateNoteBoard.Writer) // 방문한 사람이 작성자인 경우
+                    if (loginedAccount.Nickname == tempPrivateNoteBoard.Writer) // If visitor is writer
                     {
-                        #region 게시물 삭제
+                        #region Delete board
 
                         tempPrivateNoteBoard.Deleted = true;
                         await _boardRepository.DeleteBoardAsync(tempPrivateNoteBoard);
@@ -2916,9 +2916,9 @@ public class ManagementController : Controller
                 Account loginedAccount = await _accountRepository.GetAccountByEmailAsync(JsonConvert
                     .DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
 
-                if (loginedAccount.Nickname == boardComment.Writer) // 삭제하는 사람이 작성자인 경우
+                if (loginedAccount.Nickname == boardComment.Writer) // If deleter is writer
                 {
-                    #region 게시물 삭제
+                    #region Delete post
 
                     boardComment.Deleted = true;
                     await _boardCommentRepository.DeleteBoardCommentAsync(boardComment);

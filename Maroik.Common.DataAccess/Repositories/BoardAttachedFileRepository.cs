@@ -16,7 +16,7 @@ public class BoardAttachedFileRepository : IBoardAttachedFileRepository
         _context = context;
     }
     /// <summary>
-    /// 등록된 모든 계정을 구합니다.
+    /// Gets all registered accounts.
     /// </summary>
     /// <returns></returns>
     public async Task<List<BoardAttachedFile>> GetAllAsync()
@@ -25,7 +25,7 @@ public class BoardAttachedFileRepository : IBoardAttachedFileRepository
     }
 
     /// <summary>
-    /// 첨부파일을 저장합니다.
+    /// Saves an attached file.
     /// </summary>
     /// <param name="boardAttachedFile"></param>
     /// <returns></returns>
@@ -36,7 +36,7 @@ public class BoardAttachedFileRepository : IBoardAttachedFileRepository
     }
 
     /// <summary>
-    /// 첨부파일을 업데이트합니다.
+    /// Updates an attached file.
     /// </summary>
     /// <param name="boardAttachedFile"></param>
     /// <returns></returns>

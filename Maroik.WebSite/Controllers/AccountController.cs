@@ -42,23 +42,23 @@ public class AccountController : Controller
     {
         bool isAccountSessionExist = HttpContext.Session.TryGetValue(Maroik.Common.Miscellaneous.Utilities.EnumHelper.GetDescription(Maroik.Common.Miscellaneous.Utilities.Session.Account), out byte[] resultByte);
 
-        if (isAccountSessionExist) // 로그인 된 상태라면
+        if (isAccountSessionExist) // If logged in
         {
             Account loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)); // Get Session
-            if (loginedAccount.Role == Role.Admin) // 로그인한 사용자 권한이 Admin일 경우
+            if (loginedAccount.Role == Role.Admin) // If logged-in user role is Admin
             {
                 return RedirectToAction("AdminIndex", "DashBoard");
             }
-            else if (loginedAccount.Role == Role.User) // 로그인한 사용자 권한이 User일 경우
+            else if (loginedAccount.Role == Role.User) // If logged-in user role is User
             {
                 return RedirectToAction("UserIndex", "DashBoard");
             }
-            else // 로그인한 사용자 권한이 Admin도 아니고 User도 아니면 DB Insert 오류임
+            else // If logged-in user role is neither Admin nor User, it's a DB Insert error
             {
-                return null; // 잘못된 값을 넣으면 잘못된 값이 나옴
+                return null; // Wrong input produces wrong output
             }
         }
-        else // 로그인 안 된 상태라면
+        else // If not logged in
         {
             return View();
         }
@@ -77,7 +77,7 @@ public class AccountController : Controller
     public async Task<IActionResult> Login(LoginInputViewModel loginInputViewModel)
     {
         string userAgent = Request.Headers["User-Agent"].ToString();
-        if (userAgent.Contains("MSIE") || userAgent.Contains("Trident")) // IsInternetExplorer (차단 이유: Nonfactor Data Grid에서 문제 생김...)
+        if (userAgent.Contains("MSIE") || userAgent.Contains("Trident")) // IsInternetExplorer (Block reason: Issues occur in Nonfactor Data Grid...)
         {
             TempData["Error"] = _localizer["BlockInternetExplorer"].Value;
             return View();
@@ -108,7 +108,7 @@ public class AccountController : Controller
                 return View();
             }
 
-            if (!_passwordService.VerifyPassword(loginInputViewModel.Password ?? "", tempAccount.HashedPassword)) // wrong password
+            if (!_passwordService.VerifyPassword(loginInputViewModel.Password ?? "", tempAccount.HashedPassword)) // Wrong password
             {
                 tempAccount.LoginAttempt++;
 
@@ -182,23 +182,23 @@ public class AccountController : Controller
     {
         bool isAccountSessionExist = HttpContext.Session.TryGetValue(Maroik.Common.Miscellaneous.Utilities.EnumHelper.GetDescription(Maroik.Common.Miscellaneous.Utilities.Session.Account), out byte[] resultByte);
 
-        if (isAccountSessionExist) // 로그인 된 상태라면
+        if (isAccountSessionExist) // If logged in
         {
             Account loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)); // Get Session
-            if (loginedAccount.Role == Role.Admin) // 로그인한 사용자 권한이 Admin일 경우
+            if (loginedAccount.Role == Role.Admin) // If logged-in user has Admin role
             {
                 return RedirectToAction("AdminIndex", "DashBoard");
             }
-            else if (loginedAccount.Role == Role.User) // 로그인한 사용자 권한이 User일 경우
+            else if (loginedAccount.Role == Role.User) // If logged-in user has User role
             {
                 return RedirectToAction("UserIndex", "DashBoard");
             }
-            else // 로그인한 사용자 권한이 Admin도 아니고 User도 아니면 DB Insert 오류임
+            else // If logged-in user role is neither Admin nor User, it's a DB Insert error
             {
-                return null; // 잘못된 값을 넣으면 잘못된 값이 나옴
+                return null; // Invalid input returns invalid output
             }
         }
-        else // 로그인 안 된 상태라면
+        else // If not logged in
         {
             return View();
         }
@@ -208,17 +208,17 @@ public class AccountController : Controller
     [ValidateAntiForgeryToken] //To Prevent CSRF attack
     public async Task<IActionResult> Register(LoginInputViewModel loginInputViewModel)
     {
-        if (!string.IsNullOrEmpty(loginInputViewModel.Password)) // 회원 가입
+        if (!string.IsNullOrEmpty(loginInputViewModel.Password)) // Registration
         {
-            if (ModelState.IsValid) // 입력 값 검증
+            if (ModelState.IsValid) // Input validation
             {
-                if (!loginInputViewModel.AgreedServiceTerms) // 계약서 동의 하지 않을 시,
+                if (!loginInputViewModel.AgreedServiceTerms) // If consent form not agreed
                 {
                     TempData["Error"] = _localizer["Please check the consent form"].Value;
                     return View();
                 }
 
-                if (string.IsNullOrEmpty(loginInputViewModel.TimeZoneIanaId)) // TimeZone 선택 하지 않을 시,
+                if (string.IsNullOrEmpty(loginInputViewModel.TimeZoneIanaId)) // If TimeZone not selected
                 {
                     TempData["Error"] = _localizer["Please select time zone"].Value;
                     return View();
@@ -226,8 +226,8 @@ public class AccountController : Controller
 
                 Account account = await _accountRepository.GetAccountByEmailAsync(loginInputViewModel.Email);
 
-                #region 새롭게 회원가입을 진행하는 경우
-                if (account == null) // 입력된 ID로 생성된 Record가 없다.
+                #region Proceeding with new registration
+                if (account == null) // No record created with the entered ID
                 {
                     string registrationToken = GUIDToken.Generate();
                     loginInputViewModel.RegistrationToken = registrationToken;
@@ -260,38 +260,38 @@ public class AccountController : Controller
                     {
                         if (((Npgsql.NpgsqlException)e.InnerException).SqlState == Npgsql.PostgresErrorCodes.UniqueViolation)
                         {
-                            Console.WriteLine(_localizer["Input is invalid"].Value); // ActivityLog 등으로 로그 남겨야 한다..
+                            Console.WriteLine(_localizer["Input is invalid"].Value); // Should log this with ActivityLog etc..
                             TempData["Error"] = $"'{loginInputViewModel.Nickname}' {_localizer["is a Nickname that already exists."].Value} {_localizer["Please enter another Nickname."].Value}";
                             return View();
                         }
                         else
                         {
-                            Console.WriteLine(_localizer["Input is invalid"].Value); // ActivityLog 등으로 로그 남겨야 한다..
+                            Console.WriteLine(_localizer["Input is invalid"].Value); // Should log this with ActivityLog etc..
                             TempData["Error"] = _localizer["Error occurred while processing about account registration"].Value;
                             return View();
                         }
                     }
                     catch
                     {
-                        Console.WriteLine(_localizer["Input is invalid"].Value); // ActivityLog 등으로 로그 남겨야 한다..
+                        Console.WriteLine(_localizer["Input is invalid"].Value); // Should log this with ActivityLog etc..
                         TempData["Error"] = _localizer["Error occurred while processing about account registration"].Value;
                         return View();
                     }
-                    #region 메일 전송
+                    #region Send Email
                     Mail mail = new()
                     {
                         Subject = _localizer["Maroik Email Confirmation"].Value
                     };
-                    loginInputViewModel.RegistrationToken = _rsa.Sign(loginInputViewModel.RegistrationToken); // 암호화
+                    loginInputViewModel.RegistrationToken = _rsa.Sign(loginInputViewModel.RegistrationToken); // Encrypt
                     mail.Body = _mailClient.GetMailConfirmationBody(loginInputViewModel, _localizer["Welcome to Maroik"].Value, _localizer["Click the link below to verify your Email"].Value, _localizer["If this link does not work, please copy & paste this link to your Internet URL"].Value);
                     mail.ToMailIds =
                     [
                         loginInputViewModel.Email
                     ];
                     string result = await _mailClient.SendMailAsync(mail);
-                    if (result != EnumHelper.GetDescription(AccountMessage.MailSent)) // 메일 전송 오류 발생 했을 시..
+                    if (result != EnumHelper.GetDescription(AccountMessage.MailSent)) // When mail sending error occurs..
                     {
-                        Console.WriteLine(result); // ActivityLog 등으로 로그 남겨야 한다..
+                        Console.WriteLine(result); // Should log this with ActivityLog etc..
                         loginInputViewModel.RegistrationToken = registrationToken;
                         try
                         {
@@ -326,19 +326,19 @@ public class AccountController : Controller
                         return View();
                     }
                     #endregion
-                    ViewBag.ResendEmail = true; // 이메일 재전송 폼 활성화
-                    ViewBag.ResentEmailAddress = loginInputViewModel.Email; // 이메일 재전송 폼 이메일 주소 표시용
+                    ViewBag.ResendEmail = true; // Enable email resend form
+                    ViewBag.ResentEmailAddress = loginInputViewModel.Email; // For displaying email address in email resend form
                     return View();
                 }
                 #endregion
 
-                #region 회원가입이 된 경우
-                else // 입력된 ID로 생성된 Record 있다.
+                #region If registered
+                else // Record created with inputted ID exists.
                 {
-                    #region 이메일 인증이 안 된 경우
-                    if (!account.EmailConfirmed) // 생성은 되었으나 Email 확인 안 함
+                    #region If email not verified
+                    if (!account.EmailConfirmed) // Created but email not verified
                     {
-                        #region 메일 전송
+                        #region Send Email
                         Mail mail = new()
                         {
                             Subject = _localizer["Maroik Email Confirmation"].Value
@@ -353,9 +353,9 @@ public class AccountController : Controller
                             account.Email
                         ];
                         string result = await _mailClient.SendMailAsync(mail);
-                        if (result != EnumHelper.GetDescription(AccountMessage.MailSent)) // 메일 전송 오류 발생 했을 시..
+                        if (result != EnumHelper.GetDescription(AccountMessage.MailSent)) // When mail sending error occurs..
                         {
-                            Console.WriteLine(result); // ActivityLog 등으로 로그 남겨야 한다..
+                            Console.WriteLine(result); // Should log this with ActivityLog etc..
                             try
                             {
                                 account.Updated = DateTime.UtcNow;
@@ -382,14 +382,14 @@ public class AccountController : Controller
                             TempData["Error"] = _localizer["Error occurred while processing about account status"].Value;
                             return View();
                         }
-                        ViewBag.ResendEmail = true; // 이메일 재전송 폼 활성화
-                        ViewBag.ResentEmailAddress = account.Email; // 이메일 재전송 폼 이메일 주소 표시용
+                        ViewBag.ResendEmail = true; // Enable email resend form
+                        ViewBag.ResentEmailAddress = account.Email; // For displaying email address in email resend form
                         return View();
                     }
                     #endregion
 
-                    #region 이메일 인증이 된 경우
-                    else // 계정 생성 및 이메일 확인 완료
+                    #region If email verified
+                    else // Account creation and email verification completed
                     {
                         try
                         {
@@ -404,43 +404,43 @@ public class AccountController : Controller
                             return View();
                         }
                         TempData["Error"] = _localizer[EnumHelper.GetDescription(AccountMessage.UserAlreadyCreated)].Value;
-                        ViewBag.ResendEmail = false; // 로그인 폼 활성화
+                        ViewBag.ResendEmail = false; // Enable login form
                         return View();
                     }
                     #endregion
                 }
                 #endregion
             }
-            else // 입력 값 잘못 됨
+            else // Invalid input
             {
                 return RedirectToAction("Register", "Account");
             }
         }
-        else // 이메일 재전송
+        else // Email resend
         {
             _ = ModelState.Remove(nameof(loginInputViewModel.Password));
             _ = ModelState.Remove(nameof(loginInputViewModel.Nickname));
 
-            if (ModelState.IsValid) // 입력 값 검증
+            if (ModelState.IsValid) // Input validation
             {
                 Account account = await _accountRepository.GetAccountByEmailAsync(loginInputViewModel.Email);
 
-                #region 이메일 재전송 하는데 받은 Email로 DB 조회를 했는데 Record가 없다. (버그임)
-                if (account == null) // 입력된 ID로 생성된 Record 없다.
+                #region No record found in DB query with received email when resending email (bug)
+                if (account == null) // No record created with inputted ID.
                 {
                     TempData["Error"] = _localizer["Failed to resend email"].Value;
-                    ViewBag.ResendEmail = true; // 이메일 재전송 폼 활성화
+                    ViewBag.ResendEmail = true; // Enable email resend form
                     return View();
                 }
                 #endregion
 
-                #region 이메일 재전송
-                else // 입력된 ID로 생성된 Record 있다.
+                #region Email resend
+                else // Record created with inputted ID exists.
                 {
-                    #region 생성은 되었으나 Email 확인 안 함
-                    if (!account.EmailConfirmed) // 생성은 되었으나 Email 확인 안 함.
+                    #region Created but email not verified
+                    if (!account.EmailConfirmed) // Created but email not verified.
                     {
-                        #region 메일 전송
+                        #region Send Email
                         Mail mail = new()
                         {
                             Subject = _localizer["Maroik Email Confirmation"].Value,
@@ -451,9 +451,9 @@ public class AccountController : Controller
                             ]
                         };
                         string result = await _mailClient.SendMailAsync(mail);
-                        if (result != EnumHelper.GetDescription(AccountMessage.MailSent)) // 메일 전송 오류 발생 했을 시..
+                        if (result != EnumHelper.GetDescription(AccountMessage.MailSent)) // When mail sending error occurs..
                         {
-                            Console.WriteLine(result); // ActivityLog 등으로 로그 남겨야 한다..
+                            Console.WriteLine(result); // Should log this with ActivityLog etc..
                             try
                             {
                                 account.Updated = DateTime.UtcNow;
@@ -480,15 +480,15 @@ public class AccountController : Controller
                             TempData["Error"] = _localizer["Error occurred while processing about mail send account status"].Value;
                             return View();
                         }
-                        ViewBag.ResendEmail = true; // 이메일 재전송 폼 활성화
-                        ViewBag.ResentEmailAddress = account.Email; // 이메일 재전송 폼 이메일 주소 표시용
-                        ViewBag.RepeatEmailSend = true; // 이메일 재발송 확인
+                        ViewBag.ResendEmail = true; // Enable email resend form
+                        ViewBag.ResentEmailAddress = account.Email; // For displaying email address in email resend form
+                        ViewBag.RepeatEmailSend = true; // Email resend confirmation
                         return View();
                     }
                     #endregion
 
-                    #region 생성되고 Email 확인함
-                    else // 생성되고 Email 확인함
+                    #region Created and email verified
+                    else // Created and email verified
                     {
                         try
                         {
@@ -502,7 +502,7 @@ public class AccountController : Controller
                             return View();
                         }
                         TempData["Error"] = _localizer[EnumHelper.GetDescription(AccountMessage.UserAlreadyCreated)].Value;
-                        ViewBag.ResendEmail = false; // 로그인 폼 활성화
+                        ViewBag.ResendEmail = false; // Enable login form
                         return View();
                     }
                     #endregion
@@ -510,7 +510,7 @@ public class AccountController : Controller
                 #endregion
             }
 
-            else // 입력 값 잘못 됨
+            else // Invalid input
             {
                 return RedirectToAction("Register", "Account");
             }
@@ -524,32 +524,32 @@ public class AccountController : Controller
     {
         bool isAccountSessionExist = HttpContext.Session.TryGetValue(Maroik.Common.Miscellaneous.Utilities.EnumHelper.GetDescription(Maroik.Common.Miscellaneous.Utilities.Session.Account), out byte[] resultByte);
 
-        if (isAccountSessionExist) // 로그인 된 상태라면
+        if (isAccountSessionExist) // If logged in
         {
             Account loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)); // Get Session
-            if (loginedAccount.Role == Role.Admin) // 로그인한 사용자 권한이 Admin일 경우
+            if (loginedAccount.Role == Role.Admin) // If logged-in user role is Admin
             {
                 return RedirectToAction("AdminIndex", "DashBoard");
             }
-            else if (loginedAccount.Role == Role.User) // 로그인한 사용자 권한이 User일 경우
+            else if (loginedAccount.Role == Role.User) // If logged-in user role is User
             {
                 return RedirectToAction("UserIndex", "DashBoard");
             }
-            else // 로그인한 사용자 권한이 Admin도 아니고 User도 아니면 DB Insert 오류임
+            else // If logged-in user role is neither Admin nor User, it's a DB Insert error
             {
-                return null; // 잘못된 값을 넣으면 잘못된 값이 나옴
+                return null; // Wrong input produces wrong output
             }
         }
-        else // 로그인 안 된 상태라면
+        else // If not logged in
         {
             Account account = null;
 
-            #region 1.	입력된 token[암호화 됨]이랑 모든 계정에 저장된 토큰 해쉬화 후 비교해서 해당 계정 찾아낸다.
+            #region 1. Compare inputted token[encrypted] with hashed tokens stored in all accounts to find the account.
             foreach (Account tempAccount in await _accountRepository.GetAllAsync())
             {
                 try
                 {
-                    if (_rsa.Verify(tempAccount.RegistrationToken, registrationToken)) // RSA 토큰 검증
+                    if (_rsa.Verify(tempAccount.RegistrationToken, registrationToken)) // RSA token verification
                     {
                         account = tempAccount;
                         break;
@@ -562,7 +562,7 @@ public class AccountController : Controller
             }
             #endregion
 
-            #region 2.	해당 계정을 Token으로 찾지 못했다.
+            #region 2. Could not find the account by Token.
             if (account == null)
             {
                 ViewBag.InvalidToken = true;
@@ -571,7 +571,7 @@ public class AccountController : Controller
             }
             #endregion
 
-            #region 3.	해당 계정의 Token 만료 되었다.
+            #region 3. The account's Token has expired.
             if (!GUIDToken.IsTokenAlive(account.RegistrationToken))
             {
                 ViewBag.InvalidToken = true;
@@ -580,7 +580,7 @@ public class AccountController : Controller
             }
             #endregion
 
-            #region 4.	해당 계정의 EmailConfirmd가 false이다. (이메일 인증을 하지 않았다.)
+            #region 4. The account's EmailConfirmed is false. (Email not verified.)
             if (!account.EmailConfirmed)
             {
                 account.RegistrationToken = null;
@@ -591,7 +591,7 @@ public class AccountController : Controller
                 {
                     await _accountRepository.UpdateAccountAsync(account);
                 }
-                catch  // 2. Update 시, 예외 발생 했다
+                catch  // 2. Exception occurred during update
                 {
                     ViewBag.InvalidToken = true;
                     ViewBag.AccountCreated = true;
@@ -604,7 +604,7 @@ public class AccountController : Controller
             }
             #endregion
 
-            #region 5.	해당 계정의 EmailConfirmd가 true이다. (이메일 인증을 하였다.)
+            #region 5. The account's EmailConfirmed is true. (Email verified.)
             else
             {
                 account.Updated = DateTime.UtcNow;
@@ -613,7 +613,7 @@ public class AccountController : Controller
                 {
                     await _accountRepository.UpdateAccountAsync(account);
                 }
-                catch // 2.	Update 시, 예외 발생 했다 [있을 수 없는 일].
+                catch // 2. Exception occurred during update [should not happen].
                 {
                     ViewBag.InvalidToken = true;
                     ViewBag.AccountCreated = true;
@@ -635,23 +635,23 @@ public class AccountController : Controller
     {
         bool isAccountSessionExist = HttpContext.Session.TryGetValue(Maroik.Common.Miscellaneous.Utilities.EnumHelper.GetDescription(Maroik.Common.Miscellaneous.Utilities.Session.Account), out byte[] resultByte);
 
-        if (isAccountSessionExist) // 로그인 된 상태라면
+        if (isAccountSessionExist) // If logged in
         {
             Account loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)); // Get Session
-            if (loginedAccount.Role == Role.Admin) // 로그인한 사용자 권한이 Admin일 경우
+            if (loginedAccount.Role == Role.Admin) // If logged-in user role is Admin
             {
                 return RedirectToAction("AdminIndex", "DashBoard");
             }
-            else if (loginedAccount.Role == Role.User) // 로그인한 사용자 권한이 User일 경우
+            else if (loginedAccount.Role == Role.User) // If logged-in user role is User
             {
                 return RedirectToAction("UserIndex", "DashBoard");
             }
-            else // 로그인한 사용자 권한이 Admin도 아니고 User도 아니면 DB Insert 오류임
+            else // If logged-in user role is neither Admin nor User, it's a DB Insert error
             {
-                return null; // 잘못된 값을 넣으면 잘못된 값이 나옴
+                return null; // Wrong input produces wrong output
             }
         }
-        else // 로그인 안 된 상태라면
+        else // If not logged in
         {
             return View();
         }
@@ -668,26 +668,26 @@ public class AccountController : Controller
         {
             Account account = await _accountRepository.GetAccountByEmailAsync(loginInputViewModel.Email);
 
-            if (account == null) // 입력 된 Email로 생성된 Record 없다.
+            if (account == null) // No record created with inputted email.
             {
                 ViewBag.mailSent = true;
                 ViewBag.sentEmailAddress = loginInputViewModel.Email;
                 return View();
             }
 
-            if (!account.EmailConfirmed) // 이메일 인증 안 됨
+            if (!account.EmailConfirmed) // Email not verified
             {
                 ViewBag.mailSent = true;
                 ViewBag.sentEmailAddress = loginInputViewModel.Email;
                 return View();
             }
 
-            if (account.EmailConfirmed) // 이메일 인증 됨
+            if (account.EmailConfirmed) // Email verified
             {
                 string resetPasswordToken = GUIDToken.Generate();
                 try
                 {
-                    #region 메일 전송
+                    #region Send Email
                     Mail mail = new()
                     {
                         Subject = _localizer["Maroik Reset Password"].Value,
@@ -698,9 +698,9 @@ public class AccountController : Controller
                         ]
                     };
                     string result = await _mailClient.SendMailAsync(mail);
-                    if (result != EnumHelper.GetDescription(AccountMessage.MailSent)) // 메일 전송 오류 발생 했을 시..
+                    if (result != EnumHelper.GetDescription(AccountMessage.MailSent)) // When mail sending error occurs..
                     {
-                        Console.WriteLine(result); // ActivityLog 등으로 로그 남겨야 한다..
+                        Console.WriteLine(result); // Should log this with ActivityLog etc..
                         account.Updated = DateTime.UtcNow;
                         account.Message = EnumHelper.GetDescription(AccountMessage.FailToMailSent);
                         await _accountRepository.UpdateAccountAsync(account);
@@ -729,7 +729,7 @@ public class AccountController : Controller
             ViewBag.sentEmailAddress = loginInputViewModel.Email;
             return View();
         }
-        else // 입력 값 잘못 됨
+        else // Invalid input
         {
             return RedirectToAction("ForgotPassword", "Account");
         }
@@ -740,32 +740,32 @@ public class AccountController : Controller
     {
         bool isAccountSessionExist = HttpContext.Session.TryGetValue(Maroik.Common.Miscellaneous.Utilities.EnumHelper.GetDescription(Maroik.Common.Miscellaneous.Utilities.Session.Account), out byte[] resultByte);
 
-        if (isAccountSessionExist) // 로그인 된 상태라면
+        if (isAccountSessionExist) // If logged in
         {
             Account loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)); // Get Session
-            if (loginedAccount.Role == Role.Admin) // 로그인한 사용자 권한이 Admin일 경우
+            if (loginedAccount.Role == Role.Admin) // If logged-in user role is Admin
             {
                 return RedirectToAction("AdminIndex", "DashBoard");
             }
-            else if (loginedAccount.Role == Role.User) // 로그인한 사용자 권한이 User일 경우
+            else if (loginedAccount.Role == Role.User) // If logged-in user role is User
             {
                 return RedirectToAction("UserIndex", "DashBoard");
             }
-            else // 로그인한 사용자 권한이 Admin도 아니고 User도 아니면 DB Insert 오류임
+            else // If logged-in user role is neither Admin nor User, it's a DB Insert error
             {
-                return null; // 잘못된 값을 넣으면 잘못된 값이 나옴
+                return null; // Wrong input produces wrong output
             }
         }
-        else // 로그인 안 된 상태라면
+        else // If not logged in
         {
             Account account = null;
 
-            #region 1.	입력된 token[암호화 됨]이랑 모든 계정에 저장된 토큰 해쉬화 후 비교해서 해당 계정 찾아낸다.
+            #region 1. Compare inputted token[encrypted] with hashed tokens stored in all accounts to find the account.
             foreach (Account tempAccount in await _accountRepository.GetAllAsync())
             {
                 try
                 {
-                    if (_rsa.Verify(tempAccount.ResetPasswordToken, resetPasswordToken)) // RSA 토큰 검증
+                    if (_rsa.Verify(tempAccount.ResetPasswordToken, resetPasswordToken)) // RSA token verification
                     {
                         account = tempAccount;
                         break;
@@ -778,7 +778,7 @@ public class AccountController : Controller
             }
             #endregion
 
-            #region 2.	해당 계정을 Token으로 찾지 못했다.
+            #region 2. Could not find the account by Token.
             if (account == null)
             {
                 ViewBag.FailToResetPassword = true;
@@ -786,7 +786,7 @@ public class AccountController : Controller
             }
             #endregion
 
-            #region 3.	해당 계정의 Token 만료 되었다.
+            #region 3. The account's Token has expired.
             if (!GUIDToken.IsTokenAlive(account.ResetPasswordToken))
             {
                 ViewBag.FailToResetPassword = true;
@@ -794,7 +794,7 @@ public class AccountController : Controller
             }
             #endregion
 
-            #region 4.	해당 계정의 EmailConfirmd가 false이다. (이메일 인증을 하지 않았다.)
+            #region 4. The account's EmailConfirmed is false. (Email not verified.)
             if (!account.EmailConfirmed)
             {
                 ViewBag.FailToResetPassword = true;
@@ -802,7 +802,7 @@ public class AccountController : Controller
             }
             #endregion
 
-            #region 5.	해당 계정의 EmailConfirmd가 true이다. (이메일 인증을 하였다.)
+            #region 5. The account's EmailConfirmed is true. (Email verified.)
             else
             {
                 ViewBag.FailToResetPassword = false;
@@ -825,12 +825,12 @@ public class AccountController : Controller
         {
             Account account = null;
 
-            #region 1.	입력된 token[암호화 됨]이랑 모든 계정에 저장된 토큰 해쉬화 후 비교해서 해당 계정 찾아낸다.
+            #region 1. Compare inputted token[encrypted] with hashed tokens stored in all accounts to find the account.
             foreach (Account tempAccount in await _accountRepository.GetAllAsync())
             {
                 try
                 {
-                    if (_rsa.Verify(tempAccount.ResetPasswordToken, loginInputViewModel.ResetPasswordToken)) // RSA 토큰 검증
+                    if (_rsa.Verify(tempAccount.ResetPasswordToken, loginInputViewModel.ResetPasswordToken)) // RSA token verification
                     {
                         account = tempAccount;
                         break;
@@ -843,7 +843,7 @@ public class AccountController : Controller
             }
             #endregion
 
-            #region 2.	해당 계정을 Token으로 찾지 못했다.
+            #region 2. Could not find the account by Token.
             if (account == null)
             {
                 ViewBag.FailToResetPassword = true;
@@ -851,7 +851,7 @@ public class AccountController : Controller
             }
             #endregion
 
-            #region 3.	해당 계정의 Token 만료 되었다.
+            #region 3. The account's Token has expired.
             if (!GUIDToken.IsTokenAlive(account.ResetPasswordToken))
             {
                 ViewBag.FailToResetPassword = true;
@@ -859,7 +859,7 @@ public class AccountController : Controller
             }
             #endregion
 
-            #region 4.	해당 계정의 EmailConfirmd가 false이다. (이메일 인증을 하지 않았다.)
+            #region 4. The account's EmailConfirmed is false. (Email not verified.)
             if (!account.EmailConfirmed)
             {
                 ViewBag.FailToResetPassword = true;
@@ -867,20 +867,20 @@ public class AccountController : Controller
             }
             #endregion
 
-            #region 5.	해당 계정의 EmailConfirmd가 true이다. (이메일 인증을 하였다.)
+            #region 5. The account's EmailConfirmed is true. (Email verified.)
             else
             {
                 account.ResetPasswordToken = null;
                 account.HashedPassword = _passwordService.HashPassword(loginInputViewModel.Password);
-                account.Locked = false; // 잠금 해제
-                account.LoginAttempt = 0; // 로그인 시도 횟수 초기화
+                account.Locked = false; // Unlock
+                account.LoginAttempt = 0; // Reset login attempt count
                 account.Updated = DateTime.UtcNow;
                 account.Message = EnumHelper.GetDescription(AccountMessage.SuccessToResetPassword);
                 try
                 {
                     await _accountRepository.UpdateAccountAsync(account);
                 }
-                catch  // 2. Update 시, 예외 발생 했다
+                catch  // 2. Exception occurred during update
                 {
                     ViewBag.FailToResetPassword = true;
                     TempData["Error"] = _localizer["Error occurred while processing about reset password"].Value;
@@ -891,7 +891,7 @@ public class AccountController : Controller
             }
             #endregion
         }
-        else // 입력 값 잘못 됨
+        else // Invalid input
         {
             return RedirectToAction("ResetPassword", "Account");
         }

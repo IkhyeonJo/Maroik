@@ -61,7 +61,7 @@ public class ForumController : Controller
         {
             if (ModelState.IsValid)
             {
-                boardInputViewModel.Content ??= ""; // 내용이 아무것도 입력되지 않았다면
+                boardInputViewModel.Content ??= ""; // If no content was entered
 
                 #region HtmlSanitizer
                 HtmlSanitizer sanitizer = new();
@@ -83,7 +83,7 @@ public class ForumController : Controller
                 boardInputViewModel.Content = htmlDocument.DocumentNode.OuterHtml;
                 #endregion
 
-                if (boardInputViewModel.Title.Length is not (> 0 and <= 100)) // 제목 길이
+                if (boardInputViewModel.Title.Length is not (> 0 and <= 100)) // Title length
                 {
                     return Json(new { result = false, error = _localizer["Title length is must be between 1 and 100 characters."].Value });
                 }
@@ -93,14 +93,14 @@ public class ForumController : Controller
                     return Json(new { result = false, error = _localizer["content length is must be between 0 and 16384 characters."].Value });
                 }
 
-                if (boardInputViewModel.UploadedFile != null) // 파일 첨부가 되었다면
+                if (boardInputViewModel.UploadedFile != null) // If a file was attached
                 {
-                    if (!(Path.GetExtension(boardInputViewModel.UploadedFile.FileName) == ".zip")) // zip 확장자만 가능
+                    if (!(Path.GetExtension(boardInputViewModel.UploadedFile.FileName) == ".zip")) // Only zip extension allowed
                     {
                         return Json(new { result = false, error = _localizer["Only zip extension allowed."].Value });
                     }
 
-                    if (boardInputViewModel.UploadedFile.Length is not (> 0 and <= 10485760)) // 10MB 이하만 가능
+                    if (boardInputViewModel.UploadedFile.Length is not (> 0 and <= 10485760)) // Only 10MB or less allowed
                     {
                         return Json(new { result = false, error = _localizer["uploaded file size must be smaller than 10MB."].Value });
                     }
@@ -115,9 +115,9 @@ public class ForumController : Controller
                         Account loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)); // Get Session
                         Board board = new();
 
-                        if (loginedAccount.Role == Role.Admin) // 관리자인 경우
+                        if (loginedAccount.Role == Role.Admin) // If administrator
                         {
-                            board.Type = EnumHelper.GetDescription(BoardType.FreeForum); // 자유게시판
+                            board.Type = EnumHelper.GetDescription(BoardType.FreeForum); // Free forum
                             board.Title = boardInputViewModel.Title;
                             board.Content = boardInputViewModel.Content;
                             board.Writer = loginedAccount.Nickname;
@@ -128,9 +128,9 @@ public class ForumController : Controller
                             board.Locked = boardInputViewModel.Locked;
                             board.Noticed = boardInputViewModel.Noticed;
                         }
-                        else if (loginedAccount.Role == Role.User) // 일반 사용자인 경우
+                        else if (loginedAccount.Role == Role.User) // If regular user
                         {
-                            board.Type = EnumHelper.GetDescription(BoardType.FreeForum); // 자유게시판
+                            board.Type = EnumHelper.GetDescription(BoardType.FreeForum); // Free forum
                             board.Title = boardInputViewModel.Title;
                             board.Content = boardInputViewModel.Content;
                             board.Writer = loginedAccount.Nickname;
@@ -140,7 +140,7 @@ public class ForumController : Controller
                             board.Deleted = false;
                             board.Locked = boardInputViewModel.Locked;
                         }
-                        else // 비로그인 사용자인 경우
+                        else // If non-logged in user
                         {
                             await transaction.RollbackAsync();
                             return Json(new { result = false, error = _localizer["Please Login to write board"].Value });
@@ -148,12 +148,12 @@ public class ForumController : Controller
 
                         await _boardRepository.WriteBoardAsync(board);
 
-                        #region 첨부 파일 저장
-                        if (boardInputViewModel.UploadedFile != null) // 첨부 파일 존재 시,
+                        #region Save attached file
+                        if (boardInputViewModel.UploadedFile != null) // If attached file exists
                         {
-                            if (boardInputViewModel.UploadedFile.Length is > 0 and <= 10485760) // boardInputViewModel.UploadedFile Length : 파일 크기 0MB 이상, 10MB 이하
+                            if (boardInputViewModel.UploadedFile.Length is > 0 and <= 10485760) // boardInputViewModel.UploadedFile Length : file size 0MB or more, 10MB or less
                             {
-                                var createdBoardId = board.Id; // 첨부파일 FK 해서 로직 추가할 것
+                                var createdBoardId = board.Id; // Add logic for attached file FK
 
                                 string boardAttachedFilePath = Path.Combine("upload", "Forum", EnumHelper.GetDescription(BoardType.FreeForum), "boardAttachedFiles", $"{createdBoardId}");
 
@@ -304,7 +304,7 @@ public class ForumController : Controller
             return Ok(new { result = false, errorMessage = _localizer["File Size must be smaller than 10MB."].Value });
         }
 
-        // 확장자 검사
+        // Extension check
         var ext = Path.GetExtension(summernoteImageFile.FileName).ToLowerInvariant();
         if (ext != ".png" && ext != ".jpg" && ext != ".jpeg")
         {
@@ -313,9 +313,9 @@ public class ForumController : Controller
 
         try
         {
-            // 실제 이미지 여부 검사 (Magick.NET)
+            // Check if it's an actual image (Magick.NET)
             using var image = new MagickImage(summernoteImageFile.OpenReadStream());
-            // Magick.NET에서 예외가 발생하면 이미지가 아니거나 허용되지 않는 포맷임
+            // If Magick.NET throws an exception, it's not an image or an unsupported format
         }
         catch (MagickException)
         {
@@ -358,19 +358,19 @@ public class ForumController : Controller
     #region Edit, List, Detail, Write
     public async Task<IActionResult> FreeForum(string method = "list", int? boardId = null, int page = 1, string searchType = "", string searchText = "")
     {
-        if (method == "write") // 글쓰기 (write)
+        if (method == "write") // Write
         {
             FreeForumOutputViewModel freeForumOutputViewModel = new();
 
-            #region 게시판 글쓰기
+            #region Write board
             freeForumOutputViewModel.Method = method;
             #endregion
 
-            bool isAccountSessionExist = HttpContext.Session.TryGetValue(Maroik.Common.Miscellaneous.Utilities.EnumHelper.GetDescription(Maroik.Common.Miscellaneous.Utilities.Session.Account), out _); // 로그인이 되어 계정 세션이 생겼는지 확인
+            bool isAccountSessionExist = HttpContext.Session.TryGetValue(Maroik.Common.Miscellaneous.Utilities.EnumHelper.GetDescription(Maroik.Common.Miscellaneous.Utilities.Session.Account), out _); // Check if account session exists after login
 
             return isAccountSessionExist ? View(freeForumOutputViewModel) : RedirectToAction("Login", "Account");
         }
-        else if (method == "detail") // 상세보기 (detail)
+        else if (method == "detail") // Detail view
         {
             if (boardId == null)
             {
@@ -394,7 +394,7 @@ public class ForumController : Controller
 
                 if (freeBoard.Locked)
                 {
-                    _ = HttpContext.Session.TryGetValue(Maroik.Common.Miscellaneous.Utilities.EnumHelper.GetDescription(Maroik.Common.Miscellaneous.Utilities.Session.Account), out byte[] resultByte); // 작성자 또는 관리자인 경우
+                    _ = HttpContext.Session.TryGetValue(Maroik.Common.Miscellaneous.Utilities.EnumHelper.GetDescription(Maroik.Common.Miscellaneous.Utilities.Session.Account), out byte[] resultByte); // If writer or administrator
                     Account loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)); // Get Session
 
                     if (!(loginedAccount.Nickname == freeBoard.Writer || loginedAccount.Role == Role.Admin))
@@ -417,24 +417,24 @@ public class ForumController : Controller
                     isImgTagIncluded = true;
                     string filePath = imgTag.GetAttributeValue("alt", "");
 
-                    // 파일을 다운로드하는 메서드
+                    // Method to download file
                     byte[] fileData = await _fileClient.DownloadAsync(filePath);
 
                     if (fileData != null)
                     {
-                        // ContentType을 추출하기 위한 FileExtensionContentTypeProvider 사용
+                        // Use FileExtensionContentTypeProvider to extract ContentType
                         FileExtensionContentTypeProvider provider = new();
 
-                        // 기본 contentType은 "application/octet-stream"으로 설정
+                        // Set default contentType to "application/octet-stream"
                         if (!provider.TryGetContentType(filePath, out string contentType))
                         {
                             contentType = "application/octet-stream";
                         }
 
-                        // 파일 데이터를 Base64로 변환
+                        // Convert file data to Base64
                         string base64Data = Convert.ToBase64String(fileData);
 
-                        // img 태그에 base64 데이터 저장 (src에 넣는 대신 data-file 속성 사용)
+                        // Store base64 data in img tag (use data-file attribute instead of src)
                         _ = imgTag.SetAttributeValue("data-file", base64Data);
                         _ = imgTag.SetAttributeValue("data-contenttype", contentType);
                         _ = imgTag.SetAttributeValue("alt", _rsa.Encrypt(filePath));
@@ -464,16 +464,16 @@ public class ForumController : Controller
 
                     if (fileData != null)
                     {
-                        // ContentType을 추출하기 위한 FileExtensionContentTypeProvider 사용
+                        // Use FileExtensionContentTypeProvider to extract ContentType
                         FileExtensionContentTypeProvider provider = new();
 
-                        // 기본 contentType은 "application/octet-stream"으로 설정
+                        // Set default contentType to "application/octet-stream"
                         if (!provider.TryGetContentType(freeForumOutputViewModel?.BoardOutputViewModel?.BoardAttachedFilePath ?? "", out string contentType))
                         {
                             contentType = "application/octet-stream";
                         }
 
-                        // 파일 데이터를 Base64로 변환
+                        // Convert file data to Base64
                         freeForumOutputViewModel.BoardOutputViewModel.BoardAttachedFileBase64Data = Convert.ToBase64String(fileData);
                         freeForumOutputViewModel.BoardOutputViewModel.BoardAttachedFileContentType = contentType;
                     }
@@ -486,7 +486,7 @@ public class ForumController : Controller
                 return RedirectToAction("FreeForum", "Forum");
             }
         }
-        else if (method == "edit") // 수정 (edit)
+        else if (method == "edit") // Edit
         {
             if (boardId == null)
             {
@@ -511,7 +511,7 @@ public class ForumController : Controller
                 _ = HttpContext.Session.TryGetValue(Maroik.Common.Miscellaneous.Utilities.EnumHelper.GetDescription(Maroik.Common.Miscellaneous.Utilities.Session.Account), out byte[] resultByte);
                 Account loginedAccount = await _accountRepository.GetAccountByEmailAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
 
-                if (freeBoard.Writer != loginedAccount.Nickname) // 작성자와 로그인한 사용자가 같지 않으면
+                if (freeBoard.Writer != loginedAccount.Nickname) // If writer and logged-in user are not the same
                 {
                     return RedirectToAction("FreeForum", "Forum");
                 }
@@ -528,24 +528,24 @@ public class ForumController : Controller
                     isImgTagIncluded = true;
                     string filePath = imgTag.GetAttributeValue("alt", "");
 
-                    // 파일을 다운로드하는 메서드
+                    // Method to download file
                     byte[] fileData = await _fileClient.DownloadAsync(filePath);
 
                     if (fileData != null)
                     {
-                        // ContentType을 추출하기 위한 FileExtensionContentTypeProvider 사용
+                        // Use FileExtensionContentTypeProvider to extract ContentType
                         FileExtensionContentTypeProvider provider = new();
 
-                        // 기본 contentType은 "application/octet-stream"으로 설정
+                        // Set default contentType to "application/octet-stream"
                         if (!provider.TryGetContentType(filePath, out string contentType))
                         {
                             contentType = "application/octet-stream";
                         }
 
-                        // 파일 데이터를 Base64로 변환
+                        // Convert file data to Base64
                         string base64Data = Convert.ToBase64String(fileData);
 
-                        // img 태그에 base64 데이터 저장 (src에 넣는 대신 data-file 속성 사용)
+                        // Store base64 data in img tag (use data-file attribute instead of src)
                         _ = imgTag.SetAttributeValue("data-file", base64Data);
                         _ = imgTag.SetAttributeValue("data-contenttype", contentType);
                         _ = imgTag.SetAttributeValue("alt", _rsa.Encrypt(filePath));
@@ -576,16 +576,16 @@ public class ForumController : Controller
 
                     if (fileData != null)
                     {
-                        // ContentType을 추출하기 위한 FileExtensionContentTypeProvider 사용
+                        // Use FileExtensionContentTypeProvider to extract ContentType
                         FileExtensionContentTypeProvider provider = new();
 
-                        // 기본 contentType은 "application/octet-stream"으로 설정
+                        // Set default contentType to "application/octet-stream"
                         if (!provider.TryGetContentType(freeForumOutputViewModel?.BoardOutputViewModel?.BoardAttachedFilePath ?? "", out string contentType))
                         {
                             contentType = "application/octet-stream";
                         }
 
-                        // 파일 데이터를 Base64로 변환
+                        // Convert file data to Base64
                         freeForumOutputViewModel.BoardOutputViewModel.BoardAttachedFileBase64Data = Convert.ToBase64String(fileData);
                         freeForumOutputViewModel.BoardOutputViewModel.BoardAttachedFileContentType = contentType;
                     }
@@ -599,9 +599,9 @@ public class ForumController : Controller
             }
 
         }
-        else // 목록 (list)
+        else // List
         {
-            #region 게시판 기본 페이징 로직
+            #region Board default paging logic
             const int pageSize = 5;
             if (page < 1)
             {
@@ -609,25 +609,25 @@ public class ForumController : Controller
             }
             #endregion
 
-            #region 관련된 모든 게시판 데이터 가져오는 로직
+            #region Logic to get all related board data
             IEnumerable<Board> freeBoards = await _boardRepository.GetOneTypeBoardsAsync(EnumHelper.GetDescription(BoardType.FreeForum));
             freeBoards = freeBoards.Where(m => m.Deleted == false && m.Noticed == false).OrderByDescending(a => a.Id);
             #endregion
 
-            #region 검색어 로직
+            #region Search keyword logic
             if (searchType == "Title" && !string.IsNullOrEmpty(searchText))
             {
                 bool isAccountSessionExist = HttpContext.Session.TryGetValue(Maroik.Common.Miscellaneous.Utilities.EnumHelper.GetDescription(Maroik.Common.Miscellaneous.Utilities.Session.Account), out byte[] resultByte);
 
-                if (isAccountSessionExist) // 로그인이 되어 있다면
+                if (isAccountSessionExist) // If logged in
                 {
                     Account loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)); // Get Session
 
-                    if (loginedAccount.Role == Role.Admin) // 관리자는 모든 게시물을 볼 수 있음
+                    if (loginedAccount.Role == Role.Admin) // Administrator can see all posts
                     {
                         freeBoards = freeBoards.Where(a => a.Title.Contains(searchText));
                     }
-                    else if (loginedAccount.Role == Role.User) // 사용자는 보통 글 + 자신이 쓴 비밀글만 볼 수 있음
+                    else if (loginedAccount.Role == Role.User) // User can see regular posts + their own private posts
                     {
                         List<Board> searchFreeBoards = [];
                         List<Board> noLockedFreeBoards = freeBoards.Where(a => a.Title.Contains(searchText)).Where(a => !a.Locked).ToList();
@@ -637,14 +637,14 @@ public class ForumController : Controller
 
                         freeBoards = searchFreeBoards;
                     }
-                    else // 로그인 시, Admin 또는 User 권한이 없다면 버그임
+                    else // If logged in but has neither Admin nor User role, it's a bug
                     {
 
                     }
                 }
-                else // 로그인이 되지 않았다면
+                else // If not logged in
                 {
-                    freeBoards = freeBoards.Where(a => a.Title.Contains(searchText)).Where(a => !a.Locked); // 비 로그인 시, 비밀글은 검색 되지 않도록 해야함
+                    freeBoards = freeBoards.Where(a => a.Title.Contains(searchText)).Where(a => !a.Locked); // When not logged in, private posts should not be searchable
                 }
             }
             else if (searchType == "Writer" && !string.IsNullOrEmpty(searchText))
@@ -655,19 +655,19 @@ public class ForumController : Controller
 
             FreeForumOutputViewModel freeForumOutputViewModel = new();
 
-            #region 공지사항
+            #region Notice
             freeForumOutputViewModel.NoticeBoards = (await _boardRepository.GetOneTypeBoardsAsync(EnumHelper.GetDescription(BoardType.FreeForum))).Where(m => m.Deleted == false && m.Noticed == true).OrderByDescending(a => a.Id);
             #endregion
 
-            #region 게시판 목록
+            #region Board list
             freeForumOutputViewModel.Method = "list";
             #endregion
 
-            #region 게시판 페이징 로직
+            #region Board paging logic
             freeForumOutputViewModel.Pager = new Pager(freeBoards.Count(), page, pageSize);
             #endregion
 
-            #region 게시판 데이터 로직
+            #region Board data logic
             freeForumOutputViewModel.Boards = freeBoards.Skip((page - 1) * pageSize).Take(freeForumOutputViewModel.Pager.PageSize).ToList();
             #endregion
 
@@ -725,7 +725,7 @@ public class ForumController : Controller
         {
             if (ModelState.IsValid)
             {
-                boardInputViewModel.Content ??= ""; // 내용이 아무것도 입력되지 않았다면
+                boardInputViewModel.Content ??= ""; // If no content was entered
 
                 #region HtmlSanitizer
                 HtmlSanitizer sanitizer = new();
@@ -747,7 +747,7 @@ public class ForumController : Controller
                 boardInputViewModel.Content = htmlDocument.DocumentNode.OuterHtml;
                 #endregion
 
-                if (boardInputViewModel.Title.Length is not (> 0 and <= 100)) // 제목 길이
+                if (boardInputViewModel.Title.Length is not (> 0 and <= 100)) // Title length
                 {
                     return Json(new { result = false, error = _localizer["Title length is must be between 1 and 100 characters."].Value });
                 }
@@ -757,14 +757,14 @@ public class ForumController : Controller
                     return Json(new { result = false, error = _localizer["content length is must be between 0 and 16384 characters."].Value });
                 }
 
-                if (boardInputViewModel.UploadedFile != null) // 파일 첨부가 되었다면
+                if (boardInputViewModel.UploadedFile != null) // If a file was attached
                 {
-                    if (!(Path.GetExtension(boardInputViewModel.UploadedFile.FileName) == ".zip")) // zip 확장자만 가능
+                    if (!(Path.GetExtension(boardInputViewModel.UploadedFile.FileName) == ".zip")) // Only zip extension allowed
                     {
                         return Json(new { result = false, error = _localizer["Only zip extension allowed."].Value });
                     }
 
-                    if (boardInputViewModel.UploadedFile.Length is not (> 0 and <= 10485760)) // 10MB 이하만 가능
+                    if (boardInputViewModel.UploadedFile.Length is not (> 0 and <= 10485760)) // Only 10MB or less allowed
                     {
                         return Json(new { result = false, error = _localizer["uploaded file size must be smaller than 10MB."].Value });
                     }
@@ -799,14 +799,14 @@ public class ForumController : Controller
                         List<BoardAttachedFile> boardAttachedFiles = await _boardAttachedFileRepository?.GetAllAsync();
                         BoardAttachedFile previousBoardAttachedFile = boardAttachedFiles?.FirstOrDefault(m => m.BoardId == boardInputViewModel.Id);
 
-                        #region 첨부 파일 저장
+                        #region Save attached file
 
-                        #region 기존 첨부 파일 O && 신 첨부 파일 O
+                        #region Existing attached file exists && New attached file exists
                         if (previousBoardAttachedFile != null && boardInputViewModel.UploadedFile != null)
                         {
-                            if (boardInputViewModel.UploadedFile.Length is > 0 and <= 10485760) // boardInputViewModel.UploadedFile Length : 파일 크기 0MB 이상, 10MB 이하
+                            if (boardInputViewModel.UploadedFile.Length is > 0 and <= 10485760) // boardInputViewModel.UploadedFile Length : file size 0MB or more, 10MB or less
                             {
-                                int createdBoardId = boardInputViewModel.Id; // 첨부파일 FK 해서 로직 추가할 것
+                                int createdBoardId = boardInputViewModel.Id; // Add logic for attached file FK
 
                                 string boardAttachedFilePath = Path.Combine("upload", "Forum", EnumHelper.GetDescription(BoardType.FreeForum), "boardAttachedFiles", $"{createdBoardId}");
 
@@ -833,7 +833,7 @@ public class ForumController : Controller
                         }
                         #endregion
 
-                        #region 기존 첨부 파일 O && 신 첨부 파일 X
+                        #region Existing attached file exists && New attached file does not exist
                         else if (previousBoardAttachedFile != null && boardInputViewModel.UploadedFile == null)
                         {
                             previousBoardAttachedFile.Size = 0;
@@ -847,12 +847,12 @@ public class ForumController : Controller
                         }
                         #endregion
 
-                        #region 기존 첨부 파일 X && 신 첨부 파일 O
+                        #region Existing attached file does not exist && New attached file exists
                         else if (previousBoardAttachedFile == null && boardInputViewModel.UploadedFile != null)
                         {
-                            if (boardInputViewModel.UploadedFile.Length is > 0 and <= 10485760) // boardInputViewModel.UploadedFile Length : 파일 크기 0MB 이상, 10MB 이하
+                            if (boardInputViewModel.UploadedFile.Length is > 0 and <= 10485760) // boardInputViewModel.UploadedFile Length : file size 0MB or more, 10MB or less
                             {
-                                int createdBoardId = boardInputViewModel.Id; // 첨부파일 FK 해서 로직 추가할 것
+                                int createdBoardId = boardInputViewModel.Id; // Add logic for attached file FK
 
                                 string boardAttachedFilePath = Path.Combine("upload", "Forum", EnumHelper.GetDescription(BoardType.FreeForum), "boardAttachedFiles", $"{createdBoardId}");
 
@@ -881,7 +881,7 @@ public class ForumController : Controller
                         }
                         #endregion
 
-                        #region 기존 첨부 파일 X && 신 첨부 파일 X
+                        #region Existing attached file does not exist && New attached file does not exist
                         else
                         {
                             await transaction.CommitAsync();
@@ -948,9 +948,9 @@ public class ForumController : Controller
                     _ = HttpContext.Session.TryGetValue(Maroik.Common.Miscellaneous.Utilities.EnumHelper.GetDescription(Maroik.Common.Miscellaneous.Utilities.Session.Account), out byte[] resultByte);
                     Account loginedAccount = await _accountRepository.GetAccountByEmailAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
 
-                    if ((loginedAccount.Nickname == tempFreeBoard.Writer) || loginedAccount.Role == Role.Admin) // 방문한 사람이 작성자 또는 관리자인 경우
+                    if ((loginedAccount.Nickname == tempFreeBoard.Writer) || loginedAccount.Role == Role.Admin) // If visitor is writer or administrator
                     {
-                        #region 게시물 삭제
+                        #region Delete board
                         tempFreeBoard.Deleted = true;
                         await _boardRepository.DeleteBoardAsync(tempFreeBoard);
                         #endregion
@@ -991,9 +991,9 @@ public class ForumController : Controller
                 _ = HttpContext.Session.TryGetValue(Maroik.Common.Miscellaneous.Utilities.EnumHelper.GetDescription(Maroik.Common.Miscellaneous.Utilities.Session.Account), out byte[] resultByte);
                 Account loginedAccount = await _accountRepository.GetAccountByEmailAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
 
-                if ((loginedAccount.Nickname == boardComment.Writer) || loginedAccount.Role == Role.Admin) // 삭제하는 사람이 작성자 또는 관리자인 경우
+                if ((loginedAccount.Nickname == boardComment.Writer) || loginedAccount.Role == Role.Admin) // If deleter is writer or administrator
                 {
-                    #region 게시물 삭제
+                    #region Delete board comment
                     boardComment.Deleted = true;
                     await _boardCommentRepository.DeleteBoardCommentAsync(boardComment);
                     #endregion

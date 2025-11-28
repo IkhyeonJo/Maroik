@@ -18,7 +18,7 @@ public class CalendarEventRepository : ICalendarEventRepository
     }
 
     /// <summary>
-    /// 해당 달력에 해당하는 모든 달력 이벤트를 구합니다.
+    /// Gets all calendar events for the calendar.
     /// </summary>
     /// <param name="calendarId"></param>
     /// <returns></returns>
@@ -28,7 +28,7 @@ public class CalendarEventRepository : ICalendarEventRepository
     }
 
     /// <summary>
-    /// 한 달력 이벤트를 구합니다.
+    /// Gets a calendar event.
     /// </summary>
     /// <param name="id"></param>
     /// <returns></returns>
@@ -38,7 +38,7 @@ public class CalendarEventRepository : ICalendarEventRepository
     }
 
     /// <summary>
-    /// 달력 이벤트를 생성합니다.
+    /// Creates a calendar event.
     /// </summary>
     /// <param name="calendarEvent"></param>
     /// <returns></returns>
@@ -49,7 +49,7 @@ public class CalendarEventRepository : ICalendarEventRepository
     }
 
     /// <summary>
-    /// 달력 이벤트를 업데이트합니다.
+    /// Updates a calendar event.
     /// </summary>
     /// <param name="calendarEvent"></param>
     /// <returns></returns>
@@ -60,7 +60,7 @@ public class CalendarEventRepository : ICalendarEventRepository
     }
 
     /// <summary>
-    /// 달력 이벤트를 삭제합니다.
+    /// Deletes a calendar event.
     /// </summary>
     /// <param name="calendarEvent"></param>
     /// <returns></returns>

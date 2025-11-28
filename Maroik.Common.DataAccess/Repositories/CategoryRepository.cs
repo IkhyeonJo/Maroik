@@ -18,7 +18,7 @@ public class CategoryRepository : ICategoryRepository
     }
 
     /// <summary>
-    /// 모든 카테고리들을 구합니다.
+    /// Gets all categories.
     /// </summary>
     /// <returns></returns>
     public async Task<IEnumerable<Category>> GetCategoryAsync()
@@ -26,7 +26,7 @@ public class CategoryRepository : ICategoryRepository
         return await _context.Categories.ToListAsync();
     }
     /// <summary>
-    /// 권한에 따른 카테고리들을 구합니다.
+    /// Gets categories by permission.
     /// </summary>
     /// <param name="role"></param>
     /// <returns></returns>
@@ -38,7 +38,7 @@ public class CategoryRepository : ICategoryRepository
                 .ToListAsync();
     }
     /// <summary>
-    /// 카테고리를 생성합니다.
+    /// Creates a category.
     /// </summary>
     /// <param name="category"></param>
     /// <returns></returns>
@@ -48,7 +48,7 @@ public class CategoryRepository : ICategoryRepository
         _ = await _context.SaveChangesAsync();
     }
     /// <summary>
-    /// 카테고리를 업데이트합니다.
+    /// Updates a category.
     /// </summary>
     /// <param name="category"></param>
     /// <returns></returns>
@@ -58,7 +58,7 @@ public class CategoryRepository : ICategoryRepository
         _ = await _context.SaveChangesAsync();
     }
     /// <summary>
-    /// 카테고리를 제거합니다.
+    /// Removes a category.
     /// </summary>
     /// <param name="category"></param>
     /// <returns></returns>
