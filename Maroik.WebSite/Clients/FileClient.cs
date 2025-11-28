@@ -20,41 +20,41 @@ public class FileClient : IFileClient
 
         HttpResponseMessage response = await httpClient.PostAsync($"{_fileStorageBaseUrl}/api/File/download", content);
 
-        _ = response.EnsureSuccessStatusCode(); // 성공 여부 확인
-        return await response.Content.ReadAsByteArrayAsync(); // 파일 데이터 반환
+        _ = response.EnsureSuccessStatusCode(); // Check success status
+        return await response.Content.ReadAsByteArrayAsync(); // Return file data
     }
 
     public async Task<bool> UploadAsync(IFormFile formFile, string filePath)
     {
         try
         {
-            // 1. 파일 이름을 안전하게 처리하여 경로 탐색 취약성 방지
-            string sanitizedFileName = Path.GetFileName(filePath); // 사용자가 입력한 파일 이름에서 디렉토리 경로 제거
+            // 1. Safely process file name to prevent path traversal vulnerability
+            string sanitizedFileName = Path.GetFileName(filePath); // Remove directory path from user-inputted file name
 
-            // 2. 파일을 메모리 스트림에 저장하고 외부 서버로 업로드
+            // 2. Save file to memory stream and upload to external server
             if (formFile != null && formFile.Length > 0)
             {
                 using MemoryStream memoryStream = new();
-                // IFormFile 데이터를 메모리 스트림에 복사
+                // Copy IFormFile data to memory stream
                 await formFile.CopyToAsync(memoryStream);
-                memoryStream.Position = 0; // 스트림의 시작 위치로 돌아가기
+                memoryStream.Position = 0; // Return to start position of stream
 
-                // HttpClient로 외부 파일 서버에 파일 업로드
+                // Upload file to external file server using HttpClient
                 using HttpClient httpClient = new();
                 using MultipartFormDataContent content = [];
 
-                // 메모리 스트림을 ByteArrayContent로 변환하여 업로드 준비
+                // Convert memory stream to ByteArrayContent for upload preparation
                 StreamContent fileContent = new(memoryStream);
                 fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(formFile.ContentType);
 
-                // MultipartFormDataContent에 파일 추가
+                // Add file to MultipartFormDataContent
                 content.Add(fileContent, "file", sanitizedFileName);
 
-                // 추가 파라미터 추가
+                // Add additional parameters
                 content.Add(new StringContent(Path.GetDirectoryName(filePath ?? "")), "filePath");
 
                 HttpResponseMessage response = await httpClient.PostAsync($"{_fileStorageBaseUrl}/api/File/upload", content);
-                _ = response.EnsureSuccessStatusCode(); // 상태 코드 확인
+                _ = response.EnsureSuccessStatusCode(); // Check status code
 
                 return response.StatusCode == HttpStatusCode.OK;
             }

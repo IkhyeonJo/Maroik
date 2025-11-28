@@ -18,7 +18,7 @@ public class SubCategoryRepository : ISubCategoryRepository
     }
 
     /// <summary>
-    /// 모든 서브카테고리들을 구합니다.
+    /// Gets all subcategories.
     /// </summary>
     /// <returns></returns>
     public async Task<IEnumerable<SubCategory>> GetSubCategoryAsync()
@@ -26,7 +26,7 @@ public class SubCategoryRepository : ISubCategoryRepository
         return await _context.SubCategories.ToListAsync();
     }
     /// <summary>
-    /// 권한에 따른 서브카테고리들을 구합니다.
+    /// Gets subcategories by permission.
     /// </summary>
     /// <param name="role"></param>
     /// <returns></returns>
@@ -38,7 +38,7 @@ public class SubCategoryRepository : ISubCategoryRepository
                 .ToListAsync();
     }
     /// <summary>
-    /// 서브카테고리를 생성합니다.
+    /// Creates a subcategory.
     /// </summary>
     /// <param name="subCategory"></param>
     /// <returns></returns>
@@ -48,7 +48,7 @@ public class SubCategoryRepository : ISubCategoryRepository
         _ = await _context.SaveChangesAsync();
     }
     /// <summary>
-    /// 서브카테고리를 업데이트합니다.
+    /// Updates a subcategory.
     /// </summary>
     /// <param name="category"></param>
     /// <returns></returns>
@@ -58,7 +58,7 @@ public class SubCategoryRepository : ISubCategoryRepository
         _ = await _context.SaveChangesAsync();
     }
     /// <summary>
-    /// 서브카테고리를 제거합니다.
+    /// Removes a subcategory.
     /// </summary>
     /// <param name="category"></param>
     /// <returns></returns>

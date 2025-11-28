@@ -4,7 +4,7 @@ using System.Collections.Generic;
 namespace Maroik.Common.DataAccess.Models;
 
 /// <summary>
-/// Maroik.WebSite 달력 이벤트 알림
+/// CalendarEventReminder
 /// </summary>
 public partial class CalendarEventReminder
 {
@@ -14,37 +14,37 @@ public partial class CalendarEventReminder
     public long Id { get; set; }
 
     /// <summary>
-    /// 부모 Calendar Event Id
+    /// Parent Calendar Event Id
     /// </summary>
     public long CalendarEventId { get; set; }
 
     /// <summary>
-    /// 알림 방법
+    /// Method
     /// </summary>
     public string Method { get; set; }
 
     /// <summary>
-    /// 이벤트 발생 전 알림 시간 (분 단위)
+    /// MinutesBeforeEvent
     /// </summary>
     public long? MinutesBeforeEvent { get; set; }
 
     /// <summary>
-    /// 이벤트 발생 전 알림 시간 (시간 단위)
+    /// HoursBeforeEvent
     /// </summary>
     public long? HoursBeforeEvent { get; set; }
 
     /// <summary>
-    /// 이벤트 발생 전 알림 시간 (일 단위)
+    /// DaysBeforeEvent
     /// </summary>
     public long? DaysBeforeEvent { get; set; }
 
     /// <summary>
-    /// 이벤트 발생 전 알림 시간 (주 단위)
+    /// WeeksBeforeEvent
     /// </summary>
     public long? WeeksBeforeEvent { get; set; }
 
     /// <summary>
-    /// 이벤트 발생 전 알림 시간 (시간분 단위)
+    /// TimesBeforeEvent
     /// </summary>
     public TimeOnly? TimesBeforeEvent { get; set; }
 

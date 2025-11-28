@@ -61,26 +61,26 @@ public class FileController : ControllerBase
                 };
             }
 
-            // 파일 종류별 Magic Header 검사
+            // Magic Header validation by file type
             if (!IsAllowedFileType(memoryStream, fileName))
                 return BadRequest("Invalid or unsupported file format.");
             
-            // ClamAV 바이러스 검사
+            // ClamAV virus scan
             if (!await _clamavClient.ScanWithClamavAsync(memoryStream))
                 return BadRequest("File may be infected with a virus.");
 
-            // .zip 확장자인 경우 암호화 여부 검사
+            // Check if encrypted for .zip extension
             if (Path.GetExtension(fileName).Equals(".zip", StringComparison.OrdinalIgnoreCase))
             {
-                // 스트림 위치를 리셋
+                // Reset stream position
                 memoryStream.Position = 0;
                 
-                // 스트림 복사본 만들기 (메모리 사용량 증가 주의)
+                // Create stream copy (caution: increases memory usage)
                 using var msCopy = new MemoryStream();
                 await memoryStream.CopyToAsync(msCopy);
                 msCopy.Position = 0;
                 
-                // 이제 zip 검사
+                // Now check zip
                 using var zipFile = new ZipFile(msCopy);
                 foreach (ZipEntry entry in zipFile)
                 {
@@ -92,7 +92,7 @@ public class FileController : ControllerBase
             if (!Directory.Exists(safeDirectory))
                 Directory.CreateDirectory(safeDirectory);
 
-            // 저장
+            // Save
     #pragma warning disable SCS0018
             await using var stream = new FileStream(safeFilePath, FileMode.Create);
     #pragma warning restore SCS0018
@@ -100,7 +100,7 @@ public class FileController : ControllerBase
             await memoryStream.CopyToAsync(stream);
             await stream.FlushAsync();
 
-            // 실행 권한 제거 (chmod 644)
+            // Remove execute permission (chmod 644)
             var chmod = new ProcessStartInfo
             {
                 FileName = "/bin/chmod",
@@ -130,20 +130,20 @@ public class FileController : ControllerBase
     {
         try
         {
-            // 파일 이름에서 디렉터리 경로 제거 (보안)
+            // Remove directory path from file name (security)
             var sanitizedFileName = Path.GetFileName(filePath);
             filePath = Path.Combine(Path.GetDirectoryName(filePath ?? "") ?? string.Empty, sanitizedFileName);
 
-            // 파일이 존재하는지 확인
+            // Check if file exists
             if (!System.IO.File.Exists(filePath)) return NotFound("File not found");
 #pragma warning disable SCS0018 // Potential Path Traversal vulnerability was found.
             var fileData = await System.IO.File.ReadAllBytesAsync(filePath);
 #pragma warning restore SCS0018 // Potential Path Traversal vulnerability was found.
 
-            // 파일 확장자에 맞는 Content-Type을 가져오기 위한 FileExtensionContentTypeProvider 사용
+            // Use FileExtensionContentTypeProvider to get Content-Type matching file extension
             var provider = new FileExtensionContentTypeProvider();
 
-            // contentType 설정 (없을 경우 기본값 "application/octet-stream" 설정)
+            // Set contentType (default to "application/octet-stream" if not found)
             if (!provider.TryGetContentType(sanitizedFileName, out var contentType))
             {
                 contentType = "application/octet-stream";

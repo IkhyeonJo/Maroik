@@ -4,7 +4,7 @@ using System.Collections.Generic;
 namespace Maroik.Common.DataAccess.Models;
 
 /// <summary>
-/// Maroik.WebSite 달력 이벤트 첨부파일
+/// CalendarEventAttachedFile
 /// </summary>
 public partial class CalendarEventAttachedFile
 {
@@ -14,27 +14,27 @@ public partial class CalendarEventAttachedFile
     public long Id { get; set; }
 
     /// <summary>
-    /// 부모 CalendarEvent Id
+    /// Parent CalendarEvent Id
     /// </summary>
     public long CalendarEventId { get; set; }
 
     /// <summary>
-    /// 크기 (Byte)
+    /// Size (Byte)
     /// </summary>
     public long Size { get; set; }
 
     /// <summary>
-    /// 이름
+    /// Name
     /// </summary>
     public string Name { get; set; }
 
     /// <summary>
-    /// 확장자
+    /// Extension
     /// </summary>
     public string Extension { get; set; }
 
     /// <summary>
-    /// 경로
+    /// Path
     /// </summary>
     public string Path { get; set; }
 

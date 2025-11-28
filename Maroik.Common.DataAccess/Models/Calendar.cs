@@ -4,7 +4,7 @@ using System.Collections.Generic;
 namespace Maroik.Common.DataAccess.Models;
 
 /// <summary>
-/// Maroik.WebSite 달력
+/// Calendar
 /// </summary>
 public partial class Calendar
 {
@@ -14,17 +14,17 @@ public partial class Calendar
     public long Id { get; set; }
 
     /// <summary>
-    /// 계정 이메일 (ID)
+    /// AccountEmail (ID)
     /// </summary>
     public string AccountEmail { get; set; }
 
     /// <summary>
-    /// 이름
+    /// Name
     /// </summary>
     public string Name { get; set; }
 
     /// <summary>
-    /// 설명
+    /// Description
     /// </summary>
     public string Description { get; set; }
 
@@ -34,17 +34,17 @@ public partial class Calendar
     public string TimeZoneIanaId { get; set; }
 
     /// <summary>
-    /// 대표색
+    /// HtmlColorCode
     /// </summary>
     public string HtmlColorCode { get; set; }
 
     /// <summary>
-    /// 생성일
+    /// Created
     /// </summary>
     public DateTime Created { get; set; }
 
     /// <summary>
-    /// 업데이트일
+    /// Updated
     /// </summary>
     public DateTime Updated { get; set; }
 
@@ -55,5 +55,5 @@ public partial class Calendar
     public virtual CalendarShared CalendarShared { get; set; }
 
     public virtual ICollection<Account> AccountEmails { get; set; } = new List<Account>();
-    public virtual ICollection<OtherCalendar> OtherCalendars { get; set; } 
+    public virtual ICollection<OtherCalendar> OtherCalendars { get; set; }
 }

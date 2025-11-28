@@ -138,7 +138,7 @@ public class NoticeController : Controller
 
                     #endregion
 
-                    #region MaturityDate 형식 체크 (윤년 또는 월에 따른 일도 체크함)
+                    #region MaturityDate format check (also checks for leap year or day according to month)
 
                     if (!new Regex(@"^\d{4}-((0[1-9])|(1[012]))-((0[1-9]|[12]\d)|3[01])$").IsMatch(
                             fixedIncomeInputViewModel
@@ -149,7 +149,7 @@ public class NoticeController : Controller
 
                     #endregion
 
-                    #region 고정 수입 생성
+                    #region Create fixed income
 
                     await _fixedIncomeRepository.CreateFixedIncomeAsync
                     (
@@ -247,12 +247,12 @@ public class NoticeController : Controller
                                     item.DepositMonth, item.DepositDay)).TotalDays) <=
                             ServerSetting.NoticeMaturityDateDay;
                     }
-                    catch // 윤년이 아닌데 2월 29일로 초기화 했을 때 예외 발생
+                    catch // Exception occurs when initialized to February 29th in a non-leap year
                     {
                         noticedResult = false;
                     }
 
-                    if (item.Unpunctuality) // 시간 미엄수 체크 시, 알림 뜨도록 설정
+                    if (item.Unpunctuality) // Set notification to appear when unpunctuality is checked
                     {
                         noticedResult = true;
                     }
@@ -311,12 +311,12 @@ public class NoticeController : Controller
                                                 [0]), item.DepositMonth, item.DepositDay)).TotalDays) <=
                                 ServerSetting.NoticeMaturityDateDay;
                         }
-                        catch // 윤년이 아닌데 2월 29일로 초기화 했을 때 예외 발생
+                        catch // Exception occurs when initialized to February 29th in a non-leap year
                         {
                             noticedResult = false;
                         }
 
-                        if (item.Unpunctuality) // 시간 미엄수 체크 시, 알림 뜨도록 설정
+                        if (item.Unpunctuality) // Set notification to appear when unpunctuality is checked
                         {
                             noticedResult = true;
                         }
@@ -531,7 +531,7 @@ public class NoticeController : Controller
 
                     #endregion
 
-                    #region MaturityDate 형식 체크 (윤년 또는 월에 따른 일도 체크함)
+                    #region MaturityDate format check (also checks for leap year or day according to month)
 
                     if (!new Regex(@"^\d{4}-((0[1-9])|(1[012]))-((0[1-9]|[12]\d)|3[01])$").IsMatch(
                             fixedIncomeInputViewModel
@@ -542,7 +542,7 @@ public class NoticeController : Controller
 
                     #endregion
 
-                    #region 고정 수입 업데이트
+                    #region Update fixed income
 
                     List<FixedIncome> tempFixedIncomes =
                         await _fixedIncomeRepository.GetFixedIncomesAsync(JsonConvert
@@ -563,7 +563,7 @@ public class NoticeController : Controller
                         }
                         else
                         {
-                            #region 고정 수입 업데이트
+                            #region Update fixed income
 
                             tempFixedIncome.MainClass = fixedIncomeInputViewModel.MainClass;
                             tempFixedIncome.SubClass = fixedIncomeInputViewModel.SubClass;
@@ -649,7 +649,7 @@ public class NoticeController : Controller
                 }
                 else
                 {
-                    #region 고정 수입 삭제
+                    #region Delete fixed income
 
                     await _fixedIncomeRepository.DeleteFixedIncomeAsync(tempFixedIncome);
 
@@ -842,7 +842,7 @@ public class NoticeController : Controller
                     Maroik.Common.Miscellaneous.Utilities.EnumHelper.GetDescription(Maroik.Common.Miscellaneous
                         .Utilities.Session.Account), out byte[] resultByte);
 
-                #region 대분류 = '정기저축'
+                #region MainClass = 'RegularSavings'
 
                 if (fixedExpenditureInputViewModel.MainClass == "RegularSavings")
                 {
@@ -884,7 +884,7 @@ public class NoticeController : Controller
                                 });
                             }
 
-                            #region 고정 지출 생성
+                            #region Create fixed expenditure
 
                             await _fixedExpenditureRepository.CreateFixedExpenditureAsync
                             (
@@ -934,7 +934,7 @@ public class NoticeController : Controller
 
                 #endregion
 
-                #region 대분류 = '비소비지출'
+                #region MainClass = 'NonConsumerSpending'
 
                 else if (fixedExpenditureInputViewModel.MainClass == "NonConsumerSpending")
                 {
@@ -976,7 +976,7 @@ public class NoticeController : Controller
                                 });
                             }
 
-                            #region 고정 지출 생성
+                            #region Create fixed expenditure
 
                             await _fixedExpenditureRepository.CreateFixedExpenditureAsync
                             (
@@ -1025,7 +1025,7 @@ public class NoticeController : Controller
                     {
                         try
                         {
-                            #region 고정 지출 생성
+                            #region Create fixed expenditure
 
                             await _fixedExpenditureRepository.CreateFixedExpenditureAsync
                             (
@@ -1075,7 +1075,7 @@ public class NoticeController : Controller
 
                 #endregion
 
-                #region 대분류 = '소비지출'
+                #region MainClass = 'ConsumerSpending'
 
                 else if (fixedExpenditureInputViewModel.MainClass == "ConsumerSpending")
                 {
@@ -1094,7 +1094,7 @@ public class NoticeController : Controller
                     {
                         try
                         {
-                            #region 고정 지출 생성
+                            #region Create fixed expenditure
 
                             await _fixedExpenditureRepository.CreateFixedExpenditureAsync
                             (
@@ -1144,7 +1144,7 @@ public class NoticeController : Controller
 
                 #endregion
 
-                #region 대분류에 없는 값
+                #region Value not in MainClass
 
                 else
                 {
@@ -1211,12 +1211,12 @@ public class NoticeController : Controller
                                     item.DepositMonth, item.DepositDay)).TotalDays) <=
                             ServerSetting.NoticeMaturityDateDay;
                     }
-                    catch // 윤년이 아닌데 2월 29일로 초기화 했을 때 예외 발생
+                    catch // Exception occurs when initialized to February 29th in a non-leap year
                     {
                         noticedResult = false;
                     }
 
-                    if (item.Unpunctuality) // 시간 미엄수 체크 시, 알림 뜨도록 설정
+                    if (item.Unpunctuality) // Set notification to appear when unpunctuality is checked
                     {
                         noticedResult = true;
                     }
@@ -1277,12 +1277,12 @@ public class NoticeController : Controller
                                                 [0]), item.DepositMonth, item.DepositDay)).TotalDays) <=
                                 ServerSetting.NoticeMaturityDateDay;
                         }
-                        catch // 윤년이 아닌데 2월 29일로 초기화 했을 때 예외 발생
+                        catch // Exception occurs when initialized to February 29th in a non-leap year
                         {
                             noticedResult = false;
                         }
 
-                        if (item.Unpunctuality) // 시간 미엄수 체크 시, 알림 뜨도록 설정
+                        if (item.Unpunctuality) // Set notification to appear when unpunctuality is checked
                         {
                             noticedResult = true;
                         }
@@ -1429,7 +1429,7 @@ public class NoticeController : Controller
                     Maroik.Common.Miscellaneous.Utilities.EnumHelper.GetDescription(Maroik.Common.Miscellaneous
                         .Utilities.Session.Account), out byte[] resultByte);
 
-                #region 대분류 = '정기저축'
+                #region MainClass = 'RegularSavings'
 
                 if (fixedExpenditureInputViewModel.MainClass == "RegularSavings")
                 {
@@ -1526,7 +1526,7 @@ public class NoticeController : Controller
 
                 #endregion
 
-                #region 대분류 = '비소비지출'
+                #region MainClass = 'NonConsumerSpending'
 
                 else if (fixedExpenditureInputViewModel.MainClass == "NonConsumerSpending")
                 {
@@ -1676,7 +1676,7 @@ public class NoticeController : Controller
 
                 #endregion
 
-                #region 대분류 = '소비지출'
+                #region MainClass = 'ConsumerSpending'
 
                 else if (fixedExpenditureInputViewModel.MainClass == "ConsumerSpending")
                 {
@@ -1749,7 +1749,7 @@ public class NoticeController : Controller
 
                 #endregion
 
-                #region 대분류에 없는 값
+                #region Value not in MainClass
 
                 else
                 {
@@ -1865,12 +1865,12 @@ public class NoticeController : Controller
                                 Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[0]),
                             item.DepositMonth, item.DepositDay)).TotalDays) <= ServerSetting.NoticeMaturityDateDay;
             }
-            catch // 윤년이 아닌데 2월 29일로 초기화 했을 때 예외 발생
+            catch // Exception occurs when initialized to February 29th in a non-leap year
             {
                 noticedResult = false;
             }
 
-            if (item.Unpunctuality) // 시간 미엄수 체크 시, 알림 뜨도록 설정
+            if (item.Unpunctuality) // Set to show notification when unpunctuality is checked
             {
                 noticedResult = true;
             }

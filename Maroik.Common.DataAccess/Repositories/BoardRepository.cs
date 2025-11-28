@@ -18,7 +18,7 @@ public class BoardRepository : IBoardRepository
     }
 
     /// <summary>
-    /// 한 종류의 모든 게시물을 구합니다.
+    /// Gets all posts of one type.
     /// </summary>
     /// <returns></returns>
     public async Task<IEnumerable<Board>> GetOneTypeBoardsAsync(string type)
@@ -27,7 +27,7 @@ public class BoardRepository : IBoardRepository
     }
 
     /// <summary>
-    /// 게시물을 생성합니다.
+    /// Creates a post.
     /// </summary>
     /// <param name="board"></param>
     /// <returns></returns>
@@ -38,7 +38,7 @@ public class BoardRepository : IBoardRepository
     }
 
     /// <summary>
-    /// 계시물을 업데이트합니다.
+    /// Updates a post.
     /// </summary>
     /// <param name="board"></param>
     /// <returns></returns>
@@ -49,7 +49,7 @@ public class BoardRepository : IBoardRepository
     }
 
     /// <summary>
-    /// 계시물을 삭제합니다.
+    /// Deletes a post.
     /// </summary>
     /// <param name="board"></param>
     /// <returns></returns>

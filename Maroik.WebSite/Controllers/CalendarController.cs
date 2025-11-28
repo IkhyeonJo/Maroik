@@ -122,7 +122,7 @@ public class CalendarController : Controller
         {
             if (ModelState.IsValid)
             {
-                calendarEventInputViewModel.Description ??= ""; // 내용이 아무것도 입력되지 않았다면
+                calendarEventInputViewModel.Description ??= ""; // If no content was entered
 
                 #region HtmlSanitizer
                 HtmlSanitizer sanitizer = new();
@@ -144,7 +144,7 @@ public class CalendarController : Controller
                 calendarEventInputViewModel.Description = htmlDocument.DocumentNode.OuterHtml;
                 #endregion
 
-                if (calendarEventInputViewModel.Title.Length is not (> 0 and <= 100)) // 제목 길이
+                if (calendarEventInputViewModel.Title.Length is not (> 0 and <= 100)) // Title length
                 {
                     return Json(new { result = false, error = _localizer["Name length is must be between 1 and 100 characters."].Value });
                 }
@@ -154,14 +154,14 @@ public class CalendarController : Controller
                     return Json(new { result = false, error = _localizer["Description length is must be between 0 and 16384 characters."].Value });
                 }
 
-                if (calendarEventInputViewModel.CalendarEventUploadedFile != null) // 파일 첨부가 되었다면
+                if (calendarEventInputViewModel.CalendarEventUploadedFile != null) // If a file is attached
                 {
-                    if (!(Path.GetExtension(calendarEventInputViewModel.CalendarEventUploadedFile.FileName) == ".zip")) // zip 확장자만 가능
+                    if (!(Path.GetExtension(calendarEventInputViewModel.CalendarEventUploadedFile.FileName) == ".zip")) // Only zip extension allowed
                     {
                         return Json(new { result = false, error = _localizer["Only zip extension allowed."].Value });
                     }
 
-                    if (calendarEventInputViewModel.CalendarEventUploadedFile.Length is not (> 0 and <= 10485760)) // 10MB 이하만 가능
+                    if (calendarEventInputViewModel.CalendarEventUploadedFile.Length is not (> 0 and <= 10485760)) // Only 10MB or less allowed
                     {
                         return Json(new { result = false, error = _localizer["uploaded file size must be smaller than 10MB."].Value });
                     }
@@ -184,7 +184,7 @@ public class CalendarController : Controller
                             return Json(new { result = false, error = _localizer["The calendar does not exists."].Value });
                         }
 
-                        if (loginedAccount.Role is not (Role.Admin or Role.User)) // 비 로그인 사용자인 경우
+                        if (loginedAccount.Role is not (Role.Admin or Role.User)) // If not logged in user
                         {
                             await transaction.RollbackAsync();
                             return Json(new { result = false, error = _localizer["Please Login to create calendar event"].Value });
@@ -304,9 +304,9 @@ public class CalendarController : Controller
                         #endregion
 
                         #region CalendarEventAttachedFile
-                        if (calendarEventInputViewModel.CalendarEventUploadedFile != null) // 첨부 파일 존재 시,
+                        if (calendarEventInputViewModel.CalendarEventUploadedFile != null) // If attached file exists
                         {
-                            if (calendarEventInputViewModel.CalendarEventUploadedFile.Length is > 0 and <= 10485760) // calendarEventInputViewModel.CalendarEventUploadedFile Length : 파일 크기 0MB 이상, 10MB 이하
+                            if (calendarEventInputViewModel.CalendarEventUploadedFile.Length is > 0 and <= 10485760) // calendarEventInputViewModel.CalendarEventUploadedFile Length : file size 0MB or more, 10MB or less
                             {
                                 var createdCalendarEventId = calendarEvent.Id;
 
@@ -408,7 +408,7 @@ public class CalendarController : Controller
             return Ok(new { result = false, errorMessage = _localizer["File Size must be smaller than 10MB."].Value });
         }
 
-        // 확장자 검사
+        // Extension validation
         var ext = Path.GetExtension(summernoteImageFile.FileName).ToLowerInvariant();
         if (ext != ".png" && ext != ".jpg" && ext != ".jpeg")
         {
@@ -417,9 +417,9 @@ public class CalendarController : Controller
 
         try
         {
-            // 실제 이미지 여부 검사 (Magick.NET)
+            // Check if it's a real image (Magick.NET)
             using var image = new MagickImage(summernoteImageFile.OpenReadStream());
-            // Magick.NET에서 예외가 발생하면 이미지가 아니거나 허용되지 않는 포맷임
+            // If Magick.NET throws an exception, it's not an image or not an allowed format
         }
         catch (MagickException)
         {
@@ -1295,24 +1295,24 @@ public class CalendarController : Controller
                     {
                         string filePath = imgTag.GetAttributeValue("alt", "");
 
-                        // 파일을 다운로드하는 메서드
+                        // Method to download file
                         byte[] fileData = await _fileClient.DownloadAsync(filePath);
 
                         if (fileData != null)
                         {
-                            // ContentType을 추출하기 위한 FileExtensionContentTypeProvider 사용
+                            // Use FileExtensionContentTypeProvider to extract ContentType
                             FileExtensionContentTypeProvider provider = new();
 
-                            // 기본 contentType은 "application/octet-stream"으로 설정
+                            // Default contentType is set to "application/octet-stream"
                             if (!provider.TryGetContentType(filePath, out string contentType))
                             {
                                 contentType = "application/octet-stream";
                             }
 
-                            // 파일 데이터를 Base64로 변환
+                            // Convert file data to Base64
                             string base64Data = Convert.ToBase64String(fileData);
 
-                            // img 태그에 base64 데이터 저장 (src에 넣는 대신 data-file 속성 사용)
+                            // Store base64 data in img tag (use data-file attribute instead of src)
                             _ = imgTag.SetAttributeValue("data-file", base64Data);
                             _ = imgTag.SetAttributeValue("data-contenttype", contentType);
                             _ = imgTag.SetAttributeValue("alt", _rsa.Encrypt(filePath));
@@ -1446,16 +1446,16 @@ public class CalendarController : Controller
 
                         if (fileData != null)
                         {
-                            // ContentType을 추출하기 위한 FileExtensionContentTypeProvider 사용
+                            // Use FileExtensionContentTypeProvider to extract ContentType
                             FileExtensionContentTypeProvider provider = new();
 
-                            // 기본 contentType은 "application/octet-stream"으로 설정
+                            // Default contentType is set to "application/octet-stream"
                             if (!provider.TryGetContentType(calendarEvent?.CalendarEventAttachedFile?.Path ?? "", out string contentType))
                             {
                                 contentType = "application/octet-stream";
                             }
 
-                            // 파일 데이터를 Base64로 변환
+                            // Convert file data to Base64
                             calendarEvent.CalendarEventAttachedFileBase64Data = Convert.ToBase64String(fileData);
                             calendarEvent.CalendarEventAttachedFileContentType = contentType;
                         }
@@ -1558,24 +1558,24 @@ public class CalendarController : Controller
                     {
                         string filePath = imgTag.GetAttributeValue("alt", "");
 
-                        // 파일을 다운로드하는 메서드
+                        // Method to download file
                         byte[] fileData = await _fileClient.DownloadAsync(filePath);
 
                         if (fileData != null)
                         {
-                            // ContentType을 추출하기 위한 FileExtensionContentTypeProvider 사용
+                            // Use FileExtensionContentTypeProvider to extract ContentType
                             FileExtensionContentTypeProvider provider = new();
 
-                            // 기본 contentType은 "application/octet-stream"으로 설정
+                            // Default contentType is set to "application/octet-stream"
                             if (!provider.TryGetContentType(filePath, out string contentType))
                             {
                                 contentType = "application/octet-stream";
                             }
 
-                            // 파일 데이터를 Base64로 변환
+                            // Convert file data to Base64
                             string base64Data = Convert.ToBase64String(fileData);
 
-                            // img 태그에 base64 데이터 저장 (src에 넣는 대신 data-file 속성 사용)
+                            // Store base64 data in img tag (use data-file attribute instead of src)
                             _ = imgTag.SetAttributeValue("data-file", base64Data);
                             _ = imgTag.SetAttributeValue("data-contenttype", contentType);
                             _ = imgTag.SetAttributeValue("alt", _rsa.Encrypt(filePath));
@@ -1709,16 +1709,16 @@ public class CalendarController : Controller
 
                         if (fileData != null)
                         {
-                            // ContentType을 추출하기 위한 FileExtensionContentTypeProvider 사용
+                            // Use FileExtensionContentTypeProvider to extract ContentType
                             FileExtensionContentTypeProvider provider = new();
 
-                            // 기본 contentType은 "application/octet-stream"으로 설정
+                            // Default contentType is set to "application/octet-stream"
                             if (!provider.TryGetContentType(calendarEvent?.CalendarEventAttachedFile?.Path ?? "", out string contentType))
                             {
                                 contentType = "application/octet-stream";
                             }
 
-                            // 파일 데이터를 Base64로 변환
+                            // Convert file data to Base64
                             calendarEvent.CalendarEventAttachedFileBase64Data = Convert.ToBase64String(fileData);
                             calendarEvent.CalendarEventAttachedFileContentType = contentType;
                         }
@@ -2055,7 +2055,7 @@ public class CalendarController : Controller
             {
                 Account loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte));
 
-                if (loginedAccount.Role is not (Role.Admin or Role.User)) // 비 로그인 사용자인 경우
+                if (loginedAccount.Role is not (Role.Admin or Role.User)) // If not logged in user
                 {
                     return Json(new { result = false, error = _localizer["Login required."].Value });
                 }
@@ -2084,7 +2084,7 @@ public class CalendarController : Controller
                                                   {
                                                       calendar.Id,
                                                       calendar.Name,
-                                                      Checked = otherCalendar != null // otherCalendar가 존재하면 true, 없으면 false
+                                                      Checked = otherCalendar != null // true if otherCalendar exists, false otherwise
                                                   }).OrderBy(x => x.Name).ToList();
 
 
@@ -2166,7 +2166,7 @@ public class CalendarController : Controller
         {
             if (ModelState.IsValid)
             {
-                calendarEventInputViewModel.Description ??= ""; // 내용이 아무것도 입력되지 않았다면
+                calendarEventInputViewModel.Description ??= ""; // If no content was entered
 
                 #region HtmlSanitizer
                 HtmlSanitizer sanitizer = new();
@@ -2188,7 +2188,7 @@ public class CalendarController : Controller
                 calendarEventInputViewModel.Description = htmlDocument.DocumentNode.OuterHtml;
                 #endregion
 
-                if (calendarEventInputViewModel.Title.Length is not (> 0 and <= 100)) // 제목 길이
+                if (calendarEventInputViewModel.Title.Length is not (> 0 and <= 100)) // Title length
                 {
                     return Json(new { result = false, error = _localizer["Name length is must be between 1 and 100 characters."].Value });
                 }
@@ -2198,14 +2198,14 @@ public class CalendarController : Controller
                     return Json(new { result = false, error = _localizer["Description length is must be between 0 and 16384 characters."].Value });
                 }
 
-                if (calendarEventInputViewModel.CalendarEventUploadedFile != null) // 파일 첨부가 되었다면
+                if (calendarEventInputViewModel.CalendarEventUploadedFile != null) // If a file is attached
                 {
-                    if (!(Path.GetExtension(calendarEventInputViewModel.CalendarEventUploadedFile.FileName) == ".zip")) // zip 확장자만 가능
+                    if (!(Path.GetExtension(calendarEventInputViewModel.CalendarEventUploadedFile.FileName) == ".zip")) // Only zip extension allowed
                     {
                         return Json(new { result = false, error = _localizer["Only zip extension allowed."].Value });
                     }
 
-                    if (calendarEventInputViewModel.CalendarEventUploadedFile.Length is not (> 0 and <= 10485760)) // 10MB 이하만 가능
+                    if (calendarEventInputViewModel.CalendarEventUploadedFile.Length is not (> 0 and <= 10485760)) // Only 10MB or less allowed
                     {
                         return Json(new { result = false, error = _localizer["uploaded file size must be smaller than 10MB."].Value });
                     }
@@ -2228,7 +2228,7 @@ public class CalendarController : Controller
                             return Json(new { result = false, error = _localizer["The calendar does not exists."].Value });
                         }
 
-                        if (loginedAccount.Role is not (Role.Admin or Role.User)) // 비 로그인 사용자인 경우
+                        if (loginedAccount.Role is not (Role.Admin or Role.User)) // If not logged in user
                         {
                             await transaction.RollbackAsync();
                             return Json(new { result = false, error = _localizer["Please Login to update calendar event"].Value });
@@ -2364,9 +2364,9 @@ public class CalendarController : Controller
 
                         _ = await _calendarEventAttachedFileRepository.DeleteCalendarEventAttachedFileAsync(calendarEvent.Id);
 
-                        if (calendarEventInputViewModel.CalendarEventUploadedFile != null) // 첨부 파일 존재 시,
+                        if (calendarEventInputViewModel.CalendarEventUploadedFile != null) // If attached file exists
                         {
-                            if (calendarEventInputViewModel.CalendarEventUploadedFile.Length is > 0 and <= 10485760) // calendarEventInputViewModel.CalendarEventUploadedFile Length : 파일 크기 0MB 이상, 10MB 이하
+                            if (calendarEventInputViewModel.CalendarEventUploadedFile.Length is > 0 and <= 10485760) // calendarEventInputViewModel.CalendarEventUploadedFile Length : file size 0MB or more, 10MB or less
                             {
                                 var updatedCalendarEventId = calendarEvent.Id;
 
@@ -2531,7 +2531,7 @@ public class CalendarController : Controller
                     {
                         Account loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte));
 
-                        if (loginedAccount.Role is not (Role.Admin or Role.User)) // 비 로그인 사용자인 경우
+                        if (loginedAccount.Role is not (Role.Admin or Role.User)) // If not logged in user
                         {
                             await transaction.RollbackAsync();
                             return Json(new { result = false, error = _localizer["Login required."].Value });

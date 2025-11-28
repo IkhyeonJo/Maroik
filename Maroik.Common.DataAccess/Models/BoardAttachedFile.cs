@@ -4,7 +4,7 @@ using System.Collections.Generic;
 namespace Maroik.Common.DataAccess.Models;
 
 /// <summary>
-/// Maroik.WebSite 게시판 첨부 파일
+/// BoardAttachedFile
 /// </summary>
 public partial class BoardAttachedFile
 {
@@ -14,27 +14,27 @@ public partial class BoardAttachedFile
     public long Id { get; set; }
 
     /// <summary>
-    /// 부모 Board Id
+    /// Parent Board Id
     /// </summary>
     public long BoardId { get; set; }
 
     /// <summary>
-    /// 크기 (Byte)
+    /// Size (Byte)
     /// </summary>
     public long Size { get; set; }
 
     /// <summary>
-    /// 이름
+    /// Name
     /// </summary>
     public string Name { get; set; }
 
     /// <summary>
-    /// 확장자
+    /// Extension
     /// </summary>
     public string Extension { get; set; }
 
     /// <summary>
-    /// 경로
+    /// Path
     /// </summary>
     public string Path { get; set; }
 

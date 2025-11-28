@@ -11,7 +11,7 @@ namespace Maroik.Common.DataAccess.Repositories;
 public class IncomeRepository(ApplicationDbContext context) : IIncomeRepository
 {
     /// <summary>
-    /// 로그인 계정에 해당하는 모든 수입을 구합니다.
+    /// Gets all incomes for the logged-in account.
     /// </summary>
     /// <param name="email"></param>
     /// <returns></returns>
@@ -21,7 +21,7 @@ public class IncomeRepository(ApplicationDbContext context) : IIncomeRepository
     }
     
     /// <summary>
-    /// 로그인 계정에 해당하는 금년 수입을 구합니다.
+    /// Gets current year incomes for the logged-in account.
     /// </summary>
     /// <param name="email"></param>
     /// <param name="year"></param>
@@ -42,7 +42,7 @@ public class IncomeRepository(ApplicationDbContext context) : IIncomeRepository
     }
 
     /// <summary>
-    /// 로그인 계정에 해당하는 금년월 수입을 구합니다.
+    /// Gets current year-month incomes for the logged-in account.
     /// </summary>
     /// <param name="email"></param>
     /// <param name="yearMonth"></param>
@@ -63,7 +63,7 @@ public class IncomeRepository(ApplicationDbContext context) : IIncomeRepository
     }
 
     /// <summary>
-    /// 수입을 생성합니다.
+    /// Creates an income.
     /// </summary>
     /// <param name="income"></param>
     /// <returns></returns>
@@ -74,7 +74,7 @@ public class IncomeRepository(ApplicationDbContext context) : IIncomeRepository
     }
 
     /// <summary>
-    /// 수입을 업데이트합니다.
+    /// Updates an income.
     /// </summary>
     /// <param name="income"></param>
     /// <returns></returns>
@@ -85,7 +85,7 @@ public class IncomeRepository(ApplicationDbContext context) : IIncomeRepository
     }
 
     /// <summary>
-    /// 수입을 제거합니다.
+    /// Removes an income.
     /// </summary>
     /// <param name="income"></param>
     /// <returns></returns>

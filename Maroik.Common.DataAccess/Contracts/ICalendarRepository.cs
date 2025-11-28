@@ -7,34 +7,34 @@ namespace Maroik.Common.DataAccess.Contracts;
 public interface ICalendarRepository
 {
     /// <summary>
-    /// 모든 달력을 구합니다.
+    /// Gets all calendars.
     /// </summary>
     /// <returns></returns>
     public Task<List<Calendar>> GetAllCalendarsAsync();
 
     /// <summary>
-    /// 로그인 계정에 해당하는 모든 달력을 구합니다.
+    /// Gets all calendars for the logged-in account.
     /// </summary>
     /// <param name="email"></param>
     /// <returns></returns>
     public Task<List<Calendar>> GetCalendarsAsync(string email);
 
     /// <summary>
-    /// 달력을 생성합니다.
+    /// Creates a calendar.
     /// </summary>
     /// <param name="calendar"></param>
     /// <returns></returns>
     public Task CreateCalendarAsync(Calendar calendar);
 
     /// <summary>
-    /// 달력을 업데이트합니다.
+    /// Updates a calendar.
     /// </summary>
     /// <param name="calendar"></param>
     /// <returns></returns>
     public Task UpdateCalendarAsync(Calendar calendar);
 
     /// <summary>
-    /// 달력을 삭제합니다.
+    /// Deletes a calendar.
     /// </summary>
     /// <param name="calendar"></param>
     /// <returns></returns>

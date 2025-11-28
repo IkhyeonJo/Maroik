@@ -59,7 +59,7 @@ ServerSetting.RSAAlgorithm = Enum.TryParse<RSAType>(rsaAlgorithmString, out var 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(
         builder.Configuration.GetConnectionString("DefaultConnection"),
-        npgsqlOptions => npgsqlOptions.EnableRetryOnFailure(0) // 0으로 설정하여 비활성화
+        npgsqlOptions => npgsqlOptions.EnableRetryOnFailure(0) // Set to 0 to disable
     ).EnableSensitiveDataLogging()
 );
 #endregion
@@ -111,7 +111,7 @@ builder.Services.AddHttpClient();
 //    options.Configuration = builder.Configuration.GetConnectionString("Redis");
 //    options.InstanceName = "MaroikWebSite";
 //
-//    // Redis 연결 안정성을 위한 추가 설정
+//    // Additional settings for Redis connection stability
 //    options.ConfigurationOptions = new StackExchange.Redis.ConfigurationOptions
 //    {
 //        EndPoints = { builder.Configuration.GetConnectionString("Redis")! },
@@ -334,12 +334,12 @@ AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true); // https://s
 
 //1.Exception / error handling
 
-//앱이 개발환경에서 실행되는 경우
-//개발자 예외 페이지 미들웨어가(UseDeveloperExceptionPage) 가 앱 런타임 오류를 보고합니다.
-//데이터베이스 오류페이지 미들웨어가 데이터베이스 런타임 오류를 보고합니다.
-//앱이 프로덕션 환경에서 실행되는 경우
-//예외 처리기 미들웨어(UseExceptionHandler)는 다음 미들웨어에서 발생한 예외를 포착합니다.
-//HSTS(HTTP Strict Transport Security Protocol) 미들웨어(UseHsts)는 Strict-Transport - Security헤더를 추가합니다.
+//When the app is running in the development environment:
+//The developer exception page middleware (UseDeveloperExceptionPage) reports app runtime errors.
+//The database error page middleware reports database runtime errors.
+//When the app is running in the production environment:
+//The exception handler middleware (UseExceptionHandler) catches exceptions thrown in the following middleware.
+//The HSTS (HTTP Strict Transport Security Protocol) middleware (UseHsts) adds the Strict-Transport-Security header.
 
 //if (!app.Environment.IsDevelopment())
 //{
@@ -367,26 +367,26 @@ app.UseHttpsRedirection();
 app.UseRewriter(new RewriteOptions()
   .AddRedirectToWww());
 
-app.UseRouting(); // 5. 요청을 라우팅하기위한 미들웨어 라우팅 (UseRouting)
+app.UseRouting(); // 5. Routing middleware for routing requests (UseRouting)
 app.UseCors();
 
 #region Login
-app.UseSession(); // 6. 세션 미들웨어 (UseSession)는 세션 상태를 설정하고 유지합니다. 앱이 세션 상태를 사용하는 경우 쿠키 정책 미들웨어 이후 및 MVC 미들웨어 전에 세션 미들웨어를 호출하십시오.
-app.UseAuthentication(); // 7.인증 미들웨어(UseAuthentication)는 보안 자원에 대한 액세스가 허용되기 전에 사용자 인증을 시도합니다.
-app.UseAuthorization(); // 8. 권한 미들웨어 (UseAuthorization)는 사용자가 보안 자원에 액세스 할 수있는 권한을 부여합니다.
+app.UseSession(); // 6. Session middleware (UseSession) establishes and maintains session state. If the app uses session state, call Session Middleware after Cookie Policy Middleware and before MVC Middleware.
+app.UseAuthentication(); // 7. Authentication middleware (UseAuthentication) attempts to authenticate the user before they're allowed access to secure resources.
+app.UseAuthorization(); // 8. Authorization middleware (UseAuthorization) authorizes a user to access secure resources.
 #endregion
 
 #region Default HTTP Header Setting
 //https://docs.microsoft.com/en-us/aspnet/core/performance/caching/middleware?view=aspnetcore-5.0
 app.UseResponseCaching();
 
-#region 모든 페이지에 다음과 같은 코드를 적용한다. 로그아웃 후 뒤로가기하면 로그인 했던 페이지가 나오기 때문에 캐쉬 Disable 적용
+#region Apply the following code to all pages. After logout, pressing back button shows logged-in page, so cache is disabled
 
 //<META http-equiv="Expires" content="-1">
 //<META http-equiv="Pragma" content="no-cache">
 //<META http-equiv="Cache-Control" content="No-Cache">
 
-//아래 코드는 위의 Html Header에 들어가는 META 데이터 내용과 같다.
+//The code below is equivalent to the META data content that goes into the HTML Header above.
 
 app.Use(async (context, next) =>
 {

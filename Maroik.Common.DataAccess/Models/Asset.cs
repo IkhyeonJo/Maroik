@@ -4,52 +4,52 @@ using System.Collections.Generic;
 namespace Maroik.Common.DataAccess.Models;
 
 /// <summary>
-/// Maroik.WebSite 자산
+/// Asset
 /// </summary>
 public partial class Asset
 {
     /// <summary>
-    /// 상품명 (은행 계좌명, 증권 계좌명, 현금 등)
+    /// ProductName
     /// </summary>
     public string ProductName { get; set; }
 
     /// <summary>
-    /// 계정 이메일 (ID)
+    /// AccountEmail (ID)
     /// </summary>
     public string AccountEmail { get; set; }
 
     /// <summary>
-    /// 항목 (자유입출금 자산, 신탁 자산, 현금 자산, 저축성 자산, 투자성 자산, 부동산, 동산, 기타 실물 자산, 보험 자산)
+    /// Item
     /// </summary>
     public string Item { get; set; }
 
     /// <summary>
-    /// 금액
+    /// Amount
     /// </summary>
     public decimal Amount { get; set; }
 
     /// <summary>
-    /// 화폐 단위 (KRW, USD, ETC)
+    /// MonetaryUnit (KRW, USD, ETC)
     /// </summary>
     public string MonetaryUnit { get; set; }
 
     /// <summary>
-    /// 생성일
+    /// Created
     /// </summary>
     public DateTime Created { get; set; }
 
     /// <summary>
-    /// 업데이트일
+    /// Updated
     /// </summary>
     public DateTime Updated { get; set; }
 
     /// <summary>
-    /// 비고
+    /// Note
     /// </summary>
     public string Note { get; set; }
 
     /// <summary>
-    /// 삭제여부
+    /// Deleted
     /// </summary>
     public bool Deleted { get; set; }
 

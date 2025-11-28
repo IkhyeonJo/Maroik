@@ -16,7 +16,7 @@ public class AccountRepository : IAccountRepository
         _context = context;
     }
     /// <summary>
-    /// 등록된 모든 계정을 구합니다.
+    /// Gets all registered accounts.
     /// </summary>
     /// <returns></returns>
     public async Task<List<Account>> GetAllAsync()
@@ -24,7 +24,7 @@ public class AccountRepository : IAccountRepository
         return await _context.Accounts.ToListAsync();
     }
     /// <summary>
-    /// 한 계정을 이메일로 구합니다.
+    /// Gets an account by email.
     /// </summary>
     /// <param name="email"></param>
     /// <returns></returns>
@@ -33,7 +33,7 @@ public class AccountRepository : IAccountRepository
         return await _context.Accounts.FirstOrDefaultAsync(x => x.Email == email);
     }
     /// <summary>
-    /// 계정을 생성합니다.
+    /// Creates an account.
     /// </summary>
     /// <param name="account"></param>
     /// <returns></returns>
@@ -43,7 +43,7 @@ public class AccountRepository : IAccountRepository
         _ = await _context.SaveChangesAsync();
     }
     /// <summary>
-    /// 계정을 업데이트합니다.
+    /// Updates an account.
     /// </summary>
     /// <param name="account"></param>
     /// <returns></returns>

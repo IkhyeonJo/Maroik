@@ -1,17 +1,17 @@
 ﻿namespace Maroik.Common.DataAccess.Models;
 
 /// <summary>
-/// Maroik.WebSite 달력
+/// OtherCalendar
 /// </summary>
 public partial class OtherCalendar
 {
     /// <summary>
-    /// 계정 이메일 (ID)
+    /// Account Email (ID)
     /// </summary>
     public string AccountEmail { get; set; }
 
     /// <summary>
-    /// 부모 Calendar Id
+    /// Parent Calendar Id
     /// </summary>
     public long CalendarId { get; set; }
 

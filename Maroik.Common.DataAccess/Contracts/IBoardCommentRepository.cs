@@ -7,26 +7,26 @@ namespace Maroik.Common.DataAccess.Contracts;
 public interface IBoardCommentRepository
 {
     /// <summary>
-    /// 한 게시물의 모든 댓글을 구합니다.
+    /// Gets all comments for a post.
     /// </summary>
     /// <returns></returns>
     public Task<IEnumerable<BoardComment>> GetOneBoardCommentsAsync(long boardId);
 
     /// <summary>
-    /// 한 댓글을 구합니다.
+    /// Gets a comment.
     /// </summary>
     /// <returns></returns>
     public Task<BoardComment> GetBoardCommentAsync(int id);
 
     /// <summary>
-    /// 댓글을 생성합니다.
+    /// Creates a comment.
     /// </summary>
     /// <param name="boardComment"></param>
     /// <returns></returns>
     public Task WriteBoardCommentAsync(BoardComment boardComment);
 
     /// <summary>
-    /// 댓글을 삭제합니다.
+    /// Deletes a comment.
     /// </summary>
     /// <param name="boardComment"></param>
     /// <returns></returns>

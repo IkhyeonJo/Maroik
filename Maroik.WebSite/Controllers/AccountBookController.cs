@@ -549,7 +549,7 @@ public class AccountBookController : Controller
 
                     #endregion
                     
-                    #region 수입 생성
+                    #region Create income
 
                     await _incomeRepository.CreateIncomeAsync
                     (
@@ -570,7 +570,7 @@ public class AccountBookController : Controller
 
                     #endregion
 
-                    #region 자산 업데이트
+                    #region Asset update
 
                     Asset tempAsset = await _assetRepository.GetAssetAsync(
                         JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email,
@@ -810,7 +810,7 @@ public class AccountBookController : Controller
 
                     #endregion
 
-                    #region 수입 & 자산 업데이트
+                    #region Income & asset update
 
                     List<Income> tempIncomes = await _incomeRepository.GetIncomesAsync(JsonConvert
                         .DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
@@ -855,7 +855,7 @@ public class AccountBookController : Controller
                                 tempIncome.DepositMyAssetProductName;
                             decimal previousTempIncomeAmount = tempIncome.Amount;
 
-                            #region 수입 업데이트
+                            #region Income update
 
                             tempIncome.MainClass = incomeInputViewModel.MainClass;
                             tempIncome.SubClass = incomeInputViewModel.SubClass;
@@ -870,12 +870,12 @@ public class AccountBookController : Controller
 
                             #endregion
 
-                            #region 자산 업데이트
+                            #region Asset update
 
                             if (tempIncome.DepositMyAssetProductName ==
-                                previousTempIncomeDepositMyAssetProductName) // 같은 경우
+                                previousTempIncomeDepositMyAssetProductName) // If same
                             {
-                                #region 자산 업데이트
+                                #region Asset update
 
                                 Asset tempAsset = await _assetRepository.GetAssetAsync(
                                     JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte))
@@ -887,9 +887,9 @@ public class AccountBookController : Controller
 
                                 #endregion
                             }
-                            else // 다른 경우
+                            else // If different
                             {
-                                #region 구 자산 업데이트
+                                #region Old asset update
 
                                 Asset tempAsset = await _assetRepository.GetAssetAsync(
                                     JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte))
@@ -900,7 +900,7 @@ public class AccountBookController : Controller
 
                                 #endregion
 
-                                #region 신 자산 업데이트
+                                #region New asset update
 
                                 tempAsset = await _assetRepository.GetAssetAsync(
                                     JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte))
@@ -997,7 +997,7 @@ public class AccountBookController : Controller
 
                     #endregion
 
-                    #region 자산 업데이트
+                    #region Asset update
 
                     Asset tempAsset = await _assetRepository.GetAssetAsync(
                         JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email,
@@ -1008,7 +1008,7 @@ public class AccountBookController : Controller
 
                     #endregion
 
-                    #region 수입 삭제
+                    #region Delete income
 
                     await _incomeRepository.DeleteIncomeAsync(tempIncome);
 
@@ -1205,7 +1205,7 @@ public class AccountBookController : Controller
 
                 #endregion
 
-                #region 대분류 = '정기저축'
+                #region Main category = 'Regular savings'
 
                 if (expenditureInputViewModel.MainClass == "RegularSavings")
                 {
@@ -1249,7 +1249,7 @@ public class AccountBookController : Controller
                                 });
                             }
 
-                            #region 지출 생성
+                            #region Create expenditure
 
                             await _expenditureRepository.CreateExpenditureAsync
                             (
@@ -1271,7 +1271,7 @@ public class AccountBookController : Controller
 
                             #endregion
 
-                            #region 지출 자산 업데이트
+                            #region Expenditure asset update
 
                             expenditureAsset.Amount -= Math.Abs(expenditureInputViewModel.Amount);
                             expenditureAsset.Updated = DateTime.UtcNow;
@@ -1279,7 +1279,7 @@ public class AccountBookController : Controller
 
                             #endregion
 
-                            #region 수입 자산 업데이트
+                            #region Income asset update
 
                             incomeAsset.Amount += Math.Abs(expenditureInputViewModel.Amount);
                             incomeAsset.Updated = DateTime.UtcNow;
@@ -1309,7 +1309,7 @@ public class AccountBookController : Controller
 
                 #endregion
 
-                #region 대분류 = '비소비지출'
+                #region Main category = 'Non-consumption expenditure'
 
                 else if (expenditureInputViewModel.MainClass == "NonConsumerSpending")
                 {
@@ -1353,7 +1353,7 @@ public class AccountBookController : Controller
                                 });
                             }
 
-                            #region 지출 생성
+                            #region Create expenditure
 
                             await _expenditureRepository.CreateExpenditureAsync
                             (
@@ -1375,7 +1375,7 @@ public class AccountBookController : Controller
 
                             #endregion
 
-                            #region 지출 자산 업데이트
+                            #region Expenditure asset update
 
                             expenditureAsset.Amount -= Math.Abs(expenditureInputViewModel.Amount);
                             expenditureAsset.Updated = DateTime.UtcNow;
@@ -1383,7 +1383,7 @@ public class AccountBookController : Controller
 
                             #endregion
 
-                            #region 수입 자산 업데이트
+                            #region Income asset update
 
                             incomeAsset.Amount += Math.Abs(expenditureInputViewModel.Amount);
                             incomeAsset.Updated = DateTime.UtcNow;
@@ -1421,7 +1421,7 @@ public class AccountBookController : Controller
                                 return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                             }
 
-                            #region 지출 생성
+                            #region Create expenditure
 
                             await _expenditureRepository.CreateExpenditureAsync
                             (
@@ -1443,7 +1443,7 @@ public class AccountBookController : Controller
 
                             #endregion
 
-                            #region 지출 자산 업데이트
+                            #region Expenditure asset update
 
                             expenditureAsset.Amount -= Math.Abs(expenditureInputViewModel.Amount);
                             expenditureAsset.Updated = DateTime.UtcNow;
@@ -1473,7 +1473,7 @@ public class AccountBookController : Controller
 
                 #endregion
 
-                #region 대분류 = '소비지출'
+                #region Main category = 'Consumption expenditure'
 
                 else if (expenditureInputViewModel.MainClass == "ConsumerSpending")
                 {
@@ -1502,7 +1502,7 @@ public class AccountBookController : Controller
                                 return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                             }
 
-                            #region 지출 생성
+                            #region Create expenditure
 
                             await _expenditureRepository.CreateExpenditureAsync
                             (
@@ -1524,7 +1524,7 @@ public class AccountBookController : Controller
 
                             #endregion
 
-                            #region 지출 자산 업데이트
+                            #region Expenditure asset update
 
                             expenditureAsset.Amount -= Math.Abs(expenditureInputViewModel.Amount);
                             expenditureAsset.Updated = DateTime.UtcNow;
@@ -1554,7 +1554,7 @@ public class AccountBookController : Controller
 
                 #endregion
 
-                #region 대분류에 없는 값
+                #region Value not in main category
 
                 else
                 {
@@ -1759,7 +1759,7 @@ public class AccountBookController : Controller
                     Maroik.Common.Miscellaneous.Utilities.EnumHelper.GetDescription(Maroik.Common.Miscellaneous
                         .Utilities.Session.Account), out byte[] resultByte);
 
-                #region 대분류 = '정기저축'
+                #region Main category = 'Regular savings'
 
                 if (expenditureInputViewModel.MainClass == "RegularSavings")
                 {
@@ -1865,21 +1865,21 @@ public class AccountBookController : Controller
 
                             #endregion
 
-                            #region 과거 지출 값 [(결제수단(O)), (내입금자산(X))], 현재 지출 값 [(결제수단(O)), (내입금자산(O))]
+                            #region Previous expenditure value [(payment method(O)), (my deposit asset(X))], current expenditure value [(payment method(O)), (my deposit asset(O))]
 
                             if (!string.IsNullOrEmpty(previousTempExpenditure.PaymentMethod) &&
                                 string.IsNullOrEmpty(previousTempExpenditure.MyDepositAsset) &&
                                 !string.IsNullOrEmpty(currentTempExpenditure.PaymentMethod) &&
                                 !string.IsNullOrEmpty(currentTempExpenditure.MyDepositAsset))
                             {
-                                #region 지출 업데이트
+                                #region Expenditure update
 
                                 await _expenditureRepository.UpdateExpenditureAsync(currentTempExpenditure);
 
                                 #endregion
 
                                 if (previousTempExpenditure.PaymentMethod ==
-                                    currentTempExpenditure.PaymentMethod) // else 보고 참조함.
+                                    currentTempExpenditure.PaymentMethod) // See else for reference.
                                 {
                                     Asset pastExpenditureAsset =
                                         await _assetRepository.GetAssetAsync(
@@ -1902,7 +1902,7 @@ public class AccountBookController : Controller
                                     await _assetRepository.UpdateAssetAsync(currentIncomeAsset);
                                 }
                                 else if (previousTempExpenditure.PaymentMethod ==
-                                         currentTempExpenditure.MyDepositAsset) // else 보고 참조함.
+                                         currentTempExpenditure.MyDepositAsset) // See else for reference.
                                 {
                                     Asset pastExpenditureAsset =
                                         await _assetRepository.GetAssetAsync(
@@ -1926,7 +1926,7 @@ public class AccountBookController : Controller
                                 }
                                 else
                                 {
-                                    #region 자산 업데이트
+                                    #region Asset update
 
                                     Asset pastExpenditureAsset =
                                         await _assetRepository.GetAssetAsync(
@@ -1946,7 +1946,7 @@ public class AccountBookController : Controller
                                                 Encoding.Default.GetString(resultByte)).Email,
                                             currentTempExpenditure.MyDepositAsset);
 
-                                    #region 과거 자산
+                                    #region Previous asset
 
                                     pastExpenditureAsset.Amount += Math.Abs(previousTempExpenditure.Amount);
                                     pastExpenditureAsset.Updated = DateTime.UtcNow;
@@ -1958,7 +1958,7 @@ public class AccountBookController : Controller
 
                                     #endregion
 
-                                    #region 현재 자산
+                                    #region Current asset
 
                                     currentExpenditureAsset.Amount -= Math.Abs(currentTempExpenditure.Amount);
                                     currentExpenditureAsset.Updated = DateTime.UtcNow;
@@ -1983,14 +1983,14 @@ public class AccountBookController : Controller
 
                             #endregion
 
-                            #region 과거 지출 값 [(결제수단(O)), (내입금자산(O))], 현재 지출 값 [(결제수단(O)), (내입금자산(O))]
+                            #region Previous expenditure value [(payment method(O)), (my deposit asset(O))], current expenditure value [(payment method(O)), (my deposit asset(O))]
 
                             else if (!string.IsNullOrEmpty(previousTempExpenditure.PaymentMethod) &&
                                      !string.IsNullOrEmpty(previousTempExpenditure.MyDepositAsset) &&
                                      !string.IsNullOrEmpty(currentTempExpenditure.PaymentMethod) &&
                                      !string.IsNullOrEmpty(currentTempExpenditure.MyDepositAsset))
                             {
-                                #region 지출 업데이트
+                                #region Expenditure update
 
                                 await _expenditureRepository.UpdateExpenditureAsync(currentTempExpenditure);
 
@@ -2001,7 +2001,7 @@ public class AccountBookController : Controller
                                     if (previousTempExpenditure.MyDepositAsset ==
                                         currentTempExpenditure.MyDepositAsset)
                                     {
-                                        #region 자산 업데이트
+                                        #region Asset update
 
                                         Asset pastExpenditureAsset =
                                             await _assetRepository.GetAssetAsync(
@@ -2028,9 +2028,9 @@ public class AccountBookController : Controller
 
                                         #endregion
 
-                                        //#region 자산 업데이트
+                                        //#region Asset update
 
-                                        //#region 과거 자산
+                                        //#region Previous asset
                                         //var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
                                         //var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
 
@@ -2046,7 +2046,7 @@ public class AccountBookController : Controller
                                         //await assetRepository.UpdateAssetAsync(pastIncomeAsset);
                                         //#endregion
 
-                                        //#region 현재 자산
+                                        //#region Current asset
                                         //currentExpenditureAsset.Amount -= Math.Abs(currentTempExpenditure.Amount);
                                         //currentExpenditureAsset.Updated = DateTime.UtcNow;
                                         //await assetRepository.UpdateAssetAsync(currentExpenditureAsset);
@@ -2060,7 +2060,7 @@ public class AccountBookController : Controller
                                     }
                                     else
                                     {
-                                        #region 자산 업데이트
+                                        #region Asset update
 
                                         Asset pastExpenditureAsset =
                                             await _assetRepository.GetAssetAsync(
@@ -2095,9 +2095,9 @@ public class AccountBookController : Controller
 
                                         #endregion
 
-                                        //#region 자산 업데이트
+                                        //#region Asset update
 
-                                        //#region 과거 자산
+                                        //#region Previous asset
                                         //var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
                                         //var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
 
@@ -2113,7 +2113,7 @@ public class AccountBookController : Controller
                                         //await assetRepository.UpdateAssetAsync(pastIncomeAsset);
                                         //#endregion
 
-                                        //#region 현재 자산
+                                        //#region Current asset
                                         //currentExpenditureAsset.Amount -= Math.Abs(currentTempExpenditure.Amount);
                                         //currentExpenditureAsset.Updated = DateTime.UtcNow;
                                         //await assetRepository.UpdateAssetAsync(currentExpenditureAsset);
@@ -2132,7 +2132,7 @@ public class AccountBookController : Controller
                                     if (previousTempExpenditure.MyDepositAsset ==
                                         currentTempExpenditure.PaymentMethod)
                                     {
-                                        #region 자산 업데이트
+                                        #region Asset update
 
                                         Asset pastExpenditureAsset =
                                             await _assetRepository.GetAssetAsync(
@@ -2159,9 +2159,9 @@ public class AccountBookController : Controller
 
                                         #endregion
 
-                                        //#region 자산 업데이트
+                                        //#region Asset update
 
-                                        //#region 과거 자산
+                                        //#region Previous asset
                                         //var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
                                         //var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
 
@@ -2177,7 +2177,7 @@ public class AccountBookController : Controller
                                         //await assetRepository.UpdateAssetAsync(pastIncomeAsset);
                                         //#endregion
 
-                                        //#region 현재 자산
+                                        //#region Current asset
                                         //currentExpenditureAsset.Amount -= Math.Abs(currentTempExpenditure.Amount);
                                         //currentExpenditureAsset.Updated = DateTime.UtcNow;
                                         //await assetRepository.UpdateAssetAsync(currentExpenditureAsset);
@@ -2191,9 +2191,9 @@ public class AccountBookController : Controller
                                     }
                                     else
                                     {
-                                        #region 자산 업데이트
+                                        #region Asset update
 
-                                        #region 과거 자산
+                                        #region Previous asset
 
                                         Asset pastExpenditureAsset =
                                             await _assetRepository.GetAssetAsync(
@@ -2224,7 +2224,7 @@ public class AccountBookController : Controller
 
                                         #endregion
 
-                                        #region 현재 자산
+                                        #region Current asset
 
                                         currentExpenditureAsset.Amount -= Math.Abs(currentTempExpenditure.Amount);
                                         currentExpenditureAsset.Updated = DateTime.UtcNow;
@@ -2234,9 +2234,9 @@ public class AccountBookController : Controller
 
                                         #endregion
 
-                                        //#region 자산 업데이트
+                                        //#region Asset update
 
-                                        //#region 과거 자산
+                                        //#region Previous asset
                                         //var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
                                         //var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
 
@@ -2252,7 +2252,7 @@ public class AccountBookController : Controller
                                         //await assetRepository.UpdateAssetAsync(pastIncomeAsset);
                                         //#endregion
 
-                                        //#region 현재 자산
+                                        //#region Current asset
                                         //currentExpenditureAsset.Amount -= Math.Abs(currentTempExpenditure.Amount);
                                         //currentExpenditureAsset.Updated = DateTime.UtcNow;
                                         //await assetRepository.UpdateAssetAsync(currentExpenditureAsset);
@@ -2271,9 +2271,9 @@ public class AccountBookController : Controller
                                     if (previousTempExpenditure.PaymentMethod ==
                                         currentTempExpenditure.MyDepositAsset)
                                     {
-                                        #region 자산 업데이트
+                                        #region Asset update
 
-                                        #region 과거 자산
+                                        #region Previous asset
 
                                         Asset pastExpenditureAsset =
                                             await _assetRepository.GetAssetAsync(
@@ -2302,9 +2302,9 @@ public class AccountBookController : Controller
 
                                         #endregion
 
-                                        //#region 자산 업데이트
+                                        //#region Asset update
 
-                                        //#region 과거 자산
+                                        //#region Previous asset
                                         //var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
                                         //var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
 
@@ -2320,7 +2320,7 @@ public class AccountBookController : Controller
                                         //await assetRepository.UpdateAssetAsync(pastIncomeAsset);
                                         //#endregion
 
-                                        //#region 현재 자산
+                                        //#region Current asset
                                         //currentExpenditureAsset.Amount -= Math.Abs(currentTempExpenditure.Amount);
                                         //currentExpenditureAsset.Updated = DateTime.UtcNow;
                                         //await assetRepository.UpdateAssetAsync(currentExpenditureAsset);
@@ -2334,9 +2334,9 @@ public class AccountBookController : Controller
                                     }
                                     else
                                     {
-                                        #region 자산 업데이트
+                                        #region Asset update
 
-                                        #region 과거 자산
+                                        #region Previous asset
 
                                         Asset pastExpenditureAsset =
                                             await _assetRepository.GetAssetAsync(
@@ -2367,7 +2367,7 @@ public class AccountBookController : Controller
 
                                         #endregion
 
-                                        #region 현재 자산
+                                        #region Current asset
 
                                         currentIncomeAsset.Amount += Math.Abs(currentTempExpenditure.Amount);
                                         currentIncomeAsset.Updated = DateTime.UtcNow;
@@ -2377,9 +2377,9 @@ public class AccountBookController : Controller
 
                                         #endregion
 
-                                        //#region 자산 업데이트
+                                        //#region Asset update
 
-                                        //#region 과거 자산
+                                        //#region Previous asset
                                         //var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
                                         //var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
 
@@ -2395,7 +2395,7 @@ public class AccountBookController : Controller
                                         //await assetRepository.UpdateAssetAsync(pastIncomeAsset);
                                         //#endregion
 
-                                        //#region 현재 자산
+                                        //#region Current asset
                                         //currentExpenditureAsset.Amount -= Math.Abs(currentTempExpenditure.Amount);
                                         //currentExpenditureAsset.Updated = DateTime.UtcNow;
                                         //await assetRepository.UpdateAssetAsync(currentExpenditureAsset);
@@ -2414,9 +2414,9 @@ public class AccountBookController : Controller
                                     if (previousTempExpenditure.PaymentMethod ==
                                         currentTempExpenditure.PaymentMethod)
                                     {
-                                        #region 자산 업데이트
+                                        #region Asset update
 
-                                        #region 과거 자산
+                                        #region Previous asset
 
                                         Asset pastExpenditureAsset =
                                             await _assetRepository.GetAssetAsync(
@@ -2445,9 +2445,9 @@ public class AccountBookController : Controller
 
                                         #endregion
 
-                                        //#region 자산 업데이트
+                                        //#region Asset update
 
-                                        //#region 과거 자산
+                                        //#region Previous asset
                                         //var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
                                         //var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
 
@@ -2463,7 +2463,7 @@ public class AccountBookController : Controller
                                         //await assetRepository.UpdateAssetAsync(pastIncomeAsset);
                                         //#endregion
 
-                                        //#region 현재 자산
+                                        //#region Current asset
                                         //currentExpenditureAsset.Amount -= Math.Abs(currentTempExpenditure.Amount);
                                         //currentExpenditureAsset.Updated = DateTime.UtcNow;
                                         //await assetRepository.UpdateAssetAsync(currentExpenditureAsset);
@@ -2477,9 +2477,9 @@ public class AccountBookController : Controller
                                     }
                                     else
                                     {
-                                        #region 자산 업데이트
+                                        #region Asset update
 
-                                        #region 과거 자산
+                                        #region Previous asset
 
                                         Asset pastExpenditureAsset =
                                             await _assetRepository.GetAssetAsync(
@@ -2510,7 +2510,7 @@ public class AccountBookController : Controller
 
                                         #endregion
 
-                                        #region 현재 자산
+                                        #region Current asset
 
                                         currentExpenditureAsset.Amount -= Math.Abs(currentTempExpenditure.Amount);
                                         currentExpenditureAsset.Updated = DateTime.UtcNow;
@@ -2520,9 +2520,9 @@ public class AccountBookController : Controller
 
                                         #endregion
 
-                                        //#region 자산 업데이트
+                                        //#region Asset update
 
-                                        //#region 과거 자산
+                                        //#region Previous asset
                                         //var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
                                         //var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
 
@@ -2538,7 +2538,7 @@ public class AccountBookController : Controller
                                         //await assetRepository.UpdateAssetAsync(pastIncomeAsset);
                                         //#endregion
 
-                                        //#region 현재 자산
+                                        //#region Current asset
                                         //currentExpenditureAsset.Amount -= Math.Abs(currentTempExpenditure.Amount);
                                         //currentExpenditureAsset.Updated = DateTime.UtcNow;
                                         //await assetRepository.UpdateAssetAsync(currentExpenditureAsset);
@@ -2553,9 +2553,9 @@ public class AccountBookController : Controller
                                 }
                                 else
                                 {
-                                    #region 자산 업데이트
+                                    #region Asset update
 
-                                    #region 과거 자산
+                                    #region Previous asset
 
                                     Asset pastExpenditureAsset =
                                         await _assetRepository.GetAssetAsync(
@@ -2588,7 +2588,7 @@ public class AccountBookController : Controller
 
                                     #endregion
 
-                                    #region 현재 자산
+                                    #region Current asset
 
                                     currentExpenditureAsset.Amount -= Math.Abs(currentTempExpenditure.Amount);
                                     currentExpenditureAsset.Updated = DateTime.UtcNow;
@@ -2613,7 +2613,7 @@ public class AccountBookController : Controller
 
                             #endregion
 
-                            #region 잘못된 경우
+                            #region Invalid case
 
                             else
                             {
@@ -2638,7 +2638,7 @@ public class AccountBookController : Controller
 
                 #endregion
 
-                #region 대분류 = '비소비지출'
+                #region Main category = 'Non-consumption expenditure'
 
                 else if (expenditureInputViewModel.MainClass == "NonConsumerSpending")
                 {
@@ -2744,14 +2744,14 @@ public class AccountBookController : Controller
 
                             #endregion
 
-                            #region 과거 지출 값 [(결제수단(O)), (내입금자산(X))], 현재 지출 값 [(결제수단(O)), (내입금자산(O))]
+                            #region Previous expenditure value [(payment method(O)), (my deposit asset(X))], current expenditure value [(payment method(O)), (my deposit asset(O))]
 
                             if (!string.IsNullOrEmpty(previousTempExpenditure.PaymentMethod) &&
                                 string.IsNullOrEmpty(previousTempExpenditure.MyDepositAsset) &&
                                 !string.IsNullOrEmpty(currentTempExpenditure.PaymentMethod) &&
                                 !string.IsNullOrEmpty(currentTempExpenditure.MyDepositAsset))
                             {
-                                #region 지출 업데이트
+                                #region Expenditure update
 
                                 await _expenditureRepository.UpdateExpenditureAsync(currentTempExpenditure);
 
@@ -2759,7 +2759,7 @@ public class AccountBookController : Controller
 
                                 if (previousTempExpenditure.PaymentMethod == currentTempExpenditure.PaymentMethod)
                                 {
-                                    #region 자산 업데이트
+                                    #region Asset update
 
                                     Asset pastExpenditureAsset =
                                         await _assetRepository.GetAssetAsync(
@@ -2784,9 +2784,9 @@ public class AccountBookController : Controller
 
                                     #endregion
 
-                                    //#region 자산 업데이트
+                                    //#region Asset update
 
-                                    //#region 과거 자산
+                                    //#region Previous asset
                                     //var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
                                     //var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
 
@@ -2802,7 +2802,7 @@ public class AccountBookController : Controller
                                     //await assetRepository.UpdateAssetAsync(pastIncomeAsset);
                                     //#endregion
 
-                                    //#region 현재 자산
+                                    //#region Current asset
                                     //currentExpenditureAsset.Amount -= Math.Abs(currentTempExpenditure.Amount);
                                     //currentExpenditureAsset.Updated = DateTime.UtcNow;
                                     //await assetRepository.UpdateAssetAsync(currentExpenditureAsset);
@@ -2817,9 +2817,9 @@ public class AccountBookController : Controller
                                 else if (previousTempExpenditure.PaymentMethod ==
                                          currentTempExpenditure.MyDepositAsset)
                                 {
-                                    #region 자산 업데이트
+                                    #region Asset update
 
-                                    #region 과거 자산
+                                    #region Previous asset
 
                                     Asset pastExpenditureAsset =
                                         await _assetRepository.GetAssetAsync(
@@ -2841,7 +2841,7 @@ public class AccountBookController : Controller
 
                                     #endregion
 
-                                    #region 현재 자산
+                                    #region Current asset
 
                                     currentExpenditureAsset.Amount -= Math.Abs(currentTempExpenditure.Amount);
                                     currentExpenditureAsset.Updated = DateTime.UtcNow;
@@ -2851,9 +2851,9 @@ public class AccountBookController : Controller
 
                                     #endregion
 
-                                    //#region 자산 업데이트
+                                    //#region Asset update
 
-                                    //#region 과거 자산
+                                    //#region Previous asset
                                     //var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
                                     //var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
 
@@ -2869,7 +2869,7 @@ public class AccountBookController : Controller
                                     //await assetRepository.UpdateAssetAsync(pastIncomeAsset);
                                     //#endregion
 
-                                    //#region 현재 자산
+                                    //#region Current asset
                                     //currentExpenditureAsset.Amount -= Math.Abs(currentTempExpenditure.Amount);
                                     //currentExpenditureAsset.Updated = DateTime.UtcNow;
                                     //await assetRepository.UpdateAssetAsync(currentExpenditureAsset);
@@ -2883,9 +2883,9 @@ public class AccountBookController : Controller
                                 }
                                 else
                                 {
-                                    #region 자산 업데이트
+                                    #region Asset update
 
-                                    #region 과거 자산
+                                    #region Previous asset
 
                                     Asset pastExpenditureAsset =
                                         await _assetRepository.GetAssetAsync(
@@ -2915,7 +2915,7 @@ public class AccountBookController : Controller
 
                                     #endregion
 
-                                    #region 현재 자산
+                                    #region Current asset
 
                                     currentExpenditureAsset.Amount -= Math.Abs(currentTempExpenditure.Amount);
                                     currentExpenditureAsset.Updated = DateTime.UtcNow;
@@ -2940,14 +2940,14 @@ public class AccountBookController : Controller
 
                             #endregion
 
-                            #region 과거 지출 값 [(결제수단(O)), (내입금자산(O))], 현재 지출 값 [(결제수단(O)), (내입금자산(O))]
+                            #region Previous expenditure value [(payment method(O)), (my deposit asset(O))], current expenditure value [(payment method(O)), (my deposit asset(O))]
 
                             else if (!string.IsNullOrEmpty(previousTempExpenditure.PaymentMethod) &&
                                      !string.IsNullOrEmpty(previousTempExpenditure.MyDepositAsset) &&
                                      !string.IsNullOrEmpty(currentTempExpenditure.PaymentMethod) &&
                                      !string.IsNullOrEmpty(currentTempExpenditure.MyDepositAsset))
                             {
-                                #region 지출 업데이트
+                                #region Expenditure update
 
                                 await _expenditureRepository.UpdateExpenditureAsync(currentTempExpenditure);
 
@@ -2958,7 +2958,7 @@ public class AccountBookController : Controller
                                     if (previousTempExpenditure.MyDepositAsset ==
                                         currentTempExpenditure.MyDepositAsset)
                                     {
-                                        #region 자산 업데이트
+                                        #region Asset update
 
                                         Asset pastExpenditureAsset =
                                             await _assetRepository.GetAssetAsync(
@@ -2985,9 +2985,9 @@ public class AccountBookController : Controller
 
                                         #endregion
 
-                                        //#region 자산 업데이트
+                                        //#region Asset update
 
-                                        //#region 과거 자산
+                                        //#region Previous asset
                                         //var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
                                         //var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
 
@@ -3003,7 +3003,7 @@ public class AccountBookController : Controller
                                         //await assetRepository.UpdateAssetAsync(pastIncomeAsset);
                                         //#endregion
 
-                                        //#region 현재 자산
+                                        //#region Current asset
                                         //currentExpenditureAsset.Amount -= Math.Abs(currentTempExpenditure.Amount);
                                         //currentExpenditureAsset.Updated = DateTime.UtcNow;
                                         //await assetRepository.UpdateAssetAsync(currentExpenditureAsset);
@@ -3017,7 +3017,7 @@ public class AccountBookController : Controller
                                     }
                                     else
                                     {
-                                        #region 자산 업데이트
+                                        #region Asset update
 
                                         Asset pastExpenditureAsset =
                                             await _assetRepository.GetAssetAsync(
@@ -3052,9 +3052,9 @@ public class AccountBookController : Controller
 
                                         #endregion
 
-                                        //#region 자산 업데이트
+                                        //#region Asset update
 
-                                        //#region 과거 자산
+                                        //#region Previous asset
                                         //var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
                                         //var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
 
@@ -3070,7 +3070,7 @@ public class AccountBookController : Controller
                                         //await assetRepository.UpdateAssetAsync(pastIncomeAsset);
                                         //#endregion
 
-                                        //#region 현재 자산
+                                        //#region Current asset
                                         //currentExpenditureAsset.Amount -= Math.Abs(currentTempExpenditure.Amount);
                                         //currentExpenditureAsset.Updated = DateTime.UtcNow;
                                         //await assetRepository.UpdateAssetAsync(currentExpenditureAsset);
@@ -3089,7 +3089,7 @@ public class AccountBookController : Controller
                                     if (previousTempExpenditure.MyDepositAsset ==
                                         currentTempExpenditure.PaymentMethod)
                                     {
-                                        #region 자산 업데이트
+                                        #region Asset update
 
                                         Asset pastExpenditureAsset =
                                             await _assetRepository.GetAssetAsync(
@@ -3116,9 +3116,9 @@ public class AccountBookController : Controller
 
                                         #endregion
 
-                                        //#region 자산 업데이트
+                                        //#region Asset update
 
-                                        //#region 과거 자산
+                                        //#region Previous asset
                                         //var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
                                         //var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
 
@@ -3134,7 +3134,7 @@ public class AccountBookController : Controller
                                         //await assetRepository.UpdateAssetAsync(pastIncomeAsset);
                                         //#endregion
 
-                                        //#region 현재 자산
+                                        //#region Current asset
                                         //currentExpenditureAsset.Amount -= Math.Abs(currentTempExpenditure.Amount);
                                         //currentExpenditureAsset.Updated = DateTime.UtcNow;
                                         //await assetRepository.UpdateAssetAsync(currentExpenditureAsset);
@@ -3148,9 +3148,9 @@ public class AccountBookController : Controller
                                     }
                                     else
                                     {
-                                        #region 자산 업데이트
+                                        #region Asset update
 
-                                        #region 과거 자산
+                                        #region Previous asset
 
                                         Asset pastExpenditureAsset =
                                             await _assetRepository.GetAssetAsync(
@@ -3181,7 +3181,7 @@ public class AccountBookController : Controller
 
                                         #endregion
 
-                                        #region 현재 자산
+                                        #region Current asset
 
                                         currentExpenditureAsset.Amount -= Math.Abs(currentTempExpenditure.Amount);
                                         currentExpenditureAsset.Updated = DateTime.UtcNow;
@@ -3191,9 +3191,9 @@ public class AccountBookController : Controller
 
                                         #endregion
 
-                                        //#region 자산 업데이트
+                                        //#region Asset update
 
-                                        //#region 과거 자산
+                                        //#region Previous asset
                                         //var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
                                         //var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
 
@@ -3209,7 +3209,7 @@ public class AccountBookController : Controller
                                         //await assetRepository.UpdateAssetAsync(pastIncomeAsset);
                                         //#endregion
 
-                                        //#region 현재 자산
+                                        //#region Current asset
                                         //currentExpenditureAsset.Amount -= Math.Abs(currentTempExpenditure.Amount);
                                         //currentExpenditureAsset.Updated = DateTime.UtcNow;
                                         //await assetRepository.UpdateAssetAsync(currentExpenditureAsset);
@@ -3228,9 +3228,9 @@ public class AccountBookController : Controller
                                     if (previousTempExpenditure.PaymentMethod ==
                                         currentTempExpenditure.MyDepositAsset)
                                     {
-                                        #region 자산 업데이트
+                                        #region Asset update
 
-                                        #region 과거 자산
+                                        #region Previous asset
 
                                         Asset pastExpenditureAsset =
                                             await _assetRepository.GetAssetAsync(
@@ -3259,9 +3259,9 @@ public class AccountBookController : Controller
 
                                         #endregion
 
-                                        //#region 자산 업데이트
+                                        //#region Asset update
 
-                                        //#region 과거 자산
+                                        //#region Previous asset
                                         //var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
                                         //var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
 
@@ -3277,7 +3277,7 @@ public class AccountBookController : Controller
                                         //await assetRepository.UpdateAssetAsync(pastIncomeAsset);
                                         //#endregion
 
-                                        //#region 현재 자산
+                                        //#region Current asset
                                         //currentExpenditureAsset.Amount -= Math.Abs(currentTempExpenditure.Amount);
                                         //currentExpenditureAsset.Updated = DateTime.UtcNow;
                                         //await assetRepository.UpdateAssetAsync(currentExpenditureAsset);
@@ -3291,9 +3291,9 @@ public class AccountBookController : Controller
                                     }
                                     else
                                     {
-                                        #region 자산 업데이트
+                                        #region Asset update
 
-                                        #region 과거 자산
+                                        #region Previous asset
 
                                         Asset pastExpenditureAsset =
                                             await _assetRepository.GetAssetAsync(
@@ -3324,7 +3324,7 @@ public class AccountBookController : Controller
 
                                         #endregion
 
-                                        #region 현재 자산
+                                        #region Current asset
 
                                         currentIncomeAsset.Amount += Math.Abs(currentTempExpenditure.Amount);
                                         currentIncomeAsset.Updated = DateTime.UtcNow;
@@ -3334,9 +3334,9 @@ public class AccountBookController : Controller
 
                                         #endregion
 
-                                        //#region 자산 업데이트
+                                        //#region Asset update
 
-                                        //#region 과거 자산
+                                        //#region Previous asset
                                         //var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
                                         //var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
 
@@ -3352,7 +3352,7 @@ public class AccountBookController : Controller
                                         //await assetRepository.UpdateAssetAsync(pastIncomeAsset);
                                         //#endregion
 
-                                        //#region 현재 자산
+                                        //#region Current asset
                                         //currentExpenditureAsset.Amount -= Math.Abs(currentTempExpenditure.Amount);
                                         //currentExpenditureAsset.Updated = DateTime.UtcNow;
                                         //await assetRepository.UpdateAssetAsync(currentExpenditureAsset);
@@ -3371,9 +3371,9 @@ public class AccountBookController : Controller
                                     if (previousTempExpenditure.PaymentMethod ==
                                         currentTempExpenditure.PaymentMethod)
                                     {
-                                        #region 자산 업데이트
+                                        #region Asset update
 
-                                        #region 과거 자산
+                                        #region Previous asset
 
                                         Asset pastExpenditureAsset =
                                             await _assetRepository.GetAssetAsync(
@@ -3402,9 +3402,9 @@ public class AccountBookController : Controller
 
                                         #endregion
 
-                                        //#region 자산 업데이트
+                                        //#region Asset update
 
-                                        //#region 과거 자산
+                                        //#region Previous asset
                                         //var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
                                         //var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
 
@@ -3420,7 +3420,7 @@ public class AccountBookController : Controller
                                         //await assetRepository.UpdateAssetAsync(pastIncomeAsset);
                                         //#endregion
 
-                                        //#region 현재 자산
+                                        //#region Current asset
                                         //currentExpenditureAsset.Amount -= Math.Abs(currentTempExpenditure.Amount);
                                         //currentExpenditureAsset.Updated = DateTime.UtcNow;
                                         //await assetRepository.UpdateAssetAsync(currentExpenditureAsset);
@@ -3434,9 +3434,9 @@ public class AccountBookController : Controller
                                     }
                                     else
                                     {
-                                        #region 자산 업데이트
+                                        #region Asset update
 
-                                        #region 과거 자산
+                                        #region Previous asset
 
                                         Asset pastExpenditureAsset =
                                             await _assetRepository.GetAssetAsync(
@@ -3467,7 +3467,7 @@ public class AccountBookController : Controller
 
                                         #endregion
 
-                                        #region 현재 자산
+                                        #region Current asset
 
                                         currentExpenditureAsset.Amount -= Math.Abs(currentTempExpenditure.Amount);
                                         currentExpenditureAsset.Updated = DateTime.UtcNow;
@@ -3477,9 +3477,9 @@ public class AccountBookController : Controller
 
                                         #endregion
 
-                                        //#region 자산 업데이트
+                                        //#region Asset update
 
-                                        //#region 과거 자산
+                                        //#region Previous asset
                                         //var pastExpenditureAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.PaymentMethod);
                                         //var pastIncomeAsset = await assetRepository.GetAssetAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email, previousTempExpenditure.MyDepositAsset);
 
@@ -3495,7 +3495,7 @@ public class AccountBookController : Controller
                                         //await assetRepository.UpdateAssetAsync(pastIncomeAsset);
                                         //#endregion
 
-                                        //#region 현재 자산
+                                        //#region Current asset
                                         //currentExpenditureAsset.Amount -= Math.Abs(currentTempExpenditure.Amount);
                                         //currentExpenditureAsset.Updated = DateTime.UtcNow;
                                         //await assetRepository.UpdateAssetAsync(currentExpenditureAsset);
@@ -3510,9 +3510,9 @@ public class AccountBookController : Controller
                                 }
                                 else
                                 {
-                                    #region 자산 업데이트
+                                    #region Asset update
 
-                                    #region 과거 자산
+                                    #region Previous asset
 
                                     Asset pastExpenditureAsset =
                                         await _assetRepository.GetAssetAsync(
@@ -3545,7 +3545,7 @@ public class AccountBookController : Controller
 
                                     #endregion
 
-                                    #region 현재 자산
+                                    #region Current asset
 
                                     currentExpenditureAsset.Amount -= Math.Abs(currentTempExpenditure.Amount);
                                     currentExpenditureAsset.Updated = DateTime.UtcNow;
@@ -3570,7 +3570,7 @@ public class AccountBookController : Controller
 
                             #endregion
 
-                            #region 잘못된 경우
+                            #region Invalid case
 
                             else
                             {
@@ -3655,14 +3655,14 @@ public class AccountBookController : Controller
 
                             #endregion
 
-                            #region 과거 지출 값 [(결제수단(O)), (내입금자산(X))], 현재 지출 값 [(결제수단(O)), (내입금자산(X))]
+                            #region Previous expenditure value [(payment method(O)), (my deposit asset(X))], current expenditure value [(payment method(O)), (my deposit asset(X))]
 
                             if (!string.IsNullOrEmpty(previousTempExpenditure.PaymentMethod) &&
                                 string.IsNullOrEmpty(previousTempExpenditure.MyDepositAsset) &&
                                 !string.IsNullOrEmpty(currentTempExpenditure.PaymentMethod) &&
                                 string.IsNullOrEmpty(currentTempExpenditure.MyDepositAsset))
                             {
-                                #region 지출 업데이트
+                                #region Expenditure update
 
                                 await _expenditureRepository.UpdateExpenditureAsync(currentTempExpenditure);
 
@@ -3670,9 +3670,9 @@ public class AccountBookController : Controller
 
                                 if (previousTempExpenditure.PaymentMethod == currentTempExpenditure.PaymentMethod)
                                 {
-                                    #region 자산 업데이트
+                                    #region Asset update
 
-                                    #region 과거 자산
+                                    #region Previous asset
 
                                     Asset pastExpenditureAsset =
                                         await _assetRepository.GetAssetAsync(
@@ -3691,9 +3691,9 @@ public class AccountBookController : Controller
                                 }
                                 else
                                 {
-                                    #region 자산 업데이트
+                                    #region Asset update
 
-                                    #region 과거 자산
+                                    #region Previous asset
 
                                     Asset pastExpenditureAsset =
                                         await _assetRepository.GetAssetAsync(
@@ -3719,7 +3719,7 @@ public class AccountBookController : Controller
 
                                     #endregion
 
-                                    #region 현재 자산
+                                    #region Current asset
 
                                     currentExpenditureAsset.Amount -= Math.Abs(currentTempExpenditure.Amount);
                                     currentExpenditureAsset.Updated = DateTime.UtcNow;
@@ -3743,14 +3743,14 @@ public class AccountBookController : Controller
 
                             #endregion
 
-                            #region 과거 지출 값 [(결제수단(O)), (내입금자산(O))], 현재 지출 값 [(결제수단(O)), (내입금자산(X))]
+                            #region Previous expenditure value [(payment method(O)), (my deposit asset(O))], current expenditure value [(payment method(O)), (my deposit asset(X))]
 
                             else if (!string.IsNullOrEmpty(previousTempExpenditure.PaymentMethod) &&
                                      !string.IsNullOrEmpty(previousTempExpenditure.MyDepositAsset) &&
                                      !string.IsNullOrEmpty(currentTempExpenditure.PaymentMethod) &&
                                      string.IsNullOrEmpty(currentTempExpenditure.MyDepositAsset))
                             {
-                                #region 지출 업데이트
+                                #region Expenditure update
 
                                 await _expenditureRepository.UpdateExpenditureAsync(currentTempExpenditure);
 
@@ -3758,9 +3758,9 @@ public class AccountBookController : Controller
 
                                 if (previousTempExpenditure.PaymentMethod == currentTempExpenditure.PaymentMethod)
                                 {
-                                    #region 자산 업데이트
+                                    #region Asset update
 
-                                    #region 과거 자산
+                                    #region Previous asset
 
                                     Asset pastExpenditureAsset =
                                         await _assetRepository.GetAssetAsync(
@@ -3789,9 +3789,9 @@ public class AccountBookController : Controller
                                 else if (previousTempExpenditure.MyDepositAsset ==
                                          currentTempExpenditure.PaymentMethod)
                                 {
-                                    #region 자산 업데이트
+                                    #region Asset update
 
-                                    #region 과거 자산
+                                    #region Previous asset
 
                                     Asset pastExpenditureAsset =
                                         await _assetRepository.GetAssetAsync(
@@ -3819,9 +3819,9 @@ public class AccountBookController : Controller
                                 }
                                 else
                                 {
-                                    #region 자산 업데이트
+                                    #region Asset update
 
-                                    #region 과거 자산
+                                    #region Previous asset
 
                                     Asset pastExpenditureAsset =
                                         await _assetRepository.GetAssetAsync(
@@ -3849,7 +3849,7 @@ public class AccountBookController : Controller
 
                                     #endregion
 
-                                    #region 현재 자산
+                                    #region Current asset
 
                                     currentExpenditureAsset.Amount -= Math.Abs(currentTempExpenditure.Amount);
                                     currentExpenditureAsset.Updated = DateTime.UtcNow;
@@ -3869,7 +3869,7 @@ public class AccountBookController : Controller
 
                             #endregion
 
-                            #region 잘못된 경우
+                            #region Invalid case
 
                             else
                             {
@@ -3894,7 +3894,7 @@ public class AccountBookController : Controller
 
                 #endregion
 
-                #region 대분류 = '소비지출'
+                #region Main category = 'Consumption expenditure'
 
                 else if (expenditureInputViewModel.MainClass == "ConsumerSpending")
                 {
@@ -3975,14 +3975,14 @@ public class AccountBookController : Controller
 
                             #endregion
 
-                            #region 과거 지출 값 [(결제수단(O)), (내입금자산(X))], 현재 지출 값 [(결제수단(O)), (내입금자산(X))]
+                            #region Previous expenditure value [(payment method(O)), (my deposit asset(X))], current expenditure value [(payment method(O)), (my deposit asset(X))]
 
                             if (!string.IsNullOrEmpty(previousTempExpenditure.PaymentMethod) &&
                                 string.IsNullOrEmpty(previousTempExpenditure.MyDepositAsset) &&
                                 !string.IsNullOrEmpty(currentTempExpenditure.PaymentMethod) &&
                                 string.IsNullOrEmpty(currentTempExpenditure.MyDepositAsset))
                             {
-                                #region 지출 업데이트
+                                #region Expenditure update
 
                                 await _expenditureRepository.UpdateExpenditureAsync(currentTempExpenditure);
 
@@ -3990,9 +3990,9 @@ public class AccountBookController : Controller
 
                                 if (previousTempExpenditure.PaymentMethod == currentTempExpenditure.PaymentMethod)
                                 {
-                                    #region 자산 업데이트
+                                    #region Asset update
 
-                                    #region 과거 자산
+                                    #region Previous asset
 
                                     Asset pastExpenditureAsset =
                                         await _assetRepository.GetAssetAsync(
@@ -4016,7 +4016,7 @@ public class AccountBookController : Controller
 
                                     #endregion
 
-                                    #region 현재 자산
+                                    #region Current asset
 
                                     //currentExpenditureAsset.Amount -= Math.Abs(currentTempExpenditure.Amount);
                                     //currentExpenditureAsset.Updated = DateTime.UtcNow;
@@ -4032,9 +4032,9 @@ public class AccountBookController : Controller
                                 }
                                 else
                                 {
-                                    #region 자산 업데이트
+                                    #region Asset update
 
-                                    #region 과거 자산
+                                    #region Previous asset
 
                                     Asset pastExpenditureAsset =
                                         await _assetRepository.GetAssetAsync(
@@ -4060,7 +4060,7 @@ public class AccountBookController : Controller
 
                                     #endregion
 
-                                    #region 현재 자산
+                                    #region Current asset
 
                                     currentExpenditureAsset.Amount -= Math.Abs(currentTempExpenditure.Amount);
                                     currentExpenditureAsset.Updated = DateTime.UtcNow;
@@ -4084,14 +4084,14 @@ public class AccountBookController : Controller
 
                             #endregion
 
-                            #region 과거 지출 값 [(결제수단(O)), (내입금자산(O))], 현재 지출 값 [(결제수단(O)), (내입금자산(X))]
+                            #region Previous expenditure value [(payment method(O)), (my deposit asset(O))], current expenditure value [(payment method(O)), (my deposit asset(X))]
 
                             else if (!string.IsNullOrEmpty(previousTempExpenditure.PaymentMethod) &&
                                      !string.IsNullOrEmpty(previousTempExpenditure.MyDepositAsset) &&
                                      !string.IsNullOrEmpty(currentTempExpenditure.PaymentMethod) &&
                                      string.IsNullOrEmpty(currentTempExpenditure.MyDepositAsset))
                             {
-                                #region 지출 업데이트
+                                #region Expenditure update
 
                                 await _expenditureRepository.UpdateExpenditureAsync(currentTempExpenditure);
 
@@ -4099,9 +4099,9 @@ public class AccountBookController : Controller
 
                                 if (previousTempExpenditure.PaymentMethod == currentTempExpenditure.PaymentMethod)
                                 {
-                                    #region 자산 업데이트
+                                    #region Asset update
 
-                                    #region 과거 자산
+                                    #region Previous asset
 
                                     Asset pastExpenditureAsset =
                                         await _assetRepository.GetAssetAsync(
@@ -4128,7 +4128,7 @@ public class AccountBookController : Controller
 
                                     #endregion
 
-                                    #region 현재 자산
+                                    #region Current asset
 
                                     //currentExpenditureAsset.Amount -= Math.Abs(currentTempExpenditure.Amount);
                                     //currentExpenditureAsset.Updated = DateTime.UtcNow;
@@ -4145,9 +4145,9 @@ public class AccountBookController : Controller
                                 else if (previousTempExpenditure.MyDepositAsset ==
                                          currentTempExpenditure.PaymentMethod)
                                 {
-                                    #region 자산 업데이트
+                                    #region Asset update
 
-                                    #region 과거 자산
+                                    #region Previous asset
 
                                     Asset pastExpenditureAsset =
                                         await _assetRepository.GetAssetAsync(
@@ -4174,7 +4174,7 @@ public class AccountBookController : Controller
 
                                     #endregion
 
-                                    #region 현재 자산
+                                    #region Current asset
 
                                     //currentExpenditureAsset.Amount -= Math.Abs(currentTempExpenditure.Amount);
                                     //currentExpenditureAsset.Updated = DateTime.UtcNow;
@@ -4190,9 +4190,9 @@ public class AccountBookController : Controller
                                 }
                                 else
                                 {
-                                    #region 자산 업데이트
+                                    #region Asset update
 
-                                    #region 과거 자산
+                                    #region Previous asset
 
                                     Asset pastExpenditureAsset =
                                         await _assetRepository.GetAssetAsync(
@@ -4221,7 +4221,7 @@ public class AccountBookController : Controller
 
                                     #endregion
 
-                                    #region 현재 자산
+                                    #region Current asset
 
                                     currentExpenditureAsset.Amount -= Math.Abs(currentTempExpenditure.Amount);
                                     currentExpenditureAsset.Updated = DateTime.UtcNow;
@@ -4245,7 +4245,7 @@ public class AccountBookController : Controller
 
                             #endregion
 
-                            #region 잘못된 경우
+                            #region Invalid case
 
                             else
                             {
@@ -4270,7 +4270,7 @@ public class AccountBookController : Controller
 
                 #endregion
 
-                #region 대분류에 없는 값
+                #region Value not in main category
 
                 else
                 {
@@ -4367,13 +4367,13 @@ public class AccountBookController : Controller
 
                     if (!string.IsNullOrEmpty(tempExpenditure.MyDepositAsset))
                     {
-                        #region 지출 삭제
+                        #region Delete expenditure
 
                         await _expenditureRepository.DeleteExpenditureAsync(tempExpenditure);
 
                         #endregion
 
-                        #region 자산 업데이트
+                        #region Asset update
 
                         Asset expenditureAsset = await _assetRepository.GetAssetAsync(
                             JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email,
@@ -4401,13 +4401,13 @@ public class AccountBookController : Controller
                     }
                     else
                     {
-                        #region 지출 삭제
+                        #region Delete expenditure
 
                         await _expenditureRepository.DeleteExpenditureAsync(tempExpenditure);
 
                         #endregion
 
-                        #region 자산 업데이트
+                        #region Asset update
 
                         Asset expenditureAsset = await _assetRepository.GetAssetAsync(
                             JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email,

@@ -9,7 +9,7 @@ namespace Maroik.WebSite.Clients;
 public class MailClient : IMailClient
 {
     /// <summary>
-    /// 계정 비밀번호 초기화 메일의 HttpBody 부분을 구합니다.
+    /// Gets the HttpBody part of account password reset email.
     /// </summary>
     /// <param name="loginInputViewModel"></param>
     /// <param name="title"></param>
@@ -27,7 +27,7 @@ public class MailClient : IMailClient
                       </div>";
     }
     /// <summary>
-    /// 계정 확인 메일의 HttpBody 부분을 구합니다.
+    /// Gets the HttpBody part of account verification email.
     /// </summary>
     /// <param name="loginInputViewModel"></param>
     /// <param name="title"></param>
@@ -45,7 +45,7 @@ public class MailClient : IMailClient
                       </div>";
     }
     /// <summary>
-    /// 메일 전송
+    /// Send email
     /// </summary>
     /// <param name="mail"></param>
     /// <returns></returns>
