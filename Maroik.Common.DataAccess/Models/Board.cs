@@ -4,7 +4,7 @@ using System.Collections.Generic;
 namespace Maroik.Common.DataAccess.Models;
 
 /// <summary>
-/// Maroik.WebSite Board
+/// Board
 /// </summary>
 public partial class Board
 {
@@ -14,52 +14,52 @@ public partial class Board
     public long Id { get; set; }
 
     /// <summary>
-    /// 형태 (자유)
+    /// Type
     /// </summary>
     public string Type { get; set; }
 
     /// <summary>
-    /// 제목
+    /// Title
     /// </summary>
     public string Title { get; set; }
 
     /// <summary>
-    /// 내용
+    /// Content
     /// </summary>
     public string Content { get; set; }
 
     /// <summary>
-    /// 작성자
+    /// Writer
     /// </summary>
     public string Writer { get; set; }
 
     /// <summary>
-    /// 생성일
+    /// Created
     /// </summary>
     public DateTime Created { get; set; }
 
     /// <summary>
-    /// 업데이트일
+    /// Updated
     /// </summary>
     public DateTime Updated { get; set; }
 
     /// <summary>
-    /// 조회수
+    /// View
     /// </summary>
     public long View { get; set; }
 
     /// <summary>
-    /// 삭제 여부
+    /// Deleted
     /// </summary>
     public bool Deleted { get; set; }
 
     /// <summary>
-    /// 잠금 여부
+    /// Locked
     /// </summary>
     public bool Locked { get; set; }
 
     /// <summary>
-    /// 공지 여부
+    /// Noticed
     /// </summary>
     public bool Noticed { get; set; }
 

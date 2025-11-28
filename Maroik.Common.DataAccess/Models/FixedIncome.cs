@@ -4,7 +4,7 @@ using System.Collections.Generic;
 namespace Maroik.Common.DataAccess.Models;
 
 /// <summary>
-/// Maroik.WebSite 고정수입
+/// FixedIncome
 /// </summary>
 public partial class FixedIncome
 {
@@ -14,67 +14,67 @@ public partial class FixedIncome
     public long Id { get; set; }
 
     /// <summary>
-    /// 계정 이메일 (ID)
+    /// Account Email (ID)
     /// </summary>
     public string AccountEmail { get; set; }
 
     /// <summary>
-    /// 대분류 (정기수입/비정기수입)
+    /// MainClass
     /// </summary>
     public string MainClass { get; set; }
 
     /// <summary>
-    /// 소분류 (근로수입/사업수입/연금수입/금융소득/임대수입/기타수입)
+    /// SubClass
     /// </summary>
     public string SubClass { get; set; }
 
     /// <summary>
-    /// 내용 (회사명/사업명)
+    /// Content
     /// </summary>
     public string Content { get; set; }
 
     /// <summary>
-    /// 금액
+    /// Amount
     /// </summary>
     public decimal Amount { get; set; }
 
     /// <summary>
-    /// 입금 자산 (자산 상품명/현금)
+    /// DepositMyAssetProductName
     /// </summary>
     public string DepositMyAssetProductName { get; set; }
 
     /// <summary>
-    /// 입금월
+    /// DepositMonth
     /// </summary>
     public short DepositMonth { get; set; }
 
     /// <summary>
-    /// 입금일
+    /// DepositDay
     /// </summary>
     public short DepositDay { get; set; }
 
     /// <summary>
-    /// 만기일
+    /// MaturityDate
     /// </summary>
     public DateTime MaturityDate { get; set; }
 
     /// <summary>
-    /// 생성일
+    /// Created
     /// </summary>
     public DateTime Created { get; set; }
 
     /// <summary>
-    /// 업데이트일
+    /// Updated
     /// </summary>
     public DateTime Updated { get; set; }
 
     /// <summary>
-    /// 비고
+    /// Note
     /// </summary>
     public string Note { get; set; }
 
     /// <summary>
-    /// 시간 미엄수 (고정 수입 시간 약속을 지키지 않았을 때 계속 알림에 표시하는 용도)
+    /// Unpunctuality
     /// </summary>
     public bool Unpunctuality { get; set; }
 
