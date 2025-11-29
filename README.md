@@ -45,14 +45,14 @@ Maroik is a modern web application built with ASP.NET Core MVC, featuring a comp
 ## Technologies Used
 
 ### Backend
-- ASP.NET Core MVC 9.0
+- ASP.NET Core MVC 10.0
   - Minimal APIs
   - Hot Reload
   - Improved performance
   - Enhanced routing
   - Better dependency injection
 - PostgreSQL 17
-- Entity Framework Core 9.0
+- Entity Framework Core 10.0
   - Improved query performance
   - Better async support
   - Enhanced change tracking
@@ -87,7 +87,7 @@ Maroik is a modern web application built with ASP.NET Core MVC, featuring a comp
 - SweetAlert2
 
 ### Development Tools
-- Visual Studio 2022
+- Visual Studio 2026
 - JetBrains Rider
 - Git
 - Docker Compose
@@ -111,14 +111,14 @@ Maroik/
 ## Getting Started
 
 ### Prerequisites
-- .NET 9.0 SDK or later
+- .NET 10.0 SDK or later
 - Docker and Docker Compose
-- Visual Studio 2022 (Windows) or JetBrains Rider (Linux/Mac)
+- Visual Studio 2026 (Windows) or JetBrains Rider (Linux/Mac)
 
 ### Running the Project
 
 #### Windows
-1. Install Visual Studio 2022 or higher
+1. Install Visual Studio 2026 or higher
 2. Open Maroik.sln
 3. Set docker-compose as startup project
 4. Press F5 to run in debug mode
