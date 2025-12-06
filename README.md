@@ -96,7 +96,6 @@ Maroik is a modern web application built with ASP.NET Core MVC, featuring a comp
 ## Project Structure
 ```
 Maroik/
-├── Maroik.AI/              # AI-related features
 ├── Maroik.Common/          # Common data access and utilities
 ├── Maroik.Crontab/         # Scheduled tasks management
 ├── Maroik.DB/             # Database configuration
@@ -104,7 +103,6 @@ Maroik/
 ├── Maroik.FileStorage/    # File storage management
 ├── Maroik.Log/            # Logging system
 ├── Maroik.SSL/            # SSL/TLS certificate management
-├── Maroik.WebAPI/         # RESTful API endpoints
 └── Maroik.WebSite/        # Frontend website
 ```
 
