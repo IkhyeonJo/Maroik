@@ -53,6 +53,14 @@ if [ ! -d "$CERT_PATH" ]; then
   exit 0
 fi
 
+# check .env.prod file
+ENV_PROD_PATH="/home/ubuntu/Maroik/.env.prod"
+if [ ! -f "$ENV_PROD_PATH" ]; then
+  echo "[INFO] File $ENV_PROD_PATH not found."
+  echo "[INFO] Please create .env.prod file with required environment variables."
+  exit 0
+fi
+
 # Start Docker Compose
 sudo docker-compose -f /home/ubuntu/Maroik/docker-compose.prod.yml up -d
 

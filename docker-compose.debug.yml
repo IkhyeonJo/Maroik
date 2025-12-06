@@ -1,4 +1,4 @@
-﻿version: "3"
+version: "3"
 
 volumes:
       datasource:
@@ -31,10 +31,8 @@ services:
     postgresql:
       image: postgres:17
       container_name: Maroik.PostgreSQL
-      environment:
-        POSTGRES_USER: postgres
-        POSTGRES_PASSWORD: ***REMOVED***
-        POSTGRES_DB: Maroik
+      env_file:
+        - .env.debug
       volumes:
         - datasource:/var/lib/postgresql/data
         - ./Maroik.DB/PostgreSQL/SQL_Init_Script:/docker-entrypoint-initdb.d
@@ -49,14 +47,13 @@ services:
          dockerfile : Maroik.WebSite/Dockerfile
         container_name: Maroik.WebSite
         networks :
-          - backend          
+          - backend
         ports:
           - "80:80"
           - "443:443"
-        environment :
-          - DBHOST=postgresql
-          - ASPNETCORE_ENVIRONMENT=DockerComposeLocalDebug
-          - ASPNETCORE_URLS=https://+:443;http://+:80
+        env_file:
+          - .env.debug
+        environment:
           - ASPNETCORE_Kestrel__Certificates__Default__Path=/etc/ssl/localhost1.pem
           - ASPNETCORE_Kestrel__Certificates__Default__KeyPath=/etc/ssl/localhostprivkey1.pem
         volumes:
@@ -64,7 +61,7 @@ services:
           - ./Maroik.SSL/localhostprivkey1.pem:/etc/ssl/localhostprivkey1.pem:ro
           - ./Maroik.Log/:/app/Maroik.Log:rw
         depends_on :
-          - postgresql  
+          - postgresql
           #- redis  
 
     maroik.filestorage:
@@ -73,11 +70,12 @@ services:
          dockerfile : Maroik.FileStorage/Dockerfile
         container_name: Maroik.FileStorage
         networks :
-          - backend          
+          - backend
         expose:
           - "80"
-        environment :
-          - ASPNETCORE_ENVIRONMENT=DockerComposeLocalDebug
+        env_file:
+          - .env.debug
+        environment:
           - ASPNETCORE_URLS=http://+:80
         volumes:
           - ./Maroik.FileStorage/upload/:/app/upload:rw
