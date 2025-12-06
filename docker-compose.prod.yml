@@ -1,4 +1,4 @@
-﻿version: "3"
+version: "3"
 
 volumes:
       datasource:
@@ -31,10 +31,8 @@ services:
     postgresql:
       image: postgres:17
       container_name: Maroik.PostgreSQL
-      environment:
-        POSTGRES_USER: postgres
-        POSTGRES_PASSWORD: ***REMOVED***
-        POSTGRES_DB: Maroik
+      env_file:
+        - .env.prod
       volumes:
         - datasource:/var/lib/postgresql/data
         - ./Maroik.DB/PostgreSQL/SQL_Init_Script:/docker-entrypoint-initdb.d
@@ -53,10 +51,8 @@ services:
         ports:
           - "80:80"
           - "443:443"
-        environment :
-          - DBHOST=postgresql
-          - ASPNETCORE_ENVIRONMENT=Production
-          - ASPNETCORE_URLS=https://+:443;http://+:80
+        env_file:
+          - .env.prod
         volumes:
           - ./Maroik.SSL/conf:/etc/letsencrypt:ro
           - ./Maroik.Log/:/app/Maroik.Log:rw
@@ -70,11 +66,12 @@ services:
          dockerfile : Maroik.FileStorage/Dockerfile
         container_name: Maroik.FileStorage
         networks :
-          - backend          
+          - backend
         expose:
           - "80"
-        environment :
-          - ASPNETCORE_ENVIRONMENT=Production
+        env_file:
+          - .env.prod
+        environment:
           - ASPNETCORE_URLS=http://+:80
         volumes:
           - ./Maroik.FileStorage/upload/:/app/upload:rw
