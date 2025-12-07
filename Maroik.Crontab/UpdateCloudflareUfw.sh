@@ -1,7 +1,24 @@
 #!/bin/bash
 
-CF_IPV4_URL="https://www.cloudflare.com/ips-v4"
-CF_IPV6_URL="https://www.cloudflare.com/ips-v6"
+# Read .env.prod file
+ENV_FILE="/home/ubuntu/Maroik/.env.prod"
+
+if [ ! -f "$ENV_FILE" ]; then
+  echo "[ERROR] Environment file $ENV_FILE not found."
+  exit 1
+fi
+
+# Read Cloudflare URLs from .env.prod
+CF_IPV4_URL=$(grep '^CLOUDFLARE_IPV4_URL=' "$ENV_FILE" | cut -d '=' -f2)
+CF_IPV6_URL=$(grep '^CLOUDFLARE_IPV6_URL=' "$ENV_FILE" | cut -d '=' -f2)
+
+# Set defaults if not found
+if [ -z "$CF_IPV4_URL" ]; then
+  CF_IPV4_URL="https://www.cloudflare.com/ips-v4"
+fi
+if [ -z "$CF_IPV6_URL" ]; then
+  CF_IPV6_URL="https://www.cloudflare.com/ips-v6"
+fi
 
 echo "[+] Removing old Cloudflare rules..."
 sudo ufw --force reset

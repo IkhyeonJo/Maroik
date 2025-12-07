@@ -1,7 +1,24 @@
 #!/bin/bash
 
-DOMAIN="maroik.com"
-EMAIL="***REMOVED***m"
+# Read .env.prod file
+ENV_FILE="/home/ubuntu/Maroik/.env.prod"
+
+if [ ! -f "$ENV_FILE" ]; then
+  echo "[ERROR] Environment file $ENV_FILE not found."
+  exit 1
+fi
+
+# Read SSL configuration from .env.prod
+DOMAIN=$(grep '^SSL_DOMAIN=' "$ENV_FILE" | cut -d '=' -f2)
+EMAIL=$(grep '^SSL_EMAIL=' "$ENV_FILE" | cut -d '=' -f2)
+
+# Set defaults if not found
+if [ -z "$DOMAIN" ]; then
+  DOMAIN="maroik.com"
+fi
+if [ -z "$EMAIL" ]; then
+  EMAIL="***REMOVED***m"
+fi
 
 issue_wildcard() {
   docker-compose -f /home/ubuntu/Maroik/docker-compose.prod.yml run --rm certbot certonly \

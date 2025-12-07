@@ -1,6 +1,20 @@
 #!/bin/bash
 
-SHARED_DIR="/home/ubuntu/Maroik/Maroik.Log"
+# Read .env.prod file
+ENV_FILE="/home/ubuntu/Maroik/.env.prod"
+
+if [ ! -f "$ENV_FILE" ]; then
+  echo "[ERROR] Environment file $ENV_FILE not found."
+  exit 1
+fi
+
+# Read MAROIK_LOG_DIR from .env.prod
+MAROIK_LOG_DIR=$(grep '^MAROIK_LOG_DIR=' "$ENV_FILE" | cut -d '=' -f2)
+if [ -z "$MAROIK_LOG_DIR" ]; then
+  MAROIK_LOG_DIR="/home/ubuntu/Maroik/Maroik.Log"
+fi
+
+SHARED_DIR="$MAROIK_LOG_DIR"
 HOST_OUTPUT_FILE="$SHARED_DIR/HostResourceInfo.txt"
 DOCKER_OUTPUT_FILE="$SHARED_DIR/DockerResourceInfo.txt"
 
