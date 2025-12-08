@@ -35,7 +35,7 @@ services:
         - .env.prod
       volumes:
         - datasource:/var/lib/postgresql/data
-        - ./Maroik.DB/PostgreSQL/SQL_Init_Script:/docker-entrypoint-initdb.d
+        - ./Maroik.DB/PostgreSQL/SQL_Init_Script/Production:/docker-entrypoint-initdb.d
       expose:
         - "5432"
       networks:

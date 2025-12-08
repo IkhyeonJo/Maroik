@@ -61,6 +61,13 @@ if [ ! -f "$ENV_PROD_PATH" ]; then
   exit 0
 fi
 
+# check Init.sql file
+SQL_PROD_PATH="/home/ubuntu/Maroik/Maroik.DB/PostgreSQL/SQL_Init_Script/Production/Init.sql"
+if [ ! -f "$SQL_PROD_PATH" ]; then
+  echo "[INFO] File $SQL_PROD_PATH not found."
+  exit 0
+fi
+
 # Start Docker Compose
 sudo docker-compose -f /home/ubuntu/Maroik/docker-compose.prod.yml up -d
 
