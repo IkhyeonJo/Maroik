@@ -110,10 +110,6 @@ fi
 # Start Docker Compose
 sudo docker-compose -f /home/ubuntu/Maroik/docker-compose.prod.yml up -d
 
-# Install Python 3
-sudo apt install python3 -y
-
-
 # Set up cron jobs
 sudo crontab /home/ubuntu/Maroik/Maroik.Crontab/InitCron
 
