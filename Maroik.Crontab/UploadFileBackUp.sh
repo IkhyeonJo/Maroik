@@ -30,7 +30,7 @@ EXTERNAL_DRIVE_MOUNT="${EXTERNAL_DRIVE_MOUNT:-/home/ubuntu/512GB}"
 # Step 1: Backup files to local directory
 echo "[INFO] $(date '+%Y-%m-%d %H:%M:%S') - Starting file backup to local directory..."
 
-CURRENT_DATE=$(date '+%Y%m%d')
+CURRENT_DATETIME=$(date '+%Y%m%d_%H%M%S')
 
 # Clean up old temporary tar.xz files in Maroik base directory
 if [ -d "$MAROIK_BASE_DIR" ]; then
@@ -42,7 +42,7 @@ fi
 # Backup Website Upload Files
 echo "[INFO] $(date '+%Y-%m-%d %H:%M:%S') - Backing up WebSite upload files..."
 
-WEBSITE_BACKUP_NAME="website-upload-${CURRENT_DATE}"
+WEBSITE_BACKUP_NAME="website-upload-${CURRENT_DATETIME}"
 WEBSITE_TEMP_DIR="$MAROIK_BASE_DIR/$WEBSITE_BACKUP_NAME"
 WEBSITE_BACKUP_FILE="$MAROIK_BASE_DIR/${WEBSITE_BACKUP_NAME}.tar.xz"
 
@@ -67,7 +67,7 @@ fi
 # Backup FileStorage Upload Files
 echo "[INFO] $(date '+%Y-%m-%d %H:%M:%S') - Backing up FileStorage upload files..."
 
-FILESTORAGE_BACKUP_NAME="file-storage-upload-${CURRENT_DATE}"
+FILESTORAGE_BACKUP_NAME="file-storage-upload-${CURRENT_DATETIME}"
 FILESTORAGE_TEMP_DIR="$MAROIK_BASE_DIR/$FILESTORAGE_BACKUP_NAME"
 FILESTORAGE_BACKUP_FILE="$MAROIK_BASE_DIR/${FILESTORAGE_BACKUP_NAME}.tar.xz"
 
@@ -134,7 +134,8 @@ if [ "$USAGE" -gt "$THRESHOLD" ]; then
     fi
 fi
 
-# Create date folder on external drive
+# Create date folder on external drive (YYYYMMDD format for folder)
+CURRENT_DATE=$(date '+%Y%m%d')
 EXTERNAL_BACKUP_FOLDER="$FILES_BACKUP_DIR/$CURRENT_DATE"
 if [ ! -d "$EXTERNAL_BACKUP_FOLDER" ]; then
     mkdir -p "$EXTERNAL_BACKUP_FOLDER"

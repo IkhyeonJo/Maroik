@@ -34,8 +34,8 @@ EXTERNAL_DRIVE_MOUNT="${EXTERNAL_DRIVE_MOUNT:-/home/ubuntu/512GB}"
 # Step 1: Backup database to local directory
 echo "[INFO] $(date '+%Y-%m-%d %H:%M:%S') - Starting PostgreSQL backup to local directory..."
 
-CURRENT_DATE=$(date '+%Y%m%d')
-LOCAL_BACKUP_FILE="$MAROIK_BASE_DIR/maroik-db-${CURRENT_DATE}.sql"
+CURRENT_DATETIME=$(date '+%Y%m%d_%H%M%S')
+LOCAL_BACKUP_FILE="$MAROIK_BASE_DIR/maroik-db-${CURRENT_DATETIME}.sql"
 
 # Clean up old temporary SQL files in Maroik base directory
 if [ -d "$MAROIK_BASE_DIR" ]; then
@@ -115,7 +115,8 @@ if [ "$USAGE" -gt "$THRESHOLD" ]; then
     fi
 fi
 
-# Create date folder on external drive
+# Create date folder on external drive (YYYYMMDD format for folder)
+CURRENT_DATE=$(date '+%Y%m%d')
 EXTERNAL_BACKUP_FOLDER="$DB_BACKUP_DIR/$CURRENT_DATE"
 if [ ! -d "$EXTERNAL_BACKUP_FOLDER" ]; then
     mkdir -p "$EXTERNAL_BACKUP_FOLDER"
