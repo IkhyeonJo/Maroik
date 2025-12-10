@@ -413,6 +413,20 @@ FodyWeavers.xsd
 # Cloudflare configuration
 **/cloudflare.init
 
+# SSL/Certificate files
+*.pem
+*.key
+*.crt
+*.cer
+*.pfx
+*.p12
+*.der
+*.csr
+Maroik.SSL/**
+**/letsencrypt/**
+**/ssl/**
+**/certificates/**
+
 # Log files
 *.log
 Maroik.Log/**
