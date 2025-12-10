@@ -18,3 +18,6 @@ sudo crontab -r
 
 # Disable ufw
 sudo ufw disable
+
+# unmount external drive
+sudo umount /home/ubuntu/512GB
