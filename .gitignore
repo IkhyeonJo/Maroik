@@ -399,3 +399,38 @@ FodyWeavers.xsd
 
 # Rider ignored files
 .idea/*
+
+# =============================================================================
+# Custom Maroik Ignore Rules
+# =============================================================================
+
+# Environment files with sensitive information
+.env.prod
+
+# Database initialization scripts (may contain sensitive data)
+**/SQL_Init_Script/Production/*.sql
+
+# Cloudflare configuration
+**/cloudflare.init
+
+# SSL/Certificate files
+*.pem
+*.key
+*.crt
+*.cer
+*.pfx
+*.p12
+*.der
+*.csr
+Maroik.SSL/**
+**/letsencrypt/**
+**/ssl/**
+**/certificates/**
+
+# Log files
+*.log
+Maroik.Log/**
+
+# Upload directories (user uploaded files)
+Maroik.WebSite/wwwroot/upload/**
+Maroik.FileStorage/upload/**
