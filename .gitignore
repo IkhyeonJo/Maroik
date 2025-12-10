@@ -399,3 +399,20 @@ FodyWeavers.xsd
 
 # Rider ignored files
 .idea/*
+
+# =============================================================================
+# Custom Maroik Ignore Rules
+# =============================================================================
+
+# Environment files with sensitive information
+.env.prod
+
+# Database initialization scripts (may contain sensitive data)
+**/SQL_Init_Script/Production/*.sql
+
+# Cloudflare configuration
+**/cloudflare.init
+
+# Log files
+*.log
+Maroik.Log/**
