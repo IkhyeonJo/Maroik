@@ -50,7 +50,7 @@ PARAM="issue_wildcard"
 if [ ! -d "$CERT_PATH" ]; then
   echo "[INFO] Directory $CERT_PATH not found."
   echo "[INFO] Please run $TARGET_SCRIPT with parameter '$PARAM'... manually."
-  exit 0
+  exit 1
 fi
 
 # check .env.prod file
@@ -58,14 +58,53 @@ ENV_PROD_PATH="/home/ubuntu/Maroik/.env.prod"
 if [ ! -f "$ENV_PROD_PATH" ]; then
   echo "[INFO] File $ENV_PROD_PATH not found."
   echo "[INFO] Please create .env.prod file with required environment variables."
-  exit 0
+  exit 1
 fi
 
 # check Init.sql file
 SQL_PROD_PATH="/home/ubuntu/Maroik/Maroik.DB/PostgreSQL/SQL_Init_Script/Production/Init.sql"
 if [ ! -f "$SQL_PROD_PATH" ]; then
   echo "[INFO] File $SQL_PROD_PATH not found."
-  exit 0
+  exit 1
+fi
+
+# Read external drive configuration from .env.prod
+EXTERNAL_DRIVE_UUID=$(grep "^EXTERNAL_DRIVE_UUID=" "$ENV_PROD_PATH" | cut -d '=' -f2)
+EXTERNAL_DRIVE_MOUNT=$(grep "^EXTERNAL_DRIVE_MOUNT=" "$ENV_PROD_PATH" | cut -d '=' -f2)
+BACKUP_BASE_DIR=$(grep "^BACKUP_BASE_DIR=" "$ENV_PROD_PATH" | cut -d '=' -f2)
+
+# Set default value if not specified
+EXTERNAL_DRIVE_MOUNT="${EXTERNAL_DRIVE_MOUNT:-/home/ubuntu/512GB}"
+
+# Check if external drive UUID is configured
+if [ -z "$EXTERNAL_DRIVE_UUID" ] || [ "$EXTERNAL_DRIVE_UUID" == "<CHANGE_ME>" ]; then
+  echo "[INFO] External drive UUID not configured in .env.prod"
+  exit 1
+else
+  # Create mount point directory
+  sudo mkdir -p "$EXTERNAL_DRIVE_MOUNT"
+
+  # Check if external drive is already mounted
+  if mountpoint -q "$EXTERNAL_DRIVE_MOUNT"; then
+    echo "[INFO] External drive already mounted at $EXTERNAL_DRIVE_MOUNT"
+  else
+    # Try to mount the external drive
+    echo "[INFO] Mounting external drive with UUID: $EXTERNAL_DRIVE_UUID"
+    sudo mount UUID="$EXTERNAL_DRIVE_UUID" "$EXTERNAL_DRIVE_MOUNT"
+
+    # Verify mount succeeded
+    if ! mountpoint -q "$EXTERNAL_DRIVE_MOUNT"; then
+      echo "[ERROR] Failed to mount external drive"
+      echo "[ERROR] Please connect the external drive with UUID: $EXTERNAL_DRIVE_UUID"
+      echo "[ERROR] Check device connection and run: sudo blkid"
+      exit 1
+    fi
+    echo "[INFO] External drive mounted successfully at $EXTERNAL_DRIVE_MOUNT"
+  fi
+
+  # Create backup directory structure
+  sudo mkdir -p "$BACKUP_BASE_DIR/DB"
+  sudo mkdir -p "$BACKUP_BASE_DIR/Files"
 fi
 
 # Start Docker Compose
@@ -121,7 +160,7 @@ sudo sysctl -p
 # Enable UFW
 sudo ufw --force enable
 
-# Adds the current user to the "docker" group, 
+# Adds the current user to the "docker" group,
 sudo usermod -a -G docker $USER
 
 # Starts a new shell session with the "docker" group applied.
