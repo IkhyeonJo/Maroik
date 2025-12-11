@@ -20,4 +20,9 @@ sudo crontab -r
 sudo ufw disable
 
 # unmount external drive
-sudo umount /home/ubuntu/512GB
+if [ -f /home/ubuntu/Maroik/.env.prod ]; then
+    EXTERNAL_DRIVE_MOUNT=$(grep '^EXTERNAL_DRIVE_MOUNT=' /home/ubuntu/Maroik/.env.prod | cut -d '=' -f2)
+    if [ -n "$EXTERNAL_DRIVE_MOUNT" ]; then
+        sudo umount "$EXTERNAL_DRIVE_MOUNT"
+    fi
+fi
