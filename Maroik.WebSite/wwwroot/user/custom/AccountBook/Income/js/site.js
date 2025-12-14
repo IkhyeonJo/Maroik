@@ -1,4 +1,41 @@
-﻿const localizer = {
+﻿const $createIncomeTabs = $("#createIncomeTabs");
+const $editIncomeTabs = $("#editIncomeTabs");
+const $createIncomeDate = $("#createIncomeDate");
+const $editIncomeDate = $("#editIncomeDate");
+const $gridSearch = $('#gridSearch');
+const $createIncomeSubClass = $('#createIncomeSubClass');
+const $editIncomeSubClass = $('#editIncomeSubClass');
+const $editIncomeDialogModal = $('#editIncomeDialogModal');
+const $formCreateIncome = $('#formCreateIncome');
+const $__RequestVerificationToken = $('input[name="__RequestVerificationToken"]');
+const $createIncomeMainClass = $('#createIncomeMainClass');
+const $createIncomeContent = $('#createIncomeContent');
+const $createIncomeAmount = $('#createIncomeAmount');
+const $createIncomeHour = $('#createIncomeHour');
+const $createIncomeMinute = $('#createIncomeMinute');
+const $createIncomeSecond = $('#createIncomeSecond');
+const $createIncomeDepositMyAssetProductName = $('#createIncomeDepositMyAssetProductName');
+const $createIncomeNote = $('#createIncomeNote');
+const $createIncomeDialogModal = $('#createIncomeDialogModal');
+const $editIncomeId = $('#editIncomeId');
+const $editIncomeMainClass = $('#editIncomeMainClass');
+const $editIncomeContent = $('#editIncomeContent');
+const $editIncomeAmount = $('#editIncomeAmount');
+const $editIncomeHour = $('#editIncomeHour');
+const $editIncomeMinute = $('#editIncomeMinute');
+const $editIncomeSecond = $('#editIncomeSecond');
+const $editIncomeDepositMyAssetProductName = $('#editIncomeDepositMyAssetProductName');
+const $editIncomeNote = $('#editIncomeNote');
+const $formEditIncome = $('#formEditIncome');
+const $confirmDeleteIncomeDialogModal = $('#confirmDeleteIncomeDialogModal');
+const $labelCreateIncomeAmount = $('#labelCreateIncomeAmount');
+const $labelEditIncomeAmount = $('#labelEditIncomeAmount');
+const $btnEditIncomeGridRow = $('#btnEditIncomeGridRow');
+const $btnConfirmDeleteIncome = $('#btnConfirmDeleteIncome');
+const $btnExportExcelIncome = $('#btnExportExcelIncome');
+const $btnDeleteIncome = $('#btnDeleteIncome');
+
+const localizer = {
     PrevText: $('#localizerPrevText').val(),
     NextText: $('#localizerNextText').val(),
     January: $('#localizerJanuary').val(),
@@ -62,185 +99,182 @@ $.datepicker.setDefaults({
 });
 
 $(function () {
-    $("#createIncomeTabs").tabs();
-    $("#editIncomeTabs").tabs();
-    $("#createIncomeDate").datepicker({
+    $createIncomeTabs.tabs();
+    $editIncomeTabs.tabs();
+    $createIncomeDate.datepicker({
         showButtonPanel: true,
-        beforeShow: function (input) {
+        beforeShow: function () {
             setTimeout(function () {
 
             }, 1);
         },
-        onChangeMonthYear: function (year, month, instance) {
+        onChangeMonthYear: function () {
             setTimeout(function () {
 
             }, 1);
         }
     });
 
-    $("#editIncomeDate").datepicker({
+    $editIncomeDate.datepicker({
         showButtonPanel: true,
-        beforeShow: function (input) {
+        beforeShow: function () {
             setTimeout(function () {
 
             }, 1);
         },
-        onChangeMonthYear: function (year, month, instance) {
+        onChangeMonthYear: function () {
             setTimeout(function () {
 
             }, 1);
         }
     });
 
-    $('<style type="text/css"> .ui-datepicker-close { display: none; } </style>').appendTo("head");
-    $('<style type="text/css"> .ui-datepicker-current { display: none; } </style>').appendTo("head");
+    $('<style> .ui-datepicker-close { display: none; } </style>').appendTo("head");
+    $('<style> .ui-datepicker-current { display: none; } </style>').appendTo("head");
 });
 
 let selectedRowColor = "table-primary";
 
-document.addEventListener("rowclick", e => {
+$(document).off('rowclick.Income').on('rowclick.Income', e => {
     let selectedRow = e.detail;
     let selectedRowId = selectedRow.data.Id;
 
-    $('#incomeGrid > table > tbody  > tr').each(function (index, tr) {
+    let $clsGridRow = $('clsGridRow');
+
+    $clsGridRow.each(function () {
         $(this).removeClass(selectedRowColor);
     });
 
-    $('#incomeGrid > table > tbody  > tr').each(function (index, tr) {
-        if ((new String(selectedRowId).valueOf() === new String($(this).attr('data-id')).valueOf())) {
+    $clsGridRow.each(function () {
+        if ((String(selectedRowId).valueOf() === String($(this).attr('data-id')).valueOf())) {
             $(this).addClass(selectedRowColor);
         }
     });
 });
 
-document.addEventListener("reloadstart", e => {
+$(document).off('reloadstart.Income').on('reloadstart.Income', _ => {
 });
 
-document.addEventListener("reloadend", e => {
+$(document).off('reloadend.Income').on('reloadend.Income', _ => {
 });
 
-document.addEventListener("reloadfail", e => {
+$(document).off('reloadfail.Income').on('reloadfail.Income', _ => {
 });
 
-document.addEventListener("gridconfigure", e => {
+$(document).off('gridconfigure.Income').on('gridconfigure.Income', _ => {
 });
 
-
-$(document).on("dblclick", "#incomeGrid > table > tbody  > tr", function () {
-    $('#incomeGrid > table > tbody  > tr').each(function (index, tr) {
-
+$(document).off('dblclick.Income', '.clsGridRow').on('dblclick.Income', '.clsGridRow', function () {
+    $('clsGridRow').each(function () {
         if ($(this).attr("class").includes(selectedRowColor)) {
             EditIncomeGridRow();
         }
     });
 });
-$('#gridSearch').on('input', function () {
+
+$gridSearch.off('input').on('input', function () {
     const grid = new MvcGrid(document.querySelector('.mvc-grid'));
-
-    grid.url.searchParams.set("wholeSearch", this.value);
-
+    grid.url.searchParams.set('wholeSearch', this.value);
     grid.reload();
 });
 
 function CreateFormShowIncomeSubClassBySelectedIncomeMainClass(createIncomeMainClass) {
 
     if (createIncomeMainClass.value === "RegularIncome") {
-        $('#createIncomeSubClass option[value=LaborIncome]').prop('disabled', true).prop('hidden', true);
-        $('#createIncomeSubClass option[value=BusinessIncome]').prop('disabled', true).prop('hidden', true);
-        $('#createIncomeSubClass option[value=PensionIncome]').prop('disabled', true).prop('hidden', true);
-        $('#createIncomeSubClass option[value=FinancialIncome]').prop('disabled', true).prop('hidden', true);
-        $('#createIncomeSubClass option[value=RentalIncome]').prop('disabled', true).prop('hidden', true);
-        $('#createIncomeSubClass option[value=OtherIncome]').prop('disabled', true).prop('hidden', true);
+        $createIncomeSubClass.find('option[value=LaborIncome]').prop('disabled', true).prop('hidden', true);
+        $createIncomeSubClass.find('option[value=BusinessIncome]').prop('disabled', true).prop('hidden', true);
+        $createIncomeSubClass.find('option[value=PensionIncome]').prop('disabled', true).prop('hidden', true);
+        $createIncomeSubClass.find('option[value=FinancialIncome]').prop('disabled', true).prop('hidden', true);
+        $createIncomeSubClass.find('option[value=RentalIncome]').prop('disabled', true).prop('hidden', true);
+        $createIncomeSubClass.find('option[value=OtherIncome]').prop('disabled', true).prop('hidden', true);
 
-        $("#createIncomeSubClass option:selected").removeAttr("selected");
+        $createIncomeSubClass.find('option:selected').removeAttr('selected');
 
-        $('#createIncomeSubClass option[value=LaborIncome]').prop('disabled', false).prop('hidden', false).attr('selected', 'selected');
-        $('#createIncomeSubClass option[value=BusinessIncome]').prop('disabled', false).prop('hidden', false);
-        $('#createIncomeSubClass option[value=PensionIncome]').prop('disabled', false).prop('hidden', false);
-        $('#createIncomeSubClass option[value=FinancialIncome]').prop('disabled', false).prop('hidden', false);
-        $('#createIncomeSubClass option[value=RentalIncome]').prop('disabled', false).prop('hidden', false);
-        $('#createIncomeSubClass option[value=OtherIncome]').prop('disabled', false).prop('hidden', false);
+        $createIncomeSubClass.find('option[value=LaborIncome]').prop('disabled', false).prop('hidden', false).attr('selected', 'selected');
+        $createIncomeSubClass.find('option[value=BusinessIncome]').prop('disabled', false).prop('hidden', false);
+        $createIncomeSubClass.find('option[value=PensionIncome]').prop('disabled', false).prop('hidden', false);
+        $createIncomeSubClass.find('option[value=FinancialIncome]').prop('disabled', false).prop('hidden', false);
+        $createIncomeSubClass.find('option[value=RentalIncome]').prop('disabled', false).prop('hidden', false);
+        $createIncomeSubClass.find('option[value=OtherIncome]').prop('disabled', false).prop('hidden', false);
 
-        $("#createIncomeSubClass").val("LaborIncome").change();
+        $createIncomeSubClass.val("LaborIncome").change();
     }
     else if (createIncomeMainClass.value === "IrregularIncome") {
-        $('#createIncomeSubClass option[value=LaborIncome]').prop('disabled', true).prop('hidden', true);
-        $('#createIncomeSubClass option[value=BusinessIncome]').prop('disabled', true).prop('hidden', true);
-        $('#createIncomeSubClass option[value=PensionIncome]').prop('disabled', true).prop('hidden', true);
-        $('#createIncomeSubClass option[value=FinancialIncome]').prop('disabled', true).prop('hidden', true);
-        $('#createIncomeSubClass option[value=RentalIncome]').prop('disabled', true).prop('hidden', true);
-        $('#createIncomeSubClass option[value=OtherIncome]').prop('disabled', true).prop('hidden', true);
+        $createIncomeSubClass.find('option[value=LaborIncome]').prop('disabled', true).prop('hidden', true);
+        $createIncomeSubClass.find('option[value=BusinessIncome]').prop('disabled', true).prop('hidden', true);
+        $createIncomeSubClass.find('option[value=PensionIncome]').prop('disabled', true).prop('hidden', true);
+        $createIncomeSubClass.find('option[value=FinancialIncome]').prop('disabled', true).prop('hidden', true);
+        $createIncomeSubClass.find('option[value=RentalIncome]').prop('disabled', true).prop('hidden', true);
+        $createIncomeSubClass.find('option[value=OtherIncome]').prop('disabled', true).prop('hidden', true);
 
-        $("#createIncomeSubClass option:selected").removeAttr("selected");
+        $createIncomeSubClass.find('option:selected').removeAttr('selected');
 
-        $('#createIncomeSubClass option[value=LaborIncome]').prop('disabled', false).prop('hidden', false).attr('selected', 'selected');
-        $('#createIncomeSubClass option[value=OtherIncome]').prop('disabled', false).prop('hidden', false);
+        $createIncomeSubClass.find('option[value=LaborIncome]').prop('disabled', false).prop('hidden', false).attr('selected', 'selected');
+        $createIncomeSubClass.find('option[value=OtherIncome]').prop('disabled', false).prop('hidden', false);
 
-        $("#createIncomeSubClass").val("LaborIncome").change();
+        $createIncomeSubClass.val("LaborIncome").change();
     }
 }
 
 function EditFormShowIncomeSubClassBySelectedIncomeMainClass(createIncomeMainClass) {
 
     if (createIncomeMainClass.value === "RegularIncome") {
-        $('#editIncomeSubClass option[value=LaborIncome]').prop('disabled', true).prop('hidden', true);
-        $('#editIncomeSubClass option[value=BusinessIncome]').prop('disabled', true).prop('hidden', true);
-        $('#editIncomeSubClass option[value=PensionIncome]').prop('disabled', true).prop('hidden', true);
-        $('#editIncomeSubClass option[value=FinancialIncome]').prop('disabled', true).prop('hidden', true);
-        $('#editIncomeSubClass option[value=RentalIncome]').prop('disabled', true).prop('hidden', true);
-        $('#editIncomeSubClass option[value=OtherIncome]').prop('disabled', true).prop('hidden', true);
+        $editIncomeSubClass.find('option[value=LaborIncome]').prop('disabled', true).prop('hidden', true);
+        $editIncomeSubClass.find('option[value=BusinessIncome]').prop('disabled', true).prop('hidden', true);
+        $editIncomeSubClass.find('option[value=PensionIncome]').prop('disabled', true).prop('hidden', true);
+        $editIncomeSubClass.find('option[value=FinancialIncome]').prop('disabled', true).prop('hidden', true);
+        $editIncomeSubClass.find('option[value=RentalIncome]').prop('disabled', true).prop('hidden', true);
+        $editIncomeSubClass.find('option[value=OtherIncome]').prop('disabled', true).prop('hidden', true);
 
-        $("#editIncomeSubClass option:selected").removeAttr("selected");
+        $editIncomeSubClass.find('option:selected').removeAttr('selected');
 
-        $('#editIncomeSubClass option[value=LaborIncome]').prop('disabled', false).prop('hidden', false).attr('selected', 'selected');
-        $('#editIncomeSubClass option[value=BusinessIncome]').prop('disabled', false).prop('hidden', false);
-        $('#editIncomeSubClass option[value=PensionIncome]').prop('disabled', false).prop('hidden', false);
-        $('#editIncomeSubClass option[value=FinancialIncome]').prop('disabled', false).prop('hidden', false);
-        $('#editIncomeSubClass option[value=RentalIncome]').prop('disabled', false).prop('hidden', false);
-        $('#editIncomeSubClass option[value=OtherIncome]').prop('disabled', false).prop('hidden', false);
+        $editIncomeSubClass.find('option[value=LaborIncome]').prop('disabled', false).prop('hidden', false).attr('selected', 'selected');
+        $editIncomeSubClass.find('option[value=BusinessIncome]').prop('disabled', false).prop('hidden', false);
+        $editIncomeSubClass.find('option[value=PensionIncome]').prop('disabled', false).prop('hidden', false);
+        $editIncomeSubClass.find('option[value=FinancialIncome]').prop('disabled', false).prop('hidden', false);
+        $editIncomeSubClass.find('option[value=RentalIncome]').prop('disabled', false).prop('hidden', false);
+        $editIncomeSubClass.find('option[value=OtherIncome]').prop('disabled', false).prop('hidden', false);
 
-        $("#editIncomeSubClass").val("LaborIncome").change();
+        $editIncomeSubClass.val("LaborIncome").change();
     }
     else if (createIncomeMainClass.value === "IrregularIncome") {
-        $('#editIncomeSubClass option[value=LaborIncome]').prop('disabled', true).prop('hidden', true);
-        $('#editIncomeSubClass option[value=BusinessIncome]').prop('disabled', true).prop('hidden', true);
-        $('#editIncomeSubClass option[value=PensionIncome]').prop('disabled', true).prop('hidden', true);
-        $('#editIncomeSubClass option[value=FinancialIncome]').prop('disabled', true).prop('hidden', true);
-        $('#editIncomeSubClass option[value=RentalIncome]').prop('disabled', true).prop('hidden', true);
-        $('#editIncomeSubClass option[value=OtherIncome]').prop('disabled', true).prop('hidden', true);
+        $editIncomeSubClass.find('option[value=LaborIncome]').prop('disabled', true).prop('hidden', true);
+        $editIncomeSubClass.find('option[value=BusinessIncome]').prop('disabled', true).prop('hidden', true);
+        $editIncomeSubClass.find('option[value=PensionIncome]').prop('disabled', true).prop('hidden', true);
+        $editIncomeSubClass.find('option[value=FinancialIncome]').prop('disabled', true).prop('hidden', true);
+        $editIncomeSubClass.find('option[value=RentalIncome]').prop('disabled', true).prop('hidden', true);
+        $editIncomeSubClass.find('option[value=OtherIncome]').prop('disabled', true).prop('hidden', true);
 
-        $("#editIncomeSubClass option:selected").removeAttr("selected");
+        $editIncomeSubClass.find('option:selected').removeAttr('selected');
 
-        $('#editIncomeSubClass option[value=LaborIncome]').prop('disabled', false).prop('hidden', false).attr('selected', 'selected');
-        $('#editIncomeSubClass option[value=OtherIncome]').prop('disabled', false).prop('hidden', false);
+        $editIncomeSubClass.find('option[value=LaborIncome]').prop('disabled', false).prop('hidden', false).attr('selected', 'selected');
+        $editIncomeSubClass.find('option[value=OtherIncome]').prop('disabled', false).prop('hidden', false);
 
-        $("#editIncomeSubClass").val("LaborIncome").change();
+        $editIncomeSubClass.val("LaborIncome").change();
     }
 }
 
 function CreateIncome() {
 
-    if (!$('#formCreateIncome').valid()) {
+    if (!$formCreateIncome.valid()) {
         return false;
     }
 
-    let createForm = $('#formCreateIncome');
+    let mainClass = $createIncomeMainClass.val();
+    let subClass = $createIncomeSubClass.val();
+    let content = $createIncomeContent.val();
+    let amount = $createIncomeAmount.val();
 
-    let mainClass = createForm.find('select[id="createIncomeMainClass"]').val();
-    let subClass = createForm.find('select[id="createIncomeSubClass"]').val();
-    let content = createForm.find('input[id="createIncomeContent"]').val();
-    let amount = createForm.find('input[id="createIncomeAmount"]').val();
-
-    let year = parseInt(createForm.find('input[id="createIncomeDate"]').val().substring(0, 4));
-    let month = parseInt(createForm.find('input[id="createIncomeDate"]').val().substring(5, 7));
-    let day = parseInt(createForm.find('input[id="createIncomeDate"]').val().substring(8, 10));
-    let hour = parseInt(createForm.find('select[id="createIncomeHour"]').val());
-    let minute = parseInt(createForm.find('select[id="createIncomeMinute"]').val());
-    let second = parseInt(createForm.find('select[id="createIncomeSecond"]').val());
+    let year = parseInt($createIncomeDate.val().substring(0, 4));
+    let month = parseInt($createIncomeDate.val().substring(5, 7));
+    let day = parseInt($createIncomeDate.val().substring(8, 10));
+    let hour = parseInt($createIncomeHour.val());
+    let minute = parseInt($createIncomeMinute.val());
+    let second = parseInt($createIncomeSecond.val());
 
     let created = new Date(year, month - 1, day, hour, minute, second).toISOString();
-    let depositMyAssetProductName = createForm.find('select[id="createIncomeDepositMyAssetProductName"]').val();
-    let note = createForm.find('input[id="createIncomeNote"]').val();
+    let depositMyAssetProductName = $createIncomeDepositMyAssetProductName.val();
+    let note = $createIncomeNote.val();
 
     let paramValue = JSON.stringify({
         MainClass: mainClass,
@@ -255,13 +289,13 @@ function CreateIncome() {
     $.ajax({
         url: '/AccountBook/CreateIncome',
         type: 'POST',
-        headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
+        headers: { "RequestVerificationToken": $__RequestVerificationToken.val() },
         dataType: 'json',
         data: paramValue,
         contentType: 'application/json; charset=utf-8',
         success: function (data) {
             if (data.result) {
-                $('#createIncomeDialogModal').modal('hide');
+                $createIncomeDialogModal.modal('hide');
 
                 const grid = new MvcGrid(document.querySelector('.mvc-grid'));
                 grid.reload();
@@ -281,7 +315,7 @@ function EditIncomeGridRow(errorMessageSelectGridRow) {
 
     let selectedRowId = "";
 
-    $('#incomeGrid > table > tbody  > tr').each(function (index, tr) {
+    $('clsGridRow').each(function () {
         if ($(this).attr("class").includes(selectedRowColor)) {
             selectedRowId = $(this).attr("data-id");
         }
@@ -295,69 +329,67 @@ function EditIncomeGridRow(errorMessageSelectGridRow) {
     $.ajax({
         url: '/AccountBook/IsIncomeExists' + '?id=' + selectedRowId,
         type: 'POST',
-        headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
+        headers: { "RequestVerificationToken": $__RequestVerificationToken.val() },
         dataType: 'json',
         data: null,
         contentType: 'application/json; charset=utf-8',
         success: function (data) {
             if (data.result) {
 
-                let formEditIncome = $('#formEditIncome');
-
-                formEditIncome.find('input[id="editIncomeId"]').val(data.income.id);
-                formEditIncome.find('select[id="editIncomeMainClass"]').val(data.income.mainClass).change();
+                $editIncomeId.val(data.income.id);
+                $editIncomeMainClass.val(data.income.mainClass).change();
 
                 if (data.income.mainClass === "RegularIncome") {
-                    $('#editIncomeSubClass option[value=LaborIncome]').prop('disabled', true).prop('hidden', true);
-                    $('#editIncomeSubClass option[value=BusinessIncome]').prop('disabled', true).prop('hidden', true);
-                    $('#editIncomeSubClass option[value=PensionIncome]').prop('disabled', true).prop('hidden', true);
-                    $('#editIncomeSubClass option[value=FinancialIncome]').prop('disabled', true).prop('hidden', true);
-                    $('#editIncomeSubClass option[value=RentalIncome]').prop('disabled', true).prop('hidden', true);
-                    $('#editIncomeSubClass option[value=OtherIncome]').prop('disabled', true).prop('hidden', true);
+                    $editIncomeSubClass.find('option[value=LaborIncome]').prop('disabled', true).prop('hidden', true);
+                    $editIncomeSubClass.find('option[value=BusinessIncome]').prop('disabled', true).prop('hidden', true);
+                    $editIncomeSubClass.find('option[value=PensionIncome]').prop('disabled', true).prop('hidden', true);
+                    $editIncomeSubClass.find('option[value=FinancialIncome]').prop('disabled', true).prop('hidden', true);
+                    $editIncomeSubClass.find('option[value=RentalIncome]').prop('disabled', true).prop('hidden', true);
+                    $editIncomeSubClass.find('option[value=OtherIncome]').prop('disabled', true).prop('hidden', true);
 
-                    $("#editIncomeSubClass option:selected").removeAttr("selected");
+                    $editIncomeSubClass.find('option:selected').removeAttr('selected');
 
-                    $('#editIncomeSubClass option[value=LaborIncome]').prop('disabled', false).prop('hidden', false);
-                    $('#editIncomeSubClass option[value=BusinessIncome]').prop('disabled', false).prop('hidden', false);
-                    $('#editIncomeSubClass option[value=PensionIncome]').prop('disabled', false).prop('hidden', false);
-                    $('#editIncomeSubClass option[value=FinancialIncome]').prop('disabled', false).prop('hidden', false);
-                    $('#editIncomeSubClass option[value=RentalIncome]').prop('disabled', false).prop('hidden', false);
-                    $('#editIncomeSubClass option[value=OtherIncome]').prop('disabled', false).prop('hidden', false);
+                    $editIncomeSubClass.find('option[value=LaborIncome]').prop('disabled', false).prop('hidden', false);
+                    $editIncomeSubClass.find('option[value=BusinessIncome]').prop('disabled', false).prop('hidden', false);
+                    $editIncomeSubClass.find('option[value=PensionIncome]').prop('disabled', false).prop('hidden', false);
+                    $editIncomeSubClass.find('option[value=FinancialIncome]').prop('disabled', false).prop('hidden', false);
+                    $editIncomeSubClass.find('option[value=RentalIncome]').prop('disabled', false).prop('hidden', false);
+                    $editIncomeSubClass.find('option[value=OtherIncome]').prop('disabled', false).prop('hidden', false);
 
-                    formEditIncome.find('select[id="editIncomeSubClass"]').val(data.income.subClass).change();
+                    $editIncomeSubClass.val(data.income.subClass).change();
                 }
                 else if (data.income.mainClass === "IrregularIncome") {
-                    $('#editIncomeSubClass option[value=LaborIncome]').prop('disabled', true).prop('hidden', true);
-                    $('#editIncomeSubClass option[value=BusinessIncome]').prop('disabled', true).prop('hidden', true);
-                    $('#editIncomeSubClass option[value=PensionIncome]').prop('disabled', true).prop('hidden', true);
-                    $('#editIncomeSubClass option[value=FinancialIncome]').prop('disabled', true).prop('hidden', true);
-                    $('#editIncomeSubClass option[value=RentalIncome]').prop('disabled', true).prop('hidden', true);
-                    $('#editIncomeSubClass option[value=OtherIncome]').prop('disabled', true).prop('hidden', true);
+                    $editIncomeSubClass.find('option[value=LaborIncome]').prop('disabled', true).prop('hidden', true);
+                    $editIncomeSubClass.find('option[value=BusinessIncome]').prop('disabled', true).prop('hidden', true);
+                    $editIncomeSubClass.find('option[value=PensionIncome]').prop('disabled', true).prop('hidden', true);
+                    $editIncomeSubClass.find('option[value=FinancialIncome]').prop('disabled', true).prop('hidden', true);
+                    $editIncomeSubClass.find('option[value=RentalIncome]').prop('disabled', true).prop('hidden', true);
+                    $editIncomeSubClass.find('option[value=OtherIncome]').prop('disabled', true).prop('hidden', true);
 
-                    $("#editIncomeSubClass option:selected").removeAttr("selected");
+                    $editIncomeSubClass.find('option:selected').removeAttr('selected');
 
-                    $('#editIncomeSubClass option[value=LaborIncome]').prop('disabled', false).prop('hidden', false);
-                    $('#editIncomeSubClass option[value=OtherIncome]').prop('disabled', false).prop('hidden', false);
+                    $editIncomeSubClass.find('option[value=LaborIncome]').prop('disabled', false).prop('hidden', false);
+                    $editIncomeSubClass.find('option[value=OtherIncome]').prop('disabled', false).prop('hidden', false);
 
-                    formEditIncome.find('select[id="editIncomeSubClass"]').val(data.income.subClass).change();
+                    $editIncomeSubClass.val(data.income.subClass).change();
                 }
 
-                formEditIncome.find('input[id="editIncomeContent"]').val(data.income.content);
-                formEditIncome.find('input[id="editIncomeAmount"]').val(data.income.amount);
-                formEditIncome.find('input[id="editIncomeDate"]').val(data.income.created.split('T')[0]);
-                formEditIncome.find('select[id="editIncomeHour"]').val(parseInt(data.income.created.split('T')[1].substring(0, 2))).change();
-                formEditIncome.find('select[id="editIncomeMinute"]').val(parseInt(data.income.created.split('T')[1].substring(3, 5))).change();
-                formEditIncome.find('select[id="editIncomeSecond"]').val(parseInt(data.income.created.split('T')[1].substring(6, 8))).change();
-                formEditIncome.find('select[id="editIncomeDepositMyAssetProductName"]').val(data.income.depositMyAssetProductName).change();
-                formEditIncome.find('input[id="editIncomeNote"]').val(data.income.note);
+                $editIncomeContent.val(data.income.content);
+                $editIncomeAmount.val(data.income.amount);
+                $editIncomeDate.val(data.income.created.split('T')[0]);
+                $editIncomeHour.val(parseInt(data.income.created.split('T')[1].substring(0, 2))).change();
+                $editIncomeMinute.val(parseInt(data.income.created.split('T')[1].substring(3, 5))).change();
+                $editIncomeSecond.val(parseInt(data.income.created.split('T')[1].substring(6, 8))).change();
+                $editIncomeDepositMyAssetProductName.val(data.income.depositMyAssetProductName).change();
+                $editIncomeNote.val(data.income.note);
 
-                $('#editIncomeDialogModal').modal({
+                $editIncomeDialogModal.modal({
                     keyboard: false,
                     backdrop: "static"
                 });
 
-                $('#editIncomeDialogModal').modal('toggle');
-                $('#editIncomeDialogModal').modal('show');
+                $editIncomeDialogModal.modal('toggle');
+                $editIncomeDialogModal.modal('show');
             }
             else {
                 toastr.error(data.error);
@@ -368,28 +400,26 @@ function EditIncomeGridRow(errorMessageSelectGridRow) {
 
 function UpdateIncome() {
 
-    if (!$('#formEditIncome').valid()) {
+    if (!$formEditIncome.valid()) {
         return false;
     }
 
-    let createForm = $('#formEditIncome');
+    let id = $editIncomeId.val();
+    let mainClass = $editIncomeMainClass.val();
+    let subClass = $editIncomeSubClass.val();
+    let content = $editIncomeContent.val();
+    let amount = $editIncomeAmount.val();
 
-    let id = createForm.find('input[id="editIncomeId"]').val();
-    let mainClass = createForm.find('select[id="editIncomeMainClass"]').val();
-    let subClass = createForm.find('select[id="editIncomeSubClass"]').val();
-    let content = createForm.find('input[id="editIncomeContent"]').val();
-    let amount = createForm.find('input[id="editIncomeAmount"]').val();
-
-    let year = parseInt(createForm.find('input[id="editIncomeDate"]').val().substring(0, 4));
-    let month = parseInt(createForm.find('input[id="editIncomeDate"]').val().substring(5, 7));
-    let day = parseInt(createForm.find('input[id="editIncomeDate"]').val().substring(8, 10));
-    let hour = parseInt(createForm.find('select[id="editIncomeHour"]').val());
-    let minute = parseInt(createForm.find('select[id="editIncomeMinute"]').val());
-    let second = parseInt(createForm.find('select[id="editIncomeSecond"]').val());
+    let year = parseInt($editIncomeDate.val().substring(0, 4));
+    let month = parseInt($editIncomeDate.val().substring(5, 7));
+    let day = parseInt($editIncomeDate.val().substring(8, 10));
+    let hour = parseInt($editIncomeHour.val());
+    let minute = parseInt($editIncomeMinute.val());
+    let second = parseInt($editIncomeSecond.val());
 
     let created = new Date(year, month - 1, day, hour, minute, second).toISOString();
-    let depositMyAssetProductName = createForm.find('select[id="editIncomeDepositMyAssetProductName"]').val();
-    let note = createForm.find('input[id="editIncomeNote"]').val();
+    let depositMyAssetProductName = $editIncomeDepositMyAssetProductName.val();
+    let note = $editIncomeNote.val();
 
     let paramValue = JSON.stringify({
         Id: id,
@@ -405,13 +435,13 @@ function UpdateIncome() {
     $.ajax({
         url: '/AccountBook/UpdateIncome',
         type: 'POST',
-        headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
+        headers: { "RequestVerificationToken": $__RequestVerificationToken.val() },
         dataType: 'json',
         data: paramValue,
         contentType: 'application/json; charset=utf-8',
         success: function (data) {
             if (data.result) {
-                $('#editIncomeDialogModal').modal('hide');
+                $editIncomeDialogModal.modal('hide');
 
                 const grid = new MvcGrid(document.querySelector('.mvc-grid'));
                 grid.reload();
@@ -430,7 +460,7 @@ function ConfirmDeleteIncome(errorMessageSelectGridRow) {
 
     let selectedRowId = "";
 
-    $('#incomeGrid > table > tbody  > tr').each(function (index, tr) {
+    $('clsGridRow').each(function () {
         if ($(this).attr("class").includes(selectedRowColor)) {
             selectedRowId = $(this).attr("data-id");
         }
@@ -441,20 +471,20 @@ function ConfirmDeleteIncome(errorMessageSelectGridRow) {
         return false;
     }
 
-    $('#confirmDeleteIncomeDialogModal').modal({
+    $confirmDeleteIncomeDialogModal.modal({
         keyboard: false,
         backdrop: "static"
     });
 
-    $('#confirmDeleteIncomeDialogModal').modal('toggle');
-    $('#confirmDeleteIncomeDialogModal').modal('show');
+    $confirmDeleteIncomeDialogModal.modal('toggle');
+    $confirmDeleteIncomeDialogModal.modal('show');
 }
 
 function DeleteIncome(errorMessageSelectGridRow) {
 
     let selectedRowId = "";
 
-    $('#incomeGrid > table > tbody  > tr').each(function (index, tr) {
+    $('clsGridRow').each(function () {
         if ($(this).attr("class").includes(selectedRowColor)) {
             selectedRowId = $(this).attr("data-id");
         }
@@ -468,7 +498,7 @@ function DeleteIncome(errorMessageSelectGridRow) {
     $.ajax({
         url: '/AccountBook/IsIncomeExists' + '?id=' + selectedRowId,
         type: 'POST',
-        headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
+        headers: { "RequestVerificationToken": $__RequestVerificationToken.val() },
         dataType: 'json',
         data: null,
         contentType: 'application/json; charset=utf-8',
@@ -482,13 +512,13 @@ function DeleteIncome(errorMessageSelectGridRow) {
                 $.ajax({
                     url: '/AccountBook/DeleteIncome',
                     type: 'POST',
-                    headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
+                    headers: { "RequestVerificationToken": $__RequestVerificationToken.val() },
                     dataType: 'json',
                     data: paramValue,
                     contentType: 'application/json; charset=utf-8',
                     success: function (data) {
                         if (data.result) {
-                            $('#confirmDeleteIncomeDialogModal').modal('hide');
+                            $confirmDeleteIncomeDialogModal.modal('hide');
 
                             const grid = new MvcGrid(document.querySelector('.mvc-grid'));
                             grid.reload();
@@ -517,7 +547,7 @@ function ExportExcelIncome() {
     form.action = "/AccountBook/ExportExcelIncome";
 
     element1.name = "__RequestVerificationToken";
-    element1.value = $('input[name="__RequestVerificationToken"]').val();
+    element1.value = $__RequestVerificationToken.val();
     form.appendChild(element1);
 
     element2.name = "fileName";
@@ -533,16 +563,16 @@ function ChangeCreateIncomeAmountLabel(productName) {
     $.ajax({
         url: '/AccountBook/GetIncomeAmountLabel' + '?productName=' + productName,
         type: 'POST',
-        headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
+        headers: { "RequestVerificationToken": $__RequestVerificationToken.val() },
         dataType: 'json',
         data: null,
         contentType: 'application/json; charset=utf-8',
         success: function (data) {
             if (data.result) {
-                $('#labelCreateIncomeAmount').text(data.label);
+                $labelCreateIncomeAmount.text(data.label);
             }
             else {
-                $('#labelCreateIncomeAmount').text(data.label);
+                $labelCreateIncomeAmount.text(data.label);
             }
         }
     });
@@ -552,61 +582,61 @@ function ChangeEditIncomeAmountLabel(productName) {
     $.ajax({
         url: '/AccountBook/GetIncomeAmountLabel' + '?productName=' + productName,
         type: 'POST',
-        headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
+        headers: { "RequestVerificationToken": $__RequestVerificationToken.val() },
         dataType: 'json',
         data: null,
         contentType: 'application/json; charset=utf-8',
         success: function (data) {
             if (data.result) {
-                $('#labelEditIncomeAmount').text(data.label);
+                $labelEditIncomeAmount.text(data.label);
             }
             else {
-                $('#labelEditIncomeAmount').text(data.label);
+                $labelEditIncomeAmount.text(data.label);
             }
         }
     });
 }
 
-$('#btnEditIncomeGridRow').off('click').on('click', function () {
+$btnEditIncomeGridRow.off('click').on('click', function () {
     EditIncomeGridRow($(this).attr("data-errorMessageSelectGridRow"));
 });
 
-$('#btnConfirmDeleteIncome').off('click').on('click', function () {
+$btnConfirmDeleteIncome.off('click').on('click', function () {
     ConfirmDeleteIncome($(this).attr("data-errorMessageSelectGridRow"));
 });
 
-$('#btnExportExcelIncome').off('click').on('click', function () {
+$btnExportExcelIncome.off('click').on('click', function () {
     ExportExcelIncome();
 });
 
-$('#btnDeleteIncome').off('click').on('click', function () {
+$btnDeleteIncome.off('click').on('click', function () {
     DeleteIncome($(this).attr("data-errorMessageSelectGridRow"));
 });
 
-$('#formCreateIncome').off('submit').on('submit', function () {
+$formCreateIncome.off('submit').on('submit', function () {
     return CreateIncome();
 });
 
-$('#formEditIncome').off('submit').on('submit', function () {
+$formEditIncome.off('submit').on('submit', function () {
     return UpdateIncome();
 });
 
-$('#createIncomeMainClass').off('change').on('change', function () {
+$createIncomeMainClass.off('change').on('change', function () {
     CreateFormShowIncomeSubClassBySelectedIncomeMainClass(this);
 });
 
-$('#editIncomeMainClass').off('change').on('change', function () {
+$editIncomeMainClass.off('change').on('change', function () {
     EditFormShowIncomeSubClassBySelectedIncomeMainClass(this);
 });
 
-$('#createIncomeDepositMyAssetProductName').off('change').on('change', function () {
+$createIncomeDepositMyAssetProductName.off('change').on('change', function () {
     ChangeCreateIncomeAmountLabel(this.value);
 });
 
-$('#editIncomeDepositMyAssetProductName').off('change').on('change', function () {
+$editIncomeDepositMyAssetProductName.off('change').on('change', function () {
     ChangeEditIncomeAmountLabel(this.value);
 });
 
 $(function () {
-    ChangeCreateIncomeAmountLabel($('#createIncomeDepositMyAssetProductName option:selected').val());
+    ChangeCreateIncomeAmountLabel($createIncomeDepositMyAssetProductName.find('option:selected').val());
 })
