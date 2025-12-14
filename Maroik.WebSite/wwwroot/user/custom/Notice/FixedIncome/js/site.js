@@ -535,7 +535,7 @@ function EditFixedIncomeGridRow(errorMessageSelectGridRow) {
 
     let selectedRowId = "";
 
-    $('.clsGridRow').each(function (index, tr) {
+    $('.clsGridRow').each(function () {
         if ($(this).attr("class").includes(selectedRowColor)) {
             selectedRowId = $(this).attr("data-id");
         }
@@ -728,7 +728,7 @@ function ConfirmDeleteFixedIncome(errorMessageSelectGridRow) {
 
     let selectedRowId = "";
 
-    $('.clsGridRow').each(function (index, tr) {
+    $('.clsGridRow').each(function () {
         if ($(this).attr("class").includes(selectedRowColor)) {
             selectedRowId = $(this).attr("data-id");
         }
@@ -752,7 +752,7 @@ function DeleteFixedIncome(errorMessageSelectGridRow) {
 
     let selectedRowId = "";
 
-    $('.clsGridRow').each(function (index, tr) {
+    $('.clsGridRow').each(function () {
         if ($(this).attr("class").includes(selectedRowColor)) {
             selectedRowId = $(this).attr("data-id");
         }
