@@ -1,4 +1,147 @@
-﻿function base64ToBlob(base64, mime) {
+﻿const $__RequestVerificationToken = $('input[name="__RequestVerificationToken"]');
+const maxFileSize = 10485760;
+const maxMinutesBeforeEvent = 40320;
+const maxHoursBeforeEvent = 672;
+const maxDaysBeforeEvent = 28;
+const maxWeeksBeforeEvent = 4;
+const defaultBeforeAt = '09:00';
+const $createCalendarEventDescription = $('#createCalendarEventDescription');
+const $createCalendarEventTaskDialogModal = $('#createCalendarEventTaskDialogModal');
+const $editCalendarEventDescription = $('#editCalendarEventDescription');
+const $editCalendarEventTaskDialogModal = $('#editCalendarEventTaskDialogModal');
+const $createCalendarEventAttachment = $('#createCalendarEventAttachment');
+const $editCalendarEventAttachment = $('#editCalendarEventAttachment');
+const $createCalendarTabs = $('#createCalendarTabs');
+const $editCalendarTabs = $('#editCalendarTabs');
+const $createCalendarEventTaskTabs = $('#createCalendarEventTaskTabs');
+const $editCalendarEventTaskTabs = $('#editCalendarEventTaskTabs');
+const $viewCalendarEventTaskTabs = $('#viewCalendarEventTaskTabs');
+const $browseCalendarsOfInterestTabs = $('#browseCalendarsOfInterestTabs');
+const $createCalendarEventAllDayUncheckedStartDate = $('#createCalendarEventAllDayUncheckedStartDate');
+const $createCalendarEventAllDayUncheckedEndDate = $('#createCalendarEventAllDayUncheckedEndDate');
+const $createCalendarEventAllDayCheckedStartDate = $('#createCalendarEventAllDayCheckedStartDate');
+const $createCalendarEventAllDayCheckedEndDate = $('#createCalendarEventAllDayCheckedEndDate');
+const $editCalendarEventAllDayUncheckedEndDate = $('#editCalendarEventAllDayUncheckedEndDate');
+const $createCalendarEventAllDay = $('#createCalendarEventAllDay');
+const $divCreateEventAllDayUnchecked = $('#divCreateEventAllDayUnchecked');
+const $divCreateEventAllDayChecked = $('#divCreateEventAllDayChecked');
+const $divCreateEventNotificationAllDayUnchecked = $('#divCreateEventNotificationAllDayUnchecked');
+const $divCreateEventNotificationAllDayChecked = $('#divCreateEventNotificationAllDayChecked');
+const $divEditEventAllDayUnchecked = $('#divEditEventAllDayUnchecked');
+const $divEditEventAllDayChecked = $('#divEditEventAllDayChecked');
+const $divEditEventNotificationAllDayUnchecked = $('#divEditEventNotificationAllDayUnchecked');
+const $divEditEventNotificationAllDayChecked = $('#divEditEventNotificationAllDayChecked');
+const $createCalendarEventMyCalendar = $('#createCalendarEventMyCalendar');
+const $createCalendarEventAllDayUncheckedStartTimeZone = $('#createCalendarEventAllDayUncheckedStartTimeZone');
+const $loginedAccountTimeZoneIanaId = $('#loginedAccountTimeZoneIanaId');
+const $createCalendarEventAllDayUncheckedEndTimeZone = $('#createCalendarEventAllDayUncheckedEndTimeZone');
+const $calendarEventPopup = $('#calendarEventPopup');
+const $calendarEventPopupTitle = $('#calendarEventPopupTitle');
+const $divCalendarEventPopupAllDayChecked = $('#divCalendarEventPopupAllDayChecked');
+const $divCalendarEventPopupAllDayUnchecked = $('#divCalendarEventPopupAllDayUnchecked');
+const $calendarEventPopupStartAllDayChecked = $('#calendarEventPopupStartAllDayChecked');
+const $calendarEventPopupEndAllDayChecked = $('#calendarEventPopupEndAllDayChecked');
+const $calendarEventPopupStartAllDayUnchecked = $('#calendarEventPopupStartAllDayUnchecked');
+const $calendarEventPopupStartTimeZoneAllDayUnchecked = $('#calendarEventPopupStartTimeZoneAllDayUnchecked');
+const $calendarEventPopupEndAllDayUnchecked = $('#calendarEventPopupEndAllDayUnchecked');
+const $calendarEventPopupEndTimeZoneAllDayUnchecked = $('#calendarEventPopupEndTimeZoneAllDayUnchecked');
+const $editCalendarEventPopup = $('#editCalendarEventPopup');
+const $closeCalendarEventPopup = $('#closeCalendarEventPopup');
+const $editCalendarEventId = $('#editCalendarEventId');
+const $editCalendarEventName = $('#editCalendarEventName');
+const $editCalendarEventAllDay = $('#editCalendarEventAllDay');
+const $editCalendarEventAllDayCheckedStartDate = $('#editCalendarEventAllDayCheckedStartDate');
+const $editCalendarEventAllDayCheckedEndDate = $('#editCalendarEventAllDayCheckedEndDate');
+const $editCalendarEventAllDayUncheckedStartDate = $('#editCalendarEventAllDayUncheckedStartDate');
+const $editCalendarEventAllDayUncheckedStartTime = $('#editCalendarEventAllDayUncheckedStartTime');
+const $editCalendarEventAllDayUncheckedStartTimeZone = $('#editCalendarEventAllDayUncheckedStartTimeZone');
+const $editCalendarEventAllDayUncheckedEndTime = $('#editCalendarEventAllDayUncheckedEndTime');
+const $editCalendarEventAllDayUncheckedEndTimeZone = $('#editCalendarEventAllDayUncheckedEndTimeZone');
+const $editCalendarEventLocation = $('#editCalendarEventLocation');
+const $divEditCalendarEventAttachedFile = $('#divEditCalendarEventAttachedFile');
+const $aEditCalendarEventAttachedFile = $('#aEditCalendarEventAttachedFile');
+const $spanEditCalendarEventAttachedFile = $('#spanEditCalendarEventAttachedFile');
+const $editCalendarEventMyCalendar = $('#editCalendarEventMyCalendar');
+const $editCalendarEventStatus = $('#editCalendarEventStatus');
+const $editCalendarEventNotificationAllDayUnchecked = $('#editCalendarEventNotificationAllDayUnchecked');
+const $editCalendarEventNotificationAllDayChecked = $('#editCalendarEventNotificationAllDayChecked');
+const $deleteCalendarEventPopup = $('#deleteCalendarEventPopup');
+const $otherCalendarEventPopup = $('#otherCalendarEventPopup');
+const $otherCalendarEventPopupTitle = $('#otherCalendarEventPopupTitle');
+const $divOtherCalendarEventPopupAllDayChecked = $('#divOtherCalendarEventPopupAllDayChecked');
+const $divOtherCalendarEventPopupAllDayUnchecked = $('#divOtherCalendarEventPopupAllDayUnchecked');
+const $otherCalendarEventPopupStartAllDayChecked = $('#otherCalendarEventPopupStartAllDayChecked');
+const $otherCalendarEventPopupEndAllDayChecked = $('#otherCalendarEventPopupEndAllDayChecked');
+const $otherCalendarEventPopupStartAllDayUnchecked = $('#otherCalendarEventPopupStartAllDayUnchecked');
+const $otherCalendarEventPopupStartTimeZoneAllDayUnchecked = $('#otherCalendarEventPopupStartTimeZoneAllDayUnchecked');
+const $otherCalendarEventPopupEndAllDayUnchecked = $('#otherCalendarEventPopupEndAllDayUnchecked');
+const $otherCalendarEventPopupEndTimeZoneAllDayUnchecked = $('#otherCalendarEventPopupEndTimeZoneAllDayUnchecked');
+const $viewOtherCalendarEventPopup = $('#viewOtherCalendarEventPopup');
+const $closeOtherCalendarEventPopup = $('#closeOtherCalendarEventPopup');
+const $viewCalendarEventId = $('#viewCalendarEventId');
+const $viewCalendarEventName = $('#viewCalendarEventName');
+const $viewCalendarEventAllDay = $('#viewCalendarEventAllDay');
+const $divViewEventAllDayChecked = $('#divViewEventAllDayChecked');
+const $divViewEventAllDayUnchecked = $('#divViewEventAllDayUnchecked');
+const $viewCalendarEventAllDayCheckedStartDate = $('#viewCalendarEventAllDayCheckedStartDate');
+const $viewCalendarEventAllDayCheckedEndDate = $('#viewCalendarEventAllDayCheckedEndDate');
+const $viewCalendarEventAllDayUncheckedStartDate = $('#viewCalendarEventAllDayUncheckedStartDate');
+const $viewCalendarEventAllDayUncheckedStartTime = $('#viewCalendarEventAllDayUncheckedStartTime');
+const $viewCalendarEventAllDayUncheckedStartTimeZone = $('#viewCalendarEventAllDayUncheckedStartTimeZone');
+const $viewCalendarEventAllDayUncheckedEndDate = $('#viewCalendarEventAllDayUncheckedEndDate');
+const $viewCalendarEventAllDayUncheckedEndTime = $('#viewCalendarEventAllDayUncheckedEndTime');
+const $viewCalendarEventAllDayUncheckedEndTimeZone = $('#viewCalendarEventAllDayUncheckedEndTimeZone');
+const $viewCalendarEventLocation = $('#viewCalendarEventLocation');
+const $viewCalendarEventDescription = $('#viewCalendarEventDescription');
+const $divViewCalendarEventAttachedFile = $('#divViewCalendarEventAttachedFile');
+const $aViewCalendarEventAttachedFile = $('#aViewCalendarEventAttachedFile');
+const $spanViewCalendarEventAttachedFile = $('#spanViewCalendarEventAttachedFile');
+const $viewCalendarEventMyCalendar = $('#viewCalendarEventMyCalendar');
+const $viewCalendarEventStatus = $('#viewCalendarEventStatus');
+const $divViewEventNotificationAllDayChecked = $('#divViewEventNotificationAllDayChecked');
+const $divViewEventNotificationAllDayUnchecked = $('#divViewEventNotificationAllDayUnchecked');
+const $viewCalendarEventTaskDialogModal = $('#viewCalendarEventTaskDialogModal');
+const $formCreateCalendarEvent = $('#formCreateCalendarEvent');
+const $viewCalendarEventNotificationAllDayChecked = $('#viewCalendarEventNotificationAllDayChecked');
+const $viewCalendarEventNotificationAllDayUnchecked = $('#viewCalendarEventNotificationAllDayUnchecked');
+const $calendarEventOutputViewModels = $('#calendarEventOutputViewModels');
+const $otherCalendarEventOutputViewModels = $('#otherCalendarEventOutputViewModels');
+const $myCalendars = $('#myCalendars');
+const $formEditCalendar = $('#formEditCalendar');
+const $browseCalendarsOfInterestDialogModal = $('#browseCalendarsOfInterestDialogModal');
+const $confirmDeleteCalendarDialogModal = $('#confirmDeleteCalendarDialogModal');
+const $editCalendarDialogModal = $('#editCalendarDialogModal');
+const $editCalendarId = $('#editCalendarId');
+const $editCalendarName = $('#editCalendarName');
+const $editCalendarDescription = $('#editCalendarDescription');
+const $editCalendarHtmlColorCode = $('#editCalendarHtmlColorCode');
+const $editCalendarTimeZone = $('#editCalendarTimeZone');
+const $formCreateCalendar = $('#formCreateCalendar');
+const $allCheckBrowseCalendarsOfInterest = $('#allCheckBrowseCalendarsOfInterest');
+const $otherCalendars = $('#otherCalendars');
+const $divBrowseCalendarsOfInterest = $('#divBrowseCalendarsOfInterest');
+const $formUpdateBrowseCalendarsOfInterest = $('#formUpdateBrowseCalendarsOfInterest');
+const $aBrowseCalendarsOfInterest = $('#aBrowseCalendarsOfInterest');
+const $createCalendarDialogModal = $('#createCalendarDialogModal');
+const $aCreateCalendar = $('#aCreateCalendar');
+const $dropdownContent = $('#dropdown-content');
+const $dropdownIcon = $('#dropdown-icon');
+const $createCalendarEventNotificationAllDayUnchecked = $('#createCalendarEventNotificationAllDayUnchecked');
+const $createCalendarEventNotificationAllDayChecked = $('#createCalendarEventNotificationAllDayChecked');
+const $aCreateCalendarEvent = $('#aCreateCalendarEvent');
+const $createCalendarName = $('#createCalendarName');
+const $createCalendarDescription = $('#createCalendarDescription');
+const $createCalendarHtmlColorCode = $('#createCalendarHtmlColorCode');
+const $createCalendarTimeZone = $('#createCalendarTimeZone');
+const $btnDeleteCalendar = $('#btnDeleteCalendar');
+const $formEditCalendarEvent = $('#formEditCalendarEvent');
+const $createCalendarEventStatus = $('#createCalendarEventStatus');
+const $createCalendarEventLocation = $('#createCalendarEventLocation');
+const $createCalendarEventAllDayUncheckedEndTime = $('#createCalendarEventAllDayUncheckedEndTime');
+const $createCalendarEventAllDayUncheckedStartTime = $('#createCalendarEventAllDayUncheckedStartTime');
+const $createCalendarEventName = $('#createCalendarEventName');
+
+function base64ToBlob(base64, mime) {
     const byteCharacters = atob(base64);
     const byteNumbers = new Array(byteCharacters.length);
     for (let i = 0; i < byteCharacters.length; i++) {
@@ -106,26 +249,26 @@ $.datepicker.setDefaults({
     yearSuffix: localizer.YearSuffix
 });
 
-$('#createCalendarEventDescription').summernote({
+$createCalendarEventDescription.summernote({
     lang: localizer.IETFLanguageTag,
     callbacks: {
         onImageUpload: function (files) {
             for (let i = 0; i < files.length; i++) {
                 CreateUploadImageFile(files[i]);
             }
-            $("#createCalendarEventTaskDialogModal").css("overflow", "scroll");
+            $createCalendarEventTaskDialogModal.css("overflow", "scroll");
         }
     }
 });
 
-$('#editCalendarEventDescription').summernote({
+$editCalendarEventDescription.summernote({
     lang: localizer.IETFLanguageTag,
     callbacks: {
         onImageUpload: function (files) {
             for (let i = 0; i < files.length; i++) {
                 EditUploadImageFile(files[i]);
             }
-            $("#editCalendarEventTaskDialogModal").css("overflow", "scroll");
+            $editCalendarEventTaskDialogModal.css("overflow", "scroll");
         }
     }
 });
@@ -134,7 +277,7 @@ let createCalendarEventUploadedFile;
 let editCalendarEventUploadedFile;
 
 function CreateCalendarEventUploadedFile(obj, errorMessage) {
-    if (obj.files[0].size > 10485760) {
+    if (obj.files[0].size > maxFileSize) {
         alert(errorMessage);
         document.getElementById("createCalendarEventAttachment").value = "";
         return false;
@@ -145,7 +288,7 @@ function CreateCalendarEventUploadedFile(obj, errorMessage) {
 }
 
 function EditCalendarEventUploadedFile(obj, errorMessage) {
-    if (obj.files[0].size > 10485760) {
+    if (obj.files[0].size > maxFileSize) {
         alert(errorMessage);
         document.getElementById("editCalendarEventAttachment").value = "";
         return false;
@@ -155,217 +298,217 @@ function EditCalendarEventUploadedFile(obj, errorMessage) {
     }
 }
 
-$('#createCalendarEventAttachment').off('change').on('change', function () {
+$createCalendarEventAttachment.off('change').on('change', function () {
     return CreateCalendarEventUploadedFile(this, $(this).attr('data-errorMessage'));
 });
 
-$('#editCalendarEventAttachment').off('change').on('change', function () {
+$editCalendarEventAttachment.off('change').on('change', function () {
     return EditCalendarEventUploadedFile(this, $(this).attr('data-errorMessage'));
 });
 
 $(function () {
-    $("#createCalendarTabs").tabs();
-    $("#editCalendarTabs").tabs();
-    $("#createCalendarEventTaskTabs").tabs();
-    $("#editCalendarEventTaskTabs").tabs();
-    $("#viewCalendarEventTaskTabs").tabs();
-    $('#browseCalendarsOfInterestTabs').tabs();
+    $createCalendarTabs.tabs();
+    $editCalendarTabs.tabs();
+    $createCalendarEventTaskTabs.tabs();
+    $editCalendarEventTaskTabs.tabs();
+    $viewCalendarEventTaskTabs.tabs();
+    $browseCalendarsOfInterestTabs.tabs();
 
-    $("#createCalendarEventAllDayUncheckedStartDate").datepicker({
+    $createCalendarEventAllDayUncheckedStartDate.datepicker({
         showButtonPanel: true,
-        beforeShow: function (input) {
+        beforeShow: function () {
             setTimeout(function () {
             }, 1);
         },
-        onChangeMonthYear: function (year, month, instance) {
+        onChangeMonthYear: function () {
             setTimeout(function () {
             }, 1);
         },
-        onSelect: function (selectedDate) {
+        onSelect: function () {
             let startDate = $(this).datepicker('getDate');
-            let endDate = $("#createCalendarEventAllDayUncheckedEndDate").datepicker('getDate');
+            let endDate = $createCalendarEventAllDayUncheckedEndDate.datepicker('getDate');
             if (endDate && endDate < startDate) {
-                $("#createCalendarEventAllDayUncheckedEndDate").datepicker('setDate', startDate);
+                $createCalendarEventAllDayUncheckedEndDate.datepicker('setDate', startDate);
             }
-            $("#createCalendarEventAllDayUncheckedEndDate").datepicker('option', 'minDate', startDate);
+            $createCalendarEventAllDayUncheckedEndDate.datepicker('option', 'minDate', startDate);
         }
     });
 
-    $("#createCalendarEventAllDayUncheckedEndDate").datepicker({
+    $createCalendarEventAllDayUncheckedEndDate.datepicker({
         showButtonPanel: true,
-        beforeShow: function (input) {
+        beforeShow: function () {
             setTimeout(function () {
             }, 1);
         },
-        onChangeMonthYear: function (year, month, instance) {
+        onChangeMonthYear: function () {
             setTimeout(function () {
             }, 1);
         },
-        onSelect: function (selectedDate) {
+        onSelect: function () {
             let endDate = $(this).datepicker('getDate');
-            let startDate = $("#createCalendarEventAllDayUncheckedStartDate").datepicker('getDate');
+            let startDate = $createCalendarEventAllDayUncheckedStartDate.datepicker('getDate');
             if (startDate && endDate < startDate) {
                 $(this).datepicker('setDate', startDate);
             }
         }
     });
 
-    $("#createCalendarEventAllDayCheckedStartDate").datepicker({
+    $createCalendarEventAllDayCheckedStartDate.datepicker({
         showButtonPanel: true,
-        beforeShow: function (input) {
+        beforeShow: function () {
             setTimeout(function () {
             }, 1);
         },
-        onChangeMonthYear: function (year, month, instance) {
+        onChangeMonthYear: function () {
             setTimeout(function () {
             }, 1);
         },
-        onSelect: function (selectedDate) {
+        onSelect: function () {
             let startDate = $(this).datepicker('getDate');
-            let endDate = $("#createCalendarEventAllDayCheckedEndDate").datepicker('getDate');
+            let endDate = $createCalendarEventAllDayCheckedEndDate.datepicker('getDate');
             if (endDate && endDate < startDate) {
-                $("#createCalendarEventAllDayCheckedEndDate").datepicker('setDate', startDate);
+                $createCalendarEventAllDayCheckedEndDate.datepicker('setDate', startDate);
             }
-            $("#createCalendarEventAllDayCheckedEndDate").datepicker('option', 'minDate', startDate);
+            $createCalendarEventAllDayCheckedEndDate.datepicker('option', 'minDate', startDate);
         }
     });
 
-    $("#createCalendarEventAllDayCheckedEndDate").datepicker({
+    $createCalendarEventAllDayCheckedEndDate.datepicker({
         showButtonPanel: true,
-        beforeShow: function (input) {
+        beforeShow: function () {
             setTimeout(function () {
             }, 1);
         },
-        onChangeMonthYear: function (year, month, instance) {
+        onChangeMonthYear: function () {
             setTimeout(function () {
             }, 1);
         },
-        onSelect: function (selectedDate) {
+        onSelect: function () {
             let endDate = $(this).datepicker('getDate');
-            let startDate = $("#createCalendarEventAllDayCheckedStartDate").datepicker('getDate');
+            let startDate = $createCalendarEventAllDayCheckedStartDate.datepicker('getDate');
             if (startDate && endDate < startDate) {
                 $(this).datepicker('setDate', startDate);
             }
         }
     });
 
-    $("#editCalendarEventAllDayUncheckedStartDate").datepicker({
+    $editCalendarEventAllDayUncheckedStartDate.datepicker({
         showButtonPanel: true,
-        beforeShow: function (input) {
+        beforeShow: function () {
             setTimeout(function () {
             }, 1);
         },
-        onChangeMonthYear: function (year, month, instance) {
+        onChangeMonthYear: function () {
             setTimeout(function () {
             }, 1);
         },
-        onSelect: function (selectedDate) {
+        onSelect: function () {
             let startDate = $(this).datepicker('getDate');
-            let endDate = $("#editCalendarEventAllDayUncheckedEndDate").datepicker('getDate');
+            let endDate = $editCalendarEventAllDayUncheckedEndDate.datepicker('getDate');
             if (endDate && endDate < startDate) {
-                $("#editCalendarEventAllDayUncheckedEndDate").datepicker('setDate', startDate);
+                $editCalendarEventAllDayUncheckedEndDate.datepicker('setDate', startDate);
             }
-            $("#editCalendarEventAllDayUncheckedEndDate").datepicker('option', 'minDate', startDate);
+            $editCalendarEventAllDayUncheckedEndDate.datepicker('option', 'minDate', startDate);
         }
     });
 
-    $("#editCalendarEventAllDayUncheckedEndDate").datepicker({
+    $editCalendarEventAllDayUncheckedEndDate.datepicker({
         showButtonPanel: true,
-        beforeShow: function (input) {
+        beforeShow: function () {
             setTimeout(function () {
             }, 1);
         },
-        onChangeMonthYear: function (year, month, instance) {
+        onChangeMonthYear: function () {
             setTimeout(function () {
             }, 1);
         },
-        onSelect: function (selectedDate) {
+        onSelect: function () {
             let endDate = $(this).datepicker('getDate');
-            let startDate = $("#editCalendarEventAllDayUncheckedStartDate").datepicker('getDate');
+            let startDate = $editCalendarEventAllDayUncheckedStartDate.datepicker('getDate');
             if (startDate && endDate < startDate) {
                 $(this).datepicker('setDate', startDate);
             }
         }
     });
 
-    $("#editCalendarEventAllDayCheckedStartDate").datepicker({
+    $editCalendarEventAllDayCheckedStartDate.datepicker({
         showButtonPanel: true,
-        beforeShow: function (input) {
+        beforeShow: function () {
             setTimeout(function () {
             }, 1);
         },
-        onChangeMonthYear: function (year, month, instance) {
+        onChangeMonthYear: function () {
             setTimeout(function () {
             }, 1);
         },
-        onSelect: function (selectedDate) {
+        onSelect: function () {
             let startDate = $(this).datepicker('getDate');
-            let endDate = $("#editCalendarEventAllDayCheckedEndDate").datepicker('getDate');
+            let endDate = $editCalendarEventAllDayCheckedEndDate.datepicker('getDate');
             if (endDate && endDate < startDate) {
-                $("#editCalendarEventAllDayCheckedEndDate").datepicker('setDate', startDate);
+                $editCalendarEventAllDayCheckedEndDate.datepicker('setDate', startDate);
             }
-            $("#editCalendarEventAllDayCheckedEndDate").datepicker('option', 'minDate', startDate);
+            $editCalendarEventAllDayCheckedEndDate.datepicker('option', 'minDate', startDate);
         }
     });
 
-    $("#editCalendarEventAllDayCheckedEndDate").datepicker({
+    $editCalendarEventAllDayCheckedEndDate.datepicker({
         showButtonPanel: true,
-        beforeShow: function (input) {
+        beforeShow: function () {
             setTimeout(function () {
             }, 1);
         },
-        onChangeMonthYear: function (year, month, instance) {
+        onChangeMonthYear: function () {
             setTimeout(function () {
             }, 1);
         },
-        onSelect: function (selectedDate) {
+        onSelect: function () {
             let endDate = $(this).datepicker('getDate');
-            let startDate = $("#editCalendarEventAllDayCheckedStartDate").datepicker('getDate');
+            let startDate = $editCalendarEventAllDayCheckedStartDate.datepicker('getDate');
             if (startDate && endDate < startDate) {
                 $(this).datepicker('setDate', startDate);
             }
         }
     });
 
-    $('<style type="text/css"> .ui-datepicker-close { display: none; } </style>').appendTo("head");
-    $('<style type="text/css"> .ui-datepicker-current { display: none; } </style>').appendTo("head");
+    $('<style> .ui-datepicker-close { display: none; } </style>').appendTo("head");
+    $('<style> .ui-datepicker-current { display: none; } </style>').appendTo("head");
 
-    if ($("#createCalendarEventAllDay").is(':checked')) {
-        $("#divCreateEventAllDayUnchecked").hide();
-        $("#divCreateEventAllDayChecked").hide();
-        $("#divCreateEventAllDayChecked").show();
+    if ($createCalendarEventAllDay.is(':checked')) {
+        $divCreateEventAllDayUnchecked.hide();
+        $divCreateEventAllDayChecked.hide();
+        $divCreateEventAllDayChecked.show();
 
-        $("#divCreateEventNotificationAllDayUnchecked").hide();
-        $("#divCreateEventNotificationAllDayChecked").hide();
-        $("#divCreateEventNotificationAllDayChecked").show();
+        $divCreateEventNotificationAllDayUnchecked.hide();
+        $divCreateEventNotificationAllDayChecked.hide();
+        $divCreateEventNotificationAllDayChecked.show();
     }
     else {
-        $("#divCreateEventAllDayUnchecked").hide();
-        $("#divCreateEventAllDayChecked").hide();
-        $("#divCreateEventAllDayUnchecked").show();
+        $divCreateEventAllDayUnchecked.hide();
+        $divCreateEventAllDayChecked.hide();
+        $divCreateEventAllDayUnchecked.show();
 
-        $("#divCreateEventNotificationAllDayUnchecked").hide();
-        $("#divCreateEventNotificationAllDayChecked").hide();
-        $("#divCreateEventNotificationAllDayUnchecked").show();
+        $divCreateEventNotificationAllDayUnchecked.hide();
+        $divCreateEventNotificationAllDayChecked.hide();
+        $divCreateEventNotificationAllDayUnchecked.show();
     }
 
-    if ($("#editCalendarEventAllDay").is(':checked')) {
-        $("#divEditEventAllDayUnchecked").hide();
-        $("#divEditEventAllDayChecked").hide();
-        $("#divEditEventAllDayChecked").show();
+    if ($editCalendarEventAllDay.is(':checked')) {
+        $divEditEventAllDayUnchecked.hide();
+        $divEditEventAllDayChecked.hide();
+        $divEditEventAllDayChecked.show();
 
-        $("#divEditEventNotificationAllDayUnchecked").hide();
-        $("#divEditEventNotificationAllDayChecked").hide();
-        $("#divEditEventNotificationAllDayChecked").show();
+        $divEditEventNotificationAllDayUnchecked.hide();
+        $divEditEventNotificationAllDayChecked.hide();
+        $divEditEventNotificationAllDayChecked.show();
     }
     else {
-        $("#divEditEventAllDayUnchecked").hide();
-        $("#divEditEventAllDayChecked").hide();
-        $("#divEditEventAllDayUnchecked").show();
+        $divEditEventAllDayUnchecked.hide();
+        $divEditEventAllDayChecked.hide();
+        $divEditEventAllDayUnchecked.show();
 
-        $("#divEditEventNotificationAllDayUnchecked").hide();
-        $("#divEditEventNotificationAllDayChecked").hide();
-        $("#divEditEventNotificationAllDayUnchecked").show();
+        $divEditEventNotificationAllDayUnchecked.hide();
+        $divEditEventNotificationAllDayChecked.hide();
+        $divEditEventNotificationAllDayUnchecked.show();
     }
 
     calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
@@ -385,40 +528,40 @@ $(function () {
         selectable: true,
         selectMirror: true,
         select: function (arg) {
-            $('#createCalendarEventAllDayUncheckedStartDate').val(moment.utc(arg.start).add(1, 'days').format("YYYY-MM-DD"));
-            $('#createCalendarEventAllDayCheckedStartDate').val(moment.utc(arg.start).add(1, 'days').format("YYYY-MM-DD"));
+            $createCalendarEventAllDayUncheckedStartDate.val(moment.utc(arg.start).add(1, 'days').format("YYYY-MM-DD"));
+            $createCalendarEventAllDayCheckedStartDate.val(moment.utc(arg.start).add(1, 'days').format("YYYY-MM-DD"));
 
-            $('#createCalendarEventAllDayUncheckedEndDate').val(moment.utc(arg.end).format("YYYY-MM-DD"));
-            $('#createCalendarEventAllDayCheckedEndDate').val(moment.utc(arg.end).format("YYYY-MM-DD"));
+            $createCalendarEventAllDayUncheckedEndDate.val(moment.utc(arg.end).format("YYYY-MM-DD"));
+            $createCalendarEventAllDayCheckedEndDate.val(moment.utc(arg.end).format("YYYY-MM-DD"));
 
             $.ajax({
                 url: '/Calendar/GetCalendars',
                 method: 'POST',
-                headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
+                headers: { "RequestVerificationToken": $__RequestVerificationToken.val() },
                 dataType: 'json',
                 data: null,
                 contentType: 'application/json; charset=utf-8',
                 async: false,
                 success: function (response) {
                     if (response.result) {
-                        $('#createCalendarEventMyCalendar').empty();
+                        $createCalendarEventMyCalendar.empty();
 
                         $.each(response.calendars, function (index, calendar) {
-                            $('#createCalendarEventMyCalendar').append($('<option>', {
+                            $createCalendarEventMyCalendar.append($('<option>', {
                                 value: calendar.id,
                                 text: calendar.name
                             }));
                         });
 
-                        $('#createCalendarEventMyCalendar').val(data.calendarEvent.calendarId);
+                        $createCalendarEventMyCalendar.val(data.calendarEvent.calendarId);
                     }
                 }
             });
 
-            $('#createCalendarEventAllDayUncheckedStartTimeZone').val($('#loginedAccountTimeZoneIanaId').val());
-            $('#createCalendarEventAllDayUncheckedEndTimeZone').val($('#loginedAccountTimeZoneIanaId').val());
+            $createCalendarEventAllDayUncheckedStartTimeZone.val($loginedAccountTimeZoneIanaId.val());
+            $createCalendarEventAllDayUncheckedEndTimeZone.val($loginedAccountTimeZoneIanaId.val());
 
-            $('#createCalendarEventTaskDialogModal').modal('show');
+            $createCalendarEventTaskDialogModal.modal('show');
 
             calendar.unselect();
         },
@@ -427,7 +570,7 @@ $(function () {
 
                 let eventEl = $(arg.el);
                 let offset = eventEl.offset();
-                let popup = $('#calendarEventPopup');
+                let popup = $calendarEventPopup;
                 let currentEventId = popup.data('event-id');
 
                 if (popup.is(':visible') && currentEventId === arg.event.id) {
@@ -435,20 +578,20 @@ $(function () {
                     return;
                 }
 
-                $('#calendarEventPopupTitle').text(arg.event.title);
-                $('#divCalendarEventPopupAllDayChecked').hide();
-                $('#divCalendarEventPopupAllDayUnchecked').hide();
+                $calendarEventPopupTitle.text(arg.event.title);
+                $divCalendarEventPopupAllDayChecked.hide();
+                $divCalendarEventPopupAllDayUnchecked.hide();
 
                 if (arg.event.allDay === true) {
-                    $('#calendarEventPopupStartAllDayChecked').text(arg.event.extendedProps.displayStartDate);
-                    $('#calendarEventPopupEndAllDayChecked').text(arg.event.extendedProps.displayEndDate);
-                    $('#divCalendarEventPopupAllDayChecked').show();
+                    $calendarEventPopupStartAllDayChecked.text(arg.event.extendedProps.displayStartDate);
+                    $calendarEventPopupEndAllDayChecked.text(arg.event.extendedProps.displayEndDate);
+                    $divCalendarEventPopupAllDayChecked.show();
                 } else {
-                    $('#calendarEventPopupStartAllDayUnchecked').text(arg.event.extendedProps.displayStartDate);
-                    $('#calendarEventPopupStartTimeZoneAllDayUnchecked').text(`(${arg.event.extendedProps.displayStartDateTimeZone})`);
-                    $('#calendarEventPopupEndAllDayUnchecked').text(arg.event.extendedProps.displayEndDate);
-                    $('#calendarEventPopupEndTimeZoneAllDayUnchecked').text(`(${arg.event.extendedProps.displayEndDateTimeZone})`);
-                    $('#divCalendarEventPopupAllDayUnchecked').show();
+                    $calendarEventPopupStartAllDayUnchecked.text(arg.event.extendedProps.displayStartDate);
+                    $calendarEventPopupStartTimeZoneAllDayUnchecked.text(`(${arg.event.extendedProps.displayStartDateTimeZone})`);
+                    $calendarEventPopupEndAllDayUnchecked.text(arg.event.extendedProps.displayEndDate);
+                    $calendarEventPopupEndTimeZoneAllDayUnchecked.text(`(${arg.event.extendedProps.displayEndDateTimeZone})`);
+                    $divCalendarEventPopupAllDayUnchecked.show();
                 }
 
                 popup.css({
@@ -457,61 +600,58 @@ $(function () {
                     display: 'block'
                 }).data('event-id', arg.event.id);
 
-                $('#editCalendarEventPopup').focus();
+                $editCalendarEventPopup.focus();
 
-                $(document).on('click', function (e) {
-                    if (!$(e.target).closest('#calendarEventPopup, .fc-event').length) {
+                $(document).off('click.UserIndex').on('click.UserIndex', function (e) {
+                    if (!$(e.target).closest($calendarEventPopup.add('.fc-event')).length) {
                         popup.hide();
                     }
                 });
 
-                $('#closeCalendarEventPopup').off('click').on('click', function () {
+                $closeCalendarEventPopup.off('click').on('click', function () {
                     popup.hide();
                 });
 
-                $('#editCalendarEventPopup').off('click').on('click', function () {
+                $editCalendarEventPopup.off('click').on('click', function () {
 
                     $.ajax({
                         url: '/Calendar/IsCalendarEventExists' + '?id=' + popup.data('event-id'),
                         type: 'POST',
-                        headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
+                        headers: { "RequestVerificationToken": $__RequestVerificationToken.val() },
                         dataType: 'json',
                         data: null,
                         contentType: 'application/json; charset=utf-8',
                         success: function (data) {
                             if (data.result) {
 
-                                let formEditCalendarEvent = $('#formEditCalendarEvent');
+                                $editCalendarEventId.val(data.calendarEvent.id);
+                                $editCalendarEventName.val(data.calendarEvent.title);
+                                $editCalendarEventAllDay.val(data.calendarEvent.allDay);
 
-                                formEditCalendarEvent.find('input[id="editCalendarEventId"]').val(data.calendarEvent.id);
-                                formEditCalendarEvent.find('input[id="editCalendarEventName"]').val(data.calendarEvent.title);
-                                formEditCalendarEvent.find('input[id="editCalendarEventAllDay"]').val(data.calendarEvent.allDay);
-
-                                $('#divEditEventAllDayChecked').hide();
-                                $('#divEditEventAllDayUnchecked').hide();
+                                $divEditEventAllDayChecked.hide();
+                                $divEditEventAllDayUnchecked.hide();
 
                                 if (data.calendarEvent.allDay === true) {
-                                    $('#divEditEventAllDayChecked').show();
-                                    formEditCalendarEvent.find('input[id="editCalendarEventAllDay"]').prop('checked', true);
-                                    formEditCalendarEvent.find('input[id="editCalendarEventAllDayCheckedStartDate"]').val(data.calendarEvent.displayStartDate);
-                                    formEditCalendarEvent.find('input[id="editCalendarEventAllDayCheckedEndDate"]').val(data.calendarEvent.displayEndDate);
-
+                                    $divEditEventAllDayChecked.show();
+                                    $editCalendarEventAllDay.prop('checked', true);
+                                    $editCalendarEventAllDayCheckedStartDate.val(data.calendarEvent.displayStartDate);
+                                    $editCalendarEventAllDayCheckedEndDate.val(data.calendarEvent.displayEndDate);
                                 }
                                 else {
-                                    $('#divEditEventAllDayUnchecked').show();
+                                    $divEditEventAllDayUnchecked.show();
 
-                                    formEditCalendarEvent.find('input[id="editCalendarEventAllDay"]').prop('checked', false);
+                                    $editCalendarEventAllDay.prop('checked', false);
 
-                                    formEditCalendarEvent.find('input[id="editCalendarEventAllDayUncheckedStartDate"]').val(data.calendarEvent.displayStartDate.split(' ')[0]);
-                                    formEditCalendarEvent.find('select[id="editCalendarEventAllDayUncheckedStartTime"]').val(data.calendarEvent.displayStartDate.split(' ')[1].substring(0, 5));
-                                    formEditCalendarEvent.find('select[id="editCalendarEventAllDayUncheckedStartTimeZone"]').val(data.calendarEvent.startDateTimeZoneIanaId);
+                                    $editCalendarEventAllDayUncheckedStartDate.val(data.calendarEvent.displayStartDate.split(' ')[0]);
+                                    $editCalendarEventAllDayUncheckedStartTime.val(data.calendarEvent.displayStartDate.split(' ')[1].substring(0, 5));
+                                    $editCalendarEventAllDayUncheckedStartTimeZone.val(data.calendarEvent.startDateTimeZoneIanaId);
 
-                                    formEditCalendarEvent.find('input[id="editCalendarEventAllDayUncheckedEndDate"]').val(data.calendarEvent.displayEndDate.split(' ')[0]);
-                                    formEditCalendarEvent.find('select[id="editCalendarEventAllDayUncheckedEndTime"]').val(data.calendarEvent.displayEndDate.split(' ')[1].substring(0, 5));
-                                    formEditCalendarEvent.find('select[id="editCalendarEventAllDayUncheckedEndTimeZone"]').val(data.calendarEvent.endDateTimeZoneIanaId);
+                                    $editCalendarEventAllDayUncheckedEndDate.val(data.calendarEvent.displayEndDate.split(' ')[0]);
+                                    $editCalendarEventAllDayUncheckedEndTime.val(data.calendarEvent.displayEndDate.split(' ')[1].substring(0, 5));
+                                    $editCalendarEventAllDayUncheckedEndTimeZone.val(data.calendarEvent.endDateTimeZoneIanaId);
                                 }
 
-                                formEditCalendarEvent.find('input[id="editCalendarEventLocation"]').val(data.calendarEvent.location);
+                                $editCalendarEventLocation.val(data.calendarEvent.location);
 
                                 const parser = new DOMParser();
                                 const htmlDoc = parser.parseFromString(data.calendarEvent.description, 'text/html');
@@ -542,55 +682,55 @@ $(function () {
 
                                 const updatedHtml = htmlDoc.body.innerHTML;
 
-                                formEditCalendarEvent.find('textarea[id="editCalendarEventDescription"]').summernote('code', updatedHtml);
+                                $editCalendarEventDescription.summernote('code', updatedHtml);
 
-                                $('#divEditCalendarEventAttachedFile').hide();
+                                $divEditCalendarEventAttachedFile.hide();
 
                                 if (data.calendarEvent.calendarEventAttachedFile !== null) {
-                                    $('#divEditCalendarEventAttachedFile').show();
+                                    $divEditCalendarEventAttachedFile.show();
 
-                                    $("#aEditCalendarEventAttachedFile").attr("href", '#');
-                                    $("#aEditCalendarEventAttachedFile").attr("data-file", data.calendarEvent.calendarEventAttachedFileBase64Data);
-                                    $("#aEditCalendarEventAttachedFile").attr("data-contenttype", data.calendarEvent.calendarEventAttachedFileContentType);
-                                    $("#aEditCalendarEventAttachedFile").attr("data-name",`${data.calendarEvent.calendarEventAttachedFile.name}${data.calendarEvent.calendarEventAttachedFile.extension}`);
+                                    $aEditCalendarEventAttachedFile.attr("href", '#');
+                                    $aEditCalendarEventAttachedFile.attr("data-file", data.calendarEvent.calendarEventAttachedFileBase64Data);
+                                    $aEditCalendarEventAttachedFile.attr("data-contenttype", data.calendarEvent.calendarEventAttachedFileContentType);
+                                    $aEditCalendarEventAttachedFile.attr("data-name",`${data.calendarEvent.calendarEventAttachedFile.name}${data.calendarEvent.calendarEventAttachedFile.extension}`);
 
-                                    $("#aEditCalendarEventAttachedFile").text(`${data.calendarEvent.calendarEventAttachedFile.name}${data.calendarEvent.calendarEventAttachedFile.extension}`);
+                                    $aEditCalendarEventAttachedFile.text(`${data.calendarEvent.calendarEventAttachedFile.name}${data.calendarEvent.calendarEventAttachedFile.extension}`);
 
-                                    $("#spanEditCalendarEventAttachedFile").text(`${Math.round(data.calendarEvent.calendarEventAttachedFile.size / 1024).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}KB`);
+                                    $spanEditCalendarEventAttachedFile.text(`${Math.round(data.calendarEvent.calendarEventAttachedFile.size / 1024).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}KB`);
                                 }
 
                                 $.ajax({
                                     url: '/Calendar/GetCalendars',
                                     method: 'POST',
-                                    headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
+                                    headers: { "RequestVerificationToken": $__RequestVerificationToken.val() },
                                     dataType: 'json',
                                     data: null,
                                     contentType: 'application/json; charset=utf-8',
                                     async: false,
                                     success: function (response) {
                                         if (response.result) {
-                                            $('#editCalendarEventMyCalendar').empty();
+                                            $editCalendarEventMyCalendar.empty();
 
                                             $.each(response.calendars, function (index, calendar) {
-                                                $('#editCalendarEventMyCalendar').append($('<option>', {
+                                                $editCalendarEventMyCalendar.append($('<option>', {
                                                     value: calendar.id,
                                                     text: calendar.name
                                                 }));
                                             });
 
-                                            $('#editCalendarEventMyCalendar').val(data.calendarEvent.calendarId);
+                                            $editCalendarEventMyCalendar.val(data.calendarEvent.calendarId);
                                         }
                                     }
                                 });
 
-                                $('#editCalendarEventStatus').val(data.calendarEvent.status);
+                                $editCalendarEventStatus.val(data.calendarEvent.status);
 
-                                $('#divEditEventNotificationAllDayChecked').hide();
-                                $('#divEditEventNotificationAllDayUnchecked').hide();
+                                $divEditEventNotificationAllDayChecked.hide();
+                                $divEditEventNotificationAllDayUnchecked.hide();
 
                                 if (data.calendarEvent.allDay === true) {
-                                    $("#divEditEventNotificationAllDayChecked .divEditEventNotificationAllDayCheckedRow").remove();
-                                    $('#divEditEventNotificationAllDayChecked').show();
+                                    $divEditEventNotificationAllDayChecked.find('.divEditEventNotificationAllDayCheckedRow').remove();
+                                    $divEditEventNotificationAllDayChecked.show();
 
                                     if (data.calendarEvent.serializedCalendarReminders !== '[]') {
                                         const timeIntervals = Array.from({ length: 96 }, (_, i) => {
@@ -607,7 +747,7 @@ $(function () {
                                         `;
 
                                             let value = reminder.DaysBeforeEvent !== null ? reminder.DaysBeforeEvent : reminder.WeeksBeforeEvent;
-                                            let max = reminder.DaysBeforeEvent !== null ? 28 : 4;
+                                            let max = reminder.DaysBeforeEvent !== null ? maxDaysBeforeEvent : maxWeeksBeforeEvent;
                                             let selectedDays = reminder.DaysBeforeEvent !== null ? 'selected' : '';
                                             let selectedWeeks = reminder.WeeksBeforeEvent !== null ? 'selected' : '';
 
@@ -639,13 +779,13 @@ $(function () {
                                         </div>
                                     `;
 
-                                            $(htmlString).insertBefore('#editCalendarEventNotificationAllDayChecked');
+                                            $(htmlString).insertBefore($editCalendarEventNotificationAllDayChecked);
                                         });
                                     }
                                 }
                                 else {
-                                    $("#divEditEventNotificationAllDayUnchecked .divEditEventNotificationAllDayUncheckedRow").remove();
-                                    $('#divEditEventNotificationAllDayUnchecked').show();
+                                    $divEditEventNotificationAllDayUnchecked.find('.divEditEventNotificationAllDayUncheckedRow').remove();
+                                    $divEditEventNotificationAllDayUnchecked.show();
 
                                     if (data.calendarEvent.serializedCalendarReminders !== '[]') {
 
@@ -657,7 +797,7 @@ $(function () {
                                         `;
 
                                             let value = reminder.MinutesBeforeEvent !== null ? reminder.MinutesBeforeEvent : reminder.HoursBeforeEvent !== null ? reminder.HoursBeforeEvent : reminder.DaysBeforeEvent !== null ? reminder.DaysBeforeEvent : reminder.WeeksBeforeEvent;
-                                            let max = reminder.MinutesBeforeEvent !== null ? 40320 : reminder.HoursBeforeEvent !== null ? 672 : reminder.DaysBeforeEvent !== null ? 28 : 4;
+                                            let max = reminder.MinutesBeforeEvent !== null ? maxMinutesBeforeEvent : reminder.HoursBeforeEvent !== null ? maxHoursBeforeEvent : reminder.DaysBeforeEvent !== null ? maxDaysBeforeEvent : maxWeeksBeforeEvent;
 
                                             let selectedMinutes = reminder.MinutesBeforeEvent !== null ? 'selected' : '';
                                             let selectedHours = reminder.HoursBeforeEvent !== null ? 'selected' : '';
@@ -690,18 +830,18 @@ $(function () {
                                         </div>
                                     `;
 
-                                            $(htmlString).insertBefore('#editCalendarEventNotificationAllDayUnchecked');
+                                            $(htmlString).insertBefore($editCalendarEventNotificationAllDayUnchecked);
                                         });
                                     }
                                 }
 
-                                $('#editCalendarEventTaskDialogModal').modal({
+                                $editCalendarEventTaskDialogModal.modal({
                                     keyboard: false,
                                     backdrop: "static"
                                 });
 
-                                $('#editCalendarEventTaskDialogModal').modal('toggle');
-                                $('#editCalendarEventTaskDialogModal').modal('show');
+                                $editCalendarEventTaskDialogModal.modal('toggle');
+                                $editCalendarEventTaskDialogModal.modal('show');
                             }
                             else {
                                 toastr.error(data.error);
@@ -712,12 +852,12 @@ $(function () {
                     popup.hide();
                 });
 
-                $('#deleteCalendarEventPopup').off('click').on('click', function () {
+                $deleteCalendarEventPopup.off('click').on('click', function () {
                     if (confirm(`${localizer.ConfirmDelete}`)) {
                         $.ajax({
                             url: '/Calendar/DeleteCalendarEvent?id=' + popup.data('event-id'),
                             type: 'POST',
-                            headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
+                            headers: { "RequestVerificationToken": $__RequestVerificationToken.val() },
                             dataType: 'json',
                             data: null,
                             contentType: 'application/json; charset=utf-8',
@@ -738,7 +878,7 @@ $(function () {
             } else if (arg.event.extendedProps.calendarType === 'Other') {
                 let eventEl = $(arg.el);
                 let offset = eventEl.offset();
-                let popup = $('#otherCalendarEventPopup');
+                let popup = $otherCalendarEventPopup;
                 let currentEventId = popup.data('event-id');
 
                 if (popup.is(':visible') && currentEventId === arg.event.id) {
@@ -746,20 +886,20 @@ $(function () {
                     return;
                 }
 
-                $('#otherCalendarEventPopupTitle').text(arg.event.title);
-                $('#divOtherCalendarEventPopupAllDayChecked').hide();
-                $('#divOtherCalendarEventPopupAllDayUnchecked').hide();
+                $otherCalendarEventPopupTitle.text(arg.event.title);
+                $divOtherCalendarEventPopupAllDayChecked.hide();
+                $divOtherCalendarEventPopupAllDayUnchecked.hide();
 
                 if (arg.event.allDay === true) {
-                    $('#otherCalendarEventPopupStartAllDayChecked').text(arg.event.extendedProps.displayStartDate);
-                    $('#otherCalendarEventPopupEndAllDayChecked').text(arg.event.extendedProps.displayEndDate);
-                    $('#divOtherCalendarEventPopupAllDayChecked').show();
+                    $otherCalendarEventPopupStartAllDayChecked.text(arg.event.extendedProps.displayStartDate);
+                    $otherCalendarEventPopupEndAllDayChecked.text(arg.event.extendedProps.displayEndDate);
+                    $divOtherCalendarEventPopupAllDayChecked.show();
                 } else {
-                    $('#otherCalendarEventPopupStartAllDayUnchecked').text(arg.event.extendedProps.displayStartDate);
-                    $('#otherCalendarEventPopupStartTimeZoneAllDayUnchecked').text(`(${arg.event.extendedProps.displayStartDateTimeZone})`);
-                    $('#otherCalendarEventPopupEndAllDayUnchecked').text(arg.event.extendedProps.displayEndDate);
-                    $('#otherCalendarEventPopupEndTimeZoneAllDayUnchecked').text(`(${arg.event.extendedProps.displayEndDateTimeZone})`);
-                    $('#divOtherCalendarEventPopupAllDayUnchecked').show();
+                    $otherCalendarEventPopupStartAllDayUnchecked.text(arg.event.extendedProps.displayStartDate);
+                    $otherCalendarEventPopupStartTimeZoneAllDayUnchecked.text(`(${arg.event.extendedProps.displayStartDateTimeZone})`);
+                    $otherCalendarEventPopupEndAllDayUnchecked.text(arg.event.extendedProps.displayEndDate);
+                    $otherCalendarEventPopupEndTimeZoneAllDayUnchecked.text(`(${arg.event.extendedProps.displayEndDateTimeZone})`);
+                    $divOtherCalendarEventPopupAllDayUnchecked.show();
                 }
 
                 popup.css({
@@ -768,60 +908,57 @@ $(function () {
                     display: 'block'
                 }).data('event-id', arg.event.id);
 
-                $('#viewOtherCalendarEventPopup').focus();
+                $viewOtherCalendarEventPopup.focus();
 
-                $(document).on('click', function (e) {
-                    if (!$(e.target).closest('#otherCalendarEventPopup, .fc-event').length) {
+                $(document).off('click.UserIndex').on('click.UserIndex', function (e) {
+                    if (!$(e.target).closest($otherCalendarEventPopup.add('.fc-event')).length) {
                         popup.hide();
                     }
                 });
 
-                $('#closeOtherCalendarEventPopup').off('click').on('click', function () {
+                $closeOtherCalendarEventPopup.off('click').on('click', function () {
                     popup.hide();
                 });
 
-                $('#viewOtherCalendarEventPopup').off('click').on('click', function () {
+                $viewOtherCalendarEventPopup.off('click').on('click', function () {
                     $.ajax({
                         url: '/Calendar/IsOtherCalendarEventExists' + '?id=' + popup.data('event-id'),
                         type: 'POST',
-                        headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
+                        headers: { "RequestVerificationToken": $__RequestVerificationToken.val() },
                         dataType: 'json',
                         data: null,
                         contentType: 'application/json; charset=utf-8',
                         success: function (data) {
                             if (data.result) {
+                                $viewCalendarEventId.val(data.calendarEvent.id);
+                                $viewCalendarEventName.val(data.calendarEvent.title);
+                                $viewCalendarEventAllDay.val(data.calendarEvent.allDay);
 
-                                let formViewCalendarEvent = $('#formViewCalendarEvent');
-
-                                formViewCalendarEvent.find('input[id="viewCalendarEventId"]').val(data.calendarEvent.id);
-                                formViewCalendarEvent.find('input[id="viewCalendarEventName"]').val(data.calendarEvent.title);
-                                formViewCalendarEvent.find('input[id="viewCalendarEventAllDay"]').val(data.calendarEvent.allDay);
-
-                                $('#divViewEventAllDayChecked').hide();
-                                $('#divViewEventAllDayUnchecked').hide();
+                                $divViewEventAllDayChecked.hide();
+                                $divViewEventAllDayUnchecked.hide();
 
                                 if (data.calendarEvent.allDay === true) {
-                                    $('#divViewEventAllDayChecked').show();
-                                    formViewCalendarEvent.find('input[id="viewCalendarEventAllDay"]').prop('checked', true);
-                                    formViewCalendarEvent.find('input[id="viewCalendarEventAllDayCheckedStartDate"]').val(data.calendarEvent.displayStartDate);
-                                    formViewCalendarEvent.find('input[id="viewCalendarEventAllDayCheckedEndDate"]').val(data.calendarEvent.displayEndDate);
+                                    $divViewEventAllDayChecked.show();
+                                    $viewCalendarEventAllDay.prop('checked', true);
+                                    $viewCalendarEventAllDayCheckedStartDate.val(data.calendarEvent.displayStartDate);
+                                    $viewCalendarEventAllDayCheckedEndDate.val(data.calendarEvent.displayEndDate);
 
                                 }
                                 else {
-                                    $('#divViewEventAllDayUnchecked').show();
+                                    $divViewEventAllDayUnchecked.show();
 
-                                    formViewCalendarEvent.find('input[id="viewCalendarEventAllDay"]').prop('checked', false);
+                                    $viewCalendarEventAllDay.prop('checked', false);
 
-                                    formViewCalendarEvent.find('input[id="viewCalendarEventAllDayUncheckedStartDate"]').val(data.calendarEvent.displayStartDate.split(' ')[0]);
-                                    formViewCalendarEvent.find('select[id="viewCalendarEventAllDayUncheckedStartTime"]').val(data.calendarEvent.displayStartDate.split(' ')[1].substring(0, 5));
-                                    formViewCalendarEvent.find('select[id="viewCalendarEventAllDayUncheckedStartTimeZone"]').val(data.calendarEvent.startDateTimeZoneIanaId);
+                                    $viewCalendarEventAllDayUncheckedStartDate.val(data.calendarEvent.displayStartDate.split(' ')[0]);
+                                    $viewCalendarEventAllDayUncheckedStartTime.val(data.calendarEvent.displayStartDate.split(' ')[1].substring(0, 5));
+                                    $viewCalendarEventAllDayUncheckedStartTimeZone.val(data.calendarEvent.startDateTimeZoneIanaId);
 
-                                    formViewCalendarEvent.find('input[id="viewCalendarEventAllDayUncheckedEndDate"]').val(data.calendarEvent.displayEndDate.split(' ')[0]);
-                                    formViewCalendarEvent.find('select[id="viewCalendarEventAllDayUncheckedEndTime"]').val(data.calendarEvent.displayEndDate.split(' ')[1].substring(0, 5));
-                                    formViewCalendarEvent.find('select[id="viewCalendarEventAllDayUncheckedEndTimeZone"]').val(data.calendarEvent.endDateTimeZoneIanaId);
+                                    $viewCalendarEventAllDayUncheckedEndDate.val(data.calendarEvent.displayEndDate.split(' ')[0]);
+                                    $viewCalendarEventAllDayUncheckedEndTime.val(data.calendarEvent.displayEndDate.split(' ')[1].substring(0, 5));
+                                    $viewCalendarEventAllDayUncheckedEndTimeZone.val(data.calendarEvent.endDateTimeZoneIanaId);
                                 }
 
-                                formViewCalendarEvent.find('input[id="viewCalendarEventLocation"]').val(data.calendarEvent.location);
+                                $viewCalendarEventLocation.val(data.calendarEvent.location);
 
                                 const parser = new DOMParser();
                                 const htmlDoc = parser.parseFromString(data.calendarEvent.description, 'text/html');
@@ -852,57 +989,57 @@ $(function () {
 
                                 const updatedHtml = htmlDoc.body.innerHTML;
 
-                                formViewCalendarEvent.find('textarea[id="viewCalendarEventDescription"]').summernote('code', updatedHtml);
-                                formViewCalendarEvent.find('textarea[id="viewCalendarEventDescription"]').summernote('disable');
+                                $viewCalendarEventDescription.summernote('code', updatedHtml);
+                                $viewCalendarEventDescription.summernote('disable');
 
-                                $('#divViewCalendarEventAttachedFile').hide();
+                                $divViewCalendarEventAttachedFile.hide();
 
                                 if (data.calendarEvent.calendarEventAttachedFile !== null) {
-                                    $('#divViewCalendarEventAttachedFile').show();
+                                    $divViewCalendarEventAttachedFile.show();
 
-                                    $("#aViewCalendarEventAttachedFile").attr("href", '#');
-                                    $("#aViewCalendarEventAttachedFile").attr("data-file", data.calendarEvent.calendarEventAttachedFileBase64Data);
-                                    $("#aViewCalendarEventAttachedFile").attr("data-contenttype", data.calendarEvent.calendarEventAttachedFileContentType);
-                                    $("#aViewCalendarEventAttachedFile").attr("data-name", `${data.calendarEvent.calendarEventAttachedFile.name}${data.calendarEvent.calendarEventAttachedFile.extension}`);
+                                    $aViewCalendarEventAttachedFile.attr("href", '#');
+                                    $aViewCalendarEventAttachedFile.attr("data-file", data.calendarEvent.calendarEventAttachedFileBase64Data);
+                                    $aViewCalendarEventAttachedFile.attr("data-contenttype", data.calendarEvent.calendarEventAttachedFileContentType);
+                                    $aViewCalendarEventAttachedFile.attr("data-name", `${data.calendarEvent.calendarEventAttachedFile.name}${data.calendarEvent.calendarEventAttachedFile.extension}`);
 
-                                    $("#aViewCalendarEventAttachedFile").text(`${data.calendarEvent.calendarEventAttachedFile.name}${data.calendarEvent.calendarEventAttachedFile.extension}`);
+                                    $aViewCalendarEventAttachedFile.text(`${data.calendarEvent.calendarEventAttachedFile.name}${data.calendarEvent.calendarEventAttachedFile.extension}`);
 
-                                    $("#spanViewCalendarEventAttachedFile").text(`${Math.round(data.calendarEvent.calendarEventAttachedFile.size / 1024).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}KB`);
+                                    $spanViewCalendarEventAttachedFile.text(`${Math.round(data.calendarEvent.calendarEventAttachedFile.size / 1024).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}KB`);
                                 }
 
 
                                 $.ajax({
                                     url: '/Calendar/GetOtherCalendars',
                                     method: 'POST',
-                                    headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
+                                    headers: { "RequestVerificationToken": $__RequestVerificationToken.val() },
                                     dataType: 'json',
                                     data: null,
                                     contentType: 'application/json; charset=utf-8',
                                     async: false,
                                     success: function (response) {
                                         if (response.result) {
-                                            $('#viewCalendarEventMyCalendar').empty();
+                                            $viewCalendarEventMyCalendar.empty();
 
                                             $.each(response.tempOtherCalendars, function (index, tempOtherCalendar) {
-                                                $('#viewCalendarEventMyCalendar').append($('<option>', {
+                                                $viewCalendarEventMyCalendar.append($('<option>', {
                                                     value: tempOtherCalendar.id,
                                                     text: tempOtherCalendar.name
                                                 }));
                                             });
 
-                                            $('#viewCalendarEventMyCalendar').val(data.calendarEvent.calendarId);
+                                            $viewCalendarEventMyCalendar.val(data.calendarEvent.calendarId);
                                         }
                                     }
                                 });
 
-                                $('#viewCalendarEventStatus').val(data.calendarEvent.status);
+                                $viewCalendarEventStatus.val(data.calendarEvent.status);
 
-                                $('#divViewEventNotificationAllDayChecked').hide();
-                                $('#divViewEventNotificationAllDayUnchecked').hide();
+                                $divViewEventNotificationAllDayChecked.hide();
+                                $divViewEventNotificationAllDayUnchecked.hide();
 
                                 if (data.calendarEvent.allDay === true) {
-                                    $("#divViewEventNotificationAllDayChecked .divViewEventNotificationAllDayCheckedRow").remove();
-                                    $('#divViewEventNotificationAllDayChecked').show();
+                                    $divViewEventNotificationAllDayChecked.find('.divViewEventNotificationAllDayCheckedRow').remove();
+                                    $divViewEventNotificationAllDayChecked.show();
 
                                     if (data.calendarEvent.serializedCalendarReminders !== '[]') {
                                         const timeIntervals = Array.from({ length: 96 }, (_, i) => {
@@ -919,7 +1056,7 @@ $(function () {
                                             `;
 
                                             let value = reminder.DaysBeforeEvent !== null ? reminder.DaysBeforeEvent : reminder.WeeksBeforeEvent;
-                                            let max = reminder.DaysBeforeEvent !== null ? 28 : 4;
+                                            let max = reminder.DaysBeforeEvent !== null ? maxDaysBeforeEvent : maxWeeksBeforeEvent;
                                             let selectedDays = reminder.DaysBeforeEvent !== null ? 'selected' : '';
                                             let selectedWeeks = reminder.WeeksBeforeEvent !== null ? 'selected' : '';
 
@@ -948,13 +1085,13 @@ $(function () {
                                                 </div>
                                             `;
 
-                                            $(htmlString).insertBefore('#viewCalendarEventNotificationAllDayChecked');
+                                            $(htmlString).insertBefore($viewCalendarEventNotificationAllDayChecked);
                                         });
                                     }
                                 }
                                 else {
-                                    $("#divViewEventNotificationAllDayUnchecked .divViewEventNotificationAllDayUncheckedRow").remove();
-                                    $('#divViewEventNotificationAllDayUnchecked').show();
+                                    $divViewEventNotificationAllDayUnchecked.find('.divViewEventNotificationAllDayUncheckedRow').remove();
+                                    $divViewEventNotificationAllDayUnchecked.show();
 
                                     if (data.calendarEvent.serializedCalendarReminders !== '[]') {
 
@@ -966,7 +1103,7 @@ $(function () {
                                             `;
 
                                             let value = reminder.MinutesBeforeEvent !== null ? reminder.MinutesBeforeEvent : reminder.HoursBeforeEvent !== null ? reminder.HoursBeforeEvent : reminder.DaysBeforeEvent !== null ? reminder.DaysBeforeEvent : reminder.WeeksBeforeEvent;
-                                            let max = reminder.MinutesBeforeEvent !== null ? 40320 : reminder.HoursBeforeEvent !== null ? 672 : reminder.DaysBeforeEvent !== null ? 28 : 4;
+                                            let max = reminder.MinutesBeforeEvent !== null ? maxMinutesBeforeEvent : reminder.HoursBeforeEvent !== null ? maxHoursBeforeEvent : reminder.DaysBeforeEvent !== null ? maxDaysBeforeEvent : maxWeeksBeforeEvent;
 
                                             let selectedMinutes = reminder.MinutesBeforeEvent !== null ? 'selected' : '';
                                             let selectedHours = reminder.HoursBeforeEvent !== null ? 'selected' : '';
@@ -995,18 +1132,18 @@ $(function () {
                                                 </div>
                                             `;
 
-                                            $(htmlString).insertBefore('#viewCalendarEventNotificationAllDayUnchecked');
+                                            $(htmlString).insertBefore($viewCalendarEventNotificationAllDayUnchecked);
                                         });
                                     }
                                 }
 
-                                $('#viewCalendarEventTaskDialogModal').modal({
+                                $viewCalendarEventTaskDialogModal.modal({
                                     keyboard: false,
                                     backdrop: "static"
                                 });
 
-                                $('#viewCalendarEventTaskDialogModal').modal('toggle');
-                                $('#viewCalendarEventTaskDialogModal').modal('show');
+                                $viewCalendarEventTaskDialogModal.modal('toggle');
+                                $viewCalendarEventTaskDialogModal.modal('show');
                             }
                             else {
                                 toastr.error(data.error);
@@ -1022,7 +1159,7 @@ $(function () {
         }
     });
 
-    JSON.parse($('#calendarEventOutputViewModels').val()).forEach(item => {
+    JSON.parse($calendarEventOutputViewModels.val()).forEach(item => {
         calendar.addEvent({
             id: item.Id,
             title: item.Title,
@@ -1042,7 +1179,7 @@ $(function () {
         });
     });
 
-    JSON.parse($('#otherCalendarEventOutputViewModels').val()).forEach(item => {
+    JSON.parse($otherCalendarEventOutputViewModels.val()).forEach(item => {
         calendar.addEvent({
             id: item.Id,
             title: item.Title,
@@ -1071,7 +1208,7 @@ $(function () {
             Calendars: []
         };
 
-        $('#myCalendars input[type="checkbox"]:checked').each(function () {
+        $myCalendars.find('input[type="checkbox"]:checked').each(function () {
             let calendarsArray = [
                 { Id: Number($(this).closest('label').attr('id').replace('lblCalendar', '')) }
             ];
@@ -1081,7 +1218,7 @@ $(function () {
             }
         });
 
-        $('#otherCalendars input[type="checkbox"]:checked').each(function () {
+        $otherCalendars.find('input[type="checkbox"]:checked').each(function () {
             let calendarsArray = [
                 { Id: Number($(this).closest('label').attr('id').replace('lblOtherCalendar', '')) }
             ];
@@ -1094,7 +1231,7 @@ $(function () {
         $.ajax({
             url: '/Calendar/GetCalendarEvents',
             method: 'POST',
-            headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
+            headers: { "RequestVerificationToken": $__RequestVerificationToken.val() },
             dataType: 'json',
             data: JSON.stringify(paramValue),
             contentType: 'application/json; charset=utf-8',
@@ -1140,13 +1277,13 @@ $(function () {
         } else {
             value = parseInt(value, 10);
             if (timeType === 'Days') {
-                if (value < 0 || value > 28) {
+                if (value < 0 || value > maxDaysBeforeEvent) {
                     isValid = false;
                     errorMessage = `${localizer.ErrorRangeDay}`;
                 }
             }
             else if (timeType === 'Weeks') {
-                if (value < 0 || value > 4) {
+                if (value < 0 || value > maxWeeksBeforeEvent) {
                     isValid = false;
                     errorMessage = `${localizer.ErrorRangeWeek}`;
                 }
@@ -1179,25 +1316,25 @@ $(function () {
         } else {
             value = parseInt(value, 10);
             if (timeType === 'Minutes') {
-                if (value < 0 || value > 40320) {
+                if (value < 0 || value > maxMinutesBeforeEvent) {
                     isValid = false;
                     errorMessage = `${localizer.ErrorRangeMinute}`;
                 }
             }
             else if (timeType === 'Hours') {
-                if (value < 0 || value > 672) {
+                if (value < 0 || value > maxHoursBeforeEvent) {
                     isValid = false;
                     errorMessage = `${localizer.ErrorRangeHour}`;
                 }
             }
             else if (timeType === 'Days') {
-                if (value < 0 || value > 28) {
+                if (value < 0 || value > maxDaysBeforeEvent) {
                     isValid = false;
                     errorMessage = `${localizer.ErrorRangeDay}`;
                 }
             }
             else if (timeType === 'Weeks') {
-                if (value < 0 || value > 4) {
+                if (value < 0 || value > maxWeeksBeforeEvent) {
                     isValid = false;
                     errorMessage = `${localizer.ErrorRangeWeek}`;
                 }
@@ -1231,25 +1368,25 @@ $(function () {
         } else {
             value = parseInt(value, 10);
             if (timeType === 'Minutes') {
-                if (value < 0 || value > 40320) {
+                if (value < 0 || value > maxMinutesBeforeEvent) {
                     isValid = false;
                     errorMessage = `${localizer.ErrorRangeMinute}`;
                 }
             }
             else if (timeType === 'Hours') {
-                if (value < 0 || value > 672) {
+                if (value < 0 || value > maxHoursBeforeEvent) {
                     isValid = false;
                     errorMessage = `${localizer.ErrorRangeHour}`;
                 }
             }
             else if (timeType === 'Days') {
-                if (value < 0 || value > 28) {
+                if (value < 0 || value > maxDaysBeforeEvent) {
                     isValid = false;
                     errorMessage = `${localizer.ErrorRangeDay}`;
                 }
             }
             else if (timeType === 'Weeks') {
-                if (value < 0 || value > 4) {
+                if (value < 0 || value > maxWeeksBeforeEvent) {
                     isValid = false;
                     errorMessage = `${localizer.ErrorRangeWeek}`;
                 }
@@ -1283,13 +1420,13 @@ $(function () {
         } else {
             value = parseInt(value, 10);
             if (timeType === 'Days') {
-                if (value < 0 || value > 28) {
+                if (value < 0 || value > maxDaysBeforeEvent) {
                     isValid = false;
                     errorMessage = `${localizer.ErrorRangeDay}`;
                 }
             }
             else if (timeType === 'Weeks') {
-                if (value < 0 || value > 4) {
+                if (value < 0 || value > maxWeeksBeforeEvent) {
                     isValid = false;
                     errorMessage = `${localizer.ErrorRangeWeek}`;
                 }
@@ -1307,68 +1444,68 @@ $(function () {
         return isValid;
     }
 
-    $(document).on('change', '.chkCalendar', function () {
+    $(document).off('change.UserIndex').on('change.UserIndex', '.chkCalendar', function () {
         RefreshCalendarEvents();
     });
 
-    $(document).on('change', '.chkOtherCalendar', function () {
+    $(document).off('change.UserIndex').on('change.UserIndex', '.chkOtherCalendar', function () {
         RefreshCalendarEvents();
     });
 
-    $(document).on('change', '.createCalendarEventSelNotificationTimeTypeAllDayChecked', function () {
+    $(document).off('change.UserIndex').on('change.UserIndex', '.createCalendarEventSelNotificationTimeTypeAllDayChecked', function () {
         let row = $(this).closest('.divCreateEventNotificationAllDayCheckedRow');
         ValidateCreateEventInputAllDayChecked(row);
         row.find('.error-message').hide();
     });
 
-    $(document).on('input', '.createCalendarEventSelNotificationNumberAllDayChecked', function () {
+    $(document).off('input.UserIndex').on('input.UserIndex', '.createCalendarEventSelNotificationNumberAllDayChecked', function () {
         let row = $(this).closest('.divCreateEventNotificationAllDayCheckedRow');
         ValidateCreateEventInputAllDayChecked(row);
         row.find('.error-message').hide();
     });
 
-    $(document).on('change', '.createCalendarEventSelNotificationTimeTypeAllDayUnchecked', function () {
+    $(document).off('change.UserIndex').on('change.UserIndex', '.createCalendarEventSelNotificationTimeTypeAllDayUnchecked', function () {
         let row = $(this).closest('.divCreateEventNotificationAllDayUncheckedRow');
         ValidateCreateEventInputAllDayUnchecked(row);
         row.find('.error-message').hide();
     });
 
-    $(document).on('input', '.createCalendarEventSelNotificationNumberAllDayUnchecked', function () {
+    $(document).off('input.UserIndex').on('input.UserIndex', '.createCalendarEventSelNotificationNumberAllDayUnchecked', function () {
         let row = $(this).closest('.divCreateEventNotificationAllDayUncheckedRow');
         ValidateCreateEventInputAllDayUnchecked(row);
         row.find('.error-message').hide();
     });
 
-    $(document).on('change', '.editCalendarEventSelNotificationTimeTypeAllDayChecked', function () {
+    $(document).off('change.UserIndex').on('change.UserIndex', '.editCalendarEventSelNotificationTimeTypeAllDayChecked', function () {
         let row = $(this).closest('.divEditEventNotificationAllDayCheckedRow');
         ValidateEditEventInputAllDayChecked(row);
         row.find('.error-message').hide();
     });
 
-    $(document).on('input', '.editCalendarEventSelNotificationNumberAllDayChecked', function () {
+    $(document).off('input.UserIndex').on('input.UserIndex', '.editCalendarEventSelNotificationNumberAllDayChecked', function () {
         let row = $(this).closest('.divEditEventNotificationAllDayCheckedRow');
         ValidateEditEventInputAllDayChecked(row);
         row.find('.error-message').hide();
     });
 
-    $(document).on('change', '.editCalendarEventSelNotificationTimeTypeAllDayUnchecked', function () {
+    $(document).off('change.UserIndex').on('change.UserIndex', '.editCalendarEventSelNotificationTimeTypeAllDayUnchecked', function () {
         let row = $(this).closest('.divEditEventNotificationAllDayUncheckedRow');
         ValidateEditEventInputAllDayUnchecked(row);
         row.find('.error-message').hide();
     });
 
-    $(document).on('input', '.editCalendarEventSelNotificationNumberAllDayUnchecked', function () {
+    $(document).off('input.UserIndex').on('input.UserIndex', '.editCalendarEventSelNotificationNumberAllDayUnchecked', function () {
         let row = $(this).closest('.divEditEventNotificationAllDayUncheckedRow');
         ValidateEditEventInputAllDayUnchecked(row);
         row.find('.error-message').hide();
     });
 
-    $('#formCreateCalendarEvent').off('submit').on('submit', function (event) {
+    $formCreateCalendarEvent.off('submit').on('submit', function (event) {
         event.preventDefault();
 
         let isValidForm = true;
 
-        if ($('#createCalendarEventAllDay').is(':checked')) {
+        if ($createCalendarEventAllDay.is(':checked')) {
             $('.divCreateEventNotificationAllDayCheckedRow').each(function () {
                 let isValidRow = ValidateCreateEventInputAllDayChecked($(this));
                 isValidForm = isValidForm && isValidRow;
@@ -1381,47 +1518,47 @@ $(function () {
             });
         }
 
-        if (!$('#formCreateCalendarEvent').valid() || !isValidForm) {
+        if (!$formCreateCalendarEvent.valid() || !isValidForm) {
             return false;
         }
 
-        let calendarEventName = $('#createCalendarEventName').val();
-        let allDay = $('#createCalendarEventAllDay').is(':checked');
+        let calendarEventName = $createCalendarEventName.val();
+        let allDay = $createCalendarEventAllDay.is(':checked');
 
         let startDate;
         let endDate;
 
-        if ($('#createCalendarEventAllDay').is(':checked')) {
-            startDate = $('#createCalendarEventAllDayCheckedStartDate').val();
-            endDate = $('#createCalendarEventAllDayCheckedEndDate').val();
+        if ($createCalendarEventAllDay.is(':checked')) {
+            startDate = $createCalendarEventAllDayCheckedStartDate.val();
+            endDate = $createCalendarEventAllDayCheckedEndDate.val();
         }
         else {
-            startDate = $('#createCalendarEventAllDayUncheckedStartDate').val() + ' ' + $('#createCalendarEventAllDayUncheckedStartTime').val();
-            endDate = $('#createCalendarEventAllDayUncheckedEndDate').val() + ' ' + $('#createCalendarEventAllDayUncheckedEndTime').val();
+            startDate = $createCalendarEventAllDayUncheckedStartDate.val() + ' ' + $createCalendarEventAllDayUncheckedStartTime.val();
+            endDate = $createCalendarEventAllDayUncheckedEndDate.val() + ' ' + $createCalendarEventAllDayUncheckedEndTime.val();
         }
 
         let startDateTimeZoneIanaId;
         let endDateTimeZoneIanaId;
 
-        if ($('#createCalendarEventAllDay').is(':checked')) {
+        if ($createCalendarEventAllDay.is(':checked')) {
             startDateTimeZoneIanaId = '';
             endDateTimeZoneIanaId = '';
         }
         else {
-            startDateTimeZoneIanaId = $('#createCalendarEventAllDayUncheckedStartTimeZone').val();
-            endDateTimeZoneIanaId = $('#createCalendarEventAllDayUncheckedEndTimeZone').val();
+            startDateTimeZoneIanaId = $createCalendarEventAllDayUncheckedStartTimeZone.val();
+            endDateTimeZoneIanaId = $createCalendarEventAllDayUncheckedEndTimeZone.val();
         }
 
-        let location = $('#createCalendarEventLocation').val();
-        let description = $('#createCalendarEventDescription').val();
+        let location = $createCalendarEventLocation.val();
+        let description = $createCalendarEventDescription.val();
 
-        let calendarId = $('#createCalendarEventMyCalendar').val();
-        let status = $('#createCalendarEventStatus').val();
+        let calendarId = $createCalendarEventMyCalendar.val();
+        let status = $createCalendarEventStatus.val();
 
         let calendarReminders = [];
 
-        if ($('#createCalendarEventAllDay').is(':checked')) {
-            $('.divCreateEventNotificationAllDayCheckedRow').each(function (index, value) {
+        if ($createCalendarEventAllDay.is(':checked')) {
+            $('.divCreateEventNotificationAllDayCheckedRow').each(function () {
                 let method = $(this).find('.createCalendarEventSelNotificationMethodAllDayChecked').val();
                 let number = $(this).find('.createCalendarEventSelNotificationNumberAllDayChecked').val();
                 let timeType = $(this).find('.createCalendarEventSelNotificationTimeTypeAllDayChecked').val();
@@ -1450,7 +1587,7 @@ $(function () {
             });
         }
         else {
-            $('.divCreateEventNotificationAllDayUncheckedRow').each(function (index, value) {
+            $('.divCreateEventNotificationAllDayUncheckedRow').each(function () {
                 let method = $(this).find('.createCalendarEventSelNotificationMethodAllDayUnchecked').val();
                 let number = $(this).find('.createCalendarEventSelNotificationNumberAllDayUnchecked').val();
                 let timeType = $(this).find('.createCalendarEventSelNotificationTimeTypeAllDayUnchecked').val();
@@ -1519,7 +1656,7 @@ $(function () {
         $.ajax({
             url: '/Calendar/CreateCalendarEvent',
             type: 'POST',
-            headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
+            headers: { "RequestVerificationToken": $__RequestVerificationToken.val() },
             dataType: 'json',
             data: formData,
             contentType: false,
@@ -1533,7 +1670,7 @@ $(function () {
                         Calendars: []
                     };
 
-                    $('#myCalendars input[type="checkbox"]:checked').each(function () {
+                    $myCalendars.find('input[type="checkbox"]:checked').each(function () {
                         let calendarsArray = [
                             { Id: Number($(this).closest('label').attr('id').replace('lblCalendar', '')) }
                         ];
@@ -1543,7 +1680,7 @@ $(function () {
                         }
                     });
 
-                    $('#otherCalendars input[type="checkbox"]:checked').each(function () {
+                    $otherCalendars.find('input[type="checkbox"]:checked').each(function () {
                         let calendarsArray = [
                             { Id: Number($(this).closest('label').attr('id').replace('lblOtherCalendar', '')) }
                         ];
@@ -1556,7 +1693,7 @@ $(function () {
                     $.ajax({
                         url: '/Calendar/GetCalendarEvents',
                         method: 'POST',
-                        headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
+                        headers: { "RequestVerificationToken": $__RequestVerificationToken.val() },
                         dataType: 'json',
                         data: JSON.stringify(paramValue),
                         contentType: 'application/json; charset=utf-8',
@@ -1589,7 +1726,7 @@ $(function () {
 
                     toastr.success(data.message);
 
-                    $('#createCalendarEventTaskDialogModal').modal('hide');
+                    $createCalendarEventTaskDialogModal.modal('hide');
                 }
                 else {
                     toastr.error(data.error);
@@ -1601,12 +1738,12 @@ $(function () {
 
     });
 
-    $('#formEditCalendarEvent').off('submit').on('submit', function (event) {
+    $formEditCalendarEvent.off('submit').on('submit', function (event) {
         event.preventDefault();
 
         let isValidForm = true;
 
-        if ($('#editCalendarEventAllDay').is(':checked')) {
+        if ($editCalendarEventAllDay.is(':checked')) {
             $('.divEditEventNotificationAllDayCheckedRow').each(function () {
                 let isValidRow = ValidateEditEventInputAllDayChecked($(this));
                 isValidForm = isValidForm && isValidRow;
@@ -1619,48 +1756,48 @@ $(function () {
             });
         }
 
-        if (!$('#formEditCalendarEvent').valid() || !isValidForm) {
+        if (!$formEditCalendarEvent.valid() || !isValidForm) {
             return false;
         }
 
-        let calendarEventName = $('#editCalendarEventName').val();
-        let allDay = $('#editCalendarEventAllDay').is(':checked');
+        let calendarEventName = $editCalendarEventName.val();
+        let allDay = $editCalendarEventAllDay.is(':checked');
 
         let startDate;
         let endDate;
 
-        if ($('#editCalendarEventAllDay').is(':checked')) {
-            startDate = $('#editCalendarEventAllDayCheckedStartDate').val();
-            endDate = $('#editCalendarEventAllDayCheckedEndDate').val();
+        if ($editCalendarEventAllDay.is(':checked')) {
+            startDate = $editCalendarEventAllDayCheckedStartDate.val();
+            endDate = $editCalendarEventAllDayCheckedEndDate.val();
         }
         else {
-            startDate = $('#editCalendarEventAllDayUncheckedStartDate').val() + ' ' + $('#editCalendarEventAllDayUncheckedStartTime').val();
-            endDate = $('#editCalendarEventAllDayUncheckedEndDate').val() + ' ' + $('#editCalendarEventAllDayUncheckedEndTime').val();
+            startDate = $editCalendarEventAllDayUncheckedStartDate.val() + ' ' + $editCalendarEventAllDayUncheckedStartTime.val();
+            endDate = $editCalendarEventAllDayUncheckedEndDate.val() + ' ' + $editCalendarEventAllDayUncheckedEndTime.val();
         }
 
         let startDateTimeZoneIanaId;
         let endDateTimeZoneIanaId;
 
-        if ($('#editCalendarEventAllDay').is(':checked')) {
+        if ($editCalendarEventAllDay.is(':checked')) {
             startDateTimeZoneIanaId = '';
             endDateTimeZoneIanaId = '';
         }
         else {
-            startDateTimeZoneIanaId = $('#editCalendarEventAllDayUncheckedStartTimeZone').val();
-            endDateTimeZoneIanaId = $('#editCalendarEventAllDayUncheckedEndTimeZone').val();
+            startDateTimeZoneIanaId = $editCalendarEventAllDayUncheckedStartTimeZone.val();
+            endDateTimeZoneIanaId = $editCalendarEventAllDayUncheckedEndTimeZone.val();
         }
 
-        let location = $('#editCalendarEventLocation').val();
-        let description = $('#editCalendarEventDescription').val();
+        let location = $editCalendarEventLocation.val();
+        let description = $editCalendarEventDescription.val();
 
-        let id = $('#editCalendarEventId').val();
-        let calendarId = $('#editCalendarEventMyCalendar').val();
-        let status = $('#editCalendarEventStatus').val();
+        let id = $editCalendarEventId.val();
+        let calendarId = $editCalendarEventMyCalendar.val();
+        let status = $editCalendarEventStatus.val();
 
         let calendarReminders = [];
 
-        if ($('#editCalendarEventAllDay').is(':checked')) {
-            $('.divEditEventNotificationAllDayCheckedRow').each(function (index, value) {
+        if ($editCalendarEventAllDay.is(':checked')) {
+            $('.divEditEventNotificationAllDayCheckedRow').each(function () {
                 let method = $(this).find('.editCalendarEventSelNotificationMethodAllDayChecked').val();
                 let number = $(this).find('.editCalendarEventSelNotificationNumberAllDayChecked').val();
                 let timeType = $(this).find('.editCalendarEventSelNotificationTimeTypeAllDayChecked').val();
@@ -1689,7 +1826,7 @@ $(function () {
             });
         }
         else {
-            $('.divEditEventNotificationAllDayUncheckedRow').each(function (index, value) {
+            $('.divEditEventNotificationAllDayUncheckedRow').each(function () {
                 let method = $(this).find('.editCalendarEventSelNotificationMethodAllDayUnchecked').val();
                 let number = $(this).find('.editCalendarEventSelNotificationNumberAllDayUnchecked').val();
                 let timeType = $(this).find('.editCalendarEventSelNotificationTimeTypeAllDayUnchecked').val();
@@ -1759,7 +1896,7 @@ $(function () {
         $.ajax({
             url: '/Calendar/UpdateCalendarEvent',
             type: 'POST',
-            headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
+            headers: { "RequestVerificationToken": $__RequestVerificationToken.val() },
             dataType: 'json',
             data: formData,
             contentType: false,
@@ -1773,7 +1910,7 @@ $(function () {
                         Calendars: []
                     };
 
-                    $('#myCalendars input[type="checkbox"]:checked').each(function () {
+                    $myCalendars.find('input[type="checkbox"]:checked').each(function () {
                         let calendarsArray = [
                             { Id: Number($(this).closest('label').attr('id').replace('lblCalendar', '')) }
                         ];
@@ -1783,7 +1920,7 @@ $(function () {
                         }
                     });
 
-                    $('#otherCalendars input[type="checkbox"]:checked').each(function () {
+                    $otherCalendars.find('input[type="checkbox"]:checked').each(function () {
                         let calendarsArray = [
                             { Id: Number($(this).closest('label').attr('id').replace('lblOtherCalendar', '')) }
                         ];
@@ -1796,7 +1933,7 @@ $(function () {
                     $.ajax({
                         url: '/Calendar/GetCalendarEvents',
                         method: 'POST',
-                        headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
+                        headers: { "RequestVerificationToken": $__RequestVerificationToken.val() },
                         dataType: 'json',
                         data: JSON.stringify(paramValue),
                         contentType: 'application/json; charset=utf-8',
@@ -1829,7 +1966,7 @@ $(function () {
 
                     toastr.success(data.message);
 
-                    $('#editCalendarEventTaskDialogModal').modal('hide');
+                    $editCalendarEventTaskDialogModal.modal('hide');
                 }
                 else {
                     toastr.error(data.error);
@@ -1843,17 +1980,15 @@ $(function () {
 
     function UpdateCalendar() {
 
-        if (!$('#formEditCalendar').valid()) {
+        if (!$formEditCalendar.valid()) {
             return false;
         }
 
-        let editForm = $('#formEditCalendar');
-
-        let id = editForm.find('input[id="editCalendarId"]').val();
-        let name = editForm.find('input[id="editCalendarName"]').val();
-        let description = editForm.find('textarea[id="editCalendarDescription"]').val();
-        let htmlColorCode = editForm.find('input[id="editCalendarHtmlColorCode"]').val();
-        let timeZoneIanaId = editForm.find('select[id="editCalendarTimeZone"]').val();
+        let id = $editCalendarId.val();
+        let name = $editCalendarName.val();
+        let description = $editCalendarDescription.val();
+        let htmlColorCode = $editCalendarHtmlColorCode.val();
+        let timeZoneIanaId = $editCalendarTimeZone.val();
 
         let calendarsArray = [
             { Id: id, Name: name, Description: description, HtmlColorCode: htmlColorCode, TimeZoneIanaId: timeZoneIanaId }
@@ -1870,20 +2005,21 @@ $(function () {
         $.ajax({
             url: '/Calendar/UpdateCalendar',
             type: 'POST',
-            headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
+            headers: { "RequestVerificationToken": $__RequestVerificationToken.val() },
             dataType: 'json',
             data: JSON.stringify(paramValue),
             contentType: 'application/json; charset=utf-8',
             success: function (data) {
                 if (data.result) {
-                    $('#editCalendarDialogModal').modal('hide');
+                    $editCalendarDialogModal.modal('hide');
+                    let $lblCalendarId = $('#lblCalendar' + data.calendar.id);
 
-                    let label = $('#lblCalendar' + data.calendar.id).find('label');
+                    let label = $lblCalendarId.find('label');
                     if (label.length > 0) {
                         label.text(data.calendar.name);
                     }
 
-                    let checkbox = $('#lblCalendar' + data.calendar.id).find('input[type="checkbox"]');
+                    let checkbox = $lblCalendarId.find('input[type="checkbox"]');
                     if (checkbox.length > 0) {
                         checkbox.css('accent-color', data.calendar.htmlColorCode);
                     }
@@ -1896,7 +2032,7 @@ $(function () {
                     });
 
                     setTimeout(function () {
-                        let calendars = $('#myCalendars label[id^="lblCalendar"]').get();
+                        let calendars = $myCalendars.find('label[id^="lblCalendar"]').get();
 
                         calendars.sort(function (a, b) {
                             let nameA = $(a).text().trim().toUpperCase();
@@ -1908,7 +2044,7 @@ $(function () {
                         });
 
                         $.each(calendars, function (index, label) {
-                            $('#myCalendars').append(label);
+                            $myCalendars.append(label);
                         });
                     }, 0);
 
@@ -1921,23 +2057,22 @@ $(function () {
         return false;
     }
 
-    $('#formEditCalendar').off('submit').on('submit', function () {
+    $formEditCalendar.off('submit').on('submit', function () {
         return UpdateCalendar();
     });
 
     function DeleteCalendar() {
-        let selectedCalendarId = $('#confirmDeleteCalendarDialogModal').data('calendar-id');
+        let selectedCalendarId = $confirmDeleteCalendarDialogModal.data('calendar-id');
 
         $.ajax({
             url: '/Calendar/IsCalendarExists' + '?id=' + selectedCalendarId,
             type: 'POST',
-            headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
+            headers: { "RequestVerificationToken": $__RequestVerificationToken.val() },
             dataType: 'json',
             data: null,
             contentType: 'application/json; charset=utf-8',
             success: function (data) {
                 if (data.result) {
-
                     let calendarsArray = [
                         { Id: data.calendar.id }
                     ];
@@ -1950,17 +2085,16 @@ $(function () {
                         paramValue.Calendars.push(calendarsArray[i]);
                     }
 
-
                     $.ajax({
                         url: '/Calendar/DeleteCalendar',
                         type: 'POST',
-                        headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
+                        headers: { "RequestVerificationToken": $__RequestVerificationToken.val() },
                         dataType: 'json',
                         data: JSON.stringify(paramValue),
                         contentType: 'application/json; charset=utf-8',
                         success: function (data) {
                             if (data.result) {
-                                $('#confirmDeleteCalendarDialogModal').modal('hide');
+                                $confirmDeleteCalendarDialogModal.modal('hide');
 
                                 $('#lblCalendar' + data.calendar.id).remove();
 
@@ -1985,20 +2119,20 @@ $(function () {
         });
     }
 
-    $('#btnDeleteCalendar').off('click').on('click', function () {
+    $btnDeleteCalendar.off('click').on('click', function () {
         DeleteCalendar();
     });
 });
 
 function CreateUploadImageFile(file) {
 
-    formData = new FormData();
+    let formData = new FormData();
     formData.append("summernoteImageFile", file);
 
     $.ajax({
         url: "/Calendar/UploadImageFile",
         data: formData,
-        headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
+        headers: { "RequestVerificationToken": $__RequestVerificationToken.val() },
         type: 'POST',
         enctype: 'multipart/form-data',
         processData: false,
@@ -2014,7 +2148,7 @@ function CreateUploadImageFile(file) {
                 imgNode.style.maxHeight = "209px";
                 imgNode.setAttribute('alt', data.filePath);
 
-                $('#createCalendarEventDescription').summernote('insertNode', imgNode);
+                $createCalendarEventDescription.summernote('insertNode', imgNode);
 
                 imgNode.onload = function () {
                     URL.revokeObjectURL(imgURL);
@@ -2032,13 +2166,13 @@ function CreateUploadImageFile(file) {
 
 function EditUploadImageFile(file) {
 
-    formData = new FormData();
+    let formData = new FormData();
     formData.append("summernoteImageFile", file);
 
     $.ajax({
         url: "/Calendar/UploadImageFile",
         data: formData,
-        headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
+        headers: { "RequestVerificationToken": $__RequestVerificationToken.val() },
         type: 'POST',
         enctype: 'multipart/form-data',
         processData: false,
@@ -2054,7 +2188,7 @@ function EditUploadImageFile(file) {
                 imgNode.style.maxHeight = "209px";
                 imgNode.setAttribute('alt', data.filePath);
 
-                $('#editCalendarEventDescription').summernote('insertNode', imgNode);
+                $editCalendarEventDescription.summernote('insertNode', imgNode);
 
                 imgNode.onload = function () {
                     URL.revokeObjectURL(imgURL);
@@ -2072,15 +2206,14 @@ function EditUploadImageFile(file) {
 
 function CreateCalendar() {
 
-    if (!$('#formCreateCalendar').valid()) {
+    if (!$formCreateCalendar.valid()) {
         return false;
     }
 
-    let createForm = $('#formCreateCalendar');
-    let name = createForm.find('input[id="createCalendarName"]').val();
-    let description = createForm.find('textarea[id="createCalendarDescription"]').val();
-    let htmlColorCode = createForm.find('input[id="createCalendarHtmlColorCode"]').val();
-    let timeZoneIanaId = createForm.find('select[id="createCalendarTimeZone"]').val();
+    let name = $createCalendarName.val();
+    let description = $createCalendarDescription.val();
+    let htmlColorCode = $createCalendarHtmlColorCode.val();
+    let timeZoneIanaId = $createCalendarTimeZone.val();
 
     let calendarsArray = [
         { Name: name, Description: description, HtmlColorCode: htmlColorCode, TimeZoneIanaId: timeZoneIanaId }
@@ -2097,17 +2230,17 @@ function CreateCalendar() {
     $.ajax({
         url: '/Calendar/CreateCalendar',
         type: 'POST',
-        headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
+        headers: { "RequestVerificationToken": $__RequestVerificationToken.val() },
         dataType: 'json',
         data: JSON.stringify(paramValue),
         contentType: 'application/json; charset=utf-8',
         success: function (data) {
             if (data.result) {
-                $('#createCalendarDialogModal').modal('hide');
+                $createCalendarDialogModal.modal('hide');
 
-                $('#myCalendars').append(`<label id="lblCalendar${data.calendar.id}" style="position: relative; border:1px solid #ccc; padding:10px; margin:0 0 10px; display:block"><input type="checkbox" style="accent-color:${data.calendar.htmlColorCode}" checked /><label style="padding-left:0.5em;"> ${data.calendar.name}</label><i id="${data.calendar.id}" class="edit-calendar fas fa-edit" style="position: absolute; right: 40px; top: 50%; transform: translateY(-50%); cursor: pointer;"></i><i id="${data.calendar.id}" class="delete-calendar fas fa-trash" style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); cursor: pointer;"></i></label>`);
+                $myCalendars.append(`<label id="lblCalendar${data.calendar.id}" style="position: relative; border:1px solid #ccc; padding:10px; margin:0 0 10px; display:block"><input type="checkbox" style="accent-color:${data.calendar.htmlColorCode}" checked /><label style="padding-left:0.5em;"> ${data.calendar.name}</label><i id="${data.calendar.id}" class="edit-calendar fas fa-edit" style="position: absolute; right: 40px; top: 50%; transform: translateY(-50%); cursor: pointer;"></i><i id="${data.calendar.id}" class="delete-calendar fas fa-trash" style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); cursor: pointer;"></i></label>`);
 
-                let calendars = $('#myCalendars label[id^="lblCalendar"]').get();
+                let calendars = $myCalendars.find('label[id^="lblCalendar"]').get();
 
                 calendars.sort(function (a, b) {
                     let nameA = $(a).text().trim().toUpperCase();
@@ -2119,7 +2252,7 @@ function CreateCalendar() {
                 });
 
                 $.each(calendars, function (index, label) {
-                    $('#myCalendars').append(label);
+                    $myCalendars.append(label);
                 });
 
                 toastr.success(data.message);
@@ -2132,26 +2265,26 @@ function CreateCalendar() {
     return false;
 }
 
-$('#formCreateCalendar').off('submit').on('submit', function () {
+$formCreateCalendar.off('submit').on('submit', function () {
     return CreateCalendar();
 });
 
-$('#aCreateCalendarEvent').off('click').on('click', function () {
+$aCreateCalendarEvent.off('click').on('click', function () {
 
     $.ajax({
         url: '/Calendar/GetCalendars',
         method: 'POST',
-        headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
+        headers: { "RequestVerificationToken": $__RequestVerificationToken.val() },
         dataType: 'json',
         data: null,
         contentType: 'application/json; charset=utf-8',
         async: false,
         success: function (response) {
             if (response.result) {
-                $('#createCalendarEventMyCalendar').empty();
+                $createCalendarEventMyCalendar.empty();
 
                 $.each(response.calendars, function (index, calendar) {
-                    $('#createCalendarEventMyCalendar').append($('<option>', {
+                    $createCalendarEventMyCalendar.append($('<option>', {
                         value: calendar.id,
                         text: calendar.name
                     }));
@@ -2160,61 +2293,61 @@ $('#aCreateCalendarEvent').off('click').on('click', function () {
         }
     });
 
-    $('#createCalendarEventAllDayUncheckedStartTimeZone').val($('#loginedAccountTimeZoneIanaId').val());
-    $('#createCalendarEventAllDayUncheckedEndTimeZone').val($('#loginedAccountTimeZoneIanaId').val());
+    $createCalendarEventAllDayUncheckedStartTimeZone.val($loginedAccountTimeZoneIanaId.val());
+    $createCalendarEventAllDayUncheckedEndTimeZone.val($loginedAccountTimeZoneIanaId.val());
 
-    $('#createCalendarEventTaskDialogModal').modal('show');
+    $createCalendarEventTaskDialogModal.modal('show');
 
-    $('#createCalendarEventAllDayUncheckedStartDate').val(moment().format("YYYY-MM-DD"));
-    $('#createCalendarEventAllDayCheckedStartDate').val(moment().format("YYYY-MM-DD"));
+    $createCalendarEventAllDayUncheckedStartDate.val(moment().format("YYYY-MM-DD"));
+    $createCalendarEventAllDayCheckedStartDate.val(moment().format("YYYY-MM-DD"));
 
-    $('#createCalendarEventAllDayUncheckedEndDate').val(moment().format("YYYY-MM-DD"));
-    $('#createCalendarEventAllDayCheckedEndDate').val(moment().format("YYYY-MM-DD"));
+    $createCalendarEventAllDayUncheckedEndDate.val(moment().format("YYYY-MM-DD"));
+    $createCalendarEventAllDayCheckedEndDate.val(moment().format("YYYY-MM-DD"));
 });
 
-$('#createCalendarEventAllDay').off('click').on('click', function () {
+$createCalendarEventAllDay.off('click').on('click', function () {
     if ($(this).is(':checked')) {
-        $("#divCreateEventAllDayUnchecked").hide();
-        $("#divCreateEventAllDayChecked").hide();
-        $("#divCreateEventAllDayChecked").show();
+        $divCreateEventAllDayUnchecked.hide();
+        $divCreateEventAllDayChecked.hide();
+        $divCreateEventAllDayChecked.show();
 
-        $("#divCreateEventNotificationAllDayUnchecked").hide();
-        $("#divCreateEventNotificationAllDayChecked").hide();
-        $("#divCreateEventNotificationAllDayChecked").show();
+        $divCreateEventNotificationAllDayUnchecked.hide();
+        $divCreateEventNotificationAllDayChecked.hide();
+        $divCreateEventNotificationAllDayChecked.show();
     }
     else {
-        $("#divCreateEventAllDayUnchecked").hide();
-        $("#divCreateEventAllDayChecked").hide();
-        $("#divCreateEventAllDayUnchecked").show();
+        $divCreateEventAllDayUnchecked.hide();
+        $divCreateEventAllDayChecked.hide();
+        $divCreateEventAllDayUnchecked.show();
 
-        $("#divCreateEventNotificationAllDayUnchecked").hide();
-        $("#divCreateEventNotificationAllDayChecked").hide();
-        $("#divCreateEventNotificationAllDayUnchecked").show();
+        $divCreateEventNotificationAllDayUnchecked.hide();
+        $divCreateEventNotificationAllDayChecked.hide();
+        $divCreateEventNotificationAllDayUnchecked.show();
     }
 });
 
-$('#editCalendarEventAllDay').off('click').on('click', function () {
+$editCalendarEventAllDay.off('click').on('click', function () {
     if ($(this).is(':checked')) {
-        $("#divEditEventAllDayUnchecked").hide();
-        $("#divEditEventAllDayChecked").hide();
-        $("#divEditEventAllDayChecked").show();
+        $divEditEventAllDayUnchecked.hide();
+        $divEditEventAllDayChecked.hide();
+        $divEditEventAllDayChecked.show();
 
-        $("#divEditEventNotificationAllDayUnchecked").hide();
-        $("#divEditEventNotificationAllDayChecked").hide();
-        $("#divEditEventNotificationAllDayChecked").show();
+        $divEditEventNotificationAllDayUnchecked.hide();
+        $divEditEventNotificationAllDayChecked.hide();
+        $divEditEventNotificationAllDayChecked.show();
     }
     else {
-        $("#divEditEventAllDayUnchecked").hide();
-        $("#divEditEventAllDayChecked").hide();
-        $("#divEditEventAllDayUnchecked").show();
+        $divEditEventAllDayUnchecked.hide();
+        $divEditEventAllDayChecked.hide();
+        $divEditEventAllDayUnchecked.show();
 
-        $("#divEditEventNotificationAllDayUnchecked").hide();
-        $("#divEditEventNotificationAllDayChecked").hide();
-        $("#divEditEventNotificationAllDayUnchecked").show();
+        $divEditEventNotificationAllDayUnchecked.hide();
+        $divEditEventNotificationAllDayChecked.hide();
+        $divEditEventNotificationAllDayUnchecked.show();
     }
 });
 
-$('#createCalendarEventNotificationAllDayChecked').off('click').on('click', function () {
+$createCalendarEventNotificationAllDayChecked.off('click').on('click', function () {
     const timeIntervals = Array.from({ length: 96 }, (_, i) => {
         const hours = String(Math.floor(i / 4)).padStart(2, '0');
         const minutes = String((i % 4) * 15).padStart(2, '0');
@@ -2228,7 +2361,7 @@ $('#createCalendarEventNotificationAllDayChecked').off('click').on('click', func
             <option value='Notification'>${localizer.Notification}</option>
         </select>
 
-        <input type='number' class='form-control-sm createCalendarEventSelNotificationNumberAllDayChecked' style='width:20%;text-overflow:ellipsis; background-color:#343a40; color:#fff; border-color:#6c757d;' min="0" max="28">
+        <input type='number' class='form-control-sm createCalendarEventSelNotificationNumberAllDayChecked' style='width:20%;text-overflow:ellipsis; background-color:#343a40; color:#fff; border-color:#6c757d;' min='0' max='${maxDaysBeforeEvent}'>
 
         <select class='form-control-sm createCalendarEventSelNotificationTimeTypeAllDayChecked' style='width:15%;text-overflow:ellipsis;'>
             <option value='Days' selected>${localizer.Days}</option>
@@ -2236,7 +2369,7 @@ $('#createCalendarEventNotificationAllDayChecked').off('click').on('click', func
         </select>
         <label style="padding-left:5px;padding-right:5px;">${localizer.BeforeAt}</label>
         <select class='form-control-sm createCalendarEventSelNotificationTimeAllDayChecked' style='width:11%;text-overflow:ellipsis;'>
-            ${timeIntervals.map(time => time === "09:00" ? `<option value="${time}" selected>${time}</option>` : `<option value="${time}">${time}</option>`).join('')}
+            ${timeIntervals.map(time => time === `${defaultBeforeAt}` ? `<option value="${time}" selected>${time}</option>` : `<option value="${time}">${time}</option>`).join('')}
         </select>
         <a class='hover aCreateCalendarDeleteNotificationAllDayChecked' href='#' style='width:10%;'>
             <i class='fa fa-trash' aria-hidden='true' style='margin-left: 7px;'></i>
@@ -2250,7 +2383,7 @@ $('#createCalendarEventNotificationAllDayChecked').off('click').on('click', func
     $(htmlString).insertBefore(this);
 });
 
-$('#createCalendarEventNotificationAllDayUnchecked').off('click').on('click', function () {
+$createCalendarEventNotificationAllDayUnchecked.off('click').on('click', function () {
     const htmlString = String.raw`
     <div class="divCreateEventNotificationAllDayUncheckedRow" style="padding-bottom:5px;">
         <select class='form-control-sm createCalendarEventSelNotificationMethodAllDayUnchecked' style='width:20%;text-overflow:ellipsis;'>
@@ -2258,7 +2391,7 @@ $('#createCalendarEventNotificationAllDayUnchecked').off('click').on('click', fu
             <option value='Notification'>${localizer.Notification}</option>
         </select>
 
-        <input type='number' class='form-control-sm createCalendarEventSelNotificationNumberAllDayUnchecked' style='width:20%;text-overflow:ellipsis; background-color:#343a40; color:#fff; border-color:#6c757d;' min="0" max="40320">
+        <input type='number' class='form-control-sm createCalendarEventSelNotificationNumberAllDayUnchecked' style='width:20%;text-overflow:ellipsis; background-color:#343a40; color:#fff; border-color:#6c757d;' min='0' max='${maxMinutesBeforeEvent}'>
 
         <select class='form-control-sm createCalendarEventSelNotificationTimeTypeAllDayUnchecked' style='width:15%;text-overflow:ellipsis;'>
             <option value='Minutes' selected>${localizer.Minutes}</option>
@@ -2278,7 +2411,7 @@ $('#createCalendarEventNotificationAllDayUnchecked').off('click').on('click', fu
     $(htmlString).insertBefore(this);
 });
 
-$('#editCalendarEventNotificationAllDayChecked').off('click').on('click', function () {
+$editCalendarEventNotificationAllDayChecked.off('click').on('click', function () {
     const timeIntervals = Array.from({ length: 96 }, (_, i) => {
         const hours = String(Math.floor(i / 4)).padStart(2, '0');
         const minutes = String((i % 4) * 15).padStart(2, '0');
@@ -2292,7 +2425,7 @@ $('#editCalendarEventNotificationAllDayChecked').off('click').on('click', functi
             <option value='Notification'>${localizer.Notification}</option>
         </select>
 
-        <input type='number' class='form-control-sm editCalendarEventSelNotificationNumberAllDayChecked' style='width:20%;text-overflow:ellipsis; background-color:#343a40; color:#fff; border-color:#6c757d;' min="0" max="28">
+        <input type='number' class='form-control-sm editCalendarEventSelNotificationNumberAllDayChecked' style='width:20%;text-overflow:ellipsis; background-color:#343a40; color:#fff; border-color:#6c757d;' min='0' max='${maxDaysBeforeEvent}'>
 
         <select class='form-control-sm editCalendarEventSelNotificationTimeTypeAllDayChecked' style='width:15%;text-overflow:ellipsis;'>
             <option value='Days' selected>${localizer.Days}</option>
@@ -2300,7 +2433,7 @@ $('#editCalendarEventNotificationAllDayChecked').off('click').on('click', functi
         </select>
         <label style="padding-left:5px;padding-right:5px;">${localizer.BeforeAt}</label>
         <select class='form-control-sm editCalendarEventSelNotificationTimeAllDayChecked' style='width:11%;text-overflow:ellipsis;'>
-            ${timeIntervals.map(time => time === "09:00" ? `<option value="${time}" selected>${time}</option>` : `<option value="${time}">${time}</option>`).join('')}
+            ${timeIntervals.map(time => time === `${defaultBeforeAt}` ? `<option value="${time}" selected>${time}</option>` : `<option value="${time}">${time}</option>`).join('')}
         </select>
         <a class='hover aEditCalendarDeleteNotificationAllDayChecked' href='#' style='width:10%;'>
             <i class='fa fa-trash' aria-hidden='true' style='margin-left: 7px;'></i>
@@ -2314,7 +2447,7 @@ $('#editCalendarEventNotificationAllDayChecked').off('click').on('click', functi
     $(htmlString).insertBefore(this);
 });
 
-$('#editCalendarEventNotificationAllDayUnchecked').off('click').on('click', function () {
+$editCalendarEventNotificationAllDayUnchecked.off('click').on('click', function () {
 
     const htmlString = String.raw`
     <div class="divEditEventNotificationAllDayUncheckedRow" style="padding-bottom:5px;">
@@ -2323,7 +2456,7 @@ $('#editCalendarEventNotificationAllDayUnchecked').off('click').on('click', func
             <option value='Notification'>${localizer.Notification}</option>
         </select>
 
-        <input type='number' class='form-control-sm editCalendarEventSelNotificationNumberAllDayUnchecked' style='width:20%;text-overflow:ellipsis; background-color:#343a40; color:#fff; border-color:#6c757d;' min="0" max="40320">
+        <input type='number' class='form-control-sm editCalendarEventSelNotificationNumberAllDayUnchecked' style='width:20%;text-overflow:ellipsis; background-color:#343a40; color:#fff; border-color:#6c757d;' min='0' max='${maxMinutesBeforeEvent}'>
 
         <select class='form-control-sm editCalendarEventSelNotificationTimeTypeAllDayUnchecked' style='width:15%;text-overflow:ellipsis;'>
             <option value='Minutes' selected>${localizer.Minutes}</option>
@@ -2343,45 +2476,46 @@ $('#editCalendarEventNotificationAllDayUnchecked').off('click').on('click', func
     $(htmlString).insertBefore(this);
 });
 
-$(document).on('click', '.aCreateCalendarDeleteNotificationAllDayChecked', function () {
+$(document).off('click.UserIndex').on('click.UserIndex', '.aCreateCalendarDeleteNotificationAllDayChecked', function () {
     $(this).parent().remove();
 });
 
-$(document).on('click', '.aCreateCalendarDeleteNotificationAllDayUnchecked', function () {
+$(document).off('click.UserIndex').on('click.UserIndex', '.aCreateCalendarDeleteNotificationAllDayUnchecked', function () {
     $(this).parent().remove();
 });
 
-$(document).on('click', '.aEditCalendarDeleteNotificationAllDayChecked', function () {
+$(document).off('click.UserIndex').on('click.UserIndex', '.aEditCalendarDeleteNotificationAllDayChecked', function () {
     $(this).parent().remove();
 });
 
-$(document).on('click', '.aEditCalendarDeleteNotificationAllDayUnchecked', function () {
+$(document).off('click.UserIndex').on('click.UserIndex', '.aEditCalendarDeleteNotificationAllDayUnchecked', function () {
     $(this).parent().remove();
 });
 
-$('#dropdown-icon').click(function () {
-    $('#dropdown-content').toggle();
+$dropdownIcon.off('click').on('click', function () {
+    $dropdownContent.toggle();
 });
 
-$(window).click(function (event) {
-    if (!$(event.target).closest('#dropdown-icon, #dropdown-content').length) {
-        $('#dropdown-content').hide();
+$(window).off('click.UserIndex').on('click.UserIndex', function (event) {
+    let $target = $(event.target);
+    if (!$target.closest($dropdownIcon).length && !$target.closest($dropdownContent).length) {
+        $dropdownContent.hide();
     }
 });
 
-$('#dropdown-content a').click(function () {
-    $('#dropdown-content').hide();
+$dropdownContent.find('a').off('click').on('click', function () {
+    $dropdownContent.hide();
 });
 
-$('#aCreateCalendar').off('click').on('click', function () {
-    $('#createCalendarDialogModal').modal('show');
+$aCreateCalendar.off('click').on('click', function () {
+    $createCalendarDialogModal.modal('show');
 });
 
-$('#aBrowseCalendarsOfInterest').off('click').on('click', function () {
+$aBrowseCalendarsOfInterest.off('click').on('click', function () {
     $.ajax({
         url: '/Calendar/GetBrowseCalendarsOfInterest',
         method: 'POST',
-        headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
+        headers: { "RequestVerificationToken": $__RequestVerificationToken.val() },
         dataType: 'json',
         data: null,
         contentType: 'application/json; charset=utf-8',
@@ -2402,35 +2536,32 @@ $('#aBrowseCalendarsOfInterest').off('click').on('click', function () {
                     `;
                 });
 
-                $('#divBrowseCalendarsOfInterest').html(htmlString);
+                $divBrowseCalendarsOfInterest.html(htmlString);
+
+                let $checkboxes = $('.checkBoxBrowseCalendarsOfInterest');
+                let allChecked = $checkboxes.length > 0 && $checkboxes.length === $checkboxes.filter(':checked').length;
+                $allCheckBrowseCalendarsOfInterest.prop('checked', allChecked);
             }
         }
     });
 
-    if ($('.checkBoxBrowseCalendarsOfInterest').length === 0) {
-        $('#allCheckBrowseCalendarsOfInterest').prop('checked', false);
-    }
-    else {
-        $('#allCheckBrowseCalendarsOfInterest').prop('checked', $('.checkBoxBrowseCalendarsOfInterest').length === $('.checkBoxBrowseCalendarsOfInterest:checked').length);
-    }
-
-    $('#browseCalendarsOfInterestDialogModal').modal('show');
+    $browseCalendarsOfInterestDialogModal.modal('show');
 });
 
-$('#allCheckBrowseCalendarsOfInterest').off('change').on('change', function () {
+$allCheckBrowseCalendarsOfInterest.off('change').on('change', function () {
     $('.checkBoxBrowseCalendarsOfInterest').prop('checked', $(this).prop('checked'));
 });
 
-$(document).on('change', '.checkBoxBrowseCalendarsOfInterest', function () {
-    $('#allCheckBrowseCalendarsOfInterest').prop('checked', $('.checkBoxBrowseCalendarsOfInterest').length === $('.checkBoxBrowseCalendarsOfInterest:checked').length);
+$(document).off('change.UserIndex').on('change.UserIndex', '.checkBoxBrowseCalendarsOfInterest', function () {
+    $allCheckBrowseCalendarsOfInterest.prop('checked', $('.checkBoxBrowseCalendarsOfInterest').length === $('.checkBoxBrowseCalendarsOfInterest:checked').length);
 });
 
-$('#formUpdateBrowseCalendarsOfInterest').off('submit').on('submit', function (event) {
+$formUpdateBrowseCalendarsOfInterest.off('submit').on('submit', function (event) {
     event.preventDefault();
 
     let calendarBeOtherCalendar = [];
 
-    $('#divBrowseCalendarsOfInterest > .browseCalendarsOfInterest').each(function (index, element) {
+    $divBrowseCalendarsOfInterest.children('.browseCalendarsOfInterest').each(function (index, element) {
         let checkBox = $(element).find('.checkBoxBrowseCalendarsOfInterest');
         if (checkBox.is(':checked')) {
             calendarBeOtherCalendar.push({
@@ -2442,7 +2573,7 @@ $('#formUpdateBrowseCalendarsOfInterest').off('submit').on('submit', function (e
     $.ajax({
         url: '/Calendar/UpdateOtherCalendar',
         type: 'POST',
-        headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
+        headers: { "RequestVerificationToken": $__RequestVerificationToken.val() },
         dataType: 'json',
         data: JSON.stringify(calendarBeOtherCalendar),
         contentType: 'application/json; charset=utf-8',
@@ -2452,7 +2583,7 @@ $('#formUpdateBrowseCalendarsOfInterest').off('submit').on('submit', function (e
                 $.ajax({
                     url: '/Calendar/GetOtherCalendars',
                     method: 'POST',
-                    headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
+                    headers: { "RequestVerificationToken": $__RequestVerificationToken.val() },
                     dataType: 'json',
                     data: null,
                     contentType: 'application/json; charset=utf-8',
@@ -2470,7 +2601,7 @@ $('#formUpdateBrowseCalendarsOfInterest').off('submit').on('submit', function (e
                                 `;
                             });
                 
-                            $('#otherCalendars').html(htmlString);
+                            $otherCalendars.html(htmlString);
 
                             calendar.removeAllEvents();
 
@@ -2478,7 +2609,7 @@ $('#formUpdateBrowseCalendarsOfInterest').off('submit').on('submit', function (e
                                 Calendars: []
                             };
 
-                            $('#myCalendars input[type="checkbox"]:checked').each(function () {
+                            $myCalendars.find('input[type="checkbox"]:checked').each(function () {
                                 let calendarsArray = [
                                     { Id: Number($(this).closest('label').attr('id').replace('lblCalendar', '')) }
                                 ];
@@ -2488,7 +2619,7 @@ $('#formUpdateBrowseCalendarsOfInterest').off('submit').on('submit', function (e
                                 }
                             });
 
-                            $('#otherCalendars input[type="checkbox"]:checked').each(function () {
+                            $otherCalendars.find('input[type="checkbox"]:checked').each(function () {
                                 let calendarsArray = [
                                     { Id: Number($(this).closest('label').attr('id').replace('lblOtherCalendar', '')) }
                                 ];
@@ -2501,7 +2632,7 @@ $('#formUpdateBrowseCalendarsOfInterest').off('submit').on('submit', function (e
                             $.ajax({
                                 url: '/Calendar/GetCalendarEvents',
                                 method: 'POST',
-                                headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
+                                headers: { "RequestVerificationToken": $__RequestVerificationToken.val() },
                                 dataType: 'json',
                                 data: JSON.stringify(paramValue),
                                 contentType: 'application/json; charset=utf-8',
@@ -2533,7 +2664,7 @@ $('#formUpdateBrowseCalendarsOfInterest').off('submit').on('submit', function (e
                     }
                 });
 
-                $('#browseCalendarsOfInterestDialogModal').modal('hide');
+                $browseCalendarsOfInterestDialogModal.modal('hide');
                 toastr.success(data.message);
             }
             else {
@@ -2545,7 +2676,7 @@ $('#formUpdateBrowseCalendarsOfInterest').off('submit').on('submit', function (e
     return false;
 });
 
-$(document).on('click', '.edit-calendar', function (e) {
+$(document).off('click.UserIndex').on('click.UserIndex', '.edit-calendar', function (e) {
     e.preventDefault();
     e.stopPropagation();
 
@@ -2554,27 +2685,25 @@ $(document).on('click', '.edit-calendar', function (e) {
     $.ajax({
         url: '/Calendar/IsCalendarExists' + '?id=' + selectedCalendarId,
         type: 'POST',
-        headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
+        headers: { "RequestVerificationToken": $__RequestVerificationToken.val() },
         dataType: 'json',
         data: null,
         contentType: 'application/json; charset=utf-8',
         success: function (data) {
             if (data.result) {
-                let formEditCalendar = $('#formEditCalendar');
+                $editCalendarId.val(data.calendar.id);
+                $editCalendarName.val(data.calendar.name);
+                $editCalendarDescription.val(data.calendar.description);
+                $editCalendarHtmlColorCode.val(data.calendar.htmlColorCode);
+                $editCalendarTimeZone.val(data.calendar.timeZoneIanaId).change();
 
-                formEditCalendar.find('input[id="editCalendarId"]').val(data.calendar.id);
-                formEditCalendar.find('input[id="editCalendarName"]').val(data.calendar.name);
-                formEditCalendar.find('textarea[id="editCalendarDescription"]').val(data.calendar.description);
-                formEditCalendar.find('input[id="editCalendarHtmlColorCode"]').val(data.calendar.htmlColorCode);
-                formEditCalendar.find('select[id="editCalendarTimeZone"]').val(data.calendar.timeZoneIanaId).change();
-
-                $('#editCalendarDialogModal').modal({
+                $editCalendarDialogModal.modal({
                     keyboard: false,
                     backdrop: "static"
                 });
 
-                $('#editCalendarDialogModal').modal('toggle');
-                $('#editCalendarDialogModal').modal('show');
+                $editCalendarDialogModal.modal('toggle');
+                $editCalendarDialogModal.modal('show');
             }
             else {
                 toastr.error(data.error);
@@ -2583,39 +2712,39 @@ $(document).on('click', '.edit-calendar', function (e) {
     });
 });
 
-$(document).on('mouseenter', '.edit-calendar', function () {
+$(document).off('mouseenter.UserIndex').on('mouseenter.UserIndex', '.edit-calendar', function () {
     $(this).css('color', 'blue');
 });
 
-$(document).on('mouseleave', '.edit-calendar', function () {
+$(document).off('mouseleave.UserIndex').on('mouseleave.UserIndex', '.edit-calendar', function () {
     $(this).css('color', '');
 });
 
-$(document).on('click', '.delete-calendar', function (e) {
+$(document).off('click.UserIndex').on('click.UserIndex', '.delete-calendar', function (e) {
     e.preventDefault();
     e.stopPropagation();
 
     let calendarId = $(this).parent().attr('id').replace("lblCalendar", "");
-    $('#confirmDeleteCalendarDialogModal').data('calendar-id', calendarId);
+    $confirmDeleteCalendarDialogModal.data('calendar-id', calendarId);
 
-    $('#confirmDeleteCalendarDialogModal').modal({
+    $confirmDeleteCalendarDialogModal.modal({
         keyboard: false,
         backdrop: "static"
     });
 
-    $('#confirmDeleteCalendarDialogModal').modal('toggle');
-    $('#confirmDeleteCalendarDialogModal').modal('show');
+    $confirmDeleteCalendarDialogModal.modal('toggle');
+    $confirmDeleteCalendarDialogModal.modal('show');
 });
 
-$(document).on('mouseenter', '.delete-calendar', function () {
+$(document).off('mouseenter.UserIndex').on('mouseenter.UserIndex', '.delete-calendar', function () {
     $(this).css('color', 'blue');
 });
 
-$(document).on('mouseleave', '.delete-calendar', function () {
+$(document).off('mouseleave.UserIndex').on('mouseleave.UserIndex', '.delete-calendar', function () {
     $(this).css('color', '');
 });
 
-$('#aEditCalendarEventAttachedFile').off('click').on('click', function (event) {
+$aEditCalendarEventAttachedFile.off('click').on('click', function (event) {
     event.preventDefault();
     let base64Data = $(this).attr('data-file');
     let contentType = $(this).attr('data-contenttype');
@@ -2636,7 +2765,7 @@ $('#aEditCalendarEventAttachedFile').off('click').on('click', function (event) {
     }
 });
 
-$('#aViewCalendarEventAttachedFile').off('click').on('click', function (event) {
+$aViewCalendarEventAttachedFile.off('click').on('click', function (event) {
     event.preventDefault();
     let base64Data = $(this).attr('data-file');
     let contentType = $(this).attr('data-contenttype');
