@@ -1,4 +1,35 @@
-﻿function base64ToBlob(base64, mime) {
+﻿const maxFileSize = 10485760;
+const $__RequestVerificationToken = $('input[name="__RequestVerificationToken"]');
+const $writeBoardContent = $('#writeBoardContent');
+const $editBoardContent = $('#editBoardContent');
+const $searchType = $('#searchType');
+const $btnFreeForumSearchText = $('#btnFreeForumSearchText');
+const $formWriteBoard = $('#formWriteBoard');
+const $loading = $('#loading');
+const $formEditBoard = $('#formEditBoard');
+const $writeBoardTitle = $('#writeBoardTitle');
+const $writeBoardLocked = $('#writeBoardLocked');
+const $editBoardTitle = $('#editBoardTitle');
+const $editBoardLocked = $('#editBoardLocked');
+const $confirmDeleteBoardDialogModal = $('#confirmDeleteBoardDialogModal');
+const $writeFreeCommentContent = $('#writeFreeCommentContent');
+const $btnFreeForumShowWriteBoardLoading = $('#btnFreeForumShowWriteBoardLoading');
+const $btnFreeForumModify = $('#btnFreeForumModify');
+const $btnFreeForumConfirmDeleteBoard = $('#btnFreeForumConfirmDeleteBoard');
+const $btnFreeForumList = $('#btnFreeForumList');
+const $btnFreeForumSubmitModify = $('#btnFreeForumSubmitModify');
+const $btnFreeForumWrite = $('#btnFreeForumWrite');
+const $btnFreeForumSearchBoard = $('#btnFreeForumSearchBoard');
+const $btnFreeForumDeleteBoard = $('#btnFreeForumDeleteBoard');
+const $formWriteFreeComment = $('#formWriteFreeComment');
+const $writeUploadedFile = $('#writeUploadedFile');
+const $editUploadedFile = $('#editUploadedFile');
+const $detailBoardContent = $('#detailBoardContent');
+const $divEditBoardContent = $('#divEditBoardContent');
+const $aDetailBoardAttachedFile = $('#aDetailBoardAttachedFile');
+const $aEditBoardAttachedFile = $('#aEditBoardAttachedFile');
+
+function base64ToBlob(base64, mime) {
     const byteCharacters = atob(base64);
     const byteNumbers = new Array(byteCharacters.length);
     for (let i = 0; i < byteCharacters.length; i++) {
@@ -12,7 +43,7 @@ const localizer = {
     IETFLanguageTag: $('#localizerIETFLanguageTag').val()
 };
 
-$('#writeBoardContent').summernote({
+$writeBoardContent.summernote({
     height: 300,
     lang: localizer.IETFLanguageTag,
     callbacks: {
@@ -24,7 +55,7 @@ $('#writeBoardContent').summernote({
     }
 });
 
-$('#editBoardContent').summernote({
+$editBoardContent.summernote({
     height: 300,
     lang: localizer.IETFLanguageTag,
     callbacks: {
@@ -40,7 +71,7 @@ let writeUploadedFile;
 let editUploadedFile;
 
 function WriteUploadFile(obj, errorMessage) {
-    if (obj.files[0].size > 10485760) {
+    if (obj.files[0].size > maxFileSize) {
         alert(errorMessage);
         document.getElementById("writeUploadedFile").value = "";
         return false;
@@ -51,7 +82,7 @@ function WriteUploadFile(obj, errorMessage) {
 }
 
 function EditUploadFile(obj, errorMessage) {
-    if (obj.files[0].size > 10485760) {
+    if (obj.files[0].size > maxFileSize) {
         alert(errorMessage);
         document.getElementById("editUploadedFile").value = "";
         return false;
@@ -62,41 +93,40 @@ function EditUploadFile(obj, errorMessage) {
 }
 
 function SearchBoard() {
-    window.location.href = "/Forum/FreeForum?searchType=" + $('#searchType').val() + "&searchText=" + $('#btnFreeForumSearchText').val();
+    window.location.href = "/Forum/FreeForum?searchType=" + $searchType.val() + "&searchText=" + $btnFreeForumSearchText.val();
 }
 
-
 function ShowWriteBoardLoading() {
-    if (!$('#formWriteBoard').valid()) {
-        $('#loading').hide();
+    if (!$formWriteBoard.valid()) {
+        $loading.hide();
         return false;
     }
     else {
-        $('#loading').show();
+        $loading.show();
         return true;
     }
 }
 
 function ShowEditBoardLoading() {
-    if (!$('#formEditBoard').valid()) {
-        $('#loading').hide();
+    if (!$formEditBoard.valid()) {
+        $loading.hide();
         return false;
     }
     else {
-        $('#loading').show();
+        $loading.show();
         return true;
     }
 }
 
 function WriteUploadImageFile(file) {
 
-    formData = new FormData();
+    let formData = new FormData();
     formData.append("summernoteImageFile", file);
 
     $.ajax({
         url: "/Forum/UploadImageFile",
         data: formData,
-        headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
+        headers: { "RequestVerificationToken": $__RequestVerificationToken.val() },
         type: 'POST',
         enctype: 'multipart/form-data',
         processData: false,
@@ -112,7 +142,7 @@ function WriteUploadImageFile(file) {
                 imgNode.style.maxHeight = "209px";
                 imgNode.setAttribute('alt', data.filePath);
 
-                $('#writeBoardContent').summernote('insertNode', imgNode);
+                $writeBoardContent.summernote('insertNode', imgNode);
 
                 imgNode.onload = function () {
                     URL.revokeObjectURL(imgURL);
@@ -130,13 +160,13 @@ function WriteUploadImageFile(file) {
 
 function EditUploadImageFile(file) {
 
-    formData = new FormData();
+    let formData = new FormData();
     formData.append("summernoteImageFile", file);
 
     $.ajax({
         url: "/Forum/UploadImageFile",
         data: formData,
-        headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
+        headers: { "RequestVerificationToken": $__RequestVerificationToken.val() },
         type: 'POST',
         enctype: 'multipart/form-data',
         processData: false,
@@ -152,7 +182,7 @@ function EditUploadImageFile(file) {
                 imgNode.style.maxHeight = "209px";
                 imgNode.setAttribute('alt', data.filePath);
 
-                $('#editBoardContent').summernote('insertNode', imgNode);
+                $editBoardContent.summernote('insertNode', imgNode);
 
                 imgNode.onload = function () {
                     URL.revokeObjectURL(imgURL);
@@ -170,15 +200,13 @@ function EditUploadImageFile(file) {
 
 function WriteBoard() {
 
-    if (!$('#formWriteBoard').valid()) {
+    if (!$formWriteBoard.valid()) {
         return false;
     }
 
-    let createForm = $('#formWriteBoard');
-
-    let title = createForm.find('input[id="writeBoardTitle"]').val();
-    let content = createForm.find('textarea[id="writeBoardContent"]').val();
-    let locked = createForm.find('input[id="writeBoardLocked"]').is(":checked");
+    let title = $writeBoardTitle.val();
+    let content = $writeBoardContent.val();
+    let locked = $writeBoardLocked.is(":checked");
 
     let formData = new FormData();
     formData.append('Title', title);
@@ -189,7 +217,7 @@ function WriteBoard() {
     $.ajax({
         url: '/Forum/WriteFreeBoard',
         type: 'POST',
-        headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
+        headers: { "RequestVerificationToken": $__RequestVerificationToken.val() },
         dataType: 'json',
         data: formData,
         contentType: false,
@@ -201,7 +229,7 @@ function WriteBoard() {
             }
             else {
                 toastr.error(data.error);
-                $('#loading').hide();
+                $loading.hide();
             }
         }
     });
@@ -211,15 +239,13 @@ function WriteBoard() {
 
 function EditBoard(editBoardId, editCurrentPage) {
 
-    if (!$('#formEditBoard').valid()) {
+    if (!$formEditBoard.valid()) {
         return false;
     }
 
-    let createForm = $('#formEditBoard');
-
-    let title = createForm.find('input[id="editBoardTitle"]').val();
-    let content = createForm.find('textarea[id="editBoardContent"]').val();
-    let locked = createForm.find('input[id="editBoardLocked"]').is(":checked");
+    let title = $editBoardTitle.val();
+    let content = $editBoardContent.val();
+    let locked = $editBoardLocked.is(":checked");
 
     let formData = new FormData();
     formData.append('Id', editBoardId);
@@ -228,11 +254,10 @@ function EditBoard(editBoardId, editCurrentPage) {
     formData.append('Content', content);
     formData.append('UploadedFile', editUploadedFile);
 
-
     $.ajax({
         url: '/Forum/EditFreeBoard',
         type: 'POST',
-        headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
+        headers: { "RequestVerificationToken": $__RequestVerificationToken.val() },
         dataType: 'json',
         data: formData,
         contentType: false,
@@ -244,7 +269,7 @@ function EditBoard(editBoardId, editCurrentPage) {
             }
             else {
                 toastr.error(data.error);
-                $('#loading').hide();
+                $loading.hide();
             }
         }
     });
@@ -253,13 +278,13 @@ function EditBoard(editBoardId, editCurrentPage) {
 }
 
 function ConfirmDeleteBoard() {
-    $('#confirmDeleteBoardDialogModal').modal({
+    $confirmDeleteBoardDialogModal.modal({
         keyboard: false,
         backdrop: "static"
     });
 
-    $('#confirmDeleteBoardDialogModal').modal('toggle');
-    $('#confirmDeleteBoardDialogModal').modal('show');
+    $confirmDeleteBoardDialogModal.modal('toggle');
+    $confirmDeleteBoardDialogModal.modal('show');
 }
 
 function DeleteBoard(detailBoardId) {
@@ -267,7 +292,7 @@ function DeleteBoard(detailBoardId) {
     $.ajax({
         url: '/Forum/IsBoardExists' + '?id=' + detailBoardId,
         type: 'POST',
-        headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
+        headers: { "RequestVerificationToken": $__RequestVerificationToken.val() },
         dataType: 'json',
         data: null,
         contentType: 'application/json; charset=utf-8',
@@ -281,13 +306,13 @@ function DeleteBoard(detailBoardId) {
                 $.ajax({
                     url: '/Forum/DeleteBoard',
                     type: 'POST',
-                    headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
+                    headers: { "RequestVerificationToken": $__RequestVerificationToken.val() },
                     dataType: 'json',
                     data: paramValue,
                     contentType: 'application/json; charset=utf-8',
                     success: function (data) {
                         if (data.result) {
-                            $('#confirmDeleteBoardDialogModal').modal('hide');
+                            $confirmDeleteBoardDialogModal.modal('hide');
                             alert(data.message);
                             window.location.href = "/Forum/FreeForum";
                         }
@@ -306,8 +331,7 @@ function DeleteBoard(detailBoardId) {
 
 function WriteFreeComment(detailBoardId, detailCurrentPage, errorMessage) {
 
-    let createForm = $('#formWriteFreeComment');
-    let content = createForm.find('input[id="writeFreeCommentContent"]').val();
+    let content = $writeFreeCommentContent.val();
 
     if (!content) {
         alert(errorMessage);
@@ -323,7 +347,7 @@ function WriteFreeComment(detailBoardId, detailCurrentPage, errorMessage) {
     $.ajax({
         url: '/Forum/WriteFreeComment',
         type: 'POST',
-        headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
+        headers: { "RequestVerificationToken": $__RequestVerificationToken.val() },
         dataType: 'json',
         data: paramValue,
         contentType: 'application/json; charset=utf-8',
@@ -343,7 +367,7 @@ function DeleteComment(commentId, boardId, page) {
     $.ajax({
         url: '/Forum/DeleteComment' + '?id=' + commentId,
         type: 'POST',
-        headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
+        headers: { "RequestVerificationToken": $__RequestVerificationToken.val() },
         dataType: 'json',
         data: null,
         contentType: 'application/json; charset=utf-8',
@@ -358,39 +382,39 @@ function DeleteComment(commentId, boardId, page) {
     });
 }
 
-$('#btnFreeForumShowWriteBoardLoading').off('click').on('click', function () {
+$btnFreeForumShowWriteBoardLoading.off('click').on('click', function () {
     return ShowWriteBoardLoading();
 });
 
-$('#btnFreeForumModify').off('click').on('click', function () {
+$btnFreeForumModify.off('click').on('click', function () {
     location.href = $(this).attr("data-link");
 });
 
-$('#btnFreeForumConfirmDeleteBoard').off('click').on('click', function () {
+$btnFreeForumConfirmDeleteBoard.off('click').on('click', function () {
     ConfirmDeleteBoard();
 });
 
-$('#btnFreeForumList').off('click').on('click', function () {
+$btnFreeForumList.off('click').on('click', function () {
     location.href = $(this).attr("data-link");
 });
 
-$('#btnFreeForumSubmitModify').off('click').on('click', function () {
+$btnFreeForumSubmitModify.off('click').on('click', function () {
     return ShowEditBoardLoading();
 });
 
-$('#btnFreeForumWrite').off('click').on('click', function () {
+$btnFreeForumWrite.off('click').on('click', function () {
     location.href = "/Forum/FreeForum?method=write";
 });
 
-$('#btnFreeForumSearchBoard').off('click').on('click', function () {
+$btnFreeForumSearchBoard.off('click').on('click', function () {
     SearchBoard();
 });
 
-$('#btnFreeForumDeleteBoard').off('click').on('click', function () {
+$btnFreeForumDeleteBoard.off('click').on('click', function () {
     DeleteBoard($(this).attr("data-boardId"));
 });
 
-$('#btnFreeForumSearchText').off('keypress').on('keypress', function (event) {
+$btnFreeForumSearchText.off('keypress').on('keypress', function (event) {
     if (event.keyCode === 13 || event.which === 13) {
         SearchBoard();
     }
@@ -401,30 +425,30 @@ $('.aFreeForumDeleteComment').off('click').on('click', function (event) {
     DeleteComment($(this).attr("data-commentId"), $(this).attr("data-detailBoardId"), $(this).attr("data-detailCurrentPage"));
 });
 
-$('#formWriteFreeComment').off('submit').on('submit', function () {
+$formWriteFreeComment.off('submit').on('submit', function () {
     return WriteFreeComment($(this).attr("data-detailBoardId"), $(this).attr("data-detailCurrentPage"), $(this).attr("data-errorMessage"));
 });
 
-$('#formWriteBoard').off('submit').on('submit', function () {
+$formWriteBoard.off('submit').on('submit', function () {
     return WriteBoard();
 });
 
-$('#formEditBoard').off('submit').on('submit', function () {
+$formEditBoard.off('submit').on('submit', function () {
     return EditBoard($(this).attr('data-editBoardId'), $(this).attr('data-editCurrentPage'));
 });
 
-$('#writeUploadedFile').off('change').on('change', function () {
+$writeUploadedFile.off('change').on('change', function () {
     return WriteUploadFile(this, $(this).attr('data-errorMessage'));
 });
 
-$('#editUploadedFile').off('change').on('change', function () {
+$editUploadedFile.off('change').on('change', function () {
     return EditUploadFile(this, $(this).attr('data-errorMessage'));
 });
 
 $(function () {
-    if ($('#detailBoardContent').length > 0 && $('#detailBoardContent').is(":hidden")) {
+    if ($detailBoardContent.length > 0 && $detailBoardContent.is(":hidden")) {
         const parser = new DOMParser();
-        const htmlDoc = parser.parseFromString($('#detailBoardContent').html(), 'text/html');
+        const htmlDoc = parser.parseFromString($detailBoardContent.html(), 'text/html');
 
         const imgTags = htmlDoc.querySelectorAll('img[data-file]');
 
@@ -451,11 +475,11 @@ $(function () {
         });
 
         const updatedHtml = htmlDoc.body.innerHTML;
-        $('#detailBoardContent').html(updatedHtml);
-        $('#detailBoardContent').show();
-    } else if ($('#editBoardContent').length > 0 && $('#divEditBoardContent').is(":hidden")) {
+        $detailBoardContent.html(updatedHtml);
+        $detailBoardContent.show();
+    } else if ($editBoardContent.length > 0 && $divEditBoardContent.is(":hidden")) {
         const parser = new DOMParser();
-        const htmlDoc = parser.parseFromString($('#editBoardContent').summernote('code'), 'text/html');
+        const htmlDoc = parser.parseFromString($editBoardContent.summernote('code'), 'text/html');
 
         const imgTags = htmlDoc.querySelectorAll('img[data-file]');
 
@@ -482,12 +506,12 @@ $(function () {
         });
 
         const updatedHtml = htmlDoc.body.innerHTML;
-        $('#editBoardContent').summernote('code', updatedHtml);
-        $('#divEditBoardContent').show();
+        $editBoardContent.summernote('code', updatedHtml);
+        $divEditBoardContent.show();
     }
 
-    if ($('#aDetailBoardAttachedFile').length > 0) {
-        $('#aDetailBoardAttachedFile').off('click').on('click', function (event) {
+    if ($aDetailBoardAttachedFile.length > 0) {
+        $aDetailBoardAttachedFile.off('click').on('click', function (event) {
             event.preventDefault();
             let base64Data = $(this).attr('data-file');
             let contentType = $(this).attr('data-contenttype');
@@ -507,8 +531,8 @@ $(function () {
                 }
             }
         });
-    } else if ($('#aEditBoardAttachedFile').length > 0) {
-        $('#aEditBoardAttachedFile').off('click').on('click', function (event) {
+    } else if ($aEditBoardAttachedFile.length > 0) {
+        $aEditBoardAttachedFile.off('click').on('click', function (event) {
             event.preventDefault();
             let base64Data = $(this).attr('data-file');
             let contentType = $(this).attr('data-contenttype');
