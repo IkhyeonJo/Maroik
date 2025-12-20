@@ -132,7 +132,7 @@ Maroik/
 1. Configure appsettings.Production.json with domain name and mail settings
 2. Set email credentials in DBBackup.sh and UploadFileBackup.sh
 3. Copy Maroik folder to /home/ubuntu/
-4. Open ports 80, 443, 5001
+4. Open ports 80, 443
 5. Run Deploy.sh script
 
 ## Default Accounts
