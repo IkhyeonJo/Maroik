@@ -1,4 +1,4 @@
-﻿const $createIncomeTabs = $('#createIncomeTabs');
+const $createIncomeTabs = $('#createIncomeTabs');
 const $editIncomeTabs = $('#editIncomeTabs');
 const $createIncomeDate = $('#createIncomeDate');
 const $editIncomeDate = $('#editIncomeDate');
@@ -139,7 +139,7 @@ $(document).off('rowclick.Income').on('rowclick.Income', e => {
     let selectedRow = e.detail;
     let selectedRowId = selectedRow.data.Id;
 
-    let $clsGridRow = $('clsGridRow');
+    let $clsGridRow = $('.clsGridRow');
 
     $clsGridRow.each(function () {
         $(this).removeClass(selectedRowColor);
@@ -165,7 +165,7 @@ $(document).off('gridconfigure.Income').on('gridconfigure.Income', _ => {
 });
 
 $(document).off('dblclick.Income', '.clsGridRow').on('dblclick.Income', '.clsGridRow', function () {
-    $('clsGridRow').each(function () {
+    $('.clsGridRow').each(function () {
         if ($(this).attr("class").includes(selectedRowColor)) {
             EditIncomeGridRow();
         }
@@ -315,7 +315,7 @@ function EditIncomeGridRow(errorMessageSelectGridRow) {
 
     let selectedRowId = "";
 
-    $('clsGridRow').each(function () {
+    $('.clsGridRow').each(function () {
         if ($(this).attr("class").includes(selectedRowColor)) {
             selectedRowId = $(this).attr("data-id");
         }
@@ -460,7 +460,7 @@ function ConfirmDeleteIncome(errorMessageSelectGridRow) {
 
     let selectedRowId = "";
 
-    $('clsGridRow').each(function () {
+    $('.clsGridRow').each(function () {
         if ($(this).attr("class").includes(selectedRowColor)) {
             selectedRowId = $(this).attr("data-id");
         }
@@ -484,7 +484,7 @@ function DeleteIncome(errorMessageSelectGridRow) {
 
     let selectedRowId = "";
 
-    $('clsGridRow').each(function () {
+    $('.clsGridRow').each(function () {
         if ($(this).attr("class").includes(selectedRowColor)) {
             selectedRowId = $(this).attr("data-id");
         }
