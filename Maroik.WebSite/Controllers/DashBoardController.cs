@@ -1,5 +1,5 @@
-﻿using Maroik.Common.DataAccess.Contracts;
-using Maroik.Common.DataAccess.Models;
+﻿using Maroik.Core.Repository.Contracts;
+using Maroik.Core.Repository.Models;
 using Maroik.Core.Common.Extensions;
 using Maroik.Core.Common.Utilities;
 using Maroik.WebSite.Models.ViewModels.Account;

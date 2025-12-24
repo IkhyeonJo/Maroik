@@ -3,7 +3,7 @@
 @using Maroik.Core.Common.Utilities
 @using System.Text
 @using Maroik.WebSite.Utilities
-@inject Maroik.Common.DataAccess.Contracts.IAccountRepository accountRepository
+@inject Maroik.Core.Repository.Contracts.IAccountRepository accountRepository
 
 @{
     Context.Session.TryGetValue(Maroik.Core.Common.Utilities.EnumHelper.GetDescription(Maroik.Core.Common.Utilities.Session.Account), out byte[] resultByte);

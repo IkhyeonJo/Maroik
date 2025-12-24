@@ -65,9 +65,9 @@ C:\Program Files\MariaDB 10.6\data\my.ini에서
 
 # [Code First Migration]
 
-먼저 DB 깨끗이 다 지우고 [Package Manager Console] 창 띄우고 Default project를 [2.Common\Maroik.Common.DataAccess]로 맞추고 
+먼저 DB 깨끗이 다 지우고 [Package Manager Console] 창 띄우고 Default project를 [2.Common\Maroik.Core.Repository]로 맞추고 
 
-[cd .\Maroik.Common.DataAccess] 명령어를 통해 Maroik.Common.DataAccess로 이동
+[cd .\Maroik.Core.Repository] 명령어를 통해 Maroik.Core.Repository로 이동
 
 밑 코드 실행
 
@@ -92,15 +92,15 @@ dotnet ef database update
 
 # [DB First]
 
-먼저 DB 깨끗이 다 지우고 [Maroik.Common.DataAccess]에 있는 새롭게 짜여진 DB Script (_MariaDBSql_Init_Script)로 다 복원 후 [로컬 DB에 할 것!!] [그 appsettings.json도 로컬로 맞추고]
+먼저 DB 깨끗이 다 지우고 [Maroik.Core.Repository]에 있는 새롭게 짜여진 DB Script (_MariaDBSql_Init_Script)로 다 복원 후 [로컬 DB에 할 것!!] [그 appsettings.json도 로컬로 맞추고]
 
-[Package Manager Console] 창 띄우고 Default project를 [2.Common\Maroik.Common.DataAccess]로 맞추고
+[Package Manager Console] 창 띄우고 Default project를 [2.Common\Maroik.Core.Repository]로 맞추고
 
-[cd .\Maroik.Common.DataAccess] 명령어를 통해 Maroik.Common.DataAccess로 이동
+[cd .\Maroik.Core.Repository] 명령어를 통해 Maroik.Core.Repository로 이동
 
 dotnet ef dbcontext scaffold "server=localhost;port=3306;userid=root;password=***REMOVED***;database=maroik;" "Pomelo.EntityFrameworkCore.MySql" -o ./Models11 -f
 
-이 명령어를 통해 기존 모델, ApplicationDbContext것과 새롭게 생성된 모델, ApplicationDbContext 것을 비교하여 [Maroik.Common.DataAccess]에 있는 모델, ApplicationDbContext 다시 새롭게 덮어씌움
+이 명령어를 통해 기존 모델, ApplicationDbContext것과 새롭게 생성된 모델, ApplicationDbContext 것을 비교하여 [Maroik.Core.Repository]에 있는 모델, ApplicationDbContext 다시 새롭게 덮어씌움
 
 안 되면 
 https://docs.microsoft.com/en-us/aspnet/core/data/ef-mvc/migrations?view=aspnetcore-5.0#pmc

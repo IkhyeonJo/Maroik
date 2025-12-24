@@ -1,4 +1,4 @@
-﻿using Maroik.Common.DataAccess.Models;
+﻿using Maroik.Core.Repository.Models;
 using Maroik.Core.Common.Utilities;
 using Newtonsoft.Json;
 using System.Text;

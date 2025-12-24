@@ -43,7 +43,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Maroik.Common.DataAccess\Maroik.Common.DataAccess.csproj" />
+    <ProjectReference Include="..\Maroik.Core.Repository\Maroik.Core.Repository.csproj" />
     <ProjectReference Include="..\Maroik.Core.Common\Maroik.Core.Common.csproj" />
   </ItemGroup>
 

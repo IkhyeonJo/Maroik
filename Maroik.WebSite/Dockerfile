@@ -9,7 +9,7 @@ EXPOSE 443
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 COPY ["Maroik.WebSite/Maroik.WebSite.csproj", "Maroik.WebSite/"]
-COPY ["Maroik.Common.DataAccess/Maroik.Common.DataAccess.csproj", "Maroik.Common.DataAccess/"]
+COPY ["Maroik.Core.Repository/Maroik.Core.Repository.csproj", "Maroik.Core.Repository/"]
 COPY ["Maroik.Core.Common/Maroik.Core.Common.csproj", "Maroik.Core.Common/"]
 RUN dotnet restore "Maroik.WebSite/Maroik.WebSite.csproj" --disable-parallel
 COPY . .

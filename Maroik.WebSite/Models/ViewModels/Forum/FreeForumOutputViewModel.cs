@@ -1,4 +1,4 @@
-﻿using Maroik.Common.DataAccess.Models;
+﻿using Maroik.Core.Repository.Models;
 
 namespace Maroik.WebSite.Models.ViewModels.Forum;
 

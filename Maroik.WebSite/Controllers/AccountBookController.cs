@@ -1,5 +1,5 @@
-﻿using Maroik.Common.DataAccess.Contracts;
-using Maroik.Common.DataAccess.Models;
+﻿using Maroik.Core.Repository.Contracts;
+using Maroik.Core.Repository.Models;
 using Maroik.Core.Common.Extensions;
 using Maroik.Core.Common.Utilities;
 using Maroik.WebSite.Models.ViewModels.AccountBook;
@@ -10,7 +10,7 @@ using DocumentFormat.OpenXml;
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Spreadsheet;
 using System.Text;
-using Maroik.Common.DataAccess.Data;
+using Maroik.Core.Repository.Data;
 
 namespace Maroik.WebSite.Controllers;
 
