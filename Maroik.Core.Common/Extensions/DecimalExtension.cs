@@ -1,4 +1,4 @@
-﻿namespace Maroik.Common.Miscellaneous.Extensions;
+﻿namespace Maroik.Core.Common.Extensions;
 
 public static class DecimalExtension
 {

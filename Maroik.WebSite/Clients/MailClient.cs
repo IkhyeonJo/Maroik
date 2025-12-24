@@ -1,5 +1,5 @@
-using Maroik.Common.Miscellaneous.Extensions;
-using Maroik.Common.Miscellaneous.Utilities;
+using Maroik.Core.Common.Extensions;
+using Maroik.Core.Common.Utilities;
 using Maroik.WebSite.Contracts.Clients;
 using Maroik.WebSite.Models.ViewModels.Account;
 using System.Net.Mail;

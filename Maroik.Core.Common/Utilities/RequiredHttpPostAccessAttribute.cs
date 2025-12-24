@@ -1,4 +1,4 @@
-﻿namespace Maroik.Common.Miscellaneous.Utilities;
+﻿namespace Maroik.Core.Common.Utilities;
 
 [AttributeUsage(AttributeTargets.Method, AllowMultiple = true)]
 public class RequiredHttpPostAccessAttribute : Attribute

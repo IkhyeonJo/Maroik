@@ -4,8 +4,8 @@ using ImageMagick;
 using Maroik.Common.DataAccess.Contracts;
 using Maroik.Common.DataAccess.Data;
 using Maroik.Common.DataAccess.Models;
-using Maroik.Common.Miscellaneous.Extensions;
-using Maroik.Common.Miscellaneous.Utilities;
+using Maroik.Core.Common.Extensions;
+using Maroik.Core.Common.Utilities;
 using Maroik.WebSite.Contracts.Clients;
 using Maroik.WebSite.Models;
 using Maroik.WebSite.Models.ViewModels.Forum;
@@ -108,7 +108,7 @@ public class ForumController : Controller
                 await using var transaction = await _context.Database.BeginTransactionAsync();
                 try
                 {
-                    bool isAccountSessionExist = HttpContext.Session.TryGetValue(Maroik.Common.Miscellaneous.Utilities.EnumHelper.GetDescription(Maroik.Common.Miscellaneous.Utilities.Session.Account), out byte[] resultByte);
+                    bool isAccountSessionExist = HttpContext.Session.TryGetValue(Maroik.Core.Common.Utilities.EnumHelper.GetDescription(Maroik.Core.Common.Utilities.Session.Account), out byte[] resultByte);
 
                     if (isAccountSessionExist)
                     {
@@ -232,7 +232,7 @@ public class ForumController : Controller
 
                 try
                 {
-                    bool isAccountSessionExist = HttpContext.Session.TryGetValue(Maroik.Common.Miscellaneous.Utilities.EnumHelper.GetDescription(Maroik.Common.Miscellaneous.Utilities.Session.Account), out byte[] resultByte);
+                    bool isAccountSessionExist = HttpContext.Session.TryGetValue(Maroik.Core.Common.Utilities.EnumHelper.GetDescription(Maroik.Core.Common.Utilities.Session.Account), out byte[] resultByte);
 
                     if (isAccountSessionExist)
                     {
@@ -323,7 +323,7 @@ public class ForumController : Controller
         }
 
         _ = HttpContext.Session.TryGetValue(
-            Maroik.Common.Miscellaneous.Utilities.EnumHelper.GetDescription(Maroik.Common.Miscellaneous.Utilities.Session.Account),
+            Maroik.Core.Common.Utilities.EnumHelper.GetDescription(Maroik.Core.Common.Utilities.Session.Account),
             out byte[] resultByte);
 
         var loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte));
@@ -366,7 +366,7 @@ public class ForumController : Controller
             freeForumOutputViewModel.Method = method;
             #endregion
 
-            bool isAccountSessionExist = HttpContext.Session.TryGetValue(Maroik.Common.Miscellaneous.Utilities.EnumHelper.GetDescription(Maroik.Common.Miscellaneous.Utilities.Session.Account), out _); // Check if account session exists after login
+            bool isAccountSessionExist = HttpContext.Session.TryGetValue(Maroik.Core.Common.Utilities.EnumHelper.GetDescription(Maroik.Core.Common.Utilities.Session.Account), out _); // Check if account session exists after login
 
             return isAccountSessionExist ? View(freeForumOutputViewModel) : RedirectToAction("Login", "Account");
         }
@@ -394,7 +394,7 @@ public class ForumController : Controller
 
                 if (freeBoard.Locked)
                 {
-                    _ = HttpContext.Session.TryGetValue(Maroik.Common.Miscellaneous.Utilities.EnumHelper.GetDescription(Maroik.Common.Miscellaneous.Utilities.Session.Account), out byte[] resultByte); // If writer or administrator
+                    _ = HttpContext.Session.TryGetValue(Maroik.Core.Common.Utilities.EnumHelper.GetDescription(Maroik.Core.Common.Utilities.Session.Account), out byte[] resultByte); // If writer or administrator
                     Account loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)); // Get Session
 
                     if (!(loginedAccount.Nickname == freeBoard.Writer || loginedAccount.Role == Role.Admin))
@@ -508,7 +508,7 @@ public class ForumController : Controller
             {
                 Board freeBoard = freeBoards.FirstOrDefault(m => m.Id == boardId);
 
-                _ = HttpContext.Session.TryGetValue(Maroik.Common.Miscellaneous.Utilities.EnumHelper.GetDescription(Maroik.Common.Miscellaneous.Utilities.Session.Account), out byte[] resultByte);
+                _ = HttpContext.Session.TryGetValue(Maroik.Core.Common.Utilities.EnumHelper.GetDescription(Maroik.Core.Common.Utilities.Session.Account), out byte[] resultByte);
                 Account loginedAccount = await _accountRepository.GetAccountByEmailAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
 
                 if (freeBoard.Writer != loginedAccount.Nickname) // If writer and logged-in user are not the same
@@ -617,7 +617,7 @@ public class ForumController : Controller
             #region Search keyword logic
             if (searchType == "Title" && !string.IsNullOrEmpty(searchText))
             {
-                bool isAccountSessionExist = HttpContext.Session.TryGetValue(Maroik.Common.Miscellaneous.Utilities.EnumHelper.GetDescription(Maroik.Common.Miscellaneous.Utilities.Session.Account), out byte[] resultByte);
+                bool isAccountSessionExist = HttpContext.Session.TryGetValue(Maroik.Core.Common.Utilities.EnumHelper.GetDescription(Maroik.Core.Common.Utilities.Session.Account), out byte[] resultByte);
 
                 if (isAccountSessionExist) // If logged in
                 {
@@ -772,7 +772,7 @@ public class ForumController : Controller
                 await using var transaction = await _context.Database.BeginTransactionAsync();
                 try
                 {
-                    bool isAccountSessionExist = HttpContext.Session.TryGetValue(Maroik.Common.Miscellaneous.Utilities.EnumHelper.GetDescription(Maroik.Common.Miscellaneous.Utilities.Session.Account), out byte[] resultByte);
+                    bool isAccountSessionExist = HttpContext.Session.TryGetValue(Maroik.Core.Common.Utilities.EnumHelper.GetDescription(Maroik.Core.Common.Utilities.Session.Account), out byte[] resultByte);
 
                     if (isAccountSessionExist)
                     {
@@ -945,7 +945,7 @@ public class ForumController : Controller
                 }
                 else
                 {
-                    _ = HttpContext.Session.TryGetValue(Maroik.Common.Miscellaneous.Utilities.EnumHelper.GetDescription(Maroik.Common.Miscellaneous.Utilities.Session.Account), out byte[] resultByte);
+                    _ = HttpContext.Session.TryGetValue(Maroik.Core.Common.Utilities.EnumHelper.GetDescription(Maroik.Core.Common.Utilities.Session.Account), out byte[] resultByte);
                     Account loginedAccount = await _accountRepository.GetAccountByEmailAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
 
                     if ((loginedAccount.Nickname == tempFreeBoard.Writer) || loginedAccount.Role == Role.Admin) // If visitor is writer or administrator
@@ -988,7 +988,7 @@ public class ForumController : Controller
             }
             else
             {
-                _ = HttpContext.Session.TryGetValue(Maroik.Common.Miscellaneous.Utilities.EnumHelper.GetDescription(Maroik.Common.Miscellaneous.Utilities.Session.Account), out byte[] resultByte);
+                _ = HttpContext.Session.TryGetValue(Maroik.Core.Common.Utilities.EnumHelper.GetDescription(Maroik.Core.Common.Utilities.Session.Account), out byte[] resultByte);
                 Account loginedAccount = await _accountRepository.GetAccountByEmailAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
 
                 if ((loginedAccount.Nickname == boardComment.Writer) || loginedAccount.Role == Role.Admin) // If deleter is writer or administrator

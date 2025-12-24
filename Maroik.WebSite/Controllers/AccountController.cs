@@ -1,7 +1,7 @@
 ﻿using Maroik.Common.DataAccess.Contracts;
 using Maroik.Common.DataAccess.Models;
-using Maroik.Common.Miscellaneous.Extensions;
-using Maroik.Common.Miscellaneous.Utilities;
+using Maroik.Core.Common.Extensions;
+using Maroik.Core.Common.Utilities;
 using Maroik.WebSite.Contracts.Services;
 using Maroik.WebSite.Contracts.Clients;
 using Maroik.WebSite.Models.ViewModels.Account;
@@ -40,7 +40,7 @@ public class AccountController : Controller
     [HttpGet]
     public IActionResult ConsentForm()
     {
-        bool isAccountSessionExist = HttpContext.Session.TryGetValue(Maroik.Common.Miscellaneous.Utilities.EnumHelper.GetDescription(Maroik.Common.Miscellaneous.Utilities.Session.Account), out byte[] resultByte);
+        bool isAccountSessionExist = HttpContext.Session.TryGetValue(Maroik.Core.Common.Utilities.EnumHelper.GetDescription(Maroik.Core.Common.Utilities.Session.Account), out byte[] resultByte);
 
         if (isAccountSessionExist) // If logged in
         {
@@ -133,7 +133,7 @@ public class AccountController : Controller
                 tempAccount.LoginAttempt = 0;
                 await _accountRepository.UpdateAccountAsync(tempAccount);
                 tempAccount.HashedPassword = null;
-                HttpContext.Session.Set(Maroik.Common.Miscellaneous.Utilities.EnumHelper.GetDescription(Maroik.Common.Miscellaneous.Utilities.Session.Account), Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(tempAccount)));
+                HttpContext.Session.Set(Maroik.Core.Common.Utilities.EnumHelper.GetDescription(Maroik.Core.Common.Utilities.Session.Account), Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(tempAccount)));
 
                 #region DB Cache
                 return tempAccount.Role == Role.Admin
@@ -171,7 +171,7 @@ public class AccountController : Controller
     [HttpGet]
     public IActionResult Logout()
     {
-        HttpContext.Session.Remove(Maroik.Common.Miscellaneous.Utilities.EnumHelper.GetDescription(Maroik.Common.Miscellaneous.Utilities.Session.Account));
+        HttpContext.Session.Remove(Maroik.Core.Common.Utilities.EnumHelper.GetDescription(Maroik.Core.Common.Utilities.Session.Account));
         return RedirectToAction("AnonymousIndex", "DashBoard");
     }
     #endregion
@@ -180,7 +180,7 @@ public class AccountController : Controller
     [HttpGet]
     public IActionResult Register()
     {
-        bool isAccountSessionExist = HttpContext.Session.TryGetValue(Maroik.Common.Miscellaneous.Utilities.EnumHelper.GetDescription(Maroik.Common.Miscellaneous.Utilities.Session.Account), out byte[] resultByte);
+        bool isAccountSessionExist = HttpContext.Session.TryGetValue(Maroik.Core.Common.Utilities.EnumHelper.GetDescription(Maroik.Core.Common.Utilities.Session.Account), out byte[] resultByte);
 
         if (isAccountSessionExist) // If logged in
         {
@@ -522,7 +522,7 @@ public class AccountController : Controller
     [HttpGet]
     public async Task<IActionResult> ConfirmEmail(string registrationToken)
     {
-        bool isAccountSessionExist = HttpContext.Session.TryGetValue(Maroik.Common.Miscellaneous.Utilities.EnumHelper.GetDescription(Maroik.Common.Miscellaneous.Utilities.Session.Account), out byte[] resultByte);
+        bool isAccountSessionExist = HttpContext.Session.TryGetValue(Maroik.Core.Common.Utilities.EnumHelper.GetDescription(Maroik.Core.Common.Utilities.Session.Account), out byte[] resultByte);
 
         if (isAccountSessionExist) // If logged in
         {
@@ -633,7 +633,7 @@ public class AccountController : Controller
     [HttpGet]
     public IActionResult ForgotPassword()
     {
-        bool isAccountSessionExist = HttpContext.Session.TryGetValue(Maroik.Common.Miscellaneous.Utilities.EnumHelper.GetDescription(Maroik.Common.Miscellaneous.Utilities.Session.Account), out byte[] resultByte);
+        bool isAccountSessionExist = HttpContext.Session.TryGetValue(Maroik.Core.Common.Utilities.EnumHelper.GetDescription(Maroik.Core.Common.Utilities.Session.Account), out byte[] resultByte);
 
         if (isAccountSessionExist) // If logged in
         {
@@ -738,7 +738,7 @@ public class AccountController : Controller
     [HttpGet]
     public async Task<IActionResult> ResetPassword(string resetPasswordToken)
     {
-        bool isAccountSessionExist = HttpContext.Session.TryGetValue(Maroik.Common.Miscellaneous.Utilities.EnumHelper.GetDescription(Maroik.Common.Miscellaneous.Utilities.Session.Account), out byte[] resultByte);
+        bool isAccountSessionExist = HttpContext.Session.TryGetValue(Maroik.Core.Common.Utilities.EnumHelper.GetDescription(Maroik.Core.Common.Utilities.Session.Account), out byte[] resultByte);
 
         if (isAccountSessionExist) // If logged in
         {
