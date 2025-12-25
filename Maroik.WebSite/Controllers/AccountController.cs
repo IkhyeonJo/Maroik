@@ -283,7 +283,7 @@ public class AccountController : Controller
                         Subject = _localizer["Maroik Email Confirmation"].Value
                     };
                     loginInputViewModel.RegistrationToken = _rsa.Sign(loginInputViewModel.RegistrationToken); // Encrypt
-                    mail.Body = _mailClient.GetMailConfirmationBody(loginInputViewModel, _localizer["Welcome to Maroik"].Value, _localizer["Click the link below to verify your Email"].Value, _localizer["If this link does not work, please copy & paste this link to your Internet URL"].Value);
+                    mail.Body = _mailClient.GetMailConfirmationBody(loginInputViewModel.RegistrationToken, _localizer["Welcome to Maroik"].Value, _localizer["Click the link below to verify your Email"].Value, _localizer["If this link does not work, please copy & paste this link to your Internet URL"].Value);
                     mail.ToMailIds =
                     [
                         loginInputViewModel.Email
@@ -347,7 +347,7 @@ public class AccountController : Controller
                         {
                             account.RegistrationToken = GUIDToken.Generate();
                         }
-                        mail.Body = _mailClient.GetMailConfirmationBody(new LoginInputViewModel() { RegistrationToken = _rsa.Sign(account.RegistrationToken) }, _localizer["Welcome to Maroik"].Value, _localizer["Click the link below to verify your Email"].Value, _localizer["If this link does not work, please copy & paste this link to your Internet URL"].Value);
+                        mail.Body = _mailClient.GetMailConfirmationBody(_rsa.Sign(account.RegistrationToken), _localizer["Welcome to Maroik"].Value, _localizer["Click the link below to verify your Email"].Value, _localizer["If this link does not work, please copy & paste this link to your Internet URL"].Value);
                         mail.ToMailIds =
                         [
                             account.Email
@@ -444,7 +444,7 @@ public class AccountController : Controller
                         Mail mail = new()
                         {
                             Subject = _localizer["Maroik Email Confirmation"].Value,
-                            Body = _mailClient.GetMailConfirmationBody(new LoginInputViewModel() { RegistrationToken = _rsa.Sign(account.RegistrationToken) }, _localizer["Welcome to Maroik"].Value, _localizer["Click the link below to verify your Email"].Value, _localizer["If this link does not work, please copy & paste this link to your Internet URL"].Value),
+                            Body = _mailClient.GetMailConfirmationBody(_rsa.Sign(account.RegistrationToken), _localizer["Welcome to Maroik"].Value, _localizer["Click the link below to verify your Email"].Value, _localizer["If this link does not work, please copy & paste this link to your Internet URL"].Value),
                             ToMailIds =
                             [
                                 account.Email
@@ -691,7 +691,7 @@ public class AccountController : Controller
                     Mail mail = new()
                     {
                         Subject = _localizer["Maroik Reset Password"].Value,
-                        Body = _mailClient.GetMailResetPasswordBody(new LoginInputViewModel() { ResetPasswordToken = _rsa.Sign(resetPasswordToken) }, _localizer["Welcome to Maroik"].Value, _localizer["Click the link below to reset your password"].Value, _localizer["If this link does not work, please copy & paste this link to your Internet URL"].Value),
+                        Body = _mailClient.GetMailResetPasswordBody(_rsa.Sign(resetPasswordToken), _localizer["Welcome to Maroik"].Value, _localizer["Click the link below to reset your password"].Value, _localizer["If this link does not work, please copy & paste this link to your Internet URL"].Value),
                         ToMailIds =
                         [
                             account.Email

@@ -11,14 +11,14 @@ public class MailClient : IMailClient
     /// <summary>
     /// Gets the HttpBody part of account password reset email.
     /// </summary>
-    /// <param name="loginInputViewModel"></param>
+    /// <param name="registrationToken"></param>
     /// <param name="title"></param>
     /// <param name="content0"></param>
     /// <param name="content1"></param>
     /// <returns></returns>
-    public string GetMailConfirmationBody(LoginInputViewModel loginInputViewModel, string title, string content0, string content1)
+    public string GetMailConfirmationBody(string registrationToken, string title, string content0, string content1)
     {
-        string url = $"{ServerSetting.DomainName}Account/ConfirmEmail?registrationToken={Uri.EscapeDataString(loginInputViewModel.RegistrationToken)}";
+        string url = $"{ServerSetting.DomainName}Account/ConfirmEmail?registrationToken={Uri.EscapeDataString(registrationToken)}";
         return @$"<div style='text-align:center;'>
                         <h1>{title}<h1>
                         <h3>{content0}<h3>
@@ -29,14 +29,14 @@ public class MailClient : IMailClient
     /// <summary>
     /// Gets the HttpBody part of account verification email.
     /// </summary>
-    /// <param name="loginInputViewModel"></param>
+    /// <param name="resetPasswordToken"></param>
     /// <param name="title"></param>
     /// <param name="content0"></param>
     /// <param name="content1"></param>
     /// <returns></returns>
-    public string GetMailResetPasswordBody(LoginInputViewModel loginInputViewModel, string title, string content0, string content1)
+    public string GetMailResetPasswordBody(string resetPasswordToken, string title, string content0, string content1)
     {
-        string url = $"{ServerSetting.DomainName}Account/ResetPassword?resetPasswordToken={Uri.EscapeDataString(loginInputViewModel.ResetPasswordToken)}";
+        string url = $"{ServerSetting.DomainName}Account/ResetPassword?resetPasswordToken={Uri.EscapeDataString(resetPasswordToken)}";
         return @$"<div style='text-align:center;'>
                         <h1>{title}<h1>
                         <h3>{content0}<h3>
