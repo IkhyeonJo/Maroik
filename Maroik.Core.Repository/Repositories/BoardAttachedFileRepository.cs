@@ -1,6 +1,6 @@
 using Maroik.Core.Repository.Contracts;
-using Maroik.Core.Repository.Data;
-using Maroik.Core.Repository.Models;
+using Maroik.Core.PostgreSQL.Data;
+using Maroik.Core.PostgreSQL.Models;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 using System.Threading.Tasks;

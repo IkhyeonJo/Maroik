@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace Maroik.Core.Repository.Models;
+namespace Maroik.Core.PostgreSQL.Models;
 
 /// <summary>
 /// CalendarEventReminder
@@ -21,7 +21,7 @@ public partial class CalendarEventReminder
     /// <summary>
     /// Method
     /// </summary>
-    public string Method { get; set; }
+    public string? Method { get; set; }
 
     /// <summary>
     /// MinutesBeforeEvent

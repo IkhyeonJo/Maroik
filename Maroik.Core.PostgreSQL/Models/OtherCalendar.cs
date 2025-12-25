@@ -1,4 +1,4 @@
-﻿namespace Maroik.Core.Repository.Models;
+﻿namespace Maroik.Core.PostgreSQL.Models;
 
 /// <summary>
 /// OtherCalendar
@@ -8,7 +8,7 @@ public partial class OtherCalendar
     /// <summary>
     /// Account Email (ID)
     /// </summary>
-    public string AccountEmail { get; set; }
+    public string? AccountEmail { get; set; }
 
     /// <summary>
     /// Parent Calendar Id

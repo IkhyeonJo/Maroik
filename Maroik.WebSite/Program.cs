@@ -1,5 +1,5 @@
 using Maroik.Core.Repository.Contracts;
-using Maroik.Core.Repository.Data;
+using Maroik.Core.PostgreSQL.Data;
 using Maroik.Core.Repository.Repositories;
 using Maroik.Core.Common.Utilities;
 using Maroik.WebSite.Extensions;

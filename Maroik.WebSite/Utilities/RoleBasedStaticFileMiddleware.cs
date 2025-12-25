@@ -1,4 +1,4 @@
-﻿using Maroik.Core.Repository.Models;
+﻿using Maroik.Core.PostgreSQL.Models;
 using Maroik.Core.Common.Utilities;
 using Newtonsoft.Json;
 using System.Text;

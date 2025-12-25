@@ -13,6 +13,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Maroik.Core.Common", "Maroi
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Maroik.Core.Repository", "Maroik.Core.Repository\Maroik.Core.Repository.csproj", "{1C52AD3D-4A7A-1B8B-B174-45EEACCF8D48}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Maroik.Core.PostgreSQL", "Maroik.Core.PostgreSQL\Maroik.Core.PostgreSQL.csproj", "{04E38784-C17F-4A0F-8D1D-15022FF22509}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -149,6 +151,30 @@ Global
 		{1C52AD3D-4A7A-1B8B-B174-45EEACCF8D48}.Release|x64.Build.0 = Release|Any CPU
 		{1C52AD3D-4A7A-1B8B-B174-45EEACCF8D48}.Release|x86.ActiveCfg = Release|Any CPU
 		{1C52AD3D-4A7A-1B8B-B174-45EEACCF8D48}.Release|x86.Build.0 = Release|Any CPU
+		{04E38784-C17F-4A0F-8D1D-15022FF22509}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{04E38784-C17F-4A0F-8D1D-15022FF22509}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{04E38784-C17F-4A0F-8D1D-15022FF22509}.Debug|ARM.ActiveCfg = Debug|Any CPU
+		{04E38784-C17F-4A0F-8D1D-15022FF22509}.Debug|ARM.Build.0 = Debug|Any CPU
+		{04E38784-C17F-4A0F-8D1D-15022FF22509}.Debug|iPhone.ActiveCfg = Debug|Any CPU
+		{04E38784-C17F-4A0F-8D1D-15022FF22509}.Debug|iPhone.Build.0 = Debug|Any CPU
+		{04E38784-C17F-4A0F-8D1D-15022FF22509}.Debug|iPhoneSimulator.ActiveCfg = Debug|Any CPU
+		{04E38784-C17F-4A0F-8D1D-15022FF22509}.Debug|iPhoneSimulator.Build.0 = Debug|Any CPU
+		{04E38784-C17F-4A0F-8D1D-15022FF22509}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{04E38784-C17F-4A0F-8D1D-15022FF22509}.Debug|x64.Build.0 = Debug|Any CPU
+		{04E38784-C17F-4A0F-8D1D-15022FF22509}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{04E38784-C17F-4A0F-8D1D-15022FF22509}.Debug|x86.Build.0 = Debug|Any CPU
+		{04E38784-C17F-4A0F-8D1D-15022FF22509}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{04E38784-C17F-4A0F-8D1D-15022FF22509}.Release|Any CPU.Build.0 = Release|Any CPU
+		{04E38784-C17F-4A0F-8D1D-15022FF22509}.Release|ARM.ActiveCfg = Release|Any CPU
+		{04E38784-C17F-4A0F-8D1D-15022FF22509}.Release|ARM.Build.0 = Release|Any CPU
+		{04E38784-C17F-4A0F-8D1D-15022FF22509}.Release|iPhone.ActiveCfg = Release|Any CPU
+		{04E38784-C17F-4A0F-8D1D-15022FF22509}.Release|iPhone.Build.0 = Release|Any CPU
+		{04E38784-C17F-4A0F-8D1D-15022FF22509}.Release|iPhoneSimulator.ActiveCfg = Release|Any CPU
+		{04E38784-C17F-4A0F-8D1D-15022FF22509}.Release|iPhoneSimulator.Build.0 = Release|Any CPU
+		{04E38784-C17F-4A0F-8D1D-15022FF22509}.Release|x64.ActiveCfg = Release|Any CPU
+		{04E38784-C17F-4A0F-8D1D-15022FF22509}.Release|x64.Build.0 = Release|Any CPU
+		{04E38784-C17F-4A0F-8D1D-15022FF22509}.Release|x86.ActiveCfg = Release|Any CPU
+		{04E38784-C17F-4A0F-8D1D-15022FF22509}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

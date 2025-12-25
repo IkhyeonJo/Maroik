@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using Maroik.Core.Repository.Models;
+using Maroik.Core.PostgreSQL.Models;
 using Microsoft.EntityFrameworkCore;
 
-namespace Maroik.Core.Repository.Data;
+namespace Maroik.Core.PostgreSQL.Data;
 
 public partial class ApplicationDbContext : DbContext
 {

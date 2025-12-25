@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace Maroik.Core.Repository.Models;
+namespace Maroik.Core.PostgreSQL.Models;
 
 /// <summary>
 /// Category
@@ -16,32 +16,32 @@ public partial class Category
     /// <summary>
     /// Name
     /// </summary>
-    public string Name { get; set; }
+    public string? Name { get; set; }
 
     /// <summary>
     /// DisplayName
     /// </summary>
-    public string DisplayName { get; set; }
+    public string? DisplayName { get; set; }
 
     /// <summary>
     /// IconPath
     /// </summary>
-    public string IconPath { get; set; }
+    public string? IconPath { get; set; }
 
     /// <summary>
     /// Controller
     /// </summary>
-    public string Controller { get; set; }
+    public string? Controller { get; set; }
 
     /// <summary>
     /// Action
     /// </summary>
-    public string Action { get; set; }
+    public string? Action { get; set; }
 
     /// <summary>
     /// Role
     /// </summary>
-    public string Role { get; set; }
+    public string? Role { get; set; }
 
     /// <summary>
     /// Order

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace Maroik.Core.Repository.Models;
+namespace Maroik.Core.PostgreSQL.Models;
 
 /// <summary>
 /// CalendarEvent
@@ -21,12 +21,12 @@ public partial class CalendarEvent
     /// <summary>
     /// Title
     /// </summary>
-    public string Title { get; set; }
+    public string? Title { get; set; }
 
     /// <summary>
     /// Description
     /// </summary>
-    public string Description { get; set; }
+    public string? Description { get; set; }
 
     /// <summary>
     /// AllDay
@@ -46,22 +46,22 @@ public partial class CalendarEvent
     /// <summary>
     /// StartDateTimeZone (IANA TimeZone ID)
     /// </summary>
-    public string StartDateTimeZoneIanaId { get; set; }
+    public string? StartDateTimeZoneIanaId { get; set; }
 
     /// <summary>
     /// EndDateTimeZone (IANA TimeZone ID)
     /// </summary>
-    public string EndDateTimeZoneIanaId { get; set; }
+    public string? EndDateTimeZoneIanaId { get; set; }
 
     /// <summary>
     /// Location
     /// </summary>
-    public string Location { get; set; }
+    public string? Location { get; set; }
 
     /// <summary>
     /// Status
     /// </summary>
-    public string Status { get; set; }
+    public string? Status { get; set; }
 
     /// <summary>
     /// Recurrence ID (Option)

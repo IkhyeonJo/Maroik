@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace Maroik.Core.Repository.Models;
+namespace Maroik.Core.PostgreSQL.Models;
 
 /// <summary>
 /// Expenditure
@@ -16,22 +16,22 @@ public partial class Expenditure
     /// <summary>
     /// Account Email (ID)
     /// </summary>
-    public string AccountEmail { get; set; }
+    public string? AccountEmail { get; set; }
 
     /// <summary>
     /// MainClass
     /// </summary>
-    public string MainClass { get; set; }
+    public string? MainClass { get; set; }
 
     /// <summary>
     /// SubClass
     /// </summary>
-    public string SubClass { get; set; }
+    public string? SubClass { get; set; }
 
     /// <summary>
     /// Content
     /// </summary>
-    public string Content { get; set; }
+    public string? Content { get; set; }
 
     /// <summary>
     /// Amount
@@ -41,12 +41,12 @@ public partial class Expenditure
     /// <summary>
     /// PaymentMethod
     /// </summary>
-    public string PaymentMethod { get; set; }
+    public string? PaymentMethod { get; set; }
 
     /// <summary>
     /// MyDepositAsset
     /// </summary>
-    public string MyDepositAsset { get; set; }
+    public string? MyDepositAsset { get; set; }
 
     /// <summary>
     /// Created
@@ -61,7 +61,7 @@ public partial class Expenditure
     /// <summary>
     /// Note
     /// </summary>
-    public string Note { get; set; }
+    public string? Note { get; set; }
 
     public virtual Asset Asset { get; set; }
 }

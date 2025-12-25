@@ -1,5 +1,5 @@
 ﻿using Maroik.Core.Repository.Contracts;
-using Maroik.Core.Repository.Models;
+using Maroik.Core.PostgreSQL.Models;
 using Maroik.Core.Common.Extensions;
 using Maroik.Core.Common.Utilities;
 using Maroik.WebSite.Models.ViewModels.AccountBook;
@@ -10,7 +10,7 @@ using DocumentFormat.OpenXml;
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Spreadsheet;
 using System.Text;
-using Maroik.Core.Repository.Data;
+using Maroik.Core.PostgreSQL.Data;
 
 namespace Maroik.WebSite.Controllers;
 

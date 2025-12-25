@@ -1,5 +1,5 @@
 ﻿using Maroik.Core.Repository.Contracts;
-using Maroik.Core.Repository.Models;
+using Maroik.Core.PostgreSQL.Models;
 using Maroik.Core.Common.Utilities;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;

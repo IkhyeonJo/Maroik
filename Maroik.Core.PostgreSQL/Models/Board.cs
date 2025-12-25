@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace Maroik.Core.Repository.Models;
+namespace Maroik.Core.PostgreSQL.Models;
 
 /// <summary>
 /// Board
@@ -16,22 +16,22 @@ public partial class Board
     /// <summary>
     /// Type
     /// </summary>
-    public string Type { get; set; }
+    public string? Type { get; set; }
 
     /// <summary>
     /// Title
     /// </summary>
-    public string Title { get; set; }
+    public string? Title { get; set; }
 
     /// <summary>
     /// Content
     /// </summary>
-    public string Content { get; set; }
+    public string? Content { get; set; }
 
     /// <summary>
     /// Writer
     /// </summary>
-    public string Writer { get; set; }
+    public string? Writer { get; set; }
 
     /// <summary>
     /// Created

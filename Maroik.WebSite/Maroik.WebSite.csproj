@@ -43,6 +43,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Maroik.Core.PostgreSQL\Maroik.Core.PostgreSQL.csproj" />
     <ProjectReference Include="..\Maroik.Core.Repository\Maroik.Core.Repository.csproj" />
     <ProjectReference Include="..\Maroik.Core.Common\Maroik.Core.Common.csproj" />
   </ItemGroup>

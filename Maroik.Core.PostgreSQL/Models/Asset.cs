@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace Maroik.Core.Repository.Models;
+namespace Maroik.Core.PostgreSQL.Models;
 
 /// <summary>
 /// Asset
@@ -11,17 +11,17 @@ public partial class Asset
     /// <summary>
     /// ProductName
     /// </summary>
-    public string ProductName { get; set; }
+    public string? ProductName { get; set; }
 
     /// <summary>
     /// AccountEmail (ID)
     /// </summary>
-    public string AccountEmail { get; set; }
+    public string? AccountEmail { get; set; }
 
     /// <summary>
     /// Item
     /// </summary>
-    public string Item { get; set; }
+    public string? Item { get; set; }
 
     /// <summary>
     /// Amount
@@ -31,7 +31,7 @@ public partial class Asset
     /// <summary>
     /// MonetaryUnit (KRW, USD, ETC)
     /// </summary>
-    public string MonetaryUnit { get; set; }
+    public string? MonetaryUnit { get; set; }
 
     /// <summary>
     /// Created
@@ -46,7 +46,7 @@ public partial class Asset
     /// <summary>
     /// Note
     /// </summary>
-    public string Note { get; set; }
+    public string? Note { get; set; }
 
     /// <summary>
     /// Deleted

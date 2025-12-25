@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace Maroik.Core.Repository.Models;
+namespace Maroik.Core.PostgreSQL.Models;
 
 /// <summary>
 /// Calendar
@@ -16,27 +16,27 @@ public partial class Calendar
     /// <summary>
     /// AccountEmail (ID)
     /// </summary>
-    public string AccountEmail { get; set; }
+    public string? AccountEmail { get; set; }
 
     /// <summary>
     /// Name
     /// </summary>
-    public string Name { get; set; }
+    public string? Name { get; set; }
 
     /// <summary>
     /// Description
     /// </summary>
-    public string Description { get; set; }
+    public string? Description { get; set; }
 
     /// <summary>
     /// IANA TimeZone ID
     /// </summary>
-    public string TimeZoneIanaId { get; set; }
+    public string? TimeZoneIanaId { get; set; }
 
     /// <summary>
     /// HtmlColorCode
     /// </summary>
-    public string HtmlColorCode { get; set; }
+    public string? HtmlColorCode { get; set; }
 
     /// <summary>
     /// Created

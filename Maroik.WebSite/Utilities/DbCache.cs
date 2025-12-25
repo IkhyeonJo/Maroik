@@ -1,4 +1,4 @@
-using Maroik.Core.Repository.Models;
+using Maroik.Core.PostgreSQL.Models;
 
 namespace Maroik.WebSite.Utilities;
 

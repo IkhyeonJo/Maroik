@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace Maroik.Core.Repository.Models;
+namespace Maroik.Core.PostgreSQL.Models;
 
 /// <summary>
 /// BoardComment
@@ -26,17 +26,17 @@ public partial class BoardComment
     /// <summary>
     /// AvatarImagePath
     /// </summary>
-    public string AvatarImagePath { get; set; }
+    public string? AvatarImagePath { get; set; }
 
     /// <summary>
     /// Writer
     /// </summary>
-    public string Writer { get; set; }
+    public string? Writer { get; set; }
 
     /// <summary>
     /// Content
     /// </summary>
-    public string Content { get; set; }
+    public string? Content { get; set; }
 
     /// <summary>
     /// Created

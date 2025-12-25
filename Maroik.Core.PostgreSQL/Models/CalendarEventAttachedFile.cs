@@ -1,12 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace Maroik.Core.Repository.Models;
+namespace Maroik.Core.PostgreSQL.Models;
 
 /// <summary>
-/// BoardAttachedFile
+/// CalendarEventAttachedFile
 /// </summary>
-public partial class BoardAttachedFile
+public partial class CalendarEventAttachedFile
 {
     /// <summary>
     /// PK
@@ -14,9 +14,9 @@ public partial class BoardAttachedFile
     public long Id { get; set; }
 
     /// <summary>
-    /// Parent Board Id
+    /// Parent CalendarEvent Id
     /// </summary>
-    public long BoardId { get; set; }
+    public long CalendarEventId { get; set; }
 
     /// <summary>
     /// Size (Byte)
@@ -26,17 +26,17 @@ public partial class BoardAttachedFile
     /// <summary>
     /// Name
     /// </summary>
-    public string Name { get; set; }
+    public string? Name { get; set; }
 
     /// <summary>
     /// Extension
     /// </summary>
-    public string Extension { get; set; }
+    public string? Extension { get; set; }
 
     /// <summary>
     /// Path
     /// </summary>
-    public string Path { get; set; }
+    public string? Path { get; set; }
 
-    public virtual Board Board { get; set; }
+    public virtual CalendarEvent CalendarEvent { get; set; }
 }

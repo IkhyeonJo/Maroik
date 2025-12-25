@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace Maroik.Core.Repository.Models;
+namespace Maroik.Core.PostgreSQL.Models;
 
 /// <summary>
 /// Account
@@ -11,37 +11,37 @@ public partial class Account
     /// <summary>
     /// Email (ID)
     /// </summary>
-    public string Email { get; set; }
+    public string? Email { get; set; }
 
     /// <summary>
     /// HashedPassword
     /// </summary>
-    public string HashedPassword { get; set; }
+    public string? HashedPassword { get; set; }
 
     /// <summary>
     /// Nickname
     /// </summary>
-    public string Nickname { get; set; }
+    public string? Nickname { get; set; }
 
     /// <summary>
     /// AvatarImagePath
     /// </summary>
-    public string AvatarImagePath { get; set; }
+    public string? AvatarImagePath { get; set; }
 
     /// <summary>
     /// Role (Admin or User)
     /// </summary>
-    public string Role { get; set; }
+    public string? Role { get; set; }
 
     /// <summary>
     /// IANA TimeZone ID
     /// </summary>
-    public string TimeZoneIanaId { get; set; }
+    public string? TimeZoneIanaId { get; set; }
 
     /// <summary>
     /// Default monetary unit (KRW, USD, ETC)
     /// </summary>
-    public string DefaultMonetaryUnit { get; set; }
+    public string? DefaultMonetaryUnit { get; set; }
 
     /// <summary>
     /// Locked
@@ -66,12 +66,12 @@ public partial class Account
     /// <summary>
     /// RegistrationToken
     /// </summary>
-    public string RegistrationToken { get; set; }
+    public string? RegistrationToken { get; set; }
 
     /// <summary>
     /// ResetPasswordToken
     /// </summary>
-    public string ResetPasswordToken { get; set; }
+    public string? ResetPasswordToken { get; set; }
 
     /// <summary>
     /// Created
@@ -86,7 +86,7 @@ public partial class Account
     /// <summary>
     /// Message
     /// </summary>
-    public string Message { get; set; }
+    public string? Message { get; set; }
 
     /// <summary>
     /// Deleted
