@@ -10,19 +10,14 @@ Maroik is a modern web application built with ASP.NET Core MVC, featuring a comp
 ### 1. Personal Finance Management
 - Expense tracking and categorization
 - Income recording
-- Budget management
 - Financial reports and analytics
-- Export to CSV/Excel
+- Export to Excel
 
 ### 2. Calendar and Schedule Management
-- Daily/Weekly/Monthly calendar view
+- Monthly calendar view
 - Event creation and management
-- Recurring events support
-- Calendar sharing between users
-- Event reminders
 
 ### 3. Bulletin Board System
-- Multiple board categories
 - Post creation, editing, and deletion
 - Comment system
 - File attachments
@@ -33,12 +28,10 @@ Maroik is a modern web application built with ASP.NET Core MVC, featuring a comp
 - User profile management
 - Session-based authentication
 - Password management
-- Login activity tracking
 
 ### 5. Admin Dashboard
 - User management
 - System settings
-- Backup management
 - Log monitoring
 - Analytics dashboard
 
@@ -69,10 +62,6 @@ Maroik is a modern web application built with ASP.NET Core MVC, featuring a comp
   - Session Authentication
   - Role-based access control
 - Cross-Origin Resource Sharing (CORS)
-- API Documentation
-  - Swagger/OpenAPI
-  - API Explorer
-  - API versioning support
 
 ### Frontend
 - AdminLTE 3
