@@ -98,5 +98,5 @@ public partial class Account
     public virtual ICollection<Calendar> Calendars { get; set; } = new List<Calendar>();
 
     public virtual ICollection<Calendar> CalendarsNavigation { get; set; } = new List<Calendar>();
-    public virtual ICollection<OtherCalendar> OtherCalendars { get; set; }
+    public virtual ICollection<OtherCalendar> OtherCalendars { get; set; } = new List<OtherCalendar>();
 }

@@ -53,7 +53,7 @@ public partial class Asset
     /// </summary>
     public bool Deleted { get; set; }
 
-    public virtual Account AccountEmailNavigation { get; set; }
+    public virtual Account AccountEmailNavigation { get; set; } = new Account();
 
     public virtual ICollection<Expenditure> Expenditures { get; set; } = new List<Expenditure>();
 

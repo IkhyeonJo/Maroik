@@ -63,5 +63,5 @@ public partial class Expenditure
     /// </summary>
     public string? Note { get; set; }
 
-    public virtual Asset Asset { get; set; }
+    public virtual Asset Asset { get; set; } = new Asset();
 }

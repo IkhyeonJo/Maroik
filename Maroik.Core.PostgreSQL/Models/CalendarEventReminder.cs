@@ -48,5 +48,5 @@ public partial class CalendarEventReminder
     /// </summary>
     public TimeOnly? TimesBeforeEvent { get; set; }
 
-    public virtual CalendarEvent CalendarEvent { get; set; }
+    public virtual CalendarEvent CalendarEvent { get; set; } = new CalendarEvent();
 }
