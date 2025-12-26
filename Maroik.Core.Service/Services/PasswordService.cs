@@ -1,6 +1,6 @@
-using Maroik.WebSite.Contracts.Services;
+using Maroik.Core.Service.Contracts;
 
-namespace Maroik.WebSite.Services;
+namespace Maroik.Core.Service.Services;
 
 public class PasswordService : IPasswordService
 {
