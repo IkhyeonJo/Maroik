@@ -32,7 +32,6 @@ Maroik is a modern web application built with ASP.NET Core MVC, featuring a comp
 ### 5. Admin Dashboard
 - User management
 - System settings
-- Log monitoring
 - Analytics dashboard
 
 ## Technologies Used
