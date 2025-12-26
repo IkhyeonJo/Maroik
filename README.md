@@ -155,5 +155,4 @@ For issues and questions, please use the GitHub issue tracker.
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## Special Notes
-- All backup files are automatically sent via email and can overwrite upload folders and SQL script folders when needed.
 - Mail account configuration is required for deployment.
