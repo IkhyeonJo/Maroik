@@ -38,5 +38,5 @@ public partial class BoardAttachedFile
     /// </summary>
     public string? Path { get; set; }
 
-    public virtual Board Board { get; set; }
+    public virtual Board? Board { get; set; }
 }

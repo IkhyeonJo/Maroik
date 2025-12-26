@@ -48,5 +48,5 @@ public partial class BoardComment
     /// </summary>
     public bool Deleted { get; set; }
 
-    public virtual Board Board { get; set; }
+    public virtual Board? Board { get; set; }
 }

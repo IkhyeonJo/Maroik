@@ -48,5 +48,5 @@ public partial class SubCategory
     /// </summary>
     public long Order { get; set; }
 
-    public virtual Category Category { get; set; }
+    public virtual Category? Category { get; set; }
 }

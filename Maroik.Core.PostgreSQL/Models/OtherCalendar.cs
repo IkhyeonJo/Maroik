@@ -15,7 +15,7 @@ public partial class OtherCalendar
     /// </summary>
     public long CalendarId { get; set; }
 
-    public virtual Account Account { get; set; }
+    public virtual Account? Account { get; set; }
 
-    public virtual Calendar Calendar { get; set; }
+    public virtual Calendar? Calendar { get; set; }
 }

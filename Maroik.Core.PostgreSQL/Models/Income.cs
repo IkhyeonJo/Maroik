@@ -58,5 +58,5 @@ public partial class Income
     /// </summary>
     public string? Note { get; set; }
 
-    public virtual Asset Asset { get; set; }
+    public virtual Asset? Asset { get; set; }
 }

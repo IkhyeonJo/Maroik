@@ -78,5 +78,5 @@ public partial class FixedIncome
     /// </summary>
     public bool Unpunctuality { get; set; }
 
-    public virtual Asset Asset { get; set; }
+    public virtual Asset? Asset { get; set; }
 }
