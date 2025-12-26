@@ -1,27 +1,18 @@
-﻿using Maroik.WebSite.Contracts.Clients;
+﻿using Maroik.Core.Client.Contracts;
 using System.Net;
 using System.Net.Sockets;
 
-namespace Maroik.WebSite.Clients;
+namespace Maroik.Core.Client.Clients;
 
 public class ClamavClient : IClamavClient
 {
-    private readonly string _clamavHost;
-    private readonly int _clamavPort;
-
-    public ClamavClient(IConfiguration configuration)
-    {
-        _clamavHost = configuration["Clamav:Host"] ?? throw new ArgumentNullException("Clamav:Host");
-        _clamavPort = configuration.GetValue<int>("Clamav:Port");
-    }
-
-    public async Task<bool> ScanWithClamavAsync(Stream fileStream)
+    public async Task<bool> ScanWithClamavAsync(Stream fileStream, string clamavHost, int clamavPort)
     {
         try
         {
             fileStream.Position = 0;
 
-            using var client = new TcpClient(_clamavHost, _clamavPort);
+            using var client = new TcpClient(clamavHost, clamavPort);
             using var stream = client.GetStream();
             using var writer = new StreamWriter(stream, leaveOpen: true) { AutoFlush = true };
 

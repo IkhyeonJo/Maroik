@@ -19,4 +19,7 @@ public static class ServerSetting
     public static string? RSAPrivateKey { get; set; }
     public static string? RSAPublicKey { get; set; }
     public static RSAType RSAAlgorithm { get; set; }
+    public static string? ClamavHost { get; set; }
+    public static int ClamavPort { get; set; }
+    public static string? FileStorageBaseUrl { get; set; }
 }

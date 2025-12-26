@@ -10,7 +10,7 @@ using Maroik.Core.PostgreSQL.Models;
 using Maroik.Core.Common.Extensions;
 using Maroik.Core.Common.Utilities;
 using Maroik.Core.Service.Contracts;
-using Maroik.WebSite.Contracts.Clients;
+using Maroik.Core.Client.Contracts;
 using Maroik.WebSite.Models;
 using Maroik.WebSite.Models.ViewModels.Management;
 using Microsoft.AspNetCore.Mvc;
@@ -125,7 +125,7 @@ public class ManagementController : Controller
         await file.CopyToAsync(memoryStream);
         memoryStream.Position = 0;
 
-        if (!await _clamavClient.ScanWithClamavAsync(memoryStream))
+        if (!await _clamavClient.ScanWithClamavAsync(memoryStream, ServerSetting.ClamavHost, ServerSetting.ClamavPort))
         {
             return BadRequest("File may be infected with a virus.");
         }
@@ -1885,7 +1885,7 @@ public class ManagementController : Controller
                                     $"{guid}{Path.GetExtension(boardInputViewModel.UploadedFile.FileName)}";
                                 string filePath = Path.Combine(boardAttachedFilePath, attachedFile);
 
-                                _ = await _fileClient.UploadAsync(boardInputViewModel.UploadedFile, filePath);
+                                _ = await _fileClient.UploadAsync(boardInputViewModel.UploadedFile, filePath, ServerSetting.FileStorageBaseUrl);
 
                                 await _boardAttachedFileRepository.SaveBoardAttachedFileAsync(
                                     new BoardAttachedFile()
@@ -2089,11 +2089,11 @@ public class ManagementController : Controller
         string imageFile = $"{Guid.NewGuid():N}{ext}";
         string filePath = Path.Combine(summernoteImagePath, imageFile);
 
-        var uploadResult = await _fileClient.UploadAsync(summernoteImageFile, filePath);
+        var uploadResult = await _fileClient.UploadAsync(summernoteImageFile, filePath, ServerSetting.FileStorageBaseUrl);
 
         if (uploadResult)
         {
-            var fileStream = await _fileClient.DownloadAsync(filePath);
+            var fileStream = await _fileClient.DownloadAsync(filePath, ServerSetting.FileStorageBaseUrl);
             return Ok(new
             {
                 result = true,
@@ -2187,7 +2187,7 @@ public class ManagementController : Controller
                     string filePath = imgTag.GetAttributeValue("alt", "");
 
                     // Method to download file
-                    byte[] fileData = await _fileClient.DownloadAsync(filePath);
+                    byte[] fileData = await _fileClient.DownloadAsync(filePath, ServerSetting.FileStorageBaseUrl);
 
                     if (fileData != null)
                     {
@@ -2233,7 +2233,7 @@ public class ManagementController : Controller
                                           ""))
                 {
                     byte[] fileData = await _fileClient.DownloadAsync(
-                        privateNoteOutputViewModel?.BoardOutputViewModel?.BoardAttachedFilePath ?? "");
+                        privateNoteOutputViewModel?.BoardOutputViewModel?.BoardAttachedFilePath ?? "", ServerSetting.FileStorageBaseUrl);
 
                     if (fileData != null)
                     {
@@ -2311,7 +2311,7 @@ public class ManagementController : Controller
                     string filePath = imgTag.GetAttributeValue("alt", "");
 
                     // Method to download file
-                    byte[] fileData = await _fileClient.DownloadAsync(filePath);
+                    byte[] fileData = await _fileClient.DownloadAsync(filePath, ServerSetting.FileStorageBaseUrl);
 
                     if (fileData != null)
                     {
@@ -2358,7 +2358,7 @@ public class ManagementController : Controller
                                           ""))
                 {
                     byte[] fileData = await _fileClient.DownloadAsync(
-                        privateNoteOutputViewModel?.BoardOutputViewModel?.BoardAttachedFilePath ?? "");
+                        privateNoteOutputViewModel?.BoardOutputViewModel?.BoardAttachedFilePath ?? "", ServerSetting.FileStorageBaseUrl);
 
                     if (fileData != null)
                     {
@@ -2675,7 +2675,7 @@ public class ManagementController : Controller
                                     $"{guid}{Path.GetExtension(boardInputViewModel.UploadedFile.FileName)}";
                                 string filePath = Path.Combine(boardAttachedFilePath, attachedFile);
 
-                                _ = await _fileClient.UploadAsync(boardInputViewModel.UploadedFile, filePath);
+                                _ = await _fileClient.UploadAsync(boardInputViewModel.UploadedFile, filePath, ServerSetting.FileStorageBaseUrl);
 
                                 previousBoardAttachedFile.Size =
                                     Convert.ToInt32(boardInputViewModel.UploadedFile.Length);
@@ -2748,7 +2748,7 @@ public class ManagementController : Controller
                                     $"{guid}{Path.GetExtension(boardInputViewModel.UploadedFile.FileName)}";
                                 string filePath = Path.Combine(boardAttachedFilePath, attachedFile);
 
-                                _ = await _fileClient.UploadAsync(boardInputViewModel.UploadedFile, filePath);
+                                _ = await _fileClient.UploadAsync(boardInputViewModel.UploadedFile, filePath, ServerSetting.FileStorageBaseUrl);
 
                                 await _boardAttachedFileRepository.SaveBoardAttachedFileAsync(
                                     new BoardAttachedFile()

@@ -6,7 +6,7 @@ using Maroik.Core.PostgreSQL.Data;
 using Maroik.Core.PostgreSQL.Models;
 using Maroik.Core.Common.Extensions;
 using Maroik.Core.Common.Utilities;
-using Maroik.WebSite.Contracts.Clients;
+using Maroik.Core.Client.Contracts;
 using Maroik.WebSite.Models;
 using Maroik.WebSite.Models.ViewModels.Forum;
 using Microsoft.AspNetCore.Mvc;
@@ -161,7 +161,7 @@ public class ForumController : Controller
                                 string boardAttachedFile = $"{guid}{Path.GetExtension(boardInputViewModel.UploadedFile.FileName)}";
                                 string filePath = Path.Combine(boardAttachedFilePath, boardAttachedFile);
 
-                                _ = await _fileClient.UploadAsync(boardInputViewModel.UploadedFile, filePath);
+                                _ = await _fileClient.UploadAsync(boardInputViewModel.UploadedFile, filePath, ServerSetting.FileStorageBaseUrl);
 
                                 await _boardAttachedFileRepository.SaveBoardAttachedFileAsync(new BoardAttachedFile()
                                 {
@@ -332,11 +332,11 @@ public class ForumController : Controller
         string imageFile = $"{Guid.NewGuid():N}{ext}";
         string filePath = Path.Combine(summernoteImagePath, imageFile);
 
-        var uploadResult = await _fileClient.UploadAsync(summernoteImageFile, filePath);
+        var uploadResult = await _fileClient.UploadAsync(summernoteImageFile, filePath, ServerSetting.FileStorageBaseUrl);
 
         if (uploadResult)
         {
-            var fileStream = await _fileClient.DownloadAsync(filePath);
+            var fileStream = await _fileClient.DownloadAsync(filePath, ServerSetting.FileStorageBaseUrl);
             return Ok(new
             {
                 result = true,
@@ -418,7 +418,7 @@ public class ForumController : Controller
                     string filePath = imgTag.GetAttributeValue("alt", "");
 
                     // Method to download file
-                    byte[] fileData = await _fileClient.DownloadAsync(filePath);
+                    byte[] fileData = await _fileClient.DownloadAsync(filePath, ServerSetting.FileStorageBaseUrl);
 
                     if (fileData != null)
                     {
@@ -460,7 +460,7 @@ public class ForumController : Controller
 
                 if (!string.IsNullOrEmpty(freeForumOutputViewModel?.BoardOutputViewModel?.BoardAttachedFilePath ?? ""))
                 {
-                    byte[] fileData = await _fileClient.DownloadAsync(freeForumOutputViewModel?.BoardOutputViewModel?.BoardAttachedFilePath ?? "");
+                    byte[] fileData = await _fileClient.DownloadAsync(freeForumOutputViewModel?.BoardOutputViewModel?.BoardAttachedFilePath ?? "", ServerSetting.FileStorageBaseUrl);
 
                     if (fileData != null)
                     {
@@ -529,7 +529,7 @@ public class ForumController : Controller
                     string filePath = imgTag.GetAttributeValue("alt", "");
 
                     // Method to download file
-                    byte[] fileData = await _fileClient.DownloadAsync(filePath);
+                    byte[] fileData = await _fileClient.DownloadAsync(filePath, ServerSetting.FileStorageBaseUrl);
 
                     if (fileData != null)
                     {
@@ -572,7 +572,7 @@ public class ForumController : Controller
 
                 if (!string.IsNullOrEmpty(freeForumOutputViewModel?.BoardOutputViewModel?.BoardAttachedFilePath ?? ""))
                 {
-                    byte[] fileData = await _fileClient.DownloadAsync(freeForumOutputViewModel?.BoardOutputViewModel?.BoardAttachedFilePath ?? "");
+                    byte[] fileData = await _fileClient.DownloadAsync(freeForumOutputViewModel?.BoardOutputViewModel?.BoardAttachedFilePath ?? "", ServerSetting.FileStorageBaseUrl);
 
                     if (fileData != null)
                     {
@@ -814,7 +814,7 @@ public class ForumController : Controller
                                 string boardAttachedFile = $"{guid}{Path.GetExtension(boardInputViewModel.UploadedFile.FileName)}";
                                 string filePath = Path.Combine(boardAttachedFilePath, boardAttachedFile);
 
-                                _ = await _fileClient.UploadAsync(boardInputViewModel.UploadedFile, filePath);
+                                _ = await _fileClient.UploadAsync(boardInputViewModel.UploadedFile, filePath, ServerSetting.FileStorageBaseUrl);
 
                                 previousBoardAttachedFile.Size = Convert.ToInt32(boardInputViewModel.UploadedFile.Length);
                                 previousBoardAttachedFile.Name = Path.GetFileNameWithoutExtension(boardInputViewModel.UploadedFile.FileName);
@@ -860,7 +860,7 @@ public class ForumController : Controller
                                 string boardAttachedFile = $"{guid}{Path.GetExtension(boardInputViewModel.UploadedFile.FileName)}";
                                 string filePath = Path.Combine(boardAttachedFilePath, boardAttachedFile);
 
-                                _ = await _fileClient.UploadAsync(boardInputViewModel.UploadedFile, filePath);
+                                _ = await _fileClient.UploadAsync(boardInputViewModel.UploadedFile, filePath, ServerSetting.FileStorageBaseUrl);
 
                                 await _boardAttachedFileRepository.SaveBoardAttachedFileAsync(new BoardAttachedFile()
                                 {

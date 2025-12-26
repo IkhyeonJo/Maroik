@@ -9,8 +9,11 @@ EXPOSE 443
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 COPY ["Maroik.WebSite/Maroik.WebSite.csproj", "Maroik.WebSite/"]
-COPY ["Maroik.Core.Repository/Maroik.Core.Repository.csproj", "Maroik.Core.Repository/"]
 COPY ["Maroik.Core.Common/Maroik.Core.Common.csproj", "Maroik.Core.Common/"]
+COPY ["Maroik.Core.PostgreSQL/Maroik.Core.PostgreSQL.csproj", "Maroik.Core.PostgreSQL/"]
+COPY ["Maroik.Core.Repository/Maroik.Core.Repository.csproj", "Maroik.Core.Repository/"]
+COPY ["Maroik.Core.Client/Maroik.Core.Client.csproj", "Maroik.Core.Client/"]
+COPY ["Maroik.Core.Service/Maroik.Core.Service.csproj", "Maroik.Core.Service/"]
 RUN dotnet restore "Maroik.WebSite/Maroik.WebSite.csproj" --disable-parallel
 COPY . .
 WORKDIR "/src/Maroik.WebSite"

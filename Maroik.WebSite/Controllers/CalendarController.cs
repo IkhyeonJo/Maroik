@@ -6,7 +6,7 @@ using Maroik.Core.PostgreSQL.Data;
 using Maroik.Core.PostgreSQL.Models;
 using Maroik.Core.Common.Extensions;
 using Maroik.Core.Common.Utilities;
-using Maroik.WebSite.Contracts.Clients;
+using Maroik.Core.Client.Contracts;
 using Maroik.WebSite.Models.ViewModels.Calendar;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Localization;
@@ -315,7 +315,7 @@ public class CalendarController : Controller
                                 string calendarEventAttachedFile = $"{guid}{Path.GetExtension(calendarEventInputViewModel.CalendarEventUploadedFile.FileName)}";
                                 string filePath = Path.Combine(calendarEventAttachedFilePath, calendarEventAttachedFile);
 
-                                _ = await _fileClient.UploadAsync(calendarEventInputViewModel.CalendarEventUploadedFile, filePath);
+                                _ = await _fileClient.UploadAsync(calendarEventInputViewModel.CalendarEventUploadedFile, filePath, ServerSetting.FileStorageBaseUrl);
 
                                 await _calendarEventAttachedFileRepository.SaveCalendarEventAttachedFileAsync(new CalendarEventAttachedFile()
                                 {
@@ -436,11 +436,11 @@ public class CalendarController : Controller
         string imageFile = $"{Guid.NewGuid():N}{ext}";
         string filePath = Path.Combine(summernoteImagePath, imageFile);
 
-        var uploadResult = await _fileClient.UploadAsync(summernoteImageFile, filePath);
+        var uploadResult = await _fileClient.UploadAsync(summernoteImageFile, filePath, ServerSetting.FileStorageBaseUrl);
 
         if (uploadResult)
         {
-            var fileStream = await _fileClient.DownloadAsync(filePath);
+            var fileStream = await _fileClient.DownloadAsync(filePath, ServerSetting.FileStorageBaseUrl);
             return Ok(new
             {
                 result = true,
@@ -1296,7 +1296,7 @@ public class CalendarController : Controller
                         string filePath = imgTag.GetAttributeValue("alt", "");
 
                         // Method to download file
-                        byte[] fileData = await _fileClient.DownloadAsync(filePath);
+                        byte[] fileData = await _fileClient.DownloadAsync(filePath, ServerSetting.FileStorageBaseUrl);
 
                         if (fileData != null)
                         {
@@ -1442,7 +1442,7 @@ public class CalendarController : Controller
 
                     if (!string.IsNullOrEmpty(calendarEvent?.CalendarEventAttachedFile?.Path ?? ""))
                     {
-                        byte[] fileData = await _fileClient.DownloadAsync(calendarEvent?.CalendarEventAttachedFile?.Path ?? "");
+                        byte[] fileData = await _fileClient.DownloadAsync(calendarEvent?.CalendarEventAttachedFile?.Path ?? "", ServerSetting.FileStorageBaseUrl);
 
                         if (fileData != null)
                         {
@@ -1559,7 +1559,7 @@ public class CalendarController : Controller
                         string filePath = imgTag.GetAttributeValue("alt", "");
 
                         // Method to download file
-                        byte[] fileData = await _fileClient.DownloadAsync(filePath);
+                        byte[] fileData = await _fileClient.DownloadAsync(filePath, ServerSetting.FileStorageBaseUrl);
 
                         if (fileData != null)
                         {
@@ -1705,7 +1705,7 @@ public class CalendarController : Controller
 
                     if (!string.IsNullOrEmpty(calendarEvent?.CalendarEventAttachedFile?.Path ?? ""))
                     {
-                        byte[] fileData = await _fileClient.DownloadAsync(calendarEvent?.CalendarEventAttachedFile?.Path ?? "");
+                        byte[] fileData = await _fileClient.DownloadAsync(calendarEvent?.CalendarEventAttachedFile?.Path ?? "", ServerSetting.FileStorageBaseUrl);
 
                         if (fileData != null)
                         {
@@ -2375,7 +2375,7 @@ public class CalendarController : Controller
                                 string calendarEventAttachedFile = $"{guid}{Path.GetExtension(calendarEventInputViewModel.CalendarEventUploadedFile.FileName)}";
                                 string filePath = Path.Combine(calendarEventAttachedFilePath, calendarEventAttachedFile);
 
-                                _ = await _fileClient.UploadAsync(calendarEventInputViewModel.CalendarEventUploadedFile, filePath);
+                                _ = await _fileClient.UploadAsync(calendarEventInputViewModel.CalendarEventUploadedFile, filePath, ServerSetting.FileStorageBaseUrl);
 
                                 await _calendarEventAttachedFileRepository.SaveCalendarEventAttachedFileAsync(new CalendarEventAttachedFile()
                                 {
