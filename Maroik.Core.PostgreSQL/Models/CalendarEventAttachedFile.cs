@@ -38,5 +38,5 @@ public partial class CalendarEventAttachedFile
     /// </summary>
     public string? Path { get; set; }
 
-    public virtual CalendarEvent CalendarEvent { get; set; } = new CalendarEvent();
+    public virtual CalendarEvent CalendarEvent { get; set; }
 }

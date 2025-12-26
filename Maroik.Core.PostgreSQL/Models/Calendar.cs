@@ -48,12 +48,12 @@ public partial class Calendar
     /// </summary>
     public DateTime Updated { get; set; }
 
-    public virtual Account AccountEmailNavigation { get; set; } = new Account();
+    public virtual Account AccountEmailNavigation { get; set; }
 
     public virtual ICollection<CalendarEvent> CalendarEvents { get; set; } = new List<CalendarEvent>();
 
-    public virtual CalendarShared CalendarShared { get; set; } = new CalendarShared();
+    public virtual CalendarShared CalendarShared { get; set; }
 
     public virtual ICollection<Account> AccountEmails { get; set; } = new List<Account>();
-    public virtual ICollection<OtherCalendar> OtherCalendars { get; set; } = new List<OtherCalendar>();
+    public virtual ICollection<OtherCalendar> OtherCalendars { get; set; }
 }

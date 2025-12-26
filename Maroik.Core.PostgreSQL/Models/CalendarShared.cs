@@ -23,5 +23,5 @@ public partial class CalendarShared
     /// </summary>
     public bool Anonymous { get; set; }
 
-    public virtual Calendar Calendar { get; set; } = new Calendar();
+    public virtual Calendar Calendar { get; set; }
 }

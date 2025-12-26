@@ -83,5 +83,5 @@ public partial class FixedExpenditure
     /// </summary>
     public bool Unpunctuality { get; set; }
 
-    public virtual Asset Asset { get; set; } = new Asset();
+    public virtual Asset Asset { get; set; }
 }
