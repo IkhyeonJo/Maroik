@@ -39,7 +39,6 @@ Maroik is a modern web application built with ASP.NET Core MVC, featuring a comp
 
 ### Backend
 - ASP.NET Core MVC 10.0
-  - Minimal APIs
   - Hot Reload
   - Improved performance
   - Enhanced routing
@@ -49,11 +48,6 @@ Maroik is a modern web application built with ASP.NET Core MVC, featuring a comp
   - Improved query performance
   - Better async support
   - Enhanced change tracking
-- RESTful API
-  - OpenAPI/Swagger integration
-  - API versioning
-  - Rate limiting
-  - Request validation
 - Docker
   - Multi-stage builds
   - Container orchestration
