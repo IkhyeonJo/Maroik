@@ -593,7 +593,7 @@ public class ForumController : Controller
 
                 return View(freeForumOutputViewModel);
             }
-            catch (Exception ex)
+            catch
             {
                 return RedirectToAction("FreeForum", "Forum");
             }
