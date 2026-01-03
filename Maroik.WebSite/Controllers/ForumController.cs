@@ -239,7 +239,7 @@ public class ForumController : Controller
                         Account loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)); // Get Session
 
                         IEnumerable<Board> freeForumBoards = await _boardRepository.GetOneTypeBoardsAsync(EnumHelper.GetDescription(BoardType.FreeForum));
-                        freeForumBoards = freeForumBoards.Where(m => m.Writer == loginedAccount.Nickname).Where(m => m.Deleted == false).OrderByDescending(a => a.Id);
+                        freeForumBoards = freeForumBoards.Where(m => m.Deleted == false).OrderByDescending(a => a.Id);
                         Board freeForumBoard = freeForumBoards.FirstOrDefault(m => m.Id == boardCommentInputViewModel.BoardId);
 
                         if (freeForumBoard.Id != boardCommentInputViewModel.BoardId)
@@ -593,7 +593,7 @@ public class ForumController : Controller
 
                 return View(freeForumOutputViewModel);
             }
-            catch
+            catch (Exception ex)
             {
                 return RedirectToAction("FreeForum", "Forum");
             }
