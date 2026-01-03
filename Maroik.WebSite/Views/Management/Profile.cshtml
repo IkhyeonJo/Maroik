@@ -1,12 +1,12 @@
 ﻿@model Maroik.WebSite.Models.ViewModels.Management.ProfileOutputViewModel
 @using Newtonsoft.Json
-@using Maroik.Common.Miscellaneous.Utilities
+@using Maroik.Core.Common.Utilities
 @using System.Text
 @using Maroik.WebSite.Utilities
-@inject Maroik.Common.DataAccess.Contracts.IAccountRepository accountRepository
+@inject Maroik.Core.Repository.Contracts.IAccountRepository accountRepository
 
 @{
-    Context.Session.TryGetValue(Maroik.Common.Miscellaneous.Utilities.EnumHelper.GetDescription(Maroik.Common.Miscellaneous.Utilities.Session.Account), out byte[] resultByte);
+    Context.Session.TryGetValue(Maroik.Core.Common.Utilities.EnumHelper.GetDescription(Maroik.Core.Common.Utilities.Session.Account), out byte[] resultByte);
 
     Account loginedAccount = await accountRepository.GetAccountByEmailAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
 }

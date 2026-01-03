@@ -1,12 +1,12 @@
-using Maroik.Common.DataAccess.Contracts;
-using Maroik.Common.DataAccess.Data;
-using Maroik.Common.DataAccess.Repositories;
-using Maroik.Common.Miscellaneous.Utilities;
+using Maroik.Core.Repository.Contracts;
+using Maroik.Core.PostgreSQL.Data;
+using Maroik.Core.Repository.Repositories;
+using Maroik.Core.Common.Utilities;
 using Maroik.WebSite.Extensions;
-using Maroik.WebSite.Contracts.Services;
-using Maroik.WebSite.Contracts.Clients;
-using Maroik.WebSite.Clients;
-using Maroik.WebSite.Services;
+using Maroik.Core.Service.Contracts;
+using Maroik.Core.Service.Services;
+using Maroik.Core.Client.Contracts;
+using Maroik.Core.Client.Clients;
 using Maroik.WebSite.Utilities;
 using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.CookiePolicy;
@@ -53,6 +53,9 @@ ServerSetting.RSAPrivateKey = builder.Configuration.GetSection("ServerSetting")[
 ServerSetting.RSAPublicKey = builder.Configuration.GetSection("ServerSetting")["RSAPublicKey"];
 string rsaAlgorithmString = builder.Configuration.GetSection("ServerSetting")["RSAAlgorithm"] ?? "RSA2";
 ServerSetting.RSAAlgorithm = Enum.TryParse<RSAType>(rsaAlgorithmString, out var rsaType) ? rsaType : RSAType.RSA2;
+ServerSetting.ClamavHost = builder.Configuration.GetSection("Clamav")["Host"];
+ServerSetting.ClamavPort = Convert.ToInt32(builder.Configuration.GetSection("Clamav")["Port"]);
+ServerSetting.FileStorageBaseUrl = builder.Configuration.GetSection("FileStorage")["BaseUrl"];
 #endregion
 
 #region AddDbContext

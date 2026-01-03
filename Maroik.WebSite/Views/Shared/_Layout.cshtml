@@ -1,13 +1,13 @@
 ﻿@using Newtonsoft.Json
 @using System.Text
 @using Maroik.WebSite.Utilities
-@using Maroik.Common.Miscellaneous.Utilities
-@inject Maroik.Common.DataAccess.Contracts.IAccountRepository accountRepository
+@using Maroik.Core.Common.Utilities
+@inject Maroik.Core.Repository.Contracts.IAccountRepository accountRepository
 
 @{
     string returnUri = string.IsNullOrWhiteSpace(Context.Request.Path) ? "/" :
     $"{Context.Request.Path.Value}{Context.Request.QueryString}";
-    Context.Session.TryGetValue(Maroik.Common.Miscellaneous.Utilities.EnumHelper.GetDescription(Maroik.Common.Miscellaneous.Utilities.Session.Account), out byte[] resultByte);
+    Context.Session.TryGetValue(Maroik.Core.Common.Utilities.EnumHelper.GetDescription(Maroik.Core.Common.Utilities.Session.Account), out byte[] resultByte);
     string currentCulture = Context.Features.Get<Microsoft.AspNetCore.Localization.IRequestCultureFeature>().RequestCulture.Culture.Name;
     Account loginedAccount = new Account();
 

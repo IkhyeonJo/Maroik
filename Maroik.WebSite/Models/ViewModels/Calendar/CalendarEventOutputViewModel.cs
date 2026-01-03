@@ -1,4 +1,4 @@
-﻿using Maroik.Common.DataAccess.Models;
+﻿using Maroik.Core.PostgreSQL.Models;
 
 namespace Maroik.WebSite.Models.ViewModels.Calendar;
 
@@ -17,7 +17,7 @@ public class CalendarEventOutputViewModel
     public CalendarEventAttachedFile CalendarEventAttachedFile { get; set; }
     public string CalendarEventAttachedFileBase64Data { get; set; }
     public string CalendarEventAttachedFileContentType { get; set; }
-    public List<Maroik.Common.DataAccess.Models.Calendar> Calendars { get; set; }
+    public List<Maroik.Core.PostgreSQL.Models.Calendar> Calendars { get; set; }
     public string Status { get; set; }
     public string SerializedCalendarReminders { get; set; }
     public string HtmlColorCode { get; set; }

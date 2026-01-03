@@ -4,13 +4,13 @@ using DocumentFormat.OpenXml.Spreadsheet;
 using Ganss.Xss;
 using HtmlAgilityPack;
 using ImageMagick;
-using Maroik.Common.DataAccess.Contracts;
-using Maroik.Common.DataAccess.Data;
-using Maroik.Common.DataAccess.Models;
-using Maroik.Common.Miscellaneous.Extensions;
-using Maroik.Common.Miscellaneous.Utilities;
-using Maroik.WebSite.Contracts.Services;
-using Maroik.WebSite.Contracts.Clients;
+using Maroik.Core.Repository.Contracts;
+using Maroik.Core.PostgreSQL.Data;
+using Maroik.Core.PostgreSQL.Models;
+using Maroik.Core.Common.Extensions;
+using Maroik.Core.Common.Utilities;
+using Maroik.Core.Service.Contracts;
+using Maroik.Core.Client.Contracts;
 using Maroik.WebSite.Models;
 using Maroik.WebSite.Models.ViewModels.Management;
 using Microsoft.AspNetCore.Mvc;
@@ -73,7 +73,7 @@ public class ManagementController : Controller
     public async Task<IActionResult> Profile()
     {
         _ = HttpContext.Session.TryGetValue(
-            Maroik.Common.Miscellaneous.Utilities.EnumHelper.GetDescription(Maroik.Common.Miscellaneous.Utilities
+            Maroik.Core.Common.Utilities.EnumHelper.GetDescription(Maroik.Core.Common.Utilities
                 .Session.Account), out byte[] resultByte);
         string loginedAccountTimeZoneIanaId = JsonConvert
             .DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId;
@@ -125,7 +125,7 @@ public class ManagementController : Controller
         await file.CopyToAsync(memoryStream);
         memoryStream.Position = 0;
 
-        if (!await _clamavClient.ScanWithClamavAsync(memoryStream))
+        if (!await _clamavClient.ScanWithClamavAsync(memoryStream, ServerSetting.ClamavHost, ServerSetting.ClamavPort))
         {
             return BadRequest("File may be infected with a virus.");
         }
@@ -220,7 +220,7 @@ public class ManagementController : Controller
             try
             {
                 _ = HttpContext.Session.TryGetValue(
-                    Maroik.Common.Miscellaneous.Utilities.EnumHelper.GetDescription(Maroik.Common.Miscellaneous
+                    Maroik.Core.Common.Utilities.EnumHelper.GetDescription(Maroik.Core.Common
                         .Utilities.Session.Account), out byte[] resultByte);
                 Account tempAccount = await _accountRepository.GetAccountByEmailAsync(JsonConvert
                     .DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
@@ -228,11 +228,11 @@ public class ManagementController : Controller
                 await _accountRepository.UpdateAccountAsync(tempAccount);
 
                 HttpContext.Session.Remove(
-                    Maroik.Common.Miscellaneous.Utilities.EnumHelper.GetDescription(Maroik.Common.Miscellaneous
+                    Maroik.Core.Common.Utilities.EnumHelper.GetDescription(Maroik.Core.Common
                         .Utilities.Session.Account));
                 tempAccount.HashedPassword = null;
                 HttpContext.Session.Set(
-                    Maroik.Common.Miscellaneous.Utilities.EnumHelper.GetDescription(Maroik.Common.Miscellaneous
+                    Maroik.Core.Common.Utilities.EnumHelper.GetDescription(Maroik.Core.Common
                         .Utilities.Session.Account),
                     Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(tempAccount)));
             }
@@ -263,7 +263,7 @@ public class ManagementController : Controller
             try
             {
                 _ = HttpContext.Session.TryGetValue(
-                    Maroik.Common.Miscellaneous.Utilities.EnumHelper.GetDescription(Maroik.Common.Miscellaneous
+                    Maroik.Core.Common.Utilities.EnumHelper.GetDescription(Maroik.Core.Common
                         .Utilities.Session.Account), out byte[] resultByte);
                 Account tempAccount = await _accountRepository.GetAccountByEmailAsync(JsonConvert
                     .DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
@@ -473,7 +473,7 @@ public class ManagementController : Controller
         {
             List<AccountOutputViewModel> accountOutputViewModels = [];
             _ = HttpContext.Session.TryGetValue(
-                Maroik.Common.Miscellaneous.Utilities.EnumHelper.GetDescription(Maroik.Common.Miscellaneous
+                Maroik.Core.Common.Utilities.EnumHelper.GetDescription(Maroik.Core.Common
                     .Utilities.Session.Account), out byte[] resultByte);
 
             string loginedAccountTimeZoneIanaId = JsonConvert
@@ -684,7 +684,7 @@ public class ManagementController : Controller
 
         List<AccountOutputViewModel> accountOutputViewModels = new();
         _ = HttpContext.Session.TryGetValue(
-            Maroik.Common.Miscellaneous.Utilities.EnumHelper.GetDescription(Maroik.Common.Miscellaneous.Utilities
+            Maroik.Core.Common.Utilities.EnumHelper.GetDescription(Maroik.Core.Common.Utilities
                 .Session.Account), out byte[] resultByte);
         string loginedAccountTimeZoneIanaId = JsonConvert
             .DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId;
@@ -1544,7 +1544,7 @@ public class ManagementController : Controller
 
         List<MenuOutputViewModel> menuOutputViewModels = [];
         _ = HttpContext.Session.TryGetValue(
-            Maroik.Common.Miscellaneous.Utilities.EnumHelper.GetDescription(Maroik.Common.Miscellaneous.Utilities
+            Maroik.Core.Common.Utilities.EnumHelper.GetDescription(Maroik.Core.Common.Utilities
                 .Session.Account), out byte[] resultByte);
         string loginedAccountTimeZoneIanaId = JsonConvert
             .DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId;
@@ -1822,7 +1822,7 @@ public class ManagementController : Controller
                 try
                 {
                     bool isAccountSessionExist = HttpContext.Session.TryGetValue(
-                        Maroik.Common.Miscellaneous.Utilities.EnumHelper.GetDescription(Maroik.Common.Miscellaneous
+                        Maroik.Core.Common.Utilities.EnumHelper.GetDescription(Maroik.Core.Common
                             .Utilities.Session.Account), out byte[] resultByte);
 
                     if (isAccountSessionExist)
@@ -1885,7 +1885,7 @@ public class ManagementController : Controller
                                     $"{guid}{Path.GetExtension(boardInputViewModel.UploadedFile.FileName)}";
                                 string filePath = Path.Combine(boardAttachedFilePath, attachedFile);
 
-                                _ = await _fileClient.UploadAsync(boardInputViewModel.UploadedFile, filePath);
+                                _ = await _fileClient.UploadAsync(boardInputViewModel.UploadedFile, filePath, ServerSetting.FileStorageBaseUrl);
 
                                 await _boardAttachedFileRepository.SaveBoardAttachedFileAsync(
                                     new BoardAttachedFile()
@@ -1973,7 +1973,7 @@ public class ManagementController : Controller
                 try
                 {
                     bool isAccountSessionExist = HttpContext.Session.TryGetValue(
-                        Maroik.Common.Miscellaneous.Utilities.EnumHelper.GetDescription(Maroik.Common.Miscellaneous
+                        Maroik.Core.Common.Utilities.EnumHelper.GetDescription(Maroik.Core.Common
                             .Utilities.Session.Account), out byte[] resultByte);
 
                     if (isAccountSessionExist)
@@ -2079,7 +2079,7 @@ public class ManagementController : Controller
         }
 
         _ = HttpContext.Session.TryGetValue(
-            Maroik.Common.Miscellaneous.Utilities.EnumHelper.GetDescription(Maroik.Common.Miscellaneous.Utilities.Session.Account),
+            Maroik.Core.Common.Utilities.EnumHelper.GetDescription(Maroik.Core.Common.Utilities.Session.Account),
             out byte[] resultByte);
 
         var loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte));
@@ -2089,11 +2089,11 @@ public class ManagementController : Controller
         string imageFile = $"{Guid.NewGuid():N}{ext}";
         string filePath = Path.Combine(summernoteImagePath, imageFile);
 
-        var uploadResult = await _fileClient.UploadAsync(summernoteImageFile, filePath);
+        var uploadResult = await _fileClient.UploadAsync(summernoteImageFile, filePath, ServerSetting.FileStorageBaseUrl);
 
         if (uploadResult)
         {
-            var fileStream = await _fileClient.DownloadAsync(filePath);
+            var fileStream = await _fileClient.DownloadAsync(filePath, ServerSetting.FileStorageBaseUrl);
             return Ok(new
             {
                 result = true,
@@ -2128,7 +2128,7 @@ public class ManagementController : Controller
             #endregion
 
             bool isAccountSessionExist = HttpContext.Session.TryGetValue(
-                Maroik.Common.Miscellaneous.Utilities.EnumHelper.GetDescription(Maroik.Common.Miscellaneous
+                Maroik.Core.Common.Utilities.EnumHelper.GetDescription(Maroik.Core.Common
                     .Utilities.Session.Account), out _); // Check if account session exists after login
 
             return isAccountSessionExist ? View(privateNoteOutputViewModel) : RedirectToAction("Login", "Account");
@@ -2136,7 +2136,7 @@ public class ManagementController : Controller
         else if (method == "detail") // Detail view
         {
             _ = HttpContext.Session.TryGetValue(
-                Maroik.Common.Miscellaneous.Utilities.EnumHelper.GetDescription(Maroik.Common.Miscellaneous
+                Maroik.Core.Common.Utilities.EnumHelper.GetDescription(Maroik.Core.Common
                     .Utilities.Session.Account), out byte[] resultByte); // If writer or administrator
             Account loginedAccount =
                 JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)); // Get Session
@@ -2187,7 +2187,7 @@ public class ManagementController : Controller
                     string filePath = imgTag.GetAttributeValue("alt", "");
 
                     // Method to download file
-                    byte[] fileData = await _fileClient.DownloadAsync(filePath);
+                    byte[] fileData = await _fileClient.DownloadAsync(filePath, ServerSetting.FileStorageBaseUrl);
 
                     if (fileData != null)
                     {
@@ -2233,7 +2233,7 @@ public class ManagementController : Controller
                                           ""))
                 {
                     byte[] fileData = await _fileClient.DownloadAsync(
-                        privateNoteOutputViewModel?.BoardOutputViewModel?.BoardAttachedFilePath ?? "");
+                        privateNoteOutputViewModel?.BoardOutputViewModel?.BoardAttachedFilePath ?? "", ServerSetting.FileStorageBaseUrl);
 
                     if (fileData != null)
                     {
@@ -2277,7 +2277,7 @@ public class ManagementController : Controller
             };
 
             _ = HttpContext.Session.TryGetValue(
-                Maroik.Common.Miscellaneous.Utilities.EnumHelper.GetDescription(Maroik.Common.Miscellaneous
+                Maroik.Core.Common.Utilities.EnumHelper.GetDescription(Maroik.Core.Common
                     .Utilities.Session.Account), out byte[] resultByte);
             Account loginedAccount = await _accountRepository.GetAccountByEmailAsync(JsonConvert
                 .DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
@@ -2311,7 +2311,7 @@ public class ManagementController : Controller
                     string filePath = imgTag.GetAttributeValue("alt", "");
 
                     // Method to download file
-                    byte[] fileData = await _fileClient.DownloadAsync(filePath);
+                    byte[] fileData = await _fileClient.DownloadAsync(filePath, ServerSetting.FileStorageBaseUrl);
 
                     if (fileData != null)
                     {
@@ -2358,7 +2358,7 @@ public class ManagementController : Controller
                                           ""))
                 {
                     byte[] fileData = await _fileClient.DownloadAsync(
-                        privateNoteOutputViewModel?.BoardOutputViewModel?.BoardAttachedFilePath ?? "");
+                        privateNoteOutputViewModel?.BoardOutputViewModel?.BoardAttachedFilePath ?? "", ServerSetting.FileStorageBaseUrl);
 
                     if (fileData != null)
                     {
@@ -2390,7 +2390,7 @@ public class ManagementController : Controller
         else // List
         {
             bool isAccountSessionExist = HttpContext.Session.TryGetValue(
-                Maroik.Common.Miscellaneous.Utilities.EnumHelper.GetDescription(Maroik.Common.Miscellaneous
+                Maroik.Core.Common.Utilities.EnumHelper.GetDescription(Maroik.Core.Common
                     .Utilities.Session.Account), out byte[] resultByte);
             Account loginedAccount =
                 JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)); // Get Session
@@ -2500,7 +2500,7 @@ public class ManagementController : Controller
         try
         {
             _ = HttpContext.Session.TryGetValue(
-                Maroik.Common.Miscellaneous.Utilities.EnumHelper.GetDescription(Maroik.Common.Miscellaneous
+                Maroik.Core.Common.Utilities.EnumHelper.GetDescription(Maroik.Core.Common
                     .Utilities.Session.Account), out byte[] resultByte);
             Account loginedAccount = await _accountRepository.GetAccountByEmailAsync(JsonConvert
                 .DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
@@ -2614,7 +2614,7 @@ public class ManagementController : Controller
                 try
                 {
                     bool isAccountSessionExist = HttpContext.Session.TryGetValue(
-                        Maroik.Common.Miscellaneous.Utilities.EnumHelper.GetDescription(Maroik.Common.Miscellaneous
+                        Maroik.Core.Common.Utilities.EnumHelper.GetDescription(Maroik.Core.Common
                             .Utilities.Session.Account), out byte[] resultByte);
 
                     if (isAccountSessionExist)
@@ -2675,7 +2675,7 @@ public class ManagementController : Controller
                                     $"{guid}{Path.GetExtension(boardInputViewModel.UploadedFile.FileName)}";
                                 string filePath = Path.Combine(boardAttachedFilePath, attachedFile);
 
-                                _ = await _fileClient.UploadAsync(boardInputViewModel.UploadedFile, filePath);
+                                _ = await _fileClient.UploadAsync(boardInputViewModel.UploadedFile, filePath, ServerSetting.FileStorageBaseUrl);
 
                                 previousBoardAttachedFile.Size =
                                     Convert.ToInt32(boardInputViewModel.UploadedFile.Length);
@@ -2748,7 +2748,7 @@ public class ManagementController : Controller
                                     $"{guid}{Path.GetExtension(boardInputViewModel.UploadedFile.FileName)}";
                                 string filePath = Path.Combine(boardAttachedFilePath, attachedFile);
 
-                                _ = await _fileClient.UploadAsync(boardInputViewModel.UploadedFile, filePath);
+                                _ = await _fileClient.UploadAsync(boardInputViewModel.UploadedFile, filePath, ServerSetting.FileStorageBaseUrl);
 
                                 await _boardAttachedFileRepository.SaveBoardAttachedFileAsync(
                                     new BoardAttachedFile()
@@ -2837,7 +2837,7 @@ public class ManagementController : Controller
         try
         {
             _ = HttpContext.Session.TryGetValue(
-                Maroik.Common.Miscellaneous.Utilities.EnumHelper.GetDescription(Maroik.Common.Miscellaneous
+                Maroik.Core.Common.Utilities.EnumHelper.GetDescription(Maroik.Core.Common
                     .Utilities.Session.Account), out byte[] resultByte);
             Account loginedAccount = await _accountRepository.GetAccountByEmailAsync(JsonConvert
                 .DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
@@ -2911,7 +2911,7 @@ public class ManagementController : Controller
             else
             {
                 _ = HttpContext.Session.TryGetValue(
-                    Maroik.Common.Miscellaneous.Utilities.EnumHelper.GetDescription(Maroik.Common.Miscellaneous
+                    Maroik.Core.Common.Utilities.EnumHelper.GetDescription(Maroik.Core.Common
                         .Utilities.Session.Account), out byte[] resultByte);
                 Account loginedAccount = await _accountRepository.GetAccountByEmailAsync(JsonConvert
                     .DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);

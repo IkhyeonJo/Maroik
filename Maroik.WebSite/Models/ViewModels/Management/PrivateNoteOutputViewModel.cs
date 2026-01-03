@@ -1,4 +1,4 @@
-﻿using Maroik.Common.DataAccess.Models;
+﻿using Maroik.Core.PostgreSQL.Models;
 
 namespace Maroik.WebSite.Models.ViewModels.Management;
 

@@ -1,15 +1,15 @@
-﻿@model Maroik.Common.DataAccess.Models.Account
-@using Maroik.Common.Miscellaneous.Utilities
+﻿@model Maroik.Core.PostgreSQL.Models.Account
+@using Maroik.Core.Common.Utilities
 @using Maroik.WebSite.Utilities
 @using System.Text
 @using Newtonsoft.Json
 @using Maroik.WebSite.Models.ViewModels.Notice
 @using System.Text.RegularExpressions
-@inject Maroik.Common.DataAccess.Contracts.IFixedIncomeRepository fixedIncomeRepository
-@inject Maroik.Common.DataAccess.Contracts.IFixedExpenditureRepository fixedExpenditureRepository
+@inject Maroik.Core.Repository.Contracts.IFixedIncomeRepository fixedIncomeRepository
+@inject Maroik.Core.Repository.Contracts.IFixedExpenditureRepository fixedExpenditureRepository
 @{
     string currentCulture = Context.Features.Get<Microsoft.AspNetCore.Localization.IRequestCultureFeature>().RequestCulture.Culture.Name;
-    Context.Session.TryGetValue(Maroik.Common.Miscellaneous.Utilities.EnumHelper.GetDescription(Maroik.Common.Miscellaneous.Utilities.Session.Account), out byte[] resultByte);
+    Context.Session.TryGetValue(Maroik.Core.Common.Utilities.EnumHelper.GetDescription(Maroik.Core.Common.Utilities.Session.Account), out byte[] resultByte);
     string loginedAccountTimeZoneIanaId = string.Empty;
     try
     {
