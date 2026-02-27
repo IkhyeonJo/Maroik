@@ -1,7 +1,6 @@
-version: "3"
-
 volumes:
       datasource:
+      dataprotection-keys:
       #redis-data:
     
 networks:       
@@ -60,6 +59,7 @@ services:
           - ./Maroik.SSL/localhost1.pem:/etc/ssl/localhost1.pem:ro
           - ./Maroik.SSL/localhostprivkey1.pem:/etc/ssl/localhostprivkey1.pem:ro
           - ./Maroik.Log/:/app/Maroik.Log:rw
+          - dataprotection-keys:/root/.aspnet/DataProtection-Keys
         depends_on :
           - postgresql
           #- redis  
@@ -79,3 +79,4 @@ services:
           - ASPNETCORE_URLS=http://+:80
         volumes:
           - ./Maroik.FileStorage/upload/:/app/upload:rw
+          - dataprotection-keys:/root/.aspnet/DataProtection-Keys

@@ -1,7 +1,6 @@
-version: "3"
-
 volumes:
       datasource:
+      dataprotection-keys:
       #redis-data:
 
 networks:       
@@ -56,6 +55,7 @@ services:
         volumes:
           - ./Maroik.SSL/conf:/etc/letsencrypt:ro
           - ./Maroik.Log/:/app/Maroik.Log:rw
+          - dataprotection-keys:/root/.aspnet/DataProtection-Keys
         depends_on :
           - postgresql  
           #- redis  
@@ -75,6 +75,7 @@ services:
           - ASPNETCORE_URLS=http://+:80
         volumes:
           - ./Maroik.FileStorage/upload/:/app/upload:rw
+          - dataprotection-keys:/root/.aspnet/DataProtection-Keys
 
     certbot:
         image: certbot/dns-cloudflare
