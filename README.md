@@ -121,11 +121,11 @@ Maroik/
 
 ### Admin Account
 - ID: admin@maroik.com
-- Password: rhdiddl12!
+- Password: ghfkddl12gh!@
 
 ### User Account
 - ID: user@maroik.com
-- Password: rhdiddl12!
+- Password: ghfkddl12gh!@
 
 ## Screenshots
 
