@@ -75,19 +75,6 @@ Maroik is a modern web application built with ASP.NET Core MVC, featuring a comp
 - Docker Compose
 - Postman
 
-## Project Structure
-```
-Maroik/
-├── Maroik.Common/          # Common data access and utilities
-├── Maroik.Crontab/         # Scheduled tasks management
-├── Maroik.DB/             # Database configuration
-├── Maroik.DeployOps/      # Deployment scripts
-├── Maroik.FileStorage/    # File storage management
-├── Maroik.Log/            # Logging system
-├── Maroik.SSL/            # SSL/TLS certificate management
-└── Maroik.WebSite/        # Frontend website
-```
-
 ## Getting Started
 
 ### Prerequisites
