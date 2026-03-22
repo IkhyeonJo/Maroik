@@ -2,8 +2,8 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.StaticFiles;
 using System.Diagnostics;
-using Maroik.FileStorage.Contracts;
 using ICSharpCode.SharpZipLib.Zip;
+using Maroik.Core.Client.Contracts;
 
 namespace Maroik.FileStorage.Controllers;
 
@@ -66,7 +66,7 @@ public class FileController : ControllerBase
                 return BadRequest("Invalid or unsupported file format.");
             
             // ClamAV virus scan
-            if (!await _clamavClient.ScanWithClamavAsync(memoryStream))
+            if (!await _clamavClient.ScanWithClamavAsync(memoryStream, "Maroik.Clamav", 3310))
                 return BadRequest("File may be infected with a virus.");
 
             // Check if encrypted for .zip extension

@@ -18,4 +18,8 @@
     <PackageReference Include="Swashbuckle.AspNetCore" Version="10.1.5" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Maroik.Core.Client\Maroik.Core.Client.csproj" />
+  </ItemGroup>
+
 </Project>

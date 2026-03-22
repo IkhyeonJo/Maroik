@@ -1,6 +1,6 @@
-using Maroik.FileStorage.Contracts;
-using Maroik.FileStorage.Clients;
 using Microsoft.OpenApi;
+using Maroik.Core.Client.Contracts;
+using Maroik.Core.Client.Clients;
 
 var builder = WebApplication.CreateBuilder(args);
 
