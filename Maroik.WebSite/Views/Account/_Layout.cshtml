@@ -1,6 +1,6 @@
 ﻿@{
     Layout = null;
-    string returnUri = string.IsNullOrWhiteSpace(Context.Request.Path) ? "/" : $"{Context.Request.Path.Value}{Context.Request.QueryString}";
+    var returnUri = string.IsNullOrWhiteSpace(Context.Request.Path) ? "/" : $"{Context.Request.Path.Value}{Context.Request.QueryString}";
 }
 <!DOCTYPE html>
 <html lang="en">
@@ -18,12 +18,9 @@
     @*<!-- Theme style -->*@
     <link rel="stylesheet" href="~/anonymous/dist/css/adminlte.min.css" asp-append-version="true">
     <link rel="stylesheet" href="~/anonymous/custom/_AdminlteBlank/css/site.css" asp-append-version="true">
-
-    @RenderSection("Styles", required: false)
-
+    @await RenderSectionAsync("Styles", required: false)
 </head>
-<body class="hold-transition login-page" style="background-image: url('/anonymous/images/bg1.jpg'); background-size: cover;">
-    
+<body class="hold-transition login-page" style="background-image: url('@Url.Content("~/anonymous/images/bg1.jpg")'); background-size: cover;">
     @*Validation of form*@
     @Html.AntiForgeryToken()
     @*Language change return URI*@
@@ -38,6 +35,6 @@
     <script src="~/anonymous/plugins/bootstrap/js/bootstrap.bundle.min.js" asp-append-version="true"></script>
     @*<!-- AdminLTE App -->*@
     <script src="~/anonymous/dist/js/adminlte.min.js" asp-append-version="true"></script>
-    @RenderSection("Scripts", required: false)
+    @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>
