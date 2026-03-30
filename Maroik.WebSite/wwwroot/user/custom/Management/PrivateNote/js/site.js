@@ -93,7 +93,7 @@ function EditUploadFile(obj, errorMessage) {
 }
 
 function SearchBoard() {
-    window.location.href = "/Management/PrivateNote?searchType=" + $searchType.val() + "&searchText=" + $btnPrivateNoteSearchText.val();
+    window.location.href = "/Management/PrivateNote?searchType=" + encodeURIComponent($searchType.val()) + "&searchText=" + encodeURIComponent($btnPrivateNoteSearchText.val());
 }
 
 

@@ -96,7 +96,7 @@ function EditUploadFile(obj, errorMessage) {
 }
 
 function SearchBoard() {
-    window.location.href = "/Forum/FreeForum?searchType=" + $searchType.val() + "&searchText=" + $btnFreeForumSearchText.val();
+    window.location.href = "/Forum/FreeForum?searchType=" + encodeURIComponent($searchType.val()) + "&searchText=" + encodeURIComponent($btnFreeForumSearchText.val());
 }
 
 
