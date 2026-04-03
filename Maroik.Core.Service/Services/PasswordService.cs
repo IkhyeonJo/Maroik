@@ -1,4 +1,4 @@
-using Maroik.Core.Service.Contracts;
+using Maroik.Core.Contract.Interfaces;
 
 namespace Maroik.Core.Service.Services;
 

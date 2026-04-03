@@ -1,12 +1,11 @@
 ﻿using Ganss.Xss;
 using HtmlAgilityPack;
 using ImageMagick;
-using Maroik.Core.Repository.Contracts;
+using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.PostgreSQL.Data;
 using Maroik.Core.PostgreSQL.Models;
 using Maroik.WebSite.Extensions;
 using Maroik.WebSite.Utilities;
-using Maroik.Core.Client.Contracts;
 using Maroik.WebSite.Models.ViewModels.Calendar;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Localization;

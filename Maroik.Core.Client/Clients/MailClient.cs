@@ -1,5 +1,5 @@
 using Maroik.Core.Client.Utilities;
-using Maroik.Core.Client.Contracts;
+using Maroik.Core.Contract.Interfaces;
 using System.Net.Mail;
 
 namespace Maroik.Core.Client.Clients;

@@ -3,7 +3,7 @@
 @using Newtonsoft.Json
 @using System.Text
 @model CalendarOutputViewModel
-@inject Maroik.Core.Repository.Contracts.IAccountRepository accountRepository
+@inject Maroik.Core.Contract.Interfaces.IAccountRepository accountRepository
 
 @{
     string currentCulture = Context.Features.Get<Microsoft.AspNetCore.Localization.IRequestCultureFeature>().RequestCulture.Culture.Name;

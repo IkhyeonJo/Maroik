@@ -1,6 +1,6 @@
 ﻿@using Newtonsoft.Json
 @using System.Text
-@inject Maroik.Core.Repository.Contracts.IAssetRepository assetRepository
+@inject Maroik.Core.Contract.Interfaces.IAssetRepository assetRepository
 
 @{
     string currentCulture = Context.Features.Get<Microsoft.AspNetCore.Localization.IRequestCultureFeature>().RequestCulture.Culture.Name;

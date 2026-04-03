@@ -2,7 +2,7 @@ using Maroik.Core.PostgreSQL.Models;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace Maroik.Core.Repository.Contracts;
+namespace Maroik.Core.Contract.Interfaces;
 
 public interface IExpenditureRepository
 {

@@ -1,4 +1,4 @@
-namespace Maroik.Core.Client.Contracts;
+namespace Maroik.Core.Contract.Interfaces;
 
 public interface IFileClient
 {

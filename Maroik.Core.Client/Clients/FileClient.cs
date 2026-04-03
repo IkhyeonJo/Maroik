@@ -1,4 +1,4 @@
-using Maroik.Core.Client.Contracts;
+using Maroik.Core.Contract.Interfaces;
 using System.Net;
 
 namespace Maroik.Core.Client.Clients;

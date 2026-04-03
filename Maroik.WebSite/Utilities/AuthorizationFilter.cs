@@ -1,4 +1,4 @@
-﻿using Maroik.Core.Repository.Contracts;
+﻿using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.PostgreSQL.Models;
 using Maroik.WebSite.Utilities;
 using Microsoft.AspNetCore.Mvc;

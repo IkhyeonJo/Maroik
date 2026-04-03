@@ -1,5 +1,5 @@
 using Microsoft.OpenApi;
-using Maroik.Core.Client.Contracts;
+using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Client.Clients;
 
 var builder = WebApplication.CreateBuilder(args);

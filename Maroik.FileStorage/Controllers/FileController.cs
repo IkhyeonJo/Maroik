@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.StaticFiles;
 using System.Diagnostics;
 using ICSharpCode.SharpZipLib.Zip;
-using Maroik.Core.Client.Contracts;
+using Maroik.Core.Contract.Interfaces;
 
 namespace Maroik.FileStorage.Controllers;
 

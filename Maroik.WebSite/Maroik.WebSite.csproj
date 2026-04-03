@@ -35,6 +35,8 @@
     <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.23.0" />
     <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="10.0.2" />
     <PackageReference Include="NonFactors.Grid.Mvc6" Version="8.0.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.5" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="10.0.5" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.1" />
     <PackageReference Include="SecurityCodeScan.VS2019" Version="5.6.7">
       <PrivateAssets>all</PrivateAssets>
@@ -44,6 +46,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Maroik.Core.Client\Maroik.Core.Client.csproj" />
+    <ProjectReference Include="..\Maroik.Core.Contract\Maroik.Core.Contract.csproj" />
     <ProjectReference Include="..\Maroik.Core.PostgreSQL\Maroik.Core.PostgreSQL.csproj" />
     <ProjectReference Include="..\Maroik.Core.Repository\Maroik.Core.Repository.csproj" />
     <ProjectReference Include="..\Maroik.Core.Service\Maroik.Core.Service.csproj" />
