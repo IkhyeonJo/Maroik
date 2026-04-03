@@ -1,6 +1,5 @@
 using Maroik.Core.Client.Contracts;
 using System.Net;
-using Microsoft.AspNetCore.Http;
 
 namespace Maroik.Core.Client.Clients;
 
@@ -18,28 +17,22 @@ public class FileClient : IFileClient
         return await response.Content.ReadAsByteArrayAsync(); // Return file data
     }
 
-    public async Task<bool> UploadAsync(IFormFile formFile, string filePath, string fileStorageBaseUrl)
+    public async Task<bool> UploadAsync(byte[] fileData, string contentType, string filePath, string fileStorageBaseUrl)
     {
         try
         {
             // 1. Safely process file name to prevent path traversal vulnerability
             string sanitizedFileName = Path.GetFileName(filePath); // Remove directory path from user-inputted file name
 
-            // 2. Save file to memory stream and upload to external server
-            if (formFile != null && formFile.Length > 0)
+            // 2. Upload file data to external server
+            if (fileData != null && fileData.Length > 0)
             {
-                using MemoryStream memoryStream = new();
-                // Copy IFormFile data to memory stream
-                await formFile.CopyToAsync(memoryStream);
-                memoryStream.Position = 0; // Return to start position of stream
-
                 // Upload file to external file server using HttpClient
                 using HttpClient httpClient = new();
                 using MultipartFormDataContent content = [];
 
-                // Convert memory stream to ByteArrayContent for upload preparation
-                StreamContent fileContent = new(memoryStream);
-                fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(formFile.ContentType);
+                ByteArrayContent fileContent = new(fileData);
+                fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(contentType);
 
                 // Add file to MultipartFormDataContent
                 content.Add(fileContent, "file", sanitizedFileName);

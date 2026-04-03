@@ -161,7 +161,11 @@ public class ForumController : Controller
                                 string boardAttachedFile = $"{guid}{Path.GetExtension(boardInputViewModel.UploadedFile.FileName)}";
                                 string filePath = Path.Combine(boardAttachedFilePath, boardAttachedFile);
 
-                                _ = await _fileClient.UploadAsync(boardInputViewModel.UploadedFile, filePath, ServerSetting.FileStorageBaseUrl);
+                                using (MemoryStream ms = new())
+                                {
+                                    await boardInputViewModel.UploadedFile.CopyToAsync(ms);
+                                    _ = await _fileClient.UploadAsync(ms.ToArray(), boardInputViewModel.UploadedFile.ContentType, filePath, ServerSetting.FileStorageBaseUrl);
+                                }
 
                                 await _boardAttachedFileRepository.SaveBoardAttachedFileAsync(new BoardAttachedFile()
                                 {
@@ -332,7 +336,12 @@ public class ForumController : Controller
         string imageFile = $"{Guid.NewGuid():N}{ext}";
         string filePath = Path.Combine(summernoteImagePath, imageFile);
 
-        var uploadResult = await _fileClient.UploadAsync(summernoteImageFile, filePath, ServerSetting.FileStorageBaseUrl);
+        bool uploadResult;
+        using (MemoryStream ms = new())
+        {
+            await summernoteImageFile.CopyToAsync(ms);
+            uploadResult = await _fileClient.UploadAsync(ms.ToArray(), summernoteImageFile.ContentType, filePath, ServerSetting.FileStorageBaseUrl);
+        }
 
         if (uploadResult)
         {
@@ -814,7 +823,11 @@ public class ForumController : Controller
                                 string boardAttachedFile = $"{guid}{Path.GetExtension(boardInputViewModel.UploadedFile.FileName)}";
                                 string filePath = Path.Combine(boardAttachedFilePath, boardAttachedFile);
 
-                                _ = await _fileClient.UploadAsync(boardInputViewModel.UploadedFile, filePath, ServerSetting.FileStorageBaseUrl);
+                                using (MemoryStream ms = new())
+                                {
+                                    await boardInputViewModel.UploadedFile.CopyToAsync(ms);
+                                    _ = await _fileClient.UploadAsync(ms.ToArray(), boardInputViewModel.UploadedFile.ContentType, filePath, ServerSetting.FileStorageBaseUrl);
+                                }
 
                                 previousBoardAttachedFile.Size = Convert.ToInt32(boardInputViewModel.UploadedFile.Length);
                                 previousBoardAttachedFile.Name = Path.GetFileNameWithoutExtension(boardInputViewModel.UploadedFile.FileName);
@@ -860,7 +873,11 @@ public class ForumController : Controller
                                 string boardAttachedFile = $"{guid}{Path.GetExtension(boardInputViewModel.UploadedFile.FileName)}";
                                 string filePath = Path.Combine(boardAttachedFilePath, boardAttachedFile);
 
-                                _ = await _fileClient.UploadAsync(boardInputViewModel.UploadedFile, filePath, ServerSetting.FileStorageBaseUrl);
+                                using (MemoryStream ms = new())
+                                {
+                                    await boardInputViewModel.UploadedFile.CopyToAsync(ms);
+                                    _ = await _fileClient.UploadAsync(ms.ToArray(), boardInputViewModel.UploadedFile.ContentType, filePath, ServerSetting.FileStorageBaseUrl);
+                                }
 
                                 await _boardAttachedFileRepository.SaveBoardAttachedFileAsync(new BoardAttachedFile()
                                 {
