@@ -1,6 +1,6 @@
 ﻿using Maroik.Core.Repository.Contracts;
 using Maroik.Core.PostgreSQL.Models;
-using Maroik.Core.Common.Extensions;
+using Maroik.WebSite.Extensions;
 using Maroik.Core.Common.Utilities;
 using Maroik.WebSite.Models.ViewModels.Account;
 using Maroik.WebSite.Models.ViewModels.DashBoard;

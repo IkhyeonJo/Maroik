@@ -7,7 +7,7 @@ using ImageMagick;
 using Maroik.Core.Repository.Contracts;
 using Maroik.Core.PostgreSQL.Data;
 using Maroik.Core.PostgreSQL.Models;
-using Maroik.Core.Common.Extensions;
+using Maroik.WebSite.Extensions;
 using Maroik.Core.Common.Utilities;
 using Maroik.Core.Service.Contracts;
 using Maroik.Core.Client.Contracts;
