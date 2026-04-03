@@ -8,7 +8,7 @@ using Maroik.Core.Repository.Contracts;
 using Maroik.Core.PostgreSQL.Data;
 using Maroik.Core.PostgreSQL.Models;
 using Maroik.WebSite.Extensions;
-using Maroik.Core.Common.Utilities;
+using Maroik.WebSite.Utilities;
 using Maroik.Core.Service.Contracts;
 using Maroik.Core.Client.Contracts;
 using Maroik.WebSite.Models;
@@ -73,7 +73,7 @@ public class ManagementController : Controller
     public async Task<IActionResult> Profile()
     {
         _ = HttpContext.Session.TryGetValue(
-            Maroik.Core.Common.Utilities.EnumHelper.GetDescription(Maroik.Core.Common.Utilities
+            Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite.Utilities
                 .Session.Account), out byte[] resultByte);
         string loginedAccountTimeZoneIanaId = JsonConvert
             .DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId;
@@ -220,7 +220,7 @@ public class ManagementController : Controller
             try
             {
                 _ = HttpContext.Session.TryGetValue(
-                    Maroik.Core.Common.Utilities.EnumHelper.GetDescription(Maroik.Core.Common
+                    Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite
                         .Utilities.Session.Account), out byte[] resultByte);
                 Account tempAccount = await _accountRepository.GetAccountByEmailAsync(JsonConvert
                     .DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
@@ -228,11 +228,11 @@ public class ManagementController : Controller
                 await _accountRepository.UpdateAccountAsync(tempAccount);
 
                 HttpContext.Session.Remove(
-                    Maroik.Core.Common.Utilities.EnumHelper.GetDescription(Maroik.Core.Common
+                    Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite
                         .Utilities.Session.Account));
                 tempAccount.HashedPassword = null;
                 HttpContext.Session.Set(
-                    Maroik.Core.Common.Utilities.EnumHelper.GetDescription(Maroik.Core.Common
+                    Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite
                         .Utilities.Session.Account),
                     Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(tempAccount)));
             }
@@ -263,7 +263,7 @@ public class ManagementController : Controller
             try
             {
                 _ = HttpContext.Session.TryGetValue(
-                    Maroik.Core.Common.Utilities.EnumHelper.GetDescription(Maroik.Core.Common
+                    Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite
                         .Utilities.Session.Account), out byte[] resultByte);
                 Account tempAccount = await _accountRepository.GetAccountByEmailAsync(JsonConvert
                     .DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
@@ -473,7 +473,7 @@ public class ManagementController : Controller
         {
             List<AccountOutputViewModel> accountOutputViewModels = [];
             _ = HttpContext.Session.TryGetValue(
-                Maroik.Core.Common.Utilities.EnumHelper.GetDescription(Maroik.Core.Common
+                Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite
                     .Utilities.Session.Account), out byte[] resultByte);
 
             string loginedAccountTimeZoneIanaId = JsonConvert
@@ -684,7 +684,7 @@ public class ManagementController : Controller
 
         List<AccountOutputViewModel> accountOutputViewModels = new();
         _ = HttpContext.Session.TryGetValue(
-            Maroik.Core.Common.Utilities.EnumHelper.GetDescription(Maroik.Core.Common.Utilities
+            Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite.Utilities
                 .Session.Account), out byte[] resultByte);
         string loginedAccountTimeZoneIanaId = JsonConvert
             .DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId;
@@ -1544,7 +1544,7 @@ public class ManagementController : Controller
 
         List<MenuOutputViewModel> menuOutputViewModels = [];
         _ = HttpContext.Session.TryGetValue(
-            Maroik.Core.Common.Utilities.EnumHelper.GetDescription(Maroik.Core.Common.Utilities
+            Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite.Utilities
                 .Session.Account), out byte[] resultByte);
         string loginedAccountTimeZoneIanaId = JsonConvert
             .DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId;
@@ -1822,7 +1822,7 @@ public class ManagementController : Controller
                 try
                 {
                     bool isAccountSessionExist = HttpContext.Session.TryGetValue(
-                        Maroik.Core.Common.Utilities.EnumHelper.GetDescription(Maroik.Core.Common
+                        Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite
                             .Utilities.Session.Account), out byte[] resultByte);
 
                     if (isAccountSessionExist)
@@ -1973,7 +1973,7 @@ public class ManagementController : Controller
                 try
                 {
                     bool isAccountSessionExist = HttpContext.Session.TryGetValue(
-                        Maroik.Core.Common.Utilities.EnumHelper.GetDescription(Maroik.Core.Common
+                        Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite
                             .Utilities.Session.Account), out byte[] resultByte);
 
                     if (isAccountSessionExist)
@@ -2079,7 +2079,7 @@ public class ManagementController : Controller
         }
 
         _ = HttpContext.Session.TryGetValue(
-            Maroik.Core.Common.Utilities.EnumHelper.GetDescription(Maroik.Core.Common.Utilities.Session.Account),
+            Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account),
             out byte[] resultByte);
 
         var loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte));
@@ -2128,7 +2128,7 @@ public class ManagementController : Controller
             #endregion
 
             bool isAccountSessionExist = HttpContext.Session.TryGetValue(
-                Maroik.Core.Common.Utilities.EnumHelper.GetDescription(Maroik.Core.Common
+                Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite
                     .Utilities.Session.Account), out _); // Check if account session exists after login
 
             return isAccountSessionExist ? View(privateNoteOutputViewModel) : RedirectToAction("Login", "Account");
@@ -2136,7 +2136,7 @@ public class ManagementController : Controller
         else if (method == "detail") // Detail view
         {
             _ = HttpContext.Session.TryGetValue(
-                Maroik.Core.Common.Utilities.EnumHelper.GetDescription(Maroik.Core.Common
+                Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite
                     .Utilities.Session.Account), out byte[] resultByte); // If writer or administrator
             Account loginedAccount =
                 JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)); // Get Session
@@ -2277,7 +2277,7 @@ public class ManagementController : Controller
             };
 
             _ = HttpContext.Session.TryGetValue(
-                Maroik.Core.Common.Utilities.EnumHelper.GetDescription(Maroik.Core.Common
+                Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite
                     .Utilities.Session.Account), out byte[] resultByte);
             Account loginedAccount = await _accountRepository.GetAccountByEmailAsync(JsonConvert
                 .DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
@@ -2390,7 +2390,7 @@ public class ManagementController : Controller
         else // List
         {
             bool isAccountSessionExist = HttpContext.Session.TryGetValue(
-                Maroik.Core.Common.Utilities.EnumHelper.GetDescription(Maroik.Core.Common
+                Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite
                     .Utilities.Session.Account), out byte[] resultByte);
             Account loginedAccount =
                 JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)); // Get Session
@@ -2500,7 +2500,7 @@ public class ManagementController : Controller
         try
         {
             _ = HttpContext.Session.TryGetValue(
-                Maroik.Core.Common.Utilities.EnumHelper.GetDescription(Maroik.Core.Common
+                Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite
                     .Utilities.Session.Account), out byte[] resultByte);
             Account loginedAccount = await _accountRepository.GetAccountByEmailAsync(JsonConvert
                 .DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
@@ -2614,7 +2614,7 @@ public class ManagementController : Controller
                 try
                 {
                     bool isAccountSessionExist = HttpContext.Session.TryGetValue(
-                        Maroik.Core.Common.Utilities.EnumHelper.GetDescription(Maroik.Core.Common
+                        Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite
                             .Utilities.Session.Account), out byte[] resultByte);
 
                     if (isAccountSessionExist)
@@ -2837,7 +2837,7 @@ public class ManagementController : Controller
         try
         {
             _ = HttpContext.Session.TryGetValue(
-                Maroik.Core.Common.Utilities.EnumHelper.GetDescription(Maroik.Core.Common
+                Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite
                     .Utilities.Session.Account), out byte[] resultByte);
             Account loginedAccount = await _accountRepository.GetAccountByEmailAsync(JsonConvert
                 .DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
@@ -2911,7 +2911,7 @@ public class ManagementController : Controller
             else
             {
                 _ = HttpContext.Session.TryGetValue(
-                    Maroik.Core.Common.Utilities.EnumHelper.GetDescription(Maroik.Core.Common
+                    Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite
                         .Utilities.Session.Account), out byte[] resultByte);
                 Account loginedAccount = await _accountRepository.GetAccountByEmailAsync(JsonConvert
                     .DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);

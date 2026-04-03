@@ -1,4 +1,4 @@
-using Maroik.Core.Common.Utilities;
+using Maroik.Core.Client.Utilities;
 using Maroik.Core.Client.Contracts;
 using System.Net.Mail;
 

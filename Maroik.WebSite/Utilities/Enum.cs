@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel;
 
-namespace Maroik.Core.Common.Utilities;
+namespace Maroik.WebSite.Utilities;
 
 public enum AccountMessage
 {

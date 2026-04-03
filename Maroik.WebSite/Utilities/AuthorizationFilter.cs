@@ -1,6 +1,6 @@
 ﻿using Maroik.Core.Repository.Contracts;
 using Maroik.Core.PostgreSQL.Models;
-using Maroik.Core.Common.Utilities;
+using Maroik.WebSite.Utilities;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Newtonsoft.Json;
@@ -54,7 +54,7 @@ public class AuthorizationFilter : ActionFilterAttribute
         string currentControllerName = context.ActionDescriptor.RouteValues["controller"].ToString(); // Controller name before execution
         string currentActionName = context.ActionDescriptor.RouteValues["action"].ToString(); // Action name before execution
         string currentRequestMethod = context.HttpContext.Request.Method; // GET HTTP METHOD
-        bool isAccountSessionExist = context.HttpContext.Session.TryGetValue(Maroik.Core.Common.Utilities.EnumHelper.GetDescription(Maroik.Core.Common.Utilities.Session.Account), out _); // Check if account session exists after login
+        bool isAccountSessionExist = context.HttpContext.Session.TryGetValue(Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account), out _); // Check if account session exists after login
 
         if (currentRequestMethod.ToUpper() == "GET") // GET method (block page access only!!)
         {
@@ -161,7 +161,7 @@ public class AuthorizationFilter : ActionFilterAttribute
                     return;
                 }
 
-                _ = context.HttpContext.Session.TryGetValue(Maroik.Core.Common.Utilities.EnumHelper.GetDescription(Maroik.Core.Common.Utilities.Session.Account), out byte[] resultByte);
+                _ = context.HttpContext.Session.TryGetValue(Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account), out byte[] resultByte);
                 Account loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)); // Get Session
 
                 if (loginedAccount.Role == Role.Admin) // If logged-in user has Admin role
@@ -313,7 +313,7 @@ public class AuthorizationFilter : ActionFilterAttribute
             }
             else if (isAccountSessionExist == true) // If logged in
             {
-                _ = context.HttpContext.Session.TryGetValue(Maroik.Core.Common.Utilities.EnumHelper.GetDescription(Maroik.Core.Common.Utilities.Session.Account), out byte[] resultByte);
+                _ = context.HttpContext.Session.TryGetValue(Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account), out byte[] resultByte);
                 Account loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)); // Get Session
 
                 if (loginedAccount.Role == Role.Admin) // If logged-in user has Admin role

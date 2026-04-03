@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel;
 using System.Reflection;
 
-namespace Maroik.Core.Common.Utilities;
+namespace Maroik.Core.Client.Utilities;
 
 public static class EnumHelper
 {

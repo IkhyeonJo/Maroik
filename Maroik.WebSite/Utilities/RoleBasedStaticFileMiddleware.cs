@@ -1,5 +1,5 @@
 ﻿using Maroik.Core.PostgreSQL.Models;
-using Maroik.Core.Common.Utilities;
+using Maroik.WebSite.Utilities;
 using Newtonsoft.Json;
 using System.Text;
 
@@ -20,7 +20,7 @@ public class RoleBasedStaticFileMiddleware
 
         if (!string.IsNullOrEmpty(path))
         {
-            _ = context.Session.TryGetValue(Maroik.Core.Common.Utilities.EnumHelper.GetDescription(Maroik.Core.Common.Utilities.Session.Account), out byte[] resultByte);
+            _ = context.Session.TryGetValue(Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account), out byte[] resultByte);
             string userRole = null;
 
             if (resultByte != null)

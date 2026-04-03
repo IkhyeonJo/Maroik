@@ -1,5 +1,4 @@
 ﻿@using Maroik.WebSite.Utilities
-@using Maroik.Core.Common.Utilities
 @using Maroik.WebSite.Models
 @using Maroik.WebSite.Models.ViewModels.Forum
 @using Newtonsoft.Json
@@ -12,7 +11,7 @@
 @model FreeForumOutputViewModel
 
 @{
-    Context.Session.TryGetValue(Maroik.Core.Common.Utilities.EnumHelper.GetDescription(Maroik.Core.Common.Utilities.Session.Account), out byte[] resultByte);
+    Context.Session.TryGetValue(Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account), out byte[] resultByte);
 
     string loginedAccountTimeZoneIanaId = string.Empty;
 

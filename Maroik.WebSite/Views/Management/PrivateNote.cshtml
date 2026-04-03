@@ -1,5 +1,4 @@
 ﻿@using Maroik.WebSite.Utilities
-@using Maroik.Core.Common.Utilities
 @using Maroik.WebSite.Models
 @using Maroik.WebSite.Models.ViewModels.Management
 @using Newtonsoft.Json
@@ -12,7 +11,7 @@
 @model PrivateNoteOutputViewModel
 
 @{
-    Context.Session.TryGetValue(Maroik.Core.Common.Utilities.EnumHelper.GetDescription(Maroik.Core.Common.Utilities.Session.Account), out byte[] resultByte);
+    Context.Session.TryGetValue(EnumHelper.GetDescription(Session.Account), out byte[] resultByte);
     string loginedAccountTimeZoneIanaId = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId;
     Account loginedAccount = new Account();
 

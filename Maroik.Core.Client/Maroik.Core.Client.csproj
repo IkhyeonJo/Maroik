@@ -14,8 +14,4 @@
     </PackageReference>
   </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\Maroik.Core.Common\Maroik.Core.Common.csproj" />
-  </ItemGroup>
-
 </Project>

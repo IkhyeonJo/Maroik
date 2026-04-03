@@ -1,7 +1,7 @@
 ﻿using System.Security.Cryptography;
 using System.Text;
 
-namespace Maroik.Core.Common.Utilities;
+namespace Maroik.Core.Client.Utilities;
 
 #region Code Example
 //string plaintext = "plaintext";

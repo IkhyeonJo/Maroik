@@ -1,4 +1,4 @@
-namespace Maroik.Core.Common.Utilities;
+namespace Maroik.Core.Client.Utilities;
 
 public static class ServerSetting
 {

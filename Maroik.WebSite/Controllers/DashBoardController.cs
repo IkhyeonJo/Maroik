@@ -1,7 +1,7 @@
 ﻿using Maroik.Core.Repository.Contracts;
 using Maroik.Core.PostgreSQL.Models;
 using Maroik.WebSite.Extensions;
-using Maroik.Core.Common.Utilities;
+using Maroik.WebSite.Utilities;
 using Maroik.WebSite.Models.ViewModels.Account;
 using Maroik.WebSite.Models.ViewModels.DashBoard;
 using Microsoft.AspNetCore.Localization;

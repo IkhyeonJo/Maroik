@@ -1,4 +1,4 @@
-using Maroik.Core.Common.Utilities;
+using Maroik.Core.Client.Utilities;
 
 namespace Maroik.Core.Client.Contracts;
 
