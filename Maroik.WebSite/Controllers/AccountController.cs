@@ -277,17 +277,18 @@ public class AccountController : Controller
                         return View();
                     }
                     #region Send Email
-                    Maroik.Core.Client.Utilities.Mail mail = new()
-                    {
-                        Subject = _localizer["Maroik Email Confirmation"].Value
-                    };
                     loginInputViewModel.RegistrationToken = _rsa.Sign(loginInputViewModel.RegistrationToken); // Encrypt
-                    mail.Body = _mailClient.GetMailConfirmationBody(loginInputViewModel.RegistrationToken, _localizer["Welcome to Maroik"].Value, _localizer["Click the link below to verify your Email"].Value, _localizer["If this link does not work, please copy & paste this link to your Internet URL"].Value);
-                    mail.ToMailIds =
-                    [
-                        loginInputViewModel.Email
-                    ];
-                    string result = await _mailClient.SendMailAsync(mail);
+                    string result = await _mailClient.SendMailAsync(
+                        loginInputViewModel.Email,
+                        _localizer["Maroik Email Confirmation"].Value,
+                        _mailClient.GetMailConfirmationBody(loginInputViewModel.RegistrationToken, _localizer["Welcome to Maroik"].Value, _localizer["Click the link below to verify your Email"].Value, _localizer["If this link does not work, please copy & paste this link to your Internet URL"].Value, ServerSetting.DomainName ?? string.Empty),
+                        ServerSetting.SmtpHost ?? string.Empty,
+                        ServerSetting.SmtpPort.ToString(),
+                        ServerSetting.SmtpUserName ?? string.Empty,
+                        ServerSetting.SmtpPassword ?? string.Empty,
+                        ServerSetting.SmtpSSL.ToString(),
+                        ServerSetting.FromEmail ?? string.Empty,
+                        ServerSetting.FromFullName ?? string.Empty);
                     if (result != EnumHelper.GetDescription(AccountMessage.MailSent)) // When mail sending error occurs..
                     {
                         Console.WriteLine(result); // Should log this with ActivityLog etc..
@@ -338,20 +339,21 @@ public class AccountController : Controller
                     if (!account.EmailConfirmed) // Created but email not verified
                     {
                         #region Send Email
-                        Maroik.Core.Client.Utilities.Mail mail = new()
-                        {
-                            Subject = _localizer["Maroik Email Confirmation"].Value
-                        };
                         if (string.IsNullOrEmpty(account.RegistrationToken))
                         {
                             account.RegistrationToken = GUIDToken.Generate();
                         }
-                        mail.Body = _mailClient.GetMailConfirmationBody(_rsa.Sign(account.RegistrationToken), _localizer["Welcome to Maroik"].Value, _localizer["Click the link below to verify your Email"].Value, _localizer["If this link does not work, please copy & paste this link to your Internet URL"].Value);
-                        mail.ToMailIds =
-                        [
-                            account.Email
-                        ];
-                        string result = await _mailClient.SendMailAsync(mail);
+                        string result = await _mailClient.SendMailAsync(
+                            account.Email,
+                            _localizer["Maroik Email Confirmation"].Value,
+                            _mailClient.GetMailConfirmationBody(_rsa.Sign(account.RegistrationToken), _localizer["Welcome to Maroik"].Value, _localizer["Click the link below to verify your Email"].Value, _localizer["If this link does not work, please copy & paste this link to your Internet URL"].Value, ServerSetting.DomainName ?? string.Empty),
+                            ServerSetting.SmtpHost ?? string.Empty,
+                            ServerSetting.SmtpPort.ToString(),
+                            ServerSetting.SmtpUserName ?? string.Empty,
+                            ServerSetting.SmtpPassword ?? string.Empty,
+                            ServerSetting.SmtpSSL.ToString(),
+                            ServerSetting.FromEmail ?? string.Empty,
+                            ServerSetting.FromFullName ?? string.Empty);
                         if (result != EnumHelper.GetDescription(AccountMessage.MailSent)) // When mail sending error occurs..
                         {
                             Console.WriteLine(result); // Should log this with ActivityLog etc..
@@ -440,16 +442,17 @@ public class AccountController : Controller
                     if (!account.EmailConfirmed) // Created but email not verified.
                     {
                         #region Send Email
-                        Maroik.Core.Client.Utilities.Mail mail = new()
-                        {
-                            Subject = _localizer["Maroik Email Confirmation"].Value,
-                            Body = _mailClient.GetMailConfirmationBody(_rsa.Sign(account.RegistrationToken), _localizer["Welcome to Maroik"].Value, _localizer["Click the link below to verify your Email"].Value, _localizer["If this link does not work, please copy & paste this link to your Internet URL"].Value),
-                            ToMailIds =
-                            [
-                                account.Email
-                            ]
-                        };
-                        string result = await _mailClient.SendMailAsync(mail);
+                        string result = await _mailClient.SendMailAsync(
+                            account.Email,
+                            _localizer["Maroik Email Confirmation"].Value,
+                            _mailClient.GetMailConfirmationBody(_rsa.Sign(account.RegistrationToken), _localizer["Welcome to Maroik"].Value, _localizer["Click the link below to verify your Email"].Value, _localizer["If this link does not work, please copy & paste this link to your Internet URL"].Value, ServerSetting.DomainName ?? string.Empty),
+                            ServerSetting.SmtpHost ?? string.Empty,
+                            ServerSetting.SmtpPort.ToString(),
+                            ServerSetting.SmtpUserName ?? string.Empty,
+                            ServerSetting.SmtpPassword ?? string.Empty,
+                            ServerSetting.SmtpSSL.ToString(),
+                            ServerSetting.FromEmail ?? string.Empty,
+                            ServerSetting.FromFullName ?? string.Empty);
                         if (result != EnumHelper.GetDescription(AccountMessage.MailSent)) // When mail sending error occurs..
                         {
                             Console.WriteLine(result); // Should log this with ActivityLog etc..
@@ -687,16 +690,17 @@ public class AccountController : Controller
                 try
                 {
                     #region Send Email
-                    Maroik.Core.Client.Utilities.Mail mail = new()
-                    {
-                        Subject = _localizer["Maroik Reset Password"].Value,
-                        Body = _mailClient.GetMailResetPasswordBody(_rsa.Sign(resetPasswordToken), _localizer["Welcome to Maroik"].Value, _localizer["Click the link below to reset your password"].Value, _localizer["If this link does not work, please copy & paste this link to your Internet URL"].Value),
-                        ToMailIds =
-                        [
-                            account.Email
-                        ]
-                    };
-                    string result = await _mailClient.SendMailAsync(mail);
+                    string result = await _mailClient.SendMailAsync(
+                        account.Email,
+                        _localizer["Maroik Reset Password"].Value,
+                        _mailClient.GetMailResetPasswordBody(_rsa.Sign(resetPasswordToken), _localizer["Welcome to Maroik"].Value, _localizer["Click the link below to reset your password"].Value, _localizer["If this link does not work, please copy & paste this link to your Internet URL"].Value, ServerSetting.DomainName ?? string.Empty),
+                        ServerSetting.SmtpHost ?? string.Empty,
+                        ServerSetting.SmtpPort.ToString(),
+                        ServerSetting.SmtpUserName ?? string.Empty,
+                        ServerSetting.SmtpPassword ?? string.Empty,
+                        ServerSetting.SmtpSSL.ToString(),
+                        ServerSetting.FromEmail ?? string.Empty,
+                        ServerSetting.FromFullName ?? string.Empty);
                     if (result != EnumHelper.GetDescription(AccountMessage.MailSent)) // When mail sending error occurs..
                     {
                         Console.WriteLine(result); // Should log this with ActivityLog etc..

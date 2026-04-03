@@ -6,17 +6,9 @@ namespace Maroik.Core.Client.Clients;
 
 public class MailClient : IMailClient
 {
-    /// <summary>
-    /// Gets the HttpBody part of account password reset email.
-    /// </summary>
-    /// <param name="registrationToken"></param>
-    /// <param name="title"></param>
-    /// <param name="content0"></param>
-    /// <param name="content1"></param>
-    /// <returns></returns>
-    public string GetMailConfirmationBody(string registrationToken, string title, string content0, string content1)
+    public string GetMailConfirmationBody(string registrationToken, string title, string content0, string content1, string domainName)
     {
-        string url = $"{ServerSetting.DomainName}Account/ConfirmEmail?registrationToken={Uri.EscapeDataString(registrationToken)}";
+        string url = $"{domainName}Account/ConfirmEmail?registrationToken={Uri.EscapeDataString(registrationToken)}";
         return @$"<div style='text-align:center;'>
                         <h1>{title}<h1>
                         <h3>{content0}<h3>
@@ -24,17 +16,10 @@ public class MailClient : IMailClient
                         <a href='{url}' target='_blank' rel='noopener noreferrer'>{url}</a>
                       </div>";
     }
-    /// <summary>
-    /// Gets the HttpBody part of account verification email.
-    /// </summary>
-    /// <param name="resetPasswordToken"></param>
-    /// <param name="title"></param>
-    /// <param name="content0"></param>
-    /// <param name="content1"></param>
-    /// <returns></returns>
-    public string GetMailResetPasswordBody(string resetPasswordToken, string title, string content0, string content1)
+
+    public string GetMailResetPasswordBody(string resetPasswordToken, string title, string content0, string content1, string domainName)
     {
-        string url = $"{ServerSetting.DomainName}Account/ResetPassword?resetPasswordToken={Uri.EscapeDataString(resetPasswordToken)}";
+        string url = $"{domainName}Account/ResetPassword?resetPasswordToken={Uri.EscapeDataString(resetPasswordToken)}";
         return @$"<div style='text-align:center;'>
                         <h1>{title}<h1>
                         <h3>{content0}<h3>
@@ -42,35 +27,26 @@ public class MailClient : IMailClient
                         <a href='{url}' target='_blank' rel='noopener noreferrer'>{url}</a>
                       </div>";
     }
-    /// <summary>
-    /// Send email
-    /// </summary>
-    /// <param name="mail"></param>
-    /// <returns></returns>
-    public async Task<string> SendMailAsync(Mail mail)
+
+    public async Task<string> SendMailAsync(string toEmail, string subject, string body, string smtpHost, string smtpPort, string smtpUserName, string smtpPassword, string smtpSSL, string fromEmail, string fromFullName)
     {
         try
         {
             using MailMessage mailMessage = new();
-            mailMessage.From = new MailAddress(mail.FromEmail, mail.FromFullName);
-            mail.ToMailIds.ForEach(mailMessage.To.Add);
-            mailMessage.Subject = mail.Subject;
-            mailMessage.Body = mail.Body;
-            mailMessage.IsBodyHtml = mail.IsBodyHTML;
-            mail.Attachments.ForEach(x =>
-            {
-                mailMessage.Attachments.Add(new Attachment(x));
-            });
+            mailMessage.From = new MailAddress(fromEmail, fromFullName);
+            mailMessage.To.Add(toEmail);
+            mailMessage.Subject = subject;
+            mailMessage.Body = body;
+            mailMessage.IsBodyHtml = true;
 
-            using SmtpClient smtp = new(mail.SmtpHost, mail.SmtpPort);
-            smtp.Credentials = new System.Net.NetworkCredential(mail.SmtpUserName, mail.SmtpPassword);
-            smtp.EnableSsl = mail.SmtpSSL;
+            using SmtpClient smtp = new(smtpHost, int.Parse(smtpPort));
+            smtp.Credentials = new System.Net.NetworkCredential(smtpUserName, smtpPassword);
+            smtp.EnableSsl = bool.Parse(smtpSSL);
             await smtp.SendMailAsync(mailMessage);
             return EnumHelper.GetDescription(AccountMessage.MailSent);
         }
         catch (Exception ex)
         {
-
             return ex.Message;
         }
     }
