@@ -4,7 +4,7 @@ using System.Diagnostics;
 
 namespace Maroik.WebSite.Controllers;
 
-public class ExceptionController : Controller
+public class ExceptionController : BaseController
 {
     private readonly ILogger<ExceptionController> _logger;
 

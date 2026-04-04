@@ -17,7 +17,7 @@ using System.Text;
 
 namespace Maroik.WebSite.Controllers;
 
-public class CalendarController : Controller
+public class CalendarController : BaseController
 {
     private readonly RSA _rsa;
     private readonly IHtmlLocalizer<CalendarController> _localizer;
@@ -640,6 +640,25 @@ public class CalendarController : Controller
         calendarOutputViewModel.Calendars = calendars;
         calendarOutputViewModel.CalendarEventOutputViewModels = calendarEventOutputViewModels;
 
+        // Populate time data for view
+        calendarOutputViewModel.LoginedAccount = loginedAccount;
+        calendarOutputViewModel.LoginedAccountTimeZoneIanaId = loginedAccount?.TimeZoneIanaId ?? "UTC";
+        {
+            DateTime _ct = DateTime.UtcNow.ConvertTimeByTimeZoneIanaId(calendarOutputViewModel.LoginedAccountTimeZoneIanaId);
+            calendarOutputViewModel.CurrentDate = _ct.ToString("yyyy-MM-dd");
+            calendarOutputViewModel.CurrentHour = _ct.Hour;
+            calendarOutputViewModel.CurrentMinute = _ct.Minute;
+            calendarOutputViewModel.CurrentSecond = _ct.Second;
+            List<string> _ti = [];
+            for (int _h = 0; _h < 24; _h++)
+                for (int _m = 0; _m < 60; _m += 15)
+                    _ti.Add($"{_h:D2}:{_m:D2}");
+            calendarOutputViewModel.TimeIntervals = _ti;
+            int _nm = (int)Math.Round(_ct.Minute / 15.0) * 15;
+            if (_nm == 60) { _ct = _ct.AddHours(1); _nm = 0; }
+            calendarOutputViewModel.CurrentInterval = $"{_ct.Hour:D2}:{_nm:D2}";
+        }
+
         return View(calendarOutputViewModel);
     }
 
@@ -978,6 +997,25 @@ public class CalendarController : Controller
         calendarOutputViewModel.OtherCalendars = otherCalendars;
         calendarOutputViewModel.OtherCalendarEventOutputViewModels = otherCalendarEventOutputViewModels;
 
+        // Populate time data for view
+        calendarOutputViewModel.LoginedAccount = loginedAccount;
+        calendarOutputViewModel.LoginedAccountTimeZoneIanaId = loginedAccount?.TimeZoneIanaId ?? "UTC";
+        {
+            DateTime _ct = DateTime.UtcNow.ConvertTimeByTimeZoneIanaId(calendarOutputViewModel.LoginedAccountTimeZoneIanaId);
+            calendarOutputViewModel.CurrentDate = _ct.ToString("yyyy-MM-dd");
+            calendarOutputViewModel.CurrentHour = _ct.Hour;
+            calendarOutputViewModel.CurrentMinute = _ct.Minute;
+            calendarOutputViewModel.CurrentSecond = _ct.Second;
+            List<string> _ti = [];
+            for (int _h = 0; _h < 24; _h++)
+                for (int _m = 0; _m < 60; _m += 15)
+                    _ti.Add($"{_h:D2}:{_m:D2}");
+            calendarOutputViewModel.TimeIntervals = _ti;
+            int _nm = (int)Math.Round(_ct.Minute / 15.0) * 15;
+            if (_nm == 60) { _ct = _ct.AddHours(1); _nm = 0; }
+            calendarOutputViewModel.CurrentInterval = $"{_ct.Hour:D2}:{_nm:D2}";
+        }
+
         return View(calendarOutputViewModel);
     }
 
@@ -1152,6 +1190,25 @@ public class CalendarController : Controller
 
         calendarOutputViewModel.OtherCalendars = otherCalendars;
         calendarOutputViewModel.OtherCalendarEventOutputViewModels = otherCalendarEventOutputViewModels;
+
+        // Populate time data for view
+        calendarOutputViewModel.LoginedAccount = loginedAccount;
+        calendarOutputViewModel.LoginedAccountTimeZoneIanaId = loginedAccount?.TimeZoneIanaId ?? "UTC";
+        {
+            DateTime _ct = DateTime.UtcNow.ConvertTimeByTimeZoneIanaId(calendarOutputViewModel.LoginedAccountTimeZoneIanaId);
+            calendarOutputViewModel.CurrentDate = _ct.ToString("yyyy-MM-dd");
+            calendarOutputViewModel.CurrentHour = _ct.Hour;
+            calendarOutputViewModel.CurrentMinute = _ct.Minute;
+            calendarOutputViewModel.CurrentSecond = _ct.Second;
+            List<string> _ti = [];
+            for (int _h = 0; _h < 24; _h++)
+                for (int _m = 0; _m < 60; _m += 15)
+                    _ti.Add($"{_h:D2}:{_m:D2}");
+            calendarOutputViewModel.TimeIntervals = _ti;
+            int _nm = (int)Math.Round(_ct.Minute / 15.0) * 15;
+            if (_nm == 60) { _ct = _ct.AddHours(1); _nm = 0; }
+            calendarOutputViewModel.CurrentInterval = $"{_ct.Hour:D2}:{_nm:D2}";
+        }
 
         return View(calendarOutputViewModel);
     }

@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc.Localization;
 
 namespace Maroik.WebSite.Controllers;
 
-public class DriveController : Controller
+public class DriveController : BaseController
 {
     private readonly IHtmlLocalizer<DriveController> _localizer;
     private readonly ILogger<DriveController> _logger;

@@ -1,12 +1,6 @@
-﻿@using Newtonsoft.Json
-@using System.Text
-@inject Maroik.Core.Contract.Interfaces.IAssetRepository assetRepository
-
-@{
+﻿@{
     string currentCulture = Context.Features.Get<Microsoft.AspNetCore.Localization.IRequestCultureFeature>().RequestCulture.Culture.Name;
-    Context.Session.TryGetValue(Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account), out byte[] resultByte);
-
-    List<AssetResponse> assets = (await assetRepository.GetAssetsAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte ?? [])).Email)).Where(x => !x.Deleted).OrderBy(x => x.ProductName).ToList();
+    List<AssetResponse> assets = (ViewBag.Assets as List<AssetResponse>) ?? [];
 }
 
 @Html.Hidden("localizerPrevText", localizer["PrevText"].Value)

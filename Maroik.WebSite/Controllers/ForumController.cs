@@ -18,7 +18,7 @@ using System.Text;
 
 namespace Maroik.WebSite.Controllers;
 
-public class ForumController : Controller
+public class ForumController : BaseController
 {
     private readonly RSA _rsa;
     private readonly IHtmlLocalizer<ForumController> _localizer;
@@ -489,6 +489,15 @@ public class ForumController : Controller
                     }
                 }
 
+                // Preload comments and accounts for detail view
+                freeForumOutputViewModel.DetailBoardComments = (await _boardCommentRepository.GetOneBoardCommentsAsync(boardId ?? 0))?.ToList() ?? [];
+                freeForumOutputViewModel.AllAccounts = await _accountRepository.GetAllAsync() ?? [];
+                _ = HttpContext.Session.TryGetValue(EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account), out byte[] detailSessionByte);
+                freeForumOutputViewModel.LoginedAccount = detailSessionByte?.Length > 0
+                    ? JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(detailSessionByte)) ?? new AccountResponse { Role = Role.Anonymous }
+                    : new AccountResponse { Role = Role.Anonymous };
+                freeForumOutputViewModel.LoginedAccountTimeZoneIanaId = freeForumOutputViewModel.LoginedAccount.TimeZoneIanaId ?? "";
+
                 return View(freeForumOutputViewModel);
             }
             catch
@@ -679,6 +688,30 @@ public class ForumController : Controller
 
             #region Board data logic
             freeForumOutputViewModel.Boards = freeBoards.Skip((page - 1) * pageSize).Take(freeForumOutputViewModel.Pager.PageSize).ToList();
+            #endregion
+
+            #region Preload comment counts and attached files for view
+            _ = HttpContext.Session.TryGetValue(EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account), out byte[] sessionByte);
+            freeForumOutputViewModel.LoginedAccount = sessionByte?.Length > 0
+                ? JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(sessionByte)) ?? new AccountResponse { Role = Role.Anonymous }
+                : new AccountResponse { Role = Role.Anonymous };
+            freeForumOutputViewModel.LoginedAccountTimeZoneIanaId = freeForumOutputViewModel.LoginedAccount.TimeZoneIanaId ?? "";
+            freeForumOutputViewModel.AllAccounts = await _accountRepository.GetAllAsync() ?? [];
+            List<BoardAttachedFileResponse> allAttachedFiles = await _boardAttachedFileRepository.GetAllAsync() ?? [];
+            foreach (var board in freeForumOutputViewModel.NoticeBoards)
+            {
+                freeForumOutputViewModel.CommentCountByBoardId[board.Id] =
+                    (await _boardCommentRepository.GetOneBoardCommentsAsync(board.Id))?.Count(c => !c.Deleted) ?? 0;
+                freeForumOutputViewModel.AttachedFilesByBoardId[board.Id] =
+                    allAttachedFiles.Where(f => f.BoardId == board.Id && !string.IsNullOrEmpty(f.Name)).ToList();
+            }
+            foreach (var board in freeForumOutputViewModel.Boards)
+            {
+                freeForumOutputViewModel.CommentCountByBoardId[board.Id] =
+                    (await _boardCommentRepository.GetOneBoardCommentsAsync(board.Id))?.Count(c => !c.Deleted) ?? 0;
+                freeForumOutputViewModel.AttachedFilesByBoardId[board.Id] =
+                    allAttachedFiles.Where(f => f.BoardId == board.Id && !string.IsNullOrEmpty(f.Name)).ToList();
+            }
             #endregion
 
             ViewBag.SelectedSearchType = searchType;

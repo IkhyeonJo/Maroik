@@ -1,27 +1,16 @@
-﻿@using Newtonsoft.Json
-@using System.Text
-@using Maroik.WebSite.Utilities
-@inject Maroik.Core.Contract.Interfaces.IAccountRepository accountRepository
+﻿@using Maroik.WebSite.Utilities
 
 @{
     string returnUri = string.IsNullOrWhiteSpace(Context.Request.Path) ? "/" :
     $"{Context.Request.Path.Value}{Context.Request.QueryString}";
-    Context.Session.TryGetValue(EnumHelper.GetDescription(Session.Account), out byte[] resultByte);
     string currentCulture = Context.Features.Get<Microsoft.AspNetCore.Localization.IRequestCultureFeature>().RequestCulture.Culture.Name;
-    AccountResponse loginedAccount = new AccountResponse();
-
-    if (resultByte != null) // 로그인이 된 상태라면
+    AccountResponse loginedAccount = (ViewBag.LoginedAccount as AccountResponse) ?? new AccountResponse
     {
-        loginedAccount = await
-        accountRepository.GetAccountByEmailAsync(JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email);
-    }
-    else // 로그인이 되지 않은 상태라면
-    {
-        loginedAccount.Nickname = @localizer["Login"].Value;
-        loginedAccount.Role = Role.Anonymous;
-        loginedAccount.TimeZoneIanaId = "UTC";
-        loginedAccount.AvatarImagePath = "/anonymous/images/bg1.jpg";
-    }
+        Nickname = localizer["Login"].Value,
+        Role = Role.Anonymous,
+        TimeZoneIanaId = "UTC",
+        AvatarImagePath = "/anonymous/images/bg1.jpg"
+    };
 }
 
 <!DOCTYPE html>

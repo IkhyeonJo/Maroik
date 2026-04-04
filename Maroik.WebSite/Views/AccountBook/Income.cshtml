@@ -1,19 +1,12 @@
 ﻿@using Maroik.WebSite.Utilities
-@using Newtonsoft.Json
-@using System.Text
-@inject Maroik.Core.Contract.Interfaces.IAssetRepository assetRepository
 
 @{
     string currentCulture = Context.Features.Get<Microsoft.AspNetCore.Localization.IRequestCultureFeature>().RequestCulture.Culture.Name;
-    Context.Session.TryGetValue(Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account), out byte[] resultByte);
-    string loginedAccountTimeZoneIanaId = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId;
-    List<AssetResponse> assets = (await assetRepository.GetAssetsAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email)).Where(x => !x.Deleted).OrderBy(x => x.ProductName).ToList();
-
-    DateTime currentTime = DateTime.UtcNow.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId);
-    string currentDate = currentTime.ToString("yyyy-MM-dd");
-    int currentHour = currentTime.Hour;
-    int currentMinute = currentTime.Minute;
-    int currentSecond = currentTime.Second;
+    List<AssetResponse> assets = (ViewBag.Assets as List<AssetResponse>) ?? [];
+    string currentDate = (ViewBag.CurrentDate as string) ?? "";
+    int currentHour = (ViewBag.CurrentHour as int?) ?? 0;
+    int currentMinute = (ViewBag.CurrentMinute as int?) ?? 0;
+    int currentSecond = (ViewBag.CurrentSecond as int?) ?? 0;
 }
 
 @Html.Hidden("localizerPrevText", localizer["PrevText"].Value)

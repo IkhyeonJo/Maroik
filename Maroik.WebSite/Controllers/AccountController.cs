@@ -12,7 +12,7 @@ using System.Text;
 
 namespace Maroik.WebSite.Controllers;
 
-public class AccountController : Controller
+public class AccountController : BaseController
 {
     private readonly RSA _rsa;
     private readonly IHtmlLocalizer<AccountController> _localizer;

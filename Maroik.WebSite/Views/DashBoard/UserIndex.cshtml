@@ -3,401 +3,132 @@
 @model UserIndexOutputViewModel
 
 @{
-    var startYear = Convert.ToInt32(ViewBag.StartYear as string ?? "");
-    var endYear = DateTime.UtcNow.Year;
-    var selectedYear = Convert.ToInt32(ViewBag.SelectedYear as string ?? "");
-    var selectedMonth = Convert.ToInt32(ViewBag.SelectedMonth as string ?? "");
-
-    #region Year variables
-
-    var regularIncomeLaborIncomeYear = 0m;
-    var regularIncomeBusinessIncomeYear = 0m;
-    var regularIncomePensionIncomeYear = 0m;
-    var regularIncomeFinancialIncomeYear = 0m;
-    var regularIncomeRentalIncomeYear = 0m;
-    var regularIncomeOtherIncomeYear = 0m;
-
-    var percentageOfRegularIncomeLaborIncomeYear = 0d;
-    var percentageOfRegularIncomeBusinessIncomeYear = 0d;
-    var percentageOfRegularIncomePensionIncomeYear = 0d;
-    var percentageOfRegularIncomeFinancialIncomeYear = 0d;
-    var percentageOfRegularIncomeRentalIncomeYear = 0d;
-    var percentageOfRegularIncomeOtherIncomeYear = 0d;
-
-    var irregularIncomeLaborIncomeYear = 0m;
-    var irregularIncomeOtherIncomeYear = 0m;
-
-    var percentageOfIrregularIncomeLaborIncomeYear = 0d;
-    var percentageOfIrregularIncomeOtherIncomeYear = 0d;
-
-    var regularSavingsDepositYear = 0m;
-    var regularSavingsInvestmentYear = 0m;
-
-    var percentageOfRegularSavingsDepositYear = 0d;
-    var percentageOfRegularSavingsInvestmentYear = 0d;
-
-    var nonConsumerSpendingPublicPensionYear = 0m;
-    var nonConsumerSpendingDebtRepaymentYear = 0m;
-    var nonConsumerSpendingTaxYear = 0m;
-    var nonConsumerSpendingSocialInsuranceYear = 0m;
-    var nonConsumerSpendingInterHouseholdTransferExpensesYear = 0m;
-    var nonConsumerSpendingNonProfitOrganizationTransferYear = 0m;
-
-    var percentageOfNonConsumerSpendingPublicPensionYear = 0d;
-    var percentageOfNonConsumerSpendingDebtRepaymentYear = 0d;
-    var percentageOfNonConsumerSpendingTaxYear = 0d;
-    var percentageOfNonConsumerSpendingSocialInsuranceYear = 0d;
-    var percentageOfNonConsumerSpendingInterHouseholdTransferExpensesYear = 0d;
-    var percentageOfNonConsumerSpendingNonProfitOrganizationTransferYear = 0d;
-
-    var consumerSpendingMealOrEatOutExpensesYear = 0m;
-    var consumerSpendingHousingOrSuppliesCostYear = 0m;
-    var consumerSpendingEducationExpensesYear = 0m;
-    var consumerSpendingMedicalExpensesYear = 0m;
-    var consumerSpendingTransportationCostYear = 0m;
-    var consumerSpendingCommunicationCostYear = 0m;
-    var consumerSpendingLeisureOrCultureYear = 0m;
-    var consumerSpendingClothingOrShoesYear = 0m;
-    var consumerSpendingPinMoneyYear = 0m;
-    var consumerSpendingProtectionTypeInsuranceYear = 0m;
-    var consumerSpendingOtherExpensesYear = 0m;
-    var consumerSpendingUnknownExpenditureYear = 0m;
-
-    var percentageOfConsumerSpendingMealOrEatOutExpensesYear = 0d;
-    var percentageOfConsumerSpendingHousingOrSuppliesCostYear = 0d;
-    var percentageOfConsumerSpendingEducationExpensesYear = 0d;
-    var percentageOfConsumerSpendingMedicalExpensesYear = 0d;
-    var percentageOfConsumerSpendingTransportationCostYear = 0d;
-    var percentageOfConsumerSpendingCommunicationCostYear = 0d;
-    var percentageOfConsumerSpendingLeisureOrCultureYear = 0d;
-    var percentageOfConsumerSpendingClothingOrShoesYear = 0d;
-    var percentageOfConsumerSpendingPinMoneyYear = 0d;
-    var percentageOfConsumerSpendingProtectionTypeInsuranceYear = 0d;
-    var percentageOfConsumerSpendingOtherExpensesYear = 0d;
-    var percentageOfConsumerSpendingUnknownExpenditureYear = 0d;
-
-    #endregion
-
-    #region YearMonth variables
-
-    var regularIncomeLaborIncomeYearMonth = 0m;
-    var regularIncomeBusinessIncomeYearMonth = 0m;
-    var regularIncomePensionIncomeYearMonth = 0m;
-    var regularIncomeFinancialIncomeYearMonth = 0m;
-    var regularIncomeRentalIncomeYearMonth = 0m;
-    var regularIncomeOtherIncomeYearMonth = 0m;
-
-    var percentageOfRegularIncomeLaborIncomeYearMonth = 0d;
-    var percentageOfRegularIncomeBusinessIncomeYearMonth = 0d;
-    var percentageOfRegularIncomePensionIncomeYearMonth = 0d;
-    var percentageOfRegularIncomeFinancialIncomeYearMonth = 0d;
-    var percentageOfRegularIncomeRentalIncomeYearMonth = 0d;
-    var percentageOfRegularIncomeOtherIncomeYearMonth = 0d;
-
-    var irregularIncomeLaborIncomeYearMonth = 0m;
-    var irregularIncomeOtherIncomeYearMonth = 0m;
-
-    var percentageOfIrregularIncomeLaborIncomeYearMonth = 0d;
-    var percentageOfIrregularIncomeOtherIncomeYearMonth = 0d;
-
-    var regularSavingsDepositYearMonth = 0m;
-    var regularSavingsInvestmentYearMonth = 0m;
-
-    var percentageOfRegularSavingsDepositYearMonth = 0d;
-    var percentageOfRegularSavingsInvestmentYearMonth = 0d;
-
-    var nonConsumerSpendingPublicPensionYearMonth = 0m;
-    var nonConsumerSpendingDebtRepaymentYearMonth = 0m;
-    var nonConsumerSpendingTaxYearMonth = 0m;
-    var nonConsumerSpendingSocialInsuranceYearMonth = 0m;
-    var nonConsumerSpendingInterHouseholdTransferExpensesYearMonth = 0m;
-    var nonConsumerSpendingNonProfitOrganizationTransferYearMonth = 0m;
-
-    var percentageOfNonConsumerSpendingPublicPensionYearMonth = 0d;
-    var percentageOfNonConsumerSpendingDebtRepaymentYearMonth = 0d;
-    var percentageOfNonConsumerSpendingTaxYearMonth = 0d;
-    var percentageOfNonConsumerSpendingSocialInsuranceYearMonth = 0d;
-    var percentageOfNonConsumerSpendingInterHouseholdTransferExpensesYearMonth = 0d;
-    var percentageOfNonConsumerSpendingNonProfitOrganizationTransferYearMonth = 0d;
-
-    var consumerSpendingMealOrEatOutExpensesYearMonth = 0m;
-    var consumerSpendingHousingOrSuppliesCostYearMonth = 0m;
-    var consumerSpendingEducationExpensesYearMonth = 0m;
-    var consumerSpendingMedicalExpensesYearMonth = 0m;
-    var consumerSpendingTransportationCostYearMonth = 0m;
-    var consumerSpendingCommunicationCostYearMonth = 0m;
-    var consumerSpendingLeisureOrCultureYearMonth = 0m;
-    var consumerSpendingClothingOrShoesYearMonth = 0m;
-    var consumerSpendingPinMoneyYearMonth = 0m;
-    var consumerSpendingProtectionTypeInsuranceYearMonth = 0m;
-    var consumerSpendingOtherExpensesYearMonth = 0m;
-    var consumerSpendingUnknownExpenditureYearMonth = 0m;
-
-    var percentageOfConsumerSpendingMealOrEatOutExpensesYearMonth = 0d;
-    var percentageOfConsumerSpendingHousingOrSuppliesCostYearMonth = 0d;
-    var percentageOfConsumerSpendingEducationExpensesYearMonth = 0d;
-    var percentageOfConsumerSpendingMedicalExpensesYearMonth = 0d;
-    var percentageOfConsumerSpendingTransportationCostYearMonth = 0d;
-    var percentageOfConsumerSpendingCommunicationCostYearMonth = 0d;
-    var percentageOfConsumerSpendingLeisureOrCultureYearMonth = 0d;
-    var percentageOfConsumerSpendingClothingOrShoesYearMonth = 0d;
-    var percentageOfConsumerSpendingPinMoneyYearMonth = 0d;
-    var percentageOfConsumerSpendingProtectionTypeInsuranceYearMonth = 0d;
-    var percentageOfConsumerSpendingOtherExpensesYearMonth = 0d;
-    var percentageOfConsumerSpendingUnknownExpenditureYearMonth = 0d;
-
-    #endregion
-
-    if (Model.DefaultMonetaryUnit != null)
-    {
-        #region Year 수입
-
-        #region 대분류 = '정기수입'
-
-        var regularIncomeYear = Model.IncomeYearOutputViewModels.Where(x => x.MainClass == "RegularIncome").ToList();
-
-        var regularIncomeTotalYear = regularIncomeYear.Sum(v => v.Amount);
-        regularIncomeLaborIncomeYear = regularIncomeYear.Where(x => x.SubClass == "LaborIncome").Sum(v => v.Amount);
-        regularIncomeBusinessIncomeYear = regularIncomeYear.Where(x => x.SubClass == "BusinessIncome").Sum(v => v.Amount);
-        regularIncomePensionIncomeYear = regularIncomeYear.Where(x => x.SubClass == "PensionIncome").Sum(v => v.Amount);
-        regularIncomeFinancialIncomeYear = regularIncomeYear.Where(x => x.SubClass == "FinancialIncome").Sum(v => v.Amount);
-        regularIncomeRentalIncomeYear = regularIncomeYear.Where(x => x.SubClass == "RentalIncome").Sum(v => v.Amount);
-        regularIncomeOtherIncomeYear = regularIncomeYear.Where(x => x.SubClass == "OtherIncome").Sum(v => v.Amount);
-
-        if (regularIncomeTotalYear != 0)
-        {
-            percentageOfRegularIncomeLaborIncomeYear = 100 * ((double)regularIncomeLaborIncomeYear / (double)regularIncomeTotalYear);
-            percentageOfRegularIncomeBusinessIncomeYear = 100 * ((double)regularIncomeBusinessIncomeYear / (double)regularIncomeTotalYear);
-            percentageOfRegularIncomePensionIncomeYear = 100 * ((double)regularIncomePensionIncomeYear / (double)regularIncomeTotalYear);
-            percentageOfRegularIncomeFinancialIncomeYear = 100 * ((double)regularIncomeFinancialIncomeYear / (double)regularIncomeTotalYear);
-            percentageOfRegularIncomeRentalIncomeYear = 100 * ((double)regularIncomeRentalIncomeYear / (double)regularIncomeTotalYear);
-            percentageOfRegularIncomeOtherIncomeYear = 100 * ((double)regularIncomeOtherIncomeYear / (double)regularIncomeTotalYear);
-        }
-
-        #endregion
-
-        #region 대분류 = '비정기수입'
-
-        var irregularIncomeYear = Model.IncomeYearOutputViewModels.Where(x => x.MainClass == "IrregularIncome").ToList();
-
-        var irregularIncomeTotalYear = irregularIncomeYear.Sum(v => v.Amount);
-        irregularIncomeLaborIncomeYear = irregularIncomeYear.Where(x => x.SubClass == "LaborIncome").Sum(v => v.Amount);
-        irregularIncomeOtherIncomeYear = irregularIncomeYear.Where(x => x.SubClass == "OtherIncome").Sum(v => v.Amount);
-
-        if (irregularIncomeTotalYear != 0)
-        {
-            percentageOfIrregularIncomeLaborIncomeYear = 100 * ((double)irregularIncomeLaborIncomeYear / (double)irregularIncomeTotalYear);
-            percentageOfIrregularIncomeOtherIncomeYear = 100 * ((double)irregularIncomeOtherIncomeYear / (double)irregularIncomeTotalYear);
-        }
-
-        #endregion
-
-        #endregion
-
-        #region Year 지출
-
-        #region 대분류 = '정기저축'
-
-        var regularSavingsYear = Model.ExpenditureYearOutputViewModels.Where(x => x.MainClass == "RegularSavings").ToList();
-
-        var regularSavingsTotalYear = regularSavingsYear.Sum(v => v.Amount);
-        regularSavingsDepositYear = regularSavingsYear.Where(x => x.SubClass == "Deposit").Sum(v => v.Amount);
-        regularSavingsInvestmentYear = regularSavingsYear.Where(x => x.SubClass == "Investment").Sum(v => v.Amount);
-
-        if (regularSavingsTotalYear != 0)
-        {
-            percentageOfRegularSavingsDepositYear = 100 * ((double)regularSavingsDepositYear / (double)regularSavingsTotalYear);
-            percentageOfRegularSavingsInvestmentYear = 100 * ((double)regularSavingsInvestmentYear / (double)regularSavingsTotalYear);
-        }
-
-        #endregion
-
-        #region 대분류 = '비소비지출'
-
-        var nonconsumerSpendingYear = Model.ExpenditureYearOutputViewModels.Where(x => x.MainClass == "NonConsumerSpending").ToList();
-
-        var nonConsumerSpendingTotalYear = nonconsumerSpendingYear.Sum(v => v.Amount);
-        nonConsumerSpendingPublicPensionYear = nonconsumerSpendingYear.Where(x => x.SubClass == "PublicPension").Sum(v => v.Amount);
-        nonConsumerSpendingDebtRepaymentYear = nonconsumerSpendingYear.Where(x => x.SubClass == "DebtRepayment").Sum(v => v.Amount);
-        nonConsumerSpendingTaxYear = nonconsumerSpendingYear.Where(x => x.SubClass == "Tax").Sum(v => v.Amount);
-        nonConsumerSpendingSocialInsuranceYear = nonconsumerSpendingYear.Where(x => x.SubClass == "SocialInsurance").Sum(v => v.Amount);
-        nonConsumerSpendingInterHouseholdTransferExpensesYear = nonconsumerSpendingYear.Where(x => x.SubClass == "InterHouseholdTransferExpenses").Sum(v => v.Amount);
-        nonConsumerSpendingNonProfitOrganizationTransferYear = nonconsumerSpendingYear.Where(x => x.SubClass == "NonProfitOrganizationTransfer").Sum(v => v.Amount);
-
-        if (nonConsumerSpendingTotalYear != 0)
-        {
-            percentageOfNonConsumerSpendingPublicPensionYear = 100 * ((double)nonConsumerSpendingPublicPensionYear / (double)nonConsumerSpendingTotalYear);
-            percentageOfNonConsumerSpendingDebtRepaymentYear = 100 * ((double)nonConsumerSpendingDebtRepaymentYear / (double)nonConsumerSpendingTotalYear);
-            percentageOfNonConsumerSpendingTaxYear = 100 * ((double)nonConsumerSpendingTaxYear / (double)nonConsumerSpendingTotalYear);
-            percentageOfNonConsumerSpendingSocialInsuranceYear = 100 * ((double)nonConsumerSpendingSocialInsuranceYear / (double)nonConsumerSpendingTotalYear);
-            percentageOfNonConsumerSpendingInterHouseholdTransferExpensesYear = 100 * ((double)nonConsumerSpendingInterHouseholdTransferExpensesYear / (double)nonConsumerSpendingTotalYear);
-            percentageOfNonConsumerSpendingNonProfitOrganizationTransferYear = 100 * ((double)nonConsumerSpendingNonProfitOrganizationTransferYear / (double)nonConsumerSpendingTotalYear);
-        }
-
-        #endregion
-
-        #region 대분류 = '소비지출'
-
-        var consumerSpendingYear = Model.ExpenditureYearOutputViewModels.Where(x => x.MainClass == "ConsumerSpending").ToList();
-
-        var consumerSpendingTotalYear = consumerSpendingYear.Sum(v => v.Amount);
-        consumerSpendingMealOrEatOutExpensesYear = consumerSpendingYear.Where(x => x.SubClass == "MealOrEatOutExpenses").Sum(v => v.Amount);
-        consumerSpendingHousingOrSuppliesCostYear = consumerSpendingYear.Where(x => x.SubClass == "HousingOrSuppliesCost").Sum(v => v.Amount);
-        consumerSpendingEducationExpensesYear = consumerSpendingYear.Where(x => x.SubClass == "EducationExpenses").Sum(v => v.Amount);
-        consumerSpendingMedicalExpensesYear = consumerSpendingYear.Where(x => x.SubClass == "MedicalExpenses").Sum(v => v.Amount);
-        consumerSpendingTransportationCostYear = consumerSpendingYear.Where(x => x.SubClass == "TransportationCost").Sum(v => v.Amount);
-        consumerSpendingCommunicationCostYear = consumerSpendingYear.Where(x => x.SubClass == "CommunicationCost").Sum(v => v.Amount);
-        consumerSpendingLeisureOrCultureYear = consumerSpendingYear.Where(x => x.SubClass == "LeisureOrCulture").Sum(v => v.Amount);
-        consumerSpendingClothingOrShoesYear = consumerSpendingYear.Where(x => x.SubClass == "ClothingOrShoes").Sum(v => v.Amount);
-        consumerSpendingPinMoneyYear = consumerSpendingYear.Where(x => x.SubClass == "PinMoney").Sum(v => v.Amount);
-        consumerSpendingProtectionTypeInsuranceYear = consumerSpendingYear.Where(x => x.SubClass == "ProtectionTypeInsurance").Sum(v => v.Amount);
-        consumerSpendingOtherExpensesYear = consumerSpendingYear.Where(x => x.SubClass == "OtherExpenses").Sum(v => v.Amount);
-        consumerSpendingUnknownExpenditureYear = consumerSpendingYear.Where(x => x.SubClass == "UnknownExpenditure").Sum(v => v.Amount);
-
-        if (consumerSpendingTotalYear != 0)
-        {
-            percentageOfConsumerSpendingMealOrEatOutExpensesYear = 100 * ((double)consumerSpendingMealOrEatOutExpensesYear / (double)consumerSpendingTotalYear);
-            percentageOfConsumerSpendingHousingOrSuppliesCostYear = 100 * ((double)consumerSpendingHousingOrSuppliesCostYear / (double)consumerSpendingTotalYear);
-            percentageOfConsumerSpendingEducationExpensesYear = 100 * ((double)consumerSpendingEducationExpensesYear / (double)consumerSpendingTotalYear);
-            percentageOfConsumerSpendingMedicalExpensesYear = 100 * ((double)consumerSpendingMedicalExpensesYear / (double)consumerSpendingTotalYear);
-            percentageOfConsumerSpendingTransportationCostYear = 100 * ((double)consumerSpendingTransportationCostYear / (double)consumerSpendingTotalYear);
-            percentageOfConsumerSpendingCommunicationCostYear = 100 * ((double)consumerSpendingCommunicationCostYear / (double)consumerSpendingTotalYear);
-            percentageOfConsumerSpendingLeisureOrCultureYear = 100 * ((double)consumerSpendingLeisureOrCultureYear / (double)consumerSpendingTotalYear);
-            percentageOfConsumerSpendingClothingOrShoesYear = 100 * ((double)consumerSpendingClothingOrShoesYear / (double)consumerSpendingTotalYear);
-            percentageOfConsumerSpendingPinMoneyYear = 100 * ((double)consumerSpendingPinMoneyYear / (double)consumerSpendingTotalYear);
-            percentageOfConsumerSpendingProtectionTypeInsuranceYear = 100 * ((double)consumerSpendingProtectionTypeInsuranceYear / (double)consumerSpendingTotalYear);
-            percentageOfConsumerSpendingOtherExpensesYear = 100 * ((double)consumerSpendingOtherExpensesYear / (double)consumerSpendingTotalYear);
-            percentageOfConsumerSpendingUnknownExpenditureYear = 100 * ((double)consumerSpendingUnknownExpenditureYear / (double)consumerSpendingTotalYear);
-        }
-
-        #endregion
-
-        #endregion
-
-        #region YearMonth 수입
-
-        #region 대분류 = '정기수입'
-
-        var regularIncomeYearMonth = Model.IncomeYearMonthOutputViewModels.Where(x => x.MainClass == "RegularIncome").ToList();
-
-        var regularIncomeTotalYearMonth = regularIncomeYearMonth.Sum(v => v.Amount);
-        regularIncomeLaborIncomeYearMonth = regularIncomeYearMonth.Where(x => x.SubClass == "LaborIncome").Sum(v => v.Amount);
-        regularIncomeBusinessIncomeYearMonth = regularIncomeYearMonth.Where(x => x.SubClass == "BusinessIncome").Sum(v => v.Amount);
-        regularIncomePensionIncomeYearMonth = regularIncomeYearMonth.Where(x => x.SubClass == "PensionIncome").Sum(v => v.Amount);
-        regularIncomeFinancialIncomeYearMonth = regularIncomeYearMonth.Where(x => x.SubClass == "FinancialIncome").Sum(v => v.Amount);
-        regularIncomeRentalIncomeYearMonth = regularIncomeYearMonth.Where(x => x.SubClass == "RentalIncome").Sum(v => v.Amount);
-        regularIncomeOtherIncomeYearMonth = regularIncomeYearMonth.Where(x => x.SubClass == "OtherIncome").Sum(v => v.Amount);
-
-        if (regularIncomeTotalYearMonth != 0)
-        {
-            percentageOfRegularIncomeLaborIncomeYearMonth = 100 * ((double)regularIncomeLaborIncomeYearMonth / (double)regularIncomeTotalYearMonth);
-            percentageOfRegularIncomeBusinessIncomeYearMonth = 100 * ((double)regularIncomeBusinessIncomeYearMonth / (double)regularIncomeTotalYearMonth);
-            percentageOfRegularIncomePensionIncomeYearMonth = 100 * ((double)regularIncomePensionIncomeYearMonth / (double)regularIncomeTotalYearMonth);
-            percentageOfRegularIncomeFinancialIncomeYearMonth = 100 * ((double)regularIncomeFinancialIncomeYearMonth / (double)regularIncomeTotalYearMonth);
-            percentageOfRegularIncomeRentalIncomeYearMonth = 100 * ((double)regularIncomeRentalIncomeYearMonth / (double)regularIncomeTotalYearMonth);
-            percentageOfRegularIncomeOtherIncomeYearMonth = 100 * ((double)regularIncomeOtherIncomeYearMonth / (double)regularIncomeTotalYearMonth);
-        }
-
-        #endregion
-
-        #region 대분류 = '비정기수입'
-
-        var irregularIncomeYearMonth = Model.IncomeYearMonthOutputViewModels.Where(x => x.MainClass == "IrregularIncome").ToList();
-
-        var irregularIncomeTotalYearMonth = irregularIncomeYearMonth.Sum(v => v.Amount);
-        irregularIncomeLaborIncomeYearMonth = irregularIncomeYearMonth.Where(x => x.SubClass == "LaborIncome").Sum(v => v.Amount);
-        irregularIncomeOtherIncomeYearMonth = irregularIncomeYearMonth.Where(x => x.SubClass == "OtherIncome").Sum(v => v.Amount);
-
-        if (irregularIncomeTotalYearMonth != 0)
-        {
-            percentageOfIrregularIncomeLaborIncomeYearMonth = 100 * ((double)irregularIncomeLaborIncomeYearMonth / (double)irregularIncomeTotalYearMonth);
-            percentageOfIrregularIncomeOtherIncomeYearMonth = 100 * ((double)irregularIncomeOtherIncomeYearMonth / (double)irregularIncomeTotalYearMonth);
-        }
-
-        #endregion
-
-        #endregion
-
-        #region YearMonth 지출
-
-        #region 대분류 = '정기저축'
-
-        var regularSavingsYearMonth = Model.ExpenditureYearMonthOutputViewModels.Where(x => x.MainClass == "RegularSavings").ToList();
-
-        var regularSavingsTotalYearMonth = regularSavingsYearMonth.Sum(v => v.Amount);
-        regularSavingsDepositYearMonth = regularSavingsYearMonth.Where(x => x.SubClass == "Deposit").Sum(v => v.Amount);
-        regularSavingsInvestmentYearMonth = regularSavingsYearMonth.Where(x => x.SubClass == "Investment").Sum(v => v.Amount);
-
-        if (regularSavingsTotalYearMonth != 0)
-        {
-            percentageOfRegularSavingsDepositYearMonth = 100 * ((double)regularSavingsDepositYearMonth / (double)regularSavingsTotalYearMonth);
-            percentageOfRegularSavingsInvestmentYearMonth = 100 * ((double)regularSavingsInvestmentYearMonth / (double)regularSavingsTotalYearMonth);
-        }
-
-        #endregion
-
-        #region 대분류 = '비소비지출'
-
-        var nonConsumerSpendingYearMonth = Model.ExpenditureYearMonthOutputViewModels.Where(x => x.MainClass == "NonConsumerSpending").ToList();
-
-        var nonConsumerSpendingTotalYearMonth = nonConsumerSpendingYearMonth.Sum(v => v.Amount);
-        nonConsumerSpendingPublicPensionYearMonth = nonConsumerSpendingYearMonth.Where(x => x.SubClass == "PublicPension").Sum(v => v.Amount);
-        nonConsumerSpendingDebtRepaymentYearMonth = nonConsumerSpendingYearMonth.Where(x => x.SubClass == "DebtRepayment").Sum(v => v.Amount);
-        nonConsumerSpendingTaxYearMonth = nonConsumerSpendingYearMonth.Where(x => x.SubClass == "Tax").Sum(v => v.Amount);
-        nonConsumerSpendingSocialInsuranceYearMonth = nonConsumerSpendingYearMonth.Where(x => x.SubClass == "SocialInsurance").Sum(v => v.Amount);
-        nonConsumerSpendingInterHouseholdTransferExpensesYearMonth = nonConsumerSpendingYearMonth.Where(x => x.SubClass == "InterHouseholdTransferExpenses").Sum(v => v.Amount);
-        nonConsumerSpendingNonProfitOrganizationTransferYearMonth = nonConsumerSpendingYearMonth.Where(x => x.SubClass == "NonProfitOrganizationTransfer").Sum(v => v.Amount);
-
-        if (nonConsumerSpendingTotalYearMonth != 0)
-        {
-            percentageOfNonConsumerSpendingPublicPensionYearMonth = 100 * ((double)nonConsumerSpendingPublicPensionYearMonth / (double)nonConsumerSpendingTotalYearMonth);
-            percentageOfNonConsumerSpendingDebtRepaymentYearMonth = 100 * ((double)nonConsumerSpendingDebtRepaymentYearMonth / (double)nonConsumerSpendingTotalYearMonth);
-            percentageOfNonConsumerSpendingTaxYearMonth = 100 * ((double)nonConsumerSpendingTaxYearMonth / (double)nonConsumerSpendingTotalYearMonth);
-            percentageOfNonConsumerSpendingSocialInsuranceYearMonth = 100 * ((double)nonConsumerSpendingSocialInsuranceYearMonth / (double)nonConsumerSpendingTotalYearMonth);
-            percentageOfNonConsumerSpendingInterHouseholdTransferExpensesYearMonth = 100 * ((double)nonConsumerSpendingInterHouseholdTransferExpensesYearMonth / (double)nonConsumerSpendingTotalYearMonth);
-            percentageOfNonConsumerSpendingNonProfitOrganizationTransferYearMonth = 100 * ((double)nonConsumerSpendingNonProfitOrganizationTransferYearMonth / (double)nonConsumerSpendingTotalYearMonth);
-        }
-
-        #endregion
-
-        #region 대분류 = '소비지출'
-
-        var consumerSpendingYearMonth = Model.ExpenditureYearMonthOutputViewModels.Where(x => x.MainClass == "ConsumerSpending").ToList();
-
-        var consumerSpendingTotalYearMonth = consumerSpendingYearMonth.Sum(v => v.Amount);
-        consumerSpendingMealOrEatOutExpensesYearMonth = consumerSpendingYearMonth.Where(x => x.SubClass == "MealOrEatOutExpenses").Sum(v => v.Amount);
-        consumerSpendingHousingOrSuppliesCostYearMonth = consumerSpendingYearMonth.Where(x => x.SubClass == "HousingOrSuppliesCost").Sum(v => v.Amount);
-        consumerSpendingEducationExpensesYearMonth = consumerSpendingYearMonth.Where(x => x.SubClass == "EducationExpenses").Sum(v => v.Amount);
-        consumerSpendingMedicalExpensesYearMonth = consumerSpendingYearMonth.Where(x => x.SubClass == "MedicalExpenses").Sum(v => v.Amount);
-        consumerSpendingTransportationCostYearMonth = consumerSpendingYearMonth.Where(x => x.SubClass == "TransportationCost").Sum(v => v.Amount);
-        consumerSpendingCommunicationCostYearMonth = consumerSpendingYearMonth.Where(x => x.SubClass == "CommunicationCost").Sum(v => v.Amount);
-        consumerSpendingLeisureOrCultureYearMonth = consumerSpendingYearMonth.Where(x => x.SubClass == "LeisureOrCulture").Sum(v => v.Amount);
-        consumerSpendingClothingOrShoesYearMonth = consumerSpendingYearMonth.Where(x => x.SubClass == "ClothingOrShoes").Sum(v => v.Amount);
-        consumerSpendingPinMoneyYearMonth = consumerSpendingYearMonth.Where(x => x.SubClass == "PinMoney").Sum(v => v.Amount);
-        consumerSpendingProtectionTypeInsuranceYearMonth = consumerSpendingYearMonth.Where(x => x.SubClass == "ProtectionTypeInsurance").Sum(v => v.Amount);
-        consumerSpendingOtherExpensesYearMonth = consumerSpendingYearMonth.Where(x => x.SubClass == "OtherExpenses").Sum(v => v.Amount);
-        consumerSpendingUnknownExpenditureYearMonth = consumerSpendingYearMonth.Where(x => x.SubClass == "UnknownExpenditure").Sum(v => v.Amount);
-
-        if (consumerSpendingTotalYearMonth != 0)
-        {
-            percentageOfConsumerSpendingMealOrEatOutExpensesYearMonth = 100 * ((double)consumerSpendingMealOrEatOutExpensesYearMonth / (double)consumerSpendingTotalYearMonth);
-            percentageOfConsumerSpendingHousingOrSuppliesCostYearMonth = 100 * ((double)consumerSpendingHousingOrSuppliesCostYearMonth / (double)consumerSpendingTotalYearMonth);
-            percentageOfConsumerSpendingEducationExpensesYearMonth = 100 * ((double)consumerSpendingEducationExpensesYearMonth / (double)consumerSpendingTotalYearMonth);
-            percentageOfConsumerSpendingMedicalExpensesYearMonth = 100 * ((double)consumerSpendingMedicalExpensesYearMonth / (double)consumerSpendingTotalYearMonth);
-            percentageOfConsumerSpendingTransportationCostYearMonth = 100 * ((double)consumerSpendingTransportationCostYearMonth / (double)consumerSpendingTotalYearMonth);
-            percentageOfConsumerSpendingCommunicationCostYearMonth = 100 * ((double)consumerSpendingCommunicationCostYearMonth / (double)consumerSpendingTotalYearMonth);
-            percentageOfConsumerSpendingLeisureOrCultureYearMonth = 100 * ((double)consumerSpendingLeisureOrCultureYearMonth / (double)consumerSpendingTotalYearMonth);
-            percentageOfConsumerSpendingClothingOrShoesYearMonth = 100 * ((double)consumerSpendingClothingOrShoesYearMonth / (double)consumerSpendingTotalYearMonth);
-            percentageOfConsumerSpendingPinMoneyYearMonth = 100 * ((double)consumerSpendingPinMoneyYearMonth / (double)consumerSpendingTotalYearMonth);
-            percentageOfConsumerSpendingProtectionTypeInsuranceYearMonth = 100 * ((double)consumerSpendingProtectionTypeInsuranceYearMonth / (double)consumerSpendingTotalYearMonth);
-            percentageOfConsumerSpendingOtherExpensesYearMonth = 100 * ((double)consumerSpendingOtherExpensesYearMonth / (double)consumerSpendingTotalYearMonth);
-            percentageOfConsumerSpendingUnknownExpenditureYearMonth = 100 * ((double)consumerSpendingUnknownExpenditureYearMonth / (double)consumerSpendingTotalYearMonth);
-        }
-
-        #endregion
-
-        #endregion
-    }
+    var startYear = Model.StartYear;
+    var endYear = Model.EndYear;
+    var selectedYear = Model.SelectedYear;
+    var selectedMonth = Model.SelectedMonth;
+
+    var regularIncomeLaborIncomeYear = Model.RegularIncomeLaborIncomeYear;
+    var regularIncomeBusinessIncomeYear = Model.RegularIncomeBusinessIncomeYear;
+    var regularIncomePensionIncomeYear = Model.RegularIncomePensionIncomeYear;
+    var regularIncomeFinancialIncomeYear = Model.RegularIncomeFinancialIncomeYear;
+    var regularIncomeRentalIncomeYear = Model.RegularIncomeRentalIncomeYear;
+    var regularIncomeOtherIncomeYear = Model.RegularIncomeOtherIncomeYear;
+    var percentageOfRegularIncomeLaborIncomeYear = Model.PercentageOfRegularIncomeLaborIncomeYear;
+    var percentageOfRegularIncomeBusinessIncomeYear = Model.PercentageOfRegularIncomeBusinessIncomeYear;
+    var percentageOfRegularIncomePensionIncomeYear = Model.PercentageOfRegularIncomePensionIncomeYear;
+    var percentageOfRegularIncomeFinancialIncomeYear = Model.PercentageOfRegularIncomeFinancialIncomeYear;
+    var percentageOfRegularIncomeRentalIncomeYear = Model.PercentageOfRegularIncomeRentalIncomeYear;
+    var percentageOfRegularIncomeOtherIncomeYear = Model.PercentageOfRegularIncomeOtherIncomeYear;
+
+    var irregularIncomeLaborIncomeYear = Model.IrregularIncomeLaborIncomeYear;
+    var irregularIncomeOtherIncomeYear = Model.IrregularIncomeOtherIncomeYear;
+    var percentageOfIrregularIncomeLaborIncomeYear = Model.PercentageOfIrregularIncomeLaborIncomeYear;
+    var percentageOfIrregularIncomeOtherIncomeYear = Model.PercentageOfIrregularIncomeOtherIncomeYear;
+
+    var regularSavingsDepositYear = Model.RegularSavingsDepositYear;
+    var regularSavingsInvestmentYear = Model.RegularSavingsInvestmentYear;
+    var percentageOfRegularSavingsDepositYear = Model.PercentageOfRegularSavingsDepositYear;
+    var percentageOfRegularSavingsInvestmentYear = Model.PercentageOfRegularSavingsInvestmentYear;
+
+    var nonConsumerSpendingPublicPensionYear = Model.NonConsumerSpendingPublicPensionYear;
+    var nonConsumerSpendingDebtRepaymentYear = Model.NonConsumerSpendingDebtRepaymentYear;
+    var nonConsumerSpendingTaxYear = Model.NonConsumerSpendingTaxYear;
+    var nonConsumerSpendingSocialInsuranceYear = Model.NonConsumerSpendingSocialInsuranceYear;
+    var nonConsumerSpendingInterHouseholdTransferExpensesYear = Model.NonConsumerSpendingInterHouseholdTransferExpensesYear;
+    var nonConsumerSpendingNonProfitOrganizationTransferYear = Model.NonConsumerSpendingNonProfitOrganizationTransferYear;
+    var percentageOfNonConsumerSpendingPublicPensionYear = Model.PercentageOfNonConsumerSpendingPublicPensionYear;
+    var percentageOfNonConsumerSpendingDebtRepaymentYear = Model.PercentageOfNonConsumerSpendingDebtRepaymentYear;
+    var percentageOfNonConsumerSpendingTaxYear = Model.PercentageOfNonConsumerSpendingTaxYear;
+    var percentageOfNonConsumerSpendingSocialInsuranceYear = Model.PercentageOfNonConsumerSpendingSocialInsuranceYear;
+    var percentageOfNonConsumerSpendingInterHouseholdTransferExpensesYear = Model.PercentageOfNonConsumerSpendingInterHouseholdTransferExpensesYear;
+    var percentageOfNonConsumerSpendingNonProfitOrganizationTransferYear = Model.PercentageOfNonConsumerSpendingNonProfitOrganizationTransferYear;
+
+    var consumerSpendingMealOrEatOutExpensesYear = Model.ConsumerSpendingMealOrEatOutExpensesYear;
+    var consumerSpendingHousingOrSuppliesCostYear = Model.ConsumerSpendingHousingOrSuppliesCostYear;
+    var consumerSpendingEducationExpensesYear = Model.ConsumerSpendingEducationExpensesYear;
+    var consumerSpendingMedicalExpensesYear = Model.ConsumerSpendingMedicalExpensesYear;
+    var consumerSpendingTransportationCostYear = Model.ConsumerSpendingTransportationCostYear;
+    var consumerSpendingCommunicationCostYear = Model.ConsumerSpendingCommunicationCostYear;
+    var consumerSpendingLeisureOrCultureYear = Model.ConsumerSpendingLeisureOrCultureYear;
+    var consumerSpendingClothingOrShoesYear = Model.ConsumerSpendingClothingOrShoesYear;
+    var consumerSpendingPinMoneyYear = Model.ConsumerSpendingPinMoneyYear;
+    var consumerSpendingProtectionTypeInsuranceYear = Model.ConsumerSpendingProtectionTypeInsuranceYear;
+    var consumerSpendingOtherExpensesYear = Model.ConsumerSpendingOtherExpensesYear;
+    var consumerSpendingUnknownExpenditureYear = Model.ConsumerSpendingUnknownExpenditureYear;
+    var percentageOfConsumerSpendingMealOrEatOutExpensesYear = Model.PercentageOfConsumerSpendingMealOrEatOutExpensesYear;
+    var percentageOfConsumerSpendingHousingOrSuppliesCostYear = Model.PercentageOfConsumerSpendingHousingOrSuppliesCostYear;
+    var percentageOfConsumerSpendingEducationExpensesYear = Model.PercentageOfConsumerSpendingEducationExpensesYear;
+    var percentageOfConsumerSpendingMedicalExpensesYear = Model.PercentageOfConsumerSpendingMedicalExpensesYear;
+    var percentageOfConsumerSpendingTransportationCostYear = Model.PercentageOfConsumerSpendingTransportationCostYear;
+    var percentageOfConsumerSpendingCommunicationCostYear = Model.PercentageOfConsumerSpendingCommunicationCostYear;
+    var percentageOfConsumerSpendingLeisureOrCultureYear = Model.PercentageOfConsumerSpendingLeisureOrCultureYear;
+    var percentageOfConsumerSpendingClothingOrShoesYear = Model.PercentageOfConsumerSpendingClothingOrShoesYear;
+    var percentageOfConsumerSpendingPinMoneyYear = Model.PercentageOfConsumerSpendingPinMoneyYear;
+    var percentageOfConsumerSpendingProtectionTypeInsuranceYear = Model.PercentageOfConsumerSpendingProtectionTypeInsuranceYear;
+    var percentageOfConsumerSpendingOtherExpensesYear = Model.PercentageOfConsumerSpendingOtherExpensesYear;
+    var percentageOfConsumerSpendingUnknownExpenditureYear = Model.PercentageOfConsumerSpendingUnknownExpenditureYear;
+
+    var regularIncomeLaborIncomeYearMonth = Model.RegularIncomeLaborIncomeYearMonth;
+    var regularIncomeBusinessIncomeYearMonth = Model.RegularIncomeBusinessIncomeYearMonth;
+    var regularIncomePensionIncomeYearMonth = Model.RegularIncomePensionIncomeYearMonth;
+    var regularIncomeFinancialIncomeYearMonth = Model.RegularIncomeFinancialIncomeYearMonth;
+    var regularIncomeRentalIncomeYearMonth = Model.RegularIncomeRentalIncomeYearMonth;
+    var regularIncomeOtherIncomeYearMonth = Model.RegularIncomeOtherIncomeYearMonth;
+    var percentageOfRegularIncomeLaborIncomeYearMonth = Model.PercentageOfRegularIncomeLaborIncomeYearMonth;
+    var percentageOfRegularIncomeBusinessIncomeYearMonth = Model.PercentageOfRegularIncomeBusinessIncomeYearMonth;
+    var percentageOfRegularIncomePensionIncomeYearMonth = Model.PercentageOfRegularIncomePensionIncomeYearMonth;
+    var percentageOfRegularIncomeFinancialIncomeYearMonth = Model.PercentageOfRegularIncomeFinancialIncomeYearMonth;
+    var percentageOfRegularIncomeRentalIncomeYearMonth = Model.PercentageOfRegularIncomeRentalIncomeYearMonth;
+    var percentageOfRegularIncomeOtherIncomeYearMonth = Model.PercentageOfRegularIncomeOtherIncomeYearMonth;
+
+    var irregularIncomeLaborIncomeYearMonth = Model.IrregularIncomeLaborIncomeYearMonth;
+    var irregularIncomeOtherIncomeYearMonth = Model.IrregularIncomeOtherIncomeYearMonth;
+    var percentageOfIrregularIncomeLaborIncomeYearMonth = Model.PercentageOfIrregularIncomeLaborIncomeYearMonth;
+    var percentageOfIrregularIncomeOtherIncomeYearMonth = Model.PercentageOfIrregularIncomeOtherIncomeYearMonth;
+
+    var regularSavingsDepositYearMonth = Model.RegularSavingsDepositYearMonth;
+    var regularSavingsInvestmentYearMonth = Model.RegularSavingsInvestmentYearMonth;
+    var percentageOfRegularSavingsDepositYearMonth = Model.PercentageOfRegularSavingsDepositYearMonth;
+    var percentageOfRegularSavingsInvestmentYearMonth = Model.PercentageOfRegularSavingsInvestmentYearMonth;
+
+    var nonConsumerSpendingPublicPensionYearMonth = Model.NonConsumerSpendingPublicPensionYearMonth;
+    var nonConsumerSpendingDebtRepaymentYearMonth = Model.NonConsumerSpendingDebtRepaymentYearMonth;
+    var nonConsumerSpendingTaxYearMonth = Model.NonConsumerSpendingTaxYearMonth;
+    var nonConsumerSpendingSocialInsuranceYearMonth = Model.NonConsumerSpendingSocialInsuranceYearMonth;
+    var nonConsumerSpendingInterHouseholdTransferExpensesYearMonth = Model.NonConsumerSpendingInterHouseholdTransferExpensesYearMonth;
+    var nonConsumerSpendingNonProfitOrganizationTransferYearMonth = Model.NonConsumerSpendingNonProfitOrganizationTransferYearMonth;
+    var percentageOfNonConsumerSpendingPublicPensionYearMonth = Model.PercentageOfNonConsumerSpendingPublicPensionYearMonth;
+    var percentageOfNonConsumerSpendingDebtRepaymentYearMonth = Model.PercentageOfNonConsumerSpendingDebtRepaymentYearMonth;
+    var percentageOfNonConsumerSpendingTaxYearMonth = Model.PercentageOfNonConsumerSpendingTaxYearMonth;
+    var percentageOfNonConsumerSpendingSocialInsuranceYearMonth = Model.PercentageOfNonConsumerSpendingSocialInsuranceYearMonth;
+    var percentageOfNonConsumerSpendingInterHouseholdTransferExpensesYearMonth = Model.PercentageOfNonConsumerSpendingInterHouseholdTransferExpensesYearMonth;
+    var percentageOfNonConsumerSpendingNonProfitOrganizationTransferYearMonth = Model.PercentageOfNonConsumerSpendingNonProfitOrganizationTransferYearMonth;
+
+    var consumerSpendingMealOrEatOutExpensesYearMonth = Model.ConsumerSpendingMealOrEatOutExpensesYearMonth;
+    var consumerSpendingHousingOrSuppliesCostYearMonth = Model.ConsumerSpendingHousingOrSuppliesCostYearMonth;
+    var consumerSpendingEducationExpensesYearMonth = Model.ConsumerSpendingEducationExpensesYearMonth;
+    var consumerSpendingMedicalExpensesYearMonth = Model.ConsumerSpendingMedicalExpensesYearMonth;
+    var consumerSpendingTransportationCostYearMonth = Model.ConsumerSpendingTransportationCostYearMonth;
+    var consumerSpendingCommunicationCostYearMonth = Model.ConsumerSpendingCommunicationCostYearMonth;
+    var consumerSpendingLeisureOrCultureYearMonth = Model.ConsumerSpendingLeisureOrCultureYearMonth;
+    var consumerSpendingClothingOrShoesYearMonth = Model.ConsumerSpendingClothingOrShoesYearMonth;
+    var consumerSpendingPinMoneyYearMonth = Model.ConsumerSpendingPinMoneyYearMonth;
+    var consumerSpendingProtectionTypeInsuranceYearMonth = Model.ConsumerSpendingProtectionTypeInsuranceYearMonth;
+    var consumerSpendingOtherExpensesYearMonth = Model.ConsumerSpendingOtherExpensesYearMonth;
+    var consumerSpendingUnknownExpenditureYearMonth = Model.ConsumerSpendingUnknownExpenditureYearMonth;
+    var percentageOfConsumerSpendingMealOrEatOutExpensesYearMonth = Model.PercentageOfConsumerSpendingMealOrEatOutExpensesYearMonth;
+    var percentageOfConsumerSpendingHousingOrSuppliesCostYearMonth = Model.PercentageOfConsumerSpendingHousingOrSuppliesCostYearMonth;
+    var percentageOfConsumerSpendingEducationExpensesYearMonth = Model.PercentageOfConsumerSpendingEducationExpensesYearMonth;
+    var percentageOfConsumerSpendingMedicalExpensesYearMonth = Model.PercentageOfConsumerSpendingMedicalExpensesYearMonth;
+    var percentageOfConsumerSpendingTransportationCostYearMonth = Model.PercentageOfConsumerSpendingTransportationCostYearMonth;
+    var percentageOfConsumerSpendingCommunicationCostYearMonth = Model.PercentageOfConsumerSpendingCommunicationCostYearMonth;
+    var percentageOfConsumerSpendingLeisureOrCultureYearMonth = Model.PercentageOfConsumerSpendingLeisureOrCultureYearMonth;
+    var percentageOfConsumerSpendingClothingOrShoesYearMonth = Model.PercentageOfConsumerSpendingClothingOrShoesYearMonth;
+    var percentageOfConsumerSpendingPinMoneyYearMonth = Model.PercentageOfConsumerSpendingPinMoneyYearMonth;
+    var percentageOfConsumerSpendingProtectionTypeInsuranceYearMonth = Model.PercentageOfConsumerSpendingProtectionTypeInsuranceYearMonth;
+    var percentageOfConsumerSpendingOtherExpensesYearMonth = Model.PercentageOfConsumerSpendingOtherExpensesYearMonth;
+    var percentageOfConsumerSpendingUnknownExpenditureYearMonth = Model.PercentageOfConsumerSpendingUnknownExpenditureYearMonth;
 }
 
 @Html.Hidden("localizerLaborIncome", localizer["LaborIncome"].Value)

@@ -1,33 +1,17 @@
 ﻿@using Maroik.WebSite.Utilities
 @using Maroik.WebSite.Models
 @using Maroik.WebSite.Models.ViewModels.Management
-@using Newtonsoft.Json
-@using System.Text
 @using System.Web
-@inject Maroik.Core.Contract.Interfaces.IAccountRepository accountRepository
-@inject Maroik.Core.Contract.Interfaces.IBoardCommentRepository boardCommentRepository
-@inject Maroik.Core.Contract.Interfaces.IBoardAttachedFileRepository boardAttachedFileRepository
 
 @model PrivateNoteOutputViewModel
 
 @{
-    Context.Session.TryGetValue(EnumHelper.GetDescription(Session.Account), out byte[] resultByte);
-    string loginedAccountTimeZoneIanaId = JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId;
-    AccountResponse loginedAccount = new AccountResponse();
-
-    if (resultByte != null) // 로그인이 된 상태라면
-    {
-        loginedAccount = await accountRepository.GetAccountByEmailAsync(JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email);
-    }
-    else // 로그인이 되지 않은 상태라면
-    {
-        loginedAccount.Role = Role.Anonymous;
-    }
-
     string currentCulture = Context.Features.Get<Microsoft.AspNetCore.Localization.IRequestCultureFeature>().RequestCulture.Culture.Name;
     string selectedSearchType = (ViewBag.SelectedSearchType as string) ?? "";
     string typedSearchText = (ViewBag.TypedSearchText as string) ?? "";
-    List<AccountResponse> accounts = await accountRepository.GetAllAsync(); // 게시물에서 특별 계정 찾기 위한 용도
+    AccountResponse loginedAccount = Model.LoginedAccount;
+    string loginedAccountTimeZoneIanaId = Model.LoginedAccountTimeZoneIanaId;
+    List<AccountResponse> accounts = Model.AllAccounts;
 }
 
 @Html.Hidden("localizerIETFLanguageTag", localizer["IETFLanguageTag"].Value)
@@ -152,7 +136,7 @@
                 </div>
 
                 <div class="card-footer card-comments">
-                    @foreach (BoardCommentResponse comment in await boardCommentRepository.GetOneBoardCommentsAsync(Model.DetailBoardId))
+                    @foreach (BoardCommentResponse comment in Model.DetailBoardComments)
                     {
                         if (!comment.Deleted)
                         {
@@ -389,8 +373,8 @@
                         <tbody>
                             @foreach (BoardResponse noticeBoard in Model.NoticeBoards)
                             {
-                                List<BoardCommentResponse> commentsOfUndeletedSelectedBoard = (await boardCommentRepository.GetOneBoardCommentsAsync(noticeBoard.Id)).Where(m => m.Deleted == false).ToList();
-                                List<BoardAttachedFileResponse> boardAttachedFilesWithName = (await boardAttachedFileRepository.GetAllAsync()).Where(m => m.BoardId == noticeBoard.Id).Where(m => !string.IsNullOrEmpty(m.Name)).ToList();
+                                int commentsOfUndeletedSelectedBoardCount = Model.CommentCountByBoardId.GetValueOrDefault(noticeBoard.Id, 0);
+                                List<BoardAttachedFileResponse> boardAttachedFilesWithName = Model.AttachedFilesByBoardId.GetValueOrDefault(noticeBoard.Id, []);
 
                                 <tr style="background-color: lightgray;">
                                     <td style="font-weight:bold;">@localizer["Notice"]</td>
@@ -398,7 +382,7 @@
                                     {
                                         @if (loginedAccount.Nickname == noticeBoard.Writer)@*작성자인 경우*@
                                         {
-                                            <td><i class="fa fa-lock-open" aria-hidden="true"></i>@Html.ActionLink($"{noticeBoard.Title} [{commentsOfUndeletedSelectedBoard.Count}]", "PrivateNote", new {method = "detail", boardId = noticeBoard.Id, page = Model.Pager.CurrentPage}, new { style = "font-weight: bold;" })</td>
+                                            <td><i class="fa fa-lock-open" aria-hidden="true"></i>@Html.ActionLink($"{noticeBoard.Title} [{commentsOfUndeletedSelectedBoardCount}]", "PrivateNote", new {method = "detail", boardId = noticeBoard.Id, page = Model.Pager.CurrentPage}, new { style = "font-weight: bold;" })</td>
                                         }
                                         else
                                         {
@@ -407,7 +391,7 @@
                                     }
                                     else
                                     {
-                                        <td>@Html.ActionLink($"{noticeBoard.Title} [{commentsOfUndeletedSelectedBoard.Count}]", "PrivateNote", new {method = "detail", boardId = noticeBoard.Id, page = Model.Pager.CurrentPage}, new { style = "font-weight: bold;" })</td>
+                                        <td>@Html.ActionLink($"{noticeBoard.Title} [{commentsOfUndeletedSelectedBoardCount}]", "PrivateNote", new {method = "detail", boardId = noticeBoard.Id, page = Model.Pager.CurrentPage}, new { style = "font-weight: bold;" })</td>
                                     }
 
                                     <td><span style="font-weight:bold;">@noticeBoard.Writer</span></td>
@@ -438,8 +422,8 @@
                             }
                             @foreach (BoardResponse board in Model.Boards)
                             {
-                                List<BoardCommentResponse> commentsOfUndeletedSelectedBoard = (await boardCommentRepository.GetOneBoardCommentsAsync(board.Id)).Where(m => m.Deleted == false).ToList();
-                                List<BoardAttachedFileResponse> attachedFilesWithName = (await boardAttachedFileRepository.GetAllAsync()).Where(m => m.BoardId == board.Id).Where(m => !string.IsNullOrEmpty(m.Name)).ToList();
+                                int commentsOfUndeletedSelectedBoardCount = Model.CommentCountByBoardId.GetValueOrDefault(board.Id, 0);
+                                List<BoardAttachedFileResponse> attachedFilesWithName = Model.AttachedFilesByBoardId.GetValueOrDefault(board.Id, []);
 
                                 <tr>
                                     <td>@localizer["Private Note"]</td>
@@ -447,7 +431,7 @@
                                     {
                                         @if (loginedAccount.Nickname == board.Writer)@*작성자인 경우*@
                                         {
-                                            <td><i class="fa fa-lock-open" aria-hidden="true"></i> @Html.ActionLink($"{board.Title} [{commentsOfUndeletedSelectedBoard.Count}]", "PrivateNote", new {method = "detail", boardId = board.Id, page = Model.Pager.CurrentPage})</td>
+                                            <td><i class="fa fa-lock-open" aria-hidden="true"></i> @Html.ActionLink($"{board.Title} [{commentsOfUndeletedSelectedBoardCount}]", "PrivateNote", new {method = "detail", boardId = board.Id, page = Model.Pager.CurrentPage})</td>
                                         }
                                         else
                                         {
@@ -456,7 +440,7 @@
                                     }
                                     else
                                     {
-                                        <td>@Html.ActionLink($"{board.Title} [{commentsOfUndeletedSelectedBoard.Count}]", "PrivateNote", new {method = "detail", boardId = board.Id, page = Model.Pager.CurrentPage})</td>
+                                        <td>@Html.ActionLink($"{board.Title} [{commentsOfUndeletedSelectedBoardCount}]", "PrivateNote", new {method = "detail", boardId = board.Id, page = Model.Pager.CurrentPage})</td>
                                     }
 
                                     @if (accounts.Where(m => m.Role == Role.Admin).Where(m => m.Nickname == board.Writer).FirstOrDefault() != null) @*관리자가 쓴 게시물인 경우*@

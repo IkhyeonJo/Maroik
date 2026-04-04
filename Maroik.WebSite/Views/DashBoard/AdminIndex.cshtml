@@ -1,63 +1,11 @@
 ﻿@{
-
-    string hostResourceFileText = ((ViewBag.HostResourceFileText as string) ?? "");
-    string dockerResourceFileText = ((ViewBag.DockerResourceFileText as string) ?? "");
-
-    string ExtractSection(string input, string startMarker, string endMarker = null)
-    {
-        try
-        {
-            int startIndex = input.IndexOf(startMarker) + startMarker.Length;
-            int endIndex = endMarker != null ? input.IndexOf(endMarker, startIndex) : input.Length;
-            return input.Substring(startIndex, endIndex - startIndex).Trim();
-        }
-        catch
-        {
-            return "";
-        }
-    }
-
-    string hostCpuInfo = ExtractSection(hostResourceFileText, "Host CPU Information:", "Host Memory Information:");
-    string hostMemoryInfo = ExtractSection(hostResourceFileText, "Host Memory Information:", "Host Disk Information:");
-    string hostDiskInfo = ExtractSection(hostResourceFileText, "Host Disk Information:");
-
-    string dockerContainerStatus = ExtractSection(dockerResourceFileText, "Docker Container Status:", "Docker Resource Usage:");
-    string dockerResourceUsage = ExtractSection(dockerResourceFileText, "Docker Resource Usage:");
-
-    var result = new List<string> { "Name||CPU %||MEM Usage / LIMIT" };
-
-    try
-    {
-        // Parse container status
-        var containerLines = dockerContainerStatus.Split('\n', StringSplitOptions.RemoveEmptyEntries);
-        var resourceLines = dockerResourceUsage.Split('\n', StringSplitOptions.RemoveEmptyEntries);
-
-        // Dictionary to map container ID to resource usage details
-        var resourceMap = new Dictionary<string, string[]>();
-
-        for (int i = 1; i < resourceLines.Length; i++)
-        {
-            var columns = resourceLines[i].Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
-            resourceMap[columns[0]] = columns;
-        }
-
-        for (int i = 1; i < resourceLines.Length; i++)
-        {
-            var columns = resourceLines[i].Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
-            string containerName = columns[0];
-
-            if (resourceMap.TryGetValue(containerName, out var resourceDetails))
-            {
-                string cpu = resourceDetails[1];
-                string memUsage = resourceDetails[2] + " " + resourceDetails[3] + " " + resourceDetails[4];
-
-                result.Add($"{containerName}||{cpu}||{memUsage}");
-            }
-        }
-    }
-    catch
-    {
-    }
+    double hostCpuNumeric = (ViewBag.HostCpuNumeric as double?) ?? 0d;
+    string hostCpuInfo = (ViewBag.HostCpuInfo as string) ?? "";
+    string memUsageLimit = (ViewBag.MemUsageLimit as string) ?? "";
+    string hostMemoryInfo = (ViewBag.HostMemoryInfo as string) ?? "";
+    string diskUsageLimit = (ViewBag.DiskUsageLimit as string) ?? "";
+    string hostDiskInfo = (ViewBag.HostDiskInfo as string) ?? "";
+    var result = (ViewBag.DockerContainerResult as List<string>) ?? [];
 }
 
 <div class="content">
@@ -72,13 +20,10 @@
                         <span class="info-box-number">
                             @if (!string.IsNullOrEmpty(hostCpuInfo))
                             {
-                                if (double.TryParse(new string(hostCpuInfo.Where(c => char.IsDigit(c) || c == '.').ToArray()), out double numericValue))
-                                {
-                                    <text>
-                                        @(numericValue.ToString("0.0"))
-                                        <small>%</small>
-                                    </text>
-                                }
+                                <text>
+                                    @(hostCpuNumeric.ToString("0.0"))
+                                    <small>%</small>
+                                </text>
                             }
                         </span>
                     </div>
@@ -92,14 +37,7 @@
                         <span class="info-box-text">MEM Usage / LIMIT</span>
                         @if (!string.IsNullOrEmpty(hostMemoryInfo))
                         {
-                            <text>
-                                @{
-                                    string[] temp = hostMemoryInfo.Replace("Memory: ", "").Split('/');
-
-                                    string memUsageLimit = temp[1].Trim().ToString() + " / " + temp[0].Trim().ToString();
-                                }
-                                <span class="info-box-number">@(memUsageLimit)</span>
-                            </text>
+                            <span class="info-box-number">@(memUsageLimit)</span>
                         }
                     </div>
                 </div>
@@ -114,14 +52,7 @@
                         <span class="info-box-text">Disk Usage / LIMIT</span>
                         @if (!string.IsNullOrEmpty(hostDiskInfo))
                         {
-                            <text>
-                                @{
-                                    string[] temp = hostDiskInfo.Replace("Disk: ", "").Split('/');
-
-                                    string diskUsageLimit = temp[1].Trim().ToString() + " / " + temp[0].Trim().ToString();
-                                }
-                                <span class="info-box-number">@(diskUsageLimit)</span>
-                            </text>
+                            <span class="info-box-number">@(diskUsageLimit)</span>
                         }
                     </div>
                 </div>

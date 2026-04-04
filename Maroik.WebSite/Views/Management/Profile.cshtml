@@ -1,13 +1,8 @@
 ﻿@model Maroik.WebSite.Models.ViewModels.Management.ProfileOutputViewModel
-@using Newtonsoft.Json
 @using Maroik.WebSite.Utilities
-@using System.Text
-@inject Maroik.Core.Contract.Interfaces.IAccountRepository accountRepository
 
 @{
-    Context.Session.TryGetValue(EnumHelper.GetDescription(Session.Account), out byte[] resultByte);
-
-    AccountResponse loginedAccount = await accountRepository.GetAccountByEmailAsync(JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email);
+    AccountResponse loginedAccount = (ViewBag.LoginedAccount as AccountResponse) ?? new AccountResponse { Role = Role.Anonymous };
 }
 <section class="content">
     <div class="container-fluid">

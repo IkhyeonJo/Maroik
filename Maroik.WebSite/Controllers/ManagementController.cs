@@ -24,7 +24,7 @@ using System.Text.RegularExpressions;
 
 namespace Maroik.WebSite.Controllers;
 
-public class ManagementController : Controller
+public class ManagementController : BaseController
 {
     private readonly RSA _rsa;
     private readonly IHtmlLocalizer<ManagementController> _localizer;
@@ -2262,6 +2262,13 @@ public class ManagementController : Controller
                             Convert.ToBase64String(fileData);
                         privateNoteOutputViewModel.BoardOutputViewModel.BoardAttachedFileContentType = contentType;
                     }
+
+                // Preload comments and accounts for detail view
+                privateNoteOutputViewModel.DetailBoardComments = (await _boardCommentRepository.GetOneBoardCommentsAsync(boardId ?? 0))?.ToList() ?? [];
+                privateNoteOutputViewModel.AllAccounts = await _accountRepository.GetAllAsync() ?? [];
+                privateNoteOutputViewModel.LoginedAccount = loginedAccount;
+                privateNoteOutputViewModel.LoginedAccountTimeZoneIanaId = loginedAccount?.TimeZoneIanaId ?? "";
+
                 }
 
                 return View(privateNoteOutputViewModel);
@@ -2488,6 +2495,20 @@ public class ManagementController : Controller
             privateNoteOutputViewModel.Boards = privateNoteBoards.Skip((page - 1) * pageSize)
                 .Take(privateNoteOutputViewModel.Pager.PageSize).ToList();
 
+            #endregion
+
+            #region Preload comment counts and attached files for view
+            privateNoteOutputViewModel.LoginedAccount = loginedAccount;
+            privateNoteOutputViewModel.LoginedAccountTimeZoneIanaId = loginedAccount?.TimeZoneIanaId ?? "";
+            privateNoteOutputViewModel.AllAccounts = await _accountRepository.GetAllAsync() ?? [];
+            List<BoardAttachedFileResponse> allPrivateAttachedFiles = await _boardAttachedFileRepository.GetAllAsync() ?? [];
+            foreach (var board in privateNoteOutputViewModel.Boards)
+            {
+                privateNoteOutputViewModel.CommentCountByBoardId[board.Id] =
+                    (await _boardCommentRepository.GetOneBoardCommentsAsync(board.Id))?.Count(c => !c.Deleted) ?? 0;
+                privateNoteOutputViewModel.AttachedFilesByBoardId[board.Id] =
+                    allPrivateAttachedFiles.Where(f => f.BoardId == board.Id && !string.IsNullOrEmpty(f.Name)).ToList();
+            }
             #endregion
 
             ViewBag.SelectedSearchType = searchType;

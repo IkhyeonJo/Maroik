@@ -16,7 +16,7 @@ using Maroik.Core.PostgreSQL.Data;
 
 namespace Maroik.WebSite.Controllers;
 
-public class AccountBookController : Controller
+public class AccountBookController : BaseController
 {
     private readonly IHtmlLocalizer<AccountBookController> _localizer;
     private readonly ILogger<AccountBookController> _logger;
@@ -202,6 +202,23 @@ public class AccountBookController : Controller
             return PartialView("_AssetGrid", result);
         }
 
+        {
+            _ = HttpContext.Session.TryGetValue(
+                Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account),
+                out byte[] sessionByte);
+            AccountResponse loginedAccount = sessionByte?.Length > 0
+                ? JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(sessionByte)) ?? new AccountResponse()
+                : new AccountResponse();
+            string tz = loginedAccount.TimeZoneIanaId ?? "UTC";
+            List<AssetResponse> assets = (await _assetRepository.GetAssetsAsync(loginedAccount.Email))
+                .Where(x => !x.Deleted).OrderBy(x => x.ProductName).ToList();
+            DateTime ct = DateTime.UtcNow.ConvertTimeByTimeZoneIanaId(tz);
+            ViewBag.Assets = assets;
+            ViewBag.CurrentDate = ct.ToString("yyyy-MM-dd");
+            ViewBag.CurrentHour = ct.Hour;
+            ViewBag.CurrentMinute = ct.Minute;
+            ViewBag.CurrentSecond = ct.Second;
+        }
         return View();
     }
 
@@ -689,6 +706,23 @@ public class AccountBookController : Controller
             return PartialView("_IncomeGrid", result);
         }
 
+        {
+            _ = HttpContext.Session.TryGetValue(
+                Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account),
+                out byte[] sessionByte);
+            AccountResponse loginedAccount = sessionByte?.Length > 0
+                ? JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(sessionByte)) ?? new AccountResponse()
+                : new AccountResponse();
+            string tz = loginedAccount.TimeZoneIanaId ?? "UTC";
+            List<AssetResponse> assets = (await _assetRepository.GetAssetsAsync(loginedAccount.Email))
+                .Where(x => !x.Deleted).OrderBy(x => x.ProductName).ToList();
+            DateTime ct = DateTime.UtcNow.ConvertTimeByTimeZoneIanaId(tz);
+            ViewBag.Assets = assets;
+            ViewBag.CurrentDate = ct.ToString("yyyy-MM-dd");
+            ViewBag.CurrentHour = ct.Hour;
+            ViewBag.CurrentMinute = ct.Minute;
+            ViewBag.CurrentSecond = ct.Second;
+        }
         return View();
     }
 
@@ -1665,6 +1699,23 @@ public class AccountBookController : Controller
             return PartialView("_ExpenditureGrid", result);
         }
 
+        {
+            _ = HttpContext.Session.TryGetValue(
+                Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account),
+                out byte[] sessionByte);
+            AccountResponse loginedAccount = sessionByte?.Length > 0
+                ? JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(sessionByte)) ?? new AccountResponse()
+                : new AccountResponse();
+            string tz = loginedAccount.TimeZoneIanaId ?? "UTC";
+            List<AssetResponse> assets = (await _assetRepository.GetAssetsAsync(loginedAccount.Email))
+                .Where(x => !x.Deleted).OrderBy(x => x.ProductName).ToList();
+            DateTime ct = DateTime.UtcNow.ConvertTimeByTimeZoneIanaId(tz);
+            ViewBag.Assets = assets;
+            ViewBag.CurrentDate = ct.ToString("yyyy-MM-dd");
+            ViewBag.CurrentHour = ct.Hour;
+            ViewBag.CurrentMinute = ct.Minute;
+            ViewBag.CurrentSecond = ct.Second;
+        }
         return View();
     }
 

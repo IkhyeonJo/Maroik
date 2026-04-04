@@ -1,40 +1,17 @@
 ﻿@using Maroik.WebSite.Models.ViewModels.Calendar
 @using Maroik.WebSite.Utilities
 @using Newtonsoft.Json
-@using System.Text
 @model CalendarOutputViewModel
 
 @{
-    Account loginedAccount = new Account() { Role = Role.Anonymous, TimeZoneIanaId = "UTC" };
-
-    #region Set Time
-    DateTime currentTime = DateTime.UtcNow.ConvertTimeByTimeZoneIanaId(loginedAccount.TimeZoneIanaId);
-    string currentDate = currentTime.ToString("yyyy-MM-dd");
-    int currentHour = currentTime.Hour;
-    int currentMinute = currentTime.Minute;
-    int currentSecond = currentTime.Second;
-
-    // Create a list to store the time intervals
-    List<string> timeIntervals = new List<string>();
-
-    // Generate the time intervals
-    for (int hour = 0; hour < 24; hour++)
-    {
-        for (int minute = 0; minute < 60; minute += 15)
-        {
-            timeIntervals.Add($"{hour:D2}:{minute:D2}");
-        }
-    }
-
-    // Find the nearest 15-minute interval
-    int nearestMinute = (int)Math.Round(currentMinute / 15.0) * 15;
-    if (nearestMinute == 60)
-    {
-        currentTime = currentTime.AddHours(1);
-        nearestMinute = 0;
-    }
-    string currentInterval = $"{currentTime.Hour:D2}:{nearestMinute:D2}";
-    #endregion
+    var loginedAccount = Model.LoginedAccount;
+    string loginedAccountTimeZoneIanaId = Model.LoginedAccountTimeZoneIanaId;
+    string currentDate = Model.CurrentDate;
+    int currentHour = Model.CurrentHour;
+    int currentMinute = Model.CurrentMinute;
+    int currentSecond = Model.CurrentSecond;
+    List<string> timeIntervals = Model.TimeIntervals;
+    string currentInterval = Model.CurrentInterval;
 }
 
 @Html.Hidden("localizerEmail", localizer["Email"].Value)

@@ -16,7 +16,7 @@ using System.Text.RegularExpressions;
 
 namespace Maroik.WebSite.Controllers;
 
-public class NoticeController : Controller
+public class NoticeController : BaseController
 {
     private readonly IHtmlLocalizer<NoticeController> _localizer;
     private readonly ILogger<NoticeController> _logger;
@@ -356,6 +356,17 @@ public class NoticeController : Controller
             return PartialView("_FixedIncomeGrid", result);
         }
 
+        {
+            _ = HttpContext.Session.TryGetValue(
+                Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account),
+                out byte[] sessionByte);
+            AccountResponse loginedAccount = sessionByte?.Length > 0
+                ? JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(sessionByte)) ?? new AccountResponse()
+                : new AccountResponse();
+            List<AssetResponse> assets = (await _assetRepository.GetAssetsAsync(loginedAccount.Email))
+                .Where(x => !x.Deleted).OrderBy(x => x.ProductName).ToList();
+            ViewBag.Assets = assets;
+        }
         return View();
     }
 
@@ -1323,6 +1334,17 @@ public class NoticeController : Controller
             return PartialView("_FixedExpenditureGrid", result);
         }
 
+        {
+            _ = HttpContext.Session.TryGetValue(
+                Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account),
+                out byte[] sessionByte);
+            AccountResponse loginedAccount = sessionByte?.Length > 0
+                ? JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(sessionByte)) ?? new AccountResponse()
+                : new AccountResponse();
+            List<AssetResponse> assets = (await _assetRepository.GetAssetsAsync(loginedAccount.Email))
+                .Where(x => !x.Deleted).OrderBy(x => x.ProductName).ToList();
+            ViewBag.Assets = assets;
+        }
         return View();
     }
 
