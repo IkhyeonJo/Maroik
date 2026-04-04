@@ -1,9 +1,8 @@
 ﻿@using Maroik.WebSite.Utilities
 
 @{
-    string returnUri = string.IsNullOrWhiteSpace(Context.Request.Path) ? "/" :
-    $"{Context.Request.Path.Value}{Context.Request.QueryString}";
-    string currentCulture = Context.Features.Get<Microsoft.AspNetCore.Localization.IRequestCultureFeature>().RequestCulture.Culture.Name;
+    string returnUri = (ViewBag.ReturnUri as string) ?? "/";
+    string currentCulture = (ViewBag.CurrentCulture as string) ?? "en-US";
     AccountResponse loginedAccount = (ViewBag.LoginedAccount as AccountResponse) ?? new AccountResponse
     {
         Nickname = localizer["Login"].Value,

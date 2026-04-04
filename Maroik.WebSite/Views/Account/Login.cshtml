@@ -3,7 +3,7 @@
 @model LoginOutputViewModel
 
 @{
-    string currentCulture = Context.Features.Get<Microsoft.AspNetCore.Localization.IRequestCultureFeature>().RequestCulture.Culture.Name;
+    string currentCulture = (ViewBag.CurrentCulture as string) ?? "en-US";
     string error = (TempData["Error"] as string) ?? string.Empty;
 }
 

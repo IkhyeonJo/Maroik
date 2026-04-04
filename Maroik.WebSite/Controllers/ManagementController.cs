@@ -2511,8 +2511,8 @@ public class ManagementController : BaseController
             }
             #endregion
 
-            ViewBag.SelectedSearchType = searchType;
-            ViewBag.TypedSearchText = searchText;
+            privateNoteOutputViewModel.SelectedSearchType = searchType;
+            privateNoteOutputViewModel.TypedSearchText = searchText;
             return View(privateNoteOutputViewModel);
         }
     }

@@ -4,7 +4,6 @@
 @model CalendarOutputViewModel
 
 @{
-    string currentCulture = Context.Features.Get<Microsoft.AspNetCore.Localization.IRequestCultureFeature>().RequestCulture.Culture.Name;
     var loginedAccount = Model.LoginedAccount;
     string loginedAccountTimeZoneIanaId = Model.LoginedAccountTimeZoneIanaId;
     string currentDate = Model.CurrentDate;

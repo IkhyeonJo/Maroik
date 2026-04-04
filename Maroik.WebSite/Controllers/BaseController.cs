@@ -4,6 +4,7 @@ using Maroik.Core.PostgreSQL.Models;
 using Maroik.WebSite.Extensions;
 using Maroik.WebSite.Models.ViewModels.Notice;
 using Maroik.WebSite.Utilities;
+using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Newtonsoft.Json;
@@ -95,6 +96,12 @@ public abstract class BaseController : Controller
         ViewBag.FixedExpenditureNoticedCount = fixedExpenditureNoticedCount;
         ViewBag.FixedIncomesExpiredCount = fixedIncomesExpiredCount;
         ViewBag.FixedExpenditureExpiredCount = fixedExpenditureExpiredCount;
+
+        var requestCultureFeature = HttpContext.Features.Get<IRequestCultureFeature>();
+        ViewBag.CurrentCulture = requestCultureFeature?.RequestCulture.Culture.Name ?? "en-US";
+
+        string requestPath = HttpContext.Request.Path.Value ?? "";
+        ViewBag.ReturnUri = string.IsNullOrWhiteSpace(requestPath) ? "/" : $"{requestPath}{HttpContext.Request.QueryString}";
 
         await next();
     }

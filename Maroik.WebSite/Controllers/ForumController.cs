@@ -714,8 +714,8 @@ public class ForumController : BaseController
             }
             #endregion
 
-            ViewBag.SelectedSearchType = searchType;
-            ViewBag.TypedSearchText = searchText;
+            freeForumOutputViewModel.SelectedSearchType = searchType;
+            freeForumOutputViewModel.TypedSearchText = searchText;
             return View(freeForumOutputViewModel);
         }
     }

@@ -6,9 +6,8 @@
 @model PrivateNoteOutputViewModel
 
 @{
-    string currentCulture = Context.Features.Get<Microsoft.AspNetCore.Localization.IRequestCultureFeature>().RequestCulture.Culture.Name;
-    string selectedSearchType = (ViewBag.SelectedSearchType as string) ?? "";
-    string typedSearchText = (ViewBag.TypedSearchText as string) ?? "";
+    string selectedSearchType = Model.SelectedSearchType;
+    string typedSearchText = Model.TypedSearchText;
     AccountResponse loginedAccount = Model.LoginedAccount;
     string loginedAccountTimeZoneIanaId = Model.LoginedAccountTimeZoneIanaId;
     List<AccountResponse> accounts = Model.AllAccounts;

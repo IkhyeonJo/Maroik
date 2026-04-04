@@ -29,5 +29,7 @@ public class FreeForumOutputViewModel
     public Dictionary<long, int> CommentCountByBoardId { get; set; } = new();
     public Dictionary<long, List<Maroik.Core.Contract.Dtos.BoardAttachedFileResponse>> AttachedFilesByBoardId { get; set; } = new();
     public List<Maroik.Core.Contract.Dtos.BoardCommentResponse> DetailBoardComments { get; set; } = [];
+    public string SelectedSearchType { get; set; } = "";
+    public string TypedSearchText { get; set; } = "";
 
 }

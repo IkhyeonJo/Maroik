@@ -1,7 +1,6 @@
 ﻿@using Maroik.WebSite.Utilities
 
 @{
-    string currentCulture = Context.Features.Get<Microsoft.AspNetCore.Localization.IRequestCultureFeature>().RequestCulture.Culture.Name;
     List<AssetResponse> assets = (ViewBag.Assets as List<AssetResponse>) ?? [];
     string currentDate = (ViewBag.CurrentDate as string) ?? "";
     int currentHour = (ViewBag.CurrentHour as int?) ?? 0;
