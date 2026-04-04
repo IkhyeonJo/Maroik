@@ -1,10 +1,9 @@
+using Mapster;
+using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.PostgreSQL.Data;
 using Maroik.Core.PostgreSQL.Models;
 using Microsoft.EntityFrameworkCore;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace Maroik.Core.Repository.Repositories;
 
@@ -17,46 +16,26 @@ public class BoardRepository : IBoardRepository
         _context = context;
     }
 
-    /// <summary>
-    /// Gets all posts of one type.
-    /// </summary>
-    /// <returns></returns>
-    public async Task<IEnumerable<Board>> GetOneTypeBoardsAsync(string type)
+    public async Task<IEnumerable<BoardResponse>> GetOneTypeBoardsAsync(string type)
     {
-        return await _context.Boards.Where(x => x.Type == type).ToListAsync();
+        return (await _context.Boards.Where(x => x.Type == type).ToListAsync()).Adapt<List<BoardResponse>>();
     }
 
-    /// <summary>
-    /// Creates a post.
-    /// </summary>
-    /// <param name="board"></param>
-    /// <returns></returns>
-    public async Task WriteBoardAsync(Board board)
+    public async Task WriteBoardAsync(BoardRequest request)
     {
-        _ = await _context.Boards.AddAsync(board);
+        _ = await _context.Boards.AddAsync(request.Adapt<Board>());
         _ = await _context.SaveChangesAsync();
     }
 
-    /// <summary>
-    /// Updates a post.
-    /// </summary>
-    /// <param name="board"></param>
-    /// <returns></returns>
-    public async Task UpdateBoardAsync(Board board)
+    public async Task UpdateBoardAsync(BoardRequest request)
     {
-        _ = _context.Boards.Update(board);
+        _ = _context.Boards.Update(request.Adapt<Board>());
         _ = await _context.SaveChangesAsync();
     }
 
-    /// <summary>
-    /// Deletes a post.
-    /// </summary>
-    /// <param name="board"></param>
-    /// <returns></returns>
-    public async Task DeleteBoardAsync(Board board)
+    public async Task DeleteBoardAsync(BoardRequest request)
     {
-        _ = _context.Boards.Update(board);
+        _ = _context.Boards.Update(request.Adapt<Board>());
         _ = await _context.SaveChangesAsync();
     }
-
 }

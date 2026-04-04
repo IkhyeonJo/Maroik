@@ -1,6 +1,8 @@
+using Mapster;
 ﻿using Ganss.Xss;
 using HtmlAgilityPack;
 using ImageMagick;
+using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.PostgreSQL.Data;
 using Maroik.Core.PostgreSQL.Models;
@@ -73,12 +75,12 @@ public class CalendarController : Controller
                 {
                     _ = HttpContext.Session.TryGetValue(Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account), out byte[] resultByte);
 
-                    Calendar tempCalendar = calendarInputViewModel?.Calendars?.FirstOrDefault() ?? new Calendar();
-                    tempCalendar.AccountEmail = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email;
+                    CalendarRequest tempCalendar = calendarInputViewModel?.Calendars?.FirstOrDefault() ?? new CalendarRequest();
+                    tempCalendar.AccountEmail = JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email;
                     tempCalendar.Created = DateTime.UtcNow;
                     tempCalendar.Updated = DateTime.UtcNow;
 
-                    Calendar tempCalendarToValidate = (await _calendarRepository.GetCalendarsAsync(tempCalendar.AccountEmail)).Where(x => x.Name == (tempCalendar?.Name ?? "")).FirstOrDefault();
+                    CalendarResponse tempCalendarToValidate = (await _calendarRepository.GetCalendarsAsync(tempCalendar.AccountEmail)).Where(x => x.Name == (tempCalendar?.Name ?? "")).FirstOrDefault();
 
                     if (tempCalendarToValidate is not null)
                     {
@@ -173,9 +175,9 @@ public class CalendarController : Controller
 
                     if (isAccountSessionExist)
                     {
-                        Account loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte));
+                        AccountResponse loginedAccount = JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte));
 
-                        Calendar tempCalendarToValidate = (await _calendarRepository.GetCalendarsAsync(loginedAccount.Email)).Where(x => x.Id == calendarEventInputViewModel?.CalendarId).FirstOrDefault();
+                        CalendarResponse tempCalendarToValidate = (await _calendarRepository.GetCalendarsAsync(loginedAccount.Email)).Where(x => x.Id == calendarEventInputViewModel?.CalendarId).FirstOrDefault();
 
                         if (tempCalendarToValidate is null)
                         {
@@ -190,7 +192,7 @@ public class CalendarController : Controller
                         }
 
                         #region CalendarEvent
-                        CalendarEvent calendarEvent = new();
+                        CalendarEventResponse calendarEvent = new();
 
                         if (calendarEventInputViewModel.AllDay)
                         {
@@ -299,7 +301,7 @@ public class CalendarController : Controller
                             calendarEvent.Updated = DateTime.UtcNow;
                         }
 
-                        await _calendarEventRepository.CreateCalendarEventAsync(calendarEvent);
+                        await _calendarEventRepository.CreateCalendarEventAsync(calendarEvent.Adapt<CalendarEventRequest>());
                         #endregion
 
                         #region CalendarEventAttachedFile
@@ -320,7 +322,7 @@ public class CalendarController : Controller
                                     _ = await _fileClient.UploadAsync(ms.ToArray(), calendarEventInputViewModel.CalendarEventUploadedFile.ContentType, filePath, ServerSetting.FileStorageBaseUrl);
                                 }
 
-                                await _calendarEventAttachedFileRepository.SaveCalendarEventAttachedFileAsync(new CalendarEventAttachedFile()
+                                await _calendarEventAttachedFileRepository.SaveCalendarEventAttachedFileAsync(new CalendarEventAttachedFileRequest()
                                 {
                                     CalendarEventId = createdCalendarEventId,
                                     Size = Convert.ToInt32(calendarEventInputViewModel.CalendarEventUploadedFile.Length),
@@ -352,7 +354,7 @@ public class CalendarController : Controller
                             TimeSpan? timesBeforeEvent = !string.IsNullOrEmpty(tempTimesBeforeEvent)
                                 ? new TimeSpan(Convert.ToInt32(tempTimesBeforeEvent.Split(":")[0]), Convert.ToInt32(tempTimesBeforeEvent.Split(":")[1]), 0)
                                 : null;
-                            CalendarEventReminder calendarEventReminder = new()
+                            CalendarEventReminderResponse calendarEventReminder = new()
                             {
                                 CalendarEventId = calendarEvent.Id,
                                 Method = method,
@@ -363,7 +365,7 @@ public class CalendarController : Controller
                                 TimesBeforeEvent = timesBeforeEvent != null ? TimeOnly.FromTimeSpan(timesBeforeEvent ?? new TimeSpan()) : null
                             };
 
-                            await _calendarReminderRepository.CreateCalendarEventReminderAsync(calendarEventReminder);
+                            await _calendarReminderRepository.CreateCalendarEventReminderAsync(calendarEventReminder.Adapt<CalendarEventReminderRequest>());
                         }
                         #endregion
 
@@ -433,7 +435,7 @@ public class CalendarController : Controller
             Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account),
             out byte[] resultByte);
 
-        var loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte));
+        var loginedAccount = JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte));
 
         string summernoteImagePath = Path.Combine("upload", "Calendar", $"{loginedAccount.Role}Index", "summernote", "images");
         string imageFile = $"{Guid.NewGuid():N}{ext}";
@@ -472,16 +474,16 @@ public class CalendarController : Controller
     {
         _ = HttpContext.Session.TryGetValue(Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account), out byte[] resultByte);
 
-        Account loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte));
+        AccountResponse loginedAccount = JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte));
 
         CalendarOutputViewModel calendarOutputViewModel = new();
 
         #region Load Calendar
-        List<Calendar> calendars = await _calendarRepository.GetCalendarsAsync(loginedAccount.Email) ?? [];
+        List<CalendarResponse> calendars = await _calendarRepository.GetCalendarsAsync(loginedAccount.Email) ?? [];
 
         if (calendars.Count == 0)
         {
-            calendars.Add(new Calendar
+            calendars.Add(new CalendarResponse
             {
                 AccountEmail = loginedAccount.Email,
                 Name = loginedAccount.Nickname,
@@ -490,16 +492,16 @@ public class CalendarController : Controller
                 Created = DateTime.UtcNow,
                 Updated = DateTime.UtcNow
             });
-            await _calendarRepository.CreateCalendarAsync(calendars[0]);
+            await _calendarRepository.CreateCalendarAsync(calendars[0].Adapt<CalendarRequest>());
         }
         #endregion
 
         #region Load CalendarEvent
         List<CalendarEventOutputViewModel> calendarEventOutputViewModels = [];
 
-        foreach (Calendar calendar in calendars)
+        foreach (CalendarResponse calendar in calendars)
         {
-            foreach (CalendarEvent calendarEvent in await _calendarEventRepository.GetCalendarEventsAsync(calendar.Id) ?? [])
+            foreach (CalendarEventResponse calendarEvent in await _calendarEventRepository.GetCalendarEventsAsync(calendar.Id) ?? [])
             {
                 CalendarEventOutputViewModel item = new()
                 {
@@ -646,16 +648,16 @@ public class CalendarController : Controller
     {
         _ = HttpContext.Session.TryGetValue(Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account), out byte[] resultByte);
 
-        Account loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte));
+        AccountResponse loginedAccount = JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte));
 
         CalendarOutputViewModel calendarOutputViewModel = new();
 
         #region Load Calendar
-        List<Calendar> calendars = await _calendarRepository.GetCalendarsAsync(loginedAccount.Email) ?? [];
+        List<CalendarResponse> calendars = await _calendarRepository.GetCalendarsAsync(loginedAccount.Email) ?? [];
 
         if (calendars.Count == 0)
         {
-            calendars.Add(new Calendar
+            calendars.Add(new CalendarResponse
             {
                 AccountEmail = loginedAccount.Email,
                 Name = loginedAccount.Nickname,
@@ -664,16 +666,16 @@ public class CalendarController : Controller
                 Created = DateTime.UtcNow,
                 Updated = DateTime.UtcNow
             });
-            await _calendarRepository.CreateCalendarAsync(calendars[0]);
+            await _calendarRepository.CreateCalendarAsync(calendars[0].Adapt<CalendarRequest>());
         }
         #endregion
 
         #region Load CalendarEvent
         List<CalendarEventOutputViewModel> calendarEventOutputViewModels = [];
 
-        foreach (Calendar calendar in calendars)
+        foreach (CalendarResponse calendar in calendars)
         {
-            foreach (CalendarEvent calendarEvent in await _calendarEventRepository.GetCalendarEventsAsync(calendar.Id) ?? [])
+            foreach (CalendarEventResponse calendarEvent in await _calendarEventRepository.GetCalendarEventsAsync(calendar.Id) ?? [])
             {
                 CalendarEventOutputViewModel item = new()
                 {
@@ -810,9 +812,9 @@ public class CalendarController : Controller
         #endregion
 
         #region Load OtherCalendar
-        List<Calendar> otherCalendars = [];
+        List<CalendarResponse> otherCalendars = [];
 
-        List<Calendar> allCalendars = await _calendarRepository.GetAllCalendarsAsync() ?? [];
+        List<CalendarResponse> allCalendars = await _calendarRepository.GetAllCalendarsAsync() ?? [];
 
         var tempOtherCalendars = (from calendar in allCalendars
                                   join otherCalendar in await _otherCalendarRepository.GetOtherCalendarsAsync(loginedAccount.Email) ?? []
@@ -826,16 +828,16 @@ public class CalendarController : Controller
 
         foreach (var tempOtherCalendar in tempOtherCalendars)
         {
-            otherCalendars.Add(new Calendar() { Id = tempOtherCalendar.Id, Name = tempOtherCalendar.Name, HtmlColorCode = tempOtherCalendar.HtmlColorCode });
+            otherCalendars.Add(new CalendarResponse() { Id = tempOtherCalendar.Id, Name = tempOtherCalendar.Name, HtmlColorCode = tempOtherCalendar.HtmlColorCode });
         }
         #endregion
 
         #region Load OtherCalendarEvent
         List<CalendarEventOutputViewModel> otherCalendarEventOutputViewModels = [];
 
-        foreach (Calendar otherCalendar in otherCalendars)
+        foreach (CalendarResponse otherCalendar in otherCalendars)
         {
-            foreach (CalendarEvent otherCalendarEvent in await _calendarEventRepository.GetCalendarEventsAsync(otherCalendar.Id) ?? [])
+            foreach (CalendarEventResponse otherCalendarEvent in await _calendarEventRepository.GetCalendarEventsAsync(otherCalendar.Id) ?? [])
             {
                 CalendarEventOutputViewModel item = new()
                 {
@@ -982,14 +984,14 @@ public class CalendarController : Controller
     [HttpGet]
     public async Task<IActionResult> AnonymousIndex()
     {
-        Account loginedAccount = new() { Role = Role.Anonymous, TimeZoneIanaId = "UTC" };
+        AccountResponse loginedAccount = new() { Role = Role.Anonymous, TimeZoneIanaId = "UTC" };
 
         CalendarOutputViewModel calendarOutputViewModel = new();
 
         #region Load OtherCalendar
-        List<Calendar> otherCalendars = [];
+        List<CalendarResponse> otherCalendars = [];
 
-        List<Calendar> allCalendars = await _calendarRepository.GetAllCalendarsAsync() ?? [];
+        List<CalendarResponse> allCalendars = await _calendarRepository.GetAllCalendarsAsync() ?? [];
 
         var tempOtherCalendars = (from calendar in allCalendars
                                   join calendarShared in (await _calendarSharedRepository?.GetCalendarSharedAsync())?.Where(x => x.Anonymous)?.ToList() ?? []
@@ -1003,16 +1005,16 @@ public class CalendarController : Controller
 
         foreach (var tempOtherCalendar in tempOtherCalendars)
         {
-            otherCalendars.Add(new Calendar() { Id = tempOtherCalendar.Id, Name = tempOtherCalendar.Name, HtmlColorCode = tempOtherCalendar.HtmlColorCode });
+            otherCalendars.Add(new CalendarResponse() { Id = tempOtherCalendar.Id, Name = tempOtherCalendar.Name, HtmlColorCode = tempOtherCalendar.HtmlColorCode });
         }
         #endregion
 
         #region Load OtherCalendarEvent
         List<CalendarEventOutputViewModel> otherCalendarEventOutputViewModels = [];
 
-        foreach (Calendar otherCalendar in otherCalendars)
+        foreach (CalendarResponse otherCalendar in otherCalendars)
         {
-            foreach (CalendarEvent otherCalendarEvent in await _calendarEventRepository.GetCalendarEventsAsync(otherCalendar.Id) ?? [])
+            foreach (CalendarEventResponse otherCalendarEvent in await _calendarEventRepository.GetCalendarEventsAsync(otherCalendar.Id) ?? [])
             {
                 CalendarEventOutputViewModel item = new()
                 {
@@ -1163,7 +1165,7 @@ public class CalendarController : Controller
         try
         {
             _ = HttpContext.Session.TryGetValue(Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account), out byte[] resultByte);
-            List<Calendar> tempCalendars = await _calendarRepository.GetCalendarsAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email) ?? [];
+            List<CalendarResponse> tempCalendars = await _calendarRepository.GetCalendarsAsync(JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email) ?? [];
 
             if (tempCalendars == null || tempCalendars.Count == 0)
             {
@@ -1171,7 +1173,7 @@ public class CalendarController : Controller
             }
             else
             {
-                Calendar tempCalendar = tempCalendars.Where(a => a.Id == id).FirstOrDefault();
+                CalendarResponse tempCalendar = tempCalendars.Where(a => a.Id == id).FirstOrDefault();
 
                 return tempCalendar == null
                     ? Json(new { result = false, error = _localizer["Input is invalid"].Value })
@@ -1193,7 +1195,7 @@ public class CalendarController : Controller
         try
         {
             _ = HttpContext.Session.TryGetValue(Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account), out byte[] resultByte);
-            List<Calendar> calendars = (await _calendarRepository.GetCalendarsAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email) ?? [])?.ToList();
+            List<CalendarResponse> calendars = (await _calendarRepository.GetCalendarsAsync(JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email) ?? [])?.ToList();
 
             return Json(new { result = true, calendars });
         }
@@ -1215,13 +1217,13 @@ public class CalendarController : Controller
 
             if (isAccountSessionExist)
             {
-                List<Calendar> calendars = await _calendarRepository.GetAllCalendarsAsync();
-                List<OtherCalendar> otherCalendars = (await _otherCalendarRepository.GetOtherCalendarsAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email) ?? [])?.ToList();
+                List<CalendarResponse> calendars = await _calendarRepository.GetAllCalendarsAsync();
+                List<OtherCalendarResponse> otherCalendars = (await _otherCalendarRepository.GetOtherCalendarsAsync(JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email) ?? [])?.ToList();
 
-                List<Calendar> tempOtherCalendars = (from calendar in calendars
+                List<CalendarResponse> tempOtherCalendars = (from calendar in calendars
                                                      join otherCalendar in otherCalendars
                                                      on calendar.Id equals otherCalendar.CalendarId
-                                                     select new Calendar()
+                                                     select new CalendarResponse()
                                                      {
                                                          Id = calendar.Id,
                                                          Name = calendar.Name,
@@ -1232,7 +1234,7 @@ public class CalendarController : Controller
             }
             else
             {
-                List<Calendar> tempOtherCalendars = [];
+                List<CalendarResponse> tempOtherCalendars = [];
                 var temporaryOtherCalendars = (from calendar in await _calendarRepository.GetAllCalendarsAsync() ?? []
                                                join calendarShared in (await _calendarSharedRepository?.GetCalendarSharedAsync())?.Where(x => x.Anonymous)?.ToList() ?? []
                                                on calendar.Id equals calendarShared.CalendarId
@@ -1245,7 +1247,7 @@ public class CalendarController : Controller
 
                 foreach (var tempOtherCalendar in temporaryOtherCalendars)
                 {
-                    tempOtherCalendars.Add(new Calendar() { Id = tempOtherCalendar.Id, Name = tempOtherCalendar.Name, HtmlColorCode = tempOtherCalendar.HtmlColorCode });
+                    tempOtherCalendars.Add(new CalendarResponse() { Id = tempOtherCalendar.Id, Name = tempOtherCalendar.Name, HtmlColorCode = tempOtherCalendar.HtmlColorCode });
                 }
 
                 return Json(new { result = true, tempOtherCalendars });
@@ -1271,12 +1273,12 @@ public class CalendarController : Controller
                 {
                     _ = HttpContext.Session.TryGetValue(Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account), out byte[] resultByte);
 
-                    Account loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte));
+                    AccountResponse loginedAccount = JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte));
 
-                    List<Calendar> calendars = await _calendarRepository.GetCalendarsAsync(loginedAccount.Email) ?? [];
+                    List<CalendarResponse> calendars = await _calendarRepository.GetCalendarsAsync(loginedAccount.Email) ?? [];
 
-                    CalendarEvent tempCalendarEvent = await _calendarEventRepository.GetCalendarEventAsync(id);
-                    Calendar tempCalendar = calendars?.Where(x => x.Id == tempCalendarEvent.CalendarId)?.FirstOrDefault() ?? new Calendar();
+                    CalendarEventResponse tempCalendarEvent = await _calendarEventRepository.GetCalendarEventAsync(id);
+                    CalendarResponse tempCalendar = calendars?.Where(x => x.Id == tempCalendarEvent.CalendarId)?.FirstOrDefault() ?? new CalendarResponse();
 
                     if (!(tempCalendarEvent.Id > 0))
                     {
@@ -1469,7 +1471,7 @@ public class CalendarController : Controller
                         }
                     }
 
-                    calendarEvent.Calendars = calendars.Select(x => new Calendar { Id = x.Id, Name = x.Name }).OrderBy(x => x.Name).ToList();
+                    calendarEvent.Calendars = calendars.Select(x => new CalendarResponse { Id = x.Id, Name = x.Name }).OrderBy(x => x.Name).ToList();
                     calendarEvent.SerializedCalendarReminders = JsonConvert.SerializeObject((await _calendarReminderRepository.GetCalendarEventRemindersAsync(tempCalendarEvent.Id)).Select(x => new CalendarEventReminder { Method = x.Method, MinutesBeforeEvent = x.MinutesBeforeEvent, HoursBeforeEvent = x.HoursBeforeEvent, DaysBeforeEvent = x.DaysBeforeEvent, WeeksBeforeEvent = x.WeeksBeforeEvent, TimesBeforeEvent = x.TimesBeforeEvent }) ?? []);
 
                     calendarEvent.HtmlColorCode = calendars?.Where(x => x.Id == tempCalendarEvent.CalendarId)?.FirstOrDefault()?.HtmlColorCode;
@@ -1507,12 +1509,12 @@ public class CalendarController : Controller
                 {
                     bool isAccountSessionExist = HttpContext.Session.TryGetValue(Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account), out byte[] resultByte);
 
-                    Account loginedAccount = null;
-                    List<Calendar> calendars = null;
+                    AccountResponse loginedAccount = null;
+                    List<CalendarResponse> calendars = null;
 
                     if (isAccountSessionExist)
                     {
-                        loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte));
+                        loginedAccount = JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte));
                         calendars = (from calendar in await _calendarRepository.GetAllCalendarsAsync() ?? []
                                      join otherCalendar in await _otherCalendarRepository.GetOtherCalendarsAsync(loginedAccount.Email) ?? []
                                      on calendar.Id equals otherCalendar.CalendarId
@@ -1520,7 +1522,7 @@ public class CalendarController : Controller
                     }
                     else
                     {
-                        loginedAccount = new Account() { Role = Role.Anonymous, TimeZoneIanaId = "UTC" };
+                        loginedAccount = new AccountResponse() { Role = Role.Anonymous, TimeZoneIanaId = "UTC" };
                         calendars = [];
                         var temporaryOtherCalendars = (from calendar in await _calendarRepository.GetAllCalendarsAsync() ?? []
                                                        join calendarShared in (await _calendarSharedRepository?.GetCalendarSharedAsync())?.Where(x => x.Anonymous)?.ToList() ?? []
@@ -1534,12 +1536,12 @@ public class CalendarController : Controller
 
                         foreach (var tempOtherCalendar in temporaryOtherCalendars)
                         {
-                            calendars.Add(new Calendar() { Id = tempOtherCalendar.Id, Name = tempOtherCalendar.Name, HtmlColorCode = tempOtherCalendar.HtmlColorCode });
+                            calendars.Add(new CalendarResponse() { Id = tempOtherCalendar.Id, Name = tempOtherCalendar.Name, HtmlColorCode = tempOtherCalendar.HtmlColorCode });
                         }
                     }
 
-                    CalendarEvent tempCalendarEvent = await _calendarEventRepository.GetCalendarEventAsync(id);
-                    Calendar tempCalendar = calendars?.Where(x => x.Id == tempCalendarEvent.CalendarId)?.FirstOrDefault() ?? new Calendar();
+                    CalendarEventResponse tempCalendarEvent = await _calendarEventRepository.GetCalendarEventAsync(id);
+                    CalendarResponse tempCalendar = calendars?.Where(x => x.Id == tempCalendarEvent.CalendarId)?.FirstOrDefault() ?? new CalendarResponse();
 
                     if (!(tempCalendarEvent.Id > 0))
                     {
@@ -1732,7 +1734,7 @@ public class CalendarController : Controller
                         }
                     }
 
-                    calendarEvent.Calendars = calendars.Select(x => new Calendar { Id = x.Id, Name = x.Name }).OrderBy(x => x.Name).ToList();
+                    calendarEvent.Calendars = calendars.Select(x => new CalendarResponse { Id = x.Id, Name = x.Name }).OrderBy(x => x.Name).ToList();
                     calendarEvent.SerializedCalendarReminders = JsonConvert.SerializeObject((await _calendarReminderRepository.GetCalendarEventRemindersAsync(tempCalendarEvent.Id)).Select(x => new CalendarEventReminder { Method = x.Method, MinutesBeforeEvent = x.MinutesBeforeEvent, HoursBeforeEvent = x.HoursBeforeEvent, DaysBeforeEvent = x.DaysBeforeEvent, WeeksBeforeEvent = x.WeeksBeforeEvent, TimesBeforeEvent = x.TimesBeforeEvent }) ?? []);
 
                     calendarEvent.HtmlColorCode = calendars?.Where(x => x.Id == tempCalendarEvent.CalendarId)?.FirstOrDefault()?.HtmlColorCode;
@@ -1772,17 +1774,17 @@ public class CalendarController : Controller
 
                     bool isAccountSessionExist = HttpContext.Session.TryGetValue(Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account), out byte[] resultByte);
 
-                    Account loginedAccount = null;
+                    AccountResponse loginedAccount = null;
 
-                    List<Calendar> tempCalendars = null;
+                    List<CalendarResponse> tempCalendars = null;
 
-                    List<Calendar> tempOtherCalendars = null;
+                    List<CalendarResponse> tempOtherCalendars = null;
 
                     if (isAccountSessionExist)
                     {
-                        loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte));
+                        loginedAccount = JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte));
 
-                        tempCalendars = await _calendarRepository.GetCalendarsAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+                        tempCalendars = await _calendarRepository.GetCalendarsAsync(JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email);
 
                         tempOtherCalendars = [];
 
@@ -1798,12 +1800,12 @@ public class CalendarController : Controller
 
                         foreach (var tempOtherCalendar in otherCalendars)
                         {
-                            tempOtherCalendars.Add(new Calendar() { Id = tempOtherCalendar.Id, Name = tempOtherCalendar.Name, HtmlColorCode = tempOtherCalendar.HtmlColorCode });
+                            tempOtherCalendars.Add(new CalendarResponse() { Id = tempOtherCalendar.Id, Name = tempOtherCalendar.Name, HtmlColorCode = tempOtherCalendar.HtmlColorCode });
                         }
                     }
                     else
                     {
-                        loginedAccount = new Account() { Role = Role.Anonymous, TimeZoneIanaId = "UTC" };
+                        loginedAccount = new AccountResponse() { Role = Role.Anonymous, TimeZoneIanaId = "UTC" };
 
                         tempCalendars = [];
 
@@ -1821,18 +1823,18 @@ public class CalendarController : Controller
 
                         foreach (var tempOtherCalendar in temporaryOtherCalendars)
                         {
-                            tempOtherCalendars.Add(new Calendar() { Id = tempOtherCalendar.Id, Name = tempOtherCalendar.Name, HtmlColorCode = tempOtherCalendar.HtmlColorCode });
+                            tempOtherCalendars.Add(new CalendarResponse() { Id = tempOtherCalendar.Id, Name = tempOtherCalendar.Name, HtmlColorCode = tempOtherCalendar.HtmlColorCode });
                         }
                     }
 
-                    IEnumerable<Calendar> tempInputCalendars = calendarInputViewModel?.Calendars ?? [];
+                    IEnumerable<CalendarRequest> tempInputCalendars = calendarInputViewModel?.Calendars ?? [];
 
-                    foreach (Calendar tempInputCalendar in tempInputCalendars)
+                    foreach (CalendarRequest tempInputCalendar in tempInputCalendars)
                     {
-                        if (((tempCalendars?.Where(x => x.Id == tempInputCalendar.Id)?.FirstOrDefault() ?? new Calendar()).Id != 0) ||
-                            ((tempOtherCalendars?.Where(x => x.Id == tempInputCalendar.Id)?.FirstOrDefault() ?? new Calendar()).Id != 0))
+                        if (((tempCalendars?.Where(x => x.Id == tempInputCalendar.Id)?.FirstOrDefault() ?? new CalendarResponse()).Id != 0) ||
+                            ((tempOtherCalendars?.Where(x => x.Id == tempInputCalendar.Id)?.FirstOrDefault() ?? new CalendarResponse()).Id != 0))
                         {
-                            foreach (CalendarEvent calendarEvent in await _calendarEventRepository.GetCalendarEventsAsync(tempInputCalendar.Id))
+                            foreach (CalendarEventResponse calendarEvent in await _calendarEventRepository.GetCalendarEventsAsync(tempInputCalendar.Id))
                             {
                                 CalendarEventOutputViewModel item = new()
                                 {
@@ -1961,12 +1963,12 @@ public class CalendarController : Controller
                                     item.EndDate = new DateTime(tempEndDate.Year, tempEndDate.Month, tempEndDate.Day, 0, 0, 0, tempEndDate.Kind);
                                 }
 
-                                if ((tempCalendars?.Where(x => x.Id == tempInputCalendar.Id)?.FirstOrDefault() ?? new Calendar()).Id != 0)
+                                if ((tempCalendars?.Where(x => x.Id == tempInputCalendar.Id)?.FirstOrDefault() ?? new CalendarResponse()).Id != 0)
                                 {
                                     item.HtmlColorCode = tempCalendars?.Where(x => x.Id == calendarEvent.CalendarId)?.FirstOrDefault()?.HtmlColorCode;
                                     item.CalendarType = EnumHelper.GetDescription(CalendarType.My);
                                 }
-                                else if ((tempOtherCalendars?.Where(x => x.Id == tempInputCalendar.Id)?.FirstOrDefault() ?? new Calendar()).Id != 0)
+                                else if ((tempOtherCalendars?.Where(x => x.Id == tempInputCalendar.Id)?.FirstOrDefault() ?? new CalendarResponse()).Id != 0)
                                 {
                                     item.HtmlColorCode = tempOtherCalendars?.Where(x => x.Id == calendarEvent.CalendarId)?.FirstOrDefault()?.HtmlColorCode;
                                     item.CalendarType = EnumHelper.GetDescription(CalendarType.Other);
@@ -2005,24 +2007,24 @@ public class CalendarController : Controller
         try
         {
             _ = HttpContext.Session.TryGetValue(Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account), out byte[] resultByte);
-            List<Calendar> calendars = (await _calendarRepository.GetCalendarsAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email) ?? [])?.ToList();
-            List<CalendarShared> calendarShareds = (await _calendarSharedRepository.GetCalendarSharedAsync() ?? [])?.ToList();
+            List<CalendarResponse> calendars = (await _calendarRepository.GetCalendarsAsync(JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email) ?? [])?.ToList();
+            List<CalendarSharedResponse> calendarShareds = (await _calendarSharedRepository.GetCalendarSharedAsync() ?? [])?.ToList();
 
-            foreach (Calendar calendar in calendars)
+            foreach (CalendarResponse calendar in calendars)
             {
-                CalendarShared calendarShared = calendarShareds?.Where(x => x.CalendarId == calendar.Id)?.FirstOrDefault() ?? new CalendarShared();
+                CalendarSharedResponse calendarShared = calendarShareds?.Where(x => x.CalendarId == calendar.Id)?.FirstOrDefault() ?? new CalendarSharedResponse();
 
                 if (!(calendarShared.CalendarId > 0))
                 {
-                    await _calendarSharedRepository.CreateCalendarSharedAsync(new CalendarShared() { CalendarId = calendar.Id, User = false, Anonymous = false });
+                    await _calendarSharedRepository.CreateCalendarSharedAsync(new CalendarSharedRequest() { CalendarId = calendar.Id, User = false, Anonymous = false });
                 }
             }
 
-            List<CalendarShared> tempCalendarShareds = [];
+            List<CalendarSharedResponse> tempCalendarShareds = [];
 
-            foreach (CalendarShared calendarShared in (await _calendarSharedRepository.GetCalendarSharedAsync() ?? [])?.ToList())
+            foreach (CalendarSharedResponse calendarShared in (await _calendarSharedRepository.GetCalendarSharedAsync() ?? [])?.ToList())
             {
-                Calendar item = calendars.Where(x => x.Id == calendarShared.CalendarId).FirstOrDefault() ?? new Calendar();
+                CalendarResponse item = calendars.Where(x => x.Id == calendarShared.CalendarId).FirstOrDefault() ?? new CalendarResponse();
 
                 if (item.Id > 0)
                 {
@@ -2061,16 +2063,16 @@ public class CalendarController : Controller
 
             if (isAccountSessionExist)
             {
-                Account loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte));
+                AccountResponse loginedAccount = JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte));
 
                 if (loginedAccount.Role is not (Role.Admin or Role.User)) // If not logged in user
                 {
                     return Json(new { result = false, error = _localizer["Login required."].Value });
                 }
 
-                List<Calendar> allCalendars = await _calendarRepository.GetAllCalendarsAsync() ?? [];
-                List<CalendarShared> calendarShareds = await _calendarSharedRepository.GetCalendarSharedAsync() ?? [];
-                List<OtherCalendar> otherCalendars = await _otherCalendarRepository.GetOtherCalendarsAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+                List<CalendarResponse> allCalendars = await _calendarRepository.GetAllCalendarsAsync() ?? [];
+                List<CalendarSharedResponse> calendarShareds = await _calendarSharedRepository.GetCalendarSharedAsync() ?? [];
+                List<OtherCalendarResponse> otherCalendars = await _otherCalendarRepository.GetOtherCalendarsAsync(JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email);
 
                 switch (loginedAccount.Role)
                 {
@@ -2127,19 +2129,19 @@ public class CalendarController : Controller
                 {
                     _ = HttpContext.Session.TryGetValue(Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account), out byte[] resultByte);
 
-                    Calendar tempCalendar = calendarInputViewModel?.Calendars?.FirstOrDefault() ?? new Calendar();
-                    tempCalendar.AccountEmail = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email;
+                    CalendarResponse tempCalendar = (calendarInputViewModel?.Calendars?.FirstOrDefault())?.Adapt<CalendarResponse>() ?? new CalendarResponse();
+                    tempCalendar.AccountEmail = JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email;
                     tempCalendar.Updated = DateTime.UtcNow;
 
-                    List<Calendar> tempCalendars = await _calendarRepository.GetCalendarsAsync(tempCalendar.AccountEmail);
-                    Calendar previousCalendar = tempCalendars.Where(a => a.Id == tempCalendar.Id).FirstOrDefault();
+                    List<CalendarResponse> tempCalendars = await _calendarRepository.GetCalendarsAsync(tempCalendar.AccountEmail);
+                    CalendarResponse previousCalendar = tempCalendars.Where(a => a.Id == tempCalendar.Id).FirstOrDefault();
                     tempCalendar.Created = previousCalendar.Created;
 
                     if (previousCalendar.Id > 0)
                     {
-                        await _calendarRepository.UpdateCalendarAsync(tempCalendar);
+                        await _calendarRepository.UpdateCalendarAsync(tempCalendar.Adapt<CalendarRequest>());
 
-                        return Json(new { result = true, message = _localizer["The calendar has been successfully updated."].Value, calendar = new Calendar() { Id = tempCalendar.Id, Name = tempCalendar.Name, HtmlColorCode = tempCalendar.HtmlColorCode } });
+                        return Json(new { result = true, message = _localizer["The calendar has been successfully updated."].Value, calendar = new CalendarRequest() { Id = tempCalendar.Id, Name = tempCalendar.Name, HtmlColorCode = tempCalendar.HtmlColorCode } });
                     }
                     else
                     {
@@ -2226,9 +2228,9 @@ public class CalendarController : Controller
 
                     if (isAccountSessionExist)
                     {
-                        Account loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte));
+                        AccountResponse loginedAccount = JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte));
 
-                        Calendar calendarToValidate = (await _calendarRepository.GetCalendarsAsync(loginedAccount.Email)).Where(x => x.Id == calendarEventInputViewModel?.CalendarId).FirstOrDefault();
+                        CalendarResponse calendarToValidate = (await _calendarRepository.GetCalendarsAsync(loginedAccount.Email)).Where(x => x.Id == calendarEventInputViewModel?.CalendarId).FirstOrDefault();
 
                         if (calendarToValidate is null)
                         {
@@ -2242,10 +2244,10 @@ public class CalendarController : Controller
                             return Json(new { result = false, error = _localizer["Please Login to update calendar event"].Value });
                         }
 
-                        List<Calendar> calendars = await _calendarRepository.GetCalendarsAsync(loginedAccount.Email) ?? [];
+                        List<CalendarResponse> calendars = await _calendarRepository.GetCalendarsAsync(loginedAccount.Email) ?? [];
 
-                        CalendarEvent calendarEvent = await _calendarEventRepository.GetCalendarEventAsync(calendarEventInputViewModel.Id);
-                        Calendar calendar = calendars?.Where(x => x.Id == calendarEvent.CalendarId)?.FirstOrDefault() ?? new Calendar();
+                        CalendarEventResponse calendarEvent = await _calendarEventRepository.GetCalendarEventAsync(calendarEventInputViewModel.Id);
+                        CalendarResponse calendar = calendars?.Where(x => x.Id == calendarEvent.CalendarId)?.FirstOrDefault() ?? new CalendarResponse();
 
                         if (!(calendarEvent.Id > 0))
                         {
@@ -2365,10 +2367,10 @@ public class CalendarController : Controller
                             calendarEvent.Updated = DateTime.UtcNow;
                         }
 
-                        await _calendarEventRepository.UpdateCalendarEventAsync(calendarEvent);
+                        await _calendarEventRepository.UpdateCalendarEventAsync(calendarEvent.Adapt<CalendarEventRequest>());
                         #endregion
 
-                        #region CalendarEventAttachedFile
+                        #region CalendarEventAttachedFileResponse
 
                         _ = await _calendarEventAttachedFileRepository.DeleteCalendarEventAttachedFileAsync(calendarEvent.Id);
 
@@ -2389,7 +2391,7 @@ public class CalendarController : Controller
                                     _ = await _fileClient.UploadAsync(ms.ToArray(), calendarEventInputViewModel.CalendarEventUploadedFile.ContentType, filePath, ServerSetting.FileStorageBaseUrl);
                                 }
 
-                                await _calendarEventAttachedFileRepository.SaveCalendarEventAttachedFileAsync(new CalendarEventAttachedFile()
+                                await _calendarEventAttachedFileRepository.SaveCalendarEventAttachedFileAsync(new CalendarEventAttachedFileRequest()
                                 {
                                     CalendarEventId = updatedCalendarEventId,
                                     Size = Convert.ToInt32(calendarEventInputViewModel.CalendarEventUploadedFile.Length),
@@ -2424,7 +2426,7 @@ public class CalendarController : Controller
                             TimeSpan? timesBeforeEvent = !string.IsNullOrEmpty(tempTimesBeforeEvent)
                                 ? new TimeSpan(Convert.ToInt32(tempTimesBeforeEvent.Split(":")[0]), Convert.ToInt32(tempTimesBeforeEvent.Split(":")[1]), 0)
                                 : null;
-                            CalendarEventReminder calendarEventReminder = new()
+                            CalendarEventReminderResponse calendarEventReminder = new()
                             {
                                 CalendarEventId = calendarEvent.Id,
                                 Method = method,
@@ -2435,7 +2437,7 @@ public class CalendarController : Controller
                                 TimesBeforeEvent = timesBeforeEvent != null ? TimeOnly.FromTimeSpan(timesBeforeEvent ?? new TimeSpan()) : null
                             };
 
-                            await _calendarReminderRepository.CreateCalendarEventReminderAsync(calendarEventReminder);
+                            await _calendarReminderRepository.CreateCalendarEventReminderAsync(calendarEventReminder.Adapt<CalendarEventReminderRequest>());
                         }
                         #endregion
 
@@ -2470,7 +2472,7 @@ public class CalendarController : Controller
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.Admin)]
-    public async Task<IActionResult> UpdateCalendarShared([FromBody] IEnumerable<CalendarShared> calendarShareds)
+    public async Task<IActionResult> UpdateCalendarShared([FromBody] IEnumerable<CalendarSharedResponse> calendarShareds)
     {
         try
         {
@@ -2479,23 +2481,23 @@ public class CalendarController : Controller
                 await using var transaction = await _context.Database.BeginTransactionAsync();
                 try
                 {
-                    foreach (CalendarShared calendarShared in calendarShareds)
+                    foreach (CalendarSharedResponse calendarShared in calendarShareds)
                     {
-                        await _calendarSharedRepository.UpdateCalendarSharedAsync(calendarShared);
+                        await _calendarSharedRepository.UpdateCalendarSharedAsync(calendarShared.Adapt<CalendarSharedRequest>());
                     }
 
-                    #region Processing of Other Calendar
+                    #region Processing of Other CalendarResponse
                     _ = HttpContext.Session.TryGetValue(Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account), out byte[] resultByte);
 
-                    Account loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte));
+                    AccountResponse loginedAccount = JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte));
 
-                    List<OtherCalendar> otherCalendars = await _otherCalendarRepository.GetAllOtherCalendarsAsync() ?? [];
+                    List<OtherCalendarResponse> otherCalendars = await _otherCalendarRepository.GetAllOtherCalendarsAsync() ?? [];
 
-                    foreach (CalendarShared tempCalendarShared in calendarShareds.Where(x => !x.User).ToList())
+                    foreach (CalendarSharedResponse tempCalendarShared in calendarShareds.Where(x => !x.User).ToList())
                     {
                         try
                         {
-                            await _otherCalendarRepository.DeleteOtherCalendarAsync(otherCalendars.Where(x => x.CalendarId == tempCalendarShared.CalendarId).FirstOrDefault() ?? new OtherCalendar());
+                            await _otherCalendarRepository.DeleteOtherCalendarAsync((otherCalendars.Where(x => x.CalendarId == tempCalendarShared.CalendarId).FirstOrDefault())?.Adapt<OtherCalendarRequest>() ?? new OtherCalendarRequest());
                         }
                         catch
                         {
@@ -2528,7 +2530,7 @@ public class CalendarController : Controller
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.User)]
-    public async Task<IActionResult> UpdateOtherCalendar([FromBody] IEnumerable<OtherCalendar> otherCalendars)
+    public async Task<IActionResult> UpdateOtherCalendar([FromBody] IEnumerable<OtherCalendarResponse> otherCalendars)
     {
         try
         {
@@ -2541,7 +2543,7 @@ public class CalendarController : Controller
 
                     if (isAccountSessionExist)
                     {
-                        Account loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte));
+                        AccountResponse loginedAccount = JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte));
 
                         if (loginedAccount.Role is not (Role.Admin or Role.User)) // If not logged in user
                         {
@@ -2550,16 +2552,16 @@ public class CalendarController : Controller
                         }
 
                         // Delete previous otherCalendars
-                        foreach (OtherCalendar previousOtherCalendar in await _otherCalendarRepository.GetOtherCalendarsAsync(loginedAccount.Email) ?? [])
+                        foreach (OtherCalendarResponse previousOtherCalendar in await _otherCalendarRepository.GetOtherCalendarsAsync(loginedAccount.Email) ?? [])
                         {
-                            await _otherCalendarRepository.DeleteOtherCalendarAsync(previousOtherCalendar);
+                            await _otherCalendarRepository.DeleteOtherCalendarAsync(previousOtherCalendar.Adapt<OtherCalendarRequest>());
                         }
 
                         // Create new otherCalendars
-                        foreach (OtherCalendar otherCalendar in otherCalendars)
+                        foreach (OtherCalendarResponse otherCalendar in otherCalendars)
                         {
                             otherCalendar.AccountEmail = loginedAccount.Email;
-                            await _otherCalendarRepository.CreateOtherCalendarAsync(otherCalendar);
+                            await _otherCalendarRepository.CreateOtherCalendarAsync(otherCalendar.Adapt<OtherCalendarRequest>());
                         }
                         await transaction.CommitAsync();
                         return Json(new { result = true, message = _localizer["The other calendar has been successfully updated."].Value });
@@ -2601,15 +2603,15 @@ public class CalendarController : Controller
         {
             _ = HttpContext.Session.TryGetValue(Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account), out byte[] resultByte);
 
-            Calendar tempCalendar = calendarInputViewModel?.Calendars?.FirstOrDefault() ?? new Calendar();
-            tempCalendar.AccountEmail = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email;
+            CalendarResponse tempCalendar = (calendarInputViewModel?.Calendars?.FirstOrDefault())?.Adapt<CalendarResponse>() ?? new CalendarResponse();
+            tempCalendar.AccountEmail = JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email;
 
-            List<Calendar> tempCalendars = await _calendarRepository.GetCalendarsAsync(tempCalendar.AccountEmail);
+            List<CalendarResponse> tempCalendars = await _calendarRepository.GetCalendarsAsync(tempCalendar.AccountEmail);
             if ((tempCalendars.Where(a => a.Id == tempCalendar.Id).FirstOrDefault()?.Id ?? 0) > 0)
             {
-                await _calendarRepository.DeleteCalendarAsync(tempCalendar);
+                await _calendarRepository.DeleteCalendarAsync(tempCalendar.Adapt<CalendarRequest>());
 
-                return Json(new { result = true, message = _localizer["The calendar has been successfully deleted."].Value, calendar = new Calendar() { Id = tempCalendar.Id } });
+                return Json(new { result = true, message = _localizer["The calendar has been successfully deleted."].Value, calendar = new CalendarRequest() { Id = tempCalendar.Id } });
             }
             else
             {
@@ -2632,7 +2634,7 @@ public class CalendarController : Controller
         {
             _ = HttpContext.Session.TryGetValue(Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account), out byte[] resultByte);
 
-            List<Calendar> tempCalendars = await _calendarRepository.GetCalendarsAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email) ?? [];
+            List<CalendarResponse> tempCalendars = await _calendarRepository.GetCalendarsAsync(JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email) ?? [];
 
             if (tempCalendars == null || tempCalendars.Count == 0)
             {
@@ -2641,14 +2643,14 @@ public class CalendarController : Controller
             else
             {
 
-                CalendarEvent tempCalendarEvent = await _calendarEventRepository.GetCalendarEventAsync(id);
+                CalendarEventResponse tempCalendarEvent = await _calendarEventRepository.GetCalendarEventAsync(id);
 
                 if ((tempCalendars?.Where(x => x.Id == tempCalendarEvent.CalendarId)?.FirstOrDefault()?.Id ?? 0) == 0)
                 {
                     return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                 }
 
-                await _calendarEventRepository.DeleteCalendarEventAsync(tempCalendarEvent);
+                await _calendarEventRepository.DeleteCalendarEventAsync(tempCalendarEvent.Adapt<CalendarEventRequest>());
 
                 return Json(new { result = true, message = _localizer["The calendar event has been successfully deleted."].Value });
             }

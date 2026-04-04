@@ -1,6 +1,8 @@
+using Mapster;
 ﻿using Ganss.Xss;
 using HtmlAgilityPack;
 using ImageMagick;
+using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.PostgreSQL.Data;
 using Maroik.Core.PostgreSQL.Models;
@@ -111,8 +113,8 @@ public class ForumController : Controller
 
                     if (isAccountSessionExist)
                     {
-                        Account loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)); // Get Session
-                        Board board = new();
+                        AccountResponse loginedAccount = JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)); // Get Session
+                        BoardResponse board = new();
 
                         if (loginedAccount.Role == Role.Admin) // If administrator
                         {
@@ -145,7 +147,7 @@ public class ForumController : Controller
                             return Json(new { result = false, error = _localizer["Please Login to write board"].Value });
                         }
 
-                        await _boardRepository.WriteBoardAsync(board);
+                        await _boardRepository.WriteBoardAsync(board.Adapt<BoardRequest>());
 
                         #region Save attached file
                         if (boardInputViewModel.UploadedFile != null) // If attached file exists
@@ -166,7 +168,7 @@ public class ForumController : Controller
                                     _ = await _fileClient.UploadAsync(ms.ToArray(), boardInputViewModel.UploadedFile.ContentType, filePath, ServerSetting.FileStorageBaseUrl);
                                 }
 
-                                await _boardAttachedFileRepository.SaveBoardAttachedFileAsync(new BoardAttachedFile()
+                                await _boardAttachedFileRepository.SaveBoardAttachedFileAsync(new BoardAttachedFileRequest()
                                 {
                                     BoardId = createdBoardId,
                                     Size = Convert.ToInt32(boardInputViewModel.UploadedFile.Length),
@@ -239,20 +241,20 @@ public class ForumController : Controller
 
                     if (isAccountSessionExist)
                     {
-                        Account loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)); // Get Session
+                        AccountResponse loginedAccount = JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)); // Get Session
 
-                        IEnumerable<Board> freeForumBoards = await _boardRepository.GetOneTypeBoardsAsync(EnumHelper.GetDescription(BoardType.FreeForum));
+                        IEnumerable<BoardResponse> freeForumBoards = await _boardRepository.GetOneTypeBoardsAsync(EnumHelper.GetDescription(BoardType.FreeForum));
                         freeForumBoards = freeForumBoards.Where(m => m.Deleted == false).OrderByDescending(a => a.Id);
-                        Board freeForumBoard = freeForumBoards.FirstOrDefault(m => m.Id == boardCommentInputViewModel.BoardId);
+                        BoardResponse freeForumBoard = freeForumBoards.FirstOrDefault(m => m.Id == boardCommentInputViewModel.BoardId);
 
                         if (freeForumBoard.Id != boardCommentInputViewModel.BoardId)
                         {
                             return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                         }
 
-                        IEnumerable<BoardComment> totalBoardCommentsInSelectedBoard = await _boardCommentRepository.GetOneBoardCommentsAsync(boardCommentInputViewModel.BoardId);
+                        IEnumerable<BoardCommentResponse> totalBoardCommentsInSelectedBoard = await _boardCommentRepository.GetOneBoardCommentsAsync(boardCommentInputViewModel.BoardId);
 
-                        BoardComment boardComment = new()
+                        BoardCommentResponse boardComment = new()
                         {
                             BoardId = boardCommentInputViewModel.BoardId,
                             Order = totalBoardCommentsInSelectedBoard?.Count() ?? default,
@@ -262,7 +264,7 @@ public class ForumController : Controller
                             Created = DateTime.UtcNow,
                             Deleted = false
                         };
-                        await _boardCommentRepository.WriteBoardCommentAsync(boardComment);
+                        await _boardCommentRepository.WriteBoardCommentAsync(boardComment.Adapt<BoardCommentRequest>());
 
                         return Json(new { result = true, boardId = boardCommentInputViewModel.BoardId, page = boardCommentInputViewModel.DetailCurrentPage });
                     }
@@ -329,7 +331,7 @@ public class ForumController : Controller
             Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account),
             out byte[] resultByte);
 
-        var loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte));
+        var loginedAccount = JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte));
         
         string summernoteImagePath = Path.Combine("upload", "Forum", EnumHelper.GetDescription(BoardType.FreeForum), "summernote", "images");
         string imageFile = $"{Guid.NewGuid():N}{ext}";
@@ -392,18 +394,18 @@ public class ForumController : Controller
                 DetailBoardId = boardId ?? default
             };
 
-            IEnumerable<Board> freeBoards = await _boardRepository.GetOneTypeBoardsAsync(EnumHelper.GetDescription(BoardType.FreeForum));
+            IEnumerable<BoardResponse> freeBoards = await _boardRepository.GetOneTypeBoardsAsync(EnumHelper.GetDescription(BoardType.FreeForum));
             freeBoards = freeBoards.Where(m => m.Deleted == false).OrderByDescending(a => a.Id);
-            List<BoardAttachedFile> boardAttachedFiles = await _boardAttachedFileRepository.GetAllAsync();
+            List<BoardAttachedFileResponse> boardAttachedFiles = await _boardAttachedFileRepository.GetAllAsync();
 
             try
             {
-                Board freeBoard = freeBoards.FirstOrDefault(m => m.Id == boardId);
+                BoardResponse freeBoard = freeBoards.FirstOrDefault(m => m.Id == boardId);
 
                 if (freeBoard.Locked)
                 {
                     _ = HttpContext.Session.TryGetValue(Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account), out byte[] resultByte); // If writer or administrator
-                    Account loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)); // Get Session
+                    AccountResponse loginedAccount = JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)); // Get Session
 
                     if (!(loginedAccount.Nickname == freeBoard.Writer || loginedAccount.Role == Role.Admin))
                     {
@@ -412,8 +414,8 @@ public class ForumController : Controller
                 }
 
                 freeBoard.View++;
-                await _boardRepository.UpdateBoardAsync(freeBoard);
-                BoardAttachedFile boardAttachedFile = boardAttachedFiles.FirstOrDefault(m => m.BoardId == boardId);
+                await _boardRepository.UpdateBoardAsync(freeBoard.Adapt<BoardRequest>());
+                BoardAttachedFileResponse boardAttachedFile = boardAttachedFiles.FirstOrDefault(m => m.BoardId == boardId);
 
                 #region Encrypt img tag file path
                 HtmlDocument htmlDocument = new();
@@ -508,23 +510,23 @@ public class ForumController : Controller
                 EditBoardId = boardId ?? default
             };
 
-            IEnumerable<Board> freeBoards = await _boardRepository.GetOneTypeBoardsAsync(EnumHelper.GetDescription(BoardType.FreeForum));
+            IEnumerable<BoardResponse> freeBoards = await _boardRepository.GetOneTypeBoardsAsync(EnumHelper.GetDescription(BoardType.FreeForum));
             freeBoards = freeBoards.Where(m => m.Deleted == false).OrderByDescending(a => a.Id);
-            List<BoardAttachedFile> boardAttachedFiles = await _boardAttachedFileRepository.GetAllAsync();
+            List<BoardAttachedFileResponse> boardAttachedFiles = await _boardAttachedFileRepository.GetAllAsync();
 
             try
             {
-                Board freeBoard = freeBoards.FirstOrDefault(m => m.Id == boardId);
+                BoardResponse freeBoard = freeBoards.FirstOrDefault(m => m.Id == boardId);
 
                 _ = HttpContext.Session.TryGetValue(Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account), out byte[] resultByte);
-                Account loginedAccount = await _accountRepository.GetAccountByEmailAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+                AccountResponse loginedAccount = await _accountRepository.GetAccountByEmailAsync(JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email);
 
                 if (freeBoard.Writer != loginedAccount.Nickname) // If writer and logged-in user are not the same
                 {
                     return RedirectToAction("FreeForum", "Forum");
                 }
 
-                BoardAttachedFile boardAttachedFile = boardAttachedFiles.FirstOrDefault(m => m.BoardId == boardId);
+                BoardAttachedFileResponse boardAttachedFile = boardAttachedFiles.FirstOrDefault(m => m.BoardId == boardId);
 
                 #region Encrypt img tag file path
                 HtmlDocument htmlDocument = new();
@@ -618,7 +620,7 @@ public class ForumController : Controller
             #endregion
 
             #region Logic to get all related board data
-            IEnumerable<Board> freeBoards = await _boardRepository.GetOneTypeBoardsAsync(EnumHelper.GetDescription(BoardType.FreeForum));
+            IEnumerable<BoardResponse> freeBoards = await _boardRepository.GetOneTypeBoardsAsync(EnumHelper.GetDescription(BoardType.FreeForum));
             freeBoards = freeBoards.Where(m => m.Deleted == false && m.Noticed == false).OrderByDescending(a => a.Id);
             #endregion
 
@@ -629,7 +631,7 @@ public class ForumController : Controller
 
                 if (isAccountSessionExist) // If logged in
                 {
-                    Account loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)); // Get Session
+                    AccountResponse loginedAccount = JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)); // Get Session
 
                     if (loginedAccount.Role == Role.Admin) // Administrator can see all posts
                     {
@@ -637,9 +639,9 @@ public class ForumController : Controller
                     }
                     else if (loginedAccount.Role == Role.User) // User can see regular posts + their own private posts
                     {
-                        List<Board> searchFreeBoards = [];
-                        List<Board> noLockedFreeBoards = freeBoards.Where(a => a.Title.Contains(searchText)).Where(a => !a.Locked).ToList();
-                        List<Board> myLockedFreeBoards = freeBoards.Where(a => a.Title.Contains(searchText)).Where(a => a.Locked && a.Writer == loginedAccount.Nickname).ToList();
+                        List<BoardResponse> searchFreeBoards = [];
+                        List<BoardResponse> noLockedFreeBoards = freeBoards.Where(a => a.Title.Contains(searchText)).Where(a => !a.Locked).ToList();
+                        List<BoardResponse> myLockedFreeBoards = freeBoards.Where(a => a.Title.Contains(searchText)).Where(a => a.Locked && a.Writer == loginedAccount.Nickname).ToList();
                         searchFreeBoards.AddRange(noLockedFreeBoards);
                         searchFreeBoards.AddRange(myLockedFreeBoards);
 
@@ -695,7 +697,7 @@ public class ForumController : Controller
     {
         try
         {
-            IEnumerable<Board> freeBoards = await _boardRepository.GetOneTypeBoardsAsync(EnumHelper.GetDescription(BoardType.FreeForum));
+            IEnumerable<BoardResponse> freeBoards = await _boardRepository.GetOneTypeBoardsAsync(EnumHelper.GetDescription(BoardType.FreeForum));
             freeBoards = freeBoards.Where(m => m.Deleted == false).OrderByDescending(a => a.Id);
 
             if (freeBoards == null)
@@ -704,7 +706,7 @@ public class ForumController : Controller
             }
             else
             {
-                Board tempFreeBoard = freeBoards.Where(a => a.Id == id).FirstOrDefault();
+                BoardResponse tempFreeBoard = freeBoards.Where(a => a.Id == id).FirstOrDefault();
 
                 return tempFreeBoard == null
                     ? Json(new { result = false, error = _localizer["Input is invalid"].Value })
@@ -784,12 +786,12 @@ public class ForumController : Controller
 
                     if (isAccountSessionExist)
                     {
-                        Account loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)); // Get Session
+                        AccountResponse loginedAccount = JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)); // Get Session
 
-                        IEnumerable<Board> freeBoards = await _boardRepository.GetOneTypeBoardsAsync(EnumHelper.GetDescription(BoardType.FreeForum));
+                        IEnumerable<BoardResponse> freeBoards = await _boardRepository.GetOneTypeBoardsAsync(EnumHelper.GetDescription(BoardType.FreeForum));
                         freeBoards = freeBoards.Where(m => m.Deleted == false).OrderByDescending(a => a.Id);
 
-                        Board tempFreeBoard = freeBoards.Where(a => a.Id == boardInputViewModel.Id).FirstOrDefault();
+                        BoardResponse tempFreeBoard = freeBoards.Where(a => a.Id == boardInputViewModel.Id).FirstOrDefault();
 
                         if (tempFreeBoard.Writer != loginedAccount.Nickname)
                         {
@@ -802,10 +804,10 @@ public class ForumController : Controller
                         tempFreeBoard.Locked = boardInputViewModel.Locked;
                         tempFreeBoard.Updated = DateTime.UtcNow;
 
-                        await _boardRepository.UpdateBoardAsync(tempFreeBoard);
+                        await _boardRepository.UpdateBoardAsync(tempFreeBoard.Adapt<BoardRequest>());
 
-                        List<BoardAttachedFile> boardAttachedFiles = await _boardAttachedFileRepository?.GetAllAsync();
-                        BoardAttachedFile previousBoardAttachedFile = boardAttachedFiles?.FirstOrDefault(m => m.BoardId == boardInputViewModel.Id);
+                        List<BoardAttachedFileResponse> boardAttachedFiles = await _boardAttachedFileRepository?.GetAllAsync();
+                        BoardAttachedFileResponse previousBoardAttachedFile = boardAttachedFiles?.FirstOrDefault(m => m.BoardId == boardInputViewModel.Id);
 
                         #region Save attached file
 
@@ -833,7 +835,7 @@ public class ForumController : Controller
                                 previousBoardAttachedFile.Extension = Path.GetExtension(boardInputViewModel.UploadedFile.FileName);
                                 previousBoardAttachedFile.Path = $"upload/Forum/{EnumHelper.GetDescription(BoardType.FreeForum)}/boardAttachedFiles/{createdBoardId}/{boardAttachedFile}";
 
-                                await _boardAttachedFileRepository.UpdateBoardAttachedFileAsync(previousBoardAttachedFile);
+                                await _boardAttachedFileRepository.UpdateBoardAttachedFileAsync(previousBoardAttachedFile.Adapt<BoardAttachedFileRequest>());
                                 await transaction.CommitAsync();
                                 return Json(new { result = true, message = _localizer["The board has been successfully updated."].Value });
                             }
@@ -853,7 +855,7 @@ public class ForumController : Controller
                             previousBoardAttachedFile.Extension = "";
                             previousBoardAttachedFile.Path = "";
 
-                            await _boardAttachedFileRepository.UpdateBoardAttachedFileAsync(previousBoardAttachedFile);
+                            await _boardAttachedFileRepository.UpdateBoardAttachedFileAsync(previousBoardAttachedFile.Adapt<BoardAttachedFileRequest>());
                             await transaction.CommitAsync();
                             return Json(new { result = true, message = _localizer["The board has been successfully updated."].Value });
                         }
@@ -878,7 +880,7 @@ public class ForumController : Controller
                                     _ = await _fileClient.UploadAsync(ms.ToArray(), boardInputViewModel.UploadedFile.ContentType, filePath, ServerSetting.FileStorageBaseUrl);
                                 }
 
-                                await _boardAttachedFileRepository.SaveBoardAttachedFileAsync(new BoardAttachedFile()
+                                await _boardAttachedFileRepository.SaveBoardAttachedFileAsync(new BoardAttachedFileRequest()
                                 {
                                     BoardId = createdBoardId,
                                     Size = Convert.ToInt32(boardInputViewModel.UploadedFile.Length),
@@ -944,7 +946,7 @@ public class ForumController : Controller
     {
         try
         {
-            IEnumerable<Board> freeBoards = await _boardRepository.GetOneTypeBoardsAsync(EnumHelper.GetDescription(BoardType.FreeForum));
+            IEnumerable<BoardResponse> freeBoards = await _boardRepository.GetOneTypeBoardsAsync(EnumHelper.GetDescription(BoardType.FreeForum));
             freeBoards = freeBoards.Where(m => m.Deleted == false).OrderByDescending(a => a.Id);
 
             if (freeBoards == null)
@@ -953,7 +955,7 @@ public class ForumController : Controller
             }
             else
             {
-                Board tempFreeBoard = freeBoards.Where(a => a.Id == boardInputViewModel.Id).FirstOrDefault();
+                BoardResponse tempFreeBoard = freeBoards.Where(a => a.Id == boardInputViewModel.Id).FirstOrDefault();
 
                 if (tempFreeBoard == null)
                 {
@@ -962,13 +964,13 @@ public class ForumController : Controller
                 else
                 {
                     _ = HttpContext.Session.TryGetValue(Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account), out byte[] resultByte);
-                    Account loginedAccount = await _accountRepository.GetAccountByEmailAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+                    AccountResponse loginedAccount = await _accountRepository.GetAccountByEmailAsync(JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email);
 
                     if ((loginedAccount.Nickname == tempFreeBoard.Writer) || loginedAccount.Role == Role.Admin) // If visitor is writer or administrator
                     {
                         #region Delete board
                         tempFreeBoard.Deleted = true;
-                        await _boardRepository.DeleteBoardAsync(tempFreeBoard);
+                        await _boardRepository.DeleteBoardAsync(tempFreeBoard.Adapt<BoardRequest>());
                         #endregion
 
                         return Json(new { result = true, message = _localizer["The board has been successfully deleted."].Value });
@@ -996,7 +998,7 @@ public class ForumController : Controller
     {
         try
         {
-            BoardComment boardComment = await _boardCommentRepository.GetBoardCommentAsync(id);
+            BoardCommentResponse boardComment = await _boardCommentRepository.GetBoardCommentAsync(id);
 
             if (boardComment == null)
             {
@@ -1005,13 +1007,13 @@ public class ForumController : Controller
             else
             {
                 _ = HttpContext.Session.TryGetValue(Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account), out byte[] resultByte);
-                Account loginedAccount = await _accountRepository.GetAccountByEmailAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+                AccountResponse loginedAccount = await _accountRepository.GetAccountByEmailAsync(JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email);
 
                 if ((loginedAccount.Nickname == boardComment.Writer) || loginedAccount.Role == Role.Admin) // If deleter is writer or administrator
                 {
                     #region Delete board comment
                     boardComment.Deleted = true;
-                    await _boardCommentRepository.DeleteBoardCommentAsync(boardComment);
+                    await _boardCommentRepository.DeleteBoardCommentAsync(boardComment.Adapt<BoardCommentRequest>());
                     #endregion
 
                     return Json(new { result = true });

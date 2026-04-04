@@ -1,4 +1,6 @@
-﻿using Maroik.Core.Contract.Interfaces;
+using Mapster;
+﻿using Maroik.Core.Contract.Dtos;
+using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.PostgreSQL.Models;
 using Maroik.WebSite.Extensions;
 using Maroik.WebSite.Utilities;
@@ -153,10 +155,10 @@ public class NoticeController : Controller
 
                     await _fixedIncomeRepository.CreateFixedIncomeAsync
                     (
-                        new FixedIncome()
+                        new FixedIncomeRequest()
                         {
                             AccountEmail = JsonConvert
-                                .DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email,
+                                .DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email,
                             MainClass = fixedIncomeInputViewModel.MainClass,
                             SubClass = fixedIncomeInputViewModel.SubClass,
                             Content = fixedIncomeInputViewModel.Content ?? "",
@@ -218,18 +220,18 @@ public class NoticeController : Controller
                     .Utilities.Session.Account), out byte[] resultByte);
 
             string loginedAccountTimeZoneIanaId = JsonConvert
-                .DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId;
+                .DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId;
 
             DateTime currentDate =
                 new(Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[0]),
                     Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[1]),
                     Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[2]));
 
-            List<Asset> assets = await _assetRepository.GetAssetsAsync(JsonConvert
-                .DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+            List<AssetResponse> assets = await _assetRepository.GetAssetsAsync(JsonConvert
+                .DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email);
 
-            foreach (FixedIncome item in await _fixedIncomeRepository.GetFixedIncomesAsync(JsonConvert
-                         .DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email))
+            foreach (FixedIncomeResponse item in await _fixedIncomeRepository.GetFixedIncomesAsync(JsonConvert
+                         .DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email))
             {
                 if (string.IsNullOrEmpty(wholeSearch))
                 {
@@ -368,9 +370,9 @@ public class NoticeController : Controller
                 Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite
                     .Utilities.Session.Account), out byte[] resultByte);
 
-            List<FixedIncome> tempFixedIncomes =
+            List<FixedIncomeResponse> tempFixedIncomes =
                 await _fixedIncomeRepository.GetFixedIncomesAsync(JsonConvert
-                    .DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+                    .DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email);
 
             if (tempFixedIncomes == null)
             {
@@ -378,7 +380,7 @@ public class NoticeController : Controller
             }
             else
             {
-                FixedIncome tempFixedIncome = tempFixedIncomes.Where(a => a.Id == id).FirstOrDefault();
+                FixedIncomeResponse tempFixedIncome = tempFixedIncomes.Where(a => a.Id == id).FirstOrDefault();
 
                 if (tempFixedIncome == null)
                 {
@@ -423,10 +425,10 @@ public class NoticeController : Controller
                 Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite
                     .Utilities.Session.Account), out byte[] resultByte);
 
-            Asset asset =
+            AssetResponse asset =
                 (await _assetRepository.GetAssetsAsync(JsonConvert
-                    .DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email))
-                .Where(x => !x.Deleted).Where(x => x.ProductName == productName).FirstOrDefault() ?? new Asset();
+                    .DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email))
+                .Where(x => !x.Deleted).Where(x => x.ProductName == productName).FirstOrDefault() ?? new AssetResponse();
 
             if (!string.IsNullOrEmpty(asset.MonetaryUnit))
             {
@@ -544,9 +546,9 @@ public class NoticeController : Controller
 
                     #region Update fixed income
 
-                    List<FixedIncome> tempFixedIncomes =
+                    List<FixedIncomeResponse> tempFixedIncomes =
                         await _fixedIncomeRepository.GetFixedIncomesAsync(JsonConvert
-                            .DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+                            .DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email);
 
                     if (tempFixedIncomes == null)
                     {
@@ -554,7 +556,7 @@ public class NoticeController : Controller
                     }
                     else
                     {
-                        FixedIncome tempFixedIncome = tempFixedIncomes
+                        FixedIncomeResponse tempFixedIncome = tempFixedIncomes
                             .Where(a => a.Id == fixedIncomeInputViewModel.Id).FirstOrDefault();
 
                         if (tempFixedIncome == null)
@@ -584,7 +586,7 @@ public class NoticeController : Controller
                             tempFixedIncome.Note = fixedIncomeInputViewModel.Note ?? "";
                             tempFixedIncome.Unpunctuality = fixedIncomeInputViewModel.Unpunctuality;
 
-                            await _fixedIncomeRepository.UpdateFixedIncomeAsync(tempFixedIncome);
+                            await _fixedIncomeRepository.UpdateFixedIncomeAsync(tempFixedIncome.Adapt<FixedIncomeRequest>());
 
                             #endregion
 
@@ -630,9 +632,9 @@ public class NoticeController : Controller
                 Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite
                     .Utilities.Session.Account), out byte[] resultByte);
 
-            List<FixedIncome> tempFixedIncomes =
+            List<FixedIncomeResponse> tempFixedIncomes =
                 await _fixedIncomeRepository.GetFixedIncomesAsync(JsonConvert
-                    .DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+                    .DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email);
 
             if (tempFixedIncomes == null)
             {
@@ -640,7 +642,7 @@ public class NoticeController : Controller
             }
             else
             {
-                FixedIncome tempFixedIncome = tempFixedIncomes.Where(a => a.Id == fixedIncomeInputViewModel.Id)
+                FixedIncomeResponse tempFixedIncome = tempFixedIncomes.Where(a => a.Id == fixedIncomeInputViewModel.Id)
                     .FirstOrDefault();
 
                 if (tempFixedIncome == null)
@@ -651,7 +653,7 @@ public class NoticeController : Controller
                 {
                     #region Delete fixed income
 
-                    await _fixedIncomeRepository.DeleteFixedIncomeAsync(tempFixedIncome);
+                    await _fixedIncomeRepository.DeleteFixedIncomeAsync(tempFixedIncome.Adapt<FixedIncomeRequest>());
 
                     #endregion
 
@@ -679,7 +681,7 @@ public class NoticeController : Controller
     {
         await Task.Yield();
 
-        var account = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(HttpContext.Session
+        var account = JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(HttpContext.Session
             .TryGetValue(
                 Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite
                     .Utilities.Session.Account), out byte[] resultByte)
@@ -688,7 +690,7 @@ public class NoticeController : Controller
         string loginedAccountTimeZoneIanaId = account.TimeZoneIanaId;
         DateTime currentDate = DateTime.UtcNow.ToLocalTime();
 
-        List<Asset> assets = await _assetRepository.GetAssetsAsync(account.Email);
+        List<AssetResponse> assets = await _assetRepository.GetAssetsAsync(account.Email);
         var fixedIncomeList = await _fixedIncomeRepository.GetFixedIncomesAsync(account.Email);
 
         var fixedIncomeOutputViewModels = fixedIncomeList.Select(item =>
@@ -861,11 +863,11 @@ public class NoticeController : Controller
                                 });
                             }
 
-                            Asset expenditureAsset = await _assetRepository.GetAssetAsync(
-                                JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte))
+                            AssetResponse expenditureAsset = await _assetRepository.GetAssetAsync(
+                                JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte))
                                     .Email, fixedExpenditureInputViewModel.PaymentMethod);
-                            Asset incomeAsset = await _assetRepository.GetAssetAsync(
-                                JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte))
+                            AssetResponse incomeAsset = await _assetRepository.GetAssetAsync(
+                                JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte))
                                     .Email, fixedExpenditureInputViewModel.MyDepositAsset);
 
                             if (expenditureAsset == null || incomeAsset == null)
@@ -888,10 +890,10 @@ public class NoticeController : Controller
 
                             await _fixedExpenditureRepository.CreateFixedExpenditureAsync
                             (
-                                new FixedExpenditure()
+                                new FixedExpenditureRequest()
                                 {
                                     AccountEmail = JsonConvert
-                                        .DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email,
+                                        .DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email,
                                     MainClass = fixedExpenditureInputViewModel.MainClass,
                                     SubClass = fixedExpenditureInputViewModel.SubClass,
                                     Content = fixedExpenditureInputViewModel.Content ?? "",
@@ -953,11 +955,11 @@ public class NoticeController : Controller
                                 });
                             }
 
-                            Asset expenditureAsset = await _assetRepository.GetAssetAsync(
-                                JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte))
+                            AssetResponse expenditureAsset = await _assetRepository.GetAssetAsync(
+                                JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte))
                                     .Email, fixedExpenditureInputViewModel.PaymentMethod);
-                            Asset incomeAsset = await _assetRepository.GetAssetAsync(
-                                JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte))
+                            AssetResponse incomeAsset = await _assetRepository.GetAssetAsync(
+                                JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte))
                                     .Email, fixedExpenditureInputViewModel.MyDepositAsset);
 
                             if (expenditureAsset == null || incomeAsset == null)
@@ -980,10 +982,10 @@ public class NoticeController : Controller
 
                             await _fixedExpenditureRepository.CreateFixedExpenditureAsync
                             (
-                                new FixedExpenditure()
+                                new FixedExpenditureRequest()
                                 {
                                     AccountEmail = JsonConvert
-                                        .DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email,
+                                        .DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email,
                                     MainClass = fixedExpenditureInputViewModel.MainClass,
                                     SubClass = fixedExpenditureInputViewModel.SubClass,
                                     Content = fixedExpenditureInputViewModel.Content ?? "",
@@ -1029,10 +1031,10 @@ public class NoticeController : Controller
 
                             await _fixedExpenditureRepository.CreateFixedExpenditureAsync
                             (
-                                new FixedExpenditure()
+                                new FixedExpenditureRequest()
                                 {
                                     AccountEmail = JsonConvert
-                                        .DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email,
+                                        .DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email,
                                     MainClass = fixedExpenditureInputViewModel.MainClass,
                                     SubClass = fixedExpenditureInputViewModel.SubClass,
                                     Content = fixedExpenditureInputViewModel.Content ?? "",
@@ -1098,10 +1100,10 @@ public class NoticeController : Controller
 
                             await _fixedExpenditureRepository.CreateFixedExpenditureAsync
                             (
-                                new FixedExpenditure()
+                                new FixedExpenditureRequest()
                                 {
                                     AccountEmail = JsonConvert
-                                        .DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email,
+                                        .DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email,
                                     MainClass = fixedExpenditureInputViewModel.MainClass,
                                     SubClass = fixedExpenditureInputViewModel.SubClass,
                                     Content = fixedExpenditureInputViewModel.Content ?? "",
@@ -1182,18 +1184,18 @@ public class NoticeController : Controller
                     .Utilities.Session.Account), out byte[] resultByte);
 
             string loginedAccountTimeZoneIanaId = JsonConvert
-                .DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId;
+                .DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId;
 
             DateTime currentDate =
                 new(Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[0]),
                     Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[1]),
                     Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[2]));
 
-            List<Asset> assets = await _assetRepository.GetAssetsAsync(JsonConvert
-                .DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+            List<AssetResponse> assets = await _assetRepository.GetAssetsAsync(JsonConvert
+                .DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email);
 
-            foreach (FixedExpenditure item in await _fixedExpenditureRepository.GetFixedExpendituresAsync(
-                         JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email))
+            foreach (FixedExpenditureResponse item in await _fixedExpenditureRepository.GetFixedExpendituresAsync(
+                         JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email))
             {
                 if (string.IsNullOrEmpty(wholeSearch))
                 {
@@ -1335,9 +1337,9 @@ public class NoticeController : Controller
                 Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite
                     .Utilities.Session.Account), out byte[] resultByte);
 
-            List<FixedExpenditure> tempFixedExpenditures =
+            List<FixedExpenditureResponse> tempFixedExpenditures =
                 await _fixedExpenditureRepository.GetFixedExpendituresAsync(JsonConvert
-                    .DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+                    .DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email);
 
             if (tempFixedExpenditures == null)
             {
@@ -1345,7 +1347,7 @@ public class NoticeController : Controller
             }
             else
             {
-                FixedExpenditure tempFixedExpenditure =
+                FixedExpenditureResponse tempFixedExpenditure =
                     tempFixedExpenditures.Where(a => a.Id == id).FirstOrDefault();
 
                 if (tempFixedExpenditure == null)
@@ -1392,10 +1394,10 @@ public class NoticeController : Controller
                 Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite
                     .Utilities.Session.Account), out byte[] resultByte);
 
-            Asset asset =
+            AssetResponse asset =
                 (await _assetRepository.GetAssetsAsync(JsonConvert
-                    .DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email))
-                .Where(x => !x.Deleted).Where(x => x.ProductName == productName).FirstOrDefault() ?? new Asset();
+                    .DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email))
+                .Where(x => !x.Deleted).Where(x => x.ProductName == productName).FirstOrDefault() ?? new AssetResponse();
 
             if (!string.IsNullOrEmpty(asset.MonetaryUnit))
             {
@@ -1448,11 +1450,11 @@ public class NoticeController : Controller
                                 });
                             }
 
-                            Asset expenditureAsset = await _assetRepository.GetAssetAsync(
-                                JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte))
+                            AssetResponse expenditureAsset = await _assetRepository.GetAssetAsync(
+                                JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte))
                                     .Email, fixedExpenditureInputViewModel.PaymentMethod);
-                            Asset incomeAsset = await _assetRepository.GetAssetAsync(
-                                JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte))
+                            AssetResponse incomeAsset = await _assetRepository.GetAssetAsync(
+                                JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte))
                                     .Email, fixedExpenditureInputViewModel.MyDepositAsset);
 
                             if (expenditureAsset == null || incomeAsset == null)
@@ -1471,10 +1473,10 @@ public class NoticeController : Controller
                                 });
                             }
 
-                            List<FixedExpenditure> tempFixedExpenditures =
+                            List<FixedExpenditureResponse> tempFixedExpenditures =
                                 await _fixedExpenditureRepository.GetFixedExpendituresAsync(JsonConvert
-                                    .DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
-                            FixedExpenditure tempFixedExpenditure = tempFixedExpenditures
+                                    .DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email);
+                            FixedExpenditureResponse tempFixedExpenditure = tempFixedExpenditures
                                 .Where(a => a.Id == fixedExpenditureInputViewModel.Id).FirstOrDefault();
 
                             if (tempFixedExpenditure == null)
@@ -1484,7 +1486,7 @@ public class NoticeController : Controller
 
                             tempFixedExpenditure.Id = fixedExpenditureInputViewModel.Id;
                             tempFixedExpenditure.AccountEmail = JsonConvert
-                                .DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email;
+                                .DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email;
                             tempFixedExpenditure.MainClass = fixedExpenditureInputViewModel.MainClass;
                             tempFixedExpenditure.SubClass = fixedExpenditureInputViewModel.SubClass;
                             tempFixedExpenditure.Content = fixedExpenditureInputViewModel.Content ?? "";
@@ -1505,7 +1507,7 @@ public class NoticeController : Controller
                             tempFixedExpenditure.Updated = DateTime.UtcNow;
                             tempFixedExpenditure.Unpunctuality = fixedExpenditureInputViewModel.Unpunctuality;
 
-                            await _fixedExpenditureRepository.UpdateFixedExpenditureAsync(tempFixedExpenditure);
+                            await _fixedExpenditureRepository.UpdateFixedExpenditureAsync(tempFixedExpenditure.Adapt<FixedExpenditureRequest>());
 
                             return Json(new
                             {
@@ -1545,11 +1547,11 @@ public class NoticeController : Controller
                                 });
                             }
 
-                            Asset expenditureAsset = await _assetRepository.GetAssetAsync(
-                                JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte))
+                            AssetResponse expenditureAsset = await _assetRepository.GetAssetAsync(
+                                JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte))
                                     .Email, fixedExpenditureInputViewModel.PaymentMethod);
-                            Asset incomeAsset = await _assetRepository.GetAssetAsync(
-                                JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte))
+                            AssetResponse incomeAsset = await _assetRepository.GetAssetAsync(
+                                JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte))
                                     .Email, fixedExpenditureInputViewModel.MyDepositAsset);
 
                             if (expenditureAsset == null || incomeAsset == null)
@@ -1568,10 +1570,10 @@ public class NoticeController : Controller
                                 });
                             }
 
-                            List<FixedExpenditure> tempFixedExpenditures =
+                            List<FixedExpenditureResponse> tempFixedExpenditures =
                                 await _fixedExpenditureRepository.GetFixedExpendituresAsync(JsonConvert
-                                    .DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
-                            FixedExpenditure tempFixedExpenditure = tempFixedExpenditures
+                                    .DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email);
+                            FixedExpenditureResponse tempFixedExpenditure = tempFixedExpenditures
                                 .Where(a => a.Id == fixedExpenditureInputViewModel.Id).FirstOrDefault();
 
                             if (tempFixedExpenditure == null)
@@ -1581,7 +1583,7 @@ public class NoticeController : Controller
 
                             tempFixedExpenditure.Id = fixedExpenditureInputViewModel.Id;
                             tempFixedExpenditure.AccountEmail = JsonConvert
-                                .DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email;
+                                .DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email;
                             tempFixedExpenditure.MainClass = fixedExpenditureInputViewModel.MainClass;
                             tempFixedExpenditure.SubClass = fixedExpenditureInputViewModel.SubClass;
                             tempFixedExpenditure.Content = fixedExpenditureInputViewModel.Content ?? "";
@@ -1602,7 +1604,7 @@ public class NoticeController : Controller
                             tempFixedExpenditure.Updated = DateTime.UtcNow;
                             tempFixedExpenditure.Unpunctuality = fixedExpenditureInputViewModel.Unpunctuality;
 
-                            await _fixedExpenditureRepository.UpdateFixedExpenditureAsync(tempFixedExpenditure);
+                            await _fixedExpenditureRepository.UpdateFixedExpenditureAsync(tempFixedExpenditure.Adapt<FixedExpenditureRequest>());
 
                             return Json(new
                             {
@@ -1622,10 +1624,10 @@ public class NoticeController : Controller
                     {
                         try
                         {
-                            List<FixedExpenditure> tempFixedExpenditures =
+                            List<FixedExpenditureResponse> tempFixedExpenditures =
                                 await _fixedExpenditureRepository.GetFixedExpendituresAsync(JsonConvert
-                                    .DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
-                            FixedExpenditure tempFixedExpenditure = tempFixedExpenditures
+                                    .DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email);
+                            FixedExpenditureResponse tempFixedExpenditure = tempFixedExpenditures
                                 .Where(a => a.Id == fixedExpenditureInputViewModel.Id).FirstOrDefault();
 
                             if (tempFixedExpenditure == null)
@@ -1635,7 +1637,7 @@ public class NoticeController : Controller
 
                             tempFixedExpenditure.Id = fixedExpenditureInputViewModel.Id;
                             tempFixedExpenditure.AccountEmail = JsonConvert
-                                .DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email;
+                                .DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email;
                             tempFixedExpenditure.MainClass = fixedExpenditureInputViewModel.MainClass;
                             tempFixedExpenditure.SubClass = fixedExpenditureInputViewModel.SubClass;
                             tempFixedExpenditure.Content = fixedExpenditureInputViewModel.Content ?? "";
@@ -1655,7 +1657,7 @@ public class NoticeController : Controller
                             tempFixedExpenditure.Updated = DateTime.UtcNow;
                             tempFixedExpenditure.Unpunctuality = fixedExpenditureInputViewModel.Unpunctuality;
 
-                            await _fixedExpenditureRepository.UpdateFixedExpenditureAsync(tempFixedExpenditure);
+                            await _fixedExpenditureRepository.UpdateFixedExpenditureAsync(tempFixedExpenditure.Adapt<FixedExpenditureRequest>());
 
                             return Json(new
                             {
@@ -1695,10 +1697,10 @@ public class NoticeController : Controller
                     {
                         try
                         {
-                            List<FixedExpenditure> tempFixedExpenditures =
+                            List<FixedExpenditureResponse> tempFixedExpenditures =
                                 await _fixedExpenditureRepository.GetFixedExpendituresAsync(JsonConvert
-                                    .DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
-                            FixedExpenditure tempFixedExpenditure = tempFixedExpenditures
+                                    .DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email);
+                            FixedExpenditureResponse tempFixedExpenditure = tempFixedExpenditures
                                 .Where(a => a.Id == fixedExpenditureInputViewModel.Id).FirstOrDefault();
 
                             if (tempFixedExpenditure == null)
@@ -1708,7 +1710,7 @@ public class NoticeController : Controller
 
                             tempFixedExpenditure.Id = fixedExpenditureInputViewModel.Id;
                             tempFixedExpenditure.AccountEmail = JsonConvert
-                                .DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email;
+                                .DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email;
                             tempFixedExpenditure.MainClass = fixedExpenditureInputViewModel.MainClass;
                             tempFixedExpenditure.SubClass = fixedExpenditureInputViewModel.SubClass;
                             tempFixedExpenditure.Content = fixedExpenditureInputViewModel.Content ?? "";
@@ -1728,7 +1730,7 @@ public class NoticeController : Controller
                             tempFixedExpenditure.Updated = DateTime.UtcNow;
                             tempFixedExpenditure.Unpunctuality = fixedExpenditureInputViewModel.Unpunctuality;
 
-                            await _fixedExpenditureRepository.UpdateFixedExpenditureAsync(tempFixedExpenditure);
+                            await _fixedExpenditureRepository.UpdateFixedExpenditureAsync(tempFixedExpenditure.Adapt<FixedExpenditureRequest>());
 
                             return Json(new
                             {
@@ -1785,9 +1787,9 @@ public class NoticeController : Controller
                 Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite
                     .Utilities.Session.Account), out byte[] resultByte);
 
-            List<FixedExpenditure> tempFixedExpenditures =
+            List<FixedExpenditureResponse> tempFixedExpenditures =
                 await _fixedExpenditureRepository.GetFixedExpendituresAsync(JsonConvert
-                    .DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+                    .DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email);
 
             if (tempFixedExpenditures == null)
             {
@@ -1795,7 +1797,7 @@ public class NoticeController : Controller
             }
             else
             {
-                FixedExpenditure tempFixedExpenditure = tempFixedExpenditures
+                FixedExpenditureResponse tempFixedExpenditure = tempFixedExpenditures
                     .Where(a => a.Id == fixedExpenditureInputViewModel.Id).FirstOrDefault();
                 if (tempFixedExpenditure == null)
                 {
@@ -1803,7 +1805,7 @@ public class NoticeController : Controller
                 }
                 else
                 {
-                    await _fixedExpenditureRepository.DeleteFixedExpenditureAsync(tempFixedExpenditure);
+                    await _fixedExpenditureRepository.DeleteFixedExpenditureAsync(tempFixedExpenditure.Adapt<FixedExpenditureRequest>());
                     return Json(new
                     {
                         result = true,
@@ -1839,18 +1841,18 @@ public class NoticeController : Controller
                 .Session.Account), out byte[] resultByte);
 
         string loginedAccountTimeZoneIanaId = JsonConvert
-            .DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId;
+            .DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId;
 
         DateTime currentDate =
             new(Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[0]),
                 Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[1]),
                 Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[2]));
 
-        List<Asset> assets = await _assetRepository.GetAssetsAsync(JsonConvert
-            .DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+        List<AssetResponse> assets = await _assetRepository.GetAssetsAsync(JsonConvert
+            .DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email);
 
-        foreach (FixedExpenditure item in await _fixedExpenditureRepository.GetFixedExpendituresAsync(JsonConvert
-                     .DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email))
+        foreach (FixedExpenditureResponse item in await _fixedExpenditureRepository.GetFixedExpendituresAsync(JsonConvert
+                     .DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email))
         {
             bool noticedResult = false;
 

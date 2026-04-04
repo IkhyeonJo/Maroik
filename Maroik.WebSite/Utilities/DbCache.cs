@@ -1,15 +1,15 @@
-using Maroik.Core.PostgreSQL.Models;
+using Maroik.Core.Contract.Dtos;
 
 namespace Maroik.WebSite.Utilities;
 
 public static class DbCache
 {
-    public static IEnumerable<Category> AdminCategories { get; set; } = null;
-    public static IEnumerable<SubCategory> AdminSubCategories { get; set; } = null;
+    public static IEnumerable<CategoryResponse> AdminCategories { get; set; } = null;
+    public static IEnumerable<SubCategoryResponse> AdminSubCategories { get; set; } = null;
 
-    public static IEnumerable<Category> UserCategories { get; set; } = null;
-    public static IEnumerable<SubCategory> UserSubCategories { get; set; } = null;
+    public static IEnumerable<CategoryResponse> UserCategories { get; set; } = null;
+    public static IEnumerable<SubCategoryResponse> UserSubCategories { get; set; } = null;
 
-    public static IEnumerable<Category> AnonymousCategories { get; set; } = null;
-    public static IEnumerable<SubCategory> AnonymousSubCategories { get; set; } = null;
+    public static IEnumerable<CategoryResponse> AnonymousCategories { get; set; } = null;
+    public static IEnumerable<SubCategoryResponse> AnonymousSubCategories { get; set; } = null;
 }

@@ -1,97 +1,62 @@
+using Mapster;
+using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.PostgreSQL.Data;
 using Maroik.Core.PostgreSQL.Models;
 using Microsoft.EntityFrameworkCore;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace Maroik.Core.Repository.Repositories;
 
 public class IncomeRepository(ApplicationDbContext context) : IIncomeRepository
 {
-    /// <summary>
-    /// Gets all incomes for the logged-in account.
-    /// </summary>
-    /// <param name="email"></param>
-    /// <returns></returns>
-    public async Task<List<Income>> GetIncomesAsync(string email)
+    public async Task<List<IncomeResponse>> GetIncomesAsync(string email)
     {
-        return await context.Incomes.Where(x => x.AccountEmail == email).ToListAsync();
+        return (await context.Incomes.Where(x => x.AccountEmail == email).ToListAsync()).Adapt<List<IncomeResponse>>();
     }
-    
-    /// <summary>
-    /// Gets current year incomes for the logged-in account.
-    /// </summary>
-    /// <param name="email"></param>
-    /// <param name="year"></param>
-    /// <param name="timeZoneIanaId"></param>
-    /// <returns></returns>
-    public async Task<List<Income>> GetCurrentYearIncomesAsync(string email, string year, string timeZoneIanaId)
+
+    public async Task<List<IncomeResponse>> GetCurrentYearIncomesAsync(string email, string year, string timeZoneIanaId)
     {
-        return await context.Incomes.FromSqlInterpolated
+        return (await context.Incomes.FromSqlInterpolated
         (
             $"""
              SELECT *
              FROM "Income"
-             WHERE 
+             WHERE
                  TO_CHAR("Created" AT TIME ZONE 'UTC' AT TIME ZONE {timeZoneIanaId}, 'YYYY') = {year}
                  AND "AccountEmail" = {email}
              """
-        ).ToListAsync();
+        ).ToListAsync()).Adapt<List<IncomeResponse>>();
     }
 
-    /// <summary>
-    /// Gets current year-month incomes for the logged-in account.
-    /// </summary>
-    /// <param name="email"></param>
-    /// <param name="yearMonth"></param>
-    /// <param name="timeZoneIanaId"></param>
-    /// <returns></returns>
-    public async Task<List<Income>> GetCurrentYearMonthIncomesAsync(string email, string yearMonth, string timeZoneIanaId)
+    public async Task<List<IncomeResponse>> GetCurrentYearMonthIncomesAsync(string email, string yearMonth, string timeZoneIanaId)
     {
-        return await context.Incomes.FromSqlInterpolated
+        return (await context.Incomes.FromSqlInterpolated
         (
             $"""
              SELECT *
              FROM "Income"
-             WHERE 
+             WHERE
                  TO_CHAR("Created" AT TIME ZONE 'UTC' AT TIME ZONE {timeZoneIanaId}, 'YYYY-MM') = {yearMonth}
                  AND "AccountEmail" = {email}
              """
-        ).ToListAsync();
+        ).ToListAsync()).Adapt<List<IncomeResponse>>();
     }
 
-    /// <summary>
-    /// Creates an income.
-    /// </summary>
-    /// <param name="income"></param>
-    /// <returns></returns>
-    public async Task CreateIncomeAsync(Income income)
+    public async Task CreateIncomeAsync(IncomeRequest request)
     {
-        _ = await context.Incomes.AddAsync(income);
+        _ = await context.Incomes.AddAsync(request.Adapt<Income>());
         _ = await context.SaveChangesAsync();
     }
 
-    /// <summary>
-    /// Updates an income.
-    /// </summary>
-    /// <param name="income"></param>
-    /// <returns></returns>
-    public async Task UpdateIncomeAsync(Income income)
+    public async Task UpdateIncomeAsync(IncomeRequest request)
     {
-        _ = context.Incomes.Update(income);
+        _ = context.Incomes.Update(request.Adapt<Income>());
         _ = await context.SaveChangesAsync();
     }
 
-    /// <summary>
-    /// Removes an income.
-    /// </summary>
-    /// <param name="income"></param>
-    /// <returns></returns>
-    public async Task DeleteIncomeAsync(Income income)
+    public async Task DeleteIncomeAsync(IncomeRequest request)
     {
-        _ = context.Incomes.Remove(income);
+        _ = context.Incomes.Remove(request.Adapt<Income>());
         _ = await context.SaveChangesAsync();
     }
 }

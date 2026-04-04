@@ -1,4 +1,4 @@
-﻿using Maroik.Core.PostgreSQL.Models;
+﻿using Maroik.Core.Contract.Dtos;
 
 namespace Maroik.WebSite.Models.ViewModels.Management;
 
@@ -8,9 +8,9 @@ public class PrivateNoteOutputViewModel
 
     public Pager Pager { get; set; }
 
-    public IEnumerable<Board> NoticeBoards { get; set; } = [];
+    public IEnumerable<BoardResponse> NoticeBoards { get; set; } = [];
 
-    public IEnumerable<Board> Boards { get; set; } = [];
+    public IEnumerable<BoardResponse> Boards { get; set; } = [];
 
     public BoardOutputViewModel BoardOutputViewModel { get; set; }
 

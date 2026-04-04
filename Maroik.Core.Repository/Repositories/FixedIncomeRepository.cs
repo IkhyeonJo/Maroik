@@ -1,10 +1,9 @@
+using Mapster;
+using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.PostgreSQL.Data;
 using Maroik.Core.PostgreSQL.Models;
 using Microsoft.EntityFrameworkCore;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace Maroik.Core.Repository.Repositories;
 
@@ -17,46 +16,26 @@ public class FixedIncomeRepository : IFixedIncomeRepository
         _context = context;
     }
 
-    /// <summary>
-    /// Gets all fixed incomes for the logged-in account.
-    /// </summary>
-    /// <param name="email"></param>
-    /// <returns></returns>
-    public async Task<List<FixedIncome>> GetFixedIncomesAsync(string email)
+    public async Task<List<FixedIncomeResponse>> GetFixedIncomesAsync(string email)
     {
-        return await _context.FixedIncomes.Where(x => x.AccountEmail == email).ToListAsync();
+        return (await _context.FixedIncomes.Where(x => x.AccountEmail == email).ToListAsync()).Adapt<List<FixedIncomeResponse>>();
     }
 
-    /// <summary>
-    /// Creates a fixed income.
-    /// </summary>
-    /// <param name="fixedIncome"></param>
-    /// <returns></returns>
-    public async Task CreateFixedIncomeAsync(FixedIncome fixedIncome)
+    public async Task CreateFixedIncomeAsync(FixedIncomeRequest request)
     {
-        _ = await _context.FixedIncomes.AddAsync(fixedIncome);
+        _ = await _context.FixedIncomes.AddAsync(request.Adapt<FixedIncome>());
         _ = await _context.SaveChangesAsync();
     }
 
-    /// <summary>
-    /// Updates a fixed income.
-    /// </summary>
-    /// <param name="fixedIncome"></param>
-    /// <returns></returns>
-    public async Task UpdateFixedIncomeAsync(FixedIncome fixedIncome)
+    public async Task UpdateFixedIncomeAsync(FixedIncomeRequest request)
     {
-        _ = _context.FixedIncomes.Update(fixedIncome);
+        _ = _context.FixedIncomes.Update(request.Adapt<FixedIncome>());
         _ = await _context.SaveChangesAsync();
     }
 
-    /// <summary>
-    /// Removes a fixed income.
-    /// </summary>
-    /// <param name="fixedIncome"></param>
-    /// <returns></returns>
-    public async Task DeleteFixedIncomeAsync(FixedIncome fixedIncome)
+    public async Task DeleteFixedIncomeAsync(FixedIncomeRequest request)
     {
-        _ = _context.FixedIncomes.Remove(fixedIncome);
+        _ = _context.FixedIncomes.Remove(request.Adapt<FixedIncome>());
         _ = await _context.SaveChangesAsync();
     }
 }

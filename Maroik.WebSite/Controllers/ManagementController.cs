@@ -1,9 +1,11 @@
+using Mapster;
 ﻿using DocumentFormat.OpenXml;
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Spreadsheet;
 using Ganss.Xss;
 using HtmlAgilityPack;
 using ImageMagick;
+using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.PostgreSQL.Data;
 using Maroik.Core.PostgreSQL.Models;
@@ -74,9 +76,9 @@ public class ManagementController : Controller
             Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite.Utilities
                 .Session.Account), out byte[] resultByte);
         string loginedAccountTimeZoneIanaId = JsonConvert
-            .DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId;
-        Account tempAccount = await _accountRepository.GetAccountByEmailAsync(JsonConvert
-            .DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+            .DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId;
+        AccountResponse tempAccount = await _accountRepository.GetAccountByEmailAsync(JsonConvert
+            .DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email);
 
         return View(new ProfileOutputViewModel()
         {
@@ -185,11 +187,11 @@ public class ManagementController : Controller
 
         try
         {
-            Account tempAccount = await _accountRepository.GetAccountByEmailAsync(
-                JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+            AccountResponse tempAccount = await _accountRepository.GetAccountByEmailAsync(
+                JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email);
 
             tempAccount.AvatarImagePath = $"/upload/Management/Profile/Avatar/{avatarFile}";
-            await _accountRepository.UpdateAccountAsync(tempAccount);
+            await _accountRepository.UpdateAccountAsync(tempAccount.Adapt<AccountRequest>());
 
             return Ok(new { result = true });
         }
@@ -220,10 +222,10 @@ public class ManagementController : Controller
                 _ = HttpContext.Session.TryGetValue(
                     Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite
                         .Utilities.Session.Account), out byte[] resultByte);
-                Account tempAccount = await _accountRepository.GetAccountByEmailAsync(JsonConvert
-                    .DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+                AccountResponse tempAccount = await _accountRepository.GetAccountByEmailAsync(JsonConvert
+                    .DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email);
                 tempAccount.TimeZoneIanaId = profileInputViewModel.TimeZoneIanaId;
-                await _accountRepository.UpdateAccountAsync(tempAccount);
+                await _accountRepository.UpdateAccountAsync(tempAccount.Adapt<AccountRequest>());
 
                 HttpContext.Session.Remove(
                     Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite
@@ -263,13 +265,13 @@ public class ManagementController : Controller
                 _ = HttpContext.Session.TryGetValue(
                     Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite
                         .Utilities.Session.Account), out byte[] resultByte);
-                Account tempAccount = await _accountRepository.GetAccountByEmailAsync(JsonConvert
-                    .DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+                AccountResponse tempAccount = await _accountRepository.GetAccountByEmailAsync(JsonConvert
+                    .DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email);
 
                 if (_passwordService.VerifyPassword(profileInputViewModel.Password ?? "", tempAccount.HashedPassword)) // right password
                 {
                     tempAccount.HashedPassword = _passwordService.HashPassword(profileInputViewModel.NewPassword);
-                    await _accountRepository.UpdateAccountAsync(tempAccount);
+                    await _accountRepository.UpdateAccountAsync(tempAccount.Adapt<AccountRequest>());
                     return Json(new
                         { result = true, message = _localizer["Password change successfully done."].Value });
                 }
@@ -425,7 +427,7 @@ public class ManagementController : Controller
 
                 await _accountRepository.CreateAccountAsync
                 (
-                    new Account()
+                    new AccountRequest()
                     {
                         Email = accountInputViewModel.Email,
                         HashedPassword = _passwordService.HashPassword(accountInputViewModel.Password),
@@ -475,11 +477,11 @@ public class ManagementController : Controller
                     .Utilities.Session.Account), out byte[] resultByte);
 
             string loginedAccountTimeZoneIanaId = JsonConvert
-                .DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId;
+                .DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId;
 
             #region Accounts
 
-            foreach (Account item in await _accountRepository.GetAllAsync())
+            foreach (AccountResponse item in await _accountRepository.GetAllAsync())
             {
                 if (string.IsNullOrEmpty(wholeSearch))
                 {
@@ -565,7 +567,7 @@ public class ManagementController : Controller
     {
         try
         {
-            Account tempAccount = await _accountRepository.GetAccountByEmailAsync(email);
+            AccountResponse tempAccount = await _accountRepository.GetAccountByEmailAsync(email);
 
             return tempAccount == null
                 ? Json(new
@@ -598,7 +600,7 @@ public class ManagementController : Controller
 
             if (ModelState.IsValid)
             {
-                Account tempAccount = await _accountRepository.GetAccountByEmailAsync(accountInputViewModel.Email);
+                AccountResponse tempAccount = await _accountRepository.GetAccountByEmailAsync(accountInputViewModel.Email);
 
                 if (tempAccount == null)
                 {
@@ -621,7 +623,7 @@ public class ManagementController : Controller
                 tempAccount.Message = accountInputViewModel.Message;
                 tempAccount.Deleted = accountInputViewModel.Deleted;
 
-                await _accountRepository.UpdateAccountAsync(tempAccount);
+                await _accountRepository.UpdateAccountAsync(tempAccount.Adapt<AccountRequest>());
 
                 return Json(new { result = true, message = _localizer["Successfully updated the account"].Value });
             }
@@ -647,7 +649,7 @@ public class ManagementController : Controller
     {
         try
         {
-            Account tempAccount = await _accountRepository.GetAccountByEmailAsync(accountInputViewModel.Email);
+            AccountResponse tempAccount = await _accountRepository.GetAccountByEmailAsync(accountInputViewModel.Email);
 
             if (tempAccount == null)
             {
@@ -659,7 +661,7 @@ public class ManagementController : Controller
             else
             {
                 tempAccount.Deleted = true;
-                await _accountRepository.UpdateAccountAsync(tempAccount);
+                await _accountRepository.UpdateAccountAsync(tempAccount.Adapt<AccountRequest>());
                 return Json(new { result = true, message = _localizer["Successfully deleted the account"].Value });
             }
         }
@@ -685,11 +687,11 @@ public class ManagementController : Controller
             Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite.Utilities
                 .Session.Account), out byte[] resultByte);
         string loginedAccountTimeZoneIanaId = JsonConvert
-            .DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId;
+            .DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId;
 
         #region Accounts
 
-        foreach (Account item in await _accountRepository.GetAllAsync())
+        foreach (AccountResponse item in await _accountRepository.GetAllAsync())
         {
             accountOutputViewModels.Add(new AccountOutputViewModel()
             {
@@ -829,7 +831,7 @@ public class ManagementController : Controller
 
             if (ModelState.IsValid)
             {
-                Category category = new()
+                CategoryResponse category = new()
                 {
                     Name = menuInputViewModel.Name,
                     DisplayName = menuInputViewModel.DisplayName,
@@ -839,7 +841,7 @@ public class ManagementController : Controller
                     Role = menuInputViewModel.Role,
                     Order = menuInputViewModel.Order
                 };
-                await _categoryRepository.CreateCategoryAsync(category);
+                await _categoryRepository.CreateCategoryAsync(category.Adapt<CategoryRequest>());
 
                 return Json(new { result = true, message = _localizer["Successfully created the category"].Value });
             }
@@ -866,7 +868,7 @@ public class ManagementController : Controller
 
             if (ModelState.IsValid)
             {
-                SubCategory subCategory = new()
+                SubCategoryResponse subCategory = new()
                 {
                     CategoryId = menuInputViewModel.CategoryId,
                     Name = menuInputViewModel.Name,
@@ -876,7 +878,7 @@ public class ManagementController : Controller
                     Role = menuInputViewModel.Role,
                     Order = menuInputViewModel.Order
                 };
-                await _subCategoryRepository.CreateSubCategoryAsync(subCategory);
+                await _subCategoryRepository.CreateSubCategoryAsync(subCategory.Adapt<SubCategoryRequest>());
 
                 return Json(new
                     { result = true, message = _localizer["Successfully created the subCategory"].Value });
@@ -905,7 +907,7 @@ public class ManagementController : Controller
 
             #region AdminCategories
 
-            foreach (Category item in await _categoryRepository.GetCategoryByRoleAsync(Role.Admin))
+            foreach (CategoryResponse item in await _categoryRepository.GetCategoryByRoleAsync(Role.Admin))
             {
                 if (string.IsNullOrEmpty(wholeSearch))
                 {
@@ -953,7 +955,7 @@ public class ManagementController : Controller
 
             #region UserCategories
 
-            foreach (Category item in await _categoryRepository.GetCategoryByRoleAsync(Role.User))
+            foreach (CategoryResponse item in await _categoryRepository.GetCategoryByRoleAsync(Role.User))
             {
                 if (string.IsNullOrEmpty(wholeSearch))
                 {
@@ -1001,7 +1003,7 @@ public class ManagementController : Controller
 
             #region AnonymousCategories
 
-            foreach (Category item in await _categoryRepository.GetCategoryByRoleAsync(Role.Anonymous))
+            foreach (CategoryResponse item in await _categoryRepository.GetCategoryByRoleAsync(Role.Anonymous))
             {
                 if (string.IsNullOrEmpty(wholeSearch))
                 {
@@ -1049,7 +1051,7 @@ public class ManagementController : Controller
 
             #region AdminSubCategories
 
-            foreach (SubCategory item in await _subCategoryRepository.GetSubCategoryByRoleAsync(Role.Admin))
+            foreach (SubCategoryResponse item in await _subCategoryRepository.GetSubCategoryByRoleAsync(Role.Admin))
             {
                 if (string.IsNullOrEmpty(wholeSearch))
                 {
@@ -1097,7 +1099,7 @@ public class ManagementController : Controller
 
             #region UserSubCategories
 
-            foreach (SubCategory item in await _subCategoryRepository.GetSubCategoryByRoleAsync(Role.User))
+            foreach (SubCategoryResponse item in await _subCategoryRepository.GetSubCategoryByRoleAsync(Role.User))
             {
                 if (string.IsNullOrEmpty(wholeSearch))
                 {
@@ -1145,7 +1147,7 @@ public class ManagementController : Controller
 
             #region AnonymousSubCategories
 
-            foreach (SubCategory item in await _subCategoryRepository.GetSubCategoryByRoleAsync(Role.Anonymous))
+            foreach (SubCategoryResponse item in await _subCategoryRepository.GetSubCategoryByRoleAsync(Role.Anonymous))
             {
                 if (string.IsNullOrEmpty(wholeSearch))
                 {
@@ -1210,7 +1212,7 @@ public class ManagementController : Controller
 
             #region AdminCategories
 
-            foreach (Category item in await _categoryRepository.GetCategoryByRoleAsync(Role.Admin))
+            foreach (CategoryResponse item in await _categoryRepository.GetCategoryByRoleAsync(Role.Admin))
             {
                 menuOutputViewModels.Add(new MenuOutputViewModel()
                 {
@@ -1230,7 +1232,7 @@ public class ManagementController : Controller
 
             #region UserCategories
 
-            foreach (Category item in await _categoryRepository.GetCategoryByRoleAsync(Role.User))
+            foreach (CategoryResponse item in await _categoryRepository.GetCategoryByRoleAsync(Role.User))
             {
                 menuOutputViewModels.Add(new MenuOutputViewModel()
                 {
@@ -1250,7 +1252,7 @@ public class ManagementController : Controller
 
             #region AnonymousCategories
 
-            foreach (Category item in await _categoryRepository.GetCategoryByRoleAsync(Role.Anonymous))
+            foreach (CategoryResponse item in await _categoryRepository.GetCategoryByRoleAsync(Role.Anonymous))
             {
                 menuOutputViewModels.Add(new MenuOutputViewModel()
                 {
@@ -1294,7 +1296,7 @@ public class ManagementController : Controller
 
             #region AdminSubCategories
 
-            foreach (SubCategory item in await _subCategoryRepository.GetSubCategoryByRoleAsync(Role.Admin))
+            foreach (SubCategoryResponse item in await _subCategoryRepository.GetSubCategoryByRoleAsync(Role.Admin))
             {
                 menuOutputViewModels.Add(new MenuOutputViewModel()
                 {
@@ -1314,7 +1316,7 @@ public class ManagementController : Controller
 
             #region UserSubCategories
 
-            foreach (SubCategory item in await _subCategoryRepository.GetSubCategoryByRoleAsync(Role.User))
+            foreach (SubCategoryResponse item in await _subCategoryRepository.GetSubCategoryByRoleAsync(Role.User))
             {
                 menuOutputViewModels.Add(new MenuOutputViewModel()
                 {
@@ -1334,7 +1336,7 @@ public class ManagementController : Controller
 
             #region AnonymousSubCategories
 
-            foreach (SubCategory item in await _subCategoryRepository.GetSubCategoryByRoleAsync(Role.Anonymous))
+            foreach (SubCategoryResponse item in await _subCategoryRepository.GetSubCategoryByRoleAsync(Role.Anonymous))
             {
                 menuOutputViewModels.Add(new MenuOutputViewModel()
                 {
@@ -1383,7 +1385,7 @@ public class ManagementController : Controller
 
             if (ModelState.IsValid)
             {
-                Category category = new()
+                CategoryResponse category = new()
                 {
                     Id = menuInputViewModel.Id,
                     Name = menuInputViewModel.Name,
@@ -1394,7 +1396,7 @@ public class ManagementController : Controller
                     Role = menuInputViewModel.Role,
                     Order = menuInputViewModel.Order
                 };
-                await _categoryRepository.UpdateCategoryAsync(category);
+                await _categoryRepository.UpdateCategoryAsync(category.Adapt<CategoryRequest>());
 
                 return Json(new { result = true, message = _localizer["Successfully updated the category"].Value });
             }
@@ -1421,7 +1423,7 @@ public class ManagementController : Controller
 
             if (ModelState.IsValid)
             {
-                SubCategory subCategory = new()
+                SubCategoryResponse subCategory = new()
                 {
                     Id = menuInputViewModel.Id,
                     CategoryId = menuInputViewModel.CategoryId,
@@ -1432,7 +1434,7 @@ public class ManagementController : Controller
                     Role = menuInputViewModel.Role,
                     Order = menuInputViewModel.Order
                 };
-                await _subCategoryRepository.UpdateSubCategoryAsync(subCategory);
+                await _subCategoryRepository.UpdateSubCategoryAsync(subCategory.Adapt<SubCategoryRequest>());
 
                 return Json(new
                     { result = true, message = _localizer["Successfully updated the subCategory"].Value });
@@ -1464,7 +1466,7 @@ public class ManagementController : Controller
 
             if (ModelState.IsValid)
             {
-                Category category = new()
+                CategoryResponse category = new()
                 {
                     Id = menuInputViewModel.Id,
                     Name = menuInputViewModel.Name,
@@ -1475,7 +1477,7 @@ public class ManagementController : Controller
                     Role = menuInputViewModel.Role,
                     Order = menuInputViewModel.Order
                 };
-                await _categoryRepository.DeleteCategoryAsync(category);
+                await _categoryRepository.DeleteCategoryAsync(category.Adapt<CategoryRequest>());
 
                 return Json(new { result = true, message = _localizer["Successfully deleted the category"].Value });
             }
@@ -1502,7 +1504,7 @@ public class ManagementController : Controller
 
             if (ModelState.IsValid)
             {
-                SubCategory subCategory = new()
+                SubCategoryResponse subCategory = new()
                 {
                     Id = menuInputViewModel.Id,
                     CategoryId = menuInputViewModel.CategoryId,
@@ -1513,7 +1515,7 @@ public class ManagementController : Controller
                     Role = menuInputViewModel.Role,
                     Order = menuInputViewModel.Order
                 };
-                await _subCategoryRepository.DeleteSubCategoryAsync(subCategory);
+                await _subCategoryRepository.DeleteSubCategoryAsync(subCategory.Adapt<SubCategoryRequest>());
 
                 return Json(new
                     { result = true, message = _localizer["Successfully deleted the subCategory"].Value });
@@ -1545,10 +1547,10 @@ public class ManagementController : Controller
             Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite.Utilities
                 .Session.Account), out byte[] resultByte);
         string loginedAccountTimeZoneIanaId = JsonConvert
-            .DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId;
+            .DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId;
 
         #region AdminCategories
-        foreach (Category item in await _categoryRepository.GetCategoryByRoleAsync(Role.Admin))
+        foreach (CategoryResponse item in await _categoryRepository.GetCategoryByRoleAsync(Role.Admin))
         {
             menuOutputViewModels.Add(new MenuOutputViewModel()
             {
@@ -1566,7 +1568,7 @@ public class ManagementController : Controller
         #endregion
 
         #region UserCategories
-        foreach (Category item in await _categoryRepository.GetCategoryByRoleAsync(Role.User))
+        foreach (CategoryResponse item in await _categoryRepository.GetCategoryByRoleAsync(Role.User))
         {
             menuOutputViewModels.Add(new MenuOutputViewModel()
             {
@@ -1584,7 +1586,7 @@ public class ManagementController : Controller
         #endregion
 
         #region AnonymousCategories
-        foreach (Category item in await _categoryRepository.GetCategoryByRoleAsync(Role.Anonymous))
+        foreach (CategoryResponse item in await _categoryRepository.GetCategoryByRoleAsync(Role.Anonymous))
         {
             menuOutputViewModels.Add(new MenuOutputViewModel()
             {
@@ -1602,7 +1604,7 @@ public class ManagementController : Controller
         #endregion
 
         #region AdminSubCategories
-        foreach (SubCategory item in await _subCategoryRepository.GetSubCategoryByRoleAsync(Role.Admin))
+        foreach (SubCategoryResponse item in await _subCategoryRepository.GetSubCategoryByRoleAsync(Role.Admin))
         {
             menuOutputViewModels.Add(new MenuOutputViewModel()
             {
@@ -1620,7 +1622,7 @@ public class ManagementController : Controller
         #endregion
 
         #region UserSubCategories
-        foreach (SubCategory item in await _subCategoryRepository.GetSubCategoryByRoleAsync(Role.User))
+        foreach (SubCategoryResponse item in await _subCategoryRepository.GetSubCategoryByRoleAsync(Role.User))
         {
             menuOutputViewModels.Add(new MenuOutputViewModel()
             {
@@ -1638,7 +1640,7 @@ public class ManagementController : Controller
         #endregion
 
         #region AnonymousSubCategories
-        foreach (SubCategory item in await _subCategoryRepository.GetSubCategoryByRoleAsync(Role.Anonymous))
+        foreach (SubCategoryResponse item in await _subCategoryRepository.GetSubCategoryByRoleAsync(Role.Anonymous))
         {
             menuOutputViewModels.Add(new MenuOutputViewModel()
             {
@@ -1825,10 +1827,10 @@ public class ManagementController : Controller
 
                     if (isAccountSessionExist)
                     {
-                        Account loginedAccount =
-                            JsonConvert.DeserializeObject<Account>(
+                        AccountResponse loginedAccount =
+                            JsonConvert.DeserializeObject<AccountResponse>(
                                 Encoding.Default.GetString(resultByte)); // Get Session
-                        Board board = new();
+                        BoardResponse board = new();
 
                         if (loginedAccount.Role == Role.Admin) // If administrator
                         {
@@ -1862,7 +1864,7 @@ public class ManagementController : Controller
                                 { result = false, error = _localizer["Please Login to write board"].Value });
                         }
 
-                        await _boardRepository.WriteBoardAsync(board);
+                        await _boardRepository.WriteBoardAsync(board.Adapt<BoardRequest>());
 
                         #region Save attached file
 
@@ -1890,7 +1892,7 @@ public class ManagementController : Controller
                                 }
 
                                 await _boardAttachedFileRepository.SaveBoardAttachedFileAsync(
-                                    new BoardAttachedFile()
+                                    new BoardAttachedFileRequest()
                                     {
                                         BoardId = createdBoardId,
                                         Size = Convert.ToInt32(boardInputViewModel.UploadedFile.Length),
@@ -1980,16 +1982,16 @@ public class ManagementController : Controller
 
                     if (isAccountSessionExist)
                     {
-                        Account loginedAccount =
-                            JsonConvert.DeserializeObject<Account>(
+                        AccountResponse loginedAccount =
+                            JsonConvert.DeserializeObject<AccountResponse>(
                                 Encoding.Default.GetString(resultByte)); // Get Session
 
-                        IEnumerable<Board> privateNoteBoards =
+                        IEnumerable<BoardResponse> privateNoteBoards =
                             await _boardRepository.GetOneTypeBoardsAsync(
                                 EnumHelper.GetDescription(BoardType.PrivateNote));
                         privateNoteBoards = privateNoteBoards.Where(m => m.Writer == loginedAccount.Nickname)
                             .Where(m => m.Deleted == false).OrderByDescending(a => a.Id);
-                        Board privateNoteBoard =
+                        BoardResponse privateNoteBoard =
                             privateNoteBoards.FirstOrDefault(m => m.Id == boardCommentInputViewModel.BoardId);
 
                         if (privateNoteBoard.Id != boardCommentInputViewModel.BoardId)
@@ -1997,11 +1999,11 @@ public class ManagementController : Controller
                             return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                         }
 
-                        IEnumerable<BoardComment> totalBoardCommentsInSelectedBoard =
+                        IEnumerable<BoardCommentResponse> totalBoardCommentsInSelectedBoard =
                             await _boardCommentRepository.GetOneBoardCommentsAsync(boardCommentInputViewModel
                                 .BoardId);
 
-                        BoardComment boardComment = new()
+                        BoardCommentResponse boardComment = new()
                         {
                             BoardId = boardCommentInputViewModel.BoardId,
                             Order = totalBoardCommentsInSelectedBoard?.Count() ?? default,
@@ -2011,7 +2013,7 @@ public class ManagementController : Controller
                             Created = DateTime.UtcNow,
                             Deleted = false
                         };
-                        await _boardCommentRepository.WriteBoardCommentAsync(boardComment);
+                        await _boardCommentRepository.WriteBoardCommentAsync(boardComment.Adapt<BoardCommentRequest>());
 
                         return Json(new
                         {
@@ -2084,7 +2086,7 @@ public class ManagementController : Controller
             Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account),
             out byte[] resultByte);
 
-        var loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte));
+        var loginedAccount = JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte));
 
         string summernoteImagePath = Path.Combine("upload", "Management",
             EnumHelper.GetDescription(BoardType.PrivateNote), "summernote", "images");
@@ -2145,8 +2147,8 @@ public class ManagementController : Controller
             _ = HttpContext.Session.TryGetValue(
                 Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite
                     .Utilities.Session.Account), out byte[] resultByte); // If writer or administrator
-            Account loginedAccount =
-                JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)); // Get Session
+            AccountResponse loginedAccount =
+                JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)); // Get Session
 
             if (boardId == null)
             {
@@ -2160,15 +2162,15 @@ public class ManagementController : Controller
                 DetailBoardId = boardId ?? default
             };
 
-            IEnumerable<Board> privateNoteBoards =
+            IEnumerable<BoardResponse> privateNoteBoards =
                 await _boardRepository.GetOneTypeBoardsAsync(EnumHelper.GetDescription(BoardType.PrivateNote));
             privateNoteBoards = privateNoteBoards.Where(m => m.Writer == loginedAccount.Nickname)
                 .Where(m => m.Deleted == false).OrderByDescending(a => a.Id);
-            List<BoardAttachedFile> boardAttachedFiles = await _boardAttachedFileRepository.GetAllAsync();
+            List<BoardAttachedFileResponse> boardAttachedFiles = await _boardAttachedFileRepository.GetAllAsync();
 
             try
             {
-                Board privateNoteBoard = privateNoteBoards.FirstOrDefault(m => m.Id == boardId);
+                BoardResponse privateNoteBoard = privateNoteBoards.FirstOrDefault(m => m.Id == boardId);
 
                 if (privateNoteBoard.Locked)
                 {
@@ -2179,8 +2181,8 @@ public class ManagementController : Controller
                 }
 
                 privateNoteBoard.View++;
-                await _boardRepository.UpdateBoardAsync(privateNoteBoard);
-                BoardAttachedFile attachedFile = boardAttachedFiles.FirstOrDefault(m => m.BoardId == boardId);
+                await _boardRepository.UpdateBoardAsync(privateNoteBoard.Adapt<BoardRequest>());
+                BoardAttachedFileResponse attachedFile = boardAttachedFiles.FirstOrDefault(m => m.BoardId == boardId);
 
                 #region Encrypt img tag file path
 
@@ -2286,25 +2288,25 @@ public class ManagementController : Controller
             _ = HttpContext.Session.TryGetValue(
                 Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite
                     .Utilities.Session.Account), out byte[] resultByte);
-            Account loginedAccount = await _accountRepository.GetAccountByEmailAsync(JsonConvert
-                .DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+            AccountResponse loginedAccount = await _accountRepository.GetAccountByEmailAsync(JsonConvert
+                .DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email);
 
-            IEnumerable<Board> privateNoteBoards =
+            IEnumerable<BoardResponse> privateNoteBoards =
                 await _boardRepository.GetOneTypeBoardsAsync(EnumHelper.GetDescription(BoardType.PrivateNote));
             privateNoteBoards = privateNoteBoards.Where(m => m.Writer == loginedAccount.Nickname)
                 .Where(m => m.Deleted == false).OrderByDescending(a => a.Id);
-            List<BoardAttachedFile> boardAttachedFiles = await _boardAttachedFileRepository.GetAllAsync();
+            List<BoardAttachedFileResponse> boardAttachedFiles = await _boardAttachedFileRepository.GetAllAsync();
 
             try
             {
-                Board privateNoteBoard = privateNoteBoards.FirstOrDefault(m => m.Id == boardId);
+                BoardResponse privateNoteBoard = privateNoteBoards.FirstOrDefault(m => m.Id == boardId);
 
                 if (privateNoteBoard.Writer != loginedAccount.Nickname) // If writer and logged-in user are not the same
                 {
                     return RedirectToAction("PrivateNote", "Management");
                 }
 
-                BoardAttachedFile attachedFile = boardAttachedFiles.FirstOrDefault(m => m.BoardId == boardId);
+                BoardAttachedFileResponse attachedFile = boardAttachedFiles.FirstOrDefault(m => m.BoardId == boardId);
 
                 #region Encrypt img tag file path
 
@@ -2399,8 +2401,8 @@ public class ManagementController : Controller
             bool isAccountSessionExist = HttpContext.Session.TryGetValue(
                 Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite
                     .Utilities.Session.Account), out byte[] resultByte);
-            Account loginedAccount =
-                JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)); // Get Session
+            AccountResponse loginedAccount =
+                JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)); // Get Session
 
             #region Board default paging logic
 
@@ -2414,7 +2416,7 @@ public class ManagementController : Controller
 
             #region Logic to get all related board data
 
-            IEnumerable<Board> privateNoteBoards =
+            IEnumerable<BoardResponse> privateNoteBoards =
                 await _boardRepository.GetOneTypeBoardsAsync(EnumHelper.GetDescription(BoardType.PrivateNote));
             privateNoteBoards = privateNoteBoards.Where(m => m.Writer == loginedAccount.Nickname)
                 .Where(m => m.Deleted == false && m.Noticed == false).OrderByDescending(a => a.Id);
@@ -2433,10 +2435,10 @@ public class ManagementController : Controller
                     }
                     else if (loginedAccount.Role == Role.User) // User can see regular posts + their own private posts
                     {
-                        List<Board> searchPrivateNoteBoards = [];
-                        List<Board> noLockedPrivateNoteBoards = privateNoteBoards
+                        List<BoardResponse> searchPrivateNoteBoards = [];
+                        List<BoardResponse> noLockedPrivateNoteBoards = privateNoteBoards
                             .Where(a => a.Title.Contains(searchText)).Where(a => !a.Locked).ToList();
-                        List<Board> myLockedPrivateNoteBoards = privateNoteBoards
+                        List<BoardResponse> myLockedPrivateNoteBoards = privateNoteBoards
                             .Where(a => a.Title.Contains(searchText))
                             .Where(a => a.Locked && a.Writer == loginedAccount.Nickname).ToList();
                         searchPrivateNoteBoards.AddRange(noLockedPrivateNoteBoards);
@@ -2509,10 +2511,10 @@ public class ManagementController : Controller
             _ = HttpContext.Session.TryGetValue(
                 Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite
                     .Utilities.Session.Account), out byte[] resultByte);
-            Account loginedAccount = await _accountRepository.GetAccountByEmailAsync(JsonConvert
-                .DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+            AccountResponse loginedAccount = await _accountRepository.GetAccountByEmailAsync(JsonConvert
+                .DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email);
 
-            IEnumerable<Board> privateNoteBoards =
+            IEnumerable<BoardResponse> privateNoteBoards =
                 await _boardRepository.GetOneTypeBoardsAsync(EnumHelper.GetDescription(BoardType.PrivateNote));
             privateNoteBoards = privateNoteBoards.Where(m => m.Writer == loginedAccount.Nickname)
                 .Where(m => m.Deleted == false).OrderByDescending(a => a.Id);
@@ -2523,7 +2525,7 @@ public class ManagementController : Controller
             }
             else
             {
-                Board tempPrivateNoteBoard = privateNoteBoards.Where(a => a.Id == id).FirstOrDefault();
+                BoardResponse tempPrivateNoteBoard = privateNoteBoards.Where(a => a.Id == id).FirstOrDefault();
 
                 return tempPrivateNoteBoard == null
                     ? Json(new { result = false, error = _localizer["Input is invalid"].Value })
@@ -2626,17 +2628,17 @@ public class ManagementController : Controller
 
                     if (isAccountSessionExist)
                     {
-                        Account loginedAccount =
-                            JsonConvert.DeserializeObject<Account>(
+                        AccountResponse loginedAccount =
+                            JsonConvert.DeserializeObject<AccountResponse>(
                                 Encoding.Default.GetString(resultByte)); // Get Session
 
-                        IEnumerable<Board> privateNoteBoards =
+                        IEnumerable<BoardResponse> privateNoteBoards =
                             await _boardRepository.GetOneTypeBoardsAsync(
                                 EnumHelper.GetDescription(BoardType.PrivateNote));
                         privateNoteBoards = privateNoteBoards.Where(m => m.Writer == loginedAccount.Nickname)
                             .Where(m => m.Deleted == false).OrderByDescending(a => a.Id);
 
-                        Board tempPrivateNoteBoard = privateNoteBoards.Where(a => a.Id == boardInputViewModel.Id)
+                        BoardResponse tempPrivateNoteBoard = privateNoteBoards.Where(a => a.Id == boardInputViewModel.Id)
                             .FirstOrDefault();
 
                         if (tempPrivateNoteBoard.Writer != loginedAccount.Nickname)
@@ -2650,11 +2652,11 @@ public class ManagementController : Controller
                         //tempPrivateNoteBoard.Locked = boardInputViewModel.Locked;
                         tempPrivateNoteBoard.Updated = DateTime.UtcNow;
 
-                        await _boardRepository.UpdateBoardAsync(tempPrivateNoteBoard);
+                        await _boardRepository.UpdateBoardAsync(tempPrivateNoteBoard.Adapt<BoardRequest>());
 
-                        List<BoardAttachedFile> boardAttachedFiles =
+                        List<BoardAttachedFileResponse> boardAttachedFiles =
                             await _boardAttachedFileRepository?.GetAllAsync();
-                        BoardAttachedFile previousBoardAttachedFile =
+                        BoardAttachedFileResponse previousBoardAttachedFile =
                             boardAttachedFiles?.FirstOrDefault(m => m.BoardId == boardInputViewModel.Id);
 
                         #region Save attached file
@@ -2698,7 +2700,7 @@ public class ManagementController : Controller
                                     $"upload/Management/{EnumHelper.GetDescription(BoardType.PrivateNote)}/boardAttachedFiles/{createdBoardId}/{attachedFile}";
 
                                 await _boardAttachedFileRepository.UpdateBoardAttachedFileAsync(
-                                    previousBoardAttachedFile);
+                                    previousBoardAttachedFile.Adapt<BoardAttachedFileRequest>());
                                 await transaction.CommitAsync();
                                 return Json(new
                                 {
@@ -2729,7 +2731,7 @@ public class ManagementController : Controller
                             previousBoardAttachedFile.Path = "";
 
                             await _boardAttachedFileRepository.UpdateBoardAttachedFileAsync(
-                                previousBoardAttachedFile);
+                                previousBoardAttachedFile.Adapt<BoardAttachedFileRequest>());
                             await transaction.CommitAsync();
                             return Json(new
                             {
@@ -2766,7 +2768,7 @@ public class ManagementController : Controller
                                 }
 
                                 await _boardAttachedFileRepository.SaveBoardAttachedFileAsync(
-                                    new BoardAttachedFile()
+                                    new BoardAttachedFileRequest()
                                     {
                                         BoardId = createdBoardId,
                                         Size = Convert.ToInt32(boardInputViewModel.UploadedFile.Length),
@@ -2854,10 +2856,10 @@ public class ManagementController : Controller
             _ = HttpContext.Session.TryGetValue(
                 Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite
                     .Utilities.Session.Account), out byte[] resultByte);
-            Account loginedAccount = await _accountRepository.GetAccountByEmailAsync(JsonConvert
-                .DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+            AccountResponse loginedAccount = await _accountRepository.GetAccountByEmailAsync(JsonConvert
+                .DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email);
 
-            IEnumerable<Board> privateNoteBoards =
+            IEnumerable<BoardResponse> privateNoteBoards =
                 await _boardRepository.GetOneTypeBoardsAsync(EnumHelper.GetDescription(BoardType.PrivateNote));
             privateNoteBoards = privateNoteBoards.Where(m => m.Writer == loginedAccount.Nickname)
                 .Where(m => m.Deleted == false).OrderByDescending(a => a.Id);
@@ -2868,7 +2870,7 @@ public class ManagementController : Controller
             }
             else
             {
-                Board tempPrivateNoteBoard =
+                BoardResponse tempPrivateNoteBoard =
                     privateNoteBoards.Where(a => a.Id == boardInputViewModel.Id).FirstOrDefault();
 
                 if (tempPrivateNoteBoard == null)
@@ -2882,7 +2884,7 @@ public class ManagementController : Controller
                         #region Delete board
 
                         tempPrivateNoteBoard.Deleted = true;
-                        await _boardRepository.DeleteBoardAsync(tempPrivateNoteBoard);
+                        await _boardRepository.DeleteBoardAsync(tempPrivateNoteBoard.Adapt<BoardRequest>());
 
                         #endregion
 
@@ -2917,7 +2919,7 @@ public class ManagementController : Controller
     {
         try
         {
-            BoardComment boardComment = await _boardCommentRepository.GetBoardCommentAsync(id);
+            BoardCommentResponse boardComment = await _boardCommentRepository.GetBoardCommentAsync(id);
 
             if (boardComment == null)
             {
@@ -2928,15 +2930,15 @@ public class ManagementController : Controller
                 _ = HttpContext.Session.TryGetValue(
                     Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite
                         .Utilities.Session.Account), out byte[] resultByte);
-                Account loginedAccount = await _accountRepository.GetAccountByEmailAsync(JsonConvert
-                    .DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+                AccountResponse loginedAccount = await _accountRepository.GetAccountByEmailAsync(JsonConvert
+                    .DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email);
 
                 if (loginedAccount.Nickname == boardComment.Writer) // If deleter is writer
                 {
                     #region Delete post
 
                     boardComment.Deleted = true;
-                    await _boardCommentRepository.DeleteBoardCommentAsync(boardComment);
+                    await _boardCommentRepository.DeleteBoardCommentAsync(boardComment.Adapt<BoardCommentRequest>());
 
                     #endregion
 

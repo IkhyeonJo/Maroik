@@ -2,5 +2,5 @@
 
 public class CalendarInputViewModel
 {
-    public IEnumerable<Maroik.Core.PostgreSQL.Models.Calendar> Calendars { get; set; } = [];
+    public IEnumerable<Maroik.Core.Contract.Dtos.CalendarRequest> Calendars { get; set; } = [];
 }

@@ -17,18 +17,18 @@
 
     try
     {
-        loginedAccountTimeZoneIanaId = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId;
+        loginedAccountTimeZoneIanaId = JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId;
     }
     catch
     {
         loginedAccountTimeZoneIanaId = string.Empty;
     }
 
-    Account loginedAccount = new Account();
+    AccountResponse loginedAccount = new AccountResponse();
 
     if (resultByte != null) // 로그인이 된 상태라면
     {
-        loginedAccount = await accountRepository.GetAccountByEmailAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+        loginedAccount = await accountRepository.GetAccountByEmailAsync(JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email);
     }
     else // 로그인이 되지 않은 상태라면
     {
@@ -38,7 +38,7 @@
     string currentCulture = Context.Features.Get<Microsoft.AspNetCore.Localization.IRequestCultureFeature>().RequestCulture.Culture.Name;
     string selectedSearchType = (ViewBag.SelectedSearchType as string) ?? "";
     string typedSearchText = (ViewBag.TypedSearchText as string) ?? "";
-    List<Account> accounts = await accountRepository.GetAllAsync(); // 게시물에서 특별 계정 찾기 위한 용도
+    List<AccountResponse> accounts = await accountRepository.GetAllAsync(); // 게시물에서 특별 계정 찾기 위한 용도
 }
 
 @Html.Hidden("localizerIETFLanguageTag", localizer["IETFLanguageTag"].Value)
@@ -163,7 +163,7 @@
                 </div>
 
                 <div class="card-footer card-comments">
-                    @foreach (BoardComment comment in await boardCommentRepository.GetOneBoardCommentsAsync(Model.DetailBoardId))
+                    @foreach (BoardCommentResponse comment in await boardCommentRepository.GetOneBoardCommentsAsync(Model.DetailBoardId))
                     {
                         if (!comment.Deleted)
                         {
@@ -391,10 +391,10 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach (Board noticeBoard in Model.NoticeBoards)
+                            @foreach (BoardResponse noticeBoard in Model.NoticeBoards)
                             {
-                                List<BoardComment> commentsOfUndeletedSelectedBoard = (await boardCommentRepository.GetOneBoardCommentsAsync(noticeBoard.Id)).Where(m => m.Deleted == false).ToList();
-                                List<BoardAttachedFile> boardAttachedFilesWithName = (await boardAttachedFileRepository.GetAllAsync()).Where(m => m.BoardId == noticeBoard.Id).Where(m => !string.IsNullOrEmpty(m.Name)).ToList();
+                                List<BoardCommentResponse> commentsOfUndeletedSelectedBoard = (await boardCommentRepository.GetOneBoardCommentsAsync(noticeBoard.Id)).Where(m => m.Deleted == false).ToList();
+                                List<BoardAttachedFileResponse> boardAttachedFilesWithName = (await boardAttachedFileRepository.GetAllAsync()).Where(m => m.BoardId == noticeBoard.Id).Where(m => !string.IsNullOrEmpty(m.Name)).ToList();
 
                                 <tr style="background-color: lightgray;">
                                     <td style="color:green;font-weight:bold;">@localizer["Notice"]</td>
@@ -440,10 +440,10 @@
                                     }
                                 </tr>
                             }
-                            @foreach (Board board in Model.Boards)
+                            @foreach (BoardResponse board in Model.Boards)
                             {
-                                List<BoardComment> commentsOfUndeletedSelectedBoard = (await boardCommentRepository.GetOneBoardCommentsAsync(board.Id)).Where(m => m.Deleted == false).ToList();
-                                List<BoardAttachedFile> attachedFilesWithName = (await boardAttachedFileRepository.GetAllAsync()).Where(m => m.BoardId == board.Id).Where(m => !string.IsNullOrEmpty(m.Name)).ToList();
+                                List<BoardCommentResponse> commentsOfUndeletedSelectedBoard = (await boardCommentRepository.GetOneBoardCommentsAsync(board.Id)).Where(m => m.Deleted == false).ToList();
+                                List<BoardAttachedFileResponse> attachedFilesWithName = (await boardAttachedFileRepository.GetAllAsync()).Where(m => m.BoardId == board.Id).Where(m => !string.IsNullOrEmpty(m.Name)).ToList();
 
                                 <tr>
                                     <td>@localizer["Free Forum"]</td>

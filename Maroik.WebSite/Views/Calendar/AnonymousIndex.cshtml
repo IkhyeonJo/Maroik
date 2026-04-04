@@ -130,7 +130,7 @@
                         </div>
                         <div class="card-body">
                             <div id="otherCalendars">
-                                @foreach (Calendar otherCalendar in Model.OtherCalendars)
+                                @foreach (CalendarResponse otherCalendar in Model.OtherCalendars)
                                 {
                                     <label id="@($"lblOtherCalendar{otherCalendar.Id}")" style="position: relative; border:1px solid #ccc; padding:10px; margin:0 0 10px; display:block">
                                         <input type="checkbox" class="chkOtherCalendar" style="accent-color:@otherCalendar.HtmlColorCode" checked />
@@ -562,7 +562,7 @@
                                 <label for="createCalendarEventMyCalendar">@localizer["My Calendar"].Value</label>
                                 <br />
                                 <select id="createCalendarEventMyCalendar" name="createCalendarEventMyCalendar" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
-                                    @foreach (Calendar calendar in Model.Calendars)
+                                    @foreach (CalendarResponse calendar in Model.Calendars)
                                     {
                                         <option value="@calendar.Id">@calendar.Name</option>
                                     }

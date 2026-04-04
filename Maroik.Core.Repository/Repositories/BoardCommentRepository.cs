@@ -1,10 +1,9 @@
+using Mapster;
+using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.PostgreSQL.Data;
 using Maroik.Core.PostgreSQL.Models;
 using Microsoft.EntityFrameworkCore;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace Maroik.Core.Repository.Repositories;
 
@@ -17,44 +16,26 @@ public class BoardCommentRepository : IBoardCommentRepository
         _context = context;
     }
 
-    /// <summary>
-    /// Gets all comments for a post.
-    /// </summary>
-    /// <returns></returns>
-    public async Task<IEnumerable<BoardComment>> GetOneBoardCommentsAsync(long boardId)
+    public async Task<IEnumerable<BoardCommentResponse>> GetOneBoardCommentsAsync(long boardId)
     {
-        return await _context.BoardComments.Where(x => x.BoardId == boardId).OrderBy(m => m.Order).ToListAsync();
+        return (await _context.BoardComments.Where(x => x.BoardId == boardId).OrderBy(m => m.Order).ToListAsync()).Adapt<List<BoardCommentResponse>>();
     }
 
-    /// <summary>
-    /// Gets a comment.
-    /// </summary>
-    /// <returns></returns>
-    public async Task<BoardComment> GetBoardCommentAsync(int id)
+    public async Task<BoardCommentResponse?> GetBoardCommentAsync(int id)
     {
-        return await _context.BoardComments.Where(x => x.Id == id).FirstOrDefaultAsync();
+        BoardComment? comment = await _context.BoardComments.Where(x => x.Id == id).FirstOrDefaultAsync();
+        return comment?.Adapt<BoardCommentResponse>();
     }
 
-    /// <summary>
-    /// Creates a comment.
-    /// </summary>
-    /// <param name="boardComment"></param>
-    /// <returns></returns>
-    public async Task WriteBoardCommentAsync(BoardComment boardComment)
+    public async Task WriteBoardCommentAsync(BoardCommentRequest request)
     {
-        _ = await _context.BoardComments.AddAsync(boardComment);
+        _ = await _context.BoardComments.AddAsync(request.Adapt<BoardComment>());
         _ = await _context.SaveChangesAsync();
     }
 
-    /// <summary>
-    /// Deletes a comment.
-    /// </summary>
-    /// <param name="boardComment"></param>
-    /// <returns></returns>
-    public async Task DeleteBoardCommentAsync(BoardComment boardComment)
+    public async Task DeleteBoardCommentAsync(BoardCommentRequest request)
     {
-        _ = _context.BoardComments.Update(boardComment);
+        _ = _context.BoardComments.Update(request.Adapt<BoardComment>());
         _ = await _context.SaveChangesAsync();
     }
-
 }

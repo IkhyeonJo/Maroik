@@ -1,42 +1,12 @@
-using Maroik.Core.PostgreSQL.Models;
-using System.Collections.Generic;
-using System.Threading.Tasks;
+using Maroik.Core.Contract.Dtos;
 
 namespace Maroik.Core.Contract.Interfaces;
 
 public interface ICalendarRepository
 {
-    /// <summary>
-    /// Gets all calendars.
-    /// </summary>
-    /// <returns></returns>
-    public Task<List<Calendar>> GetAllCalendarsAsync();
-
-    /// <summary>
-    /// Gets all calendars for the logged-in account.
-    /// </summary>
-    /// <param name="email"></param>
-    /// <returns></returns>
-    public Task<List<Calendar>> GetCalendarsAsync(string email);
-
-    /// <summary>
-    /// Creates a calendar.
-    /// </summary>
-    /// <param name="calendar"></param>
-    /// <returns></returns>
-    public Task CreateCalendarAsync(Calendar calendar);
-
-    /// <summary>
-    /// Updates a calendar.
-    /// </summary>
-    /// <param name="calendar"></param>
-    /// <returns></returns>
-    public Task UpdateCalendarAsync(Calendar calendar);
-
-    /// <summary>
-    /// Deletes a calendar.
-    /// </summary>
-    /// <param name="calendar"></param>
-    /// <returns></returns>
-    public Task DeleteCalendarAsync(Calendar calendar);
+    public Task<List<CalendarResponse>> GetAllCalendarsAsync();
+    public Task<List<CalendarResponse>> GetCalendarsAsync(string email);
+    public Task CreateCalendarAsync(CalendarRequest request);
+    public Task UpdateCalendarAsync(CalendarRequest request);
+    public Task DeleteCalendarAsync(CalendarRequest request);
 }

@@ -1,4 +1,6 @@
-﻿using Maroik.Core.Contract.Interfaces;
+using Mapster;
+﻿using Maroik.Core.Contract.Dtos;
+using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.PostgreSQL.Models;
 using Maroik.WebSite.Utilities;
 using Maroik.WebSite.Models.ViewModels.Account;
@@ -41,7 +43,7 @@ public class AccountController : Controller
 
         if (isAccountSessionExist) // If logged in
         {
-            Account loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)); // Get Session
+            AccountResponse loginedAccount = JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)); // Get Session
             if (loginedAccount.Role == Role.Admin) // If logged-in user role is Admin
             {
                 return RedirectToAction("AdminIndex", "DashBoard");
@@ -85,7 +87,7 @@ public class AccountController : Controller
 
         if (ModelState.IsValid)
         {
-            Account tempAccount = await _accountRepository.GetAccountByEmailAsync(loginInputViewModel.Email);
+            AccountResponse tempAccount = await _accountRepository.GetAccountByEmailAsync(loginInputViewModel.Email);
 
             if (tempAccount == null) // no account exist
             {
@@ -113,13 +115,13 @@ public class AccountController : Controller
                 {
                     tempAccount.Locked = true;
                     tempAccount.Message = EnumHelper.GetDescription(AccountMessage.AccountLocked);
-                    await _accountRepository.UpdateAccountAsync(tempAccount);
+                    await _accountRepository.UpdateAccountAsync(tempAccount.Adapt<AccountRequest>());
                     TempData["Error"] = _localizer["Your Account is Locked, Please reset your password by clicking Forgot password Button"].Value;
                     return View();
                 }
                 else
                 {
-                    await _accountRepository.UpdateAccountAsync(tempAccount);
+                    await _accountRepository.UpdateAccountAsync(tempAccount.Adapt<AccountRequest>());
                     TempData["Error"] = _localizer["Email or Password is wrong"].Value;
                     return View();
                 }
@@ -128,7 +130,7 @@ public class AccountController : Controller
             if (tempAccount.EmailConfirmed == true && tempAccount.AgreedServiceTerms == true)
             {
                 tempAccount.LoginAttempt = 0;
-                await _accountRepository.UpdateAccountAsync(tempAccount);
+                await _accountRepository.UpdateAccountAsync(tempAccount.Adapt<AccountRequest>());
                 tempAccount.HashedPassword = null;
                 HttpContext.Session.Set(Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account), Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(tempAccount)));
 
@@ -181,7 +183,7 @@ public class AccountController : Controller
 
         if (isAccountSessionExist) // If logged in
         {
-            Account loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)); // Get Session
+            AccountResponse loginedAccount = JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)); // Get Session
             if (loginedAccount.Role == Role.Admin) // If logged-in user has Admin role
             {
                 return RedirectToAction("AdminIndex", "DashBoard");
@@ -221,7 +223,7 @@ public class AccountController : Controller
                     return View();
                 }
 
-                Account account = await _accountRepository.GetAccountByEmailAsync(loginInputViewModel.Email);
+                AccountResponse account = await _accountRepository.GetAccountByEmailAsync(loginInputViewModel.Email);
 
                 #region Proceeding with new registration
                 if (account == null) // No record created with the entered ID
@@ -232,7 +234,7 @@ public class AccountController : Controller
                     {
                         await _accountRepository.CreateAccountAsync
                             (
-                            new Account()
+                            new AccountRequest()
                             {
                                 Email = loginInputViewModel.Email,
                                 HashedPassword = _passwordService.HashPassword(loginInputViewModel.Password),
@@ -295,7 +297,7 @@ public class AccountController : Controller
                         {
                             await _accountRepository.UpdateAccountAsync
                                 (
-                                new Account()
+                                new AccountRequest()
                                 {
                                     Email = loginInputViewModel.Email,
                                     HashedPassword = _passwordService.HashPassword(loginInputViewModel.Password),
@@ -359,7 +361,7 @@ public class AccountController : Controller
                             {
                                 account.Updated = DateTime.UtcNow;
                                 account.Message = EnumHelper.GetDescription(AccountMessage.FailToMailSent);
-                                await _accountRepository.UpdateAccountAsync(account);
+                                await _accountRepository.UpdateAccountAsync(account.Adapt<AccountRequest>());
                             }
                             catch
                             {
@@ -374,7 +376,7 @@ public class AccountController : Controller
                         {
                             account.Message = EnumHelper.GetDescription(AccountMessage.VerifyEmail);
                             account.Updated = DateTime.UtcNow;
-                            await _accountRepository.UpdateAccountAsync(account);
+                            await _accountRepository.UpdateAccountAsync(account.Adapt<AccountRequest>());
                         }
                         catch
                         {
@@ -395,7 +397,7 @@ public class AccountController : Controller
                             account.Message = EnumHelper.GetDescription(AccountMessage.UserAlreadyCreated);
                             account.Updated = DateTime.UtcNow;
                             account.AgreedServiceTerms = true;
-                            await _accountRepository.UpdateAccountAsync(account);
+                            await _accountRepository.UpdateAccountAsync(account.Adapt<AccountRequest>());
                         }
                         catch
                         {
@@ -422,7 +424,7 @@ public class AccountController : Controller
 
             if (ModelState.IsValid) // Input validation
             {
-                Account account = await _accountRepository.GetAccountByEmailAsync(loginInputViewModel.Email);
+                AccountResponse account = await _accountRepository.GetAccountByEmailAsync(loginInputViewModel.Email);
 
                 #region No record found in DB query with received email when resending email (bug)
                 if (account == null) // No record created with inputted ID.
@@ -458,7 +460,7 @@ public class AccountController : Controller
                             {
                                 account.Updated = DateTime.UtcNow;
                                 account.Message = EnumHelper.GetDescription(AccountMessage.FailToMailSent);
-                                await _accountRepository.UpdateAccountAsync(account);
+                                await _accountRepository.UpdateAccountAsync(account.Adapt<AccountRequest>());
                             }
                             catch
                             {
@@ -473,7 +475,7 @@ public class AccountController : Controller
                         {
                             account.Message = EnumHelper.GetDescription(AccountMessage.VerifyEmail);
                             account.Updated = DateTime.UtcNow;
-                            await _accountRepository.UpdateAccountAsync(account);
+                            await _accountRepository.UpdateAccountAsync(account.Adapt<AccountRequest>());
                         }
                         catch
                         {
@@ -494,7 +496,7 @@ public class AccountController : Controller
                         {
                             account.Message = EnumHelper.GetDescription(AccountMessage.UserAlreadyCreated);
                             account.Updated = DateTime.UtcNow;
-                            await _accountRepository.UpdateAccountAsync(account);
+                            await _accountRepository.UpdateAccountAsync(account.Adapt<AccountRequest>());
                         }
                         catch
                         {
@@ -526,7 +528,7 @@ public class AccountController : Controller
 
         if (isAccountSessionExist) // If logged in
         {
-            Account loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)); // Get Session
+            AccountResponse loginedAccount = JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)); // Get Session
             if (loginedAccount.Role == Role.Admin) // If logged-in user role is Admin
             {
                 return RedirectToAction("AdminIndex", "DashBoard");
@@ -542,10 +544,10 @@ public class AccountController : Controller
         }
         else // If not logged in
         {
-            Account account = null;
+            AccountResponse account = null;
 
             #region 1. Compare inputted token[encrypted] with hashed tokens stored in all accounts to find the account.
-            foreach (Account tempAccount in await _accountRepository.GetAllAsync())
+            foreach (AccountResponse tempAccount in await _accountRepository.GetAllAsync())
             {
                 try
                 {
@@ -589,7 +591,7 @@ public class AccountController : Controller
                 account.Message = EnumHelper.GetDescription(AccountMessage.Success);
                 try
                 {
-                    await _accountRepository.UpdateAccountAsync(account);
+                    await _accountRepository.UpdateAccountAsync(account.Adapt<AccountRequest>());
                 }
                 catch  // 2. Exception occurred during update
                 {
@@ -611,7 +613,7 @@ public class AccountController : Controller
                 account.Message = EnumHelper.GetDescription(AccountMessage.UserAlreadyCreated);
                 try
                 {
-                    await _accountRepository.UpdateAccountAsync(account);
+                    await _accountRepository.UpdateAccountAsync(account.Adapt<AccountRequest>());
                 }
                 catch // 2. Exception occurred during update [should not happen].
                 {
@@ -637,7 +639,7 @@ public class AccountController : Controller
 
         if (isAccountSessionExist) // If logged in
         {
-            Account loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)); // Get Session
+            AccountResponse loginedAccount = JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)); // Get Session
             if (loginedAccount.Role == Role.Admin) // If logged-in user role is Admin
             {
                 return RedirectToAction("AdminIndex", "DashBoard");
@@ -666,7 +668,7 @@ public class AccountController : Controller
 
         if (ModelState.IsValid)
         {
-            Account account = await _accountRepository.GetAccountByEmailAsync(loginInputViewModel.Email);
+            AccountResponse account = await _accountRepository.GetAccountByEmailAsync(loginInputViewModel.Email);
 
             if (account == null) // No record created with inputted email.
             {
@@ -704,7 +706,7 @@ public class AccountController : Controller
                         Console.WriteLine(result); // Should log this with ActivityLog etc..
                         account.Updated = DateTime.UtcNow;
                         account.Message = EnumHelper.GetDescription(AccountMessage.FailToMailSent);
-                        await _accountRepository.UpdateAccountAsync(account);
+                        await _accountRepository.UpdateAccountAsync(account.Adapt<AccountRequest>());
                         ViewBag.mailSent = true;
                         ViewBag.sentEmailAddress = loginInputViewModel.Email;
                         return View();
@@ -714,7 +716,7 @@ public class AccountController : Controller
                     account.ResetPasswordToken = resetPasswordToken;
                     account.Updated = DateTime.UtcNow;
                     account.Message = EnumHelper.GetDescription(AccountMessage.ResetPasswordMail);
-                    await _accountRepository.UpdateAccountAsync(account);
+                    await _accountRepository.UpdateAccountAsync(account.Adapt<AccountRequest>());
                     ViewBag.mailSent = true;
                     ViewBag.sentEmailAddress = loginInputViewModel.Email;
                     return View();
@@ -743,7 +745,7 @@ public class AccountController : Controller
 
         if (isAccountSessionExist) // If logged in
         {
-            Account loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)); // Get Session
+            AccountResponse loginedAccount = JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)); // Get Session
             if (loginedAccount.Role == Role.Admin) // If logged-in user role is Admin
             {
                 return RedirectToAction("AdminIndex", "DashBoard");
@@ -759,10 +761,10 @@ public class AccountController : Controller
         }
         else // If not logged in
         {
-            Account account = null;
+            AccountResponse account = null;
 
             #region 1. Compare inputted token[encrypted] with hashed tokens stored in all accounts to find the account.
-            foreach (Account tempAccount in await _accountRepository.GetAllAsync())
+            foreach (AccountResponse tempAccount in await _accountRepository.GetAllAsync())
             {
                 try
                 {
@@ -824,10 +826,10 @@ public class AccountController : Controller
 
         if (ModelState.IsValid)
         {
-            Account account = null;
+            AccountResponse account = null;
 
             #region 1. Compare inputted token[encrypted] with hashed tokens stored in all accounts to find the account.
-            foreach (Account tempAccount in await _accountRepository.GetAllAsync())
+            foreach (AccountResponse tempAccount in await _accountRepository.GetAllAsync())
             {
                 try
                 {
@@ -879,7 +881,7 @@ public class AccountController : Controller
                 account.Message = EnumHelper.GetDescription(AccountMessage.SuccessToResetPassword);
                 try
                 {
-                    await _accountRepository.UpdateAccountAsync(account);
+                    await _accountRepository.UpdateAccountAsync(account.Adapt<AccountRequest>());
                 }
                 catch  // 2. Exception occurred during update
                 {

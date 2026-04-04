@@ -1,29 +1,10 @@
-using Maroik.Core.PostgreSQL.Models;
-using System.Collections.Generic;
-using System.Threading.Tasks;
+using Maroik.Core.Contract.Dtos;
 
 namespace Maroik.Core.Contract.Interfaces;
 
 public interface ICalendarEventReminderRepository
 {
-    /// <summary>
-    /// Gets all calendar event reminders for the calendar event.
-    /// </summary>
-    /// <param name="calendarEventId"></param>
-    /// <returns></returns>
-    public Task<IEnumerable<CalendarEventReminder>> GetCalendarEventRemindersAsync(long calendarEventId);
-
-    /// <summary>
-    /// Creates a calendar event reminder.
-    /// </summary>
-    /// <param name="calendarEventReminder"></param>
-    /// <returns></returns>
-    public Task CreateCalendarEventReminderAsync(CalendarEventReminder calendarEventReminder);
-
-    /// <summary>
-    /// Deletes calendar event reminders.
-    /// </summary>
-    /// <param name="calendarEventId"></param>
-    /// <returns></returns>
+    public Task<IEnumerable<CalendarEventReminderResponse>> GetCalendarEventRemindersAsync(long calendarEventId);
+    public Task CreateCalendarEventReminderAsync(CalendarEventReminderRequest request);
     public Task<int> DeleteCalendarEventReminderAsync(long calendarEventId);
 }

@@ -7,7 +7,7 @@
 @{
     Context.Session.TryGetValue(EnumHelper.GetDescription(Session.Account), out byte[] resultByte);
 
-    Account loginedAccount = await accountRepository.GetAccountByEmailAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+    AccountResponse loginedAccount = await accountRepository.GetAccountByEmailAsync(JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email);
 }
 <section class="content">
     <div class="container-fluid">

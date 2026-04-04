@@ -1,28 +1,10 @@
-using Maroik.Core.PostgreSQL.Models;
-using System.Collections.Generic;
-using System.Threading.Tasks;
+using Maroik.Core.Contract.Dtos;
 
 namespace Maroik.Core.Contract.Interfaces;
 
 public interface ICalendarSharedRepository
 {
-    /// <summary>
-    /// Gets all shared calendars.
-    /// </summary>
-    /// <returns></returns>
-    public Task<List<CalendarShared>> GetCalendarSharedAsync();
-
-    /// <summary>
-    /// Creates a shared calendar.
-    /// </summary>
-    /// <param name="calendarShared"></param>
-    /// <returns></returns>
-    public Task CreateCalendarSharedAsync(CalendarShared calendarShared);
-
-    /// <summary>
-    /// Updates a shared calendar.
-    /// </summary>
-    /// <param name="calendarShared"></param>
-    /// <returns></returns>
-    public Task UpdateCalendarSharedAsync(CalendarShared calendarShared);
+    public Task<List<CalendarSharedResponse>> GetCalendarSharedAsync();
+    public Task CreateCalendarSharedAsync(CalendarSharedRequest request);
+    public Task UpdateCalendarSharedAsync(CalendarSharedRequest request);
 }

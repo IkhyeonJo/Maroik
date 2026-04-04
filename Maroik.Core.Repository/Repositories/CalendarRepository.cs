@@ -1,10 +1,9 @@
+using Mapster;
+using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.PostgreSQL.Data;
 using Maroik.Core.PostgreSQL.Models;
 using Microsoft.EntityFrameworkCore;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace Maroik.Core.Repository.Repositories;
 
@@ -17,55 +16,31 @@ public class CalendarRepository : ICalendarRepository
         _context = context;
     }
 
-    /// <summary>
-    /// Gets all calendars.
-    /// </summary>
-    /// <returns></returns>
-    public async Task<List<Calendar>> GetAllCalendarsAsync()
+    public async Task<List<CalendarResponse>> GetAllCalendarsAsync()
     {
-        return await _context.Calendars.OrderBy(x => x.Name).ToListAsync();
+        return (await _context.Calendars.OrderBy(x => x.Name).ToListAsync()).Adapt<List<CalendarResponse>>();
     }
 
-    /// <summary>
-    /// Gets all calendars for the logged-in account.
-    /// </summary>
-    /// <param name="email"></param>
-    /// <returns></returns>
-    public async Task<List<Calendar>> GetCalendarsAsync(string email)
+    public async Task<List<CalendarResponse>> GetCalendarsAsync(string email)
     {
-        return await _context.Calendars.Where(x => x.AccountEmail == email).OrderBy(x => x.Name).ToListAsync();
+        return (await _context.Calendars.Where(x => x.AccountEmail == email).OrderBy(x => x.Name).ToListAsync()).Adapt<List<CalendarResponse>>();
     }
 
-    /// <summary>
-    /// Creates a calendar.
-    /// </summary>
-    /// <param name="calendar"></param>
-    /// <returns></returns>
-    public async Task CreateCalendarAsync(Calendar calendar)
+    public async Task CreateCalendarAsync(CalendarRequest request)
     {
-        _ = await _context.Calendars.AddAsync(calendar);
+        _ = await _context.Calendars.AddAsync(request.Adapt<Calendar>());
         _ = await _context.SaveChangesAsync();
     }
 
-    /// <summary>
-    /// Updates a calendar.
-    /// </summary>
-    /// <param name="calendar"></param>
-    /// <returns></returns>
-    public async Task UpdateCalendarAsync(Calendar calendar)
+    public async Task UpdateCalendarAsync(CalendarRequest request)
     {
-        _ = _context.Calendars.Update(calendar);
+        _ = _context.Calendars.Update(request.Adapt<Calendar>());
         _ = await _context.SaveChangesAsync();
     }
 
-    /// <summary>
-    /// Deletes a calendar.
-    /// </summary>
-    /// <param name="calendar"></param>
-    /// <returns></returns>
-    public async Task DeleteCalendarAsync(Calendar calendar)
+    public async Task DeleteCalendarAsync(CalendarRequest request)
     {
-        _ = _context.Calendars.Remove(calendar);
+        _ = _context.Calendars.Remove(request.Adapt<Calendar>());
         _ = await _context.SaveChangesAsync();
     }
 }

@@ -1,10 +1,9 @@
+using Mapster;
+using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.PostgreSQL.Data;
 using Maroik.Core.PostgreSQL.Models;
 using Microsoft.EntityFrameworkCore;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace Maroik.Core.Repository.Repositories;
 
@@ -17,32 +16,17 @@ public class CalendarEventReminderRepository : ICalendarEventReminderRepository
         _context = context;
     }
 
-    /// <summary>
-    /// Gets all calendar event reminders for the calendar event.
-    /// </summary>
-    /// <param name="calendarEventId"></param>
-    /// <returns></returns>
-    public async Task<IEnumerable<CalendarEventReminder>> GetCalendarEventRemindersAsync(long calendarEventId)
+    public async Task<IEnumerable<CalendarEventReminderResponse>> GetCalendarEventRemindersAsync(long calendarEventId)
     {
-        return await _context.CalendarEventReminders.Where(x => x.CalendarEventId == calendarEventId).ToListAsync();
+        return (await _context.CalendarEventReminders.Where(x => x.CalendarEventId == calendarEventId).ToListAsync()).Adapt<List<CalendarEventReminderResponse>>();
     }
 
-    /// <summary>
-    /// Creates a calendar event reminder.
-    /// </summary>
-    /// <param name="calendarEventReminder"></param>
-    /// <returns></returns>
-    public async Task CreateCalendarEventReminderAsync(CalendarEventReminder calendarEventReminder)
+    public async Task CreateCalendarEventReminderAsync(CalendarEventReminderRequest request)
     {
-        _ = await _context.CalendarEventReminders.AddAsync(calendarEventReminder);
+        _ = await _context.CalendarEventReminders.AddAsync(request.Adapt<CalendarEventReminder>());
         _ = await _context.SaveChangesAsync();
     }
 
-    /// <summary>
-    /// Deletes calendar event reminders.
-    /// </summary>
-    /// <param name="calendarEventId"></param>
-    /// <returns></returns>
     public async Task<int> DeleteCalendarEventReminderAsync(long calendarEventId)
     {
         return await _context.Database.ExecuteSqlInterpolatedAsync(

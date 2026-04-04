@@ -1,4 +1,5 @@
-﻿using Maroik.Core.Contract.Interfaces;
+﻿using Maroik.Core.Contract.Dtos;
+using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.PostgreSQL.Models;
 using Maroik.WebSite.Utilities;
 using Microsoft.AspNetCore.Mvc;
@@ -101,15 +102,15 @@ public class AuthorizationFilter : ActionFilterAttribute
                     return;
                 }
 
-                IEnumerable<Category> anonymousCategories = DbCache.AnonymousCategories;
-                IEnumerable<SubCategory> anonymousSubCategories = DbCache.AnonymousSubCategories;
+                IEnumerable<CategoryResponse> anonymousCategories = DbCache.AnonymousCategories;
+                IEnumerable<SubCategoryResponse> anonymousSubCategories = DbCache.AnonymousSubCategories;
 
                 #region If Category without SubCategory
-                IEnumerable<Category> singleCategories = from anonymousCategory in anonymousCategories
+                IEnumerable<CategoryResponse> singleCategories = from anonymousCategory in anonymousCategories
                                                          where !string.IsNullOrEmpty(anonymousCategory.Action)
                                                          select anonymousCategory; // Collection of categories without sub-categories
 
-                foreach (Category singleCategory in singleCategories)
+                foreach (CategoryResponse singleCategory in singleCategories)
                 {
                     if (singleCategory.Controller == currentControllerName && singleCategory.Action == currentActionName)
                     {
@@ -120,16 +121,16 @@ public class AuthorizationFilter : ActionFilterAttribute
                 #endregion
 
                 #region If Category with SubCategory
-                IEnumerable<Category> nonSingleCategories = from anonymousCategory in anonymousCategories
+                IEnumerable<CategoryResponse> nonSingleCategories = from anonymousCategory in anonymousCategories
                                                             where string.IsNullOrEmpty(anonymousCategory.Action)
                                                             select anonymousCategory; // Collection of categories with sub-categories
 
-                foreach (Category nonSingleCategory in nonSingleCategories)
+                foreach (CategoryResponse nonSingleCategory in nonSingleCategories)
                 {
-                    IEnumerable<SubCategory> nonSingleCategorysSubCategories = from anonymousSubCategory in anonymousSubCategories
+                    IEnumerable<SubCategoryResponse> nonSingleCategorysSubCategories = from anonymousSubCategory in anonymousSubCategories
                                                                                where anonymousSubCategory.CategoryId == nonSingleCategory.Id
                                                                                select anonymousSubCategory;
-                    foreach (SubCategory nonSingleCategorysSubCategory in nonSingleCategorysSubCategories)
+                    foreach (SubCategoryResponse nonSingleCategorysSubCategory in nonSingleCategorysSubCategories)
                     {
                         if (nonSingleCategory.Controller == currentControllerName && nonSingleCategorysSubCategory.Action == currentActionName)
                         {
@@ -162,19 +163,19 @@ public class AuthorizationFilter : ActionFilterAttribute
                 }
 
                 _ = context.HttpContext.Session.TryGetValue(Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account), out byte[] resultByte);
-                Account loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)); // Get Session
+                AccountResponse loginedAccount = JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)); // Get Session
 
                 if (loginedAccount.Role == Role.Admin) // If logged-in user has Admin role
                 {
-                    IEnumerable<Category> adminCategories = DbCache.AdminCategories;
-                    IEnumerable<SubCategory> adminSubCategories = DbCache.AdminSubCategories;
+                    IEnumerable<CategoryResponse> adminCategories = DbCache.AdminCategories;
+                    IEnumerable<SubCategoryResponse> adminSubCategories = DbCache.AdminSubCategories;
 
                     #region If Category without SubCategory
-                    IEnumerable<Category> singleCategories = from adminCategory in adminCategories
+                    IEnumerable<CategoryResponse> singleCategories = from adminCategory in adminCategories
                                                              where !string.IsNullOrEmpty(adminCategory.Action)
                                                              select adminCategory; // Collection of categories without sub-categories
 
-                    foreach (Category singleCategory in singleCategories)
+                    foreach (CategoryResponse singleCategory in singleCategories)
                     {
                         if (singleCategory.Controller == currentControllerName && singleCategory.Action == currentActionName)
                         {
@@ -185,16 +186,16 @@ public class AuthorizationFilter : ActionFilterAttribute
                     #endregion
 
                     #region If Category with SubCategory
-                    IEnumerable<Category> nonSingleCategories = from adminCategory in adminCategories
+                    IEnumerable<CategoryResponse> nonSingleCategories = from adminCategory in adminCategories
                                                                 where string.IsNullOrEmpty(adminCategory.Action)
                                                                 select adminCategory; // Collection of categories with sub-categories
 
-                    foreach (Category nonSingleCategory in nonSingleCategories)
+                    foreach (CategoryResponse nonSingleCategory in nonSingleCategories)
                     {
-                        IEnumerable<SubCategory> nonSingleCategorysSubCategories = from adminSubCategory in adminSubCategories
+                        IEnumerable<SubCategoryResponse> nonSingleCategorysSubCategories = from adminSubCategory in adminSubCategories
                                                                                    where adminSubCategory.CategoryId == nonSingleCategory.Id
                                                                                    select adminSubCategory;
-                        foreach (SubCategory nonSingleCategorysSubCategory in nonSingleCategorysSubCategories)
+                        foreach (SubCategoryResponse nonSingleCategorysSubCategory in nonSingleCategorysSubCategories)
                         {
                             if (nonSingleCategory.Controller == currentControllerName && nonSingleCategorysSubCategory.Action == currentActionName)
                             {
@@ -211,15 +212,15 @@ public class AuthorizationFilter : ActionFilterAttribute
                 }
                 else if (loginedAccount.Role == Role.User) // If logged-in user has User role
                 {
-                    IEnumerable<Category> userCategories = DbCache.UserCategories;
-                    IEnumerable<SubCategory> userSubCategories = DbCache.UserSubCategories;
+                    IEnumerable<CategoryResponse> userCategories = DbCache.UserCategories;
+                    IEnumerable<SubCategoryResponse> userSubCategories = DbCache.UserSubCategories;
 
                     #region If Category without SubCategory
-                    IEnumerable<Category> singleCategories = from userCategory in userCategories
+                    IEnumerable<CategoryResponse> singleCategories = from userCategory in userCategories
                                                              where !string.IsNullOrEmpty(userCategory.Action)
                                                              select userCategory; // Collection of categories without sub-categories
 
-                    foreach (Category singleCategory in singleCategories)
+                    foreach (CategoryResponse singleCategory in singleCategories)
                     {
                         if (singleCategory.Controller == currentControllerName && singleCategory.Action == currentActionName)
                         {
@@ -230,16 +231,16 @@ public class AuthorizationFilter : ActionFilterAttribute
                     #endregion
 
                     #region If Category with SubCategory
-                    IEnumerable<Category> nonSingleCategories = from userCategory in userCategories
+                    IEnumerable<CategoryResponse> nonSingleCategories = from userCategory in userCategories
                                                                 where string.IsNullOrEmpty(userCategory.Action)
                                                                 select userCategory; // Collection of categories with sub-categories
 
-                    foreach (Category nonSingleCategory in nonSingleCategories)
+                    foreach (CategoryResponse nonSingleCategory in nonSingleCategories)
                     {
-                        IEnumerable<SubCategory> nonSingleCategorysSubCategories = from userSubCategory in userSubCategories
+                        IEnumerable<SubCategoryResponse> nonSingleCategorysSubCategories = from userSubCategory in userSubCategories
                                                                                    where userSubCategory.CategoryId == nonSingleCategory.Id
                                                                                    select userSubCategory;
-                        foreach (SubCategory nonSingleCategorysSubCategory in nonSingleCategorysSubCategories)
+                        foreach (SubCategoryResponse nonSingleCategorysSubCategory in nonSingleCategorysSubCategories)
                         {
                             if (nonSingleCategory.Controller == currentControllerName && nonSingleCategorysSubCategory.Action == currentActionName)
                             {
@@ -277,8 +278,8 @@ public class AuthorizationFilter : ActionFilterAttribute
                     }
                 }
 
-                IEnumerable<Category> anonymousCategories = DbCache.AnonymousCategories;
-                foreach (Category anonymousCategory in anonymousCategories)
+                IEnumerable<CategoryResponse> anonymousCategories = DbCache.AnonymousCategories;
+                foreach (CategoryResponse anonymousCategory in anonymousCategories)
                 {
                     existingHttpPostMethods = existingControllers
                     .Where(type => type.Name == $"{anonymousCategory.Controller}Controller") // When permission is AnonymousCategory, only registered Category's Controller name is accessible
@@ -314,12 +315,12 @@ public class AuthorizationFilter : ActionFilterAttribute
             else if (isAccountSessionExist == true) // If logged in
             {
                 _ = context.HttpContext.Session.TryGetValue(Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account), out byte[] resultByte);
-                Account loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)); // Get Session
+                AccountResponse loginedAccount = JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)); // Get Session
 
                 if (loginedAccount.Role == Role.Admin) // If logged-in user has Admin role
                 {
-                    IEnumerable<Category> adminCategories = DbCache.AdminCategories;
-                    foreach (Category adminCategory in adminCategories)
+                    IEnumerable<CategoryResponse> adminCategories = DbCache.AdminCategories;
+                    foreach (CategoryResponse adminCategory in adminCategories)
                     {
                         IEnumerable<MethodInfo> existingHttpPostMethods = existingControllers
                         .Where(type => type.Name == $"{adminCategory.Controller}Controller") // When permission is Admin, only registered Category's Controller name is accessible
@@ -353,8 +354,8 @@ public class AuthorizationFilter : ActionFilterAttribute
                 }
                 else if (loginedAccount.Role == Role.User) // If logged-in user has User role
                 {
-                    IEnumerable<Category> userCategories = DbCache.UserCategories;
-                    foreach (Category userCategory in userCategories)
+                    IEnumerable<CategoryResponse> userCategories = DbCache.UserCategories;
+                    foreach (CategoryResponse userCategory in userCategories)
                     {
                         IEnumerable<MethodInfo> existingHttpPostMethods = existingControllers
                         .Where(type => type.Name == $"{userCategory.Controller}Controller") // When permission is User, only registered Category's Controller name is accessible

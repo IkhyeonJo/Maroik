@@ -1,4 +1,6 @@
-﻿using Maroik.Core.Contract.Interfaces;
+using Mapster;
+﻿using Maroik.Core.Contract.Dtos;
+using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.PostgreSQL.Models;
 using Maroik.WebSite.Extensions;
 using Maroik.WebSite.Utilities;
@@ -68,11 +70,11 @@ public class DashBoardController(
     {
         _ = HttpContext.Session.TryGetValue(EnumHelper.GetDescription(Session.Account), out var resultByte);
 
-        var loginedAccountTimeZoneIanaId = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte ?? [])).TimeZoneIanaId;
+        var loginedAccountTimeZoneIanaId = JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte ?? [])).TimeZoneIanaId;
 
         var userIndexOutputViewModel = new UserIndexOutputViewModel();
-        var currentLoginUser = await accountRepository.GetAccountByEmailAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte ?? [])).Email);
-        var assets = (await assetRepository.GetAssetsAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte ?? [])).Email)) ?? [];
+        var currentLoginUser = await accountRepository.GetAccountByEmailAsync(JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte ?? [])).Email);
+        var assets = (await assetRepository.GetAssetsAsync(JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte ?? [])).Email)) ?? [];
 
         #region For Demo User [Only Demo purpose]
         if (currentLoginUser?.Email == "demo@maroik.com")
@@ -124,7 +126,7 @@ public class DashBoardController(
                 if (currentLoginUser != null)
                 {
                     currentLoginUser.DefaultMonetaryUnit = null;
-                    await accountRepository.UpdateAccountAsync(currentLoginUser);
+                    await accountRepository.UpdateAccountAsync(currentLoginUser.Adapt<AccountRequest>());
                 }
 
                 break;
@@ -139,7 +141,7 @@ public class DashBoardController(
                 if (currentLoginUser != null)
                 {
                     currentLoginUser.DefaultMonetaryUnit = mostUsedMonetaryUnit?.Key;
-                    await accountRepository.UpdateAccountAsync(currentLoginUser);
+                    await accountRepository.UpdateAccountAsync(currentLoginUser.Adapt<AccountRequest>());
                 }
 
                 break;
@@ -149,7 +151,7 @@ public class DashBoardController(
                 if (currentLoginUser?.DefaultMonetaryUnit != null && assets.Count == 0)
                 {
                     currentLoginUser.DefaultMonetaryUnit = null;
-                    await accountRepository.UpdateAccountAsync(currentLoginUser);
+                    await accountRepository.UpdateAccountAsync(currentLoginUser.Adapt<AccountRequest>());
                 }
                 else if (currentLoginUser?.DefaultMonetaryUnit != null && assets.Count != 0)
                 {
@@ -160,7 +162,7 @@ public class DashBoardController(
                             .OrderByDescending(g => g.Count())
                             .FirstOrDefault();
                         currentLoginUser.DefaultMonetaryUnit = mostUsedMonetaryUnit?.Key;
-                        await accountRepository.UpdateAccountAsync(currentLoginUser);
+                        await accountRepository.UpdateAccountAsync(currentLoginUser.Adapt<AccountRequest>());
                     }
                 }
 
@@ -175,9 +177,9 @@ public class DashBoardController(
         if (userIndexOutputViewModel.DefaultMonetaryUnit != null)
         {
             var currentYear = $"{year}";
-            var currentLoginUserEmail = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte ?? [])).Email;
+            var currentLoginUserEmail = JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte ?? [])).Email;
 
-            var incomes = await incomeRepository.GetCurrentYearIncomesAsync(currentLoginUserEmail, currentYear, JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte ?? [])).TimeZoneIanaId);
+            var incomes = await incomeRepository.GetCurrentYearIncomesAsync(currentLoginUserEmail, currentYear, JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte ?? [])).TimeZoneIanaId);
             userIndexOutputViewModel.IncomeYearOutputViewModels = [];
             foreach (var item in incomes)
             {
@@ -196,7 +198,7 @@ public class DashBoardController(
                 });
             }
 
-            var expenditures = await expenditureRepository.GetCurrentYearExpendituresAsync(currentLoginUserEmail, currentYear, JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte ?? [])).TimeZoneIanaId);
+            var expenditures = await expenditureRepository.GetCurrentYearExpendituresAsync(currentLoginUserEmail, currentYear, JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte ?? [])).TimeZoneIanaId);
             userIndexOutputViewModel.ExpenditureYearOutputViewModels = [];
             foreach (var item in expenditures)
             {
@@ -224,9 +226,9 @@ public class DashBoardController(
         if (userIndexOutputViewModel.DefaultMonetaryUnit != null)
         {
             var currentYearMonth = $"{year}-{month}";
-            var currentLoginUserEmail = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte ?? [])).Email;
+            var currentLoginUserEmail = JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte ?? [])).Email;
 
-            var incomes = await incomeRepository.GetCurrentYearMonthIncomesAsync(currentLoginUserEmail, currentYearMonth, JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte ?? [])).TimeZoneIanaId);
+            var incomes = await incomeRepository.GetCurrentYearMonthIncomesAsync(currentLoginUserEmail, currentYearMonth, JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte ?? [])).TimeZoneIanaId);
             userIndexOutputViewModel.IncomeYearMonthOutputViewModels = [];
             foreach (var item in incomes)
             {
@@ -245,7 +247,7 @@ public class DashBoardController(
                 });
             }
 
-            var expenditures = await expenditureRepository.GetCurrentYearMonthExpendituresAsync(currentLoginUserEmail, currentYearMonth, JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte ?? [])).TimeZoneIanaId);
+            var expenditures = await expenditureRepository.GetCurrentYearMonthExpendituresAsync(currentLoginUserEmail, currentYearMonth, JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte ?? [])).TimeZoneIanaId);
             userIndexOutputViewModel.ExpenditureYearMonthOutputViewModels = [];
             foreach (var item in expenditures)
             {
@@ -277,8 +279,8 @@ public class DashBoardController(
         #endregion
 
         #region StartYear
-        var firstCreatedIncome = (await incomeRepository.GetIncomesAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte ?? [])).Email)).OrderBy(x => x.Created).ToList().FirstOrDefault() ?? new Income();
-        var firstCreatedExpenditure = (await expenditureRepository.GetExpendituresAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte ?? [])).Email)).OrderBy(x => x.Created).ToList().FirstOrDefault() ?? new Expenditure();
+        var firstCreatedIncome = (await incomeRepository.GetIncomesAsync(JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte ?? [])).Email)).OrderBy(x => x.Created).ToList().FirstOrDefault() ?? new IncomeResponse();
+        var firstCreatedExpenditure = (await expenditureRepository.GetExpendituresAsync(JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte ?? [])).Email)).OrderBy(x => x.Created).ToList().FirstOrDefault() ?? new ExpenditureResponse();
 
         if (firstCreatedIncome.Created == DateTime.MinValue)
         {
@@ -318,15 +320,15 @@ public class DashBoardController(
         try
         {
             _ = HttpContext.Session.TryGetValue(EnumHelper.GetDescription(Session.Account), out var resultByte);
-            var assets = (await assetRepository.GetAssetsAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte ?? [])).Email)) ?? [];
+            var assets = (await assetRepository.GetAssetsAsync(JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte ?? [])).Email)) ?? [];
 
-            var currentLoginUser = await accountRepository.GetAccountByEmailAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte ?? [])).Email);
+            var currentLoginUser = await accountRepository.GetAccountByEmailAsync(JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte ?? [])).Email);
 
             currentLoginUser.DefaultMonetaryUnit = !assets.Select(x => x.MonetaryUnit).Distinct().ToList().Contains(userIndexInputViewModel.DefaultMonetaryUnit)
                 ? null
                 : userIndexInputViewModel.DefaultMonetaryUnit;
 
-            await accountRepository.UpdateAccountAsync(currentLoginUser);
+            await accountRepository.UpdateAccountAsync(currentLoginUser.Adapt<AccountRequest>());
 
             return Json(new { result = true });
 
@@ -347,7 +349,7 @@ public class DashBoardController(
         var isAccountSessionExist = HttpContext.Session.TryGetValue(EnumHelper.GetDescription(Session.Account), out var resultByte);
 
         if (!isAccountSessionExist) return View();
-        var loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte));
+        var loginedAccount = JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte));
         return loginedAccount.Role switch
         {
             Role.Admin => RedirectToAction("AdminIndex", "DashBoard"),

@@ -1,38 +1,12 @@
-using Maroik.Core.PostgreSQL.Models;
-using System.Collections.Generic;
-using System.Threading.Tasks;
+using Maroik.Core.Contract.Dtos;
 
 namespace Maroik.Core.Contract.Interfaces;
 
 public interface ISubCategoryRepository
 {
-    /// <summary>
-    /// Gets all subcategories.
-    /// </summary>
-    /// <returns></returns>
-    public Task<IEnumerable<SubCategory>> GetSubCategoryAsync();
-    /// <summary>
-    /// Gets subcategories by permission.
-    /// </summary>
-    /// <param name="role"></param>
-    /// <returns></returns>
-    public Task<IEnumerable<SubCategory>> GetSubCategoryByRoleAsync(string role);
-    /// <summary>
-    /// Creates a subcategory.
-    /// </summary>
-    /// <param name="subCategory"></param>
-    /// <returns></returns>
-    public Task CreateSubCategoryAsync(SubCategory subCategory);
-    /// <summary>
-    /// Updates a subcategory.
-    /// </summary>
-    /// <param name="subCategory"></param>
-    /// <returns></returns>
-    public Task UpdateSubCategoryAsync(SubCategory subCategory);
-    /// <summary>
-    /// Removes a subcategory.
-    /// </summary>
-    /// <param name="subCategory"></param>
-    /// <returns></returns>
-    public Task DeleteSubCategoryAsync(SubCategory subCategory);
+    public Task<IEnumerable<SubCategoryResponse>> GetSubCategoryAsync();
+    public Task<IEnumerable<SubCategoryResponse>> GetSubCategoryByRoleAsync(string role);
+    public Task CreateSubCategoryAsync(SubCategoryRequest request);
+    public Task UpdateSubCategoryAsync(SubCategoryRequest request);
+    public Task DeleteSubCategoryAsync(SubCategoryRequest request);
 }

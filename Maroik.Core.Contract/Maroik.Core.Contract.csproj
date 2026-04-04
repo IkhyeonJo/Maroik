@@ -6,8 +6,5 @@
         <Nullable>enable</Nullable>
     </PropertyGroup>
 
-    <ItemGroup>
-        <ProjectReference Include="..\Maroik.Core.PostgreSQL\Maroik.Core.PostgreSQL.csproj" />
-    </ItemGroup>
 
 </Project>

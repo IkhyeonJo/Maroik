@@ -8,13 +8,13 @@
 @{
     string currentCulture = Context.Features.Get<Microsoft.AspNetCore.Localization.IRequestCultureFeature>().RequestCulture.Culture.Name;
     Context.Session.TryGetValue(Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account), out byte[] resultByte);
-    string loginedAccountTimeZoneIanaId = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId;
+    string loginedAccountTimeZoneIanaId = JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId;
 
-    Account loginedAccount = new Account();
+    AccountResponse loginedAccount = new AccountResponse();
 
     if (resultByte != null) // 로그인이 된 상태라면
     {
-        loginedAccount = await accountRepository.GetAccountByEmailAsync(JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte)).Email);
+        loginedAccount = await accountRepository.GetAccountByEmailAsync(JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email);
     }
     else // 로그인이 되지 않은 상태라면
     {
@@ -157,7 +157,7 @@
                         </div>
                         <div class="card-body">
                             <div id="myCalendars">
-                                @foreach (Calendar calendar in Model.Calendars)
+                                @foreach (CalendarResponse calendar in Model.Calendars)
                                 {
                                     <label id="@($"lblCalendar{calendar.Id}")" style="position: relative; border:1px solid #ccc; padding:10px; margin:0 0 10px; display:block">
                                         <input type="checkbox" class="chkCalendar" style="accent-color:@calendar.HtmlColorCode" checked />
@@ -181,7 +181,7 @@
                         </div>
                         <div class="card-body">
                             <div id="otherCalendars">
-                                @foreach (Calendar otherCalendar in Model.OtherCalendars)
+                                @foreach (CalendarResponse otherCalendar in Model.OtherCalendars)
                                 {
                                     <label id="@($"lblOtherCalendar{otherCalendar.Id}")" style="position: relative; border:1px solid #ccc; padding:10px; margin:0 0 10px; display:block">
                                         <input type="checkbox" class="chkOtherCalendar" style="accent-color:@otherCalendar.HtmlColorCode" checked />
@@ -613,7 +613,7 @@
                                 <label for="createCalendarEventMyCalendar">@localizer["My Calendar"].Value</label>
                                 <br />
                                 <select id="createCalendarEventMyCalendar" name="createCalendarEventMyCalendar" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
-                                    @foreach (Calendar calendar in Model.Calendars)
+                                    @foreach (CalendarResponse calendar in Model.Calendars)
                                     {
                                         <option value="@calendar.Id">@calendar.Name</option>
                                     }

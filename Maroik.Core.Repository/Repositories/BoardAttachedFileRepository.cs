@@ -1,9 +1,9 @@
+using Mapster;
+using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.PostgreSQL.Data;
 using Maroik.Core.PostgreSQL.Models;
 using Microsoft.EntityFrameworkCore;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 
 namespace Maroik.Core.Repository.Repositories;
 
@@ -15,34 +15,21 @@ public class BoardAttachedFileRepository : IBoardAttachedFileRepository
     {
         _context = context;
     }
-    /// <summary>
-    /// Gets all registered accounts.
-    /// </summary>
-    /// <returns></returns>
-    public async Task<List<BoardAttachedFile>> GetAllAsync()
+
+    public async Task<List<BoardAttachedFileResponse>> GetAllAsync()
     {
-        return await _context.BoardAttachedFiles.ToListAsync();
+        return (await _context.BoardAttachedFiles.ToListAsync()).Adapt<List<BoardAttachedFileResponse>>();
     }
 
-    /// <summary>
-    /// Saves an attached file.
-    /// </summary>
-    /// <param name="boardAttachedFile"></param>
-    /// <returns></returns>
-    public async Task SaveBoardAttachedFileAsync(BoardAttachedFile boardAttachedFile)
+    public async Task SaveBoardAttachedFileAsync(BoardAttachedFileRequest request)
     {
-        _ = await _context.BoardAttachedFiles.AddAsync(boardAttachedFile);
+        _ = await _context.BoardAttachedFiles.AddAsync(request.Adapt<BoardAttachedFile>());
         _ = await _context.SaveChangesAsync();
     }
 
-    /// <summary>
-    /// Updates an attached file.
-    /// </summary>
-    /// <param name="boardAttachedFile"></param>
-    /// <returns></returns>
-    public async Task UpdateBoardAttachedFileAsync(BoardAttachedFile boardAttachedFile)
+    public async Task UpdateBoardAttachedFileAsync(BoardAttachedFileRequest request)
     {
-        _ = _context.BoardAttachedFiles.Update(boardAttachedFile);
+        _ = _context.BoardAttachedFiles.Update(request.Adapt<BoardAttachedFile>());
         _ = await _context.SaveChangesAsync();
     }
 }

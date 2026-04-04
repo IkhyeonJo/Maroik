@@ -1,4 +1,4 @@
-﻿using Maroik.Core.PostgreSQL.Models;
+﻿using Maroik.Core.Contract.Dtos;
 using Maroik.WebSite.Utilities;
 using Newtonsoft.Json;
 using System.Text;
@@ -25,7 +25,7 @@ public class RoleBasedStaticFileMiddleware
 
             if (resultByte != null)
             {
-                Account loginedAccount = JsonConvert.DeserializeObject<Account>(Encoding.Default.GetString(resultByte));
+                AccountResponse loginedAccount = JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte));
                 userRole = loginedAccount.Role;
             }
 

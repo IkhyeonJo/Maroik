@@ -1,10 +1,9 @@
+using Mapster;
+using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.PostgreSQL.Data;
 using Maroik.Core.PostgreSQL.Models;
 using Microsoft.EntityFrameworkCore;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace Maroik.Core.Repository.Repositories;
 
@@ -16,52 +15,31 @@ public class CalendarEventAttachedFileRepository : ICalendarEventAttachedFileRep
     {
         _context = context;
     }
-    /// <summary>
-    /// Gets all registered files.
-    /// </summary>
-    /// <returns></returns>
-    public async Task<List<CalendarEventAttachedFile>> GetAllAsync()
+
+    public async Task<List<CalendarEventAttachedFileResponse>> GetAllAsync()
     {
-        return await _context.CalendarEventAttachedFiles.ToListAsync();
+        return (await _context.CalendarEventAttachedFiles.ToListAsync()).Adapt<List<CalendarEventAttachedFileResponse>>();
     }
 
-    /// <summary>
-    /// Gets an attached file.
-    /// </summary>
-    /// <param name="calendarEventId"></param>
-    /// <returns></returns>
-    public async Task<CalendarEventAttachedFile> GetCalendarEventAttachedFileAsync(long calendarEventId)
+    public async Task<CalendarEventAttachedFileResponse?> GetCalendarEventAttachedFileAsync(long calendarEventId)
     {
-        return await _context.CalendarEventAttachedFiles.Where(x => x.CalendarEventId == calendarEventId).FirstOrDefaultAsync();
+        CalendarEventAttachedFile? file = await _context.CalendarEventAttachedFiles
+            .Where(x => x.CalendarEventId == calendarEventId).FirstOrDefaultAsync();
+        return file?.Adapt<CalendarEventAttachedFileResponse>();
     }
 
-    /// <summary>
-    /// Saves an attached file.
-    /// </summary>
-    /// <param name="calendarEventAttachedFile"></param>
-    /// <returns></returns>
-    public async Task SaveCalendarEventAttachedFileAsync(CalendarEventAttachedFile calendarEventAttachedFile)
+    public async Task SaveCalendarEventAttachedFileAsync(CalendarEventAttachedFileRequest request)
     {
-        _ = await _context.CalendarEventAttachedFiles.AddAsync(calendarEventAttachedFile);
+        _ = await _context.CalendarEventAttachedFiles.AddAsync(request.Adapt<CalendarEventAttachedFile>());
         _ = await _context.SaveChangesAsync();
     }
 
-    /// <summary>
-    /// Updates an attached file.
-    /// </summary>
-    /// <param name="calendarEventAttachedFile"></param>
-    /// <returns></returns>
-    public async Task UpdateCalendarEventAttachedFileAsync(CalendarEventAttachedFile calendarEventAttachedFile)
+    public async Task UpdateCalendarEventAttachedFileAsync(CalendarEventAttachedFileRequest request)
     {
-        _ = _context.CalendarEventAttachedFiles.Update(calendarEventAttachedFile);
+        _ = _context.CalendarEventAttachedFiles.Update(request.Adapt<CalendarEventAttachedFile>());
         _ = await _context.SaveChangesAsync();
     }
 
-    /// <summary>
-    /// Deletes attached files.
-    /// </summary>
-    /// <param name="calendarEventId"></param>
-    /// <returns></returns>
     public async Task<int> DeleteCalendarEventAttachedFileAsync(long calendarEventId)
     {
         return await _context.Database.ExecuteSqlInterpolatedAsync

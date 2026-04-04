@@ -1,4 +1,4 @@
-﻿using Maroik.Core.PostgreSQL.Models;
+﻿using Maroik.Core.Contract.Dtos;
 
 namespace Maroik.WebSite.Models.ViewModels.Calendar;
 
@@ -14,10 +14,10 @@ public class CalendarEventOutputViewModel
     public string EndDateTimeZoneIanaId { get; set; }
     public string Location { get; set; }
     public string Description { get; set; }
-    public CalendarEventAttachedFile CalendarEventAttachedFile { get; set; }
+    public CalendarEventAttachedFileResponse CalendarEventAttachedFile { get; set; }
     public string CalendarEventAttachedFileBase64Data { get; set; }
     public string CalendarEventAttachedFileContentType { get; set; }
-    public List<Maroik.Core.PostgreSQL.Models.Calendar> Calendars { get; set; }
+    public List<CalendarResponse> Calendars { get; set; }
     public string Status { get; set; }
     public string SerializedCalendarReminders { get; set; }
     public string HtmlColorCode { get; set; }

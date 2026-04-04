@@ -1,5 +1,7 @@
+using Mapster;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.PostgreSQL.Data;
+using Maroik.Core.Repository.Mappings;
 using Maroik.Core.Repository.Repositories;
 using Maroik.WebSite.Utilities;
 using Maroik.WebSite.Extensions;
@@ -62,6 +64,12 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
         npgsqlOptions => npgsqlOptions.EnableRetryOnFailure(0) // Set to 0 to disable
     ).EnableSensitiveDataLogging()
 );
+#endregion
+
+#region Mapster
+TypeAdapterConfig globalConfig = TypeAdapterConfig.GlobalSettings;
+globalConfig.Scan(typeof(MappingConfig).Assembly);
+builder.Services.AddSingleton(globalConfig);
 #endregion
 
 #region AddRepositories

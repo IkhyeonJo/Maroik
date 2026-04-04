@@ -2,8 +2,8 @@
 
 public class CalendarOutputViewModel
 {
-    public IEnumerable<Maroik.Core.PostgreSQL.Models.Calendar> Calendars { get; set; } = [];
+    public IEnumerable<Maroik.Core.Contract.Dtos.CalendarResponse> Calendars { get; set; } = [];
     public IEnumerable<CalendarEventOutputViewModel> CalendarEventOutputViewModels { get; set; } = [];
-    public IEnumerable<Maroik.Core.PostgreSQL.Models.Calendar> OtherCalendars { get; set; } = [];
+    public IEnumerable<Maroik.Core.Contract.Dtos.CalendarResponse> OtherCalendars { get; set; } = [];
     public IEnumerable<CalendarEventOutputViewModel> OtherCalendarEventOutputViewModels { get; set; } = [];
 }

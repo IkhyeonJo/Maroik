@@ -1,10 +1,9 @@
+using Mapster;
+using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.PostgreSQL.Data;
 using Maroik.Core.PostgreSQL.Models;
 using Microsoft.EntityFrameworkCore;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace Maroik.Core.Repository.Repositories;
 
@@ -17,54 +16,31 @@ public class SubCategoryRepository : ISubCategoryRepository
         _context = context;
     }
 
-    /// <summary>
-    /// Gets all subcategories.
-    /// </summary>
-    /// <returns></returns>
-    public async Task<IEnumerable<SubCategory>> GetSubCategoryAsync()
+    public async Task<IEnumerable<SubCategoryResponse>> GetSubCategoryAsync()
     {
-        return await _context.SubCategories.ToListAsync();
+        return (await _context.SubCategories.ToListAsync()).Adapt<List<SubCategoryResponse>>();
     }
-    /// <summary>
-    /// Gets subcategories by permission.
-    /// </summary>
-    /// <param name="role"></param>
-    /// <returns></returns>
-    public async Task<IEnumerable<SubCategory>> GetSubCategoryByRoleAsync(string role)
+
+    public async Task<IEnumerable<SubCategoryResponse>> GetSubCategoryByRoleAsync(string role)
     {
-        return await _context.SubCategories
-                .Where(a => a.Role == role)
-                .OrderBy(a => a.Order)
-                .ToListAsync();
+        return (await _context.SubCategories.Where(a => a.Role == role).OrderBy(a => a.Order).ToListAsync()).Adapt<List<SubCategoryResponse>>();
     }
-    /// <summary>
-    /// Creates a subcategory.
-    /// </summary>
-    /// <param name="subCategory"></param>
-    /// <returns></returns>
-    public async Task CreateSubCategoryAsync(SubCategory subCategory)
+
+    public async Task CreateSubCategoryAsync(SubCategoryRequest request)
     {
-        _ = await _context.SubCategories.AddAsync(subCategory);
+        _ = await _context.SubCategories.AddAsync(request.Adapt<SubCategory>());
         _ = await _context.SaveChangesAsync();
     }
-    /// <summary>
-    /// Updates a subcategory.
-    /// </summary>
-    /// <param name="category"></param>
-    /// <returns></returns>
-    public async Task UpdateSubCategoryAsync(SubCategory subCategory)
+
+    public async Task UpdateSubCategoryAsync(SubCategoryRequest request)
     {
-        _ = _context.SubCategories.Update(subCategory);
+        _ = _context.SubCategories.Update(request.Adapt<SubCategory>());
         _ = await _context.SaveChangesAsync();
     }
-    /// <summary>
-    /// Removes a subcategory.
-    /// </summary>
-    /// <param name="category"></param>
-    /// <returns></returns>
-    public async Task DeleteSubCategoryAsync(SubCategory subCategory)
+
+    public async Task DeleteSubCategoryAsync(SubCategoryRequest request)
     {
-        _ = _context.SubCategories.Remove(subCategory);
+        _ = _context.SubCategories.Remove(request.Adapt<SubCategory>());
         _ = await _context.SaveChangesAsync();
     }
 }

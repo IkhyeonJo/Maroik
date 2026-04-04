@@ -1,9 +1,9 @@
+using Mapster;
+using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.PostgreSQL.Data;
 using Maroik.Core.PostgreSQL.Models;
 using Microsoft.EntityFrameworkCore;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 
 namespace Maroik.Core.Repository.Repositories;
 
@@ -15,41 +15,27 @@ public class AccountRepository : IAccountRepository
     {
         _context = context;
     }
-    /// <summary>
-    /// Gets all registered accounts.
-    /// </summary>
-    /// <returns></returns>
-    public async Task<List<Account>> GetAllAsync()
+
+    public async Task<List<AccountResponse>> GetAllAsync()
     {
-        return await _context.Accounts.ToListAsync();
+        return (await _context.Accounts.ToListAsync()).Adapt<List<AccountResponse>>();
     }
-    /// <summary>
-    /// Gets an account by email.
-    /// </summary>
-    /// <param name="email"></param>
-    /// <returns></returns>
-    public async Task<Account> GetAccountByEmailAsync(string email)
+
+    public async Task<AccountResponse?> GetAccountByEmailAsync(string email)
     {
-        return await _context.Accounts.FirstOrDefaultAsync(x => x.Email == email);
+        Account? account = await _context.Accounts.FirstOrDefaultAsync(x => x.Email == email);
+        return account?.Adapt<AccountResponse>();
     }
-    /// <summary>
-    /// Creates an account.
-    /// </summary>
-    /// <param name="account"></param>
-    /// <returns></returns>
-    public async Task CreateAccountAsync(Account account)
+
+    public async Task CreateAccountAsync(AccountRequest request)
     {
-        _ = await _context.Accounts.AddAsync(account);
+        _ = await _context.Accounts.AddAsync(request.Adapt<Account>());
         _ = await _context.SaveChangesAsync();
     }
-    /// <summary>
-    /// Updates an account.
-    /// </summary>
-    /// <param name="account"></param>
-    /// <returns></returns>
-    public async Task UpdateAccountAsync(Account account)
+
+    public async Task UpdateAccountAsync(AccountRequest request)
     {
-        _ = _context.Accounts.Update(account);
+        _ = _context.Accounts.Update(request.Adapt<Account>());
         _ = await _context.SaveChangesAsync();
     }
 }

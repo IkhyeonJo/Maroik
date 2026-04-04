@@ -1,10 +1,9 @@
+using Mapster;
+using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.PostgreSQL.Data;
 using Maroik.Core.PostgreSQL.Models;
 using Microsoft.EntityFrameworkCore;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace Maroik.Core.Repository.Repositories;
 
@@ -17,72 +16,46 @@ public class AssetRepository : IAssetRepository
         _context = context;
     }
 
-    /// <summary>
-    /// Gets all assets for the logged-in account.
-    /// </summary>
-    /// <param name="email"></param>
-    /// <returns></returns>
-    public async Task<List<Asset>> GetAssetsAsync(string email)
+    public async Task<List<AssetResponse>> GetAssetsAsync(string email)
     {
-        return await _context.Assets.Where(x => x.AccountEmail == email).ToListAsync();
+        return (await _context.Assets.Where(x => x.AccountEmail == email).ToListAsync()).Adapt<List<AssetResponse>>();
     }
 
-    /// <summary>
-    /// Gets a specific asset for the logged-in account.
-    /// </summary>
-    /// <param name="email"></param>
-    /// <param name="productName"></param>
-    /// <returns></returns>
-    public async Task<Asset> GetAssetAsync(string email, string productName)
+    public async Task<AssetResponse?> GetAssetAsync(string email, string productName)
     {
-        return await _context.Assets.FirstOrDefaultAsync(a => a.AccountEmail == email && a.ProductName == productName);
+        Asset? asset = await _context.Assets.FirstOrDefaultAsync(a => a.AccountEmail == email && a.ProductName == productName);
+        return asset?.Adapt<AssetResponse>();
     }
 
-    /// <summary>
-    /// Creates an asset.
-    /// </summary>
-    /// <param name="asset"></param>
-    /// <returns></returns>
-    public async Task CreateAssetAsync(Asset asset)
+    public async Task CreateAssetAsync(AssetRequest request)
     {
-        _ = await _context.Assets.AddAsync(asset);
+        _ = await _context.Assets.AddAsync(request.Adapt<Asset>());
         _ = await _context.SaveChangesAsync();
     }
 
-    /// <summary>
-    /// Updates an asset.
-    /// </summary>
-    /// <param name="asset"></param>
-    /// <returns></returns>
-    public async Task UpdateAssetAsync(Asset asset)
+    public async Task UpdateAssetAsync(AssetRequest request)
     {
-        _ = _context.Assets.Update(asset);
+        _ = _context.Assets.Update(request.Adapt<Asset>());
         _ = await _context.SaveChangesAsync();
     }
 
-    /// <summary>
-    /// Updates an asset including asset name.
-    /// </summary>
-    /// <param name="asset"></param>
-    /// <param name="originalProductName"></param>
-    /// <returns></returns>
-    public async Task<int> UpdateAssetWithProductNameAsync(Asset asset, string originalProductName)
+    public async Task<int> UpdateAssetWithProductNameAsync(AssetRequest request, string originalProductName)
     {
         return await _context.Database.ExecuteSqlInterpolatedAsync
         (
             $"""
              UPDATE "Asset"
-             SET 
-                 "ProductName" = {asset.ProductName},
-                 "Item" = {asset.Item},
-                 "Amount" = {asset.Amount},
-                 "MonetaryUnit" = {asset.MonetaryUnit},
-                 "Note" = {asset.Note},
-                 "Deleted" = {asset.Deleted},
-                 "Updated" = {asset.Updated}
-             WHERE 
+             SET
+                 "ProductName" = {request.ProductName},
+                 "Item" = {request.Item},
+                 "Amount" = {request.Amount},
+                 "MonetaryUnit" = {request.MonetaryUnit},
+                 "Note" = {request.Note},
+                 "Deleted" = {request.Deleted},
+                 "Updated" = {request.Updated}
+             WHERE
                  "ProductName" = {originalProductName}
-                 AND "AccountEmail" = {asset.AccountEmail}
+                 AND "AccountEmail" = {request.AccountEmail}
              """
         );
     }
