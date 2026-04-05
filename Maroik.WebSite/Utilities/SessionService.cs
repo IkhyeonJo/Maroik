@@ -26,7 +26,7 @@ public class SessionService : ISessionService
 
         try
         {
-            return JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(bytes));
+            return JsonConvert.DeserializeObject<AccountResponse>(Encoding.UTF8.GetString(bytes));
         }
         catch
         {

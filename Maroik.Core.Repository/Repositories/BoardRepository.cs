@@ -21,6 +21,19 @@ public class BoardRepository : IBoardRepository
         return (await _context.Boards.Where(x => x.Type == type).ToListAsync()).Adapt<List<BoardResponse>>();
     }
 
+    public async Task<BoardResponse?> GetBoardByIdAsync(long id)
+    {
+        var board = await _context.Boards.FirstOrDefaultAsync(x => x.Id == id && !x.Deleted);
+        return board?.Adapt<BoardResponse>();
+    }
+
+    public async Task IncrementViewAsync(long id)
+    {
+        await _context.Boards
+            .Where(x => x.Id == id)
+            .ExecuteUpdateAsync(s => s.SetProperty(b => b.View, b => b.View + 1));
+    }
+
     public async Task WriteBoardAsync(BoardRequest request)
     {
         _ = await _context.Boards.AddAsync(request.Adapt<Board>());

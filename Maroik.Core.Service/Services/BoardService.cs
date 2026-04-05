@@ -150,6 +150,10 @@ public class BoardService : IBoardService
     {
         try
         {
+            BoardResponse? board = await _boardRepository.GetBoardByIdAsync(request.BoardId);
+            if (board == null)
+                return ServiceResult.Fail("Input is invalid");
+
             IEnumerable<BoardCommentResponse> existing = await _boardCommentRepository.GetOneBoardCommentsAsync(request.BoardId);
             request.Order = existing?.Count() ?? 0;
             request.Created = DateTime.UtcNow;
@@ -160,6 +164,20 @@ public class BoardService : IBoardService
         catch (Exception e)
         {
             _logger.LogError(e, "Failed to write comment on board {BoardId}", request.BoardId);
+            return ServiceResult.Fail("Input is invalid");
+        }
+    }
+
+    public async Task<ServiceResult> IncrementBoardViewAsync(long boardId)
+    {
+        try
+        {
+            await _boardRepository.IncrementViewAsync(boardId);
+            return ServiceResult.Ok();
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e, "Failed to increment view count for board {BoardId}", boardId);
             return ServiceResult.Fail("Input is invalid");
         }
     }

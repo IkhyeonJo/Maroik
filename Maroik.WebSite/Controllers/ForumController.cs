@@ -4,7 +4,6 @@ using HtmlAgilityPack;
 using ImageMagick;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
-using Maroik.Core.PostgreSQL.Models;
 using Maroik.Core.Contract.Utilities;
 using Maroik.WebSite.Utilities;
 using Maroik.WebSite.Models;
@@ -173,11 +172,6 @@ public class ForumController : BaseController
 
             AccountResponse loginedAccount = _sessionService.GetAccount()!;
 
-            IEnumerable<BoardResponse> freeForumBoards = await _boardRepository.GetOneTypeBoardsAsync(EnumHelper.GetDescription(BoardType.FreeForum));
-            BoardResponse freeForumBoard = freeForumBoards.Where(m => !m.Deleted).FirstOrDefault(m => m.Id == boardCommentInputViewModel.BoardId);
-            if (freeForumBoard?.Id != boardCommentInputViewModel.BoardId)
-                return Json(new { result = false, error = _localizer["Input is invalid"].Value });
-
             BoardCommentRequest commentRequest = new()
             {
                 BoardId = boardCommentInputViewModel.BoardId,
@@ -316,8 +310,7 @@ public class ForumController : BaseController
                     }
                 }
 
-                freeBoard.View++;
-                await _boardRepository.UpdateBoardAsync(freeBoard.Adapt<BoardRequest>());
+                await _boardService.IncrementBoardViewAsync(boardId ?? 0);
                 BoardAttachedFileResponse boardAttachedFile = boardAttachedFiles.FirstOrDefault(m => m.BoardId == boardId);
 
                 #region Encrypt img tag file path

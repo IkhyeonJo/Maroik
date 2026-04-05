@@ -7,7 +7,6 @@ using HtmlAgilityPack;
 using ImageMagick;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
-using Maroik.Core.PostgreSQL.Models;
 using Maroik.Core.Contract.Utilities;
 using Maroik.WebSite.Utilities;
 using Maroik.WebSite.Models;
