@@ -20,7 +20,7 @@ using System.Globalization;
 using System.Security.Cryptography.X509Certificates;
 using System.Security.Cryptography;
 using System.Runtime.InteropServices;
-using StackExchange.Redis;
+//using StackExchange.Redis;
 
 X509Certificate2 currentCert;
 string previousCertHash;
@@ -37,8 +37,8 @@ const string cookiePrefix = "__Secure-";
 #region ServerSettings
 // Capture config values needed before DI container is built (for middleware/Kestrel configuration)
 var serverConfig = builder.Configuration.GetSection("ServerSetting");
-string cfgDomainName = serverConfig["DomainName"] ?? string.Empty;
-int cfgSessionExpireMinutes = Convert.ToInt32(serverConfig["SessionExpireMinutes"]);
+var cfgDomainName = serverConfig["DomainName"] ?? string.Empty;
+var cfgSessionExpireMinutes = Convert.ToInt32(serverConfig["SessionExpireMinutes"]);
 var cfgDockerCertPath = serverConfig["DockerCertPath"];
 var cfgDockerKeyPath = serverConfig["DockerKeyPath"];
 
@@ -63,7 +63,7 @@ builder.Services.Configure<ServerSetting>(cfg =>
     cfg.DockerKeyPath = section["DockerKeyPath"];
     cfg.RSAPrivateKey = section["RSAPrivateKey"];
     cfg.RSAPublicKey = section["RSAPublicKey"];
-    string rsaAlgorithmString = section["RSAAlgorithm"] ?? "RSA2";
+    var rsaAlgorithmString = section["RSAAlgorithm"] ?? "RSA2";
     cfg.RSAAlgorithm = Enum.TryParse<RSAType>(rsaAlgorithmString, out var rsaType) ? rsaType : RSAType.RSA2;
     cfg.ClamavHost = builder.Configuration.GetSection("Clamav")["Host"];
     cfg.ClamavPort = Convert.ToInt32(builder.Configuration.GetSection("Clamav")["Port"]);
@@ -81,7 +81,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 #endregion
 
 #region Mapster
-TypeAdapterConfig globalConfig = TypeAdapterConfig.GlobalSettings;
+var globalConfig = TypeAdapterConfig.GlobalSettings;
 globalConfig.Scan(typeof(MappingConfig).Assembly);
 builder.Services.AddSingleton(globalConfig);
 #endregion
@@ -221,8 +221,8 @@ builder.Services.Configure<RequestLocalizationOptions>(
     {
         List<CultureInfo> supportedCultures =
         [
-                        new CultureInfo("en-US"),
-                        new CultureInfo("ko-KR")
+                        new("en-US"),
+                        new("ko-KR")
         ];
         opt.DefaultRequestCulture = new RequestCulture("en-US");
         opt.SupportedCultures = supportedCultures;
@@ -232,7 +232,9 @@ builder.Services.Configure<RequestLocalizationOptions>(
 
 builder.Services.AddControllersWithViews(options =>
 {
+#pragma warning disable CA2263
     _ = options.Filters.Add(typeof(AuthorizationFilter)); // An instance
+#pragma warning restore CA2263
     options.Filters.Add(new AutoValidateAntiforgeryTokenAttribute()); // Globally enables token validation for all requests except for GET, HEAD, OPTIONS, and TRACE
 });
 
@@ -425,7 +427,7 @@ app.UseResponseCaching();
 //<META http-equiv="Pragma" content="no-cache">
 //<META http-equiv="Cache-Control" content="No-Cache">
 
-//The code below is equivalent to the META data content that goes into the HTML Header above.
+//The code below is equivalent to the metadata content that goes into the HTML Header above.
 
 app.Use(async (context, next) =>
 {
@@ -438,7 +440,7 @@ app.Use(async (context, next) =>
             NoStore = true // For resolve logout back button problem
         };
     context.Response.Headers[Microsoft.Net.Http.Headers.HeaderNames.Vary] =
-        new [] { "Accept-Encoding" };
+        (string[])["Accept-Encoding"];
 
     #region Security Headers [https://blog.elmah.io/the-asp-net-core-security-headers-guide/]
     context.Response.Headers.Append("Strict-Transport-Security", "max-age=63072000; includeSubDomains; preload");
@@ -459,7 +461,7 @@ app.Use(async (context, next) =>
 
 #region Multi-Language
 string[] supportedCultures = ["en-US", "ko-KR"];
-RequestLocalizationOptions localizationOptions = new RequestLocalizationOptions().SetDefaultCulture(supportedCultures[0])
+var localizationOptions = new RequestLocalizationOptions().SetDefaultCulture(supportedCultures[0])
     .AddSupportedCultures(supportedCultures)
     .AddSupportedUICultures(supportedCultures);
 
