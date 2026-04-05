@@ -2,6 +2,7 @@ using Maroik.Core.Contract.Utilities;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
 using Mapster;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace Maroik.Core.Service.Services;
@@ -14,8 +15,8 @@ public class BoardService : IBoardService
     private readonly IFileClient _fileClient;
     private readonly IUnitOfWork _unitOfWork;
     private readonly IOptions<ServerSetting> _settings;
+    private readonly ILogger<BoardService> _logger;
 
-    // Maps board type description to storage area folder name
     private static readonly Dictionary<string, string> BoardAreaMap = new(StringComparer.OrdinalIgnoreCase)
     {
         ["FreeForum"]   = "Forum",
@@ -28,7 +29,8 @@ public class BoardService : IBoardService
         IBoardCommentRepository boardCommentRepository,
         IFileClient fileClient,
         IUnitOfWork unitOfWork,
-        IOptions<ServerSetting> settings)
+        IOptions<ServerSetting> settings,
+        ILogger<BoardService> logger)
     {
         _boardRepository = boardRepository;
         _boardAttachedFileRepository = boardAttachedFileRepository;
@@ -36,6 +38,7 @@ public class BoardService : IBoardService
         _fileClient = fileClient;
         _unitOfWork = unitOfWork;
         _settings = settings;
+        _logger = logger;
     }
 
     public async Task<ServiceResult> WriteBoardAsync(BoardRequest request, AttachedFileInfo? attachedFile)
@@ -67,8 +70,9 @@ public class BoardService : IBoardService
             await _unitOfWork.CommitAsync();
             return ServiceResult.Ok();
         }
-        catch
+        catch (Exception e)
         {
+            _logger.LogError(e, "Failed to write board post (Type={Type})", request.Type);
             await _unitOfWork.RollbackAsync();
             return ServiceResult.Fail("Input is invalid");
         }
@@ -102,48 +106,17 @@ public class BoardService : IBoardService
 
             await _boardRepository.UpdateBoardAsync(board.Adapt<BoardRequest>());
 
-            // Handle attachment
             List<BoardAttachedFileResponse> allAttached = await _boardAttachedFileRepository.GetAllAsync();
             BoardAttachedFileResponse? previous = allAttached.FirstOrDefault(f => f.BoardId == request.Id);
 
-            if (previous != null && newFile != null)
-            {
-                string filePath = BuildAttachedFilePath(request.Type!, request.Id, newFile.FileName);
-                await _fileClient.UploadAsync(newFile.Bytes, newFile.ContentType, filePath, _settings.Value.FileStorageBaseUrl ?? string.Empty);
-                previous.Size = Convert.ToInt32(newFile.Size);
-                previous.Name = Path.GetFileNameWithoutExtension(newFile.FileName);
-                previous.Extension = Path.GetExtension(newFile.FileName);
-                previous.Path = filePath.Replace('\\', '/');
-                await _boardAttachedFileRepository.UpdateBoardAttachedFileAsync(previous.Adapt<BoardAttachedFileRequest>());
-            }
-            else if (previous != null && newFile == null)
-            {
-                previous.Size = 0;
-                previous.Name = "";
-                previous.Extension = "";
-                previous.Path = "";
-                await _boardAttachedFileRepository.UpdateBoardAttachedFileAsync(previous.Adapt<BoardAttachedFileRequest>());
-            }
-            else if (previous == null && newFile != null)
-            {
-                string filePath = BuildAttachedFilePath(request.Type!, request.Id, newFile.FileName);
-                await _fileClient.UploadAsync(newFile.Bytes, newFile.ContentType, filePath, _settings.Value.FileStorageBaseUrl ?? string.Empty);
-                await _boardAttachedFileRepository.SaveBoardAttachedFileAsync(new BoardAttachedFileRequest
-                {
-                    BoardId = request.Id,
-                    Size = Convert.ToInt32(newFile.Size),
-                    Name = Path.GetFileNameWithoutExtension(newFile.FileName),
-                    Extension = Path.GetExtension(newFile.FileName),
-                    Path = filePath.Replace('\\', '/')
-                });
-            }
-            // previous == null && newFile == null → nothing to do
+            await HandleAttachmentAsync(request.Type!, request.Id, previous, newFile);
 
             await _unitOfWork.CommitAsync();
             return ServiceResult.Ok();
         }
-        catch
+        catch (Exception e)
         {
+            _logger.LogError(e, "Failed to edit board post {BoardId}", request.Id);
             await _unitOfWork.RollbackAsync();
             return ServiceResult.Fail("Input is invalid");
         }
@@ -166,8 +139,9 @@ public class BoardService : IBoardService
             await _boardRepository.DeleteBoardAsync(board.Adapt<BoardRequest>());
             return ServiceResult.Ok();
         }
-        catch
+        catch (Exception e)
         {
+            _logger.LogError(e, "Failed to delete board post {BoardId}", boardId);
             return ServiceResult.Fail("Input is invalid");
         }
     }
@@ -183,8 +157,9 @@ public class BoardService : IBoardService
             await _boardCommentRepository.WriteBoardCommentAsync(request);
             return ServiceResult.Ok();
         }
-        catch
+        catch (Exception e)
         {
+            _logger.LogError(e, "Failed to write comment on board {BoardId}", request.BoardId);
             return ServiceResult.Fail("Input is invalid");
         }
     }
@@ -204,10 +179,47 @@ public class BoardService : IBoardService
             await _boardCommentRepository.DeleteBoardCommentAsync(comment.Adapt<BoardCommentRequest>());
             return ServiceResult.Ok();
         }
-        catch
+        catch (Exception e)
         {
+            _logger.LogError(e, "Failed to delete comment {CommentId}", commentId);
             return ServiceResult.Fail("Input is invalid");
         }
+    }
+
+    private async Task HandleAttachmentAsync(string boardType, long boardId, BoardAttachedFileResponse? previous, AttachedFileInfo? newFile)
+    {
+        if (previous != null && newFile != null)
+        {
+            string filePath = BuildAttachedFilePath(boardType, boardId, newFile.FileName);
+            await _fileClient.UploadAsync(newFile.Bytes, newFile.ContentType, filePath, _settings.Value.FileStorageBaseUrl ?? string.Empty);
+            previous.Size = Convert.ToInt32(newFile.Size);
+            previous.Name = Path.GetFileNameWithoutExtension(newFile.FileName);
+            previous.Extension = Path.GetExtension(newFile.FileName);
+            previous.Path = filePath.Replace('\\', '/');
+            await _boardAttachedFileRepository.UpdateBoardAttachedFileAsync(previous.Adapt<BoardAttachedFileRequest>());
+        }
+        else if (previous != null && newFile == null)
+        {
+            previous.Size = 0;
+            previous.Name = "";
+            previous.Extension = "";
+            previous.Path = "";
+            await _boardAttachedFileRepository.UpdateBoardAttachedFileAsync(previous.Adapt<BoardAttachedFileRequest>());
+        }
+        else if (previous == null && newFile != null)
+        {
+            string filePath = BuildAttachedFilePath(boardType, boardId, newFile.FileName);
+            await _fileClient.UploadAsync(newFile.Bytes, newFile.ContentType, filePath, _settings.Value.FileStorageBaseUrl ?? string.Empty);
+            await _boardAttachedFileRepository.SaveBoardAttachedFileAsync(new BoardAttachedFileRequest
+            {
+                BoardId = boardId,
+                Size = Convert.ToInt32(newFile.Size),
+                Name = Path.GetFileNameWithoutExtension(newFile.FileName),
+                Extension = Path.GetExtension(newFile.FileName),
+                Path = filePath.Replace('\\', '/')
+            });
+        }
+        // previous == null && newFile == null → nothing to do
     }
 
     private static string BuildAttachedFilePath(string boardType, long boardId, string fileName)

@@ -37,18 +37,7 @@ public class AccountController : BaseController
 
     #region ConsentForm
     [HttpGet]
-    public IActionResult ConsentForm()
-    {
-        var loginedAccount = _sessionService.GetAccount();
-
-        if (loginedAccount != null)
-        {
-            return loginedAccount.Role == Role.Admin ? RedirectToAction("AdminIndex", "DashBoard")
-                : loginedAccount.Role == Role.User ? RedirectToAction("UserIndex", "DashBoard")
-                : null;
-        }
-        return View();
-    }
+    public IActionResult ConsentForm() => View();
     #endregion
 
     #region Login
@@ -80,12 +69,7 @@ public class AccountController : BaseController
         }
 
         _sessionService.SetAccount(result.Account!);
-
-        return result.Account!.Role == Role.Admin
-            ? RedirectToAction("AdminIndex", "DashBoard")
-            : result.Account.Role == Role.User
-                ? RedirectToAction("UserIndex", "DashBoard")
-                : (IActionResult)null;
+        return RedirectToAction("AnonymousIndex", "DashBoard");
     }
     #endregion
 
@@ -100,18 +84,7 @@ public class AccountController : BaseController
 
     #region Register
     [HttpGet]
-    public IActionResult Register()
-    {
-        var loginedAccount = _sessionService.GetAccount();
-
-        if (loginedAccount != null)
-        {
-            return loginedAccount.Role == Role.Admin ? RedirectToAction("AdminIndex", "DashBoard")
-                : loginedAccount.Role == Role.User ? RedirectToAction("UserIndex", "DashBoard")
-                : null;
-        }
-        return View();
-    }
+    public IActionResult Register() => View();
 
     [HttpPost]
     [ValidateAntiForgeryToken]
@@ -210,15 +183,6 @@ public class AccountController : BaseController
     [HttpGet]
     public async Task<IActionResult> ConfirmEmail(string registrationToken)
     {
-        var loginedAccount = _sessionService.GetAccount();
-
-        if (loginedAccount != null)
-        {
-            return loginedAccount.Role == Role.Admin ? RedirectToAction("AdminIndex", "DashBoard")
-                : loginedAccount.Role == Role.User ? RedirectToAction("UserIndex", "DashBoard")
-                : null;
-        }
-
         var result = await _accountService.ConfirmEmailAsync(registrationToken);
 
         if (!string.IsNullOrEmpty(result.ErrorKey))
@@ -232,18 +196,7 @@ public class AccountController : BaseController
 
     #region ForgotPassword
     [HttpGet]
-    public IActionResult ForgotPassword()
-    {
-        var loginedAccount = _sessionService.GetAccount();
-
-        if (loginedAccount != null)
-        {
-            return loginedAccount.Role == Role.Admin ? RedirectToAction("AdminIndex", "DashBoard")
-                : loginedAccount.Role == Role.User ? RedirectToAction("UserIndex", "DashBoard")
-                : null;
-        }
-        return View();
-    }
+    public IActionResult ForgotPassword() => View();
 
     [HttpPost]
     [ValidateAntiForgeryToken]
@@ -274,15 +227,6 @@ public class AccountController : BaseController
     [HttpGet]
     public async Task<IActionResult> ResetPassword(string resetPasswordToken)
     {
-        var loginedAccount = _sessionService.GetAccount();
-
-        if (loginedAccount != null)
-        {
-            return loginedAccount.Role == Role.Admin ? RedirectToAction("AdminIndex", "DashBoard")
-                : loginedAccount.Role == Role.User ? RedirectToAction("UserIndex", "DashBoard")
-                : null;
-        }
-
         var result = await _accountService.ValidateResetPasswordTokenAsync(resetPasswordToken);
         ViewBag.FailToResetPassword = result.FailToReset;
         ViewBag.ResetPasswordToken = result.ResetPasswordToken;

@@ -2,6 +2,7 @@ using Maroik.Core.Contract.Utilities;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
 using Mapster;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace Maroik.Core.Service.Services;
@@ -13,14 +14,22 @@ public class AccountService : IAccountService
     private readonly IMailClient _mailClient;
     private readonly IRSAService _rsa;
     private readonly IOptions<ServerSetting> _settings;
+    private readonly ILogger<AccountService> _logger;
 
-    public AccountService(IAccountRepository accountRepository, IPasswordService passwordService, IMailClient mailClient, IOptions<ServerSetting> settings, IRSAService rsa)
+    public AccountService(
+        IAccountRepository accountRepository,
+        IPasswordService passwordService,
+        IMailClient mailClient,
+        IOptions<ServerSetting> settings,
+        IRSAService rsa,
+        ILogger<AccountService> logger)
     {
         _accountRepository = accountRepository;
         _passwordService = passwordService;
         _mailClient = mailClient;
         _settings = settings;
         _rsa = rsa;
+        _logger = logger;
     }
 
     public async Task<LoginResult> LoginAsync(string email, string password)
@@ -68,7 +77,6 @@ public class AccountService : IAccountService
 
         if (existing == null)
         {
-            // New registration — hash password before storing
             newAccount.HashedPassword = _passwordService.HashPassword(newAccount.HashedPassword ?? "");
             try
             {
@@ -76,13 +84,14 @@ public class AccountService : IAccountService
             }
             catch (Exception e)
             {
-                // PostgreSQL unique constraint violation (SqlState 23505) — nickname already taken
                 if (IsUniqueViolation(e))
                     return RegisterResult.Fail($"'{newAccount.Nickname}' is a Nickname that already exists. Please enter another Nickname.");
+                _logger.LogError(e, "Failed to create account for {Email}", newAccount.Email);
                 return RegisterResult.Fail("Error occurred while processing about account registration");
             }
 
-            string body = emailBodyFactory(_rsa.Sign(newAccount.RegistrationToken!));
+            // Encrypt raw token so the URL token can be looked up directly in DB on confirmation
+            string body = emailBodyFactory(_rsa.Encrypt(newAccount.RegistrationToken!));
             string mailResult = await SendMailAsync(newAccount.Email!, emailSubject, body);
             if (mailResult != EnumHelper.GetDescription(AccountMessage.MailSent))
             {
@@ -91,20 +100,19 @@ public class AccountService : IAccountService
                     newAccount.Message = EnumHelper.GetDescription(AccountMessage.FailToMailSent);
                     await _accountRepository.UpdateAccountAsync(newAccount);
                 }
-                catch { /* best effort */ }
+                catch (Exception e) { _logger.LogWarning(e, "Failed to update account message after mail send failure"); }
                 return RegisterResult.Fail("Error occurred while processing about sending account authentication mail");
             }
 
             return RegisterResult.Ok(showResendEmail: true, email: newAccount.Email);
         }
 
-        // Account already exists but email not confirmed
         if (!existing.EmailConfirmed)
         {
             if (string.IsNullOrEmpty(existing.RegistrationToken))
                 existing.RegistrationToken = GUIDToken.Generate();
 
-            string body = emailBodyFactory(_rsa.Sign(existing.RegistrationToken));
+            string body = emailBodyFactory(_rsa.Encrypt(existing.RegistrationToken));
             string mailResult = await SendMailAsync(existing.Email!, emailSubject, body);
 
             if (mailResult != EnumHelper.GetDescription(AccountMessage.MailSent))
@@ -115,7 +123,7 @@ public class AccountService : IAccountService
                     existing.Message = EnumHelper.GetDescription(AccountMessage.FailToMailSent);
                     await _accountRepository.UpdateAccountAsync(existing.Adapt<AccountRequest>());
                 }
-                catch { /* best effort */ }
+                catch (Exception e) { _logger.LogWarning(e, "Failed to update account message after mail send failure for {Email}", existing.Email); }
                 return RegisterResult.Fail("Error occurred while processing about sending account authentication mail");
             }
 
@@ -125,15 +133,15 @@ public class AccountService : IAccountService
                 existing.Updated = DateTime.UtcNow;
                 await _accountRepository.UpdateAccountAsync(existing.Adapt<AccountRequest>());
             }
-            catch
+            catch (Exception e)
             {
+                _logger.LogError(e, "Failed to update account status for {Email}", existing.Email);
                 return RegisterResult.Fail("Error occurred while processing about account status");
             }
 
             return RegisterResult.Ok(showResendEmail: true, email: existing.Email);
         }
 
-        // Email already confirmed
         try
         {
             existing.Message = EnumHelper.GetDescription(AccountMessage.UserAlreadyCreated);
@@ -141,8 +149,9 @@ public class AccountService : IAccountService
             existing.AgreedServiceTerms = true;
             await _accountRepository.UpdateAccountAsync(existing.Adapt<AccountRequest>());
         }
-        catch
+        catch (Exception e)
         {
+            _logger.LogError(e, "Failed to update account status for {Email}", existing.Email);
             return RegisterResult.Fail("Error occurred while processing about account status");
         }
 
@@ -161,7 +170,7 @@ public class AccountService : IAccountService
             if (string.IsNullOrEmpty(account.RegistrationToken))
                 account.RegistrationToken = GUIDToken.Generate();
 
-            string body = emailBodyFactory(_rsa.Sign(account.RegistrationToken));
+            string body = emailBodyFactory(_rsa.Encrypt(account.RegistrationToken));
             string mailResult = await SendMailAsync(email, emailSubject, body);
             if (mailResult != EnumHelper.GetDescription(AccountMessage.MailSent))
             {
@@ -171,8 +180,9 @@ public class AccountService : IAccountService
                     account.Message = EnumHelper.GetDescription(AccountMessage.FailToMailSent);
                     await _accountRepository.UpdateAccountAsync(account.Adapt<AccountRequest>());
                 }
-                catch
+                catch (Exception e)
                 {
+                    _logger.LogError(e, "Failed to update account status for {Email}", email);
                     return RegisterResult.Fail("Error occurred while processing about account status");
                 }
                 return RegisterResult.Fail("Error occurred while processing about sending account authentication mail");
@@ -184,50 +194,47 @@ public class AccountService : IAccountService
                 account.Updated = DateTime.UtcNow;
                 await _accountRepository.UpdateAccountAsync(account.Adapt<AccountRequest>());
             }
-            catch
+            catch (Exception e)
             {
+                _logger.LogError(e, "Failed to update account status for {Email}", email);
                 return RegisterResult.Fail("Error occurred while processing about mail send account status");
             }
 
             return RegisterResult.Ok(showResendEmail: true, email: account.Email, repeat: true);
         }
 
-        // Already confirmed
         try
         {
             account.Message = EnumHelper.GetDescription(AccountMessage.UserAlreadyCreated);
             account.Updated = DateTime.UtcNow;
             await _accountRepository.UpdateAccountAsync(account.Adapt<AccountRequest>());
         }
-        catch
+        catch (Exception e)
         {
+            _logger.LogError(e, "Failed to update account status for {Email}", email);
             return RegisterResult.Fail("Error occurred while processing about account status");
         }
 
         return RegisterResult.Fail(EnumHelper.GetDescription(AccountMessage.UserAlreadyCreated));
     }
 
-    public async Task<ConfirmEmailResult> ConfirmEmailAsync(string registrationToken)
+    public async Task<ConfirmEmailResult> ConfirmEmailAsync(string encryptedToken)
     {
-        AccountResponse? account = null;
-
-        foreach (AccountResponse temp in await _accountRepository.GetAllAsync())
+        // Decrypt URL token to get the raw GUID stored in DB — eliminates O(n) account scan
+        string rawToken;
+        try { rawToken = _rsa.Decrypt(encryptedToken); }
+        catch (Exception e)
         {
-            try
-            {
-                if (_rsa.Verify(temp.RegistrationToken ?? string.Empty, registrationToken))
-                {
-                    account = temp;
-                    break;
-                }
-            }
-            catch { /* token mismatch */ }
+            _logger.LogWarning(e, "Failed to decrypt registration token");
+            return new ConfirmEmailResult { InvalidToken = true, AccountCreated = false };
         }
+
+        AccountResponse? account = await _accountRepository.GetAccountByRegistrationTokenAsync(rawToken);
 
         if (account == null)
             return new ConfirmEmailResult { InvalidToken = true, AccountCreated = false };
 
-        if (!GUIDToken.IsTokenAlive(account.RegistrationToken!))
+        if (!GUIDToken.IsTokenAlive(rawToken))
             return new ConfirmEmailResult { InvalidToken = true, AccountCreated = false };
 
         if (!account.EmailConfirmed)
@@ -240,8 +247,9 @@ public class AccountService : IAccountService
             {
                 await _accountRepository.UpdateAccountAsync(account.Adapt<AccountRequest>());
             }
-            catch
+            catch (Exception e)
             {
+                _logger.LogError(e, "Failed to confirm email for account {Email}", account.Email);
                 return new ConfirmEmailResult
                 {
                     InvalidToken = true,
@@ -252,15 +260,15 @@ public class AccountService : IAccountService
             return new ConfirmEmailResult { InvalidToken = false, AccountCreated = true };
         }
 
-        // Already confirmed
         account.Updated = DateTime.UtcNow;
         account.Message = EnumHelper.GetDescription(AccountMessage.UserAlreadyCreated);
         try
         {
             await _accountRepository.UpdateAccountAsync(account.Adapt<AccountRequest>());
         }
-        catch
+        catch (Exception e)
         {
+            _logger.LogError(e, "Failed to update account status for {Email}", account.Email);
             return new ConfirmEmailResult
             {
                 InvalidToken = true,
@@ -281,8 +289,8 @@ public class AccountService : IAccountService
         string resetPasswordToken = GUIDToken.Generate();
         try
         {
-            string signedToken = _rsa.Sign(resetPasswordToken);
-            string body = emailBodyFactory(signedToken);
+            // Encrypt raw token for URL; DB stores raw for direct lookup
+            string body = emailBodyFactory(_rsa.Encrypt(resetPasswordToken));
 
             string mailResult = await SendMailAsync(account.Email!, emailSubject, body);
             if (mailResult != EnumHelper.GetDescription(AccountMessage.MailSent))
@@ -298,52 +306,42 @@ public class AccountService : IAccountService
             account.Message = EnumHelper.GetDescription(AccountMessage.ResetPasswordMail);
             await _accountRepository.UpdateAccountAsync(account.Adapt<AccountRequest>());
         }
-        catch { /* best effort */ }
+        catch (Exception e) { _logger.LogWarning(e, "ForgotPassword failed for {Email}", email); }
 
         return true;
     }
 
-    public async Task<ResetPasswordValidationResult> ValidateResetPasswordTokenAsync(string resetPasswordToken)
+    public async Task<ResetPasswordValidationResult> ValidateResetPasswordTokenAsync(string encryptedToken)
     {
-        AccountResponse? account = null;
-
-        foreach (AccountResponse temp in await _accountRepository.GetAllAsync())
+        string rawToken;
+        try { rawToken = _rsa.Decrypt(encryptedToken); }
+        catch (Exception e)
         {
-            try
-            {
-                if (_rsa.Verify(temp.ResetPasswordToken ?? string.Empty, resetPasswordToken))
-                {
-                    account = temp;
-                    break;
-                }
-            }
-            catch { /* token mismatch */ }
+            _logger.LogWarning(e, "Failed to decrypt reset password token");
+            return new ResetPasswordValidationResult { FailToReset = true };
         }
 
-        if (account == null || !GUIDToken.IsTokenAlive(account.ResetPasswordToken!) || !account.EmailConfirmed)
+        AccountResponse? account = await _accountRepository.GetAccountByResetPasswordTokenAsync(rawToken);
+
+        if (account == null || !GUIDToken.IsTokenAlive(rawToken) || !account.EmailConfirmed)
             return new ResetPasswordValidationResult { FailToReset = true };
 
-        return new ResetPasswordValidationResult { FailToReset = false, ResetPasswordToken = resetPasswordToken };
+        return new ResetPasswordValidationResult { FailToReset = false, ResetPasswordToken = encryptedToken };
     }
 
-    public async Task<ServiceResult> ResetPasswordAsync(string resetPasswordToken, string newPassword)
+    public async Task<ServiceResult> ResetPasswordAsync(string encryptedToken, string newPassword)
     {
-        AccountResponse? account = null;
-
-        foreach (AccountResponse temp in await _accountRepository.GetAllAsync())
+        string rawToken;
+        try { rawToken = _rsa.Decrypt(encryptedToken); }
+        catch (Exception e)
         {
-            try
-            {
-                if (_rsa.Verify(temp.ResetPasswordToken ?? string.Empty, resetPasswordToken))
-                {
-                    account = temp;
-                    break;
-                }
-            }
-            catch { /* token mismatch */ }
+            _logger.LogWarning(e, "Failed to decrypt reset password token");
+            return ServiceResult.Fail("reset-password-invalid");
         }
 
-        if (account == null || !GUIDToken.IsTokenAlive(account.ResetPasswordToken!) || !account.EmailConfirmed)
+        AccountResponse? account = await _accountRepository.GetAccountByResetPasswordTokenAsync(rawToken);
+
+        if (account == null || !GUIDToken.IsTokenAlive(rawToken) || !account.EmailConfirmed)
             return ServiceResult.Fail("reset-password-invalid");
 
         account.ResetPasswordToken = null;
@@ -356,8 +354,9 @@ public class AccountService : IAccountService
         {
             await _accountRepository.UpdateAccountAsync(account.Adapt<AccountRequest>());
         }
-        catch
+        catch (Exception e)
         {
+            _logger.LogError(e, "Failed to reset password for {Email}", account.Email);
             return ServiceResult.Fail("Error occurred while processing about reset password");
         }
 

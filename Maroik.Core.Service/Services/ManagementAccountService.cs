@@ -1,6 +1,7 @@
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
 using Mapster;
+using Microsoft.Extensions.Logging;
 
 namespace Maroik.Core.Service.Services;
 
@@ -8,11 +9,16 @@ public class ManagementAccountService : IManagementAccountService
 {
     private readonly IAccountRepository _accountRepository;
     private readonly IPasswordService _passwordService;
+    private readonly ILogger<ManagementAccountService> _logger;
 
-    public ManagementAccountService(IAccountRepository accountRepository, IPasswordService passwordService)
+    public ManagementAccountService(
+        IAccountRepository accountRepository,
+        IPasswordService passwordService,
+        ILogger<ManagementAccountService> logger)
     {
         _accountRepository = accountRepository;
         _passwordService = passwordService;
+        _logger = logger;
     }
 
     public async Task<ServiceResult> CreateAccountAsync(AccountRequest request)
@@ -26,8 +32,9 @@ public class ManagementAccountService : IManagementAccountService
             await _accountRepository.CreateAccountAsync(request);
             return ServiceResult.Ok();
         }
-        catch
+        catch (Exception e)
         {
+            _logger.LogError(e, "Failed to create account for {Email}", request.Email);
             return ServiceResult.Fail("Input is invalid");
         }
     }
@@ -57,8 +64,9 @@ public class ManagementAccountService : IManagementAccountService
             await _accountRepository.UpdateAccountAsync(existing.Adapt<AccountRequest>());
             return ServiceResult.Ok();
         }
-        catch
+        catch (Exception e)
         {
+            _logger.LogError(e, "Failed to update account for {Email}", request.Email);
             return ServiceResult.Fail("Input is invalid");
         }
     }
@@ -75,8 +83,9 @@ public class ManagementAccountService : IManagementAccountService
             await _accountRepository.UpdateAccountAsync(existing.Adapt<AccountRequest>());
             return ServiceResult.Ok();
         }
-        catch
+        catch (Exception e)
         {
+            _logger.LogError(e, "Failed to delete account for {Email}", email);
             return ServiceResult.Fail("Input is invalid");
         }
     }

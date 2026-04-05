@@ -27,6 +27,18 @@ public class AccountRepository : IAccountRepository
         return account?.Adapt<AccountResponse>();
     }
 
+    public async Task<AccountResponse?> GetAccountByRegistrationTokenAsync(string rawToken)
+    {
+        Account? account = await _context.Accounts.FirstOrDefaultAsync(x => x.RegistrationToken == rawToken);
+        return account?.Adapt<AccountResponse>();
+    }
+
+    public async Task<AccountResponse?> GetAccountByResetPasswordTokenAsync(string rawToken)
+    {
+        Account? account = await _context.Accounts.FirstOrDefaultAsync(x => x.ResetPasswordToken == rawToken);
+        return account?.Adapt<AccountResponse>();
+    }
+
     public async Task CreateAccountAsync(AccountRequest request)
     {
         _ = await _context.Accounts.AddAsync(request.Adapt<Account>());

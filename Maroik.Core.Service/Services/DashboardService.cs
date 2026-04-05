@@ -10,17 +10,23 @@ public class DashboardService : IDashboardService
     private readonly IAssetRepository _assetRepository;
     private readonly IIncomeRepository _incomeRepository;
     private readonly IExpenditureRepository _expenditureRepository;
+    private readonly IFixedIncomeRepository _fixedIncomeRepository;
+    private readonly IFixedExpenditureRepository _fixedExpenditureRepository;
 
     public DashboardService(
         IAccountRepository accountRepository,
         IAssetRepository assetRepository,
         IIncomeRepository incomeRepository,
-        IExpenditureRepository expenditureRepository)
+        IExpenditureRepository expenditureRepository,
+        IFixedIncomeRepository fixedIncomeRepository,
+        IFixedExpenditureRepository fixedExpenditureRepository)
     {
         _accountRepository = accountRepository;
         _assetRepository = assetRepository;
         _incomeRepository = incomeRepository;
         _expenditureRepository = expenditureRepository;
+        _fixedIncomeRepository = fixedIncomeRepository;
+        _fixedExpenditureRepository = fixedExpenditureRepository;
     }
 
     public async Task<DashboardSummary> GetSummaryAsync(string accountEmail, string year, string month, string timeZoneId)
@@ -104,6 +110,52 @@ public class DashboardService : IDashboardService
             : null;
 
         await _accountRepository.UpdateAccountAsync(account.Adapt<AccountRequest>());
+    }
+
+    public async Task<NotificationCounts> GetNoticeCountsAsync(string email, int noticeMaturityDateDay)
+    {
+        int incomesNoticed = 0, expendituresNoticed = 0;
+        int incomesExpired = 0, expendituresExpired = 0;
+
+        DateTime currentDate = DateTime.UtcNow.Date;
+
+        foreach (var item in await _fixedIncomeRepository.GetFixedIncomesAsync(email))
+        {
+            bool noticed = false;
+            try
+            {
+                var paymentDate = new DateTime(currentDate.Year, item.DepositMonth, item.DepositDay);
+                double daysUntilPayment = paymentDate.Subtract(currentDate).TotalDays;
+                noticed = daysUntilPayment >= 0 && daysUntilPayment <= noticeMaturityDateDay;
+            }
+            catch { /* invalid DepositMonth/Day combination — treat as not noticed */ }
+            if (item.Unpunctuality) noticed = true;
+            if (noticed) incomesNoticed++;
+            if (item.MaturityDate.Subtract(currentDate).TotalDays < 0) incomesExpired++;
+        }
+
+        foreach (var item in await _fixedExpenditureRepository.GetFixedExpendituresAsync(email))
+        {
+            bool noticed = false;
+            try
+            {
+                var paymentDate = new DateTime(currentDate.Year, item.DepositMonth, item.DepositDay);
+                double daysUntilPayment = paymentDate.Subtract(currentDate).TotalDays;
+                noticed = daysUntilPayment >= 0 && daysUntilPayment <= noticeMaturityDateDay;
+            }
+            catch { /* invalid DepositMonth/Day combination — treat as not noticed */ }
+            if (item.Unpunctuality) noticed = true;
+            if (noticed) expendituresNoticed++;
+            if (item.MaturityDate.Subtract(currentDate).TotalDays < 0) expendituresExpired++;
+        }
+
+        return new NotificationCounts
+        {
+            FixedIncomesNoticed = incomesNoticed,
+            FixedExpendituresNoticed = expendituresNoticed,
+            FixedIncomesExpired = incomesExpired,
+            FixedExpendituresExpired = expendituresExpired
+        };
     }
 
     private async Task SyncDefaultMonetaryUnitInternalAsync(AccountResponse? account, List<AssetResponse> assets)

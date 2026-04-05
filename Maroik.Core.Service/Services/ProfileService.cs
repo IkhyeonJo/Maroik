@@ -1,6 +1,7 @@
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
 using Mapster;
+using Microsoft.Extensions.Logging;
 
 namespace Maroik.Core.Service.Services;
 
@@ -8,11 +9,16 @@ public class ProfileService : IProfileService
 {
     private readonly IAccountRepository _accountRepository;
     private readonly IPasswordService _passwordService;
+    private readonly ILogger<ProfileService> _logger;
 
-    public ProfileService(IAccountRepository accountRepository, IPasswordService passwordService)
+    public ProfileService(
+        IAccountRepository accountRepository,
+        IPasswordService passwordService,
+        ILogger<ProfileService> logger)
     {
         _accountRepository = accountRepository;
         _passwordService = passwordService;
+        _logger = logger;
     }
 
     public async Task<ServiceResult> UpdateAvatarAsync(string email, string avatarPath)
@@ -27,8 +33,9 @@ public class ProfileService : IProfileService
             await _accountRepository.UpdateAccountAsync(account.Adapt<AccountRequest>());
             return ServiceResult.Ok();
         }
-        catch
+        catch (Exception e)
         {
+            _logger.LogError(e, "Failed to update avatar for {Email}", email);
             return ServiceResult.Fail("Input is invalid");
         }
     }
@@ -45,8 +52,9 @@ public class ProfileService : IProfileService
             await _accountRepository.UpdateAccountAsync(account.Adapt<AccountRequest>());
             return ServiceResult.Ok();
         }
-        catch
+        catch (Exception e)
         {
+            _logger.LogError(e, "Failed to update timezone for {Email}", email);
             return ServiceResult.Fail("Input is invalid");
         }
     }
@@ -66,8 +74,9 @@ public class ProfileService : IProfileService
             await _accountRepository.UpdateAccountAsync(account.Adapt<AccountRequest>());
             return ServiceResult.Ok();
         }
-        catch
+        catch (Exception e)
         {
+            _logger.LogError(e, "Failed to update password for {Email}", email);
             return ServiceResult.Fail("Input is invalid");
         }
     }

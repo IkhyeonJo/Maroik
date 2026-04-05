@@ -1,14 +1,10 @@
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
-using Maroik.Core.PostgreSQL.Models;
 using Maroik.Core.Contract.Utilities;
-using Maroik.WebSite.Models.ViewModels.Notice;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.Extensions.Options;
-using Newtonsoft.Json;
-using System.Text;
 
 namespace Maroik.WebSite.Controllers;
 
@@ -18,11 +14,10 @@ public abstract class BaseController : Controller
     {
         var services = HttpContext.RequestServices;
         var accountRepo = services.GetRequiredService<IAccountRepository>();
-        var fixedIncomeRepo = services.GetRequiredService<IFixedIncomeRepository>();
-        var fixedExpenditureRepo = services.GetRequiredService<IFixedExpenditureRepository>();
+        var dashboardService = services.GetRequiredService<IDashboardService>();
         var serverSettings = services.GetRequiredService<IOptions<ServerSetting>>();
         var sessionService = services.GetRequiredService<ISessionService>();
-        int noticeMaturityDateDay = serverSettings.Value.NoticeMaturityDateDay;
+
         ViewBag.DomainName = serverSettings.Value.DomainName;
 
         AccountResponse loginedAccount = new()
@@ -33,8 +28,6 @@ public abstract class BaseController : Controller
             AvatarImagePath = "/anonymous/images/bg1.jpg"
         };
 
-        string loginedAccountTimeZoneIanaId = "UTC";
-
         var sessionAccount = sessionService.GetAccount();
         if (sessionAccount != null)
         {
@@ -42,17 +35,14 @@ public abstract class BaseController : Controller
             {
                 string email = sessionAccount.Email ?? "";
                 if (!string.IsNullOrEmpty(email))
-                {
                     loginedAccount = await accountRepo.GetAccountByEmailAsync(email) ?? loginedAccount;
-                    loginedAccountTimeZoneIanaId = loginedAccount.TimeZoneIanaId ?? "UTC";
-                }
             }
-            catch { /* ignore */ }
+            catch { /* ignore session refresh errors */ }
         }
 
         ViewBag.LoginedAccount = loginedAccount;
 
-        // Fixed income/expenditure notice counts for _MainTopBar
+        // Fixed income/expenditure notice counts — delegated to DashboardService
         int fixedIncomesNoticedCount = 0, fixedExpenditureNoticedCount = 0;
         int fixedIncomesExpiredCount = 0, fixedExpenditureExpiredCount = 0;
 
@@ -60,37 +50,16 @@ public abstract class BaseController : Controller
         {
             try
             {
-                DateTime currentDate = DateTime.UtcNow.Date;
+                var counts = await dashboardService.GetNoticeCountsAsync(
+                    loginedAccount.Email ?? "",
+                    serverSettings.Value.NoticeMaturityDateDay);
 
-                foreach (var item in await fixedIncomeRepo.GetFixedIncomesAsync(loginedAccount.Email ?? ""))
-                {
-                    bool noticed = false;
-                    try
-                    {
-                        noticed = currentDate.Subtract(new DateTime(currentDate.Year, item.DepositMonth, item.DepositDay)).TotalDays <= 0 &&
-                                  Math.Abs(currentDate.Subtract(new DateTime(currentDate.Year, item.DepositMonth, item.DepositDay)).TotalDays) <= noticeMaturityDateDay;
-                    }
-                    catch { noticed = false; }
-                    if (item.Unpunctuality) noticed = true;
-                    if (noticed) fixedIncomesNoticedCount++;
-                    if (item.MaturityDate.Subtract(currentDate).TotalDays < 0) fixedIncomesExpiredCount++;
-                }
-
-                foreach (var item in await fixedExpenditureRepo.GetFixedExpendituresAsync(loginedAccount.Email ?? ""))
-                {
-                    bool noticed = false;
-                    try
-                    {
-                        noticed = currentDate.Subtract(new DateTime(currentDate.Year, item.DepositMonth, item.DepositDay)).TotalDays <= 0 &&
-                                  Math.Abs(currentDate.Subtract(new DateTime(currentDate.Year, item.DepositMonth, item.DepositDay)).TotalDays) <= noticeMaturityDateDay;
-                    }
-                    catch { noticed = false; }
-                    if (item.Unpunctuality) noticed = true;
-                    if (noticed) fixedExpenditureNoticedCount++;
-                    if (item.MaturityDate.Subtract(currentDate).TotalDays < 0) fixedExpenditureExpiredCount++;
-                }
+                fixedIncomesNoticedCount = counts.FixedIncomesNoticed;
+                fixedExpenditureNoticedCount = counts.FixedExpendituresNoticed;
+                fixedIncomesExpiredCount = counts.FixedIncomesExpired;
+                fixedExpenditureExpiredCount = counts.FixedExpendituresExpired;
             }
-            catch { /* ignore */ }
+            catch { /* ignore — non-critical UI badge */ }
         }
 
         ViewBag.FixedIncomesNoticedCount = fixedIncomesNoticedCount;

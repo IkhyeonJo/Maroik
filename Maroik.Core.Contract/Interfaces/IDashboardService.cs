@@ -6,4 +6,5 @@ public interface IDashboardService
 {
     Task<DashboardSummary> GetSummaryAsync(string accountEmail, string year, string month, string timeZoneId);
     Task UpdateDefaultMonetaryUnitAsync(string accountEmail, string? monetaryUnit);
+    Task<NotificationCounts> GetNoticeCountsAsync(string email, int noticeMaturityDateDay);
 }
