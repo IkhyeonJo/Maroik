@@ -1,9 +1,8 @@
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.PostgreSQL.Models;
-using Maroik.WebSite.Extensions;
+using Maroik.Core.Client.Utilities;
 using Maroik.WebSite.Models.ViewModels.Notice;
-using Maroik.WebSite.Utilities;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;

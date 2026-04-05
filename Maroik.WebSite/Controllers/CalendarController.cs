@@ -5,7 +5,7 @@ using ImageMagick;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.PostgreSQL.Models;
-using Maroik.WebSite.Extensions;
+using Maroik.Core.Client.Utilities;
 using Maroik.WebSite.Utilities;
 using Maroik.WebSite.Models.ViewModels.Calendar;
 using Microsoft.AspNetCore.Mvc;
@@ -71,7 +71,7 @@ public class CalendarController : BaseController
             if (!ModelState.IsValid)
                 return Json(new { result = false, error = _localizer["Input is invalid"].Value });
 
-            _ = HttpContext.Session.TryGetValue(Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account), out byte[] resultByte);
+            _ = HttpContext.Session.TryGetValue(Maroik.Core.Client.Utilities.EnumHelper.GetDescription(Maroik.Core.Client.Utilities.Session.Account), out byte[] resultByte);
             CalendarRequest tempCalendar = calendarInputViewModel?.Calendars?.FirstOrDefault() ?? new CalendarRequest();
             tempCalendar.AccountEmail = JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email;
 
@@ -148,7 +148,7 @@ public class CalendarController : BaseController
                     }
                 }
 
-                bool isAccountSessionExist = HttpContext.Session.TryGetValue(Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account), out byte[] resultByte);
+                bool isAccountSessionExist = HttpContext.Session.TryGetValue(Maroik.Core.Client.Utilities.EnumHelper.GetDescription(Maroik.Core.Client.Utilities.Session.Account), out byte[] resultByte);
 
                 if (!isAccountSessionExist)
                     return Json(new { result = false, error = _localizer["Please Login to create calendar event"].Value });
@@ -312,7 +312,7 @@ public class CalendarController : BaseController
         }
 
         _ = HttpContext.Session.TryGetValue(
-            Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account),
+            Maroik.Core.Client.Utilities.EnumHelper.GetDescription(Maroik.Core.Client.Utilities.Session.Account),
             out byte[] resultByte);
 
         var loginedAccount = JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte));
@@ -352,7 +352,7 @@ public class CalendarController : BaseController
     [HttpGet]
     public async Task<IActionResult> AdminIndex()
     {
-        _ = HttpContext.Session.TryGetValue(Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account), out byte[] resultByte);
+        _ = HttpContext.Session.TryGetValue(Maroik.Core.Client.Utilities.EnumHelper.GetDescription(Maroik.Core.Client.Utilities.Session.Account), out byte[] resultByte);
 
         AccountResponse loginedAccount = JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte));
 
@@ -545,7 +545,7 @@ public class CalendarController : BaseController
     [HttpGet]
     public async Task<IActionResult> UserIndex()
     {
-        _ = HttpContext.Session.TryGetValue(Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account), out byte[] resultByte);
+        _ = HttpContext.Session.TryGetValue(Maroik.Core.Client.Utilities.EnumHelper.GetDescription(Maroik.Core.Client.Utilities.Session.Account), out byte[] resultByte);
 
         AccountResponse loginedAccount = JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte));
 
@@ -1101,7 +1101,7 @@ public class CalendarController : BaseController
     {
         try
         {
-            _ = HttpContext.Session.TryGetValue(Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account), out byte[] resultByte);
+            _ = HttpContext.Session.TryGetValue(Maroik.Core.Client.Utilities.EnumHelper.GetDescription(Maroik.Core.Client.Utilities.Session.Account), out byte[] resultByte);
             List<CalendarResponse> tempCalendars = await _calendarRepository.GetCalendarsAsync(JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email) ?? [];
 
             if (tempCalendars == null || tempCalendars.Count == 0)
@@ -1131,7 +1131,7 @@ public class CalendarController : BaseController
     {
         try
         {
-            _ = HttpContext.Session.TryGetValue(Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account), out byte[] resultByte);
+            _ = HttpContext.Session.TryGetValue(Maroik.Core.Client.Utilities.EnumHelper.GetDescription(Maroik.Core.Client.Utilities.Session.Account), out byte[] resultByte);
             List<CalendarResponse> calendars = (await _calendarRepository.GetCalendarsAsync(JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email) ?? [])?.ToList();
 
             return Json(new { result = true, calendars });
@@ -1150,7 +1150,7 @@ public class CalendarController : BaseController
     {
         try
         {
-            bool isAccountSessionExist = HttpContext.Session.TryGetValue(Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account), out byte[] resultByte);
+            bool isAccountSessionExist = HttpContext.Session.TryGetValue(Maroik.Core.Client.Utilities.EnumHelper.GetDescription(Maroik.Core.Client.Utilities.Session.Account), out byte[] resultByte);
 
             if (isAccountSessionExist)
             {
@@ -1208,7 +1208,7 @@ public class CalendarController : BaseController
             {
                 try
                 {
-                    _ = HttpContext.Session.TryGetValue(Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account), out byte[] resultByte);
+                    _ = HttpContext.Session.TryGetValue(Maroik.Core.Client.Utilities.EnumHelper.GetDescription(Maroik.Core.Client.Utilities.Session.Account), out byte[] resultByte);
 
                     AccountResponse loginedAccount = JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte));
 
@@ -1444,7 +1444,7 @@ public class CalendarController : BaseController
             {
                 try
                 {
-                    bool isAccountSessionExist = HttpContext.Session.TryGetValue(Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account), out byte[] resultByte);
+                    bool isAccountSessionExist = HttpContext.Session.TryGetValue(Maroik.Core.Client.Utilities.EnumHelper.GetDescription(Maroik.Core.Client.Utilities.Session.Account), out byte[] resultByte);
 
                     AccountResponse loginedAccount = null;
                     List<CalendarResponse> calendars = null;
@@ -1709,7 +1709,7 @@ public class CalendarController : BaseController
                 {
                     List<CalendarEventOutputViewModel> calendarEvents = [];
 
-                    bool isAccountSessionExist = HttpContext.Session.TryGetValue(Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account), out byte[] resultByte);
+                    bool isAccountSessionExist = HttpContext.Session.TryGetValue(Maroik.Core.Client.Utilities.EnumHelper.GetDescription(Maroik.Core.Client.Utilities.Session.Account), out byte[] resultByte);
 
                     AccountResponse loginedAccount = null;
 
@@ -1943,7 +1943,7 @@ public class CalendarController : BaseController
     {
         try
         {
-            _ = HttpContext.Session.TryGetValue(Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account), out byte[] resultByte);
+            _ = HttpContext.Session.TryGetValue(Maroik.Core.Client.Utilities.EnumHelper.GetDescription(Maroik.Core.Client.Utilities.Session.Account), out byte[] resultByte);
             List<CalendarResponse> calendars = (await _calendarRepository.GetCalendarsAsync(JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email) ?? [])?.ToList();
             List<CalendarSharedResponse> calendarShareds = (await _calendarSharedRepository.GetCalendarSharedAsync() ?? [])?.ToList();
 
@@ -1996,7 +1996,7 @@ public class CalendarController : BaseController
     {
         try
         {
-            bool isAccountSessionExist = HttpContext.Session.TryGetValue(Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account), out byte[] resultByte);
+            bool isAccountSessionExist = HttpContext.Session.TryGetValue(Maroik.Core.Client.Utilities.EnumHelper.GetDescription(Maroik.Core.Client.Utilities.Session.Account), out byte[] resultByte);
 
             if (isAccountSessionExist)
             {
@@ -2064,7 +2064,7 @@ public class CalendarController : BaseController
             {
                 try
                 {
-                    _ = HttpContext.Session.TryGetValue(Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account), out byte[] resultByte);
+                    _ = HttpContext.Session.TryGetValue(Maroik.Core.Client.Utilities.EnumHelper.GetDescription(Maroik.Core.Client.Utilities.Session.Account), out byte[] resultByte);
 
                     CalendarResponse tempCalendar = (calendarInputViewModel?.Calendars?.FirstOrDefault())?.Adapt<CalendarResponse>() ?? new CalendarResponse();
                     tempCalendar.AccountEmail = JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email;
@@ -2158,7 +2158,7 @@ public class CalendarController : BaseController
                     }
                 }
 
-                bool isAccountSessionExist = HttpContext.Session.TryGetValue(Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account), out byte[] resultByte);
+                bool isAccountSessionExist = HttpContext.Session.TryGetValue(Maroik.Core.Client.Utilities.EnumHelper.GetDescription(Maroik.Core.Client.Utilities.Session.Account), out byte[] resultByte);
 
                 if (!isAccountSessionExist)
                     return Json(new { result = false, error = _localizer["Please Login to update calendar event"].Value });
@@ -2325,7 +2325,7 @@ public class CalendarController : BaseController
         {
             if (ModelState.IsValid)
             {
-                bool isAccountSessionExist = HttpContext.Session.TryGetValue(Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account), out byte[] resultByte);
+                bool isAccountSessionExist = HttpContext.Session.TryGetValue(Maroik.Core.Client.Utilities.EnumHelper.GetDescription(Maroik.Core.Client.Utilities.Session.Account), out byte[] resultByte);
 
                 if (!isAccountSessionExist)
                     return Json(new { result = false, error = _localizer["Login required."].Value });
@@ -2367,7 +2367,7 @@ public class CalendarController : BaseController
     {
         try
         {
-            _ = HttpContext.Session.TryGetValue(Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account), out byte[] resultByte);
+            _ = HttpContext.Session.TryGetValue(Maroik.Core.Client.Utilities.EnumHelper.GetDescription(Maroik.Core.Client.Utilities.Session.Account), out byte[] resultByte);
 
             CalendarRequest tempCalendar = calendarInputViewModel?.Calendars?.FirstOrDefault() ?? new CalendarRequest();
             tempCalendar.AccountEmail = JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email;
@@ -2393,7 +2393,7 @@ public class CalendarController : BaseController
     {
         try
         {
-            _ = HttpContext.Session.TryGetValue(Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account), out byte[] resultByte);
+            _ = HttpContext.Session.TryGetValue(Maroik.Core.Client.Utilities.EnumHelper.GetDescription(Maroik.Core.Client.Utilities.Session.Account), out byte[] resultByte);
 
             string email = JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email;
 

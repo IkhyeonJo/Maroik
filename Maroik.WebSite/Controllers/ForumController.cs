@@ -5,7 +5,7 @@ using ImageMagick;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.PostgreSQL.Models;
-using Maroik.WebSite.Extensions;
+using Maroik.Core.Client.Utilities;
 using Maroik.WebSite.Utilities;
 using Maroik.WebSite.Models;
 using Maroik.WebSite.Models.ViewModels.Forum;
@@ -97,7 +97,7 @@ public class ForumController : BaseController
             }
 
             bool isAccountSessionExist = HttpContext.Session.TryGetValue(
-                Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account),
+                Maroik.Core.Client.Utilities.EnumHelper.GetDescription(Maroik.Core.Client.Utilities.Session.Account),
                 out byte[] resultByte);
 
             if (!isAccountSessionExist)
@@ -166,7 +166,7 @@ public class ForumController : BaseController
             #endregion
 
             bool isAccountSessionExist = HttpContext.Session.TryGetValue(
-                Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account),
+                Maroik.Core.Client.Utilities.EnumHelper.GetDescription(Maroik.Core.Client.Utilities.Session.Account),
                 out byte[] resultByte);
 
             if (!isAccountSessionExist)
@@ -237,7 +237,7 @@ public class ForumController : BaseController
         }
 
         _ = HttpContext.Session.TryGetValue(
-            Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account),
+            Maroik.Core.Client.Utilities.EnumHelper.GetDescription(Maroik.Core.Client.Utilities.Session.Account),
             out byte[] resultByte);
 
         var loginedAccount = JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte));
@@ -285,7 +285,7 @@ public class ForumController : BaseController
             freeForumOutputViewModel.Method = method;
             #endregion
 
-            bool isAccountSessionExist = HttpContext.Session.TryGetValue(Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account), out _); // Check if account session exists after login
+            bool isAccountSessionExist = HttpContext.Session.TryGetValue(Maroik.Core.Client.Utilities.EnumHelper.GetDescription(Maroik.Core.Client.Utilities.Session.Account), out _); // Check if account session exists after login
 
             return isAccountSessionExist ? View(freeForumOutputViewModel) : RedirectToAction("Login", "Account");
         }
@@ -313,7 +313,7 @@ public class ForumController : BaseController
 
                 if (freeBoard.Locked)
                 {
-                    _ = HttpContext.Session.TryGetValue(Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account), out byte[] resultByte); // If writer or administrator
+                    _ = HttpContext.Session.TryGetValue(Maroik.Core.Client.Utilities.EnumHelper.GetDescription(Maroik.Core.Client.Utilities.Session.Account), out byte[] resultByte); // If writer or administrator
                     AccountResponse loginedAccount = JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)); // Get Session
 
                     if (!(loginedAccount.Nickname == freeBoard.Writer || loginedAccount.Role == Role.Admin))
@@ -401,7 +401,7 @@ public class ForumController : BaseController
                 // Preload comments and accounts for detail view
                 freeForumOutputViewModel.DetailBoardComments = (await _boardCommentRepository.GetOneBoardCommentsAsync(boardId ?? 0))?.ToList() ?? [];
                 freeForumOutputViewModel.AllAccounts = await _accountRepository.GetAllAsync() ?? [];
-                _ = HttpContext.Session.TryGetValue(EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account), out byte[] detailSessionByte);
+                _ = HttpContext.Session.TryGetValue(EnumHelper.GetDescription(Maroik.Core.Client.Utilities.Session.Account), out byte[] detailSessionByte);
                 freeForumOutputViewModel.LoginedAccount = detailSessionByte?.Length > 0
                     ? JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(detailSessionByte)) ?? new AccountResponse { Role = Role.Anonymous }
                     : new AccountResponse { Role = Role.Anonymous };
@@ -436,7 +436,7 @@ public class ForumController : BaseController
             {
                 BoardResponse freeBoard = freeBoards.FirstOrDefault(m => m.Id == boardId);
 
-                _ = HttpContext.Session.TryGetValue(Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account), out byte[] resultByte);
+                _ = HttpContext.Session.TryGetValue(Maroik.Core.Client.Utilities.EnumHelper.GetDescription(Maroik.Core.Client.Utilities.Session.Account), out byte[] resultByte);
                 AccountResponse loginedAccount = await _accountRepository.GetAccountByEmailAsync(JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email);
 
                 if (freeBoard.Writer != loginedAccount.Nickname) // If writer and logged-in user are not the same
@@ -545,7 +545,7 @@ public class ForumController : BaseController
             #region Search keyword logic
             if (searchType == "Title" && !string.IsNullOrEmpty(searchText))
             {
-                bool isAccountSessionExist = HttpContext.Session.TryGetValue(Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account), out byte[] resultByte);
+                bool isAccountSessionExist = HttpContext.Session.TryGetValue(Maroik.Core.Client.Utilities.EnumHelper.GetDescription(Maroik.Core.Client.Utilities.Session.Account), out byte[] resultByte);
 
                 if (isAccountSessionExist) // If logged in
                 {
@@ -600,7 +600,7 @@ public class ForumController : BaseController
             #endregion
 
             #region Preload comment counts and attached files for view
-            _ = HttpContext.Session.TryGetValue(EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account), out byte[] sessionByte);
+            _ = HttpContext.Session.TryGetValue(EnumHelper.GetDescription(Maroik.Core.Client.Utilities.Session.Account), out byte[] sessionByte);
             freeForumOutputViewModel.LoginedAccount = sessionByte?.Length > 0
                 ? JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(sessionByte)) ?? new AccountResponse { Role = Role.Anonymous }
                 : new AccountResponse { Role = Role.Anonymous };
@@ -713,7 +713,7 @@ public class ForumController : BaseController
             }
 
             bool isAccountSessionExist = HttpContext.Session.TryGetValue(
-                Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account),
+                Maroik.Core.Client.Utilities.EnumHelper.GetDescription(Maroik.Core.Client.Utilities.Session.Account),
                 out byte[] resultByte);
 
             if (!isAccountSessionExist)
@@ -770,7 +770,7 @@ public class ForumController : BaseController
         try
         {
             _ = HttpContext.Session.TryGetValue(
-                Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account),
+                Maroik.Core.Client.Utilities.EnumHelper.GetDescription(Maroik.Core.Client.Utilities.Session.Account),
                 out byte[] resultByte);
             AccountResponse loginedAccount = await _accountRepository.GetAccountByEmailAsync(
                 JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email);
@@ -802,7 +802,7 @@ public class ForumController : BaseController
         try
         {
             _ = HttpContext.Session.TryGetValue(
-                Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account),
+                Maroik.Core.Client.Utilities.EnumHelper.GetDescription(Maroik.Core.Client.Utilities.Session.Account),
                 out byte[] resultByte);
             AccountResponse loginedAccount = await _accountRepository.GetAccountByEmailAsync(
                 JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email);

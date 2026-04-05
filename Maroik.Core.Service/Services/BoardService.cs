@@ -49,7 +49,7 @@ public class BoardService : IBoardService
             if (attachedFile != null)
             {
                 string filePath = BuildAttachedFilePath(request.Type!, request.Id, attachedFile.FileName);
-                await _fileClient.UploadAsync(attachedFile.Bytes, attachedFile.ContentType, filePath, ServerSetting.FileStorageBaseUrl);
+                await _fileClient.UploadAsync(attachedFile.Bytes, attachedFile.ContentType, filePath, ServerSetting.FileStorageBaseUrl ?? string.Empty);
                 await _boardAttachedFileRepository.SaveBoardAttachedFileAsync(new BoardAttachedFileRequest
                 {
                     BoardId = request.Id,
@@ -105,7 +105,7 @@ public class BoardService : IBoardService
             if (previous != null && newFile != null)
             {
                 string filePath = BuildAttachedFilePath(request.Type!, request.Id, newFile.FileName);
-                await _fileClient.UploadAsync(newFile.Bytes, newFile.ContentType, filePath, ServerSetting.FileStorageBaseUrl);
+                await _fileClient.UploadAsync(newFile.Bytes, newFile.ContentType, filePath, ServerSetting.FileStorageBaseUrl ?? string.Empty);
                 previous.Size = Convert.ToInt32(newFile.Size);
                 previous.Name = Path.GetFileNameWithoutExtension(newFile.FileName);
                 previous.Extension = Path.GetExtension(newFile.FileName);
@@ -123,7 +123,7 @@ public class BoardService : IBoardService
             else if (previous == null && newFile != null)
             {
                 string filePath = BuildAttachedFilePath(request.Type!, request.Id, newFile.FileName);
-                await _fileClient.UploadAsync(newFile.Bytes, newFile.ContentType, filePath, ServerSetting.FileStorageBaseUrl);
+                await _fileClient.UploadAsync(newFile.Bytes, newFile.ContentType, filePath, ServerSetting.FileStorageBaseUrl ?? string.Empty);
                 await _boardAttachedFileRepository.SaveBoardAttachedFileAsync(new BoardAttachedFileRequest
                 {
                     BoardId = request.Id,

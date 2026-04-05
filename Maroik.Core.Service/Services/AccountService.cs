@@ -17,7 +17,7 @@ public class AccountService : IAccountService
         _accountRepository = accountRepository;
         _passwordService = passwordService;
         _mailClient = mailClient;
-        _rsa = new RSA(ServerSetting.RSAAlgorithm, System.Text.Encoding.UTF8, ServerSetting.RSAPrivateKey, ServerSetting.RSAPublicKey);
+        _rsa = new RSA(ServerSetting.RSAAlgorithm, System.Text.Encoding.UTF8, ServerSetting.RSAPrivateKey ?? string.Empty, ServerSetting.RSAPublicKey);
     }
 
     public async Task<LoginResult> LoginAsync(string email, string password)
@@ -212,7 +212,7 @@ public class AccountService : IAccountService
         {
             try
             {
-                if (_rsa.Verify(temp.RegistrationToken, registrationToken))
+                if (_rsa.Verify(temp.RegistrationToken ?? string.Empty, registrationToken))
                 {
                     account = temp;
                     break;
@@ -308,7 +308,7 @@ public class AccountService : IAccountService
         {
             try
             {
-                if (_rsa.Verify(temp.ResetPasswordToken, resetPasswordToken))
+                if (_rsa.Verify(temp.ResetPasswordToken ?? string.Empty, resetPasswordToken))
                 {
                     account = temp;
                     break;
@@ -331,7 +331,7 @@ public class AccountService : IAccountService
         {
             try
             {
-                if (_rsa.Verify(temp.ResetPasswordToken, resetPasswordToken))
+                if (_rsa.Verify(temp.ResetPasswordToken ?? string.Empty, resetPasswordToken))
                 {
                     account = temp;
                     break;

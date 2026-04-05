@@ -3,6 +3,7 @@ using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.PostgreSQL.Data;
 using Maroik.Core.Repository.Mappings;
 using Maroik.Core.Repository.Repositories;
+using Maroik.Core.Client.Utilities;
 using Maroik.WebSite.Utilities;
 using Maroik.WebSite.Extensions;
 using Maroik.Core.Service.Services;

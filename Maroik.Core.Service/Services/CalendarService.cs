@@ -175,7 +175,7 @@ public class CalendarService : ICalendarService
             if (attachedFile != null)
             {
                 string filePath = BuildEventFilePath(roleIndex, request.Id, attachedFile.FileName);
-                await _fileClient.UploadAsync(attachedFile.Bytes, attachedFile.ContentType, filePath, ServerSetting.FileStorageBaseUrl);
+                await _fileClient.UploadAsync(attachedFile.Bytes, attachedFile.ContentType, filePath, ServerSetting.FileStorageBaseUrl ?? string.Empty);
                 await _calendarEventAttachedFileRepository.SaveCalendarEventAttachedFileAsync(new CalendarEventAttachedFileRequest
                 {
                     CalendarEventId = request.Id,
@@ -229,7 +229,7 @@ public class CalendarService : ICalendarService
             if (attachedFile != null)
             {
                 string filePath = BuildEventFilePath(roleIndex, request.Id, attachedFile.FileName);
-                await _fileClient.UploadAsync(attachedFile.Bytes, attachedFile.ContentType, filePath, ServerSetting.FileStorageBaseUrl);
+                await _fileClient.UploadAsync(attachedFile.Bytes, attachedFile.ContentType, filePath, ServerSetting.FileStorageBaseUrl ?? string.Empty);
                 await _calendarEventAttachedFileRepository.SaveCalendarEventAttachedFileAsync(new CalendarEventAttachedFileRequest
                 {
                     CalendarEventId = request.Id,

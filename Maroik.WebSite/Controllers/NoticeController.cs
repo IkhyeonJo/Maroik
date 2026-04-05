@@ -1,6 +1,6 @@
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
-using Maroik.WebSite.Extensions;
+using Maroik.Core.Client.Utilities;
 using Maroik.WebSite.Utilities;
 using Maroik.WebSite.Models.ViewModels.Notice;
 using Microsoft.AspNetCore.Mvc;
@@ -94,8 +94,7 @@ public class NoticeController : BaseController
             #region FixedIncomes
 
             _ = HttpContext.Session.TryGetValue(
-                Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite
-                    .Utilities.Session.Account), out byte[] resultByte);
+                Maroik.Core.Client.Utilities.EnumHelper.GetDescription(Maroik.Core.Client.Utilities.Session.Account), out byte[] resultByte);
 
             string loginedAccountTimeZoneIanaId = JsonConvert
                 .DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId;
@@ -236,7 +235,7 @@ public class NoticeController : BaseController
 
         {
             _ = HttpContext.Session.TryGetValue(
-                Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account),
+                Maroik.Core.Client.Utilities.EnumHelper.GetDescription(Maroik.Core.Client.Utilities.Session.Account),
                 out byte[] sessionByte);
             AccountResponse loginedAccount = sessionByte?.Length > 0
                 ? JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(sessionByte)) ?? new AccountResponse()
@@ -256,8 +255,7 @@ public class NoticeController : BaseController
         try
         {
             _ = HttpContext.Session.TryGetValue(
-                Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite
-                    .Utilities.Session.Account), out byte[] resultByte);
+                Maroik.Core.Client.Utilities.EnumHelper.GetDescription(Maroik.Core.Client.Utilities.Session.Account), out byte[] resultByte);
 
             List<FixedIncomeResponse> tempFixedIncomes =
                 await _fixedIncomeRepository.GetFixedIncomesAsync(JsonConvert
@@ -311,8 +309,7 @@ public class NoticeController : BaseController
             string label = _localizer["Amount"].Value;
 
             _ = HttpContext.Session.TryGetValue(
-                Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite
-                    .Utilities.Session.Account), out byte[] resultByte);
+                Maroik.Core.Client.Utilities.EnumHelper.GetDescription(Maroik.Core.Client.Utilities.Session.Account), out byte[] resultByte);
 
             AssetResponse asset =
                 (await _assetRepository.GetAssetsAsync(JsonConvert
@@ -396,8 +393,7 @@ public class NoticeController : BaseController
 
         var account = JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(HttpContext.Session
             .TryGetValue(
-                Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite
-                    .Utilities.Session.Account), out byte[] resultByte)
+                Maroik.Core.Client.Utilities.EnumHelper.GetDescription(Maroik.Core.Client.Utilities.Session.Account), out byte[] resultByte)
             ? resultByte
             : Array.Empty<byte>()));
         string loginedAccountTimeZoneIanaId = account.TimeZoneIanaId;
@@ -590,8 +586,7 @@ public class NoticeController : BaseController
             #region FixedExpenditures
 
             _ = HttpContext.Session.TryGetValue(
-                Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite
-                    .Utilities.Session.Account), out byte[] resultByte);
+                Maroik.Core.Client.Utilities.EnumHelper.GetDescription(Maroik.Core.Client.Utilities.Session.Account), out byte[] resultByte);
 
             string loginedAccountTimeZoneIanaId = JsonConvert
                 .DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId;
@@ -735,7 +730,7 @@ public class NoticeController : BaseController
 
         {
             _ = HttpContext.Session.TryGetValue(
-                Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account),
+                Maroik.Core.Client.Utilities.EnumHelper.GetDescription(Maroik.Core.Client.Utilities.Session.Account),
                 out byte[] sessionByte);
             AccountResponse loginedAccount = sessionByte?.Length > 0
                 ? JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(sessionByte)) ?? new AccountResponse()
@@ -755,8 +750,7 @@ public class NoticeController : BaseController
         try
         {
             _ = HttpContext.Session.TryGetValue(
-                Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite
-                    .Utilities.Session.Account), out byte[] resultByte);
+                Maroik.Core.Client.Utilities.EnumHelper.GetDescription(Maroik.Core.Client.Utilities.Session.Account), out byte[] resultByte);
 
             List<FixedExpenditureResponse> tempFixedExpenditures =
                 await _fixedExpenditureRepository.GetFixedExpendituresAsync(JsonConvert
@@ -812,8 +806,7 @@ public class NoticeController : BaseController
             string label = _localizer["Amount"].Value;
 
             _ = HttpContext.Session.TryGetValue(
-                Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite
-                    .Utilities.Session.Account), out byte[] resultByte);
+                Maroik.Core.Client.Utilities.EnumHelper.GetDescription(Maroik.Core.Client.Utilities.Session.Account), out byte[] resultByte);
 
             AssetResponse asset =
                 (await _assetRepository.GetAssetsAsync(JsonConvert
@@ -902,8 +895,7 @@ public class NoticeController : BaseController
         #region FixedExpenditures
 
         _ = HttpContext.Session.TryGetValue(
-            Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite.Utilities
-                .Session.Account), out byte[] resultByte);
+            Maroik.Core.Client.Utilities.EnumHelper.GetDescription(Maroik.Core.Client.Utilities.Session.Account), out byte[] resultByte);
 
         string loginedAccountTimeZoneIanaId = JsonConvert
             .DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId;

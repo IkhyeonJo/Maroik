@@ -1,5 +1,5 @@
 ﻿using Maroik.Core.Contract.Dtos;
-using Maroik.WebSite.Utilities;
+using Maroik.Core.Client.Utilities;
 using Newtonsoft.Json;
 using System.Text;
 
@@ -20,7 +20,7 @@ public class RoleBasedStaticFileMiddleware
 
         if (!string.IsNullOrEmpty(path))
         {
-            _ = context.Session.TryGetValue(Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account), out byte[] resultByte);
+            _ = context.Session.TryGetValue(Maroik.Core.Client.Utilities.EnumHelper.GetDescription(Maroik.Core.Client.Utilities.Session.Account), out byte[] resultByte);
             string userRole = null;
 
             if (resultByte != null)

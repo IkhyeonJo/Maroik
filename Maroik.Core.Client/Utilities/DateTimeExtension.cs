@@ -1,4 +1,4 @@
-﻿namespace Maroik.WebSite.Extensions;
+namespace Maroik.Core.Client.Utilities;
 
 public static class DateTimeExtension
 {
