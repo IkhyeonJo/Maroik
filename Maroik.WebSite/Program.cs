@@ -94,6 +94,19 @@ builder.Services.AddScoped<ICalendarSharedRepository, CalendarSharedRepository>(
 
 #region AddServices
 builder.Services.AddScoped<IPasswordService, PasswordService>();
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+builder.Services.AddScoped<IAccountService, AccountService>();
+builder.Services.AddScoped<IAssetService, AssetService>();
+builder.Services.AddScoped<IIncomeService, IncomeService>();
+builder.Services.AddScoped<IExpenditureService, ExpenditureService>();
+builder.Services.AddScoped<IFixedIncomeService, FixedIncomeService>();
+builder.Services.AddScoped<IFixedExpenditureService, FixedExpenditureService>();
+builder.Services.AddScoped<IDashboardService, DashboardService>();
+builder.Services.AddScoped<IProfileService, ProfileService>();
+builder.Services.AddScoped<IManagementAccountService, ManagementAccountService>();
+builder.Services.AddScoped<IMenuService, MenuService>();
+builder.Services.AddScoped<IBoardService, BoardService>();
+builder.Services.AddScoped<ICalendarService, CalendarService>();
 #endregion
 
 #region AddClients

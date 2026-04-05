@@ -1,7 +1,5 @@
-using Mapster;
-﻿using Maroik.Core.Contract.Dtos;
+using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
-using Maroik.Core.PostgreSQL.Models;
 using Maroik.WebSite.Extensions;
 using Maroik.WebSite.Utilities;
 using Maroik.WebSite.Models.ViewModels.Account;
@@ -13,12 +11,7 @@ using System.Text;
 
 namespace Maroik.WebSite.Controllers;
 
-public class DashBoardController(
-    IIncomeRepository incomeRepository,
-    IExpenditureRepository expenditureRepository,
-    IAssetRepository assetRepository,
-    IAccountRepository accountRepository)
-    : BaseController
+public class DashBoardController(IDashboardService dashboardService) : BaseController
 {
     private const string HostResourceFilePath = "/app/Maroik.Log/HostResourceInfo.txt";
     private const string DockerResourceFilePath = "/app/Maroik.Log/DockerResourceInfo.txt";
@@ -137,429 +130,268 @@ public class DashBoardController(
     public async Task<IActionResult> UserIndex(string year, string month)
     {
         _ = HttpContext.Session.TryGetValue(EnumHelper.GetDescription(Session.Account), out var resultByte);
-
-        var loginedAccountTimeZoneIanaId = JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte ?? [])).TimeZoneIanaId;
-
-        var userIndexOutputViewModel = new UserIndexOutputViewModel();
-        var currentLoginUser = await accountRepository.GetAccountByEmailAsync(JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte ?? [])).Email);
-        var assets = (await assetRepository.GetAssetsAsync(JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte ?? [])).Email)) ?? [];
+        var loginedAccount = JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte ?? []));
+        string email = loginedAccount.Email;
+        string timeZoneId = loginedAccount.TimeZoneIanaId;
 
         #region For Demo User [Only Demo purpose]
-        if (currentLoginUser?.Email == "demo@maroik.com")
+        if (email == "demo@maroik.com")
         {
             year = "2025";
             month = "06";
         }
         #endregion
-        
-        #region Year & Month
-        if (string.IsNullOrEmpty(year))
+
+        var summary = await dashboardService.GetSummaryAsync(email, year ?? "", month ?? "", timeZoneId);
+
+        var vm = new UserIndexOutputViewModel
         {
-            year = DateTime.UtcNow.Year.ToString();
-        }
-        else
+            DefaultMonetaryUnit = summary.DefaultMonetaryUnit,
+            MonetaryUnits = summary.MonetaryUnits,
+            StartYear = summary.StartYear,
+            EndYear = summary.EndYear,
+            SelectedYear = summary.SelectedYear,
+            SelectedMonth = summary.SelectedMonth
+        };
+
+        if (summary.DefaultMonetaryUnit != null)
         {
-            try
+            vm.IncomeYearOutputViewModels = summary.YearIncomes.Select(item => new IncomeOutputViewModel
             {
-                year = Convert.ToInt32(year).ToString();
-            }
-            catch
+                Id = item.Id,
+                MainClass = item.MainClass,
+                SubClass = item.SubClass,
+                Content = item.Content,
+                Amount = Convert.ToDecimal(item.Amount.TrimTrailingZeros()),
+                MonetaryUnit = summary.Assets.FirstOrDefault(x => x.ProductName == item.DepositMyAssetProductName)?.MonetaryUnit,
+                DepositMyAssetProductName = item.DepositMyAssetProductName,
+                Created = item.Created.ConvertTimeByTimeZoneIanaId(timeZoneId),
+                Updated = item.Updated.ConvertTimeByTimeZoneIanaId(timeZoneId),
+                Note = item.Note
+            }).ToList();
+
+            vm.ExpenditureYearOutputViewModels = summary.YearExpenditures.Select(item => new ExpenditureOutputViewModel
             {
-                year = DateTime.UtcNow.Year.ToString();
-            }
-        }
+                Id = item.Id,
+                MainClass = item.MainClass,
+                SubClass = item.SubClass,
+                Content = item.Content,
+                Amount = Convert.ToDecimal(item.Amount.TrimTrailingZeros()),
+                MonetaryUnit = summary.Assets.FirstOrDefault(x => x.ProductName == item.PaymentMethod)?.MonetaryUnit,
+                PaymentMethod = item.PaymentMethod,
+                Note = item.Note,
+                MyDepositAsset = item.MyDepositAsset,
+                Created = item.Created.ConvertTimeByTimeZoneIanaId(timeZoneId),
+                Updated = item.Updated.ConvertTimeByTimeZoneIanaId(timeZoneId)
+            }).ToList();
 
-        if (string.IsNullOrEmpty(month))
-        {
-            month = DateTime.UtcNow.Month.ToString("00");
-        }
-        else
-        {
-            try
+            vm.IncomeYearMonthOutputViewModels = summary.YearMonthIncomes.Select(item => new IncomeOutputViewModel
             {
-                month = Convert.ToInt32(month).ToString("00");
-            }
-            catch
+                Id = item.Id,
+                MainClass = item.MainClass,
+                SubClass = item.SubClass,
+                Content = item.Content,
+                Amount = Convert.ToDecimal(item.Amount.TrimTrailingZeros()),
+                MonetaryUnit = summary.Assets.FirstOrDefault(x => x.ProductName == item.DepositMyAssetProductName)?.MonetaryUnit,
+                DepositMyAssetProductName = item.DepositMyAssetProductName,
+                Created = item.Created.ConvertTimeByTimeZoneIanaId(timeZoneId),
+                Updated = item.Updated.ConvertTimeByTimeZoneIanaId(timeZoneId),
+                Note = item.Note
+            }).ToList();
+
+            vm.ExpenditureYearMonthOutputViewModels = summary.YearMonthExpenditures.Select(item => new ExpenditureOutputViewModel
             {
-                month = DateTime.UtcNow.Month.ToString("00");
-            }
-        }
-        #endregion
+                Id = item.Id,
+                MainClass = item.MainClass,
+                SubClass = item.SubClass,
+                Content = item.Content,
+                Amount = Convert.ToDecimal(item.Amount.TrimTrailingZeros()),
+                MonetaryUnit = summary.Assets.FirstOrDefault(x => x.ProductName == item.PaymentMethod)?.MonetaryUnit,
+                PaymentMethod = item.PaymentMethod,
+                Note = item.Note,
+                MyDepositAsset = item.MyDepositAsset,
+                Created = item.Created.ConvertTimeByTimeZoneIanaId(timeZoneId),
+                Updated = item.Updated.ConvertTimeByTimeZoneIanaId(timeZoneId)
+            }).ToList();
 
-        #region Set if currentLoginUser's DefaultMonetaryUnit is not existed in Assets
-        switch (currentLoginUser?.DefaultMonetaryUnit)
-        {
-            case null when assets.Count == 0:
-            {
-                if (currentLoginUser != null)
-                {
-                    currentLoginUser.DefaultMonetaryUnit = null;
-                    await accountRepository.UpdateAccountAsync(currentLoginUser.Adapt<AccountRequest>());
-                }
-
-                break;
-            }
-            case null when assets.Count != 0:
-            {
-                var mostUsedMonetaryUnit = assets
-                    .GroupBy(a => a.MonetaryUnit)
-                    .OrderByDescending(g => g.Count())
-                    .FirstOrDefault();
-                
-                if (currentLoginUser != null)
-                {
-                    currentLoginUser.DefaultMonetaryUnit = mostUsedMonetaryUnit?.Key;
-                    await accountRepository.UpdateAccountAsync(currentLoginUser.Adapt<AccountRequest>());
-                }
-
-                break;
-            }
-            default:
-            {
-                if (currentLoginUser?.DefaultMonetaryUnit != null && assets.Count == 0)
-                {
-                    currentLoginUser.DefaultMonetaryUnit = null;
-                    await accountRepository.UpdateAccountAsync(currentLoginUser.Adapt<AccountRequest>());
-                }
-                else if (currentLoginUser?.DefaultMonetaryUnit != null && assets.Count != 0)
-                {
-                    if (!assets.Select(x => x.MonetaryUnit).Distinct().ToList().Contains(currentLoginUser.DefaultMonetaryUnit))
-                    {
-                        var mostUsedMonetaryUnit = assets
-                            .GroupBy(a => a.MonetaryUnit)
-                            .OrderByDescending(g => g.Count())
-                            .FirstOrDefault();
-                        currentLoginUser.DefaultMonetaryUnit = mostUsedMonetaryUnit?.Key;
-                        await accountRepository.UpdateAccountAsync(currentLoginUser.Adapt<AccountRequest>());
-                    }
-                }
-
-                break;
-            }
-        }
-
-        userIndexOutputViewModel.DefaultMonetaryUnit = currentLoginUser?.DefaultMonetaryUnit;
-        #endregion
-        
-        #region Current Year Income/Expenditure & MonetaryUnits
-        if (userIndexOutputViewModel.DefaultMonetaryUnit != null)
-        {
-            var currentYear = $"{year}";
-            var currentLoginUserEmail = JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte ?? [])).Email;
-
-            var incomes = await incomeRepository.GetCurrentYearIncomesAsync(currentLoginUserEmail, currentYear, JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte ?? [])).TimeZoneIanaId);
-            userIndexOutputViewModel.IncomeYearOutputViewModels = [];
-            foreach (var item in incomes)
-            {
-                userIndexOutputViewModel.IncomeYearOutputViewModels.Add(new IncomeOutputViewModel()
-                {
-                    Id = item.Id,
-                    MainClass = item.MainClass,
-                    SubClass = item.SubClass,
-                    Content = item.Content,
-                    Amount = Convert.ToDecimal(item.Amount.TrimTrailingZeros()),
-                    MonetaryUnit = assets.FirstOrDefault(x => x.ProductName == item.DepositMyAssetProductName)?.MonetaryUnit,
-                    DepositMyAssetProductName = item.DepositMyAssetProductName,
-                    Created = item.Created.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId),
-                    Updated = item.Updated.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId),
-                    Note = item.Note
-                });
-            }
-
-            var expenditures = await expenditureRepository.GetCurrentYearExpendituresAsync(currentLoginUserEmail, currentYear, JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte ?? [])).TimeZoneIanaId);
-            userIndexOutputViewModel.ExpenditureYearOutputViewModels = [];
-            foreach (var item in expenditures)
-            {
-                userIndexOutputViewModel.ExpenditureYearOutputViewModels.Add(new ExpenditureOutputViewModel()
-                {
-                    Id = item.Id,
-                    MainClass = item.MainClass,
-                    SubClass = item.SubClass,
-                    Content = item.Content,
-                    Amount = Convert.ToDecimal(item.Amount.TrimTrailingZeros()),
-                    MonetaryUnit = assets.FirstOrDefault(x => x.ProductName == item.PaymentMethod)?.MonetaryUnit,
-                    PaymentMethod = item.PaymentMethod,
-                    Note = item.Note,
-                    MyDepositAsset = item.MyDepositAsset,
-                    Created = item.Created.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId),
-                    Updated = item.Updated.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId)
-                });
-            }
-            userIndexOutputViewModel.IncomeYearOutputViewModels = userIndexOutputViewModel.IncomeYearOutputViewModels.Where(x => x.MonetaryUnit == userIndexOutputViewModel.DefaultMonetaryUnit).ToList();
-            userIndexOutputViewModel.ExpenditureYearOutputViewModels = userIndexOutputViewModel.ExpenditureYearOutputViewModels.Where(x => x.MonetaryUnit == userIndexOutputViewModel.DefaultMonetaryUnit).ToList();
-        }
-        #endregion
-
-        #region Current Year & Month Income/Expenditure & MonetaryUnits
-        if (userIndexOutputViewModel.DefaultMonetaryUnit != null)
-        {
-            var currentYearMonth = $"{year}-{month}";
-            var currentLoginUserEmail = JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte ?? [])).Email;
-
-            var incomes = await incomeRepository.GetCurrentYearMonthIncomesAsync(currentLoginUserEmail, currentYearMonth, JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte ?? [])).TimeZoneIanaId);
-            userIndexOutputViewModel.IncomeYearMonthOutputViewModels = [];
-            foreach (var item in incomes)
-            {
-                userIndexOutputViewModel.IncomeYearMonthOutputViewModels.Add(new IncomeOutputViewModel()
-                {
-                    Id = item.Id,
-                    MainClass = item.MainClass,
-                    SubClass = item.SubClass,
-                    Content = item.Content,
-                    Amount = Convert.ToDecimal(item.Amount.TrimTrailingZeros()),
-                    MonetaryUnit = assets.FirstOrDefault(x => x.ProductName == item.DepositMyAssetProductName)?.MonetaryUnit,
-                    DepositMyAssetProductName = item.DepositMyAssetProductName,
-                    Created = item.Created.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId),
-                    Updated = item.Updated.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId),
-                    Note = item.Note
-                });
-            }
-
-            var expenditures = await expenditureRepository.GetCurrentYearMonthExpendituresAsync(currentLoginUserEmail, currentYearMonth, JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte ?? [])).TimeZoneIanaId);
-            userIndexOutputViewModel.ExpenditureYearMonthOutputViewModels = [];
-            foreach (var item in expenditures)
-            {
-                userIndexOutputViewModel.ExpenditureYearMonthOutputViewModels.Add(new ExpenditureOutputViewModel()
-                {
-                    Id = item.Id,
-                    MainClass = item.MainClass,
-                    SubClass = item.SubClass,
-                    Content = item.Content,
-                    Amount = Convert.ToDecimal(item.Amount.TrimTrailingZeros()),
-                    MonetaryUnit = assets.FirstOrDefault(x => x.ProductName == item.PaymentMethod)?.MonetaryUnit,
-                    PaymentMethod = item.PaymentMethod,
-                    Note = item.Note,
-                    MyDepositAsset = item.MyDepositAsset,
-                    Created = item.Created.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId),
-                    Updated = item.Updated.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId)
-                });
-            }
-            userIndexOutputViewModel.IncomeYearMonthOutputViewModels = userIndexOutputViewModel.IncomeYearMonthOutputViewModels.Where(x => x.MonetaryUnit == userIndexOutputViewModel.DefaultMonetaryUnit).ToList();
-            userIndexOutputViewModel.ExpenditureYearMonthOutputViewModels = userIndexOutputViewModel.ExpenditureYearMonthOutputViewModels.Where(x => x.MonetaryUnit == userIndexOutputViewModel.DefaultMonetaryUnit).ToList();
-        }
-        #endregion
-
-        #region Set MonetaryUnits
-        if (assets?.Count != 0)
-        {
-            userIndexOutputViewModel.MonetaryUnits = assets?.Select(x => x?.MonetaryUnit).Distinct().ToList() ?? [];
-        }
-        #endregion
-
-        #region StartYear
-        var firstCreatedIncome = (await incomeRepository.GetIncomesAsync(JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte ?? [])).Email)).OrderBy(x => x.Created).ToList().FirstOrDefault() ?? new IncomeResponse();
-        var firstCreatedExpenditure = (await expenditureRepository.GetExpendituresAsync(JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte ?? [])).Email)).OrderBy(x => x.Created).ToList().FirstOrDefault() ?? new ExpenditureResponse();
-
-        if (firstCreatedIncome.Created == DateTime.MinValue)
-        {
-            firstCreatedIncome.Created = DateTime.MaxValue;
-        }
-
-        if (firstCreatedExpenditure.Created == DateTime.MinValue)
-        {
-            firstCreatedExpenditure.Created = DateTime.MaxValue;
-        }
-
-        var firstCreatedIncomeOrExpenditure = DateTime.Compare(firstCreatedIncome.Created, firstCreatedExpenditure.Created) < 0
-            ? firstCreatedIncome.Created
-            : firstCreatedExpenditure.Created;
-        if (firstCreatedIncomeOrExpenditure == DateTime.MaxValue)
-        {
-            firstCreatedIncomeOrExpenditure = DateTime.UtcNow;
-        }
-
-        firstCreatedIncomeOrExpenditure = firstCreatedIncomeOrExpenditure.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId);
-        #endregion
-
-        userIndexOutputViewModel.StartYear = firstCreatedIncomeOrExpenditure.Year;
-        userIndexOutputViewModel.EndYear = DateTime.UtcNow.Year;
-        userIndexOutputViewModel.SelectedYear = Convert.ToInt32(year);
-        userIndexOutputViewModel.SelectedMonth = Convert.ToInt32(month);
-
-        #region Compute aggregated statistics
-
-        if (userIndexOutputViewModel.DefaultMonetaryUnit != null)
-        {
             // ---- Year Income ----
-            var regularIncomeYear = userIndexOutputViewModel.IncomeYearOutputViewModels.Where(x => x.MainClass == "RegularIncome").ToList();
+            var regularIncomeYear = vm.IncomeYearOutputViewModels.Where(x => x.MainClass == "RegularIncome").ToList();
             var regularIncomeTotalYear = regularIncomeYear.Sum(v => v.Amount);
-            userIndexOutputViewModel.RegularIncomeLaborIncomeYear = regularIncomeYear.Where(x => x.SubClass == "LaborIncome").Sum(v => v.Amount);
-            userIndexOutputViewModel.RegularIncomeBusinessIncomeYear = regularIncomeYear.Where(x => x.SubClass == "BusinessIncome").Sum(v => v.Amount);
-            userIndexOutputViewModel.RegularIncomePensionIncomeYear = regularIncomeYear.Where(x => x.SubClass == "PensionIncome").Sum(v => v.Amount);
-            userIndexOutputViewModel.RegularIncomeFinancialIncomeYear = regularIncomeYear.Where(x => x.SubClass == "FinancialIncome").Sum(v => v.Amount);
-            userIndexOutputViewModel.RegularIncomeRentalIncomeYear = regularIncomeYear.Where(x => x.SubClass == "RentalIncome").Sum(v => v.Amount);
-            userIndexOutputViewModel.RegularIncomeOtherIncomeYear = regularIncomeYear.Where(x => x.SubClass == "OtherIncome").Sum(v => v.Amount);
+            vm.RegularIncomeLaborIncomeYear = regularIncomeYear.Where(x => x.SubClass == "LaborIncome").Sum(v => v.Amount);
+            vm.RegularIncomeBusinessIncomeYear = regularIncomeYear.Where(x => x.SubClass == "BusinessIncome").Sum(v => v.Amount);
+            vm.RegularIncomePensionIncomeYear = regularIncomeYear.Where(x => x.SubClass == "PensionIncome").Sum(v => v.Amount);
+            vm.RegularIncomeFinancialIncomeYear = regularIncomeYear.Where(x => x.SubClass == "FinancialIncome").Sum(v => v.Amount);
+            vm.RegularIncomeRentalIncomeYear = regularIncomeYear.Where(x => x.SubClass == "RentalIncome").Sum(v => v.Amount);
+            vm.RegularIncomeOtherIncomeYear = regularIncomeYear.Where(x => x.SubClass == "OtherIncome").Sum(v => v.Amount);
             if (regularIncomeTotalYear != 0)
             {
-                userIndexOutputViewModel.PercentageOfRegularIncomeLaborIncomeYear = 100 * ((double)userIndexOutputViewModel.RegularIncomeLaborIncomeYear / (double)regularIncomeTotalYear);
-                userIndexOutputViewModel.PercentageOfRegularIncomeBusinessIncomeYear = 100 * ((double)userIndexOutputViewModel.RegularIncomeBusinessIncomeYear / (double)regularIncomeTotalYear);
-                userIndexOutputViewModel.PercentageOfRegularIncomePensionIncomeYear = 100 * ((double)userIndexOutputViewModel.RegularIncomePensionIncomeYear / (double)regularIncomeTotalYear);
-                userIndexOutputViewModel.PercentageOfRegularIncomeFinancialIncomeYear = 100 * ((double)userIndexOutputViewModel.RegularIncomeFinancialIncomeYear / (double)regularIncomeTotalYear);
-                userIndexOutputViewModel.PercentageOfRegularIncomeRentalIncomeYear = 100 * ((double)userIndexOutputViewModel.RegularIncomeRentalIncomeYear / (double)regularIncomeTotalYear);
-                userIndexOutputViewModel.PercentageOfRegularIncomeOtherIncomeYear = 100 * ((double)userIndexOutputViewModel.RegularIncomeOtherIncomeYear / (double)regularIncomeTotalYear);
+                vm.PercentageOfRegularIncomeLaborIncomeYear = 100 * ((double)vm.RegularIncomeLaborIncomeYear / (double)regularIncomeTotalYear);
+                vm.PercentageOfRegularIncomeBusinessIncomeYear = 100 * ((double)vm.RegularIncomeBusinessIncomeYear / (double)regularIncomeTotalYear);
+                vm.PercentageOfRegularIncomePensionIncomeYear = 100 * ((double)vm.RegularIncomePensionIncomeYear / (double)regularIncomeTotalYear);
+                vm.PercentageOfRegularIncomeFinancialIncomeYear = 100 * ((double)vm.RegularIncomeFinancialIncomeYear / (double)regularIncomeTotalYear);
+                vm.PercentageOfRegularIncomeRentalIncomeYear = 100 * ((double)vm.RegularIncomeRentalIncomeYear / (double)regularIncomeTotalYear);
+                vm.PercentageOfRegularIncomeOtherIncomeYear = 100 * ((double)vm.RegularIncomeOtherIncomeYear / (double)regularIncomeTotalYear);
             }
 
-            var irregularIncomeYear = userIndexOutputViewModel.IncomeYearOutputViewModels.Where(x => x.MainClass == "IrregularIncome").ToList();
+            var irregularIncomeYear = vm.IncomeYearOutputViewModels.Where(x => x.MainClass == "IrregularIncome").ToList();
             var irregularIncomeTotalYear = irregularIncomeYear.Sum(v => v.Amount);
-            userIndexOutputViewModel.IrregularIncomeLaborIncomeYear = irregularIncomeYear.Where(x => x.SubClass == "LaborIncome").Sum(v => v.Amount);
-            userIndexOutputViewModel.IrregularIncomeOtherIncomeYear = irregularIncomeYear.Where(x => x.SubClass == "OtherIncome").Sum(v => v.Amount);
+            vm.IrregularIncomeLaborIncomeYear = irregularIncomeYear.Where(x => x.SubClass == "LaborIncome").Sum(v => v.Amount);
+            vm.IrregularIncomeOtherIncomeYear = irregularIncomeYear.Where(x => x.SubClass == "OtherIncome").Sum(v => v.Amount);
             if (irregularIncomeTotalYear != 0)
             {
-                userIndexOutputViewModel.PercentageOfIrregularIncomeLaborIncomeYear = 100 * ((double)userIndexOutputViewModel.IrregularIncomeLaborIncomeYear / (double)irregularIncomeTotalYear);
-                userIndexOutputViewModel.PercentageOfIrregularIncomeOtherIncomeYear = 100 * ((double)userIndexOutputViewModel.IrregularIncomeOtherIncomeYear / (double)irregularIncomeTotalYear);
+                vm.PercentageOfIrregularIncomeLaborIncomeYear = 100 * ((double)vm.IrregularIncomeLaborIncomeYear / (double)irregularIncomeTotalYear);
+                vm.PercentageOfIrregularIncomeOtherIncomeYear = 100 * ((double)vm.IrregularIncomeOtherIncomeYear / (double)irregularIncomeTotalYear);
             }
 
             // ---- Year Expenditure ----
-            var regularSavingsYear = userIndexOutputViewModel.ExpenditureYearOutputViewModels.Where(x => x.MainClass == "RegularSavings").ToList();
+            var regularSavingsYear = vm.ExpenditureYearOutputViewModels.Where(x => x.MainClass == "RegularSavings").ToList();
             var regularSavingsTotalYear = regularSavingsYear.Sum(v => v.Amount);
-            userIndexOutputViewModel.RegularSavingsDepositYear = regularSavingsYear.Where(x => x.SubClass == "Deposit").Sum(v => v.Amount);
-            userIndexOutputViewModel.RegularSavingsInvestmentYear = regularSavingsYear.Where(x => x.SubClass == "Investment").Sum(v => v.Amount);
+            vm.RegularSavingsDepositYear = regularSavingsYear.Where(x => x.SubClass == "Deposit").Sum(v => v.Amount);
+            vm.RegularSavingsInvestmentYear = regularSavingsYear.Where(x => x.SubClass == "Investment").Sum(v => v.Amount);
             if (regularSavingsTotalYear != 0)
             {
-                userIndexOutputViewModel.PercentageOfRegularSavingsDepositYear = 100 * ((double)userIndexOutputViewModel.RegularSavingsDepositYear / (double)regularSavingsTotalYear);
-                userIndexOutputViewModel.PercentageOfRegularSavingsInvestmentYear = 100 * ((double)userIndexOutputViewModel.RegularSavingsInvestmentYear / (double)regularSavingsTotalYear);
+                vm.PercentageOfRegularSavingsDepositYear = 100 * ((double)vm.RegularSavingsDepositYear / (double)regularSavingsTotalYear);
+                vm.PercentageOfRegularSavingsInvestmentYear = 100 * ((double)vm.RegularSavingsInvestmentYear / (double)regularSavingsTotalYear);
             }
 
-            var nonconsumerSpendingYear = userIndexOutputViewModel.ExpenditureYearOutputViewModels.Where(x => x.MainClass == "NonConsumerSpending").ToList();
+            var nonconsumerSpendingYear = vm.ExpenditureYearOutputViewModels.Where(x => x.MainClass == "NonConsumerSpending").ToList();
             var nonConsumerSpendingTotalYear = nonconsumerSpendingYear.Sum(v => v.Amount);
-            userIndexOutputViewModel.NonConsumerSpendingPublicPensionYear = nonconsumerSpendingYear.Where(x => x.SubClass == "PublicPension").Sum(v => v.Amount);
-            userIndexOutputViewModel.NonConsumerSpendingDebtRepaymentYear = nonconsumerSpendingYear.Where(x => x.SubClass == "DebtRepayment").Sum(v => v.Amount);
-            userIndexOutputViewModel.NonConsumerSpendingTaxYear = nonconsumerSpendingYear.Where(x => x.SubClass == "Tax").Sum(v => v.Amount);
-            userIndexOutputViewModel.NonConsumerSpendingSocialInsuranceYear = nonconsumerSpendingYear.Where(x => x.SubClass == "SocialInsurance").Sum(v => v.Amount);
-            userIndexOutputViewModel.NonConsumerSpendingInterHouseholdTransferExpensesYear = nonconsumerSpendingYear.Where(x => x.SubClass == "InterHouseholdTransferExpenses").Sum(v => v.Amount);
-            userIndexOutputViewModel.NonConsumerSpendingNonProfitOrganizationTransferYear = nonconsumerSpendingYear.Where(x => x.SubClass == "NonProfitOrganizationTransfer").Sum(v => v.Amount);
+            vm.NonConsumerSpendingPublicPensionYear = nonconsumerSpendingYear.Where(x => x.SubClass == "PublicPension").Sum(v => v.Amount);
+            vm.NonConsumerSpendingDebtRepaymentYear = nonconsumerSpendingYear.Where(x => x.SubClass == "DebtRepayment").Sum(v => v.Amount);
+            vm.NonConsumerSpendingTaxYear = nonconsumerSpendingYear.Where(x => x.SubClass == "Tax").Sum(v => v.Amount);
+            vm.NonConsumerSpendingSocialInsuranceYear = nonconsumerSpendingYear.Where(x => x.SubClass == "SocialInsurance").Sum(v => v.Amount);
+            vm.NonConsumerSpendingInterHouseholdTransferExpensesYear = nonconsumerSpendingYear.Where(x => x.SubClass == "InterHouseholdTranserExpenses").Sum(v => v.Amount);
+            vm.NonConsumerSpendingNonProfitOrganizationTransferYear = nonconsumerSpendingYear.Where(x => x.SubClass == "NonProfitOrganizationTransfer").Sum(v => v.Amount);
             if (nonConsumerSpendingTotalYear != 0)
             {
-                userIndexOutputViewModel.PercentageOfNonConsumerSpendingPublicPensionYear = 100 * ((double)userIndexOutputViewModel.NonConsumerSpendingPublicPensionYear / (double)nonConsumerSpendingTotalYear);
-                userIndexOutputViewModel.PercentageOfNonConsumerSpendingDebtRepaymentYear = 100 * ((double)userIndexOutputViewModel.NonConsumerSpendingDebtRepaymentYear / (double)nonConsumerSpendingTotalYear);
-                userIndexOutputViewModel.PercentageOfNonConsumerSpendingTaxYear = 100 * ((double)userIndexOutputViewModel.NonConsumerSpendingTaxYear / (double)nonConsumerSpendingTotalYear);
-                userIndexOutputViewModel.PercentageOfNonConsumerSpendingSocialInsuranceYear = 100 * ((double)userIndexOutputViewModel.NonConsumerSpendingSocialInsuranceYear / (double)nonConsumerSpendingTotalYear);
-                userIndexOutputViewModel.PercentageOfNonConsumerSpendingInterHouseholdTransferExpensesYear = 100 * ((double)userIndexOutputViewModel.NonConsumerSpendingInterHouseholdTransferExpensesYear / (double)nonConsumerSpendingTotalYear);
-                userIndexOutputViewModel.PercentageOfNonConsumerSpendingNonProfitOrganizationTransferYear = 100 * ((double)userIndexOutputViewModel.NonConsumerSpendingNonProfitOrganizationTransferYear / (double)nonConsumerSpendingTotalYear);
+                vm.PercentageOfNonConsumerSpendingPublicPensionYear = 100 * ((double)vm.NonConsumerSpendingPublicPensionYear / (double)nonConsumerSpendingTotalYear);
+                vm.PercentageOfNonConsumerSpendingDebtRepaymentYear = 100 * ((double)vm.NonConsumerSpendingDebtRepaymentYear / (double)nonConsumerSpendingTotalYear);
+                vm.PercentageOfNonConsumerSpendingTaxYear = 100 * ((double)vm.NonConsumerSpendingTaxYear / (double)nonConsumerSpendingTotalYear);
+                vm.PercentageOfNonConsumerSpendingSocialInsuranceYear = 100 * ((double)vm.NonConsumerSpendingSocialInsuranceYear / (double)nonConsumerSpendingTotalYear);
+                vm.PercentageOfNonConsumerSpendingInterHouseholdTransferExpensesYear = 100 * ((double)vm.NonConsumerSpendingInterHouseholdTransferExpensesYear / (double)nonConsumerSpendingTotalYear);
+                vm.PercentageOfNonConsumerSpendingNonProfitOrganizationTransferYear = 100 * ((double)vm.NonConsumerSpendingNonProfitOrganizationTransferYear / (double)nonConsumerSpendingTotalYear);
             }
 
-            var consumerSpendingYear = userIndexOutputViewModel.ExpenditureYearOutputViewModels.Where(x => x.MainClass == "ConsumerSpending").ToList();
+            var consumerSpendingYear = vm.ExpenditureYearOutputViewModels.Where(x => x.MainClass == "ConsumerSpending").ToList();
             var consumerSpendingTotalYear = consumerSpendingYear.Sum(v => v.Amount);
-            userIndexOutputViewModel.ConsumerSpendingMealOrEatOutExpensesYear = consumerSpendingYear.Where(x => x.SubClass == "MealOrEatOutExpenses").Sum(v => v.Amount);
-            userIndexOutputViewModel.ConsumerSpendingHousingOrSuppliesCostYear = consumerSpendingYear.Where(x => x.SubClass == "HousingOrSuppliesCost").Sum(v => v.Amount);
-            userIndexOutputViewModel.ConsumerSpendingEducationExpensesYear = consumerSpendingYear.Where(x => x.SubClass == "EducationExpenses").Sum(v => v.Amount);
-            userIndexOutputViewModel.ConsumerSpendingMedicalExpensesYear = consumerSpendingYear.Where(x => x.SubClass == "MedicalExpenses").Sum(v => v.Amount);
-            userIndexOutputViewModel.ConsumerSpendingTransportationCostYear = consumerSpendingYear.Where(x => x.SubClass == "TransportationCost").Sum(v => v.Amount);
-            userIndexOutputViewModel.ConsumerSpendingCommunicationCostYear = consumerSpendingYear.Where(x => x.SubClass == "CommunicationCost").Sum(v => v.Amount);
-            userIndexOutputViewModel.ConsumerSpendingLeisureOrCultureYear = consumerSpendingYear.Where(x => x.SubClass == "LeisureOrCulture").Sum(v => v.Amount);
-            userIndexOutputViewModel.ConsumerSpendingClothingOrShoesYear = consumerSpendingYear.Where(x => x.SubClass == "ClothingOrShoes").Sum(v => v.Amount);
-            userIndexOutputViewModel.ConsumerSpendingPinMoneyYear = consumerSpendingYear.Where(x => x.SubClass == "PinMoney").Sum(v => v.Amount);
-            userIndexOutputViewModel.ConsumerSpendingProtectionTypeInsuranceYear = consumerSpendingYear.Where(x => x.SubClass == "ProtectionTypeInsurance").Sum(v => v.Amount);
-            userIndexOutputViewModel.ConsumerSpendingOtherExpensesYear = consumerSpendingYear.Where(x => x.SubClass == "OtherExpenses").Sum(v => v.Amount);
-            userIndexOutputViewModel.ConsumerSpendingUnknownExpenditureYear = consumerSpendingYear.Where(x => x.SubClass == "UnknownExpenditure").Sum(v => v.Amount);
+            vm.ConsumerSpendingMealOrEatOutExpensesYear = consumerSpendingYear.Where(x => x.SubClass == "MealOrEatOutExpenses").Sum(v => v.Amount);
+            vm.ConsumerSpendingHousingOrSuppliesCostYear = consumerSpendingYear.Where(x => x.SubClass == "HousingOrSuppliesCost").Sum(v => v.Amount);
+            vm.ConsumerSpendingEducationExpensesYear = consumerSpendingYear.Where(x => x.SubClass == "EducationExpenses").Sum(v => v.Amount);
+            vm.ConsumerSpendingMedicalExpensesYear = consumerSpendingYear.Where(x => x.SubClass == "MedicalExpenses").Sum(v => v.Amount);
+            vm.ConsumerSpendingTransportationCostYear = consumerSpendingYear.Where(x => x.SubClass == "TransportationCost").Sum(v => v.Amount);
+            vm.ConsumerSpendingCommunicationCostYear = consumerSpendingYear.Where(x => x.SubClass == "CommunicationCost").Sum(v => v.Amount);
+            vm.ConsumerSpendingLeisureOrCultureYear = consumerSpendingYear.Where(x => x.SubClass == "LeisureOrCulture").Sum(v => v.Amount);
+            vm.ConsumerSpendingClothingOrShoesYear = consumerSpendingYear.Where(x => x.SubClass == "ClothingOrShoes").Sum(v => v.Amount);
+            vm.ConsumerSpendingPinMoneyYear = consumerSpendingYear.Where(x => x.SubClass == "PinMoney").Sum(v => v.Amount);
+            vm.ConsumerSpendingProtectionTypeInsuranceYear = consumerSpendingYear.Where(x => x.SubClass == "ProtectionTypeInsurance").Sum(v => v.Amount);
+            vm.ConsumerSpendingOtherExpensesYear = consumerSpendingYear.Where(x => x.SubClass == "OtherExpenses").Sum(v => v.Amount);
+            vm.ConsumerSpendingUnknownExpenditureYear = consumerSpendingYear.Where(x => x.SubClass == "UnknownExpenditure").Sum(v => v.Amount);
             if (consumerSpendingTotalYear != 0)
             {
-                userIndexOutputViewModel.PercentageOfConsumerSpendingMealOrEatOutExpensesYear = 100 * ((double)userIndexOutputViewModel.ConsumerSpendingMealOrEatOutExpensesYear / (double)consumerSpendingTotalYear);
-                userIndexOutputViewModel.PercentageOfConsumerSpendingHousingOrSuppliesCostYear = 100 * ((double)userIndexOutputViewModel.ConsumerSpendingHousingOrSuppliesCostYear / (double)consumerSpendingTotalYear);
-                userIndexOutputViewModel.PercentageOfConsumerSpendingEducationExpensesYear = 100 * ((double)userIndexOutputViewModel.ConsumerSpendingEducationExpensesYear / (double)consumerSpendingTotalYear);
-                userIndexOutputViewModel.PercentageOfConsumerSpendingMedicalExpensesYear = 100 * ((double)userIndexOutputViewModel.ConsumerSpendingMedicalExpensesYear / (double)consumerSpendingTotalYear);
-                userIndexOutputViewModel.PercentageOfConsumerSpendingTransportationCostYear = 100 * ((double)userIndexOutputViewModel.ConsumerSpendingTransportationCostYear / (double)consumerSpendingTotalYear);
-                userIndexOutputViewModel.PercentageOfConsumerSpendingCommunicationCostYear = 100 * ((double)userIndexOutputViewModel.ConsumerSpendingCommunicationCostYear / (double)consumerSpendingTotalYear);
-                userIndexOutputViewModel.PercentageOfConsumerSpendingLeisureOrCultureYear = 100 * ((double)userIndexOutputViewModel.ConsumerSpendingLeisureOrCultureYear / (double)consumerSpendingTotalYear);
-                userIndexOutputViewModel.PercentageOfConsumerSpendingClothingOrShoesYear = 100 * ((double)userIndexOutputViewModel.ConsumerSpendingClothingOrShoesYear / (double)consumerSpendingTotalYear);
-                userIndexOutputViewModel.PercentageOfConsumerSpendingPinMoneyYear = 100 * ((double)userIndexOutputViewModel.ConsumerSpendingPinMoneyYear / (double)consumerSpendingTotalYear);
-                userIndexOutputViewModel.PercentageOfConsumerSpendingProtectionTypeInsuranceYear = 100 * ((double)userIndexOutputViewModel.ConsumerSpendingProtectionTypeInsuranceYear / (double)consumerSpendingTotalYear);
-                userIndexOutputViewModel.PercentageOfConsumerSpendingOtherExpensesYear = 100 * ((double)userIndexOutputViewModel.ConsumerSpendingOtherExpensesYear / (double)consumerSpendingTotalYear);
-                userIndexOutputViewModel.PercentageOfConsumerSpendingUnknownExpenditureYear = 100 * ((double)userIndexOutputViewModel.ConsumerSpendingUnknownExpenditureYear / (double)consumerSpendingTotalYear);
+                vm.PercentageOfConsumerSpendingMealOrEatOutExpensesYear = 100 * ((double)vm.ConsumerSpendingMealOrEatOutExpensesYear / (double)consumerSpendingTotalYear);
+                vm.PercentageOfConsumerSpendingHousingOrSuppliesCostYear = 100 * ((double)vm.ConsumerSpendingHousingOrSuppliesCostYear / (double)consumerSpendingTotalYear);
+                vm.PercentageOfConsumerSpendingEducationExpensesYear = 100 * ((double)vm.ConsumerSpendingEducationExpensesYear / (double)consumerSpendingTotalYear);
+                vm.PercentageOfConsumerSpendingMedicalExpensesYear = 100 * ((double)vm.ConsumerSpendingMedicalExpensesYear / (double)consumerSpendingTotalYear);
+                vm.PercentageOfConsumerSpendingTransportationCostYear = 100 * ((double)vm.ConsumerSpendingTransportationCostYear / (double)consumerSpendingTotalYear);
+                vm.PercentageOfConsumerSpendingCommunicationCostYear = 100 * ((double)vm.ConsumerSpendingCommunicationCostYear / (double)consumerSpendingTotalYear);
+                vm.PercentageOfConsumerSpendingLeisureOrCultureYear = 100 * ((double)vm.ConsumerSpendingLeisureOrCultureYear / (double)consumerSpendingTotalYear);
+                vm.PercentageOfConsumerSpendingClothingOrShoesYear = 100 * ((double)vm.ConsumerSpendingClothingOrShoesYear / (double)consumerSpendingTotalYear);
+                vm.PercentageOfConsumerSpendingPinMoneyYear = 100 * ((double)vm.ConsumerSpendingPinMoneyYear / (double)consumerSpendingTotalYear);
+                vm.PercentageOfConsumerSpendingProtectionTypeInsuranceYear = 100 * ((double)vm.ConsumerSpendingProtectionTypeInsuranceYear / (double)consumerSpendingTotalYear);
+                vm.PercentageOfConsumerSpendingOtherExpensesYear = 100 * ((double)vm.ConsumerSpendingOtherExpensesYear / (double)consumerSpendingTotalYear);
+                vm.PercentageOfConsumerSpendingUnknownExpenditureYear = 100 * ((double)vm.ConsumerSpendingUnknownExpenditureYear / (double)consumerSpendingTotalYear);
             }
 
             // ---- YearMonth Income ----
-            var regularIncomeYearMonth = userIndexOutputViewModel.IncomeYearMonthOutputViewModels.Where(x => x.MainClass == "RegularIncome").ToList();
+            var regularIncomeYearMonth = vm.IncomeYearMonthOutputViewModels.Where(x => x.MainClass == "RegularIncome").ToList();
             var regularIncomeTotalYearMonth = regularIncomeYearMonth.Sum(v => v.Amount);
-            userIndexOutputViewModel.RegularIncomeLaborIncomeYearMonth = regularIncomeYearMonth.Where(x => x.SubClass == "LaborIncome").Sum(v => v.Amount);
-            userIndexOutputViewModel.RegularIncomeBusinessIncomeYearMonth = regularIncomeYearMonth.Where(x => x.SubClass == "BusinessIncome").Sum(v => v.Amount);
-            userIndexOutputViewModel.RegularIncomePensionIncomeYearMonth = regularIncomeYearMonth.Where(x => x.SubClass == "PensionIncome").Sum(v => v.Amount);
-            userIndexOutputViewModel.RegularIncomeFinancialIncomeYearMonth = regularIncomeYearMonth.Where(x => x.SubClass == "FinancialIncome").Sum(v => v.Amount);
-            userIndexOutputViewModel.RegularIncomeRentalIncomeYearMonth = regularIncomeYearMonth.Where(x => x.SubClass == "RentalIncome").Sum(v => v.Amount);
-            userIndexOutputViewModel.RegularIncomeOtherIncomeYearMonth = regularIncomeYearMonth.Where(x => x.SubClass == "OtherIncome").Sum(v => v.Amount);
+            vm.RegularIncomeLaborIncomeYearMonth = regularIncomeYearMonth.Where(x => x.SubClass == "LaborIncome").Sum(v => v.Amount);
+            vm.RegularIncomeBusinessIncomeYearMonth = regularIncomeYearMonth.Where(x => x.SubClass == "BusinessIncome").Sum(v => v.Amount);
+            vm.RegularIncomePensionIncomeYearMonth = regularIncomeYearMonth.Where(x => x.SubClass == "PensionIncome").Sum(v => v.Amount);
+            vm.RegularIncomeFinancialIncomeYearMonth = regularIncomeYearMonth.Where(x => x.SubClass == "FinancialIncome").Sum(v => v.Amount);
+            vm.RegularIncomeRentalIncomeYearMonth = regularIncomeYearMonth.Where(x => x.SubClass == "RentalIncome").Sum(v => v.Amount);
+            vm.RegularIncomeOtherIncomeYearMonth = regularIncomeYearMonth.Where(x => x.SubClass == "OtherIncome").Sum(v => v.Amount);
             if (regularIncomeTotalYearMonth != 0)
             {
-                userIndexOutputViewModel.PercentageOfRegularIncomeLaborIncomeYearMonth = 100 * ((double)userIndexOutputViewModel.RegularIncomeLaborIncomeYearMonth / (double)regularIncomeTotalYearMonth);
-                userIndexOutputViewModel.PercentageOfRegularIncomeBusinessIncomeYearMonth = 100 * ((double)userIndexOutputViewModel.RegularIncomeBusinessIncomeYearMonth / (double)regularIncomeTotalYearMonth);
-                userIndexOutputViewModel.PercentageOfRegularIncomePensionIncomeYearMonth = 100 * ((double)userIndexOutputViewModel.RegularIncomePensionIncomeYearMonth / (double)regularIncomeTotalYearMonth);
-                userIndexOutputViewModel.PercentageOfRegularIncomeFinancialIncomeYearMonth = 100 * ((double)userIndexOutputViewModel.RegularIncomeFinancialIncomeYearMonth / (double)regularIncomeTotalYearMonth);
-                userIndexOutputViewModel.PercentageOfRegularIncomeRentalIncomeYearMonth = 100 * ((double)userIndexOutputViewModel.RegularIncomeRentalIncomeYearMonth / (double)regularIncomeTotalYearMonth);
-                userIndexOutputViewModel.PercentageOfRegularIncomeOtherIncomeYearMonth = 100 * ((double)userIndexOutputViewModel.RegularIncomeOtherIncomeYearMonth / (double)regularIncomeTotalYearMonth);
+                vm.PercentageOfRegularIncomeLaborIncomeYearMonth = 100 * ((double)vm.RegularIncomeLaborIncomeYearMonth / (double)regularIncomeTotalYearMonth);
+                vm.PercentageOfRegularIncomeBusinessIncomeYearMonth = 100 * ((double)vm.RegularIncomeBusinessIncomeYearMonth / (double)regularIncomeTotalYearMonth);
+                vm.PercentageOfRegularIncomePensionIncomeYearMonth = 100 * ((double)vm.RegularIncomePensionIncomeYearMonth / (double)regularIncomeTotalYearMonth);
+                vm.PercentageOfRegularIncomeFinancialIncomeYearMonth = 100 * ((double)vm.RegularIncomeFinancialIncomeYearMonth / (double)regularIncomeTotalYearMonth);
+                vm.PercentageOfRegularIncomeRentalIncomeYearMonth = 100 * ((double)vm.RegularIncomeRentalIncomeYearMonth / (double)regularIncomeTotalYearMonth);
+                vm.PercentageOfRegularIncomeOtherIncomeYearMonth = 100 * ((double)vm.RegularIncomeOtherIncomeYearMonth / (double)regularIncomeTotalYearMonth);
             }
 
-            var irregularIncomeYearMonth = userIndexOutputViewModel.IncomeYearMonthOutputViewModels.Where(x => x.MainClass == "IrregularIncome").ToList();
+            var irregularIncomeYearMonth = vm.IncomeYearMonthOutputViewModels.Where(x => x.MainClass == "IrregularIncome").ToList();
             var irregularIncomeTotalYearMonth = irregularIncomeYearMonth.Sum(v => v.Amount);
-            userIndexOutputViewModel.IrregularIncomeLaborIncomeYearMonth = irregularIncomeYearMonth.Where(x => x.SubClass == "LaborIncome").Sum(v => v.Amount);
-            userIndexOutputViewModel.IrregularIncomeOtherIncomeYearMonth = irregularIncomeYearMonth.Where(x => x.SubClass == "OtherIncome").Sum(v => v.Amount);
+            vm.IrregularIncomeLaborIncomeYearMonth = irregularIncomeYearMonth.Where(x => x.SubClass == "LaborIncome").Sum(v => v.Amount);
+            vm.IrregularIncomeOtherIncomeYearMonth = irregularIncomeYearMonth.Where(x => x.SubClass == "OtherIncome").Sum(v => v.Amount);
             if (irregularIncomeTotalYearMonth != 0)
             {
-                userIndexOutputViewModel.PercentageOfIrregularIncomeLaborIncomeYearMonth = 100 * ((double)userIndexOutputViewModel.IrregularIncomeLaborIncomeYearMonth / (double)irregularIncomeTotalYearMonth);
-                userIndexOutputViewModel.PercentageOfIrregularIncomeOtherIncomeYearMonth = 100 * ((double)userIndexOutputViewModel.IrregularIncomeOtherIncomeYearMonth / (double)irregularIncomeTotalYearMonth);
+                vm.PercentageOfIrregularIncomeLaborIncomeYearMonth = 100 * ((double)vm.IrregularIncomeLaborIncomeYearMonth / (double)irregularIncomeTotalYearMonth);
+                vm.PercentageOfIrregularIncomeOtherIncomeYearMonth = 100 * ((double)vm.IrregularIncomeOtherIncomeYearMonth / (double)irregularIncomeTotalYearMonth);
             }
 
             // ---- YearMonth Expenditure ----
-            var regularSavingsYearMonth = userIndexOutputViewModel.ExpenditureYearMonthOutputViewModels.Where(x => x.MainClass == "RegularSavings").ToList();
+            var regularSavingsYearMonth = vm.ExpenditureYearMonthOutputViewModels.Where(x => x.MainClass == "RegularSavings").ToList();
             var regularSavingsTotalYearMonth = regularSavingsYearMonth.Sum(v => v.Amount);
-            userIndexOutputViewModel.RegularSavingsDepositYearMonth = regularSavingsYearMonth.Where(x => x.SubClass == "Deposit").Sum(v => v.Amount);
-            userIndexOutputViewModel.RegularSavingsInvestmentYearMonth = regularSavingsYearMonth.Where(x => x.SubClass == "Investment").Sum(v => v.Amount);
+            vm.RegularSavingsDepositYearMonth = regularSavingsYearMonth.Where(x => x.SubClass == "Deposit").Sum(v => v.Amount);
+            vm.RegularSavingsInvestmentYearMonth = regularSavingsYearMonth.Where(x => x.SubClass == "Investment").Sum(v => v.Amount);
             if (regularSavingsTotalYearMonth != 0)
             {
-                userIndexOutputViewModel.PercentageOfRegularSavingsDepositYearMonth = 100 * ((double)userIndexOutputViewModel.RegularSavingsDepositYearMonth / (double)regularSavingsTotalYearMonth);
-                userIndexOutputViewModel.PercentageOfRegularSavingsInvestmentYearMonth = 100 * ((double)userIndexOutputViewModel.RegularSavingsInvestmentYearMonth / (double)regularSavingsTotalYearMonth);
+                vm.PercentageOfRegularSavingsDepositYearMonth = 100 * ((double)vm.RegularSavingsDepositYearMonth / (double)regularSavingsTotalYearMonth);
+                vm.PercentageOfRegularSavingsInvestmentYearMonth = 100 * ((double)vm.RegularSavingsInvestmentYearMonth / (double)regularSavingsTotalYearMonth);
             }
 
-            var nonConsumerSpendingYearMonth = userIndexOutputViewModel.ExpenditureYearMonthOutputViewModels.Where(x => x.MainClass == "NonConsumerSpending").ToList();
+            var nonConsumerSpendingYearMonth = vm.ExpenditureYearMonthOutputViewModels.Where(x => x.MainClass == "NonConsumerSpending").ToList();
             var nonConsumerSpendingTotalYearMonth = nonConsumerSpendingYearMonth.Sum(v => v.Amount);
-            userIndexOutputViewModel.NonConsumerSpendingPublicPensionYearMonth = nonConsumerSpendingYearMonth.Where(x => x.SubClass == "PublicPension").Sum(v => v.Amount);
-            userIndexOutputViewModel.NonConsumerSpendingDebtRepaymentYearMonth = nonConsumerSpendingYearMonth.Where(x => x.SubClass == "DebtRepayment").Sum(v => v.Amount);
-            userIndexOutputViewModel.NonConsumerSpendingTaxYearMonth = nonConsumerSpendingYearMonth.Where(x => x.SubClass == "Tax").Sum(v => v.Amount);
-            userIndexOutputViewModel.NonConsumerSpendingSocialInsuranceYearMonth = nonConsumerSpendingYearMonth.Where(x => x.SubClass == "SocialInsurance").Sum(v => v.Amount);
-            userIndexOutputViewModel.NonConsumerSpendingInterHouseholdTransferExpensesYearMonth = nonConsumerSpendingYearMonth.Where(x => x.SubClass == "InterHouseholdTransferExpenses").Sum(v => v.Amount);
-            userIndexOutputViewModel.NonConsumerSpendingNonProfitOrganizationTransferYearMonth = nonConsumerSpendingYearMonth.Where(x => x.SubClass == "NonProfitOrganizationTransfer").Sum(v => v.Amount);
+            vm.NonConsumerSpendingPublicPensionYearMonth = nonConsumerSpendingYearMonth.Where(x => x.SubClass == "PublicPension").Sum(v => v.Amount);
+            vm.NonConsumerSpendingDebtRepaymentYearMonth = nonConsumerSpendingYearMonth.Where(x => x.SubClass == "DebtRepayment").Sum(v => v.Amount);
+            vm.NonConsumerSpendingTaxYearMonth = nonConsumerSpendingYearMonth.Where(x => x.SubClass == "Tax").Sum(v => v.Amount);
+            vm.NonConsumerSpendingSocialInsuranceYearMonth = nonConsumerSpendingYearMonth.Where(x => x.SubClass == "SocialInsurance").Sum(v => v.Amount);
+            vm.NonConsumerSpendingInterHouseholdTransferExpensesYearMonth = nonConsumerSpendingYearMonth.Where(x => x.SubClass == "InterHouseholdTranserExpenses").Sum(v => v.Amount);
+            vm.NonConsumerSpendingNonProfitOrganizationTransferYearMonth = nonConsumerSpendingYearMonth.Where(x => x.SubClass == "NonProfitOrganizationTransfer").Sum(v => v.Amount);
             if (nonConsumerSpendingTotalYearMonth != 0)
             {
-                userIndexOutputViewModel.PercentageOfNonConsumerSpendingPublicPensionYearMonth = 100 * ((double)userIndexOutputViewModel.NonConsumerSpendingPublicPensionYearMonth / (double)nonConsumerSpendingTotalYearMonth);
-                userIndexOutputViewModel.PercentageOfNonConsumerSpendingDebtRepaymentYearMonth = 100 * ((double)userIndexOutputViewModel.NonConsumerSpendingDebtRepaymentYearMonth / (double)nonConsumerSpendingTotalYearMonth);
-                userIndexOutputViewModel.PercentageOfNonConsumerSpendingTaxYearMonth = 100 * ((double)userIndexOutputViewModel.NonConsumerSpendingTaxYearMonth / (double)nonConsumerSpendingTotalYearMonth);
-                userIndexOutputViewModel.PercentageOfNonConsumerSpendingSocialInsuranceYearMonth = 100 * ((double)userIndexOutputViewModel.NonConsumerSpendingSocialInsuranceYearMonth / (double)nonConsumerSpendingTotalYearMonth);
-                userIndexOutputViewModel.PercentageOfNonConsumerSpendingInterHouseholdTransferExpensesYearMonth = 100 * ((double)userIndexOutputViewModel.NonConsumerSpendingInterHouseholdTransferExpensesYearMonth / (double)nonConsumerSpendingTotalYearMonth);
-                userIndexOutputViewModel.PercentageOfNonConsumerSpendingNonProfitOrganizationTransferYearMonth = 100 * ((double)userIndexOutputViewModel.NonConsumerSpendingNonProfitOrganizationTransferYearMonth / (double)nonConsumerSpendingTotalYearMonth);
+                vm.PercentageOfNonConsumerSpendingPublicPensionYearMonth = 100 * ((double)vm.NonConsumerSpendingPublicPensionYearMonth / (double)nonConsumerSpendingTotalYearMonth);
+                vm.PercentageOfNonConsumerSpendingDebtRepaymentYearMonth = 100 * ((double)vm.NonConsumerSpendingDebtRepaymentYearMonth / (double)nonConsumerSpendingTotalYearMonth);
+                vm.PercentageOfNonConsumerSpendingTaxYearMonth = 100 * ((double)vm.NonConsumerSpendingTaxYearMonth / (double)nonConsumerSpendingTotalYearMonth);
+                vm.PercentageOfNonConsumerSpendingSocialInsuranceYearMonth = 100 * ((double)vm.NonConsumerSpendingSocialInsuranceYearMonth / (double)nonConsumerSpendingTotalYearMonth);
+                vm.PercentageOfNonConsumerSpendingInterHouseholdTransferExpensesYearMonth = 100 * ((double)vm.NonConsumerSpendingInterHouseholdTransferExpensesYearMonth / (double)nonConsumerSpendingTotalYearMonth);
+                vm.PercentageOfNonConsumerSpendingNonProfitOrganizationTransferYearMonth = 100 * ((double)vm.NonConsumerSpendingNonProfitOrganizationTransferYearMonth / (double)nonConsumerSpendingTotalYearMonth);
             }
 
-            var consumerSpendingYearMonth = userIndexOutputViewModel.ExpenditureYearMonthOutputViewModels.Where(x => x.MainClass == "ConsumerSpending").ToList();
+            var consumerSpendingYearMonth = vm.ExpenditureYearMonthOutputViewModels.Where(x => x.MainClass == "ConsumerSpending").ToList();
             var consumerSpendingTotalYearMonth = consumerSpendingYearMonth.Sum(v => v.Amount);
-            userIndexOutputViewModel.ConsumerSpendingMealOrEatOutExpensesYearMonth = consumerSpendingYearMonth.Where(x => x.SubClass == "MealOrEatOutExpenses").Sum(v => v.Amount);
-            userIndexOutputViewModel.ConsumerSpendingHousingOrSuppliesCostYearMonth = consumerSpendingYearMonth.Where(x => x.SubClass == "HousingOrSuppliesCost").Sum(v => v.Amount);
-            userIndexOutputViewModel.ConsumerSpendingEducationExpensesYearMonth = consumerSpendingYearMonth.Where(x => x.SubClass == "EducationExpenses").Sum(v => v.Amount);
-            userIndexOutputViewModel.ConsumerSpendingMedicalExpensesYearMonth = consumerSpendingYearMonth.Where(x => x.SubClass == "MedicalExpenses").Sum(v => v.Amount);
-            userIndexOutputViewModel.ConsumerSpendingTransportationCostYearMonth = consumerSpendingYearMonth.Where(x => x.SubClass == "TransportationCost").Sum(v => v.Amount);
-            userIndexOutputViewModel.ConsumerSpendingCommunicationCostYearMonth = consumerSpendingYearMonth.Where(x => x.SubClass == "CommunicationCost").Sum(v => v.Amount);
-            userIndexOutputViewModel.ConsumerSpendingLeisureOrCultureYearMonth = consumerSpendingYearMonth.Where(x => x.SubClass == "LeisureOrCulture").Sum(v => v.Amount);
-            userIndexOutputViewModel.ConsumerSpendingClothingOrShoesYearMonth = consumerSpendingYearMonth.Where(x => x.SubClass == "ClothingOrShoes").Sum(v => v.Amount);
-            userIndexOutputViewModel.ConsumerSpendingPinMoneyYearMonth = consumerSpendingYearMonth.Where(x => x.SubClass == "PinMoney").Sum(v => v.Amount);
-            userIndexOutputViewModel.ConsumerSpendingProtectionTypeInsuranceYearMonth = consumerSpendingYearMonth.Where(x => x.SubClass == "ProtectionTypeInsurance").Sum(v => v.Amount);
-            userIndexOutputViewModel.ConsumerSpendingOtherExpensesYearMonth = consumerSpendingYearMonth.Where(x => x.SubClass == "OtherExpenses").Sum(v => v.Amount);
-            userIndexOutputViewModel.ConsumerSpendingUnknownExpenditureYearMonth = consumerSpendingYearMonth.Where(x => x.SubClass == "UnknownExpenditure").Sum(v => v.Amount);
+            vm.ConsumerSpendingMealOrEatOutExpensesYearMonth = consumerSpendingYearMonth.Where(x => x.SubClass == "MealOrEatOutExpenses").Sum(v => v.Amount);
+            vm.ConsumerSpendingHousingOrSuppliesCostYearMonth = consumerSpendingYearMonth.Where(x => x.SubClass == "HousingOrSuppliesCost").Sum(v => v.Amount);
+            vm.ConsumerSpendingEducationExpensesYearMonth = consumerSpendingYearMonth.Where(x => x.SubClass == "EducationExpenses").Sum(v => v.Amount);
+            vm.ConsumerSpendingMedicalExpensesYearMonth = consumerSpendingYearMonth.Where(x => x.SubClass == "MedicalExpenses").Sum(v => v.Amount);
+            vm.ConsumerSpendingTransportationCostYearMonth = consumerSpendingYearMonth.Where(x => x.SubClass == "TransportationCost").Sum(v => v.Amount);
+            vm.ConsumerSpendingCommunicationCostYearMonth = consumerSpendingYearMonth.Where(x => x.SubClass == "CommunicationCost").Sum(v => v.Amount);
+            vm.ConsumerSpendingLeisureOrCultureYearMonth = consumerSpendingYearMonth.Where(x => x.SubClass == "LeisureOrCulture").Sum(v => v.Amount);
+            vm.ConsumerSpendingClothingOrShoesYearMonth = consumerSpendingYearMonth.Where(x => x.SubClass == "ClothingOrShoes").Sum(v => v.Amount);
+            vm.ConsumerSpendingPinMoneyYearMonth = consumerSpendingYearMonth.Where(x => x.SubClass == "PinMoney").Sum(v => v.Amount);
+            vm.ConsumerSpendingProtectionTypeInsuranceYearMonth = consumerSpendingYearMonth.Where(x => x.SubClass == "ProtectionTypeInsurance").Sum(v => v.Amount);
+            vm.ConsumerSpendingOtherExpensesYearMonth = consumerSpendingYearMonth.Where(x => x.SubClass == "OtherExpenses").Sum(v => v.Amount);
+            vm.ConsumerSpendingUnknownExpenditureYearMonth = consumerSpendingYearMonth.Where(x => x.SubClass == "UnknownExpenditure").Sum(v => v.Amount);
             if (consumerSpendingTotalYearMonth != 0)
             {
-                userIndexOutputViewModel.PercentageOfConsumerSpendingMealOrEatOutExpensesYearMonth = 100 * ((double)userIndexOutputViewModel.ConsumerSpendingMealOrEatOutExpensesYearMonth / (double)consumerSpendingTotalYearMonth);
-                userIndexOutputViewModel.PercentageOfConsumerSpendingHousingOrSuppliesCostYearMonth = 100 * ((double)userIndexOutputViewModel.ConsumerSpendingHousingOrSuppliesCostYearMonth / (double)consumerSpendingTotalYearMonth);
-                userIndexOutputViewModel.PercentageOfConsumerSpendingEducationExpensesYearMonth = 100 * ((double)userIndexOutputViewModel.ConsumerSpendingEducationExpensesYearMonth / (double)consumerSpendingTotalYearMonth);
-                userIndexOutputViewModel.PercentageOfConsumerSpendingMedicalExpensesYearMonth = 100 * ((double)userIndexOutputViewModel.ConsumerSpendingMedicalExpensesYearMonth / (double)consumerSpendingTotalYearMonth);
-                userIndexOutputViewModel.PercentageOfConsumerSpendingTransportationCostYearMonth = 100 * ((double)userIndexOutputViewModel.ConsumerSpendingTransportationCostYearMonth / (double)consumerSpendingTotalYearMonth);
-                userIndexOutputViewModel.PercentageOfConsumerSpendingCommunicationCostYearMonth = 100 * ((double)userIndexOutputViewModel.ConsumerSpendingCommunicationCostYearMonth / (double)consumerSpendingTotalYearMonth);
-                userIndexOutputViewModel.PercentageOfConsumerSpendingLeisureOrCultureYearMonth = 100 * ((double)userIndexOutputViewModel.ConsumerSpendingLeisureOrCultureYearMonth / (double)consumerSpendingTotalYearMonth);
-                userIndexOutputViewModel.PercentageOfConsumerSpendingClothingOrShoesYearMonth = 100 * ((double)userIndexOutputViewModel.ConsumerSpendingClothingOrShoesYearMonth / (double)consumerSpendingTotalYearMonth);
-                userIndexOutputViewModel.PercentageOfConsumerSpendingPinMoneyYearMonth = 100 * ((double)userIndexOutputViewModel.ConsumerSpendingPinMoneyYearMonth / (double)consumerSpendingTotalYearMonth);
-                userIndexOutputViewModel.PercentageOfConsumerSpendingProtectionTypeInsuranceYearMonth = 100 * ((double)userIndexOutputViewModel.ConsumerSpendingProtectionTypeInsuranceYearMonth / (double)consumerSpendingTotalYearMonth);
-                userIndexOutputViewModel.PercentageOfConsumerSpendingOtherExpensesYearMonth = 100 * ((double)userIndexOutputViewModel.ConsumerSpendingOtherExpensesYearMonth / (double)consumerSpendingTotalYearMonth);
-                userIndexOutputViewModel.PercentageOfConsumerSpendingUnknownExpenditureYearMonth = 100 * ((double)userIndexOutputViewModel.ConsumerSpendingUnknownExpenditureYearMonth / (double)consumerSpendingTotalYearMonth);
+                vm.PercentageOfConsumerSpendingMealOrEatOutExpensesYearMonth = 100 * ((double)vm.ConsumerSpendingMealOrEatOutExpensesYearMonth / (double)consumerSpendingTotalYearMonth);
+                vm.PercentageOfConsumerSpendingHousingOrSuppliesCostYearMonth = 100 * ((double)vm.ConsumerSpendingHousingOrSuppliesCostYearMonth / (double)consumerSpendingTotalYearMonth);
+                vm.PercentageOfConsumerSpendingEducationExpensesYearMonth = 100 * ((double)vm.ConsumerSpendingEducationExpensesYearMonth / (double)consumerSpendingTotalYearMonth);
+                vm.PercentageOfConsumerSpendingMedicalExpensesYearMonth = 100 * ((double)vm.ConsumerSpendingMedicalExpensesYearMonth / (double)consumerSpendingTotalYearMonth);
+                vm.PercentageOfConsumerSpendingTransportationCostYearMonth = 100 * ((double)vm.ConsumerSpendingTransportationCostYearMonth / (double)consumerSpendingTotalYearMonth);
+                vm.PercentageOfConsumerSpendingCommunicationCostYearMonth = 100 * ((double)vm.ConsumerSpendingCommunicationCostYearMonth / (double)consumerSpendingTotalYearMonth);
+                vm.PercentageOfConsumerSpendingLeisureOrCultureYearMonth = 100 * ((double)vm.ConsumerSpendingLeisureOrCultureYearMonth / (double)consumerSpendingTotalYearMonth);
+                vm.PercentageOfConsumerSpendingClothingOrShoesYearMonth = 100 * ((double)vm.ConsumerSpendingClothingOrShoesYearMonth / (double)consumerSpendingTotalYearMonth);
+                vm.PercentageOfConsumerSpendingPinMoneyYearMonth = 100 * ((double)vm.ConsumerSpendingPinMoneyYearMonth / (double)consumerSpendingTotalYearMonth);
+                vm.PercentageOfConsumerSpendingProtectionTypeInsuranceYearMonth = 100 * ((double)vm.ConsumerSpendingProtectionTypeInsuranceYearMonth / (double)consumerSpendingTotalYearMonth);
+                vm.PercentageOfConsumerSpendingOtherExpensesYearMonth = 100 * ((double)vm.ConsumerSpendingOtherExpensesYearMonth / (double)consumerSpendingTotalYearMonth);
+                vm.PercentageOfConsumerSpendingUnknownExpenditureYearMonth = 100 * ((double)vm.ConsumerSpendingUnknownExpenditureYearMonth / (double)consumerSpendingTotalYearMonth);
             }
         }
 
-        #endregion
-
-        return View(userIndexOutputViewModel);
+        return View(vm);
     }
     #endregion
 
@@ -572,18 +404,9 @@ public class DashBoardController(
         try
         {
             _ = HttpContext.Session.TryGetValue(EnumHelper.GetDescription(Session.Account), out var resultByte);
-            var assets = (await assetRepository.GetAssetsAsync(JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte ?? [])).Email)) ?? [];
-
-            var currentLoginUser = await accountRepository.GetAccountByEmailAsync(JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte ?? [])).Email);
-
-            currentLoginUser.DefaultMonetaryUnit = !assets.Select(x => x.MonetaryUnit).Distinct().ToList().Contains(userIndexInputViewModel.DefaultMonetaryUnit)
-                ? null
-                : userIndexInputViewModel.DefaultMonetaryUnit;
-
-            await accountRepository.UpdateAccountAsync(currentLoginUser.Adapt<AccountRequest>());
-
+            string email = JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte ?? [])).Email;
+            await dashboardService.UpdateDefaultMonetaryUnitAsync(email, userIndexInputViewModel.DefaultMonetaryUnit);
             return Json(new { result = true });
-
         }
         catch
         {

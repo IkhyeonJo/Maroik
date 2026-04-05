@@ -1,7 +1,5 @@
-using Mapster;
-﻿using Maroik.Core.Contract.Dtos;
+using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
-using Maroik.Core.PostgreSQL.Models;
 using Maroik.WebSite.Extensions;
 using Maroik.WebSite.Utilities;
 using Maroik.WebSite.Models.ViewModels.Notice;
@@ -20,188 +18,68 @@ public class NoticeController : BaseController
 {
     private readonly IHtmlLocalizer<NoticeController> _localizer;
     private readonly ILogger<NoticeController> _logger;
-    private readonly IAccountRepository _accountRepository;
     private readonly IHostEnvironment _hostEnvironment;
-    private readonly ICategoryRepository _categoryRepository;
-    private readonly ISubCategoryRepository _subCategoryRepository;
     private readonly IAssetRepository _assetRepository;
-    private readonly IIncomeRepository _incomeRepository;
-    private readonly IExpenditureRepository _expenditureRepository;
     private readonly IFixedIncomeRepository _fixedIncomeRepository;
     private readonly IFixedExpenditureRepository _fixedExpenditureRepository;
+    private readonly IFixedIncomeService _fixedIncomeService;
+    private readonly IFixedExpenditureService _fixedExpenditureService;
 
-    public NoticeController(IHtmlLocalizer<NoticeController> localizer, ILogger<NoticeController> logger,
-        IAccountRepository accountRepository, IHostEnvironment hostEnvironment,
-        ICategoryRepository categoryRepository, ISubCategoryRepository subCategoryRepository,
-        IAssetRepository assetRepository, IIncomeRepository incomeRepository,
-        IExpenditureRepository expenditureRepository, IFixedIncomeRepository fixedIncomeRepository,
-        IFixedExpenditureRepository fixedExpenditureRepository)
+    public NoticeController(
+        IHtmlLocalizer<NoticeController> localizer,
+        ILogger<NoticeController> logger,
+        IHostEnvironment hostEnvironment,
+        IAssetRepository assetRepository,
+        IFixedIncomeRepository fixedIncomeRepository,
+        IFixedExpenditureRepository fixedExpenditureRepository,
+        IFixedIncomeService fixedIncomeService,
+        IFixedExpenditureService fixedExpenditureService)
     {
         _localizer = localizer;
         _logger = logger;
-        _accountRepository = accountRepository;
         _hostEnvironment = hostEnvironment;
-        _categoryRepository = categoryRepository;
-        _subCategoryRepository = subCategoryRepository;
         _assetRepository = assetRepository;
-        _incomeRepository = incomeRepository;
-        _expenditureRepository = expenditureRepository;
         _fixedIncomeRepository = fixedIncomeRepository;
         _fixedExpenditureRepository = fixedExpenditureRepository;
+        _fixedIncomeService = fixedIncomeService;
+        _fixedExpenditureService = fixedExpenditureService;
     }
 
     #region FixedIncome
 
     #region Create
-
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.User)]
     public async Task<IActionResult> CreateFixedIncome(
         [FromBody] FixedIncomeInputViewModel fixedIncomeInputViewModel)
     {
-        try
-        {
-            if (ModelState.IsValid)
-            {
-                try
-                {
-                    fixedIncomeInputViewModel.Amount = Math.Abs(fixedIncomeInputViewModel.Amount);
-                    _ = HttpContext.Session.TryGetValue(
-                        Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite
-                            .Utilities.Session.Account), out byte[] resultByte);
-
-                    #region Validation of MainClass & SubClass Value
-
-                    if (fixedIncomeInputViewModel.MainClass == "RegularIncome")
-                    {
-                        if (fixedIncomeInputViewModel.SubClass is not ("LaborIncome" or
-                            "BusinessIncome" or
-                            "PensionIncome" or
-                            "FinancialIncome" or
-                            "RentalIncome" or
-                            "OtherIncome"))
-                        {
-                            return Json(new { result = false, error = _localizer["Input is invalid"].Value });
-                        }
-                    }
-                    else if (fixedIncomeInputViewModel.MainClass == "IrregularIncome")
-                    {
-                        if (fixedIncomeInputViewModel.SubClass is not ("LaborIncome" or
-                            "OtherIncome"))
-                        {
-                            return Json(new { result = false, error = _localizer["Input is invalid"].Value });
-                        }
-                    }
-
-                    #endregion
-
-                    #region Validate of DepositMonth
-
-                    if (fixedIncomeInputViewModel.DepositMonth is not (>= 1 and <= 12))
-                    {
-                        return Json(new { result = false, error = _localizer["Input is invalid"].Value });
-                    }
-
-                    #endregion
-
-                    #region Validate of DepositDay
-
-                    if (fixedIncomeInputViewModel.DepositMonth is 1 or
-                        3 or
-                        5 or
-                        7 or
-                        8 or
-                        10 or
-                        12)
-                    {
-                        if (fixedIncomeInputViewModel.DepositDay is not (>= 1 and <= 31))
-                        {
-                            return Json(new { result = false, error = _localizer["Input is invalid"].Value });
-                        }
-                    }
-                    else if (fixedIncomeInputViewModel.DepositMonth == 2)
-                    {
-                        if (fixedIncomeInputViewModel.DepositDay is not (>= 1 and <= 29))
-                        {
-                            return Json(new { result = false, error = _localizer["Input is invalid"].Value });
-                        }
-                    }
-                    else if (fixedIncomeInputViewModel.DepositMonth is 4 or
-                             6 or
-                             9 or
-                             11)
-                    {
-                        if (fixedIncomeInputViewModel.DepositDay is not (>= 1 and <= 30))
-                        {
-                            return Json(new { result = false, error = _localizer["Input is invalid"].Value });
-                        }
-                    }
-
-                    #endregion
-
-                    #region MaturityDate format check (also checks for leap year or day according to month)
-
-                    if (!new Regex(@"^\d{4}-((0[1-9])|(1[012]))-((0[1-9]|[12]\d)|3[01])$").IsMatch(
-                            fixedIncomeInputViewModel
-                                .MaturityDate)) // https://stackoverflow.com/questions/5247219/regular-expression-to-detect-yyyy-mm-dd/15233484
-                    {
-                        return Json(new { result = false, error = _localizer["Input is invalid"].Value });
-                    }
-
-                    #endregion
-
-                    #region Create fixed income
-
-                    await _fixedIncomeRepository.CreateFixedIncomeAsync
-                    (
-                        new FixedIncomeRequest()
-                        {
-                            AccountEmail = JsonConvert
-                                .DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email,
-                            MainClass = fixedIncomeInputViewModel.MainClass,
-                            SubClass = fixedIncomeInputViewModel.SubClass,
-                            Content = fixedIncomeInputViewModel.Content ?? "",
-                            Amount = Math.Abs(fixedIncomeInputViewModel.Amount),
-                            DepositMyAssetProductName = fixedIncomeInputViewModel.DepositMyAssetProductName,
-                            DepositMonth = fixedIncomeInputViewModel.DepositMonth,
-                            DepositDay = fixedIncomeInputViewModel.DepositDay,
-                            MaturityDate = new DateTime(
-                                Convert.ToInt32(Regex.Split(fixedIncomeInputViewModel.MaturityDate, "-")[0]
-                                    .ToString()),
-                                Convert.ToInt32(Regex.Split(fixedIncomeInputViewModel.MaturityDate, "-")[1]
-                                    .ToString()),
-                                Convert.ToInt32(Regex.Split(fixedIncomeInputViewModel.MaturityDate, "-")[2]
-                                    .ToString())),
-                            Created = DateTime.UtcNow,
-                            Updated = DateTime.UtcNow,
-                            Note = fixedIncomeInputViewModel.Note ?? ""
-                        }
-                    );
-
-                    #endregion
-
-                    return Json(new
-                    {
-                        result = true, message = _localizer["The fixedIncome has been successfully created."].Value
-                    });
-                }
-                catch
-                {
-                    return Json(new { result = false, error = _localizer["Input is invalid"].Value });
-                }
-            }
-            else
-            {
-                return Json(new { result = false, error = _localizer["Input is invalid"].Value });
-            }
-        }
-        catch
-        {
+        if (!ModelState.IsValid)
             return Json(new { result = false, error = _localizer["Input is invalid"].Value });
-        }
-    }
 
+        _ = HttpContext.Session.TryGetValue(EnumHelper.GetDescription(Session.Account), out byte[] resultByte);
+        string email = JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email;
+
+        var request = new FixedIncomeRequest
+        {
+            Id = fixedIncomeInputViewModel.Id,
+            MainClass = fixedIncomeInputViewModel.MainClass,
+            SubClass = fixedIncomeInputViewModel.SubClass,
+            Content = fixedIncomeInputViewModel.Content ?? "",
+            Amount = fixedIncomeInputViewModel.Amount,
+            DepositMyAssetProductName = fixedIncomeInputViewModel.DepositMyAssetProductName,
+            DepositMonth = fixedIncomeInputViewModel.DepositMonth,
+            DepositDay = fixedIncomeInputViewModel.DepositDay,
+            MaturityDate = ParseMaturityDate(fixedIncomeInputViewModel.MaturityDate),
+            Note = fixedIncomeInputViewModel.Note ?? "",
+            Unpunctuality = fixedIncomeInputViewModel.Unpunctuality
+        };
+
+        var result = await _fixedIncomeService.CreateAsync(email, request);
+        return result.Success
+            ? Json(new { result = true, message = _localizer["The fixedIncome has been successfully created."].Value })
+            : Json(new { result = false, error = _localizer[result.ErrorKey].Value });
+    }
     #endregion
 
     #region Read
@@ -457,231 +335,55 @@ public class NoticeController : BaseController
     #endregion
 
     #region Update
-
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.User)]
     public async Task<IActionResult> UpdateFixedIncome(
         [FromBody] FixedIncomeInputViewModel fixedIncomeInputViewModel)
     {
-        try
-        {
-            if (ModelState.IsValid)
-            {
-                try
-                {
-                    fixedIncomeInputViewModel.Amount = Math.Abs(fixedIncomeInputViewModel.Amount);
-                    _ = HttpContext.Session.TryGetValue(
-                        Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite
-                            .Utilities.Session.Account), out byte[] resultByte);
-
-                    #region Validation of MainClass & SubClass Value
-
-                    if (fixedIncomeInputViewModel.MainClass == "RegularIncome")
-                    {
-                        if (fixedIncomeInputViewModel.SubClass is not ("LaborIncome" or
-                            "BusinessIncome" or
-                            "PensionIncome" or
-                            "FinancialIncome" or
-                            "RentalIncome" or
-                            "OtherIncome"))
-                        {
-                            return Json(new { result = false, error = _localizer["Input is invalid"].Value });
-                        }
-                    }
-                    else if (fixedIncomeInputViewModel.MainClass == "IrregularIncome")
-                    {
-                        if (fixedIncomeInputViewModel.SubClass is not ("LaborIncome" or
-                            "OtherIncome"))
-                        {
-                            return Json(new { result = false, error = _localizer["Input is invalid"].Value });
-                        }
-                    }
-
-                    #endregion
-
-                    #region Validate of DepositMonth
-
-                    if (fixedIncomeInputViewModel.DepositMonth is not (>= 1 and <= 12))
-                    {
-                        return Json(new { result = false, error = _localizer["Input is invalid"].Value });
-                    }
-
-                    #endregion
-
-                    #region Validate of DepositDay
-
-                    if (fixedIncomeInputViewModel.DepositMonth is 1 or
-                        3 or
-                        5 or
-                        7 or
-                        8 or
-                        10 or
-                        12)
-                    {
-                        if (fixedIncomeInputViewModel.DepositDay is not (>= 1 and <= 31))
-                        {
-                            return Json(new { result = false, error = _localizer["Input is invalid"].Value });
-                        }
-                    }
-                    else if (fixedIncomeInputViewModel.DepositMonth == 2)
-                    {
-                        if (fixedIncomeInputViewModel.DepositDay is not (>= 1 and <= 29))
-                        {
-                            return Json(new { result = false, error = _localizer["Input is invalid"].Value });
-                        }
-                    }
-                    else if (fixedIncomeInputViewModel.DepositMonth is 4 or
-                             6 or
-                             9 or
-                             11)
-                    {
-                        if (fixedIncomeInputViewModel.DepositDay is not (>= 1 and <= 30))
-                        {
-                            return Json(new { result = false, error = _localizer["Input is invalid"].Value });
-                        }
-                    }
-
-                    #endregion
-
-                    #region MaturityDate format check (also checks for leap year or day according to month)
-
-                    if (!new Regex(@"^\d{4}-((0[1-9])|(1[012]))-((0[1-9]|[12]\d)|3[01])$").IsMatch(
-                            fixedIncomeInputViewModel
-                                .MaturityDate)) // https://stackoverflow.com/questions/5247219/regular-expression-to-detect-yyyy-mm-dd/15233484
-                    {
-                        return Json(new { result = false, error = _localizer["Input is invalid"].Value });
-                    }
-
-                    #endregion
-
-                    #region Update fixed income
-
-                    List<FixedIncomeResponse> tempFixedIncomes =
-                        await _fixedIncomeRepository.GetFixedIncomesAsync(JsonConvert
-                            .DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email);
-
-                    if (tempFixedIncomes == null)
-                    {
-                        return Json(new { result = false, error = _localizer["No fixedIncome exists"].Value });
-                    }
-                    else
-                    {
-                        FixedIncomeResponse tempFixedIncome = tempFixedIncomes
-                            .Where(a => a.Id == fixedIncomeInputViewModel.Id).FirstOrDefault();
-
-                        if (tempFixedIncome == null)
-                        {
-                            return Json(new { result = false, error = _localizer["Input is invalid"].Value });
-                        }
-                        else
-                        {
-                            #region Update fixed income
-
-                            tempFixedIncome.MainClass = fixedIncomeInputViewModel.MainClass;
-                            tempFixedIncome.SubClass = fixedIncomeInputViewModel.SubClass;
-                            tempFixedIncome.Content = fixedIncomeInputViewModel.Content ?? "";
-                            tempFixedIncome.Amount = Math.Abs(fixedIncomeInputViewModel.Amount);
-                            tempFixedIncome.DepositMyAssetProductName =
-                                fixedIncomeInputViewModel.DepositMyAssetProductName;
-                            tempFixedIncome.DepositMonth = fixedIncomeInputViewModel.DepositMonth;
-                            tempFixedIncome.DepositDay = fixedIncomeInputViewModel.DepositDay;
-                            tempFixedIncome.MaturityDate = new DateTime(
-                                Convert.ToInt32(Regex.Split(fixedIncomeInputViewModel.MaturityDate, "-")[0]
-                                    .ToString()),
-                                Convert.ToInt32(Regex.Split(fixedIncomeInputViewModel.MaturityDate, "-")[1]
-                                    .ToString()),
-                                Convert.ToInt32(Regex.Split(fixedIncomeInputViewModel.MaturityDate, "-")[2]
-                                    .ToString()));
-                            tempFixedIncome.Updated = DateTime.UtcNow;
-                            tempFixedIncome.Note = fixedIncomeInputViewModel.Note ?? "";
-                            tempFixedIncome.Unpunctuality = fixedIncomeInputViewModel.Unpunctuality;
-
-                            await _fixedIncomeRepository.UpdateFixedIncomeAsync(tempFixedIncome.Adapt<FixedIncomeRequest>());
-
-                            #endregion
-
-                            return Json(new
-                            {
-                                result = true,
-                                message = _localizer["The fixedIncome has been successfully updated."].Value
-                            });
-                        }
-                    }
-
-                    #endregion
-                }
-                catch
-                {
-                    return Json(new { result = false, error = _localizer["Input is invalid"].Value });
-                }
-            }
-            else
-            {
-                return Json(new { result = false, error = _localizer["Input is invalid"].Value });
-            }
-        }
-        catch
-        {
+        if (!ModelState.IsValid)
             return Json(new { result = false, error = _localizer["Input is invalid"].Value });
-        }
-    }
 
+        _ = HttpContext.Session.TryGetValue(EnumHelper.GetDescription(Session.Account), out byte[] resultByte);
+        string email = JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email;
+
+        var request = new FixedIncomeRequest
+        {
+            Id = fixedIncomeInputViewModel.Id,
+            MainClass = fixedIncomeInputViewModel.MainClass,
+            SubClass = fixedIncomeInputViewModel.SubClass,
+            Content = fixedIncomeInputViewModel.Content ?? "",
+            Amount = fixedIncomeInputViewModel.Amount,
+            DepositMyAssetProductName = fixedIncomeInputViewModel.DepositMyAssetProductName,
+            DepositMonth = fixedIncomeInputViewModel.DepositMonth,
+            DepositDay = fixedIncomeInputViewModel.DepositDay,
+            MaturityDate = ParseMaturityDate(fixedIncomeInputViewModel.MaturityDate),
+            Note = fixedIncomeInputViewModel.Note ?? "",
+            Unpunctuality = fixedIncomeInputViewModel.Unpunctuality
+        };
+
+        var result = await _fixedIncomeService.UpdateAsync(email, request);
+        return result.Success
+            ? Json(new { result = true, message = _localizer["The fixedIncome has been successfully updated."].Value })
+            : Json(new { result = false, error = _localizer[result.ErrorKey].Value });
+    }
     #endregion
 
     #region Delete
-
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.User)]
     public async Task<IActionResult> DeleteFixedIncome(
         [FromBody] FixedIncomeInputViewModel fixedIncomeInputViewModel)
     {
-        try
-        {
-            _ = HttpContext.Session.TryGetValue(
-                Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite
-                    .Utilities.Session.Account), out byte[] resultByte);
+        _ = HttpContext.Session.TryGetValue(EnumHelper.GetDescription(Session.Account), out byte[] resultByte);
+        string email = JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email;
 
-            List<FixedIncomeResponse> tempFixedIncomes =
-                await _fixedIncomeRepository.GetFixedIncomesAsync(JsonConvert
-                    .DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email);
-
-            if (tempFixedIncomes == null)
-            {
-                return Json(new { result = false, error = _localizer["Input is invalid"].Value });
-            }
-            else
-            {
-                FixedIncomeResponse tempFixedIncome = tempFixedIncomes.Where(a => a.Id == fixedIncomeInputViewModel.Id)
-                    .FirstOrDefault();
-
-                if (tempFixedIncome == null)
-                {
-                    return Json(new { result = false, error = _localizer["Input is invalid"].Value });
-                }
-                else
-                {
-                    #region Delete fixed income
-
-                    await _fixedIncomeRepository.DeleteFixedIncomeAsync(tempFixedIncome.Adapt<FixedIncomeRequest>());
-
-                    #endregion
-
-                    return Json(new
-                    {
-                        result = true, message = _localizer["The fixedIncome has been successfully deleted."].Value
-                    });
-                }
-            }
-        }
-        catch
-        {
-            return Json(new { result = false, error = _localizer["Input is invalid"].Value });
-        }
+        var result = await _fixedIncomeService.DeleteAsync(email, fixedIncomeInputViewModel.Id);
+        return result.Success
+            ? Json(new { result = true, message = _localizer["The fixedIncome has been successfully deleted."].Value })
+            : Json(new { result = false, error = _localizer[result.ErrorKey].Value });
     }
-
-    #endregion
 
     #region Excel
 
@@ -836,347 +538,44 @@ public class NoticeController : BaseController
 
     #endregion
 
+    #endregion
+
     #region FixedExpenditure
 
     #region Create
-
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.User)]
     public async Task<IActionResult> CreateFixedExpenditure(
         [FromBody] FixedExpenditureInputViewModel fixedExpenditureInputViewModel)
     {
-        try
-        {
-            if (ModelState.IsValid)
-            {
-                fixedExpenditureInputViewModel.Amount = Math.Abs(fixedExpenditureInputViewModel.Amount);
-                _ = HttpContext.Session.TryGetValue(
-                    Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite
-                        .Utilities.Session.Account), out byte[] resultByte);
-
-                #region MainClass = 'RegularSavings'
-
-                if (fixedExpenditureInputViewModel.MainClass == "RegularSavings")
-                {
-                    if (fixedExpenditureInputViewModel.SubClass is "Deposit" or "Investment")
-                    {
-                        try
-                        {
-                            if (fixedExpenditureInputViewModel.PaymentMethod ==
-                                fixedExpenditureInputViewModel.MyDepositAsset)
-                            {
-                                return Json(new
-                                {
-                                    result = false,
-                                    error = _localizer[
-                                        "The PaymentMethod and MyDepositAsset value cannot be the same."].Value
-                                });
-                            }
-
-                            AssetResponse expenditureAsset = await _assetRepository.GetAssetAsync(
-                                JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte))
-                                    .Email, fixedExpenditureInputViewModel.PaymentMethod);
-                            AssetResponse incomeAsset = await _assetRepository.GetAssetAsync(
-                                JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte))
-                                    .Email, fixedExpenditureInputViewModel.MyDepositAsset);
-
-                            if (expenditureAsset == null || incomeAsset == null)
-                            {
-                                return Json(new { result = false, error = _localizer["Input is invalid"].Value });
-                            }
-
-                            if (expenditureAsset.MonetaryUnit != incomeAsset.MonetaryUnit)
-                            {
-                                return Json(new
-                                {
-                                    result = false,
-                                    error = _localizer[
-                                            "PaymentMethod MonetaryUnit must be same as MyDepositAsset MonetaryUnit."]
-                                        .Value
-                                });
-                            }
-
-                            #region Create fixed expenditure
-
-                            await _fixedExpenditureRepository.CreateFixedExpenditureAsync
-                            (
-                                new FixedExpenditureRequest()
-                                {
-                                    AccountEmail = JsonConvert
-                                        .DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email,
-                                    MainClass = fixedExpenditureInputViewModel.MainClass,
-                                    SubClass = fixedExpenditureInputViewModel.SubClass,
-                                    Content = fixedExpenditureInputViewModel.Content ?? "",
-                                    Amount = Math.Abs(fixedExpenditureInputViewModel.Amount),
-                                    PaymentMethod = fixedExpenditureInputViewModel.PaymentMethod,
-                                    MyDepositAsset = fixedExpenditureInputViewModel.MyDepositAsset,
-                                    DepositMonth = fixedExpenditureInputViewModel.DepositMonth,
-                                    DepositDay = fixedExpenditureInputViewModel.DepositDay,
-                                    MaturityDate = new DateTime(
-                                        Convert.ToInt32(Regex.Split(fixedExpenditureInputViewModel.MaturityDate,
-                                            "-")[0].ToString()),
-                                        Convert.ToInt32(Regex.Split(fixedExpenditureInputViewModel.MaturityDate,
-                                            "-")[1].ToString()),
-                                        Convert.ToInt32(Regex.Split(fixedExpenditureInputViewModel.MaturityDate,
-                                            "-")[2].ToString())),
-                                    Created = DateTime.UtcNow,
-                                    Updated = DateTime.UtcNow,
-                                    Note = fixedExpenditureInputViewModel.Note ?? ""
-                                }
-                            );
-
-                            #endregion
-
-                            return Json(new
-                            {
-                                result = true,
-                                message = _localizer["The fixedExpenditure has been successfully created."].Value
-                            });
-                        }
-                        catch
-                        {
-                            return Json(new { result = false, error = _localizer["Input is invalid"].Value });
-                        }
-                    }
-                    else
-                    {
-                        return Json(new { result = false, error = _localizer["Input is invalid"].Value });
-                    }
-                }
-
-                #endregion
-
-                #region MainClass = 'NonConsumerSpending'
-
-                else if (fixedExpenditureInputViewModel.MainClass == "NonConsumerSpending")
-                {
-                    if (fixedExpenditureInputViewModel.SubClass is "PublicPension" or "DebtRepayment")
-                    {
-                        try
-                        {
-                            if (fixedExpenditureInputViewModel.PaymentMethod ==
-                                fixedExpenditureInputViewModel.MyDepositAsset)
-                            {
-                                return Json(new
-                                {
-                                    result = false,
-                                    error = _localizer[
-                                        "The PaymentMethod and MyDepositAsset value cannot be the same."].Value
-                                });
-                            }
-
-                            AssetResponse expenditureAsset = await _assetRepository.GetAssetAsync(
-                                JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte))
-                                    .Email, fixedExpenditureInputViewModel.PaymentMethod);
-                            AssetResponse incomeAsset = await _assetRepository.GetAssetAsync(
-                                JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte))
-                                    .Email, fixedExpenditureInputViewModel.MyDepositAsset);
-
-                            if (expenditureAsset == null || incomeAsset == null)
-                            {
-                                return Json(new { result = false, error = _localizer["Input is invalid"].Value });
-                            }
-
-                            if (expenditureAsset.MonetaryUnit != incomeAsset.MonetaryUnit)
-                            {
-                                return Json(new
-                                {
-                                    result = false,
-                                    error = _localizer[
-                                            "PaymentMethod MonetaryUnit must be same as MyDepositAsset MonetaryUnit."]
-                                        .Value
-                                });
-                            }
-
-                            #region Create fixed expenditure
-
-                            await _fixedExpenditureRepository.CreateFixedExpenditureAsync
-                            (
-                                new FixedExpenditureRequest()
-                                {
-                                    AccountEmail = JsonConvert
-                                        .DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email,
-                                    MainClass = fixedExpenditureInputViewModel.MainClass,
-                                    SubClass = fixedExpenditureInputViewModel.SubClass,
-                                    Content = fixedExpenditureInputViewModel.Content ?? "",
-                                    Amount = Math.Abs(fixedExpenditureInputViewModel.Amount),
-                                    PaymentMethod = fixedExpenditureInputViewModel.PaymentMethod,
-                                    MyDepositAsset = fixedExpenditureInputViewModel.MyDepositAsset,
-                                    DepositMonth = fixedExpenditureInputViewModel.DepositMonth,
-                                    DepositDay = fixedExpenditureInputViewModel.DepositDay,
-                                    MaturityDate = new DateTime(
-                                        Convert.ToInt32(Regex.Split(fixedExpenditureInputViewModel.MaturityDate,
-                                            "-")[0].ToString()),
-                                        Convert.ToInt32(Regex.Split(fixedExpenditureInputViewModel.MaturityDate,
-                                            "-")[1].ToString()),
-                                        Convert.ToInt32(Regex.Split(fixedExpenditureInputViewModel.MaturityDate,
-                                            "-")[2].ToString())),
-                                    Created = DateTime.UtcNow,
-                                    Updated = DateTime.UtcNow,
-                                    Note = fixedExpenditureInputViewModel.Note ?? ""
-                                }
-                            );
-
-                            #endregion
-
-                            return Json(new
-                            {
-                                result = true,
-                                message = _localizer["The fixedExpenditure has been successfully created."].Value
-                            });
-                        }
-                        catch
-                        {
-                            return Json(new { result = false, error = _localizer["Input is invalid"].Value });
-                        }
-                    }
-                    else if (fixedExpenditureInputViewModel.SubClass is "Tax" or
-                             "SocialInsurance" or
-                             "InterHouseholdTranserExpenses" or
-                             "NonProfitOrganizationTransfer")
-                    {
-                        try
-                        {
-                            #region Create fixed expenditure
-
-                            await _fixedExpenditureRepository.CreateFixedExpenditureAsync
-                            (
-                                new FixedExpenditureRequest()
-                                {
-                                    AccountEmail = JsonConvert
-                                        .DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email,
-                                    MainClass = fixedExpenditureInputViewModel.MainClass,
-                                    SubClass = fixedExpenditureInputViewModel.SubClass,
-                                    Content = fixedExpenditureInputViewModel.Content ?? "",
-                                    Amount = Math.Abs(fixedExpenditureInputViewModel.Amount),
-                                    PaymentMethod = fixedExpenditureInputViewModel.PaymentMethod,
-                                    MyDepositAsset = "",
-                                    DepositMonth = fixedExpenditureInputViewModel.DepositMonth,
-                                    DepositDay = fixedExpenditureInputViewModel.DepositDay,
-                                    MaturityDate = new DateTime(
-                                        Convert.ToInt32(Regex.Split(fixedExpenditureInputViewModel.MaturityDate,
-                                            "-")[0].ToString()),
-                                        Convert.ToInt32(Regex.Split(fixedExpenditureInputViewModel.MaturityDate,
-                                            "-")[1].ToString()),
-                                        Convert.ToInt32(Regex.Split(fixedExpenditureInputViewModel.MaturityDate,
-                                            "-")[2].ToString())),
-                                    Created = DateTime.UtcNow,
-                                    Updated = DateTime.UtcNow,
-                                    Note = fixedExpenditureInputViewModel.Note ?? ""
-                                }
-                            );
-
-                            #endregion
-
-                            return Json(new
-                            {
-                                result = true,
-                                message = _localizer["The fixedExpenditure has been successfully created."].Value
-                            });
-                        }
-                        catch
-                        {
-                            return Json(new { result = false, error = _localizer["Input is invalid"].Value });
-                        }
-                    }
-                    else
-                    {
-                        return Json(new { result = false, error = _localizer["Input is invalid"].Value });
-                    }
-                }
-
-                #endregion
-
-                #region MainClass = 'ConsumerSpending'
-
-                else if (fixedExpenditureInputViewModel.MainClass == "ConsumerSpending")
-                {
-                    if (fixedExpenditureInputViewModel.SubClass is "MealOrEatOutExpenses" or
-                        "HousingOrSuppliesCost" or
-                        "EducationExpenses" or
-                        "MedicalExpenses" or
-                        "TransportationCost" or
-                        "CommunicationCost" or
-                        "LeisureOrCulture" or
-                        "ClothingOrShoes" or
-                        "PinMoney" or
-                        "ProtectionTypeInsurance" or
-                        "OtherExpenses" or
-                        "UnknownExpenditure")
-                    {
-                        try
-                        {
-                            #region Create fixed expenditure
-
-                            await _fixedExpenditureRepository.CreateFixedExpenditureAsync
-                            (
-                                new FixedExpenditureRequest()
-                                {
-                                    AccountEmail = JsonConvert
-                                        .DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email,
-                                    MainClass = fixedExpenditureInputViewModel.MainClass,
-                                    SubClass = fixedExpenditureInputViewModel.SubClass,
-                                    Content = fixedExpenditureInputViewModel.Content ?? "",
-                                    Amount = Math.Abs(fixedExpenditureInputViewModel.Amount),
-                                    PaymentMethod = fixedExpenditureInputViewModel.PaymentMethod,
-                                    MyDepositAsset = "",
-                                    DepositMonth = fixedExpenditureInputViewModel.DepositMonth,
-                                    DepositDay = fixedExpenditureInputViewModel.DepositDay,
-                                    MaturityDate = new DateTime(
-                                        Convert.ToInt32(Regex.Split(fixedExpenditureInputViewModel.MaturityDate,
-                                            "-")[0].ToString()),
-                                        Convert.ToInt32(Regex.Split(fixedExpenditureInputViewModel.MaturityDate,
-                                            "-")[1].ToString()),
-                                        Convert.ToInt32(Regex.Split(fixedExpenditureInputViewModel.MaturityDate,
-                                            "-")[2].ToString())),
-                                    Created = DateTime.UtcNow,
-                                    Updated = DateTime.UtcNow,
-                                    Note = fixedExpenditureInputViewModel.Note ?? ""
-                                }
-                            );
-
-                            #endregion
-
-                            return Json(new
-                            {
-                                result = true,
-                                message = _localizer["The fixedExpenditure has been successfully created."].Value
-                            });
-                        }
-                        catch
-                        {
-                            return Json(new { result = false, error = _localizer["Input is invalid"].Value });
-                        }
-                    }
-                    else
-                    {
-                        return Json(new { result = false, error = _localizer["Input is invalid"].Value });
-                    }
-                }
-
-                #endregion
-
-                #region Value not in MainClass
-
-                else
-                {
-                    return Json(new { result = false, error = _localizer["Input is invalid"].Value });
-                }
-
-                #endregion
-            }
-            else
-            {
-                return Json(new { result = false, error = _localizer["Input is invalid"].Value });
-            }
-        }
-        catch
-        {
+        if (!ModelState.IsValid)
             return Json(new { result = false, error = _localizer["Input is invalid"].Value });
-        }
-    }
 
+        _ = HttpContext.Session.TryGetValue(EnumHelper.GetDescription(Session.Account), out byte[] resultByte);
+        string email = JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email;
+
+        var request = new FixedExpenditureRequest
+        {
+            Id = fixedExpenditureInputViewModel.Id,
+            MainClass = fixedExpenditureInputViewModel.MainClass,
+            SubClass = fixedExpenditureInputViewModel.SubClass,
+            Content = fixedExpenditureInputViewModel.Content ?? "",
+            Amount = fixedExpenditureInputViewModel.Amount,
+            PaymentMethod = fixedExpenditureInputViewModel.PaymentMethod,
+            MyDepositAsset = fixedExpenditureInputViewModel.MyDepositAsset ?? "",
+            DepositMonth = fixedExpenditureInputViewModel.DepositMonth,
+            DepositDay = fixedExpenditureInputViewModel.DepositDay,
+            MaturityDate = ParseMaturityDate(fixedExpenditureInputViewModel.MaturityDate),
+            Note = fixedExpenditureInputViewModel.Note ?? "",
+            Unpunctuality = fixedExpenditureInputViewModel.Unpunctuality
+        };
+
+        var result = await _fixedExpenditureService.CreateAsync(email, request);
+        return result.Success
+            ? Json(new { result = true, message = _localizer["The fixedExpenditure has been successfully created."].Value })
+            : Json(new { result = false, error = _localizer[result.ErrorKey].Value });
+    }
     #endregion
 
     #region Read
@@ -1437,412 +836,56 @@ public class NoticeController : BaseController
     #endregion
 
     #region Update
-
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.User)]
     public async Task<IActionResult> UpdateFixedExpenditure(
         [FromBody] FixedExpenditureInputViewModel fixedExpenditureInputViewModel)
     {
-        try
-        {
-            if (ModelState.IsValid)
-            {
-                fixedExpenditureInputViewModel.Amount = Math.Abs(fixedExpenditureInputViewModel.Amount);
-                _ = HttpContext.Session.TryGetValue(
-                    Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite
-                        .Utilities.Session.Account), out byte[] resultByte);
-
-                #region MainClass = 'RegularSavings'
-
-                if (fixedExpenditureInputViewModel.MainClass == "RegularSavings")
-                {
-                    if (fixedExpenditureInputViewModel.SubClass is "Deposit" or "Investment")
-                    {
-                        try
-                        {
-                            if (fixedExpenditureInputViewModel.PaymentMethod ==
-                                fixedExpenditureInputViewModel.MyDepositAsset)
-                            {
-                                return Json(new
-                                {
-                                    result = false,
-                                    error = _localizer[
-                                        "The PaymentMethod and MyDepositAsset value cannot be the same."].Value
-                                });
-                            }
-
-                            AssetResponse expenditureAsset = await _assetRepository.GetAssetAsync(
-                                JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte))
-                                    .Email, fixedExpenditureInputViewModel.PaymentMethod);
-                            AssetResponse incomeAsset = await _assetRepository.GetAssetAsync(
-                                JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte))
-                                    .Email, fixedExpenditureInputViewModel.MyDepositAsset);
-
-                            if (expenditureAsset == null || incomeAsset == null)
-                            {
-                                return Json(new { result = false, error = _localizer["Input is invalid"].Value });
-                            }
-
-                            if (expenditureAsset.MonetaryUnit != incomeAsset.MonetaryUnit)
-                            {
-                                return Json(new
-                                {
-                                    result = false,
-                                    error = _localizer[
-                                            "PaymentMethod MonetaryUnit must be same as MyDepositAsset MonetaryUnit."]
-                                        .Value
-                                });
-                            }
-
-                            List<FixedExpenditureResponse> tempFixedExpenditures =
-                                await _fixedExpenditureRepository.GetFixedExpendituresAsync(JsonConvert
-                                    .DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email);
-                            FixedExpenditureResponse tempFixedExpenditure = tempFixedExpenditures
-                                .Where(a => a.Id == fixedExpenditureInputViewModel.Id).FirstOrDefault();
-
-                            if (tempFixedExpenditure == null)
-                            {
-                                return Json(new { result = false, error = _localizer["Input is invalid"].Value });
-                            }
-
-                            tempFixedExpenditure.Id = fixedExpenditureInputViewModel.Id;
-                            tempFixedExpenditure.AccountEmail = JsonConvert
-                                .DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email;
-                            tempFixedExpenditure.MainClass = fixedExpenditureInputViewModel.MainClass;
-                            tempFixedExpenditure.SubClass = fixedExpenditureInputViewModel.SubClass;
-                            tempFixedExpenditure.Content = fixedExpenditureInputViewModel.Content ?? "";
-                            tempFixedExpenditure.Amount = fixedExpenditureInputViewModel.Amount;
-                            tempFixedExpenditure.DepositMonth = fixedExpenditureInputViewModel.DepositMonth;
-                            tempFixedExpenditure.DepositDay = fixedExpenditureInputViewModel.DepositDay;
-                            tempFixedExpenditure.MaturityDate = new DateTime(
-                                Convert.ToInt32(Regex.Split(fixedExpenditureInputViewModel.MaturityDate, "-")[0]
-                                    .ToString()),
-                                Convert.ToInt32(Regex.Split(fixedExpenditureInputViewModel.MaturityDate, "-")[1]
-                                    .ToString()),
-                                Convert.ToInt32(Regex.Split(fixedExpenditureInputViewModel.MaturityDate, "-")[2]
-                                    .ToString()));
-                            tempFixedExpenditure.Note = fixedExpenditureInputViewModel?.Note ?? "";
-                            tempFixedExpenditure.PaymentMethod = fixedExpenditureInputViewModel.PaymentMethod;
-                            tempFixedExpenditure.MyDepositAsset =
-                                fixedExpenditureInputViewModel.MyDepositAsset ?? "";
-                            tempFixedExpenditure.Updated = DateTime.UtcNow;
-                            tempFixedExpenditure.Unpunctuality = fixedExpenditureInputViewModel.Unpunctuality;
-
-                            await _fixedExpenditureRepository.UpdateFixedExpenditureAsync(tempFixedExpenditure.Adapt<FixedExpenditureRequest>());
-
-                            return Json(new
-                            {
-                                result = true,
-                                message = _localizer["The fixedExpenditure has been successfully updated."].Value
-                            });
-                        }
-                        catch
-                        {
-                            return Json(new { result = false, error = _localizer["Input is invalid"].Value });
-                        }
-                    }
-                    else
-                    {
-                        return Json(new { result = false, error = _localizer["Input is invalid"].Value });
-                    }
-                }
-
-                #endregion
-
-                #region MainClass = 'NonConsumerSpending'
-
-                else if (fixedExpenditureInputViewModel.MainClass == "NonConsumerSpending")
-                {
-                    if (fixedExpenditureInputViewModel.SubClass is "PublicPension" or "DebtRepayment")
-                    {
-                        try
-                        {
-                            if (fixedExpenditureInputViewModel.PaymentMethod ==
-                                fixedExpenditureInputViewModel.MyDepositAsset)
-                            {
-                                return Json(new
-                                {
-                                    result = false,
-                                    error = _localizer[
-                                        "The PaymentMethod and MyDepositAsset value cannot be the same."].Value
-                                });
-                            }
-
-                            AssetResponse expenditureAsset = await _assetRepository.GetAssetAsync(
-                                JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte))
-                                    .Email, fixedExpenditureInputViewModel.PaymentMethod);
-                            AssetResponse incomeAsset = await _assetRepository.GetAssetAsync(
-                                JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte))
-                                    .Email, fixedExpenditureInputViewModel.MyDepositAsset);
-
-                            if (expenditureAsset == null || incomeAsset == null)
-                            {
-                                return Json(new { result = false, error = _localizer["Input is invalid"].Value });
-                            }
-
-                            if (expenditureAsset.MonetaryUnit != incomeAsset.MonetaryUnit)
-                            {
-                                return Json(new
-                                {
-                                    result = false,
-                                    error = _localizer[
-                                            "PaymentMethod MonetaryUnit must be same as MyDepositAsset MonetaryUnit."]
-                                        .Value
-                                });
-                            }
-
-                            List<FixedExpenditureResponse> tempFixedExpenditures =
-                                await _fixedExpenditureRepository.GetFixedExpendituresAsync(JsonConvert
-                                    .DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email);
-                            FixedExpenditureResponse tempFixedExpenditure = tempFixedExpenditures
-                                .Where(a => a.Id == fixedExpenditureInputViewModel.Id).FirstOrDefault();
-
-                            if (tempFixedExpenditure == null)
-                            {
-                                return Json(new { result = false, error = _localizer["Input is invalid"].Value });
-                            }
-
-                            tempFixedExpenditure.Id = fixedExpenditureInputViewModel.Id;
-                            tempFixedExpenditure.AccountEmail = JsonConvert
-                                .DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email;
-                            tempFixedExpenditure.MainClass = fixedExpenditureInputViewModel.MainClass;
-                            tempFixedExpenditure.SubClass = fixedExpenditureInputViewModel.SubClass;
-                            tempFixedExpenditure.Content = fixedExpenditureInputViewModel.Content ?? "";
-                            tempFixedExpenditure.Amount = fixedExpenditureInputViewModel.Amount;
-                            tempFixedExpenditure.DepositMonth = fixedExpenditureInputViewModel.DepositMonth;
-                            tempFixedExpenditure.DepositDay = fixedExpenditureInputViewModel.DepositDay;
-                            tempFixedExpenditure.MaturityDate = new DateTime(
-                                Convert.ToInt32(Regex.Split(fixedExpenditureInputViewModel.MaturityDate, "-")[0]
-                                    .ToString()),
-                                Convert.ToInt32(Regex.Split(fixedExpenditureInputViewModel.MaturityDate, "-")[1]
-                                    .ToString()),
-                                Convert.ToInt32(Regex.Split(fixedExpenditureInputViewModel.MaturityDate, "-")[2]
-                                    .ToString()));
-                            tempFixedExpenditure.Note = fixedExpenditureInputViewModel?.Note ?? "";
-                            tempFixedExpenditure.PaymentMethod = fixedExpenditureInputViewModel.PaymentMethod;
-                            tempFixedExpenditure.MyDepositAsset =
-                                fixedExpenditureInputViewModel.MyDepositAsset ?? "";
-                            tempFixedExpenditure.Updated = DateTime.UtcNow;
-                            tempFixedExpenditure.Unpunctuality = fixedExpenditureInputViewModel.Unpunctuality;
-
-                            await _fixedExpenditureRepository.UpdateFixedExpenditureAsync(tempFixedExpenditure.Adapt<FixedExpenditureRequest>());
-
-                            return Json(new
-                            {
-                                result = true,
-                                message = _localizer["The fixedExpenditure has been successfully updated."].Value
-                            });
-                        }
-                        catch
-                        {
-                            return Json(new { result = false, error = _localizer["Input is invalid"].Value });
-                        }
-                    }
-                    else if (fixedExpenditureInputViewModel.SubClass is "Tax" or
-                             "SocialInsurance" or
-                             "InterHouseholdTranserExpenses" or
-                             "NonProfitOrganizationTransfer")
-                    {
-                        try
-                        {
-                            List<FixedExpenditureResponse> tempFixedExpenditures =
-                                await _fixedExpenditureRepository.GetFixedExpendituresAsync(JsonConvert
-                                    .DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email);
-                            FixedExpenditureResponse tempFixedExpenditure = tempFixedExpenditures
-                                .Where(a => a.Id == fixedExpenditureInputViewModel.Id).FirstOrDefault();
-
-                            if (tempFixedExpenditure == null)
-                            {
-                                return Json(new { result = false, error = _localizer["Input is invalid"].Value });
-                            }
-
-                            tempFixedExpenditure.Id = fixedExpenditureInputViewModel.Id;
-                            tempFixedExpenditure.AccountEmail = JsonConvert
-                                .DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email;
-                            tempFixedExpenditure.MainClass = fixedExpenditureInputViewModel.MainClass;
-                            tempFixedExpenditure.SubClass = fixedExpenditureInputViewModel.SubClass;
-                            tempFixedExpenditure.Content = fixedExpenditureInputViewModel.Content ?? "";
-                            tempFixedExpenditure.Amount = fixedExpenditureInputViewModel.Amount;
-                            tempFixedExpenditure.DepositMonth = fixedExpenditureInputViewModel.DepositMonth;
-                            tempFixedExpenditure.DepositDay = fixedExpenditureInputViewModel.DepositDay;
-                            tempFixedExpenditure.MaturityDate = new DateTime(
-                                Convert.ToInt32(Regex.Split(fixedExpenditureInputViewModel.MaturityDate, "-")[0]
-                                    .ToString()),
-                                Convert.ToInt32(Regex.Split(fixedExpenditureInputViewModel.MaturityDate, "-")[1]
-                                    .ToString()),
-                                Convert.ToInt32(Regex.Split(fixedExpenditureInputViewModel.MaturityDate, "-")[2]
-                                    .ToString()));
-                            tempFixedExpenditure.Note = fixedExpenditureInputViewModel?.Note ?? "";
-                            tempFixedExpenditure.PaymentMethod = fixedExpenditureInputViewModel.PaymentMethod;
-                            tempFixedExpenditure.MyDepositAsset = "";
-                            tempFixedExpenditure.Updated = DateTime.UtcNow;
-                            tempFixedExpenditure.Unpunctuality = fixedExpenditureInputViewModel.Unpunctuality;
-
-                            await _fixedExpenditureRepository.UpdateFixedExpenditureAsync(tempFixedExpenditure.Adapt<FixedExpenditureRequest>());
-
-                            return Json(new
-                            {
-                                result = true,
-                                message = _localizer["The fixedExpenditure has been successfully updated."].Value
-                            });
-                        }
-                        catch
-                        {
-                            return Json(new { result = false, error = _localizer["Input is invalid"].Value });
-                        }
-                    }
-                    else
-                    {
-                        return Json(new { result = false, error = _localizer["Input is invalid"].Value });
-                    }
-                }
-
-                #endregion
-
-                #region MainClass = 'ConsumerSpending'
-
-                else if (fixedExpenditureInputViewModel.MainClass == "ConsumerSpending")
-                {
-                    if (fixedExpenditureInputViewModel.SubClass is "MealOrEatOutExpenses" or
-                        "HousingOrSuppliesCost" or
-                        "EducationExpenses" or
-                        "MedicalExpenses" or
-                        "TransportationCost" or
-                        "CommunicationCost" or
-                        "LeisureOrCulture" or
-                        "ClothingOrShoes" or
-                        "PinMoney" or
-                        "ProtectionTypeInsurance" or
-                        "OtherExpenses" or
-                        "UnknownExpenditure")
-                    {
-                        try
-                        {
-                            List<FixedExpenditureResponse> tempFixedExpenditures =
-                                await _fixedExpenditureRepository.GetFixedExpendituresAsync(JsonConvert
-                                    .DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email);
-                            FixedExpenditureResponse tempFixedExpenditure = tempFixedExpenditures
-                                .Where(a => a.Id == fixedExpenditureInputViewModel.Id).FirstOrDefault();
-
-                            if (tempFixedExpenditure == null)
-                            {
-                                return Json(new { result = false, error = _localizer["Input is invalid"].Value });
-                            }
-
-                            tempFixedExpenditure.Id = fixedExpenditureInputViewModel.Id;
-                            tempFixedExpenditure.AccountEmail = JsonConvert
-                                .DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email;
-                            tempFixedExpenditure.MainClass = fixedExpenditureInputViewModel.MainClass;
-                            tempFixedExpenditure.SubClass = fixedExpenditureInputViewModel.SubClass;
-                            tempFixedExpenditure.Content = fixedExpenditureInputViewModel.Content ?? "";
-                            tempFixedExpenditure.Amount = fixedExpenditureInputViewModel.Amount;
-                            tempFixedExpenditure.DepositMonth = fixedExpenditureInputViewModel.DepositMonth;
-                            tempFixedExpenditure.DepositDay = fixedExpenditureInputViewModel.DepositDay;
-                            tempFixedExpenditure.MaturityDate = new DateTime(
-                                Convert.ToInt32(Regex.Split(fixedExpenditureInputViewModel.MaturityDate, "-")[0]
-                                    .ToString()),
-                                Convert.ToInt32(Regex.Split(fixedExpenditureInputViewModel.MaturityDate, "-")[1]
-                                    .ToString()),
-                                Convert.ToInt32(Regex.Split(fixedExpenditureInputViewModel.MaturityDate, "-")[2]
-                                    .ToString()));
-                            tempFixedExpenditure.Note = fixedExpenditureInputViewModel?.Note ?? "";
-                            tempFixedExpenditure.PaymentMethod = fixedExpenditureInputViewModel.PaymentMethod;
-                            tempFixedExpenditure.MyDepositAsset = "";
-                            tempFixedExpenditure.Updated = DateTime.UtcNow;
-                            tempFixedExpenditure.Unpunctuality = fixedExpenditureInputViewModel.Unpunctuality;
-
-                            await _fixedExpenditureRepository.UpdateFixedExpenditureAsync(tempFixedExpenditure.Adapt<FixedExpenditureRequest>());
-
-                            return Json(new
-                            {
-                                result = true,
-                                message = _localizer["The fixedExpenditure has been successfully updated."].Value
-                            });
-                        }
-                        catch
-                        {
-                            return Json(new { result = false, error = _localizer["Input is invalid"].Value });
-                        }
-                    }
-                    else
-                    {
-                        return Json(new { result = false, error = _localizer["Input is invalid"].Value });
-                    }
-                }
-
-                #endregion
-
-                #region Value not in MainClass
-
-                else
-                {
-                    return Json(new { result = false, error = _localizer["Input is invalid"].Value });
-                }
-
-                #endregion
-            }
-            else
-            {
-                return Json(new { result = false, error = _localizer["Input is invalid"].Value });
-            }
-        }
-        catch
-        {
+        if (!ModelState.IsValid)
             return Json(new { result = false, error = _localizer["Input is invalid"].Value });
-        }
-    }
 
+        _ = HttpContext.Session.TryGetValue(EnumHelper.GetDescription(Session.Account), out byte[] resultByte);
+        string email = JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email;
+
+        var request = new FixedExpenditureRequest
+        {
+            Id = fixedExpenditureInputViewModel.Id,
+            MainClass = fixedExpenditureInputViewModel.MainClass,
+            SubClass = fixedExpenditureInputViewModel.SubClass,
+            Content = fixedExpenditureInputViewModel.Content ?? "",
+            Amount = fixedExpenditureInputViewModel.Amount,
+            PaymentMethod = fixedExpenditureInputViewModel.PaymentMethod,
+            MyDepositAsset = fixedExpenditureInputViewModel.MyDepositAsset ?? "",
+            DepositMonth = fixedExpenditureInputViewModel.DepositMonth,
+            DepositDay = fixedExpenditureInputViewModel.DepositDay,
+            MaturityDate = ParseMaturityDate(fixedExpenditureInputViewModel.MaturityDate),
+            Note = fixedExpenditureInputViewModel.Note ?? "",
+            Unpunctuality = fixedExpenditureInputViewModel.Unpunctuality
+        };
+
+        var result = await _fixedExpenditureService.UpdateAsync(email, request);
+        return result.Success
+            ? Json(new { result = true, message = _localizer["The fixedExpenditure has been successfully updated."].Value })
+            : Json(new { result = false, error = _localizer[result.ErrorKey].Value });
+    }
     #endregion
 
     #region Delete
-
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.User)]
     public async Task<IActionResult> DeleteFixedExpenditure(
         [FromBody] FixedExpenditureInputViewModel fixedExpenditureInputViewModel)
     {
-        try
-        {
-            _ = HttpContext.Session.TryGetValue(
-                Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite
-                    .Utilities.Session.Account), out byte[] resultByte);
+        _ = HttpContext.Session.TryGetValue(EnumHelper.GetDescription(Session.Account), out byte[] resultByte);
+        string email = JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email;
 
-            List<FixedExpenditureResponse> tempFixedExpenditures =
-                await _fixedExpenditureRepository.GetFixedExpendituresAsync(JsonConvert
-                    .DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email);
-
-            if (tempFixedExpenditures == null)
-            {
-                return Json(new { result = false, error = _localizer["Input is invalid"].Value });
-            }
-            else
-            {
-                FixedExpenditureResponse tempFixedExpenditure = tempFixedExpenditures
-                    .Where(a => a.Id == fixedExpenditureInputViewModel.Id).FirstOrDefault();
-                if (tempFixedExpenditure == null)
-                {
-                    return Json(new { result = false, error = _localizer["Input is invalid"].Value });
-                }
-                else
-                {
-                    await _fixedExpenditureRepository.DeleteFixedExpenditureAsync(tempFixedExpenditure.Adapt<FixedExpenditureRequest>());
-                    return Json(new
-                    {
-                        result = true,
-                        message = _localizer["The fixedExpenditure has been successfully deleted."].Value
-                    });
-                }
-            }
-        }
-        catch
-        {
-            return Json(new { result = false, error = _localizer["Input is invalid"].Value });
-        }
+        var result = await _fixedExpenditureService.DeleteAsync(email, fixedExpenditureInputViewModel.Id);
+        return result.Success
+            ? Json(new { result = true, message = _localizer["The fixedExpenditure has been successfully deleted."].Value })
+            : Json(new { result = false, error = _localizer[result.ErrorKey].Value });
     }
-
-    #endregion
 
     #region Excel
 
@@ -2013,4 +1056,15 @@ public class NoticeController : BaseController
     #endregion
 
     #endregion
+
+    #endregion
+
+    private static DateTime ParseMaturityDate(string maturityDate)
+    {
+        var parts = Regex.Split(maturityDate, "-");
+        return new DateTime(
+            Convert.ToInt32(parts[0]),
+            Convert.ToInt32(parts[1]),
+            Convert.ToInt32(parts[2]));
+    }
 }

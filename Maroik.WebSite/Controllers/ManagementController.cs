@@ -7,7 +7,6 @@ using HtmlAgilityPack;
 using ImageMagick;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
-using Maroik.Core.PostgreSQL.Data;
 using Maroik.Core.PostgreSQL.Models;
 using Maroik.WebSite.Extensions;
 using Maroik.WebSite.Utilities;
@@ -38,8 +37,10 @@ public class ManagementController : BaseController
     private readonly IBoardCommentRepository _boardCommentRepository;
     private readonly IFileClient _fileClient;
     private readonly IClamavClient _clamavClient;
-    private readonly IPasswordService _passwordService;
-    private readonly ApplicationDbContext _context;
+    private readonly IProfileService _profileService;
+    private readonly IManagementAccountService _managementAccountService;
+    private readonly IMenuService _menuService;
+    private readonly IBoardService _boardService;
 
     public ManagementController(IHtmlLocalizer<ManagementController> localizer,
         ILogger<ManagementController> logger, IBoardRepository boardRepository,
@@ -47,7 +48,8 @@ public class ManagementController : BaseController
         IAccountRepository accountRepository, IHostEnvironment hostEnvironment,
         ICategoryRepository categoryRepository, ISubCategoryRepository subCategoryRepository,
         IFileClient fileClient, IClamavClient clamavClient,
-        ApplicationDbContext context, IPasswordService passwordService)
+        IProfileService profileService, IManagementAccountService managementAccountService,
+        IMenuService menuService, IBoardService boardService)
     {
         _rsa = new RSA(ServerSetting.RSAAlgorithm, Encoding.UTF8, ServerSetting.RSAPrivateKey, ServerSetting.RSAPublicKey);
         _localizer = localizer;
@@ -61,8 +63,10 @@ public class ManagementController : BaseController
         _boardCommentRepository = boardCommentRepository;
         _fileClient = fileClient;
         _clamavClient = clamavClient;
-        _context = context;
-        _passwordService = passwordService;
+        _profileService = profileService;
+        _managementAccountService = managementAccountService;
+        _menuService = menuService;
+        _boardService = boardService;
     }
 
     #region Profile
@@ -185,20 +189,11 @@ public class ManagementController : BaseController
             await process?.WaitForExitAsync()!;
         }
 
-        try
-        {
-            AccountResponse tempAccount = await _accountRepository.GetAccountByEmailAsync(
-                JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email);
-
-            tempAccount.AvatarImagePath = $"/upload/Management/Profile/Avatar/{avatarFile}";
-            await _accountRepository.UpdateAccountAsync(tempAccount.Adapt<AccountRequest>());
-
-            return Ok(new { result = true });
-        }
-        catch
-        {
-            return Ok(new { result = false, errorMessage = _localizer["Input is invalid"].Value });
-        }
+        string email = JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email;
+        ServiceResult avatarResult = await _profileService.UpdateAvatarAsync(email, $"/upload/Management/Profile/Avatar/{avatarFile}");
+        return avatarResult.Success
+            ? Ok(new { result = true })
+            : Ok(new { result = false, errorMessage = _localizer["Input is invalid"].Value });
     }
 
     #endregion
@@ -222,19 +217,19 @@ public class ManagementController : BaseController
                 _ = HttpContext.Session.TryGetValue(
                     Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite
                         .Utilities.Session.Account), out byte[] resultByte);
-                AccountResponse tempAccount = await _accountRepository.GetAccountByEmailAsync(JsonConvert
-                    .DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email);
-                tempAccount.TimeZoneIanaId = profileInputViewModel.TimeZoneIanaId;
-                await _accountRepository.UpdateAccountAsync(tempAccount.Adapt<AccountRequest>());
+                string email = JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email;
+                await _profileService.UpdateTimeZoneAsync(email, profileInputViewModel.TimeZoneIanaId);
 
+                // Refresh session with updated timezone
+                AccountResponse updatedAccount = await _accountRepository.GetAccountByEmailAsync(email);
                 HttpContext.Session.Remove(
                     Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite
                         .Utilities.Session.Account));
-                tempAccount.HashedPassword = null;
+                updatedAccount.HashedPassword = null;
                 HttpContext.Session.Set(
                     Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite
                         .Utilities.Session.Account),
-                    Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(tempAccount)));
+                    Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(updatedAccount)));
             }
             catch
             {
@@ -258,35 +253,26 @@ public class ManagementController : BaseController
         _ = ModelState.Remove(nameof(profileInputViewModel.Nickname));
         _ = ModelState.Remove(nameof(profileInputViewModel.TimeZoneIanaId));
         
-        if (ModelState.IsValid)
-        {
-            try
-            {
-                _ = HttpContext.Session.TryGetValue(
-                    Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite
-                        .Utilities.Session.Account), out byte[] resultByte);
-                AccountResponse tempAccount = await _accountRepository.GetAccountByEmailAsync(JsonConvert
-                    .DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email);
+        if (!ModelState.IsValid)
+            return Json(new { result = false, error = _localizer["Input is invalid"].Value });
 
-                if (_passwordService.VerifyPassword(profileInputViewModel.Password ?? "", tempAccount.HashedPassword)) // right password
-                {
-                    tempAccount.HashedPassword = _passwordService.HashPassword(profileInputViewModel.NewPassword);
-                    await _accountRepository.UpdateAccountAsync(tempAccount.Adapt<AccountRequest>());
-                    return Json(new
-                        { result = true, message = _localizer["Password change successfully done."].Value });
-                }
-                else // wrong password
-                {
-                    return Json(new
-                        { result = false, error = _localizer["Invalid password. Please check again."].Value });
-                }
-            }
-            catch
-            {
-                return Json(new { result = false, error = _localizer["Input is invalid"].Value });
-            }
+        try
+        {
+            _ = HttpContext.Session.TryGetValue(
+                Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite
+                    .Utilities.Session.Account), out byte[] resultByte);
+            string email = JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email;
+
+            ServiceResult result = await _profileService.UpdatePasswordAsync(
+                email,
+                profileInputViewModel.Password ?? "",
+                profileInputViewModel.NewPassword ?? "");
+
+            return result.Success
+                ? Json(new { result = true, message = _localizer["Password change successfully done."].Value })
+                : Json(new { result = false, error = _localizer[result.ErrorKey ?? "Input is invalid"].Value });
         }
-        else
+        catch
         {
             return Json(new { result = false, error = _localizer["Input is invalid"].Value });
         }
@@ -413,41 +399,29 @@ public class ManagementController : BaseController
 
                 #endregion
 
-                #region Check if account exists with the entered email
-
-                if (await _accountRepository.GetAccountByEmailAsync(accountInputViewModel.Email) != null)
-                {
-                    return Json(new
-                        { result = false, error = _localizer["This account has already been created."].Value });
-                }
-
-                #endregion
-
                 #region Create account
 
-                await _accountRepository.CreateAccountAsync
-                (
-                    new AccountRequest()
-                    {
-                        Email = accountInputViewModel.Email,
-                        HashedPassword = _passwordService.HashPassword(accountInputViewModel.Password),
-                        Nickname = accountInputViewModel.Nickname,
-                        AvatarImagePath = "/upload/Management/Profile/default-avatar.jpg",
-                        Role = accountInputViewModel.Role,
-                        TimeZoneIanaId = accountInputViewModel.TimeZoneIanaId,
-                        Locked = false,
-                        LoginAttempt = 0,
-                        EmailConfirmed = true,
-                        AgreedServiceTerms = true,
-                        RegistrationToken = null,
-                        ResetPasswordToken = null,
-                        Created = DateTime.UtcNow,
-                        Updated = DateTime.UtcNow,
-                        Message = EnumHelper.GetDescription(AccountMessage.Success),
-                        Deleted = false
-                    }
-                );
-                return Json(new { result = true, message = _localizer["Account create successfully done."].Value });
+                ServiceResult createResult = await _managementAccountService.CreateAccountAsync(new AccountRequest
+                {
+                    Email = accountInputViewModel.Email,
+                    HashedPassword = accountInputViewModel.Password, // service will hash
+                    Nickname = accountInputViewModel.Nickname,
+                    AvatarImagePath = "/upload/Management/Profile/default-avatar.jpg",
+                    Role = accountInputViewModel.Role,
+                    TimeZoneIanaId = accountInputViewModel.TimeZoneIanaId,
+                    Locked = false,
+                    LoginAttempt = 0,
+                    EmailConfirmed = true,
+                    AgreedServiceTerms = true,
+                    Created = DateTime.UtcNow,
+                    Updated = DateTime.UtcNow,
+                    Message = EnumHelper.GetDescription(AccountMessage.Success),
+                    Deleted = false
+                });
+
+                return createResult.Success
+                    ? Json(new { result = true, message = _localizer["Account create successfully done."].Value })
+                    : Json(new { result = false, error = _localizer[createResult.ErrorKey ?? "Input is invalid"].Value });
 
                 #endregion
             }
@@ -598,39 +572,26 @@ public class ManagementController : BaseController
             _ = ModelState.Remove(nameof(accountInputViewModel.RegistrationToken));
             _ = ModelState.Remove(nameof(accountInputViewModel.ResetPasswordToken));
 
-            if (ModelState.IsValid)
-            {
-                AccountResponse tempAccount = await _accountRepository.GetAccountByEmailAsync(accountInputViewModel.Email);
-
-                if (tempAccount == null)
-                {
-                    return Json(new { result = false, error = _localizer["Email address is wrong"].Value });
-                }
-
-                tempAccount.Email = accountInputViewModel.Email;
-                tempAccount.HashedPassword = _passwordService.HashPassword(accountInputViewModel.Password);
-                tempAccount.Role = accountInputViewModel.Role;
-                tempAccount.TimeZoneIanaId = accountInputViewModel.TimeZoneIanaId;
-                tempAccount.Locked = accountInputViewModel.Locked;
-                if (accountInputViewModel.Locked == false)
-                {
-                    tempAccount.LoginAttempt = 0;
-                }
-
-                tempAccount.EmailConfirmed = accountInputViewModel.EmailConfirmed;
-                tempAccount.AgreedServiceTerms = accountInputViewModel.AgreedServiceTerms;
-                tempAccount.Updated = DateTime.UtcNow;
-                tempAccount.Message = accountInputViewModel.Message;
-                tempAccount.Deleted = accountInputViewModel.Deleted;
-
-                await _accountRepository.UpdateAccountAsync(tempAccount.Adapt<AccountRequest>());
-
-                return Json(new { result = true, message = _localizer["Successfully updated the account"].Value });
-            }
-            else
-            {
+            if (!ModelState.IsValid)
                 return Json(new { result = false, error = _localizer["Input is invalid"].Value });
-            }
+
+            ServiceResult updateResult = await _managementAccountService.UpdateAccountAsync(
+                new AccountRequest
+                {
+                    Email = accountInputViewModel.Email,
+                    Role = accountInputViewModel.Role,
+                    TimeZoneIanaId = accountInputViewModel.TimeZoneIanaId,
+                    Locked = accountInputViewModel.Locked,
+                    EmailConfirmed = accountInputViewModel.EmailConfirmed,
+                    AgreedServiceTerms = accountInputViewModel.AgreedServiceTerms,
+                    Message = accountInputViewModel.Message,
+                    Deleted = accountInputViewModel.Deleted
+                },
+                accountInputViewModel.Password); // new password (plain); service hashes it
+
+            return updateResult.Success
+                ? Json(new { result = true, message = _localizer["Successfully updated the account"].Value })
+                : Json(new { result = false, error = _localizer[updateResult.ErrorKey ?? "Input is invalid"].Value });
         }
         catch
         {
@@ -649,21 +610,10 @@ public class ManagementController : BaseController
     {
         try
         {
-            AccountResponse tempAccount = await _accountRepository.GetAccountByEmailAsync(accountInputViewModel.Email);
-
-            if (tempAccount == null)
-            {
-                return Json(new
-                {
-                    result = false, error = _localizer["Fail to find the account by given email address"].Value
-                });
-            }
-            else
-            {
-                tempAccount.Deleted = true;
-                await _accountRepository.UpdateAccountAsync(tempAccount.Adapt<AccountRequest>());
-                return Json(new { result = true, message = _localizer["Successfully deleted the account"].Value });
-            }
+            ServiceResult deleteResult = await _managementAccountService.DeleteAccountAsync(accountInputViewModel.Email);
+            return deleteResult.Success
+                ? Json(new { result = true, message = _localizer["Successfully deleted the account"].Value })
+                : Json(new { result = false, error = _localizer[deleteResult.ErrorKey ?? "Input is invalid"].Value });
         }
         catch
         {
@@ -829,26 +779,22 @@ public class ManagementController : BaseController
             _ = ModelState.Remove(nameof(menuInputViewModel
                 .Action)); // remove ModelState check in Action (in Request parameters, Action can be null)
 
-            if (ModelState.IsValid)
-            {
-                CategoryResponse category = new()
-                {
-                    Name = menuInputViewModel.Name,
-                    DisplayName = menuInputViewModel.DisplayName,
-                    IconPath = menuInputViewModel.IconPath,
-                    Controller = menuInputViewModel.Controller,
-                    Action = menuInputViewModel.Action,
-                    Role = menuInputViewModel.Role,
-                    Order = menuInputViewModel.Order
-                };
-                await _categoryRepository.CreateCategoryAsync(category.Adapt<CategoryRequest>());
-
-                return Json(new { result = true, message = _localizer["Successfully created the category"].Value });
-            }
-            else
-            {
+            if (!ModelState.IsValid)
                 return Json(new { result = false, error = _localizer["Input is invalid"].Value });
-            }
+
+            ServiceResult createCatResult = await _menuService.CreateCategoryAsync(new CategoryRequest
+            {
+                Name = menuInputViewModel.Name,
+                DisplayName = menuInputViewModel.DisplayName,
+                IconPath = menuInputViewModel.IconPath,
+                Controller = menuInputViewModel.Controller,
+                Action = menuInputViewModel.Action,
+                Role = menuInputViewModel.Role,
+                Order = menuInputViewModel.Order
+            });
+            return createCatResult.Success
+                ? Json(new { result = true, message = _localizer["Successfully created the category"].Value })
+                : Json(new { result = false, error = _localizer["Input is invalid"].Value });
         }
         catch
         {
@@ -866,27 +812,22 @@ public class ManagementController : BaseController
             _ = ModelState.Remove(nameof(menuInputViewModel
                 .Controller)); // remove ModelState check in Controller (in Request parameters, Controller can be null)
 
-            if (ModelState.IsValid)
-            {
-                SubCategoryResponse subCategory = new()
-                {
-                    CategoryId = menuInputViewModel.CategoryId,
-                    Name = menuInputViewModel.Name,
-                    DisplayName = menuInputViewModel.DisplayName,
-                    IconPath = menuInputViewModel.IconPath,
-                    Action = menuInputViewModel.Action,
-                    Role = menuInputViewModel.Role,
-                    Order = menuInputViewModel.Order
-                };
-                await _subCategoryRepository.CreateSubCategoryAsync(subCategory.Adapt<SubCategoryRequest>());
-
-                return Json(new
-                    { result = true, message = _localizer["Successfully created the subCategory"].Value });
-            }
-            else
-            {
+            if (!ModelState.IsValid)
                 return Json(new { result = false, error = _localizer["Input is invalid"].Value });
-            }
+
+            ServiceResult createSubCatResult = await _menuService.CreateSubCategoryAsync(new SubCategoryRequest
+            {
+                CategoryId = menuInputViewModel.CategoryId,
+                Name = menuInputViewModel.Name,
+                DisplayName = menuInputViewModel.DisplayName,
+                IconPath = menuInputViewModel.IconPath,
+                Action = menuInputViewModel.Action,
+                Role = menuInputViewModel.Role,
+                Order = menuInputViewModel.Order
+            });
+            return createSubCatResult.Success
+                ? Json(new { result = true, message = _localizer["Successfully created the subCategory"].Value })
+                : Json(new { result = false, error = _localizer["Input is invalid"].Value });
         }
         catch
         {
@@ -1383,27 +1324,23 @@ public class ManagementController : BaseController
             _ = ModelState.Remove(nameof(menuInputViewModel
                 .Action)); // remove ModelState check in Action (in Request parameters, Action can be null)
 
-            if (ModelState.IsValid)
-            {
-                CategoryResponse category = new()
-                {
-                    Id = menuInputViewModel.Id,
-                    Name = menuInputViewModel.Name,
-                    DisplayName = menuInputViewModel.DisplayName,
-                    IconPath = menuInputViewModel.IconPath,
-                    Controller = menuInputViewModel.Controller,
-                    Action = menuInputViewModel.Action,
-                    Role = menuInputViewModel.Role,
-                    Order = menuInputViewModel.Order
-                };
-                await _categoryRepository.UpdateCategoryAsync(category.Adapt<CategoryRequest>());
-
-                return Json(new { result = true, message = _localizer["Successfully updated the category"].Value });
-            }
-            else
-            {
+            if (!ModelState.IsValid)
                 return Json(new { result = false, error = _localizer["Input is invalid"].Value });
-            }
+
+            ServiceResult updateCatResult = await _menuService.UpdateCategoryAsync(new CategoryRequest
+            {
+                Id = menuInputViewModel.Id,
+                Name = menuInputViewModel.Name,
+                DisplayName = menuInputViewModel.DisplayName,
+                IconPath = menuInputViewModel.IconPath,
+                Controller = menuInputViewModel.Controller,
+                Action = menuInputViewModel.Action,
+                Role = menuInputViewModel.Role,
+                Order = menuInputViewModel.Order
+            });
+            return updateCatResult.Success
+                ? Json(new { result = true, message = _localizer["Successfully updated the category"].Value })
+                : Json(new { result = false, error = _localizer["Input is invalid"].Value });
         }
         catch
         {
@@ -1421,28 +1358,23 @@ public class ManagementController : BaseController
             _ = ModelState.Remove(nameof(menuInputViewModel
                 .Controller)); // remove ModelState check in Controller (in Request parameters, Controller can be null)
 
-            if (ModelState.IsValid)
-            {
-                SubCategoryResponse subCategory = new()
-                {
-                    Id = menuInputViewModel.Id,
-                    CategoryId = menuInputViewModel.CategoryId,
-                    Name = menuInputViewModel.Name,
-                    DisplayName = menuInputViewModel.DisplayName,
-                    IconPath = menuInputViewModel.IconPath,
-                    Action = menuInputViewModel.Action,
-                    Role = menuInputViewModel.Role,
-                    Order = menuInputViewModel.Order
-                };
-                await _subCategoryRepository.UpdateSubCategoryAsync(subCategory.Adapt<SubCategoryRequest>());
-
-                return Json(new
-                    { result = true, message = _localizer["Successfully updated the subCategory"].Value });
-            }
-            else
-            {
+            if (!ModelState.IsValid)
                 return Json(new { result = false, error = _localizer["Input is invalid"].Value });
-            }
+
+            ServiceResult updateSubCatResult = await _menuService.UpdateSubCategoryAsync(new SubCategoryRequest
+            {
+                Id = menuInputViewModel.Id,
+                CategoryId = menuInputViewModel.CategoryId,
+                Name = menuInputViewModel.Name,
+                DisplayName = menuInputViewModel.DisplayName,
+                IconPath = menuInputViewModel.IconPath,
+                Action = menuInputViewModel.Action,
+                Role = menuInputViewModel.Role,
+                Order = menuInputViewModel.Order
+            });
+            return updateSubCatResult.Success
+                ? Json(new { result = true, message = _localizer["Successfully updated the subCategory"].Value })
+                : Json(new { result = false, error = _localizer["Input is invalid"].Value });
         }
         catch
         {
@@ -1464,27 +1396,23 @@ public class ManagementController : BaseController
             _ = ModelState.Remove(nameof(menuInputViewModel
                 .Action)); // remove ModelState check in Action (in Request parameters, Action can be null)
 
-            if (ModelState.IsValid)
-            {
-                CategoryResponse category = new()
-                {
-                    Id = menuInputViewModel.Id,
-                    Name = menuInputViewModel.Name,
-                    DisplayName = menuInputViewModel.DisplayName,
-                    IconPath = menuInputViewModel.IconPath,
-                    Controller = menuInputViewModel.Controller,
-                    Action = menuInputViewModel.Action,
-                    Role = menuInputViewModel.Role,
-                    Order = menuInputViewModel.Order
-                };
-                await _categoryRepository.DeleteCategoryAsync(category.Adapt<CategoryRequest>());
-
-                return Json(new { result = true, message = _localizer["Successfully deleted the category"].Value });
-            }
-            else
-            {
+            if (!ModelState.IsValid)
                 return Json(new { result = false, error = _localizer["Input is invalid"].Value });
-            }
+
+            ServiceResult deleteCatResult = await _menuService.DeleteCategoryAsync(new CategoryRequest
+            {
+                Id = menuInputViewModel.Id,
+                Name = menuInputViewModel.Name,
+                DisplayName = menuInputViewModel.DisplayName,
+                IconPath = menuInputViewModel.IconPath,
+                Controller = menuInputViewModel.Controller,
+                Action = menuInputViewModel.Action,
+                Role = menuInputViewModel.Role,
+                Order = menuInputViewModel.Order
+            });
+            return deleteCatResult.Success
+                ? Json(new { result = true, message = _localizer["Successfully deleted the category"].Value })
+                : Json(new { result = false, error = _localizer["Input is invalid"].Value });
         }
         catch
         {
@@ -1502,28 +1430,24 @@ public class ManagementController : BaseController
             _ = ModelState.Remove(nameof(menuInputViewModel
                 .Controller)); // remove ModelState check in Controller (in Request parameters, Controller can be null)
 
-            if (ModelState.IsValid)
-            {
-                SubCategoryResponse subCategory = new()
-                {
-                    Id = menuInputViewModel.Id,
-                    CategoryId = menuInputViewModel.CategoryId,
-                    Name = menuInputViewModel.Name,
-                    DisplayName = menuInputViewModel.DisplayName,
-                    IconPath = menuInputViewModel.IconPath,
-                    Action = menuInputViewModel.Action,
-                    Role = menuInputViewModel.Role,
-                    Order = menuInputViewModel.Order
-                };
-                await _subCategoryRepository.DeleteSubCategoryAsync(subCategory.Adapt<SubCategoryRequest>());
-
-                return Json(new
-                    { result = true, message = _localizer["Successfully deleted the subCategory"].Value });
-            }
-            else
-            {
+            if (!ModelState.IsValid)
                 return Json(new { result = false, error = _localizer["Input is invalid"].Value });
-            }
+
+            ServiceResult deleteSubCatResult = await _menuService.DeleteSubCategoryAsync(new SubCategoryRequest
+            {
+                Id = menuInputViewModel.Id,
+                CategoryId = menuInputViewModel.CategoryId,
+                Name = menuInputViewModel.Name,
+                DisplayName = menuInputViewModel.DisplayName,
+                IconPath = menuInputViewModel.IconPath,
+                Action = menuInputViewModel.Action,
+                Role = menuInputViewModel.Role,
+                Order = menuInputViewModel.Order
+            });
+
+            return deleteSubCatResult.Success
+                ? Json(new { result = true, message = _localizer["Successfully deleted the subCategory"].Value })
+                : Json(new { result = false, error = _localizer["Input is invalid"].Value });
         }
         catch
         {
@@ -1754,190 +1678,82 @@ public class ManagementController : BaseController
         {
             _ = ModelState.Remove(nameof(boardInputViewModel.Locked));
 
-            if (ModelState.IsValid)
-            {
-                boardInputViewModel.Content ??= ""; // If no content was entered
-
-                #region HtmlSanitizer
-
-                HtmlSanitizer sanitizer = new();
-                _ = sanitizer.AllowedAttributes.Add("class");
-                string sanitized = sanitizer.Sanitize(boardInputViewModel.Content);
-                boardInputViewModel.Content = sanitized;
-
-                #endregion
-
-                #region Decrypt img tag file path
-
-                HtmlDocument htmlDocument = new();
-                htmlDocument.LoadHtml(boardInputViewModel.Content);
-
-                foreach (HtmlNode imgTag in htmlDocument.DocumentNode.Descendants("img") ?? [])
-                {
-                    string encryptedFilePath = imgTag.GetAttributeValue("alt", "");
-                    _ = imgTag.SetAttributeValue("alt", _rsa.Decrypt(encryptedFilePath));
-                }
-
-                boardInputViewModel.Content = htmlDocument.DocumentNode.OuterHtml;
-
-                #endregion
-
-                if (boardInputViewModel.Title.Length is not (> 0 and <= 100)) // Title length
-                {
-                    return Json(new
-                    {
-                        result = false,
-                        error = _localizer["Title length is must be between 1 and 100 characters."].Value
-                    });
-                }
-
-                if (boardInputViewModel.Content.Length > 16384) // Content Maxlength: 16KB
-                {
-                    return Json(new
-                    {
-                        result = false,
-                        error = _localizer["content length is must be between 0 and 16384 characters."].Value
-                    });
-                }
-
-                if (boardInputViewModel.UploadedFile != null) // If a file was attached
-                {
-                    if (!(Path.GetExtension(boardInputViewModel.UploadedFile.FileName) == ".zip")) // Only zip extension allowed
-                    {
-                        return Json(new
-                            { result = false, error = _localizer["Only zip extension allowed."].Value });
-                    }
-
-                    if (boardInputViewModel.UploadedFile.Length is not (> 0 and <= 10485760)) // Only 10MB or less allowed
-                    {
-                        return Json(new
-                        {
-                            result = false,
-                            error = _localizer["uploaded file size must be smaller than 10MB."].Value
-                        });
-                    }
-                }
-
-                await using var transaction = await _context.Database.BeginTransactionAsync();
-                try
-                {
-                    bool isAccountSessionExist = HttpContext.Session.TryGetValue(
-                        Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite
-                            .Utilities.Session.Account), out byte[] resultByte);
-
-                    if (isAccountSessionExist)
-                    {
-                        AccountResponse loginedAccount =
-                            JsonConvert.DeserializeObject<AccountResponse>(
-                                Encoding.Default.GetString(resultByte)); // Get Session
-                        BoardResponse board = new();
-
-                        if (loginedAccount.Role == Role.Admin) // If administrator
-                        {
-                            board.Type = EnumHelper.GetDescription(BoardType.PrivateNote); // Private note
-                            board.Title = boardInputViewModel.Title;
-                            board.Content = boardInputViewModel.Content;
-                            board.Writer = loginedAccount.Nickname;
-                            board.Created = DateTime.UtcNow;
-                            board.Updated = DateTime.UtcNow;
-                            board.View = 0;
-                            board.Deleted = false;
-                            //board.Locked = boardInputViewModel.Locked;
-                            board.Noticed = boardInputViewModel.Noticed;
-                        }
-                        else if (loginedAccount.Role == Role.User) // If regular user
-                        {
-                            board.Type = EnumHelper.GetDescription(BoardType.PrivateNote); // Private note
-                            board.Title = boardInputViewModel.Title;
-                            board.Content = boardInputViewModel.Content;
-                            board.Writer = loginedAccount.Nickname;
-                            board.Created = DateTime.UtcNow;
-                            board.Updated = DateTime.UtcNow;
-                            board.View = 0;
-                            board.Deleted = false;
-                            //board.Locked = boardInputViewModel.Locked;
-                        }
-                        else // If non-logged in user
-                        {
-                            await transaction.RollbackAsync();
-                            return Json(new
-                                { result = false, error = _localizer["Please Login to write board"].Value });
-                        }
-
-                        await _boardRepository.WriteBoardAsync(board.Adapt<BoardRequest>());
-
-                        #region Save attached file
-
-                        if (boardInputViewModel.UploadedFile != null) // If attached file exists
-                        {
-                            if (boardInputViewModel.UploadedFile
-                                    .Length is
-                                > 0 and <= 10485760) // boardInputViewModel.UploadedFile Length : file size 0MB or more, 10MB or less
-                            {
-                                var createdBoardId = board.Id; // Add logic for attached file FK
-
-                                string boardAttachedFilePath = Path.Combine("upload", "Management",
-                                    EnumHelper.GetDescription(BoardType.PrivateNote), "boardAttachedFiles",
-                                    $"{createdBoardId}");
-
-                                string guid = Guid.NewGuid().ToString().ToUpper();
-                                string attachedFile =
-                                    $"{guid}{Path.GetExtension(boardInputViewModel.UploadedFile.FileName)}";
-                                string filePath = Path.Combine(boardAttachedFilePath, attachedFile);
-
-                                using (MemoryStream ms = new())
-                                {
-                                    await boardInputViewModel.UploadedFile.CopyToAsync(ms);
-                                    _ = await _fileClient.UploadAsync(ms.ToArray(), boardInputViewModel.UploadedFile.ContentType, filePath, ServerSetting.FileStorageBaseUrl);
-                                }
-
-                                await _boardAttachedFileRepository.SaveBoardAttachedFileAsync(
-                                    new BoardAttachedFileRequest()
-                                    {
-                                        BoardId = createdBoardId,
-                                        Size = Convert.ToInt32(boardInputViewModel.UploadedFile.Length),
-                                        Name = Path.GetFileNameWithoutExtension(boardInputViewModel.UploadedFile
-                                            .FileName),
-                                        Extension = Path.GetExtension(boardInputViewModel.UploadedFile.FileName),
-                                        Path =
-                                            $"upload/Management/{EnumHelper.GetDescription(BoardType.PrivateNote)}/boardAttachedFiles/{createdBoardId}/{attachedFile}"
-                                    });
-                            }
-                            else
-                            {
-                                await transaction.RollbackAsync();
-                                return Ok(new
-                                {
-                                    result = false,
-                                    errorMessage = _localizer["File Size must be smaller than 10MB."].Value
-                                });
-                            }
-                        }
-
-                        #endregion
-                        await transaction.CommitAsync();
-                        return Json(new
-                        {
-                            result = true, message = _localizer["The board has been successfully created."].Value
-                        });
-                    }
-                    else
-                    {
-                        await transaction.RollbackAsync();
-                        return Json(new
-                            { result = false, error = _localizer["Please Login to write board"].Value });
-                    }
-                }
-                catch
-                {
-                    await transaction.RollbackAsync();
-                    return Json(new { result = false, error = _localizer["Input is invalid"].Value });
-                }
-            }
-            else
-            {
+            if (!ModelState.IsValid)
                 return Json(new { result = false, error = _localizer["Input is invalid"].Value });
+
+            boardInputViewModel.Content ??= "";
+
+            #region HtmlSanitizer
+            HtmlSanitizer sanitizer = new();
+            _ = sanitizer.AllowedAttributes.Add("class");
+            boardInputViewModel.Content = sanitizer.Sanitize(boardInputViewModel.Content);
+            #endregion
+
+            #region Decrypt img tag file path
+            HtmlDocument htmlDocument = new();
+            htmlDocument.LoadHtml(boardInputViewModel.Content);
+            foreach (HtmlNode imgTag in htmlDocument.DocumentNode.Descendants("img") ?? [])
+            {
+                string encryptedFilePath = imgTag.GetAttributeValue("alt", "");
+                _ = imgTag.SetAttributeValue("alt", _rsa.Decrypt(encryptedFilePath));
             }
+            boardInputViewModel.Content = htmlDocument.DocumentNode.OuterHtml;
+            #endregion
+
+            if (boardInputViewModel.Title.Length is not (> 0 and <= 100))
+                return Json(new { result = false, error = _localizer["Title length is must be between 1 and 100 characters."].Value });
+
+            if (boardInputViewModel.Content.Length > 16384)
+                return Json(new { result = false, error = _localizer["content length is must be between 0 and 16384 characters."].Value });
+
+            if (boardInputViewModel.UploadedFile != null)
+            {
+                if (Path.GetExtension(boardInputViewModel.UploadedFile.FileName) != ".zip")
+                    return Json(new { result = false, error = _localizer["Only zip extension allowed."].Value });
+
+                if (boardInputViewModel.UploadedFile.Length is not (> 0 and <= 10485760))
+                    return Json(new { result = false, error = _localizer["uploaded file size must be smaller than 10MB."].Value });
+            }
+
+            bool isAccountSessionExist = HttpContext.Session.TryGetValue(
+                Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account),
+                out byte[] resultByte);
+
+            if (!isAccountSessionExist)
+                return Json(new { result = false, error = _localizer["Please Login to write board"].Value });
+
+            AccountResponse loginedAccount = JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte));
+
+            if (loginedAccount.Role != Role.Admin && loginedAccount.Role != Role.User)
+                return Json(new { result = false, error = _localizer["Please Login to write board"].Value });
+
+            BoardRequest boardRequest = new()
+            {
+                Type = EnumHelper.GetDescription(BoardType.PrivateNote),
+                Title = boardInputViewModel.Title,
+                Content = boardInputViewModel.Content,
+                Writer = loginedAccount.Nickname,
+                Noticed = loginedAccount.Role == Role.Admin && boardInputViewModel.Noticed
+            };
+
+            AttachedFileInfo attachedFile = null;
+            if (boardInputViewModel.UploadedFile != null)
+            {
+                using MemoryStream ms = new();
+                await boardInputViewModel.UploadedFile.CopyToAsync(ms);
+                attachedFile = new AttachedFileInfo
+                {
+                    Bytes = ms.ToArray(),
+                    ContentType = boardInputViewModel.UploadedFile.ContentType,
+                    FileName = boardInputViewModel.UploadedFile.FileName,
+                    Size = boardInputViewModel.UploadedFile.Length
+                };
+            }
+
+            ServiceResult result = await _boardService.WriteBoardAsync(boardRequest, attachedFile);
+            return result.Success
+                ? Json(new { result = true, message = _localizer["The board has been successfully created."].Value })
+                : Json(new { result = false, error = _localizer["Input is invalid"].Value });
         }
         catch
         {
@@ -1958,84 +1774,48 @@ public class ManagementController : BaseController
     {
         try
         {
-            if (ModelState.IsValid)
-            {
-                if (string.IsNullOrEmpty(boardCommentInputViewModel.Content))
-                {
-                    return Json(new { result = false, error = _localizer["Please enter a comment."].Value });
-                }
-
-                #region HtmlSanitizer
-
-                HtmlSanitizer sanitizer = new();
-                _ = sanitizer.AllowedAttributes.Add("class");
-                string sanitized = sanitizer.Sanitize(boardCommentInputViewModel.Content);
-                boardCommentInputViewModel.Content = sanitized;
-
-                #endregion
-
-                try
-                {
-                    bool isAccountSessionExist = HttpContext.Session.TryGetValue(
-                        Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite
-                            .Utilities.Session.Account), out byte[] resultByte);
-
-                    if (isAccountSessionExist)
-                    {
-                        AccountResponse loginedAccount =
-                            JsonConvert.DeserializeObject<AccountResponse>(
-                                Encoding.Default.GetString(resultByte)); // Get Session
-
-                        IEnumerable<BoardResponse> privateNoteBoards =
-                            await _boardRepository.GetOneTypeBoardsAsync(
-                                EnumHelper.GetDescription(BoardType.PrivateNote));
-                        privateNoteBoards = privateNoteBoards.Where(m => m.Writer == loginedAccount.Nickname)
-                            .Where(m => m.Deleted == false).OrderByDescending(a => a.Id);
-                        BoardResponse privateNoteBoard =
-                            privateNoteBoards.FirstOrDefault(m => m.Id == boardCommentInputViewModel.BoardId);
-
-                        if (privateNoteBoard.Id != boardCommentInputViewModel.BoardId)
-                        {
-                            return Json(new { result = false, error = _localizer["Input is invalid"].Value });
-                        }
-
-                        IEnumerable<BoardCommentResponse> totalBoardCommentsInSelectedBoard =
-                            await _boardCommentRepository.GetOneBoardCommentsAsync(boardCommentInputViewModel
-                                .BoardId);
-
-                        BoardCommentResponse boardComment = new()
-                        {
-                            BoardId = boardCommentInputViewModel.BoardId,
-                            Order = totalBoardCommentsInSelectedBoard?.Count() ?? default,
-                            AvatarImagePath = loginedAccount.AvatarImagePath,
-                            Writer = loginedAccount.Nickname,
-                            Content = boardCommentInputViewModel.Content,
-                            Created = DateTime.UtcNow,
-                            Deleted = false
-                        };
-                        await _boardCommentRepository.WriteBoardCommentAsync(boardComment.Adapt<BoardCommentRequest>());
-
-                        return Json(new
-                        {
-                            result = true, boardId = boardCommentInputViewModel.BoardId,
-                            page = boardCommentInputViewModel.DetailCurrentPage
-                        });
-                    }
-                    else
-                    {
-                        return Json(new
-                            { result = false, error = _localizer["Please Login to write comment."].Value });
-                    }
-                }
-                catch
-                {
-                    return Json(new { result = false, error = _localizer["Input is invalid"].Value });
-                }
-            }
-            else
-            {
+            if (!ModelState.IsValid)
                 return Json(new { result = false, error = _localizer["Input is invalid"].Value });
-            }
+
+            if (string.IsNullOrEmpty(boardCommentInputViewModel.Content))
+                return Json(new { result = false, error = _localizer["Please enter a comment."].Value });
+
+            #region HtmlSanitizer
+            HtmlSanitizer sanitizer = new();
+            _ = sanitizer.AllowedAttributes.Add("class");
+            boardCommentInputViewModel.Content = sanitizer.Sanitize(boardCommentInputViewModel.Content);
+            #endregion
+
+            bool isAccountSessionExist = HttpContext.Session.TryGetValue(
+                Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account),
+                out byte[] resultByte);
+
+            if (!isAccountSessionExist)
+                return Json(new { result = false, error = _localizer["Please Login to write comment."].Value });
+
+            AccountResponse loginedAccount = JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte));
+
+            IEnumerable<BoardResponse> privateNoteBoards = await _boardRepository.GetOneTypeBoardsAsync(
+                EnumHelper.GetDescription(BoardType.PrivateNote));
+            BoardResponse privateNoteBoard = privateNoteBoards
+                .Where(m => m.Writer == loginedAccount.Nickname && !m.Deleted)
+                .FirstOrDefault(m => m.Id == boardCommentInputViewModel.BoardId);
+
+            if (privateNoteBoard?.Id != boardCommentInputViewModel.BoardId)
+                return Json(new { result = false, error = _localizer["Input is invalid"].Value });
+
+            BoardCommentRequest commentRequest = new()
+            {
+                BoardId = boardCommentInputViewModel.BoardId,
+                AvatarImagePath = loginedAccount.AvatarImagePath,
+                Writer = loginedAccount.Nickname,
+                Content = boardCommentInputViewModel.Content
+            };
+
+            ServiceResult result = await _boardService.WriteCommentAsync(commentRequest);
+            return result.Success
+                ? Json(new { result = true, boardId = boardCommentInputViewModel.BoardId, page = boardCommentInputViewModel.DetailCurrentPage })
+                : Json(new { result = false, error = _localizer["Input is invalid"].Value });
         }
         catch
         {
@@ -2577,280 +2357,78 @@ public class ManagementController : BaseController
         {
             _ = ModelState.Remove(nameof(boardInputViewModel.Locked));
 
-            if (ModelState.IsValid)
-            {
-                boardInputViewModel.Content ??= ""; // If no content was entered
-
-                #region HtmlSanitizer
-
-                HtmlSanitizer sanitizer = new();
-                _ = sanitizer.AllowedAttributes.Add("class");
-                string sanitized = sanitizer.Sanitize(boardInputViewModel.Content);
-                boardInputViewModel.Content = sanitized;
-
-                #endregion
-
-                #region Decrypt img tag file path
-
-                HtmlDocument htmlDocument = new();
-                htmlDocument.LoadHtml(boardInputViewModel.Content);
-
-                foreach (HtmlNode imgTag in htmlDocument.DocumentNode.Descendants("img") ?? [])
-                {
-                    string encryptedFilePath = imgTag.GetAttributeValue("alt", "");
-                    _ = imgTag.SetAttributeValue("alt", _rsa.Decrypt(encryptedFilePath));
-                }
-
-                boardInputViewModel.Content = htmlDocument.DocumentNode.OuterHtml;
-
-                #endregion
-
-                if (boardInputViewModel.Title.Length is not (> 0 and <= 100)) // Title length
-                {
-                    return Json(new
-                    {
-                        result = false,
-                        error = _localizer["Title length is must be between 1 and 100 characters."].Value
-                    });
-                }
-
-                if (boardInputViewModel.Content.Length > 16384) // Content Maxlength: 16KB
-                {
-                    return Json(new
-                    {
-                        result = false,
-                        error = _localizer["content length is must be between 0 and 16384 characters."].Value
-                    });
-                }
-
-                if (boardInputViewModel.UploadedFile != null) // If a file was attached
-                {
-                    if (!(Path.GetExtension(boardInputViewModel.UploadedFile.FileName) == ".zip")) // Only zip extension allowed
-                    {
-                        return Json(new
-                            { result = false, error = _localizer["Only zip extension allowed."].Value });
-                    }
-
-                    if (boardInputViewModel.UploadedFile.Length is not (> 0 and <= 10485760)) // Only 10MB or less allowed
-                    {
-                        return Json(new
-                        {
-                            result = false,
-                            error = _localizer["uploaded file size must be smaller than 10MB."].Value
-                        });
-                    }
-                }
-                await using var transaction = await _context.Database.BeginTransactionAsync();
-                try
-                {
-                    bool isAccountSessionExist = HttpContext.Session.TryGetValue(
-                        Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite
-                            .Utilities.Session.Account), out byte[] resultByte);
-
-                    if (isAccountSessionExist)
-                    {
-                        AccountResponse loginedAccount =
-                            JsonConvert.DeserializeObject<AccountResponse>(
-                                Encoding.Default.GetString(resultByte)); // Get Session
-
-                        IEnumerable<BoardResponse> privateNoteBoards =
-                            await _boardRepository.GetOneTypeBoardsAsync(
-                                EnumHelper.GetDescription(BoardType.PrivateNote));
-                        privateNoteBoards = privateNoteBoards.Where(m => m.Writer == loginedAccount.Nickname)
-                            .Where(m => m.Deleted == false).OrderByDescending(a => a.Id);
-
-                        BoardResponse tempPrivateNoteBoard = privateNoteBoards.Where(a => a.Id == boardInputViewModel.Id)
-                            .FirstOrDefault();
-
-                        if (tempPrivateNoteBoard.Writer != loginedAccount.Nickname)
-                        {
-                            await transaction.RollbackAsync();
-                            return Json(new { result = false, error = _localizer["Input is invalid"].Value });
-                        }
-
-                        tempPrivateNoteBoard.Title = boardInputViewModel.Title;
-                        tempPrivateNoteBoard.Content = boardInputViewModel.Content;
-                        //tempPrivateNoteBoard.Locked = boardInputViewModel.Locked;
-                        tempPrivateNoteBoard.Updated = DateTime.UtcNow;
-
-                        await _boardRepository.UpdateBoardAsync(tempPrivateNoteBoard.Adapt<BoardRequest>());
-
-                        List<BoardAttachedFileResponse> boardAttachedFiles =
-                            await _boardAttachedFileRepository?.GetAllAsync();
-                        BoardAttachedFileResponse previousBoardAttachedFile =
-                            boardAttachedFiles?.FirstOrDefault(m => m.BoardId == boardInputViewModel.Id);
-
-                        #region Save attached file
-
-                        #region Existing attached file exists && New attached file exists
-
-                        if (previousBoardAttachedFile != null && boardInputViewModel.UploadedFile != null)
-                        {
-                            if (boardInputViewModel.UploadedFile
-                                    .Length is
-                                > 0 and <= 10485760) // boardInputViewModel.UploadedFile Length : file size 0MB or more, 10MB or less
-                            {
-                                int createdBoardId = boardInputViewModel.Id; // Add logic for attached file FK
-
-                                string boardAttachedFilePath = Path.Combine("upload", "Management",
-                                    EnumHelper.GetDescription(BoardType.PrivateNote), "boardAttachedFiles",
-                                    $"{createdBoardId}");
-                                if (!Directory.Exists(boardAttachedFilePath))
-                                {
-                                    _ = Directory.CreateDirectory(boardAttachedFilePath);
-                                }
-
-                                string guid = Guid.NewGuid().ToString().ToUpper();
-                                string attachedFile =
-                                    $"{guid}{Path.GetExtension(boardInputViewModel.UploadedFile.FileName)}";
-                                string filePath = Path.Combine(boardAttachedFilePath, attachedFile);
-
-                                using (MemoryStream ms = new())
-                                {
-                                    await boardInputViewModel.UploadedFile.CopyToAsync(ms);
-                                    _ = await _fileClient.UploadAsync(ms.ToArray(), boardInputViewModel.UploadedFile.ContentType, filePath, ServerSetting.FileStorageBaseUrl);
-                                }
-
-                                previousBoardAttachedFile.Size =
-                                    Convert.ToInt32(boardInputViewModel.UploadedFile.Length);
-                                previousBoardAttachedFile.Name =
-                                    Path.GetFileNameWithoutExtension(boardInputViewModel.UploadedFile.FileName);
-                                previousBoardAttachedFile.Extension =
-                                    Path.GetExtension(boardInputViewModel.UploadedFile.FileName);
-                                previousBoardAttachedFile.Path =
-                                    $"upload/Management/{EnumHelper.GetDescription(BoardType.PrivateNote)}/boardAttachedFiles/{createdBoardId}/{attachedFile}";
-
-                                await _boardAttachedFileRepository.UpdateBoardAttachedFileAsync(
-                                    previousBoardAttachedFile.Adapt<BoardAttachedFileRequest>());
-                                await transaction.CommitAsync();
-                                return Json(new
-                                {
-                                    result = true,
-                                    message = _localizer["The board has been successfully updated."].Value
-                                });
-                            }
-                            else
-                            {
-                                await transaction.RollbackAsync();
-                                return Ok(new
-                                {
-                                    result = false,
-                                    errorMessage = _localizer["File Size must be smaller than 10MB."].Value
-                                });
-                            }
-                        }
-
-                        #endregion
-
-                        #region Existing attached file exists && New attached file does not exist
-
-                        else if (previousBoardAttachedFile != null && boardInputViewModel.UploadedFile == null)
-                        {
-                            previousBoardAttachedFile.Size = 0;
-                            previousBoardAttachedFile.Name = "";
-                            previousBoardAttachedFile.Extension = "";
-                            previousBoardAttachedFile.Path = "";
-
-                            await _boardAttachedFileRepository.UpdateBoardAttachedFileAsync(
-                                previousBoardAttachedFile.Adapt<BoardAttachedFileRequest>());
-                            await transaction.CommitAsync();
-                            return Json(new
-                            {
-                                result = true,
-                                message = _localizer["The board has been successfully updated."].Value
-                            });
-                        }
-
-                        #endregion
-
-                        #region Existing attached file does not exist && New attached file exists
-
-                        else if (previousBoardAttachedFile == null && boardInputViewModel.UploadedFile != null)
-                        {
-                            if (boardInputViewModel.UploadedFile
-                                    .Length is
-                                > 0 and <= 10485760) // boardInputViewModel.UploadedFile Length : file size 0MB or more, 10MB or less
-                            {
-                                int createdBoardId = boardInputViewModel.Id; // Add logic for attached file FK
-
-                                string boardAttachedFilePath = Path.Combine("upload", "Management",
-                                    EnumHelper.GetDescription(BoardType.PrivateNote), "boardAttachedFiles",
-                                    $"{createdBoardId}");
-
-                                string guid = Guid.NewGuid().ToString().ToUpper();
-                                string attachedFile =
-                                    $"{guid}{Path.GetExtension(boardInputViewModel.UploadedFile.FileName)}";
-                                string filePath = Path.Combine(boardAttachedFilePath, attachedFile);
-
-                                using (MemoryStream ms = new())
-                                {
-                                    await boardInputViewModel.UploadedFile.CopyToAsync(ms);
-                                    _ = await _fileClient.UploadAsync(ms.ToArray(), boardInputViewModel.UploadedFile.ContentType, filePath, ServerSetting.FileStorageBaseUrl);
-                                }
-
-                                await _boardAttachedFileRepository.SaveBoardAttachedFileAsync(
-                                    new BoardAttachedFileRequest()
-                                    {
-                                        BoardId = createdBoardId,
-                                        Size = Convert.ToInt32(boardInputViewModel.UploadedFile.Length),
-                                        Name = Path.GetFileNameWithoutExtension(boardInputViewModel.UploadedFile
-                                            .FileName),
-                                        Extension = Path.GetExtension(boardInputViewModel.UploadedFile.FileName),
-                                        Path =
-                                            $"upload/Management/{EnumHelper.GetDescription(BoardType.PrivateNote)}/boardAttachedFiles/{createdBoardId}/{attachedFile}"
-                                    });
-                                await transaction.CommitAsync();
-                                return Json(new
-                                {
-                                    result = true,
-                                    message = _localizer["The board has been successfully updated."].Value
-                                });
-                            }
-                            else
-                            {
-                                await transaction.RollbackAsync();
-                                return Ok(new
-                                {
-                                    result = false,
-                                    errorMessage = _localizer["File Size must be smaller than 10MB."].Value
-                                });
-                            }
-                        }
-
-                        #endregion
-
-                        #region Existing attached file does not exist && New attached file does not exist
-
-                        else
-                        {
-                            await transaction.CommitAsync();
-                            return Json(new
-                            {
-                                result = true,
-                                message = _localizer["The board has been successfully updated."].Value
-                            });
-                        }
-
-                        #endregion
-
-                        #endregion
-                    }
-                    else
-                    {
-                        await transaction.RollbackAsync();
-                        return Json(new { result = false, error = _localizer["Please Login to edit board"].Value });
-                    }
-                }
-                catch
-                {
-                    await transaction.RollbackAsync();
-                    return Json(new { result = false, error = _localizer["Input is invalid"].Value });
-                }
-            }
-            else
-            {
+            if (!ModelState.IsValid)
                 return Json(new { result = false, error = _localizer["Input is invalid"].Value });
+
+            boardInputViewModel.Content ??= "";
+
+            #region HtmlSanitizer
+            HtmlSanitizer sanitizer = new();
+            _ = sanitizer.AllowedAttributes.Add("class");
+            boardInputViewModel.Content = sanitizer.Sanitize(boardInputViewModel.Content);
+            #endregion
+
+            #region Decrypt img tag file path
+            HtmlDocument htmlDocument = new();
+            htmlDocument.LoadHtml(boardInputViewModel.Content);
+            foreach (HtmlNode imgTag in htmlDocument.DocumentNode.Descendants("img") ?? [])
+            {
+                string encryptedFilePath = imgTag.GetAttributeValue("alt", "");
+                _ = imgTag.SetAttributeValue("alt", _rsa.Decrypt(encryptedFilePath));
             }
+            boardInputViewModel.Content = htmlDocument.DocumentNode.OuterHtml;
+            #endregion
+
+            if (boardInputViewModel.Title.Length is not (> 0 and <= 100))
+                return Json(new { result = false, error = _localizer["Title length is must be between 1 and 100 characters."].Value });
+
+            if (boardInputViewModel.Content.Length > 16384)
+                return Json(new { result = false, error = _localizer["content length is must be between 0 and 16384 characters."].Value });
+
+            if (boardInputViewModel.UploadedFile != null)
+            {
+                if (Path.GetExtension(boardInputViewModel.UploadedFile.FileName) != ".zip")
+                    return Json(new { result = false, error = _localizer["Only zip extension allowed."].Value });
+
+                if (boardInputViewModel.UploadedFile.Length is not (> 0 and <= 10485760))
+                    return Json(new { result = false, error = _localizer["uploaded file size must be smaller than 10MB."].Value });
+            }
+
+            bool isAccountSessionExist = HttpContext.Session.TryGetValue(
+                Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account),
+                out byte[] resultByte);
+
+            if (!isAccountSessionExist)
+                return Json(new { result = false, error = _localizer["Please Login to edit board"].Value });
+
+            AccountResponse loginedAccount = JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte));
+
+            BoardRequest boardRequest = new()
+            {
+                Id = boardInputViewModel.Id,
+                Type = EnumHelper.GetDescription(BoardType.PrivateNote),
+                Title = boardInputViewModel.Title,
+                Content = boardInputViewModel.Content
+            };
+
+            AttachedFileInfo attachedFile = null;
+            if (boardInputViewModel.UploadedFile != null)
+            {
+                using MemoryStream ms = new();
+                await boardInputViewModel.UploadedFile.CopyToAsync(ms);
+                attachedFile = new AttachedFileInfo
+                {
+                    Bytes = ms.ToArray(),
+                    ContentType = boardInputViewModel.UploadedFile.ContentType,
+                    FileName = boardInputViewModel.UploadedFile.FileName,
+                    Size = boardInputViewModel.UploadedFile.Length
+                };
+            }
+
+            ServiceResult result = await _boardService.EditBoardAsync(boardRequest, loginedAccount.Nickname, attachedFile);
+            return result.Success
+                ? Json(new { result = true, message = _localizer["The board has been successfully updated."].Value })
+                : Json(new { result = false, error = _localizer["Input is invalid"].Value });
         }
         catch
         {
@@ -2875,52 +2453,20 @@ public class ManagementController : BaseController
         try
         {
             _ = HttpContext.Session.TryGetValue(
-                Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite
-                    .Utilities.Session.Account), out byte[] resultByte);
-            AccountResponse loginedAccount = await _accountRepository.GetAccountByEmailAsync(JsonConvert
-                .DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email);
+                Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account),
+                out byte[] resultByte);
+            AccountResponse loginedAccount = await _accountRepository.GetAccountByEmailAsync(
+                JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email);
 
-            IEnumerable<BoardResponse> privateNoteBoards =
-                await _boardRepository.GetOneTypeBoardsAsync(EnumHelper.GetDescription(BoardType.PrivateNote));
-            privateNoteBoards = privateNoteBoards.Where(m => m.Writer == loginedAccount.Nickname)
-                .Where(m => m.Deleted == false).OrderByDescending(a => a.Id);
+            ServiceResult result = await _boardService.DeleteBoardAsync(
+                boardInputViewModel.Id,
+                EnumHelper.GetDescription(BoardType.PrivateNote),
+                loginedAccount.Nickname,
+                loginedAccount.Role == Role.Admin);
 
-            if (privateNoteBoards == null)
-            {
-                return Json(new { result = false, error = _localizer["Input is invalid"].Value });
-            }
-            else
-            {
-                BoardResponse tempPrivateNoteBoard =
-                    privateNoteBoards.Where(a => a.Id == boardInputViewModel.Id).FirstOrDefault();
-
-                if (tempPrivateNoteBoard == null)
-                {
-                    return Json(new { result = false, error = _localizer["Input is invalid"].Value });
-                }
-                else
-                {
-                    if (loginedAccount.Nickname == tempPrivateNoteBoard.Writer) // If visitor is writer
-                    {
-                        #region Delete board
-
-                        tempPrivateNoteBoard.Deleted = true;
-                        await _boardRepository.DeleteBoardAsync(tempPrivateNoteBoard.Adapt<BoardRequest>());
-
-                        #endregion
-
-                        return Json(new
-                        {
-                            result = true, message = _localizer["The board has been successfully deleted."].Value
-                        });
-                    }
-                    else
-                    {
-                        return Json(new
-                            { result = true, message = _localizer["You do not have permission to delete."].Value });
-                    }
-                }
-            }
+            return result.Success
+                ? Json(new { result = true, message = _localizer["The board has been successfully deleted."].Value })
+                : Json(new { result = false, error = result.ErrorKey });
         }
         catch
         {
@@ -2940,37 +2486,20 @@ public class ManagementController : BaseController
     {
         try
         {
-            BoardCommentResponse boardComment = await _boardCommentRepository.GetBoardCommentAsync(id);
+            _ = HttpContext.Session.TryGetValue(
+                Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite.Utilities.Session.Account),
+                out byte[] resultByte);
+            AccountResponse loginedAccount = await _accountRepository.GetAccountByEmailAsync(
+                JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email);
 
-            if (boardComment == null)
-            {
-                return Json(new { result = false, error = _localizer["Input is invalid"].Value });
-            }
-            else
-            {
-                _ = HttpContext.Session.TryGetValue(
-                    Maroik.WebSite.Utilities.EnumHelper.GetDescription(Maroik.WebSite
-                        .Utilities.Session.Account), out byte[] resultByte);
-                AccountResponse loginedAccount = await _accountRepository.GetAccountByEmailAsync(JsonConvert
-                    .DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email);
+            ServiceResult result = await _boardService.DeleteCommentAsync(
+                id,
+                loginedAccount.Nickname,
+                loginedAccount.Role == Role.Admin);
 
-                if (loginedAccount.Nickname == boardComment.Writer) // If deleter is writer
-                {
-                    #region Delete post
-
-                    boardComment.Deleted = true;
-                    await _boardCommentRepository.DeleteBoardCommentAsync(boardComment.Adapt<BoardCommentRequest>());
-
-                    #endregion
-
-                    return Json(new { result = true });
-                }
-                else
-                {
-                    return Json(new
-                        { result = true, message = _localizer["You do not have permission to delete."].Value });
-                }
-            }
+            return result.Success
+                ? Json(new { result = true })
+                : Json(new { result = false, error = result.ErrorKey });
         }
         catch
         {
