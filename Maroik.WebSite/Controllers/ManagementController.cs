@@ -28,16 +28,11 @@ public class ManagementController : BaseController
     private readonly IRSAService _rsa;
     private readonly IHtmlLocalizer<ManagementController> _localizer;
     private readonly ILogger<ManagementController> _logger;
-    private readonly IAccountRepository _accountRepository;
     private readonly IHostEnvironment _hostEnvironment;
-    private readonly ICategoryRepository _categoryRepository;
-    private readonly ISubCategoryRepository _subCategoryRepository;
-    private readonly IBoardRepository _boardRepository;
-    private readonly IBoardAttachedFileRepository _boardAttachedFileRepository;
-    private readonly IBoardCommentRepository _boardCommentRepository;
     private readonly IFileClient _fileClient;
     private readonly IClamavClient _clamavClient;
     private readonly IProfileService _profileService;
+    private readonly IAccountService _accountService;
     private readonly IManagementAccountService _managementAccountService;
     private readonly IMenuService _menuService;
     private readonly IBoardService _boardService;
@@ -45,12 +40,10 @@ public class ManagementController : BaseController
     private readonly ISessionService _sessionService;
 
     public ManagementController(IHtmlLocalizer<ManagementController> localizer,
-        ILogger<ManagementController> logger, IBoardRepository boardRepository,
-        IBoardAttachedFileRepository boardAttachedFileRepository, IBoardCommentRepository boardCommentRepository,
-        IAccountRepository accountRepository, IHostEnvironment hostEnvironment,
-        ICategoryRepository categoryRepository, ISubCategoryRepository subCategoryRepository,
+        ILogger<ManagementController> logger, IHostEnvironment hostEnvironment,
         IFileClient fileClient, IClamavClient clamavClient,
-        IProfileService profileService, IManagementAccountService managementAccountService,
+        IProfileService profileService, IAccountService accountService,
+        IManagementAccountService managementAccountService,
         IMenuService menuService, IBoardService boardService,
         IOptions<ServerSetting> settings, IRSAService rsa, ISessionService sessionService)
     {
@@ -59,16 +52,11 @@ public class ManagementController : BaseController
         _sessionService = sessionService;
         _localizer = localizer;
         _logger = logger;
-        _boardRepository = boardRepository;
-        _boardAttachedFileRepository = boardAttachedFileRepository;
-        _accountRepository = accountRepository;
         _hostEnvironment = hostEnvironment;
-        _categoryRepository = categoryRepository;
-        _subCategoryRepository = subCategoryRepository;
-        _boardCommentRepository = boardCommentRepository;
         _fileClient = fileClient;
         _clamavClient = clamavClient;
         _profileService = profileService;
+        _accountService = accountService;
         _managementAccountService = managementAccountService;
         _menuService = menuService;
         _boardService = boardService;
@@ -82,7 +70,7 @@ public class ManagementController : BaseController
     public async Task<IActionResult> Profile()
     {
         string loginedAccountTimeZoneIanaId = _sessionService.GetAccount()!.TimeZoneIanaId;
-        AccountResponse tempAccount = await _accountRepository.GetAccountByEmailAsync(_sessionService.GetAccount()!.Email);
+        AccountResponse tempAccount = await _profileService.GetProfileAsync(_sessionService.GetAccount()!.Email);
 
         return View(new ProfileOutputViewModel()
         {
@@ -214,7 +202,7 @@ public class ManagementController : BaseController
                 await _profileService.UpdateTimeZoneAsync(email, profileInputViewModel.TimeZoneIanaId);
 
                 // Refresh session with updated timezone
-                AccountResponse updatedAccount = await _accountRepository.GetAccountByEmailAsync(email);
+                AccountResponse updatedAccount = await _profileService.GetProfileAsync(email);
                 _sessionService.RemoveAccount();
                 updatedAccount.HashedPassword = null;
                 _sessionService.SetAccount(updatedAccount);
@@ -435,7 +423,7 @@ public class ManagementController : BaseController
 
             #region Accounts
 
-            foreach (AccountResponse item in await _accountRepository.GetAllAsync())
+            foreach (AccountResponse item in await _managementAccountService.GetAllAccountsAsync())
             {
                 if (string.IsNullOrEmpty(wholeSearch))
                 {
@@ -521,7 +509,7 @@ public class ManagementController : BaseController
     {
         try
         {
-            AccountResponse tempAccount = await _accountRepository.GetAccountByEmailAsync(email);
+            AccountResponse? tempAccount = await _managementAccountService.GetAccountByEmailAsync(email);
 
             return tempAccount == null
                 ? Json(new
@@ -617,7 +605,7 @@ public class ManagementController : BaseController
 
         #region Accounts
 
-        foreach (AccountResponse item in await _accountRepository.GetAllAsync())
+        foreach (AccountResponse item in await _managementAccountService.GetAllAccountsAsync())
         {
             accountOutputViewModels.Add(new AccountOutputViewModel()
             {
@@ -822,11 +810,19 @@ public class ManagementController : BaseController
         {
             List<MenuOutputViewModel> menuOutputViewModels = [];
 
-            #region AdminCategories
+            #region Categories
 
-            foreach (CategoryResponse item in await _categoryRepository.GetCategoryByRoleAsync(Role.Admin))
+            foreach (CategoryResponse item in await _menuService.GetAllCategoriesAsync())
             {
-                if (string.IsNullOrEmpty(wholeSearch))
+                if (string.IsNullOrEmpty(wholeSearch) ||
+                    item.Id.ToString().Contains(wholeSearch) ||
+                    (item.Name?.ToString() ?? "").Contains(wholeSearch) ||
+                    (item.DisplayName?.ToString() ?? "").Contains(wholeSearch) ||
+                    (item.IconPath?.ToString() ?? "").Contains(wholeSearch) ||
+                    (item.Controller?.ToString() ?? "").Contains(wholeSearch) ||
+                    (item.Action?.ToString() ?? "").Contains(wholeSearch) ||
+                    (item.Role?.ToString() ?? "").Contains(wholeSearch) ||
+                    item.Order.ToString().Contains(wholeSearch))
                 {
                     menuOutputViewModels.Add(new MenuOutputViewModel()
                     {
@@ -841,136 +837,23 @@ public class ManagementController : BaseController
                         Order = item.Order
                     });
                 }
-                else
-                {
-                    if (item.Id.ToString().Contains(wholeSearch) ||
-                        (item.Name?.ToString() ?? "").Contains(wholeSearch) ||
-                        (item.DisplayName?.ToString() ?? "").Contains(wholeSearch) ||
-                        (item.IconPath?.ToString() ?? "").Contains(wholeSearch) ||
-                        (item.Controller?.ToString() ?? "").Contains(wholeSearch) ||
-                        (item.Action?.ToString() ?? "").Contains(wholeSearch) ||
-                        (item.Role?.ToString() ?? "").Contains(wholeSearch) ||
-                        item.Order.ToString().Contains(wholeSearch))
-                    {
-                        menuOutputViewModels.Add(new MenuOutputViewModel()
-                        {
-                            Id = item.Id,
-                            CategoryId = null,
-                            Name = item.Name,
-                            DisplayName = item.DisplayName,
-                            IconPath = item.IconPath,
-                            Controller = item.Controller,
-                            Action = item.Action,
-                            Role = item.Role,
-                            Order = item.Order
-                        });
-                    }
-                }
             }
 
             #endregion
 
-            #region UserCategories
+            #region SubCategories
 
-            foreach (CategoryResponse item in await _categoryRepository.GetCategoryByRoleAsync(Role.User))
+            foreach (SubCategoryResponse item in await _menuService.GetAllSubCategoriesAsync())
             {
-                if (string.IsNullOrEmpty(wholeSearch))
-                {
-                    menuOutputViewModels.Add(new MenuOutputViewModel()
-                    {
-                        Id = item.Id,
-                        CategoryId = null,
-                        Name = item.Name,
-                        DisplayName = item.DisplayName,
-                        IconPath = item.IconPath,
-                        Controller = item.Controller,
-                        Action = item.Action,
-                        Role = item.Role,
-                        Order = item.Order
-                    });
-                }
-                else
-                {
-                    if (item.Id.ToString().Contains(wholeSearch) ||
-                        (item.Name?.ToString() ?? "").Contains(wholeSearch) ||
-                        (item.DisplayName?.ToString() ?? "").Contains(wholeSearch) ||
-                        (item.IconPath?.ToString() ?? "").Contains(wholeSearch) ||
-                        (item.Controller?.ToString() ?? "").Contains(wholeSearch) ||
-                        (item.Action?.ToString() ?? "").Contains(wholeSearch) ||
-                        (item.Role?.ToString() ?? "").Contains(wholeSearch) ||
-                        item.Order.ToString().Contains(wholeSearch))
-                    {
-                        menuOutputViewModels.Add(new MenuOutputViewModel()
-                        {
-                            Id = item.Id,
-                            CategoryId = null,
-                            Name = item.Name,
-                            DisplayName = item.DisplayName,
-                            IconPath = item.IconPath,
-                            Controller = item.Controller,
-                            Action = item.Action,
-                            Role = item.Role,
-                            Order = item.Order
-                        });
-                    }
-                }
-            }
-
-            #endregion
-
-            #region AnonymousCategories
-
-            foreach (CategoryResponse item in await _categoryRepository.GetCategoryByRoleAsync(Role.Anonymous))
-            {
-                if (string.IsNullOrEmpty(wholeSearch))
-                {
-                    menuOutputViewModels.Add(new MenuOutputViewModel()
-                    {
-                        Id = item.Id,
-                        CategoryId = null,
-                        Name = item.Name,
-                        DisplayName = item.DisplayName,
-                        IconPath = item.IconPath,
-                        Controller = item.Controller,
-                        Action = item.Action,
-                        Role = item.Role,
-                        Order = item.Order
-                    });
-                }
-                else
-                {
-                    if (item.Id.ToString().Contains(wholeSearch) ||
-                        (item.Name?.ToString() ?? "").Contains(wholeSearch) ||
-                        (item.DisplayName?.ToString() ?? "").Contains(wholeSearch) ||
-                        (item.IconPath?.ToString() ?? "").Contains(wholeSearch) ||
-                        (item.Controller?.ToString() ?? "").Contains(wholeSearch) ||
-                        (item.Action?.ToString() ?? "").Contains(wholeSearch) ||
-                        (item.Role?.ToString() ?? "").Contains(wholeSearch) ||
-                        item.Order.ToString().Contains(wholeSearch))
-                    {
-                        menuOutputViewModels.Add(new MenuOutputViewModel()
-                        {
-                            Id = item.Id,
-                            CategoryId = null,
-                            Name = item.Name,
-                            DisplayName = item.DisplayName,
-                            IconPath = item.IconPath,
-                            Controller = item.Controller,
-                            Action = item.Action,
-                            Role = item.Role,
-                            Order = item.Order
-                        });
-                    }
-                }
-            }
-
-            #endregion
-
-            #region AdminSubCategories
-
-            foreach (SubCategoryResponse item in await _subCategoryRepository.GetSubCategoryByRoleAsync(Role.Admin))
-            {
-                if (string.IsNullOrEmpty(wholeSearch))
+                if (string.IsNullOrEmpty(wholeSearch) ||
+                    item.Id.ToString().Contains(wholeSearch) ||
+                    item.CategoryId.ToString().Contains(wholeSearch) ||
+                    (item.Name?.ToString() ?? "").Contains(wholeSearch) ||
+                    (item.DisplayName?.ToString() ?? "").Contains(wholeSearch) ||
+                    (item.IconPath?.ToString() ?? "").Contains(wholeSearch) ||
+                    (item.Action?.ToString() ?? "").Contains(wholeSearch) ||
+                    (item.Role?.ToString() ?? "").Contains(wholeSearch) ||
+                    item.Order.ToString().Contains(wholeSearch))
                 {
                     menuOutputViewModels.Add(new MenuOutputViewModel()
                     {
@@ -984,127 +867,6 @@ public class ManagementController : BaseController
                         Role = item.Role,
                         Order = item.Order
                     });
-                }
-                else
-                {
-                    if (item.Id.ToString().Contains(wholeSearch) ||
-                        item.CategoryId.ToString().Contains(wholeSearch) ||
-                        (item.Name?.ToString() ?? "").Contains(wholeSearch) ||
-                        (item.DisplayName?.ToString() ?? "").Contains(wholeSearch) ||
-                        (item.IconPath?.ToString() ?? "").Contains(wholeSearch) ||
-                        (item.Action?.ToString() ?? "").Contains(wholeSearch) ||
-                        (item.Role?.ToString() ?? "").Contains(wholeSearch) ||
-                        item.Order.ToString().Contains(wholeSearch))
-                    {
-                        menuOutputViewModels.Add(new MenuOutputViewModel()
-                        {
-                            Id = item.Id,
-                            CategoryId = item.CategoryId,
-                            Name = item.Name,
-                            DisplayName = item.DisplayName,
-                            IconPath = item.IconPath,
-                            Controller = null,
-                            Action = item.Action,
-                            Role = item.Role,
-                            Order = item.Order
-                        });
-                    }
-                }
-            }
-
-            #endregion
-
-            #region UserSubCategories
-
-            foreach (SubCategoryResponse item in await _subCategoryRepository.GetSubCategoryByRoleAsync(Role.User))
-            {
-                if (string.IsNullOrEmpty(wholeSearch))
-                {
-                    menuOutputViewModels.Add(new MenuOutputViewModel()
-                    {
-                        Id = item.Id,
-                        CategoryId = item.CategoryId,
-                        Name = item.Name,
-                        DisplayName = item.DisplayName,
-                        IconPath = item.IconPath,
-                        Controller = null,
-                        Action = item.Action,
-                        Role = item.Role,
-                        Order = item.Order
-                    });
-                }
-                else
-                {
-                    if (item.Id.ToString().Contains(wholeSearch) ||
-                        item.CategoryId.ToString().Contains(wholeSearch) ||
-                        (item.Name?.ToString() ?? "").Contains(wholeSearch) ||
-                        (item.DisplayName?.ToString() ?? "").Contains(wholeSearch) ||
-                        (item.IconPath?.ToString() ?? "").Contains(wholeSearch) ||
-                        (item.Action?.ToString() ?? "").Contains(wholeSearch) ||
-                        (item.Role?.ToString() ?? "").Contains(wholeSearch) ||
-                        item.Order.ToString().Contains(wholeSearch))
-                    {
-                        menuOutputViewModels.Add(new MenuOutputViewModel()
-                        {
-                            Id = item.Id,
-                            CategoryId = item.CategoryId,
-                            Name = item.Name,
-                            DisplayName = item.DisplayName,
-                            IconPath = item.IconPath,
-                            Controller = null,
-                            Action = item.Action,
-                            Role = item.Role,
-                            Order = item.Order
-                        });
-                    }
-                }
-            }
-
-            #endregion
-
-            #region AnonymousSubCategories
-
-            foreach (SubCategoryResponse item in await _subCategoryRepository.GetSubCategoryByRoleAsync(Role.Anonymous))
-            {
-                if (string.IsNullOrEmpty(wholeSearch))
-                {
-                    menuOutputViewModels.Add(new MenuOutputViewModel()
-                    {
-                        Id = item.Id,
-                        CategoryId = item.CategoryId,
-                        Name = item.Name,
-                        DisplayName = item.DisplayName,
-                        IconPath = item.IconPath,
-                        Controller = null,
-                        Action = item.Action,
-                        Role = item.Role,
-                        Order = item.Order
-                    });
-                }
-                else
-                {
-                    if (item.Id.ToString().Contains(wholeSearch) ||
-                        item.CategoryId.ToString().Contains(wholeSearch) ||
-                        (item.Name?.ToString() ?? "").Contains(wholeSearch) ||
-                        (item.DisplayName?.ToString() ?? "").Contains(wholeSearch) ||
-                        (item.IconPath?.ToString() ?? "").Contains(wholeSearch) ||
-                        (item.Action?.ToString() ?? "").Contains(wholeSearch) ||
-                        (item.Role?.ToString() ?? "").Contains(wholeSearch) ||
-                        item.Order.ToString().Contains(wholeSearch))
-                    {
-                        menuOutputViewModels.Add(new MenuOutputViewModel()
-                        {
-                            Id = item.Id,
-                            CategoryId = item.CategoryId,
-                            Name = item.Name,
-                            DisplayName = item.DisplayName,
-                            IconPath = item.IconPath,
-                            Controller = null,
-                            Action = item.Action,
-                            Role = item.Role,
-                            Order = item.Order
-                        });
-                    }
                 }
             }
 
@@ -1125,76 +887,23 @@ public class ManagementController : BaseController
     {
         try
         {
-            List<MenuOutputViewModel> menuOutputViewModels = [];
+            CategoryResponse? category = await _menuService.GetCategoryByIdAsync(id);
+            if (category == null)
+                return Json(new { result = false, error = _localizer["Input is invalid"].Value });
 
-            #region AdminCategories
-
-            foreach (CategoryResponse item in await _categoryRepository.GetCategoryByRoleAsync(Role.Admin))
+            MenuOutputViewModel vm = new()
             {
-                menuOutputViewModels.Add(new MenuOutputViewModel()
-                {
-                    Id = item.Id,
-                    CategoryId = null,
-                    Name = item.Name,
-                    DisplayName = item.DisplayName,
-                    IconPath = item.IconPath,
-                    Controller = item.Controller,
-                    Action = item.Action,
-                    Role = item.Role,
-                    Order = item.Order
-                });
-            }
-
-            #endregion
-
-            #region UserCategories
-
-            foreach (CategoryResponse item in await _categoryRepository.GetCategoryByRoleAsync(Role.User))
-            {
-                menuOutputViewModels.Add(new MenuOutputViewModel()
-                {
-                    Id = item.Id,
-                    CategoryId = null,
-                    Name = item.Name,
-                    DisplayName = item.DisplayName,
-                    IconPath = item.IconPath,
-                    Controller = item.Controller,
-                    Action = item.Action,
-                    Role = item.Role,
-                    Order = item.Order
-                });
-            }
-
-            #endregion
-
-            #region AnonymousCategories
-
-            foreach (CategoryResponse item in await _categoryRepository.GetCategoryByRoleAsync(Role.Anonymous))
-            {
-                menuOutputViewModels.Add(new MenuOutputViewModel()
-                {
-                    Id = item.Id,
-                    CategoryId = null,
-                    Name = item.Name,
-                    DisplayName = item.DisplayName,
-                    IconPath = item.IconPath,
-                    Controller = item.Controller,
-                    Action = item.Action,
-                    Role = item.Role,
-                    Order = item.Order
-                });
-            }
-
-            #endregion
-
-            MenuOutputViewModel selectedCategory = menuOutputViewModels.Where(a => a.Id == id).FirstOrDefault();
-            if (selectedCategory == null)
-            {
-                throw new Exception(); // Not found in DB
-            }
-
-            return Json(new
-                { result = true, category = menuOutputViewModels.Where(a => a.Id == id).FirstOrDefault() });
+                Id = category.Id,
+                CategoryId = null,
+                Name = category.Name,
+                DisplayName = category.DisplayName,
+                IconPath = category.IconPath,
+                Controller = category.Controller,
+                Action = category.Action,
+                Role = category.Role,
+                Order = category.Order
+            };
+            return Json(new { result = true, category = vm });
         }
         catch
         {
@@ -1209,76 +918,23 @@ public class ManagementController : BaseController
     {
         try
         {
-            List<MenuOutputViewModel> menuOutputViewModels = [];
+            SubCategoryResponse? subCategory = await _menuService.GetSubCategoryByIdAsync(id);
+            if (subCategory == null)
+                return Json(new { result = false, error = _localizer["Input is invalid"].Value });
 
-            #region AdminSubCategories
-
-            foreach (SubCategoryResponse item in await _subCategoryRepository.GetSubCategoryByRoleAsync(Role.Admin))
+            MenuOutputViewModel vm = new()
             {
-                menuOutputViewModels.Add(new MenuOutputViewModel()
-                {
-                    Id = item.Id,
-                    CategoryId = item.CategoryId,
-                    Name = item.Name,
-                    DisplayName = item.DisplayName,
-                    IconPath = item.IconPath,
-                    Controller = null,
-                    Action = item.Action,
-                    Role = item.Role,
-                    Order = item.Order
-                });
-            }
-
-            #endregion
-
-            #region UserSubCategories
-
-            foreach (SubCategoryResponse item in await _subCategoryRepository.GetSubCategoryByRoleAsync(Role.User))
-            {
-                menuOutputViewModels.Add(new MenuOutputViewModel()
-                {
-                    Id = item.Id,
-                    CategoryId = item.CategoryId,
-                    Name = item.Name,
-                    DisplayName = item.DisplayName,
-                    IconPath = item.IconPath,
-                    Controller = null,
-                    Action = item.Action,
-                    Role = item.Role,
-                    Order = item.Order
-                });
-            }
-
-            #endregion
-
-            #region AnonymousSubCategories
-
-            foreach (SubCategoryResponse item in await _subCategoryRepository.GetSubCategoryByRoleAsync(Role.Anonymous))
-            {
-                menuOutputViewModels.Add(new MenuOutputViewModel()
-                {
-                    Id = item.Id,
-                    CategoryId = item.CategoryId,
-                    Name = item.Name,
-                    DisplayName = item.DisplayName,
-                    IconPath = item.IconPath,
-                    Controller = null,
-                    Action = item.Action,
-                    Role = item.Role,
-                    Order = item.Order
-                });
-            }
-
-            #endregion
-
-            MenuOutputViewModel selectedCategory = menuOutputViewModels.Where(a => a.Id == id).FirstOrDefault();
-            if (selectedCategory == null)
-            {
-                throw new Exception(); // Not found in DB
-            }
-
-            return Json(new
-                { result = true, subCategory = menuOutputViewModels.Where(a => a.Id == id).FirstOrDefault() });
+                Id = subCategory.Id,
+                CategoryId = subCategory.CategoryId,
+                Name = subCategory.Name,
+                DisplayName = subCategory.DisplayName,
+                IconPath = subCategory.IconPath,
+                Controller = null,
+                Action = subCategory.Action,
+                Role = subCategory.Role,
+                Order = subCategory.Order
+            };
+            return Json(new { result = true, subCategory = vm });
         }
         catch
         {
@@ -1445,8 +1101,8 @@ public class ManagementController : BaseController
         List<MenuOutputViewModel> menuOutputViewModels = [];
         string loginedAccountTimeZoneIanaId = _sessionService.GetAccount()!.TimeZoneIanaId;
 
-        #region AdminCategories
-        foreach (CategoryResponse item in await _categoryRepository.GetCategoryByRoleAsync(Role.Admin))
+        #region Categories
+        foreach (CategoryResponse item in await _menuService.GetAllCategoriesAsync())
         {
             menuOutputViewModels.Add(new MenuOutputViewModel()
             {
@@ -1463,80 +1119,8 @@ public class ManagementController : BaseController
         }
         #endregion
 
-        #region UserCategories
-        foreach (CategoryResponse item in await _categoryRepository.GetCategoryByRoleAsync(Role.User))
-        {
-            menuOutputViewModels.Add(new MenuOutputViewModel()
-            {
-                Id = item.Id,
-                CategoryId = null,
-                Name = item.Name,
-                DisplayName = item.DisplayName,
-                IconPath = item.IconPath,
-                Controller = item.Controller,
-                Action = item.Action,
-                Role = item.Role,
-                Order = item.Order
-            });
-        }
-        #endregion
-
-        #region AnonymousCategories
-        foreach (CategoryResponse item in await _categoryRepository.GetCategoryByRoleAsync(Role.Anonymous))
-        {
-            menuOutputViewModels.Add(new MenuOutputViewModel()
-            {
-                Id = item.Id,
-                CategoryId = null,
-                Name = item.Name,
-                DisplayName = item.DisplayName,
-                IconPath = item.IconPath,
-                Controller = item.Controller,
-                Action = item.Action,
-                Role = item.Role,
-                Order = item.Order
-            });
-        }
-        #endregion
-
-        #region AdminSubCategories
-        foreach (SubCategoryResponse item in await _subCategoryRepository.GetSubCategoryByRoleAsync(Role.Admin))
-        {
-            menuOutputViewModels.Add(new MenuOutputViewModel()
-            {
-                Id = item.Id,
-                CategoryId = item.CategoryId,
-                Name = item.Name,
-                DisplayName = item.DisplayName,
-                IconPath = item.IconPath,
-                Controller = null,
-                Action = item.Action,
-                Role = item.Role,
-                Order = item.Order
-            });
-        }
-        #endregion
-
-        #region UserSubCategories
-        foreach (SubCategoryResponse item in await _subCategoryRepository.GetSubCategoryByRoleAsync(Role.User))
-        {
-            menuOutputViewModels.Add(new MenuOutputViewModel()
-            {
-                Id = item.Id,
-                CategoryId = item.CategoryId,
-                Name = item.Name,
-                DisplayName = item.DisplayName,
-                IconPath = item.IconPath,
-                Controller = null,
-                Action = item.Action,
-                Role = item.Role,
-                Order = item.Order
-            });
-        }
-        #endregion
-
-        #region AnonymousSubCategories
-        foreach (SubCategoryResponse item in await _subCategoryRepository.GetSubCategoryByRoleAsync(Role.Anonymous))
+        #region SubCategories
+        foreach (SubCategoryResponse item in await _menuService.GetAllSubCategoriesAsync())
         {
             menuOutputViewModels.Add(new MenuOutputViewModel()
             {
@@ -1761,15 +1345,6 @@ public class ManagementController : BaseController
 
             AccountResponse loginedAccount = _sessionService.GetAccount()!;
 
-            IEnumerable<BoardResponse> privateNoteBoards = await _boardRepository.GetOneTypeBoardsAsync(
-                EnumHelper.GetDescription(BoardType.PrivateNote));
-            BoardResponse privateNoteBoard = privateNoteBoards
-                .Where(m => m.Writer == loginedAccount.Nickname && !m.Deleted)
-                .FirstOrDefault(m => m.Id == boardCommentInputViewModel.BoardId);
-
-            if (privateNoteBoard?.Id != boardCommentInputViewModel.BoardId)
-                return Json(new { result = false, error = _localizer["Input is invalid"].Value });
-
             BoardCommentRequest commentRequest = new()
             {
                 BoardId = boardCommentInputViewModel.BoardId,
@@ -1778,7 +1353,7 @@ public class ManagementController : BaseController
                 Content = boardCommentInputViewModel.Content
             };
 
-            ServiceResult result = await _boardService.WriteCommentAsync(commentRequest);
+            ServiceResult result = await _boardService.WriteCommentAsync(commentRequest, loginedAccount.Nickname);
             return result.Success
                 ? Json(new { result = true, boardId = boardCommentInputViewModel.BoardId, page = boardCommentInputViewModel.DetailCurrentPage })
                 : Json(new { result = false, error = _localizer["Input is invalid"].Value });
@@ -1898,15 +1473,13 @@ public class ManagementController : BaseController
                 DetailBoardId = boardId ?? default
             };
 
-            IEnumerable<BoardResponse> privateNoteBoards =
-                await _boardRepository.GetOneTypeBoardsAsync(EnumHelper.GetDescription(BoardType.PrivateNote));
-            privateNoteBoards = privateNoteBoards.Where(m => m.Writer == loginedAccount.Nickname)
-                .Where(m => m.Deleted == false).OrderByDescending(a => a.Id);
-            List<BoardAttachedFileResponse> boardAttachedFiles = await _boardAttachedFileRepository.GetAllAsync();
+            BoardResponse? privateNoteBoard = await _boardService.GetBoardByIdAsync(boardId ?? 0);
+            BoardAttachedFileResponse? attachedFile = await _boardService.GetAttachedFileByBoardIdAsync(boardId ?? 0);
 
             try
             {
-                BoardResponse privateNoteBoard = privateNoteBoards.FirstOrDefault(m => m.Id == boardId);
+                if (privateNoteBoard == null || privateNoteBoard.Deleted || privateNoteBoard.Writer != loginedAccount.Nickname)
+                    return RedirectToAction("PrivateNote", "Management");
 
                 if (privateNoteBoard.Locked)
                 {
@@ -1916,9 +1489,7 @@ public class ManagementController : BaseController
                     }
                 }
 
-                privateNoteBoard.View++;
-                await _boardRepository.UpdateBoardAsync(privateNoteBoard.Adapt<BoardRequest>());
-                BoardAttachedFileResponse attachedFile = boardAttachedFiles.FirstOrDefault(m => m.BoardId == boardId);
+                await _boardService.IncrementBoardViewAsync(boardId ?? 0);
 
                 #region Encrypt img tag file path
 
@@ -2000,8 +1571,8 @@ public class ManagementController : BaseController
                     }
 
                 // Preload comments and accounts for detail view
-                privateNoteOutputViewModel.DetailBoardComments = (await _boardCommentRepository.GetOneBoardCommentsAsync(boardId ?? 0))?.ToList() ?? [];
-                privateNoteOutputViewModel.AllAccounts = await _accountRepository.GetAllAsync() ?? [];
+                privateNoteOutputViewModel.DetailBoardComments = (await _boardService.GetCommentsByBoardIdAsync(boardId ?? 0))?.ToList() ?? [];
+                privateNoteOutputViewModel.AllAccounts = await _accountService.GetAllAccountsAsync() ?? [];
                 privateNoteOutputViewModel.LoginedAccount = loginedAccount;
                 privateNoteOutputViewModel.LoginedAccountTimeZoneIanaId = loginedAccount?.TimeZoneIanaId ?? "";
 
@@ -2028,24 +1599,17 @@ public class ManagementController : BaseController
                 EditBoardId = boardId ?? default
             };
 
-            AccountResponse loginedAccount = await _accountRepository.GetAccountByEmailAsync(_sessionService.GetAccount()!.Email);
+            AccountResponse loginedAccount = _sessionService.GetAccount()!;
 
-            IEnumerable<BoardResponse> privateNoteBoards =
-                await _boardRepository.GetOneTypeBoardsAsync(EnumHelper.GetDescription(BoardType.PrivateNote));
-            privateNoteBoards = privateNoteBoards.Where(m => m.Writer == loginedAccount.Nickname)
-                .Where(m => m.Deleted == false).OrderByDescending(a => a.Id);
-            List<BoardAttachedFileResponse> boardAttachedFiles = await _boardAttachedFileRepository.GetAllAsync();
+            BoardResponse? privateNoteBoard = await _boardService.GetBoardByIdAsync(boardId ?? 0);
+            BoardAttachedFileResponse? attachedFile = await _boardService.GetAttachedFileByBoardIdAsync(boardId ?? 0);
 
             try
             {
-                BoardResponse privateNoteBoard = privateNoteBoards.FirstOrDefault(m => m.Id == boardId);
-
-                if (privateNoteBoard.Writer != loginedAccount.Nickname) // If writer and logged-in user are not the same
+                if (privateNoteBoard == null || privateNoteBoard.Deleted || privateNoteBoard.Writer != loginedAccount.Nickname)
                 {
                     return RedirectToAction("PrivateNote", "Management");
                 }
-
-                BoardAttachedFileResponse attachedFile = boardAttachedFiles.FirstOrDefault(m => m.BoardId == boardId);
 
                 #region Encrypt img tag file path
 
@@ -2153,7 +1717,7 @@ public class ManagementController : BaseController
             #region Logic to get all related board data
 
             IEnumerable<BoardResponse> privateNoteBoards =
-                await _boardRepository.GetOneTypeBoardsAsync(EnumHelper.GetDescription(BoardType.PrivateNote));
+                await _boardService.GetBoardsAsync(EnumHelper.GetDescription(BoardType.PrivateNote));
             privateNoteBoards = privateNoteBoards.Where(m => m.Writer == loginedAccount.Nickname)
                 .Where(m => m.Deleted == false && m.Noticed == false).OrderByDescending(a => a.Id);
 
@@ -2229,14 +1793,17 @@ public class ManagementController : BaseController
             #region Preload comment counts and attached files for view
             privateNoteOutputViewModel.LoginedAccount = loginedAccount;
             privateNoteOutputViewModel.LoginedAccountTimeZoneIanaId = loginedAccount?.TimeZoneIanaId ?? "";
-            privateNoteOutputViewModel.AllAccounts = await _accountRepository.GetAllAsync() ?? [];
-            List<BoardAttachedFileResponse> allPrivateAttachedFiles = await _boardAttachedFileRepository.GetAllAsync() ?? [];
+            privateNoteOutputViewModel.AllAccounts = await _accountService.GetAllAccountsAsync() ?? [];
+
+            List<long> boardIds = privateNoteOutputViewModel.Boards.Select(b => b.Id).ToList();
+            Dictionary<long, int> commentCounts = await _boardService.GetCommentCountsForBoardsAsync(boardIds);
+            Dictionary<long, BoardAttachedFileResponse?> attachedFiles = await _boardService.GetAttachedFilesForBoardsAsync(boardIds);
+
             foreach (var board in privateNoteOutputViewModel.Boards)
             {
-                privateNoteOutputViewModel.CommentCountByBoardId[board.Id] =
-                    (await _boardCommentRepository.GetOneBoardCommentsAsync(board.Id))?.Count(c => !c.Deleted) ?? 0;
-                privateNoteOutputViewModel.AttachedFilesByBoardId[board.Id] =
-                    allPrivateAttachedFiles.Where(f => f.BoardId == board.Id && !string.IsNullOrEmpty(f.Name)).ToList();
+                privateNoteOutputViewModel.CommentCountByBoardId[board.Id] = commentCounts.GetValueOrDefault(board.Id, 0);
+                BoardAttachedFileResponse? af = attachedFiles.GetValueOrDefault(board.Id);
+                privateNoteOutputViewModel.AttachedFilesByBoardId[board.Id] = af != null && !string.IsNullOrEmpty(af.Name) ? [af] : [];
             }
             #endregion
 
@@ -2258,25 +1825,12 @@ public class ManagementController : BaseController
     {
         try
         {
-            AccountResponse loginedAccount = await _accountRepository.GetAccountByEmailAsync(_sessionService.GetAccount()!.Email);
+            string nickname = _sessionService.GetAccount()!.Nickname;
+            BoardResponse? board = await _boardService.GetBoardByIdAsync(id);
 
-            IEnumerable<BoardResponse> privateNoteBoards =
-                await _boardRepository.GetOneTypeBoardsAsync(EnumHelper.GetDescription(BoardType.PrivateNote));
-            privateNoteBoards = privateNoteBoards.Where(m => m.Writer == loginedAccount.Nickname)
-                .Where(m => m.Deleted == false).OrderByDescending(a => a.Id);
-
-            if (privateNoteBoards == null)
-            {
-                return Json(new { result = false, error = _localizer["No PrivateNoteBoard exists"].Value });
-            }
-            else
-            {
-                BoardResponse tempPrivateNoteBoard = privateNoteBoards.Where(a => a.Id == id).FirstOrDefault();
-
-                return tempPrivateNoteBoard == null
-                    ? Json(new { result = false, error = _localizer["Input is invalid"].Value })
-                    : (IActionResult)Json(new { result = true, PrivateNoteBoard = tempPrivateNoteBoard });
-            }
+            return board == null || board.Deleted || board.Writer != nickname
+                ? Json(new { result = false, error = _localizer["Input is invalid"].Value })
+                : Json(new { result = true, PrivateNoteBoard = board });
         }
         catch
         {
@@ -2394,8 +1948,7 @@ public class ManagementController : BaseController
     {
         try
         {
-            AccountResponse loginedAccount = await _accountRepository.GetAccountByEmailAsync(
-                _sessionService.GetAccount()!.Email);
+            AccountResponse loginedAccount = _sessionService.GetAccount()!;
 
             ServiceResult result = await _boardService.DeleteBoardAsync(
                 boardInputViewModel.Id,
@@ -2425,8 +1978,7 @@ public class ManagementController : BaseController
     {
         try
         {
-            AccountResponse loginedAccount = await _accountRepository.GetAccountByEmailAsync(
-                _sessionService.GetAccount()!.Email);
+            AccountResponse loginedAccount = _sessionService.GetAccount()!;
 
             ServiceResult result = await _boardService.DeleteCommentAsync(
                 id,

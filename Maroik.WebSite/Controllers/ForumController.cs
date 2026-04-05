@@ -1,5 +1,4 @@
-using Mapster;
-﻿using Ganss.Xss;
+using Ganss.Xss;
 using HtmlAgilityPack;
 using ImageMagick;
 using Maroik.Core.Contract.Dtos;
@@ -23,29 +22,23 @@ public class ForumController : BaseController
     private readonly IHtmlLocalizer<ForumController> _localizer;
     private readonly ILogger<ForumController> _logger;
     private readonly IHostEnvironment _hostEnvironment;
-    private readonly IBoardRepository _boardRepository;
-    private readonly IBoardAttachedFileRepository _boardAttachedFileRepository;
-    private readonly IAccountRepository _accountRepository;
-    private readonly IBoardCommentRepository _boardCommentRepository;
     private readonly IFileClient _fileClient;
     private readonly IBoardService _boardService;
+    private readonly IAccountService _accountService;
     private readonly IOptions<ServerSetting> _settings;
     private readonly ISessionService _sessionService;
 
-    public ForumController(IHtmlLocalizer<ForumController> localizer, ILogger<ForumController> logger, IBoardRepository boardRepository, IHostEnvironment hostEnvironment, IBoardAttachedFileRepository boardAttachedFileRepository, IAccountRepository accountRepository, IBoardCommentRepository boardCommentRepository, IFileClient fileClient, IBoardService boardService, IOptions<ServerSetting> settings, IRSAService rsa, ISessionService sessionService)
+    public ForumController(IHtmlLocalizer<ForumController> localizer, ILogger<ForumController> logger, IHostEnvironment hostEnvironment, IFileClient fileClient, IBoardService boardService, IAccountService accountService, IOptions<ServerSetting> settings, IRSAService rsa, ISessionService sessionService)
     {
         _settings = settings;
         _rsa = rsa;
         _sessionService = sessionService;
         _localizer = localizer;
         _logger = logger;
-        _boardRepository = boardRepository;
         _hostEnvironment = hostEnvironment;
-        _boardAttachedFileRepository = boardAttachedFileRepository;
-        _accountRepository = accountRepository;
-        _boardCommentRepository = boardCommentRepository;
         _fileClient = fileClient;
         _boardService = boardService;
+        _accountService = accountService;
     }
 
     #region FreeForum
@@ -230,7 +223,7 @@ public class ForumController : BaseController
         }
 
         var loginedAccount = _sessionService.GetAccount()!;
-        
+
         string summernoteImagePath = Path.Combine("upload", "Forum", EnumHelper.GetDescription(BoardType.FreeForum), "summernote", "images");
         string imageFile = $"{Guid.NewGuid():N}{ext}";
         string filePath = Path.Combine(summernoteImagePath, imageFile);
@@ -292,13 +285,13 @@ public class ForumController : BaseController
                 DetailBoardId = boardId ?? default
             };
 
-            IEnumerable<BoardResponse> freeBoards = await _boardRepository.GetOneTypeBoardsAsync(EnumHelper.GetDescription(BoardType.FreeForum));
-            freeBoards = freeBoards.Where(m => m.Deleted == false).OrderByDescending(a => a.Id);
-            List<BoardAttachedFileResponse> boardAttachedFiles = await _boardAttachedFileRepository.GetAllAsync();
+            BoardResponse? freeBoard = await _boardService.GetBoardByIdAsync(boardId ?? 0);
+            BoardAttachedFileResponse? boardAttachedFile = await _boardService.GetAttachedFileByBoardIdAsync(boardId ?? 0);
 
             try
             {
-                BoardResponse freeBoard = freeBoards.FirstOrDefault(m => m.Id == boardId);
+                if (freeBoard == null || freeBoard.Deleted)
+                    return RedirectToAction("FreeForum", "Forum");
 
                 if (freeBoard.Locked)
                 {
@@ -311,7 +304,6 @@ public class ForumController : BaseController
                 }
 
                 await _boardService.IncrementBoardViewAsync(boardId ?? 0);
-                BoardAttachedFileResponse boardAttachedFile = boardAttachedFiles.FirstOrDefault(m => m.BoardId == boardId);
 
                 #region Encrypt img tag file path
                 HtmlDocument htmlDocument = new();
@@ -386,8 +378,8 @@ public class ForumController : BaseController
                 }
 
                 // Preload comments and accounts for detail view
-                freeForumOutputViewModel.DetailBoardComments = (await _boardCommentRepository.GetOneBoardCommentsAsync(boardId ?? 0))?.ToList() ?? [];
-                freeForumOutputViewModel.AllAccounts = await _accountRepository.GetAllAsync() ?? [];
+                freeForumOutputViewModel.DetailBoardComments = (await _boardService.GetCommentsByBoardIdAsync(boardId ?? 0))?.ToList() ?? [];
+                freeForumOutputViewModel.AllAccounts = await _accountService.GetAllAccountsAsync() ?? [];
                 freeForumOutputViewModel.LoginedAccount = _sessionService.GetAccount() ?? new AccountResponse { Role = Role.Anonymous };
                 freeForumOutputViewModel.LoginedAccountTimeZoneIanaId = freeForumOutputViewModel.LoginedAccount.TimeZoneIanaId ?? "";
 
@@ -412,22 +404,20 @@ public class ForumController : BaseController
                 EditBoardId = boardId ?? default
             };
 
-            IEnumerable<BoardResponse> freeBoards = await _boardRepository.GetOneTypeBoardsAsync(EnumHelper.GetDescription(BoardType.FreeForum));
-            freeBoards = freeBoards.Where(m => m.Deleted == false).OrderByDescending(a => a.Id);
-            List<BoardAttachedFileResponse> boardAttachedFiles = await _boardAttachedFileRepository.GetAllAsync();
+            BoardResponse? freeBoard = await _boardService.GetBoardByIdAsync(boardId ?? 0);
+            BoardAttachedFileResponse? boardAttachedFile = await _boardService.GetAttachedFileByBoardIdAsync(boardId ?? 0);
 
             try
             {
-                BoardResponse freeBoard = freeBoards.FirstOrDefault(m => m.Id == boardId);
+                if (freeBoard == null || freeBoard.Deleted)
+                    return RedirectToAction("FreeForum", "Forum");
 
-                AccountResponse loginedAccount = await _accountRepository.GetAccountByEmailAsync(_sessionService.GetAccount()!.Email);
+                AccountResponse loginedAccount = _sessionService.GetAccount()!;
 
                 if (freeBoard.Writer != loginedAccount.Nickname) // If writer and logged-in user are not the same
                 {
                     return RedirectToAction("FreeForum", "Forum");
                 }
-
-                BoardAttachedFileResponse boardAttachedFile = boardAttachedFiles.FirstOrDefault(m => m.BoardId == boardId);
 
                 #region Encrypt img tag file path
                 HtmlDocument htmlDocument = new();
@@ -521,8 +511,8 @@ public class ForumController : BaseController
             #endregion
 
             #region Logic to get all related board data
-            IEnumerable<BoardResponse> freeBoards = await _boardRepository.GetOneTypeBoardsAsync(EnumHelper.GetDescription(BoardType.FreeForum));
-            freeBoards = freeBoards.Where(m => m.Deleted == false && m.Noticed == false).OrderByDescending(a => a.Id);
+            IEnumerable<BoardResponse> allFreeBoards = await _boardService.GetBoardsAsync(EnumHelper.GetDescription(BoardType.FreeForum));
+            IEnumerable<BoardResponse> freeBoards = allFreeBoards.Where(m => m.Deleted == false && m.Noticed == false).OrderByDescending(a => a.Id);
             #endregion
 
             #region Search keyword logic
@@ -566,7 +556,7 @@ public class ForumController : BaseController
             FreeForumOutputViewModel freeForumOutputViewModel = new();
 
             #region Notice
-            freeForumOutputViewModel.NoticeBoards = (await _boardRepository.GetOneTypeBoardsAsync(EnumHelper.GetDescription(BoardType.FreeForum))).Where(m => m.Deleted == false && m.Noticed == true).OrderByDescending(a => a.Id);
+            freeForumOutputViewModel.NoticeBoards = allFreeBoards.Where(m => m.Deleted == false && m.Noticed == true).OrderByDescending(a => a.Id);
             #endregion
 
             #region Board list
@@ -584,21 +574,26 @@ public class ForumController : BaseController
             #region Preload comment counts and attached files for view
             freeForumOutputViewModel.LoginedAccount = _sessionService.GetAccount() ?? new AccountResponse { Role = Role.Anonymous };
             freeForumOutputViewModel.LoginedAccountTimeZoneIanaId = freeForumOutputViewModel.LoginedAccount.TimeZoneIanaId ?? "";
-            freeForumOutputViewModel.AllAccounts = await _accountRepository.GetAllAsync() ?? [];
-            List<BoardAttachedFileResponse> allAttachedFiles = await _boardAttachedFileRepository.GetAllAsync() ?? [];
+            freeForumOutputViewModel.AllAccounts = await _accountService.GetAllAccountsAsync() ?? [];
+
+            List<long> allBoardIds = freeForumOutputViewModel.NoticeBoards.Select(b => b.Id)
+                .Concat(freeForumOutputViewModel.Boards.Select(b => b.Id))
+                .Distinct().ToList();
+
+            Dictionary<long, int> commentCounts = await _boardService.GetCommentCountsForBoardsAsync(allBoardIds);
+            Dictionary<long, BoardAttachedFileResponse?> attachedFiles = await _boardService.GetAttachedFilesForBoardsAsync(allBoardIds);
+
             foreach (var board in freeForumOutputViewModel.NoticeBoards)
             {
-                freeForumOutputViewModel.CommentCountByBoardId[board.Id] =
-                    (await _boardCommentRepository.GetOneBoardCommentsAsync(board.Id))?.Count(c => !c.Deleted) ?? 0;
-                freeForumOutputViewModel.AttachedFilesByBoardId[board.Id] =
-                    allAttachedFiles.Where(f => f.BoardId == board.Id && !string.IsNullOrEmpty(f.Name)).ToList();
+                freeForumOutputViewModel.CommentCountByBoardId[board.Id] = commentCounts.GetValueOrDefault(board.Id, 0);
+                BoardAttachedFileResponse? af = attachedFiles.GetValueOrDefault(board.Id);
+                freeForumOutputViewModel.AttachedFilesByBoardId[board.Id] = af != null && !string.IsNullOrEmpty(af.Name) ? [af] : [];
             }
             foreach (var board in freeForumOutputViewModel.Boards)
             {
-                freeForumOutputViewModel.CommentCountByBoardId[board.Id] =
-                    (await _boardCommentRepository.GetOneBoardCommentsAsync(board.Id))?.Count(c => !c.Deleted) ?? 0;
-                freeForumOutputViewModel.AttachedFilesByBoardId[board.Id] =
-                    allAttachedFiles.Where(f => f.BoardId == board.Id && !string.IsNullOrEmpty(f.Name)).ToList();
+                freeForumOutputViewModel.CommentCountByBoardId[board.Id] = commentCounts.GetValueOrDefault(board.Id, 0);
+                BoardAttachedFileResponse? af = attachedFiles.GetValueOrDefault(board.Id);
+                freeForumOutputViewModel.AttachedFilesByBoardId[board.Id] = af != null && !string.IsNullOrEmpty(af.Name) ? [af] : [];
             }
             #endregion
 
@@ -618,21 +613,11 @@ public class ForumController : BaseController
     {
         try
         {
-            IEnumerable<BoardResponse> freeBoards = await _boardRepository.GetOneTypeBoardsAsync(EnumHelper.GetDescription(BoardType.FreeForum));
-            freeBoards = freeBoards.Where(m => m.Deleted == false).OrderByDescending(a => a.Id);
+            BoardResponse? board = await _boardService.GetBoardByIdAsync(id);
 
-            if (freeBoards == null)
-            {
-                return Json(new { result = false, error = _localizer["No freeBoard exists"].Value });
-            }
-            else
-            {
-                BoardResponse tempFreeBoard = freeBoards.Where(a => a.Id == id).FirstOrDefault();
-
-                return tempFreeBoard == null
-                    ? Json(new { result = false, error = _localizer["Input is invalid"].Value })
-                    : (IActionResult)Json(new { result = true, freeBoard = tempFreeBoard });
-            }
+            return board == null || board.Deleted
+                ? Json(new { result = false, error = _localizer["Input is invalid"].Value })
+                : Json(new { result = true, freeBoard = board });
         }
         catch
         {
@@ -745,8 +730,7 @@ public class ForumController : BaseController
     {
         try
         {
-            AccountResponse loginedAccount = await _accountRepository.GetAccountByEmailAsync(
-                _sessionService.GetAccount()!.Email);
+            AccountResponse loginedAccount = _sessionService.GetAccount()!;
 
             ServiceResult result = await _boardService.DeleteBoardAsync(
                 boardInputViewModel.Id,
@@ -774,8 +758,7 @@ public class ForumController : BaseController
     {
         try
         {
-            AccountResponse loginedAccount = await _accountRepository.GetAccountByEmailAsync(
-                _sessionService.GetAccount()!.Email);
+            AccountResponse loginedAccount = _sessionService.GetAccount()!;
 
             ServiceResult result = await _boardService.DeleteCommentAsync(
                 id,

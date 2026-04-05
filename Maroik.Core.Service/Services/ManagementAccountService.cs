@@ -21,6 +21,12 @@ public class ManagementAccountService : IManagementAccountService
         _logger = logger;
     }
 
+    public async Task<List<AccountResponse>> GetAllAccountsAsync()
+        => await _accountRepository.GetAllAsync();
+
+    public async Task<AccountResponse?> GetAccountByEmailAsync(string email)
+        => await _accountRepository.GetAccountByEmailAsync(email);
+
     public async Task<ServiceResult> CreateAccountAsync(AccountRequest request)
     {
         try

@@ -21,6 +21,9 @@ public class ProfileService : IProfileService
         _logger = logger;
     }
 
+    public async Task<AccountResponse?> GetProfileAsync(string email)
+        => await _accountRepository.GetAccountByEmailAsync(email);
+
     public async Task<ServiceResult> UpdateAvatarAsync(string email, string avatarPath)
     {
         try

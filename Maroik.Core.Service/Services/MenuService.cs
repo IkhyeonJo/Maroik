@@ -20,6 +20,24 @@ public class MenuService : IMenuService
         _logger = logger;
     }
 
+    public async Task<IEnumerable<CategoryResponse>> GetAllCategoriesAsync()
+        => await _categoryRepository.GetCategoryAsync();
+
+    public async Task<IEnumerable<SubCategoryResponse>> GetAllSubCategoriesAsync()
+        => await _subCategoryRepository.GetSubCategoryAsync();
+
+    public async Task<CategoryResponse?> GetCategoryByIdAsync(int id)
+    {
+        IEnumerable<CategoryResponse> categories = await _categoryRepository.GetCategoryAsync();
+        return categories.FirstOrDefault(c => c.Id == id);
+    }
+
+    public async Task<SubCategoryResponse?> GetSubCategoryByIdAsync(int id)
+    {
+        IEnumerable<SubCategoryResponse> subCategories = await _subCategoryRepository.GetSubCategoryAsync();
+        return subCategories.FirstOrDefault(s => s.Id == id);
+    }
+
     public async Task<ServiceResult> CreateCategoryAsync(CategoryRequest request)
     {
         try

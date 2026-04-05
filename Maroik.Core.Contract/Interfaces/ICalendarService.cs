@@ -4,6 +4,15 @@ namespace Maroik.Core.Contract.Interfaces;
 
 public interface ICalendarService
 {
+    Task<List<CalendarResponse>> GetCalendarsAsync(string email);
+    Task<List<CalendarResponse>> GetAllCalendarsAsync();
+    Task<IEnumerable<CalendarEventResponse>> GetCalendarEventsAsync(long calendarId);
+    Task<CalendarEventResponse?> GetCalendarEventAsync(long id);
+    Task<CalendarEventAttachedFileResponse?> GetCalendarEventAttachedFileAsync(long calendarEventId);
+    Task<IEnumerable<CalendarEventReminderResponse>> GetCalendarEventRemindersAsync(long calendarEventId);
+    Task<List<OtherCalendarResponse>> GetOtherCalendarsAsync(string email);
+    Task<List<CalendarSharedResponse>> GetCalendarSharedAsync();
+    Task<ServiceResult> EnsureCalendarSharedAsync(long calendarId);
     Task<ServiceResult> CreateCalendarAsync(CalendarRequest request);
     Task<ServiceResult> UpdateCalendarAsync(CalendarRequest request);
     Task<ServiceResult> DeleteCalendarAsync(CalendarRequest request);

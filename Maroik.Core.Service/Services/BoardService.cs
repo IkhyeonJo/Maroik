@@ -41,6 +41,24 @@ public class BoardService : IBoardService
         _logger = logger;
     }
 
+    public async Task<IEnumerable<BoardResponse>> GetBoardsAsync(string type)
+        => await _boardRepository.GetOneTypeBoardsAsync(type);
+
+    public async Task<BoardResponse?> GetBoardByIdAsync(long id)
+        => await _boardRepository.GetBoardByIdAsync(id);
+
+    public async Task<BoardAttachedFileResponse?> GetAttachedFileByBoardIdAsync(long boardId)
+        => await _boardAttachedFileRepository.GetByBoardIdAsync(boardId);
+
+    public async Task<Dictionary<long, BoardAttachedFileResponse?>> GetAttachedFilesForBoardsAsync(IEnumerable<long> boardIds)
+        => await _boardAttachedFileRepository.GetByBoardIdsAsync(boardIds);
+
+    public async Task<IEnumerable<BoardCommentResponse>> GetCommentsByBoardIdAsync(long boardId)
+        => await _boardCommentRepository.GetOneBoardCommentsAsync(boardId);
+
+    public async Task<Dictionary<long, int>> GetCommentCountsForBoardsAsync(IEnumerable<long> boardIds)
+        => await _boardCommentRepository.GetCommentCountsByBoardIdsAsync(boardIds);
+
     public async Task<ServiceResult> WriteBoardAsync(BoardRequest request, AttachedFileInfo? attachedFile)
     {
         await _unitOfWork.BeginAsync();
@@ -83,10 +101,9 @@ public class BoardService : IBoardService
         await _unitOfWork.BeginAsync();
         try
         {
-            IEnumerable<BoardResponse> boards = await _boardRepository.GetOneTypeBoardsAsync(request.Type ?? "");
-            BoardResponse? board = boards.FirstOrDefault(b => b.Id == request.Id && !b.Deleted);
+            BoardResponse? board = await _boardRepository.GetBoardByIdAsync(request.Id);
 
-            if (board == null)
+            if (board == null || board.Deleted)
             {
                 await _unitOfWork.RollbackAsync();
                 return ServiceResult.Fail("Input is invalid");
@@ -106,8 +123,7 @@ public class BoardService : IBoardService
 
             await _boardRepository.UpdateBoardAsync(board.Adapt<BoardRequest>());
 
-            List<BoardAttachedFileResponse> allAttached = await _boardAttachedFileRepository.GetAllAsync();
-            BoardAttachedFileResponse? previous = allAttached.FirstOrDefault(f => f.BoardId == request.Id);
+            BoardAttachedFileResponse? previous = await _boardAttachedFileRepository.GetByBoardIdAsync(request.Id);
 
             await HandleAttachmentAsync(request.Type!, request.Id, previous, newFile);
 
@@ -126,10 +142,9 @@ public class BoardService : IBoardService
     {
         try
         {
-            IEnumerable<BoardResponse> boards = await _boardRepository.GetOneTypeBoardsAsync(boardType);
-            BoardResponse? board = boards.FirstOrDefault(b => b.Id == boardId && !b.Deleted);
+            BoardResponse? board = await _boardRepository.GetBoardByIdAsync(boardId);
 
-            if (board == null)
+            if (board == null || board.Deleted)
                 return ServiceResult.Fail("Input is invalid");
 
             if (board.Writer != requesterNickname && !isAdmin)
@@ -146,13 +161,16 @@ public class BoardService : IBoardService
         }
     }
 
-    public async Task<ServiceResult> WriteCommentAsync(BoardCommentRequest request)
+    public async Task<ServiceResult> WriteCommentAsync(BoardCommentRequest request, string? requiredOwnerNickname = null)
     {
         try
         {
             BoardResponse? board = await _boardRepository.GetBoardByIdAsync(request.BoardId);
             if (board == null)
                 return ServiceResult.Fail("Input is invalid");
+
+            if (requiredOwnerNickname != null && board.Writer != requiredOwnerNickname)
+                return ServiceResult.Fail("You do not have permission to write a comment.");
 
             IEnumerable<BoardCommentResponse> existing = await _boardCommentRepository.GetOneBoardCommentsAsync(request.BoardId);
             request.Order = existing?.Count() ?? 0;

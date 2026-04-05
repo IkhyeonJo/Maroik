@@ -21,23 +21,13 @@ public class CalendarController : BaseController
     private readonly IRSAService _rsa;
     private readonly IHtmlLocalizer<CalendarController> _localizer;
     private readonly ILogger<CalendarController> _logger;
-    private readonly IIncomeRepository _incomeRepository;
-    private readonly IExpenditureRepository _expenditureRepository;
-    private readonly IAssetRepository _assetRepository;
-    private readonly IAccountRepository _accountRepository;
-    private readonly ICalendarRepository _calendarRepository;
-    private readonly IOtherCalendarRepository _otherCalendarRepository;
-    private readonly ICalendarEventRepository _calendarEventRepository;
-    private readonly ICalendarEventAttachedFileRepository _calendarEventAttachedFileRepository;
-    private readonly ICalendarEventReminderRepository _calendarReminderRepository;
-    private readonly ICalendarSharedRepository _calendarSharedRepository;
     private readonly IHostEnvironment _hostEnvironment;
     private readonly IFileClient _fileClient;
     private readonly ICalendarService _calendarService;
     private readonly IOptions<ServerSetting> _settings;
     private readonly ISessionService _sessionService;
 
-    public CalendarController(IHtmlLocalizer<CalendarController> localizer, ILogger<CalendarController> logger, IHostEnvironment hostEnvironment, ICalendarService calendarService, IIncomeRepository incomeRepository, IExpenditureRepository expenditureRepository, IAssetRepository assetRepository, IAccountRepository accountRepository, ICalendarRepository calendarRepository, IOtherCalendarRepository otherCalendarRepository, ICalendarEventRepository calendarEventRepository, ICalendarEventAttachedFileRepository calendarEventAttachedFileRepository, ICalendarEventReminderRepository calendarReminderRepository, ICalendarSharedRepository calendarSharedRepository, IFileClient fileClient, IOptions<ServerSetting> settings, IRSAService rsa, ISessionService sessionService)
+    public CalendarController(IHtmlLocalizer<CalendarController> localizer, ILogger<CalendarController> logger, IHostEnvironment hostEnvironment, ICalendarService calendarService, IFileClient fileClient, IOptions<ServerSetting> settings, IRSAService rsa, ISessionService sessionService)
     {
         _settings = settings;
         _rsa = rsa;
@@ -46,16 +36,6 @@ public class CalendarController : BaseController
         _logger = logger;
         _hostEnvironment = hostEnvironment;
         _calendarService = calendarService;
-        _incomeRepository = incomeRepository;
-        _expenditureRepository = expenditureRepository;
-        _assetRepository = assetRepository;
-        _accountRepository = accountRepository;
-        _calendarRepository = calendarRepository;
-        _otherCalendarRepository = otherCalendarRepository;
-        _calendarEventRepository = calendarEventRepository;
-        _calendarEventAttachedFileRepository = calendarEventAttachedFileRepository;
-        _calendarReminderRepository = calendarReminderRepository;
-        _calendarSharedRepository = calendarSharedRepository;
         _fileClient = fileClient;
     }
 
@@ -355,20 +335,18 @@ public class CalendarController : BaseController
         CalendarOutputViewModel calendarOutputViewModel = new();
 
         #region Load Calendar
-        List<CalendarResponse> calendars = await _calendarRepository.GetCalendarsAsync(loginedAccount.Email) ?? [];
+        List<CalendarResponse> calendars = await _calendarService.GetCalendarsAsync(loginedAccount.Email);
 
         if (calendars.Count == 0)
         {
-            calendars.Add(new CalendarResponse
+            await _calendarService.EnsureDefaultCalendarAsync(new CalendarRequest
             {
                 AccountEmail = loginedAccount.Email,
                 Name = loginedAccount.Nickname,
                 TimeZoneIanaId = loginedAccount.TimeZoneIanaId,
-                HtmlColorCode = "#fc330e", // Default Html Color Code
-                Created = DateTime.UtcNow,
-                Updated = DateTime.UtcNow
+                HtmlColorCode = "#fc330e" // Default Html Color Code
             });
-            await _calendarRepository.CreateCalendarAsync(calendars[0].Adapt<CalendarRequest>());
+            calendars = await _calendarService.GetCalendarsAsync(loginedAccount.Email);
         }
         #endregion
 
@@ -377,7 +355,7 @@ public class CalendarController : BaseController
 
         foreach (CalendarResponse calendar in calendars)
         {
-            foreach (CalendarEventResponse calendarEvent in await _calendarEventRepository.GetCalendarEventsAsync(calendar.Id) ?? [])
+            foreach (CalendarEventResponse calendarEvent in await _calendarService.GetCalendarEventsAsync(calendar.Id) ?? [])
             {
                 CalendarEventOutputViewModel item = new()
                 {
@@ -546,20 +524,18 @@ public class CalendarController : BaseController
         CalendarOutputViewModel calendarOutputViewModel = new();
 
         #region Load Calendar
-        List<CalendarResponse> calendars = await _calendarRepository.GetCalendarsAsync(loginedAccount.Email) ?? [];
+        List<CalendarResponse> calendars = await _calendarService.GetCalendarsAsync(loginedAccount.Email);
 
         if (calendars.Count == 0)
         {
-            calendars.Add(new CalendarResponse
+            await _calendarService.EnsureDefaultCalendarAsync(new CalendarRequest
             {
                 AccountEmail = loginedAccount.Email,
                 Name = loginedAccount.Nickname,
                 TimeZoneIanaId = loginedAccount.TimeZoneIanaId,
-                HtmlColorCode = "#fc330e", // Default Html Color Code
-                Created = DateTime.UtcNow,
-                Updated = DateTime.UtcNow
+                HtmlColorCode = "#fc330e" // Default Html Color Code
             });
-            await _calendarRepository.CreateCalendarAsync(calendars[0].Adapt<CalendarRequest>());
+            calendars = await _calendarService.GetCalendarsAsync(loginedAccount.Email);
         }
         #endregion
 
@@ -568,7 +544,7 @@ public class CalendarController : BaseController
 
         foreach (CalendarResponse calendar in calendars)
         {
-            foreach (CalendarEventResponse calendarEvent in await _calendarEventRepository.GetCalendarEventsAsync(calendar.Id) ?? [])
+            foreach (CalendarEventResponse calendarEvent in await _calendarService.GetCalendarEventsAsync(calendar.Id) ?? [])
             {
                 CalendarEventOutputViewModel item = new()
                 {
@@ -707,10 +683,10 @@ public class CalendarController : BaseController
         #region Load OtherCalendar
         List<CalendarResponse> otherCalendars = [];
 
-        List<CalendarResponse> allCalendars = await _calendarRepository.GetAllCalendarsAsync() ?? [];
+        List<CalendarResponse> allCalendars = await _calendarService.GetAllCalendarsAsync();
 
         var tempOtherCalendars = (from calendar in allCalendars
-                                  join otherCalendar in await _otherCalendarRepository.GetOtherCalendarsAsync(loginedAccount.Email) ?? []
+                                  join otherCalendar in await _calendarService.GetOtherCalendarsAsync(loginedAccount.Email)
                                   on calendar.Id equals otherCalendar.CalendarId
                                   select new
                                   {
@@ -730,7 +706,7 @@ public class CalendarController : BaseController
 
         foreach (CalendarResponse otherCalendar in otherCalendars)
         {
-            foreach (CalendarEventResponse otherCalendarEvent in await _calendarEventRepository.GetCalendarEventsAsync(otherCalendar.Id) ?? [])
+            foreach (CalendarEventResponse otherCalendarEvent in await _calendarService.GetCalendarEventsAsync(otherCalendar.Id) ?? [])
             {
                 CalendarEventOutputViewModel item = new()
                 {
@@ -903,10 +879,10 @@ public class CalendarController : BaseController
         #region Load OtherCalendar
         List<CalendarResponse> otherCalendars = [];
 
-        List<CalendarResponse> allCalendars = await _calendarRepository.GetAllCalendarsAsync() ?? [];
+        List<CalendarResponse> allCalendars = await _calendarService.GetAllCalendarsAsync();
 
         var tempOtherCalendars = (from calendar in allCalendars
-                                  join calendarShared in (await _calendarSharedRepository?.GetCalendarSharedAsync())?.Where(x => x.Anonymous)?.ToList() ?? []
+                                  join calendarShared in (await _calendarService.GetCalendarSharedAsync()).Where(x => x.Anonymous).ToList()
                                   on calendar.Id equals calendarShared.CalendarId
                                   select new
                                   {
@@ -926,7 +902,7 @@ public class CalendarController : BaseController
 
         foreach (CalendarResponse otherCalendar in otherCalendars)
         {
-            foreach (CalendarEventResponse otherCalendarEvent in await _calendarEventRepository.GetCalendarEventsAsync(otherCalendar.Id) ?? [])
+            foreach (CalendarEventResponse otherCalendarEvent in await _calendarService.GetCalendarEventsAsync(otherCalendar.Id) ?? [])
             {
                 CalendarEventOutputViewModel item = new()
                 {
@@ -1095,7 +1071,7 @@ public class CalendarController : BaseController
     {
         try
         {
-            List<CalendarResponse> tempCalendars = await _calendarRepository.GetCalendarsAsync(_sessionService.GetAccount()!.Email) ?? [];
+            List<CalendarResponse> tempCalendars = await _calendarService.GetCalendarsAsync(_sessionService.GetAccount()!.Email);
 
             if (tempCalendars == null || tempCalendars.Count == 0)
             {
@@ -1124,7 +1100,7 @@ public class CalendarController : BaseController
     {
         try
         {
-            List<CalendarResponse> calendars = (await _calendarRepository.GetCalendarsAsync(_sessionService.GetAccount()!.Email) ?? [])?.ToList();
+            List<CalendarResponse> calendars = await _calendarService.GetCalendarsAsync(_sessionService.GetAccount()!.Email);
 
             return Json(new { result = true, calendars });
         }
@@ -1145,8 +1121,8 @@ public class CalendarController : BaseController
             bool isAccountSessionExist = _sessionService.GetAccount() != null;
             if (isAccountSessionExist)
             {
-                List<CalendarResponse> calendars = await _calendarRepository.GetAllCalendarsAsync();
-                List<OtherCalendarResponse> otherCalendars = (await _otherCalendarRepository.GetOtherCalendarsAsync(_sessionService.GetAccount()!.Email) ?? [])?.ToList();
+                List<CalendarResponse> calendars = await _calendarService.GetAllCalendarsAsync();
+                List<OtherCalendarResponse> otherCalendars = await _calendarService.GetOtherCalendarsAsync(_sessionService.GetAccount()!.Email);
 
                 List<CalendarResponse> tempOtherCalendars = (from calendar in calendars
                                                      join otherCalendar in otherCalendars
@@ -1163,8 +1139,8 @@ public class CalendarController : BaseController
             else
             {
                 List<CalendarResponse> tempOtherCalendars = [];
-                var temporaryOtherCalendars = (from calendar in await _calendarRepository.GetAllCalendarsAsync() ?? []
-                                               join calendarShared in (await _calendarSharedRepository?.GetCalendarSharedAsync())?.Where(x => x.Anonymous)?.ToList() ?? []
+                var temporaryOtherCalendars = (from calendar in await _calendarService.GetAllCalendarsAsync()
+                                               join calendarShared in (await _calendarService.GetCalendarSharedAsync()).Where(x => x.Anonymous).ToList()
                                                on calendar.Id equals calendarShared.CalendarId
                                                select new
                                                {

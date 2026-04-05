@@ -40,6 +40,49 @@ public class CalendarService : ICalendarService
         _settings = settings;
     }
 
+    public async Task<List<CalendarResponse>> GetCalendarsAsync(string email)
+        => await _calendarRepository.GetCalendarsAsync(email);
+
+    public async Task<List<CalendarResponse>> GetAllCalendarsAsync()
+        => await _calendarRepository.GetAllCalendarsAsync();
+
+    public async Task<IEnumerable<CalendarEventResponse>> GetCalendarEventsAsync(long calendarId)
+        => await _calendarEventRepository.GetCalendarEventsAsync(calendarId);
+
+    public async Task<CalendarEventResponse?> GetCalendarEventAsync(long id)
+        => await _calendarEventRepository.GetCalendarEventAsync(id);
+
+    public async Task<CalendarEventAttachedFileResponse?> GetCalendarEventAttachedFileAsync(long calendarEventId)
+        => await _calendarEventAttachedFileRepository.GetCalendarEventAttachedFileAsync(calendarEventId);
+
+    public async Task<IEnumerable<CalendarEventReminderResponse>> GetCalendarEventRemindersAsync(long calendarEventId)
+        => await _calendarEventReminderRepository.GetCalendarEventRemindersAsync(calendarEventId);
+
+    public async Task<List<OtherCalendarResponse>> GetOtherCalendarsAsync(string email)
+        => await _otherCalendarRepository.GetOtherCalendarsAsync(email);
+
+    public async Task<List<CalendarSharedResponse>> GetCalendarSharedAsync()
+        => await _calendarSharedRepository.GetCalendarSharedAsync();
+
+    public async Task<ServiceResult> EnsureCalendarSharedAsync(long calendarId)
+    {
+        try
+        {
+            List<CalendarSharedResponse> shareds = await _calendarSharedRepository.GetCalendarSharedAsync();
+            if (!shareds.Any(s => s.CalendarId == calendarId))
+            {
+                await _calendarSharedRepository.CreateCalendarSharedAsync(new CalendarSharedRequest
+                {
+                    CalendarId = calendarId,
+                    User = false,
+                    Anonymous = false
+                });
+            }
+            return ServiceResult.Ok();
+        }
+        catch { return ServiceResult.Fail("Input is invalid"); }
+    }
+
     public async Task<ServiceResult> CreateCalendarAsync(CalendarRequest request)
     {
         try
