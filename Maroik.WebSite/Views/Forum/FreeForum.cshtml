@@ -121,11 +121,11 @@
                 </div>
                 <div class="card-footer bg-dark">
                     <div class="float-right">
-                        @if (loginedAccount.Nickname == Model.BoardOutputViewModel.Writer)@*방문한 사람이 작성자인 경우*@
+                        @if (loginedAccount.Nickname == Model.BoardOutputViewModel.Writer)@*If the visitor is the author*@
                         {
                             <button id="btnFreeForumModify" type="button" class="btn btn-primary" data-link="@Url.Action("FreeForum", "Forum", new { method = "edit", boardId = Model.DetailBoardId, page = Model.DetailCurrentPage })">@localizer["Modify"].Value</button>
                         }
-                        @if ((loginedAccount.Nickname == Model.BoardOutputViewModel.Writer) || loginedAccount.Role == Role.Admin)@*방문한 사람이 작성자 또는 관리자인 경우*@
+                        @if ((loginedAccount.Nickname == Model.BoardOutputViewModel.Writer) || loginedAccount.Role == Role.Admin)@*If the visitor is the author or admin*@
                         {
                             <button id="btnFreeForumConfirmDeleteBoard" type="button" class="btn btn-danger">@localizer["Delete"].Value</button>
                         }
@@ -138,7 +138,7 @@
                     {
                         if (!comment.Deleted)
                         {
-                            @if (Model.BoardOutputViewModel.Writer == comment.Writer) @*게시물 작성자와 댓글 작성자가 같으면 배경색 변경*@
+                            @if (Model.BoardOutputViewModel.Writer == comment.Writer) @*Change background color if the commenter is the post author*@
                             {
                                 <div class="card-comment" style="background-color:#003366;">
                                     <img class="img-circle img-sm" src="@(comment.AvatarImagePath)" alt="">
@@ -146,7 +146,7 @@
                                     <div class="comment-text">
                                         <span class="username">
 
-                                            @if (accounts.Where(m => m.Role == Role.Admin).Where(m => m.Nickname == comment.Writer).FirstOrDefault() != null)@*관리자가 쓴 댓글인 경우*@
+                                            @if (accounts.Where(m => m.Role == Role.Admin).Where(m => m.Nickname == comment.Writer).FirstOrDefault() != null)@*If the comment was written by an admin*@
                                             {
                                                 <span style="font-weight:bold; color:green;">@comment.Writer</span>
                                             }
@@ -172,7 +172,7 @@
 
                                             }
 
-                                            @if (loginedAccount.Nickname == comment.Writer || loginedAccount.Role == Role.Admin)@*작성자 또는 관리자인 경우*@
+                                            @if (loginedAccount.Nickname == comment.Writer || loginedAccount.Role == Role.Admin)@*If the visitor is the author or admin*@
                                             {
                                                 <span class="text-muted float-right" style="margin: 0px 0px 0px 3px"><a class="hover aFreeForumDeleteComment" href="#" data-commentId="@(comment.Id)" data-detailBoardId="@(Model.DetailBoardId)" data-detailCurrentPage="@(Model.DetailCurrentPage)">@localizer["Delete"].Value</a></span>
                                             }
@@ -189,7 +189,7 @@
                                     <div class="comment-text">
                                         <span class="username">
 
-                                            @if (accounts.Where(m => m.Role == Role.Admin).Where(m => m.Nickname == comment.Writer).FirstOrDefault() != null)@*관리자가 쓴 댓글인 경우*@
+                                            @if (accounts.Where(m => m.Role == Role.Admin).Where(m => m.Nickname == comment.Writer).FirstOrDefault() != null)@*If the comment was written by an admin*@
                                             {
                                                 <span style="font-weight:bold; color:green;">@comment.Writer</span>
                                             }
@@ -215,7 +215,7 @@
 
                                             }
 
-                                            @if (loginedAccount.Nickname == comment.Writer || loginedAccount.Role == Role.Admin)@*작성자 또는 관리자인 경우*@
+                                            @if (loginedAccount.Nickname == comment.Writer || loginedAccount.Role == Role.Admin)@*If the visitor is the author or admin*@
                                             {
                                                 <span class="text-muted float-right" style="margin: 0px 0px 0px 3px"><a class="hover aFreeForumDeleteComment" href="#" data-commentId="@(comment.Id)" data-detailBoardId="@(Model.DetailBoardId)" data-detailCurrentPage="@(Model.DetailCurrentPage)">@localizer["Delete"].Value</a></span>
                                             }
@@ -371,7 +371,7 @@
                                     <td style="color:green;font-weight:bold;">@localizer["Notice"]</td>
                                     @if (noticeBoard.Locked)
                                     {
-                                        @if (loginedAccount.Nickname == noticeBoard.Writer || loginedAccount.Role == Role.Admin)@*작성자 또는 관리자인 경우*@
+                                        @if (loginedAccount.Nickname == noticeBoard.Writer || loginedAccount.Role == Role.Admin)@*If the visitor is the author or admin*@
                                         {
                                             <td><i class="fa fa-lock-open" aria-hidden="true"></i>@Html.ActionLink($"{noticeBoard.Title} [{commentsOfUndeletedSelectedBoardCount}]", "FreeForum", new {method = "detail", boardId = noticeBoard.Id, page = Model.Pager.CurrentPage}, new { style = "color: green; font-weight: bold;" })</td>
                                         }
@@ -420,7 +420,7 @@
                                     <td>@localizer["Free Forum"]</td>
                                     @if (board.Locked)
                                     {
-                                        @if (loginedAccount.Nickname == board.Writer || loginedAccount.Role == Role.Admin)@*작성자 또는 관리자인 경우*@
+                                        @if (loginedAccount.Nickname == board.Writer || loginedAccount.Role == Role.Admin)@*If the visitor is the author or admin*@
                                         {
                                             <td><i class="fa fa-lock-open" aria-hidden="true"></i> @Html.ActionLink($"{board.Title} [{commentsOfUndeletedSelectedBoardCount}]", "FreeForum", new {method = "detail", boardId = board.Id, page = Model.Pager.CurrentPage})</td>
                                         }
@@ -434,7 +434,7 @@
                                         <td>@Html.ActionLink($"{board.Title} [{commentsOfUndeletedSelectedBoardCount}]", "FreeForum", new {method = "detail", boardId = board.Id, page = Model.Pager.CurrentPage})</td>
                                     }
 
-                                    @if (accounts.Where(m => m.Role == Role.Admin).Where(m => m.Nickname == board.Writer).FirstOrDefault() != null) @*관리자가 쓴 게시물인 경우*@
+                                    @if (accounts.Where(m => m.Role == Role.Admin).Where(m => m.Nickname == board.Writer).FirstOrDefault() != null) @*If the post was written by an admin*@
                                     {
                                         <td><span style="font-weight:bold; color:green;">@board.Writer</span></td>
                                     }

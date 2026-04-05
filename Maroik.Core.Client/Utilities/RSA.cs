@@ -14,13 +14,13 @@ namespace Maroik.Core.Client.Utilities;
 //var dd = rsa.Verify(plaintext, cc);
 #endregion
 /// <summary>
-/// RSA加解密 使用OpenSSL的公钥加密/私钥解密
-/// 
-/// 公私钥请使用openssl生成  ssh-keygen -t rsa 命令生成的公钥私钥是不行的
-/// 
-/// 作者：李志强
-/// 时间：2017年10月30日15:50:14
-/// QQ:501232752
+/// RSA encryption/decryption using OpenSSL public key encryption / private key decryption.
+///
+/// Public/private keys must be generated with openssl. Keys generated via ssh-keygen -t rsa are NOT compatible.
+///
+/// Author: Li Zhiqiang
+/// Date: 2017-10-30 15:50:14
+/// QQ: 501232752
 /// </summary>
 public class RSA
 {
@@ -30,12 +30,12 @@ public class RSA
     private readonly Encoding _encoding;
 
     /// <summary>
-    /// 实例化RSAHelper
+    /// Instantiate RSAHelper.
     /// </summary>
-    /// <param name="rsaType">加密算法类型 RSA SHA1;RSA2 SHA256 密钥长度至少为2048</param>
-    /// <param name="encoding">编码类型</param>
-    /// <param name="privateKey">私钥</param>
-    /// <param name="publicKey">公钥</param>
+    /// <param name="rsaType">Encryption algorithm type: RSA=SHA1, RSA2=SHA256. Key length must be at least 2048 bits.</param>
+    /// <param name="encoding">Encoding type.</param>
+    /// <param name="privateKey">Private key.</param>
+    /// <param name="publicKey">Public key.</param>
     public RSA(RSAType rsaType, Encoding encoding, string privateKey, string? publicKey = null)
     {
         _encoding = encoding;
@@ -52,12 +52,12 @@ public class RSA
         _hashAlgorithmName = rsaType == RSAType.RSA ? HashAlgorithmName.SHA1 : HashAlgorithmName.SHA256;
     }
 
-    #region 使用私钥签名
+    #region Sign with private key
 
     /// <summary>
-    /// 使用私钥签名
+    /// Sign with private key.
     /// </summary>
-    /// <param name="data">原始数据</param>
+    /// <param name="data">Original data.</param>
     /// <returns></returns>
     public string Sign(string data)
     {
@@ -70,13 +70,13 @@ public class RSA
 
     #endregion
 
-    #region 使用公钥验证签名
+    #region Verify signature with public key
 
     /// <summary>
-    /// 使用公钥验证签名
+    /// Verify signature with public key.
     /// </summary>
-    /// <param name="data">原始数据</param>
-    /// <param name="sign">签名</param>
+    /// <param name="data">Original data.</param>
+    /// <param name="sign">Signature.</param>
     /// <returns></returns>
     public bool Verify(string data, string sign)
     {
@@ -90,7 +90,7 @@ public class RSA
 
     #endregion
 
-    #region 解密
+    #region Decrypt
 
     public string Decrypt(string cipherText)
     {
@@ -101,7 +101,7 @@ public class RSA
 
     #endregion
 
-    #region 加密
+    #region Encrypt
 
     public string Encrypt(string text)
     {
@@ -112,7 +112,7 @@ public class RSA
 
     #endregion
 
-    #region 使用私钥创建RSA实例
+    #region Create RSA instance from private key
 
     public System.Security.Cryptography.RSA CreateRsaProviderFromPrivateKey(string privateKey)
     {
@@ -158,7 +158,7 @@ public class RSA
 
     #endregion
 
-    #region 使用公钥创建RSA实例
+    #region Create RSA instance from public key
 
     public System.Security.Cryptography.RSA? CreateRsaProviderFromPublicKey(string publicKeyString)
     {
@@ -280,7 +280,7 @@ public class RSA
 
     #endregion
 
-    #region 导入密钥算法
+    #region Key parsing helpers
 
     private int GetIntegerSize(BinaryReader binr)
     {
@@ -342,7 +342,7 @@ public class RSA
 }
 
 /// <summary>
-/// RSA算法类型
+/// RSA algorithm type.
 /// </summary>
 public enum RSAType
 {
@@ -351,8 +351,7 @@ public enum RSAType
     /// </summary>
     RSA = 0,
     /// <summary>
-    /// RSA2 密钥长度至少为2048
-    /// SHA256
+    /// SHA256. Key length must be at least 2048 bits.
     /// </summary>
     RSA2
 }

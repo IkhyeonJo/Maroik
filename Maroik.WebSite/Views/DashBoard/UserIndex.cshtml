@@ -158,8 +158,8 @@
 @Html.Hidden("localizerOtherExpenses", localizer["OtherExpenses"].Value)
 @Html.Hidden("localizerUnknownExpenditure", localizer["UnknownExpenditure"].Value)
 
-@*수입*@
-@*정기수입*@
+@*Income*@
+@*Regular Income*@
 @Html.Hidden($"{nameof(regularIncomeLaborIncomeYear)}", regularIncomeLaborIncomeYear.TrimTrailingZeros())
 @Html.Hidden($"{nameof(regularIncomeBusinessIncomeYear)}", regularIncomeBusinessIncomeYear.TrimTrailingZeros())
 @Html.Hidden($"{nameof(regularIncomePensionIncomeYear)}", regularIncomePensionIncomeYear.TrimTrailingZeros())
@@ -189,7 +189,7 @@
 @Html.Hidden($"{nameof(percentageOfRegularIncomeRentalIncomeYearMonth)}", $"{percentageOfRegularIncomeRentalIncomeYearMonth:0.00}")
 @Html.Hidden($"{nameof(percentageOfRegularIncomeOtherIncomeYearMonth)}", $"{percentageOfRegularIncomeOtherIncomeYearMonth:0.00}")
 
-@*비정기수입*@
+@*Irregular Income*@
 @Html.Hidden($"{nameof(irregularIncomeLaborIncomeYear)}", irregularIncomeLaborIncomeYear.TrimTrailingZeros())
 @Html.Hidden($"{nameof(irregularIncomeOtherIncomeYear)}", irregularIncomeOtherIncomeYear.TrimTrailingZeros())
 
@@ -203,8 +203,8 @@
 @Html.Hidden($"{nameof(percentageOfIrregularIncomeLaborIncomeYearMonth)}", $"{percentageOfIrregularIncomeLaborIncomeYearMonth:0.00}")
 @Html.Hidden($"{nameof(percentageOfIrregularIncomeOtherIncomeYearMonth)}", $"{percentageOfIrregularIncomeOtherIncomeYearMonth:0.00}")
 
-@*지출*@
-@*정기저축*@
+@*Expenditure*@
+@*Regular Savings*@
 @Html.Hidden($"{nameof(regularSavingsDepositYear)}", regularSavingsDepositYear.TrimTrailingZeros())
 @Html.Hidden($"{nameof(regularSavingsInvestmentYear)}", regularSavingsInvestmentYear.TrimTrailingZeros())
 
@@ -218,7 +218,7 @@
 @Html.Hidden($"{nameof(percentageOfRegularSavingsDepositYearMonth)}", $"{percentageOfRegularSavingsDepositYearMonth:0.00}")
 @Html.Hidden($"{nameof(percentageOfRegularSavingsInvestmentYearMonth)}", $"{percentageOfRegularSavingsInvestmentYearMonth:0.00}")
 
-@*비소비지출*@
+@*Non-Consumer Spending*@
 @Html.Hidden($"{nameof(nonConsumerSpendingPublicPensionYear)}", nonConsumerSpendingPublicPensionYear.TrimTrailingZeros())
 @Html.Hidden($"{nameof(nonConsumerSpendingDebtRepaymentYear)}", nonConsumerSpendingDebtRepaymentYear.TrimTrailingZeros())
 @Html.Hidden($"{nameof(nonConsumerSpendingTaxYear)}", nonConsumerSpendingTaxYear.TrimTrailingZeros())
@@ -248,7 +248,7 @@
 @Html.Hidden($"{nameof(percentageOfNonConsumerSpendingInterHouseholdTransferExpensesYearMonth)}", $"{percentageOfNonConsumerSpendingInterHouseholdTransferExpensesYearMonth:0.00}")
 @Html.Hidden($"{nameof(percentageOfNonConsumerSpendingNonProfitOrganizationTransferYearMonth)}", $"{percentageOfNonConsumerSpendingNonProfitOrganizationTransferYearMonth:0.00}")
 
-@*소비지출*@
+@*Consumer Spending*@
 @Html.Hidden($"{nameof(consumerSpendingMealOrEatOutExpensesYear)}", consumerSpendingMealOrEatOutExpensesYear.TrimTrailingZeros())
 @Html.Hidden($"{nameof(consumerSpendingHousingOrSuppliesCostYear)}", consumerSpendingHousingOrSuppliesCostYear.TrimTrailingZeros())
 @Html.Hidden($"{nameof(consumerSpendingEducationExpensesYear)}", consumerSpendingEducationExpensesYear.TrimTrailingZeros())
