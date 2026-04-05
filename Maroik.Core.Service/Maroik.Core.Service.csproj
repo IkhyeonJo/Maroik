@@ -17,7 +17,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Maroik.Core.Client\Maroik.Core.Client.csproj" />
     <ProjectReference Include="..\Maroik.Core.Contract\Maroik.Core.Contract.csproj" />
   </ItemGroup>
 

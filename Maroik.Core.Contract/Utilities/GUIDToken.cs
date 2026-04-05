@@ -1,4 +1,4 @@
-namespace Maroik.Core.Client.Utilities;
+namespace Maroik.Core.Contract.Utilities;
 
 public class GUIDToken
 {
@@ -6,7 +6,7 @@ public class GUIDToken
     {
         #region Unique token
 
-        //string token = Convert.ToBase64String(Guid.NewGuid().ToByteArray()); 
+        //string token = Convert.ToBase64String(Guid.NewGuid().ToByteArray());
 
         #endregion
 
@@ -31,7 +31,7 @@ public class GUIDToken
         }
         else
         {
-            return true; // token alive 
+            return true; // token alive
         }
     }
 }

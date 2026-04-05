@@ -1,4 +1,4 @@
-﻿using Maroik.Core.Client.Utilities;
+﻿using Maroik.Core.Contract.Utilities;
 using Maroik.Core.Contract.Interfaces;
 
 namespace Maroik.WebSite.Utilities;

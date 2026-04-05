@@ -1,5 +1,5 @@
 #nullable enable
-using Maroik.Core.Client.Utilities;
+using Maroik.Core.Contract.Utilities;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
 using Newtonsoft.Json;

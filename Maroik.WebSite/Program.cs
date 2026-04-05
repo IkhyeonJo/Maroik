@@ -1,9 +1,8 @@
 using Mapster;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.PostgreSQL.Data;
-using Maroik.Core.Repository.Mappings;
 using Maroik.Core.Repository.Repositories;
-using Maroik.Core.Client.Utilities;
+using Maroik.Core.Contract.Utilities;
 using Maroik.WebSite.Utilities;
 using Maroik.WebSite.Extensions;
 using Maroik.Core.Service.Services;
@@ -82,7 +81,10 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 
 #region Mapster
 var globalConfig = TypeAdapterConfig.GlobalSettings;
-globalConfig.Scan(typeof(MappingConfig).Assembly);
+globalConfig.Scan(
+    typeof(Maroik.Core.Repository.Mappings.MappingConfig).Assembly,  // Repository mappings (Entity <-> DTO)
+    typeof(Maroik.WebSite.Mappings.MappingConfig).Assembly            // WebSite mappings (DTO <-> ViewModel)
+);
 builder.Services.AddSingleton(globalConfig);
 #endregion
 
