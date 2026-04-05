@@ -6,6 +6,7 @@ using Maroik.WebSite.Models.ViewModels.Notice;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
+using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using System.Text;
 
@@ -19,9 +20,10 @@ public abstract class BaseController : Controller
         var accountRepo = services.GetRequiredService<IAccountRepository>();
         var fixedIncomeRepo = services.GetRequiredService<IFixedIncomeRepository>();
         var fixedExpenditureRepo = services.GetRequiredService<IFixedExpenditureRepository>();
-
-        bool isSessionExist = HttpContext.Session.TryGetValue(
-            EnumHelper.GetDescription(Session.Account), out byte[] resultByte);
+        var serverSettings = services.GetRequiredService<IOptions<ServerSetting>>();
+        var sessionService = services.GetRequiredService<ISessionService>();
+        int noticeMaturityDateDay = serverSettings.Value.NoticeMaturityDateDay;
+        ViewBag.DomainName = serverSettings.Value.DomainName;
 
         AccountResponse loginedAccount = new()
         {
@@ -33,12 +35,12 @@ public abstract class BaseController : Controller
 
         string loginedAccountTimeZoneIanaId = "UTC";
 
-        if (isSessionExist && resultByte?.Length > 0)
+        var sessionAccount = sessionService.GetAccount();
+        if (sessionAccount != null)
         {
             try
             {
-                string email = JsonConvert.DeserializeObject<AccountResponse>(
-                    Encoding.Default.GetString(resultByte))?.Email ?? "";
+                string email = sessionAccount.Email ?? "";
                 if (!string.IsNullOrEmpty(email))
                 {
                     loginedAccount = await accountRepo.GetAccountByEmailAsync(email) ?? loginedAccount;
@@ -54,7 +56,7 @@ public abstract class BaseController : Controller
         int fixedIncomesNoticedCount = 0, fixedExpenditureNoticedCount = 0;
         int fixedIncomesExpiredCount = 0, fixedExpenditureExpiredCount = 0;
 
-        if (isSessionExist && resultByte?.Length > 0 && loginedAccount.Role == Role.User)
+        if (sessionAccount != null && loginedAccount.Role == Role.User)
         {
             try
             {
@@ -66,7 +68,7 @@ public abstract class BaseController : Controller
                     try
                     {
                         noticed = currentDate.Subtract(new DateTime(currentDate.Year, item.DepositMonth, item.DepositDay)).TotalDays <= 0 &&
-                                  Math.Abs(currentDate.Subtract(new DateTime(currentDate.Year, item.DepositMonth, item.DepositDay)).TotalDays) <= ServerSetting.NoticeMaturityDateDay;
+                                  Math.Abs(currentDate.Subtract(new DateTime(currentDate.Year, item.DepositMonth, item.DepositDay)).TotalDays) <= noticeMaturityDateDay;
                     }
                     catch { noticed = false; }
                     if (item.Unpunctuality) noticed = true;
@@ -80,7 +82,7 @@ public abstract class BaseController : Controller
                     try
                     {
                         noticed = currentDate.Subtract(new DateTime(currentDate.Year, item.DepositMonth, item.DepositDay)).TotalDays <= 0 &&
-                                  Math.Abs(currentDate.Subtract(new DateTime(currentDate.Year, item.DepositMonth, item.DepositDay)).TotalDays) <= ServerSetting.NoticeMaturityDateDay;
+                                  Math.Abs(currentDate.Subtract(new DateTime(currentDate.Year, item.DepositMonth, item.DepositDay)).TotalDays) <= noticeMaturityDateDay;
                     }
                     catch { noticed = false; }
                     if (item.Unpunctuality) noticed = true;

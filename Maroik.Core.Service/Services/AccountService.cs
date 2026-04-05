@@ -2,6 +2,7 @@ using Maroik.Core.Client.Utilities;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
 using Mapster;
+using Microsoft.Extensions.Options;
 
 namespace Maroik.Core.Service.Services;
 
@@ -10,14 +11,16 @@ public class AccountService : IAccountService
     private readonly IAccountRepository _accountRepository;
     private readonly IPasswordService _passwordService;
     private readonly IMailClient _mailClient;
-    private readonly RSA _rsa;
+    private readonly IRSAService _rsa;
+    private readonly IOptions<ServerSetting> _settings;
 
-    public AccountService(IAccountRepository accountRepository, IPasswordService passwordService, IMailClient mailClient)
+    public AccountService(IAccountRepository accountRepository, IPasswordService passwordService, IMailClient mailClient, IOptions<ServerSetting> settings, IRSAService rsa)
     {
         _accountRepository = accountRepository;
         _passwordService = passwordService;
         _mailClient = mailClient;
-        _rsa = new RSA(ServerSetting.RSAAlgorithm, System.Text.Encoding.UTF8, ServerSetting.RSAPrivateKey ?? string.Empty, ServerSetting.RSAPublicKey);
+        _settings = settings;
+        _rsa = rsa;
     }
 
     public async Task<LoginResult> LoginAsync(string email, string password)
@@ -36,7 +39,7 @@ public class AccountService : IAccountService
         if (!_passwordService.VerifyPassword(password, account.HashedPassword ?? ""))
         {
             account.LoginAttempt++;
-            if (account.LoginAttempt == ServerSetting.MaxLoginAttempt)
+            if (account.LoginAttempt == _settings.Value.MaxLoginAttempt)
             {
                 account.Locked = true;
                 account.Message = EnumHelper.GetDescription(AccountMessage.AccountLocked);
@@ -364,13 +367,13 @@ public class AccountService : IAccountService
     private Task<string> SendMailAsync(string to, string subject, string body)
         => _mailClient.SendMailAsync(
             to, subject, body,
-            ServerSetting.SmtpHost ?? string.Empty,
-            ServerSetting.SmtpPort.ToString(),
-            ServerSetting.SmtpUserName ?? string.Empty,
-            ServerSetting.SmtpPassword ?? string.Empty,
-            ServerSetting.SmtpSSL.ToString(),
-            ServerSetting.FromEmail ?? string.Empty,
-            ServerSetting.FromFullName ?? string.Empty);
+            _settings.Value.SmtpHost ?? string.Empty,
+            _settings.Value.SmtpPort.ToString(),
+            _settings.Value.SmtpUserName ?? string.Empty,
+            _settings.Value.SmtpPassword ?? string.Empty,
+            _settings.Value.SmtpSSL.ToString(),
+            _settings.Value.FromEmail ?? string.Empty,
+            _settings.Value.FromFullName ?? string.Empty);
 
     private static bool IsUniqueViolation(Exception e)
         => e.InnerException?.Message?.Contains("23505") == true

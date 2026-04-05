@@ -15,6 +15,7 @@ using Maroik.WebSite.Models.ViewModels.Management;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Localization;
 using Microsoft.AspNetCore.StaticFiles;
+using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using System.Diagnostics;
 using System.Net.Mail;
@@ -25,7 +26,7 @@ namespace Maroik.WebSite.Controllers;
 
 public class ManagementController : BaseController
 {
-    private readonly RSA _rsa;
+    private readonly IRSAService _rsa;
     private readonly IHtmlLocalizer<ManagementController> _localizer;
     private readonly ILogger<ManagementController> _logger;
     private readonly IAccountRepository _accountRepository;
@@ -41,6 +42,8 @@ public class ManagementController : BaseController
     private readonly IManagementAccountService _managementAccountService;
     private readonly IMenuService _menuService;
     private readonly IBoardService _boardService;
+    private readonly IOptions<ServerSetting> _settings;
+    private readonly ISessionService _sessionService;
 
     public ManagementController(IHtmlLocalizer<ManagementController> localizer,
         ILogger<ManagementController> logger, IBoardRepository boardRepository,
@@ -49,9 +52,12 @@ public class ManagementController : BaseController
         ICategoryRepository categoryRepository, ISubCategoryRepository subCategoryRepository,
         IFileClient fileClient, IClamavClient clamavClient,
         IProfileService profileService, IManagementAccountService managementAccountService,
-        IMenuService menuService, IBoardService boardService)
+        IMenuService menuService, IBoardService boardService,
+        IOptions<ServerSetting> settings, IRSAService rsa, ISessionService sessionService)
     {
-        _rsa = new RSA(ServerSetting.RSAAlgorithm, Encoding.UTF8, ServerSetting.RSAPrivateKey, ServerSetting.RSAPublicKey);
+        _settings = settings;
+        _rsa = rsa;
+        _sessionService = sessionService;
         _localizer = localizer;
         _logger = logger;
         _boardRepository = boardRepository;
@@ -76,12 +82,8 @@ public class ManagementController : BaseController
     [HttpGet]
     public async Task<IActionResult> Profile()
     {
-        _ = HttpContext.Session.TryGetValue(
-            Maroik.Core.Client.Utilities.EnumHelper.GetDescription(Maroik.Core.Client.Utilities.Session.Account), out byte[] resultByte);
-        string loginedAccountTimeZoneIanaId = JsonConvert
-            .DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId;
-        AccountResponse tempAccount = await _accountRepository.GetAccountByEmailAsync(JsonConvert
-            .DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email);
+        string loginedAccountTimeZoneIanaId = _sessionService.GetAccount()!.TimeZoneIanaId;
+        AccountResponse tempAccount = await _accountRepository.GetAccountByEmailAsync(_sessionService.GetAccount()!.Email);
 
         return View(new ProfileOutputViewModel()
         {
@@ -128,7 +130,7 @@ public class ManagementController : BaseController
         await file.CopyToAsync(memoryStream);
         memoryStream.Position = 0;
 
-        if (!await _clamavClient.ScanWithClamavAsync(memoryStream, ServerSetting.ClamavHost, ServerSetting.ClamavPort))
+        if (!await _clamavClient.ScanWithClamavAsync(memoryStream, _settings.Value.ClamavHost, _settings.Value.ClamavPort))
         {
             return BadRequest("File may be infected with a virus.");
         }
@@ -147,10 +149,6 @@ public class ManagementController : BaseController
         {
             return Ok(new { result = false, errorMessage = _localizer["Invalid image file."].Value });
         }
-
-        _ = HttpContext.Session.TryGetValue(
-            EnumHelper.GetDescription(Session.Account),
-            out byte[] resultByte);
 
         string avatarPath = Path.Combine(_hostEnvironment.ContentRootPath, "wwwroot", "upload", "Management", "Profile", "Avatar");
         if (!Directory.Exists(avatarPath))
@@ -188,7 +186,7 @@ public class ManagementController : BaseController
             await process?.WaitForExitAsync()!;
         }
 
-        string email = JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email;
+        string email = _sessionService.GetAccount()!.Email;
         ServiceResult avatarResult = await _profileService.UpdateAvatarAsync(email, $"/upload/Management/Profile/Avatar/{avatarFile}");
         return avatarResult.Success
             ? Ok(new { result = true })
@@ -213,19 +211,14 @@ public class ManagementController : BaseController
         {
             try
             {
-                _ = HttpContext.Session.TryGetValue(
-                    Maroik.Core.Client.Utilities.EnumHelper.GetDescription(Maroik.Core.Client.Utilities.Session.Account), out byte[] resultByte);
-                string email = JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email;
+                string email = _sessionService.GetAccount()!.Email;
                 await _profileService.UpdateTimeZoneAsync(email, profileInputViewModel.TimeZoneIanaId);
 
                 // Refresh session with updated timezone
                 AccountResponse updatedAccount = await _accountRepository.GetAccountByEmailAsync(email);
-                HttpContext.Session.Remove(
-                    Maroik.Core.Client.Utilities.EnumHelper.GetDescription(Maroik.Core.Client.Utilities.Session.Account));
+                _sessionService.RemoveAccount();
                 updatedAccount.HashedPassword = null;
-                HttpContext.Session.Set(
-                    Maroik.Core.Client.Utilities.EnumHelper.GetDescription(Maroik.Core.Client.Utilities.Session.Account),
-                    Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(updatedAccount)));
+                _sessionService.SetAccount(updatedAccount);
             }
             catch
             {
@@ -254,9 +247,7 @@ public class ManagementController : BaseController
 
         try
         {
-            _ = HttpContext.Session.TryGetValue(
-                Maroik.Core.Client.Utilities.EnumHelper.GetDescription(Maroik.Core.Client.Utilities.Session.Account), out byte[] resultByte);
-            string email = JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email;
+            string email = _sessionService.GetAccount()!.Email;
 
             ServiceResult result = await _profileService.UpdatePasswordAsync(
                 email,
@@ -441,11 +432,7 @@ public class ManagementController : BaseController
         if (HttpContext.Request.Headers["X-Requested-With"] == "XMLHttpRequest") // ajax
         {
             List<AccountOutputViewModel> accountOutputViewModels = [];
-            _ = HttpContext.Session.TryGetValue(
-                Maroik.Core.Client.Utilities.EnumHelper.GetDescription(Maroik.Core.Client.Utilities.Session.Account), out byte[] resultByte);
-
-            string loginedAccountTimeZoneIanaId = JsonConvert
-                .DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId;
+            string loginedAccountTimeZoneIanaId = _sessionService.GetAccount()!.TimeZoneIanaId;
 
             #region Accounts
 
@@ -627,10 +614,7 @@ public class ManagementController : BaseController
         await Task.Yield();
 
         List<AccountOutputViewModel> accountOutputViewModels = new();
-        _ = HttpContext.Session.TryGetValue(
-            Maroik.Core.Client.Utilities.EnumHelper.GetDescription(Maroik.Core.Client.Utilities.Session.Account), out byte[] resultByte);
-        string loginedAccountTimeZoneIanaId = JsonConvert
-            .DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId;
+        string loginedAccountTimeZoneIanaId = _sessionService.GetAccount()!.TimeZoneIanaId;
 
         #region Accounts
 
@@ -1460,10 +1444,7 @@ public class ManagementController : BaseController
         await Task.Yield();
 
         List<MenuOutputViewModel> menuOutputViewModels = [];
-        _ = HttpContext.Session.TryGetValue(
-            Maroik.Core.Client.Utilities.EnumHelper.GetDescription(Maroik.Core.Client.Utilities.Session.Account), out byte[] resultByte);
-        string loginedAccountTimeZoneIanaId = JsonConvert
-            .DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId;
+        string loginedAccountTimeZoneIanaId = _sessionService.GetAccount()!.TimeZoneIanaId;
 
         #region AdminCategories
         foreach (CategoryResponse item in await _categoryRepository.GetCategoryByRoleAsync(Role.Admin))
@@ -1707,14 +1688,11 @@ public class ManagementController : BaseController
                     return Json(new { result = false, error = _localizer["uploaded file size must be smaller than 10MB."].Value });
             }
 
-            bool isAccountSessionExist = HttpContext.Session.TryGetValue(
-                Maroik.Core.Client.Utilities.EnumHelper.GetDescription(Maroik.Core.Client.Utilities.Session.Account),
-                out byte[] resultByte);
-
+            bool isAccountSessionExist = _sessionService.GetAccount() != null;
             if (!isAccountSessionExist)
                 return Json(new { result = false, error = _localizer["Please Login to write board"].Value });
 
-            AccountResponse loginedAccount = JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte));
+            AccountResponse loginedAccount = _sessionService.GetAccount()!;
 
             if (loginedAccount.Role != Role.Admin && loginedAccount.Role != Role.User)
                 return Json(new { result = false, error = _localizer["Please Login to write board"].Value });
@@ -1778,14 +1756,11 @@ public class ManagementController : BaseController
             boardCommentInputViewModel.Content = sanitizer.Sanitize(boardCommentInputViewModel.Content);
             #endregion
 
-            bool isAccountSessionExist = HttpContext.Session.TryGetValue(
-                Maroik.Core.Client.Utilities.EnumHelper.GetDescription(Maroik.Core.Client.Utilities.Session.Account),
-                out byte[] resultByte);
-
+            bool isAccountSessionExist = _sessionService.GetAccount() != null;
             if (!isAccountSessionExist)
                 return Json(new { result = false, error = _localizer["Please Login to write comment."].Value });
 
-            AccountResponse loginedAccount = JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte));
+            AccountResponse loginedAccount = _sessionService.GetAccount()!;
 
             IEnumerable<BoardResponse> privateNoteBoards = await _boardRepository.GetOneTypeBoardsAsync(
                 EnumHelper.GetDescription(BoardType.PrivateNote));
@@ -1854,11 +1829,7 @@ public class ManagementController : BaseController
             return Ok(new { result = false, errorMessage = _localizer["Invalid image file."].Value });
         }
 
-        _ = HttpContext.Session.TryGetValue(
-            Maroik.Core.Client.Utilities.EnumHelper.GetDescription(Maroik.Core.Client.Utilities.Session.Account),
-            out byte[] resultByte);
-
-        var loginedAccount = JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte));
+        var loginedAccount = _sessionService.GetAccount()!;
 
         string summernoteImagePath = Path.Combine("upload", "Management",
             EnumHelper.GetDescription(BoardType.PrivateNote), "summernote", "images");
@@ -1869,12 +1840,12 @@ public class ManagementController : BaseController
         using (MemoryStream ms = new())
         {
             await summernoteImageFile.CopyToAsync(ms);
-            uploadResult = await _fileClient.UploadAsync(ms.ToArray(), summernoteImageFile.ContentType, filePath, ServerSetting.FileStorageBaseUrl);
+            uploadResult = await _fileClient.UploadAsync(ms.ToArray(), summernoteImageFile.ContentType, filePath, _settings.Value.FileStorageBaseUrl);
         }
 
         if (uploadResult)
         {
-            var fileStream = await _fileClient.DownloadAsync(filePath, ServerSetting.FileStorageBaseUrl);
+            var fileStream = await _fileClient.DownloadAsync(filePath, _settings.Value.FileStorageBaseUrl);
             return Ok(new
             {
                 result = true,
@@ -1908,17 +1879,13 @@ public class ManagementController : BaseController
 
             #endregion
 
-            bool isAccountSessionExist = HttpContext.Session.TryGetValue(
-                Maroik.Core.Client.Utilities.EnumHelper.GetDescription(Maroik.Core.Client.Utilities.Session.Account), out _); // Check if account session exists after login
+            bool isAccountSessionExist = _sessionService.GetAccount() != null; // Check if account session exists after login
 
             return isAccountSessionExist ? View(privateNoteOutputViewModel) : RedirectToAction("Login", "Account");
         }
         else if (method == "detail") // Detail view
         {
-            _ = HttpContext.Session.TryGetValue(
-                Maroik.Core.Client.Utilities.EnumHelper.GetDescription(Maroik.Core.Client.Utilities.Session.Account), out byte[] resultByte); // If writer or administrator
-            AccountResponse loginedAccount =
-                JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)); // Get Session
+            AccountResponse loginedAccount = _sessionService.GetAccount()!; // Get Session
 
             if (boardId == null)
             {
@@ -1966,7 +1933,7 @@ public class ManagementController : BaseController
                     string filePath = imgTag.GetAttributeValue("alt", "");
 
                     // Method to download file
-                    byte[] fileData = await _fileClient.DownloadAsync(filePath, ServerSetting.FileStorageBaseUrl);
+                    byte[] fileData = await _fileClient.DownloadAsync(filePath, _settings.Value.FileStorageBaseUrl);
 
                     if (fileData != null)
                     {
@@ -2012,7 +1979,7 @@ public class ManagementController : BaseController
                                           ""))
                 {
                     byte[] fileData = await _fileClient.DownloadAsync(
-                        privateNoteOutputViewModel?.BoardOutputViewModel?.BoardAttachedFilePath ?? "", ServerSetting.FileStorageBaseUrl);
+                        privateNoteOutputViewModel?.BoardOutputViewModel?.BoardAttachedFilePath ?? "", _settings.Value.FileStorageBaseUrl);
 
                     if (fileData != null)
                     {
@@ -2062,10 +2029,7 @@ public class ManagementController : BaseController
                 EditBoardId = boardId ?? default
             };
 
-            _ = HttpContext.Session.TryGetValue(
-                Maroik.Core.Client.Utilities.EnumHelper.GetDescription(Maroik.Core.Client.Utilities.Session.Account), out byte[] resultByte);
-            AccountResponse loginedAccount = await _accountRepository.GetAccountByEmailAsync(JsonConvert
-                .DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email);
+            AccountResponse loginedAccount = await _accountRepository.GetAccountByEmailAsync(_sessionService.GetAccount()!.Email);
 
             IEnumerable<BoardResponse> privateNoteBoards =
                 await _boardRepository.GetOneTypeBoardsAsync(EnumHelper.GetDescription(BoardType.PrivateNote));
@@ -2096,7 +2060,7 @@ public class ManagementController : BaseController
                     string filePath = imgTag.GetAttributeValue("alt", "");
 
                     // Method to download file
-                    byte[] fileData = await _fileClient.DownloadAsync(filePath, ServerSetting.FileStorageBaseUrl);
+                    byte[] fileData = await _fileClient.DownloadAsync(filePath, _settings.Value.FileStorageBaseUrl);
 
                     if (fileData != null)
                     {
@@ -2143,7 +2107,7 @@ public class ManagementController : BaseController
                                           ""))
                 {
                     byte[] fileData = await _fileClient.DownloadAsync(
-                        privateNoteOutputViewModel?.BoardOutputViewModel?.BoardAttachedFilePath ?? "", ServerSetting.FileStorageBaseUrl);
+                        privateNoteOutputViewModel?.BoardOutputViewModel?.BoardAttachedFilePath ?? "", _settings.Value.FileStorageBaseUrl);
 
                     if (fileData != null)
                     {
@@ -2174,10 +2138,8 @@ public class ManagementController : BaseController
         }
         else // List
         {
-            bool isAccountSessionExist = HttpContext.Session.TryGetValue(
-                Maroik.Core.Client.Utilities.EnumHelper.GetDescription(Maroik.Core.Client.Utilities.Session.Account), out byte[] resultByte);
-            AccountResponse loginedAccount =
-                JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)); // Get Session
+            bool isAccountSessionExist = _sessionService.GetAccount() != null;
+            AccountResponse loginedAccount = _sessionService.GetAccount()!;
 
             #region Board default paging logic
 
@@ -2297,10 +2259,7 @@ public class ManagementController : BaseController
     {
         try
         {
-            _ = HttpContext.Session.TryGetValue(
-                Maroik.Core.Client.Utilities.EnumHelper.GetDescription(Maroik.Core.Client.Utilities.Session.Account), out byte[] resultByte);
-            AccountResponse loginedAccount = await _accountRepository.GetAccountByEmailAsync(JsonConvert
-                .DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email);
+            AccountResponse loginedAccount = await _accountRepository.GetAccountByEmailAsync(_sessionService.GetAccount()!.Email);
 
             IEnumerable<BoardResponse> privateNoteBoards =
                 await _boardRepository.GetOneTypeBoardsAsync(EnumHelper.GetDescription(BoardType.PrivateNote));
@@ -2381,14 +2340,11 @@ public class ManagementController : BaseController
                     return Json(new { result = false, error = _localizer["uploaded file size must be smaller than 10MB."].Value });
             }
 
-            bool isAccountSessionExist = HttpContext.Session.TryGetValue(
-                Maroik.Core.Client.Utilities.EnumHelper.GetDescription(Maroik.Core.Client.Utilities.Session.Account),
-                out byte[] resultByte);
-
+            bool isAccountSessionExist = _sessionService.GetAccount() != null;
             if (!isAccountSessionExist)
                 return Json(new { result = false, error = _localizer["Please Login to edit board"].Value });
 
-            AccountResponse loginedAccount = JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte));
+            AccountResponse loginedAccount = _sessionService.GetAccount()!;
 
             BoardRequest boardRequest = new()
             {
@@ -2439,11 +2395,8 @@ public class ManagementController : BaseController
     {
         try
         {
-            _ = HttpContext.Session.TryGetValue(
-                Maroik.Core.Client.Utilities.EnumHelper.GetDescription(Maroik.Core.Client.Utilities.Session.Account),
-                out byte[] resultByte);
             AccountResponse loginedAccount = await _accountRepository.GetAccountByEmailAsync(
-                JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email);
+                _sessionService.GetAccount()!.Email);
 
             ServiceResult result = await _boardService.DeleteBoardAsync(
                 boardInputViewModel.Id,
@@ -2473,11 +2426,8 @@ public class ManagementController : BaseController
     {
         try
         {
-            _ = HttpContext.Session.TryGetValue(
-                Maroik.Core.Client.Utilities.EnumHelper.GetDescription(Maroik.Core.Client.Utilities.Session.Account),
-                out byte[] resultByte);
             AccountResponse loginedAccount = await _accountRepository.GetAccountByEmailAsync(
-                JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email);
+                _sessionService.GetAccount()!.Email);
 
             ServiceResult result = await _boardService.DeleteCommentAsync(
                 id,

@@ -24,6 +24,7 @@ public class AccountBookController : BaseController
     private readonly IAssetService _assetService;
     private readonly IIncomeService _incomeService;
     private readonly IExpenditureService _expenditureService;
+    private readonly ISessionService _sessionService;
 
     public AccountBookController(
         IHtmlLocalizer<AccountBookController> localizer,
@@ -34,7 +35,8 @@ public class AccountBookController : BaseController
         IExpenditureRepository expenditureRepository,
         IAssetService assetService,
         IIncomeService incomeService,
-        IExpenditureService expenditureService)
+        IExpenditureService expenditureService,
+        ISessionService sessionService)
     {
         _localizer = localizer;
         _logger = logger;
@@ -45,6 +47,7 @@ public class AccountBookController : BaseController
         _assetService = assetService;
         _incomeService = incomeService;
         _expenditureService = expenditureService;
+        _sessionService = sessionService;
     }
 
     #region Asset
@@ -59,8 +62,7 @@ public class AccountBookController : BaseController
         if (!ModelState.IsValid)
             return Json(new { result = false, error = _localizer["Input is invalid"].Value });
 
-        _ = HttpContext.Session.TryGetValue(EnumHelper.GetDescription(Session.Account), out byte[] resultByte);
-        string email = JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email;
+        string email = _sessionService.GetAccount()!.Email;
 
         var request = new AssetRequest
         {
@@ -91,14 +93,9 @@ public class AccountBookController : BaseController
 
             #region Assets
 
-            _ = HttpContext.Session.TryGetValue(
-                Maroik.Core.Client.Utilities.EnumHelper.GetDescription(Maroik.Core.Client.Utilities.Session.Account), out byte[] resultByte);
+            string loginedAccountTimeZoneIanaId = _sessionService.GetAccount()!.TimeZoneIanaId;
 
-            string loginedAccountTimeZoneIanaId = JsonConvert
-                .DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId;
-
-            foreach (AssetResponse item in await _assetRepository.GetAssetsAsync(JsonConvert
-                         .DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email))
+            foreach (AssetResponse item in await _assetRepository.GetAssetsAsync(_sessionService.GetAccount()!.Email))
             {
                 if (string.IsNullOrEmpty(wholeSearch))
                 {
@@ -150,12 +147,7 @@ public class AccountBookController : BaseController
         }
 
         {
-            _ = HttpContext.Session.TryGetValue(
-                Maroik.Core.Client.Utilities.EnumHelper.GetDescription(Maroik.Core.Client.Utilities.Session.Account),
-                out byte[] sessionByte);
-            AccountResponse loginedAccount = sessionByte?.Length > 0
-                ? JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(sessionByte)) ?? new AccountResponse()
-                : new AccountResponse();
+            AccountResponse loginedAccount = _sessionService.GetAccount() ?? new AccountResponse();
             string tz = loginedAccount.TimeZoneIanaId ?? "UTC";
             List<AssetResponse> assets = (await _assetRepository.GetAssetsAsync(loginedAccount.Email))
                 .Where(x => !x.Deleted).OrderBy(x => x.ProductName).ToList();
@@ -176,11 +168,8 @@ public class AccountBookController : BaseController
     {
         try
         {
-            _ = HttpContext.Session.TryGetValue(
-                Maroik.Core.Client.Utilities.EnumHelper.GetDescription(Maroik.Core.Client.Utilities.Session.Account), out byte[] resultByte);
-
             AssetResponse tempAsset = await _assetRepository.GetAssetAsync(
-                JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email, productName);
+                _sessionService.GetAccount()!.Email, productName);
 
             return tempAsset == null
                 ? Json(new
@@ -208,8 +197,7 @@ public class AccountBookController : BaseController
         if (!ModelState.IsValid)
             return Json(new { result = false, error = _localizer["Input is invalid"].Value });
 
-        _ = HttpContext.Session.TryGetValue(EnumHelper.GetDescription(Session.Account), out byte[] resultByte);
-        string email = JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email;
+        string email = _sessionService.GetAccount()!.Email;
 
         var request = new AssetRequest
         {
@@ -236,8 +224,7 @@ public class AccountBookController : BaseController
     [RequiredHttpPostAccess(Role = Role.User)]
     public async Task<IActionResult> DeleteAsset([FromBody] AssetInputViewModel assetInputViewModel)
     {
-        _ = HttpContext.Session.TryGetValue(EnumHelper.GetDescription(Session.Account), out byte[] resultByte);
-        string email = JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email;
+        string email = _sessionService.GetAccount()!.Email;
 
         var result = await _assetService.DeleteAsync(email, assetInputViewModel.ProductName);
         return result.Success
@@ -258,13 +245,9 @@ public class AccountBookController : BaseController
 
         List<AssetOutputViewModel> assetOutputViewModels = new List<AssetOutputViewModel>();
 
-        _ = HttpContext.Session.TryGetValue(
-            Maroik.Core.Client.Utilities.EnumHelper.GetDescription(Maroik.Core.Client.Utilities.Session.Account), out byte[] resultByte);
-        string loginedAccountTimeZoneIanaId = JsonConvert
-            .DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId;
+        string loginedAccountTimeZoneIanaId = _sessionService.GetAccount()!.TimeZoneIanaId;
 
-        foreach (AssetResponse item in await _assetRepository.GetAssetsAsync(JsonConvert
-                     .DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email))
+        foreach (AssetResponse item in await _assetRepository.GetAssetsAsync(_sessionService.GetAccount()!.Email))
         {
             assetOutputViewModels.Add(new AssetOutputViewModel()
             {
@@ -366,8 +349,7 @@ public class AccountBookController : BaseController
         if (!ModelState.IsValid)
             return Json(new { result = false, error = _localizer["Input is invalid"].Value });
 
-        _ = HttpContext.Session.TryGetValue(EnumHelper.GetDescription(Session.Account), out byte[] resultByte);
-        string email = JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email;
+        string email = _sessionService.GetAccount()!.Email;
 
         var request = new IncomeRequest
         {
@@ -399,17 +381,11 @@ public class AccountBookController : BaseController
 
             #region Incomes
 
-            _ = HttpContext.Session.TryGetValue(
-                Maroik.Core.Client.Utilities.EnumHelper.GetDescription(Maroik.Core.Client.Utilities.Session.Account), out byte[] resultByte);
+            string loginedAccountTimeZoneIanaId = _sessionService.GetAccount()!.TimeZoneIanaId;
 
-            string loginedAccountTimeZoneIanaId = JsonConvert
-                .DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId;
+            List<AssetResponse> assets = await _assetRepository.GetAssetsAsync(_sessionService.GetAccount()!.Email);
 
-            List<AssetResponse> assets = await _assetRepository.GetAssetsAsync(JsonConvert
-                .DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email);
-
-            foreach (IncomeResponse item in await _incomeRepository.GetIncomesAsync(JsonConvert
-                         .DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email))
+            foreach (IncomeResponse item in await _incomeRepository.GetIncomesAsync(_sessionService.GetAccount()!.Email))
             {
                 if (string.IsNullOrEmpty(wholeSearch))
                 {
@@ -469,12 +445,7 @@ public class AccountBookController : BaseController
         }
 
         {
-            _ = HttpContext.Session.TryGetValue(
-                Maroik.Core.Client.Utilities.EnumHelper.GetDescription(Maroik.Core.Client.Utilities.Session.Account),
-                out byte[] sessionByte);
-            AccountResponse loginedAccount = sessionByte?.Length > 0
-                ? JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(sessionByte)) ?? new AccountResponse()
-                : new AccountResponse();
+            AccountResponse loginedAccount = _sessionService.GetAccount() ?? new AccountResponse();
             string tz = loginedAccount.TimeZoneIanaId ?? "UTC";
             List<AssetResponse> assets = (await _assetRepository.GetAssetsAsync(loginedAccount.Email))
                 .Where(x => !x.Deleted).OrderBy(x => x.ProductName).ToList();
@@ -495,12 +466,8 @@ public class AccountBookController : BaseController
     {
         try
         {
-            _ = HttpContext.Session.TryGetValue(
-                Maroik.Core.Client.Utilities.EnumHelper.GetDescription(Maroik.Core.Client.Utilities.Session.Account), out byte[] resultByte);
-            string loginedAccountTimeZoneIanaId = JsonConvert
-                .DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId;
-            List<IncomeResponse> tempIncomes = await _incomeRepository.GetIncomesAsync(JsonConvert
-                .DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email);
+            string loginedAccountTimeZoneIanaId = _sessionService.GetAccount()!.TimeZoneIanaId;
+            List<IncomeResponse> tempIncomes = await _incomeRepository.GetIncomesAsync(_sessionService.GetAccount()!.Email);
 
             if (tempIncomes == null)
             {
@@ -537,12 +504,8 @@ public class AccountBookController : BaseController
         {
             string label = _localizer["Amount"].Value;
 
-            _ = HttpContext.Session.TryGetValue(
-                Maroik.Core.Client.Utilities.EnumHelper.GetDescription(Maroik.Core.Client.Utilities.Session.Account), out byte[] resultByte);
-
             AssetResponse asset =
-                (await _assetRepository.GetAssetsAsync(JsonConvert
-                    .DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email))
+                (await _assetRepository.GetAssetsAsync(_sessionService.GetAccount()!.Email))
                 .Where(x => !x.Deleted).Where(x => x.ProductName == productName).FirstOrDefault() ?? new AssetResponse();
 
             if (!string.IsNullOrEmpty(asset.MonetaryUnit))
@@ -570,8 +533,7 @@ public class AccountBookController : BaseController
         if (!ModelState.IsValid)
             return Json(new { result = false, error = _localizer["Input is invalid"].Value });
 
-        _ = HttpContext.Session.TryGetValue(EnumHelper.GetDescription(Session.Account), out byte[] resultByte);
-        string email = JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email;
+        string email = _sessionService.GetAccount()!.Email;
 
         var request = new IncomeRequest
         {
@@ -600,8 +562,7 @@ public class AccountBookController : BaseController
     [RequiredHttpPostAccess(Role = Role.User)]
     public async Task<IActionResult> DeleteIncome([FromBody] IncomeInputViewModel incomeInputViewModel)
     {
-        _ = HttpContext.Session.TryGetValue(EnumHelper.GetDescription(Session.Account), out byte[] resultByte);
-        string email = JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email;
+        string email = _sessionService.GetAccount()!.Email;
 
         var result = await _incomeService.DeleteAsync(email, incomeInputViewModel.Id);
         return result.Success
@@ -624,16 +585,11 @@ public class AccountBookController : BaseController
 
         #region Incomes
 
-        _ = HttpContext.Session.TryGetValue(
-            Maroik.Core.Client.Utilities.EnumHelper.GetDescription(Maroik.Core.Client.Utilities.Session.Account), out byte[] resultByte);
-        string loginedAccountTimeZoneIanaId = JsonConvert
-            .DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId;
+        string loginedAccountTimeZoneIanaId = _sessionService.GetAccount()!.TimeZoneIanaId;
 
-        List<AssetResponse> assets = await _assetRepository.GetAssetsAsync(JsonConvert
-            .DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email);
+        List<AssetResponse> assets = await _assetRepository.GetAssetsAsync(_sessionService.GetAccount()!.Email);
 
-        foreach (IncomeResponse item in await _incomeRepository.GetIncomesAsync(JsonConvert
-                     .DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email))
+        foreach (IncomeResponse item in await _incomeRepository.GetIncomesAsync(_sessionService.GetAccount()!.Email))
         {
             incomeOutputViewModels.Add(new IncomeOutputViewModel()
             {
@@ -742,8 +698,7 @@ public class AccountBookController : BaseController
         if (!ModelState.IsValid)
             return Json(new { result = false, error = _localizer["Input is invalid"].Value });
 
-        _ = HttpContext.Session.TryGetValue(EnumHelper.GetDescription(Session.Account), out byte[] resultByte);
-        string email = JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email;
+        string email = _sessionService.GetAccount()!.Email;
 
         var request = new ExpenditureRequest
         {
@@ -774,17 +729,11 @@ public class AccountBookController : BaseController
 
             #region Expenditures
 
-            _ = HttpContext.Session.TryGetValue(
-                Maroik.Core.Client.Utilities.EnumHelper.GetDescription(Maroik.Core.Client.Utilities.Session.Account), out byte[] resultByte);
+            string loginedAccountTimeZoneIanaId = _sessionService.GetAccount()!.TimeZoneIanaId;
 
-            string loginedAccountTimeZoneIanaId = JsonConvert
-                .DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId;
+            List<AssetResponse> assets = await _assetRepository.GetAssetsAsync(_sessionService.GetAccount()!.Email);
 
-            List<AssetResponse> assets = await _assetRepository.GetAssetsAsync(JsonConvert
-                .DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email);
-
-            foreach (ExpenditureResponse item in await _expenditureRepository.GetExpendituresAsync(JsonConvert
-                         .DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email))
+            foreach (ExpenditureResponse item in await _expenditureRepository.GetExpendituresAsync(_sessionService.GetAccount()!.Email))
             {
                 if (string.IsNullOrEmpty(wholeSearch))
                 {
@@ -847,12 +796,7 @@ public class AccountBookController : BaseController
         }
 
         {
-            _ = HttpContext.Session.TryGetValue(
-                Maroik.Core.Client.Utilities.EnumHelper.GetDescription(Maroik.Core.Client.Utilities.Session.Account),
-                out byte[] sessionByte);
-            AccountResponse loginedAccount = sessionByte?.Length > 0
-                ? JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(sessionByte)) ?? new AccountResponse()
-                : new AccountResponse();
+            AccountResponse loginedAccount = _sessionService.GetAccount() ?? new AccountResponse();
             string tz = loginedAccount.TimeZoneIanaId ?? "UTC";
             List<AssetResponse> assets = (await _assetRepository.GetAssetsAsync(loginedAccount.Email))
                 .Where(x => !x.Deleted).OrderBy(x => x.ProductName).ToList();
@@ -873,13 +817,9 @@ public class AccountBookController : BaseController
     {
         try
         {
-            _ = HttpContext.Session.TryGetValue(
-                Maroik.Core.Client.Utilities.EnumHelper.GetDescription(Maroik.Core.Client.Utilities.Session.Account), out byte[] resultByte);
-            string loginedAccountTimeZoneIanaId = JsonConvert
-                .DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId;
+            string loginedAccountTimeZoneIanaId = _sessionService.GetAccount()!.TimeZoneIanaId;
             List<ExpenditureResponse> tempExpenditures =
-                await _expenditureRepository.GetExpendituresAsync(JsonConvert
-                    .DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email);
+                await _expenditureRepository.GetExpendituresAsync(_sessionService.GetAccount()!.Email);
 
             if (tempExpenditures == null)
             {
@@ -916,12 +856,8 @@ public class AccountBookController : BaseController
         {
             string label = _localizer["Amount"].Value;
 
-            _ = HttpContext.Session.TryGetValue(
-                Maroik.Core.Client.Utilities.EnumHelper.GetDescription(Maroik.Core.Client.Utilities.Session.Account), out byte[] resultByte);
-
             AssetResponse asset =
-                (await _assetRepository.GetAssetsAsync(JsonConvert
-                    .DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email))
+                (await _assetRepository.GetAssetsAsync(_sessionService.GetAccount()!.Email))
                 .Where(x => !x.Deleted).Where(x => x.ProductName == productName).FirstOrDefault() ?? new AssetResponse();
 
             if (!string.IsNullOrEmpty(asset.MonetaryUnit))
@@ -948,8 +884,7 @@ public class AccountBookController : BaseController
         if (!ModelState.IsValid)
             return Json(new { result = false, error = _localizer["Input is invalid"].Value });
 
-        _ = HttpContext.Session.TryGetValue(EnumHelper.GetDescription(Session.Account), out byte[] resultByte);
-        string email = JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email;
+        string email = _sessionService.GetAccount()!.Email;
 
         var request = new ExpenditureRequest
         {
@@ -976,8 +911,7 @@ public class AccountBookController : BaseController
     public async Task<IActionResult> DeleteExpenditure(
         [FromBody] ExpenditureInputViewModel expenditureInputViewModel)
     {
-        _ = HttpContext.Session.TryGetValue(EnumHelper.GetDescription(Session.Account), out byte[] resultByte);
-        string email = JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email;
+        string email = _sessionService.GetAccount()!.Email;
 
         var result = await _expenditureService.DeleteAsync(email, expenditureInputViewModel.Id);
         return result.Success
@@ -998,16 +932,11 @@ public class AccountBookController : BaseController
 
         #region Expenditures
 
-        _ = HttpContext.Session.TryGetValue(
-            Maroik.Core.Client.Utilities.EnumHelper.GetDescription(Maroik.Core.Client.Utilities.Session.Account), out byte[] resultByte);
-        string loginedAccountTimeZoneIanaId = JsonConvert
-            .DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId;
+        string loginedAccountTimeZoneIanaId = _sessionService.GetAccount()!.TimeZoneIanaId;
 
-        List<AssetResponse> assets = await _assetRepository.GetAssetsAsync(JsonConvert
-            .DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email);
+        List<AssetResponse> assets = await _assetRepository.GetAssetsAsync(_sessionService.GetAccount()!.Email);
 
-        foreach (ExpenditureResponse item in await _expenditureRepository.GetExpendituresAsync(JsonConvert
-                     .DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email))
+        foreach (ExpenditureResponse item in await _expenditureRepository.GetExpendituresAsync(_sessionService.GetAccount()!.Email))
         {
             expenditureOutputViewModels.Add(new ExpenditureOutputViewModel()
             {

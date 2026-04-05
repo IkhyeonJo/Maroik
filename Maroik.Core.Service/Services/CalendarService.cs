@@ -2,6 +2,7 @@ using Maroik.Core.Client.Utilities;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
 using Mapster;
+using Microsoft.Extensions.Options;
 
 namespace Maroik.Core.Service.Services;
 
@@ -15,6 +16,7 @@ public class CalendarService : ICalendarService
     private readonly IOtherCalendarRepository _otherCalendarRepository;
     private readonly IFileClient _fileClient;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IOptions<ServerSetting> _settings;
 
     public CalendarService(
         ICalendarRepository calendarRepository,
@@ -24,7 +26,8 @@ public class CalendarService : ICalendarService
         ICalendarSharedRepository calendarSharedRepository,
         IOtherCalendarRepository otherCalendarRepository,
         IFileClient fileClient,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        IOptions<ServerSetting> settings)
     {
         _calendarRepository = calendarRepository;
         _calendarEventRepository = calendarEventRepository;
@@ -34,6 +37,7 @@ public class CalendarService : ICalendarService
         _otherCalendarRepository = otherCalendarRepository;
         _fileClient = fileClient;
         _unitOfWork = unitOfWork;
+        _settings = settings;
     }
 
     public async Task<ServiceResult> CreateCalendarAsync(CalendarRequest request)
@@ -175,7 +179,7 @@ public class CalendarService : ICalendarService
             if (attachedFile != null)
             {
                 string filePath = BuildEventFilePath(roleIndex, request.Id, attachedFile.FileName);
-                await _fileClient.UploadAsync(attachedFile.Bytes, attachedFile.ContentType, filePath, ServerSetting.FileStorageBaseUrl ?? string.Empty);
+                await _fileClient.UploadAsync(attachedFile.Bytes, attachedFile.ContentType, filePath, _settings.Value.FileStorageBaseUrl ?? string.Empty);
                 await _calendarEventAttachedFileRepository.SaveCalendarEventAttachedFileAsync(new CalendarEventAttachedFileRequest
                 {
                     CalendarEventId = request.Id,
@@ -229,7 +233,7 @@ public class CalendarService : ICalendarService
             if (attachedFile != null)
             {
                 string filePath = BuildEventFilePath(roleIndex, request.Id, attachedFile.FileName);
-                await _fileClient.UploadAsync(attachedFile.Bytes, attachedFile.ContentType, filePath, ServerSetting.FileStorageBaseUrl ?? string.Empty);
+                await _fileClient.UploadAsync(attachedFile.Bytes, attachedFile.ContentType, filePath, _settings.Value.FileStorageBaseUrl ?? string.Empty);
                 await _calendarEventAttachedFileRepository.SaveCalendarEventAttachedFileAsync(new CalendarEventAttachedFileRequest
                 {
                     CalendarEventId = request.Id,

@@ -11,6 +11,7 @@ using Maroik.WebSite.Models.ViewModels.Calendar;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Localization;
 using Microsoft.AspNetCore.StaticFiles;
+using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using System.Text;
 
@@ -18,7 +19,7 @@ namespace Maroik.WebSite.Controllers;
 
 public class CalendarController : BaseController
 {
-    private readonly RSA _rsa;
+    private readonly IRSAService _rsa;
     private readonly IHtmlLocalizer<CalendarController> _localizer;
     private readonly ILogger<CalendarController> _logger;
     private readonly IIncomeRepository _incomeRepository;
@@ -34,10 +35,14 @@ public class CalendarController : BaseController
     private readonly IHostEnvironment _hostEnvironment;
     private readonly IFileClient _fileClient;
     private readonly ICalendarService _calendarService;
+    private readonly IOptions<ServerSetting> _settings;
+    private readonly ISessionService _sessionService;
 
-    public CalendarController(IHtmlLocalizer<CalendarController> localizer, ILogger<CalendarController> logger, IHostEnvironment hostEnvironment, ICalendarService calendarService, IIncomeRepository incomeRepository, IExpenditureRepository expenditureRepository, IAssetRepository assetRepository, IAccountRepository accountRepository, ICalendarRepository calendarRepository, IOtherCalendarRepository otherCalendarRepository, ICalendarEventRepository calendarEventRepository, ICalendarEventAttachedFileRepository calendarEventAttachedFileRepository, ICalendarEventReminderRepository calendarReminderRepository, ICalendarSharedRepository calendarSharedRepository, IFileClient fileClient)
+    public CalendarController(IHtmlLocalizer<CalendarController> localizer, ILogger<CalendarController> logger, IHostEnvironment hostEnvironment, ICalendarService calendarService, IIncomeRepository incomeRepository, IExpenditureRepository expenditureRepository, IAssetRepository assetRepository, IAccountRepository accountRepository, ICalendarRepository calendarRepository, IOtherCalendarRepository otherCalendarRepository, ICalendarEventRepository calendarEventRepository, ICalendarEventAttachedFileRepository calendarEventAttachedFileRepository, ICalendarEventReminderRepository calendarReminderRepository, ICalendarSharedRepository calendarSharedRepository, IFileClient fileClient, IOptions<ServerSetting> settings, IRSAService rsa, ISessionService sessionService)
     {
-        _rsa = new RSA(ServerSetting.RSAAlgorithm, Encoding.UTF8, ServerSetting.RSAPrivateKey, ServerSetting.RSAPublicKey);
+        _settings = settings;
+        _rsa = rsa;
+        _sessionService = sessionService;
         _localizer = localizer;
         _logger = logger;
         _hostEnvironment = hostEnvironment;
@@ -71,9 +76,8 @@ public class CalendarController : BaseController
             if (!ModelState.IsValid)
                 return Json(new { result = false, error = _localizer["Input is invalid"].Value });
 
-            _ = HttpContext.Session.TryGetValue(Maroik.Core.Client.Utilities.EnumHelper.GetDescription(Maroik.Core.Client.Utilities.Session.Account), out byte[] resultByte);
             CalendarRequest tempCalendar = calendarInputViewModel?.Calendars?.FirstOrDefault() ?? new CalendarRequest();
-            tempCalendar.AccountEmail = JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email;
+            tempCalendar.AccountEmail = _sessionService.GetAccount()!.Email;
 
             ServiceResult result = await _calendarService.CreateCalendarAsync(tempCalendar);
 
@@ -148,12 +152,11 @@ public class CalendarController : BaseController
                     }
                 }
 
-                bool isAccountSessionExist = HttpContext.Session.TryGetValue(Maroik.Core.Client.Utilities.EnumHelper.GetDescription(Maroik.Core.Client.Utilities.Session.Account), out byte[] resultByte);
-
+                bool isAccountSessionExist = _sessionService.GetAccount() != null;
                 if (!isAccountSessionExist)
                     return Json(new { result = false, error = _localizer["Please Login to create calendar event"].Value });
 
-                AccountResponse loginedAccount = JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte));
+                AccountResponse loginedAccount = _sessionService.GetAccount()!;
 
                 if (loginedAccount.Role is not (Role.Admin or Role.User))
                     return Json(new { result = false, error = _localizer["Please Login to create calendar event"].Value });
@@ -311,11 +314,7 @@ public class CalendarController : BaseController
             return Ok(new { result = false, errorMessage = _localizer["Invalid image file."].Value });
         }
 
-        _ = HttpContext.Session.TryGetValue(
-            Maroik.Core.Client.Utilities.EnumHelper.GetDescription(Maroik.Core.Client.Utilities.Session.Account),
-            out byte[] resultByte);
-
-        var loginedAccount = JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte));
+        var loginedAccount = _sessionService.GetAccount()!;
 
         string summernoteImagePath = Path.Combine("upload", "Calendar", $"{loginedAccount.Role}Index", "summernote", "images");
         string imageFile = $"{Guid.NewGuid():N}{ext}";
@@ -325,12 +324,12 @@ public class CalendarController : BaseController
         using (MemoryStream ms = new())
         {
             await summernoteImageFile.CopyToAsync(ms);
-            uploadResult = await _fileClient.UploadAsync(ms.ToArray(), summernoteImageFile.ContentType, filePath, ServerSetting.FileStorageBaseUrl);
+            uploadResult = await _fileClient.UploadAsync(ms.ToArray(), summernoteImageFile.ContentType, filePath, _settings.Value.FileStorageBaseUrl);
         }
 
         if (uploadResult)
         {
-            var fileStream = await _fileClient.DownloadAsync(filePath, ServerSetting.FileStorageBaseUrl);
+            var fileStream = await _fileClient.DownloadAsync(filePath, _settings.Value.FileStorageBaseUrl);
             return Ok(new
             {
                 result = true,
@@ -352,9 +351,7 @@ public class CalendarController : BaseController
     [HttpGet]
     public async Task<IActionResult> AdminIndex()
     {
-        _ = HttpContext.Session.TryGetValue(Maroik.Core.Client.Utilities.EnumHelper.GetDescription(Maroik.Core.Client.Utilities.Session.Account), out byte[] resultByte);
-
-        AccountResponse loginedAccount = JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte));
+        AccountResponse loginedAccount = _sessionService.GetAccount()!;
 
         CalendarOutputViewModel calendarOutputViewModel = new();
 
@@ -545,9 +542,7 @@ public class CalendarController : BaseController
     [HttpGet]
     public async Task<IActionResult> UserIndex()
     {
-        _ = HttpContext.Session.TryGetValue(Maroik.Core.Client.Utilities.EnumHelper.GetDescription(Maroik.Core.Client.Utilities.Session.Account), out byte[] resultByte);
-
-        AccountResponse loginedAccount = JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte));
+        AccountResponse loginedAccount = _sessionService.GetAccount()!;
 
         CalendarOutputViewModel calendarOutputViewModel = new();
 
@@ -1101,8 +1096,7 @@ public class CalendarController : BaseController
     {
         try
         {
-            _ = HttpContext.Session.TryGetValue(Maroik.Core.Client.Utilities.EnumHelper.GetDescription(Maroik.Core.Client.Utilities.Session.Account), out byte[] resultByte);
-            List<CalendarResponse> tempCalendars = await _calendarRepository.GetCalendarsAsync(JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email) ?? [];
+            List<CalendarResponse> tempCalendars = await _calendarRepository.GetCalendarsAsync(_sessionService.GetAccount()!.Email) ?? [];
 
             if (tempCalendars == null || tempCalendars.Count == 0)
             {
@@ -1131,8 +1125,7 @@ public class CalendarController : BaseController
     {
         try
         {
-            _ = HttpContext.Session.TryGetValue(Maroik.Core.Client.Utilities.EnumHelper.GetDescription(Maroik.Core.Client.Utilities.Session.Account), out byte[] resultByte);
-            List<CalendarResponse> calendars = (await _calendarRepository.GetCalendarsAsync(JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email) ?? [])?.ToList();
+            List<CalendarResponse> calendars = (await _calendarRepository.GetCalendarsAsync(_sessionService.GetAccount()!.Email) ?? [])?.ToList();
 
             return Json(new { result = true, calendars });
         }
@@ -1150,12 +1143,11 @@ public class CalendarController : BaseController
     {
         try
         {
-            bool isAccountSessionExist = HttpContext.Session.TryGetValue(Maroik.Core.Client.Utilities.EnumHelper.GetDescription(Maroik.Core.Client.Utilities.Session.Account), out byte[] resultByte);
-
+            bool isAccountSessionExist = _sessionService.GetAccount() != null;
             if (isAccountSessionExist)
             {
                 List<CalendarResponse> calendars = await _calendarRepository.GetAllCalendarsAsync();
-                List<OtherCalendarResponse> otherCalendars = (await _otherCalendarRepository.GetOtherCalendarsAsync(JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email) ?? [])?.ToList();
+                List<OtherCalendarResponse> otherCalendars = (await _otherCalendarRepository.GetOtherCalendarsAsync(_sessionService.GetAccount()!.Email) ?? [])?.ToList();
 
                 List<CalendarResponse> tempOtherCalendars = (from calendar in calendars
                                                      join otherCalendar in otherCalendars
@@ -1208,9 +1200,7 @@ public class CalendarController : BaseController
             {
                 try
                 {
-                    _ = HttpContext.Session.TryGetValue(Maroik.Core.Client.Utilities.EnumHelper.GetDescription(Maroik.Core.Client.Utilities.Session.Account), out byte[] resultByte);
-
-                    AccountResponse loginedAccount = JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte));
+                    AccountResponse loginedAccount = _sessionService.GetAccount()!;
 
                     List<CalendarResponse> calendars = await _calendarRepository.GetCalendarsAsync(loginedAccount.Email) ?? [];
 
@@ -1243,7 +1233,7 @@ public class CalendarController : BaseController
                         string filePath = imgTag.GetAttributeValue("alt", "");
 
                         // Method to download file
-                        byte[] fileData = await _fileClient.DownloadAsync(filePath, ServerSetting.FileStorageBaseUrl);
+                        byte[] fileData = await _fileClient.DownloadAsync(filePath, _settings.Value.FileStorageBaseUrl);
 
                         if (fileData != null)
                         {
@@ -1389,7 +1379,7 @@ public class CalendarController : BaseController
 
                     if (!string.IsNullOrEmpty(calendarEvent?.CalendarEventAttachedFile?.Path ?? ""))
                     {
-                        byte[] fileData = await _fileClient.DownloadAsync(calendarEvent?.CalendarEventAttachedFile?.Path ?? "", ServerSetting.FileStorageBaseUrl);
+                        byte[] fileData = await _fileClient.DownloadAsync(calendarEvent?.CalendarEventAttachedFile?.Path ?? "", _settings.Value.FileStorageBaseUrl);
 
                         if (fileData != null)
                         {
@@ -1444,14 +1434,13 @@ public class CalendarController : BaseController
             {
                 try
                 {
-                    bool isAccountSessionExist = HttpContext.Session.TryGetValue(Maroik.Core.Client.Utilities.EnumHelper.GetDescription(Maroik.Core.Client.Utilities.Session.Account), out byte[] resultByte);
-
+                    bool isAccountSessionExist = _sessionService.GetAccount() != null;
                     AccountResponse loginedAccount = null;
                     List<CalendarResponse> calendars = null;
 
                     if (isAccountSessionExist)
                     {
-                        loginedAccount = JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte));
+                        loginedAccount = _sessionService.GetAccount()!;
                         calendars = (from calendar in await _calendarRepository.GetAllCalendarsAsync() ?? []
                                      join otherCalendar in await _otherCalendarRepository.GetOtherCalendarsAsync(loginedAccount.Email) ?? []
                                      on calendar.Id equals otherCalendar.CalendarId
@@ -1506,7 +1495,7 @@ public class CalendarController : BaseController
                         string filePath = imgTag.GetAttributeValue("alt", "");
 
                         // Method to download file
-                        byte[] fileData = await _fileClient.DownloadAsync(filePath, ServerSetting.FileStorageBaseUrl);
+                        byte[] fileData = await _fileClient.DownloadAsync(filePath, _settings.Value.FileStorageBaseUrl);
 
                         if (fileData != null)
                         {
@@ -1652,7 +1641,7 @@ public class CalendarController : BaseController
 
                     if (!string.IsNullOrEmpty(calendarEvent?.CalendarEventAttachedFile?.Path ?? ""))
                     {
-                        byte[] fileData = await _fileClient.DownloadAsync(calendarEvent?.CalendarEventAttachedFile?.Path ?? "", ServerSetting.FileStorageBaseUrl);
+                        byte[] fileData = await _fileClient.DownloadAsync(calendarEvent?.CalendarEventAttachedFile?.Path ?? "", _settings.Value.FileStorageBaseUrl);
 
                         if (fileData != null)
                         {
@@ -1709,8 +1698,7 @@ public class CalendarController : BaseController
                 {
                     List<CalendarEventOutputViewModel> calendarEvents = [];
 
-                    bool isAccountSessionExist = HttpContext.Session.TryGetValue(Maroik.Core.Client.Utilities.EnumHelper.GetDescription(Maroik.Core.Client.Utilities.Session.Account), out byte[] resultByte);
-
+                    bool isAccountSessionExist = _sessionService.GetAccount() != null;
                     AccountResponse loginedAccount = null;
 
                     List<CalendarResponse> tempCalendars = null;
@@ -1719,9 +1707,9 @@ public class CalendarController : BaseController
 
                     if (isAccountSessionExist)
                     {
-                        loginedAccount = JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte));
+                        loginedAccount = _sessionService.GetAccount()!;
 
-                        tempCalendars = await _calendarRepository.GetCalendarsAsync(JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email);
+                        tempCalendars = await _calendarRepository.GetCalendarsAsync(_sessionService.GetAccount()!.Email);
 
                         tempOtherCalendars = [];
 
@@ -1943,8 +1931,7 @@ public class CalendarController : BaseController
     {
         try
         {
-            _ = HttpContext.Session.TryGetValue(Maroik.Core.Client.Utilities.EnumHelper.GetDescription(Maroik.Core.Client.Utilities.Session.Account), out byte[] resultByte);
-            List<CalendarResponse> calendars = (await _calendarRepository.GetCalendarsAsync(JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email) ?? [])?.ToList();
+            List<CalendarResponse> calendars = (await _calendarRepository.GetCalendarsAsync(_sessionService.GetAccount()!.Email) ?? [])?.ToList();
             List<CalendarSharedResponse> calendarShareds = (await _calendarSharedRepository.GetCalendarSharedAsync() ?? [])?.ToList();
 
             foreach (CalendarResponse calendar in calendars)
@@ -1996,11 +1983,10 @@ public class CalendarController : BaseController
     {
         try
         {
-            bool isAccountSessionExist = HttpContext.Session.TryGetValue(Maroik.Core.Client.Utilities.EnumHelper.GetDescription(Maroik.Core.Client.Utilities.Session.Account), out byte[] resultByte);
-
+            bool isAccountSessionExist = _sessionService.GetAccount() != null;
             if (isAccountSessionExist)
             {
-                AccountResponse loginedAccount = JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte));
+                AccountResponse loginedAccount = _sessionService.GetAccount()!;
 
                 if (loginedAccount.Role is not (Role.Admin or Role.User)) // If not logged in user
                 {
@@ -2009,7 +1995,7 @@ public class CalendarController : BaseController
 
                 List<CalendarResponse> allCalendars = await _calendarRepository.GetAllCalendarsAsync() ?? [];
                 List<CalendarSharedResponse> calendarShareds = await _calendarSharedRepository.GetCalendarSharedAsync() ?? [];
-                List<OtherCalendarResponse> otherCalendars = await _otherCalendarRepository.GetOtherCalendarsAsync(JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email);
+                List<OtherCalendarResponse> otherCalendars = await _otherCalendarRepository.GetOtherCalendarsAsync(_sessionService.GetAccount()!.Email);
 
                 switch (loginedAccount.Role)
                 {
@@ -2064,10 +2050,8 @@ public class CalendarController : BaseController
             {
                 try
                 {
-                    _ = HttpContext.Session.TryGetValue(Maroik.Core.Client.Utilities.EnumHelper.GetDescription(Maroik.Core.Client.Utilities.Session.Account), out byte[] resultByte);
-
                     CalendarResponse tempCalendar = (calendarInputViewModel?.Calendars?.FirstOrDefault())?.Adapt<CalendarResponse>() ?? new CalendarResponse();
-                    tempCalendar.AccountEmail = JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email;
+                    tempCalendar.AccountEmail = _sessionService.GetAccount()!.Email;
                     tempCalendar.Updated = DateTime.UtcNow;
 
                     List<CalendarResponse> tempCalendars = await _calendarRepository.GetCalendarsAsync(tempCalendar.AccountEmail);
@@ -2158,12 +2142,11 @@ public class CalendarController : BaseController
                     }
                 }
 
-                bool isAccountSessionExist = HttpContext.Session.TryGetValue(Maroik.Core.Client.Utilities.EnumHelper.GetDescription(Maroik.Core.Client.Utilities.Session.Account), out byte[] resultByte);
-
+                bool isAccountSessionExist = _sessionService.GetAccount() != null;
                 if (!isAccountSessionExist)
                     return Json(new { result = false, error = _localizer["Please Login to update calendar event"].Value });
 
-                AccountResponse loginedAccount = JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte));
+                AccountResponse loginedAccount = _sessionService.GetAccount()!;
 
                 if (loginedAccount.Role is not (Role.Admin or Role.User))
                     return Json(new { result = false, error = _localizer["Please Login to update calendar event"].Value });
@@ -2325,12 +2308,11 @@ public class CalendarController : BaseController
         {
             if (ModelState.IsValid)
             {
-                bool isAccountSessionExist = HttpContext.Session.TryGetValue(Maroik.Core.Client.Utilities.EnumHelper.GetDescription(Maroik.Core.Client.Utilities.Session.Account), out byte[] resultByte);
-
+                bool isAccountSessionExist = _sessionService.GetAccount() != null;
                 if (!isAccountSessionExist)
                     return Json(new { result = false, error = _localizer["Login required."].Value });
 
-                AccountResponse loginedAccount = JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte));
+                AccountResponse loginedAccount = _sessionService.GetAccount()!;
 
                 if (loginedAccount.Role is not (Role.Admin or Role.User))
                     return Json(new { result = false, error = _localizer["Login required."].Value });
@@ -2367,10 +2349,8 @@ public class CalendarController : BaseController
     {
         try
         {
-            _ = HttpContext.Session.TryGetValue(Maroik.Core.Client.Utilities.EnumHelper.GetDescription(Maroik.Core.Client.Utilities.Session.Account), out byte[] resultByte);
-
             CalendarRequest tempCalendar = calendarInputViewModel?.Calendars?.FirstOrDefault() ?? new CalendarRequest();
-            tempCalendar.AccountEmail = JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email;
+            tempCalendar.AccountEmail = _sessionService.GetAccount()!.Email;
 
             ServiceResult deleteCalendarResult = await _calendarService.DeleteCalendarAsync(tempCalendar);
 
@@ -2393,9 +2373,7 @@ public class CalendarController : BaseController
     {
         try
         {
-            _ = HttpContext.Session.TryGetValue(Maroik.Core.Client.Utilities.EnumHelper.GetDescription(Maroik.Core.Client.Utilities.Session.Account), out byte[] resultByte);
-
-            string email = JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email;
+            string email = _sessionService.GetAccount()!.Email;
 
             ServiceResult deleteEventResult = await _calendarService.DeleteCalendarEventAsync(id, email);
 

@@ -4,6 +4,7 @@ using Maroik.Core.Client.Utilities;
 using Maroik.WebSite.Models.ViewModels.Account;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Localization;
+using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using System.Text;
 
@@ -15,28 +16,33 @@ public class AccountController : BaseController
     private readonly ILogger<AccountController> _logger;
     private readonly IAccountService _accountService;
     private readonly IMailClient _mailClient;
+    private readonly IOptions<ServerSetting> _settings;
+    private readonly ISessionService _sessionService;
 
     public AccountController(
         IHtmlLocalizer<AccountController> localizer,
         ILogger<AccountController> logger,
         IAccountService accountService,
-        IMailClient mailClient)
+        IMailClient mailClient,
+        IOptions<ServerSetting> settings,
+        ISessionService sessionService)
     {
         _localizer = localizer;
         _logger = logger;
         _accountService = accountService;
         _mailClient = mailClient;
+        _settings = settings;
+        _sessionService = sessionService;
     }
 
     #region ConsentForm
     [HttpGet]
     public IActionResult ConsentForm()
     {
-        bool isAccountSessionExist = HttpContext.Session.TryGetValue(EnumHelper.GetDescription(Session.Account), out byte[] resultByte);
+        var loginedAccount = _sessionService.GetAccount();
 
-        if (isAccountSessionExist)
+        if (loginedAccount != null)
         {
-            AccountResponse loginedAccount = JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte));
             return loginedAccount.Role == Role.Admin ? RedirectToAction("AdminIndex", "DashBoard")
                 : loginedAccount.Role == Role.User ? RedirectToAction("UserIndex", "DashBoard")
                 : null;
@@ -73,9 +79,7 @@ public class AccountController : BaseController
             return View();
         }
 
-        HttpContext.Session.Set(
-            EnumHelper.GetDescription(Session.Account),
-            Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(result.Account)));
+        _sessionService.SetAccount(result.Account!);
 
         return result.Account!.Role == Role.Admin
             ? RedirectToAction("AdminIndex", "DashBoard")
@@ -89,7 +93,7 @@ public class AccountController : BaseController
     [HttpGet]
     public IActionResult Logout()
     {
-        HttpContext.Session.Remove(EnumHelper.GetDescription(Session.Account));
+        _sessionService.RemoveAccount();
         return RedirectToAction("AnonymousIndex", "DashBoard");
     }
     #endregion
@@ -98,11 +102,10 @@ public class AccountController : BaseController
     [HttpGet]
     public IActionResult Register()
     {
-        bool isAccountSessionExist = HttpContext.Session.TryGetValue(EnumHelper.GetDescription(Session.Account), out byte[] resultByte);
+        var loginedAccount = _sessionService.GetAccount();
 
-        if (isAccountSessionExist)
+        if (loginedAccount != null)
         {
-            AccountResponse loginedAccount = JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte));
             return loginedAccount.Role == Role.Admin ? RedirectToAction("AdminIndex", "DashBoard")
                 : loginedAccount.Role == Role.User ? RedirectToAction("UserIndex", "DashBoard")
                 : null;
@@ -136,7 +139,7 @@ public class AccountController : BaseController
                 _localizer["Welcome to Maroik"].Value,
                 _localizer["Click the link below to verify your Email"].Value,
                 _localizer["If this link does not work, please copy & paste this link to your Internet URL"].Value,
-                ServerSetting.DomainName ?? string.Empty);
+                _settings.Value.DomainName ?? string.Empty);
 
             var newAccount = new AccountRequest
             {
@@ -184,7 +187,7 @@ public class AccountController : BaseController
                 _localizer["Welcome to Maroik"].Value,
                 _localizer["Click the link below to verify your Email"].Value,
                 _localizer["If this link does not work, please copy & paste this link to your Internet URL"].Value,
-                ServerSetting.DomainName ?? string.Empty);
+                _settings.Value.DomainName ?? string.Empty);
 
             var result = await _accountService.ResendConfirmationEmailAsync(loginInputViewModel.Email, emailSubject, emailBodyFactory);
 
@@ -207,11 +210,10 @@ public class AccountController : BaseController
     [HttpGet]
     public async Task<IActionResult> ConfirmEmail(string registrationToken)
     {
-        bool isAccountSessionExist = HttpContext.Session.TryGetValue(EnumHelper.GetDescription(Session.Account), out byte[] resultByte);
+        var loginedAccount = _sessionService.GetAccount();
 
-        if (isAccountSessionExist)
+        if (loginedAccount != null)
         {
-            AccountResponse loginedAccount = JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte));
             return loginedAccount.Role == Role.Admin ? RedirectToAction("AdminIndex", "DashBoard")
                 : loginedAccount.Role == Role.User ? RedirectToAction("UserIndex", "DashBoard")
                 : null;
@@ -232,11 +234,10 @@ public class AccountController : BaseController
     [HttpGet]
     public IActionResult ForgotPassword()
     {
-        bool isAccountSessionExist = HttpContext.Session.TryGetValue(EnumHelper.GetDescription(Session.Account), out byte[] resultByte);
+        var loginedAccount = _sessionService.GetAccount();
 
-        if (isAccountSessionExist)
+        if (loginedAccount != null)
         {
-            AccountResponse loginedAccount = JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte));
             return loginedAccount.Role == Role.Admin ? RedirectToAction("AdminIndex", "DashBoard")
                 : loginedAccount.Role == Role.User ? RedirectToAction("UserIndex", "DashBoard")
                 : null;
@@ -263,7 +264,7 @@ public class AccountController : BaseController
                 _localizer["Welcome to Maroik"].Value,
                 _localizer["Click the link below to reset your password"].Value,
                 _localizer["If this link does not work, please copy & paste this link to your Internet URL"].Value,
-                ServerSetting.DomainName ?? string.Empty));
+                _settings.Value.DomainName ?? string.Empty));
 
         ViewBag.mailSent = true;
         ViewBag.sentEmailAddress = loginInputViewModel.Email;
@@ -273,11 +274,10 @@ public class AccountController : BaseController
     [HttpGet]
     public async Task<IActionResult> ResetPassword(string resetPasswordToken)
     {
-        bool isAccountSessionExist = HttpContext.Session.TryGetValue(EnumHelper.GetDescription(Session.Account), out byte[] resultByte);
+        var loginedAccount = _sessionService.GetAccount();
 
-        if (isAccountSessionExist)
+        if (loginedAccount != null)
         {
-            AccountResponse loginedAccount = JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte));
             return loginedAccount.Role == Role.Admin ? RedirectToAction("AdminIndex", "DashBoard")
                 : loginedAccount.Role == Role.User ? RedirectToAction("UserIndex", "DashBoard")
                 : null;

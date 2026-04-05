@@ -35,27 +35,40 @@ var builder = WebApplication.CreateBuilder(args);
 const string cookiePrefix = "__Secure-";
 
 #region ServerSettings
-ServerSetting.DomainName = builder.Configuration.GetSection("ServerSetting")["DomainName"];
-ServerSetting.MaxLoginAttempt = Convert.ToByte(builder.Configuration.GetSection("ServerSetting")["MaxLoginAttempt"]);
-ServerSetting.SessionExpireMinutes = Convert.ToInt32(builder.Configuration.GetSection("ServerSetting")["SessionExpireMinutes"]);
-ServerSetting.SmtpUserName = builder.Configuration.GetSection("ServerSetting").GetSection("SmtpOptions")["smtpUserName"];
-ServerSetting.SmtpPassword = builder.Configuration.GetSection("ServerSetting").GetSection("SmtpOptions")["smtpPassword"];
-ServerSetting.SmtpHost = builder.Configuration.GetSection("ServerSetting").GetSection("SmtpOptions")["smtpHost"];
-ServerSetting.SmtpPort = Convert.ToInt32(builder.Configuration.GetSection("ServerSetting").GetSection("SmtpOptions")["smtpPort"]);
-ServerSetting.SmtpSSL = Convert.ToBoolean(builder.Configuration.GetSection("ServerSetting").GetSection("SmtpOptions")["smtpSSL"]);
-ServerSetting.FromEmail = builder.Configuration.GetSection("ServerSetting").GetSection("SmtpOptions")["fromEmail"];
-ServerSetting.FromFullName = builder.Configuration.GetSection("ServerSetting").GetSection("SmtpOptions")["fromFullName"];
-ServerSetting.IsDefault = Convert.ToBoolean(builder.Configuration.GetSection("ServerSetting").GetSection("SmtpOptions")["IsDefault"]);
-ServerSetting.NoticeMaturityDateDay = Convert.ToInt32(builder.Configuration.GetSection("ServerSetting")["NoticeMaturityDateDay"]);
-ServerSetting.DockerCertPath = builder.Configuration.GetSection("ServerSetting")["DockerCertPath"];
-ServerSetting.DockerKeyPath = builder.Configuration.GetSection("ServerSetting")["DockerKeyPath"];
-ServerSetting.RSAPrivateKey = builder.Configuration.GetSection("ServerSetting")["RSAPrivateKey"];
-ServerSetting.RSAPublicKey = builder.Configuration.GetSection("ServerSetting")["RSAPublicKey"];
-string rsaAlgorithmString = builder.Configuration.GetSection("ServerSetting")["RSAAlgorithm"] ?? "RSA2";
-ServerSetting.RSAAlgorithm = Enum.TryParse<RSAType>(rsaAlgorithmString, out var rsaType) ? rsaType : RSAType.RSA2;
-ServerSetting.ClamavHost = builder.Configuration.GetSection("Clamav")["Host"];
-ServerSetting.ClamavPort = Convert.ToInt32(builder.Configuration.GetSection("Clamav")["Port"]);
-ServerSetting.FileStorageBaseUrl = builder.Configuration.GetSection("FileStorage")["BaseUrl"];
+// Capture config values needed before DI container is built (for middleware/Kestrel configuration)
+var serverConfig = builder.Configuration.GetSection("ServerSetting");
+string cfgDomainName = serverConfig["DomainName"] ?? string.Empty;
+int cfgSessionExpireMinutes = Convert.ToInt32(serverConfig["SessionExpireMinutes"]);
+var cfgDockerCertPath = serverConfig["DockerCertPath"];
+var cfgDockerKeyPath = serverConfig["DockerKeyPath"];
+
+// Register ServerSetting as IOptions<ServerSetting> for DI
+builder.Services.Configure<ServerSetting>(cfg =>
+{
+    var section = builder.Configuration.GetSection("ServerSetting");
+    cfg.DomainName = section["DomainName"];
+    cfg.MaxLoginAttempt = Convert.ToByte(section["MaxLoginAttempt"]);
+    cfg.SessionExpireMinutes = Convert.ToInt32(section["SessionExpireMinutes"]);
+    var smtp = section.GetSection("SmtpOptions");
+    cfg.SmtpUserName = smtp["smtpUserName"];
+    cfg.SmtpPassword = smtp["smtpPassword"];
+    cfg.SmtpHost = smtp["smtpHost"];
+    cfg.SmtpPort = Convert.ToInt32(smtp["smtpPort"]);
+    cfg.SmtpSSL = Convert.ToBoolean(smtp["smtpSSL"]);
+    cfg.FromEmail = smtp["fromEmail"];
+    cfg.FromFullName = smtp["fromFullName"];
+    cfg.IsDefault = Convert.ToBoolean(smtp["IsDefault"]);
+    cfg.NoticeMaturityDateDay = Convert.ToInt32(section["NoticeMaturityDateDay"]);
+    cfg.DockerCertPath = section["DockerCertPath"];
+    cfg.DockerKeyPath = section["DockerKeyPath"];
+    cfg.RSAPrivateKey = section["RSAPrivateKey"];
+    cfg.RSAPublicKey = section["RSAPublicKey"];
+    string rsaAlgorithmString = section["RSAAlgorithm"] ?? "RSA2";
+    cfg.RSAAlgorithm = Enum.TryParse<RSAType>(rsaAlgorithmString, out var rsaType) ? rsaType : RSAType.RSA2;
+    cfg.ClamavHost = builder.Configuration.GetSection("Clamav")["Host"];
+    cfg.ClamavPort = Convert.ToInt32(builder.Configuration.GetSection("Clamav")["Port"]);
+    cfg.FileStorageBaseUrl = builder.Configuration.GetSection("FileStorage")["BaseUrl"];
+});
 #endregion
 
 #region AddDbContext
@@ -115,6 +128,7 @@ builder.Services.AddScoped<IMailClient, MailClient>();
 builder.Services.AddScoped<IFileClient, FileClient>();
 builder.Services.AddScoped<IClamavClient, ClamavClient>();
 builder.Services.AddHttpClient();
+builder.Services.AddSingleton<IRSAService, RSAService>();
 #endregion
 
 //#region REDIS
@@ -150,11 +164,11 @@ builder.Services.AddHttpClient();
 builder.Services.AddDistributedMemoryCache(); // Server Memory
 builder.Services.AddSession(options =>
 {
-    options.IdleTimeout = TimeSpan.FromMinutes(ServerSetting.SessionExpireMinutes);
+    options.IdleTimeout = TimeSpan.FromMinutes(cfgSessionExpireMinutes);
     options.Cookie.Name = $"{cookiePrefix}{SessionDefaults.CookieName}";
     options.Cookie.HttpOnly = true;
     options.Cookie.IsEssential = true;
-    options.Cookie.Domain = ServerSetting.DomainName?.Replace("https://", "").Replace("/", "");
+    options.Cookie.Domain = cfgDomainName.Replace("https://", "").Replace("/", "");
     options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
     options.Cookie.SameSite = SameSiteMode.Strict;
 });
@@ -166,7 +180,7 @@ builder.Services.AddAntiforgery(options =>
     options.Cookie.Name = $"{cookiePrefix}{AntiforgeryOptions.DefaultCookiePrefix}";
     options.Cookie.HttpOnly = true;
     options.Cookie.IsEssential = true;
-    options.Cookie.Domain = ServerSetting.DomainName?.Replace("https://", "").Replace("/", "");
+    options.Cookie.Domain = cfgDomainName.Replace("https://", "").Replace("/", "");
     options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
     options.Cookie.SameSite = SameSiteMode.Strict;
 });
@@ -178,21 +192,24 @@ builder.Services.AddCors(options =>
     options.AddDefaultPolicy(
         corsPolicyBuilder =>
         {
-            _ = corsPolicyBuilder.WithOrigins(ServerSetting.DomainName?.Replace("/", "") ?? string.Empty);
+            _ = corsPolicyBuilder.WithOrigins(cfgDomainName.Replace("/", ""));
         });
 });
 #endregion
 
 builder.Services.AddSingleton<IConfiguration>(builder.Configuration);
-builder.Services.AddResponseCaching(); // For HTTP Header Setting 
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<ISessionService, SessionService>();
+builder.Services.AddMemoryCache(); // For IMemoryCache DI
+builder.Services.AddResponseCaching(); // For HTTP Header Setting
 
 builder.Services.AddHsts(options => // https://blog.elmah.io/the-asp-net-core-security-headers-guide/
 {
     options.IncludeSubDomains = true;
     options.MaxAge = TimeSpan.FromDays(365);
     options.Preload = true;
-    options.ExcludedHosts.Add(ServerSetting.DomainName?.Replace("https://", "").Replace("/", ""));
-    options.ExcludedHosts.Add(ServerSetting.DomainName?.Replace("https://", "").Replace("/", "").Replace("www.", ""));
+    options.ExcludedHosts.Add(cfgDomainName.Replace("https://", "").Replace("/", ""));
+    options.ExcludedHosts.Add(cfgDomainName.Replace("https://", "").Replace("/", "").Replace("www.", ""));
 });
 
 #region Multi-Language
@@ -283,12 +300,12 @@ X509Certificate2 LoadCertificate(string certPath, string keyPath)
     }
 }
 
-if (!string.IsNullOrEmpty(ServerSetting.DockerCertPath) && !string.IsNullOrEmpty(ServerSetting.DockerKeyPath))
+if (!string.IsNullOrEmpty(cfgDockerCertPath) && !string.IsNullOrEmpty(cfgDockerKeyPath))
 {
     // Load certificate
-    currentCert = LoadCertificate(ServerSetting.DockerCertPath, ServerSetting.DockerKeyPath);
-    previousCertHash = ComputeFileHash(ServerSetting.DockerCertPath);
-    previousCertKeyHash = ComputeFileHash(ServerSetting.DockerKeyPath);
+    currentCert = LoadCertificate(cfgDockerCertPath, cfgDockerKeyPath);
+    previousCertHash = ComputeFileHash(cfgDockerCertPath);
+    previousCertKeyHash = ComputeFileHash(cfgDockerKeyPath);
     
     // Configure Kestrel SSL settings
     builder.WebHost.ConfigureKestrel(options =>
@@ -315,15 +332,15 @@ if (!string.IsNullOrEmpty(ServerSetting.DockerCertPath) && !string.IsNullOrEmpty
 
         try
         {
-            var currentCertHash = ComputeFileHash(ServerSetting.DockerCertPath);
-            var currentCertKeyHash = ComputeFileHash(ServerSetting.DockerKeyPath);
+            var currentCertHash = ComputeFileHash(cfgDockerCertPath);
+            var currentCertKeyHash = ComputeFileHash(cfgDockerKeyPath);
             // ReSharper disable once InvertIf
             if (currentCertHash != previousCertHash &&
                 currentCertKeyHash != previousCertKeyHash)
             {
                 Console.WriteLine("Certificate file, reloading...");
 
-                var newCert = LoadCertificate(ServerSetting.DockerCertPath, ServerSetting.DockerKeyPath);
+                var newCert = LoadCertificate(cfgDockerCertPath, cfgDockerKeyPath);
 
                 lock (certLock)
                 {
@@ -433,7 +450,7 @@ app.Use(async (context, next) =>
     context.Response.Headers.Append("Cross-Origin-Embedder-Policy", "require-corp");
     context.Response.Headers.Append("Cross-Origin-Opener-Policy", "same-origin");
     context.Response.Headers.Append("Permissions-Policy", "accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()");
-    context.Response.Headers.Append("Content-Security-Policy", $"img-src 'self' blob:; connect-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; object-src 'none'; base-uri 'none'; report-uri {ServerSetting.DomainName}; form-action 'self'; frame-ancestors 'none'"); // [https://csper.io/blog/no-more-unsafe-inline] [https://csp-evaluator.withgoogle.com/?csp=https://www.maroik.com]
+    context.Response.Headers.Append("Content-Security-Policy", $"img-src 'self' blob:; connect-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; object-src 'none'; base-uri 'none'; report-uri {cfgDomainName}; form-action 'self'; frame-ancestors 'none'"); // [https://csper.io/blog/no-more-unsafe-inline] [https://csp-evaluator.withgoogle.com/?csp=https://www.maroik.com]
     #endregion
     await next();
 });

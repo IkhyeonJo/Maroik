@@ -1,9 +1,10 @@
-﻿using Maroik.Core.Contract.Dtos;
+using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.PostgreSQL.Models;
 using Maroik.Core.Client.Utilities;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
+using Microsoft.Extensions.Caching.Memory;
 using Newtonsoft.Json;
 using System.Reflection;
 using System.Text;
@@ -14,48 +15,69 @@ public class AuthorizationFilter : ActionFilterAttribute
 {
     private readonly ICategoryRepository _categoryRepository;
     private readonly ISubCategoryRepository _subCategoryRepository;
+    private readonly IMemoryCache _cache;
+    private readonly ISessionService _sessionService;
 
-    public AuthorizationFilter(ICategoryRepository categoryRepository, ISubCategoryRepository subCategoryRepository)
+    private const string AdminCategoriesCacheKey = "nav_admin_categories";
+    private const string AdminSubCategoriesCacheKey = "nav_admin_subcategories";
+    private const string UserCategoriesCacheKey = "nav_user_categories";
+    private const string UserSubCategoriesCacheKey = "nav_user_subcategories";
+    private const string AnonymousCategoriesCacheKey = "nav_anonymous_categories";
+    private const string AnonymousSubCategoriesCacheKey = "nav_anonymous_subcategories";
+
+    public AuthorizationFilter(ICategoryRepository categoryRepository, ISubCategoryRepository subCategoryRepository, IMemoryCache cache, ISessionService sessionService)
     {
         _categoryRepository = categoryRepository;
         _subCategoryRepository = subCategoryRepository;
+        _cache = cache;
+        _sessionService = sessionService;
     }
 
     // Do something before the action executes.
     public override async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
     {
-        var categories = await _categoryRepository.GetCategoryAsync();
-        var subCategories = await _subCategoryRepository.GetSubCategoryAsync();
+        if (!_cache.TryGetValue(AdminCategoriesCacheKey, out IEnumerable<CategoryResponse> adminCategories) ||
+            !_cache.TryGetValue(AdminSubCategoriesCacheKey, out IEnumerable<SubCategoryResponse> adminSubCategories) ||
+            !_cache.TryGetValue(UserCategoriesCacheKey, out IEnumerable<CategoryResponse> userCategories) ||
+            !_cache.TryGetValue(UserSubCategoriesCacheKey, out IEnumerable<SubCategoryResponse> userSubCategories) ||
+            !_cache.TryGetValue(AnonymousCategoriesCacheKey, out IEnumerable<CategoryResponse> anonymousCategories) ||
+            !_cache.TryGetValue(AnonymousSubCategoriesCacheKey, out IEnumerable<SubCategoryResponse> anonymousSubCategories))
+        {
+            var categories = (await _categoryRepository.GetCategoryAsync()).ToList();
+            var subCategories = (await _subCategoryRepository.GetSubCategoryAsync()).ToList();
 
-        DbCache.AdminCategories = from adminCategory in categories
-                                  where adminCategory.Role == Role.Admin
-                                  select adminCategory;
+            var entryOptions = new MemoryCacheEntryOptions()
+                .SetSlidingExpiration(TimeSpan.FromMinutes(10));
 
-        DbCache.AdminSubCategories = from adminSubCategory in subCategories
-                                     where adminSubCategory.Role == Role.Admin
-                                     select adminSubCategory;
+            adminCategories = categories.Where(c => c.Role == Role.Admin).ToList();
+            adminSubCategories = subCategories.Where(s => s.Role == Role.Admin).ToList();
+            userCategories = categories.Where(c => c.Role == Role.User).ToList();
+            userSubCategories = subCategories.Where(s => s.Role == Role.User).ToList();
+            anonymousCategories = categories.Where(c => c.Role == Role.Anonymous).ToList();
+            anonymousSubCategories = subCategories.Where(s => s.Role == Role.Anonymous).ToList();
 
-        DbCache.UserCategories = from userCategory in categories
-                                 where userCategory.Role == Role.User
-                                 select userCategory;
+            _cache.Set(AdminCategoriesCacheKey, adminCategories, entryOptions);
+            _cache.Set(AdminSubCategoriesCacheKey, adminSubCategories, entryOptions);
+            _cache.Set(UserCategoriesCacheKey, userCategories, entryOptions);
+            _cache.Set(UserSubCategoriesCacheKey, userSubCategories, entryOptions);
+            _cache.Set(AnonymousCategoriesCacheKey, anonymousCategories, entryOptions);
+            _cache.Set(AnonymousSubCategoriesCacheKey, anonymousSubCategories, entryOptions);
+        }
 
-        DbCache.UserSubCategories = from userSubCategory in subCategories
-                                    where userSubCategory.Role == Role.User
-                                    select userSubCategory;
-
-        DbCache.AnonymousCategories = from anonymousCategory in categories
-                                      where anonymousCategory.Role == Role.Anonymous
-                                      select anonymousCategory;
-
-        DbCache.AnonymousSubCategories = from anonymousSubCategory in subCategories
-                                         where anonymousSubCategory.Role == Role.Anonymous
-                                         select anonymousSubCategory;
-
+        if (context.Controller is Controller ctrl)
+        {
+            ctrl.ViewBag.AdminCategories = adminCategories;
+            ctrl.ViewBag.AdminSubCategories = adminSubCategories;
+            ctrl.ViewBag.UserCategories = userCategories;
+            ctrl.ViewBag.UserSubCategories = userSubCategories;
+            ctrl.ViewBag.AnonymousCategories = anonymousCategories;
+            ctrl.ViewBag.AnonymousSubCategories = anonymousSubCategories;
+        }
 
         string currentControllerName = context.ActionDescriptor.RouteValues["controller"].ToString(); // Controller name before execution
         string currentActionName = context.ActionDescriptor.RouteValues["action"].ToString(); // Action name before execution
         string currentRequestMethod = context.HttpContext.Request.Method; // GET HTTP METHOD
-        bool isAccountSessionExist = context.HttpContext.Session.TryGetValue(Maroik.Core.Client.Utilities.EnumHelper.GetDescription(Maroik.Core.Client.Utilities.Session.Account), out _); // Check if account session exists after login
+        bool isAccountSessionExist = _sessionService.GetAccount() != null; // Check if account session exists after login
 
         if (currentRequestMethod.ToUpper() == "GET") // GET method (block page access only!!)
         {
@@ -101,9 +123,6 @@ public class AuthorizationFilter : ActionFilterAttribute
                     await next(); // Do Action!!
                     return;
                 }
-
-                IEnumerable<CategoryResponse> anonymousCategories = DbCache.AnonymousCategories;
-                IEnumerable<SubCategoryResponse> anonymousSubCategories = DbCache.AnonymousSubCategories;
 
                 #region If Category without SubCategory
                 IEnumerable<CategoryResponse> singleCategories = from anonymousCategory in anonymousCategories
@@ -162,14 +181,10 @@ public class AuthorizationFilter : ActionFilterAttribute
                     return;
                 }
 
-                _ = context.HttpContext.Session.TryGetValue(Maroik.Core.Client.Utilities.EnumHelper.GetDescription(Maroik.Core.Client.Utilities.Session.Account), out byte[] resultByte);
-                AccountResponse loginedAccount = JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)); // Get Session
+                AccountResponse loginedAccount = _sessionService.GetAccount()!; // Get Session
 
                 if (loginedAccount.Role == Role.Admin) // If logged-in user has Admin role
                 {
-                    IEnumerable<CategoryResponse> adminCategories = DbCache.AdminCategories;
-                    IEnumerable<SubCategoryResponse> adminSubCategories = DbCache.AdminSubCategories;
-
                     #region If Category without SubCategory
                     IEnumerable<CategoryResponse> singleCategories = from adminCategory in adminCategories
                                                              where !string.IsNullOrEmpty(adminCategory.Action)
@@ -212,9 +227,6 @@ public class AuthorizationFilter : ActionFilterAttribute
                 }
                 else if (loginedAccount.Role == Role.User) // If logged-in user has User role
                 {
-                    IEnumerable<CategoryResponse> userCategories = DbCache.UserCategories;
-                    IEnumerable<SubCategoryResponse> userSubCategories = DbCache.UserSubCategories;
-
                     #region If Category without SubCategory
                     IEnumerable<CategoryResponse> singleCategories = from userCategory in userCategories
                                                              where !string.IsNullOrEmpty(userCategory.Action)
@@ -278,7 +290,6 @@ public class AuthorizationFilter : ActionFilterAttribute
                     }
                 }
 
-                IEnumerable<CategoryResponse> anonymousCategories = DbCache.AnonymousCategories;
                 foreach (CategoryResponse anonymousCategory in anonymousCategories)
                 {
                     existingHttpPostMethods = existingControllers
@@ -314,12 +325,10 @@ public class AuthorizationFilter : ActionFilterAttribute
             }
             else if (isAccountSessionExist == true) // If logged in
             {
-                _ = context.HttpContext.Session.TryGetValue(Maroik.Core.Client.Utilities.EnumHelper.GetDescription(Maroik.Core.Client.Utilities.Session.Account), out byte[] resultByte);
-                AccountResponse loginedAccount = JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)); // Get Session
+                AccountResponse loginedAccount = _sessionService.GetAccount()!; // Get Session
 
                 if (loginedAccount.Role == Role.Admin) // If logged-in user has Admin role
                 {
-                    IEnumerable<CategoryResponse> adminCategories = DbCache.AdminCategories;
                     foreach (CategoryResponse adminCategory in adminCategories)
                     {
                         IEnumerable<MethodInfo> existingHttpPostMethods = existingControllers
@@ -354,7 +363,6 @@ public class AuthorizationFilter : ActionFilterAttribute
                 }
                 else if (loginedAccount.Role == Role.User) // If logged-in user has User role
                 {
-                    IEnumerable<CategoryResponse> userCategories = DbCache.UserCategories;
                     foreach (CategoryResponse userCategory in userCategories)
                     {
                         IEnumerable<MethodInfo> existingHttpPostMethods = existingControllers

@@ -12,6 +12,7 @@ using Maroik.WebSite.Models.ViewModels.Forum;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Localization;
 using Microsoft.AspNetCore.StaticFiles;
+using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using System.Text;
 
@@ -19,7 +20,7 @@ namespace Maroik.WebSite.Controllers;
 
 public class ForumController : BaseController
 {
-    private readonly RSA _rsa;
+    private readonly IRSAService _rsa;
     private readonly IHtmlLocalizer<ForumController> _localizer;
     private readonly ILogger<ForumController> _logger;
     private readonly IHostEnvironment _hostEnvironment;
@@ -29,10 +30,14 @@ public class ForumController : BaseController
     private readonly IBoardCommentRepository _boardCommentRepository;
     private readonly IFileClient _fileClient;
     private readonly IBoardService _boardService;
+    private readonly IOptions<ServerSetting> _settings;
+    private readonly ISessionService _sessionService;
 
-    public ForumController(IHtmlLocalizer<ForumController> localizer, ILogger<ForumController> logger, IBoardRepository boardRepository, IHostEnvironment hostEnvironment, IBoardAttachedFileRepository boardAttachedFileRepository, IAccountRepository accountRepository, IBoardCommentRepository boardCommentRepository, IFileClient fileClient, IBoardService boardService)
+    public ForumController(IHtmlLocalizer<ForumController> localizer, ILogger<ForumController> logger, IBoardRepository boardRepository, IHostEnvironment hostEnvironment, IBoardAttachedFileRepository boardAttachedFileRepository, IAccountRepository accountRepository, IBoardCommentRepository boardCommentRepository, IFileClient fileClient, IBoardService boardService, IOptions<ServerSetting> settings, IRSAService rsa, ISessionService sessionService)
     {
-        _rsa = new RSA(ServerSetting.RSAAlgorithm, Encoding.UTF8, ServerSetting.RSAPrivateKey, ServerSetting.RSAPublicKey);
+        _settings = settings;
+        _rsa = rsa;
+        _sessionService = sessionService;
         _localizer = localizer;
         _logger = logger;
         _boardRepository = boardRepository;
@@ -96,14 +101,11 @@ public class ForumController : BaseController
                     return Json(new { result = false, error = _localizer["uploaded file size must be smaller than 10MB."].Value });
             }
 
-            bool isAccountSessionExist = HttpContext.Session.TryGetValue(
-                Maroik.Core.Client.Utilities.EnumHelper.GetDescription(Maroik.Core.Client.Utilities.Session.Account),
-                out byte[] resultByte);
-
+            bool isAccountSessionExist = _sessionService.GetAccount() != null;
             if (!isAccountSessionExist)
                 return Json(new { result = false, error = _localizer["Please Login to write board"].Value });
 
-            AccountResponse loginedAccount = JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte));
+            AccountResponse loginedAccount = _sessionService.GetAccount()!;
 
             if (loginedAccount.Role != Role.Admin && loginedAccount.Role != Role.User)
                 return Json(new { result = false, error = _localizer["Please Login to write board"].Value });
@@ -165,14 +167,11 @@ public class ForumController : BaseController
             boardCommentInputViewModel.Content = sanitizer.Sanitize(boardCommentInputViewModel.Content);
             #endregion
 
-            bool isAccountSessionExist = HttpContext.Session.TryGetValue(
-                Maroik.Core.Client.Utilities.EnumHelper.GetDescription(Maroik.Core.Client.Utilities.Session.Account),
-                out byte[] resultByte);
-
+            bool isAccountSessionExist = _sessionService.GetAccount() != null;
             if (!isAccountSessionExist)
                 return Json(new { result = false, error = _localizer["Please Login to write boardComment."].Value });
 
-            AccountResponse loginedAccount = JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte));
+            AccountResponse loginedAccount = _sessionService.GetAccount()!;
 
             IEnumerable<BoardResponse> freeForumBoards = await _boardRepository.GetOneTypeBoardsAsync(EnumHelper.GetDescription(BoardType.FreeForum));
             BoardResponse freeForumBoard = freeForumBoards.Where(m => !m.Deleted).FirstOrDefault(m => m.Id == boardCommentInputViewModel.BoardId);
@@ -236,11 +235,7 @@ public class ForumController : BaseController
             return Ok(new { result = false, errorMessage = _localizer["Invalid image file."].Value });
         }
 
-        _ = HttpContext.Session.TryGetValue(
-            Maroik.Core.Client.Utilities.EnumHelper.GetDescription(Maroik.Core.Client.Utilities.Session.Account),
-            out byte[] resultByte);
-
-        var loginedAccount = JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte));
+        var loginedAccount = _sessionService.GetAccount()!;
         
         string summernoteImagePath = Path.Combine("upload", "Forum", EnumHelper.GetDescription(BoardType.FreeForum), "summernote", "images");
         string imageFile = $"{Guid.NewGuid():N}{ext}";
@@ -250,12 +245,12 @@ public class ForumController : BaseController
         using (MemoryStream ms = new())
         {
             await summernoteImageFile.CopyToAsync(ms);
-            uploadResult = await _fileClient.UploadAsync(ms.ToArray(), summernoteImageFile.ContentType, filePath, ServerSetting.FileStorageBaseUrl);
+            uploadResult = await _fileClient.UploadAsync(ms.ToArray(), summernoteImageFile.ContentType, filePath, _settings.Value.FileStorageBaseUrl);
         }
 
         if (uploadResult)
         {
-            var fileStream = await _fileClient.DownloadAsync(filePath, ServerSetting.FileStorageBaseUrl);
+            var fileStream = await _fileClient.DownloadAsync(filePath, _settings.Value.FileStorageBaseUrl);
             return Ok(new
             {
                 result = true,
@@ -285,7 +280,7 @@ public class ForumController : BaseController
             freeForumOutputViewModel.Method = method;
             #endregion
 
-            bool isAccountSessionExist = HttpContext.Session.TryGetValue(Maroik.Core.Client.Utilities.EnumHelper.GetDescription(Maroik.Core.Client.Utilities.Session.Account), out _); // Check if account session exists after login
+            bool isAccountSessionExist = _sessionService.GetAccount() != null; // Check if account session exists after login
 
             return isAccountSessionExist ? View(freeForumOutputViewModel) : RedirectToAction("Login", "Account");
         }
@@ -313,8 +308,7 @@ public class ForumController : BaseController
 
                 if (freeBoard.Locked)
                 {
-                    _ = HttpContext.Session.TryGetValue(Maroik.Core.Client.Utilities.EnumHelper.GetDescription(Maroik.Core.Client.Utilities.Session.Account), out byte[] resultByte); // If writer or administrator
-                    AccountResponse loginedAccount = JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)); // Get Session
+                    AccountResponse loginedAccount = _sessionService.GetAccount()!; // Get Session
 
                     if (!(loginedAccount.Nickname == freeBoard.Writer || loginedAccount.Role == Role.Admin))
                     {
@@ -337,7 +331,7 @@ public class ForumController : BaseController
                     string filePath = imgTag.GetAttributeValue("alt", "");
 
                     // Method to download file
-                    byte[] fileData = await _fileClient.DownloadAsync(filePath, ServerSetting.FileStorageBaseUrl);
+                    byte[] fileData = await _fileClient.DownloadAsync(filePath, _settings.Value.FileStorageBaseUrl);
 
                     if (fileData != null)
                     {
@@ -379,7 +373,7 @@ public class ForumController : BaseController
 
                 if (!string.IsNullOrEmpty(freeForumOutputViewModel?.BoardOutputViewModel?.BoardAttachedFilePath ?? ""))
                 {
-                    byte[] fileData = await _fileClient.DownloadAsync(freeForumOutputViewModel?.BoardOutputViewModel?.BoardAttachedFilePath ?? "", ServerSetting.FileStorageBaseUrl);
+                    byte[] fileData = await _fileClient.DownloadAsync(freeForumOutputViewModel?.BoardOutputViewModel?.BoardAttachedFilePath ?? "", _settings.Value.FileStorageBaseUrl);
 
                     if (fileData != null)
                     {
@@ -401,10 +395,7 @@ public class ForumController : BaseController
                 // Preload comments and accounts for detail view
                 freeForumOutputViewModel.DetailBoardComments = (await _boardCommentRepository.GetOneBoardCommentsAsync(boardId ?? 0))?.ToList() ?? [];
                 freeForumOutputViewModel.AllAccounts = await _accountRepository.GetAllAsync() ?? [];
-                _ = HttpContext.Session.TryGetValue(EnumHelper.GetDescription(Maroik.Core.Client.Utilities.Session.Account), out byte[] detailSessionByte);
-                freeForumOutputViewModel.LoginedAccount = detailSessionByte?.Length > 0
-                    ? JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(detailSessionByte)) ?? new AccountResponse { Role = Role.Anonymous }
-                    : new AccountResponse { Role = Role.Anonymous };
+                freeForumOutputViewModel.LoginedAccount = _sessionService.GetAccount() ?? new AccountResponse { Role = Role.Anonymous };
                 freeForumOutputViewModel.LoginedAccountTimeZoneIanaId = freeForumOutputViewModel.LoginedAccount.TimeZoneIanaId ?? "";
 
                 return View(freeForumOutputViewModel);
@@ -436,8 +427,7 @@ public class ForumController : BaseController
             {
                 BoardResponse freeBoard = freeBoards.FirstOrDefault(m => m.Id == boardId);
 
-                _ = HttpContext.Session.TryGetValue(Maroik.Core.Client.Utilities.EnumHelper.GetDescription(Maroik.Core.Client.Utilities.Session.Account), out byte[] resultByte);
-                AccountResponse loginedAccount = await _accountRepository.GetAccountByEmailAsync(JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email);
+                AccountResponse loginedAccount = await _accountRepository.GetAccountByEmailAsync(_sessionService.GetAccount()!.Email);
 
                 if (freeBoard.Writer != loginedAccount.Nickname) // If writer and logged-in user are not the same
                 {
@@ -457,7 +447,7 @@ public class ForumController : BaseController
                     string filePath = imgTag.GetAttributeValue("alt", "");
 
                     // Method to download file
-                    byte[] fileData = await _fileClient.DownloadAsync(filePath, ServerSetting.FileStorageBaseUrl);
+                    byte[] fileData = await _fileClient.DownloadAsync(filePath, _settings.Value.FileStorageBaseUrl);
 
                     if (fileData != null)
                     {
@@ -500,7 +490,7 @@ public class ForumController : BaseController
 
                 if (!string.IsNullOrEmpty(freeForumOutputViewModel?.BoardOutputViewModel?.BoardAttachedFilePath ?? ""))
                 {
-                    byte[] fileData = await _fileClient.DownloadAsync(freeForumOutputViewModel?.BoardOutputViewModel?.BoardAttachedFilePath ?? "", ServerSetting.FileStorageBaseUrl);
+                    byte[] fileData = await _fileClient.DownloadAsync(freeForumOutputViewModel?.BoardOutputViewModel?.BoardAttachedFilePath ?? "", _settings.Value.FileStorageBaseUrl);
 
                     if (fileData != null)
                     {
@@ -545,11 +535,10 @@ public class ForumController : BaseController
             #region Search keyword logic
             if (searchType == "Title" && !string.IsNullOrEmpty(searchText))
             {
-                bool isAccountSessionExist = HttpContext.Session.TryGetValue(Maroik.Core.Client.Utilities.EnumHelper.GetDescription(Maroik.Core.Client.Utilities.Session.Account), out byte[] resultByte);
-
+                bool isAccountSessionExist = _sessionService.GetAccount() != null;
                 if (isAccountSessionExist) // If logged in
                 {
-                    AccountResponse loginedAccount = JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)); // Get Session
+                    AccountResponse loginedAccount = _sessionService.GetAccount()!; // Get Session
 
                     if (loginedAccount.Role == Role.Admin) // Administrator can see all posts
                     {
@@ -600,10 +589,7 @@ public class ForumController : BaseController
             #endregion
 
             #region Preload comment counts and attached files for view
-            _ = HttpContext.Session.TryGetValue(EnumHelper.GetDescription(Maroik.Core.Client.Utilities.Session.Account), out byte[] sessionByte);
-            freeForumOutputViewModel.LoginedAccount = sessionByte?.Length > 0
-                ? JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(sessionByte)) ?? new AccountResponse { Role = Role.Anonymous }
-                : new AccountResponse { Role = Role.Anonymous };
+            freeForumOutputViewModel.LoginedAccount = _sessionService.GetAccount() ?? new AccountResponse { Role = Role.Anonymous };
             freeForumOutputViewModel.LoginedAccountTimeZoneIanaId = freeForumOutputViewModel.LoginedAccount.TimeZoneIanaId ?? "";
             freeForumOutputViewModel.AllAccounts = await _accountRepository.GetAllAsync() ?? [];
             List<BoardAttachedFileResponse> allAttachedFiles = await _boardAttachedFileRepository.GetAllAsync() ?? [];
@@ -712,14 +698,11 @@ public class ForumController : BaseController
                     return Json(new { result = false, error = _localizer["uploaded file size must be smaller than 10MB."].Value });
             }
 
-            bool isAccountSessionExist = HttpContext.Session.TryGetValue(
-                Maroik.Core.Client.Utilities.EnumHelper.GetDescription(Maroik.Core.Client.Utilities.Session.Account),
-                out byte[] resultByte);
-
+            bool isAccountSessionExist = _sessionService.GetAccount() != null;
             if (!isAccountSessionExist)
                 return Json(new { result = false, error = _localizer["Please Login to edit board"].Value });
 
-            AccountResponse loginedAccount = JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte));
+            AccountResponse loginedAccount = _sessionService.GetAccount()!;
 
             BoardRequest boardRequest = new()
             {
@@ -769,11 +752,8 @@ public class ForumController : BaseController
     {
         try
         {
-            _ = HttpContext.Session.TryGetValue(
-                Maroik.Core.Client.Utilities.EnumHelper.GetDescription(Maroik.Core.Client.Utilities.Session.Account),
-                out byte[] resultByte);
             AccountResponse loginedAccount = await _accountRepository.GetAccountByEmailAsync(
-                JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email);
+                _sessionService.GetAccount()!.Email);
 
             ServiceResult result = await _boardService.DeleteBoardAsync(
                 boardInputViewModel.Id,
@@ -801,11 +781,8 @@ public class ForumController : BaseController
     {
         try
         {
-            _ = HttpContext.Session.TryGetValue(
-                Maroik.Core.Client.Utilities.EnumHelper.GetDescription(Maroik.Core.Client.Utilities.Session.Account),
-                out byte[] resultByte);
             AccountResponse loginedAccount = await _accountRepository.GetAccountByEmailAsync(
-                JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email);
+                _sessionService.GetAccount()!.Email);
 
             ServiceResult result = await _boardService.DeleteCommentAsync(
                 id,

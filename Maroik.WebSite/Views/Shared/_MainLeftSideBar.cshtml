@@ -96,10 +96,10 @@
 
                 @if (Model.Role == Role.Admin) // 로그인 한 사용자의 권한이 Admin인 경우
                 {
-                    IOrderedEnumerable<CategoryResponse> tempAdminCategories = from adminCategory in DbCache.AdminCategories
+                    IOrderedEnumerable<CategoryResponse> tempAdminCategories = from adminCategory in (IEnumerable<CategoryResponse>)ViewBag.AdminCategories
                                                                        orderby adminCategory.Order ascending
                                                                        select adminCategory;
-                    IEnumerable<SubCategoryResponse> tempAdminSubCategories = DbCache.AdminSubCategories;
+                    IEnumerable<SubCategoryResponse> tempAdminSubCategories = (IEnumerable<SubCategoryResponse>)ViewBag.AdminSubCategories;
 
                     foreach (CategoryResponse tempAdminCategory in tempAdminCategories)
                     {
@@ -210,10 +210,10 @@
                 }
                 else if (Model.Role == Role.User) // 로그인 한 사용자의 권한이 User인 경우
                 {
-                    IOrderedEnumerable<CategoryResponse> tempUserCategories = from userCategory in DbCache.UserCategories
+                    IOrderedEnumerable<CategoryResponse> tempUserCategories = from userCategory in (IEnumerable<CategoryResponse>)ViewBag.UserCategories
                                                                       orderby userCategory.Order ascending
                                                                       select userCategory;
-                    IEnumerable<SubCategoryResponse> tempUserSubCategories = DbCache.UserSubCategories;
+                    IEnumerable<SubCategoryResponse> tempUserSubCategories = (IEnumerable<SubCategoryResponse>)ViewBag.UserSubCategories;
 
                     foreach (CategoryResponse tempUserCategory in tempUserCategories)
                     {
@@ -323,10 +323,10 @@
                 }
                 else if (Model.Role == Role.Anonymous) // 비 로그인 사용자인 경우
                 {
-                    IOrderedEnumerable<CategoryResponse> tempAnonymousCategories = from anonymousCategory in DbCache.AnonymousCategories
+                    IOrderedEnumerable<CategoryResponse> tempAnonymousCategories = from anonymousCategory in (IEnumerable<CategoryResponse>)ViewBag.AnonymousCategories
                                                                            orderby anonymousCategory.Order ascending
                                                                            select anonymousCategory;
-                    IEnumerable<SubCategoryResponse> tempAnonymousSubCategories = DbCache.AnonymousSubCategories;
+                    IEnumerable<SubCategoryResponse> tempAnonymousSubCategories = (IEnumerable<SubCategoryResponse>)ViewBag.AnonymousSubCategories;
 
                     foreach (CategoryResponse tempAnonymousCategory in tempAnonymousCategories)
                     {

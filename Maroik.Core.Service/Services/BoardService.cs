@@ -2,6 +2,7 @@ using Maroik.Core.Client.Utilities;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
 using Mapster;
+using Microsoft.Extensions.Options;
 
 namespace Maroik.Core.Service.Services;
 
@@ -12,6 +13,7 @@ public class BoardService : IBoardService
     private readonly IBoardCommentRepository _boardCommentRepository;
     private readonly IFileClient _fileClient;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IOptions<ServerSetting> _settings;
 
     // Maps board type description to storage area folder name
     private static readonly Dictionary<string, string> BoardAreaMap = new(StringComparer.OrdinalIgnoreCase)
@@ -25,13 +27,15 @@ public class BoardService : IBoardService
         IBoardAttachedFileRepository boardAttachedFileRepository,
         IBoardCommentRepository boardCommentRepository,
         IFileClient fileClient,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        IOptions<ServerSetting> settings)
     {
         _boardRepository = boardRepository;
         _boardAttachedFileRepository = boardAttachedFileRepository;
         _boardCommentRepository = boardCommentRepository;
         _fileClient = fileClient;
         _unitOfWork = unitOfWork;
+        _settings = settings;
     }
 
     public async Task<ServiceResult> WriteBoardAsync(BoardRequest request, AttachedFileInfo? attachedFile)
@@ -49,7 +53,7 @@ public class BoardService : IBoardService
             if (attachedFile != null)
             {
                 string filePath = BuildAttachedFilePath(request.Type!, request.Id, attachedFile.FileName);
-                await _fileClient.UploadAsync(attachedFile.Bytes, attachedFile.ContentType, filePath, ServerSetting.FileStorageBaseUrl ?? string.Empty);
+                await _fileClient.UploadAsync(attachedFile.Bytes, attachedFile.ContentType, filePath, _settings.Value.FileStorageBaseUrl ?? string.Empty);
                 await _boardAttachedFileRepository.SaveBoardAttachedFileAsync(new BoardAttachedFileRequest
                 {
                     BoardId = request.Id,
@@ -105,7 +109,7 @@ public class BoardService : IBoardService
             if (previous != null && newFile != null)
             {
                 string filePath = BuildAttachedFilePath(request.Type!, request.Id, newFile.FileName);
-                await _fileClient.UploadAsync(newFile.Bytes, newFile.ContentType, filePath, ServerSetting.FileStorageBaseUrl ?? string.Empty);
+                await _fileClient.UploadAsync(newFile.Bytes, newFile.ContentType, filePath, _settings.Value.FileStorageBaseUrl ?? string.Empty);
                 previous.Size = Convert.ToInt32(newFile.Size);
                 previous.Name = Path.GetFileNameWithoutExtension(newFile.FileName);
                 previous.Extension = Path.GetExtension(newFile.FileName);
@@ -123,7 +127,7 @@ public class BoardService : IBoardService
             else if (previous == null && newFile != null)
             {
                 string filePath = BuildAttachedFilePath(request.Type!, request.Id, newFile.FileName);
-                await _fileClient.UploadAsync(newFile.Bytes, newFile.ContentType, filePath, ServerSetting.FileStorageBaseUrl ?? string.Empty);
+                await _fileClient.UploadAsync(newFile.Bytes, newFile.ContentType, filePath, _settings.Value.FileStorageBaseUrl ?? string.Empty);
                 await _boardAttachedFileRepository.SaveBoardAttachedFileAsync(new BoardAttachedFileRequest
                 {
                     BoardId = request.Id,

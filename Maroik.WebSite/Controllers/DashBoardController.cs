@@ -11,7 +11,7 @@ using System.Text;
 
 namespace Maroik.WebSite.Controllers;
 
-public class DashBoardController(IDashboardService dashboardService) : BaseController
+public class DashBoardController(IDashboardService dashboardService, ISessionService sessionService) : BaseController
 {
     private const string HostResourceFilePath = "/app/Maroik.Log/HostResourceInfo.txt";
     private const string DockerResourceFilePath = "/app/Maroik.Log/DockerResourceInfo.txt";
@@ -129,8 +129,7 @@ public class DashBoardController(IDashboardService dashboardService) : BaseContr
     [HttpGet]
     public async Task<IActionResult> UserIndex(string year, string month)
     {
-        _ = HttpContext.Session.TryGetValue(EnumHelper.GetDescription(Session.Account), out var resultByte);
-        var loginedAccount = JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte ?? []));
+        var loginedAccount = sessionService.GetAccount();
         string email = loginedAccount.Email;
         string timeZoneId = loginedAccount.TimeZoneIanaId;
 
@@ -403,8 +402,7 @@ public class DashBoardController(IDashboardService dashboardService) : BaseContr
     {
         try
         {
-            _ = HttpContext.Session.TryGetValue(EnumHelper.GetDescription(Session.Account), out var resultByte);
-            string email = JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte ?? [])).Email;
+            string email = sessionService.GetAccount()?.Email ?? "";
             await dashboardService.UpdateDefaultMonetaryUnitAsync(email, userIndexInputViewModel.DefaultMonetaryUnit);
             return Json(new { result = true });
         }
@@ -421,10 +419,9 @@ public class DashBoardController(IDashboardService dashboardService) : BaseContr
     [HttpGet]
     public IActionResult AnonymousIndex()
     {
-        var isAccountSessionExist = HttpContext.Session.TryGetValue(EnumHelper.GetDescription(Session.Account), out var resultByte);
+        var loginedAccount = sessionService.GetAccount();
 
-        if (!isAccountSessionExist) return View();
-        var loginedAccount = JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte));
+        if (loginedAccount == null) return View();
         return loginedAccount.Role switch
         {
             Role.Admin => RedirectToAction("AdminIndex", "DashBoard"),

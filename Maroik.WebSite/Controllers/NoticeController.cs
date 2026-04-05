@@ -5,6 +5,7 @@ using Maroik.WebSite.Utilities;
 using Maroik.WebSite.Models.ViewModels.Notice;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Localization;
+using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using DocumentFormat.OpenXml;
 using DocumentFormat.OpenXml.Packaging;
@@ -24,6 +25,8 @@ public class NoticeController : BaseController
     private readonly IFixedExpenditureRepository _fixedExpenditureRepository;
     private readonly IFixedIncomeService _fixedIncomeService;
     private readonly IFixedExpenditureService _fixedExpenditureService;
+    private readonly IOptions<ServerSetting> _settings;
+    private readonly ISessionService _sessionService;
 
     public NoticeController(
         IHtmlLocalizer<NoticeController> localizer,
@@ -33,7 +36,9 @@ public class NoticeController : BaseController
         IFixedIncomeRepository fixedIncomeRepository,
         IFixedExpenditureRepository fixedExpenditureRepository,
         IFixedIncomeService fixedIncomeService,
-        IFixedExpenditureService fixedExpenditureService)
+        IFixedExpenditureService fixedExpenditureService,
+        IOptions<ServerSetting> settings,
+        ISessionService sessionService)
     {
         _localizer = localizer;
         _logger = logger;
@@ -43,6 +48,8 @@ public class NoticeController : BaseController
         _fixedExpenditureRepository = fixedExpenditureRepository;
         _fixedIncomeService = fixedIncomeService;
         _fixedExpenditureService = fixedExpenditureService;
+        _settings = settings;
+        _sessionService = sessionService;
     }
 
     #region FixedIncome
@@ -57,8 +64,7 @@ public class NoticeController : BaseController
         if (!ModelState.IsValid)
             return Json(new { result = false, error = _localizer["Input is invalid"].Value });
 
-        _ = HttpContext.Session.TryGetValue(EnumHelper.GetDescription(Session.Account), out byte[] resultByte);
-        string email = JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email;
+        string email = _sessionService.GetAccount()!.Email;
 
         var request = new FixedIncomeRequest
         {
@@ -93,22 +99,16 @@ public class NoticeController : BaseController
 
             #region FixedIncomes
 
-            _ = HttpContext.Session.TryGetValue(
-                Maroik.Core.Client.Utilities.EnumHelper.GetDescription(Maroik.Core.Client.Utilities.Session.Account), out byte[] resultByte);
-
-            string loginedAccountTimeZoneIanaId = JsonConvert
-                .DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId;
+            string loginedAccountTimeZoneIanaId = _sessionService.GetAccount()!.TimeZoneIanaId;
 
             DateTime currentDate =
                 new(Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[0]),
                     Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[1]),
                     Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[2]));
 
-            List<AssetResponse> assets = await _assetRepository.GetAssetsAsync(JsonConvert
-                .DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email);
+            List<AssetResponse> assets = await _assetRepository.GetAssetsAsync(_sessionService.GetAccount()!.Email);
 
-            foreach (FixedIncomeResponse item in await _fixedIncomeRepository.GetFixedIncomesAsync(JsonConvert
-                         .DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email))
+            foreach (FixedIncomeResponse item in await _fixedIncomeRepository.GetFixedIncomesAsync(_sessionService.GetAccount()!.Email))
             {
                 if (string.IsNullOrEmpty(wholeSearch))
                 {
@@ -124,7 +124,7 @@ public class NoticeController : BaseController
                                     Convert.ToInt32(
                                         Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[0]),
                                     item.DepositMonth, item.DepositDay)).TotalDays) <=
-                            ServerSetting.NoticeMaturityDateDay;
+                            _settings.Value.NoticeMaturityDateDay;
                     }
                     catch // Exception occurs when initialized to February 29th in a non-leap year
                     {
@@ -188,7 +188,7 @@ public class NoticeController : BaseController
                                         Convert.ToInt32(
                                             Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")
                                                 [0]), item.DepositMonth, item.DepositDay)).TotalDays) <=
-                                ServerSetting.NoticeMaturityDateDay;
+                                _settings.Value.NoticeMaturityDateDay;
                         }
                         catch // Exception occurs when initialized to February 29th in a non-leap year
                         {
@@ -234,12 +234,7 @@ public class NoticeController : BaseController
         }
 
         {
-            _ = HttpContext.Session.TryGetValue(
-                Maroik.Core.Client.Utilities.EnumHelper.GetDescription(Maroik.Core.Client.Utilities.Session.Account),
-                out byte[] sessionByte);
-            AccountResponse loginedAccount = sessionByte?.Length > 0
-                ? JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(sessionByte)) ?? new AccountResponse()
-                : new AccountResponse();
+            AccountResponse loginedAccount = _sessionService.GetAccount() ?? new AccountResponse();
             List<AssetResponse> assets = (await _assetRepository.GetAssetsAsync(loginedAccount.Email))
                 .Where(x => !x.Deleted).OrderBy(x => x.ProductName).ToList();
             ViewBag.Assets = assets;
@@ -254,12 +249,8 @@ public class NoticeController : BaseController
     {
         try
         {
-            _ = HttpContext.Session.TryGetValue(
-                Maroik.Core.Client.Utilities.EnumHelper.GetDescription(Maroik.Core.Client.Utilities.Session.Account), out byte[] resultByte);
-
             List<FixedIncomeResponse> tempFixedIncomes =
-                await _fixedIncomeRepository.GetFixedIncomesAsync(JsonConvert
-                    .DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email);
+                await _fixedIncomeRepository.GetFixedIncomesAsync(_sessionService.GetAccount()!.Email);
 
             if (tempFixedIncomes == null)
             {
@@ -308,12 +299,8 @@ public class NoticeController : BaseController
         {
             string label = _localizer["Amount"].Value;
 
-            _ = HttpContext.Session.TryGetValue(
-                Maroik.Core.Client.Utilities.EnumHelper.GetDescription(Maroik.Core.Client.Utilities.Session.Account), out byte[] resultByte);
-
             AssetResponse asset =
-                (await _assetRepository.GetAssetsAsync(JsonConvert
-                    .DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email))
+                (await _assetRepository.GetAssetsAsync(_sessionService.GetAccount()!.Email))
                 .Where(x => !x.Deleted).Where(x => x.ProductName == productName).FirstOrDefault() ?? new AssetResponse();
 
             if (!string.IsNullOrEmpty(asset.MonetaryUnit))
@@ -341,8 +328,7 @@ public class NoticeController : BaseController
         if (!ModelState.IsValid)
             return Json(new { result = false, error = _localizer["Input is invalid"].Value });
 
-        _ = HttpContext.Session.TryGetValue(EnumHelper.GetDescription(Session.Account), out byte[] resultByte);
-        string email = JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email;
+        string email = _sessionService.GetAccount()!.Email;
 
         var request = new FixedIncomeRequest
         {
@@ -373,8 +359,7 @@ public class NoticeController : BaseController
     public async Task<IActionResult> DeleteFixedIncome(
         [FromBody] FixedIncomeInputViewModel fixedIncomeInputViewModel)
     {
-        _ = HttpContext.Session.TryGetValue(EnumHelper.GetDescription(Session.Account), out byte[] resultByte);
-        string email = JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email;
+        string email = _sessionService.GetAccount()!.Email;
 
         var result = await _fixedIncomeService.DeleteAsync(email, fixedIncomeInputViewModel.Id);
         return result.Success
@@ -391,11 +376,7 @@ public class NoticeController : BaseController
     {
         await Task.Yield();
 
-        var account = JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(HttpContext.Session
-            .TryGetValue(
-                Maroik.Core.Client.Utilities.EnumHelper.GetDescription(Maroik.Core.Client.Utilities.Session.Account), out byte[] resultByte)
-            ? resultByte
-            : Array.Empty<byte>()));
+        var account = _sessionService.GetAccount() ?? new AccountResponse();
         string loginedAccountTimeZoneIanaId = account.TimeZoneIanaId;
         DateTime currentDate = DateTime.UtcNow.ToLocalTime();
 
@@ -411,7 +392,7 @@ public class NoticeController : BaseController
                     var maturityDate = new DateTime(currentDate.Year, item.DepositMonth, item.DepositDay);
                     noticedResult = currentDate.Subtract(maturityDate).TotalDays <= 0 &&
                                     Math.Abs(currentDate.Subtract(maturityDate).TotalDays) <=
-                                    ServerSetting.NoticeMaturityDateDay;
+                                    _settings.Value.NoticeMaturityDateDay;
                 }
                 catch
                 {
@@ -548,8 +529,7 @@ public class NoticeController : BaseController
         if (!ModelState.IsValid)
             return Json(new { result = false, error = _localizer["Input is invalid"].Value });
 
-        _ = HttpContext.Session.TryGetValue(EnumHelper.GetDescription(Session.Account), out byte[] resultByte);
-        string email = JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email;
+        string email = _sessionService.GetAccount()!.Email;
 
         var request = new FixedExpenditureRequest
         {
@@ -585,22 +565,17 @@ public class NoticeController : BaseController
 
             #region FixedExpenditures
 
-            _ = HttpContext.Session.TryGetValue(
-                Maroik.Core.Client.Utilities.EnumHelper.GetDescription(Maroik.Core.Client.Utilities.Session.Account), out byte[] resultByte);
-
-            string loginedAccountTimeZoneIanaId = JsonConvert
-                .DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId;
+            string loginedAccountTimeZoneIanaId = _sessionService.GetAccount()!.TimeZoneIanaId;
 
             DateTime currentDate =
                 new(Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[0]),
                     Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[1]),
                     Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[2]));
 
-            List<AssetResponse> assets = await _assetRepository.GetAssetsAsync(JsonConvert
-                .DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email);
+            List<AssetResponse> assets = await _assetRepository.GetAssetsAsync(_sessionService.GetAccount()!.Email);
 
             foreach (FixedExpenditureResponse item in await _fixedExpenditureRepository.GetFixedExpendituresAsync(
-                         JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email))
+                         _sessionService.GetAccount()!.Email))
             {
                 if (string.IsNullOrEmpty(wholeSearch))
                 {
@@ -616,7 +591,7 @@ public class NoticeController : BaseController
                                     Convert.ToInt32(
                                         Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[0]),
                                     item.DepositMonth, item.DepositDay)).TotalDays) <=
-                            ServerSetting.NoticeMaturityDateDay;
+                            _settings.Value.NoticeMaturityDateDay;
                     }
                     catch // Exception occurs when initialized to February 29th in a non-leap year
                     {
@@ -682,7 +657,7 @@ public class NoticeController : BaseController
                                         Convert.ToInt32(
                                             Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")
                                                 [0]), item.DepositMonth, item.DepositDay)).TotalDays) <=
-                                ServerSetting.NoticeMaturityDateDay;
+                                _settings.Value.NoticeMaturityDateDay;
                         }
                         catch // Exception occurs when initialized to February 29th in a non-leap year
                         {
@@ -729,12 +704,7 @@ public class NoticeController : BaseController
         }
 
         {
-            _ = HttpContext.Session.TryGetValue(
-                Maroik.Core.Client.Utilities.EnumHelper.GetDescription(Maroik.Core.Client.Utilities.Session.Account),
-                out byte[] sessionByte);
-            AccountResponse loginedAccount = sessionByte?.Length > 0
-                ? JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(sessionByte)) ?? new AccountResponse()
-                : new AccountResponse();
+            AccountResponse loginedAccount = _sessionService.GetAccount() ?? new AccountResponse();
             List<AssetResponse> assets = (await _assetRepository.GetAssetsAsync(loginedAccount.Email))
                 .Where(x => !x.Deleted).OrderBy(x => x.ProductName).ToList();
             ViewBag.Assets = assets;
@@ -749,12 +719,8 @@ public class NoticeController : BaseController
     {
         try
         {
-            _ = HttpContext.Session.TryGetValue(
-                Maroik.Core.Client.Utilities.EnumHelper.GetDescription(Maroik.Core.Client.Utilities.Session.Account), out byte[] resultByte);
-
             List<FixedExpenditureResponse> tempFixedExpenditures =
-                await _fixedExpenditureRepository.GetFixedExpendituresAsync(JsonConvert
-                    .DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email);
+                await _fixedExpenditureRepository.GetFixedExpendituresAsync(_sessionService.GetAccount()!.Email);
 
             if (tempFixedExpenditures == null)
             {
@@ -805,12 +771,8 @@ public class NoticeController : BaseController
         {
             string label = _localizer["Amount"].Value;
 
-            _ = HttpContext.Session.TryGetValue(
-                Maroik.Core.Client.Utilities.EnumHelper.GetDescription(Maroik.Core.Client.Utilities.Session.Account), out byte[] resultByte);
-
             AssetResponse asset =
-                (await _assetRepository.GetAssetsAsync(JsonConvert
-                    .DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email))
+                (await _assetRepository.GetAssetsAsync(_sessionService.GetAccount()!.Email))
                 .Where(x => !x.Deleted).Where(x => x.ProductName == productName).FirstOrDefault() ?? new AssetResponse();
 
             if (!string.IsNullOrEmpty(asset.MonetaryUnit))
@@ -838,8 +800,7 @@ public class NoticeController : BaseController
         if (!ModelState.IsValid)
             return Json(new { result = false, error = _localizer["Input is invalid"].Value });
 
-        _ = HttpContext.Session.TryGetValue(EnumHelper.GetDescription(Session.Account), out byte[] resultByte);
-        string email = JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email;
+        string email = _sessionService.GetAccount()!.Email;
 
         var request = new FixedExpenditureRequest
         {
@@ -871,8 +832,7 @@ public class NoticeController : BaseController
     public async Task<IActionResult> DeleteFixedExpenditure(
         [FromBody] FixedExpenditureInputViewModel fixedExpenditureInputViewModel)
     {
-        _ = HttpContext.Session.TryGetValue(EnumHelper.GetDescription(Session.Account), out byte[] resultByte);
-        string email = JsonConvert.DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email;
+        string email = _sessionService.GetAccount()!.Email;
 
         var result = await _fixedExpenditureService.DeleteAsync(email, fixedExpenditureInputViewModel.Id);
         return result.Success
@@ -894,22 +854,16 @@ public class NoticeController : BaseController
 
         #region FixedExpenditures
 
-        _ = HttpContext.Session.TryGetValue(
-            Maroik.Core.Client.Utilities.EnumHelper.GetDescription(Maroik.Core.Client.Utilities.Session.Account), out byte[] resultByte);
-
-        string loginedAccountTimeZoneIanaId = JsonConvert
-            .DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).TimeZoneIanaId;
+        string loginedAccountTimeZoneIanaId = _sessionService.GetAccount()!.TimeZoneIanaId;
 
         DateTime currentDate =
             new(Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[0]),
                 Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[1]),
                 Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[2]));
 
-        List<AssetResponse> assets = await _assetRepository.GetAssetsAsync(JsonConvert
-            .DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email);
+        List<AssetResponse> assets = await _assetRepository.GetAssetsAsync(_sessionService.GetAccount()!.Email);
 
-        foreach (FixedExpenditureResponse item in await _fixedExpenditureRepository.GetFixedExpendituresAsync(JsonConvert
-                     .DeserializeObject<AccountResponse>(Encoding.Default.GetString(resultByte)).Email))
+        foreach (FixedExpenditureResponse item in await _fixedExpenditureRepository.GetFixedExpendituresAsync(_sessionService.GetAccount()!.Email))
         {
             bool noticedResult = false;
 
@@ -922,7 +876,7 @@ public class NoticeController : BaseController
                         .Subtract(new DateTime(
                             Convert.ToInt32(
                                 Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[0]),
-                            item.DepositMonth, item.DepositDay)).TotalDays) <= ServerSetting.NoticeMaturityDateDay;
+                            item.DepositMonth, item.DepositDay)).TotalDays) <= _settings.Value.NoticeMaturityDateDay;
             }
             catch // Exception occurs when initialized to February 29th in a non-leap year
             {
