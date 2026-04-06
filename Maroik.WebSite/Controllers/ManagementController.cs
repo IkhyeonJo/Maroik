@@ -1,10 +1,9 @@
 using Mapster;
-﻿using DocumentFormat.OpenXml;
+using DocumentFormat.OpenXml;
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Spreadsheet;
 using Ganss.Xss;
 using HtmlAgilityPack;
-using ImageMagick;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Contract.Utilities;
@@ -14,9 +13,7 @@ using Maroik.WebSite.Models.ViewModels.Management;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Localization;
 using Microsoft.AspNetCore.StaticFiles;
-using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
-using System.Diagnostics;
 using System.Net.Mail;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -29,32 +26,25 @@ public class ManagementController : BaseController
     private readonly IHtmlLocalizer<ManagementController> _localizer;
     private readonly ILogger<ManagementController> _logger;
     private readonly IHostEnvironment _hostEnvironment;
-    private readonly IFileClient _fileClient;
-    private readonly IClamavClient _clamavClient;
     private readonly IProfileService _profileService;
     private readonly IAccountService _accountService;
     private readonly IManagementAccountService _managementAccountService;
     private readonly IMenuService _menuService;
     private readonly IBoardService _boardService;
-    private readonly IOptions<ServerSetting> _settings;
     private readonly ISessionService _sessionService;
 
     public ManagementController(IHtmlLocalizer<ManagementController> localizer,
         ILogger<ManagementController> logger, IHostEnvironment hostEnvironment,
-        IFileClient fileClient, IClamavClient clamavClient,
         IProfileService profileService, IAccountService accountService,
         IManagementAccountService managementAccountService,
         IMenuService menuService, IBoardService boardService,
-        IOptions<ServerSetting> settings, IRSAService rsa, ISessionService sessionService)
+        IRSAService rsa, ISessionService sessionService)
     {
-        _settings = settings;
         _rsa = rsa;
         _sessionService = sessionService;
         _localizer = localizer;
         _logger = logger;
         _hostEnvironment = hostEnvironment;
-        _fileClient = fileClient;
-        _clamavClient = clamavClient;
         _profileService = profileService;
         _accountService = accountService;
         _managementAccountService = managementAccountService;
@@ -101,83 +91,37 @@ public class ManagementController : BaseController
         IFormFile file = profileInputViewModel.ProfileAvatarFiles[0];
 
         if (file.Length <= 0 || file.Length > 10 * 1024 * 1024)
-        {
             return Ok(new { result = false, errorMessage = _localizer["File Size must be smaller than 10MB."].Value });
-        }
 
         var allowedExtensions = new[] { ".jpg", ".jpeg", ".png" };
         var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
         if (!allowedExtensions.Contains(extension))
-        {
             return Ok(new { result = false, errorMessage = _localizer["Only .jpg or jpeg or .png file allowed"].Value });
+
+        byte[] imageBytes;
+        using (var ms = new MemoryStream())
+        {
+            await file.CopyToAsync(ms);
+            imageBytes = ms.ToArray();
         }
 
-        // Copy memory stream before ClamAV scan
-        using var memoryStream = new MemoryStream();
-        await file.CopyToAsync(memoryStream);
-        memoryStream.Position = 0;
-
-        if (!await _clamavClient.ScanWithClamavAsync(memoryStream, _settings.Value.ClamavHost, _settings.Value.ClamavPort))
-        {
-            return BadRequest("File may be infected with a virus.");
-        }
-
-        // Validate image (using Magick.NET, including SVG blocking)
-        memoryStream.Position = 0;
-        try
-        {
-            using var image = new MagickImage(memoryStream);
-            if (image.Format == MagickFormat.Svg)
-            {
-                return Ok(new { result = false, errorMessage = _localizer["SVG format is not allowed"].Value });
-            }
-        }
-        catch
-        {
-            return Ok(new { result = false, errorMessage = _localizer["Invalid image file."].Value });
-        }
-
-        string avatarPath = Path.Combine(_hostEnvironment.ContentRootPath, "wwwroot", "upload", "Management", "Profile", "Avatar");
-        if (!Directory.Exists(avatarPath))
-        {
-            Directory.CreateDirectory(avatarPath);
-        }
-
-        string guid = Guid.NewGuid().ToString().ToUpper();
-        string avatarFile = $"{guid}{extension}";
-        string filePath = Path.Combine(avatarPath, avatarFile);
-
-    #pragma warning disable SCS0018
-        await using (var stream = new FileStream(filePath, FileMode.Create))
-    #pragma warning restore SCS0018
-        {
-            memoryStream.Position = 0;
-            await memoryStream.CopyToAsync(stream);
-            await stream.FlushAsync();
-        }
-
-        // Remove execute permission (chmod 644)
-        var chmod = new ProcessStartInfo
-        {
-            FileName = "/bin/chmod",
-#pragma warning disable SCS0001
-            Arguments = $"644 \"{filePath}\"",
-#pragma warning restore SCS0001
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            UseShellExecute = false,
-            CreateNoWindow = true
-        };
-        using (var process = Process.Start(chmod))
-        {
-            await process?.WaitForExitAsync()!;
-        }
-
+        string avatarDirectoryPath = Path.Combine(_hostEnvironment.ContentRootPath, "wwwroot", "upload", "Management", "Profile", "Avatar");
         string email = _sessionService.GetAccount()!.Email;
-        ServiceResult avatarResult = await _profileService.UpdateAvatarAsync(email, $"/upload/Management/Profile/Avatar/{avatarFile}");
-        return avatarResult.Success
-            ? Ok(new { result = true })
-            : Ok(new { result = false, errorMessage = _localizer["Input is invalid"].Value });
+
+        ServiceResult avatarResult = await _profileService.UploadAndUpdateAvatarAsync(email, imageBytes, extension, avatarDirectoryPath);
+
+        if (!avatarResult.Success)
+        {
+            return avatarResult.ErrorKey switch
+            {
+                "virus-detected" => BadRequest("File may be infected with a virus."),
+                "svg-not-allowed" => Ok(new { result = false, errorMessage = _localizer["SVG format is not allowed"].Value }),
+                "invalid-image" => Ok(new { result = false, errorMessage = _localizer["Invalid image file."].Value }),
+                _ => Ok(new { result = false, errorMessage = _localizer["Input is invalid"].Value })
+            };
+        }
+
+        return Ok(new { result = true });
     }
 
     #endregion
@@ -1376,61 +1320,41 @@ public class ManagementController : BaseController
     public async Task<IActionResult> UploadImageFile(IFormFile summernoteImageFile)
     {
         if (summernoteImageFile == null)
-        {
             return Ok(new { result = false, errorMessage = _localizer["Please attach a file."].Value });
-        }
 
         if (summernoteImageFile.Length <= 0 || summernoteImageFile.Length > 10 * 1024 * 1024)
-        {
             return Ok(new { result = false, errorMessage = _localizer["File Size must be smaller than 10MB."].Value });
-        }
 
-        // Extension check
         var ext = Path.GetExtension(summernoteImageFile.FileName).ToLowerInvariant();
         if (ext != ".png" && ext != ".jpg" && ext != ".jpeg")
-        {
             return Ok(new { result = false, errorMessage = _localizer["Only .jpg, .jpeg or .png file allowed."].Value });
-        }
 
-        try
-        {
-            // Check if it's an actual image (Magick.NET)
-            using var image = new MagickImage(summernoteImageFile.OpenReadStream());
-            // If Magick.NET throws an exception, it's not an image or an unsupported format
-        }
-        catch (MagickException)
-        {
-            return Ok(new { result = false, errorMessage = _localizer["Invalid image file."].Value });
-        }
-
-        var loginedAccount = _sessionService.GetAccount()!;
-
-        string summernoteImagePath = Path.Combine("upload", "Management",
-            EnumHelper.GetDescription(BoardType.PrivateNote), "summernote", "images");
-        string imageFile = $"{Guid.NewGuid():N}{ext}";
-        string filePath = Path.Combine(summernoteImagePath, imageFile);
-
-        bool uploadResult;
-        using (MemoryStream ms = new())
+        byte[] bytes;
+        using (var ms = new MemoryStream())
         {
             await summernoteImageFile.CopyToAsync(ms);
-            uploadResult = await _fileClient.UploadAsync(ms.ToArray(), summernoteImageFile.ContentType, filePath, _settings.Value.FileStorageBaseUrl);
+            bytes = ms.ToArray();
         }
 
-        if (uploadResult)
+        var file = new AttachedFileInfo
         {
-            var fileStream = await _fileClient.DownloadAsync(filePath, _settings.Value.FileStorageBaseUrl);
-            return Ok(new
-            {
-                result = true,
-                file = File(fileStream, summernoteImageFile.ContentType, imageFile),
-                filePath = _rsa.Encrypt(filePath)
-            });
-        }
-        else
+            Bytes = bytes,
+            ContentType = summernoteImageFile.ContentType,
+            FileName = summernoteImageFile.FileName,
+            Size = summernoteImageFile.Length
+        };
+
+        SummernoteUploadResult uploadResult = await _boardService.UploadSummernoteImageAsync(file, "Management", EnumHelper.GetDescription(BoardType.PrivateNote));
+
+        if (!uploadResult.Success)
+            return Ok(new { result = false, errorMessage = _localizer[uploadResult.ErrorKey ?? "Input is invalid"].Value });
+
+        return Ok(new
         {
-            return Ok(new { result = false, errorMessage = _localizer["Input is invalid"].Value });
-        }
+            result = true,
+            file = File(uploadResult.FileBytes!, uploadResult.ContentType!, uploadResult.FileName!),
+            filePath = _rsa.Encrypt(uploadResult.FilePath!)
+        });
     }
     #endregion
 
@@ -1503,7 +1427,7 @@ public class ManagementController : BaseController
                     string filePath = imgTag.GetAttributeValue("alt", "");
 
                     // Method to download file
-                    byte[] fileData = await _fileClient.DownloadAsync(filePath, _settings.Value.FileStorageBaseUrl);
+                    byte[] fileData = await _boardService.DownloadFileAsync(filePath);
 
                     if (fileData != null)
                     {
@@ -1548,8 +1472,8 @@ public class ManagementController : BaseController
                 if (!string.IsNullOrEmpty(privateNoteOutputViewModel?.BoardOutputViewModel?.BoardAttachedFilePath ??
                                           ""))
                 {
-                    byte[] fileData = await _fileClient.DownloadAsync(
-                        privateNoteOutputViewModel?.BoardOutputViewModel?.BoardAttachedFilePath ?? "", _settings.Value.FileStorageBaseUrl);
+                    byte[] fileData = await _boardService.DownloadFileAsync(
+                        privateNoteOutputViewModel?.BoardOutputViewModel?.BoardAttachedFilePath ?? "");
 
                     if (fileData != null)
                     {
@@ -1623,7 +1547,7 @@ public class ManagementController : BaseController
                     string filePath = imgTag.GetAttributeValue("alt", "");
 
                     // Method to download file
-                    byte[] fileData = await _fileClient.DownloadAsync(filePath, _settings.Value.FileStorageBaseUrl);
+                    byte[] fileData = await _boardService.DownloadFileAsync(filePath);
 
                     if (fileData != null)
                     {
@@ -1669,8 +1593,8 @@ public class ManagementController : BaseController
                 if (!string.IsNullOrEmpty(privateNoteOutputViewModel?.BoardOutputViewModel?.BoardAttachedFilePath ??
                                           ""))
                 {
-                    byte[] fileData = await _fileClient.DownloadAsync(
-                        privateNoteOutputViewModel?.BoardOutputViewModel?.BoardAttachedFilePath ?? "", _settings.Value.FileStorageBaseUrl);
+                    byte[] fileData = await _boardService.DownloadFileAsync(
+                        privateNoteOutputViewModel?.BoardOutputViewModel?.BoardAttachedFilePath ?? "");
 
                     if (fileData != null)
                     {

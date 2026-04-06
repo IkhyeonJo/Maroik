@@ -1,6 +1,5 @@
 using Ganss.Xss;
 using HtmlAgilityPack;
-using ImageMagick;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Contract.Utilities;
@@ -10,7 +9,6 @@ using Maroik.WebSite.Models.ViewModels.Forum;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Localization;
 using Microsoft.AspNetCore.StaticFiles;
-using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using System.Text;
 
@@ -22,21 +20,17 @@ public class ForumController : BaseController
     private readonly IHtmlLocalizer<ForumController> _localizer;
     private readonly ILogger<ForumController> _logger;
     private readonly IHostEnvironment _hostEnvironment;
-    private readonly IFileClient _fileClient;
     private readonly IBoardService _boardService;
     private readonly IAccountService _accountService;
-    private readonly IOptions<ServerSetting> _settings;
     private readonly ISessionService _sessionService;
 
-    public ForumController(IHtmlLocalizer<ForumController> localizer, ILogger<ForumController> logger, IHostEnvironment hostEnvironment, IFileClient fileClient, IBoardService boardService, IAccountService accountService, IOptions<ServerSetting> settings, IRSAService rsa, ISessionService sessionService)
+    public ForumController(IHtmlLocalizer<ForumController> localizer, ILogger<ForumController> logger, IHostEnvironment hostEnvironment, IBoardService boardService, IAccountService accountService, IRSAService rsa, ISessionService sessionService)
     {
-        _settings = settings;
         _rsa = rsa;
         _sessionService = sessionService;
         _localizer = localizer;
         _logger = logger;
         _hostEnvironment = hostEnvironment;
-        _fileClient = fileClient;
         _boardService = boardService;
         _accountService = accountService;
     }
@@ -195,60 +189,41 @@ public class ForumController : BaseController
     public async Task<IActionResult> UploadImageFile(IFormFile summernoteImageFile)
     {
         if (summernoteImageFile == null)
-        {
             return Ok(new { result = false, errorMessage = _localizer["Please attach a file."].Value });
-        }
 
         if (summernoteImageFile.Length <= 0 || summernoteImageFile.Length > 10 * 1024 * 1024)
-        {
             return Ok(new { result = false, errorMessage = _localizer["File Size must be smaller than 10MB."].Value });
-        }
 
-        // Extension check
         var ext = Path.GetExtension(summernoteImageFile.FileName).ToLowerInvariant();
         if (ext != ".png" && ext != ".jpg" && ext != ".jpeg")
-        {
             return Ok(new { result = false, errorMessage = _localizer["Only .jpg, .jpeg or .png file allowed."].Value });
-        }
 
-        try
-        {
-            // Check if it's an actual image (Magick.NET)
-            using var image = new MagickImage(summernoteImageFile.OpenReadStream());
-            // If Magick.NET throws an exception, it's not an image or an unsupported format
-        }
-        catch (MagickException)
-        {
-            return Ok(new { result = false, errorMessage = _localizer["Invalid image file."].Value });
-        }
-
-        var loginedAccount = _sessionService.GetAccount()!;
-
-        string summernoteImagePath = Path.Combine("upload", "Forum", EnumHelper.GetDescription(BoardType.FreeForum), "summernote", "images");
-        string imageFile = $"{Guid.NewGuid():N}{ext}";
-        string filePath = Path.Combine(summernoteImagePath, imageFile);
-
-        bool uploadResult;
-        using (MemoryStream ms = new())
+        byte[] bytes;
+        using (var ms = new MemoryStream())
         {
             await summernoteImageFile.CopyToAsync(ms);
-            uploadResult = await _fileClient.UploadAsync(ms.ToArray(), summernoteImageFile.ContentType, filePath, _settings.Value.FileStorageBaseUrl);
+            bytes = ms.ToArray();
         }
 
-        if (uploadResult)
+        var file = new AttachedFileInfo
         {
-            var fileStream = await _fileClient.DownloadAsync(filePath, _settings.Value.FileStorageBaseUrl);
-            return Ok(new
-            {
-                result = true,
-                file = File(fileStream, summernoteImageFile.ContentType, imageFile),
-                filePath = _rsa.Encrypt(filePath)
-            });
-        }
-        else
+            Bytes = bytes,
+            ContentType = summernoteImageFile.ContentType,
+            FileName = summernoteImageFile.FileName,
+            Size = summernoteImageFile.Length
+        };
+
+        SummernoteUploadResult uploadResult = await _boardService.UploadSummernoteImageAsync(file, "Forum", EnumHelper.GetDescription(BoardType.FreeForum));
+
+        if (!uploadResult.Success)
+            return Ok(new { result = false, errorMessage = _localizer[uploadResult.ErrorKey ?? "Input is invalid"].Value });
+
+        return Ok(new
         {
-            return Ok(new { result = false, errorMessage = _localizer["Input is invalid"].Value });
-        }
+            result = true,
+            file = File(uploadResult.FileBytes!, uploadResult.ContentType!, uploadResult.FileName!),
+            filePath = _rsa.Encrypt(uploadResult.FilePath!)
+        });
     }
     #endregion
 
@@ -316,7 +291,7 @@ public class ForumController : BaseController
                     string filePath = imgTag.GetAttributeValue("alt", "");
 
                     // Method to download file
-                    byte[] fileData = await _fileClient.DownloadAsync(filePath, _settings.Value.FileStorageBaseUrl);
+                    byte[] fileData = await _boardService.DownloadFileAsync(filePath);
 
                     if (fileData != null)
                     {
@@ -358,7 +333,7 @@ public class ForumController : BaseController
 
                 if (!string.IsNullOrEmpty(freeForumOutputViewModel?.BoardOutputViewModel?.BoardAttachedFilePath ?? ""))
                 {
-                    byte[] fileData = await _fileClient.DownloadAsync(freeForumOutputViewModel?.BoardOutputViewModel?.BoardAttachedFilePath ?? "", _settings.Value.FileStorageBaseUrl);
+                    byte[] fileData = await _boardService.DownloadFileAsync(freeForumOutputViewModel?.BoardOutputViewModel?.BoardAttachedFilePath ?? "");
 
                     if (fileData != null)
                     {
@@ -430,7 +405,7 @@ public class ForumController : BaseController
                     string filePath = imgTag.GetAttributeValue("alt", "");
 
                     // Method to download file
-                    byte[] fileData = await _fileClient.DownloadAsync(filePath, _settings.Value.FileStorageBaseUrl);
+                    byte[] fileData = await _boardService.DownloadFileAsync(filePath);
 
                     if (fileData != null)
                     {
@@ -473,7 +448,7 @@ public class ForumController : BaseController
 
                 if (!string.IsNullOrEmpty(freeForumOutputViewModel?.BoardOutputViewModel?.BoardAttachedFilePath ?? ""))
                 {
-                    byte[] fileData = await _fileClient.DownloadAsync(freeForumOutputViewModel?.BoardOutputViewModel?.BoardAttachedFilePath ?? "", _settings.Value.FileStorageBaseUrl);
+                    byte[] fileData = await _boardService.DownloadFileAsync(freeForumOutputViewModel?.BoardOutputViewModel?.BoardAttachedFilePath ?? "");
 
                     if (fileData != null)
                     {

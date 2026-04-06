@@ -16,4 +16,6 @@ public interface IBoardService
     Task<ServiceResult> WriteCommentAsync(BoardCommentRequest request, string? requiredOwnerNickname = null);
     Task<ServiceResult> DeleteCommentAsync(long commentId, string requesterNickname, bool isAdmin);
     Task<ServiceResult> IncrementBoardViewAsync(long boardId);
+    Task<SummernoteUploadResult> UploadSummernoteImageAsync(AttachedFileInfo file, string area, string boardType);
+    Task<byte[]?> DownloadFileAsync(string filePath);
 }

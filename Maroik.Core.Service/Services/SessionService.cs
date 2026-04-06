@@ -2,10 +2,11 @@
 using Maroik.Core.Contract.Utilities;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
-using Newtonsoft.Json;
+using Microsoft.AspNetCore.Http;
 using System.Text;
+using System.Text.Json;
 
-namespace Maroik.WebSite.Utilities;
+namespace Maroik.Core.Service.Services;
 
 public class SessionService : ISessionService
 {
@@ -26,7 +27,7 @@ public class SessionService : ISessionService
 
         try
         {
-            return JsonConvert.DeserializeObject<AccountResponse>(Encoding.UTF8.GetString(bytes));
+            return JsonSerializer.Deserialize<AccountResponse>(Encoding.UTF8.GetString(bytes));
         }
         catch
         {
@@ -39,7 +40,7 @@ public class SessionService : ISessionService
         var session = _httpContextAccessor.HttpContext?.Session;
         session?.Set(
             EnumHelper.GetDescription(Session.Account),
-            Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(account)));
+            Encoding.UTF8.GetBytes(JsonSerializer.Serialize(account)));
     }
 
     public void RemoveAccount()

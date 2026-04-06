@@ -1,7 +1,6 @@
 using Mapster;
-﻿using Ganss.Xss;
+using Ganss.Xss;
 using HtmlAgilityPack;
-using ImageMagick;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Contract.Utilities;
@@ -10,7 +9,6 @@ using Maroik.WebSite.Models.ViewModels.Calendar;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Localization;
 using Microsoft.AspNetCore.StaticFiles;
-using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using System.Text;
 
@@ -22,21 +20,17 @@ public class CalendarController : BaseController
     private readonly IHtmlLocalizer<CalendarController> _localizer;
     private readonly ILogger<CalendarController> _logger;
     private readonly IHostEnvironment _hostEnvironment;
-    private readonly IFileClient _fileClient;
     private readonly ICalendarService _calendarService;
-    private readonly IOptions<ServerSetting> _settings;
     private readonly ISessionService _sessionService;
 
-    public CalendarController(IHtmlLocalizer<CalendarController> localizer, ILogger<CalendarController> logger, IHostEnvironment hostEnvironment, ICalendarService calendarService, IFileClient fileClient, IOptions<ServerSetting> settings, IRSAService rsa, ISessionService sessionService)
+    public CalendarController(IHtmlLocalizer<CalendarController> localizer, ILogger<CalendarController> logger, IHostEnvironment hostEnvironment, ICalendarService calendarService, IRSAService rsa, ISessionService sessionService)
     {
-        _settings = settings;
         _rsa = rsa;
         _sessionService = sessionService;
         _localizer = localizer;
         _logger = logger;
         _hostEnvironment = hostEnvironment;
         _calendarService = calendarService;
-        _fileClient = fileClient;
     }
 
     #region Calendar
@@ -266,60 +260,44 @@ public class CalendarController : BaseController
     public async Task<IActionResult> UploadImageFile(IFormFile summernoteImageFile)
     {
         if (summernoteImageFile == null)
-        {
             return Ok(new { result = false, errorMessage = _localizer["Please attach a file."].Value });
-        }
 
         if (summernoteImageFile.Length <= 0 || summernoteImageFile.Length > 10 * 1024 * 1024)
-        {
             return Ok(new { result = false, errorMessage = _localizer["File Size must be smaller than 10MB."].Value });
-        }
 
-        // Extension validation
         var ext = Path.GetExtension(summernoteImageFile.FileName).ToLowerInvariant();
         if (ext != ".png" && ext != ".jpg" && ext != ".jpeg")
-        {
             return Ok(new { result = false, errorMessage = _localizer["Only .jpg, .jpeg or .png file allowed."].Value });
-        }
 
-        try
+        byte[] bytes;
+        using (var ms = new MemoryStream())
         {
-            // Check if it's a real image (Magick.NET)
-            using var image = new MagickImage(summernoteImageFile.OpenReadStream());
-            // If Magick.NET throws an exception, it's not an image or not an allowed format
-        }
-        catch (MagickException)
-        {
-            return Ok(new { result = false, errorMessage = _localizer["Invalid image file."].Value });
+            await summernoteImageFile.CopyToAsync(ms);
+            bytes = ms.ToArray();
         }
 
         var loginedAccount = _sessionService.GetAccount()!;
+        string roleIndex = $"{loginedAccount.Role}Index";
 
-        string summernoteImagePath = Path.Combine("upload", "Calendar", $"{loginedAccount.Role}Index", "summernote", "images");
-        string imageFile = $"{Guid.NewGuid():N}{ext}";
-        string filePath = Path.Combine(summernoteImagePath, imageFile);
+        var file = new AttachedFileInfo
+        {
+            Bytes = bytes,
+            ContentType = summernoteImageFile.ContentType,
+            FileName = summernoteImageFile.FileName,
+            Size = summernoteImageFile.Length
+        };
 
-        bool uploadResult;
-        using (MemoryStream ms = new())
-        {
-            await summernoteImageFile.CopyToAsync(ms);
-            uploadResult = await _fileClient.UploadAsync(ms.ToArray(), summernoteImageFile.ContentType, filePath, _settings.Value.FileStorageBaseUrl);
-        }
+        SummernoteUploadResult uploadResult = await _calendarService.UploadSummernoteImageAsync(file, roleIndex);
 
-        if (uploadResult)
+        if (!uploadResult.Success)
+            return Ok(new { result = false, errorMessage = _localizer[uploadResult.ErrorKey ?? "Input is invalid"].Value });
+
+        return Ok(new
         {
-            var fileStream = await _fileClient.DownloadAsync(filePath, _settings.Value.FileStorageBaseUrl);
-            return Ok(new
-            {
-                result = true,
-                file = File(fileStream, summernoteImageFile.ContentType, imageFile),
-                filePath = _rsa.Encrypt(filePath)
-            });
-        }
-        else
-        {
-            return Ok(new { result = false, errorMessage = _localizer["Input is invalid"].Value });
-        }
+            result = true,
+            file = File(uploadResult.FileBytes!, uploadResult.ContentType!, uploadResult.FileName!),
+            filePath = _rsa.Encrypt(uploadResult.FilePath!)
+        });
     }
     #endregion
 
@@ -1208,7 +1186,7 @@ public class CalendarController : BaseController
                         string filePath = imgTag.GetAttributeValue("alt", "");
 
                         // Method to download file
-                        byte[] fileData = await _fileClient.DownloadAsync(filePath, _settings.Value.FileStorageBaseUrl);
+                        byte[] fileData = await _calendarService.DownloadFileAsync(filePath);
 
                         if (fileData != null)
                         {
@@ -1354,7 +1332,7 @@ public class CalendarController : BaseController
 
                     if (!string.IsNullOrEmpty(calendarEvent?.CalendarEventAttachedFile?.Path ?? ""))
                     {
-                        byte[] fileData = await _fileClient.DownloadAsync(calendarEvent?.CalendarEventAttachedFile?.Path ?? "", _settings.Value.FileStorageBaseUrl);
+                        byte[] fileData = await _calendarService.DownloadFileAsync(calendarEvent?.CalendarEventAttachedFile?.Path ?? "");
 
                         if (fileData != null)
                         {
@@ -1470,7 +1448,7 @@ public class CalendarController : BaseController
                         string filePath = imgTag.GetAttributeValue("alt", "");
 
                         // Method to download file
-                        byte[] fileData = await _fileClient.DownloadAsync(filePath, _settings.Value.FileStorageBaseUrl);
+                        byte[] fileData = await _calendarService.DownloadFileAsync(filePath);
 
                         if (fileData != null)
                         {
@@ -1616,7 +1594,7 @@ public class CalendarController : BaseController
 
                     if (!string.IsNullOrEmpty(calendarEvent?.CalendarEventAttachedFile?.Path ?? ""))
                     {
-                        byte[] fileData = await _fileClient.DownloadAsync(calendarEvent?.CalendarEventAttachedFile?.Path ?? "", _settings.Value.FileStorageBaseUrl);
+                        byte[] fileData = await _calendarService.DownloadFileAsync(calendarEvent?.CalendarEventAttachedFile?.Path ?? "");
 
                         if (fileData != null)
                         {

@@ -1,7 +1,9 @@
+using ImageMagick;
 using Maroik.Core.Contract.Utilities;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
 using Mapster;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace Maroik.Core.Service.Services;
@@ -17,6 +19,7 @@ public class CalendarService : ICalendarService
     private readonly IFileClient _fileClient;
     private readonly IUnitOfWork _unitOfWork;
     private readonly IOptions<ServerSetting> _settings;
+    private readonly ILogger<CalendarService> _logger;
 
     public CalendarService(
         ICalendarRepository calendarRepository,
@@ -27,7 +30,8 @@ public class CalendarService : ICalendarService
         IOtherCalendarRepository otherCalendarRepository,
         IFileClient fileClient,
         IUnitOfWork unitOfWork,
-        IOptions<ServerSetting> settings)
+        IOptions<ServerSetting> settings,
+        ILogger<CalendarService> logger)
     {
         _calendarRepository = calendarRepository;
         _calendarEventRepository = calendarEventRepository;
@@ -38,6 +42,7 @@ public class CalendarService : ICalendarService
         _fileClient = fileClient;
         _unitOfWork = unitOfWork;
         _settings = settings;
+        _logger = logger;
     }
 
     public async Task<List<CalendarResponse>> GetCalendarsAsync(string email)
@@ -338,4 +343,40 @@ public class CalendarService : ICalendarService
                 ? TimeOnly.FromTimeSpan(r.TimesBeforeEvent.Value)
                 : null
         };
+
+    public async Task<SummernoteUploadResult> UploadSummernoteImageAsync(AttachedFileInfo file, string roleIndex)
+    {
+        try
+        {
+            using var image = new MagickImage(new MemoryStream(file.Bytes));
+        }
+        catch (MagickException)
+        {
+            return SummernoteUploadResult.Fail("Invalid image file.");
+        }
+
+        string ext = Path.GetExtension(file.FileName).ToLowerInvariant();
+        string imageFile = $"{Guid.NewGuid():N}{ext}";
+        string filePath = Path.Combine("upload", "Calendar", roleIndex, "summernote", "images", imageFile);
+
+        bool uploaded = await _fileClient.UploadAsync(file.Bytes, file.ContentType, filePath, _settings.Value.FileStorageBaseUrl ?? string.Empty);
+        if (!uploaded)
+            return SummernoteUploadResult.Fail("Input is invalid");
+
+        byte[] fileBytes = await _fileClient.DownloadAsync(filePath, _settings.Value.FileStorageBaseUrl ?? string.Empty);
+        return SummernoteUploadResult.Ok(fileBytes, file.ContentType, imageFile, filePath);
+    }
+
+    public async Task<byte[]?> DownloadFileAsync(string filePath)
+    {
+        try
+        {
+            return await _fileClient.DownloadAsync(filePath, _settings.Value.FileStorageBaseUrl ?? string.Empty);
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e, "Failed to download file {FilePath}", filePath);
+            return null;
+        }
+    }
 }

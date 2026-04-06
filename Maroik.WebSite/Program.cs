@@ -1,7 +1,7 @@
 using Mapster;
 using Maroik.Core.Contract.Interfaces;
-using Maroik.Core.PostgreSQL.Data;
 using Maroik.Core.Repository.Repositories;
+using Maroik.Core.Repository.Extensions;
 using Maroik.Core.Contract.Utilities;
 using Maroik.WebSite.Utilities;
 using Maroik.WebSite.Extensions;
@@ -14,7 +14,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Razor;
 using Microsoft.AspNetCore.Rewrite;
 using Microsoft.AspNetCore.Session;
-using Microsoft.EntityFrameworkCore;
 using System.Globalization;
 using System.Security.Cryptography.X509Certificates;
 using System.Security.Cryptography;
@@ -71,12 +70,7 @@ builder.Services.Configure<ServerSetting>(cfg =>
 #endregion
 
 #region AddDbContext
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseNpgsql(
-        builder.Configuration.GetConnectionString("DefaultConnection"),
-        npgsqlOptions => npgsqlOptions.EnableRetryOnFailure(0) // Set to 0 to disable
-    ).EnableSensitiveDataLogging()
-);
+builder.Services.AddRepositoryContext(builder.Configuration);
 #endregion
 
 #region Mapster
@@ -372,8 +366,6 @@ if (!string.IsNullOrEmpty(cfgDockerCertPath) && !string.IsNullOrEmpty(cfgDockerK
 #endregion
 
 var app = builder.Build();
-
-AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true); // https://stackoverflow.com/questions/69961449/net6-and-datetime-problem-cannot-write-datetime-with-kind-utc-to-postgresql-ty
 
 //1.Exception / error handling
 

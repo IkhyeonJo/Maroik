@@ -4,9 +4,6 @@ using Maroik.Core.Contract.Utilities;
 using Maroik.WebSite.Models.ViewModels.Account;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Localization;
-using Microsoft.Extensions.Options;
-using Newtonsoft.Json;
-using System.Text;
 
 namespace Maroik.WebSite.Controllers;
 
@@ -15,23 +12,17 @@ public class AccountController : BaseController
     private readonly IHtmlLocalizer<AccountController> _localizer;
     private readonly ILogger<AccountController> _logger;
     private readonly IAccountService _accountService;
-    private readonly IMailClient _mailClient;
-    private readonly IOptions<ServerSetting> _settings;
     private readonly ISessionService _sessionService;
 
     public AccountController(
         IHtmlLocalizer<AccountController> localizer,
         ILogger<AccountController> logger,
         IAccountService accountService,
-        IMailClient mailClient,
-        IOptions<ServerSetting> settings,
         ISessionService sessionService)
     {
         _localizer = localizer;
         _logger = logger;
         _accountService = accountService;
-        _mailClient = mailClient;
-        _settings = settings;
         _sessionService = sessionService;
     }
 
@@ -107,12 +98,9 @@ public class AccountController : BaseController
             }
 
             string emailSubject = _localizer["Maroik Email Confirmation"].Value;
-            Func<string, string> emailBodyFactory = signedToken => _mailClient.GetMailConfirmationBody(
-                signedToken,
-                _localizer["Welcome to Maroik"].Value,
-                _localizer["Click the link below to verify your Email"].Value,
-                _localizer["If this link does not work, please copy & paste this link to your Internet URL"].Value,
-                _settings.Value.DomainName ?? string.Empty);
+            string emailTitle = _localizer["Welcome to Maroik"].Value;
+            string emailContent0 = _localizer["Click the link below to verify your Email"].Value;
+            string emailContent1 = _localizer["If this link does not work, please copy & paste this link to your Internet URL"].Value;
 
             var newAccount = new AccountRequest
             {
@@ -134,7 +122,7 @@ public class AccountController : BaseController
                 Deleted = false
             };
 
-            var result = await _accountService.RegisterAsync(newAccount, emailSubject, emailBodyFactory);
+            var result = await _accountService.RegisterAsync(newAccount, emailSubject, emailTitle, emailContent0, emailContent1);
 
             if (!result.Success)
             {
@@ -155,14 +143,11 @@ public class AccountController : BaseController
             if (!ModelState.IsValid) return RedirectToAction("Register", "Account");
 
             string emailSubject = _localizer["Maroik Email Confirmation"].Value;
-            Func<string, string> emailBodyFactory = signedToken => _mailClient.GetMailConfirmationBody(
-                signedToken,
-                _localizer["Welcome to Maroik"].Value,
-                _localizer["Click the link below to verify your Email"].Value,
-                _localizer["If this link does not work, please copy & paste this link to your Internet URL"].Value,
-                _settings.Value.DomainName ?? string.Empty);
+            string emailTitle = _localizer["Welcome to Maroik"].Value;
+            string emailContent0 = _localizer["Click the link below to verify your Email"].Value;
+            string emailContent1 = _localizer["If this link does not work, please copy & paste this link to your Internet URL"].Value;
 
-            var result = await _accountService.ResendConfirmationEmailAsync(loginInputViewModel.Email, emailSubject, emailBodyFactory);
+            var result = await _accountService.ResendConfirmationEmailAsync(loginInputViewModel.Email, emailSubject, emailTitle, emailContent0, emailContent1);
 
             if (!result.Success)
             {
@@ -208,16 +193,11 @@ public class AccountController : BaseController
         if (!ModelState.IsValid) return RedirectToAction("ForgotPassword", "Account");
 
         string emailSubject = _localizer["Maroik Reset Password"].Value;
+        string emailTitle = _localizer["Welcome to Maroik"].Value;
+        string emailContent0 = _localizer["Click the link below to reset your password"].Value;
+        string emailContent1 = _localizer["If this link does not work, please copy & paste this link to your Internet URL"].Value;
 
-        await _accountService.ForgotPasswordAsync(
-            loginInputViewModel.Email,
-            emailSubject,
-            signedToken => _mailClient.GetMailResetPasswordBody(
-                signedToken,
-                _localizer["Welcome to Maroik"].Value,
-                _localizer["Click the link below to reset your password"].Value,
-                _localizer["If this link does not work, please copy & paste this link to your Internet URL"].Value,
-                _settings.Value.DomainName ?? string.Empty));
+        await _accountService.ForgotPasswordAsync(loginInputViewModel.Email, emailSubject, emailTitle, emailContent0, emailContent1);
 
         ViewBag.mailSent = true;
         ViewBag.sentEmailAddress = loginInputViewModel.Email;

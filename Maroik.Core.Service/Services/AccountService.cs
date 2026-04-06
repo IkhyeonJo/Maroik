@@ -77,7 +77,7 @@ public class AccountService : IAccountService
         return LoginResult.Ok(account);
     }
 
-    public async Task<RegisterResult> RegisterAsync(AccountRequest newAccount, string emailSubject, Func<string, string> emailBodyFactory)
+    public async Task<RegisterResult> RegisterAsync(AccountRequest newAccount, string emailSubject, string emailTitle, string emailContent0, string emailContent1)
     {
         AccountResponse? existing = await _accountRepository.GetAccountByEmailAsync(newAccount.Email ?? "");
 
@@ -97,7 +97,7 @@ public class AccountService : IAccountService
             }
 
             // Encrypt raw token so the URL token can be looked up directly in DB on confirmation
-            string body = emailBodyFactory(_rsa.Encrypt(newAccount.RegistrationToken!));
+            string body = _mailClient.GetMailConfirmationBody(_rsa.Encrypt(newAccount.RegistrationToken!), emailTitle, emailContent0, emailContent1, _settings.Value.DomainName ?? string.Empty);
             string mailResult = await SendMailAsync(newAccount.Email!, emailSubject, body);
             if (mailResult != EnumHelper.GetDescription(AccountMessage.MailSent))
             {
@@ -118,7 +118,7 @@ public class AccountService : IAccountService
             if (string.IsNullOrEmpty(existing.RegistrationToken))
                 existing.RegistrationToken = GUIDToken.Generate();
 
-            string body = emailBodyFactory(_rsa.Encrypt(existing.RegistrationToken));
+            string body = _mailClient.GetMailConfirmationBody(_rsa.Encrypt(existing.RegistrationToken), emailTitle, emailContent0, emailContent1, _settings.Value.DomainName ?? string.Empty);
             string mailResult = await SendMailAsync(existing.Email!, emailSubject, body);
 
             if (mailResult != EnumHelper.GetDescription(AccountMessage.MailSent))
@@ -164,7 +164,7 @@ public class AccountService : IAccountService
         return RegisterResult.Fail(EnumHelper.GetDescription(AccountMessage.UserAlreadyCreated));
     }
 
-    public async Task<RegisterResult> ResendConfirmationEmailAsync(string email, string emailSubject, Func<string, string> emailBodyFactory)
+    public async Task<RegisterResult> ResendConfirmationEmailAsync(string email, string emailSubject, string emailTitle, string emailContent0, string emailContent1)
     {
         AccountResponse? account = await _accountRepository.GetAccountByEmailAsync(email);
 
@@ -176,7 +176,7 @@ public class AccountService : IAccountService
             if (string.IsNullOrEmpty(account.RegistrationToken))
                 account.RegistrationToken = GUIDToken.Generate();
 
-            string body = emailBodyFactory(_rsa.Encrypt(account.RegistrationToken));
+            string body = _mailClient.GetMailConfirmationBody(_rsa.Encrypt(account.RegistrationToken), emailTitle, emailContent0, emailContent1, _settings.Value.DomainName ?? string.Empty);
             string mailResult = await SendMailAsync(email, emailSubject, body);
             if (mailResult != EnumHelper.GetDescription(AccountMessage.MailSent))
             {
@@ -285,7 +285,7 @@ public class AccountService : IAccountService
         return new ConfirmEmailResult { InvalidToken = false, AccountCreated = false };
     }
 
-    public async Task<bool> ForgotPasswordAsync(string email, string emailSubject, Func<string, string> emailBodyFactory)
+    public async Task<bool> ForgotPasswordAsync(string email, string emailSubject, string emailTitle, string emailContent0, string emailContent1)
     {
         AccountResponse? account = await _accountRepository.GetAccountByEmailAsync(email);
 
@@ -296,7 +296,7 @@ public class AccountService : IAccountService
         try
         {
             // Encrypt raw token for URL; DB stores raw for direct lookup
-            string body = emailBodyFactory(_rsa.Encrypt(resetPasswordToken));
+            string body = _mailClient.GetMailResetPasswordBody(_rsa.Encrypt(resetPasswordToken), emailTitle, emailContent0, emailContent1, _settings.Value.DomainName ?? string.Empty);
 
             string mailResult = await SendMailAsync(account.Email!, emailSubject, body);
             if (mailResult != EnumHelper.GetDescription(AccountMessage.MailSent))

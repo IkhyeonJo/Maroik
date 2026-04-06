@@ -22,4 +22,6 @@ public interface ICalendarService
     Task<ServiceResult> CreateCalendarEventAsync(CalendarEventRequest request, string email, string roleIndex, List<CalendarReminderInfo> reminders, AttachedFileInfo? attachedFile);
     Task<ServiceResult> UpdateCalendarEventAsync(CalendarEventRequest request, string email, string roleIndex, List<CalendarReminderInfo> reminders, AttachedFileInfo? attachedFile);
     Task<ServiceResult> DeleteCalendarEventAsync(long calendarEventId, string email);
+    Task<SummernoteUploadResult> UploadSummernoteImageAsync(AttachedFileInfo file, string roleIndex);
+    Task<byte[]?> DownloadFileAsync(string filePath);
 }

@@ -1,3 +1,4 @@
+using ImageMagick;
 using Maroik.Core.Contract.Utilities;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
@@ -256,6 +257,42 @@ public class BoardService : IBoardService
             });
         }
         // previous == null && newFile == null → nothing to do
+    }
+
+    public async Task<SummernoteUploadResult> UploadSummernoteImageAsync(AttachedFileInfo file, string area, string boardType)
+    {
+        try
+        {
+            using var image = new MagickImage(new MemoryStream(file.Bytes));
+        }
+        catch (MagickException)
+        {
+            return SummernoteUploadResult.Fail("Invalid image file.");
+        }
+
+        string ext = Path.GetExtension(file.FileName).ToLowerInvariant();
+        string imageFile = $"{Guid.NewGuid():N}{ext}";
+        string filePath = Path.Combine("upload", area, boardType, "summernote", "images", imageFile);
+
+        bool uploaded = await _fileClient.UploadAsync(file.Bytes, file.ContentType, filePath, _settings.Value.FileStorageBaseUrl ?? string.Empty);
+        if (!uploaded)
+            return SummernoteUploadResult.Fail("Input is invalid");
+
+        byte[] fileBytes = await _fileClient.DownloadAsync(filePath, _settings.Value.FileStorageBaseUrl ?? string.Empty);
+        return SummernoteUploadResult.Ok(fileBytes, file.ContentType, imageFile, filePath);
+    }
+
+    public async Task<byte[]?> DownloadFileAsync(string filePath)
+    {
+        try
+        {
+            return await _fileClient.DownloadAsync(filePath, _settings.Value.FileStorageBaseUrl ?? string.Empty);
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e, "Failed to download file {FilePath}", filePath);
+            return null;
+        }
     }
 
     private static string BuildAttachedFilePath(string boardType, long boardId, string fileName)
