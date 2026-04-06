@@ -12,6 +12,9 @@ public class FixedIncomeService : IFixedIncomeService
     public FixedIncomeService(IFixedIncomeRepository fixedIncomeRepository)
         => _fixedIncomeRepository = fixedIncomeRepository;
 
+    public Task<List<FixedIncomeResponse>> GetFixedIncomesAsync(string accountEmail)
+        => _fixedIncomeRepository.GetFixedIncomesAsync(accountEmail);
+
     public async Task<ServiceResult> CreateAsync(string accountEmail, FixedIncomeRequest request)
     {
         var validation = ValidateRequest(request);

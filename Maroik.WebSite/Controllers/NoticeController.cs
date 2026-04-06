@@ -20,9 +20,7 @@ public class NoticeController : BaseController
     private readonly IHtmlLocalizer<NoticeController> _localizer;
     private readonly ILogger<NoticeController> _logger;
     private readonly IHostEnvironment _hostEnvironment;
-    private readonly IAssetRepository _assetRepository;
-    private readonly IFixedIncomeRepository _fixedIncomeRepository;
-    private readonly IFixedExpenditureRepository _fixedExpenditureRepository;
+    private readonly IAssetService _assetService;
     private readonly IFixedIncomeService _fixedIncomeService;
     private readonly IFixedExpenditureService _fixedExpenditureService;
     private readonly IOptions<ServerSetting> _settings;
@@ -32,9 +30,7 @@ public class NoticeController : BaseController
         IHtmlLocalizer<NoticeController> localizer,
         ILogger<NoticeController> logger,
         IHostEnvironment hostEnvironment,
-        IAssetRepository assetRepository,
-        IFixedIncomeRepository fixedIncomeRepository,
-        IFixedExpenditureRepository fixedExpenditureRepository,
+        IAssetService assetService,
         IFixedIncomeService fixedIncomeService,
         IFixedExpenditureService fixedExpenditureService,
         IOptions<ServerSetting> settings,
@@ -43,9 +39,7 @@ public class NoticeController : BaseController
         _localizer = localizer;
         _logger = logger;
         _hostEnvironment = hostEnvironment;
-        _assetRepository = assetRepository;
-        _fixedIncomeRepository = fixedIncomeRepository;
-        _fixedExpenditureRepository = fixedExpenditureRepository;
+        _assetService = assetService;
         _fixedIncomeService = fixedIncomeService;
         _fixedExpenditureService = fixedExpenditureService;
         _settings = settings;
@@ -106,9 +100,9 @@ public class NoticeController : BaseController
                     Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[1]),
                     Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[2]));
 
-            List<AssetResponse> assets = await _assetRepository.GetAssetsAsync(_sessionService.GetAccount()!.Email);
+            List<AssetResponse> assets = await _assetService.GetAssetsAsync(_sessionService.GetAccount()!.Email);
 
-            foreach (FixedIncomeResponse item in await _fixedIncomeRepository.GetFixedIncomesAsync(_sessionService.GetAccount()!.Email))
+            foreach (FixedIncomeResponse item in await _fixedIncomeService.GetFixedIncomesAsync(_sessionService.GetAccount()!.Email))
             {
                 if (string.IsNullOrEmpty(wholeSearch))
                 {
@@ -235,7 +229,7 @@ public class NoticeController : BaseController
 
         {
             AccountResponse loginedAccount = _sessionService.GetAccount() ?? new AccountResponse();
-            List<AssetResponse> assets = (await _assetRepository.GetAssetsAsync(loginedAccount.Email))
+            List<AssetResponse> assets = (await _assetService.GetAssetsAsync(loginedAccount.Email))
                 .Where(x => !x.Deleted).OrderBy(x => x.ProductName).ToList();
             ViewBag.Assets = assets;
         }
@@ -250,7 +244,7 @@ public class NoticeController : BaseController
         try
         {
             List<FixedIncomeResponse> tempFixedIncomes =
-                await _fixedIncomeRepository.GetFixedIncomesAsync(_sessionService.GetAccount()!.Email);
+                await _fixedIncomeService.GetFixedIncomesAsync(_sessionService.GetAccount()!.Email);
 
             if (tempFixedIncomes == null)
             {
@@ -300,7 +294,7 @@ public class NoticeController : BaseController
             string label = _localizer["Amount"].Value;
 
             AssetResponse asset =
-                (await _assetRepository.GetAssetsAsync(_sessionService.GetAccount()!.Email))
+                (await _assetService.GetAssetsAsync(_sessionService.GetAccount()!.Email))
                 .Where(x => !x.Deleted).Where(x => x.ProductName == productName).FirstOrDefault() ?? new AssetResponse();
 
             if (!string.IsNullOrEmpty(asset.MonetaryUnit))
@@ -380,8 +374,8 @@ public class NoticeController : BaseController
         string loginedAccountTimeZoneIanaId = account.TimeZoneIanaId;
         DateTime currentDate = DateTime.UtcNow.ToLocalTime();
 
-        List<AssetResponse> assets = await _assetRepository.GetAssetsAsync(account.Email);
-        var fixedIncomeList = await _fixedIncomeRepository.GetFixedIncomesAsync(account.Email);
+        List<AssetResponse> assets = await _assetService.GetAssetsAsync(account.Email);
+        var fixedIncomeList = await _fixedIncomeService.GetFixedIncomesAsync(account.Email);
 
         var fixedIncomeOutputViewModels = fixedIncomeList.Select(item =>
             {
@@ -572,9 +566,9 @@ public class NoticeController : BaseController
                     Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[1]),
                     Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[2]));
 
-            List<AssetResponse> assets = await _assetRepository.GetAssetsAsync(_sessionService.GetAccount()!.Email);
+            List<AssetResponse> assets = await _assetService.GetAssetsAsync(_sessionService.GetAccount()!.Email);
 
-            foreach (FixedExpenditureResponse item in await _fixedExpenditureRepository.GetFixedExpendituresAsync(
+            foreach (FixedExpenditureResponse item in await _fixedExpenditureService.GetFixedExpendituresAsync(
                          _sessionService.GetAccount()!.Email))
             {
                 if (string.IsNullOrEmpty(wholeSearch))
@@ -705,7 +699,7 @@ public class NoticeController : BaseController
 
         {
             AccountResponse loginedAccount = _sessionService.GetAccount() ?? new AccountResponse();
-            List<AssetResponse> assets = (await _assetRepository.GetAssetsAsync(loginedAccount.Email))
+            List<AssetResponse> assets = (await _assetService.GetAssetsAsync(loginedAccount.Email))
                 .Where(x => !x.Deleted).OrderBy(x => x.ProductName).ToList();
             ViewBag.Assets = assets;
         }
@@ -720,7 +714,7 @@ public class NoticeController : BaseController
         try
         {
             List<FixedExpenditureResponse> tempFixedExpenditures =
-                await _fixedExpenditureRepository.GetFixedExpendituresAsync(_sessionService.GetAccount()!.Email);
+                await _fixedExpenditureService.GetFixedExpendituresAsync(_sessionService.GetAccount()!.Email);
 
             if (tempFixedExpenditures == null)
             {
@@ -772,7 +766,7 @@ public class NoticeController : BaseController
             string label = _localizer["Amount"].Value;
 
             AssetResponse asset =
-                (await _assetRepository.GetAssetsAsync(_sessionService.GetAccount()!.Email))
+                (await _assetService.GetAssetsAsync(_sessionService.GetAccount()!.Email))
                 .Where(x => !x.Deleted).Where(x => x.ProductName == productName).FirstOrDefault() ?? new AssetResponse();
 
             if (!string.IsNullOrEmpty(asset.MonetaryUnit))
@@ -861,9 +855,9 @@ public class NoticeController : BaseController
                 Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[1]),
                 Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[2]));
 
-        List<AssetResponse> assets = await _assetRepository.GetAssetsAsync(_sessionService.GetAccount()!.Email);
+        List<AssetResponse> assets = await _assetService.GetAssetsAsync(_sessionService.GetAccount()!.Email);
 
-        foreach (FixedExpenditureResponse item in await _fixedExpenditureRepository.GetFixedExpendituresAsync(_sessionService.GetAccount()!.Email))
+        foreach (FixedExpenditureResponse item in await _fixedExpenditureService.GetFixedExpendituresAsync(_sessionService.GetAccount()!.Email))
         {
             bool noticedResult = false;
 

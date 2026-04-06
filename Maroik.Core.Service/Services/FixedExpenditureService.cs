@@ -16,6 +16,9 @@ public class FixedExpenditureService : IFixedExpenditureService
         _assetRepository = assetRepository;
     }
 
+    public Task<List<FixedExpenditureResponse>> GetFixedExpendituresAsync(string accountEmail)
+        => _fixedExpenditureRepository.GetFixedExpendituresAsync(accountEmail);
+
     public async Task<ServiceResult> CreateAsync(string accountEmail, FixedExpenditureRequest request)
     {
         var validation = ValidateClassAndDate(request);

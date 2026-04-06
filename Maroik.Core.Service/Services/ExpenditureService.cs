@@ -20,6 +20,9 @@ public class ExpenditureService : IExpenditureService
         _unitOfWork = unitOfWork;
     }
 
+    public Task<List<ExpenditureResponse>> GetExpendituresAsync(string accountEmail)
+        => _expenditureRepository.GetExpendituresAsync(accountEmail);
+
     public async Task<ServiceResult> CreateAsync(string accountEmail, ExpenditureRequest request)
     {
         await _unitOfWork.BeginAsync();

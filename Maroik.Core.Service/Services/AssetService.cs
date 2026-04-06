@@ -23,6 +23,12 @@ public class AssetService : IAssetService
         _unitOfWork = unitOfWork;
     }
 
+    public Task<List<AssetResponse>> GetAssetsAsync(string accountEmail)
+        => _assetRepository.GetAssetsAsync(accountEmail);
+
+    public Task<AssetResponse?> GetAssetAsync(string accountEmail, string productName)
+        => _assetRepository.GetAssetAsync(accountEmail, productName);
+
     public async Task<ServiceResult> CreateAsync(string accountEmail, AssetRequest request)
     {
         if (!IsValidAssetItem(request.Item))

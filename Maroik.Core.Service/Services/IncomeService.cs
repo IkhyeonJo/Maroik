@@ -17,6 +17,9 @@ public class IncomeService : IIncomeService
         _unitOfWork = unitOfWork;
     }
 
+    public Task<List<IncomeResponse>> GetIncomesAsync(string accountEmail)
+        => _incomeRepository.GetIncomesAsync(accountEmail);
+
     public async Task<ServiceResult> CreateAsync(string accountEmail, IncomeRequest request)
     {
         await _unitOfWork.BeginAsync();

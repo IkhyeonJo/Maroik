@@ -4,6 +4,7 @@ namespace Maroik.Core.Contract.Interfaces;
 
 public interface IFixedExpenditureService
 {
+    Task<List<FixedExpenditureResponse>> GetFixedExpendituresAsync(string accountEmail);
     Task<ServiceResult> CreateAsync(string accountEmail, FixedExpenditureRequest request);
     Task<ServiceResult> UpdateAsync(string accountEmail, FixedExpenditureRequest request);
     Task<ServiceResult> DeleteAsync(string accountEmail, long id);

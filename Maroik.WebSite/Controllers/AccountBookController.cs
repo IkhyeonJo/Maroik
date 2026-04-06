@@ -18,9 +18,6 @@ public class AccountBookController : BaseController
     private readonly IHtmlLocalizer<AccountBookController> _localizer;
     private readonly ILogger<AccountBookController> _logger;
     private readonly IHostEnvironment _hostEnvironment;
-    private readonly IAssetRepository _assetRepository;
-    private readonly IIncomeRepository _incomeRepository;
-    private readonly IExpenditureRepository _expenditureRepository;
     private readonly IAssetService _assetService;
     private readonly IIncomeService _incomeService;
     private readonly IExpenditureService _expenditureService;
@@ -30,9 +27,6 @@ public class AccountBookController : BaseController
         IHtmlLocalizer<AccountBookController> localizer,
         ILogger<AccountBookController> logger,
         IHostEnvironment hostEnvironment,
-        IAssetRepository assetRepository,
-        IIncomeRepository incomeRepository,
-        IExpenditureRepository expenditureRepository,
         IAssetService assetService,
         IIncomeService incomeService,
         IExpenditureService expenditureService,
@@ -41,9 +35,6 @@ public class AccountBookController : BaseController
         _localizer = localizer;
         _logger = logger;
         _hostEnvironment = hostEnvironment;
-        _assetRepository = assetRepository;
-        _incomeRepository = incomeRepository;
-        _expenditureRepository = expenditureRepository;
         _assetService = assetService;
         _incomeService = incomeService;
         _expenditureService = expenditureService;
@@ -95,7 +86,7 @@ public class AccountBookController : BaseController
 
             string loginedAccountTimeZoneIanaId = _sessionService.GetAccount()!.TimeZoneIanaId;
 
-            foreach (AssetResponse item in await _assetRepository.GetAssetsAsync(_sessionService.GetAccount()!.Email))
+            foreach (AssetResponse item in await _assetService.GetAssetsAsync(_sessionService.GetAccount()!.Email))
             {
                 if (string.IsNullOrEmpty(wholeSearch))
                 {
@@ -149,7 +140,7 @@ public class AccountBookController : BaseController
         {
             AccountResponse loginedAccount = _sessionService.GetAccount() ?? new AccountResponse();
             string tz = loginedAccount.TimeZoneIanaId ?? "UTC";
-            List<AssetResponse> assets = (await _assetRepository.GetAssetsAsync(loginedAccount.Email))
+            List<AssetResponse> assets = (await _assetService.GetAssetsAsync(loginedAccount.Email))
                 .Where(x => !x.Deleted).OrderBy(x => x.ProductName).ToList();
             DateTime ct = DateTime.UtcNow.ConvertTimeByTimeZoneIanaId(tz);
             ViewBag.Assets = assets;
@@ -168,7 +159,7 @@ public class AccountBookController : BaseController
     {
         try
         {
-            AssetResponse tempAsset = await _assetRepository.GetAssetAsync(
+            AssetResponse tempAsset = await _assetService.GetAssetAsync(
                 _sessionService.GetAccount()!.Email, productName);
 
             return tempAsset == null
@@ -247,7 +238,7 @@ public class AccountBookController : BaseController
 
         string loginedAccountTimeZoneIanaId = _sessionService.GetAccount()!.TimeZoneIanaId;
 
-        foreach (AssetResponse item in await _assetRepository.GetAssetsAsync(_sessionService.GetAccount()!.Email))
+        foreach (AssetResponse item in await _assetService.GetAssetsAsync(_sessionService.GetAccount()!.Email))
         {
             assetOutputViewModels.Add(new AssetOutputViewModel()
             {
@@ -383,9 +374,9 @@ public class AccountBookController : BaseController
 
             string loginedAccountTimeZoneIanaId = _sessionService.GetAccount()!.TimeZoneIanaId;
 
-            List<AssetResponse> assets = await _assetRepository.GetAssetsAsync(_sessionService.GetAccount()!.Email);
+            List<AssetResponse> assets = await _assetService.GetAssetsAsync(_sessionService.GetAccount()!.Email);
 
-            foreach (IncomeResponse item in await _incomeRepository.GetIncomesAsync(_sessionService.GetAccount()!.Email))
+            foreach (IncomeResponse item in await _incomeService.GetIncomesAsync(_sessionService.GetAccount()!.Email))
             {
                 if (string.IsNullOrEmpty(wholeSearch))
                 {
@@ -447,7 +438,7 @@ public class AccountBookController : BaseController
         {
             AccountResponse loginedAccount = _sessionService.GetAccount() ?? new AccountResponse();
             string tz = loginedAccount.TimeZoneIanaId ?? "UTC";
-            List<AssetResponse> assets = (await _assetRepository.GetAssetsAsync(loginedAccount.Email))
+            List<AssetResponse> assets = (await _assetService.GetAssetsAsync(loginedAccount.Email))
                 .Where(x => !x.Deleted).OrderBy(x => x.ProductName).ToList();
             DateTime ct = DateTime.UtcNow.ConvertTimeByTimeZoneIanaId(tz);
             ViewBag.Assets = assets;
@@ -467,7 +458,7 @@ public class AccountBookController : BaseController
         try
         {
             string loginedAccountTimeZoneIanaId = _sessionService.GetAccount()!.TimeZoneIanaId;
-            List<IncomeResponse> tempIncomes = await _incomeRepository.GetIncomesAsync(_sessionService.GetAccount()!.Email);
+            List<IncomeResponse> tempIncomes = await _incomeService.GetIncomesAsync(_sessionService.GetAccount()!.Email);
 
             if (tempIncomes == null)
             {
@@ -505,7 +496,7 @@ public class AccountBookController : BaseController
             string label = _localizer["Amount"].Value;
 
             AssetResponse asset =
-                (await _assetRepository.GetAssetsAsync(_sessionService.GetAccount()!.Email))
+                (await _assetService.GetAssetsAsync(_sessionService.GetAccount()!.Email))
                 .Where(x => !x.Deleted).Where(x => x.ProductName == productName).FirstOrDefault() ?? new AssetResponse();
 
             if (!string.IsNullOrEmpty(asset.MonetaryUnit))
@@ -587,9 +578,9 @@ public class AccountBookController : BaseController
 
         string loginedAccountTimeZoneIanaId = _sessionService.GetAccount()!.TimeZoneIanaId;
 
-        List<AssetResponse> assets = await _assetRepository.GetAssetsAsync(_sessionService.GetAccount()!.Email);
+        List<AssetResponse> assets = await _assetService.GetAssetsAsync(_sessionService.GetAccount()!.Email);
 
-        foreach (IncomeResponse item in await _incomeRepository.GetIncomesAsync(_sessionService.GetAccount()!.Email))
+        foreach (IncomeResponse item in await _incomeService.GetIncomesAsync(_sessionService.GetAccount()!.Email))
         {
             incomeOutputViewModels.Add(new IncomeOutputViewModel()
             {
@@ -731,9 +722,9 @@ public class AccountBookController : BaseController
 
             string loginedAccountTimeZoneIanaId = _sessionService.GetAccount()!.TimeZoneIanaId;
 
-            List<AssetResponse> assets = await _assetRepository.GetAssetsAsync(_sessionService.GetAccount()!.Email);
+            List<AssetResponse> assets = await _assetService.GetAssetsAsync(_sessionService.GetAccount()!.Email);
 
-            foreach (ExpenditureResponse item in await _expenditureRepository.GetExpendituresAsync(_sessionService.GetAccount()!.Email))
+            foreach (ExpenditureResponse item in await _expenditureService.GetExpendituresAsync(_sessionService.GetAccount()!.Email))
             {
                 if (string.IsNullOrEmpty(wholeSearch))
                 {
@@ -798,7 +789,7 @@ public class AccountBookController : BaseController
         {
             AccountResponse loginedAccount = _sessionService.GetAccount() ?? new AccountResponse();
             string tz = loginedAccount.TimeZoneIanaId ?? "UTC";
-            List<AssetResponse> assets = (await _assetRepository.GetAssetsAsync(loginedAccount.Email))
+            List<AssetResponse> assets = (await _assetService.GetAssetsAsync(loginedAccount.Email))
                 .Where(x => !x.Deleted).OrderBy(x => x.ProductName).ToList();
             DateTime ct = DateTime.UtcNow.ConvertTimeByTimeZoneIanaId(tz);
             ViewBag.Assets = assets;
@@ -819,7 +810,7 @@ public class AccountBookController : BaseController
         {
             string loginedAccountTimeZoneIanaId = _sessionService.GetAccount()!.TimeZoneIanaId;
             List<ExpenditureResponse> tempExpenditures =
-                await _expenditureRepository.GetExpendituresAsync(_sessionService.GetAccount()!.Email);
+                await _expenditureService.GetExpendituresAsync(_sessionService.GetAccount()!.Email);
 
             if (tempExpenditures == null)
             {
@@ -857,7 +848,7 @@ public class AccountBookController : BaseController
             string label = _localizer["Amount"].Value;
 
             AssetResponse asset =
-                (await _assetRepository.GetAssetsAsync(_sessionService.GetAccount()!.Email))
+                (await _assetService.GetAssetsAsync(_sessionService.GetAccount()!.Email))
                 .Where(x => !x.Deleted).Where(x => x.ProductName == productName).FirstOrDefault() ?? new AssetResponse();
 
             if (!string.IsNullOrEmpty(asset.MonetaryUnit))
@@ -934,9 +925,9 @@ public class AccountBookController : BaseController
 
         string loginedAccountTimeZoneIanaId = _sessionService.GetAccount()!.TimeZoneIanaId;
 
-        List<AssetResponse> assets = await _assetRepository.GetAssetsAsync(_sessionService.GetAccount()!.Email);
+        List<AssetResponse> assets = await _assetService.GetAssetsAsync(_sessionService.GetAccount()!.Email);
 
-        foreach (ExpenditureResponse item in await _expenditureRepository.GetExpendituresAsync(_sessionService.GetAccount()!.Email))
+        foreach (ExpenditureResponse item in await _expenditureService.GetExpendituresAsync(_sessionService.GetAccount()!.Email))
         {
             expenditureOutputViewModels.Add(new ExpenditureOutputViewModel()
             {
