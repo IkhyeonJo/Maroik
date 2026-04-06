@@ -260,8 +260,8 @@ public class ForumController : BaseController
                 DetailBoardId = boardId ?? default
             };
 
-            BoardResponse? freeBoard = await _boardService.GetBoardByIdAsync(boardId ?? 0);
-            BoardAttachedFileResponse? boardAttachedFile = await _boardService.GetAttachedFileByBoardIdAsync(boardId ?? 0);
+            BoardResponse freeBoard = await _boardService.GetBoardByIdAsync(boardId ?? 0);
+            BoardAttachedFileResponse boardAttachedFile = await _boardService.GetAttachedFileByBoardIdAsync(boardId ?? 0);
 
             try
             {
@@ -379,8 +379,8 @@ public class ForumController : BaseController
                 EditBoardId = boardId ?? default
             };
 
-            BoardResponse? freeBoard = await _boardService.GetBoardByIdAsync(boardId ?? 0);
-            BoardAttachedFileResponse? boardAttachedFile = await _boardService.GetAttachedFileByBoardIdAsync(boardId ?? 0);
+            BoardResponse freeBoard = await _boardService.GetBoardByIdAsync(boardId ?? 0);
+            BoardAttachedFileResponse boardAttachedFile = await _boardService.GetAttachedFileByBoardIdAsync(boardId ?? 0);
 
             try
             {
@@ -556,18 +556,18 @@ public class ForumController : BaseController
                 .Distinct().ToList();
 
             Dictionary<long, int> commentCounts = await _boardService.GetCommentCountsForBoardsAsync(allBoardIds);
-            Dictionary<long, BoardAttachedFileResponse?> attachedFiles = await _boardService.GetAttachedFilesForBoardsAsync(allBoardIds);
+            Dictionary<long, BoardAttachedFileResponse> attachedFiles = await _boardService.GetAttachedFilesForBoardsAsync(allBoardIds);
 
             foreach (var board in freeForumOutputViewModel.NoticeBoards)
             {
                 freeForumOutputViewModel.CommentCountByBoardId[board.Id] = commentCounts.GetValueOrDefault(board.Id, 0);
-                BoardAttachedFileResponse? af = attachedFiles.GetValueOrDefault(board.Id);
+                BoardAttachedFileResponse af = attachedFiles.GetValueOrDefault(board.Id);
                 freeForumOutputViewModel.AttachedFilesByBoardId[board.Id] = af != null && !string.IsNullOrEmpty(af.Name) ? [af] : [];
             }
             foreach (var board in freeForumOutputViewModel.Boards)
             {
                 freeForumOutputViewModel.CommentCountByBoardId[board.Id] = commentCounts.GetValueOrDefault(board.Id, 0);
-                BoardAttachedFileResponse? af = attachedFiles.GetValueOrDefault(board.Id);
+                BoardAttachedFileResponse af = attachedFiles.GetValueOrDefault(board.Id);
                 freeForumOutputViewModel.AttachedFilesByBoardId[board.Id] = af != null && !string.IsNullOrEmpty(af.Name) ? [af] : [];
             }
             #endregion
@@ -588,7 +588,7 @@ public class ForumController : BaseController
     {
         try
         {
-            BoardResponse? board = await _boardService.GetBoardByIdAsync(id);
+            BoardResponse board = await _boardService.GetBoardByIdAsync(id);
 
             return board == null || board.Deleted
                 ? Json(new { result = false, error = _localizer["Input is invalid"].Value })

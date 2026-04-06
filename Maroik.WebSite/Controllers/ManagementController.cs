@@ -453,7 +453,7 @@ public class ManagementController : BaseController
     {
         try
         {
-            AccountResponse? tempAccount = await _managementAccountService.GetAccountByEmailAsync(email);
+            AccountResponse tempAccount = await _managementAccountService.GetAccountByEmailAsync(email);
 
             return tempAccount == null
                 ? Json(new
@@ -831,7 +831,7 @@ public class ManagementController : BaseController
     {
         try
         {
-            CategoryResponse? category = await _menuService.GetCategoryByIdAsync(id);
+            CategoryResponse category = await _menuService.GetCategoryByIdAsync(id);
             if (category == null)
                 return Json(new { result = false, error = _localizer["Input is invalid"].Value });
 
@@ -862,7 +862,7 @@ public class ManagementController : BaseController
     {
         try
         {
-            SubCategoryResponse? subCategory = await _menuService.GetSubCategoryByIdAsync(id);
+            SubCategoryResponse subCategory = await _menuService.GetSubCategoryByIdAsync(id);
             if (subCategory == null)
                 return Json(new { result = false, error = _localizer["Input is invalid"].Value });
 
@@ -1397,8 +1397,8 @@ public class ManagementController : BaseController
                 DetailBoardId = boardId ?? default
             };
 
-            BoardResponse? privateNoteBoard = await _boardService.GetBoardByIdAsync(boardId ?? 0);
-            BoardAttachedFileResponse? attachedFile = await _boardService.GetAttachedFileByBoardIdAsync(boardId ?? 0);
+            BoardResponse privateNoteBoard = await _boardService.GetBoardByIdAsync(boardId ?? 0);
+            BoardAttachedFileResponse attachedFile = await _boardService.GetAttachedFileByBoardIdAsync(boardId ?? 0);
 
             try
             {
@@ -1525,8 +1525,8 @@ public class ManagementController : BaseController
 
             AccountResponse loginedAccount = _sessionService.GetAccount()!;
 
-            BoardResponse? privateNoteBoard = await _boardService.GetBoardByIdAsync(boardId ?? 0);
-            BoardAttachedFileResponse? attachedFile = await _boardService.GetAttachedFileByBoardIdAsync(boardId ?? 0);
+            BoardResponse privateNoteBoard = await _boardService.GetBoardByIdAsync(boardId ?? 0);
+            BoardAttachedFileResponse attachedFile = await _boardService.GetAttachedFileByBoardIdAsync(boardId ?? 0);
 
             try
             {
@@ -1721,12 +1721,12 @@ public class ManagementController : BaseController
 
             List<long> boardIds = privateNoteOutputViewModel.Boards.Select(b => b.Id).ToList();
             Dictionary<long, int> commentCounts = await _boardService.GetCommentCountsForBoardsAsync(boardIds);
-            Dictionary<long, BoardAttachedFileResponse?> attachedFiles = await _boardService.GetAttachedFilesForBoardsAsync(boardIds);
+            Dictionary<long, BoardAttachedFileResponse> attachedFiles = await _boardService.GetAttachedFilesForBoardsAsync(boardIds);
 
             foreach (var board in privateNoteOutputViewModel.Boards)
             {
                 privateNoteOutputViewModel.CommentCountByBoardId[board.Id] = commentCounts.GetValueOrDefault(board.Id, 0);
-                BoardAttachedFileResponse? af = attachedFiles.GetValueOrDefault(board.Id);
+                BoardAttachedFileResponse af = attachedFiles.GetValueOrDefault(board.Id);
                 privateNoteOutputViewModel.AttachedFilesByBoardId[board.Id] = af != null && !string.IsNullOrEmpty(af.Name) ? [af] : [];
             }
             #endregion
@@ -1750,7 +1750,7 @@ public class ManagementController : BaseController
         try
         {
             string nickname = _sessionService.GetAccount()!.Nickname;
-            BoardResponse? board = await _boardService.GetBoardByIdAsync(id);
+            BoardResponse board = await _boardService.GetBoardByIdAsync(id);
 
             return board == null || board.Deleted || board.Writer != nickname
                 ? Json(new { result = false, error = _localizer["Input is invalid"].Value })
