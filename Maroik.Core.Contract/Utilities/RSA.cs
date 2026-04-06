@@ -32,7 +32,7 @@ public class Rsa
     /// <summary>
     /// Instantiate RSAHelper.
     /// </summary>
-    /// <param name="rsaType">Encryption algorithm type: RSA=SHA1, RSA2=SHA256. Key length must be at least 2048 bits.</param>
+    /// <param name="rsaType">Encryption algorithm type: Rsa=SHA1, Rsa2=SHA256. Key length must be at least 2048 bits.</param>
     /// <param name="encoding">Encoding type.</param>
     /// <param name="privateKey">Private key.</param>
     /// <param name="publicKey">Public key.</param>
