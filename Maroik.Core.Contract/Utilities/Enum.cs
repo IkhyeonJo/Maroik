@@ -53,3 +53,11 @@ public enum CalendarType
     [Description("Other")]
     Other
 }
+
+public enum RsaType
+{
+    /// <summary>SHA1</summary>
+    Rsa = 0,
+    /// <summary>SHA256. Key length must be at least 2048 bits.</summary>
+    Rsa2
+}

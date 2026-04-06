@@ -1,18 +1,9 @@
 using System.Security.Cryptography;
 using System.Text;
+using Maroik.Core.Contract.Utilities;
 
-namespace Maroik.Core.Contract.Utilities;
+namespace Maroik.Core.Service.Services;
 
-#region Code Example
-//string plaintext = "plaintext";
-
-//var rsa = new Rsa(RsaType.Rsa2, Encoding.UTF8, Rsa.privateKey, Rsa.publicKey);
-
-//var aa = rsa.Encrypt(plaintext);
-//var bb = rsa.Decrypt(aa);
-//var cc = rsa.Sign(plaintext);
-//var dd = rsa.Verify(plaintext, cc);
-#endregion
 /// <summary>
 /// RSA encryption/decryption using OpenSSL public key encryption / private key decryption.
 ///
@@ -22,7 +13,7 @@ namespace Maroik.Core.Contract.Utilities;
 /// Date: 2017-10-30 15:50:14
 /// QQ: 501232752
 /// </summary>
-public class Rsa
+internal class Rsa
 {
     private readonly System.Security.Cryptography.RSA? _privateKeyRsaProvider;
     private readonly System.Security.Cryptography.RSA? _publicKeyRsaProvider;
@@ -338,20 +329,4 @@ public class Rsa
     }
 
     #endregion
-
-}
-
-/// <summary>
-/// RSA algorithm type.
-/// </summary>
-public enum RsaType
-{
-    /// <summary>
-    /// SHA1
-    /// </summary>
-    Rsa = 0,
-    /// <summary>
-    /// SHA256. Key length must be at least 2048 bits.
-    /// </summary>
-    Rsa2
 }
