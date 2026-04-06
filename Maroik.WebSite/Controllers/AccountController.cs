@@ -114,7 +114,7 @@ public class AccountController : BaseController
                 LoginAttempt = 0,
                 EmailConfirmed = false,
                 AgreedServiceTerms = true,
-                RegistrationToken = GUIDToken.Generate(),
+                RegistrationToken = GuidToken.Generate(),
                 ResetPasswordToken = null,
                 Created = DateTime.UtcNow,
                 Updated = DateTime.UtcNow,

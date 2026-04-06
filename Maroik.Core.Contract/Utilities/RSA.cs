@@ -6,7 +6,7 @@ namespace Maroik.Core.Contract.Utilities;
 #region Code Example
 //string plaintext = "plaintext";
 
-//var rsa = new RSA(RSAType.RSA2, Encoding.UTF8, RSA.privateKey, RSA.publicKey);
+//var rsa = new Rsa(RsaType.Rsa2, Encoding.UTF8, Rsa.privateKey, Rsa.publicKey);
 
 //var aa = rsa.Encrypt(plaintext);
 //var bb = rsa.Decrypt(aa);
@@ -22,7 +22,7 @@ namespace Maroik.Core.Contract.Utilities;
 /// Date: 2017-10-30 15:50:14
 /// QQ: 501232752
 /// </summary>
-public class RSA
+public class Rsa
 {
     private readonly System.Security.Cryptography.RSA? _privateKeyRsaProvider;
     private readonly System.Security.Cryptography.RSA? _publicKeyRsaProvider;
@@ -36,7 +36,7 @@ public class RSA
     /// <param name="encoding">Encoding type.</param>
     /// <param name="privateKey">Private key.</param>
     /// <param name="publicKey">Public key.</param>
-    public RSA(RSAType rsaType, Encoding encoding, string privateKey, string? publicKey = null)
+    public Rsa(RsaType rsaType, Encoding encoding, string privateKey, string? publicKey = null)
     {
         _encoding = encoding;
         if (!string.IsNullOrEmpty(privateKey))
@@ -49,7 +49,7 @@ public class RSA
             _publicKeyRsaProvider = CreateRsaProviderFromPublicKey(publicKey);
         }
 
-        _hashAlgorithmName = rsaType == RSAType.RSA ? HashAlgorithmName.SHA1 : HashAlgorithmName.SHA256;
+        _hashAlgorithmName = rsaType == RsaType.Rsa ? HashAlgorithmName.SHA1 : HashAlgorithmName.SHA256;
     }
 
     #region Sign with private key
@@ -344,14 +344,14 @@ public class RSA
 /// <summary>
 /// RSA algorithm type.
 /// </summary>
-public enum RSAType
+public enum RsaType
 {
     /// <summary>
     /// SHA1
     /// </summary>
-    RSA = 0,
+    Rsa = 0,
     /// <summary>
     /// SHA256. Key length must be at least 2048 bits.
     /// </summary>
-    RSA2
+    Rsa2
 }

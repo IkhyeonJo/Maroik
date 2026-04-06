@@ -28,7 +28,7 @@ public class MailClient : IMailClient
                       </div>";
     }
 
-    public async Task<string> SendMailAsync(string toEmail, string subject, string body, string smtpHost, string smtpPort, string smtpUserName, string smtpPassword, string smtpSSL, string fromEmail, string fromFullName)
+    public async Task<string> SendMailAsync(string toEmail, string subject, string body, string smtpHost, string smtpPort, string smtpUserName, string smtpPassword, string smtpSsl, string fromEmail, string fromFullName)
     {
         try
         {
@@ -41,7 +41,7 @@ public class MailClient : IMailClient
 
             using SmtpClient smtp = new(smtpHost, int.Parse(smtpPort));
             smtp.Credentials = new System.Net.NetworkCredential(smtpUserName, smtpPassword);
-            smtp.EnableSsl = bool.Parse(smtpSSL);
+            smtp.EnableSsl = bool.Parse(smtpSsl);
             await smtp.SendMailAsync(mailMessage);
             return EnumHelper.GetDescription(AccountMessage.MailSent);
         }

@@ -1,6 +1,6 @@
 namespace Maroik.Core.Contract.Utilities;
 
-public class GUIDToken
+public class GuidToken
 {
     public static string Generate()
     {

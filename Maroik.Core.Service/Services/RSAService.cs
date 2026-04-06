@@ -4,17 +4,17 @@ using Microsoft.Extensions.Options;
 
 namespace Maroik.Core.Service.Services;
 
-public class RSAService : IRSAService
+public class RsaService : IRsaService
 {
-    private readonly RSA _rsa;
+    private readonly Rsa _rsa;
 
-    public RSAService(IOptions<ServerSetting> settings)
+    public RsaService(IOptions<ServerSetting> settings)
     {
-        _rsa = new RSA(
-            settings.Value.RSAAlgorithm,
+        _rsa = new Rsa(
+            settings.Value.RsaAlgorithm,
             System.Text.Encoding.UTF8,
-            settings.Value.RSAPrivateKey ?? string.Empty,
-            settings.Value.RSAPublicKey);
+            settings.Value.RsaPrivateKey ?? string.Empty,
+            settings.Value.RsaPublicKey);
     }
 
     public string Sign(string data) => _rsa.Sign(data);

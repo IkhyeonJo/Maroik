@@ -52,17 +52,17 @@ builder.Services.Configure<ServerSetting>(cfg =>
     cfg.SmtpPassword = smtp["smtpPassword"];
     cfg.SmtpHost = smtp["smtpHost"];
     cfg.SmtpPort = Convert.ToInt32(smtp["smtpPort"]);
-    cfg.SmtpSSL = Convert.ToBoolean(smtp["smtpSSL"]);
+    cfg.SmtpSsl = Convert.ToBoolean(smtp["smtpSSL"]);
     cfg.FromEmail = smtp["fromEmail"];
     cfg.FromFullName = smtp["fromFullName"];
     cfg.IsDefault = Convert.ToBoolean(smtp["IsDefault"]);
     cfg.NoticeMaturityDateDay = Convert.ToInt32(section["NoticeMaturityDateDay"]);
     cfg.DockerCertPath = section["DockerCertPath"];
     cfg.DockerKeyPath = section["DockerKeyPath"];
-    cfg.RSAPrivateKey = section["RSAPrivateKey"];
-    cfg.RSAPublicKey = section["RSAPublicKey"];
-    var rsaAlgorithmString = section["RSAAlgorithm"] ?? "RSA2";
-    cfg.RSAAlgorithm = Enum.TryParse<RSAType>(rsaAlgorithmString, out var rsaType) ? rsaType : RSAType.RSA2;
+    cfg.RsaPrivateKey = section["RSAPrivateKey"];
+    cfg.RsaPublicKey = section["RSAPublicKey"];
+    var rsaAlgorithmString = section["RSAAlgorithm"] ?? "Rsa2";
+    cfg.RsaAlgorithm = Enum.TryParse<RsaType>(rsaAlgorithmString, out var rsaType) ? rsaType : RsaType.Rsa2;
     cfg.ClamavHost = builder.Configuration.GetSection("Clamav")["Host"];
     cfg.ClamavPort = Convert.ToInt32(builder.Configuration.GetSection("Clamav")["Port"]);
     cfg.FileStorageBaseUrl = builder.Configuration.GetSection("FileStorage")["BaseUrl"];
@@ -124,7 +124,7 @@ builder.Services.AddScoped<IMailClient, MailClient>();
 builder.Services.AddScoped<IFileClient, FileClient>();
 builder.Services.AddScoped<IClamavClient, ClamavClient>();
 builder.Services.AddHttpClient();
-builder.Services.AddSingleton<IRSAService, RSAService>();
+builder.Services.AddSingleton<IRsaService, RsaService>();
 #endregion
 
 //#region REDIS

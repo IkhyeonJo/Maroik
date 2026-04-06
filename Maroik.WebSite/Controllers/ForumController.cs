@@ -16,7 +16,7 @@ namespace Maroik.WebSite.Controllers;
 
 public class ForumController : BaseController
 {
-    private readonly IRSAService _rsa;
+    private readonly IRsaService _rsa;
     private readonly IHtmlLocalizer<ForumController> _localizer;
     private readonly ILogger<ForumController> _logger;
     private readonly IHostEnvironment _hostEnvironment;
@@ -24,7 +24,7 @@ public class ForumController : BaseController
     private readonly IAccountService _accountService;
     private readonly ISessionService _sessionService;
 
-    public ForumController(IHtmlLocalizer<ForumController> localizer, ILogger<ForumController> logger, IHostEnvironment hostEnvironment, IBoardService boardService, IAccountService accountService, IRSAService rsa, ISessionService sessionService)
+    public ForumController(IHtmlLocalizer<ForumController> localizer, ILogger<ForumController> logger, IHostEnvironment hostEnvironment, IBoardService boardService, IAccountService accountService, IRsaService rsa, ISessionService sessionService)
     {
         _rsa = rsa;
         _sessionService = sessionService;

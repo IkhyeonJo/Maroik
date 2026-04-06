@@ -22,7 +22,7 @@ namespace Maroik.WebSite.Controllers;
 
 public class ManagementController : BaseController
 {
-    private readonly IRSAService _rsa;
+    private readonly IRsaService _rsa;
     private readonly IHtmlLocalizer<ManagementController> _localizer;
     private readonly ILogger<ManagementController> _logger;
     private readonly IHostEnvironment _hostEnvironment;
@@ -38,7 +38,7 @@ public class ManagementController : BaseController
         IProfileService profileService, IAccountService accountService,
         IManagementAccountService managementAccountService,
         IMenuService menuService, IBoardService boardService,
-        IRSAService rsa, ISessionService sessionService)
+        IRsaService rsa, ISessionService sessionService)
     {
         _rsa = rsa;
         _sessionService = sessionService;

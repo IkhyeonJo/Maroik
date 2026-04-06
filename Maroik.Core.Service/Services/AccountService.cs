@@ -12,7 +12,7 @@ public class AccountService : IAccountService
     private readonly IAccountRepository _accountRepository;
     private readonly IPasswordService _passwordService;
     private readonly IMailClient _mailClient;
-    private readonly IRSAService _rsa;
+    private readonly IRsaService _rsa;
     private readonly IOptions<ServerSetting> _settings;
     private readonly ILogger<AccountService> _logger;
 
@@ -21,7 +21,7 @@ public class AccountService : IAccountService
         IPasswordService passwordService,
         IMailClient mailClient,
         IOptions<ServerSetting> settings,
-        IRSAService rsa,
+        IRsaService rsa,
         ILogger<AccountService> logger)
     {
         _accountRepository = accountRepository;
@@ -116,7 +116,7 @@ public class AccountService : IAccountService
         if (!existing.EmailConfirmed)
         {
             if (string.IsNullOrEmpty(existing.RegistrationToken))
-                existing.RegistrationToken = GUIDToken.Generate();
+                existing.RegistrationToken = GuidToken.Generate();
 
             string body = _mailClient.GetMailConfirmationBody(_rsa.Encrypt(existing.RegistrationToken), emailTitle, emailContent0, emailContent1, _settings.Value.DomainName ?? string.Empty);
             string mailResult = await SendMailAsync(existing.Email!, emailSubject, body);
@@ -174,7 +174,7 @@ public class AccountService : IAccountService
         if (!account.EmailConfirmed)
         {
             if (string.IsNullOrEmpty(account.RegistrationToken))
-                account.RegistrationToken = GUIDToken.Generate();
+                account.RegistrationToken = GuidToken.Generate();
 
             string body = _mailClient.GetMailConfirmationBody(_rsa.Encrypt(account.RegistrationToken), emailTitle, emailContent0, emailContent1, _settings.Value.DomainName ?? string.Empty);
             string mailResult = await SendMailAsync(email, emailSubject, body);
@@ -240,7 +240,7 @@ public class AccountService : IAccountService
         if (account == null)
             return new ConfirmEmailResult { InvalidToken = true, AccountCreated = false };
 
-        if (!GUIDToken.IsTokenAlive(rawToken))
+        if (!GuidToken.IsTokenAlive(rawToken))
             return new ConfirmEmailResult { InvalidToken = true, AccountCreated = false };
 
         if (!account.EmailConfirmed)
@@ -292,7 +292,7 @@ public class AccountService : IAccountService
         if (account == null || !account.EmailConfirmed)
             return true; // silently succeed (security: don't reveal if email exists)
 
-        string resetPasswordToken = GUIDToken.Generate();
+        string resetPasswordToken = GuidToken.Generate();
         try
         {
             // Encrypt raw token for URL; DB stores raw for direct lookup
@@ -329,7 +329,7 @@ public class AccountService : IAccountService
 
         AccountResponse? account = await _accountRepository.GetAccountByResetPasswordTokenAsync(rawToken);
 
-        if (account == null || !GUIDToken.IsTokenAlive(rawToken) || !account.EmailConfirmed)
+        if (account == null || !GuidToken.IsTokenAlive(rawToken) || !account.EmailConfirmed)
             return new ResetPasswordValidationResult { FailToReset = true };
 
         return new ResetPasswordValidationResult { FailToReset = false, ResetPasswordToken = encryptedToken };
@@ -347,7 +347,7 @@ public class AccountService : IAccountService
 
         AccountResponse? account = await _accountRepository.GetAccountByResetPasswordTokenAsync(rawToken);
 
-        if (account == null || !GUIDToken.IsTokenAlive(rawToken) || !account.EmailConfirmed)
+        if (account == null || !GuidToken.IsTokenAlive(rawToken) || !account.EmailConfirmed)
             return ServiceResult.Fail("reset-password-invalid");
 
         account.ResetPasswordToken = null;
@@ -376,7 +376,7 @@ public class AccountService : IAccountService
             _settings.Value.SmtpPort.ToString(),
             _settings.Value.SmtpUserName ?? string.Empty,
             _settings.Value.SmtpPassword ?? string.Empty,
-            _settings.Value.SmtpSSL.ToString(),
+            _settings.Value.SmtpSsl.ToString(),
             _settings.Value.FromEmail ?? string.Empty,
             _settings.Value.FromFullName ?? string.Empty);
 
