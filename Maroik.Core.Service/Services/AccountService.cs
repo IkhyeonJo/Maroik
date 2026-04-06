@@ -35,6 +35,9 @@ public class AccountService : IAccountService
     public async Task<List<AccountResponse>> GetAllAccountsAsync()
         => await _accountRepository.GetAllAsync();
 
+    public Task<AccountResponse?> GetAccountByEmailAsync(string email)
+        => _accountRepository.GetAccountByEmailAsync(email);
+
     public async Task<LoginResult> LoginAsync(string email, string password)
     {
         AccountResponse? account = await _accountRepository.GetAccountByEmailAsync(email);

@@ -13,7 +13,7 @@ public abstract class BaseController : Controller
     public override async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
     {
         var services = HttpContext.RequestServices;
-        var accountRepo = services.GetRequiredService<IAccountRepository>();
+        var accountService = services.GetRequiredService<IAccountService>();
         var dashboardService = services.GetRequiredService<IDashboardService>();
         var serverSettings = services.GetRequiredService<IOptions<ServerSetting>>();
         var sessionService = services.GetRequiredService<ISessionService>();
@@ -35,7 +35,7 @@ public abstract class BaseController : Controller
             {
                 string email = sessionAccount.Email ?? "";
                 if (!string.IsNullOrEmpty(email))
-                    loginedAccount = await accountRepo.GetAccountByEmailAsync(email) ?? loginedAccount;
+                    loginedAccount = await accountService.GetAccountByEmailAsync(email) ?? loginedAccount;
             }
             catch { /* ignore session refresh errors */ }
         }

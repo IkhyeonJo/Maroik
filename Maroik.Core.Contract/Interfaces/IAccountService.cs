@@ -5,6 +5,7 @@ namespace Maroik.Core.Contract.Interfaces;
 public interface IAccountService
 {
     Task<List<AccountResponse>> GetAllAccountsAsync();
+    Task<AccountResponse?> GetAccountByEmailAsync(string email);
     Task<LoginResult> LoginAsync(string email, string password);
     Task<RegisterResult> RegisterAsync(AccountRequest newAccount, string emailSubject, Func<string, string> emailBodyFactory);
     Task<RegisterResult> ResendConfirmationEmailAsync(string email, string emailSubject, Func<string, string> emailBodyFactory);

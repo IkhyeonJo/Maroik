@@ -12,8 +12,7 @@ namespace Maroik.WebSite.Utilities;
 
 public class AuthorizationFilter : ActionFilterAttribute
 {
-    private readonly ICategoryRepository _categoryRepository;
-    private readonly ISubCategoryRepository _subCategoryRepository;
+    private readonly IMenuService _menuService;
     private readonly IMemoryCache _cache;
     private readonly ISessionService _sessionService;
 
@@ -24,10 +23,9 @@ public class AuthorizationFilter : ActionFilterAttribute
     private const string AnonymousCategoriesCacheKey = "nav_anonymous_categories";
     private const string AnonymousSubCategoriesCacheKey = "nav_anonymous_subcategories";
 
-    public AuthorizationFilter(ICategoryRepository categoryRepository, ISubCategoryRepository subCategoryRepository, IMemoryCache cache, ISessionService sessionService)
+    public AuthorizationFilter(IMenuService menuService, IMemoryCache cache, ISessionService sessionService)
     {
-        _categoryRepository = categoryRepository;
-        _subCategoryRepository = subCategoryRepository;
+        _menuService = menuService;
         _cache = cache;
         _sessionService = sessionService;
     }
@@ -42,8 +40,8 @@ public class AuthorizationFilter : ActionFilterAttribute
             !_cache.TryGetValue(AnonymousCategoriesCacheKey, out IEnumerable<CategoryResponse> anonymousCategories) ||
             !_cache.TryGetValue(AnonymousSubCategoriesCacheKey, out IEnumerable<SubCategoryResponse> anonymousSubCategories))
         {
-            var categories = (await _categoryRepository.GetCategoryAsync()).ToList();
-            var subCategories = (await _subCategoryRepository.GetSubCategoryAsync()).ToList();
+            var categories = (await _menuService.GetAllCategoriesAsync()).ToList();
+            var subCategories = (await _menuService.GetAllSubCategoriesAsync()).ToList();
 
             var entryOptions = new MemoryCacheEntryOptions()
                 .SetSlidingExpiration(TimeSpan.FromMinutes(10));
