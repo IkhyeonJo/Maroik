@@ -9,6 +9,7 @@ using Maroik.WebSite.Models.ViewModels.Calendar;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Localization;
 using Microsoft.AspNetCore.StaticFiles;
+using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using System.Text;
 
@@ -23,7 +24,17 @@ public class CalendarController : BaseController
     private readonly ICalendarService _calendarService;
     private readonly ISessionService _sessionService;
 
-    public CalendarController(IHtmlLocalizer<CalendarController> localizer, ILogger<CalendarController> logger, IHostEnvironment hostEnvironment, ICalendarService calendarService, IRsaService rsa, ISessionService sessionService)
+    public CalendarController(
+        IHtmlLocalizer<CalendarController> localizer,
+        ILogger<CalendarController> logger,
+        IHostEnvironment hostEnvironment,
+        ICalendarService calendarService,
+        IRsaService rsa,
+        IAccountService accountService,
+        IDashboardService dashboardService,
+        IOptions<ServerSetting> serverSettings,
+        ISessionService sessionService)
+        : base(accountService, dashboardService, serverSettings, sessionService)
     {
         _rsa = rsa;
         _sessionService = sessionService;

@@ -10,15 +10,26 @@ namespace Maroik.WebSite.Controllers;
 
 public abstract class BaseController : Controller
 {
+    private readonly IAccountService _accountService;
+    private readonly IDashboardService _dashboardService;
+    private readonly IOptions<ServerSetting> _serverSettings;
+    private readonly ISessionService _sessionService;
+
+    protected BaseController(
+        IAccountService accountService,
+        IDashboardService dashboardService,
+        IOptions<ServerSetting> serverSettings,
+        ISessionService sessionService)
+    {
+        _accountService = accountService;
+        _dashboardService = dashboardService;
+        _serverSettings = serverSettings;
+        _sessionService = sessionService;
+    }
+
     public override async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
     {
-        var services = HttpContext.RequestServices;
-        var accountService = services.GetRequiredService<IAccountService>();
-        var dashboardService = services.GetRequiredService<IDashboardService>();
-        var serverSettings = services.GetRequiredService<IOptions<ServerSetting>>();
-        var sessionService = services.GetRequiredService<ISessionService>();
-
-        ViewBag.DomainName = serverSettings.Value.DomainName;
+        ViewBag.DomainName = _serverSettings.Value.DomainName;
 
         AccountResponse loginedAccount = new()
         {
@@ -28,14 +39,14 @@ public abstract class BaseController : Controller
             AvatarImagePath = "/anonymous/images/bg1.jpg"
         };
 
-        var sessionAccount = sessionService.GetAccount();
+        var sessionAccount = _sessionService.GetAccount();
         if (sessionAccount != null)
         {
             try
             {
                 string email = sessionAccount.Email ?? "";
                 if (!string.IsNullOrEmpty(email))
-                    loginedAccount = await accountService.GetAccountByEmailAsync(email) ?? loginedAccount;
+                    loginedAccount = await _accountService.GetAccountByEmailAsync(email) ?? loginedAccount;
             }
             catch { /* ignore session refresh errors */ }
         }
@@ -50,9 +61,9 @@ public abstract class BaseController : Controller
         {
             try
             {
-                var counts = await dashboardService.GetNoticeCountsAsync(
+                var counts = await _dashboardService.GetNoticeCountsAsync(
                     loginedAccount.Email ?? "",
-                    serverSettings.Value.NoticeMaturityDateDay);
+                    _serverSettings.Value.NoticeMaturityDateDay);
 
                 fixedIncomesNoticedCount = counts.FixedIncomesNoticed;
                 fixedExpenditureNoticedCount = counts.FixedExpendituresNoticed;

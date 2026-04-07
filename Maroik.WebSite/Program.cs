@@ -1,12 +1,10 @@
 using Mapster;
-using Maroik.Core.Contract.Interfaces;
-using Maroik.Core.Repository.Repositories;
-using Maroik.Core.Repository.Extensions;
 using Maroik.Core.Contract.Utilities;
+using Maroik.Core.Repository.Extensions;
+using Maroik.Core.Service.Extensions;
+using Maroik.Core.Client.Extensions;
 using Maroik.WebSite.Utilities;
 using Maroik.WebSite.Extensions;
-using Maroik.Core.Service.Services;
-using Maroik.Core.Client.Clients;
 using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.CookiePolicy;
 using Microsoft.AspNetCore.Localization;
@@ -83,48 +81,16 @@ builder.Services.AddSingleton(globalConfig);
 #endregion
 
 #region AddRepositories
-builder.Services.AddScoped<IAccountRepository, AccountRepository>();
-builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
-builder.Services.AddScoped<ISubCategoryRepository, SubCategoryRepository>();
-builder.Services.AddScoped<IAssetRepository, AssetRepository>();
-builder.Services.AddScoped<IIncomeRepository, IncomeRepository>();
-builder.Services.AddScoped<IExpenditureRepository, ExpenditureRepository>();
-builder.Services.AddScoped<IFixedIncomeRepository, FixedIncomeRepository>();
-builder.Services.AddScoped<IFixedExpenditureRepository, FixedExpenditureRepository>();
-builder.Services.AddScoped<IBoardRepository, BoardRepository>();
-builder.Services.AddScoped<IBoardAttachedFileRepository, BoardAttachedFileRepository>();
-builder.Services.AddScoped<IBoardCommentRepository, BoardCommentRepository>();
-builder.Services.AddScoped<ICalendarRepository, CalendarRepository>();
-builder.Services.AddScoped<IOtherCalendarRepository, OtherCalendarRepository>();
-builder.Services.AddScoped<ICalendarEventRepository, CalendarEventRepository>();
-builder.Services.AddScoped<ICalendarEventAttachedFileRepository, CalendarEventAttachedFileRepository>();
-builder.Services.AddScoped<ICalendarEventReminderRepository, CalendarEventReminderRepository>();
-builder.Services.AddScoped<ICalendarSharedRepository, CalendarSharedRepository>();
+builder.Services.AddRepositoryServices();
 #endregion
 
 #region AddServices
-builder.Services.AddScoped<IPasswordService, PasswordService>();
-builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
-builder.Services.AddScoped<IAccountService, AccountService>();
-builder.Services.AddScoped<IAssetService, AssetService>();
-builder.Services.AddScoped<IIncomeService, IncomeService>();
-builder.Services.AddScoped<IExpenditureService, ExpenditureService>();
-builder.Services.AddScoped<IFixedIncomeService, FixedIncomeService>();
-builder.Services.AddScoped<IFixedExpenditureService, FixedExpenditureService>();
-builder.Services.AddScoped<IDashboardService, DashboardService>();
-builder.Services.AddScoped<IProfileService, ProfileService>();
-builder.Services.AddScoped<IManagementAccountService, ManagementAccountService>();
-builder.Services.AddScoped<IMenuService, MenuService>();
-builder.Services.AddScoped<IBoardService, BoardService>();
-builder.Services.AddScoped<ICalendarService, CalendarService>();
+builder.Services.AddApplicationServices();
 #endregion
 
 #region AddClients
-builder.Services.AddScoped<IMailClient, MailClient>();
-builder.Services.AddScoped<IFileClient, FileClient>();
-builder.Services.AddScoped<IClamavClient, ClamavClient>();
+builder.Services.AddClientServices();
 builder.Services.AddHttpClient();
-builder.Services.AddSingleton<IRsaService, RsaService>();
 #endregion
 
 //#region REDIS
@@ -195,7 +161,6 @@ builder.Services.AddCors(options =>
 
 builder.Services.AddSingleton<IConfiguration>(builder.Configuration);
 builder.Services.AddHttpContextAccessor();
-builder.Services.AddScoped<ISessionService, SessionService>();
 builder.Services.AddMemoryCache(); // For IMemoryCache DI
 builder.Services.AddResponseCaching(); // For HTTP Header Setting
 

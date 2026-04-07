@@ -9,6 +9,7 @@ using Maroik.WebSite.Models.ViewModels.Forum;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Localization;
 using Microsoft.AspNetCore.StaticFiles;
+using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using System.Text;
 
@@ -24,7 +25,17 @@ public class ForumController : BaseController
     private readonly IAccountService _accountService;
     private readonly ISessionService _sessionService;
 
-    public ForumController(IHtmlLocalizer<ForumController> localizer, ILogger<ForumController> logger, IHostEnvironment hostEnvironment, IBoardService boardService, IAccountService accountService, IRsaService rsa, ISessionService sessionService)
+    public ForumController(
+        IHtmlLocalizer<ForumController> localizer,
+        ILogger<ForumController> logger,
+        IHostEnvironment hostEnvironment,
+        IBoardService boardService,
+        IAccountService accountService,
+        IRsaService rsa,
+        IDashboardService dashboardService,
+        IOptions<ServerSetting> serverSettings,
+        ISessionService sessionService)
+        : base(accountService, dashboardService, serverSettings, sessionService)
     {
         _rsa = rsa;
         _sessionService = sessionService;

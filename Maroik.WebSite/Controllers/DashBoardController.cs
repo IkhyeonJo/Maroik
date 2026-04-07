@@ -6,12 +6,18 @@ using Maroik.WebSite.Models.ViewModels.Account;
 using Maroik.WebSite.Models.ViewModels.DashBoard;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using System.Text;
 
 namespace Maroik.WebSite.Controllers;
 
-public class DashBoardController(IDashboardService dashboardService, ISessionService sessionService) : BaseController
+public class DashBoardController(
+    IAccountService accountService,
+    IDashboardService dashboardService,
+    IOptions<ServerSetting> serverSettings,
+    ISessionService sessionService)
+    : BaseController(accountService, dashboardService, serverSettings, sessionService)
 {
     private const string HostResourceFilePath = "/app/Maroik.Log/HostResourceInfo.txt";
     private const string DockerResourceFilePath = "/app/Maroik.Log/DockerResourceInfo.txt";

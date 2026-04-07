@@ -5,6 +5,7 @@ using Maroik.WebSite.Utilities;
 using Maroik.WebSite.Models.ViewModels.AccountBook;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Localization;
+using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using DocumentFormat.OpenXml;
 using DocumentFormat.OpenXml.Packaging;
@@ -30,7 +31,11 @@ public class AccountBookController : BaseController
         IAssetService assetService,
         IIncomeService incomeService,
         IExpenditureService expenditureService,
+        IAccountService accountService,
+        IDashboardService dashboardService,
+        IOptions<ServerSetting> serverSettings,
         ISessionService sessionService)
+        : base(accountService, dashboardService, serverSettings, sessionService)
     {
         _localizer = localizer;
         _logger = logger;

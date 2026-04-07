@@ -13,6 +13,7 @@ using Maroik.WebSite.Models.ViewModels.Management;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Localization;
 using Microsoft.AspNetCore.StaticFiles;
+using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using System.Net.Mail;
 using System.Text;
@@ -33,12 +34,20 @@ public class ManagementController : BaseController
     private readonly IBoardService _boardService;
     private readonly ISessionService _sessionService;
 
-    public ManagementController(IHtmlLocalizer<ManagementController> localizer,
-        ILogger<ManagementController> logger, IHostEnvironment hostEnvironment,
-        IProfileService profileService, IAccountService accountService,
+    public ManagementController(
+        IHtmlLocalizer<ManagementController> localizer,
+        ILogger<ManagementController> logger,
+        IHostEnvironment hostEnvironment,
+        IProfileService profileService,
+        IAccountService accountService,
         IManagementAccountService managementAccountService,
-        IMenuService menuService, IBoardService boardService,
-        IRsaService rsa, ISessionService sessionService)
+        IMenuService menuService,
+        IBoardService boardService,
+        IRsaService rsa,
+        IDashboardService dashboardService,
+        IOptions<ServerSetting> serverSettings,
+        ISessionService sessionService)
+        : base(accountService, dashboardService, serverSettings, sessionService)
     {
         _rsa = rsa;
         _sessionService = sessionService;

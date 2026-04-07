@@ -4,6 +4,7 @@ using Maroik.Core.Contract.Utilities;
 using Maroik.WebSite.Models.ViewModels.Account;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Localization;
+using Microsoft.Extensions.Options;
 
 namespace Maroik.WebSite.Controllers;
 
@@ -18,7 +19,10 @@ public class AccountController : BaseController
         IHtmlLocalizer<AccountController> localizer,
         ILogger<AccountController> logger,
         IAccountService accountService,
+        IDashboardService dashboardService,
+        IOptions<ServerSetting> serverSettings,
         ISessionService sessionService)
+        : base(accountService, dashboardService, serverSettings, sessionService)
     {
         _localizer = localizer;
         _logger = logger;

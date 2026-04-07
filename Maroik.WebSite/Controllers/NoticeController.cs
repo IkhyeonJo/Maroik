@@ -33,8 +33,11 @@ public class NoticeController : BaseController
         IAssetService assetService,
         IFixedIncomeService fixedIncomeService,
         IFixedExpenditureService fixedExpenditureService,
+        IAccountService accountService,
+        IDashboardService dashboardService,
         IOptions<ServerSetting> settings,
         ISessionService sessionService)
+        : base(accountService, dashboardService, settings, sessionService)
     {
         _localizer = localizer;
         _logger = logger;
