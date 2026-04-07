@@ -226,7 +226,7 @@ public class AccountService : IAccountService
 
     public async Task<ConfirmEmailResult> ConfirmEmailAsync(string encryptedToken)
     {
-        // Decrypt URL token to get the raw GUID stored in DB — eliminates O(n) account scan
+        // Decrypt URL token to get the raw GUID stored in DB - eliminates O(n) account scan
         string rawToken;
         try { rawToken = _rsa.Decrypt(encryptedToken); }
         catch (Exception e)

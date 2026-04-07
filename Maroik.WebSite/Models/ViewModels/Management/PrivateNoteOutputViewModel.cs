@@ -22,7 +22,7 @@ public class PrivateNoteOutputViewModel
 
     public int EditCurrentPage { get; set; }
 
-    // Populated by controller — consumed by view
+    // Populated by controller - consumed by view
     public Maroik.Core.Contract.Dtos.AccountResponse LoginedAccount { get; set; } = new();
     public string LoginedAccountTimeZoneIanaId { get; set; } = "";
     public List<Maroik.Core.Contract.Dtos.AccountResponse> AllAccounts { get; set; } = [];

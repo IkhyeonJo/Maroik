@@ -15,7 +15,7 @@ public class UserIndexOutputViewModel
     public int SelectedYear { get; set; }
     public int SelectedMonth { get; set; }
 
-    // Year Income — RegularIncome
+    // Year Income - RegularIncome
     public decimal RegularIncomeLaborIncomeYear { get; set; }
     public decimal RegularIncomeBusinessIncomeYear { get; set; }
     public decimal RegularIncomePensionIncomeYear { get; set; }
@@ -29,19 +29,19 @@ public class UserIndexOutputViewModel
     public double PercentageOfRegularIncomeRentalIncomeYear { get; set; }
     public double PercentageOfRegularIncomeOtherIncomeYear { get; set; }
 
-    // Year Income — IrregularIncome
+    // Year Income - IrregularIncome
     public decimal IrregularIncomeLaborIncomeYear { get; set; }
     public decimal IrregularIncomeOtherIncomeYear { get; set; }
     public double PercentageOfIrregularIncomeLaborIncomeYear { get; set; }
     public double PercentageOfIrregularIncomeOtherIncomeYear { get; set; }
 
-    // Year Expenditure — RegularSavings
+    // Year Expenditure - RegularSavings
     public decimal RegularSavingsDepositYear { get; set; }
     public decimal RegularSavingsInvestmentYear { get; set; }
     public double PercentageOfRegularSavingsDepositYear { get; set; }
     public double PercentageOfRegularSavingsInvestmentYear { get; set; }
 
-    // Year Expenditure — NonConsumerSpending
+    // Year Expenditure - NonConsumerSpending
     public decimal NonConsumerSpendingPublicPensionYear { get; set; }
     public decimal NonConsumerSpendingDebtRepaymentYear { get; set; }
     public decimal NonConsumerSpendingTaxYear { get; set; }
@@ -55,7 +55,7 @@ public class UserIndexOutputViewModel
     public double PercentageOfNonConsumerSpendingInterHouseholdTransferExpensesYear { get; set; }
     public double PercentageOfNonConsumerSpendingNonProfitOrganizationTransferYear { get; set; }
 
-    // Year Expenditure — ConsumerSpending
+    // Year Expenditure - ConsumerSpending
     public decimal ConsumerSpendingMealOrEatOutExpensesYear { get; set; }
     public decimal ConsumerSpendingHousingOrSuppliesCostYear { get; set; }
     public decimal ConsumerSpendingEducationExpensesYear { get; set; }
@@ -81,7 +81,7 @@ public class UserIndexOutputViewModel
     public double PercentageOfConsumerSpendingOtherExpensesYear { get; set; }
     public double PercentageOfConsumerSpendingUnknownExpenditureYear { get; set; }
 
-    // YearMonth Income — RegularIncome
+    // YearMonth Income - RegularIncome
     public decimal RegularIncomeLaborIncomeYearMonth { get; set; }
     public decimal RegularIncomeBusinessIncomeYearMonth { get; set; }
     public decimal RegularIncomePensionIncomeYearMonth { get; set; }
@@ -95,19 +95,19 @@ public class UserIndexOutputViewModel
     public double PercentageOfRegularIncomeRentalIncomeYearMonth { get; set; }
     public double PercentageOfRegularIncomeOtherIncomeYearMonth { get; set; }
 
-    // YearMonth Income — IrregularIncome
+    // YearMonth Income - IrregularIncome
     public decimal IrregularIncomeLaborIncomeYearMonth { get; set; }
     public decimal IrregularIncomeOtherIncomeYearMonth { get; set; }
     public double PercentageOfIrregularIncomeLaborIncomeYearMonth { get; set; }
     public double PercentageOfIrregularIncomeOtherIncomeYearMonth { get; set; }
 
-    // YearMonth Expenditure — RegularSavings
+    // YearMonth Expenditure - RegularSavings
     public decimal RegularSavingsDepositYearMonth { get; set; }
     public decimal RegularSavingsInvestmentYearMonth { get; set; }
     public double PercentageOfRegularSavingsDepositYearMonth { get; set; }
     public double PercentageOfRegularSavingsInvestmentYearMonth { get; set; }
 
-    // YearMonth Expenditure — NonConsumerSpending
+    // YearMonth Expenditure - NonConsumerSpending
     public decimal NonConsumerSpendingPublicPensionYearMonth { get; set; }
     public decimal NonConsumerSpendingDebtRepaymentYearMonth { get; set; }
     public decimal NonConsumerSpendingTaxYearMonth { get; set; }
@@ -121,7 +121,7 @@ public class UserIndexOutputViewModel
     public double PercentageOfNonConsumerSpendingInterHouseholdTransferExpensesYearMonth { get; set; }
     public double PercentageOfNonConsumerSpendingNonProfitOrganizationTransferYearMonth { get; set; }
 
-    // YearMonth Expenditure — ConsumerSpending
+    // YearMonth Expenditure - ConsumerSpending
     public decimal ConsumerSpendingMealOrEatOutExpensesYearMonth { get; set; }
     public decimal ConsumerSpendingHousingOrSuppliesCostYearMonth { get; set; }
     public decimal ConsumerSpendingEducationExpensesYearMonth { get; set; }

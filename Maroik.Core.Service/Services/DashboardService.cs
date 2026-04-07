@@ -128,7 +128,7 @@ public class DashboardService : IDashboardService
                 double daysUntilPayment = paymentDate.Subtract(currentDate).TotalDays;
                 noticed = daysUntilPayment >= 0 && daysUntilPayment <= noticeMaturityDateDay;
             }
-            catch { /* invalid DepositMonth/Day combination — treat as not noticed */ }
+            catch { /* invalid DepositMonth/Day combination - treat as not noticed */ }
             if (item.Unpunctuality) noticed = true;
             if (noticed) incomesNoticed++;
             if (item.MaturityDate.Subtract(currentDate).TotalDays < 0) incomesExpired++;
@@ -143,7 +143,7 @@ public class DashboardService : IDashboardService
                 double daysUntilPayment = paymentDate.Subtract(currentDate).TotalDays;
                 noticed = daysUntilPayment >= 0 && daysUntilPayment <= noticeMaturityDateDay;
             }
-            catch { /* invalid DepositMonth/Day combination — treat as not noticed */ }
+            catch { /* invalid DepositMonth/Day combination - treat as not noticed */ }
             if (item.Unpunctuality) noticed = true;
             if (noticed) expendituresNoticed++;
             if (item.MaturityDate.Subtract(currentDate).TotalDays < 0) expendituresExpired++;

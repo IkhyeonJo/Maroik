@@ -53,7 +53,7 @@ public abstract class BaseController : Controller
 
         ViewBag.LoginedAccount = loginedAccount;
 
-        // Fixed income/expenditure notice counts — delegated to DashboardService
+        // Fixed income/expenditure notice counts - delegated to DashboardService
         int fixedIncomesNoticedCount = 0, fixedExpenditureNoticedCount = 0;
         int fixedIncomesExpiredCount = 0, fixedExpenditureExpiredCount = 0;
 
@@ -70,7 +70,7 @@ public abstract class BaseController : Controller
                 fixedIncomesExpiredCount = counts.FixedIncomesExpired;
                 fixedExpenditureExpiredCount = counts.FixedExpendituresExpired;
             }
-            catch { /* ignore — non-critical UI badge */ }
+            catch { /* ignore - non-critical UI badge */ }
         }
 
         ViewBag.FixedIncomesNoticedCount = fixedIncomesNoticedCount;

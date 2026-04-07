@@ -9,7 +9,7 @@ public class CalendarOutputViewModel
     public IEnumerable<CalendarResponse> OtherCalendars { get; set; } = [];
     public IEnumerable<CalendarEventOutputViewModel> OtherCalendarEventOutputViewModels { get; set; } = [];
 
-    // Populated by controller — consumed by view
+    // Populated by controller - consumed by view
     public AccountResponse LoginedAccount { get; set; } = new();
     public string LoginedAccountTimeZoneIanaId { get; set; } = "UTC";
     public string CurrentDate { get; set; } = "";

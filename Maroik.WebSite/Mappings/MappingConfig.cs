@@ -40,7 +40,7 @@ public class MappingConfig : IRegister
 
         // ── Expenditure ───────────────────────────────────────────────────────
         // MonetaryUnit exists in OutputViewModel but not in ExpenditureResponse;
-        // Mapster leaves it at its default — controller populates it from account settings.
+        // Mapster leaves it at its default - controller populates it from account settings.
         config.NewConfig<ExpenditureResponse, AccountBookExpOutput>();
         config.NewConfig<ExpenditureResponse, DashBoardExpOutput>();
 
@@ -55,7 +55,7 @@ public class MappingConfig : IRegister
             .Ignore(dest => dest.AccountEmail);
 
         // ── Fixed Expenditure ─────────────────────────────────────────────────
-        // MaturityDate: DateTime (DTO) ↔ string (ViewModel) — explicit conversion required.
+        // MaturityDate: DateTime (DTO) ↔ string (ViewModel) - explicit conversion required.
         // Noticed / Expired exist only in OutputViewModel; controller sets them after mapping.
         config.NewConfig<FixedExpenditureResponse, FixedExpenditureOutputViewModel>()
             .Map(dest => dest.MaturityDate, src => src.MaturityDate.ToString("yyyy-MM-dd"));
@@ -73,7 +73,7 @@ public class MappingConfig : IRegister
             .Ignore(dest => dest.AccountEmail);
 
         // ── Board ─────────────────────────────────────────────────────────────
-        // UploadedFile (IFormFile) has no matching property in BoardRequest — ignored automatically.
+        // UploadedFile (IFormFile) has no matching property in BoardRequest - ignored automatically.
         // Writer / Type / Created / Updated / View / Deleted are set server-side.
         config.NewConfig<ForumBoardInput, BoardRequest>()
             .Ignore(dest => dest.Writer)
@@ -93,7 +93,7 @@ public class MappingConfig : IRegister
 
         // ── Calendar Event ────────────────────────────────────────────────────
         // StartDate / EndDate come in as strings from the form; parse to DateTime.
-        // CalendarEventUploadedFile / SerializedCalendarReminders have no dest match — ignored automatically.
+        // CalendarEventUploadedFile / SerializedCalendarReminders have no dest match - ignored automatically.
         config.NewConfig<CalendarEventInputViewModel, CalendarEventRequest>()
             .Map(dest => dest.StartDate, src => ParseDate(src.StartDate))
             .Map(dest => dest.EndDate, src => ParseDate(src.EndDate))
