@@ -9,6 +9,11 @@ namespace Maroik.FileStorage.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+/// <summary>
+/// Internal API controller for the Maroik.FileStorage microservice.
+/// Handles virus-scanned file uploads (ClamAV) and raw file downloads.
+/// Supports .zip, .jpg, .jpeg, and .png files up to 10 MB.
+/// </summary>
 public class FileController : ControllerBase
 {
     private readonly IClamavClient _clamavClient;
@@ -17,9 +22,13 @@ public class FileController : ControllerBase
     {
         _clamavClient = clamavClient;
     }
-    
+
     [AllowAnonymous]
     [HttpPost("upload")]
+    /// <summary>
+    /// Accepts a multipart file upload, validates the extension and size, scans for viruses via ClamAV,
+    /// and writes the file to the server-side path specified by <paramref name="filePath"/>.
+    /// </summary>
     public async Task<IActionResult> UploadAsync([FromForm] IFormFile file, [FromForm] string filePath)
     {
         try
@@ -126,6 +135,7 @@ public class FileController : ControllerBase
 
     [AllowAnonymous]
     [HttpPost("download")]
+    /// <summary>Reads the file at the given server-side <paramref name="filePath"/> and returns its raw bytes.</summary>
     public async Task<IActionResult> DownloadAsync([FromForm] string filePath)
     {
         try

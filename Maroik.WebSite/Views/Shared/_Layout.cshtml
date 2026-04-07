@@ -4,7 +4,7 @@
     Resolves the logged-in account from ViewBag and selects the correct role-specific static-asset bundle
     (admin / user / anonymous) for CSS and JavaScript references.
     Renders: top bar, left sidebar, page body (via @RenderBody()), control sidebar, and footer partials.
-    All inline @* ... *@ comments mark individual third-party library inclusions.
+    All inline comments mark individual third-party library inclusions and section injection points.
 *@
 
 @{
@@ -150,6 +150,7 @@
         <link rel="stylesheet" href="~/anonymous/custom/_Layout/css/site.css" asp-append-version="true">
     }
 
+    @*Page-specific CSS injected by child views via @section Styles { }*@
     @await RenderSectionAsync("Styles", required: false)
 </head>
 @*
@@ -313,6 +314,7 @@ to get the desired effect
                 <script src="~/anonymous/custom/_Layout/js/site.js" asp-append-version="true"></script>
             }
 
+            @*Page-specific JavaScript injected by child views via @section Scripts { }*@
             @await RenderSectionAsync("Scripts", required: false)
         </div>
         @*<!-- /.content-wrapper -->*@

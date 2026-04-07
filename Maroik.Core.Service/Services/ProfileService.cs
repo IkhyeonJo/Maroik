@@ -38,9 +38,11 @@ public class ProfileService : IProfileService
         _logger = logger;
     }
 
+    /// <inheritdoc />
     public async Task<AccountResponse?> GetProfileAsync(string email)
         => await _accountRepository.GetAccountByEmailAsync(email);
 
+    /// <inheritdoc />
     public async Task<ServiceResult> UpdateAvatarAsync(string email, string avatarPath)
     {
         try
@@ -60,6 +62,7 @@ public class ProfileService : IProfileService
         }
     }
 
+    /// <inheritdoc />
     public async Task<ServiceResult> UpdateTimeZoneAsync(string email, string timeZoneIanaId)
     {
         try
@@ -79,6 +82,7 @@ public class ProfileService : IProfileService
         }
     }
 
+    /// <inheritdoc />
     public async Task<ServiceResult> UpdatePasswordAsync(string email, string currentPassword, string newPassword)
     {
         try
@@ -101,6 +105,7 @@ public class ProfileService : IProfileService
         }
     }
 
+    /// <inheritdoc />
     public async Task<ServiceResult> UploadAndUpdateAvatarAsync(string email, byte[] imageBytes, string extension, string avatarDirectoryPath)
     {
         using var memoryStream = new MemoryStream(imageBytes);

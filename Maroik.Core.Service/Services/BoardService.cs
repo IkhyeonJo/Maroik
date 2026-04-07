@@ -50,24 +50,31 @@ public class BoardService : IBoardService
         _logger = logger;
     }
 
+    /// <inheritdoc />
     public async Task<IEnumerable<BoardResponse>> GetBoardsAsync(string type)
         => await _boardRepository.GetOneTypeBoardsAsync(type);
 
+    /// <inheritdoc />
     public async Task<BoardResponse?> GetBoardByIdAsync(long id)
         => await _boardRepository.GetBoardByIdAsync(id);
 
+    /// <inheritdoc />
     public async Task<BoardAttachedFileResponse?> GetAttachedFileByBoardIdAsync(long boardId)
         => await _boardAttachedFileRepository.GetByBoardIdAsync(boardId);
 
+    /// <inheritdoc />
     public async Task<Dictionary<long, BoardAttachedFileResponse?>> GetAttachedFilesForBoardsAsync(IEnumerable<long> boardIds)
         => await _boardAttachedFileRepository.GetByBoardIdsAsync(boardIds);
 
+    /// <inheritdoc />
     public async Task<IEnumerable<BoardCommentResponse>> GetCommentsByBoardIdAsync(long boardId)
         => await _boardCommentRepository.GetOneBoardCommentsAsync(boardId);
 
+    /// <inheritdoc />
     public async Task<Dictionary<long, int>> GetCommentCountsForBoardsAsync(IEnumerable<long> boardIds)
         => await _boardCommentRepository.GetCommentCountsByBoardIdsAsync(boardIds);
 
+    /// <inheritdoc />
     public async Task<ServiceResult> WriteBoardAsync(BoardRequest request, AttachedFileInfo? attachedFile)
     {
         await _unitOfWork.BeginAsync();
@@ -105,6 +112,7 @@ public class BoardService : IBoardService
         }
     }
 
+    /// <inheritdoc />
     public async Task<ServiceResult> EditBoardAsync(BoardRequest request, string writerNickname, AttachedFileInfo? newFile)
     {
         await _unitOfWork.BeginAsync();
@@ -147,6 +155,7 @@ public class BoardService : IBoardService
         }
     }
 
+    /// <inheritdoc />
     public async Task<ServiceResult> DeleteBoardAsync(long boardId, string boardType, string requesterNickname, bool isAdmin)
     {
         try
@@ -170,6 +179,7 @@ public class BoardService : IBoardService
         }
     }
 
+    /// <inheritdoc />
     public async Task<ServiceResult> WriteCommentAsync(BoardCommentRequest request, string? requiredOwnerNickname = null)
     {
         try
@@ -195,6 +205,7 @@ public class BoardService : IBoardService
         }
     }
 
+    /// <inheritdoc />
     public async Task<ServiceResult> IncrementBoardViewAsync(long boardId)
     {
         try
@@ -209,6 +220,7 @@ public class BoardService : IBoardService
         }
     }
 
+    /// <inheritdoc />
     public async Task<ServiceResult> DeleteCommentAsync(long commentId, string requesterNickname, bool isAdmin)
     {
         try
@@ -267,6 +279,7 @@ public class BoardService : IBoardService
         // previous == null && newFile == null → nothing to do
     }
 
+    /// <inheritdoc />
     public async Task<SummernoteUploadResult> UploadSummernoteImageAsync(AttachedFileInfo file, string area, string boardType)
     {
         try
@@ -290,6 +303,7 @@ public class BoardService : IBoardService
         return SummernoteUploadResult.Ok(fileBytes, file.ContentType, imageFile, filePath);
     }
 
+    /// <inheritdoc />
     public async Task<byte[]?> DownloadFileAsync(string filePath)
     {
         try

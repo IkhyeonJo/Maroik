@@ -18,9 +18,11 @@ public class FixedIncomeService : IFixedIncomeService
     public FixedIncomeService(IFixedIncomeRepository fixedIncomeRepository)
         => _fixedIncomeRepository = fixedIncomeRepository;
 
+    /// <inheritdoc />
     public Task<List<FixedIncomeResponse>> GetFixedIncomesAsync(string accountEmail)
         => _fixedIncomeRepository.GetFixedIncomesAsync(accountEmail);
 
+    /// <inheritdoc />
     public async Task<ServiceResult> CreateAsync(string accountEmail, FixedIncomeRequest request)
     {
         var validation = ValidateRequest(request);
@@ -35,6 +37,7 @@ public class FixedIncomeService : IFixedIncomeService
         return ServiceResult.Ok();
     }
 
+    /// <inheritdoc />
     public async Task<ServiceResult> UpdateAsync(string accountEmail, FixedIncomeRequest request)
     {
         var validation = ValidateRequest(request);
@@ -61,6 +64,7 @@ public class FixedIncomeService : IFixedIncomeService
         return ServiceResult.Ok();
     }
 
+    /// <inheritdoc />
     public async Task<ServiceResult> DeleteAsync(string accountEmail, long id)
     {
         List<FixedIncomeResponse> items = await _fixedIncomeRepository.GetFixedIncomesAsync(accountEmail);

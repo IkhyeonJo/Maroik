@@ -8,6 +8,10 @@ using Microsoft.Extensions.Options;
 
 namespace Maroik.WebSite.Controllers;
 
+/// <summary>
+/// Abstract base controller that runs before every action to populate ViewBag with
+/// the logged-in account, notification badge counts, current culture, and return URI.
+/// </summary>
 public abstract class BaseController : Controller
 {
     private readonly IAccountService _accountService;
@@ -27,6 +31,7 @@ public abstract class BaseController : Controller
         _sessionService = sessionService;
     }
 
+    /// <summary>Populates shared ViewBag entries (account, notice counts, culture, return URI) before each action executes.</summary>
     public override async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
     {
         ViewBag.DomainName = _serverSettings.Value.DomainName;

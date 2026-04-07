@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Maroik.Core.Repository.Repositories;
 
+/// <summary>EF Core implementation of <see cref="ICalendarSharedRepository"/>.</summary>
 public class CalendarSharedRepository : ICalendarSharedRepository
 {
     private readonly ApplicationDbContext _context;
@@ -16,17 +17,20 @@ public class CalendarSharedRepository : ICalendarSharedRepository
         _context = context;
     }
 
+    /// <inheritdoc />
     public async Task<List<CalendarSharedResponse>> GetCalendarSharedAsync()
     {
         return (await _context.CalendarShareds.OrderBy(x => x.CalendarId).ToListAsync()).Adapt<List<CalendarSharedResponse>>();
     }
 
+    /// <inheritdoc />
     public async Task CreateCalendarSharedAsync(CalendarSharedRequest request)
     {
         _ = await _context.CalendarShareds.AddAsync(request.Adapt<CalendarShared>());
         _ = await _context.SaveChangesAsync();
     }
 
+    /// <inheritdoc />
     public async Task UpdateCalendarSharedAsync(CalendarSharedRequest request)
     {
         _ = _context.CalendarShareds.Update(request.Adapt<CalendarShared>());

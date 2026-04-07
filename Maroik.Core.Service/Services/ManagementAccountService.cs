@@ -27,12 +27,15 @@ public class ManagementAccountService : IManagementAccountService
         _logger = logger;
     }
 
+    /// <inheritdoc />
     public async Task<List<AccountResponse>> GetAllAccountsAsync()
         => await _accountRepository.GetAllAsync();
 
+    /// <inheritdoc />
     public async Task<AccountResponse?> GetAccountByEmailAsync(string email)
         => await _accountRepository.GetAccountByEmailAsync(email);
 
+    /// <inheritdoc />
     public async Task<ServiceResult> CreateAccountAsync(AccountRequest request)
     {
         try
@@ -51,6 +54,7 @@ public class ManagementAccountService : IManagementAccountService
         }
     }
 
+    /// <inheritdoc />
     public async Task<ServiceResult> UpdateAccountAsync(AccountRequest request, string? newPassword)
     {
         try
@@ -83,6 +87,7 @@ public class ManagementAccountService : IManagementAccountService
         }
     }
 
+    /// <inheritdoc />
     public async Task<ServiceResult> DeleteAccountAsync(string email)
     {
         try

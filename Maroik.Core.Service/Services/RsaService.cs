@@ -23,8 +23,12 @@ public class RsaService : IRsaService
             settings.Value.RsaPublicKey);
     }
 
+    /// <inheritdoc />
     public string Sign(string data) => _rsa.Sign(data);
+    /// <inheritdoc />
     public bool Verify(string data, string sign) => _rsa.Verify(data, sign);
+    /// <inheritdoc />
     public string Decrypt(string cipherText) => _rsa.Decrypt(cipherText);
+    /// <inheritdoc />
     public string Encrypt(string text) => _rsa.Encrypt(text);
 }

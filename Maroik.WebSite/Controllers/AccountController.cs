@@ -8,6 +8,10 @@ using Microsoft.Extensions.Options;
 
 namespace Maroik.WebSite.Controllers;
 
+/// <summary>
+/// Handles all self-service account flows: consent, login, logout, registration,
+/// email confirmation, forgot-password, and password reset.
+/// </summary>
 public class AccountController : BaseController
 {
     private readonly IHtmlLocalizer<AccountController> _localizer;
@@ -32,15 +36,18 @@ public class AccountController : BaseController
 
     #region ConsentForm
     [HttpGet]
+    /// <summary>Displays the service consent form.</summary>
     public IActionResult ConsentForm() => View();
     #endregion
 
     #region Login
     [HttpGet]
+    /// <summary>Displays the login form (GET) or processes login credentials (POST).</summary>
     public IActionResult Login() => View();
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    /// <summary>Displays the login form (GET) or processes login credentials (POST).</summary>
     public async Task<IActionResult> Login(LoginInputViewModel loginInputViewModel)
     {
         string userAgent = Request.Headers["User-Agent"].ToString();
@@ -70,6 +77,7 @@ public class AccountController : BaseController
 
     #region Logout
     [HttpGet]
+    /// <summary>Clears the session and redirects to the anonymous dashboard.</summary>
     public IActionResult Logout()
     {
         _sessionService.RemoveAccount();
@@ -79,10 +87,12 @@ public class AccountController : BaseController
 
     #region Register
     [HttpGet]
+    /// <summary>Displays the registration form (GET) or processes new-account / resend-email requests (POST).</summary>
     public IActionResult Register() => View();
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    /// <summary>Displays the registration form (GET) or processes new-account / resend-email requests (POST).</summary>
     public async Task<IActionResult> Register(LoginInputViewModel loginInputViewModel)
     {
         if (!string.IsNullOrEmpty(loginInputViewModel.Password)) // Registration path
@@ -170,6 +180,7 @@ public class AccountController : BaseController
 
     #region ConfirmEmail
     [HttpGet]
+    /// <summary>Validates the email-confirmation token from the registration link and activates the account.</summary>
     public async Task<IActionResult> ConfirmEmail(string registrationToken)
     {
         var result = await _accountService.ConfirmEmailAsync(registrationToken);
@@ -185,10 +196,12 @@ public class AccountController : BaseController
 
     #region ForgotPassword
     [HttpGet]
+    /// <summary>Displays the forgot-password form (GET) or sends a reset-password email (POST).</summary>
     public IActionResult ForgotPassword() => View();
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    /// <summary>Displays the forgot-password form (GET) or sends a reset-password email (POST).</summary>
     public async Task<IActionResult> ForgotPassword(LoginInputViewModel loginInputViewModel)
     {
         _ = ModelState.Remove(nameof(loginInputViewModel.Nickname));
@@ -209,6 +222,7 @@ public class AccountController : BaseController
     }
 
     [HttpGet]
+    /// <summary>Validates the reset token (GET) or applies the new password (POST).</summary>
     public async Task<IActionResult> ResetPassword(string resetPasswordToken)
     {
         var result = await _accountService.ValidateResetPasswordTokenAsync(resetPasswordToken);
@@ -219,6 +233,7 @@ public class AccountController : BaseController
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    /// <summary>Validates the reset token (GET) or applies the new password (POST).</summary>
     public async Task<IActionResult> ResetPassword(LoginInputViewModel loginInputViewModel)
     {
         _ = ModelState.Remove(nameof(loginInputViewModel.Email));

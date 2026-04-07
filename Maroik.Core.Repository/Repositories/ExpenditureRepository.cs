@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Maroik.Core.Repository.Repositories;
 
+/// <summary>EF Core implementation of <see cref="IExpenditureRepository"/>.</summary>
 public class ExpenditureRepository : IExpenditureRepository
 {
     private readonly ApplicationDbContext _context;
@@ -16,11 +17,13 @@ public class ExpenditureRepository : IExpenditureRepository
         _context = context;
     }
 
+    /// <inheritdoc />
     public async Task<List<ExpenditureResponse>> GetExpendituresAsync(string email)
     {
         return (await _context.Expenditures.Where(x => x.AccountEmail == email).ToListAsync()).Adapt<List<ExpenditureResponse>>();
     }
 
+    /// <inheritdoc />
     public async Task<List<ExpenditureResponse>> GetCurrentYearExpendituresAsync(string email, string year, string timeZoneIanaId)
     {
         return (await _context.Expenditures.FromSqlInterpolated
@@ -35,6 +38,7 @@ public class ExpenditureRepository : IExpenditureRepository
         ).ToListAsync()).Adapt<List<ExpenditureResponse>>();
     }
 
+    /// <inheritdoc />
     public async Task<List<ExpenditureResponse>> GetCurrentYearMonthExpendituresAsync(string email, string yearMonth, string timeZoneIanaId)
     {
         return (await _context.Expenditures.FromSqlInterpolated
@@ -49,24 +53,28 @@ public class ExpenditureRepository : IExpenditureRepository
         ).ToListAsync()).Adapt<List<ExpenditureResponse>>();
     }
 
+    /// <inheritdoc />
     public async Task CreateExpenditureAsync(ExpenditureRequest request)
     {
         _ = await _context.Expenditures.AddAsync(request.Adapt<Expenditure>());
         _ = await _context.SaveChangesAsync();
     }
 
+    /// <inheritdoc />
     public async Task UpdateExpenditureAsync(ExpenditureRequest request)
     {
         _ = _context.Expenditures.Update(request.Adapt<Expenditure>());
         _ = await _context.SaveChangesAsync();
     }
 
+    /// <inheritdoc />
     public async Task DeleteExpenditureAsync(ExpenditureRequest request)
     {
         _ = _context.Expenditures.Remove(request.Adapt<Expenditure>());
         _ = await _context.SaveChangesAsync();
     }
 
+    /// <inheritdoc />
     public async Task<int> UpdateMyDepositAssetWithProductNameAsync(string accountEmail, string oldMyDepositAsset, string newMyDepositAsset)
     {
         return await _context.Database.ExecuteSqlInterpolatedAsync

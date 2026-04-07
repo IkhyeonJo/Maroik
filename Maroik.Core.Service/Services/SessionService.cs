@@ -24,6 +24,7 @@ public class SessionService : ISessionService
         _httpContextAccessor = httpContextAccessor;
     }
 
+    /// <inheritdoc />
     public AccountResponse? GetAccount()
     {
         var session = _httpContextAccessor.HttpContext?.Session;
@@ -42,6 +43,7 @@ public class SessionService : ISessionService
         }
     }
 
+    /// <inheritdoc />
     public void SetAccount(AccountResponse account)
     {
         var session = _httpContextAccessor.HttpContext?.Session;
@@ -50,6 +52,7 @@ public class SessionService : ISessionService
             Encoding.UTF8.GetBytes(JsonSerializer.Serialize(account)));
     }
 
+    /// <inheritdoc />
     public void RemoveAccount()
     {
         var session = _httpContextAccessor.HttpContext?.Session;

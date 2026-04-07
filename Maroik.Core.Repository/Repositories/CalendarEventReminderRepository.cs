@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Maroik.Core.Repository.Repositories;
 
+/// <summary>EF Core implementation of <see cref="ICalendarEventReminderRepository"/>.</summary>
 public class CalendarEventReminderRepository : ICalendarEventReminderRepository
 {
     private readonly ApplicationDbContext _context;
@@ -16,17 +17,20 @@ public class CalendarEventReminderRepository : ICalendarEventReminderRepository
         _context = context;
     }
 
+    /// <inheritdoc />
     public async Task<IEnumerable<CalendarEventReminderResponse>> GetCalendarEventRemindersAsync(long calendarEventId)
     {
         return (await _context.CalendarEventReminders.Where(x => x.CalendarEventId == calendarEventId).ToListAsync()).Adapt<List<CalendarEventReminderResponse>>();
     }
 
+    /// <inheritdoc />
     public async Task CreateCalendarEventReminderAsync(CalendarEventReminderRequest request)
     {
         _ = await _context.CalendarEventReminders.AddAsync(request.Adapt<CalendarEventReminder>());
         _ = await _context.SaveChangesAsync();
     }
 
+    /// <inheritdoc />
     public async Task<int> DeleteCalendarEventReminderAsync(long calendarEventId)
     {
         return await _context.Database.ExecuteSqlInterpolatedAsync(

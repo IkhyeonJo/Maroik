@@ -28,12 +28,15 @@ public class AssetService : IAssetService
         _unitOfWork = unitOfWork;
     }
 
+    /// <inheritdoc />
     public Task<List<AssetResponse>> GetAssetsAsync(string accountEmail)
         => _assetRepository.GetAssetsAsync(accountEmail);
 
+    /// <inheritdoc />
     public Task<AssetResponse?> GetAssetAsync(string accountEmail, string productName)
         => _assetRepository.GetAssetAsync(accountEmail, productName);
 
+    /// <inheritdoc />
     public async Task<ServiceResult> CreateAsync(string accountEmail, AssetRequest request)
     {
         if (!IsValidAssetItem(request.Item))
@@ -52,6 +55,7 @@ public class AssetService : IAssetService
         return ServiceResult.Ok();
     }
 
+    /// <inheritdoc />
     public async Task<ServiceResult> UpdateAsync(string accountEmail, AssetRequest request, string originalProductName)
     {
         await _unitOfWork.BeginAsync();
@@ -100,6 +104,7 @@ public class AssetService : IAssetService
         }
     }
 
+    /// <inheritdoc />
     public async Task<ServiceResult> DeleteAsync(string accountEmail, string productName)
     {
         AssetResponse? asset = await _assetRepository.GetAssetAsync(accountEmail, productName);

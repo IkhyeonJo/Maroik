@@ -83,6 +83,7 @@ internal class Rsa
 
     #region Decrypt
 
+    /// <summary>Decrypts a Base64-encoded ciphertext using the private key (PKCS#1 padding).</summary>
     public string Decrypt(string cipherText)
     {
         return _privateKeyRsaProvider == null
@@ -94,6 +95,7 @@ internal class Rsa
 
     #region Encrypt
 
+    /// <summary>Encrypts a UTF-8 string using the public key (PKCS#1 padding) and returns a Base64-encoded ciphertext.</summary>
     public string Encrypt(string text)
     {
         return _publicKeyRsaProvider == null
@@ -105,6 +107,7 @@ internal class Rsa
 
     #region Create RSA instance from private key
 
+    /// <summary>Parses a DER-encoded PKCS#1 private key (Base64) and returns an <see cref="System.Security.Cryptography.RSA"/> instance.</summary>
     public System.Security.Cryptography.RSA CreateRsaProviderFromPrivateKey(string privateKey)
     {
         byte[] privateKeyBits = Convert.FromBase64String(privateKey);
@@ -151,6 +154,7 @@ internal class Rsa
 
     #region Create RSA instance from public key
 
+    /// <summary>Parses a DER-encoded X.509 SubjectPublicKeyInfo public key (Base64) and returns an <see cref="System.Security.Cryptography.RSA"/> instance.</summary>
     public System.Security.Cryptography.RSA? CreateRsaProviderFromPublicKey(string publicKeyString)
     {
         // encoded OID sequence for  PKCS #1 rsaEncryption szOID_RSA_RSA = "1.2.840.113549.1.1.1"

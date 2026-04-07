@@ -40,12 +40,15 @@ public class AccountService : IAccountService
         _logger = logger;
     }
 
+    /// <inheritdoc />
     public async Task<List<AccountResponse>> GetAllAccountsAsync()
         => await _accountRepository.GetAllAsync();
 
+    /// <inheritdoc />
     public Task<AccountResponse?> GetAccountByEmailAsync(string email)
         => _accountRepository.GetAccountByEmailAsync(email);
 
+    /// <inheritdoc />
     public async Task<LoginResult> LoginAsync(string email, string password)
     {
         AccountResponse? account = await _accountRepository.GetAccountByEmailAsync(email);
@@ -85,6 +88,7 @@ public class AccountService : IAccountService
         return LoginResult.Ok(account);
     }
 
+    /// <inheritdoc />
     public async Task<RegisterResult> RegisterAsync(AccountRequest newAccount, string emailSubject, string emailTitle, string emailContent0, string emailContent1)
     {
         AccountResponse? existing = await _accountRepository.GetAccountByEmailAsync(newAccount.Email ?? "");
@@ -172,6 +176,7 @@ public class AccountService : IAccountService
         return RegisterResult.Fail(EnumHelper.GetDescription(AccountMessage.UserAlreadyCreated));
     }
 
+    /// <inheritdoc />
     public async Task<RegisterResult> ResendConfirmationEmailAsync(string email, string emailSubject, string emailTitle, string emailContent0, string emailContent1)
     {
         AccountResponse? account = await _accountRepository.GetAccountByEmailAsync(email);
@@ -232,6 +237,7 @@ public class AccountService : IAccountService
         return RegisterResult.Fail(EnumHelper.GetDescription(AccountMessage.UserAlreadyCreated));
     }
 
+    /// <inheritdoc />
     public async Task<ConfirmEmailResult> ConfirmEmailAsync(string encryptedToken)
     {
         // Decrypt URL token to get the raw GUID stored in DB - eliminates O(n) account scan
@@ -293,6 +299,7 @@ public class AccountService : IAccountService
         return new ConfirmEmailResult { InvalidToken = false, AccountCreated = false };
     }
 
+    /// <inheritdoc />
     public async Task<bool> ForgotPasswordAsync(string email, string emailSubject, string emailTitle, string emailContent0, string emailContent1)
     {
         AccountResponse? account = await _accountRepository.GetAccountByEmailAsync(email);
@@ -325,6 +332,7 @@ public class AccountService : IAccountService
         return true;
     }
 
+    /// <inheritdoc />
     public async Task<ResetPasswordValidationResult> ValidateResetPasswordTokenAsync(string encryptedToken)
     {
         string rawToken;
@@ -343,6 +351,7 @@ public class AccountService : IAccountService
         return new ResetPasswordValidationResult { FailToReset = false, ResetPasswordToken = encryptedToken };
     }
 
+    /// <inheritdoc />
     public async Task<ServiceResult> ResetPasswordAsync(string encryptedToken, string newPassword)
     {
         string rawToken;

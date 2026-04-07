@@ -52,30 +52,39 @@ public class CalendarService : ICalendarService
         _logger = logger;
     }
 
+    /// <inheritdoc />
     public async Task<List<CalendarResponse>> GetCalendarsAsync(string email)
         => await _calendarRepository.GetCalendarsAsync(email);
 
+    /// <inheritdoc />
     public async Task<List<CalendarResponse>> GetAllCalendarsAsync()
         => await _calendarRepository.GetAllCalendarsAsync();
 
+    /// <inheritdoc />
     public async Task<IEnumerable<CalendarEventResponse>> GetCalendarEventsAsync(long calendarId)
         => await _calendarEventRepository.GetCalendarEventsAsync(calendarId);
 
+    /// <inheritdoc />
     public async Task<CalendarEventResponse?> GetCalendarEventAsync(long id)
         => await _calendarEventRepository.GetCalendarEventAsync(id);
 
+    /// <inheritdoc />
     public async Task<CalendarEventAttachedFileResponse?> GetCalendarEventAttachedFileAsync(long calendarEventId)
         => await _calendarEventAttachedFileRepository.GetCalendarEventAttachedFileAsync(calendarEventId);
 
+    /// <inheritdoc />
     public async Task<IEnumerable<CalendarEventReminderResponse>> GetCalendarEventRemindersAsync(long calendarEventId)
         => await _calendarEventReminderRepository.GetCalendarEventRemindersAsync(calendarEventId);
 
+    /// <inheritdoc />
     public async Task<List<OtherCalendarResponse>> GetOtherCalendarsAsync(string email)
         => await _otherCalendarRepository.GetOtherCalendarsAsync(email);
 
+    /// <inheritdoc />
     public async Task<List<CalendarSharedResponse>> GetCalendarSharedAsync()
         => await _calendarSharedRepository.GetCalendarSharedAsync();
 
+    /// <inheritdoc />
     public async Task<ServiceResult> EnsureCalendarSharedAsync(long calendarId)
     {
         try
@@ -95,6 +104,7 @@ public class CalendarService : ICalendarService
         catch { return ServiceResult.Fail("Input is invalid"); }
     }
 
+    /// <inheritdoc />
     public async Task<ServiceResult> CreateCalendarAsync(CalendarRequest request)
     {
         try
@@ -112,6 +122,7 @@ public class CalendarService : ICalendarService
         catch { return ServiceResult.Fail("Input is invalid"); }
     }
 
+    /// <inheritdoc />
     public async Task<ServiceResult> UpdateCalendarAsync(CalendarRequest request)
     {
         try
@@ -129,6 +140,7 @@ public class CalendarService : ICalendarService
         catch { return ServiceResult.Fail("Input is invalid"); }
     }
 
+    /// <inheritdoc />
     public async Task<ServiceResult> DeleteCalendarAsync(CalendarRequest request)
     {
         try
@@ -143,6 +155,7 @@ public class CalendarService : ICalendarService
         catch { return ServiceResult.Fail("Input is invalid"); }
     }
 
+    /// <inheritdoc />
     public async Task<ServiceResult> EnsureDefaultCalendarAsync(CalendarRequest request)
     {
         try
@@ -159,6 +172,7 @@ public class CalendarService : ICalendarService
         catch { return ServiceResult.Fail("Input is invalid"); }
     }
 
+    /// <inheritdoc />
     public async Task<ServiceResult> UpdateOtherCalendarAsync(string email, IEnumerable<OtherCalendarRequest> requests)
     {
         await _unitOfWork.BeginAsync();
@@ -183,6 +197,7 @@ public class CalendarService : ICalendarService
         }
     }
 
+    /// <inheritdoc />
     public async Task<ServiceResult> UpdateCalendarSharedAsync(IEnumerable<CalendarSharedRequest> requests)
     {
         await _unitOfWork.BeginAsync();
@@ -212,6 +227,7 @@ public class CalendarService : ICalendarService
         }
     }
 
+    /// <inheritdoc />
     public async Task<ServiceResult> CreateCalendarEventAsync(
         CalendarEventRequest request, string email, string roleIndex,
         List<CalendarReminderInfo> reminders, AttachedFileInfo? attachedFile)
@@ -258,6 +274,7 @@ public class CalendarService : ICalendarService
         }
     }
 
+    /// <inheritdoc />
     public async Task<ServiceResult> UpdateCalendarEventAsync(
         CalendarEventRequest request, string email, string roleIndex,
         List<CalendarReminderInfo> reminders, AttachedFileInfo? attachedFile)
@@ -314,6 +331,7 @@ public class CalendarService : ICalendarService
         }
     }
 
+    /// <inheritdoc />
     public async Task<ServiceResult> DeleteCalendarEventAsync(long calendarEventId, string email)
     {
         try
@@ -351,6 +369,7 @@ public class CalendarService : ICalendarService
                 : null
         };
 
+    /// <inheritdoc />
     public async Task<SummernoteUploadResult> UploadSummernoteImageAsync(AttachedFileInfo file, string roleIndex)
     {
         try
@@ -374,6 +393,7 @@ public class CalendarService : ICalendarService
         return SummernoteUploadResult.Ok(fileBytes, file.ContentType, imageFile, filePath);
     }
 
+    /// <inheritdoc />
     public async Task<byte[]?> DownloadFileAsync(string filePath)
     {
         try

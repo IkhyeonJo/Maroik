@@ -10,6 +10,11 @@ using System.Text;
 
 namespace Maroik.WebSite.Utilities;
 
+/// <summary>
+/// Action filter that loads and caches the navigation menu (categories and sub-categories)
+/// for all three roles (Admin, User, Anonymous) and sets them on ViewBag before each action.
+/// The menu data is cached with a 10-minute sliding expiration to reduce database load.
+/// </summary>
 public class AuthorizationFilter : ActionFilterAttribute
 {
     private readonly IMenuService _menuService;
@@ -30,7 +35,7 @@ public class AuthorizationFilter : ActionFilterAttribute
         _sessionService = sessionService;
     }
 
-    // Do something before the action executes.
+    /// <summary>Loads (or restores from cache) the navigation menu data and populates ViewBag before the action executes.</summary>
     public override async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
     {
         if (!_cache.TryGetValue(AdminCategoriesCacheKey, out IEnumerable<CategoryResponse> adminCategories) ||

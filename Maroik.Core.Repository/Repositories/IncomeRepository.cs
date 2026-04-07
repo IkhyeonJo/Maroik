@@ -7,13 +7,16 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Maroik.Core.Repository.Repositories;
 
+/// <summary>EF Core implementation of <see cref="IIncomeRepository"/>.</summary>
 public class IncomeRepository(ApplicationDbContext context) : IIncomeRepository
 {
+    /// <inheritdoc />
     public async Task<List<IncomeResponse>> GetIncomesAsync(string email)
     {
         return (await context.Incomes.Where(x => x.AccountEmail == email).ToListAsync()).Adapt<List<IncomeResponse>>();
     }
 
+    /// <inheritdoc />
     public async Task<List<IncomeResponse>> GetCurrentYearIncomesAsync(string email, string year, string timeZoneIanaId)
     {
         return (await context.Incomes.FromSqlInterpolated
@@ -28,6 +31,7 @@ public class IncomeRepository(ApplicationDbContext context) : IIncomeRepository
         ).ToListAsync()).Adapt<List<IncomeResponse>>();
     }
 
+    /// <inheritdoc />
     public async Task<List<IncomeResponse>> GetCurrentYearMonthIncomesAsync(string email, string yearMonth, string timeZoneIanaId)
     {
         return (await context.Incomes.FromSqlInterpolated
@@ -42,18 +46,21 @@ public class IncomeRepository(ApplicationDbContext context) : IIncomeRepository
         ).ToListAsync()).Adapt<List<IncomeResponse>>();
     }
 
+    /// <inheritdoc />
     public async Task CreateIncomeAsync(IncomeRequest request)
     {
         _ = await context.Incomes.AddAsync(request.Adapt<Income>());
         _ = await context.SaveChangesAsync();
     }
 
+    /// <inheritdoc />
     public async Task UpdateIncomeAsync(IncomeRequest request)
     {
         _ = context.Incomes.Update(request.Adapt<Income>());
         _ = await context.SaveChangesAsync();
     }
 
+    /// <inheritdoc />
     public async Task DeleteIncomeAsync(IncomeRequest request)
     {
         _ = context.Incomes.Remove(request.Adapt<Income>());

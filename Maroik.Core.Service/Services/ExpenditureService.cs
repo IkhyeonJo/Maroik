@@ -25,9 +25,11 @@ public class ExpenditureService : IExpenditureService
         _unitOfWork = unitOfWork;
     }
 
+    /// <inheritdoc />
     public Task<List<ExpenditureResponse>> GetExpendituresAsync(string accountEmail)
         => _expenditureRepository.GetExpendituresAsync(accountEmail);
 
+    /// <inheritdoc />
     public async Task<ServiceResult> CreateAsync(string accountEmail, ExpenditureRequest request)
     {
         await _unitOfWork.BeginAsync();
@@ -111,6 +113,7 @@ public class ExpenditureService : IExpenditureService
         }
     }
 
+    /// <inheritdoc />
     public async Task<ServiceResult> UpdateAsync(string accountEmail, ExpenditureRequest request)
     {
         await _unitOfWork.BeginAsync();
@@ -191,6 +194,7 @@ public class ExpenditureService : IExpenditureService
         }
     }
 
+    /// <inheritdoc />
     public async Task<ServiceResult> DeleteAsync(string accountEmail, long id)
     {
         await _unitOfWork.BeginAsync();

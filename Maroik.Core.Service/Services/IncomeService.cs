@@ -22,9 +22,11 @@ public class IncomeService : IIncomeService
         _unitOfWork = unitOfWork;
     }
 
+    /// <inheritdoc />
     public Task<List<IncomeResponse>> GetIncomesAsync(string accountEmail)
         => _incomeRepository.GetIncomesAsync(accountEmail);
 
+    /// <inheritdoc />
     public async Task<ServiceResult> CreateAsync(string accountEmail, IncomeRequest request)
     {
         await _unitOfWork.BeginAsync();
@@ -67,6 +69,7 @@ public class IncomeService : IIncomeService
         }
     }
 
+    /// <inheritdoc />
     public async Task<ServiceResult> UpdateAsync(string accountEmail, IncomeRequest request)
     {
         await _unitOfWork.BeginAsync();
@@ -145,6 +148,7 @@ public class IncomeService : IIncomeService
         }
     }
 
+    /// <inheritdoc />
     public async Task<ServiceResult> DeleteAsync(string accountEmail, long id)
     {
         await _unitOfWork.BeginAsync();

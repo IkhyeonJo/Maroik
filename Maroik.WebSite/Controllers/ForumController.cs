@@ -15,6 +15,10 @@ using System.Text;
 
 namespace Maroik.WebSite.Controllers;
 
+/// <summary>
+/// Manages the free forum: listing, writing, editing, and deleting posts and comments,
+/// plus Summernote inline-image uploads.
+/// </summary>
 public class ForumController : BaseController
 {
     private readonly IRsaService _rsa;
@@ -57,6 +61,7 @@ public class ForumController : BaseController
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.Admin)]
     [RequiredHttpPostAccess(Role = Role.User)]
+    /// <summary>Submits a new free-forum post (with optional file attachment).</summary>
     public async Task<IActionResult> WriteFreeBoard(BoardInputViewModel boardInputViewModel)
     {
         try
@@ -148,6 +153,7 @@ public class ForumController : BaseController
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.Admin)]
     [RequiredHttpPostAccess(Role = Role.User)]
+    /// <summary>Submits a comment on a free-forum post.</summary>
     public async Task<IActionResult> WriteFreeComment([FromBody] BoardCommentInputViewModel boardCommentInputViewModel)
     {
         try
@@ -197,6 +203,7 @@ public class ForumController : BaseController
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.Admin)]
     [RequiredHttpPostAccess(Role = Role.User)]
+    /// <summary>Uploads a Summernote inline image and returns its URL.</summary>
     public async Task<IActionResult> UploadImageFile(IFormFile summernoteImageFile)
     {
         if (summernoteImageFile == null)
@@ -243,6 +250,7 @@ public class ForumController : BaseController
     #region Read
 
     #region Edit, List, Detail, Write
+    /// <summary>Displays the free-forum list or a single post (list / write / view / edit).</summary>
     public async Task<IActionResult> FreeForum(string method = "list", int? boardId = null, int page = 1, string searchType = "", string searchText = "")
     {
         if (method == "write") // Write
@@ -595,6 +603,7 @@ public class ForumController : BaseController
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.Admin)]
     [RequiredHttpPostAccess(Role = Role.User)]
+    /// <summary>Checks whether a board post with the given ID exists (used for edit validation).</summary>
     public async Task<IActionResult> IsBoardExists(int id)
     {
         try
@@ -621,6 +630,7 @@ public class ForumController : BaseController
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.Admin)]
     [RequiredHttpPostAccess(Role = Role.User)]
+    /// <summary>Saves edits to an existing free-forum post.</summary>
     public async Task<IActionResult> EditFreeBoard(BoardInputViewModel boardInputViewModel)
     {
         try
@@ -712,6 +722,7 @@ public class ForumController : BaseController
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.Admin)]
     [RequiredHttpPostAccess(Role = Role.User)]
+    /// <summary>Soft-deletes a free-forum post.</summary>
     public async Task<IActionResult> DeleteBoard([FromBody] BoardInputViewModel boardInputViewModel)
     {
         try
@@ -740,6 +751,7 @@ public class ForumController : BaseController
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.Admin)]
     [RequiredHttpPostAccess(Role = Role.User)]
+    /// <summary>Soft-deletes a free-forum comment.</summary>
     public async Task<IActionResult> DeleteComment(int id)
     {
         try

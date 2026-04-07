@@ -19,12 +19,14 @@ public class UnitOfWork : IUnitOfWork
 
     public UnitOfWork(ApplicationDbContext context) => _context = context;
 
+    /// <inheritdoc />
     public async Task BeginAsync()
     {
         _transaction = await _context.Database.BeginTransactionAsync();
         _committed = false;
     }
 
+    /// <inheritdoc />
     public async Task CommitAsync()
     {
         if (_transaction != null)
@@ -34,12 +36,14 @@ public class UnitOfWork : IUnitOfWork
         }
     }
 
+    /// <inheritdoc />
     public async Task RollbackAsync()
     {
         if (_transaction != null)
             await _transaction.RollbackAsync();
     }
 
+    /// <inheritdoc />
     public async ValueTask DisposeAsync()
     {
         if (_transaction != null)

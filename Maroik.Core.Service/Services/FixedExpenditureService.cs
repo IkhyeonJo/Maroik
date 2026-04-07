@@ -22,9 +22,11 @@ public class FixedExpenditureService : IFixedExpenditureService
         _assetRepository = assetRepository;
     }
 
+    /// <inheritdoc />
     public Task<List<FixedExpenditureResponse>> GetFixedExpendituresAsync(string accountEmail)
         => _fixedExpenditureRepository.GetFixedExpendituresAsync(accountEmail);
 
+    /// <inheritdoc />
     public async Task<ServiceResult> CreateAsync(string accountEmail, FixedExpenditureRequest request)
     {
         var validation = ValidateClassAndDate(request);
@@ -58,6 +60,7 @@ public class FixedExpenditureService : IFixedExpenditureService
         return ServiceResult.Ok();
     }
 
+    /// <inheritdoc />
     public async Task<ServiceResult> UpdateAsync(string accountEmail, FixedExpenditureRequest request)
     {
         var validation = ValidateClassAndDate(request);
@@ -98,6 +101,7 @@ public class FixedExpenditureService : IFixedExpenditureService
         return ServiceResult.Ok();
     }
 
+    /// <inheritdoc />
     public async Task<ServiceResult> DeleteAsync(string accountEmail, long id)
     {
         List<FixedExpenditureResponse> items = await _fixedExpenditureRepository.GetFixedExpendituresAsync(accountEmail);

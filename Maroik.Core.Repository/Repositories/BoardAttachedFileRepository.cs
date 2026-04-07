@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Maroik.Core.Repository.Repositories;
 
+/// <summary>EF Core implementation of <see cref="IBoardAttachedFileRepository"/>.</summary>
 public class BoardAttachedFileRepository : IBoardAttachedFileRepository
 {
     private readonly ApplicationDbContext _context;
@@ -16,17 +17,20 @@ public class BoardAttachedFileRepository : IBoardAttachedFileRepository
         _context = context;
     }
 
+    /// <inheritdoc />
     public async Task<List<BoardAttachedFileResponse>> GetAllAsync()
     {
         return (await _context.BoardAttachedFiles.ToListAsync()).Adapt<List<BoardAttachedFileResponse>>();
     }
 
+    /// <inheritdoc />
     public async Task<BoardAttachedFileResponse?> GetByBoardIdAsync(long boardId)
     {
         BoardAttachedFile? file = await _context.BoardAttachedFiles.FirstOrDefaultAsync(x => x.BoardId == boardId);
         return file?.Adapt<BoardAttachedFileResponse>();
     }
 
+    /// <inheritdoc />
     public async Task<Dictionary<long, BoardAttachedFileResponse?>> GetByBoardIdsAsync(IEnumerable<long> boardIds)
     {
         List<long> ids = boardIds.ToList();
@@ -36,12 +40,14 @@ public class BoardAttachedFileRepository : IBoardAttachedFileRepository
         return ids.ToDictionary(id => id, id => files.FirstOrDefault(f => f.BoardId == id)?.Adapt<BoardAttachedFileResponse>());
     }
 
+    /// <inheritdoc />
     public async Task SaveBoardAttachedFileAsync(BoardAttachedFileRequest request)
     {
         _ = await _context.BoardAttachedFiles.AddAsync(request.Adapt<BoardAttachedFile>());
         _ = await _context.SaveChangesAsync();
     }
 
+    /// <inheritdoc />
     public async Task UpdateBoardAttachedFileAsync(BoardAttachedFileRequest request)
     {
         _ = _context.BoardAttachedFiles.Update(request.Adapt<BoardAttachedFile>());

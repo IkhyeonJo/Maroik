@@ -27,6 +27,7 @@ public class MappingConfig : IRegister
     private static DateTime ParseDate(string s) =>
         DateTime.TryParse(s, out var d) ? d : default;
 
+    /// <summary>Registers all Mapster type-adapter rules for the WebSite presentation layer.</summary>
     public void Register(TypeAdapterConfig config)
     {
         // ── Account ──────────────────────────────────────────────────────────

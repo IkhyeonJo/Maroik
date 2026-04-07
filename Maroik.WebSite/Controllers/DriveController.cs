@@ -6,6 +6,7 @@ using Microsoft.Extensions.Options;
 
 namespace Maroik.WebSite.Controllers;
 
+/// <summary>Serves the file-drive index views for each role (Admin / User / Anonymous).</summary>
 public class DriveController : BaseController
 {
     private readonly IHtmlLocalizer<DriveController> _localizer;
@@ -28,18 +29,21 @@ public class DriveController : BaseController
 
     #region Read
     [HttpGet]
+    /// <summary>Returns the admin drive view.</summary>
     public IActionResult AdminIndex()
     {
         return View();
     }
 
     [HttpGet]
+    /// <summary>Returns the user drive view.</summary>
     public IActionResult UserIndex()
     {
         return View();
     }
 
     [HttpGet]
+    /// <summary>Returns the anonymous drive view.</summary>
     public IActionResult AnonymousIndex()
     {
         return View();

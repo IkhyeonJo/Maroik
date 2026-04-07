@@ -26,24 +26,29 @@ public class MenuService : IMenuService
         _logger = logger;
     }
 
+    /// <inheritdoc />
     public async Task<IEnumerable<CategoryResponse>> GetAllCategoriesAsync()
         => await _categoryRepository.GetCategoryAsync();
 
+    /// <inheritdoc />
     public async Task<IEnumerable<SubCategoryResponse>> GetAllSubCategoriesAsync()
         => await _subCategoryRepository.GetSubCategoryAsync();
 
+    /// <inheritdoc />
     public async Task<CategoryResponse?> GetCategoryByIdAsync(int id)
     {
         IEnumerable<CategoryResponse> categories = await _categoryRepository.GetCategoryAsync();
         return categories.FirstOrDefault(c => c.Id == id);
     }
 
+    /// <inheritdoc />
     public async Task<SubCategoryResponse?> GetSubCategoryByIdAsync(int id)
     {
         IEnumerable<SubCategoryResponse> subCategories = await _subCategoryRepository.GetSubCategoryAsync();
         return subCategories.FirstOrDefault(s => s.Id == id);
     }
 
+    /// <inheritdoc />
     public async Task<ServiceResult> CreateCategoryAsync(CategoryRequest request)
     {
         try
@@ -58,6 +63,7 @@ public class MenuService : IMenuService
         }
     }
 
+    /// <inheritdoc />
     public async Task<ServiceResult> UpdateCategoryAsync(CategoryRequest request)
     {
         try
@@ -72,6 +78,7 @@ public class MenuService : IMenuService
         }
     }
 
+    /// <inheritdoc />
     public async Task<ServiceResult> DeleteCategoryAsync(CategoryRequest request)
     {
         try
@@ -86,6 +93,7 @@ public class MenuService : IMenuService
         }
     }
 
+    /// <inheritdoc />
     public async Task<ServiceResult> CreateSubCategoryAsync(SubCategoryRequest request)
     {
         try
@@ -100,6 +108,7 @@ public class MenuService : IMenuService
         }
     }
 
+    /// <inheritdoc />
     public async Task<ServiceResult> UpdateSubCategoryAsync(SubCategoryRequest request)
     {
         try
@@ -114,6 +123,7 @@ public class MenuService : IMenuService
         }
     }
 
+    /// <inheritdoc />
     public async Task<ServiceResult> DeleteSubCategoryAsync(SubCategoryRequest request)
     {
         try

@@ -36,6 +36,7 @@ public class DashboardService : IDashboardService
         _fixedExpenditureRepository = fixedExpenditureRepository;
     }
 
+    /// <inheritdoc />
     public async Task<DashboardSummary> GetSummaryAsync(string accountEmail, string year, string month, string timeZoneId)
     {
         // Normalize year/month
@@ -106,6 +107,7 @@ public class DashboardService : IDashboardService
         return summary;
     }
 
+    /// <inheritdoc />
     public async Task UpdateDefaultMonetaryUnitAsync(string accountEmail, string? monetaryUnit)
     {
         var assets = (await _assetRepository.GetAssetsAsync(accountEmail)) ?? [];
@@ -119,6 +121,7 @@ public class DashboardService : IDashboardService
         await _accountRepository.UpdateAccountAsync(account.Adapt<AccountRequest>());
     }
 
+    /// <inheritdoc />
     public async Task<NotificationCounts> GetNoticeCountsAsync(string email, int noticeMaturityDateDay)
     {
         int incomesNoticed = 0, expendituresNoticed = 0;

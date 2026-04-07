@@ -7,6 +7,7 @@ using System.Diagnostics;
 
 namespace Maroik.WebSite.Controllers;
 
+/// <summary>Handles application error and access-denied pages.</summary>
 public class ExceptionController : BaseController
 {
     private readonly ILogger<ExceptionController> _logger;
@@ -23,6 +24,7 @@ public class ExceptionController : BaseController
     }
 
     [HttpGet]
+    /// <summary>Returns the access-denied view.</summary>
     public IActionResult AccessDenied()
     {
         return View();
@@ -30,6 +32,7 @@ public class ExceptionController : BaseController
 
     [HttpGet]
     [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+    /// <summary>Returns the generic error view.</summary>
     public IActionResult Error()
     {
         return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });

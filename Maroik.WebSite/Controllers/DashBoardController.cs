@@ -12,6 +12,10 @@ using System.Text;
 
 namespace Maroik.WebSite.Controllers;
 
+/// <summary>
+/// Serves the dashboard index views (Admin / User / Anonymous) and handles
+/// language-culture changes and the user's default monetary-unit preference.
+/// </summary>
 public class DashBoardController(
     IAccountService accountService,
     IDashboardService dashboardService,
@@ -30,6 +34,7 @@ public class DashBoardController(
     [RequiredHttpPostAccess(Role = Role.Admin)]
     [RequiredHttpPostAccess(Role = Role.User)]
     [RequiredHttpPostAccess(Role = Role.Anonymous)]
+    /// <summary>Sets the UI culture cookie to the requested locale.</summary>
     public IActionResult CultureManagement([FromBody] LoginInputViewModel loginInputViewModel)
     {
         Response.Cookies.Append(CookieRequestCultureProvider.DefaultCookieName, CookieRequestCultureProvider.MakeCookieValue(new RequestCulture(loginInputViewModel.Culture)),
@@ -41,6 +46,7 @@ public class DashBoardController(
 
     #region Admin
     [HttpGet]
+    /// <summary>Returns the admin dashboard view.</summary>
     public IActionResult AdminIndex()
     {
         var hostResourceFileText = System.IO.File.Exists(HostResourceFilePath)
@@ -135,6 +141,7 @@ public class DashBoardController(
 
     #region Read
     [HttpGet]
+    /// <summary>Returns the user dashboard view populated with income/expenditure summary data.</summary>
     public async Task<IActionResult> UserIndex(string year, string month)
     {
         var loginedAccount = _sessionService1.GetAccount();
@@ -406,6 +413,7 @@ public class DashBoardController(
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.User)]
+    /// <summary>Updates the logged-in user's default monetary unit preference.</summary>
     public async Task<IActionResult> UserUpdateDefaultMonetary([FromBody] UserIndexInputViewModel userIndexInputViewModel)
     {
         try
@@ -425,6 +433,7 @@ public class DashBoardController(
 
     #region Anonymous
     [HttpGet]
+    /// <summary>Returns the anonymous (public) dashboard view.</summary>
     public IActionResult AnonymousIndex()
     {
         var loginedAccount = _sessionService1.GetAccount();
