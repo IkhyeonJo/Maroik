@@ -2,6 +2,11 @@ using Maroik.Core.Contract.Interfaces;
 
 namespace Maroik.Core.Service.Services;
 
+/// <summary>
+/// BCrypt-based implementation of <see cref="IPasswordService"/>.
+/// Uses a work factor of 13 (2^13 iterations) which balances security and hash speed
+/// — high enough to be brute-force resistant, low enough for interactive login latency.
+/// </summary>
 public class PasswordService : IPasswordService
 {
     private const int WorkFactor = 13; // BCrypt work factor

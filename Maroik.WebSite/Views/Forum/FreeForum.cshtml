@@ -1,3 +1,13 @@
+@*
+    Forum/FreeForum.cshtml
+    Main FreeForum (public board) page.
+    Uses FreeForumOutputViewModel to drive three display modes controlled by Model.Method:
+      - "Index"  : Paginated post list with pinned notices, search bar, and comment count badges.
+      - "Detail" : Post detail panel showing full content, attached file, and comment thread.
+      - "Edit"   : Summernote-powered post editor for creating or editing a post (with file upload).
+    All date/time values are converted to the logged-in user's local time zone for display.
+    The Pager model drives the 5-link page navigation at the bottom of the list.
+*@
 @using Maroik.WebSite.Models
 @using Maroik.WebSite.Models.ViewModels.Forum
 @using System.Web

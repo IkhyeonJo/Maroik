@@ -1,3 +1,12 @@
+@*
+    Management/PrivateNote.cshtml
+    Admin-only PrivateNote board page in the management area.
+    Uses PrivateNoteOutputViewModel to drive three display modes controlled by Model.Method:
+      - "Index"  : Paginated post list with pinned notices, search bar, and comment count badges.
+      - "Detail" : Post detail panel showing full content, attached file, and comment thread.
+      - "Edit"   : Summernote-powered post editor for creating or editing a private note.
+    Structurally identical to Forum/FreeForum.cshtml but scoped to admin-only access.
+*@
 @using Maroik.WebSite.Models
 @using Maroik.WebSite.Models.ViewModels.Management
 @using System.Web

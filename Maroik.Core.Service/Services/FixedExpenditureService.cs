@@ -5,6 +5,12 @@ using System.Text.RegularExpressions;
 
 namespace Maroik.Core.Service.Services;
 
+/// <summary>
+/// Implementation of <see cref="IFixedExpenditureService"/> for managing recurring expenditure entries.
+/// Validates the <c>MaturityDate</c> format and deposit day before persisting.
+/// Computes <c>Noticed</c> and <c>Expired</c> flags based on the current date,
+/// and verifies asset ownership before write operations.
+/// </summary>
 public class FixedExpenditureService : IFixedExpenditureService
 {
     private readonly IFixedExpenditureRepository _fixedExpenditureRepository;

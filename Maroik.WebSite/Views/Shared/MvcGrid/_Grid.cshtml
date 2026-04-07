@@ -1,3 +1,13 @@
+@*
+    Shared/MvcGrid/_Grid.cshtml
+    NonFactors MVC Grid table partial view — part of the nonfactors.grid.mvc6 library.
+    Renders a full HTML table (thead / tbody / optional tfoot) for a given IGrid model.
+    Supports three filter modes: Header (filter inputs in the header row), Row (filter inputs in a
+    dedicated row below the header), and None (no filter inputs rendered).
+    Each column can optionally show a sort button and a filter button.
+    An empty-text row is rendered when the result set contains no rows.
+    The pager partial (_Pager.cshtml) is rendered below the table when Model.Pager is set.
+*@
 @using Microsoft.AspNetCore.Mvc.Rendering;
 @using Microsoft.Extensions.Primitives;
 @using NonFactors.Mvc.Grid;

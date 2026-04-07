@@ -1,18 +1,23 @@
 namespace Maroik.Core.Contract.Interfaces;
 
+/// <summary>
+/// Service interface for password hashing and verification using BCrypt.
+/// Never store or compare plain-text passwords; always use these methods.
+/// </summary>
 public interface IPasswordService
 {
     /// <summary>
-    /// BCrypt를 사용하여 패스워드를 해싱합니다.
+    /// Hashes a plain-text password using BCrypt.
     /// </summary>
-    /// <param name="password">원본 패스워드</param>
-    /// <returns>BCrypt 해싱된 패스워드</returns>
+    /// <param name="password">The plain-text password to hash.</param>
+    /// <returns>A BCrypt-hashed password string safe for database storage.</returns>
     public string HashPassword(string password);
+
     /// <summary>
-    /// BCrypt를 사용하여 패스워드를 검증합니다.
+    /// Verifies that a plain-text password matches a stored BCrypt hash.
     /// </summary>
-    /// <param name="password">입력된 패스워드</param>
-    /// <param name="hashedPassword">저장된 해싱된 패스워드</param>
-    /// <returns>패스워드 일치 여부</returns>
+    /// <param name="password">The plain-text password entered by the user.</param>
+    /// <param name="hashedPassword">The stored BCrypt hash to compare against.</param>
+    /// <returns>True if the password matches; otherwise false.</returns>
     public bool VerifyPassword(string password, string hashedPassword);
 }

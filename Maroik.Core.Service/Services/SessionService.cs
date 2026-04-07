@@ -8,6 +8,13 @@ using System.Text.Json;
 
 namespace Maroik.Core.Service.Services;
 
+/// <summary>
+/// ASP.NET Core session-based implementation of <see cref="ISessionService"/>.
+/// Serialises and deserialises <see cref="AccountResponse"/> to/from the server-side
+/// session store using JSON (System.Text.Json) encoded as UTF-8 bytes.
+/// The session key name is taken from the <see cref="Session.Account"/> enum description
+/// so it is consistent with all other session accesses in the application.
+/// </summary>
 public class SessionService : ISessionService
 {
     private readonly IHttpContextAccessor _httpContextAccessor;

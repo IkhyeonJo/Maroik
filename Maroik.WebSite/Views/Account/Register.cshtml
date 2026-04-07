@@ -1,4 +1,14 @@
-﻿@using Maroik.WebSite.Models.ViewModels.Account
+﻿@*
+    Account/Register.cshtml
+    Registration flow rendered inside the Account/_Layout full-page shell.
+    Has three states controlled by ViewBag flags:
+      1. resendEmail == false  — shows the new-user registration form (nickname, email, password, time zone, terms).
+      2. resendEmail == true && repeatEmailSend == false  — confirms the confirmation email was sent and offers a Resend button.
+      3. resendEmail == true && repeatEmailSend == true   — confirms the email was resent and provides admin contact info.
+    The time-zone selector iterates all system time zones and converts Windows IDs to IANA IDs where needed.
+    Uses rel="noopener noreferrer" on the terms link to prevent tabnabbing.
+*@
+@using Maroik.WebSite.Models.ViewModels.Account
 
 @model LoginOutputViewModel
 

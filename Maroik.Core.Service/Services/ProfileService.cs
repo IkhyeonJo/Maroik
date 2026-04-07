@@ -9,6 +9,13 @@ using System.Diagnostics;
 
 namespace Maroik.Core.Service.Services;
 
+/// <summary>
+/// Implementation of <see cref="IProfileService"/> for user self-service profile management.
+/// Avatar images are scanned by ClamAV (<see cref="IClamavClient"/>) before being processed
+/// with ImageMagick (resize/compress) and uploaded to the file-storage microservice.
+/// Password changes require the current password to be verified via BCrypt before the new
+/// hash is stored. Time-zone updates validate the IANA ID against the system's zone database.
+/// </summary>
 public class ProfileService : IProfileService
 {
     private readonly IAccountRepository _accountRepository;

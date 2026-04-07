@@ -3,45 +3,53 @@ using System.Net;
 
 namespace Maroik.Core.Client.Clients;
 
+/// <summary>
+/// Concrete implementation of <see cref="IFileClient"/> that communicates with the
+/// Maroik.FileStorage microservice via HTTP multipart/form-data requests.
+/// </summary>
 public class FileClient : IFileClient
 {
+    /// <inheritdoc />
     public async Task<byte[]> DownloadAsync(string filePath, string fileStorageBaseUrl)
     {
         using HttpClient httpClient = new();
         using MultipartFormDataContent content = [];
+
+        // Pass the server-side file path to the storage service
         content.Add(new StringContent(filePath), "filePath");
 
         HttpResponseMessage response = await httpClient.PostAsync($"{fileStorageBaseUrl}/api/File/download", content);
 
-        _ = response.EnsureSuccessStatusCode(); // Check success status
-        return await response.Content.ReadAsByteArrayAsync(); // Return file data
+        _ = response.EnsureSuccessStatusCode(); // Throw on non-2xx status
+        return await response.Content.ReadAsByteArrayAsync(); // Return raw file bytes
     }
 
+    /// <inheritdoc />
     public async Task<bool> UploadAsync(byte[] fileData, string contentType, string filePath, string fileStorageBaseUrl)
     {
         try
         {
-            // 1. Safely process file name to prevent path traversal vulnerability
-            string sanitizedFileName = Path.GetFileName(filePath); // Remove directory path from user-inputted file name
+            // Strip any directory component from the file name to prevent path-traversal attacks
+            string sanitizedFileName = Path.GetFileName(filePath);
 
-            // 2. Upload file data to external server
+            // Reject empty uploads immediately
             if (fileData != null && fileData.Length > 0)
             {
-                // Upload file to external file server using HttpClient
                 using HttpClient httpClient = new();
                 using MultipartFormDataContent content = [];
 
+                // Wrap raw bytes with the correct MIME type
                 ByteArrayContent fileContent = new(fileData);
                 fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(contentType);
 
-                // Add file to MultipartFormDataContent
+                // Attach the file bytes under the "file" field name
                 content.Add(fileContent, "file", sanitizedFileName);
 
-                // Add additional parameters
+                // Tell the storage service where to save the file (directory path only)
                 content.Add(new StringContent(Path.GetDirectoryName(filePath ?? "") ?? ""), "filePath");
 
                 HttpResponseMessage response = await httpClient.PostAsync($"{fileStorageBaseUrl}/api/File/upload", content);
-                _ = response.EnsureSuccessStatusCode(); // Check status code
+                _ = response.EnsureSuccessStatusCode();
 
                 return response.StatusCode == HttpStatusCode.OK;
             }

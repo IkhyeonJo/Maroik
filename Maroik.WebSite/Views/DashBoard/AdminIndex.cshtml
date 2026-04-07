@@ -1,4 +1,12 @@
-﻿@{
+﻿@*
+    DashBoard/AdminIndex.cshtml
+    Admin dashboard showing live server resource usage.
+    Displays host-level CPU %, memory usage/limit, and disk usage/limit in info-box cards.
+    Below that, iterates all running Docker containers (from ViewBag.DockerContainerResult —
+    a pipe-delimited list where result[0] is the header row) and renders per-container
+    CPU % and memory usage/limit cards.
+*@
+@{
     double hostCpuNumeric = (ViewBag.HostCpuNumeric as double?) ?? 0d;
     string hostCpuInfo = (ViewBag.HostCpuInfo as string) ?? "";
     string memUsageLimit = (ViewBag.MemUsageLimit as string) ?? "";

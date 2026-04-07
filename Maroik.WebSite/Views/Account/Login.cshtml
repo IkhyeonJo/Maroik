@@ -1,4 +1,12 @@
-﻿@using Maroik.WebSite.Models.ViewModels.Account
+﻿@*
+    Account/Login.cshtml
+    Login form rendered inside the Account/_Layout full-page shell.
+    Displays an email/password sign-in form and quick-action links for registration,
+    password reset, and returning to the public landing page.
+    Also includes a language selector that posts a culture-change action.
+    Errors from TempData["Error"] are displayed in red below the form.
+*@
+@using Maroik.WebSite.Models.ViewModels.Account
 
 @model LoginOutputViewModel
 

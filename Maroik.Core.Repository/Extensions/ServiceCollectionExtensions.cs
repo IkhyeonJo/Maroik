@@ -7,10 +7,22 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Maroik.Core.Repository.Extensions;
 
+/// <summary>
+/// Extension methods for registering the EF Core database context and all repository
+/// implementations into the DI container.
+/// Uses the C# 14 "extension" block syntax to add methods directly to <see cref="IServiceCollection"/>.
+/// </summary>
 public static class ServiceCollectionExtensions
 {
     extension(IServiceCollection services)
     {
+        /// <summary>
+        /// Configures the PostgreSQL <see cref="ApplicationDbContext"/> using the
+        /// "DefaultConnection" connection string from <paramref name="configuration"/>.
+        /// Enables legacy timestamp behaviour for Npgsql (treats DateTime as UTC without offset).
+        /// Retry-on-failure is disabled (count = 0) — transient errors are expected to be handled
+        /// by the application tier.
+        /// </summary>
         public void AddRepositoryContext(IConfiguration configuration)
         {
             AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
@@ -23,6 +35,10 @@ public static class ServiceCollectionExtensions
             );
         }
 
+        /// <summary>
+        /// Registers all repository and unit-of-work implementations as scoped services.
+        /// Each repository is bound to its corresponding interface defined in Maroik.Core.Contract.
+        /// </summary>
         public void AddRepositoryServices()
         {
             services.AddScoped<IUnitOfWork, UnitOfWork>();

@@ -1,4 +1,14 @@
-﻿@model Maroik.WebSite.Models.ViewModels.Management.ProfileOutputViewModel
+﻿@*
+    Management/Profile.cshtml
+    Admin self-service profile edit page.
+    Displays the admin's current profile details (email, avatar, nickname, member-since date).
+    Contains separate form sections for:
+      - Updating nickname and avatar image.
+      - Changing password (current + new + confirm new).
+      - Changing the preferred time-zone.
+    The logged-in account is read from ViewBag.LoginedAccount to pre-populate read-only fields.
+*@
+@model Maroik.WebSite.Models.ViewModels.Management.ProfileOutputViewModel
 
 @{
     AccountResponse loginedAccount = (ViewBag.LoginedAccount as AccountResponse) ?? new AccountResponse { Role = Role.Anonymous };

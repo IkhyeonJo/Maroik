@@ -4,6 +4,12 @@ using Microsoft.Extensions.Logging;
 
 namespace Maroik.Core.Service.Services;
 
+/// <summary>
+/// Implementation of <see cref="IMenuService"/> that delegates navigation menu management
+/// to <see cref="ICategoryRepository"/> and <see cref="ISubCategoryRepository"/>.
+/// All write operations wrap exceptions in a <see cref="ServiceResult.Fail"/> so the
+/// controller can surface a user-friendly error without exposing internal details.
+/// </summary>
 public class MenuService : IMenuService
 {
     private readonly ICategoryRepository _categoryRepository;

@@ -8,6 +8,13 @@ using Microsoft.Extensions.Options;
 
 namespace Maroik.Core.Service.Services;
 
+/// <summary>
+/// Implementation of <see cref="ICalendarService"/> covering the full calendar feature set:
+/// calendars, events, reminders, file attachments, sharing, and subscriptions.
+/// Event attachments are virus-scanned by ClamAV and image-processed by ImageMagick before upload.
+/// Files are stored in and retrieved from the file-storage microservice.
+/// All multi-step write operations use <see cref="IUnitOfWork"/> transactions.
+/// </summary>
 public class CalendarService : ICalendarService
 {
     private readonly ICalendarRepository _calendarRepository;

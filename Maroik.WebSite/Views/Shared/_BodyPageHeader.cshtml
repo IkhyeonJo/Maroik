@@ -1,4 +1,12 @@
-﻿@model Maroik.Core.Contract.Dtos.AccountResponse
+﻿@*
+    Shared/_BodyPageHeader.cshtml
+    AdminLTE content-header partial rendered once per page via _Layout.
+    Displays the page title (h1) and a breadcrumb trail based on the currently active menu item.
+    Looks up the current controller/action in the role-appropriate Category/SubCategory lists
+    (from ViewBag) to find the matching display name and build the breadcrumb path.
+    Uses a Razor "goto Finish" label to exit nested loops once the match is found.
+*@
+@model Maroik.Core.Contract.Dtos.AccountResponse
 
 @{
     string currentControllerName = ViewContext.RouteData.Values["Controller"].ToString();

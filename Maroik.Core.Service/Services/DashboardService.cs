@@ -4,6 +4,13 @@ using Mapster;
 
 namespace Maroik.Core.Service.Services;
 
+/// <summary>
+/// Implementation of <see cref="IDashboardService"/> that aggregates data from multiple repositories
+/// to populate the user dashboard and notification badge counts.
+/// Calculates yearly/monthly income and expenditure totals grouped by MainClass/SubClass,
+/// and computes notification counts for fixed-income and fixed-expenditure entries
+/// whose deposit dates are approaching or have passed maturity.
+/// </summary>
 public class DashboardService : IDashboardService
 {
     private readonly IAccountRepository _accountRepository;

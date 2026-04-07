@@ -4,6 +4,11 @@ using Mapster;
 
 namespace Maroik.Core.Service.Services;
 
+/// <summary>
+/// Implementation of <see cref="IAssetService"/> for managing personal financial assets.
+/// Rename operations use a database transaction (via <see cref="IUnitOfWork"/>) to atomically
+/// update the asset name and cascade the rename to all linked expenditure and fixed-expenditure records.
+/// </summary>
 public class AssetService : IAssetService
 {
     private readonly IAssetRepository _assetRepository;

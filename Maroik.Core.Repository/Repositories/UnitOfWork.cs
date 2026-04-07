@@ -4,6 +4,13 @@ using Microsoft.EntityFrameworkCore.Storage;
 
 namespace Maroik.Core.Repository.Repositories;
 
+/// <summary>
+/// EF Core implementation of <see cref="IUnitOfWork"/> that wraps a single
+/// <see cref="Microsoft.EntityFrameworkCore.Storage.IDbContextTransaction"/>.
+/// Implements <see cref="IAsyncDisposable"/> so that any uncommitted transaction
+/// is automatically rolled back if the service scope is disposed without an explicit commit —
+/// preventing partial writes in case of unhandled exceptions.
+/// </summary>
 public class UnitOfWork : IUnitOfWork
 {
     private readonly ApplicationDbContext _context;

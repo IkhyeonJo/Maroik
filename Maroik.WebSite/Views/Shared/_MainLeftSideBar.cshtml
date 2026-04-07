@@ -1,4 +1,13 @@
-﻿@model Maroik.Core.Contract.Dtos.AccountResponse
+﻿@*
+    Shared/_MainLeftSideBar.cshtml
+    AdminLTE left sidebar partial rendered once per page via _Layout.
+    Model: AccountResponse of the logged-in user.
+    Renders the brand logo (links to the role-appropriate dashboard) and the dynamic navigation menu.
+    Menu items are loaded from ViewBag.{Role}Categories / ViewBag.{Role}SubCategories,
+    sorted by Order, and matched against the current controller/action to apply the active highlight.
+    Uses a Razor "goto Finish" jump label to break out of nested foreach loops once the active item is found.
+*@
+@model Maroik.Core.Contract.Dtos.AccountResponse
 
 @{
     string currentControllerName = ViewContext.RouteData.Values["Controller"].ToString();

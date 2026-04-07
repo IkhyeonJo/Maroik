@@ -4,6 +4,11 @@ using Mapster;
 
 namespace Maroik.Core.Service.Services;
 
+/// <summary>
+/// Implementation of <see cref="IExpenditureService"/> for managing expenditure transaction records.
+/// Asset ownership is verified before create/update operations to prevent cross-account data access.
+/// All write operations are wrapped in a database transaction via <see cref="IUnitOfWork"/>.
+/// </summary>
 public class ExpenditureService : IExpenditureService
 {
     private readonly IExpenditureRepository _expenditureRepository;

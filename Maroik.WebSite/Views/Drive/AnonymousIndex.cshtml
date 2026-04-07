@@ -1,4 +1,13 @@
-﻿@section Styles {
+﻿@*
+    Drive/AnonymousIndex.cshtml
+    Public drive / file-manager page for anonymous users.
+    Renders a client-side file-manager UI (toolbar, breadcrumb, upload zone, file grid, context menu)
+    backed by the anonymous drive JS (site.js). File operations (upload, rename, delete, copy/move,
+    download, folder creation) are handled entirely in JavaScript via fetch calls.
+    Static sample file/folder items are pre-rendered in the grid as placeholders;
+    the JS replaces them with real data from the API on load.
+*@
+@section Styles {
     <link rel="stylesheet" href="~/anonymous/plugins/datatables-bs4/css/dataTables.bootstrap4.min.css" asp-append-version="true">
     <link rel="stylesheet" href="~/anonymous/plugins/datatables-responsive/css/responsive.bootstrap4.min.css" asp-append-version="true">
     <link rel="stylesheet" href="~/anonymous/custom/Drive/AnonymousIndex/css/site.css" asp-append-version="true">

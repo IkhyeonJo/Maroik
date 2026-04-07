@@ -5,6 +5,12 @@ using Microsoft.Extensions.Logging;
 
 namespace Maroik.Core.Service.Services;
 
+/// <summary>
+/// Implementation of <see cref="IManagementAccountService"/> for admin account CRUD operations.
+/// Passwords supplied in create/update operations are hashed via <see cref="IPasswordService"/>
+/// before being stored. Soft-deleted accounts can be restored by the admin.
+/// Errors are logged and returned as <see cref="ServiceResult.Fail"/> to the caller.
+/// </summary>
 public class ManagementAccountService : IManagementAccountService
 {
     private readonly IAccountRepository _accountRepository;

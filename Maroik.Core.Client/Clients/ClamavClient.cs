@@ -4,39 +4,53 @@ using System.Net.Sockets;
 
 namespace Maroik.Core.Client.Clients;
 
+/// <summary>
+/// Concrete implementation of <see cref="IClamavClient"/> that streams file data to a
+/// ClamAV antivirus daemon using the INSTREAM protocol over a raw TCP connection.
+/// </summary>
 public class ClamavClient : IClamavClient
 {
+    /// <inheritdoc />
     public async Task<bool> ScanWithClamavAsync(Stream fileStream, string clamavHost, int clamavPort)
     {
         try
         {
+            // Rewind the stream so we read from the beginning
             fileStream.Position = 0;
 
+            // Open a TCP connection to the ClamAV daemon
             using var client = new TcpClient(clamavHost, clamavPort);
             using var stream = client.GetStream();
             using var writer = new StreamWriter(stream, leaveOpen: true) { AutoFlush = true };
 
+            // Initiate a streaming scan session with the INSTREAM command
             await writer.WriteLineAsync("nINSTREAM");
 
+            // Send file data in 2 KB chunks, each prefixed with its 4-byte big-endian length
             byte[] buffer = new byte[2048];
             int bytesRead;
             while ((bytesRead = await fileStream.ReadAsync(buffer, 0, buffer.Length)) > 0)
             {
+                // INSTREAM protocol requires network byte order (big-endian) for the length prefix
                 byte[] lengthPrefix = BitConverter.GetBytes(IPAddress.HostToNetworkOrder(bytesRead));
                 await stream.WriteAsync(lengthPrefix, 0, lengthPrefix.Length);
                 await stream.WriteAsync(buffer, 0, bytesRead);
             }
 
+            // A zero-length chunk signals end-of-stream to ClamAV
             byte[] zero = BitConverter.GetBytes(0);
             await stream.WriteAsync(zero, 0, zero.Length);
 
+            // Read the single-line scan result (e.g. "stream: OK" or "stream: Virus FOUND")
             using var reader = new StreamReader(stream);
             string response = await reader.ReadLineAsync() ?? string.Empty;
 
+            // "OK" in the response means the file passed the virus scan
             return response.Contains("OK");
         }
         catch
         {
+            // Treat any connection or protocol error as a scan failure (fail-safe)
             return false;
         }
     }

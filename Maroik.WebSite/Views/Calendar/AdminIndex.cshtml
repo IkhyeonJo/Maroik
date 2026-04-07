@@ -1,4 +1,13 @@
-﻿@using Maroik.WebSite.Models.ViewModels.Calendar
+﻿@*
+    Calendar/AdminIndex.cshtml
+    Admin calendar view with full CRUD capabilities.
+    Uses CalendarOutputViewModel to render the admin's own calendars and events plus
+    any subscribed (other) calendars in a FullCalendar.js grid.
+    Includes create/edit/delete modals for calendars, events, reminders, file attachments,
+    and calendar-sharing settings. Events are serialised to JSON for FullCalendar initialisation.
+    The time grid is scrolled to the admin's current local time on page load.
+*@
+@using Maroik.WebSite.Models.ViewModels.Calendar
 @using Newtonsoft.Json
 @model CalendarOutputViewModel
 

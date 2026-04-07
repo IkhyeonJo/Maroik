@@ -1,3 +1,14 @@
+@*
+    AccountBook/Income.cshtml
+    Income transaction management page.
+    Displays a NonFactors MVC Grid listing all income records (partial view _IncomeGrid).
+    A toolbar provides Create/Edit/Delete buttons for CRUD operations.
+    The create/edit form uses a date-picker (Tempusdominus) with the user's current local time
+    pre-populated from ViewBag (CurrentDate, CurrentHour, CurrentMinute, CurrentSecond).
+    The asset dropdown is populated from ViewBag.Assets so the user can choose which
+    account the income was deposited into.
+    Localisation strings for the calendar widget are injected as hidden form fields.
+*@
 
 @{
     List<AssetResponse> assets = (ViewBag.Assets as List<AssetResponse>) ?? [];

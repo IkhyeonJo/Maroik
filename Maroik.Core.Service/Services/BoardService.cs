@@ -8,6 +8,14 @@ using Microsoft.Extensions.Options;
 
 namespace Maroik.Core.Service.Services;
 
+/// <summary>
+/// Implementation of <see cref="IBoardService"/> for forum post management.
+/// File attachments are virus-scanned by ClamAV, image-processed by ImageMagick,
+/// and stored/retrieved via the file-storage microservice (<see cref="IFileClient"/>).
+/// Summernote inline images are uploaded to the file-storage service and the returned URL
+/// is embedded in the HTML content. Post/comment write operations use <see cref="IUnitOfWork"/>
+/// transactions to keep post and attachment records in sync.
+/// </summary>
 public class BoardService : IBoardService
 {
     private readonly IBoardRepository _boardRepository;

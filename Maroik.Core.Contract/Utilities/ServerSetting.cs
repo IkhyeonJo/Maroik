@@ -1,25 +1,70 @@
 namespace Maroik.Core.Contract.Utilities;
 
+/// <summary>
+/// Strongly-typed configuration class bound to the "ServerSetting" section of appsettings.json.
+/// Injected via <c>IOptions&lt;ServerSetting&gt;</c> throughout the application.
+/// </summary>
 public class ServerSetting
 {
+    /// <summary>Public-facing base URL of the application (e.g. "https://maroik.com/"). Used to build email links.</summary>
     public string? DomainName { get; set; }
+
+    /// <summary>SMTP login user name (typically the sender email address).</summary>
     public string? SmtpUserName { get; set; }
+
+    /// <summary>SMTP login password.</summary>
     public string? SmtpPassword { get; set; }
+
+    /// <summary>SMTP server host name or IP address.</summary>
     public string? SmtpHost { get; set; }
+
+    /// <summary>SMTP server port (e.g. 587 for STARTTLS, 465 for implicit TLS).</summary>
     public int SmtpPort { get; set; }
+
+    /// <summary>Whether the SMTP connection requires SSL/TLS.</summary>
     public bool SmtpSsl { get; set; }
+
+    /// <summary>Email address shown in the From header of outgoing emails.</summary>
     public string? FromEmail { get; set; }
+
+    /// <summary>Display name shown next to the From address in outgoing emails.</summary>
     public string? FromFullName { get; set; }
+
+    /// <summary>When true, the application runs in default/demo mode (may restrict certain admin actions).</summary>
     public bool IsDefault { get; set; }
+
+    /// <summary>Number of consecutive failed logins allowed before the account is locked.</summary>
     public byte MaxLoginAttempt { get; set; }
+
+    /// <summary>Number of minutes of inactivity before the server-side session expires.</summary>
     public int SessionExpireMinutes { get; set; }
+
+    /// <summary>
+    /// How many days before a fixed income/expenditure maturity date to start showing the notice badge.
+    /// </summary>
     public int NoticeMaturityDateDay { get; set; }
+
+    /// <summary>File system path to the TLS certificate used by the Docker/Kestrel host.</summary>
     public string? DockerCertPath { get; set; }
+
+    /// <summary>File system path to the TLS private key used by the Docker/Kestrel host.</summary>
     public string? DockerKeyPath { get; set; }
+
+    /// <summary>PEM-encoded RSA private key used for signing and decryption.</summary>
     public string? RsaPrivateKey { get; set; }
+
+    /// <summary>PEM-encoded RSA public key used for verification and encryption.</summary>
     public string? RsaPublicKey { get; set; }
+
+    /// <summary>RSA algorithm variant (<see cref="RsaType.Rsa"/> = SHA-1, <see cref="RsaType.Rsa2"/> = SHA-256).</summary>
     public RsaType RsaAlgorithm { get; set; }
+
+    /// <summary>Host name or IP address of the ClamAV antivirus daemon.</summary>
     public string? ClamavHost { get; set; }
+
+    /// <summary>TCP port of the ClamAV daemon (default: 3310).</summary>
     public int ClamavPort { get; set; }
+
+    /// <summary>Base URL of the Maroik.FileStorage microservice used for file upload/download.</summary>
     public string? FileStorageBaseUrl { get; set; }
 }

@@ -4,6 +4,11 @@ using Mapster;
 
 namespace Maroik.Core.Service.Services;
 
+/// <summary>
+/// Implementation of <see cref="IIncomeService"/> for managing income transaction records.
+/// Asset ownership is verified before create/update operations to prevent cross-account data access.
+/// All write operations are wrapped in a database transaction via <see cref="IUnitOfWork"/>.
+/// </summary>
 public class IncomeService : IIncomeService
 {
     private readonly IIncomeRepository _incomeRepository;

@@ -14,6 +14,13 @@ using ForumBoardInput = Maroik.WebSite.Models.ViewModels.Forum.BoardInputViewMod
 
 namespace Maroik.WebSite.Mappings;
 
+/// <summary>
+/// Mapster mapping configuration for the WebSite presentation layer.
+/// Registered via <c>TypeAdapterConfig.GlobalSettings.Scan(Assembly)</c> at startup.
+/// Defines explicit type-adapter rules where property names differ, conversions are required,
+/// or certain destination fields must be ignored (e.g. server-side-only fields like AccountEmail,
+/// HashedPassword, Writer, and audit timestamps).
+/// </summary>
 public class MappingConfig : IRegister
 {
     // Expression trees (used by Mapster .Map()) do not support inline `out var` declarations.

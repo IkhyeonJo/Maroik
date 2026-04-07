@@ -1,4 +1,13 @@
-﻿@{
+﻿@*
+    Account/ConfirmEmail.cshtml
+    Email confirmation landing page opened via the link sent to the user after registration.
+    Renders one of four states based on ViewBag flags (InvalidToken, AccountCreated):
+      - invalidToken=false, accountCreated=false : Email was already confirmed — shows "Back to Login".
+      - invalidToken=false, accountCreated=true  : Account created successfully — shows success message.
+      - invalidToken=true,  accountCreated=false : Token is invalid or expired — shows error + re-register hint.
+      - invalidToken=true,  accountCreated=true  : Unexpected exception state — shows error details.
+*@
+@{
     bool invalidToken = ViewBag.InvalidToken ?? false;
     bool accountCreated = ViewBag.AccountCreated ?? false;
     string error = (TempData["Error"] as string) ?? string.Empty;

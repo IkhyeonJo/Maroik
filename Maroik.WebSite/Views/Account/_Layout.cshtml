@@ -1,4 +1,11 @@
-﻿@{
+﻿@*
+    Account/_Layout.cshtml
+    Standalone layout used exclusively by Account views (Login, Register, ForgotPassword, ResetPassword, ConfirmEmail).
+    Does not extend the main AdminLTE shell — sets Layout = null and renders a full self-contained HTML page
+    with a full-screen background image and minimal static assets (Font Awesome, iCheck Bootstrap, AdminLTE).
+    Embeds the anti-forgery token and the return-URI hidden field for post-login redirect.
+*@
+@{
     Layout = null;
     var returnUri = string.IsNullOrWhiteSpace(Context.Request.Path) ? "/" : $"{Context.Request.Path.Value}{Context.Request.QueryString}";
 }
