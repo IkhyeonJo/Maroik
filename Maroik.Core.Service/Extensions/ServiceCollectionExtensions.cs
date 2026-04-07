@@ -6,7 +6,7 @@ namespace Maroik.Core.Service.Extensions;
 
 public static class ServiceCollectionExtensions
 {
-    public static IServiceCollection AddApplicationServices(this IServiceCollection services)
+    public static void AddApplicationServices(this IServiceCollection services)
     {
         services.AddScoped<IPasswordService, PasswordService>();
         services.AddScoped<IAccountService, AccountService>();
@@ -23,6 +23,5 @@ public static class ServiceCollectionExtensions
         services.AddScoped<ICalendarService, CalendarService>();
         services.AddScoped<ISessionService, SessionService>();
         services.AddSingleton<IRsaService, RsaService>();
-        return services;
     }
 }

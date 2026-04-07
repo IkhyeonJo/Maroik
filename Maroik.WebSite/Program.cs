@@ -100,9 +100,7 @@ builder.Services.AddHttpClient();
 //    var connectionString = builder.Configuration.GetConnectionString("Redis");
 //    return ConnectionMultiplexer.Connect(connectionString!);
 //});
-//#endregion
 
-#region AddSession
 // NuGet: Microsoft.Extensions.Caching.StackExchangeRedis
 //builder.Services.AddStackExchangeRedisCache(options =>
 //{
@@ -122,7 +120,9 @@ builder.Services.AddHttpClient();
 //        KeepAlive = 60
 //    };
 //});
+//#endregion
 
+#region AddSession
 builder.Services.AddDistributedMemoryCache(); // Server Memory
 builder.Services.AddSession(options =>
 {
