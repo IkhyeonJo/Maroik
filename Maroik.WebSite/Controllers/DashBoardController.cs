@@ -1,4 +1,4 @@
-using Maroik.Core.Contract.Dtos;
+﻿using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Contract.Utilities;
 using Maroik.WebSite.Utilities;
@@ -19,6 +19,8 @@ public class DashBoardController(
     ISessionService sessionService)
     : BaseController(accountService, dashboardService, serverSettings, sessionService)
 {
+    private readonly IDashboardService _dashboardService1 = dashboardService;
+    private readonly ISessionService _sessionService1 = sessionService;
     private const string HostResourceFilePath = "/app/Maroik.Log/HostResourceInfo.txt";
     private const string DockerResourceFilePath = "/app/Maroik.Log/DockerResourceInfo.txt";
 
@@ -135,7 +137,7 @@ public class DashBoardController(
     [HttpGet]
     public async Task<IActionResult> UserIndex(string year, string month)
     {
-        var loginedAccount = sessionService.GetAccount();
+        var loginedAccount = _sessionService1.GetAccount();
         string email = loginedAccount.Email;
         string timeZoneId = loginedAccount.TimeZoneIanaId;
 
@@ -147,7 +149,7 @@ public class DashBoardController(
         }
         #endregion
 
-        var summary = await dashboardService.GetSummaryAsync(email, year ?? "", month ?? "", timeZoneId);
+        var summary = await _dashboardService1.GetSummaryAsync(email, year ?? "", month ?? "", timeZoneId);
 
         var vm = new UserIndexOutputViewModel
         {
@@ -408,8 +410,8 @@ public class DashBoardController(
     {
         try
         {
-            string email = sessionService.GetAccount()?.Email ?? "";
-            await dashboardService.UpdateDefaultMonetaryUnitAsync(email, userIndexInputViewModel.DefaultMonetaryUnit);
+            string email = _sessionService1.GetAccount()?.Email ?? "";
+            await _dashboardService1.UpdateDefaultMonetaryUnitAsync(email, userIndexInputViewModel.DefaultMonetaryUnit);
             return Json(new { result = true });
         }
         catch
@@ -425,7 +427,7 @@ public class DashBoardController(
     [HttpGet]
     public IActionResult AnonymousIndex()
     {
-        var loginedAccount = sessionService.GetAccount();
+        var loginedAccount = _sessionService1.GetAccount();
 
         if (loginedAccount == null) return View();
         return loginedAccount.Role switch
