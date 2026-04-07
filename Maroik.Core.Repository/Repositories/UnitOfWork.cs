@@ -8,15 +8,23 @@ public class UnitOfWork : IUnitOfWork
 {
     private readonly ApplicationDbContext _context;
     private IDbContextTransaction? _transaction;
+    private bool _committed;
 
     public UnitOfWork(ApplicationDbContext context) => _context = context;
 
-    public async Task BeginAsync() => _transaction = await _context.Database.BeginTransactionAsync();
+    public async Task BeginAsync()
+    {
+        _transaction = await _context.Database.BeginTransactionAsync();
+        _committed = false;
+    }
 
     public async Task CommitAsync()
     {
         if (_transaction != null)
+        {
             await _transaction.CommitAsync();
+            _committed = true;
+        }
     }
 
     public async Task RollbackAsync()
@@ -29,6 +37,11 @@ public class UnitOfWork : IUnitOfWork
     {
         if (_transaction != null)
         {
+            if (!_committed)
+            {
+                try { await _transaction.RollbackAsync(); }
+                catch { /* 이미 롤백/커밋된 트랜잭션이면 무시 */ }
+            }
             await _transaction.DisposeAsync();
             _transaction = null;
         }
