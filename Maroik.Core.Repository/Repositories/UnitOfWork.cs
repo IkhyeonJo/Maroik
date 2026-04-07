@@ -40,7 +40,7 @@ public class UnitOfWork : IUnitOfWork
             if (!_committed)
             {
                 try { await _transaction.RollbackAsync(); }
-                catch { /* 이미 롤백/커밋된 트랜잭션이면 무시 */ }
+                catch { /* Ignore if the transaction has already been rolled back or committed */ }
             }
             await _transaction.DisposeAsync();
             _transaction = null;
