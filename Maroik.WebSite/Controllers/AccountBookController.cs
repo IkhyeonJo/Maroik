@@ -1,4 +1,3 @@
-using System.Globalization;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Contract.Utilities;
@@ -7,9 +6,11 @@ using Maroik.WebSite.Models.ViewModels.AccountBook;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Localization;
 using Microsoft.Extensions.Options;
+using Newtonsoft.Json;
 using DocumentFormat.OpenXml;
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Spreadsheet;
+using System.Text;
 
 namespace Maroik.WebSite.Controllers;
 
@@ -17,33 +18,52 @@ namespace Maroik.WebSite.Controllers;
 /// Manages account-book records: assets, income transactions, and expenditure transactions
 /// (create, read, update, delete, export).
 /// </summary>
-public class AccountBookController(
-    IHtmlLocalizer<AccountBookController> localizer,
-    IAssetService assetService,
-    IIncomeService incomeService,
-    IExpenditureService expenditureService,
-    IAccountService accountService,
-    IDashboardService dashboardService,
-    IOptions<ServerSetting> serverSettings,
-    ISessionService sessionService)
-    : BaseController(accountService, dashboardService, serverSettings, sessionService)
+public class AccountBookController : BaseController
 {
-    private readonly ISessionService _sessionService = sessionService;
+    private readonly IHtmlLocalizer<AccountBookController> _localizer;
+    private readonly ILogger<AccountBookController> _logger;
+    private readonly IHostEnvironment _hostEnvironment;
+    private readonly IAssetService _assetService;
+    private readonly IIncomeService _incomeService;
+    private readonly IExpenditureService _expenditureService;
+    private readonly ISessionService _sessionService;
+
+    public AccountBookController(
+        IHtmlLocalizer<AccountBookController> localizer,
+        ILogger<AccountBookController> logger,
+        IHostEnvironment hostEnvironment,
+        IAssetService assetService,
+        IIncomeService incomeService,
+        IExpenditureService expenditureService,
+        IAccountService accountService,
+        IDashboardService dashboardService,
+        IOptions<ServerSetting> serverSettings,
+        ISessionService sessionService)
+        : base(accountService, dashboardService, serverSettings, sessionService)
+    {
+        _localizer = localizer;
+        _logger = logger;
+        _hostEnvironment = hostEnvironment;
+        _assetService = assetService;
+        _incomeService = incomeService;
+        _expenditureService = expenditureService;
+        _sessionService = sessionService;
+    }
 
     #region Asset
 
     #region Create
 
-    /// <summary>Creates a new asset record.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.User)]
+    /// <summary>Creates a new asset record.</summary>
     public async Task<IActionResult> CreateAsset([FromBody] AssetInputViewModel assetInputViewModel)
     {
         if (!ModelState.IsValid)
-            return Json(new { result = false, error = localizer["Input is invalid"].Value });
+            return Json(new { result = false, error = _localizer["Input is invalid"].Value });
 
-        var email = _sessionService.GetAccount()!.Email ?? string.Empty;
+        string email = _sessionService.GetAccount()!.Email;
 
         var request = new AssetRequest
         {
@@ -55,67 +75,65 @@ public class AccountBookController(
             Deleted = false
         };
 
-        var result = await assetService.CreateAsync(email, request);
+        var result = await _assetService.CreateAsync(email, request);
         return result.Success
-            ? Json(new { result = true, message = localizer["The asset has been successfully created."].Value })
-            : Json(new { result = false, error = localizer[result.ErrorKey].Value });
+            ? Json(new { result = true, message = _localizer["The asset has been successfully created."].Value })
+            : Json(new { result = false, error = _localizer[result.ErrorKey].Value });
     }
 
     #endregion
 
     #region Read
 
-    /// <summary>Returns the asset grid (AJAX) or the full asset page.</summary>
     [HttpGet]
+    /// <summary>Returns the asset grid (AJAX) or the full asset page.</summary>
     public async Task<IActionResult> Asset(string wholeSearch)
     {
-#pragma warning disable ASP0015
         if (HttpContext.Request.Headers["X-Requested-With"] == "XMLHttpRequest") // ajax
-#pragma warning restore ASP0015
         {
             List<AssetOutputViewModel> assetOutputViewModels = [];
 
             #region Assets
 
-            var loginedAccountTimeZoneIanaId = _sessionService.GetAccount()!.TimeZoneIanaId;
+            string loginedAccountTimeZoneIanaId = _sessionService.GetAccount()!.TimeZoneIanaId;
 
-            foreach (var item in await assetService.GetAssetsAsync(_sessionService.GetAccount()!.Email ?? string.Empty))
+            foreach (AssetResponse item in await _assetService.GetAssetsAsync(_sessionService.GetAccount()!.Email))
             {
                 if (string.IsNullOrEmpty(wholeSearch))
                 {
                     assetOutputViewModels.Add(new AssetOutputViewModel()
                     {
                         ProductName = item.ProductName,
-                        Item = localizer[item.Item ?? string.Empty].Value,
+                        Item = _localizer[item.Item.ToString()].Value,
                         Amount = Convert.ToDecimal(item.Amount.TrimTrailingZeros()),
                         MonetaryUnit = item.MonetaryUnit,
-                        Created = item.Created.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId ?? string.Empty),
-                        Updated = item.Updated.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId ?? string.Empty),
+                        Created = item.Created.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId),
+                        Updated = item.Updated.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId),
                         Note = item.Note,
                         Deleted = item.Deleted
                     });
                 }
                 else
                 {
-                    if ((item.ProductName ?? "").Contains(wholeSearch) ||
-                        localizer[item.Item ?? ""].Value.Contains(wholeSearch) ||
-                        (item.Amount.TrimTrailingZeros()).Contains(wholeSearch) ||
-                        (item.MonetaryUnit ?? "").Contains(wholeSearch) ||
-                        (item.Created.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId ?? string.Empty).ToString(CultureInfo.InvariantCulture))
+                    if ((item.ProductName?.ToString() ?? "").Contains(wholeSearch) ||
+                        _localizer[item.Item?.ToString() ?? ""].Value.Contains(wholeSearch) ||
+                        (item.Amount.TrimTrailingZeros() ?? "").Contains(wholeSearch) ||
+                        (item.MonetaryUnit?.ToString() ?? "").Contains(wholeSearch) ||
+                        (item.Created.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId).ToString() ?? "")
                         .Contains(wholeSearch) ||
-                        (item.Updated.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId ?? string.Empty).ToString(CultureInfo.InvariantCulture))
+                        (item.Updated.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId).ToString() ?? "")
                         .Contains(wholeSearch) ||
-                        (item.Note ?? "").Contains(wholeSearch) ||
-                        (item.Deleted.ToString()).Contains(wholeSearch))
+                        (item.Note?.ToString() ?? "").Contains(wholeSearch) ||
+                        (item.Deleted.ToString() ?? "").Contains(wholeSearch))
                     {
                         assetOutputViewModels.Add(new AssetOutputViewModel()
                         {
                             ProductName = item.ProductName,
-                            Item = localizer[item.Item ?? string.Empty].Value,
+                            Item = _localizer[item.Item.ToString()].Value,
                             Amount = Convert.ToDecimal(item.Amount.TrimTrailingZeros()),
                             MonetaryUnit = item.MonetaryUnit,
-                            Created = item.Created.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId ?? string.Empty),
-                            Updated = item.Updated.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId ?? string.Empty),
+                            Created = item.Created.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId),
+                            Updated = item.Updated.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId),
                             Note = item.Note,
                             Deleted = item.Deleted
                         });
@@ -125,17 +143,17 @@ public class AccountBookController(
 
             #endregion
 
-            var result =
+            IQueryable<AssetOutputViewModel> result =
                 assetOutputViewModels.OrderBy(m => m.ProductName).AsQueryable();
             return PartialView("_AssetGrid", result);
         }
 
         {
-            var loginedAccount = _sessionService.GetAccount() ?? new AccountResponse();
-            var tz = loginedAccount.TimeZoneIanaId ?? "UTC";
-            var assets = (await assetService.GetAssetsAsync(loginedAccount.Email ?? string.Empty))
+            AccountResponse loginedAccount = _sessionService.GetAccount() ?? new AccountResponse();
+            string tz = loginedAccount.TimeZoneIanaId ?? "UTC";
+            List<AssetResponse> assets = (await _assetService.GetAssetsAsync(loginedAccount.Email))
                 .Where(x => !x.Deleted).OrderBy(x => x.ProductName).ToList();
-            var ct = DateTime.UtcNow.ConvertTimeByTimeZoneIanaId(tz);
+            DateTime ct = DateTime.UtcNow.ConvertTimeByTimeZoneIanaId(tz);
             ViewBag.Assets = assets;
             ViewBag.CurrentDate = ct.ToString("yyyy-MM-dd");
             ViewBag.CurrentHour = ct.Hour;
@@ -145,27 +163,27 @@ public class AccountBookController(
         return View();
     }
 
-    /// <summary>Checks whether an asset with the given product name exists.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.User)]
+    /// <summary>Checks whether an asset with the given product name exists.</summary>
     public async Task<IActionResult> IsAssetExists(string productName)
     {
         try
         {
-            var tempAsset = await assetService.GetAssetAsync(
-                _sessionService.GetAccount()!.Email ?? string.Empty, productName);
+            AssetResponse tempAsset = await _assetService.GetAssetAsync(
+                _sessionService.GetAccount()!.Email, productName);
 
             return tempAsset == null
                 ? Json(new
                 {
-                    result = false, error = localizer["Fail to find the asset by given product name"].Value
+                    result = false, error = _localizer["Fail to find the asset by given product name"].Value
                 })
                 : (IActionResult)Json(new { result = true, asset = tempAsset });
         }
         catch
         {
-            return Json(new { result = false, error = localizer["Input is invalid"].Value });
+            return Json(new { result = false, error = _localizer["Input is invalid"].Value });
         }
     }
 
@@ -173,17 +191,17 @@ public class AccountBookController(
 
     #region Update
 
-    /// <summary>Updates an existing asset record.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.User)]
+    /// <summary>Updates an existing asset record.</summary>
     public async Task<IActionResult> UpdateAsset([FromBody] AssetInputViewModel assetInputViewModel)
     {
         _ = ModelState.Remove(nameof(assetInputViewModel.MonetaryUnit));
         if (!ModelState.IsValid)
-            return Json(new { result = false, error = localizer["Input is invalid"].Value });
+            return Json(new { result = false, error = _localizer["Input is invalid"].Value });
 
-        var email = _sessionService.GetAccount()!.Email ?? string.Empty;
+        string email = _sessionService.GetAccount()!.Email;
 
         var request = new AssetRequest
         {
@@ -195,45 +213,49 @@ public class AccountBookController(
             Deleted = assetInputViewModel.Deleted
         };
 
-        var result = await assetService.UpdateAsync(email, request, assetInputViewModel.OriginalProductName);
+        var result = await _assetService.UpdateAsync(email, request, assetInputViewModel.OriginalProductName);
         return result.Success
-            ? Json(new { result = true, message = localizer["The asset has been successfully updated."].Value })
-            : Json(new { result = false, error = localizer[result.ErrorKey].Value });
+            ? Json(new { result = true, message = _localizer["The asset has been successfully updated."].Value })
+            : Json(new { result = false, error = _localizer[result.ErrorKey].Value });
     }
 
     #endregion
 
     #region Delete
 
-    /// <summary>Soft-deletes an existing asset record.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.User)]
+    /// <summary>Soft-deletes an existing asset record.</summary>
     public async Task<IActionResult> DeleteAsset([FromBody] AssetInputViewModel assetInputViewModel)
     {
-        var email = _sessionService.GetAccount()!.Email ?? string.Empty;
+        string email = _sessionService.GetAccount()!.Email;
 
-        var result = await assetService.DeleteAsync(email, assetInputViewModel.ProductName);
+        var result = await _assetService.DeleteAsync(email, assetInputViewModel.ProductName);
         return result.Success
-            ? Json(new { result = true, message = localizer["The asset has been successfully deleted."].Value })
-            : Json(new { result = false, error = localizer[result.ErrorKey].Value });
+            ? Json(new { result = true, message = _localizer["The asset has been successfully deleted."].Value })
+            : Json(new { result = false, error = _localizer[result.ErrorKey].Value });
     }
 
     #endregion
 
     #region Excel
 
-    /// <summary>Exports asset records to an Excel file.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.User)]
+    /// <summary>Exports asset records to an Excel file.</summary>
     public async Task<IActionResult> ExportExcelAsset(string fileName = "")
     {
         await Task.Yield();
 
-        var loginedAccountTimeZoneIanaId = _sessionService.GetAccount()!.TimeZoneIanaId ?? string.Empty;
+        List<AssetOutputViewModel> assetOutputViewModels = new List<AssetOutputViewModel>();
 
-        var assetOutputViewModels = (await assetService.GetAssetsAsync(_sessionService.GetAccount()!.Email ?? string.Empty)).Select(item => new AssetOutputViewModel
+        string loginedAccountTimeZoneIanaId = _sessionService.GetAccount()!.TimeZoneIanaId;
+
+        foreach (AssetResponse item in await _assetService.GetAssetsAsync(_sessionService.GetAccount()!.Email))
+        {
+            assetOutputViewModels.Add(new AssetOutputViewModel()
             {
                 ProductName = item.ProductName,
                 Item = item.Item,
@@ -243,12 +265,12 @@ public class AccountBookController(
                 Updated = item.Updated.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId),
                 Note = item.Note,
                 Deleted = item.Deleted
-            })
-            .ToList();
+            });
+        }
 
         assetOutputViewModels = assetOutputViewModels.OrderBy(m => m.ProductName).ToList();
 
-        var stream = new MemoryStream();
+        MemoryStream stream = new MemoryStream();
         using (var spreadsheetDocument = SpreadsheetDocument.Create(stream, SpreadsheetDocumentType.Workbook))
         {
             var workbookPart = spreadsheetDocument.AddWorkbookPart();
@@ -256,12 +278,12 @@ public class AccountBookController(
             var sheets = workbookPart.Workbook.AppendChild(new Sheets());
 
             var worksheetPart = workbookPart.AddNewPart<WorksheetPart>();
-            var worksheet = new Worksheet();
-            var sheetData = new SheetData();
+            Worksheet worksheet = new Worksheet();
+            SheetData sheetData = new SheetData();
             worksheet.Append(sheetData);
             worksheetPart.Worksheet = worksheet;
 
-            var sheet = new Sheet()
+            Sheet sheet = new Sheet()
             {
                 Id = workbookPart.GetIdOfPart(worksheetPart),
                 SheetId = 1,
@@ -278,29 +300,29 @@ public class AccountBookController(
                 };
             }
 
-            var headerRow = new Row();
+            Row headerRow = new Row();
             headerRow.Append(
-                CreateCell(localizer[nameof(AssetOutputViewModel.ProductName)].Value),
-                CreateCell(localizer[nameof(AssetOutputViewModel.Item)].Value),
-                CreateCell(localizer[nameof(AssetOutputViewModel.Amount)].Value),
-                CreateCell(localizer[nameof(AssetOutputViewModel.MonetaryUnit)].Value),
-                CreateCell(localizer[nameof(AssetOutputViewModel.Created)].Value),
-                CreateCell(localizer[nameof(AssetOutputViewModel.Updated)].Value),
-                CreateCell(localizer[nameof(AssetOutputViewModel.Note)].Value),
-                CreateCell(localizer[nameof(AssetOutputViewModel.Deleted)].Value)
+                CreateCell(_localizer[nameof(AssetOutputViewModel.ProductName)].Value),
+                CreateCell(_localizer[nameof(AssetOutputViewModel.Item)].Value),
+                CreateCell(_localizer[nameof(AssetOutputViewModel.Amount)].Value),
+                CreateCell(_localizer[nameof(AssetOutputViewModel.MonetaryUnit)].Value),
+                CreateCell(_localizer[nameof(AssetOutputViewModel.Created)].Value),
+                CreateCell(_localizer[nameof(AssetOutputViewModel.Updated)].Value),
+                CreateCell(_localizer[nameof(AssetOutputViewModel.Note)].Value),
+                CreateCell(_localizer[nameof(AssetOutputViewModel.Deleted)].Value)
             );
             sheetData.Append(headerRow);
 
             foreach (var item in assetOutputViewModels)
             {
-                var dataRow = new Row();
+                Row dataRow = new Row();
                 dataRow.Append(
                     CreateCell(item.ProductName),
-                    CreateCell(localizer[item.Item ?? ""].Value),
-                    CreateCell(Convert.ToDecimal(item.Amount.TrimTrailingZeros()).ToString(CultureInfo.InvariantCulture)),
+                    CreateCell(_localizer[item?.Item?.ToString() ?? ""].Value),
+                    CreateCell(Convert.ToDecimal(item.Amount.TrimTrailingZeros()).ToString()),
                     CreateCell(item.MonetaryUnit),
-                    CreateCell(item.Created.ToString(CultureInfo.InvariantCulture)),
-                    CreateCell(item.Updated.ToString(CultureInfo.InvariantCulture)),
+                    CreateCell(item.Created.ToString()),
+                    CreateCell(item.Updated.ToString()),
                     CreateCell(item.Note),
                     CreateCell(item.Deleted.ToString())
                 );
@@ -311,7 +333,7 @@ public class AccountBookController(
         }
 
         stream.Position = 0;
-        var excelName =
+        string excelName =
             $"{fileName}-{DateTime.UtcNow.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId):yyyy-MM-dd-HH-mm-ss-fff}.xlsx";
 
         return File(stream, "application/octet-stream", excelName);
@@ -325,16 +347,16 @@ public class AccountBookController(
 
     #region Create
 
-    /// <summary>Creates a new income transaction.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.User)]
+    /// <summary>Creates a new income transaction.</summary>
     public async Task<IActionResult> CreateIncome([FromBody] IncomeInputViewModel incomeInputViewModel)
     {
         if (!ModelState.IsValid)
-            return Json(new { result = false, error = localizer["Input is invalid"].Value });
+            return Json(new { result = false, error = _localizer["Input is invalid"].Value });
 
-        var email = _sessionService.GetAccount()!.Email ?? string.Empty;
+        string email = _sessionService.GetAccount()!.Email;
 
         var request = new IncomeRequest
         {
@@ -347,46 +369,43 @@ public class AccountBookController(
             Note = incomeInputViewModel.Note ?? ""
         };
 
-        var result = await incomeService.CreateAsync(email, request);
+        var result = await _incomeService.CreateAsync(email, request);
         return result.Success
-            ? Json(new { result = true, message = localizer["The income has been successfully created."].Value })
-            : Json(new { result = false, error = localizer[result.ErrorKey].Value });
+            ? Json(new { result = true, message = _localizer["The income has been successfully created."].Value })
+            : Json(new { result = false, error = _localizer[result.ErrorKey].Value });
     }
 
     #endregion
 
     #region Read
 
-    /// <summary>Returns the income grid (AJAX) or the full income page.</summary>
     [HttpGet]
+    /// <summary>Returns the income grid (AJAX) or the full income page.</summary>
     public async Task<IActionResult> Income(string wholeSearch)
     {
-#pragma warning disable ASP0015
         if (HttpContext.Request.Headers["X-Requested-With"] == "XMLHttpRequest") // ajax
-#pragma warning restore ASP0015
         {
             List<IncomeOutputViewModel> incomeOutputViewModels = [];
 
             #region Incomes
 
-            var loginedAccountTimeZoneIanaId = _sessionService.GetAccount()!.TimeZoneIanaId ?? string.Empty;
+            string loginedAccountTimeZoneIanaId = _sessionService.GetAccount()!.TimeZoneIanaId;
 
-            var assets = await assetService.GetAssetsAsync(_sessionService.GetAccount()!.Email ?? string.Empty);
+            List<AssetResponse> assets = await _assetService.GetAssetsAsync(_sessionService.GetAccount()!.Email);
 
-            foreach (var item in await incomeService.GetIncomesAsync(_sessionService.GetAccount()!.Email ?? string.Empty))
+            foreach (IncomeResponse item in await _incomeService.GetIncomesAsync(_sessionService.GetAccount()!.Email))
             {
                 if (string.IsNullOrEmpty(wholeSearch))
                 {
-                    incomeOutputViewModels.Add(new IncomeOutputViewModel
+                    incomeOutputViewModels.Add(new IncomeOutputViewModel()
                     {
                         Id = item.Id,
-                        MainClass = localizer[item.MainClass ?? string.Empty].Value,
-                        SubClass = localizer[item.SubClass ?? string.Empty].Value,
+                        MainClass = _localizer[item.MainClass.ToString()].Value,
+                        SubClass = _localizer[item.SubClass.ToString()].Value,
                         Content = item.Content,
                         Amount = Convert.ToDecimal(item.Amount.TrimTrailingZeros()),
-                        MonetaryUnit = assets
-                            .FirstOrDefault(x => x.ProductName == item.DepositMyAssetProductName)
-                            ?.MonetaryUnit,
+                        MonetaryUnit = assets.Where(x => x.ProductName == item.DepositMyAssetProductName)
+                            .FirstOrDefault().MonetaryUnit,
                         DepositMyAssetProductName = item.DepositMyAssetProductName,
                         Created = item.Created.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId),
                         Updated = item.Updated.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId),
@@ -395,29 +414,28 @@ public class AccountBookController(
                 }
                 else
                 {
-                    if (localizer[item.MainClass ?? ""].Value.Contains(wholeSearch) ||
-                        localizer[item.SubClass ?? ""].Value.Contains(wholeSearch) ||
-                        (item.Content ?? "").Contains(wholeSearch) ||
-                        (item.Amount.TrimTrailingZeros()).Contains(wholeSearch) ||
-                        (assets.FirstOrDefault(x => x.ProductName == item.DepositMyAssetProductName)
-                            ?.MonetaryUnit?.ToString() ?? "").Contains(wholeSearch) ||
-                        (item.DepositMyAssetProductName ?? "").Contains(wholeSearch) ||
-                        (item.Created.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId).ToString(CultureInfo.InvariantCulture))
+                    if (_localizer[item.MainClass?.ToString() ?? ""].Value.Contains(wholeSearch) ||
+                        _localizer[item.SubClass?.ToString() ?? ""].Value.Contains(wholeSearch) ||
+                        (item.Content?.ToString() ?? "").Contains(wholeSearch) ||
+                        (item.Amount.TrimTrailingZeros() ?? "").Contains(wholeSearch) ||
+                        (assets.Where(x => x.ProductName == item.DepositMyAssetProductName).FirstOrDefault()
+                            .MonetaryUnit.ToString() ?? "").Contains(wholeSearch) ||
+                        (item.DepositMyAssetProductName?.ToString() ?? "").Contains(wholeSearch) ||
+                        (item.Created.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId).ToString() ?? "")
                         .Contains(wholeSearch) ||
-                        (item.Updated.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId).ToString(CultureInfo.InvariantCulture))
+                        (item.Updated.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId).ToString() ?? "")
                         .Contains(wholeSearch) ||
-                        (item.Note ?? "").Contains(wholeSearch))
+                        (item.Note?.ToString() ?? "").Contains(wholeSearch))
                     {
                         incomeOutputViewModels.Add(new IncomeOutputViewModel()
                         {
                             Id = item.Id,
-                            MainClass = localizer[item.MainClass ?? string.Empty].Value,
-                            SubClass = localizer[item.SubClass ?? string.Empty].Value,
+                            MainClass = _localizer[item.MainClass.ToString()].Value,
+                            SubClass = _localizer[item.SubClass.ToString()].Value,
                             Content = item.Content,
                             Amount = Convert.ToDecimal(item.Amount.TrimTrailingZeros()),
-                            MonetaryUnit = assets
-                                .FirstOrDefault(x => x.ProductName == item.DepositMyAssetProductName)
-                                ?.MonetaryUnit,
+                            MonetaryUnit = assets.Where(x => x.ProductName == item.DepositMyAssetProductName)
+                                .FirstOrDefault().MonetaryUnit,
                             DepositMyAssetProductName = item.DepositMyAssetProductName,
                             Created = item.Created.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId),
                             Updated = item.Updated.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId),
@@ -435,11 +453,11 @@ public class AccountBookController(
         }
 
         {
-            var loginedAccount = _sessionService.GetAccount() ?? new AccountResponse();
-            var tz = loginedAccount.TimeZoneIanaId ?? "UTC";
-            var assets = (await assetService.GetAssetsAsync(loginedAccount.Email ?? string.Empty))
+            AccountResponse loginedAccount = _sessionService.GetAccount() ?? new AccountResponse();
+            string tz = loginedAccount.TimeZoneIanaId ?? "UTC";
+            List<AssetResponse> assets = (await _assetService.GetAssetsAsync(loginedAccount.Email))
                 .Where(x => !x.Deleted).OrderBy(x => x.ProductName).ToList();
-            var ct = DateTime.UtcNow.ConvertTimeByTimeZoneIanaId(tz);
+            DateTime ct = DateTime.UtcNow.ConvertTimeByTimeZoneIanaId(tz);
             ViewBag.Assets = assets;
             ViewBag.CurrentDate = ct.ToString("yyyy-MM-dd");
             ViewBag.CurrentHour = ct.Hour;
@@ -449,48 +467,56 @@ public class AccountBookController(
         return View();
     }
 
-    /// <summary>Checks whether an income record with the given ID exists.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.User)]
+    /// <summary>Checks whether an income record with the given ID exists.</summary>
     public async Task<IActionResult> IsIncomeExists(int id)
     {
         try
         {
-            var loginedAccountTimeZoneIanaId = _sessionService.GetAccount()!.TimeZoneIanaId ?? string.Empty;
-            var tempIncomes = await incomeService.GetIncomesAsync(_sessionService.GetAccount()!.Email ?? string.Empty);
+            string loginedAccountTimeZoneIanaId = _sessionService.GetAccount()!.TimeZoneIanaId;
+            List<IncomeResponse> tempIncomes = await _incomeService.GetIncomesAsync(_sessionService.GetAccount()!.Email);
 
+            if (tempIncomes == null)
             {
-                var tempIncome = tempIncomes.FirstOrDefault(a => a.Id == id);
+                return Json(new { result = false, error = _localizer["No income exists"].Value });
+            }
+            else
+            {
+                IncomeResponse tempIncome = tempIncomes.Where(a => a.Id == id).FirstOrDefault();
 
                 if (tempIncome == null)
                 {
-                    return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                    return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                 }
-
-                tempIncome.Created =
-                    tempIncome.Created.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId);
-                return Json(new { result = true, income = tempIncome });
+                else
+                {
+                    tempIncome.Created =
+                        tempIncome.Created.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId);
+                    return Json(new { result = true, income = tempIncome });
+                }
             }
         }
         catch
         {
-            return Json(new { result = false, error = localizer["Input is invalid"].Value });
+            return Json(new { result = false, error = _localizer["Input is invalid"].Value });
         }
     }
 
-    /// <summary>Returns a formatted amount label for the given income product.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.User)]
+    /// <summary>Returns a formatted amount label for the given income product.</summary>
     public async Task<IActionResult> GetIncomeAmountLabel(string productName)
     {
         try
         {
-            var label = localizer["Amount"].Value;
+            string label = _localizer["Amount"].Value;
 
-            var asset =
-                (await assetService.GetAssetsAsync(_sessionService.GetAccount()!.Email ?? string.Empty)).Where(x => !x.Deleted).FirstOrDefault(x => x.ProductName == productName) ?? new AssetResponse();
+            AssetResponse asset =
+                (await _assetService.GetAssetsAsync(_sessionService.GetAccount()!.Email))
+                .Where(x => !x.Deleted).Where(x => x.ProductName == productName).FirstOrDefault() ?? new AssetResponse();
 
             if (!string.IsNullOrEmpty(asset.MonetaryUnit))
             {
@@ -501,7 +527,7 @@ public class AccountBookController(
         }
         catch
         {
-            return Json(new { result = false, label = localizer["Amount"].Value });
+            return Json(new { result = false, label = _localizer["Amount"].Value });
         }
     }
 
@@ -509,16 +535,16 @@ public class AccountBookController(
 
     #region Update
 
-    /// <summary>Updates an existing income record.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.User)]
+    /// <summary>Updates an existing income record.</summary>
     public async Task<IActionResult> UpdateIncome([FromBody] IncomeInputViewModel incomeInputViewModel)
     {
         if (!ModelState.IsValid)
-            return Json(new { result = false, error = localizer["Input is invalid"].Value });
+            return Json(new { result = false, error = _localizer["Input is invalid"].Value });
 
-        var email = _sessionService.GetAccount()!.Email ?? string.Empty;
+        string email = _sessionService.GetAccount()!.Email;
 
         var request = new IncomeRequest
         {
@@ -532,63 +558,66 @@ public class AccountBookController(
             Note = incomeInputViewModel.Note
         };
 
-        var result = await incomeService.UpdateAsync(email, request);
+        var result = await _incomeService.UpdateAsync(email, request);
         return result.Success
-            ? Json(new { result = true, message = localizer["The income has been successfully updated."].Value })
-            : Json(new { result = false, error = localizer[result.ErrorKey].Value });
+            ? Json(new { result = true, message = _localizer["The income has been successfully updated."].Value })
+            : Json(new { result = false, error = _localizer[result.ErrorKey].Value });
     }
 
     #endregion
 
     #region Delete
 
-    /// <summary>Deletes an existing income record.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.User)]
+    /// <summary>Deletes an existing income record.</summary>
     public async Task<IActionResult> DeleteIncome([FromBody] IncomeInputViewModel incomeInputViewModel)
     {
-        var email = _sessionService.GetAccount()!.Email ?? string.Empty;
+        string email = _sessionService.GetAccount()!.Email;
 
-        var result = await incomeService.DeleteAsync(email, incomeInputViewModel.Id);
+        var result = await _incomeService.DeleteAsync(email, incomeInputViewModel.Id);
         return result.Success
-            ? Json(new { result = true, message = localizer["The income has been successfully deleted."].Value })
-            : Json(new { result = false, error = localizer[result.ErrorKey].Value });
+            ? Json(new { result = true, message = _localizer["The income has been successfully deleted."].Value })
+            : Json(new { result = false, error = _localizer[result.ErrorKey].Value });
     }
 
     #endregion
 
     #region Excel
 
-    /// <summary>Exports income records to an Excel file.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.User)]
+    /// <summary>Exports income records to an Excel file.</summary>
     public async Task<IActionResult> ExportExcelIncome(string fileName = "")
     {
         await Task.Yield();
 
+        List<IncomeOutputViewModel> incomeOutputViewModels = new List<IncomeOutputViewModel>();
+
         #region Incomes
 
-        var loginedAccountTimeZoneIanaId = _sessionService.GetAccount()!.TimeZoneIanaId ?? string.Empty;
+        string loginedAccountTimeZoneIanaId = _sessionService.GetAccount()!.TimeZoneIanaId;
 
-        var assets = await assetService.GetAssetsAsync(_sessionService.GetAccount()!.Email ?? string.Empty);
+        List<AssetResponse> assets = await _assetService.GetAssetsAsync(_sessionService.GetAccount()!.Email);
 
-        var incomeOutputViewModels = (await incomeService.GetIncomesAsync(_sessionService.GetAccount()!.Email ?? string.Empty)).Select(item => new IncomeOutputViewModel
+        foreach (IncomeResponse item in await _incomeService.GetIncomesAsync(_sessionService.GetAccount()!.Email))
+        {
+            incomeOutputViewModels.Add(new IncomeOutputViewModel()
             {
                 MainClass = item.MainClass,
                 SubClass = item.SubClass,
                 Content = item.Content,
                 Amount = Convert.ToDecimal(item.Amount.TrimTrailingZeros()),
-                MonetaryUnit = assets
-                    .FirstOrDefault(x => x.ProductName == item.DepositMyAssetProductName)
-                    ?.MonetaryUnit,
+                MonetaryUnit = assets.Where(x => x.ProductName == item.DepositMyAssetProductName).FirstOrDefault()
+                    .MonetaryUnit,
                 DepositMyAssetProductName = item.DepositMyAssetProductName,
                 Created = item.Created.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId),
                 Updated = item.Updated.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId),
                 Note = item.Note
-            })
-            .ToList();
+            });
+        }
 
         incomeOutputViewModels = incomeOutputViewModels.OrderByDescending(m => m.Created)
             .ThenByDescending(m => m.Updated).ToList();
@@ -604,12 +633,12 @@ public class AccountBookController(
             var sheets = workbookPart.Workbook.AppendChild(new Sheets());
 
             var worksheetPart = workbookPart.AddNewPart<WorksheetPart>();
-            var worksheet = new Worksheet();
-            var sheetData = new SheetData();
+            Worksheet worksheet = new Worksheet();
+            SheetData sheetData = new SheetData();
             worksheet.Append(sheetData);
             worksheetPart.Worksheet = worksheet;
 
-            var sheet = new Sheet()
+            Sheet sheet = new Sheet()
             {
                 Id = workbookPart.GetIdOfPart(worksheetPart),
                 SheetId = 1,
@@ -626,33 +655,33 @@ public class AccountBookController(
                 };
             }
 
-            var headerRow = new Row();
+            Row headerRow = new Row();
             headerRow.Append(
-                CreateCell(localizer[nameof(IncomeOutputViewModel.MainClass)].Value),
-                CreateCell(localizer[nameof(IncomeOutputViewModel.SubClass)].Value),
-                CreateCell(localizer[nameof(IncomeOutputViewModel.Content)].Value),
-                CreateCell(localizer[nameof(IncomeOutputViewModel.Amount)].Value),
-                CreateCell(localizer[nameof(IncomeOutputViewModel.MonetaryUnit)].Value),
-                CreateCell(localizer[nameof(IncomeOutputViewModel.DepositMyAssetProductName)].Value),
-                CreateCell(localizer[nameof(IncomeOutputViewModel.Created)].Value),
-                CreateCell(localizer[nameof(IncomeOutputViewModel.Updated)].Value),
-                CreateCell(localizer[nameof(IncomeOutputViewModel.Note)].Value)
+                CreateCell(_localizer[nameof(IncomeOutputViewModel.MainClass)].Value),
+                CreateCell(_localizer[nameof(IncomeOutputViewModel.SubClass)].Value),
+                CreateCell(_localizer[nameof(IncomeOutputViewModel.Content)].Value),
+                CreateCell(_localizer[nameof(IncomeOutputViewModel.Amount)].Value),
+                CreateCell(_localizer[nameof(IncomeOutputViewModel.MonetaryUnit)].Value),
+                CreateCell(_localizer[nameof(IncomeOutputViewModel.DepositMyAssetProductName)].Value),
+                CreateCell(_localizer[nameof(IncomeOutputViewModel.Created)].Value),
+                CreateCell(_localizer[nameof(IncomeOutputViewModel.Updated)].Value),
+                CreateCell(_localizer[nameof(IncomeOutputViewModel.Note)].Value)
             );
             sheetData.Append(headerRow);
 
             foreach (var item in incomeOutputViewModels)
             {
-                var dataRow = new Row();
+                Row dataRow = new Row();
                 dataRow.Append(
-                    CreateCell(localizer[item?.MainClass ?? ""].Value),
-                    CreateCell(localizer[item?.SubClass ?? ""].Value),
-                    CreateCell(item?.Content),
-                    CreateCell(Convert.ToDecimal(item?.Amount.TrimTrailingZeros()).ToString(CultureInfo.InvariantCulture)),
-                    CreateCell(item?.MonetaryUnit),
-                    CreateCell(item?.DepositMyAssetProductName),
-                    CreateCell(item?.Created.ToString(CultureInfo.InvariantCulture)),
-                    CreateCell(item?.Updated.ToString(CultureInfo.InvariantCulture)),
-                    CreateCell(item?.Note)
+                    CreateCell(_localizer[item?.MainClass?.ToString() ?? ""].Value),
+                    CreateCell(_localizer[item?.SubClass?.ToString() ?? ""].Value),
+                    CreateCell(item.Content),
+                    CreateCell(Convert.ToDecimal(item.Amount.TrimTrailingZeros()).ToString()),
+                    CreateCell(item.MonetaryUnit),
+                    CreateCell(item.DepositMyAssetProductName),
+                    CreateCell(item.Created.ToString()),
+                    CreateCell(item.Updated.ToString()),
+                    CreateCell(item.Note)
                 );
                 sheetData.Append(dataRow);
             }
@@ -661,7 +690,7 @@ public class AccountBookController(
         }
 
         stream.Position = 0;
-        var excelName =
+        string excelName =
             $"{fileName}-{DateTime.UtcNow.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId):yyyy-MM-dd-HH-mm-ss-fff}.xlsx";
 
         return File(stream, "application/octet-stream", excelName);
@@ -673,17 +702,17 @@ public class AccountBookController(
 
     #region Expenditure
 
-    /// <summary>Creates a new expenditure transaction.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.User)]
+    /// <summary>Creates a new expenditure transaction.</summary>
     public async Task<IActionResult> CreateExpenditure(
         [FromBody] ExpenditureInputViewModel expenditureInputViewModel)
     {
         if (!ModelState.IsValid)
-            return Json(new { result = false, error = localizer["Input is invalid"].Value });
+            return Json(new { result = false, error = _localizer["Input is invalid"].Value });
 
-        var email = _sessionService.GetAccount()!.Email ?? string.Empty;
+        string email = _sessionService.GetAccount()!.Email;
 
         var request = new ExpenditureRequest
         {
@@ -697,62 +726,96 @@ public class AccountBookController(
             Note = expenditureInputViewModel.Note ?? ""
         };
 
-        var result = await expenditureService.CreateAsync(email, request);
+        var result = await _expenditureService.CreateAsync(email, request);
         return result.Success
-            ? Json(new { result = true, message = localizer["The expenditure has been successfully created."].Value })
-            : Json(new { result = false, error = localizer[result.ErrorKey].Value });
+            ? Json(new { result = true, message = _localizer["The expenditure has been successfully created."].Value })
+            : Json(new { result = false, error = _localizer[result.ErrorKey].Value });
     }
 
     #region Read
 
-    /// <summary>Returns the expenditure grid (AJAX) or the full expenditure page.</summary>
     [HttpGet]
+    /// <summary>Returns the expenditure grid (AJAX) or the full expenditure page.</summary>
     public async Task<IActionResult> Expenditure(string wholeSearch)
     {
-#pragma warning disable ASP0015
         if (HttpContext.Request.Headers["X-Requested-With"] == "XMLHttpRequest") // ajax
-#pragma warning restore ASP0015
         {
             List<ExpenditureOutputViewModel> expenditureOutputViewModels = [];
 
             #region Expenditures
 
-            var loginedAccountTimeZoneIanaId = _sessionService.GetAccount()!.TimeZoneIanaId ?? string.Empty;
+            string loginedAccountTimeZoneIanaId = _sessionService.GetAccount()!.TimeZoneIanaId;
 
-            var assets = await assetService.GetAssetsAsync(_sessionService.GetAccount()!.Email ?? string.Empty);
+            List<AssetResponse> assets = await _assetService.GetAssetsAsync(_sessionService.GetAccount()!.Email);
 
-            expenditureOutputViewModels.AddRange(from item in await expenditureService.GetExpendituresAsync(_sessionService.GetAccount()!.Email ?? string.Empty)
-                where string.IsNullOrEmpty(wholeSearch) || localizer[item.MainClass ?? ""].Value.Contains(wholeSearch) || localizer[item.SubClass ?? ""].Value.Contains(wholeSearch) || (item.Content ?? "").Contains(wholeSearch) || (item.Amount.TrimTrailingZeros()).Contains(wholeSearch) || (assets.FirstOrDefault(x => x.ProductName == item.PaymentMethod)
-                    ?.MonetaryUnit?.ToString() ?? "").Contains(wholeSearch) || (item.PaymentMethod ?? "").Contains(wholeSearch) || (item.Note ?? "").Contains(wholeSearch) || (item.MyDepositAsset ?? "").Contains(wholeSearch) || (item.Created.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId).ToString(CultureInfo.InvariantCulture)).Contains(wholeSearch) || (item.Updated.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId).ToString(CultureInfo.InvariantCulture)).Contains(wholeSearch)
-                select new ExpenditureOutputViewModel
+            foreach (ExpenditureResponse item in await _expenditureService.GetExpendituresAsync(_sessionService.GetAccount()!.Email))
+            {
+                if (string.IsNullOrEmpty(wholeSearch))
                 {
-                    Id = item.Id,
-                    MainClass = localizer[item.MainClass ?? string.Empty].Value,
-                    SubClass = localizer[item.SubClass ?? string.Empty].Value,
-                    Content = item.Content,
-                    Amount = Convert.ToDecimal(item.Amount.TrimTrailingZeros()),
-                    MonetaryUnit = assets.FirstOrDefault(x => x.ProductName == item.PaymentMethod)
-                        ?.MonetaryUnit,
-                    PaymentMethod = item.PaymentMethod,
-                    Note = item.Note,
-                    MyDepositAsset = item.MyDepositAsset,
-                    Created = item.Created.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId),
-                    Updated = item.Updated.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId)
-                });
+                    expenditureOutputViewModels.Add(new ExpenditureOutputViewModel()
+                    {
+                        Id = item.Id,
+                        MainClass = _localizer[item.MainClass.ToString()].Value,
+                        SubClass = _localizer[item.SubClass.ToString()].Value,
+                        Content = item.Content,
+                        Amount = Convert.ToDecimal(item.Amount.TrimTrailingZeros()),
+                        MonetaryUnit = assets.Where(x => x.ProductName == item.PaymentMethod).FirstOrDefault()
+                            .MonetaryUnit,
+                        PaymentMethod = item.PaymentMethod,
+                        Note = item.Note,
+                        MyDepositAsset = item.MyDepositAsset,
+                        Created = item.Created.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId),
+                        Updated = item.Updated.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId)
+                    });
+                }
+                else
+                {
+                    if (_localizer[item.MainClass?.ToString() ?? ""].Value.Contains(wholeSearch) ||
+                        _localizer[item.SubClass?.ToString() ?? ""].Value.Contains(wholeSearch) ||
+                        (item.Content?.ToString() ?? "").Contains(wholeSearch) ||
+                        (item.Amount.TrimTrailingZeros() ?? "").Contains(wholeSearch) ||
+                        (assets.Where(x => x.ProductName == item.PaymentMethod).FirstOrDefault().MonetaryUnit
+                            .ToString() ?? "").Contains(wholeSearch) ||
+                        (item.PaymentMethod?.ToString() ?? "").Contains(wholeSearch) ||
+                        (item.Note?.ToString() ?? "").Contains(wholeSearch) ||
+                        (item.MyDepositAsset?.ToString() ?? "").Contains(wholeSearch) ||
+                        (item.Created.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId).ToString() ?? "")
+                        .Contains(wholeSearch) ||
+                        (item.Updated.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId).ToString() ?? "")
+                        .Contains(wholeSearch))
+                    {
+                        expenditureOutputViewModels.Add(new ExpenditureOutputViewModel()
+                        {
+                            Id = item.Id,
+                            MainClass = _localizer[item.MainClass.ToString()].Value,
+                            SubClass = _localizer[item.SubClass.ToString()].Value,
+                            Content = item.Content,
+                            Amount = Convert.ToDecimal(item.Amount.TrimTrailingZeros()),
+                            MonetaryUnit = assets.Where(x => x.ProductName == item.PaymentMethod).FirstOrDefault()
+                                .MonetaryUnit,
+                            PaymentMethod = item.PaymentMethod,
+                            Note = item.Note,
+                            MyDepositAsset = item.MyDepositAsset,
+                            Created = item.Created.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId),
+                            Updated = item.Updated.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId)
+                        });
+                    }
+                }
+            }
 
             #endregion
 
-            var result = expenditureOutputViewModels
+            IQueryable<ExpenditureOutputViewModel> result = expenditureOutputViewModels
                 .OrderByDescending(m => m.Created).ThenByDescending(m => m.Updated).AsQueryable();
             return PartialView("_ExpenditureGrid", result);
         }
 
         {
-            var loginedAccount = _sessionService.GetAccount() ?? new AccountResponse();
-            var tz = loginedAccount.TimeZoneIanaId ?? "UTC";
-            var assets = (await assetService.GetAssetsAsync(loginedAccount.Email ?? string.Empty))
+            AccountResponse loginedAccount = _sessionService.GetAccount() ?? new AccountResponse();
+            string tz = loginedAccount.TimeZoneIanaId ?? "UTC";
+            List<AssetResponse> assets = (await _assetService.GetAssetsAsync(loginedAccount.Email))
                 .Where(x => !x.Deleted).OrderBy(x => x.ProductName).ToList();
-            var ct = DateTime.UtcNow.ConvertTimeByTimeZoneIanaId(tz);
+            DateTime ct = DateTime.UtcNow.ConvertTimeByTimeZoneIanaId(tz);
             ViewBag.Assets = assets;
             ViewBag.CurrentDate = ct.ToString("yyyy-MM-dd");
             ViewBag.CurrentHour = ct.Hour;
@@ -762,49 +825,57 @@ public class AccountBookController(
         return View();
     }
 
-    /// <summary>Checks whether an expenditure record with the given ID exists.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.User)]
+    /// <summary>Checks whether an expenditure record with the given ID exists.</summary>
     public async Task<IActionResult> IsExpenditureExists(int id)
     {
         try
         {
-            var loginedAccountTimeZoneIanaId = _sessionService.GetAccount()!.TimeZoneIanaId ?? string.Empty;
-            var tempExpenditures =
-                await expenditureService.GetExpendituresAsync(_sessionService.GetAccount()!.Email ?? string.Empty);
+            string loginedAccountTimeZoneIanaId = _sessionService.GetAccount()!.TimeZoneIanaId;
+            List<ExpenditureResponse> tempExpenditures =
+                await _expenditureService.GetExpendituresAsync(_sessionService.GetAccount()!.Email);
 
+            if (tempExpenditures == null)
             {
-                var tempExpenditure = tempExpenditures.FirstOrDefault(a => a.Id == id);
+                return Json(new { result = false, error = _localizer["No expenditure exists"].Value });
+            }
+            else
+            {
+                ExpenditureResponse tempExpenditure = tempExpenditures.Where(a => a.Id == id).FirstOrDefault();
 
                 if (tempExpenditure == null)
                 {
-                    return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                    return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                 }
-
-                tempExpenditure.Created =
-                    tempExpenditure.Created.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId);
-                return Json(new { result = true, expenditure = tempExpenditure });
+                else
+                {
+                    tempExpenditure.Created =
+                        tempExpenditure.Created.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId);
+                    return Json(new { result = true, expenditure = tempExpenditure });
+                }
             }
         }
         catch
         {
-            return Json(new { result = false, error = localizer["Input is invalid"].Value });
+            return Json(new { result = false, error = _localizer["Input is invalid"].Value });
         }
     }
 
-    /// <summary>Returns a formatted amount label for the given expenditure product.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.User)]
+    /// <summary>Returns a formatted amount label for the given expenditure product.</summary>
     public async Task<IActionResult> GetExpenditureAmountLabel(string productName)
     {
         try
         {
-            var label = localizer["Amount"].Value;
+            string label = _localizer["Amount"].Value;
 
-            var asset =
-                (await assetService.GetAssetsAsync(_sessionService.GetAccount()!.Email ?? string.Empty)).Where(x => !x.Deleted).FirstOrDefault(x => x.ProductName == productName) ?? new AssetResponse();
+            AssetResponse asset =
+                (await _assetService.GetAssetsAsync(_sessionService.GetAccount()!.Email))
+                .Where(x => !x.Deleted).Where(x => x.ProductName == productName).FirstOrDefault() ?? new AssetResponse();
 
             if (!string.IsNullOrEmpty(asset.MonetaryUnit))
             {
@@ -815,23 +886,23 @@ public class AccountBookController(
         }
         catch
         {
-            return Json(new { result = false, label = localizer["Amount"].Value });
+            return Json(new { result = false, label = _localizer["Amount"].Value });
         }
     }
 
     #endregion
 
-    /// <summary>Updates an existing expenditure record.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.User)]
+    /// <summary>Updates an existing expenditure record.</summary>
     public async Task<IActionResult> UpdateExpenditure(
         [FromBody] ExpenditureInputViewModel expenditureInputViewModel)
     {
         if (!ModelState.IsValid)
-            return Json(new { result = false, error = localizer["Input is invalid"].Value });
+            return Json(new { result = false, error = _localizer["Input is invalid"].Value });
 
-        var email = _sessionService.GetAccount()!.Email ?? string.Empty;
+        string email = _sessionService.GetAccount()!.Email;
 
         var request = new ExpenditureRequest
         {
@@ -846,57 +917,61 @@ public class AccountBookController(
             Note = expenditureInputViewModel.Note ?? ""
         };
 
-        var result = await expenditureService.UpdateAsync(email, request);
+        var result = await _expenditureService.UpdateAsync(email, request);
         return result.Success
-            ? Json(new { result = true, message = localizer["The expenditure has been successfully updated."].Value })
-            : Json(new { result = false, error = localizer[result.ErrorKey].Value });
+            ? Json(new { result = true, message = _localizer["The expenditure has been successfully updated."].Value })
+            : Json(new { result = false, error = _localizer[result.ErrorKey].Value });
     }
 
-    /// <summary>Deletes an existing expenditure record.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.User)]
+    /// <summary>Deletes an existing expenditure record.</summary>
     public async Task<IActionResult> DeleteExpenditure(
         [FromBody] ExpenditureInputViewModel expenditureInputViewModel)
     {
-        var email = _sessionService.GetAccount()!.Email ?? string.Empty;
+        string email = _sessionService.GetAccount()!.Email;
 
-        var result = await expenditureService.DeleteAsync(email, expenditureInputViewModel.Id);
+        var result = await _expenditureService.DeleteAsync(email, expenditureInputViewModel.Id);
         return result.Success
-            ? Json(new { result = true, message = localizer["The expenditure has been successfully deleted."].Value })
-            : Json(new { result = false, error = localizer[result.ErrorKey].Value });
+            ? Json(new { result = true, message = _localizer["The expenditure has been successfully deleted."].Value })
+            : Json(new { result = false, error = _localizer[result.ErrorKey].Value });
     }
 
     #region Excel
 
-    /// <summary>Exports expenditure records to an Excel file.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.User)]
+    /// <summary>Exports expenditure records to an Excel file.</summary>
     public async Task<IActionResult> ExportExcelExpenditure(string fileName = "")
     {
         await Task.Yield();
 
+        List<ExpenditureOutputViewModel> expenditureOutputViewModels = new List<ExpenditureOutputViewModel>();
+
         #region Expenditures
 
-        var loginedAccountTimeZoneIanaId = _sessionService.GetAccount()!.TimeZoneIanaId ?? string.Empty;
+        string loginedAccountTimeZoneIanaId = _sessionService.GetAccount()!.TimeZoneIanaId;
 
-        var assets = await assetService.GetAssetsAsync(_sessionService.GetAccount()!.Email ?? string.Empty);
+        List<AssetResponse> assets = await _assetService.GetAssetsAsync(_sessionService.GetAccount()!.Email);
 
-        var expenditureOutputViewModels = (await expenditureService.GetExpendituresAsync(_sessionService.GetAccount()!.Email ?? string.Empty)).Select(item => new ExpenditureOutputViewModel
+        foreach (ExpenditureResponse item in await _expenditureService.GetExpendituresAsync(_sessionService.GetAccount()!.Email))
+        {
+            expenditureOutputViewModels.Add(new ExpenditureOutputViewModel()
             {
-                MainClass = localizer[item?.MainClass ?? string.Empty].Value,
-                SubClass = localizer[item?.SubClass ?? string.Empty].Value,
-                Content = item?.Content,
-                Amount = Convert.ToDecimal(item?.Amount.TrimTrailingZeros()),
-                MonetaryUnit = assets.FirstOrDefault(x => x.ProductName == item?.PaymentMethod)?.MonetaryUnit,
-                PaymentMethod = item?.PaymentMethod,
-                Note = item?.Note,
-                MyDepositAsset = item?.MyDepositAsset,
-                Created = item!.Created.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId),
-                Updated = item!.Updated.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId)
-            })
-            .ToList();
+                MainClass = _localizer[item.MainClass.ToString()].Value,
+                SubClass = _localizer[item.SubClass.ToString()].Value,
+                Content = item.Content,
+                Amount = Convert.ToDecimal(item.Amount.TrimTrailingZeros()),
+                MonetaryUnit = assets.Where(x => x.ProductName == item.PaymentMethod).FirstOrDefault().MonetaryUnit,
+                PaymentMethod = item.PaymentMethod,
+                Note = item.Note,
+                MyDepositAsset = item.MyDepositAsset,
+                Created = item.Created.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId),
+                Updated = item.Updated.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId)
+            });
+        }
 
         expenditureOutputViewModels = expenditureOutputViewModels.OrderByDescending(m => m.Created)
             .ThenByDescending(m => m.Updated).ToList();
@@ -912,12 +987,12 @@ public class AccountBookController(
             var sheets = workbookPart.Workbook.AppendChild(new Sheets());
 
             var worksheetPart = workbookPart.AddNewPart<WorksheetPart>();
-            var worksheet = new Worksheet();
-            var sheetData = new SheetData();
+            Worksheet worksheet = new Worksheet();
+            SheetData sheetData = new SheetData();
             worksheet.Append(sheetData);
             worksheetPart.Worksheet = worksheet;
 
-            var sheet = new Sheet()
+            Sheet sheet = new Sheet()
             {
                 Id = workbookPart.GetIdOfPart(worksheetPart),
                 SheetId = 1,
@@ -934,35 +1009,35 @@ public class AccountBookController(
                 };
             }
 
-            var headerRow = new Row();
+            Row headerRow = new Row();
             headerRow.Append(
-                CreateCell(localizer[nameof(ExpenditureOutputViewModel.MainClass)].Value),
-                CreateCell(localizer[nameof(ExpenditureOutputViewModel.SubClass)].Value),
-                CreateCell(localizer[nameof(ExpenditureOutputViewModel.Content)].Value),
-                CreateCell(localizer[nameof(ExpenditureOutputViewModel.Amount)].Value),
-                CreateCell(localizer[nameof(ExpenditureOutputViewModel.MonetaryUnit)].Value),
-                CreateCell(localizer[nameof(ExpenditureOutputViewModel.PaymentMethod)].Value),
-                CreateCell(localizer[nameof(ExpenditureOutputViewModel.Note)].Value),
-                CreateCell(localizer[nameof(ExpenditureOutputViewModel.MyDepositAsset)].Value),
-                CreateCell(localizer[nameof(ExpenditureOutputViewModel.Created)].Value),
-                CreateCell(localizer[nameof(ExpenditureOutputViewModel.Updated)].Value)
+                CreateCell(_localizer[nameof(ExpenditureOutputViewModel.MainClass)].Value),
+                CreateCell(_localizer[nameof(ExpenditureOutputViewModel.SubClass)].Value),
+                CreateCell(_localizer[nameof(ExpenditureOutputViewModel.Content)].Value),
+                CreateCell(_localizer[nameof(ExpenditureOutputViewModel.Amount)].Value),
+                CreateCell(_localizer[nameof(ExpenditureOutputViewModel.MonetaryUnit)].Value),
+                CreateCell(_localizer[nameof(ExpenditureOutputViewModel.PaymentMethod)].Value),
+                CreateCell(_localizer[nameof(ExpenditureOutputViewModel.Note)].Value),
+                CreateCell(_localizer[nameof(ExpenditureOutputViewModel.MyDepositAsset)].Value),
+                CreateCell(_localizer[nameof(ExpenditureOutputViewModel.Created)].Value),
+                CreateCell(_localizer[nameof(ExpenditureOutputViewModel.Updated)].Value)
             );
             sheetData.Append(headerRow);
 
             foreach (var item in expenditureOutputViewModels)
             {
-                var dataRow = new Row();
+                Row dataRow = new Row();
                 dataRow.Append(
-                    CreateCell(localizer[item?.MainClass ?? ""].Value),
-                    CreateCell(localizer[item?.SubClass ?? ""].Value),
-                    CreateCell(item?.Content),
-                    CreateCell(Convert.ToDecimal(item?.Amount.TrimTrailingZeros()).ToString(CultureInfo.InvariantCulture)),
-                    CreateCell(item?.MonetaryUnit),
-                    CreateCell(item?.PaymentMethod),
-                    CreateCell(item?.Note),
-                    CreateCell(item?.MyDepositAsset),
-                    CreateCell(item?.Created.ToString(CultureInfo.InvariantCulture)),
-                    CreateCell(item?.Updated.ToString(CultureInfo.InvariantCulture))
+                    CreateCell(_localizer[item?.MainClass?.ToString() ?? ""].Value),
+                    CreateCell(_localizer[item?.SubClass?.ToString() ?? ""].Value),
+                    CreateCell(item.Content),
+                    CreateCell(Convert.ToDecimal(item.Amount.TrimTrailingZeros()).ToString()),
+                    CreateCell(item.MonetaryUnit),
+                    CreateCell(item.PaymentMethod),
+                    CreateCell(item.Note),
+                    CreateCell(item.MyDepositAsset),
+                    CreateCell(item.Created.ToString()),
+                    CreateCell(item.Updated.ToString())
                 );
                 sheetData.Append(dataRow);
             }
@@ -971,7 +1046,7 @@ public class AccountBookController(
         }
 
         stream.Position = 0;
-        var excelName =
+        string excelName =
             $"{fileName}-{DateTime.UtcNow.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId):yyyy-MM-dd-HH-mm-ss-fff}.xlsx";
 
         return File(stream, "application/octet-stream", excelName);

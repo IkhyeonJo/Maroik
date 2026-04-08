@@ -21,10 +21,10 @@
                 <a asp-controller="DashBoard" asp-action="AnonymousIndex" class="h1"><b>Maroik</b></a>
             </div>
             <div class="card-body">
-                <p class="login-box-msg"><font style="font-weight:bold" color="black">@Localizer["You have already verified your email"]</font></p>
+                <p class="login-box-msg"><font style="font-weight:bold" color="black">@localizer["You have already verified your email"]</font></p>
                 <div class="social-auth-links text-center mt-2 mb-3">
                     <a asp-controller="Account" asp-action="Login" class="btn btn-block btn-primary">
-                        <i class="fas fa-sign-in-alt" style="padding-right:3px;"></i>@Localizer["Back To Login Page"]
+                        <i class="fas fa-sign-in-alt" style="padding-right:3px;"></i>@localizer["Back To Login Page"]
                     </a>
                 </div>
             </div>
@@ -39,10 +39,10 @@ else if (invalidToken == false && accountCreated == true) // 1. Account created 
                 <a asp-controller="DashBoard" asp-action="AnonymousIndex" class="h1"><b>Maroik</b></a>
             </div>
             <div class="card-body">
-                <p class="login-box-msg"><font style="font-weight:bold" color="green">@Localizer["Your account has been successfully created"]</font></p>
+                <p class="login-box-msg"><font style="font-weight:bold" color="green">@localizer["Your account has been successfully created"]</font></p>
                 <div class="social-auth-links text-center mt-2 mb-3">
                     <a asp-controller="Account" asp-action="Login" class="btn btn-block btn-primary">
-                        <i class="fas fa-sign-in-alt" style="padding-right:3px;"></i>@Localizer["Back To Login Page"]
+                        <i class="fas fa-sign-in-alt" style="padding-right:3px;"></i>@localizer["Back To Login Page"]
                     </a>
                 </div>
             </div>
@@ -57,26 +57,26 @@ else if (invalidToken == true && accountCreated == false) // 1. Invalid confirma
                 <a asp-controller="DashBoard" asp-action="AnonymousIndex" class="h1"><b>Maroik</b></a>
             </div>
             <div class="card-body">
-                <p class="login-box-msg"><font style="font-weight:bold" color="red">@Localizer["The authentication token is invalid."]</font></p>
+                <p class="login-box-msg"><font style="font-weight:bold" color="red">@localizer["The authentication token is invalid."]</font></p>
                 <div class="social-auth-links text-center mt-2 mb-3">
                     <p class="mb-0">
                         <font style="font-weight:bold" color="black">
-                            @Localizer["The validity period of the authentication token may have expired or membership registration may have already been completed."]
+                            @localizer["The validity period of the authentication token may have expired or membership registration may have already been completed."]
                             <br />
                             <br />
-                            @Localizer["If you have not registered as a member,"]
+                            @localizer["If you have not registered as a member,"]
                             <br />
-                            @Localizer["please try signing up again."]
+                            @localizer["please try signing up again."]
                             <br />
                             <br />
-                            @Localizer["If the problem persists,"]
+                            @localizer["If the problem persists,"]
                             <br />
-                            @Localizer["please contact your"] <a href="mailto:admin@maroik.com">@Localizer["administrator"]</a>.
+                            @localizer["please contact your"] <a href="mailto:admin@maroik.com">@localizer["administrator"]</a>.
                         </font>
                     </p>
                     <br />
                     <a asp-controller="Account" asp-action="Login" class="btn btn-block btn-primary">
-                        <i class="fas fa-sign-in-alt" style="padding-right:3px;"></i>@Localizer["Back To Login Page"]
+                        <i class="fas fa-sign-in-alt" style="padding-right:3px;"></i>@localizer["Back To Login Page"]
                     </a>
                 </div>
             </div>
@@ -91,14 +91,14 @@ else if (invalidToken == true && accountCreated == true) // 1. (This should not 
                 <a asp-controller="DashBoard" asp-action="AnonymousIndex" class="h1"><b>Maroik</b></a>
             </div>
             <div class="card-body">
-                <p class="login-box-msg"><font style="font-weight:bold" color="red">@Localizer["Exception!!"]</font></p>
+                <p class="login-box-msg"><font style="font-weight:bold" color="red">@localizer["Exception!!"]</font></p>
                 <div class="social-auth-links text-center mt-2 mb-3">
                     <p class="mb-0">
                         <font style="font-weight:bold" color="red">@error</font>
                     </p>
                     <br />
                     <a asp-controller="Account" asp-action="Login" class="btn btn-block btn-primary">
-                        <i class="fas fa-sign-in-alt" style="padding-right:3px;"></i>@Localizer["Back To Login Page"]
+                        <i class="fas fa-sign-in-alt" style="padding-right:3px;"></i>@localizer["Back To Login Page"]
                     </a>
                 </div>
             </div>

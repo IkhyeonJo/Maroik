@@ -23,7 +23,7 @@
                         <div class="text-center">
                             <img class="profile-user-img img-fluid img-circle"
                                  src="@Model.AvatarImagePath"
-                                 alt="@Localizer["User profile picture"]">
+                                 alt="@localizer["User profile picture"]">
                         </div>
                         <h3 class="profile-username text-center">@Model.Nickname</h3>
                         @*<p class="text-muted text-center">Software Engineer</p>*@
@@ -43,7 +43,7 @@
                         *@
                         <ul class="list-group list-group-unbordered mb-3">
                             <li class="list-group-item">
-                                <b>@Localizer["Create"]</b> <font class="float-right">@Model.Created.ToString("d")</font>
+                                <b>@localizer["Create"]</b> <font class="float-right">@Model.Created.ToString("d")</font>
                             </li>
                         </ul>
                     </div>
@@ -101,7 +101,7 @@
                                 <li class="nav-item"><a class="nav-link" href="#timeline" data-toggle="tab">Timeline</a></li>
                                 <li class="nav-item"><a class="nav-link" href="#settings" data-toggle="tab">Settings</a></li>
                             *@
-                            <li class="nav-item"><a class="nav-link active" href="#settings" data-toggle="tab">@Localizer["Settings"]</a></li>
+                            <li class="nav-item"><a class="nav-link active" href="#settings" data-toggle="tab">@localizer["Settings"]</a></li>
                         </ul>
                     </div>
                     <div class="card-body">
@@ -362,7 +362,7 @@
                                                 <div class="card-header">
                                                     <h3 class="card-title">
                                                         <i class="fas fa-user-circle fa-lg"></i>
-                                                        @Localizer["Avatar Image"]
+                                                        @localizer["Avatar Image"]
                                                     </h3>
                                                 </div>
                                                 <div class="card-body pad table-responsive">
@@ -371,7 +371,7 @@
                                                         <div class="col-lg-4">
                                                             <div class="row" style="padding-bottom: 10px;">
                                                                 <div class="col-lg-12">
-                                                                    <img class="profile-user-img img-responsive img-circle" src="@Model.AvatarImagePath" alt="@Localizer["Profile picture"]">
+                                                                    <img class="profile-user-img img-responsive img-circle" src="@Model.AvatarImagePath" alt="@localizer["Profile picture"]">
                                                                 </div>
                                                             </div>
 
@@ -383,8 +383,8 @@
                                                                                 <form id="formUpdateProfileAvatar" method="POST" enctype="multipart/form-data">
                                                                                     <div class="form-group">
                                                                                         <div class="btn btn-default btn-file">
-                                                                                            <i class="fas fa-paperclip" style="padding-right: 3px;"></i>&nbsp;&nbsp;&nbsp;@Localizer["Browse"]
-                                                                                            <input type="file" name="ProfileAvatarFiles" id="ProfileAvatarFiles" data-noFileAttachedErrorMessage="@Localizer["Please attach a file."]" data-fileSizeLimitationErrorMessage="@Localizer["File Size must be smaller than 10MB."]" data-fileTypeErrorMessage="@Localizer["Only .jpg or jpeg or .png file allowed."]" accept="image/png, image/jpg, image/jpeg">
+                                                                                            <i class="fas fa-paperclip" style="padding-right: 3px;"></i>&nbsp;&nbsp;&nbsp;@localizer["Browse"]
+                                                                                            <input type="file" name="ProfileAvatarFiles" id="ProfileAvatarFiles" data-noFileAttachedErrorMessage="@localizer["Please attach a file."]" data-fileSizeLimitationErrorMessage="@localizer["File Size must be smaller than 10MB."]" data-fileTypeErrorMessage="@localizer["Only .jpg or jpeg or .png file allowed."]" accept="image/png, image/jpg, image/jpeg">
                                                                                         </div>
                                                                                     </div>
                                                                                 </form>
@@ -397,11 +397,11 @@
 
                                                         <div class="col-lg-8">
                                                             <div class="form-group">
-                                                                <div class="col-lg-3">@Localizer["Email"]</div>
+                                                                <div class="col-lg-3">@localizer["Email"]</div>
                                                                 <div class="col-lg-9"><input class="form-control" value="@Model.Email" disabled /></div>
                                                             </div>
                                                             <div class="form-group">
-                                                                <div class="col-lg-3">@Localizer["Nickname"]</div>
+                                                                <div class="col-lg-3">@localizer["Nickname"]</div>
                                                                 <div class="col-lg-9"><input class="form-control" value="@Model.Nickname" disabled /></div>
                                                             </div>
                                                         </div>
@@ -417,35 +417,35 @@
                                                 <div class="card-header">
                                                     <h3 class="card-title">
                                                         <i class="fas fa-key"></i>
-                                                        @Localizer["Change Password"]
+                                                        @localizer["Change Password"]
                                                     </h3>
                                                 </div>
                                                 <div class="card-body pad table-responsive">
                                                     <form id="formUpdateProfilePassword" class="form-horizontal" method="post">
                                                         <div class="form-group row">
-                                                            <label asp-for="Password" class="col-sm-2 col-form-label">@Localizer["Password"]</label>
+                                                            <label asp-for="Password" class="col-sm-2 col-form-label">@localizer["Password"]</label>
                                                             <div class="col-sm-10">
-                                                                <input asp-for="Password" type="password" class="form-control" placeholder="@Localizer["Password"]" />
+                                                                <input asp-for="Password" type="password" class="form-control" placeholder="@localizer["Password"]" />
                                                                 <span asp-validation-for="Password" class="text-danger"></span>
                                                             </div>
                                                         </div>
                                                         <div class="form-group row">
-                                                            <label asp-for="NewPassword" class="col-sm-2 col-form-label">@Localizer["New Password"]</label>
+                                                            <label asp-for="NewPassword" class="col-sm-2 col-form-label">@localizer["New Password"]</label>
                                                             <div class="col-sm-10">
-                                                                <input asp-for="NewPassword" type="password" class="form-control" placeholder="@Localizer["New Password"]" />
+                                                                <input asp-for="NewPassword" type="password" class="form-control" placeholder="@localizer["New Password"]" />
                                                                 <span asp-validation-for="NewPassword" class="text-danger"></span>
                                                             </div>
                                                         </div>
                                                         <div class="form-group row">
-                                                            <label asp-for="ConfirmNewPassword" class="col-sm-2 col-form-label">@Localizer["Confirm new password"]</label>
+                                                            <label asp-for="ConfirmNewPassword" class="col-sm-2 col-form-label">@localizer["Confirm new password"]</label>
                                                             <div class="col-sm-10">
-                                                                <input asp-for="ConfirmNewPassword" type="password" class="form-control" placeholder="@Localizer["Confirm new password"]" />
+                                                                <input asp-for="ConfirmNewPassword" type="password" class="form-control" placeholder="@localizer["Confirm new password"]" />
                                                                 <span asp-validation-for="ConfirmNewPassword" class="text-danger"></span>
                                                             </div>
                                                         </div>
                                                         <div class="form-group row">
                                                             <div class="offset-sm-2 col-sm-10">
-                                                                <button type="submit" class="btn btn-danger">@Localizer["Modify"]</button>
+                                                                <button type="submit" class="btn btn-danger">@localizer["Modify"]</button>
                                                             </div>
                                                         </div>
                                                     </form>
@@ -460,13 +460,13 @@
                                                 <div class="card-header">
                                                     <h3 class="card-title">
                                                         <i class="fas fa-clock"></i>
-                                                        @Localizer["Time zone"] 
+                                                        @localizer["Time zone"] 
                                                     </h3>
                                                 </div>
                                                 <div class="card-body pad table-responsive">
                                                     <form id="formUpdateProfileTimeZone" class="form-horizontal" method="post" asp-controller="Management" asp-action="UpdateProfileTimeZone">
                                                         <div class="form-group row">
-                                                            <label asp-for="TimeZoneIanaId" class="col-sm-2 col-form-label">@Localizer["Time zone"]</label>
+                                                            <label asp-for="TimeZoneIanaId" class="col-sm-2 col-form-label">@localizer["Time zone"]</label>
                                                             <div class="col-sm-10">
                                                                 <select asp-for="TimeZoneIanaId" class="form-control" style="max-width:100%;text-overflow:ellipsis;">
                                                                     @foreach (TimeZoneInfo systemTimeZone in TimeZoneInfo.GetSystemTimeZones())
@@ -493,7 +493,7 @@
                                                         </div>
                                                         <div class="form-group row">
                                                             <div class="offset-sm-2 col-sm-10">
-                                                                <button type="submit" class="btn btn-danger">@Localizer["Modify"]</button>
+                                                                <button type="submit" class="btn btn-danger">@localizer["Modify"]</button>
                                                             </div>
                                                         </div>
                                                     </form>

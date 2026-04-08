@@ -1,34 +1,53 @@
-using Maroik.Core.Contract.Interfaces;
+﻿using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Contract.Utilities;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Localization;
 using Microsoft.Extensions.Options;
 
 namespace Maroik.WebSite.Controllers;
 
 /// <summary>Serves the file-drive index views for each role (Admin / User / Anonymous).</summary>
-public class DriveController(
-    IAccountService accountService,
-    IDashboardService dashboardService,
-    IOptions<ServerSetting> serverSettings,
-    ISessionService sessionService)
-    : BaseController(accountService, dashboardService, serverSettings, sessionService)
+public class DriveController : BaseController
 {
+    private readonly IHtmlLocalizer<DriveController> _localizer;
+    private readonly ILogger<DriveController> _logger;
+
+    public DriveController(
+        IHtmlLocalizer<DriveController> localizer,
+        ILogger<DriveController> logger,
+        IAccountService accountService,
+        IDashboardService dashboardService,
+        IOptions<ServerSetting> serverSettings,
+        ISessionService sessionService)
+        : base(accountService, dashboardService, serverSettings, sessionService)
+    {
+        _localizer = localizer;
+        _logger = logger;
+    }
+
     #region Drive
 
     #region Read
-
+    [HttpGet]
     /// <summary>Returns the admin drive view.</summary>
-    [HttpGet]
-    public IActionResult AdminIndex() => View();
+    public IActionResult AdminIndex()
+    {
+        return View();
+    }
 
+    [HttpGet]
     /// <summary>Returns the user drive view.</summary>
-    [HttpGet]
-    public IActionResult UserIndex() => View();
+    public IActionResult UserIndex()
+    {
+        return View();
+    }
 
+    [HttpGet]
     /// <summary>Returns the anonymous drive view.</summary>
-    [HttpGet]
-    public IActionResult AnonymousIndex() => View();
-
+    public IActionResult AnonymousIndex()
+    {
+        return View();
+    }
     #endregion
 
     #endregion

@@ -12,39 +12,48 @@ namespace Maroik.WebSite.Controllers;
 /// Handles all self-service account flows: consent, login, logout, registration,
 /// email confirmation, forgot-password, and password reset.
 /// </summary>
-public class AccountController(
-    IHtmlLocalizer<AccountController> localizer,
-    IAccountService accountService,
-    IDashboardService dashboardService,
-    IOptions<ServerSetting> serverSettings,
-    ISessionService sessionService)
-    : BaseController(accountService, dashboardService, serverSettings, sessionService)
+public class AccountController : BaseController
 {
-    private readonly IAccountService _accountService = accountService;
-    private readonly ISessionService _sessionService = sessionService;
+    private readonly IHtmlLocalizer<AccountController> _localizer;
+    private readonly ILogger<AccountController> _logger;
+    private readonly IAccountService _accountService;
+    private readonly ISessionService _sessionService;
+
+    public AccountController(
+        IHtmlLocalizer<AccountController> localizer,
+        ILogger<AccountController> logger,
+        IAccountService accountService,
+        IDashboardService dashboardService,
+        IOptions<ServerSetting> serverSettings,
+        ISessionService sessionService)
+        : base(accountService, dashboardService, serverSettings, sessionService)
+    {
+        _localizer = localizer;
+        _logger = logger;
+        _accountService = accountService;
+        _sessionService = sessionService;
+    }
 
     #region ConsentForm
-    /// <summary>Displays the service consent form.</summary>
     [HttpGet]
+    /// <summary>Displays the service consent form.</summary>
     public IActionResult ConsentForm() => View();
     #endregion
 
     #region Login
-    /// <summary>Displays the login form (GET) or processes login credentials (POST).</summary>
     [HttpGet]
+    /// <summary>Displays the login form (GET) or processes login credentials (POST).</summary>
     public IActionResult Login() => View();
 
-    /// <summary>Displays the login form (GET) or processes login credentials (POST).</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
+    /// <summary>Displays the login form (GET) or processes login credentials (POST).</summary>
     public async Task<IActionResult> Login(LoginInputViewModel loginInputViewModel)
     {
-#pragma warning disable ASP0015
-        var userAgent = Request.Headers["User-Agent"].ToString();
-#pragma warning restore ASP0015
+        string userAgent = Request.Headers["User-Agent"].ToString();
         if (userAgent.Contains("MSIE") || userAgent.Contains("Trident"))
         {
-            TempData["Error"] = localizer["BlockInternetExplorer"].Value;
+            TempData["Error"] = _localizer["BlockInternetExplorer"].Value;
             return View();
         }
 
@@ -57,7 +66,7 @@ public class AccountController(
 
         if (!result.Success)
         {
-            TempData["Error"] = localizer[result.ErrorKey].Value;
+            TempData["Error"] = _localizer[result.ErrorKey].Value;
             return View();
         }
 
@@ -67,8 +76,8 @@ public class AccountController(
     #endregion
 
     #region Logout
-    /// <summary>Clears the session and redirects to the anonymous dashboard.</summary>
     [HttpGet]
+    /// <summary>Clears the session and redirects to the anonymous dashboard.</summary>
     public IActionResult Logout()
     {
         _sessionService.RemoveAccount();
@@ -77,13 +86,13 @@ public class AccountController(
     #endregion
 
     #region Register
-    /// <summary>Displays the registration form (GET) or processes new-account / resend-email requests (POST).</summary>
     [HttpGet]
+    /// <summary>Displays the registration form (GET) or processes new-account / resend-email requests (POST).</summary>
     public IActionResult Register() => View();
 
-    /// <summary>Displays the registration form (GET) or processes new-account / resend-email requests (POST).</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
+    /// <summary>Displays the registration form (GET) or processes new-account / resend-email requests (POST).</summary>
     public async Task<IActionResult> Register(LoginInputViewModel loginInputViewModel)
     {
         if (!string.IsNullOrEmpty(loginInputViewModel.Password)) // Registration path
@@ -92,20 +101,20 @@ public class AccountController(
 
             if (!loginInputViewModel.AgreedServiceTerms)
             {
-                TempData["Error"] = localizer["Please check the consent form"].Value;
+                TempData["Error"] = _localizer["Please check the consent form"].Value;
                 return View();
             }
 
             if (string.IsNullOrEmpty(loginInputViewModel.TimeZoneIanaId))
             {
-                TempData["Error"] = localizer["Please select time zone"].Value;
+                TempData["Error"] = _localizer["Please select time zone"].Value;
                 return View();
             }
 
-            var emailSubject = localizer["Maroik Email Confirmation"].Value;
-            var emailTitle = localizer["Welcome to Maroik"].Value;
-            var emailContent0 = localizer["Click the link below to verify your Email"].Value;
-            var emailContent1 = localizer["If this link does not work, please copy & paste this link to your Internet URL"].Value;
+            string emailSubject = _localizer["Maroik Email Confirmation"].Value;
+            string emailTitle = _localizer["Welcome to Maroik"].Value;
+            string emailContent0 = _localizer["Click the link below to verify your Email"].Value;
+            string emailContent1 = _localizer["If this link does not work, please copy & paste this link to your Internet URL"].Value;
 
             var newAccount = new AccountRequest
             {
@@ -131,13 +140,14 @@ public class AccountController(
 
             if (!result.Success)
             {
-                TempData["Error"] = localizer[result.ErrorKey].Value;
+                TempData["Error"] = _localizer[result.ErrorKey].Value;
                 ViewBag.ResendEmail = result.ShowResendEmail;
                 return View();
             }
 
             ViewBag.ResendEmail = result.ShowResendEmail;
             ViewBag.ResentEmailAddress = result.EmailAddress;
+            return View();
         }
         else // Email resend path
         {
@@ -146,16 +156,16 @@ public class AccountController(
 
             if (!ModelState.IsValid) return RedirectToAction("Register", "Account");
 
-            var emailSubject = localizer["Maroik Email Confirmation"].Value;
-            var emailTitle = localizer["Welcome to Maroik"].Value;
-            var emailContent0 = localizer["Click the link below to verify your Email"].Value;
-            var emailContent1 = localizer["If this link does not work, please copy & paste this link to your Internet URL"].Value;
+            string emailSubject = _localizer["Maroik Email Confirmation"].Value;
+            string emailTitle = _localizer["Welcome to Maroik"].Value;
+            string emailContent0 = _localizer["Click the link below to verify your Email"].Value;
+            string emailContent1 = _localizer["If this link does not work, please copy & paste this link to your Internet URL"].Value;
 
             var result = await _accountService.ResendConfirmationEmailAsync(loginInputViewModel.Email, emailSubject, emailTitle, emailContent0, emailContent1);
 
             if (!result.Success)
             {
-                TempData["Error"] = localizer[result.ErrorKey].Value;
+                TempData["Error"] = _localizer[result.ErrorKey].Value;
                 ViewBag.ResendEmail = result.ShowResendEmail;
                 return View();
             }
@@ -163,21 +173,20 @@ public class AccountController(
             ViewBag.ResendEmail = result.ShowResendEmail;
             ViewBag.ResentEmailAddress = result.EmailAddress;
             ViewBag.RepeatEmailSend = result.RepeatEmailSend;
+            return View();
         }
-
-        return View();
     }
     #endregion
 
     #region ConfirmEmail
-    /// <summary>Validates the email-confirmation token from the registration link and activates the account.</summary>
     [HttpGet]
+    /// <summary>Validates the email-confirmation token from the registration link and activates the account.</summary>
     public async Task<IActionResult> ConfirmEmail(string registrationToken)
     {
         var result = await _accountService.ConfirmEmailAsync(registrationToken);
 
         if (!string.IsNullOrEmpty(result.ErrorKey))
-            TempData["Error"] = localizer[result.ErrorKey].Value;
+            TempData["Error"] = _localizer[result.ErrorKey].Value;
 
         ViewBag.InvalidToken = result.InvalidToken;
         ViewBag.AccountCreated = result.AccountCreated;
@@ -186,13 +195,13 @@ public class AccountController(
     #endregion
 
     #region ForgotPassword
-    /// <summary>Displays the forgot-password form (GET) or sends a reset-password email (POST).</summary>
     [HttpGet]
+    /// <summary>Displays the forgot-password form (GET) or sends a reset-password email (POST).</summary>
     public IActionResult ForgotPassword() => View();
 
-    /// <summary>Displays the forgot-password form (GET) or sends a reset-password email (POST).</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
+    /// <summary>Displays the forgot-password form (GET) or sends a reset-password email (POST).</summary>
     public async Task<IActionResult> ForgotPassword(LoginInputViewModel loginInputViewModel)
     {
         _ = ModelState.Remove(nameof(loginInputViewModel.Nickname));
@@ -200,10 +209,10 @@ public class AccountController(
 
         if (!ModelState.IsValid) return RedirectToAction("ForgotPassword", "Account");
 
-        var emailSubject = localizer["Maroik Reset Password"].Value;
-        var emailTitle = localizer["Welcome to Maroik"].Value;
-        var emailContent0 = localizer["Click the link below to reset your password"].Value;
-        var emailContent1 = localizer["If this link does not work, please copy & paste this link to your Internet URL"].Value;
+        string emailSubject = _localizer["Maroik Reset Password"].Value;
+        string emailTitle = _localizer["Welcome to Maroik"].Value;
+        string emailContent0 = _localizer["Click the link below to reset your password"].Value;
+        string emailContent1 = _localizer["If this link does not work, please copy & paste this link to your Internet URL"].Value;
 
         await _accountService.ForgotPasswordAsync(loginInputViewModel.Email, emailSubject, emailTitle, emailContent0, emailContent1);
 
@@ -212,8 +221,8 @@ public class AccountController(
         return View();
     }
 
-    /// <summary>Validates the reset token (GET) or applies the new password (POST).</summary>
     [HttpGet]
+    /// <summary>Validates the reset token (GET) or applies the new password (POST).</summary>
     public async Task<IActionResult> ResetPassword(string resetPasswordToken)
     {
         var result = await _accountService.ValidateResetPasswordTokenAsync(resetPasswordToken);
@@ -222,9 +231,9 @@ public class AccountController(
         return View();
     }
 
-    /// <summary>Validates the reset token (GET) or applies the new password (POST).</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
+    /// <summary>Validates the reset token (GET) or applies the new password (POST).</summary>
     public async Task<IActionResult> ResetPassword(LoginInputViewModel loginInputViewModel)
     {
         _ = ModelState.Remove(nameof(loginInputViewModel.Email));
@@ -244,7 +253,7 @@ public class AccountController(
                 ViewBag.FailToResetPassword = true;
                 return View();
             }
-            TempData["Error"] = localizer[result.ErrorKey].Value;
+            TempData["Error"] = _localizer[result.ErrorKey].Value;
             ViewBag.FailToResetPassword = true;
             return View();
         }

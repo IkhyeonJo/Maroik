@@ -10,6 +10,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Localization;
 using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.Extensions.Options;
+using Newtonsoft.Json;
+using System.Text;
 
 namespace Maroik.WebSite.Controllers;
 
@@ -17,18 +19,36 @@ namespace Maroik.WebSite.Controllers;
 /// Manages the free forum: listing, writing, editing, and deleting posts and comments,
 /// plus Summernote inline-image uploads.
 /// </summary>
-public class ForumController(
-    IHtmlLocalizer<ForumController> localizer,
-    IBoardService boardService,
-    IAccountService accountService,
-    IRsaService rsa,
-    IDashboardService dashboardService,
-    IOptions<ServerSetting> serverSettings,
-    ISessionService sessionService)
-    : BaseController(accountService, dashboardService, serverSettings, sessionService)
+public class ForumController : BaseController
 {
-    private readonly IAccountService _accountService = accountService;
-    private readonly ISessionService _sessionService = sessionService;
+    private readonly IRsaService _rsa;
+    private readonly IHtmlLocalizer<ForumController> _localizer;
+    private readonly ILogger<ForumController> _logger;
+    private readonly IHostEnvironment _hostEnvironment;
+    private readonly IBoardService _boardService;
+    private readonly IAccountService _accountService;
+    private readonly ISessionService _sessionService;
+
+    public ForumController(
+        IHtmlLocalizer<ForumController> localizer,
+        ILogger<ForumController> logger,
+        IHostEnvironment hostEnvironment,
+        IBoardService boardService,
+        IAccountService accountService,
+        IRsaService rsa,
+        IDashboardService dashboardService,
+        IOptions<ServerSetting> serverSettings,
+        ISessionService sessionService)
+        : base(accountService, dashboardService, serverSettings, sessionService)
+    {
+        _rsa = rsa;
+        _sessionService = sessionService;
+        _localizer = localizer;
+        _logger = logger;
+        _hostEnvironment = hostEnvironment;
+        _boardService = boardService;
+        _accountService = accountService;
+    }
 
     #region FreeForum
 
@@ -37,63 +57,62 @@ public class ForumController(
     #region Write
 
     #region FreeBoard
-
-    /// <summary>Submits a new free-forum post (with optional file attachment).</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.Admin)]
     [RequiredHttpPostAccess(Role = Role.User)]
+    /// <summary>Submits a new free-forum post (with optional file attachment).</summary>
     public async Task<IActionResult> WriteFreeBoard(BoardInputViewModel boardInputViewModel)
     {
         try
         {
             if (!ModelState.IsValid)
-                return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                return Json(new { result = false, error = _localizer["Input is invalid"].Value });
 
             boardInputViewModel.Content ??= "";
 
             #region HtmlSanitizer
-            var sanitizer = new HtmlSanitizer();
+            HtmlSanitizer sanitizer = new();
             _ = sanitizer.AllowedAttributes.Add("class");
             boardInputViewModel.Content = sanitizer.Sanitize(boardInputViewModel.Content);
             #endregion
 
             #region Decrypt img tag file path
-            var htmlDocument = new HtmlDocument();
+            HtmlDocument htmlDocument = new();
             htmlDocument.LoadHtml(boardInputViewModel.Content);
-            foreach (var imgTag in htmlDocument.DocumentNode.Descendants("img") ?? [])
+            foreach (HtmlNode imgTag in htmlDocument.DocumentNode.Descendants("img") ?? [])
             {
-                var encryptedFilePath = imgTag.GetAttributeValue("alt", "");
-                _ = imgTag.SetAttributeValue("alt", rsa.Decrypt(encryptedFilePath));
+                string encryptedFilePath = imgTag.GetAttributeValue("alt", "");
+                _ = imgTag.SetAttributeValue("alt", _rsa.Decrypt(encryptedFilePath));
             }
             boardInputViewModel.Content = htmlDocument.DocumentNode.OuterHtml;
             #endregion
 
             if (boardInputViewModel.Title.Length is not (> 0 and <= 100))
-                return Json(new { result = false, error = localizer["Title length is must be between 1 and 100 characters."].Value });
+                return Json(new { result = false, error = _localizer["Title length is must be between 1 and 100 characters."].Value });
 
             if (boardInputViewModel.Content.Length > 16384)
-                return Json(new { result = false, error = localizer["content length is must be between 0 and 16384 characters."].Value });
+                return Json(new { result = false, error = _localizer["content length is must be between 0 and 16384 characters."].Value });
 
             if (boardInputViewModel.UploadedFile != null)
             {
                 if (Path.GetExtension(boardInputViewModel.UploadedFile.FileName) != ".zip")
-                    return Json(new { result = false, error = localizer["Only zip extension allowed."].Value });
+                    return Json(new { result = false, error = _localizer["Only zip extension allowed."].Value });
 
                 if (boardInputViewModel.UploadedFile.Length is not (> 0 and <= 10485760))
-                    return Json(new { result = false, error = localizer["uploaded file size must be smaller than 10MB."].Value });
+                    return Json(new { result = false, error = _localizer["uploaded file size must be smaller than 10MB."].Value });
             }
 
-            var isAccountSessionExist = _sessionService.GetAccount() != null;
+            bool isAccountSessionExist = _sessionService.GetAccount() != null;
             if (!isAccountSessionExist)
-                return Json(new { result = false, error = localizer["Please Login to write board"].Value });
+                return Json(new { result = false, error = _localizer["Please Login to write board"].Value });
 
-            var loginedAccount = _sessionService.GetAccount()!;
+            AccountResponse loginedAccount = _sessionService.GetAccount()!;
 
             if (loginedAccount.Role != Role.Admin && loginedAccount.Role != Role.User)
-                return Json(new { result = false, error = localizer["Please Login to write board"].Value });
+                return Json(new { result = false, error = _localizer["Please Login to write board"].Value });
 
-            var boardRequest = new BoardRequest
+            BoardRequest boardRequest = new()
             {
                 Type = EnumHelper.GetDescription(BoardType.FreeForum),
                 Title = boardInputViewModel.Title,
@@ -106,7 +125,7 @@ public class ForumController(
             AttachedFileInfo attachedFile = null;
             if (boardInputViewModel.UploadedFile != null)
             {
-                using var ms = new MemoryStream();
+                using MemoryStream ms = new();
                 await boardInputViewModel.UploadedFile.CopyToAsync(ms);
                 attachedFile = new AttachedFileInfo
                 {
@@ -117,49 +136,47 @@ public class ForumController(
                 };
             }
 
-            var result = await boardService.WriteBoardAsync(boardRequest, attachedFile);
+            ServiceResult result = await _boardService.WriteBoardAsync(boardRequest, attachedFile);
             return result.Success
-                ? Json(new { result = true, message = localizer["The board has been successfully created."].Value })
-                : Json(new { result = false, error = localizer["Input is invalid"].Value });
+                ? Json(new { result = true, message = _localizer["The board has been successfully created."].Value })
+                : Json(new { result = false, error = _localizer["Input is invalid"].Value });
         }
         catch
         {
-            return Json(new { result = false, error = localizer["Input is invalid"].Value });
+            return Json(new { result = false, error = _localizer["Input is invalid"].Value });
         }
     }
-
     #endregion
 
     #region FreeComment
-
-    /// <summary>Submits a comment on a free-forum post.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.Admin)]
     [RequiredHttpPostAccess(Role = Role.User)]
+    /// <summary>Submits a comment on a free-forum post.</summary>
     public async Task<IActionResult> WriteFreeComment([FromBody] BoardCommentInputViewModel boardCommentInputViewModel)
     {
         try
         {
             if (!ModelState.IsValid)
-                return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                return Json(new { result = false, error = _localizer["Input is invalid"].Value });
 
             if (string.IsNullOrEmpty(boardCommentInputViewModel.Content))
-                return Json(new { result = false, error = localizer["Please enter a boardComment."].Value });
+                return Json(new { result = false, error = _localizer["Please enter a boardComment."].Value });
 
             #region HtmlSanitizer
-            var sanitizer = new HtmlSanitizer();
+            HtmlSanitizer sanitizer = new();
             _ = sanitizer.AllowedAttributes.Add("class");
             boardCommentInputViewModel.Content = sanitizer.Sanitize(boardCommentInputViewModel.Content);
             #endregion
 
-            var isAccountSessionExist = _sessionService.GetAccount() != null;
+            bool isAccountSessionExist = _sessionService.GetAccount() != null;
             if (!isAccountSessionExist)
-                return Json(new { result = false, error = localizer["Please Login to write boardComment."].Value });
+                return Json(new { result = false, error = _localizer["Please Login to write boardComment."].Value });
 
-            var loginedAccount = _sessionService.GetAccount()!;
+            AccountResponse loginedAccount = _sessionService.GetAccount()!;
 
-            var commentRequest = new BoardCommentRequest
+            BoardCommentRequest commentRequest = new()
             {
                 BoardId = boardCommentInputViewModel.BoardId,
                 AvatarImagePath = loginedAccount.AvatarImagePath,
@@ -167,39 +184,37 @@ public class ForumController(
                 Content = boardCommentInputViewModel.Content
             };
 
-            var result = await boardService.WriteCommentAsync(commentRequest);
+            ServiceResult result = await _boardService.WriteCommentAsync(commentRequest);
             return result.Success
                 ? Json(new { result = true, boardId = boardCommentInputViewModel.BoardId, page = boardCommentInputViewModel.DetailCurrentPage })
-                : Json(new { result = false, error = localizer["Input is invalid"].Value });
+                : Json(new { result = false, error = _localizer["Input is invalid"].Value });
         }
         catch
         {
-            return Json(new { result = false, error = localizer["Input is invalid"].Value });
+            return Json(new { result = false, error = _localizer["Input is invalid"].Value });
         }
     }
-
     #endregion
 
     #endregion
 
     #region Summernote Image File Upload
-
-    /// <summary>Uploads a Summernote inline image and returns its URL.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.Admin)]
     [RequiredHttpPostAccess(Role = Role.User)]
+    /// <summary>Uploads a Summernote inline image and returns its URL.</summary>
     public async Task<IActionResult> UploadImageFile(IFormFile summernoteImageFile)
     {
         if (summernoteImageFile == null)
-            return Ok(new { result = false, errorMessage = localizer["Please attach a file."].Value });
+            return Ok(new { result = false, errorMessage = _localizer["Please attach a file."].Value });
 
         if (summernoteImageFile.Length <= 0 || summernoteImageFile.Length > 10 * 1024 * 1024)
-            return Ok(new { result = false, errorMessage = localizer["File Size must be smaller than 10MB."].Value });
+            return Ok(new { result = false, errorMessage = _localizer["File Size must be smaller than 10MB."].Value });
 
         var ext = Path.GetExtension(summernoteImageFile.FileName).ToLowerInvariant();
         if (ext != ".png" && ext != ".jpg" && ext != ".jpeg")
-            return Ok(new { result = false, errorMessage = localizer["Only .jpg, .jpeg or .png file allowed."].Value });
+            return Ok(new { result = false, errorMessage = _localizer["Only .jpg, .jpeg or .png file allowed."].Value });
 
         byte[] bytes;
         using (var ms = new MemoryStream())
@@ -216,19 +231,18 @@ public class ForumController(
             Size = summernoteImageFile.Length
         };
 
-        var uploadResult = await boardService.UploadSummernoteImageAsync(file, "Forum", EnumHelper.GetDescription(BoardType.FreeForum));
+        SummernoteUploadResult uploadResult = await _boardService.UploadSummernoteImageAsync(file, "Forum", EnumHelper.GetDescription(BoardType.FreeForum));
 
         if (!uploadResult.Success)
-            return Ok(new { result = false, errorMessage = localizer[uploadResult.ErrorKey ?? "Input is invalid"].Value });
+            return Ok(new { result = false, errorMessage = _localizer[uploadResult.ErrorKey ?? "Input is invalid"].Value });
 
         return Ok(new
         {
             result = true,
             file = File(uploadResult.FileBytes!, uploadResult.ContentType!, uploadResult.FileName!),
-            filePath = rsa.Encrypt(uploadResult.FilePath!)
+            filePath = _rsa.Encrypt(uploadResult.FilePath!)
         });
     }
-
     #endregion
 
     #endregion
@@ -236,19 +250,18 @@ public class ForumController(
     #region Read
 
     #region Edit, List, Detail, Write
-
     /// <summary>Displays the free-forum list or a single post (list / write / view / edit).</summary>
     public async Task<IActionResult> FreeForum(string method = "list", int? boardId = null, int page = 1, string searchType = "", string searchText = "")
     {
         if (method == "write") // Write
         {
-            var freeForumOutputViewModel = new FreeForumOutputViewModel();
+            FreeForumOutputViewModel freeForumOutputViewModel = new();
 
             #region Write board
             freeForumOutputViewModel.Method = method;
             #endregion
 
-            var isAccountSessionExist = _sessionService.GetAccount() != null; // Check if account session exists after login
+            bool isAccountSessionExist = _sessionService.GetAccount() != null; // Check if account session exists after login
 
             return isAccountSessionExist ? View(freeForumOutputViewModel) : RedirectToAction("Login", "Account");
         }
@@ -259,15 +272,15 @@ public class ForumController(
                 return RedirectToAction("FreeForum", "Forum");
             }
 
-            var freeForumOutputViewModel = new FreeForumOutputViewModel
+            FreeForumOutputViewModel freeForumOutputViewModel = new()
             {
                 Method = method,
                 DetailCurrentPage = page,
                 DetailBoardId = boardId ?? default
             };
 
-            var freeBoard = await boardService.GetBoardByIdAsync(boardId ?? 0);
-            var boardAttachedFile = await boardService.GetAttachedFileByBoardIdAsync(boardId ?? 0);
+            BoardResponse freeBoard = await _boardService.GetBoardByIdAsync(boardId ?? 0);
+            BoardAttachedFileResponse boardAttachedFile = await _boardService.GetAttachedFileByBoardIdAsync(boardId ?? 0);
 
             try
             {
@@ -276,7 +289,7 @@ public class ForumController(
 
                 if (freeBoard.Locked)
                 {
-                    var loginedAccount = _sessionService.GetAccount()!; // Get Session
+                    AccountResponse loginedAccount = _sessionService.GetAccount()!; // Get Session
 
                     if (!(loginedAccount.Nickname == freeBoard.Writer || loginedAccount.Role == Role.Admin))
                     {
@@ -284,46 +297,46 @@ public class ForumController(
                     }
                 }
 
-                await boardService.IncrementBoardViewAsync(boardId ?? 0);
+                await _boardService.IncrementBoardViewAsync(boardId ?? 0);
 
                 #region Encrypt img tag file path
-                var htmlDocument = new HtmlDocument();
+                HtmlDocument htmlDocument = new();
                 htmlDocument.LoadHtml(freeBoard.Content);
-                var isImgTagIncluded = false;
+                bool isImgTagIncluded = false;
 
-                foreach (var imgTag in htmlDocument.DocumentNode.Descendants("img") ?? [])
+                foreach (HtmlNode imgTag in htmlDocument.DocumentNode.Descendants("img") ?? [])
                 {
                     isImgTagIncluded = true;
-                    var filePath = imgTag.GetAttributeValue("alt", "");
+                    string filePath = imgTag.GetAttributeValue("alt", "");
 
                     // Method to download file
-                    var fileData = await boardService.DownloadFileAsync(filePath);
+                    byte[] fileData = await _boardService.DownloadFileAsync(filePath);
 
                     if (fileData != null)
                     {
                         // Use FileExtensionContentTypeProvider to extract ContentType
-                        var provider = new FileExtensionContentTypeProvider();
+                        FileExtensionContentTypeProvider provider = new();
 
                         // Set default contentType to "application/octet-stream"
-                        if (!provider.TryGetContentType(filePath, out var contentType))
+                        if (!provider.TryGetContentType(filePath, out string contentType))
                         {
                             contentType = "application/octet-stream";
                         }
 
                         // Convert file data to Base64
-                        var base64Data = Convert.ToBase64String(fileData);
+                        string base64Data = Convert.ToBase64String(fileData);
 
                         // Store base64 data in img tag (use data-file attribute instead of src)
                         _ = imgTag.SetAttributeValue("data-file", base64Data);
                         _ = imgTag.SetAttributeValue("data-contenttype", contentType);
-                        _ = imgTag.SetAttributeValue("alt", rsa.Encrypt(filePath));
+                        _ = imgTag.SetAttributeValue("alt", _rsa.Encrypt(filePath));
                     }
                 }
 
                 freeBoard.Content = htmlDocument.DocumentNode.OuterHtml;
                 #endregion
 
-                freeForumOutputViewModel.BoardOutputViewModel = new BoardOutputViewModel
+                freeForumOutputViewModel.BoardOutputViewModel = new Maroik.WebSite.Models.ViewModels.Forum.BoardOutputViewModel()
                 {
                     Title = freeBoard.Title,
                     Writer = freeBoard.Writer,
@@ -339,15 +352,15 @@ public class ForumController(
 
                 if (!string.IsNullOrEmpty(freeForumOutputViewModel?.BoardOutputViewModel?.BoardAttachedFilePath ?? ""))
                 {
-                    var fileData = await boardService.DownloadFileAsync(freeForumOutputViewModel?.BoardOutputViewModel?.BoardAttachedFilePath ?? "");
+                    byte[] fileData = await _boardService.DownloadFileAsync(freeForumOutputViewModel?.BoardOutputViewModel?.BoardAttachedFilePath ?? "");
 
                     if (fileData != null)
                     {
                         // Use FileExtensionContentTypeProvider to extract ContentType
-                        var provider = new FileExtensionContentTypeProvider();
+                        FileExtensionContentTypeProvider provider = new();
 
                         // Set default contentType to "application/octet-stream"
-                        if (!provider.TryGetContentType(freeForumOutputViewModel?.BoardOutputViewModel?.BoardAttachedFilePath ?? "", out var contentType))
+                        if (!provider.TryGetContentType(freeForumOutputViewModel?.BoardOutputViewModel?.BoardAttachedFilePath ?? "", out string contentType))
                         {
                             contentType = "application/octet-stream";
                         }
@@ -359,7 +372,7 @@ public class ForumController(
                 }
 
                 // Preload comments and accounts for detail view
-                freeForumOutputViewModel.DetailBoardComments = (await boardService.GetCommentsByBoardIdAsync(boardId ?? 0))?.ToList() ?? [];
+                freeForumOutputViewModel.DetailBoardComments = (await _boardService.GetCommentsByBoardIdAsync(boardId ?? 0))?.ToList() ?? [];
                 freeForumOutputViewModel.AllAccounts = await _accountService.GetAllAccountsAsync() ?? [];
                 freeForumOutputViewModel.LoginedAccount = _sessionService.GetAccount() ?? new AccountResponse { Role = Role.Anonymous };
                 freeForumOutputViewModel.LoginedAccountTimeZoneIanaId = freeForumOutputViewModel.LoginedAccount.TimeZoneIanaId ?? "";
@@ -378,22 +391,22 @@ public class ForumController(
                 return RedirectToAction("FreeForum", "Forum");
             }
 
-            var freeForumOutputViewModel = new FreeForumOutputViewModel
+            FreeForumOutputViewModel freeForumOutputViewModel = new()
             {
                 Method = method,
                 EditCurrentPage = page,
                 EditBoardId = boardId ?? default
             };
 
-            var freeBoard = await boardService.GetBoardByIdAsync(boardId ?? 0);
-            var boardAttachedFile = await boardService.GetAttachedFileByBoardIdAsync(boardId ?? 0);
+            BoardResponse freeBoard = await _boardService.GetBoardByIdAsync(boardId ?? 0);
+            BoardAttachedFileResponse boardAttachedFile = await _boardService.GetAttachedFileByBoardIdAsync(boardId ?? 0);
 
             try
             {
                 if (freeBoard == null || freeBoard.Deleted)
                     return RedirectToAction("FreeForum", "Forum");
 
-                var loginedAccount = _sessionService.GetAccount()!;
+                AccountResponse loginedAccount = _sessionService.GetAccount()!;
 
                 if (freeBoard.Writer != loginedAccount.Nickname) // If writer and logged-in user are not the same
                 {
@@ -401,43 +414,43 @@ public class ForumController(
                 }
 
                 #region Encrypt img tag file path
-                var htmlDocument = new HtmlDocument();
+                HtmlDocument htmlDocument = new();
                 htmlDocument.LoadHtml(freeBoard.Content);
-                var isImgTagIncluded = false;
+                bool isImgTagIncluded = false;
 
-                foreach (var imgTag in htmlDocument.DocumentNode.Descendants("img") ?? [])
+                foreach (HtmlNode imgTag in htmlDocument.DocumentNode.Descendants("img") ?? [])
                 {
                     isImgTagIncluded = true;
-                    var filePath = imgTag.GetAttributeValue("alt", "");
+                    string filePath = imgTag.GetAttributeValue("alt", "");
 
                     // Method to download file
-                    var fileData = await boardService.DownloadFileAsync(filePath);
+                    byte[] fileData = await _boardService.DownloadFileAsync(filePath);
 
                     if (fileData != null)
                     {
                         // Use FileExtensionContentTypeProvider to extract ContentType
-                        var provider = new FileExtensionContentTypeProvider();
+                        FileExtensionContentTypeProvider provider = new();
 
                         // Set default contentType to "application/octet-stream"
-                        if (!provider.TryGetContentType(filePath, out var contentType))
+                        if (!provider.TryGetContentType(filePath, out string contentType))
                         {
                             contentType = "application/octet-stream";
                         }
 
                         // Convert file data to Base64
-                        var base64Data = Convert.ToBase64String(fileData);
+                        string base64Data = Convert.ToBase64String(fileData);
 
                         // Store base64 data in img tag (use data-file attribute instead of src)
                         _ = imgTag.SetAttributeValue("data-file", base64Data);
                         _ = imgTag.SetAttributeValue("data-contenttype", contentType);
-                        _ = imgTag.SetAttributeValue("alt", rsa.Encrypt(filePath));
+                        _ = imgTag.SetAttributeValue("alt", _rsa.Encrypt(filePath));
                     }
                 }
 
                 freeBoard.Content = htmlDocument.DocumentNode.OuterHtml;
                 #endregion
 
-                freeForumOutputViewModel.BoardOutputViewModel = new BoardOutputViewModel
+                freeForumOutputViewModel.BoardOutputViewModel = new Maroik.WebSite.Models.ViewModels.Forum.BoardOutputViewModel()
                 {
                     Title = freeBoard.Title,
                     Writer = freeBoard.Writer,
@@ -454,15 +467,15 @@ public class ForumController(
 
                 if (!string.IsNullOrEmpty(freeForumOutputViewModel?.BoardOutputViewModel?.BoardAttachedFilePath ?? ""))
                 {
-                    var fileData = await boardService.DownloadFileAsync(freeForumOutputViewModel?.BoardOutputViewModel?.BoardAttachedFilePath ?? "");
+                    byte[] fileData = await _boardService.DownloadFileAsync(freeForumOutputViewModel?.BoardOutputViewModel?.BoardAttachedFilePath ?? "");
 
                     if (fileData != null)
                     {
                         // Use FileExtensionContentTypeProvider to extract ContentType
-                        var provider = new FileExtensionContentTypeProvider();
+                        FileExtensionContentTypeProvider provider = new();
 
                         // Set default contentType to "application/octet-stream"
-                        if (!provider.TryGetContentType(freeForumOutputViewModel?.BoardOutputViewModel?.BoardAttachedFilePath ?? "", out var contentType))
+                        if (!provider.TryGetContentType(freeForumOutputViewModel?.BoardOutputViewModel?.BoardAttachedFilePath ?? "", out string contentType))
                         {
                             contentType = "application/octet-stream";
                         }
@@ -479,6 +492,7 @@ public class ForumController(
             {
                 return RedirectToAction("FreeForum", "Forum");
             }
+
         }
         else // List
         {
@@ -491,27 +505,27 @@ public class ForumController(
             #endregion
 
             #region Logic to get all related board data
-            var allFreeBoards = await boardService.GetBoardsAsync(EnumHelper.GetDescription(BoardType.FreeForum));
-            var freeBoards = allFreeBoards.Where(m => m.Deleted == false && m.Noticed == false).OrderByDescending(a => a.Id).ToList();
+            IEnumerable<BoardResponse> allFreeBoards = await _boardService.GetBoardsAsync(EnumHelper.GetDescription(BoardType.FreeForum));
+            IEnumerable<BoardResponse> freeBoards = allFreeBoards.Where(m => m.Deleted == false && m.Noticed == false).OrderByDescending(a => a.Id);
             #endregion
 
             #region Search keyword logic
             if (searchType == "Title" && !string.IsNullOrEmpty(searchText))
             {
-                var isAccountSessionExist = _sessionService.GetAccount() != null;
+                bool isAccountSessionExist = _sessionService.GetAccount() != null;
                 if (isAccountSessionExist) // If logged in
                 {
-                    var loginedAccount = _sessionService.GetAccount()!; // Get Session
+                    AccountResponse loginedAccount = _sessionService.GetAccount()!; // Get Session
 
                     if (loginedAccount.Role == Role.Admin) // Administrator can see all posts
                     {
-                        freeBoards = freeBoards.Where(a => a.Title.Contains(searchText)).ToList();
+                        freeBoards = freeBoards.Where(a => a.Title.Contains(searchText));
                     }
                     else if (loginedAccount.Role == Role.User) // User can see regular posts + their own private posts
                     {
-                        var searchFreeBoards = new List<BoardResponse>();
-                        var noLockedFreeBoards = freeBoards.Where(a => a.Title.Contains(searchText)).Where(a => !a.Locked).ToList();
-                        var myLockedFreeBoards = freeBoards.Where(a => a.Title.Contains(searchText)).Where(a => a.Locked && a.Writer == loginedAccount.Nickname).ToList();
+                        List<BoardResponse> searchFreeBoards = [];
+                        List<BoardResponse> noLockedFreeBoards = freeBoards.Where(a => a.Title.Contains(searchText)).Where(a => !a.Locked).ToList();
+                        List<BoardResponse> myLockedFreeBoards = freeBoards.Where(a => a.Title.Contains(searchText)).Where(a => a.Locked && a.Writer == loginedAccount.Nickname).ToList();
                         searchFreeBoards.AddRange(noLockedFreeBoards);
                         searchFreeBoards.AddRange(myLockedFreeBoards);
 
@@ -524,16 +538,16 @@ public class ForumController(
                 }
                 else // If not logged in
                 {
-                    freeBoards = freeBoards.Where(a => a.Title.Contains(searchText)).Where(a => !a.Locked).ToList(); // When not logged in, private posts should not be searchable
+                    freeBoards = freeBoards.Where(a => a.Title.Contains(searchText)).Where(a => !a.Locked); // When not logged in, private posts should not be searchable
                 }
             }
             else if (searchType == "Writer" && !string.IsNullOrEmpty(searchText))
             {
-                freeBoards = freeBoards.Where(a => a.Writer.Contains(searchText)).ToList();
+                freeBoards = freeBoards.Where(a => a.Writer.Contains(searchText));
             }
             #endregion
 
-            var freeForumOutputViewModel = new FreeForumOutputViewModel();
+            FreeForumOutputViewModel freeForumOutputViewModel = new();
 
             #region Notice
             freeForumOutputViewModel.NoticeBoards = allFreeBoards.Where(m => m.Deleted == false && m.Noticed == true).OrderByDescending(a => a.Id);
@@ -556,23 +570,23 @@ public class ForumController(
             freeForumOutputViewModel.LoginedAccountTimeZoneIanaId = freeForumOutputViewModel.LoginedAccount.TimeZoneIanaId ?? "";
             freeForumOutputViewModel.AllAccounts = await _accountService.GetAllAccountsAsync() ?? [];
 
-            var allBoardIds = freeForumOutputViewModel.NoticeBoards.Select(b => b.Id)
+            List<long> allBoardIds = freeForumOutputViewModel.NoticeBoards.Select(b => b.Id)
                 .Concat(freeForumOutputViewModel.Boards.Select(b => b.Id))
                 .Distinct().ToList();
 
-            var commentCounts = await boardService.GetCommentCountsForBoardsAsync(allBoardIds);
-            var attachedFiles = await boardService.GetAttachedFilesForBoardsAsync(allBoardIds);
+            Dictionary<long, int> commentCounts = await _boardService.GetCommentCountsForBoardsAsync(allBoardIds);
+            Dictionary<long, BoardAttachedFileResponse> attachedFiles = await _boardService.GetAttachedFilesForBoardsAsync(allBoardIds);
 
             foreach (var board in freeForumOutputViewModel.NoticeBoards)
             {
                 freeForumOutputViewModel.CommentCountByBoardId[board.Id] = commentCounts.GetValueOrDefault(board.Id, 0);
-                var af = attachedFiles.GetValueOrDefault(board.Id);
+                BoardAttachedFileResponse af = attachedFiles.GetValueOrDefault(board.Id);
                 freeForumOutputViewModel.AttachedFilesByBoardId[board.Id] = af != null && !string.IsNullOrEmpty(af.Name) ? [af] : [];
             }
             foreach (var board in freeForumOutputViewModel.Boards)
             {
                 freeForumOutputViewModel.CommentCountByBoardId[board.Id] = commentCounts.GetValueOrDefault(board.Id, 0);
-                var af = attachedFiles.GetValueOrDefault(board.Id);
+                BoardAttachedFileResponse af = attachedFiles.GetValueOrDefault(board.Id);
                 freeForumOutputViewModel.AttachedFilesByBoardId[board.Id] = af != null && !string.IsNullOrEmpty(af.Name) ? [af] : [];
             }
             #endregion
@@ -582,32 +596,29 @@ public class ForumController(
             return View(freeForumOutputViewModel);
         }
     }
-
     #endregion
 
     #region IsBoardExists
-
-    /// <summary>Checks whether a board post with the given ID exists (used for edit validation).</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.Admin)]
     [RequiredHttpPostAccess(Role = Role.User)]
+    /// <summary>Checks whether a board post with the given ID exists (used for edit validation).</summary>
     public async Task<IActionResult> IsBoardExists(int id)
     {
         try
         {
-            var board = await boardService.GetBoardByIdAsync(id);
+            BoardResponse board = await _boardService.GetBoardByIdAsync(id);
 
             return board == null || board.Deleted
-                ? Json(new { result = false, error = localizer["Input is invalid"].Value })
+                ? Json(new { result = false, error = _localizer["Input is invalid"].Value })
                 : Json(new { result = true, freeBoard = board });
         }
         catch
         {
-            return Json(new { result = false, error = localizer["Input is invalid"].Value });
+            return Json(new { result = false, error = _localizer["Input is invalid"].Value });
         }
     }
-
     #endregion
 
     #endregion
@@ -615,60 +626,59 @@ public class ForumController(
     #region Update
 
     #region Edit
-
-    /// <summary>Saves edits to an existing free-forum post.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.Admin)]
     [RequiredHttpPostAccess(Role = Role.User)]
+    /// <summary>Saves edits to an existing free-forum post.</summary>
     public async Task<IActionResult> EditFreeBoard(BoardInputViewModel boardInputViewModel)
     {
         try
         {
             if (!ModelState.IsValid)
-                return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                return Json(new { result = false, error = _localizer["Input is invalid"].Value });
 
             boardInputViewModel.Content ??= "";
 
             #region HtmlSanitizer
-            var sanitizer = new HtmlSanitizer();
+            HtmlSanitizer sanitizer = new();
             _ = sanitizer.AllowedAttributes.Add("class");
             boardInputViewModel.Content = sanitizer.Sanitize(boardInputViewModel.Content);
             #endregion
 
             #region Decrypt img tag file path
-            var htmlDocument = new HtmlDocument();
+            HtmlDocument htmlDocument = new();
             htmlDocument.LoadHtml(boardInputViewModel.Content);
-            foreach (var imgTag in htmlDocument.DocumentNode.Descendants("img") ?? [])
+            foreach (HtmlNode imgTag in htmlDocument.DocumentNode.Descendants("img") ?? [])
             {
-                var encryptedFilePath = imgTag.GetAttributeValue("alt", "");
-                _ = imgTag.SetAttributeValue("alt", rsa.Decrypt(encryptedFilePath));
+                string encryptedFilePath = imgTag.GetAttributeValue("alt", "");
+                _ = imgTag.SetAttributeValue("alt", _rsa.Decrypt(encryptedFilePath));
             }
             boardInputViewModel.Content = htmlDocument.DocumentNode.OuterHtml;
             #endregion
 
             if (boardInputViewModel.Title.Length is not (> 0 and <= 100))
-                return Json(new { result = false, error = localizer["Title length is must be between 1 and 100 characters."].Value });
+                return Json(new { result = false, error = _localizer["Title length is must be between 1 and 100 characters."].Value });
 
             if (boardInputViewModel.Content.Length > 16384)
-                return Json(new { result = false, error = localizer["content length is must be between 0 and 16384 characters."].Value });
+                return Json(new { result = false, error = _localizer["content length is must be between 0 and 16384 characters."].Value });
 
             if (boardInputViewModel.UploadedFile != null)
             {
                 if (Path.GetExtension(boardInputViewModel.UploadedFile.FileName) != ".zip")
-                    return Json(new { result = false, error = localizer["Only zip extension allowed."].Value });
+                    return Json(new { result = false, error = _localizer["Only zip extension allowed."].Value });
 
                 if (boardInputViewModel.UploadedFile.Length is not (> 0 and <= 10485760))
-                    return Json(new { result = false, error = localizer["uploaded file size must be smaller than 10MB."].Value });
+                    return Json(new { result = false, error = _localizer["uploaded file size must be smaller than 10MB."].Value });
             }
 
-            var isAccountSessionExist = _sessionService.GetAccount() != null;
+            bool isAccountSessionExist = _sessionService.GetAccount() != null;
             if (!isAccountSessionExist)
-                return Json(new { result = false, error = localizer["Please Login to edit board"].Value });
+                return Json(new { result = false, error = _localizer["Please Login to edit board"].Value });
 
-            var loginedAccount = _sessionService.GetAccount()!;
+            AccountResponse loginedAccount = _sessionService.GetAccount()!;
 
-            var boardRequest = new BoardRequest
+            BoardRequest boardRequest = new()
             {
                 Id = boardInputViewModel.Id,
                 Type = EnumHelper.GetDescription(BoardType.FreeForum),
@@ -680,7 +690,7 @@ public class ForumController(
             AttachedFileInfo attachedFile = null;
             if (boardInputViewModel.UploadedFile != null)
             {
-                using var ms = new MemoryStream();
+                using MemoryStream ms = new();
                 await boardInputViewModel.UploadedFile.CopyToAsync(ms);
                 attachedFile = new AttachedFileInfo
                 {
@@ -691,17 +701,16 @@ public class ForumController(
                 };
             }
 
-            var result = await boardService.EditBoardAsync(boardRequest, loginedAccount.Nickname, attachedFile);
+            ServiceResult result = await _boardService.EditBoardAsync(boardRequest, loginedAccount.Nickname, attachedFile);
             return result.Success
-                ? Json(new { result = true, message = localizer["The board has been successfully updated."].Value })
-                : Json(new { result = false, error = localizer["Input is invalid"].Value });
+                ? Json(new { result = true, message = _localizer["The board has been successfully updated."].Value })
+                : Json(new { result = false, error = _localizer["Input is invalid"].Value });
         }
         catch
         {
-            return Json(new { result = false, error = localizer["Input is invalid"].Value });
+            return Json(new { result = false, error = _localizer["Input is invalid"].Value });
         }
     }
-
     #endregion
 
     #endregion
@@ -709,50 +718,47 @@ public class ForumController(
     #region Delete
 
     #region Board
-
-    /// <summary>Soft-deletes a free-forum post.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.Admin)]
     [RequiredHttpPostAccess(Role = Role.User)]
+    /// <summary>Soft-deletes a free-forum post.</summary>
     public async Task<IActionResult> DeleteBoard([FromBody] BoardInputViewModel boardInputViewModel)
     {
         try
         {
-            var loginedAccount = _sessionService.GetAccount()!;
+            AccountResponse loginedAccount = _sessionService.GetAccount()!;
 
-            var result = await boardService.DeleteBoardAsync(
+            ServiceResult result = await _boardService.DeleteBoardAsync(
                 boardInputViewModel.Id,
                 EnumHelper.GetDescription(BoardType.FreeForum),
                 loginedAccount.Nickname,
                 loginedAccount.Role == Role.Admin);
 
             return result.Success
-                ? Json(new { result = true, message = localizer["The board has been successfully deleted."].Value })
+                ? Json(new { result = true, message = _localizer["The board has been successfully deleted."].Value })
                 : Json(new { result = false, error = result.ErrorKey });
         }
         catch
         {
-            return Json(new { result = false, error = localizer["Input is invalid"].Value });
+            return Json(new { result = false, error = _localizer["Input is invalid"].Value });
         }
     }
-
     #endregion
 
     #region BoardComment
-
-    /// <summary>Soft-deletes a free-forum comment.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.Admin)]
     [RequiredHttpPostAccess(Role = Role.User)]
+    /// <summary>Soft-deletes a free-forum comment.</summary>
     public async Task<IActionResult> DeleteComment(int id)
     {
         try
         {
-            var loginedAccount = _sessionService.GetAccount()!;
+            AccountResponse loginedAccount = _sessionService.GetAccount()!;
 
-            var result = await boardService.DeleteCommentAsync(
+            ServiceResult result = await _boardService.DeleteCommentAsync(
                 id,
                 loginedAccount.Nickname,
                 loginedAccount.Role == Role.Admin);
@@ -763,13 +769,13 @@ public class ForumController(
         }
         catch
         {
-            return Json(new { result = false, error = localizer["Input is invalid"].Value });
+            return Json(new { result = false, error = _localizer["Input is invalid"].Value });
         }
     }
-
     #endregion
 
     #endregion
 
     #endregion
+
 }

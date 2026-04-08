@@ -13,22 +13,22 @@
     .Grid(Model)
     .Build(columns =>
     {
-        columns.Add(model => model.Email).Titled(Localizer[nameof(Maroik.WebSite.Models.ViewModels.Management.AccountOutputViewModel.Email)]);
-        columns.Add(model => model.HashedPassword).Titled(Localizer[nameof(Maroik.WebSite.Models.ViewModels.Management.AccountOutputViewModel.HashedPassword)]);
-        columns.Add(model => model.Nickname).Titled(Localizer[nameof(Maroik.WebSite.Models.ViewModels.Management.AccountOutputViewModel.Nickname)]);
-        columns.Add(model => model.AvatarImagePath).Titled(Localizer[nameof(Maroik.WebSite.Models.ViewModels.Management.AccountOutputViewModel.AvatarImagePath)]);
-        columns.Add(model => model.Role).Titled(Localizer[nameof(Maroik.WebSite.Models.ViewModels.Management.AccountOutputViewModel.Role)]);
-        columns.Add(model => model.TimeZoneIanaId).Titled(Localizer[nameof(Maroik.WebSite.Models.ViewModels.Management.AccountOutputViewModel.TimeZoneIanaId)]);
-        columns.Add(model => model.Locked).Titled(Localizer[nameof(Maroik.WebSite.Models.ViewModels.Management.AccountOutputViewModel.Locked)]);
-        columns.Add(model => model.LoginAttempt).Titled(Localizer[nameof(Maroik.WebSite.Models.ViewModels.Management.AccountOutputViewModel.LoginAttempt)]);
-        columns.Add(model => model.EmailConfirmed).Titled(Localizer[nameof(Maroik.WebSite.Models.ViewModels.Management.AccountOutputViewModel.EmailConfirmed)]);
-        columns.Add(model => model.AgreedServiceTerms).Titled(Localizer[nameof(Maroik.WebSite.Models.ViewModels.Management.AccountOutputViewModel.AgreedServiceTerms)]);
-        columns.Add(model => model.RegistrationToken).Titled(Localizer[nameof(Maroik.WebSite.Models.ViewModels.Management.AccountOutputViewModel.RegistrationToken)]);
-        columns.Add(model => model.ResetPasswordToken).Titled(Localizer[nameof(Maroik.WebSite.Models.ViewModels.Management.AccountOutputViewModel.ResetPasswordToken)]);
-        columns.Add(model => model.Created).Titled(Localizer[nameof(Maroik.WebSite.Models.ViewModels.Management.AccountOutputViewModel.Created)]);
-        columns.Add(model => model.Updated).Titled(Localizer[nameof(Maroik.WebSite.Models.ViewModels.Management.AccountOutputViewModel.Updated)]);
-        columns.Add(model => model.Message).Titled(Localizer[nameof(Maroik.WebSite.Models.ViewModels.Management.AccountOutputViewModel.Message)]);
-        columns.Add(model => model.Deleted).Titled(Localizer[nameof(Maroik.WebSite.Models.ViewModels.Management.AccountOutputViewModel.Deleted)]);
+        columns.Add(model => model.Email).Titled(localizer[nameof(Maroik.WebSite.Models.ViewModels.Management.AccountOutputViewModel.Email)]);
+        columns.Add(model => model.HashedPassword).Titled(localizer[nameof(Maroik.WebSite.Models.ViewModels.Management.AccountOutputViewModel.HashedPassword)]);
+        columns.Add(model => model.Nickname).Titled(localizer[nameof(Maroik.WebSite.Models.ViewModels.Management.AccountOutputViewModel.Nickname)]);
+        columns.Add(model => model.AvatarImagePath).Titled(localizer[nameof(Maroik.WebSite.Models.ViewModels.Management.AccountOutputViewModel.AvatarImagePath)]);
+        columns.Add(model => model.Role).Titled(localizer[nameof(Maroik.WebSite.Models.ViewModels.Management.AccountOutputViewModel.Role)]);
+        columns.Add(model => model.TimeZoneIanaId).Titled(localizer[nameof(Maroik.WebSite.Models.ViewModels.Management.AccountOutputViewModel.TimeZoneIanaId)]);
+        columns.Add(model => model.Locked).Titled(localizer[nameof(Maroik.WebSite.Models.ViewModels.Management.AccountOutputViewModel.Locked)]);
+        columns.Add(model => model.LoginAttempt).Titled(localizer[nameof(Maroik.WebSite.Models.ViewModels.Management.AccountOutputViewModel.LoginAttempt)]);
+        columns.Add(model => model.EmailConfirmed).Titled(localizer[nameof(Maroik.WebSite.Models.ViewModels.Management.AccountOutputViewModel.EmailConfirmed)]);
+        columns.Add(model => model.AgreedServiceTerms).Titled(localizer[nameof(Maroik.WebSite.Models.ViewModels.Management.AccountOutputViewModel.AgreedServiceTerms)]);
+        columns.Add(model => model.RegistrationToken).Titled(localizer[nameof(Maroik.WebSite.Models.ViewModels.Management.AccountOutputViewModel.RegistrationToken)]);
+        columns.Add(model => model.ResetPasswordToken).Titled(localizer[nameof(Maroik.WebSite.Models.ViewModels.Management.AccountOutputViewModel.ResetPasswordToken)]);
+        columns.Add(model => model.Created).Titled(localizer[nameof(Maroik.WebSite.Models.ViewModels.Management.AccountOutputViewModel.Created)]);
+        columns.Add(model => model.Updated).Titled(localizer[nameof(Maroik.WebSite.Models.ViewModels.Management.AccountOutputViewModel.Updated)]);
+        columns.Add(model => model.Message).Titled(localizer[nameof(Maroik.WebSite.Models.ViewModels.Management.AccountOutputViewModel.Message)]);
+        columns.Add(model => model.Deleted).Titled(localizer[nameof(Maroik.WebSite.Models.ViewModels.Management.AccountOutputViewModel.Deleted)]);
     })
     .Id("accountGrid")
     .Css("table table-striped")
@@ -37,7 +37,7 @@
     //.RowAttributed(model => new { @class = model.IsWorking == true ? "working" : null, data_id = model.Id })
     .RowAttributed(model => new { @class = "table-inactive clsGridRow", data_email = model.Email})
     .Using(GridFilterMode.Row)
-    .Empty(Localizer["No data found"])
+    .Empty(localizer["No data found"])
     .Filterable()
     .Sortable()
     .Pageable(pager => {

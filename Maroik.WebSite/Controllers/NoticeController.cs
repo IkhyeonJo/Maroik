@@ -1,8 +1,3 @@
-using System.Globalization;
-using System.Text.RegularExpressions;
-using DocumentFormat.OpenXml;
-using DocumentFormat.OpenXml.Packaging;
-using DocumentFormat.OpenXml.Spreadsheet;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Contract.Utilities;
@@ -11,39 +6,64 @@ using Maroik.WebSite.Models.ViewModels.Notice;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Localization;
 using Microsoft.Extensions.Options;
+using Newtonsoft.Json;
+using DocumentFormat.OpenXml;
+using DocumentFormat.OpenXml.Packaging;
+using DocumentFormat.OpenXml.Spreadsheet;
+using System.Text;
+using System.Text.RegularExpressions;
 
 namespace Maroik.WebSite.Controllers;
 
 /// <summary>Manages fixed-income and fixed-expenditure notice records (create, read, update, delete, export).</summary>
-public class NoticeController(
-    IHtmlLocalizer<NoticeController> localizer,
-    IAssetService assetService,
-    IFixedIncomeService fixedIncomeService,
-    IFixedExpenditureService fixedExpenditureService,
-    IAccountService accountService,
-    IDashboardService dashboardService,
-    IOptions<ServerSetting> settings,
-    ISessionService sessionService)
-    : BaseController(accountService, dashboardService, settings, sessionService)
+public class NoticeController : BaseController
 {
-    private readonly IOptions<ServerSetting> _settings = settings;
-    private readonly ISessionService _sessionService = sessionService;
+    private readonly IHtmlLocalizer<NoticeController> _localizer;
+    private readonly ILogger<NoticeController> _logger;
+    private readonly IHostEnvironment _hostEnvironment;
+    private readonly IAssetService _assetService;
+    private readonly IFixedIncomeService _fixedIncomeService;
+    private readonly IFixedExpenditureService _fixedExpenditureService;
+    private readonly IOptions<ServerSetting> _settings;
+    private readonly ISessionService _sessionService;
+
+    public NoticeController(
+        IHtmlLocalizer<NoticeController> localizer,
+        ILogger<NoticeController> logger,
+        IHostEnvironment hostEnvironment,
+        IAssetService assetService,
+        IFixedIncomeService fixedIncomeService,
+        IFixedExpenditureService fixedExpenditureService,
+        IAccountService accountService,
+        IDashboardService dashboardService,
+        IOptions<ServerSetting> settings,
+        ISessionService sessionService)
+        : base(accountService, dashboardService, settings, sessionService)
+    {
+        _localizer = localizer;
+        _logger = logger;
+        _hostEnvironment = hostEnvironment;
+        _assetService = assetService;
+        _fixedIncomeService = fixedIncomeService;
+        _fixedExpenditureService = fixedExpenditureService;
+        _settings = settings;
+        _sessionService = sessionService;
+    }
 
     #region FixedIncome
 
     #region Create
-
-    /// <summary>Creates a new fixed-income record.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.User)]
+    /// <summary>Creates a new fixed-income record.</summary>
     public async Task<IActionResult> CreateFixedIncome(
         [FromBody] FixedIncomeInputViewModel fixedIncomeInputViewModel)
     {
         if (!ModelState.IsValid)
-            return Json(new { result = false, error = localizer["Input is invalid"].Value });
+            return Json(new { result = false, error = _localizer["Input is invalid"].Value });
 
-        var email = _sessionService.GetAccount()!.Email;
+        string email = _sessionService.GetAccount()!.Email;
 
         var request = new FixedIncomeRequest
         {
@@ -60,42 +80,39 @@ public class NoticeController(
             Unpunctuality = fixedIncomeInputViewModel.Unpunctuality
         };
 
-        var result = await fixedIncomeService.CreateAsync(email, request);
+        var result = await _fixedIncomeService.CreateAsync(email, request);
         return result.Success
-            ? Json(new { result = true, message = localizer["The fixedIncome has been successfully created."].Value })
-            : Json(new { result = false, error = localizer[result.ErrorKey].Value });
+            ? Json(new { result = true, message = _localizer["The fixedIncome has been successfully created."].Value })
+            : Json(new { result = false, error = _localizer[result.ErrorKey].Value });
     }
-
     #endregion
 
     #region Read
 
-    /// <summary>Returns the fixed-income grid (AJAX) or the full page.</summary>
     [HttpGet]
+    /// <summary>Returns the fixed-income grid (AJAX) or the full page.</summary>
     public async Task<IActionResult> FixedIncome(string wholeSearch)
     {
-#pragma warning disable ASP0015
         if (HttpContext.Request.Headers["X-Requested-With"] == "XMLHttpRequest") // ajax
-#pragma warning restore ASP0015
         {
             List<FixedIncomeOutputViewModel> fixedIncomeOutputViewModels = [];
 
             #region FixedIncomes
 
-            var loginedAccountTimeZoneIanaId = _sessionService.GetAccount()!.TimeZoneIanaId;
+            string loginedAccountTimeZoneIanaId = _sessionService.GetAccount()!.TimeZoneIanaId;
 
-            var currentDate =
-                new DateTime(Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[0]),
+            DateTime currentDate =
+                new(Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[0]),
                     Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[1]),
                     Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[2]));
 
-            var assets = await assetService.GetAssetsAsync(_sessionService.GetAccount()!.Email);
+            List<AssetResponse> assets = await _assetService.GetAssetsAsync(_sessionService.GetAccount()!.Email);
 
-            foreach (var item in await fixedIncomeService.GetFixedIncomesAsync(_sessionService.GetAccount()!.Email))
+            foreach (FixedIncomeResponse item in await _fixedIncomeService.GetFixedIncomesAsync(_sessionService.GetAccount()!.Email))
             {
                 if (string.IsNullOrEmpty(wholeSearch))
                 {
-                    var noticedResult = false;
+                    bool noticedResult = false;
 
                     try
                     {
@@ -119,15 +136,15 @@ public class NoticeController(
                         noticedResult = true;
                     }
 
-                    fixedIncomeOutputViewModels.Add(new FixedIncomeOutputViewModel
+                    fixedIncomeOutputViewModels.Add(new FixedIncomeOutputViewModel()
                     {
                         Id = item.Id,
-                        MainClass = localizer[item.MainClass.ToString()].Value,
-                        SubClass = localizer[item.SubClass.ToString()].Value,
+                        MainClass = _localizer[item.MainClass.ToString()].Value,
+                        SubClass = _localizer[item.SubClass.ToString()].Value,
                         Content = item.Content,
                         Amount = Convert.ToDecimal(item.Amount.TrimTrailingZeros()),
-                        MonetaryUnit = assets.FirstOrDefault(x => x.ProductName == item.DepositMyAssetProductName)
-                            ?.MonetaryUnit,
+                        MonetaryUnit = assets.Where(x => x.ProductName == item.DepositMyAssetProductName)
+                            .FirstOrDefault().MonetaryUnit,
                         DepositMonth = item.DepositMonth,
                         DepositDay = item.DepositDay,
                         MaturityDate = item.MaturityDate.ToString("yyyy-MM-dd"),
@@ -142,23 +159,23 @@ public class NoticeController(
                 }
                 else
                 {
-                    if (localizer[item.MainClass?.ToString() ?? ""].Value.Contains(wholeSearch) ||
-                        localizer[item.SubClass?.ToString() ?? ""].Value.Contains(wholeSearch) ||
+                    if (_localizer[item.MainClass?.ToString() ?? ""].Value.Contains(wholeSearch) ||
+                        _localizer[item.SubClass?.ToString() ?? ""].Value.Contains(wholeSearch) ||
                         (item.Content?.ToString() ?? "").Contains(wholeSearch) ||
                         (item.Amount.TrimTrailingZeros() ?? "").Contains(wholeSearch) ||
-                        (assets.FirstOrDefault(x => x.ProductName == item.DepositMyAssetProductName)
-                            ?.MonetaryUnit ?? "").Contains(wholeSearch) ||
+                        (assets.Where(x => x.ProductName == item.DepositMyAssetProductName).FirstOrDefault()
+                            .MonetaryUnit.ToString() ?? "").Contains(wholeSearch) ||
                         (item.DepositMonth.ToString() ?? "").Contains(wholeSearch) ||
                         (item.DepositDay.ToString() ?? "").Contains(wholeSearch) ||
                         (item.MaturityDate.ToString("yyyy-MM-dd") ?? "").Contains(wholeSearch) ||
                         (item.Note?.ToString() ?? "").Contains(wholeSearch) ||
                         (item.DepositMyAssetProductName?.ToString() ?? "").Contains(wholeSearch) ||
-                        (item.Created.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId).ToString(CultureInfo.InvariantCulture) ?? "")
+                        (item.Created.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId).ToString() ?? "")
                         .Contains(wholeSearch) ||
-                        (item.Updated.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId).ToString(CultureInfo.InvariantCulture) ?? "")
+                        (item.Updated.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId).ToString() ?? "")
                         .Contains(wholeSearch))
                     {
-                        var noticedResult = false;
+                        bool noticedResult = false;
 
                         try
                         {
@@ -183,15 +200,15 @@ public class NoticeController(
                             noticedResult = true;
                         }
 
-                        fixedIncomeOutputViewModels.Add(new FixedIncomeOutputViewModel
+                        fixedIncomeOutputViewModels.Add(new FixedIncomeOutputViewModel()
                         {
                             Id = item.Id,
-                            MainClass = localizer[item.MainClass.ToString()].Value,
-                            SubClass = localizer[item.SubClass.ToString()].Value,
+                            MainClass = _localizer[item.MainClass.ToString()].Value,
+                            SubClass = _localizer[item.SubClass.ToString()].Value,
                             Content = item.Content,
                             Amount = Convert.ToDecimal(item.Amount.TrimTrailingZeros()),
-                            MonetaryUnit = assets.FirstOrDefault(x => x.ProductName == item.DepositMyAssetProductName)
-                                ?.MonetaryUnit,
+                            MonetaryUnit = assets.Where(x => x.ProductName == item.DepositMyAssetProductName)
+                                .FirstOrDefault().MonetaryUnit,
                             DepositMonth = item.DepositMonth,
                             DepositDay = item.DepositDay,
                             MaturityDate = item.MaturityDate.ToString("yyyy-MM-dd"),
@@ -209,7 +226,7 @@ public class NoticeController(
 
             #endregion
 
-            var result = fixedIncomeOutputViewModels
+            IQueryable<FixedIncomeOutputViewModel> result = fixedIncomeOutputViewModels
                 .OrderByDescending(a => a.Expired).ThenByDescending(m => m.Noticed)
                 .ThenByDescending(m => m.Unpunctuality).ThenByDescending(a => a.Created)
                 .ThenByDescending(a => a.Updated).AsQueryable();
@@ -217,69 +234,76 @@ public class NoticeController(
         }
 
         {
-            var loginedAccount = _sessionService.GetAccount() ?? new AccountResponse();
-            var assets = (await assetService.GetAssetsAsync(loginedAccount.Email))
+            AccountResponse loginedAccount = _sessionService.GetAccount() ?? new AccountResponse();
+            List<AssetResponse> assets = (await _assetService.GetAssetsAsync(loginedAccount.Email))
                 .Where(x => !x.Deleted).OrderBy(x => x.ProductName).ToList();
             ViewBag.Assets = assets;
         }
         return View();
     }
 
-    /// <summary>Checks whether a fixed-income record with the given ID exists.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.User)]
+    /// <summary>Checks whether a fixed-income record with the given ID exists.</summary>
     public async Task<IActionResult> IsFixedIncomeExists(int id)
     {
         try
         {
-            var tempFixedIncomes =
-                await fixedIncomeService.GetFixedIncomesAsync(_sessionService.GetAccount()!.Email);
+            List<FixedIncomeResponse> tempFixedIncomes =
+                await _fixedIncomeService.GetFixedIncomesAsync(_sessionService.GetAccount()!.Email);
 
+            if (tempFixedIncomes == null)
             {
-                var tempFixedIncome = tempFixedIncomes.FirstOrDefault(a => a.Id == id);
+                return Json(new { result = false, error = _localizer["No fixedIncome exists"].Value });
+            }
+            else
+            {
+                FixedIncomeResponse tempFixedIncome = tempFixedIncomes.Where(a => a.Id == id).FirstOrDefault();
 
                 if (tempFixedIncome == null)
                 {
-                    return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                    return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                 }
-
-                var tempFixedIncomeOutputModel = new FixedIncomeOutputViewModel
+                else
                 {
-                    Id = tempFixedIncome.Id,
-                    MainClass = tempFixedIncome.MainClass,
-                    SubClass = tempFixedIncome.SubClass,
-                    Content = tempFixedIncome.Content,
-                    Amount = Convert.ToDecimal(tempFixedIncome.Amount.TrimTrailingZeros()),
-                    DepositMonth = tempFixedIncome.DepositMonth,
-                    DepositDay = tempFixedIncome.DepositDay,
-                    MaturityDate = tempFixedIncome.MaturityDate.ToString("yyyy-MM-dd"),
-                    Note = tempFixedIncome.Note,
-                    DepositMyAssetProductName = tempFixedIncome.DepositMyAssetProductName,
-                    Unpunctuality = tempFixedIncome.Unpunctuality
-                };
-                return Json(new { result = true, fixedIncome = tempFixedIncomeOutputModel });
+                    FixedIncomeOutputViewModel tempFixedIncomeOutputModel = new()
+                    {
+                        Id = tempFixedIncome.Id,
+                        MainClass = tempFixedIncome.MainClass,
+                        SubClass = tempFixedIncome.SubClass,
+                        Content = tempFixedIncome.Content,
+                        Amount = Convert.ToDecimal(tempFixedIncome.Amount.TrimTrailingZeros()),
+                        DepositMonth = tempFixedIncome.DepositMonth,
+                        DepositDay = tempFixedIncome.DepositDay,
+                        MaturityDate = tempFixedIncome.MaturityDate.ToString("yyyy-MM-dd"),
+                        Note = tempFixedIncome.Note,
+                        DepositMyAssetProductName = tempFixedIncome.DepositMyAssetProductName,
+                        Unpunctuality = tempFixedIncome.Unpunctuality
+                    };
+                    return Json(new { result = true, fixedIncome = tempFixedIncomeOutputModel });
+                }
             }
         }
         catch
         {
-            return Json(new { result = false, error = localizer["Input is invalid"].Value });
+            return Json(new { result = false, error = _localizer["Input is invalid"].Value });
         }
     }
 
-    /// <summary>Returns a formatted amount label for the given fixed-income product.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.User)]
+    /// <summary>Returns a formatted amount label for the given fixed-income product.</summary>
     public async Task<IActionResult> GetFixedIncomeAmountLabel(string productName)
     {
         try
         {
-            var label = localizer["Amount"].Value;
+            string label = _localizer["Amount"].Value;
 
-            var asset =
-                (await assetService.GetAssetsAsync(_sessionService.GetAccount()!.Email))
-                .Where(x => !x.Deleted).FirstOrDefault(x => x.ProductName == productName) ?? new AssetResponse();
+            AssetResponse asset =
+                (await _assetService.GetAssetsAsync(_sessionService.GetAccount()!.Email))
+                .Where(x => !x.Deleted).Where(x => x.ProductName == productName).FirstOrDefault() ?? new AssetResponse();
 
             if (!string.IsNullOrEmpty(asset.MonetaryUnit))
             {
@@ -290,25 +314,24 @@ public class NoticeController(
         }
         catch
         {
-            return Json(new { result = false, label = localizer["Amount"].Value });
+            return Json(new { result = false, label = _localizer["Amount"].Value });
         }
     }
 
     #endregion
 
     #region Update
-
-    /// <summary>Updates an existing fixed-income record.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.User)]
+    /// <summary>Updates an existing fixed-income record.</summary>
     public async Task<IActionResult> UpdateFixedIncome(
         [FromBody] FixedIncomeInputViewModel fixedIncomeInputViewModel)
     {
         if (!ModelState.IsValid)
-            return Json(new { result = false, error = localizer["Input is invalid"].Value });
+            return Json(new { result = false, error = _localizer["Input is invalid"].Value });
 
-        var email = _sessionService.GetAccount()!.Email;
+        string email = _sessionService.GetAccount()!.Email;
 
         var request = new FixedIncomeRequest
         {
@@ -325,51 +348,49 @@ public class NoticeController(
             Unpunctuality = fixedIncomeInputViewModel.Unpunctuality
         };
 
-        var result = await fixedIncomeService.UpdateAsync(email, request);
+        var result = await _fixedIncomeService.UpdateAsync(email, request);
         return result.Success
-            ? Json(new { result = true, message = localizer["The fixedIncome has been successfully updated."].Value })
-            : Json(new { result = false, error = localizer[result.ErrorKey].Value });
+            ? Json(new { result = true, message = _localizer["The fixedIncome has been successfully updated."].Value })
+            : Json(new { result = false, error = _localizer[result.ErrorKey].Value });
     }
-
     #endregion
 
     #region Delete
-
-    /// <summary>Deletes an existing fixed-income record.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.User)]
+    /// <summary>Deletes an existing fixed-income record.</summary>
     public async Task<IActionResult> DeleteFixedIncome(
         [FromBody] FixedIncomeInputViewModel fixedIncomeInputViewModel)
     {
-        var email = _sessionService.GetAccount()!.Email;
+        string email = _sessionService.GetAccount()!.Email;
 
-        var result = await fixedIncomeService.DeleteAsync(email, fixedIncomeInputViewModel.Id);
+        var result = await _fixedIncomeService.DeleteAsync(email, fixedIncomeInputViewModel.Id);
         return result.Success
-            ? Json(new { result = true, message = localizer["The fixedIncome has been successfully deleted."].Value })
-            : Json(new { result = false, error = localizer[result.ErrorKey].Value });
+            ? Json(new { result = true, message = _localizer["The fixedIncome has been successfully deleted."].Value })
+            : Json(new { result = false, error = _localizer[result.ErrorKey].Value });
     }
 
     #region Excel
 
-    /// <summary>Exports fixed-income records to an Excel file.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.User)]
+    /// <summary>Exports fixed-income records to an Excel file.</summary>
     public async Task<IActionResult> ExportExcelFixedIncome(string fileName = "")
     {
         await Task.Yield();
 
         var account = _sessionService.GetAccount() ?? new AccountResponse();
-        var loginedAccountTimeZoneIanaId = account.TimeZoneIanaId;
-        var currentDate = DateTime.UtcNow.ToLocalTime();
+        string loginedAccountTimeZoneIanaId = account.TimeZoneIanaId;
+        DateTime currentDate = DateTime.UtcNow.ToLocalTime();
 
-        var assets = await assetService.GetAssetsAsync(account.Email);
-        var fixedIncomeList = await fixedIncomeService.GetFixedIncomesAsync(account.Email);
+        List<AssetResponse> assets = await _assetService.GetAssetsAsync(account.Email);
+        var fixedIncomeList = await _fixedIncomeService.GetFixedIncomesAsync(account.Email);
 
         var fixedIncomeOutputViewModels = fixedIncomeList.Select(item =>
             {
-                var noticedResult = false;
+                bool noticedResult = false;
 
                 try
                 {
@@ -391,8 +412,8 @@ public class NoticeController(
                 var asset = assets.FirstOrDefault(x => x.ProductName == item.DepositMyAssetProductName);
                 return new FixedIncomeOutputViewModel
                 {
-                    MainClass = localizer[item.MainClass.ToString()].Value,
-                    SubClass = localizer[item.SubClass.ToString()].Value,
+                    MainClass = _localizer[item.MainClass.ToString()].Value,
+                    SubClass = _localizer[item.SubClass.ToString()].Value,
                     Content = item.Content,
                     Amount = Convert.ToDecimal(item.Amount.TrimTrailingZeros()),
                     MonetaryUnit = asset?.MonetaryUnit,
@@ -414,18 +435,19 @@ public class NoticeController(
             .ThenByDescending(a => a.Updated)
             .ToList();
 
-        var stream = new MemoryStream();
+        MemoryStream stream = new();
 
-        using (var spreadsheetDocument = SpreadsheetDocument.Create(stream, SpreadsheetDocumentType.Workbook))
+        using (SpreadsheetDocument spreadsheetDocument =
+               SpreadsheetDocument.Create(stream, SpreadsheetDocumentType.Workbook))
         {
-            var workbookPart = spreadsheetDocument.AddWorkbookPart();
+            WorkbookPart workbookPart = spreadsheetDocument.AddWorkbookPart();
             workbookPart.Workbook = new Workbook();
 
-            var worksheetPart = workbookPart.AddNewPart<WorksheetPart>();
+            WorksheetPart worksheetPart = workbookPart.AddNewPart<WorksheetPart>();
             worksheetPart.Worksheet = new Worksheet(new SheetData());
 
-            var sheets = spreadsheetDocument.WorkbookPart.Workbook.AppendChild(new Sheets());
-            var sheet = new Sheet
+            Sheets sheets = spreadsheetDocument.WorkbookPart.Workbook.AppendChild(new Sheets());
+            Sheet sheet = new Sheet()
             {
                 Id = spreadsheetDocument.WorkbookPart.GetIdOfPart(worksheetPart),
                 SheetId = 1,
@@ -433,7 +455,7 @@ public class NoticeController(
             };
             sheets.Append(sheet);
 
-            var sheetData = worksheetPart.Worksheet.GetFirstChild<SheetData>();
+            SheetData sheetData = worksheetPart.Worksheet.GetFirstChild<SheetData>();
 
             Cell CreateCell(string text)
             {
@@ -444,41 +466,41 @@ public class NoticeController(
                 };
             }
 
-            var headerRow = new Row();
+            Row headerRow = new Row();
             headerRow.Append(
-                CreateCell(localizer[nameof(FixedIncomeOutputViewModel.MainClass)].Value),
-                CreateCell(localizer[nameof(FixedIncomeOutputViewModel.SubClass)].Value),
-                CreateCell(localizer[nameof(FixedIncomeOutputViewModel.Content)].Value),
-                CreateCell(localizer[nameof(FixedIncomeOutputViewModel.Amount)].Value),
-                CreateCell(localizer[nameof(FixedIncomeOutputViewModel.MonetaryUnit)].Value),
-                CreateCell(localizer[nameof(FixedIncomeOutputViewModel.DepositMonth)].Value),
-                CreateCell(localizer[nameof(FixedIncomeOutputViewModel.DepositDay)].Value),
-                CreateCell(localizer[nameof(FixedIncomeOutputViewModel.MaturityDate)].Value),
-                CreateCell(localizer[nameof(FixedIncomeOutputViewModel.Note)].Value),
-                CreateCell(localizer[nameof(FixedIncomeOutputViewModel.DepositMyAssetProductName)].Value),
-                CreateCell(localizer[nameof(FixedIncomeOutputViewModel.Created)].Value),
-                CreateCell(localizer[nameof(FixedIncomeOutputViewModel.Updated)].Value),
-                CreateCell(localizer[nameof(FixedIncomeOutputViewModel.Noticed)].Value),
-                CreateCell(localizer[nameof(FixedIncomeOutputViewModel.Expired)].Value)
+                CreateCell(_localizer[nameof(FixedIncomeOutputViewModel.MainClass)].Value),
+                CreateCell(_localizer[nameof(FixedIncomeOutputViewModel.SubClass)].Value),
+                CreateCell(_localizer[nameof(FixedIncomeOutputViewModel.Content)].Value),
+                CreateCell(_localizer[nameof(FixedIncomeOutputViewModel.Amount)].Value),
+                CreateCell(_localizer[nameof(FixedIncomeOutputViewModel.MonetaryUnit)].Value),
+                CreateCell(_localizer[nameof(FixedIncomeOutputViewModel.DepositMonth)].Value),
+                CreateCell(_localizer[nameof(FixedIncomeOutputViewModel.DepositDay)].Value),
+                CreateCell(_localizer[nameof(FixedIncomeOutputViewModel.MaturityDate)].Value),
+                CreateCell(_localizer[nameof(FixedIncomeOutputViewModel.Note)].Value),
+                CreateCell(_localizer[nameof(FixedIncomeOutputViewModel.DepositMyAssetProductName)].Value),
+                CreateCell(_localizer[nameof(FixedIncomeOutputViewModel.Created)].Value),
+                CreateCell(_localizer[nameof(FixedIncomeOutputViewModel.Updated)].Value),
+                CreateCell(_localizer[nameof(FixedIncomeOutputViewModel.Noticed)].Value),
+                CreateCell(_localizer[nameof(FixedIncomeOutputViewModel.Expired)].Value)
             );
             sheetData.Append(headerRow);
 
             foreach (var item in fixedIncomeOutputViewModels)
             {
-                var dataRow = new Row();
+                Row dataRow = new Row();
                 dataRow.Append(
                     CreateCell(item.MainClass),
                     CreateCell(item.SubClass),
                     CreateCell(item.Content),
-                    CreateCell(item.Amount.ToString(CultureInfo.InvariantCulture)),
+                    CreateCell(item.Amount.ToString()),
                     CreateCell(item.MonetaryUnit),
-                    CreateCell(item.DepositMonth.ToString(CultureInfo.InvariantCulture)),
-                    CreateCell(item.DepositDay.ToString(CultureInfo.InvariantCulture)),
+                    CreateCell(item.DepositMonth.ToString()),
+                    CreateCell(item.DepositDay.ToString()),
                     CreateCell(item.MaturityDate),
                     CreateCell(item.Note),
                     CreateCell(item.DepositMyAssetProductName),
-                    CreateCell(item.Created.ToString(CultureInfo.InvariantCulture)),
-                    CreateCell(item.Updated.ToString(CultureInfo.InvariantCulture)),
+                    CreateCell(item.Created.ToString()),
+                    CreateCell(item.Updated.ToString()),
                     CreateCell(item.Noticed.ToString()),
                     CreateCell(item.Expired.ToString())
                 );
@@ -489,7 +511,7 @@ public class NoticeController(
         }
 
         stream.Position = 0;
-        var excelName =
+        string excelName =
             $"{fileName}-{DateTime.UtcNow.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId):yyyy-MM-dd-HH-mm-ss-fff}.xlsx";
         return File(stream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", excelName);
     }
@@ -503,18 +525,17 @@ public class NoticeController(
     #region FixedExpenditure
 
     #region Create
-
-    /// <summary>Creates a new fixed-expenditure record.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.User)]
+    /// <summary>Creates a new fixed-expenditure record.</summary>
     public async Task<IActionResult> CreateFixedExpenditure(
         [FromBody] FixedExpenditureInputViewModel fixedExpenditureInputViewModel)
     {
         if (!ModelState.IsValid)
-            return Json(new { result = false, error = localizer["Input is invalid"].Value });
+            return Json(new { result = false, error = _localizer["Input is invalid"].Value });
 
-        var email = _sessionService.GetAccount()!.Email;
+        string email = _sessionService.GetAccount()!.Email;
 
         var request = new FixedExpenditureRequest
         {
@@ -532,43 +553,40 @@ public class NoticeController(
             Unpunctuality = fixedExpenditureInputViewModel.Unpunctuality
         };
 
-        var result = await fixedExpenditureService.CreateAsync(email, request);
+        var result = await _fixedExpenditureService.CreateAsync(email, request);
         return result.Success
-            ? Json(new { result = true, message = localizer["The fixedExpenditure has been successfully created."].Value })
-            : Json(new { result = false, error = localizer[result.ErrorKey].Value });
+            ? Json(new { result = true, message = _localizer["The fixedExpenditure has been successfully created."].Value })
+            : Json(new { result = false, error = _localizer[result.ErrorKey].Value });
     }
-
     #endregion
 
     #region Read
 
-    /// <summary>Returns the fixed-expenditure grid (AJAX) or the full page.</summary>
     [HttpGet]
+    /// <summary>Returns the fixed-expenditure grid (AJAX) or the full page.</summary>
     public async Task<IActionResult> FixedExpenditure(string wholeSearch)
     {
-#pragma warning disable ASP0015
         if (HttpContext.Request.Headers["X-Requested-With"] == "XMLHttpRequest") // ajax
-#pragma warning restore ASP0015
         {
             List<FixedExpenditureOutputViewModel> fixedExpenditureOutputViewModels = [];
 
             #region FixedExpenditures
 
-            var loginedAccountTimeZoneIanaId = _sessionService.GetAccount()!.TimeZoneIanaId;
+            string loginedAccountTimeZoneIanaId = _sessionService.GetAccount()!.TimeZoneIanaId;
 
-            var currentDate =
-                new DateTime(Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[0]),
+            DateTime currentDate =
+                new(Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[0]),
                     Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[1]),
                     Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[2]));
 
-            var assets = await assetService.GetAssetsAsync(_sessionService.GetAccount()!.Email);
+            List<AssetResponse> assets = await _assetService.GetAssetsAsync(_sessionService.GetAccount()!.Email);
 
-            foreach (var item in await fixedExpenditureService.GetFixedExpendituresAsync(
+            foreach (FixedExpenditureResponse item in await _fixedExpenditureService.GetFixedExpendituresAsync(
                          _sessionService.GetAccount()!.Email))
             {
                 if (string.IsNullOrEmpty(wholeSearch))
                 {
-                    var noticedResult = false;
+                    bool noticedResult = false;
 
                     try
                     {
@@ -592,15 +610,15 @@ public class NoticeController(
                         noticedResult = true;
                     }
 
-                    fixedExpenditureOutputViewModels.Add(new FixedExpenditureOutputViewModel
+                    fixedExpenditureOutputViewModels.Add(new FixedExpenditureOutputViewModel()
                     {
                         Id = item.Id,
-                        MainClass = localizer[item.MainClass.ToString()].Value,
-                        SubClass = localizer[item.SubClass.ToString()].Value,
+                        MainClass = _localizer[item.MainClass.ToString()].Value,
+                        SubClass = _localizer[item.SubClass.ToString()].Value,
                         Content = item.Content,
                         Amount = Convert.ToDecimal(item.Amount.TrimTrailingZeros()),
-                        MonetaryUnit = assets.FirstOrDefault(x => x.ProductName == item.PaymentMethod)
-                            ?.MonetaryUnit,
+                        MonetaryUnit = assets.Where(x => x.ProductName == item.PaymentMethod).FirstOrDefault()
+                            .MonetaryUnit,
                         PaymentMethod = item.PaymentMethod,
                         MyDepositAsset = item.MyDepositAsset,
                         DepositMonth = item.DepositMonth,
@@ -616,24 +634,24 @@ public class NoticeController(
                 }
                 else
                 {
-                    if (localizer[item.MainClass?.ToString() ?? ""].Value.Contains(wholeSearch) ||
-                        localizer[item.SubClass?.ToString() ?? ""].Value.Contains(wholeSearch) ||
+                    if (_localizer[item.MainClass?.ToString() ?? ""].Value.Contains(wholeSearch) ||
+                        _localizer[item.SubClass?.ToString() ?? ""].Value.Contains(wholeSearch) ||
                         (item.Content?.ToString() ?? "").Contains(wholeSearch) ||
                         (item.Amount.TrimTrailingZeros() ?? "").Contains(wholeSearch) ||
-                        (assets.FirstOrDefault(x => x.ProductName == item.PaymentMethod)?.MonetaryUnit ?? "")
-                        .Contains(wholeSearch) ||
+                        (assets.Where(x => x.ProductName == item.PaymentMethod).FirstOrDefault().MonetaryUnit
+                            .ToString() ?? "").Contains(wholeSearch) ||
                         (item.PaymentMethod.ToString() ?? "").Contains(wholeSearch) ||
                         (item.MyDepositAsset?.ToString() ?? "").Contains(wholeSearch) ||
                         (item.DepositMonth.ToString() ?? "").Contains(wholeSearch) ||
                         (item.DepositDay.ToString() ?? "").Contains(wholeSearch) ||
                         (item.MaturityDate.ToString("yyyy-MM-dd") ?? "").Contains(wholeSearch) ||
-                        (item.Created.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId).ToString(CultureInfo.InvariantCulture) ?? "")
+                        (item.Created.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId).ToString() ?? "")
                         .Contains(wholeSearch) ||
-                        (item.Updated.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId).ToString(CultureInfo.InvariantCulture) ?? "")
+                        (item.Updated.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId).ToString() ?? "")
                         .Contains(wholeSearch) ||
                         (item.Note?.ToString() ?? "").Contains(wholeSearch))
                     {
-                        var noticedResult = false;
+                        bool noticedResult = false;
 
                         try
                         {
@@ -658,15 +676,15 @@ public class NoticeController(
                             noticedResult = true;
                         }
 
-                        fixedExpenditureOutputViewModels.Add(new FixedExpenditureOutputViewModel
+                        fixedExpenditureOutputViewModels.Add(new FixedExpenditureOutputViewModel()
                         {
                             Id = item.Id,
-                            MainClass = localizer[item.MainClass.ToString()].Value,
-                            SubClass = localizer[item.SubClass.ToString()].Value,
+                            MainClass = _localizer[item.MainClass.ToString()].Value,
+                            SubClass = _localizer[item.SubClass.ToString()].Value,
                             Content = item.Content,
                             Amount = Convert.ToDecimal(item.Amount.TrimTrailingZeros()),
-                            MonetaryUnit = assets.FirstOrDefault(x => x.ProductName == item.PaymentMethod)
-                                ?.MonetaryUnit,
+                            MonetaryUnit = assets.Where(x => x.ProductName == item.PaymentMethod).FirstOrDefault()
+                                .MonetaryUnit,
                             PaymentMethod = item.PaymentMethod,
                             MyDepositAsset = item.MyDepositAsset,
                             DepositMonth = item.DepositMonth,
@@ -685,7 +703,7 @@ public class NoticeController(
 
             #endregion
 
-            var result = fixedExpenditureOutputViewModels
+            IQueryable<FixedExpenditureOutputViewModel> result = fixedExpenditureOutputViewModels
                 .OrderByDescending(a => a.Expired).ThenByDescending(m => m.Noticed)
                 .ThenByDescending(m => m.Unpunctuality).ThenByDescending(a => a.Created)
                 .ThenByDescending(a => a.Updated).AsQueryable();
@@ -693,70 +711,78 @@ public class NoticeController(
         }
 
         {
-            var loginedAccount = _sessionService.GetAccount() ?? new AccountResponse();
-            var assets = (await assetService.GetAssetsAsync(loginedAccount.Email))
+            AccountResponse loginedAccount = _sessionService.GetAccount() ?? new AccountResponse();
+            List<AssetResponse> assets = (await _assetService.GetAssetsAsync(loginedAccount.Email))
                 .Where(x => !x.Deleted).OrderBy(x => x.ProductName).ToList();
             ViewBag.Assets = assets;
         }
         return View();
     }
 
-    /// <summary>Checks whether a fixed-expenditure record with the given ID exists.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.User)]
+    /// <summary>Checks whether a fixed-expenditure record with the given ID exists.</summary>
     public async Task<IActionResult> IsFixedExpenditureExists(int id)
     {
         try
         {
-            var tempFixedExpenditures =
-                await fixedExpenditureService.GetFixedExpendituresAsync(_sessionService.GetAccount()!.Email);
+            List<FixedExpenditureResponse> tempFixedExpenditures =
+                await _fixedExpenditureService.GetFixedExpendituresAsync(_sessionService.GetAccount()!.Email);
 
+            if (tempFixedExpenditures == null)
             {
-                var tempFixedExpenditure = tempFixedExpenditures.FirstOrDefault(a => a.Id == id);
+                return Json(new { result = false, error = _localizer["No fixedExpenditure exists"].Value });
+            }
+            else
+            {
+                FixedExpenditureResponse tempFixedExpenditure =
+                    tempFixedExpenditures.Where(a => a.Id == id).FirstOrDefault();
 
                 if (tempFixedExpenditure == null)
                 {
-                    return Json(new { result = false, error = localizer["Input is invalid"].Value });
+                    return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                 }
-
-                var tempFixedIncomeOutputModel = new FixedExpenditureOutputViewModel
+                else
                 {
-                    Id = tempFixedExpenditure.Id,
-                    MainClass = tempFixedExpenditure.MainClass,
-                    SubClass = tempFixedExpenditure.SubClass,
-                    Content = tempFixedExpenditure.Content,
-                    Amount = Convert.ToDecimal(tempFixedExpenditure.Amount.TrimTrailingZeros()),
-                    DepositMonth = tempFixedExpenditure.DepositMonth,
-                    DepositDay = tempFixedExpenditure.DepositDay,
-                    MaturityDate = tempFixedExpenditure.MaturityDate.ToString("yyyy-MM-dd"),
-                    Note = tempFixedExpenditure.Note,
-                    PaymentMethod = tempFixedExpenditure.PaymentMethod,
-                    MyDepositAsset = tempFixedExpenditure.MyDepositAsset ?? "",
-                    Unpunctuality = tempFixedExpenditure.Unpunctuality
-                };
-                return Json(new { result = true, fixedExpenditure = tempFixedIncomeOutputModel });
+                    FixedExpenditureOutputViewModel tempFixedIncomeOutputModel = new()
+                    {
+                        Id = tempFixedExpenditure.Id,
+                        MainClass = tempFixedExpenditure.MainClass,
+                        SubClass = tempFixedExpenditure.SubClass,
+                        Content = tempFixedExpenditure.Content,
+                        Amount = Convert.ToDecimal(tempFixedExpenditure.Amount.TrimTrailingZeros()),
+                        DepositMonth = tempFixedExpenditure.DepositMonth,
+                        DepositDay = tempFixedExpenditure.DepositDay,
+                        MaturityDate = tempFixedExpenditure.MaturityDate.ToString("yyyy-MM-dd"),
+                        Note = tempFixedExpenditure.Note,
+                        PaymentMethod = tempFixedExpenditure.PaymentMethod,
+                        MyDepositAsset = tempFixedExpenditure.MyDepositAsset ?? "",
+                        Unpunctuality = tempFixedExpenditure.Unpunctuality
+                    };
+                    return Json(new { result = true, fixedExpenditure = tempFixedIncomeOutputModel });
+                }
             }
         }
         catch
         {
-            return Json(new { result = false, error = localizer["Input is invalid"].Value });
+            return Json(new { result = false, error = _localizer["Input is invalid"].Value });
         }
     }
 
-    /// <summary>Returns a formatted amount label for the given fixed-expenditure product.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.User)]
+    /// <summary>Returns a formatted amount label for the given fixed-expenditure product.</summary>
     public async Task<IActionResult> GetFixedExpenditureAmountLabel(string productName)
     {
         try
         {
-            var label = localizer["Amount"].Value;
+            string label = _localizer["Amount"].Value;
 
-            var asset =
-                (await assetService.GetAssetsAsync(_sessionService.GetAccount()!.Email))
-                .Where(x => !x.Deleted).FirstOrDefault(x => x.ProductName == productName) ?? new AssetResponse();
+            AssetResponse asset =
+                (await _assetService.GetAssetsAsync(_sessionService.GetAccount()!.Email))
+                .Where(x => !x.Deleted).Where(x => x.ProductName == productName).FirstOrDefault() ?? new AssetResponse();
 
             if (!string.IsNullOrEmpty(asset.MonetaryUnit))
             {
@@ -767,25 +793,24 @@ public class NoticeController(
         }
         catch
         {
-            return Json(new { result = false, label = localizer["Amount"].Value });
+            return Json(new { result = false, label = _localizer["Amount"].Value });
         }
     }
 
     #endregion
 
     #region Update
-
-    /// <summary>Updates an existing fixed-expenditure record.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.User)]
+    /// <summary>Updates an existing fixed-expenditure record.</summary>
     public async Task<IActionResult> UpdateFixedExpenditure(
         [FromBody] FixedExpenditureInputViewModel fixedExpenditureInputViewModel)
     {
         if (!ModelState.IsValid)
-            return Json(new { result = false, error = localizer["Input is invalid"].Value });
+            return Json(new { result = false, error = _localizer["Input is invalid"].Value });
 
-        var email = _sessionService.GetAccount()!.Email;
+        string email = _sessionService.GetAccount()!.Email;
 
         var request = new FixedExpenditureRequest
         {
@@ -803,57 +828,56 @@ public class NoticeController(
             Unpunctuality = fixedExpenditureInputViewModel.Unpunctuality
         };
 
-        var result = await fixedExpenditureService.UpdateAsync(email, request);
+        var result = await _fixedExpenditureService.UpdateAsync(email, request);
         return result.Success
-            ? Json(new { result = true, message = localizer["The fixedExpenditure has been successfully updated."].Value })
-            : Json(new { result = false, error = localizer[result.ErrorKey].Value });
+            ? Json(new { result = true, message = _localizer["The fixedExpenditure has been successfully updated."].Value })
+            : Json(new { result = false, error = _localizer[result.ErrorKey].Value });
     }
-
     #endregion
 
     #region Delete
-
-    /// <summary>Deletes an existing fixed-expenditure record.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.User)]
+    /// <summary>Deletes an existing fixed-expenditure record.</summary>
     public async Task<IActionResult> DeleteFixedExpenditure(
         [FromBody] FixedExpenditureInputViewModel fixedExpenditureInputViewModel)
     {
-        var email = _sessionService.GetAccount()!.Email;
+        string email = _sessionService.GetAccount()!.Email;
 
-        var result = await fixedExpenditureService.DeleteAsync(email, fixedExpenditureInputViewModel.Id);
+        var result = await _fixedExpenditureService.DeleteAsync(email, fixedExpenditureInputViewModel.Id);
         return result.Success
-            ? Json(new { result = true, message = localizer["The fixedExpenditure has been successfully deleted."].Value })
-            : Json(new { result = false, error = localizer[result.ErrorKey].Value });
+            ? Json(new { result = true, message = _localizer["The fixedExpenditure has been successfully deleted."].Value })
+            : Json(new { result = false, error = _localizer[result.ErrorKey].Value });
     }
 
     #region Excel
 
-    /// <summary>Exports fixed-expenditure records to an Excel file.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.User)]
+    /// <summary>Exports fixed-expenditure records to an Excel file.</summary>
     public async Task<IActionResult> ExportExcelFixedExpenditure(string fileName = "")
     {
         await Task.Yield();
 
+        List<FixedExpenditureOutputViewModel> fixedExpenditureOutputViewModels =
+            new List<FixedExpenditureOutputViewModel>();
+
         #region FixedExpenditures
 
-        var loginedAccountTimeZoneIanaId = _sessionService.GetAccount()!.TimeZoneIanaId;
+        string loginedAccountTimeZoneIanaId = _sessionService.GetAccount()!.TimeZoneIanaId;
 
-        var currentDate =
-            new DateTime(Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[0]),
+        DateTime currentDate =
+            new(Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[0]),
                 Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[1]),
                 Convert.ToInt32(Regex.Split(DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd"), "-")[2]));
 
-        var assets = await assetService.GetAssetsAsync(_sessionService.GetAccount()!.Email);
+        List<AssetResponse> assets = await _assetService.GetAssetsAsync(_sessionService.GetAccount()!.Email);
 
-        var fixedExpenditureOutputViewModels = new List<FixedExpenditureOutputViewModel>();
-
-        foreach (var item in await fixedExpenditureService.GetFixedExpendituresAsync(_sessionService.GetAccount()!.Email))
+        foreach (FixedExpenditureResponse item in await _fixedExpenditureService.GetFixedExpendituresAsync(_sessionService.GetAccount()!.Email))
         {
-            var noticedResult = false;
+            bool noticedResult = false;
 
             try
             {
@@ -876,13 +900,13 @@ public class NoticeController(
                 noticedResult = true;
             }
 
-            fixedExpenditureOutputViewModels.Add(new FixedExpenditureOutputViewModel
+            fixedExpenditureOutputViewModels.Add(new FixedExpenditureOutputViewModel()
             {
-                MainClass = localizer[item.MainClass.ToString()].Value,
-                SubClass = localizer[item.SubClass.ToString()].Value,
+                MainClass = _localizer[item.MainClass.ToString()].Value,
+                SubClass = _localizer[item.SubClass.ToString()].Value,
                 Content = item.Content,
                 Amount = Convert.ToDecimal(item.Amount.TrimTrailingZeros()),
-                MonetaryUnit = assets.FirstOrDefault(x => x.ProductName == item.PaymentMethod)?.MonetaryUnit,
+                MonetaryUnit = assets.Where(x => x.ProductName == item.PaymentMethod).FirstOrDefault().MonetaryUnit,
                 PaymentMethod = item.PaymentMethod,
                 MyDepositAsset = item.MyDepositAsset,
                 DepositMonth = item.DepositMonth,
@@ -903,7 +927,7 @@ public class NoticeController(
 
         #endregion
 
-        var stream = new MemoryStream();
+        MemoryStream stream = new();
 
         using (var spreadsheetDocument = SpreadsheetDocument.Create(stream, SpreadsheetDocumentType.Workbook))
         {
@@ -912,12 +936,12 @@ public class NoticeController(
             var sheets = workbookPart.Workbook.AppendChild(new Sheets());
 
             var worksheetPart = workbookPart.AddNewPart<WorksheetPart>();
-            var worksheet = new Worksheet();
-            var sheetData = new SheetData();
+            Worksheet worksheet = new Worksheet();
+            SheetData sheetData = new SheetData();
             worksheet.Append(sheetData);
             worksheetPart.Worksheet = worksheet;
 
-            var sheet = new Sheet
+            Sheet sheet = new Sheet()
             {
                 Id = workbookPart.GetIdOfPart(worksheetPart),
                 SheetId = 1,
@@ -927,52 +951,52 @@ public class NoticeController(
 
             Cell CreateCell(string value)
             {
-                return new Cell
+                return new Cell()
                 {
                     CellValue = new CellValue(value),
                     DataType = CellValues.String
                 };
             }
 
-            var headerRow = new Row();
+            Row headerRow = new Row();
             headerRow.Append(
-                CreateCell(localizer[nameof(FixedExpenditureOutputViewModel.MainClass)].Value),
-                CreateCell(localizer[nameof(FixedExpenditureOutputViewModel.SubClass)].Value),
-                CreateCell(localizer[nameof(FixedExpenditureOutputViewModel.Content)].Value),
-                CreateCell(localizer[nameof(FixedExpenditureOutputViewModel.Amount)].Value),
-                CreateCell(localizer[nameof(FixedExpenditureOutputViewModel.MonetaryUnit)].Value),
-                CreateCell(localizer[nameof(FixedExpenditureOutputViewModel.PaymentMethod)].Value),
-                CreateCell(localizer[nameof(FixedExpenditureOutputViewModel.MyDepositAsset)].Value),
-                CreateCell(localizer[nameof(FixedExpenditureOutputViewModel.DepositMonth)].Value),
-                CreateCell(localizer[nameof(FixedExpenditureOutputViewModel.DepositDay)].Value),
-                CreateCell(localizer[nameof(FixedExpenditureOutputViewModel.MaturityDate)].Value),
-                CreateCell(localizer[nameof(FixedExpenditureOutputViewModel.Created)].Value),
-                CreateCell(localizer[nameof(FixedExpenditureOutputViewModel.Updated)].Value),
-                CreateCell(localizer[nameof(FixedExpenditureOutputViewModel.Note)].Value),
-                CreateCell(localizer[nameof(FixedExpenditureOutputViewModel.Noticed)].Value),
-                CreateCell(localizer[nameof(FixedExpenditureOutputViewModel.Expired)].Value)
+                CreateCell(_localizer[nameof(FixedExpenditureOutputViewModel.MainClass)].Value),
+                CreateCell(_localizer[nameof(FixedExpenditureOutputViewModel.SubClass)].Value),
+                CreateCell(_localizer[nameof(FixedExpenditureOutputViewModel.Content)].Value),
+                CreateCell(_localizer[nameof(FixedExpenditureOutputViewModel.Amount)].Value),
+                CreateCell(_localizer[nameof(FixedExpenditureOutputViewModel.MonetaryUnit)].Value),
+                CreateCell(_localizer[nameof(FixedExpenditureOutputViewModel.PaymentMethod)].Value),
+                CreateCell(_localizer[nameof(FixedExpenditureOutputViewModel.MyDepositAsset)].Value),
+                CreateCell(_localizer[nameof(FixedExpenditureOutputViewModel.DepositMonth)].Value),
+                CreateCell(_localizer[nameof(FixedExpenditureOutputViewModel.DepositDay)].Value),
+                CreateCell(_localizer[nameof(FixedExpenditureOutputViewModel.MaturityDate)].Value),
+                CreateCell(_localizer[nameof(FixedExpenditureOutputViewModel.Created)].Value),
+                CreateCell(_localizer[nameof(FixedExpenditureOutputViewModel.Updated)].Value),
+                CreateCell(_localizer[nameof(FixedExpenditureOutputViewModel.Note)].Value),
+                CreateCell(_localizer[nameof(FixedExpenditureOutputViewModel.Noticed)].Value),
+                CreateCell(_localizer[nameof(FixedExpenditureOutputViewModel.Expired)].Value)
             );
             sheetData.Append(headerRow);
 
             foreach (var item in fixedExpenditureOutputViewModels)
             {
-                var dataRow = new Row();
+                Row dataRow = new Row();
                 dataRow.Append(
-                    CreateCell(localizer[item?.MainClass ?? ""].Value),
-                    CreateCell(localizer[item?.SubClass ?? ""].Value),
-                    CreateCell(item?.Content),
-                    CreateCell(Convert.ToDecimal(item?.Amount.TrimTrailingZeros()).ToString(CultureInfo.InvariantCulture)),
-                    CreateCell(item?.MonetaryUnit),
-                    CreateCell(item?.PaymentMethod),
-                    CreateCell(item?.MyDepositAsset),
-                    CreateCell(item?.DepositMonth.ToString(CultureInfo.InvariantCulture)),
-                    CreateCell(item?.DepositDay.ToString(CultureInfo.InvariantCulture)),
-                    CreateCell(item?.MaturityDate),
-                    CreateCell(item?.Created.ToString(CultureInfo.InvariantCulture)),
-                    CreateCell(item?.Updated.ToString(CultureInfo.InvariantCulture)),
-                    CreateCell(item?.Note),
-                    CreateCell(item?.Noticed.ToString()),
-                    CreateCell(item?.Expired.ToString())
+                    CreateCell(_localizer[item?.MainClass?.ToString() ?? ""].Value),
+                    CreateCell(_localizer[item?.SubClass?.ToString() ?? ""].Value),
+                    CreateCell(item.Content),
+                    CreateCell(Convert.ToDecimal(item.Amount.TrimTrailingZeros()).ToString()),
+                    CreateCell(item.MonetaryUnit),
+                    CreateCell(item.PaymentMethod),
+                    CreateCell(item.MyDepositAsset),
+                    CreateCell(item.DepositMonth.ToString()),
+                    CreateCell(item.DepositDay.ToString()),
+                    CreateCell(item.MaturityDate),
+                    CreateCell(item.Created.ToString()),
+                    CreateCell(item.Updated.ToString()),
+                    CreateCell(item.Note),
+                    CreateCell(item.Noticed.ToString()),
+                    CreateCell(item.Expired.ToString())
                 );
                 sheetData.Append(dataRow);
             }
@@ -981,7 +1005,7 @@ public class NoticeController(
         }
 
         stream.Position = 0;
-        var excelName =
+        string excelName =
             $"{fileName}-{DateTime.UtcNow.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId):yyyy-MM-dd-HH-mm-ss-fff}.xlsx";
 
         return File(stream, "application/octet-stream", excelName);

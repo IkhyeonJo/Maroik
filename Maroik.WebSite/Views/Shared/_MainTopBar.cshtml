@@ -10,12 +10,13 @@
     passed from the controller via ViewBag.
 *@
 @model Maroik.Core.Contract.Dtos.AccountResponse
+@using Maroik.WebSite.Models.ViewModels.Notice
 @{
-    var currentCulture = (ViewBag.CurrentCulture as string) ?? "en-US";
-    var fixedIncomesNoticedCount = (ViewBag.FixedIncomesNoticedCount as int?) ?? 0;
-    var fixedExpenditureNoticedCount = (ViewBag.FixedExpenditureNoticedCount as int?) ?? 0;
-    var fixedIncomesExpiredCount = (ViewBag.FixedIncomesExpiredCount as int?) ?? 0;
-    var fixedExpenditureExpiredCount = (ViewBag.FixedExpenditureExpiredCount as int?) ?? 0;
+    string currentCulture = (ViewBag.CurrentCulture as string) ?? "en-US";
+    int fixedIncomesNoticedCount = (ViewBag.FixedIncomesNoticedCount as int?) ?? 0;
+    int fixedExpenditureNoticedCount = (ViewBag.FixedExpenditureNoticedCount as int?) ?? 0;
+    int fixedIncomesExpiredCount = (ViewBag.FixedIncomesExpiredCount as int?) ?? 0;
+    int fixedExpenditureExpiredCount = (ViewBag.FixedExpenditureExpiredCount as int?) ?? 0;
 }
 
 @*<!-- Navbar -->*@
@@ -125,10 +126,9 @@
 
         @*<!-- Notifications Dropdown Menu -->*@
 
-        @switch (Model.Role)
+        @if (Model.Role == Role.Admin)
         {
-            case Role.Admin:
-                @*
+            @*
         <li class="nav-item dropdown">
         <a class="nav-link" data-toggle="dropdown" href="#">
         <i class="far fa-bell"></i>
@@ -156,62 +156,62 @@
         </div>
         </li>
         *@
-                @*<!-- Language Dropdown Menu -->*@
-                <li class="nav-item dropdown">
-                    <a class="nav-link" data-toggle="dropdown" href="#">
-                        <i class="fas fa-globe"></i>
-                    </a>
-                    <div class="dropdown-menu" role="menu">
-                        <a id="aChangeCultureEnUS" class="dropdown-item @(currentCulture == "en-US" ? "active" : "")" style="cursor: pointer;">English</a>
-                        <a id="aChangeCultureKoKR" class="dropdown-item @(currentCulture == "ko-KR" ? "active" : "")" style="cursor: pointer;">한국어</a>
-                    </div>
-                </li>
-                break;
-            case Role.User:
+            @*<!-- Language Dropdown Menu -->*@
+            <li class="nav-item dropdown">
+                <a class="nav-link" data-toggle="dropdown" href="#">
+                    <i class="fas fa-globe"></i>
+                </a>
+                <div class="dropdown-menu" role="menu">
+                    <a id="aChangeCultureEnUS" class="dropdown-item @(currentCulture == "en-US" ? "active" : "")" style="cursor: pointer;">English</a>
+                    <a id="aChangeCultureKoKR" class="dropdown-item @(currentCulture == "ko-KR" ? "active" : "")" style="cursor: pointer;">한국어</a>
+                </div>
+            </li>
+        }
+        else if (Model.Role == Role.User)
+        {
+            if ((fixedIncomesNoticedCount + fixedIncomesExpiredCount + fixedExpenditureNoticedCount + fixedExpenditureExpiredCount) > 0)
             {
-                if ((fixedIncomesNoticedCount + fixedIncomesExpiredCount + fixedExpenditureNoticedCount + fixedExpenditureExpiredCount) > 0)
-                {
-                    <li class="nav-item dropdown">
-                        <a class="nav-link" data-toggle="dropdown" href="#">
-                            <i class="far fa-bell"></i>
-                            <span class="badge badge-warning navbar-badge">@(fixedIncomesNoticedCount + fixedIncomesExpiredCount + fixedExpenditureNoticedCount + fixedExpenditureExpiredCount)</span>
-                        </a>
-                        <div class="dropdown-menu dropdown-menu-lg dropdown-menu-right">
-                            <span class="dropdown-item dropdown-header">@(fixedIncomesNoticedCount + fixedIncomesExpiredCount + fixedExpenditureNoticedCount + fixedExpenditureExpiredCount) @Localizer["Notifications"].Value</span>
-                            <div class="dropdown-divider"></div>
-                            @if (fixedIncomesNoticedCount + fixedIncomesExpiredCount > 0)
-                            {
-                                <a href="@Url.Action("FixedIncome", "Notice")" class="dropdown-item">
-                                    <i class="fas fa-file mr-2"></i>[@(fixedIncomesNoticedCount + fixedIncomesExpiredCount)] @Localizer["FixedIncome new message"].Value
-                                </a>
-                                <div class="dropdown-divider"></div>
-                            }
-                            @if (fixedExpenditureNoticedCount + fixedExpenditureExpiredCount > 0)
-                            {
-                                <a href="@Url.Action("FixedExpenditure", "Notice")" class="dropdown-item">
-                                    <i class="fas fa-file mr-2"></i>[@(fixedExpenditureNoticedCount + fixedExpenditureExpiredCount)] @Localizer["FixedExpenditure new message"].Value
-                                </a>
-                                <div class="dropdown-divider"></div>
-                            }
-                            <span class="dropdown-item dropdown-footer">@Localizer["Notifications"].Value</span>
-                        </div>
-                    </li>
-                }
-
-                @*<!-- Language Dropdown Menu -->*@
                 <li class="nav-item dropdown">
                     <a class="nav-link" data-toggle="dropdown" href="#">
-                        <i class="fas fa-globe"></i>
+                        <i class="far fa-bell"></i>
+                        <span class="badge badge-warning navbar-badge">@(fixedIncomesNoticedCount + fixedIncomesExpiredCount + fixedExpenditureNoticedCount + fixedExpenditureExpiredCount)</span>
                     </a>
-                    <div class="dropdown-menu" role="menu">
-                        <a id="aChangeCultureEnUS" class="dropdown-item @(currentCulture == "en-US" ? "active" : "")" style="cursor: pointer;">English</a>
-                        <a id="aChangeCultureKoKR" class="dropdown-item @(currentCulture == "ko-KR" ? "active" : "")" style="cursor: pointer;">한국어</a>
+                    <div class="dropdown-menu dropdown-menu-lg dropdown-menu-right">
+                        <span class="dropdown-item dropdown-header">@(fixedIncomesNoticedCount + fixedIncomesExpiredCount + fixedExpenditureNoticedCount + fixedExpenditureExpiredCount) @localizer["Notifications"].Value</span>
+                        <div class="dropdown-divider"></div>
+                        @if (fixedIncomesNoticedCount + fixedIncomesExpiredCount > 0)
+                        {
+                            <a href="@Url.Action("FixedIncome", "Notice")" class="dropdown-item">
+                                <i class="fas fa-file mr-2"></i>[@(fixedIncomesNoticedCount + fixedIncomesExpiredCount)] @localizer["FixedIncome new message"].Value
+                            </a>
+                            <div class="dropdown-divider"></div>
+                        }
+                        @if (fixedExpenditureNoticedCount + fixedExpenditureExpiredCount > 0)
+                        {
+                            <a href="@Url.Action("FixedExpenditure", "Notice")" class="dropdown-item">
+                                <i class="fas fa-file mr-2"></i>[@(fixedExpenditureNoticedCount + fixedExpenditureExpiredCount)] @localizer["FixedExpenditure new message"].Value
+                            </a>
+                            <div class="dropdown-divider"></div>
+                        }
+                        <span class="dropdown-item dropdown-footer">@localizer["Notifications"].Value</span>
                     </div>
                 </li>
-                break;
             }
-            case Role.Anonymous:
-                break;
+
+            @*<!-- Language Dropdown Menu -->*@
+            <li class="nav-item dropdown">
+                <a class="nav-link" data-toggle="dropdown" href="#">
+                    <i class="fas fa-globe"></i>
+                </a>
+                <div class="dropdown-menu" role="menu">
+                    <a id="aChangeCultureEnUS" class="dropdown-item @(currentCulture == "en-US" ? "active" : "")" style="cursor: pointer;">English</a>
+                    <a id="aChangeCultureKoKR" class="dropdown-item @(currentCulture == "ko-KR" ? "active" : "")" style="cursor: pointer;">한국어</a>
+                </div>
+            </li>
+        }
+        else if (Model.Role == Role.Anonymous)
+        {
+
         }
 
         @*
@@ -226,25 +226,23 @@
         </a>
         </li>
         *@
-        @switch (Model.Role)
+        @if (Model.Role == Role.Admin)
         {
-            case Role.Admin:
-            case Role.User:
-                <li class="nav-item dropdown user-menu">
-                    <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown">
-                        <img src="@Model.AvatarImagePath" class="user-image img-circle elevation-2" alt="User Image">
-                        <span class="d-none d-md-inline">@Model.Nickname</span>
-                    </a>
-                    <ul class="dropdown-menu dropdown-menu-lg dropdown-menu-right">
-                        @*<!-- User image -->*@
-                        <li class="user-header bg-primary">
-                            <img src="@Model.AvatarImagePath" class="img-circle elevation-2" alt="User Image">
-                            <p>
-                                @Model.Nickname
-                                <small>@Localizer["Member since"] @Model.Created.ConvertTimeByTimeZoneIanaId(Model.TimeZoneIanaId ?? "").ToString("d")</small>
-                            </p>
-                        </li>
-                        @*
+            <li class="nav-item dropdown user-menu">
+                <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown">
+                    <img src="@Model.AvatarImagePath" class="user-image img-circle elevation-2" alt="User Image">
+                    <span class="d-none d-md-inline">@Model.Nickname</span>
+                </a>
+                <ul class="dropdown-menu dropdown-menu-lg dropdown-menu-right">
+                    @*<!-- User image -->*@
+                    <li class="user-header bg-primary">
+                        <img src="@Model.AvatarImagePath" class="img-circle elevation-2" alt="User Image">
+                        <p>
+                            @Model.Nickname
+                            <small>@localizer["Member since"] @Model.Created.ConvertTimeByTimeZoneIanaId(Model.TimeZoneIanaId ?? "").ToString("d")</small>
+                        </p>
+                    </li>
+                    @*
                 <!-- Menu Body -->
                 <li class="user-body">
                 <div class="row">
@@ -261,35 +259,76 @@
                 <!-- /.row -->
                 </li>
                 *@
-                        @*<!-- Menu Footer-->*@
-                        <li class="user-footer">
-                            <a asp-controller="Management" asp-action="Profile" class="btn btn-default btn-flat">@Localizer["Profile"]</a>
-                            <a asp-controller="Account" asp-action="Logout" class="btn btn-default btn-flat float-right">@Localizer["Sign out"]</a>
-                        </li>
-                    </ul>
+                    @*<!-- Menu Footer-->*@
+                    <li class="user-footer">
+                        <a asp-controller="Management" asp-action="Profile" class="btn btn-default btn-flat">@localizer["Profile"]</a>
+                        <a asp-controller="Account" asp-action="Logout" class="btn btn-default btn-flat float-right">@localizer["Sign out"]</a>
+                    </li>
+                </ul>
+            </li>
+        }
+        else if (Model.Role == Role.User)
+        {
+            <li class="nav-item dropdown user-menu">
+                <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown">
+                    <img src="@Model.AvatarImagePath" class="user-image img-circle elevation-2" alt="User Image">
+                    <span class="d-none d-md-inline">@Model.Nickname</span>
+                </a>
+                <ul class="dropdown-menu dropdown-menu-lg dropdown-menu-right">
+                    @*<!-- User image -->*@
+                    <li class="user-header bg-primary">
+                        <img src="@Model.AvatarImagePath" class="img-circle elevation-2" alt="User Image">
+                        <p>
+                            @Model.Nickname
+                            <small>@localizer["Member since"] @Model.Created.ConvertTimeByTimeZoneIanaId(Model.TimeZoneIanaId ?? "").ToString("d")</small>
+                        </p>
+                    </li>
+                    @*
+                <!-- Menu Body -->
+                <li class="user-body">
+                <div class="row">
+                <div class="col-4 text-center">
+                <a href="#">Followers</a>
+                </div>
+                <div class="col-4 text-center">
+                <a href="#">Sales</a>
+                </div>
+                <div class="col-4 text-center">
+                <a href="#">Friends</a>
+                </div>
+                </div>
+                <!-- /.row -->
                 </li>
-                break;
-            case Role.Anonymous:
-                @*<!-- Language Dropdown Menu -->*@
-                <li class="nav-item dropdown">
-                    <div class="btn-group" style="padding-right:10px;">
-                        <button type="button" class="btn btn-info btn-block dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
-                            <i class="fas fa-globe" style="padding-right:6px;"></i>@Localizer["Language"]
-                        </button>
-                        <div class="dropdown-menu" role="menu">
-                            <a id="aChangeCultureEnUS" class="dropdown-item @(currentCulture == "en-US" ? "active" : "")" style="cursor: pointer;">English</a>
-                            <a id="aChangeCultureKoKR" class="dropdown-item @(currentCulture == "ko-KR" ? "active" : "")" style="cursor: pointer;">한국어</a>
-                        </div>
-                    </div>
-                </li>
-
-                @*<!-- Login Button -->*@
-                <li class="nav-item dropdown">
-                    <button id="btnMainTopBarLogin" class="btn btn-primary btn-block">
-                        <i class="fas fa-sign-in-alt" style="padding-right:6px;"></i>@Localizer["Login"]
+                *@
+                    @*<!-- Menu Footer-->*@
+                    <li class="user-footer">
+                        <a asp-controller="Management" asp-action="Profile" class="btn btn-default btn-flat">@localizer["Profile"]</a>
+                        <a asp-controller="Account" asp-action="Logout" class="btn btn-default btn-flat float-right">@localizer["Sign out"]</a>
+                    </li>
+                </ul>
+            </li>
+        }
+        else if (Model.Role == Role.Anonymous)
+        {
+            @*<!-- Language Dropdown Menu -->*@
+            <li class="nav-item dropdown">
+                <div class="btn-group" style="padding-right:10px;">
+                    <button type="button" class="btn btn-info btn-block dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
+                        <i class="fas fa-globe" style="padding-right:6px;"></i>@localizer["Language"]
                     </button>
-                </li>
-                break;
+                    <div class="dropdown-menu" role="menu">
+                        <a id="aChangeCultureEnUS" class="dropdown-item @(currentCulture == "en-US" ? "active" : "")" style="cursor: pointer;">English</a>
+                        <a id="aChangeCultureKoKR" class="dropdown-item @(currentCulture == "ko-KR" ? "active" : "")" style="cursor: pointer;">한국어</a>
+                    </div>
+                </div>
+            </li>
+
+            @*<!-- Login Button -->*@
+            <li class="nav-item dropdown">
+                <button id="btnMainTopBarLogin" class="btn btn-primary btn-block">
+                    <i class="fas fa-sign-in-alt" style="padding-right:6px;"></i>@localizer["Login"]
+                </button>
+            </li>
         }
     </ul>
 </nav>

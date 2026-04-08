@@ -1,4 +1,4 @@
-using Maroik.Core.Contract.Interfaces;
+﻿using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Contract.Utilities;
 using Maroik.WebSite.Models.ViewModels;
 using Microsoft.AspNetCore.Mvc;
@@ -8,20 +8,31 @@ using System.Diagnostics;
 namespace Maroik.WebSite.Controllers;
 
 /// <summary>Handles application error and access-denied pages.</summary>
-public class ExceptionController(
-    IAccountService accountService,
-    IDashboardService dashboardService,
-    IOptions<ServerSetting> serverSettings,
-    ISessionService sessionService)
-    : BaseController(accountService, dashboardService, serverSettings, sessionService)
+public class ExceptionController : BaseController
 {
-    /// <summary>Returns the access-denied view.</summary>
-    [HttpGet]
-    public IActionResult AccessDenied() => View();
+    private readonly ILogger<ExceptionController> _logger;
 
-    /// <summary>Returns the generic error view.</summary>
+    public ExceptionController(
+        ILogger<ExceptionController> logger,
+        IAccountService accountService,
+        IDashboardService dashboardService,
+        IOptions<ServerSetting> serverSettings,
+        ISessionService sessionService)
+        : base(accountService, dashboardService, serverSettings, sessionService)
+    {
+        _logger = logger;
+    }
+
+    [HttpGet]
+    /// <summary>Returns the access-denied view.</summary>
+    public IActionResult AccessDenied()
+    {
+        return View();
+    }
+
     [HttpGet]
     [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+    /// <summary>Returns the generic error view.</summary>
     public IActionResult Error()
     {
         return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });

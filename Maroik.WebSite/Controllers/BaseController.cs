@@ -12,17 +12,29 @@ namespace Maroik.WebSite.Controllers;
 /// Abstract base controller that runs before every action to populate ViewBag with
 /// the logged-in account, notification badge counts, current culture, and return URI.
 /// </summary>
-public abstract class BaseController(
-    IAccountService accountService,
-    IDashboardService dashboardService,
-    IOptions<ServerSetting> serverSettings,
-    ISessionService sessionService)
-    : Controller
+public abstract class BaseController : Controller
 {
+    private readonly IAccountService _accountService;
+    private readonly IDashboardService _dashboardService;
+    private readonly IOptions<ServerSetting> _serverSettings;
+    private readonly ISessionService _sessionService;
+
+    protected BaseController(
+        IAccountService accountService,
+        IDashboardService dashboardService,
+        IOptions<ServerSetting> serverSettings,
+        ISessionService sessionService)
+    {
+        _accountService = accountService;
+        _dashboardService = dashboardService;
+        _serverSettings = serverSettings;
+        _sessionService = sessionService;
+    }
+
     /// <summary>Populates shared ViewBag entries (account, notice counts, culture, return URI) before each action executes.</summary>
     public override async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
     {
-        ViewBag.DomainName = serverSettings.Value.DomainName;
+        ViewBag.DomainName = _serverSettings.Value.DomainName;
 
         AccountResponse loginedAccount = new()
         {
@@ -32,14 +44,14 @@ public abstract class BaseController(
             AvatarImagePath = "/anonymous/images/bg1.jpg"
         };
 
-        var sessionAccount = sessionService.GetAccount();
+        var sessionAccount = _sessionService.GetAccount();
         if (sessionAccount != null)
         {
             try
             {
-                var email = sessionAccount.Email ?? "";
+                string email = sessionAccount.Email ?? "";
                 if (!string.IsNullOrEmpty(email))
-                    loginedAccount = await accountService.GetAccountByEmailAsync(email) ?? loginedAccount;
+                    loginedAccount = await _accountService.GetAccountByEmailAsync(email) ?? loginedAccount;
             }
             catch { /* ignore session refresh errors */ }
         }
@@ -54,9 +66,9 @@ public abstract class BaseController(
         {
             try
             {
-                var counts = await dashboardService.GetNoticeCountsAsync(
+                var counts = await _dashboardService.GetNoticeCountsAsync(
                     loginedAccount.Email ?? "",
-                    serverSettings.Value.NoticeMaturityDateDay);
+                    _serverSettings.Value.NoticeMaturityDateDay);
 
                 fixedIncomesNoticedCount = counts.FixedIncomesNoticed;
                 fixedExpenditureNoticedCount = counts.FixedExpendituresNoticed;
@@ -74,7 +86,7 @@ public abstract class BaseController(
         var requestCultureFeature = HttpContext.Features.Get<IRequestCultureFeature>();
         ViewBag.CurrentCulture = requestCultureFeature?.RequestCulture.Culture.Name ?? "en-US";
 
-        var requestPath = HttpContext.Request.Path.Value ?? "";
+        string requestPath = HttpContext.Request.Path.Value ?? "";
         ViewBag.ReturnUri = string.IsNullOrWhiteSpace(requestPath) ? "/" : $"{requestPath}{HttpContext.Request.QueryString}";
 
         await next();
