@@ -140,32 +140,32 @@
     var percentageOfConsumerSpendingUnknownExpenditureYearMonth = Model.PercentageOfConsumerSpendingUnknownExpenditureYearMonth;
 }
 
-@Html.Hidden("localizerLaborIncome", localizer["LaborIncome"].Value)
-@Html.Hidden("localizerBusinessIncome", localizer["BusinessIncome"].Value)
-@Html.Hidden("localizerPensionIncome", localizer["PensionIncome"].Value)
-@Html.Hidden("localizerFinancialIncome", localizer["FinancialIncome"].Value)
-@Html.Hidden("localizerRentalIncome", localizer["RentalIncome"].Value)
-@Html.Hidden("localizerOtherIncome", localizer["OtherIncome"].Value)
-@Html.Hidden("localizerDeposit", localizer["Deposit"].Value)
-@Html.Hidden("localizerInvestment", localizer["Investment"].Value)
-@Html.Hidden("localizerPublicPension", localizer["PublicPension"].Value)
-@Html.Hidden("localizerDebtRepayment", localizer["DebtRepayment"].Value)
-@Html.Hidden("localizerTax", localizer["Tax"].Value)
-@Html.Hidden("localizerSocialInsurance", localizer["SocialInsurance"].Value)
-@Html.Hidden("localizerInterHouseholdTransferExpenses", localizer["InterHouseholdTransferExpenses"].Value)
-@Html.Hidden("localizerNonProfitOrganizationTransfer", localizer["NonProfitOrganizationTransfer"].Value)
-@Html.Hidden("localizerMealOrEatOutExpenses", localizer["MealOrEatOutExpenses"].Value)
-@Html.Hidden("localizerHousingOrSuppliesCost", localizer["HousingOrSuppliesCost"].Value)
-@Html.Hidden("localizerEducationExpenses", localizer["EducationExpenses"].Value)
-@Html.Hidden("localizerMedicalExpenses", localizer["MedicalExpenses"].Value)
-@Html.Hidden("localizerTransportationCost", localizer["TransportationCost"].Value)
-@Html.Hidden("localizerCommunicationCost", localizer["CommunicationCost"].Value)
-@Html.Hidden("localizerLeisureOrCulture", localizer["LeisureOrCulture"].Value)
-@Html.Hidden("localizerClothingOrShoes", localizer["ClothingOrShoes"].Value)
-@Html.Hidden("localizerPinMoney", localizer["PinMoney"].Value)
-@Html.Hidden("localizerProtectionTypeInsurance", localizer["ProtectionTypeInsurance"].Value)
-@Html.Hidden("localizerOtherExpenses", localizer["OtherExpenses"].Value)
-@Html.Hidden("localizerUnknownExpenditure", localizer["UnknownExpenditure"].Value)
+@Html.Hidden("localizerLaborIncome", Localizer["LaborIncome"].Value)
+@Html.Hidden("localizerBusinessIncome", Localizer["BusinessIncome"].Value)
+@Html.Hidden("localizerPensionIncome", Localizer["PensionIncome"].Value)
+@Html.Hidden("localizerFinancialIncome", Localizer["FinancialIncome"].Value)
+@Html.Hidden("localizerRentalIncome", Localizer["RentalIncome"].Value)
+@Html.Hidden("localizerOtherIncome", Localizer["OtherIncome"].Value)
+@Html.Hidden("localizerDeposit", Localizer["Deposit"].Value)
+@Html.Hidden("localizerInvestment", Localizer["Investment"].Value)
+@Html.Hidden("localizerPublicPension", Localizer["PublicPension"].Value)
+@Html.Hidden("localizerDebtRepayment", Localizer["DebtRepayment"].Value)
+@Html.Hidden("localizerTax", Localizer["Tax"].Value)
+@Html.Hidden("localizerSocialInsurance", Localizer["SocialInsurance"].Value)
+@Html.Hidden("localizerInterHouseholdTransferExpenses", Localizer["InterHouseholdTransferExpenses"].Value)
+@Html.Hidden("localizerNonProfitOrganizationTransfer", Localizer["NonProfitOrganizationTransfer"].Value)
+@Html.Hidden("localizerMealOrEatOutExpenses", Localizer["MealOrEatOutExpenses"].Value)
+@Html.Hidden("localizerHousingOrSuppliesCost", Localizer["HousingOrSuppliesCost"].Value)
+@Html.Hidden("localizerEducationExpenses", Localizer["EducationExpenses"].Value)
+@Html.Hidden("localizerMedicalExpenses", Localizer["MedicalExpenses"].Value)
+@Html.Hidden("localizerTransportationCost", Localizer["TransportationCost"].Value)
+@Html.Hidden("localizerCommunicationCost", Localizer["CommunicationCost"].Value)
+@Html.Hidden("localizerLeisureOrCulture", Localizer["LeisureOrCulture"].Value)
+@Html.Hidden("localizerClothingOrShoes", Localizer["ClothingOrShoes"].Value)
+@Html.Hidden("localizerPinMoney", Localizer["PinMoney"].Value)
+@Html.Hidden("localizerProtectionTypeInsurance", Localizer["ProtectionTypeInsurance"].Value)
+@Html.Hidden("localizerOtherExpenses", Localizer["OtherExpenses"].Value)
+@Html.Hidden("localizerUnknownExpenditure", Localizer["UnknownExpenditure"].Value)
 
 @*Income*@
 @*Regular Income*@
@@ -321,7 +321,7 @@
                     <div class="card">
                         <div class="card-header">
                             <h3 class="card-title">
-                                <i class="fas fa-cog"></i> @localizer["Setting"].Value
+                                <i class="fas fa-cog"></i> @Localizer["Setting"].Value
                             </h3>
                             <div class="card-tools">
                                 <div class="input-group input-group-sm">
@@ -381,17 +381,17 @@
                     <div class="card-header">
                         <h3 class="card-title">
                             <i class="fas fa-chart-pie mr-1"></i>
-                            @localizer["YearIncome"].Value
+                            @Localizer["YearIncome"].Value
                         </h3>
                         <div class="card-tools">
                             <ul class="nav nav-pills ml-auto">
                                 <li class="nav-item">
                                     <a class="nav-link" href="#dashboardIncomeYearTabs-1"
-                                       data-toggle="tab">@localizer["Regular income"].Value</a>
+                                       data-toggle="tab">@Localizer["Regular income"].Value</a>
                                 </li>
                                 <li class="nav-item">
                                     <a class="nav-link active" href="#dashboardIncomeYearTabs-2"
-                                       data-toggle="tab">@localizer["Irregular income"].Value</a>
+                                       data-toggle="tab">@Localizer["Irregular income"].Value</a>
                                 </li>
                             </ul>
                         </div>
@@ -418,17 +418,17 @@
                     <div class="card-header">
                         <h3 class="card-title">
                             <i class="fas fa-chart-pie mr-1"></i>
-                            @localizer["MonthIncome"].Value
+                            @Localizer["MonthIncome"].Value
                         </h3>
                         <div class="card-tools">
                             <ul class="nav nav-pills ml-auto">
                                 <li class="nav-item">
                                     <a class="nav-link" href="#dashboardIncomeYearMonthTabs-1"
-                                       data-toggle="tab">@localizer["Regular income"].Value</a>
+                                       data-toggle="tab">@Localizer["Regular income"].Value</a>
                                 </li>
                                 <li class="nav-item">
                                     <a class="nav-link active" href="#dashboardIncomeYearMonthTabs-2"
-                                       data-toggle="tab">@localizer["Irregular income"].Value</a>
+                                       data-toggle="tab">@Localizer["Irregular income"].Value</a>
                                 </li>
                             </ul>
                         </div>
@@ -457,21 +457,21 @@
                     <div class="card-header">
                         <h3 class="card-title">
                             <i class="fas fa-chart-pie mr-1"></i>
-                            @localizer["YearExpenditure"].Value
+                            @Localizer["YearExpenditure"].Value
                         </h3>
                         <div class="card-tools">
                             <ul class="nav nav-pills ml-auto">
                                 <li class="nav-item">
                                     <a class="nav-link" href="#dashboardExpenditureYearTabs-1"
-                                       data-toggle="tab">@localizer["Regular savings"].Value</a>
+                                       data-toggle="tab">@Localizer["Regular savings"].Value</a>
                                 </li>
                                 <li class="nav-item">
                                     <a class="nav-link" href="#dashboardExpenditureYearTabs-2"
-                                       data-toggle="tab">@localizer["NonConsumer spending"].Value</a>
+                                       data-toggle="tab">@Localizer["NonConsumer spending"].Value</a>
                                 </li>
                                 <li class="nav-item">
                                     <a class="nav-link active" href="#dashboardExpenditureYearTabs-3"
-                                       data-toggle="tab">@localizer["Consumer spending"].Value</a>
+                                       data-toggle="tab">@Localizer["Consumer spending"].Value</a>
                                 </li>
                             </ul>
                         </div>
@@ -503,21 +503,21 @@
                     <div class="card-header">
                         <h3 class="card-title">
                             <i class="fas fa-chart-pie mr-1"></i>
-                            @localizer["MonthExpenditure"].Value
+                            @Localizer["MonthExpenditure"].Value
                         </h3>
                         <div class="card-tools">
                             <ul class="nav nav-pills ml-auto">
                                 <li class="nav-item">
                                     <a class="nav-link" href="#dashboardExpenditureYearMonthTabs-1"
-                                       data-toggle="tab">@localizer["Regular savings"].Value</a>
+                                       data-toggle="tab">@Localizer["Regular savings"].Value</a>
                                 </li>
                                 <li class="nav-item">
                                     <a class="nav-link" href="#dashboardExpenditureYearMonthTabs-2"
-                                       data-toggle="tab">@localizer["NonConsumer spending"].Value</a>
+                                       data-toggle="tab">@Localizer["NonConsumer spending"].Value</a>
                                 </li>
                                 <li class="nav-item">
                                     <a class="nav-link active" href="#dashboardExpenditureYearMonthTabs-3"
-                                       data-toggle="tab">@localizer["Consumer spending"].Value</a>
+                                       data-toggle="tab">@Localizer["Consumer spending"].Value</a>
                                 </li>
                             </ul>
                         </div>

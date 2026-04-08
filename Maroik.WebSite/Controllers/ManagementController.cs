@@ -14,9 +14,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Localization;
 using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.Extensions.Options;
-using Newtonsoft.Json;
 using System.Net.Mail;
-using System.Text;
 using System.Text.RegularExpressions;
 
 namespace Maroik.WebSite.Controllers;
@@ -25,56 +23,33 @@ namespace Maroik.WebSite.Controllers;
 /// Admin-only controller for managing user profiles, accounts, and the navigation menu
 /// (categories and sub-categories).
 /// </summary>
-public class ManagementController : BaseController
+public class ManagementController(
+    IHtmlLocalizer<ManagementController> localizer,
+    IHostEnvironment hostEnvironment,
+    IProfileService profileService,
+    IAccountService accountService,
+    IManagementAccountService managementAccountService,
+    IMenuService menuService,
+    IBoardService boardService,
+    IRsaService rsa,
+    IDashboardService dashboardService,
+    IOptions<ServerSetting> serverSettings,
+    ISessionService sessionService)
+    : BaseController(accountService, dashboardService, serverSettings, sessionService)
 {
-    private readonly IRsaService _rsa;
-    private readonly IHtmlLocalizer<ManagementController> _localizer;
-    private readonly ILogger<ManagementController> _logger;
-    private readonly IHostEnvironment _hostEnvironment;
-    private readonly IProfileService _profileService;
-    private readonly IAccountService _accountService;
-    private readonly IManagementAccountService _managementAccountService;
-    private readonly IMenuService _menuService;
-    private readonly IBoardService _boardService;
-    private readonly ISessionService _sessionService;
-
-    public ManagementController(
-        IHtmlLocalizer<ManagementController> localizer,
-        ILogger<ManagementController> logger,
-        IHostEnvironment hostEnvironment,
-        IProfileService profileService,
-        IAccountService accountService,
-        IManagementAccountService managementAccountService,
-        IMenuService menuService,
-        IBoardService boardService,
-        IRsaService rsa,
-        IDashboardService dashboardService,
-        IOptions<ServerSetting> serverSettings,
-        ISessionService sessionService)
-        : base(accountService, dashboardService, serverSettings, sessionService)
-    {
-        _rsa = rsa;
-        _sessionService = sessionService;
-        _localizer = localizer;
-        _logger = logger;
-        _hostEnvironment = hostEnvironment;
-        _profileService = profileService;
-        _accountService = accountService;
-        _managementAccountService = managementAccountService;
-        _menuService = menuService;
-        _boardService = boardService;
-    }
+    private readonly IAccountService _accountService = accountService;
+    private readonly ISessionService _sessionService = sessionService;
 
     #region Profile
 
     #region Read
 
-    [HttpGet]
     /// <summary>Displays the current user's profile page.</summary>
+    [HttpGet]
     public async Task<IActionResult> Profile()
     {
-        string loginedAccountTimeZoneIanaId = _sessionService.GetAccount()!.TimeZoneIanaId;
-        AccountResponse tempAccount = await _profileService.GetProfileAsync(_sessionService.GetAccount()!.Email);
+        var loginedAccountTimeZoneIanaId = _sessionService.GetAccount()!.TimeZoneIanaId;
+        var tempAccount = await profileService.GetProfileAsync(_sessionService.GetAccount()!.Email);
 
         return View(new ProfileOutputViewModel()
         {
@@ -91,27 +66,27 @@ public class ManagementController : BaseController
 
     #region ProfileAvatar
 
+    /// <summary>Updates the current user's avatar image.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.Admin)]
     [RequiredHttpPostAccess(Role = Role.User)]
-    /// <summary>Updates the current user's avatar image.</summary>
     public async Task<IActionResult> UpdateProfileAvatar(ProfileInputViewModel profileInputViewModel)
     {
         if (profileInputViewModel.ProfileAvatarFiles == null || profileInputViewModel.ProfileAvatarFiles.Count == 0)
         {
-            return Ok(new { result = false, errorMessage = _localizer["Please attach a file"].Value });
+            return Ok(new { result = false, errorMessage = localizer["Please attach a file"].Value });
         }
 
-        IFormFile file = profileInputViewModel.ProfileAvatarFiles[0];
+        var file = profileInputViewModel.ProfileAvatarFiles[0];
 
         if (file.Length <= 0 || file.Length > 10 * 1024 * 1024)
-            return Ok(new { result = false, errorMessage = _localizer["File Size must be smaller than 10MB."].Value });
+            return Ok(new { result = false, errorMessage = localizer["File Size must be smaller than 10MB."].Value });
 
         var allowedExtensions = new[] { ".jpg", ".jpeg", ".png" };
         var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
         if (!allowedExtensions.Contains(extension))
-            return Ok(new { result = false, errorMessage = _localizer["Only .jpg or jpeg or .png file allowed"].Value });
+            return Ok(new { result = false, errorMessage = localizer["Only .jpg or jpeg or .png file allowed"].Value });
 
         byte[] imageBytes;
         using (var ms = new MemoryStream())
@@ -120,19 +95,19 @@ public class ManagementController : BaseController
             imageBytes = ms.ToArray();
         }
 
-        string avatarDirectoryPath = Path.Combine(_hostEnvironment.ContentRootPath, "wwwroot", "upload", "Management", "Profile", "Avatar");
-        string email = _sessionService.GetAccount()!.Email;
+        var avatarDirectoryPath = Path.Combine(hostEnvironment.ContentRootPath, "wwwroot", "upload", "Management", "Profile", "Avatar");
+        var email = _sessionService.GetAccount()!.Email;
 
-        ServiceResult avatarResult = await _profileService.UploadAndUpdateAvatarAsync(email, imageBytes, extension, avatarDirectoryPath);
+        var avatarResult = await profileService.UploadAndUpdateAvatarAsync(email, imageBytes, extension, avatarDirectoryPath);
 
         if (!avatarResult.Success)
         {
             return avatarResult.ErrorKey switch
             {
                 "virus-detected" => BadRequest("File may be infected with a virus."),
-                "svg-not-allowed" => Ok(new { result = false, errorMessage = _localizer["SVG format is not allowed"].Value }),
-                "invalid-image" => Ok(new { result = false, errorMessage = _localizer["Invalid image file."].Value }),
-                _ => Ok(new { result = false, errorMessage = _localizer["Input is invalid"].Value })
+                "svg-not-allowed" => Ok(new { result = false, errorMessage = localizer["SVG format is not allowed"].Value }),
+                "invalid-image" => Ok(new { result = false, errorMessage = localizer["Invalid image file."].Value }),
+                _ => Ok(new { result = false, errorMessage = localizer["Input is invalid"].Value })
             };
         }
 
@@ -143,11 +118,11 @@ public class ManagementController : BaseController
 
     #region ProfileTimeZone
 
+    /// <summary>Updates the current user's time-zone setting.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.Admin)]
     [RequiredHttpPostAccess(Role = Role.User)]
-    /// <summary>Updates the current user's time-zone setting.</summary>
     public async Task<IActionResult> UpdateProfileTimeZone(ProfileInputViewModel profileInputViewModel)
     {
         _ = ModelState.Remove(nameof(profileInputViewModel.Nickname));
@@ -158,18 +133,18 @@ public class ManagementController : BaseController
         {
             try
             {
-                string email = _sessionService.GetAccount()!.Email;
-                await _profileService.UpdateTimeZoneAsync(email, profileInputViewModel.TimeZoneIanaId);
+                var email = _sessionService.GetAccount()!.Email;
+                await profileService.UpdateTimeZoneAsync(email, profileInputViewModel.TimeZoneIanaId);
 
                 // Refresh session with updated timezone
-                AccountResponse updatedAccount = await _profileService.GetProfileAsync(email);
+                var updatedAccount = await profileService.GetProfileAsync(email);
                 _sessionService.RemoveAccount();
                 updatedAccount.HashedPassword = null;
                 _sessionService.SetAccount(updatedAccount);
             }
             catch
             {
-                Console.WriteLine(_localizer["Input is invalid"].Value);
+                Console.WriteLine(localizer["Input is invalid"].Value);
             }
         }
 
@@ -180,35 +155,35 @@ public class ManagementController : BaseController
 
     #region ProfilePassword
 
+    /// <summary>Changes the current user's password.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.Admin)]
     [RequiredHttpPostAccess(Role = Role.User)]
-    /// <summary>Changes the current user's password.</summary>
     public async Task<IActionResult> UpdateProfilePassword([FromBody] ProfileInputViewModel profileInputViewModel)
     {
         _ = ModelState.Remove(nameof(profileInputViewModel.Nickname));
         _ = ModelState.Remove(nameof(profileInputViewModel.TimeZoneIanaId));
         
         if (!ModelState.IsValid)
-            return Json(new { result = false, error = _localizer["Input is invalid"].Value });
+            return Json(new { result = false, error = localizer["Input is invalid"].Value });
 
         try
         {
-            string email = _sessionService.GetAccount()!.Email;
+            var email = _sessionService.GetAccount()!.Email;
 
-            ServiceResult result = await _profileService.UpdatePasswordAsync(
+            var result = await profileService.UpdatePasswordAsync(
                 email,
                 profileInputViewModel.Password ?? "",
                 profileInputViewModel.NewPassword ?? "");
 
             return result.Success
-                ? Json(new { result = true, message = _localizer["Password change successfully done."].Value })
-                : Json(new { result = false, error = _localizer[result.ErrorKey ?? "Input is invalid"].Value });
+                ? Json(new { result = true, message = localizer["Password change successfully done."].Value })
+                : Json(new { result = false, error = localizer[result.ErrorKey ?? "Input is invalid"].Value });
         }
         catch
         {
-            return Json(new { result = false, error = _localizer["Input is invalid"].Value });
+            return Json(new { result = false, error = localizer["Input is invalid"].Value });
         }
     }
 
@@ -222,10 +197,10 @@ public class ManagementController : BaseController
 
     #region Create
 
+    /// <summary>Creates a new user account (admin action).</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.Admin)]
-    /// <summary>Creates a new user account (admin action).</summary>
     public async Task<IActionResult> CreateAccount([FromBody] AccountInputViewModel accountInputViewModel)
     {
         try
@@ -278,7 +253,7 @@ public class ManagementController : BaseController
 
                 if (!IsValidEmail(accountInputViewModel.Email)) // Invalid email format
                 {
-                    return Json(new { result = false, error = _localizer["Invalid email form"].Value });
+                    return Json(new { result = false, error = localizer["Invalid email form"].Value });
                 }
 
                 #endregion
@@ -292,7 +267,7 @@ public class ManagementController : BaseController
                     return Json(new
                     {
                         result = false,
-                        error = _localizer[
+                        error = localizer[
                                 "Password must be at least 8 characters and contain at 3 of 4 of the following: upper case (A-Z), lower case (a-z), number (0-9) and special character (e.g. !@#$%^&*)"]
                             .Value
                     });
@@ -304,13 +279,13 @@ public class ManagementController : BaseController
 
                 if (string.IsNullOrEmpty(accountInputViewModel.Nickname))
                 {
-                    return Json(new { result = false, error = _localizer["Please enter Nickname"].Value });
+                    return Json(new { result = false, error = localizer["Please enter Nickname"].Value });
                 }
                 else if (accountInputViewModel.Nickname.Length is not (>= 1 and <= 255))
                 {
                     return Json(new
                     {
-                        result = false, error = _localizer["Nickname is must be between 1 and 255 characters"].Value
+                        result = false, error = localizer["Nickname is must be between 1 and 255 characters"].Value
                     });
                 }
 
@@ -329,14 +304,14 @@ public class ManagementController : BaseController
 
                 if (string.IsNullOrEmpty(accountInputViewModel.TimeZoneIanaId))
                 {
-                    return Json(new { result = false, error = _localizer["Please select time zone"].Value });
+                    return Json(new { result = false, error = localizer["Please select time zone"].Value });
                 }
 
                 #endregion
 
                 #region Create account
 
-                ServiceResult createResult = await _managementAccountService.CreateAccountAsync(new AccountRequest
+                var createResult = await managementAccountService.CreateAccountAsync(new AccountRequest
                 {
                     Email = accountInputViewModel.Email,
                     HashedPassword = accountInputViewModel.Password, // service will hash
@@ -355,19 +330,19 @@ public class ManagementController : BaseController
                 });
 
                 return createResult.Success
-                    ? Json(new { result = true, message = _localizer["Account create successfully done."].Value })
-                    : Json(new { result = false, error = _localizer[createResult.ErrorKey ?? "Input is invalid"].Value });
+                    ? Json(new { result = true, message = localizer["Account create successfully done."].Value })
+                    : Json(new { result = false, error = localizer[createResult.ErrorKey ?? "Input is invalid"].Value });
 
                 #endregion
             }
             else
             {
-                return Json(new { result = false, error = _localizer["Input is invalid"].Value });
+                return Json(new { result = false, error = localizer["Input is invalid"].Value });
             }
         }
         catch
         {
-            return Json(new { result = false, error = _localizer["Input is invalid"].Value });
+            return Json(new { result = false, error = localizer["Input is invalid"].Value });
         }
     }
 
@@ -375,18 +350,20 @@ public class ManagementController : BaseController
 
     #region Read
 
-    [HttpGet]
     /// <summary>Returns the account management grid (AJAX) or the full page.</summary>
+    [HttpGet]
     public async Task<IActionResult> Account(string wholeSearch)
     {
+#pragma warning disable ASP0015
         if (HttpContext.Request.Headers["X-Requested-With"] == "XMLHttpRequest") // ajax
+#pragma warning restore ASP0015
         {
             List<AccountOutputViewModel> accountOutputViewModels = [];
-            string loginedAccountTimeZoneIanaId = _sessionService.GetAccount()!.TimeZoneIanaId;
+            var loginedAccountTimeZoneIanaId = _sessionService.GetAccount()!.TimeZoneIanaId;
 
             #region Accounts
 
-            foreach (AccountResponse item in await _managementAccountService.GetAllAccountsAsync())
+            foreach (var item in await managementAccountService.GetAllAccountsAsync())
             {
                 if (string.IsNullOrEmpty(wholeSearch))
                 {
@@ -456,7 +433,7 @@ public class ManagementController : BaseController
 
             #endregion
 
-            IQueryable<AccountOutputViewModel> result = accountOutputViewModels.OrderBy(m => m.Email)
+            var result = accountOutputViewModels.OrderBy(m => m.Email)
                 .ThenBy(m => m.Nickname).ThenByDescending(m => m.Created).ThenByDescending(m => m.Updated)
                 .AsQueryable();
             return PartialView("_AccountGrid", result);
@@ -465,26 +442,26 @@ public class ManagementController : BaseController
         return View();
     }
 
+    /// <summary>Checks whether an account with the given email exists.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.Admin)]
-    /// <summary>Checks whether an account with the given email exists.</summary>
     public async Task<IActionResult> IsAccountExists(string email)
     {
         try
         {
-            AccountResponse tempAccount = await _managementAccountService.GetAccountByEmailAsync(email);
+            var tempAccount = await managementAccountService.GetAccountByEmailAsync(email);
 
             return tempAccount == null
                 ? Json(new
                 {
-                    result = false, error = _localizer["Fail to find the account by given email address"].Value
+                    result = false, error = localizer["Fail to find the account by given email address"].Value
                 })
                 : (IActionResult)Json(new { result = true, account = tempAccount });
         }
         catch
         {
-            return Json(new { result = false, error = _localizer["Input is invalid"].Value });
+            return Json(new { result = false, error = localizer["Input is invalid"].Value });
         }
     }
 
@@ -492,10 +469,10 @@ public class ManagementController : BaseController
 
     #region Update
 
+    /// <summary>Updates an existing account's fields.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.Admin)]
-    /// <summary>Updates an existing account's fields.</summary>
     public async Task<IActionResult> UpdateAccount([FromBody] AccountInputViewModel accountInputViewModel)
     {
         try
@@ -506,9 +483,9 @@ public class ManagementController : BaseController
             _ = ModelState.Remove(nameof(accountInputViewModel.ResetPasswordToken));
 
             if (!ModelState.IsValid)
-                return Json(new { result = false, error = _localizer["Input is invalid"].Value });
+                return Json(new { result = false, error = localizer["Input is invalid"].Value });
 
-            ServiceResult updateResult = await _managementAccountService.UpdateAccountAsync(
+            var updateResult = await managementAccountService.UpdateAccountAsync(
                 new AccountRequest
                 {
                     Email = accountInputViewModel.Email,
@@ -523,12 +500,12 @@ public class ManagementController : BaseController
                 accountInputViewModel.Password); // new password (plain); service hashes it
 
             return updateResult.Success
-                ? Json(new { result = true, message = _localizer["Successfully updated the account"].Value })
-                : Json(new { result = false, error = _localizer[updateResult.ErrorKey ?? "Input is invalid"].Value });
+                ? Json(new { result = true, message = localizer["Successfully updated the account"].Value })
+                : Json(new { result = false, error = localizer[updateResult.ErrorKey ?? "Input is invalid"].Value });
         }
         catch
         {
-            return Json(new { result = false, error = _localizer["Input is invalid"].Value });
+            return Json(new { result = false, error = localizer["Input is invalid"].Value });
         }
     }
 
@@ -536,22 +513,22 @@ public class ManagementController : BaseController
 
     #region Delete
 
+    /// <summary>Soft-deletes an existing account.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.Admin)]
-    /// <summary>Soft-deletes an existing account.</summary>
     public async Task<IActionResult> DeleteAccount([FromBody] AccountInputViewModel accountInputViewModel)
     {
         try
         {
-            ServiceResult deleteResult = await _managementAccountService.DeleteAccountAsync(accountInputViewModel.Email);
+            var deleteResult = await managementAccountService.DeleteAccountAsync(accountInputViewModel.Email);
             return deleteResult.Success
-                ? Json(new { result = true, message = _localizer["Successfully deleted the account"].Value })
-                : Json(new { result = false, error = _localizer[deleteResult.ErrorKey ?? "Input is invalid"].Value });
+                ? Json(new { result = true, message = localizer["Successfully deleted the account"].Value })
+                : Json(new { result = false, error = localizer[deleteResult.ErrorKey ?? "Input is invalid"].Value });
         }
         catch
         {
-            return Json(new { result = false, error = _localizer["Input is invalid"].Value });
+            return Json(new { result = false, error = localizer["Input is invalid"].Value });
         }
     }
 
@@ -559,20 +536,20 @@ public class ManagementController : BaseController
 
     #region Excel
 
+    /// <summary>Exports the account list to an Excel file.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.Admin)]
-    /// <summary>Exports the account list to an Excel file.</summary>
     public async Task<IActionResult> ExportExcelAccount(string fileName = "")
     {
         await Task.Yield();
 
-        List<AccountOutputViewModel> accountOutputViewModels = new();
-        string loginedAccountTimeZoneIanaId = _sessionService.GetAccount()!.TimeZoneIanaId;
+        var accountOutputViewModels = new List<AccountOutputViewModel>();
+        var loginedAccountTimeZoneIanaId = _sessionService.GetAccount()!.TimeZoneIanaId;
 
         #region Accounts
 
-        foreach (AccountResponse item in await _managementAccountService.GetAllAccountsAsync())
+        foreach (var item in await managementAccountService.GetAllAccountsAsync())
         {
             accountOutputViewModels.Add(new AccountOutputViewModel()
             {
@@ -600,18 +577,18 @@ public class ManagementController : BaseController
 
         #endregion
 
-        MemoryStream stream = new();
+        var stream = new MemoryStream();
 
-        using (SpreadsheetDocument document = SpreadsheetDocument.Create(stream, SpreadsheetDocumentType.Workbook))
+        using (var document = SpreadsheetDocument.Create(stream, SpreadsheetDocumentType.Workbook))
         {
-            WorkbookPart workbookPart = document.AddWorkbookPart();
+            var workbookPart = document.AddWorkbookPart();
             workbookPart.Workbook = new Workbook();
 
-            WorksheetPart worksheetPart = workbookPart.AddNewPart<WorksheetPart>();
+            var worksheetPart = workbookPart.AddNewPart<WorksheetPart>();
             worksheetPart.Worksheet = new Worksheet(new SheetData());
 
-            Sheets sheets = document.WorkbookPart.Workbook.AppendChild(new Sheets());
-            Sheet sheet = new Sheet()
+            var sheets = document.WorkbookPart.Workbook.AppendChild(new Sheets());
+            var sheet = new Sheet()
             {
                 Id = document.WorkbookPart.GetIdOfPart(worksheetPart),
                 SheetId = 1,
@@ -619,7 +596,7 @@ public class ManagementController : BaseController
             };
             sheets.Append(sheet);
 
-            SheetData sheetData = worksheetPart.Worksheet.GetFirstChild<SheetData>();
+            var sheetData = worksheetPart.Worksheet.GetFirstChild<SheetData>();
 
             Cell CreateCell(string value)
             {
@@ -630,31 +607,31 @@ public class ManagementController : BaseController
                 };
             }
 
-            Row headerRow = new Row();
+            var headerRow = new Row();
             headerRow.Append(
-                CreateCell(_localizer[nameof(AccountOutputViewModel.Email)].Value),
-                CreateCell(_localizer[nameof(AccountOutputViewModel.HashedPassword)].Value),
-                CreateCell(_localizer[nameof(AccountOutputViewModel.Nickname)].Value),
-                CreateCell(_localizer[nameof(AccountOutputViewModel.AvatarImagePath)].Value),
-                CreateCell(_localizer[nameof(AccountOutputViewModel.Role)].Value),
-                CreateCell(_localizer[nameof(AccountOutputViewModel.TimeZoneIanaId)].Value),
-                CreateCell(_localizer[nameof(AccountOutputViewModel.Locked)].Value),
-                CreateCell(_localizer[nameof(AccountOutputViewModel.LoginAttempt)].Value),
-                CreateCell(_localizer[nameof(AccountOutputViewModel.EmailConfirmed)].Value),
-                CreateCell(_localizer[nameof(AccountOutputViewModel.AgreedServiceTerms)].Value),
-                CreateCell(_localizer[nameof(AccountOutputViewModel.RegistrationToken)].Value),
-                CreateCell(_localizer[nameof(AccountOutputViewModel.ResetPasswordToken)].Value),
-                CreateCell(_localizer[nameof(AccountOutputViewModel.Created)].Value),
-                CreateCell(_localizer[nameof(AccountOutputViewModel.Updated)].Value),
-                CreateCell(_localizer[nameof(AccountOutputViewModel.Message)].Value),
-                CreateCell(_localizer[nameof(AccountOutputViewModel.Deleted)].Value)
+                CreateCell(localizer[nameof(AccountOutputViewModel.Email)].Value),
+                CreateCell(localizer[nameof(AccountOutputViewModel.HashedPassword)].Value),
+                CreateCell(localizer[nameof(AccountOutputViewModel.Nickname)].Value),
+                CreateCell(localizer[nameof(AccountOutputViewModel.AvatarImagePath)].Value),
+                CreateCell(localizer[nameof(AccountOutputViewModel.Role)].Value),
+                CreateCell(localizer[nameof(AccountOutputViewModel.TimeZoneIanaId)].Value),
+                CreateCell(localizer[nameof(AccountOutputViewModel.Locked)].Value),
+                CreateCell(localizer[nameof(AccountOutputViewModel.LoginAttempt)].Value),
+                CreateCell(localizer[nameof(AccountOutputViewModel.EmailConfirmed)].Value),
+                CreateCell(localizer[nameof(AccountOutputViewModel.AgreedServiceTerms)].Value),
+                CreateCell(localizer[nameof(AccountOutputViewModel.RegistrationToken)].Value),
+                CreateCell(localizer[nameof(AccountOutputViewModel.ResetPasswordToken)].Value),
+                CreateCell(localizer[nameof(AccountOutputViewModel.Created)].Value),
+                CreateCell(localizer[nameof(AccountOutputViewModel.Updated)].Value),
+                CreateCell(localizer[nameof(AccountOutputViewModel.Message)].Value),
+                CreateCell(localizer[nameof(AccountOutputViewModel.Deleted)].Value)
             );
             sheetData.Append(headerRow);
 
-            int recordIndex = 2;
-            foreach (AccountOutputViewModel item in accountOutputViewModels)
+            var recordIndex = 2;
+            foreach (var item in accountOutputViewModels)
             {
-                Row recordRow = new Row()
+                var recordRow = new Row()
                 {
                     RowIndex = (uint)recordIndex
                 };
@@ -686,7 +663,7 @@ public class ManagementController : BaseController
         }
 
         stream.Position = 0;
-        string excelName =
+        var excelName =
             $"{fileName}-{DateTime.UtcNow.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId):yyyy-MM-dd-HH-mm-ss-fff}.xlsx";
 
         return File(stream, "application/octet-stream", excelName);
@@ -700,10 +677,10 @@ public class ManagementController : BaseController
 
     #region Create
 
+    /// <summary>Creates a new navigation category.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.Admin)]
-    /// <summary>Creates a new navigation category.</summary>
     public async Task<IActionResult> CreateCategory([FromBody] MenuInputViewModel menuInputViewModel)
     {
         try
@@ -712,9 +689,9 @@ public class ManagementController : BaseController
                 .Action)); // remove ModelState check in Action (in Request parameters, Action can be null)
 
             if (!ModelState.IsValid)
-                return Json(new { result = false, error = _localizer["Input is invalid"].Value });
+                return Json(new { result = false, error = localizer["Input is invalid"].Value });
 
-            ServiceResult createCatResult = await _menuService.CreateCategoryAsync(new CategoryRequest
+            var createCatResult = await menuService.CreateCategoryAsync(new CategoryRequest
             {
                 Name = menuInputViewModel.Name,
                 DisplayName = menuInputViewModel.DisplayName,
@@ -725,19 +702,19 @@ public class ManagementController : BaseController
                 Order = menuInputViewModel.Order
             });
             return createCatResult.Success
-                ? Json(new { result = true, message = _localizer["Successfully created the category"].Value })
-                : Json(new { result = false, error = _localizer["Input is invalid"].Value });
+                ? Json(new { result = true, message = localizer["Successfully created the category"].Value })
+                : Json(new { result = false, error = localizer["Input is invalid"].Value });
         }
         catch
         {
-            return Json(new { result = false, error = _localizer["Input is invalid"].Value });
+            return Json(new { result = false, error = localizer["Input is invalid"].Value });
         }
     }
 
+    /// <summary>Creates a new navigation sub-category.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.Admin)]
-    /// <summary>Creates a new navigation sub-category.</summary>
     public async Task<IActionResult> CreateSubCategory([FromBody] MenuInputViewModel menuInputViewModel)
     {
         try
@@ -746,9 +723,9 @@ public class ManagementController : BaseController
                 .Controller)); // remove ModelState check in Controller (in Request parameters, Controller can be null)
 
             if (!ModelState.IsValid)
-                return Json(new { result = false, error = _localizer["Input is invalid"].Value });
+                return Json(new { result = false, error = localizer["Input is invalid"].Value });
 
-            ServiceResult createSubCatResult = await _menuService.CreateSubCategoryAsync(new SubCategoryRequest
+            var createSubCatResult = await menuService.CreateSubCategoryAsync(new SubCategoryRequest
             {
                 CategoryId = menuInputViewModel.CategoryId,
                 Name = menuInputViewModel.Name,
@@ -759,12 +736,12 @@ public class ManagementController : BaseController
                 Order = menuInputViewModel.Order
             });
             return createSubCatResult.Success
-                ? Json(new { result = true, message = _localizer["Successfully created the subCategory"].Value })
-                : Json(new { result = false, error = _localizer["Input is invalid"].Value });
+                ? Json(new { result = true, message = localizer["Successfully created the subCategory"].Value })
+                : Json(new { result = false, error = localizer["Input is invalid"].Value });
         }
         catch
         {
-            return Json(new { result = false, error = _localizer["Input is invalid"].Value });
+            return Json(new { result = false, error = localizer["Input is invalid"].Value });
         }
     }
 
@@ -772,17 +749,19 @@ public class ManagementController : BaseController
 
     #region Read
 
-    [HttpGet]
     /// <summary>Returns the menu management grid (AJAX) or the full page.</summary>
+    [HttpGet]
     public async Task<IActionResult> Menu(string wholeSearch)
     {
+#pragma warning disable ASP0015
         if (HttpContext.Request.Headers["X-Requested-With"] == "XMLHttpRequest") // ajax
+#pragma warning restore ASP0015
         {
             List<MenuOutputViewModel> menuOutputViewModels = [];
 
             #region Categories
 
-            foreach (CategoryResponse item in await _menuService.GetAllCategoriesAsync())
+            foreach (var item in await menuService.GetAllCategoriesAsync())
             {
                 if (string.IsNullOrEmpty(wholeSearch) ||
                     item.Id.ToString().Contains(wholeSearch) ||
@@ -813,7 +792,7 @@ public class ManagementController : BaseController
 
             #region SubCategories
 
-            foreach (SubCategoryResponse item in await _menuService.GetAllSubCategoriesAsync())
+            foreach (var item in await menuService.GetAllSubCategoriesAsync())
             {
                 if (string.IsNullOrEmpty(wholeSearch) ||
                     item.Id.ToString().Contains(wholeSearch) ||
@@ -842,7 +821,7 @@ public class ManagementController : BaseController
 
             #endregion
 
-            IQueryable<MenuOutputViewModel> result = menuOutputViewModels.OrderByDescending(m => m.Id)
+            var result = menuOutputViewModels.OrderByDescending(m => m.Id)
                 .ThenByDescending(m => m.CategoryId).AsQueryable();
             return PartialView("_MenuGrid", result);
         }
@@ -850,19 +829,19 @@ public class ManagementController : BaseController
         return View();
     }
 
+    /// <summary>Checks whether a category with the given ID exists.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.Admin)]
-    /// <summary>Checks whether a category with the given ID exists.</summary>
     public async Task<IActionResult> IsCategoryExists(int id)
     {
         try
         {
-            CategoryResponse category = await _menuService.GetCategoryByIdAsync(id);
+            var category = await menuService.GetCategoryByIdAsync(id);
             if (category == null)
-                return Json(new { result = false, error = _localizer["Input is invalid"].Value });
+                return Json(new { result = false, error = localizer["Input is invalid"].Value });
 
-            MenuOutputViewModel vm = new()
+            var vm = new MenuOutputViewModel()
             {
                 Id = category.Id,
                 CategoryId = null,
@@ -878,23 +857,23 @@ public class ManagementController : BaseController
         }
         catch
         {
-            return Json(new { result = false, error = _localizer["Input is invalid"].Value });
+            return Json(new { result = false, error = localizer["Input is invalid"].Value });
         }
     }
 
+    /// <summary>Checks whether a sub-category with the given ID exists.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.Admin)]
-    /// <summary>Checks whether a sub-category with the given ID exists.</summary>
     public async Task<IActionResult> IsSubCategoryExists(int id)
     {
         try
         {
-            SubCategoryResponse subCategory = await _menuService.GetSubCategoryByIdAsync(id);
+            var subCategory = await menuService.GetSubCategoryByIdAsync(id);
             if (subCategory == null)
-                return Json(new { result = false, error = _localizer["Input is invalid"].Value });
+                return Json(new { result = false, error = localizer["Input is invalid"].Value });
 
-            MenuOutputViewModel vm = new()
+            var vm = new MenuOutputViewModel
             {
                 Id = subCategory.Id,
                 CategoryId = subCategory.CategoryId,
@@ -910,7 +889,7 @@ public class ManagementController : BaseController
         }
         catch
         {
-            return Json(new { result = false, error = _localizer["Input is invalid"].Value });
+            return Json(new { result = false, error = localizer["Input is invalid"].Value });
         }
     }
 
@@ -918,10 +897,10 @@ public class ManagementController : BaseController
 
     #region Update
 
+    /// <summary>Updates an existing navigation category.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.Admin)]
-    /// <summary>Updates an existing navigation category.</summary>
     public async Task<IActionResult> UpdateCategory([FromBody] MenuInputViewModel menuInputViewModel)
     {
         try
@@ -930,9 +909,9 @@ public class ManagementController : BaseController
                 .Action)); // remove ModelState check in Action (in Request parameters, Action can be null)
 
             if (!ModelState.IsValid)
-                return Json(new { result = false, error = _localizer["Input is invalid"].Value });
+                return Json(new { result = false, error = localizer["Input is invalid"].Value });
 
-            ServiceResult updateCatResult = await _menuService.UpdateCategoryAsync(new CategoryRequest
+            var updateCatResult = await menuService.UpdateCategoryAsync(new CategoryRequest
             {
                 Id = menuInputViewModel.Id,
                 Name = menuInputViewModel.Name,
@@ -944,19 +923,19 @@ public class ManagementController : BaseController
                 Order = menuInputViewModel.Order
             });
             return updateCatResult.Success
-                ? Json(new { result = true, message = _localizer["Successfully updated the category"].Value })
-                : Json(new { result = false, error = _localizer["Input is invalid"].Value });
+                ? Json(new { result = true, message = localizer["Successfully updated the category"].Value })
+                : Json(new { result = false, error = localizer["Input is invalid"].Value });
         }
         catch
         {
-            return Json(new { result = false, error = _localizer["Input is invalid"].Value });
+            return Json(new { result = false, error = localizer["Input is invalid"].Value });
         }
     }
 
+    /// <summary>Updates an existing navigation sub-category.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.Admin)]
-    /// <summary>Updates an existing navigation sub-category.</summary>
     public async Task<IActionResult> UpdateSubCategory([FromBody] MenuInputViewModel menuInputViewModel)
     {
         try
@@ -965,9 +944,9 @@ public class ManagementController : BaseController
                 .Controller)); // remove ModelState check in Controller (in Request parameters, Controller can be null)
 
             if (!ModelState.IsValid)
-                return Json(new { result = false, error = _localizer["Input is invalid"].Value });
+                return Json(new { result = false, error = localizer["Input is invalid"].Value });
 
-            ServiceResult updateSubCatResult = await _menuService.UpdateSubCategoryAsync(new SubCategoryRequest
+            var updateSubCatResult = await menuService.UpdateSubCategoryAsync(new SubCategoryRequest
             {
                 Id = menuInputViewModel.Id,
                 CategoryId = menuInputViewModel.CategoryId,
@@ -979,12 +958,12 @@ public class ManagementController : BaseController
                 Order = menuInputViewModel.Order
             });
             return updateSubCatResult.Success
-                ? Json(new { result = true, message = _localizer["Successfully updated the subCategory"].Value })
-                : Json(new { result = false, error = _localizer["Input is invalid"].Value });
+                ? Json(new { result = true, message = localizer["Successfully updated the subCategory"].Value })
+                : Json(new { result = false, error = localizer["Input is invalid"].Value });
         }
         catch
         {
-            return Json(new { result = false, error = _localizer["Input is invalid"].Value });
+            return Json(new { result = false, error = localizer["Input is invalid"].Value });
         }
     }
 
@@ -992,10 +971,10 @@ public class ManagementController : BaseController
 
     #region Delete
 
+    /// <summary>Deletes a navigation category.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.Admin)]
-    /// <summary>Deletes a navigation category.</summary>
     public async Task<IActionResult> DeleteCategory([FromBody] MenuInputViewModel menuInputViewModel)
     {
         try
@@ -1004,9 +983,9 @@ public class ManagementController : BaseController
                 .Action)); // remove ModelState check in Action (in Request parameters, Action can be null)
 
             if (!ModelState.IsValid)
-                return Json(new { result = false, error = _localizer["Input is invalid"].Value });
+                return Json(new { result = false, error = localizer["Input is invalid"].Value });
 
-            ServiceResult deleteCatResult = await _menuService.DeleteCategoryAsync(new CategoryRequest
+            var deleteCatResult = await menuService.DeleteCategoryAsync(new CategoryRequest
             {
                 Id = menuInputViewModel.Id,
                 Name = menuInputViewModel.Name,
@@ -1018,19 +997,19 @@ public class ManagementController : BaseController
                 Order = menuInputViewModel.Order
             });
             return deleteCatResult.Success
-                ? Json(new { result = true, message = _localizer["Successfully deleted the category"].Value })
-                : Json(new { result = false, error = _localizer["Input is invalid"].Value });
+                ? Json(new { result = true, message = localizer["Successfully deleted the category"].Value })
+                : Json(new { result = false, error = localizer["Input is invalid"].Value });
         }
         catch
         {
-            return Json(new { result = false, error = _localizer["Input is invalid"].Value });
+            return Json(new { result = false, error = localizer["Input is invalid"].Value });
         }
     }
 
+    /// <summary>Deletes a navigation sub-category.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.Admin)]
-    /// <summary>Deletes a navigation sub-category.</summary>
     public async Task<IActionResult> DeleteSubCategory([FromBody] MenuInputViewModel menuInputViewModel)
     {
         try
@@ -1039,9 +1018,9 @@ public class ManagementController : BaseController
                 .Controller)); // remove ModelState check in Controller (in Request parameters, Controller can be null)
 
             if (!ModelState.IsValid)
-                return Json(new { result = false, error = _localizer["Input is invalid"].Value });
+                return Json(new { result = false, error = localizer["Input is invalid"].Value });
 
-            ServiceResult deleteSubCatResult = await _menuService.DeleteSubCategoryAsync(new SubCategoryRequest
+            var deleteSubCatResult = await menuService.DeleteSubCategoryAsync(new SubCategoryRequest
             {
                 Id = menuInputViewModel.Id,
                 CategoryId = menuInputViewModel.CategoryId,
@@ -1054,12 +1033,12 @@ public class ManagementController : BaseController
             });
 
             return deleteSubCatResult.Success
-                ? Json(new { result = true, message = _localizer["Successfully deleted the subCategory"].Value })
-                : Json(new { result = false, error = _localizer["Input is invalid"].Value });
+                ? Json(new { result = true, message = localizer["Successfully deleted the subCategory"].Value })
+                : Json(new { result = false, error = localizer["Input is invalid"].Value });
         }
         catch
         {
-            return Json(new { result = false, error = _localizer["Input is invalid"].Value });
+            return Json(new { result = false, error = localizer["Input is invalid"].Value });
         }
     }
 
@@ -1067,19 +1046,19 @@ public class ManagementController : BaseController
 
     #region Excel
 
+    /// <summary>Exports the navigation menu (categories and sub-categories) to an Excel file.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.Admin)]
-    /// <summary>Exports the navigation menu (categories and sub-categories) to an Excel file.</summary>
     public async Task<IActionResult> ExportExcelMenu(string fileName = "")
     {
         await Task.Yield();
 
         List<MenuOutputViewModel> menuOutputViewModels = [];
-        string loginedAccountTimeZoneIanaId = _sessionService.GetAccount()!.TimeZoneIanaId;
+        var loginedAccountTimeZoneIanaId = _sessionService.GetAccount()!.TimeZoneIanaId;
 
         #region Categories
-        foreach (CategoryResponse item in await _menuService.GetAllCategoriesAsync())
+        foreach (var item in await menuService.GetAllCategoriesAsync())
         {
             menuOutputViewModels.Add(new MenuOutputViewModel()
             {
@@ -1097,7 +1076,7 @@ public class ManagementController : BaseController
         #endregion
 
         #region SubCategories
-        foreach (SubCategoryResponse item in await _menuService.GetAllSubCategoriesAsync())
+        foreach (var item in await menuService.GetAllSubCategoriesAsync())
         {
             menuOutputViewModels.Add(new MenuOutputViewModel()
             {
@@ -1117,19 +1096,18 @@ public class ManagementController : BaseController
         menuOutputViewModels = menuOutputViewModels.OrderByDescending(m => m.Id).ThenByDescending(m => m.CategoryId)
             .ToList();
 
-        MemoryStream stream = new MemoryStream();
+        var stream = new MemoryStream();
 
-        using (SpreadsheetDocument spreadsheetDocument =
-               SpreadsheetDocument.Create(stream, SpreadsheetDocumentType.Workbook))
+        using (var spreadsheetDocument = SpreadsheetDocument.Create(stream, SpreadsheetDocumentType.Workbook))
         {
-            WorkbookPart workbookPart = spreadsheetDocument.AddWorkbookPart();
+            var workbookPart = spreadsheetDocument.AddWorkbookPart();
             workbookPart.Workbook = new Workbook();
 
-            WorksheetPart worksheetPart = workbookPart.AddNewPart<WorksheetPart>();
+            var worksheetPart = workbookPart.AddNewPart<WorksheetPart>();
             worksheetPart.Worksheet = new Worksheet(new SheetData());
 
-            Sheets sheets = spreadsheetDocument.WorkbookPart.Workbook.AppendChild(new Sheets());
-            Sheet sheet = new Sheet()
+            var sheets = spreadsheetDocument.WorkbookPart.Workbook.AppendChild(new Sheets());
+            var sheet = new Sheet()
             {
                 Id = spreadsheetDocument.WorkbookPart.GetIdOfPart(worksheetPart),
                 SheetId = 1,
@@ -1137,7 +1115,7 @@ public class ManagementController : BaseController
             };
             sheets.Append(sheet);
 
-            SheetData sheetData = worksheetPart.Worksheet.GetFirstChild<SheetData>();
+            var sheetData = worksheetPart.Worksheet.GetFirstChild<SheetData>();
 
             Cell CreateCell(string value)
             {
@@ -1148,23 +1126,23 @@ public class ManagementController : BaseController
                 };
             }
 
-            Row headerRow = new Row();
+            var headerRow = new Row();
             headerRow.Append(
-                CreateCell(_localizer[nameof(MenuOutputViewModel.Id).ToString()].Value),
-                CreateCell(_localizer[nameof(MenuOutputViewModel.CategoryId).ToString()].Value),
-                CreateCell(_localizer[nameof(MenuOutputViewModel.Name).ToString()].Value),
-                CreateCell(_localizer[nameof(MenuOutputViewModel.DisplayName).ToString()].Value),
-                CreateCell(_localizer[nameof(MenuOutputViewModel.IconPath).ToString()].Value),
-                CreateCell(_localizer[nameof(MenuOutputViewModel.Controller).ToString()].Value),
-                CreateCell(_localizer[nameof(MenuOutputViewModel.Action).ToString()].Value),
-                CreateCell(_localizer[nameof(MenuOutputViewModel.Role).ToString()].Value),
-                CreateCell(_localizer[nameof(MenuOutputViewModel.Order).ToString()].Value)
+                CreateCell(localizer[nameof(MenuOutputViewModel.Id)].Value),
+                CreateCell(localizer[nameof(MenuOutputViewModel.CategoryId)].Value),
+                CreateCell(localizer[nameof(MenuOutputViewModel.Name)].Value),
+                CreateCell(localizer[nameof(MenuOutputViewModel.DisplayName)].Value),
+                CreateCell(localizer[nameof(MenuOutputViewModel.IconPath)].Value),
+                CreateCell(localizer[nameof(MenuOutputViewModel.Controller)].Value),
+                CreateCell(localizer[nameof(MenuOutputViewModel.Action)].Value),
+                CreateCell(localizer[nameof(MenuOutputViewModel.Role)].Value),
+                CreateCell(localizer[nameof(MenuOutputViewModel.Order)].Value)
             );
             sheetData.Append(headerRow);
 
-            foreach (MenuOutputViewModel item in menuOutputViewModels)
+            foreach (var item in menuOutputViewModels)
             {
-                Row dataRow = new Row();
+                var dataRow = new Row();
                 dataRow.Append(
                     CreateCell(item.Id.ToString()),
                     CreateCell(item.CategoryId?.ToString() ?? string.Empty),
@@ -1183,7 +1161,7 @@ public class ManagementController : BaseController
         }
 
         stream.Position = 0;
-        string excelName =
+        var excelName =
             $"{fileName}-{DateTime.UtcNow.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId):yyyy-MM-dd-HH-mm-ss-fff}.xlsx";
 
         return File(stream, "application/octet-stream", excelName);
@@ -1201,11 +1179,11 @@ public class ManagementController : BaseController
 
     #region PrivateNoteBoard
 
+    /// <summary>Creates or updates a private note board post.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.Admin)]
     [RequiredHttpPostAccess(Role = Role.User)]
-    /// <summary>Creates or updates a private note board post.</summary>
     public async Task<IActionResult> WritePrivateNoteBoard(BoardInputViewModel boardInputViewModel)
     {
         try
@@ -1213,7 +1191,7 @@ public class ManagementController : BaseController
             _ = ModelState.Remove(nameof(boardInputViewModel.Locked));
 
             if (!ModelState.IsValid)
-                return Json(new { result = false, error = _localizer["Input is invalid"].Value });
+                return Json(new { result = false, error = localizer["Input is invalid"].Value });
 
             boardInputViewModel.Content ??= "";
 
@@ -1224,41 +1202,41 @@ public class ManagementController : BaseController
             #endregion
 
             #region Decrypt img tag file path
-            HtmlDocument htmlDocument = new();
+            var htmlDocument = new HtmlDocument();
             htmlDocument.LoadHtml(boardInputViewModel.Content);
-            foreach (HtmlNode imgTag in htmlDocument.DocumentNode.Descendants("img") ?? [])
+            foreach (var imgTag in htmlDocument.DocumentNode.Descendants("img") ?? [])
             {
-                string encryptedFilePath = imgTag.GetAttributeValue("alt", "");
-                _ = imgTag.SetAttributeValue("alt", _rsa.Decrypt(encryptedFilePath));
+                var encryptedFilePath = imgTag.GetAttributeValue("alt", "");
+                _ = imgTag.SetAttributeValue("alt", rsa.Decrypt(encryptedFilePath));
             }
             boardInputViewModel.Content = htmlDocument.DocumentNode.OuterHtml;
             #endregion
 
             if (boardInputViewModel.Title.Length is not (> 0 and <= 100))
-                return Json(new { result = false, error = _localizer["Title length is must be between 1 and 100 characters."].Value });
+                return Json(new { result = false, error = localizer["Title length is must be between 1 and 100 characters."].Value });
 
             if (boardInputViewModel.Content.Length > 16384)
-                return Json(new { result = false, error = _localizer["content length is must be between 0 and 16384 characters."].Value });
+                return Json(new { result = false, error = localizer["content length is must be between 0 and 16384 characters."].Value });
 
             if (boardInputViewModel.UploadedFile != null)
             {
                 if (Path.GetExtension(boardInputViewModel.UploadedFile.FileName) != ".zip")
-                    return Json(new { result = false, error = _localizer["Only zip extension allowed."].Value });
+                    return Json(new { result = false, error = localizer["Only zip extension allowed."].Value });
 
                 if (boardInputViewModel.UploadedFile.Length is not (> 0 and <= 10485760))
-                    return Json(new { result = false, error = _localizer["uploaded file size must be smaller than 10MB."].Value });
+                    return Json(new { result = false, error = localizer["uploaded file size must be smaller than 10MB."].Value });
             }
 
-            bool isAccountSessionExist = _sessionService.GetAccount() != null;
+            var isAccountSessionExist = _sessionService.GetAccount() != null;
             if (!isAccountSessionExist)
-                return Json(new { result = false, error = _localizer["Please Login to write board"].Value });
+                return Json(new { result = false, error = localizer["Please Login to write board"].Value });
 
-            AccountResponse loginedAccount = _sessionService.GetAccount()!;
+            var loginedAccount = _sessionService.GetAccount()!;
 
             if (loginedAccount.Role != Role.Admin && loginedAccount.Role != Role.User)
-                return Json(new { result = false, error = _localizer["Please Login to write board"].Value });
+                return Json(new { result = false, error = localizer["Please Login to write board"].Value });
 
-            BoardRequest boardRequest = new()
+            var boardRequest = new BoardRequest
             {
                 Type = EnumHelper.GetDescription(BoardType.PrivateNote),
                 Title = boardInputViewModel.Title,
@@ -1281,14 +1259,14 @@ public class ManagementController : BaseController
                 };
             }
 
-            ServiceResult result = await _boardService.WriteBoardAsync(boardRequest, attachedFile);
+            var result = await boardService.WriteBoardAsync(boardRequest, attachedFile);
             return result.Success
-                ? Json(new { result = true, message = _localizer["The board has been successfully created."].Value })
-                : Json(new { result = false, error = _localizer["Input is invalid"].Value });
+                ? Json(new { result = true, message = localizer["The board has been successfully created."].Value })
+                : Json(new { result = false, error = localizer["Input is invalid"].Value });
         }
         catch
         {
-            return Json(new { result = false, error = _localizer["Input is invalid"].Value });
+            return Json(new { result = false, error = localizer["Input is invalid"].Value });
         }
     }
 
@@ -1296,21 +1274,21 @@ public class ManagementController : BaseController
 
     #region PrivateNoteComment
 
+    /// <summary>Submits a new PrivateNoteComment.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.Admin)]
     [RequiredHttpPostAccess(Role = Role.User)]
-    /// <summary>Submits a new PrivateNoteComment.</summary>
     public async Task<IActionResult> WritePrivateNoteComment(
         [FromBody] BoardCommentInputViewModel boardCommentInputViewModel)
     {
         try
         {
             if (!ModelState.IsValid)
-                return Json(new { result = false, error = _localizer["Input is invalid"].Value });
+                return Json(new { result = false, error = localizer["Input is invalid"].Value });
 
             if (string.IsNullOrEmpty(boardCommentInputViewModel.Content))
-                return Json(new { result = false, error = _localizer["Please enter a comment."].Value });
+                return Json(new { result = false, error = localizer["Please enter a comment."].Value });
 
             #region HtmlSanitizer
             HtmlSanitizer sanitizer = new();
@@ -1318,13 +1296,13 @@ public class ManagementController : BaseController
             boardCommentInputViewModel.Content = sanitizer.Sanitize(boardCommentInputViewModel.Content);
             #endregion
 
-            bool isAccountSessionExist = _sessionService.GetAccount() != null;
+            var isAccountSessionExist = _sessionService.GetAccount() != null;
             if (!isAccountSessionExist)
-                return Json(new { result = false, error = _localizer["Please Login to write comment."].Value });
+                return Json(new { result = false, error = localizer["Please Login to write comment."].Value });
 
-            AccountResponse loginedAccount = _sessionService.GetAccount()!;
+            var loginedAccount = _sessionService.GetAccount()!;
 
-            BoardCommentRequest commentRequest = new()
+            var commentRequest = new BoardCommentRequest
             {
                 BoardId = boardCommentInputViewModel.BoardId,
                 AvatarImagePath = loginedAccount.AvatarImagePath,
@@ -1332,14 +1310,14 @@ public class ManagementController : BaseController
                 Content = boardCommentInputViewModel.Content
             };
 
-            ServiceResult result = await _boardService.WriteCommentAsync(commentRequest, loginedAccount.Nickname);
+            var result = await boardService.WriteCommentAsync(commentRequest, loginedAccount.Nickname);
             return result.Success
                 ? Json(new { result = true, boardId = boardCommentInputViewModel.BoardId, page = boardCommentInputViewModel.DetailCurrentPage })
-                : Json(new { result = false, error = _localizer["Input is invalid"].Value });
+                : Json(new { result = false, error = localizer["Input is invalid"].Value });
         }
         catch
         {
-            return Json(new { result = false, error = _localizer["Input is invalid"].Value });
+            return Json(new { result = false, error = localizer["Input is invalid"].Value });
         }
     }
 
@@ -1348,22 +1326,23 @@ public class ManagementController : BaseController
     #endregion
 
     #region Summernote Image File Upload
+
+    /// <summary>Uploads a ImageFile file.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.Admin)]
     [RequiredHttpPostAccess(Role = Role.User)]
-    /// <summary>Uploads a ImageFile file.</summary>
     public async Task<IActionResult> UploadImageFile(IFormFile summernoteImageFile)
     {
         if (summernoteImageFile == null)
-            return Ok(new { result = false, errorMessage = _localizer["Please attach a file."].Value });
+            return Ok(new { result = false, errorMessage = localizer["Please attach a file."].Value });
 
         if (summernoteImageFile.Length <= 0 || summernoteImageFile.Length > 10 * 1024 * 1024)
-            return Ok(new { result = false, errorMessage = _localizer["File Size must be smaller than 10MB."].Value });
+            return Ok(new { result = false, errorMessage = localizer["File Size must be smaller than 10MB."].Value });
 
         var ext = Path.GetExtension(summernoteImageFile.FileName).ToLowerInvariant();
         if (ext != ".png" && ext != ".jpg" && ext != ".jpeg")
-            return Ok(new { result = false, errorMessage = _localizer["Only .jpg, .jpeg or .png file allowed."].Value });
+            return Ok(new { result = false, errorMessage = localizer["Only .jpg, .jpeg or .png file allowed."].Value });
 
         byte[] bytes;
         using (var ms = new MemoryStream())
@@ -1380,16 +1359,16 @@ public class ManagementController : BaseController
             Size = summernoteImageFile.Length
         };
 
-        SummernoteUploadResult uploadResult = await _boardService.UploadSummernoteImageAsync(file, "Management", EnumHelper.GetDescription(BoardType.PrivateNote));
+        var uploadResult = await boardService.UploadSummernoteImageAsync(file, "Management", EnumHelper.GetDescription(BoardType.PrivateNote));
 
         if (!uploadResult.Success)
-            return Ok(new { result = false, errorMessage = _localizer[uploadResult.ErrorKey ?? "Input is invalid"].Value });
+            return Ok(new { result = false, errorMessage = localizer[uploadResult.ErrorKey ?? "Input is invalid"].Value });
 
         return Ok(new
         {
             result = true,
             file = File(uploadResult.FileBytes!, uploadResult.ContentType!, uploadResult.FileName!),
-            filePath = _rsa.Encrypt(uploadResult.FilePath!)
+            filePath = rsa.Encrypt(uploadResult.FilePath!)
         });
     }
     #endregion
@@ -1406,7 +1385,7 @@ public class ManagementController : BaseController
     {
         if (method == "write") // Write
         {
-            PrivateNoteOutputViewModel privateNoteOutputViewModel = new();
+            var privateNoteOutputViewModel = new PrivateNoteOutputViewModel();
 
             #region Write board
 
@@ -1414,28 +1393,28 @@ public class ManagementController : BaseController
 
             #endregion
 
-            bool isAccountSessionExist = _sessionService.GetAccount() != null; // Check if account session exists after login
+            var isAccountSessionExist = _sessionService.GetAccount() != null; // Check if account session exists after login
 
             return isAccountSessionExist ? View(privateNoteOutputViewModel) : RedirectToAction("Login", "Account");
         }
         else if (method == "detail") // Detail view
         {
-            AccountResponse loginedAccount = _sessionService.GetAccount()!; // Get Session
+            var loginedAccount = _sessionService.GetAccount()!; // Get Session
 
             if (boardId == null)
             {
                 return RedirectToAction("PrivateNote", "Management");
             }
 
-            PrivateNoteOutputViewModel privateNoteOutputViewModel = new()
+            var privateNoteOutputViewModel = new PrivateNoteOutputViewModel
             {
                 Method = method,
                 DetailCurrentPage = page,
                 DetailBoardId = boardId ?? default
             };
 
-            BoardResponse privateNoteBoard = await _boardService.GetBoardByIdAsync(boardId ?? 0);
-            BoardAttachedFileResponse attachedFile = await _boardService.GetAttachedFileByBoardIdAsync(boardId ?? 0);
+            var privateNoteBoard = await boardService.GetBoardByIdAsync(boardId ?? 0);
+            var attachedFile = await boardService.GetAttachedFileByBoardIdAsync(boardId ?? 0);
 
             try
             {
@@ -1450,40 +1429,40 @@ public class ManagementController : BaseController
                     }
                 }
 
-                await _boardService.IncrementBoardViewAsync(boardId ?? 0);
+                await boardService.IncrementBoardViewAsync(boardId ?? 0);
 
                 #region Encrypt img tag file path
 
-                HtmlDocument htmlDocument = new();
+                var htmlDocument = new HtmlDocument();
                 htmlDocument.LoadHtml(privateNoteBoard.Content);
-                bool isImgTagIncluded = false;
+                var isImgTagIncluded = false;
 
-                foreach (HtmlNode imgTag in htmlDocument.DocumentNode.Descendants("img") ?? [])
+                foreach (var imgTag in htmlDocument.DocumentNode.Descendants("img") ?? [])
                 {
                     isImgTagIncluded = true;
-                    string filePath = imgTag.GetAttributeValue("alt", "");
+                    var filePath = imgTag.GetAttributeValue("alt", "");
 
                     // Method to download file
-                    byte[] fileData = await _boardService.DownloadFileAsync(filePath);
+                    var fileData = await boardService.DownloadFileAsync(filePath);
 
                     if (fileData != null)
                     {
                         // Use FileExtensionContentTypeProvider to extract ContentType
-                        FileExtensionContentTypeProvider provider = new();
+                        var provider = new FileExtensionContentTypeProvider();
 
                         // Set default contentType to "application/octet-stream"
-                        if (!provider.TryGetContentType(filePath, out string contentType))
+                        if (!provider.TryGetContentType(filePath, out var contentType))
                         {
                             contentType = "application/octet-stream";
                         }
 
                         // Convert file data to Base64
-                        string base64Data = Convert.ToBase64String(fileData);
+                        var base64Data = Convert.ToBase64String(fileData);
 
                         // Store base64 data in img tag (use data-file attribute instead of src)
                         _ = imgTag.SetAttributeValue("data-file", base64Data);
                         _ = imgTag.SetAttributeValue("data-contenttype", contentType);
-                        _ = imgTag.SetAttributeValue("alt", _rsa.Encrypt(filePath));
+                        _ = imgTag.SetAttributeValue("alt", rsa.Encrypt(filePath));
                     }
                 }
 
@@ -1492,7 +1471,7 @@ public class ManagementController : BaseController
                 #endregion
 
                 privateNoteOutputViewModel.BoardOutputViewModel =
-                    new Maroik.WebSite.Models.ViewModels.Management.BoardOutputViewModel()
+                    new BoardOutputViewModel
                     {
                         Title = privateNoteBoard.Title,
                         Writer = privateNoteBoard.Writer,
@@ -1509,18 +1488,18 @@ public class ManagementController : BaseController
                 if (!string.IsNullOrEmpty(privateNoteOutputViewModel?.BoardOutputViewModel?.BoardAttachedFilePath ??
                                           ""))
                 {
-                    byte[] fileData = await _boardService.DownloadFileAsync(
+                    var fileData = await boardService.DownloadFileAsync(
                         privateNoteOutputViewModel?.BoardOutputViewModel?.BoardAttachedFilePath ?? "");
 
                     if (fileData != null)
                     {
                         // Use FileExtensionContentTypeProvider to extract ContentType
-                        FileExtensionContentTypeProvider provider = new();
+                        var provider = new FileExtensionContentTypeProvider();
 
                         // Set default contentType to "application/octet-stream"
                         if (!provider.TryGetContentType(
                                 privateNoteOutputViewModel?.BoardOutputViewModel?.BoardAttachedFilePath ?? "",
-                                out string contentType))
+                                out var contentType))
                         {
                             contentType = "application/octet-stream";
                         }
@@ -1531,12 +1510,11 @@ public class ManagementController : BaseController
                         privateNoteOutputViewModel.BoardOutputViewModel.BoardAttachedFileContentType = contentType;
                     }
 
-                // Preload comments and accounts for detail view
-                privateNoteOutputViewModel.DetailBoardComments = (await _boardService.GetCommentsByBoardIdAsync(boardId ?? 0))?.ToList() ?? [];
-                privateNoteOutputViewModel.AllAccounts = await _accountService.GetAllAccountsAsync() ?? [];
-                privateNoteOutputViewModel.LoginedAccount = loginedAccount;
-                privateNoteOutputViewModel.LoginedAccountTimeZoneIanaId = loginedAccount?.TimeZoneIanaId ?? "";
-
+                    // Preload comments and accounts for detail view
+                    privateNoteOutputViewModel.DetailBoardComments = (await boardService.GetCommentsByBoardIdAsync(boardId ?? 0))?.ToList() ?? [];
+                    privateNoteOutputViewModel.AllAccounts = await _accountService.GetAllAccountsAsync() ?? [];
+                    privateNoteOutputViewModel.LoginedAccount = loginedAccount;
+                    privateNoteOutputViewModel.LoginedAccountTimeZoneIanaId = loginedAccount?.TimeZoneIanaId ?? "";
                 }
 
                 return View(privateNoteOutputViewModel);
@@ -1553,17 +1531,17 @@ public class ManagementController : BaseController
                 return RedirectToAction("PrivateNote", "Management");
             }
 
-            PrivateNoteOutputViewModel privateNoteOutputViewModel = new()
+            var privateNoteOutputViewModel = new PrivateNoteOutputViewModel
             {
                 Method = method,
                 EditCurrentPage = page,
                 EditBoardId = boardId ?? default
             };
 
-            AccountResponse loginedAccount = _sessionService.GetAccount()!;
+            var loginedAccount = _sessionService.GetAccount()!;
 
-            BoardResponse privateNoteBoard = await _boardService.GetBoardByIdAsync(boardId ?? 0);
-            BoardAttachedFileResponse attachedFile = await _boardService.GetAttachedFileByBoardIdAsync(boardId ?? 0);
+            var privateNoteBoard = await boardService.GetBoardByIdAsync(boardId ?? 0);
+            var attachedFile = await boardService.GetAttachedFileByBoardIdAsync(boardId ?? 0);
 
             try
             {
@@ -1574,36 +1552,36 @@ public class ManagementController : BaseController
 
                 #region Encrypt img tag file path
 
-                HtmlDocument htmlDocument = new();
+                var htmlDocument = new HtmlDocument();
                 htmlDocument.LoadHtml(privateNoteBoard.Content);
-                bool isImgTagIncluded = false;
+                var isImgTagIncluded = false;
 
-                foreach (HtmlNode imgTag in htmlDocument.DocumentNode.Descendants("img") ?? [])
+                foreach (var imgTag in htmlDocument.DocumentNode.Descendants("img") ?? [])
                 {
                     isImgTagIncluded = true;
-                    string filePath = imgTag.GetAttributeValue("alt", "");
+                    var filePath = imgTag.GetAttributeValue("alt", "");
 
                     // Method to download file
-                    byte[] fileData = await _boardService.DownloadFileAsync(filePath);
+                    var fileData = await boardService.DownloadFileAsync(filePath);
 
                     if (fileData != null)
                     {
                         // Use FileExtensionContentTypeProvider to extract ContentType
-                        FileExtensionContentTypeProvider provider = new();
+                        var provider = new FileExtensionContentTypeProvider();
 
                         // Set default contentType to "application/octet-stream"
-                        if (!provider.TryGetContentType(filePath, out string contentType))
+                        if (!provider.TryGetContentType(filePath, out var contentType))
                         {
                             contentType = "application/octet-stream";
                         }
 
                         // Convert file data to Base64
-                        string base64Data = Convert.ToBase64String(fileData);
+                        var base64Data = Convert.ToBase64String(fileData);
 
                         // Store base64 data in img tag (use data-file attribute instead of src)
                         _ = imgTag.SetAttributeValue("data-file", base64Data);
                         _ = imgTag.SetAttributeValue("data-contenttype", contentType);
-                        _ = imgTag.SetAttributeValue("alt", _rsa.Encrypt(filePath));
+                        _ = imgTag.SetAttributeValue("alt", rsa.Encrypt(filePath));
                     }
                 }
 
@@ -1612,7 +1590,7 @@ public class ManagementController : BaseController
                 #endregion
 
                 privateNoteOutputViewModel.BoardOutputViewModel =
-                    new Maroik.WebSite.Models.ViewModels.Management.BoardOutputViewModel()
+                    new BoardOutputViewModel
                     {
                         Title = privateNoteBoard.Title,
                         Writer = privateNoteBoard.Writer,
@@ -1630,18 +1608,18 @@ public class ManagementController : BaseController
                 if (!string.IsNullOrEmpty(privateNoteOutputViewModel?.BoardOutputViewModel?.BoardAttachedFilePath ??
                                           ""))
                 {
-                    byte[] fileData = await _boardService.DownloadFileAsync(
+                    var fileData = await boardService.DownloadFileAsync(
                         privateNoteOutputViewModel?.BoardOutputViewModel?.BoardAttachedFilePath ?? "");
 
                     if (fileData != null)
                     {
                         // Use FileExtensionContentTypeProvider to extract ContentType
-                        FileExtensionContentTypeProvider provider = new();
+                        var provider = new FileExtensionContentTypeProvider();
 
                         // Set default contentType to "application/octet-stream"
                         if (!provider.TryGetContentType(
                                 privateNoteOutputViewModel?.BoardOutputViewModel?.BoardAttachedFilePath ?? "",
-                                out string contentType))
+                                out var contentType))
                         {
                             contentType = "application/octet-stream";
                         }
@@ -1662,8 +1640,8 @@ public class ManagementController : BaseController
         }
         else // List
         {
-            bool isAccountSessionExist = _sessionService.GetAccount() != null;
-            AccountResponse loginedAccount = _sessionService.GetAccount()!;
+            var isAccountSessionExist = _sessionService.GetAccount() != null;
+            var loginedAccount = _sessionService.GetAccount()!;
 
             #region Board default paging logic
 
@@ -1677,8 +1655,8 @@ public class ManagementController : BaseController
 
             #region Logic to get all related board data
 
-            IEnumerable<BoardResponse> privateNoteBoards =
-                await _boardService.GetBoardsAsync(EnumHelper.GetDescription(BoardType.PrivateNote));
+            var privateNoteBoards =
+                await boardService.GetBoardsAsync(EnumHelper.GetDescription(BoardType.PrivateNote));
             privateNoteBoards = privateNoteBoards.Where(m => m.Writer == loginedAccount.Nickname)
                 .Where(m => m.Deleted == false && m.Noticed == false).OrderByDescending(a => a.Id);
 
@@ -1696,10 +1674,10 @@ public class ManagementController : BaseController
                     }
                     else if (loginedAccount.Role == Role.User) // User can see regular posts + their own private posts
                     {
-                        List<BoardResponse> searchPrivateNoteBoards = [];
-                        List<BoardResponse> noLockedPrivateNoteBoards = privateNoteBoards
+                        var searchPrivateNoteBoards = new List<BoardResponse>();
+                        var noLockedPrivateNoteBoards = privateNoteBoards
                             .Where(a => a.Title.Contains(searchText)).Where(a => !a.Locked).ToList();
-                        List<BoardResponse> myLockedPrivateNoteBoards = privateNoteBoards
+                        var myLockedPrivateNoteBoards = privateNoteBoards
                             .Where(a => a.Title.Contains(searchText))
                             .Where(a => a.Locked && a.Writer == loginedAccount.Nickname).ToList();
                         searchPrivateNoteBoards.AddRange(noLockedPrivateNoteBoards);
@@ -1724,7 +1702,7 @@ public class ManagementController : BaseController
 
             #endregion
 
-            PrivateNoteOutputViewModel privateNoteOutputViewModel = new();
+            var privateNoteOutputViewModel = new PrivateNoteOutputViewModel();
 
             #region Notice
 
@@ -1756,14 +1734,14 @@ public class ManagementController : BaseController
             privateNoteOutputViewModel.LoginedAccountTimeZoneIanaId = loginedAccount?.TimeZoneIanaId ?? "";
             privateNoteOutputViewModel.AllAccounts = await _accountService.GetAllAccountsAsync() ?? [];
 
-            List<long> boardIds = privateNoteOutputViewModel.Boards.Select(b => b.Id).ToList();
-            Dictionary<long, int> commentCounts = await _boardService.GetCommentCountsForBoardsAsync(boardIds);
-            Dictionary<long, BoardAttachedFileResponse> attachedFiles = await _boardService.GetAttachedFilesForBoardsAsync(boardIds);
+            var boardIds = privateNoteOutputViewModel.Boards.Select(b => b.Id).ToList();
+            var commentCounts = await boardService.GetCommentCountsForBoardsAsync(boardIds);
+            var attachedFiles = await boardService.GetAttachedFilesForBoardsAsync(boardIds);
 
             foreach (var board in privateNoteOutputViewModel.Boards)
             {
                 privateNoteOutputViewModel.CommentCountByBoardId[board.Id] = commentCounts.GetValueOrDefault(board.Id, 0);
-                BoardAttachedFileResponse af = attachedFiles.GetValueOrDefault(board.Id);
+                var af = attachedFiles.GetValueOrDefault(board.Id);
                 privateNoteOutputViewModel.AttachedFilesByBoardId[board.Id] = af != null && !string.IsNullOrEmpty(af.Name) ? [af] : [];
             }
             #endregion
@@ -1778,25 +1756,25 @@ public class ManagementController : BaseController
 
     #region IsBoardExists
 
+    /// <summary>Checks whether a Board record exists.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.Admin)]
     [RequiredHttpPostAccess(Role = Role.User)]
-    /// <summary>Checks whether a Board record exists.</summary>
     public async Task<IActionResult> IsBoardExists(int id)
     {
         try
         {
-            string nickname = _sessionService.GetAccount()!.Nickname;
-            BoardResponse board = await _boardService.GetBoardByIdAsync(id);
+            var nickname = _sessionService.GetAccount()!.Nickname;
+            var board = await boardService.GetBoardByIdAsync(id);
 
             return board == null || board.Deleted || board.Writer != nickname
-                ? Json(new { result = false, error = _localizer["Input is invalid"].Value })
+                ? Json(new { result = false, error = localizer["Input is invalid"].Value })
                 : Json(new { result = true, PrivateNoteBoard = board });
         }
         catch
         {
-            return Json(new { result = false, error = _localizer["Input is invalid"].Value });
+            return Json(new { result = false, error = localizer["Input is invalid"].Value });
         }
     }
 
@@ -1808,11 +1786,11 @@ public class ManagementController : BaseController
 
     #region Edit
 
+    /// <summary>Saves edits to an existing PrivateNoteBoard.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.Admin)]
     [RequiredHttpPostAccess(Role = Role.User)]
-    /// <summary>Saves edits to an existing PrivateNoteBoard.</summary>
     public async Task<IActionResult> EditPrivateNoteBoard(BoardInputViewModel boardInputViewModel)
     {
         try
@@ -1820,7 +1798,7 @@ public class ManagementController : BaseController
             _ = ModelState.Remove(nameof(boardInputViewModel.Locked));
 
             if (!ModelState.IsValid)
-                return Json(new { result = false, error = _localizer["Input is invalid"].Value });
+                return Json(new { result = false, error = localizer["Input is invalid"].Value });
 
             boardInputViewModel.Content ??= "";
 
@@ -1831,38 +1809,38 @@ public class ManagementController : BaseController
             #endregion
 
             #region Decrypt img tag file path
-            HtmlDocument htmlDocument = new();
+            var htmlDocument = new HtmlDocument();
             htmlDocument.LoadHtml(boardInputViewModel.Content);
-            foreach (HtmlNode imgTag in htmlDocument.DocumentNode.Descendants("img") ?? [])
+            foreach (var imgTag in htmlDocument.DocumentNode.Descendants("img") ?? [])
             {
-                string encryptedFilePath = imgTag.GetAttributeValue("alt", "");
-                _ = imgTag.SetAttributeValue("alt", _rsa.Decrypt(encryptedFilePath));
+                var encryptedFilePath = imgTag.GetAttributeValue("alt", "");
+                _ = imgTag.SetAttributeValue("alt", rsa.Decrypt(encryptedFilePath));
             }
             boardInputViewModel.Content = htmlDocument.DocumentNode.OuterHtml;
             #endregion
 
             if (boardInputViewModel.Title.Length is not (> 0 and <= 100))
-                return Json(new { result = false, error = _localizer["Title length is must be between 1 and 100 characters."].Value });
+                return Json(new { result = false, error = localizer["Title length is must be between 1 and 100 characters."].Value });
 
             if (boardInputViewModel.Content.Length > 16384)
-                return Json(new { result = false, error = _localizer["content length is must be between 0 and 16384 characters."].Value });
+                return Json(new { result = false, error = localizer["content length is must be between 0 and 16384 characters."].Value });
 
             if (boardInputViewModel.UploadedFile != null)
             {
                 if (Path.GetExtension(boardInputViewModel.UploadedFile.FileName) != ".zip")
-                    return Json(new { result = false, error = _localizer["Only zip extension allowed."].Value });
+                    return Json(new { result = false, error = localizer["Only zip extension allowed."].Value });
 
                 if (boardInputViewModel.UploadedFile.Length is not (> 0 and <= 10485760))
-                    return Json(new { result = false, error = _localizer["uploaded file size must be smaller than 10MB."].Value });
+                    return Json(new { result = false, error = localizer["uploaded file size must be smaller than 10MB."].Value });
             }
 
-            bool isAccountSessionExist = _sessionService.GetAccount() != null;
+            var isAccountSessionExist = _sessionService.GetAccount() != null;
             if (!isAccountSessionExist)
-                return Json(new { result = false, error = _localizer["Please Login to edit board"].Value });
+                return Json(new { result = false, error = localizer["Please Login to edit board"].Value });
 
-            AccountResponse loginedAccount = _sessionService.GetAccount()!;
+            var loginedAccount = _sessionService.GetAccount()!;
 
-            BoardRequest boardRequest = new()
+            var boardRequest = new BoardRequest
             {
                 Id = boardInputViewModel.Id,
                 Type = EnumHelper.GetDescription(BoardType.PrivateNote),
@@ -1884,14 +1862,14 @@ public class ManagementController : BaseController
                 };
             }
 
-            ServiceResult result = await _boardService.EditBoardAsync(boardRequest, loginedAccount.Nickname, attachedFile);
+            var result = await boardService.EditBoardAsync(boardRequest, loginedAccount.Nickname, attachedFile);
             return result.Success
-                ? Json(new { result = true, message = _localizer["The board has been successfully updated."].Value })
-                : Json(new { result = false, error = _localizer["Input is invalid"].Value });
+                ? Json(new { result = true, message = localizer["The board has been successfully updated."].Value })
+                : Json(new { result = false, error = localizer["Input is invalid"].Value });
         }
         catch
         {
-            return Json(new { result = false, error = _localizer["Input is invalid"].Value });
+            return Json(new { result = false, error = localizer["Input is invalid"].Value });
         }
     }
 
@@ -1903,30 +1881,30 @@ public class ManagementController : BaseController
 
     #region Board
 
+    /// <summary>Deletes an existing Board record.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.Admin)]
     [RequiredHttpPostAccess(Role = Role.User)]
-    /// <summary>Deletes an existing Board record.</summary>
     public async Task<IActionResult> DeleteBoard([FromBody] BoardInputViewModel boardInputViewModel)
     {
         try
         {
-            AccountResponse loginedAccount = _sessionService.GetAccount()!;
+            var loginedAccount = _sessionService.GetAccount()!;
 
-            ServiceResult result = await _boardService.DeleteBoardAsync(
+            var result = await boardService.DeleteBoardAsync(
                 boardInputViewModel.Id,
                 EnumHelper.GetDescription(BoardType.PrivateNote),
                 loginedAccount.Nickname,
                 loginedAccount.Role == Role.Admin);
 
             return result.Success
-                ? Json(new { result = true, message = _localizer["The board has been successfully deleted."].Value })
+                ? Json(new { result = true, message = localizer["The board has been successfully deleted."].Value })
                 : Json(new { result = false, error = result.ErrorKey });
         }
         catch
         {
-            return Json(new { result = false, error = _localizer["Input is invalid"].Value });
+            return Json(new { result = false, error = localizer["Input is invalid"].Value });
         }
     }
 
@@ -1934,18 +1912,18 @@ public class ManagementController : BaseController
 
     #region BoardComment
 
+    /// <summary>Deletes an existing Comment record.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.Admin)]
     [RequiredHttpPostAccess(Role = Role.User)]
-    /// <summary>Deletes an existing Comment record.</summary>
     public async Task<IActionResult> DeleteComment(int id)
     {
         try
         {
-            AccountResponse loginedAccount = _sessionService.GetAccount()!;
+            var loginedAccount = _sessionService.GetAccount()!;
 
-            ServiceResult result = await _boardService.DeleteCommentAsync(
+            var result = await boardService.DeleteCommentAsync(
                 id,
                 loginedAccount.Nickname,
                 loginedAccount.Role == Role.Admin);
@@ -1956,7 +1934,7 @@ public class ManagementController : BaseController
         }
         catch
         {
-            return Json(new { result = false, error = _localizer["Input is invalid"].Value });
+            return Json(new { result = false, error = localizer["Input is invalid"].Value });
         }
     }
 

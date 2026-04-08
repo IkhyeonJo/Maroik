@@ -7,12 +7,12 @@
     CPU % and memory usage/limit cards.
 *@
 @{
-    double hostCpuNumeric = (ViewBag.HostCpuNumeric as double?) ?? 0d;
-    string hostCpuInfo = (ViewBag.HostCpuInfo as string) ?? "";
-    string memUsageLimit = (ViewBag.MemUsageLimit as string) ?? "";
-    string hostMemoryInfo = (ViewBag.HostMemoryInfo as string) ?? "";
-    string diskUsageLimit = (ViewBag.DiskUsageLimit as string) ?? "";
-    string hostDiskInfo = (ViewBag.HostDiskInfo as string) ?? "";
+    var hostCpuNumeric = (ViewBag.HostCpuNumeric as double?) ?? 0d;
+    var hostCpuInfo = (ViewBag.HostCpuInfo as string) ?? "";
+    var memUsageLimit = (ViewBag.MemUsageLimit as string) ?? "";
+    var hostMemoryInfo = (ViewBag.HostMemoryInfo as string) ?? "";
+    var diskUsageLimit = (ViewBag.DiskUsageLimit as string) ?? "";
+    var hostDiskInfo = (ViewBag.HostDiskInfo as string) ?? "";
     var result = (ViewBag.DockerContainerResult as List<string>) ?? [];
 }
 
@@ -69,9 +69,9 @@
 
         @if (result.Count > 1)
         {
-            for (int i = 1; i < result.Count; i++)
+            for (var i = 1; i < result.Count; i++)
             {
-                string[] dockerContainerInfo = result[i].Split("||");
+                var dockerContainerInfo = result[i].Split("||");
 
                 <text>
                     <div class="row">
