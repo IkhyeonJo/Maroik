@@ -201,4 +201,86 @@ public class DashboardService : IDashboardService
         if (needsUpdate)
             await _accountRepository.UpdateAccountAsync(account.Adapt<AccountRequest>());
     }
+
+    /// <inheritdoc />
+    public ServerResourceSummary GetServerResourceSummary(string hostResourceFilePath, string dockerResourceFilePath)
+    {
+        string hostText = File.Exists(hostResourceFilePath) ? File.ReadAllText(hostResourceFilePath) : string.Empty;
+        string dockerText = File.Exists(dockerResourceFilePath) ? File.ReadAllText(dockerResourceFilePath) : string.Empty;
+
+        string hostCpuInfo = ExtractSection(hostText, "Host CPU Information:", "Host Memory Information:");
+        string hostMemoryInfo = ExtractSection(hostText, "Host Memory Information:", "Host Disk Information:");
+        string hostDiskInfo = ExtractSection(hostText, "Host Disk Information:");
+        string dockerResourceUsage = ExtractSection(dockerText, "Docker Resource Usage:");
+
+        var dockerContainerResult = new List<string> { "Name||CPU %||MEM Usage / LIMIT" };
+        try
+        {
+            var lines = dockerResourceUsage.Split('\n', StringSplitOptions.RemoveEmptyEntries);
+            var resourceMap = new Dictionary<string, string[]>();
+            for (int i = 1; i < lines.Length; i++)
+            {
+                var cols = lines[i].Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                resourceMap[cols[0]] = cols;
+            }
+            for (int i = 1; i < lines.Length; i++)
+            {
+                var cols = lines[i].Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                string name = cols[0];
+                if (resourceMap.TryGetValue(name, out var r))
+                    dockerContainerResult.Add($"{name}||{r[1]}||{r[2]} {r[3]} {r[4]}");
+            }
+        }
+        catch { }
+
+        string memUsageLimit = string.Empty;
+        if (!string.IsNullOrEmpty(hostMemoryInfo))
+        {
+            try
+            {
+                string[] temp = hostMemoryInfo.Replace("Memory: ", "").Split('/');
+                if (temp.Length >= 2)
+                    memUsageLimit = temp[1].Trim() + " / " + temp[0].Trim();
+            }
+            catch { }
+        }
+
+        string diskUsageLimit = string.Empty;
+        if (!string.IsNullOrEmpty(hostDiskInfo))
+        {
+            try
+            {
+                string[] temp = hostDiskInfo.Replace("Disk: ", "").Split('/');
+                if (temp.Length >= 2)
+                    diskUsageLimit = temp[1].Trim() + " / " + temp[0].Trim();
+            }
+            catch { }
+        }
+
+        double.TryParse(
+            new string(hostCpuInfo.Where(c => char.IsDigit(c) || c == '.').ToArray()),
+            out double hostCpuNumeric);
+
+        return new ServerResourceSummary
+        {
+            HostCpuNumeric = hostCpuNumeric,
+            HostCpuInfo = hostCpuInfo,
+            MemUsageLimit = memUsageLimit,
+            HostMemoryInfo = hostMemoryInfo,
+            DiskUsageLimit = diskUsageLimit,
+            HostDiskInfo = hostDiskInfo,
+            DockerContainerResult = dockerContainerResult
+        };
+    }
+
+    private static string ExtractSection(string input, string startMarker, string? endMarker = null)
+    {
+        try
+        {
+            int startIndex = input.IndexOf(startMarker) + startMarker.Length;
+            int endIndex = endMarker != null ? input.IndexOf(endMarker, startIndex) : input.Length;
+            return input.Substring(startIndex, endIndex - startIndex).Trim();
+        }
+        catch { return string.Empty; }
+    }
 }

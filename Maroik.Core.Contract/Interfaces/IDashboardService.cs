@@ -23,4 +23,10 @@ public interface IDashboardService
     /// Used to populate the navigation header badges.
     /// </summary>
     Task<NotificationCounts> GetNoticeCountsAsync(string email, int noticeMaturityDateDay);
+
+    /// <summary>
+    /// Reads the host and Docker resource log files and returns the parsed metrics
+    /// used by the admin dashboard.
+    /// </summary>
+    ServerResourceSummary GetServerResourceSummary(string hostResourceFilePath, string dockerResourceFilePath);
 }

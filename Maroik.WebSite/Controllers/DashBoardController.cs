@@ -8,7 +8,6 @@ using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
-using System.Text;
 
 namespace Maroik.WebSite.Controllers;
 
@@ -49,89 +48,15 @@ public class DashBoardController(
     /// <summary>Returns the admin dashboard view.</summary>
     public IActionResult AdminIndex()
     {
-        var hostResourceFileText = System.IO.File.Exists(HostResourceFilePath)
-            ? System.IO.File.ReadAllText(HostResourceFilePath)
-            : string.Empty;
-        var dockerResourceFileText = System.IO.File.Exists(DockerResourceFilePath)
-            ? System.IO.File.ReadAllText(DockerResourceFilePath)
-            : string.Empty;
+        var resource = _dashboardService1.GetServerResourceSummary(HostResourceFilePath, DockerResourceFilePath);
 
-        static string ExtractSection(string input, string startMarker, string endMarker = null)
-        {
-            try
-            {
-                int startIndex = input.IndexOf(startMarker) + startMarker.Length;
-                int endIndex = endMarker != null ? input.IndexOf(endMarker, startIndex) : input.Length;
-                return input.Substring(startIndex, endIndex - startIndex).Trim();
-            }
-            catch { return ""; }
-        }
-
-        var hostCpuInfo = ExtractSection(hostResourceFileText, "Host CPU Information:", "Host Memory Information:");
-        var hostMemoryInfo = ExtractSection(hostResourceFileText, "Host Memory Information:", "Host Disk Information:");
-        var hostDiskInfo = ExtractSection(hostResourceFileText, "Host Disk Information:");
-        var dockerContainerStatus = ExtractSection(dockerResourceFileText, "Docker Container Status:", "Docker Resource Usage:");
-        var dockerResourceUsage = ExtractSection(dockerResourceFileText, "Docker Resource Usage:");
-
-        var dockerContainerResult = new List<string> { "Name||CPU %||MEM Usage / LIMIT" };
-        try
-        {
-            var resourceLines = dockerResourceUsage.Split('\n', StringSplitOptions.RemoveEmptyEntries);
-            var resourceMap = new Dictionary<string, string[]>();
-            for (int i = 1; i < resourceLines.Length; i++)
-            {
-                var columns = resourceLines[i].Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
-                resourceMap[columns[0]] = columns;
-            }
-            for (int i = 1; i < resourceLines.Length; i++)
-            {
-                var columns = resourceLines[i].Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
-                string containerName = columns[0];
-                if (resourceMap.TryGetValue(containerName, out var resourceDetails))
-                {
-                    string cpu = resourceDetails[1];
-                    string memUsage = resourceDetails[2] + " " + resourceDetails[3] + " " + resourceDetails[4];
-                    dockerContainerResult.Add($"{containerName}||{cpu}||{memUsage}");
-                }
-            }
-        }
-        catch { }
-
-        string memUsageLimit = "";
-        if (!string.IsNullOrEmpty(hostMemoryInfo))
-        {
-            try
-            {
-                string[] temp = hostMemoryInfo.Replace("Memory: ", "").Split('/');
-                if (temp.Length >= 2)
-                    memUsageLimit = temp[1].Trim() + " / " + temp[0].Trim();
-            }
-            catch { }
-        }
-
-        string diskUsageLimit = "";
-        if (!string.IsNullOrEmpty(hostDiskInfo))
-        {
-            try
-            {
-                string[] temp = hostDiskInfo.Replace("Disk: ", "").Split('/');
-                if (temp.Length >= 2)
-                    diskUsageLimit = temp[1].Trim() + " / " + temp[0].Trim();
-            }
-            catch { }
-        }
-
-        double hostCpuNumeric = 0;
-        if (!string.IsNullOrEmpty(hostCpuInfo))
-            double.TryParse(new string(hostCpuInfo.Where(c => char.IsDigit(c) || c == '.').ToArray()), out hostCpuNumeric);
-
-        ViewBag.HostCpuNumeric = hostCpuNumeric;
-        ViewBag.HostCpuInfo = hostCpuInfo;
-        ViewBag.MemUsageLimit = memUsageLimit;
-        ViewBag.HostMemoryInfo = hostMemoryInfo;
-        ViewBag.DiskUsageLimit = diskUsageLimit;
-        ViewBag.HostDiskInfo = hostDiskInfo;
-        ViewBag.DockerContainerResult = dockerContainerResult;
+        ViewBag.HostCpuNumeric = resource.HostCpuNumeric;
+        ViewBag.HostCpuInfo = resource.HostCpuInfo;
+        ViewBag.MemUsageLimit = resource.MemUsageLimit;
+        ViewBag.HostMemoryInfo = resource.HostMemoryInfo;
+        ViewBag.DiskUsageLimit = resource.DiskUsageLimit;
+        ViewBag.HostDiskInfo = resource.HostDiskInfo;
+        ViewBag.DockerContainerResult = resource.DockerContainerResult;
 
         return View();
     }
