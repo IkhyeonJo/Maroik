@@ -1,0 +1,350 @@
+using Maroik.Core.Contract.Dtos;
+using Maroik.Core.Contract.Interfaces;
+using Maroik.Core.Contract.Utilities;
+using Maroik.Core.Service.Services;
+using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Options;
+using Moq;
+
+namespace Maroik.Core.Service.Tests.Services;
+
+public class BoardServiceTests
+{
+    private readonly Mock<IBoardRepository> _boardRepo = new();
+    private readonly Mock<IBoardAttachedFileRepository> _attachedFileRepo = new();
+    private readonly Mock<IBoardCommentRepository> _commentRepo = new();
+    private readonly Mock<IFileClient> _fileClient = new();
+    private readonly Mock<IUnitOfWork> _unitOfWork = new();
+    private readonly IOptions<ServerSetting> _settings =
+        Options.Create(new ServerSetting { FileStorageBaseUrl = "http://files.example.com" });
+
+    public BoardServiceTests()
+    {
+        _unitOfWork.Setup(u => u.BeginAsync()).Returns(Task.CompletedTask);
+        _unitOfWork.Setup(u => u.CommitAsync()).Returns(Task.CompletedTask);
+        _unitOfWork.Setup(u => u.RollbackAsync()).Returns(Task.CompletedTask);
+        _unitOfWork.Setup(u => u.DisposeAsync()).Returns(ValueTask.CompletedTask);
+    }
+
+    private BoardService CreateSut() => new(
+        _boardRepo.Object,
+        _attachedFileRepo.Object,
+        _commentRepo.Object,
+        _fileClient.Object,
+        _unitOfWork.Object,
+        _settings,
+        NullLogger<BoardService>.Instance);
+
+    // ── Helpers ──────────────────────────────────────────────────────────────
+
+    private static BoardResponse MakeBoard(long id = 1, string writer = "Alice", bool deleted = false) => new()
+    {
+        Id = id,
+        Type = "FreeForum",
+        Writer = writer,
+        Title = "Test Title",
+        Content = "Test Content",
+        Deleted = deleted
+    };
+
+    private static BoardCommentResponse MakeComment(int id = 1, string writer = "Alice") => new()
+    {
+        Id = id,
+        BoardId = 1,
+        Writer = writer,
+        Content = "Comment",
+        Deleted = false
+    };
+
+    // ── GetBoardsAsync ───────────────────────────────────────────────────────
+
+    [Fact]
+    public async Task GetBoardsAsync_DelegatesToRepository()
+    {
+        var list = new List<BoardResponse> { MakeBoard() };
+        _boardRepo.Setup(r => r.GetOneTypeBoardsAsync("FreeForum")).ReturnsAsync(list);
+        var sut = CreateSut();
+
+        IEnumerable<BoardResponse> result = await sut.GetBoardsAsync("FreeForum");
+
+        Assert.Single(result);
+    }
+
+    // ── GetBoardByIdAsync ────────────────────────────────────────────────────
+
+    [Fact]
+    public async Task GetBoardByIdAsync_DelegatesToRepository()
+    {
+        _boardRepo.Setup(r => r.GetBoardByIdAsync(1)).ReturnsAsync(MakeBoard());
+        var sut = CreateSut();
+
+        BoardResponse? result = await sut.GetBoardByIdAsync(1);
+
+        Assert.NotNull(result);
+        Assert.Equal(1, result.Id);
+    }
+
+    // ── WriteBoardAsync ──────────────────────────────────────────────────────
+
+    [Fact]
+    public async Task WriteBoardAsync_ReturnsSuccess_WithNoAttachment()
+    {
+        _boardRepo.Setup(r => r.WriteBoardAsync(It.IsAny<BoardRequest>())).Returns(Task.CompletedTask);
+        var sut = CreateSut();
+
+        ServiceResult result = await sut.WriteBoardAsync(new BoardRequest { Type = "FreeForum" }, null);
+
+        Assert.True(result.Success);
+        _unitOfWork.Verify(u => u.CommitAsync(), Times.Once);
+    }
+
+    [Fact]
+    public async Task WriteBoardAsync_ReturnsSuccess_WithAttachment()
+    {
+        _boardRepo.Setup(r => r.WriteBoardAsync(It.IsAny<BoardRequest>())).Returns(Task.CompletedTask);
+        _fileClient.Setup(f => f.UploadAsync(It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
+            .ReturnsAsync(true);
+        _attachedFileRepo.Setup(r => r.SaveBoardAttachedFileAsync(It.IsAny<BoardAttachedFileRequest>())).Returns(Task.CompletedTask);
+        var sut = CreateSut();
+
+        var file = new AttachedFileInfo { FileName = "doc.pdf", ContentType = "application/pdf", Bytes = [1, 2], Size = 2 };
+        ServiceResult result = await sut.WriteBoardAsync(new BoardRequest { Type = "FreeForum" }, file);
+
+        Assert.True(result.Success);
+        _attachedFileRepo.Verify(r => r.SaveBoardAttachedFileAsync(It.IsAny<BoardAttachedFileRequest>()), Times.Once);
+        _unitOfWork.Verify(u => u.CommitAsync(), Times.Once);
+    }
+
+    [Fact]
+    public async Task WriteBoardAsync_ReturnsFail_WhenRepositoryThrows()
+    {
+        _boardRepo.Setup(r => r.WriteBoardAsync(It.IsAny<BoardRequest>())).ThrowsAsync(new Exception("DB error"));
+        var sut = CreateSut();
+
+        ServiceResult result = await sut.WriteBoardAsync(new BoardRequest { Type = "FreeForum" }, null);
+
+        Assert.False(result.Success);
+        _unitOfWork.Verify(u => u.RollbackAsync(), Times.Once);
+    }
+
+    // ── EditBoardAsync ───────────────────────────────────────────────────────
+
+    [Fact]
+    public async Task EditBoardAsync_ReturnsFail_WhenBoardNotFound()
+    {
+        _boardRepo.Setup(r => r.GetBoardByIdAsync(99)).ReturnsAsync((BoardResponse?)null);
+        var sut = CreateSut();
+
+        ServiceResult result = await sut.EditBoardAsync(new BoardRequest { Id = 99, Type = "FreeForum" }, "Alice", null);
+
+        Assert.False(result.Success);
+        _unitOfWork.Verify(u => u.RollbackAsync(), Times.Once);
+    }
+
+    [Fact]
+    public async Task EditBoardAsync_ReturnsFail_WhenBoardIsDeleted()
+    {
+        _boardRepo.Setup(r => r.GetBoardByIdAsync(1)).ReturnsAsync(MakeBoard(deleted: true));
+        var sut = CreateSut();
+
+        ServiceResult result = await sut.EditBoardAsync(new BoardRequest { Id = 1, Type = "FreeForum" }, "Alice", null);
+
+        Assert.False(result.Success);
+        _unitOfWork.Verify(u => u.RollbackAsync(), Times.Once);
+    }
+
+    [Fact]
+    public async Task EditBoardAsync_ReturnsFail_WhenRequesterIsNotWriter()
+    {
+        _boardRepo.Setup(r => r.GetBoardByIdAsync(1)).ReturnsAsync(MakeBoard(writer: "Alice"));
+        var sut = CreateSut();
+
+        ServiceResult result = await sut.EditBoardAsync(new BoardRequest { Id = 1, Type = "FreeForum" }, "Bob", null);
+
+        Assert.False(result.Success);
+        _unitOfWork.Verify(u => u.RollbackAsync(), Times.Once);
+    }
+
+    [Fact]
+    public async Task EditBoardAsync_ReturnsSuccess_WhenWriterMatchesAndNoNewFile()
+    {
+        _boardRepo.Setup(r => r.GetBoardByIdAsync(1)).ReturnsAsync(MakeBoard(writer: "Alice"));
+        _boardRepo.Setup(r => r.UpdateBoardAsync(It.IsAny<BoardRequest>())).Returns(Task.CompletedTask);
+        _attachedFileRepo.Setup(r => r.GetByBoardIdAsync(1)).ReturnsAsync((BoardAttachedFileResponse?)null);
+        var sut = CreateSut();
+
+        ServiceResult result = await sut.EditBoardAsync(
+            new BoardRequest { Id = 1, Type = "FreeForum", Title = "New Title", Content = "New Content" }, "Alice", null);
+
+        Assert.True(result.Success);
+        _unitOfWork.Verify(u => u.CommitAsync(), Times.Once);
+    }
+
+    // ── DeleteBoardAsync ─────────────────────────────────────────────────────
+
+    [Fact]
+    public async Task DeleteBoardAsync_ReturnsFail_WhenBoardNotFound()
+    {
+        _boardRepo.Setup(r => r.GetBoardByIdAsync(99)).ReturnsAsync((BoardResponse?)null);
+        var sut = CreateSut();
+
+        ServiceResult result = await sut.DeleteBoardAsync(99, "FreeForum", "Alice", false);
+
+        Assert.False(result.Success);
+    }
+
+    [Fact]
+    public async Task DeleteBoardAsync_ReturnsFail_WhenNotOwnerAndNotAdmin()
+    {
+        _boardRepo.Setup(r => r.GetBoardByIdAsync(1)).ReturnsAsync(MakeBoard(writer: "Alice"));
+        var sut = CreateSut();
+
+        ServiceResult result = await sut.DeleteBoardAsync(1, "FreeForum", "Bob", false);
+
+        Assert.False(result.Success);
+        Assert.Contains("permission", result.ErrorKey, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task DeleteBoardAsync_ReturnsSuccess_WhenOwner()
+    {
+        _boardRepo.Setup(r => r.GetBoardByIdAsync(1)).ReturnsAsync(MakeBoard(writer: "Alice"));
+        _boardRepo.Setup(r => r.DeleteBoardAsync(It.IsAny<BoardRequest>())).Returns(Task.CompletedTask);
+        var sut = CreateSut();
+
+        ServiceResult result = await sut.DeleteBoardAsync(1, "FreeForum", "Alice", false);
+
+        Assert.True(result.Success);
+    }
+
+    [Fact]
+    public async Task DeleteBoardAsync_ReturnsSuccess_WhenAdmin()
+    {
+        _boardRepo.Setup(r => r.GetBoardByIdAsync(1)).ReturnsAsync(MakeBoard(writer: "Alice"));
+        _boardRepo.Setup(r => r.DeleteBoardAsync(It.IsAny<BoardRequest>())).Returns(Task.CompletedTask);
+        var sut = CreateSut();
+
+        ServiceResult result = await sut.DeleteBoardAsync(1, "FreeForum", "Admin", true);
+
+        Assert.True(result.Success);
+    }
+
+    // ── WriteCommentAsync ────────────────────────────────────────────────────
+
+    [Fact]
+    public async Task WriteCommentAsync_ReturnsFail_WhenBoardNotFound()
+    {
+        _boardRepo.Setup(r => r.GetBoardByIdAsync(99)).ReturnsAsync((BoardResponse?)null);
+        var sut = CreateSut();
+
+        ServiceResult result = await sut.WriteCommentAsync(new BoardCommentRequest { BoardId = 99 });
+
+        Assert.False(result.Success);
+    }
+
+    [Fact]
+    public async Task WriteCommentAsync_ReturnsFail_WhenRequiredOwnerDoesNotMatch()
+    {
+        _boardRepo.Setup(r => r.GetBoardByIdAsync(1)).ReturnsAsync(MakeBoard(writer: "Alice"));
+        var sut = CreateSut();
+
+        ServiceResult result = await sut.WriteCommentAsync(new BoardCommentRequest { BoardId = 1 }, "Bob");
+
+        Assert.False(result.Success);
+        Assert.Contains("permission", result.ErrorKey, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task WriteCommentAsync_ReturnsSuccess_WhenOwnerMatchesAndNoOwnerRestriction()
+    {
+        _boardRepo.Setup(r => r.GetBoardByIdAsync(1)).ReturnsAsync(MakeBoard(writer: "Alice"));
+        _commentRepo.Setup(r => r.GetOneBoardCommentsAsync(1)).ReturnsAsync(new List<BoardCommentResponse>());
+        _commentRepo.Setup(r => r.WriteBoardCommentAsync(It.IsAny<BoardCommentRequest>())).Returns(Task.CompletedTask);
+        var sut = CreateSut();
+
+        ServiceResult result = await sut.WriteCommentAsync(new BoardCommentRequest { BoardId = 1, Writer = "Bob" });
+
+        Assert.True(result.Success);
+    }
+
+    [Fact]
+    public async Task WriteCommentAsync_SetsOrderBasedOnExistingCommentCount()
+    {
+        _boardRepo.Setup(r => r.GetBoardByIdAsync(1)).ReturnsAsync(MakeBoard());
+        _commentRepo.Setup(r => r.GetOneBoardCommentsAsync(1))
+            .ReturnsAsync(new List<BoardCommentResponse> { MakeComment(1), MakeComment(2) });
+
+        BoardCommentRequest? captured = null;
+        _commentRepo.Setup(r => r.WriteBoardCommentAsync(It.IsAny<BoardCommentRequest>()))
+            .Callback<BoardCommentRequest>(req => captured = req)
+            .Returns(Task.CompletedTask);
+        var sut = CreateSut();
+
+        await sut.WriteCommentAsync(new BoardCommentRequest { BoardId = 1 });
+
+        Assert.NotNull(captured);
+        Assert.Equal(2, captured.Order);
+    }
+
+    // ── DeleteCommentAsync ───────────────────────────────────────────────────
+
+    [Fact]
+    public async Task DeleteCommentAsync_ReturnsFail_WhenCommentNotFound()
+    {
+        _commentRepo.Setup(r => r.GetBoardCommentAsync(99)).ReturnsAsync((BoardCommentResponse?)null);
+        var sut = CreateSut();
+
+        ServiceResult result = await sut.DeleteCommentAsync(99, "Alice", false);
+
+        Assert.False(result.Success);
+    }
+
+    [Fact]
+    public async Task DeleteCommentAsync_ReturnsFail_WhenNotOwnerAndNotAdmin()
+    {
+        _commentRepo.Setup(r => r.GetBoardCommentAsync(1)).ReturnsAsync(MakeComment(writer: "Alice"));
+        var sut = CreateSut();
+
+        ServiceResult result = await sut.DeleteCommentAsync(1, "Bob", false);
+
+        Assert.False(result.Success);
+        Assert.Contains("permission", result.ErrorKey, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task DeleteCommentAsync_ReturnsSuccess_WhenOwner()
+    {
+        _commentRepo.Setup(r => r.GetBoardCommentAsync(1)).ReturnsAsync(MakeComment(writer: "Alice"));
+        _commentRepo.Setup(r => r.DeleteBoardCommentAsync(It.IsAny<BoardCommentRequest>())).Returns(Task.CompletedTask);
+        var sut = CreateSut();
+
+        ServiceResult result = await sut.DeleteCommentAsync(1, "Alice", false);
+
+        Assert.True(result.Success);
+    }
+
+    // ── IncrementBoardViewAsync ──────────────────────────────────────────────
+
+    [Fact]
+    public async Task IncrementBoardViewAsync_ReturnsSuccess_WhenNoException()
+    {
+        _boardRepo.Setup(r => r.IncrementViewAsync(1)).Returns(Task.CompletedTask);
+        var sut = CreateSut();
+
+        ServiceResult result = await sut.IncrementBoardViewAsync(1);
+
+        Assert.True(result.Success);
+        _boardRepo.Verify(r => r.IncrementViewAsync(1), Times.Once);
+    }
+
+    [Fact]
+    public async Task IncrementBoardViewAsync_ReturnsFail_WhenRepositoryThrows()
+    {
+        _boardRepo.Setup(r => r.IncrementViewAsync(1)).ThrowsAsync(new Exception("error"));
+        var sut = CreateSut();
+
+        ServiceResult result = await sut.IncrementBoardViewAsync(1);
+
+        Assert.False(result.Success);
+    }
+}

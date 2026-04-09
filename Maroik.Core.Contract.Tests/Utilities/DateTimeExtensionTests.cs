@@ -1,0 +1,63 @@
+using Maroik.Core.Contract.Utilities;
+
+namespace Maroik.Core.Contract.Tests.Utilities;
+
+public class DateTimeExtensionTests
+{
+    // ── ConvertTimeByTimeZoneIanaId ──────────────────────────────────────────
+
+    [Fact]
+    public void ConvertTimeByTimeZoneIanaId_ConvertsUtcToLocalTime_ForValidIanaId()
+    {
+        // UTC noon should be 9 PM in Asia/Seoul (UTC+9)
+        var utcNoon = new DateTime(2025, 6, 15, 12, 0, 0, DateTimeKind.Utc);
+
+        DateTime result = utcNoon.ConvertTimeByTimeZoneIanaId("Asia/Seoul");
+
+        // Asia/Seoul is UTC+9; noon UTC = 21:00 KST
+        Assert.Equal(21, result.Hour);
+        Assert.Equal(15, result.Minute);
+    }
+
+    [Fact]
+    public void ConvertTimeByTimeZoneIanaId_ReturnsOriginalValue_ForInvalidIanaId()
+    {
+        var original = new DateTime(2025, 1, 1, 10, 0, 0);
+
+        DateTime result = original.ConvertTimeByTimeZoneIanaId("Invalid/Timezone/ID");
+
+        Assert.Equal(original, result);
+    }
+
+    [Fact]
+    public void ConvertTimeByTimeZoneIanaId_ReturnsOriginalValue_ForEmptyIanaId()
+    {
+        var original = new DateTime(2025, 3, 15, 8, 30, 0);
+
+        DateTime result = original.ConvertTimeByTimeZoneIanaId(string.Empty);
+
+        Assert.Equal(original, result);
+    }
+
+    [Fact]
+    public void ConvertTimeByTimeZoneIanaId_ReturnsUtcTime_ForUtcIanaId()
+    {
+        var utcTime = new DateTime(2025, 6, 15, 12, 0, 0, DateTimeKind.Utc);
+
+        DateTime result = utcTime.ConvertTimeByTimeZoneIanaId("UTC");
+
+        Assert.Equal(12, result.Hour);
+        Assert.Equal(0, result.Minute);
+    }
+
+    [Fact]
+    public void ConvertTimeByTimeZoneIanaId_HandlesNegativeOffsets()
+    {
+        // UTC noon in America/New_York (UTC-5 in winter) should be 7 AM
+        var utcNoon = new DateTime(2025, 1, 15, 12, 0, 0, DateTimeKind.Utc);
+
+        DateTime result = utcNoon.ConvertTimeByTimeZoneIanaId("America/New_York");
+
+        Assert.Equal(7, result.Hour);
+    }
+}
