@@ -11,6 +11,9 @@ public interface IAccountRepository
     /// <summary>Returns all account rows (admin use only).</summary>
     public Task<List<AccountResponse>> GetAllAsync();
 
+    /// <summary>Returns accounts whose nickname matches any of the given values.</summary>
+    public Task<List<AccountResponse>> GetAccountsByNicknamesAsync(IEnumerable<string> nicknames);
+
     /// <summary>Finds an account by its email address (primary key).</summary>
     public Task<AccountResponse?> GetAccountByEmailAsync(string email);
 

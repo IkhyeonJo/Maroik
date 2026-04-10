@@ -26,6 +26,10 @@ var isReloading = false;
 // ReSharper disable once TooWideLocalVariableScope
 System.Timers.Timer certTimer;
 
+using var startupLoggerFactory = LoggerFactory.Create(b => b.AddConsole());
+var certLogger = startupLoggerFactory.CreateLogger("CertificateManager");
+ILogger certRuntimeLogger = null;
+
 var builder = WebApplication.CreateBuilder(args);
 
 const string cookiePrefix = "__Secure-";
@@ -258,7 +262,7 @@ X509Certificate2 LoadCertificate(string certPath, string keyPath)
     }
     catch (Exception ex)
     {
-        Console.WriteLine($"Failed to load certificate from {certPath} and {keyPath}: {ex.Message}");
+        certLogger.LogError(ex, "Failed to load certificate from {CertPath} and {KeyPath}", certPath, keyPath);
         throw;
     }
 }
@@ -301,7 +305,7 @@ if (!string.IsNullOrEmpty(cfgDockerCertPath) && !string.IsNullOrEmpty(cfgDockerK
             if (currentCertHash != previousCertHash &&
                 currentCertKeyHash != previousCertKeyHash)
             {
-                Console.WriteLine("Certificate file, reloading...");
+                certRuntimeLogger?.LogInformation("Certificate file changed, reloading...");
 
                 var newCert = LoadCertificate(cfgDockerCertPath, cfgDockerKeyPath);
 
@@ -312,12 +316,12 @@ if (!string.IsNullOrEmpty(cfgDockerCertPath) && !string.IsNullOrEmpty(cfgDockerK
                     previousCertHash = currentCertHash;
                     previousCertKeyHash = currentCertKeyHash;
                 }
-                Console.WriteLine("Certificate reloaded successfully.");
+                certRuntimeLogger?.LogInformation("Certificate reloaded successfully.");
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Failed to reload certificate: {ex.Message}");
+            certRuntimeLogger?.LogError(ex, "Failed to reload certificate");
         }
         finally
         {
@@ -326,11 +330,14 @@ if (!string.IsNullOrEmpty(cfgDockerCertPath) && !string.IsNullOrEmpty(cfgDockerK
     };
 
     certTimer.Start();
-    Console.WriteLine("Certificate polling started.");
+    certLogger.LogInformation("Certificate polling started.");
 }
 #endregion
 
 var app = builder.Build();
+
+if (!string.IsNullOrEmpty(cfgDockerCertPath) && !string.IsNullOrEmpty(cfgDockerKeyPath))
+    certRuntimeLogger = app.Logger;
 
 //1.Exception / error handling
 

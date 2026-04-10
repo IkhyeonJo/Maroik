@@ -45,6 +45,10 @@ public class AccountService : IAccountService
         => await _accountRepository.GetAllAsync();
 
     /// <inheritdoc />
+    public Task<List<AccountResponse>> GetAccountsByNicknamesAsync(IEnumerable<string> nicknames)
+        => _accountRepository.GetAccountsByNicknamesAsync(nicknames);
+
+    /// <inheritdoc />
     public Task<AccountResponse?> GetAccountByEmailAsync(string email)
         => _accountRepository.GetAccountByEmailAsync(email);
 

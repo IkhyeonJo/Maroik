@@ -141,8 +141,9 @@ public class ForumController : BaseController
                 ? Json(new { result = true, message = _localizer["The board has been successfully created."].Value })
                 : Json(new { result = false, error = _localizer["Input is invalid"].Value });
         }
-        catch
+        catch (Exception ex)
         {
+            _logger.LogError(ex, "Unhandled exception in forum action");
             return Json(new { result = false, error = _localizer["Input is invalid"].Value });
         }
     }
@@ -189,8 +190,9 @@ public class ForumController : BaseController
                 ? Json(new { result = true, boardId = boardCommentInputViewModel.BoardId, page = boardCommentInputViewModel.DetailCurrentPage })
                 : Json(new { result = false, error = _localizer["Input is invalid"].Value });
         }
-        catch
+        catch (Exception ex)
         {
+            _logger.LogError(ex, "Unhandled exception in forum action");
             return Json(new { result = false, error = _localizer["Input is invalid"].Value });
         }
     }
@@ -373,14 +375,19 @@ public class ForumController : BaseController
 
                 // Preload comments and accounts for detail view
                 freeForumOutputViewModel.DetailBoardComments = (await _boardService.GetCommentsByBoardIdAsync(boardId ?? 0))?.ToList() ?? [];
-                freeForumOutputViewModel.AllAccounts = await _accountService.GetAllAccountsAsync() ?? [];
+                var detailNicknames = freeForumOutputViewModel.DetailBoardComments.Select(c => c.Writer)
+                    .Append(freeBoard.Writer ?? "")
+                    .Where(w => !string.IsNullOrEmpty(w))
+                    .Distinct();
+                freeForumOutputViewModel.AllAccounts = await _accountService.GetAccountsByNicknamesAsync(detailNicknames) ?? [];
                 freeForumOutputViewModel.LoginedAccount = _sessionService.GetAccount() ?? new AccountResponse { Role = Role.Anonymous };
                 freeForumOutputViewModel.LoginedAccountTimeZoneIanaId = freeForumOutputViewModel.LoginedAccount.TimeZoneIanaId ?? "";
 
                 return View(freeForumOutputViewModel);
             }
-            catch
+            catch (Exception ex)
             {
+                _logger.LogError(ex, "Unhandled exception in FreeForum action");
                 return RedirectToAction("FreeForum", "Forum");
             }
         }
@@ -488,8 +495,9 @@ public class ForumController : BaseController
 
                 return View(freeForumOutputViewModel);
             }
-            catch
+            catch (Exception ex)
             {
+                _logger.LogError(ex, "Unhandled exception in FreeForum action");
                 return RedirectToAction("FreeForum", "Forum");
             }
 
@@ -568,7 +576,11 @@ public class ForumController : BaseController
             #region Preload comment counts and attached files for view
             freeForumOutputViewModel.LoginedAccount = _sessionService.GetAccount() ?? new AccountResponse { Role = Role.Anonymous };
             freeForumOutputViewModel.LoginedAccountTimeZoneIanaId = freeForumOutputViewModel.LoginedAccount.TimeZoneIanaId ?? "";
-            freeForumOutputViewModel.AllAccounts = await _accountService.GetAllAccountsAsync() ?? [];
+            var listNicknames = freeForumOutputViewModel.NoticeBoards.Select(b => b.Writer)
+                .Concat(freeForumOutputViewModel.Boards.Select(b => b.Writer))
+                .Where(w => !string.IsNullOrEmpty(w))
+                .Distinct();
+            freeForumOutputViewModel.AllAccounts = await _accountService.GetAccountsByNicknamesAsync(listNicknames) ?? [];
 
             List<long> allBoardIds = freeForumOutputViewModel.NoticeBoards.Select(b => b.Id)
                 .Concat(freeForumOutputViewModel.Boards.Select(b => b.Id))
@@ -614,8 +626,9 @@ public class ForumController : BaseController
                 ? Json(new { result = false, error = _localizer["Input is invalid"].Value })
                 : Json(new { result = true, freeBoard = board });
         }
-        catch
+        catch (Exception ex)
         {
+            _logger.LogError(ex, "Unhandled exception in forum action");
             return Json(new { result = false, error = _localizer["Input is invalid"].Value });
         }
     }
@@ -706,8 +719,9 @@ public class ForumController : BaseController
                 ? Json(new { result = true, message = _localizer["The board has been successfully updated."].Value })
                 : Json(new { result = false, error = _localizer["Input is invalid"].Value });
         }
-        catch
+        catch (Exception ex)
         {
+            _logger.LogError(ex, "Unhandled exception in forum action");
             return Json(new { result = false, error = _localizer["Input is invalid"].Value });
         }
     }
@@ -739,8 +753,9 @@ public class ForumController : BaseController
                 ? Json(new { result = true, message = _localizer["The board has been successfully deleted."].Value })
                 : Json(new { result = false, error = result.ErrorKey });
         }
-        catch
+        catch (Exception ex)
         {
+            _logger.LogError(ex, "Unhandled exception in forum action");
             return Json(new { result = false, error = _localizer["Input is invalid"].Value });
         }
     }
@@ -767,8 +782,9 @@ public class ForumController : BaseController
                 ? Json(new { result = true })
                 : Json(new { result = false, error = result.ErrorKey });
         }
-        catch
+        catch (Exception ex)
         {
+            _logger.LogError(ex, "Unhandled exception in forum action");
             return Json(new { result = false, error = _localizer["Input is invalid"].Value });
         }
     }

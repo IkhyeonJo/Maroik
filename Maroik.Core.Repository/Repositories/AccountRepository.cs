@@ -24,6 +24,16 @@ public class AccountRepository : IAccountRepository
     }
 
     /// <inheritdoc />
+    public async Task<List<AccountResponse>> GetAccountsByNicknamesAsync(IEnumerable<string> nicknames)
+    {
+        var list = nicknames.ToList();
+        return (await _context.Accounts
+            .Where(a => list.Contains(a.Nickname ?? ""))
+            .ToListAsync())
+            .Adapt<List<AccountResponse>>();
+    }
+
+    /// <inheritdoc />
     public async Task<AccountResponse?> GetAccountByEmailAsync(string email)
     {
         Account? account = await _context.Accounts.FirstOrDefaultAsync(x => x.Email == email);

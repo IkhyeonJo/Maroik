@@ -10,6 +10,9 @@ public interface IAccountService
     /// <summary>Returns all accounts (admin use).</summary>
     Task<List<AccountResponse>> GetAllAccountsAsync();
 
+    /// <summary>Returns accounts whose nickname matches any of the given values.</summary>
+    Task<List<AccountResponse>> GetAccountsByNicknamesAsync(IEnumerable<string> nicknames);
+
     /// <summary>Returns the account with the given email, or null if not found.</summary>
     Task<AccountResponse?> GetAccountByEmailAsync(string email);
 

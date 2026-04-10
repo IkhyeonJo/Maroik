@@ -28,6 +28,11 @@ public class AuthorizationFilter : ActionFilterAttribute
     private const string AnonymousCategoriesCacheKey = "nav_anonymous_categories";
     private const string AnonymousSubCategoriesCacheKey = "nav_anonymous_subcategories";
 
+    private static readonly IReadOnlyList<Type> CachedControllerTypes =
+        Assembly.GetExecutingAssembly().GetTypes()
+            .Where(type => typeof(Controller).IsAssignableFrom(type))
+            .ToList();
+
     public AuthorizationFilter(IMenuService menuService, IMemoryCache cache, ISessionService sessionService)
     {
         _menuService = menuService;
@@ -273,8 +278,7 @@ public class AuthorizationFilter : ActionFilterAttribute
         }
         else if (currentRequestMethod.ToUpper() == "POST") // POST method
         {
-            IEnumerable<Type> existingControllers = Assembly.GetExecutingAssembly().GetTypes()
-                .Where(type => typeof(Controller).IsAssignableFrom(type)); //filter controllers
+            IReadOnlyList<Type> existingControllers = CachedControllerTypes;
 
             if (isAccountSessionExist == false) // If not logged in
             {

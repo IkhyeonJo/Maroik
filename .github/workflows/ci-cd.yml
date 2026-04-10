@@ -1,0 +1,73 @@
+name: CI / CD
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  # ─────────────────────────────────────────────────────────────────────────────
+  # CI — Build & Test
+  # ─────────────────────────────────────────────────────────────────────────────
+  test:
+    name: Build & Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restore dependencies
+        run: dotnet restore Maroik.sln
+
+      - name: Build
+        run: dotnet build Maroik.sln --no-restore --configuration Release
+
+      # ── Unit & Integration Tests ─────────────────────────────────────────────
+      - name: Unit & Integration Tests
+        run: |
+          dotnet test Maroik.sln \
+            --no-build \
+            --configuration Release \
+            --filter "FullyQualifiedName!~E2E" \
+            --logger "github;annotations.format=json"
+
+      # ── E2E Tests (Playwright) ───────────────────────────────────────────────
+      - name: Install Playwright browsers
+        run: pwsh Maroik.E2E.Tests/bin/Release/net10.0/playwright.ps1 install --with-deps chromium
+
+      - name: E2E Tests
+        run: |
+          dotnet test Maroik.E2E.Tests/Maroik.E2E.Tests.csproj \
+            --no-build \
+            --configuration Release \
+            --logger "github;annotations.format=json"
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # CD — Deploy (main 브랜치 push 시에만, CI 통과 후)
+  # ─────────────────────────────────────────────────────────────────────────────
+  deploy:
+    name: Deploy to Server
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    steps:
+      - name: SSH Deploy
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd /home/ubuntu/Maroik
+            git pull origin main
+            chmod +x Maroik.DeployOps/UnDeploy.sh Maroik.DeployOps/Deploy.sh
+            ./Maroik.DeployOps/UnDeploy.sh
+            ./Maroik.DeployOps/Deploy.sh

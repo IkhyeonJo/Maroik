@@ -4,6 +4,8 @@ using Maroik.Core.Contract.Utilities;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace Maroik.WebSite.Controllers;
@@ -34,6 +36,9 @@ public abstract class BaseController : Controller
     /// <summary>Populates shared ViewBag entries (account, notice counts, culture, return URI) before each action executes.</summary>
     public override async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
     {
+        var logger = context.HttpContext.RequestServices
+            .GetRequiredService<ILoggerFactory>().CreateLogger<BaseController>();
+
         ViewBag.DomainName = _serverSettings.Value.DomainName;
 
         AccountResponse loginedAccount = new()
@@ -53,7 +58,7 @@ public abstract class BaseController : Controller
                 if (!string.IsNullOrEmpty(email))
                     loginedAccount = await _accountService.GetAccountByEmailAsync(email) ?? loginedAccount;
             }
-            catch { /* ignore session refresh errors */ }
+            catch (Exception ex) { logger.LogWarning(ex, "Failed to refresh session account for {Email}", sessionAccount?.Email); }
         }
 
         ViewBag.LoginedAccount = loginedAccount;
@@ -75,7 +80,7 @@ public abstract class BaseController : Controller
                 fixedIncomesExpiredCount = counts.FixedIncomesExpired;
                 fixedExpenditureExpiredCount = counts.FixedExpendituresExpired;
             }
-            catch { /* ignore - non-critical UI badge */ }
+            catch (Exception ex) { logger.LogWarning(ex, "Failed to load notice counts for {Email}", loginedAccount.Email); }
         }
 
         ViewBag.FixedIncomesNoticedCount = fixedIncomesNoticedCount;
