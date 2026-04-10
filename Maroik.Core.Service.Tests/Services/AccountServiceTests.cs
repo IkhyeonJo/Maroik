@@ -523,6 +523,25 @@ public class AccountServiceTests
             req.ResetPasswordToken == null)), Times.Once);
     }
 
+    // ── GetAccountsByNicknamesAsync ──────────────────────────────────────────
+
+    [Fact]
+    public async Task GetAccountsByNicknamesAsync_DelegatesToRepository()
+    {
+        var nicknames = new[] { "Alice", "Bob" };
+        var expected = new List<AccountResponse>
+        {
+            new() { Nickname = "Alice" },
+            new() { Nickname = "Bob" }
+        };
+        _accountRepo.Setup(r => r.GetAccountsByNicknamesAsync(nicknames)).ReturnsAsync(expected);
+
+        var result = await CreateSut().GetAccountsByNicknamesAsync(nicknames);
+
+        Assert.Equal(2, result.Count);
+        _accountRepo.Verify(r => r.GetAccountsByNicknamesAsync(nicknames), Times.Once);
+    }
+
     // ── Private helpers ──────────────────────────────────────────────────────
 
     private static string BuildExpiredToken()

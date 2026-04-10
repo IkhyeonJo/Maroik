@@ -159,6 +159,43 @@ public class AccountRepositoryTests : IDisposable
         Assert.Equal("NewUser", saved.Nickname);
     }
 
+    // ── GetAccountsByNicknamesAsync ─────────────────────────────────────────
+
+    [Fact]
+    public async Task GetAccountsByNicknamesAsync_ReturnsMatchingAccounts()
+    {
+        await SeedAsync(
+            MakeAccount("alice@example.com", "Alice"),
+            MakeAccount("bob@example.com", "Bob"),
+            MakeAccount("carol@example.com", "Carol"));
+
+        List<AccountResponse> result = await _sut.GetAccountsByNicknamesAsync(["Alice", "Carol"]);
+
+        Assert.Equal(2, result.Count);
+        Assert.Contains(result, a => a.Nickname == "Alice");
+        Assert.Contains(result, a => a.Nickname == "Carol");
+    }
+
+    [Fact]
+    public async Task GetAccountsByNicknamesAsync_ReturnsEmpty_WhenNoneMatch()
+    {
+        await SeedAsync(MakeAccount("alice@example.com", "Alice"));
+
+        List<AccountResponse> result = await _sut.GetAccountsByNicknamesAsync(["Ghost"]);
+
+        Assert.Empty(result);
+    }
+
+    [Fact]
+    public async Task GetAccountsByNicknamesAsync_ReturnsEmpty_WhenListIsEmpty()
+    {
+        await SeedAsync(MakeAccount("alice@example.com", "Alice"));
+
+        List<AccountResponse> result = await _sut.GetAccountsByNicknamesAsync([]);
+
+        Assert.Empty(result);
+    }
+
     // ── UpdateAccountAsync ───────────────────────────────────────────────────
 
     [Fact]
