@@ -33,7 +33,7 @@ public class SessionServiceTests
     [Fact]
     public void GetAccount_ReturnsNull_WhenHttpContextIsNull()
     {
-        _httpContextAccessor.Setup(a => a.HttpContext).Returns((HttpContext?)null);
+        _httpContextAccessor.Setup(a => a.HttpContext).Returns(((HttpContext?)null)!);
         var sut = CreateSut();
 
         AccountResponse? result = sut.GetAccount();
@@ -114,7 +114,7 @@ public class SessionServiceTests
     [Fact]
     public void SetAccount_DoesNotThrow_WhenHttpContextIsNull()
     {
-        _httpContextAccessor.Setup(a => a.HttpContext).Returns((HttpContext?)null);
+        _httpContextAccessor.Setup(a => a.HttpContext).Returns(((HttpContext?)null)!);
         var sut = CreateSut();
 
         // Should not throw
@@ -139,7 +139,7 @@ public class SessionServiceTests
     [Fact]
     public void RemoveAccount_DoesNotThrow_WhenHttpContextIsNull()
     {
-        _httpContextAccessor.Setup(a => a.HttpContext).Returns((HttpContext?)null);
+        _httpContextAccessor.Setup(a => a.HttpContext).Returns(((HttpContext?)null)!);
         var sut = CreateSut();
 
         var ex = Record.Exception(() => sut.RemoveAccount());

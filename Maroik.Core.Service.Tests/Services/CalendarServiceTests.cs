@@ -314,8 +314,8 @@ public class CalendarServiceTests
         _eventRepo.Setup(r => r.GetCalendarEventAsync(1))
             .ReturnsAsync(new CalendarEventResponse { Id = 1, CalendarId = 1, Title = "Old" });
         _eventRepo.Setup(r => r.UpdateCalendarEventAsync(It.IsAny<CalendarEventRequest>())).Returns(Task.CompletedTask);
-        _eventFileRepo.Setup(r => r.DeleteCalendarEventAttachedFileAsync(1)).Returns(Task.CompletedTask);
-        _reminderRepo.Setup(r => r.DeleteCalendarEventReminderAsync(1)).Returns(Task.CompletedTask);
+        _eventFileRepo.Setup(r => r.DeleteCalendarEventAttachedFileAsync(1)).ReturnsAsync(0);
+        _reminderRepo.Setup(r => r.DeleteCalendarEventReminderAsync(1)).ReturnsAsync(0);
         var sut = CreateSut();
 
         ServiceResult result = await sut.UpdateCalendarEventAsync(
