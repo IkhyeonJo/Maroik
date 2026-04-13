@@ -1,4 +1,4 @@
-﻿using Maroik.Core.Contract.Dtos;
+using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Contract.Utilities;
 using Maroik.WebSite.Utilities;
@@ -28,12 +28,12 @@ public class DashBoardController(
     private const string DockerResourceFilePath = "/app/Maroik.Log/DockerResourceInfo.txt";
 
     #region Language change
+    /// <summary>Sets the UI culture cookie to the requested locale.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.Admin)]
     [RequiredHttpPostAccess(Role = Role.User)]
     [RequiredHttpPostAccess(Role = Role.Anonymous)]
-    /// <summary>Sets the UI culture cookie to the requested locale.</summary>
     public IActionResult CultureManagement([FromBody] LoginInputViewModel loginInputViewModel)
     {
         Response.Cookies.Append(CookieRequestCultureProvider.DefaultCookieName, CookieRequestCultureProvider.MakeCookieValue(new RequestCulture(loginInputViewModel.Culture)),
@@ -44,8 +44,8 @@ public class DashBoardController(
     #endregion
 
     #region Admin
-    [HttpGet]
     /// <summary>Returns the admin dashboard view.</summary>
+    [HttpGet]
     public IActionResult AdminIndex()
     {
         var resource = _dashboardService1.GetServerResourceSummary(HostResourceFilePath, DockerResourceFilePath);
@@ -65,8 +65,8 @@ public class DashBoardController(
     #region User
 
     #region Read
-    [HttpGet]
     /// <summary>Returns the user dashboard view populated with income/expenditure summary data.</summary>
+    [HttpGet]
     public async Task<IActionResult> UserIndex(string year, string month)
     {
         var loginedAccount = _sessionService1.GetAccount();
@@ -335,10 +335,10 @@ public class DashBoardController(
     #endregion
 
     #region Update
+    /// <summary>Updates the logged-in user's default monetary unit preference.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.User)]
-    /// <summary>Updates the logged-in user's default monetary unit preference.</summary>
     public async Task<IActionResult> UserUpdateDefaultMonetary([FromBody] UserIndexInputViewModel userIndexInputViewModel)
     {
         try
@@ -357,8 +357,8 @@ public class DashBoardController(
     #endregion
 
     #region Anonymous
-    [HttpGet]
     /// <summary>Returns the anonymous (public) dashboard view.</summary>
+    [HttpGet]
     public IActionResult AnonymousIndex()
     {
         var loginedAccount = _sessionService1.GetAccount();

@@ -2,6 +2,11 @@ using Maroik.Core.Contract.Utilities;
 
 namespace Maroik.Core.Contract.Tests.Utilities;
 
+/// <summary>
+/// Unit tests for <see cref="Maroik.Core.Contract.Utilities.GuidToken"/>.
+/// Verifies token generation uniqueness, Base64 validity, 24-hour expiry window,
+/// and rejection of expired or tampered tokens.
+/// </summary>
 public class GuidTokenTests
 {
     [Fact]

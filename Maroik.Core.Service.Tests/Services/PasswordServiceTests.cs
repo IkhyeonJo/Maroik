@@ -2,6 +2,11 @@ using Maroik.Core.Service.Services;
 
 namespace Maroik.Core.Service.Tests.Services;
 
+/// <summary>
+/// Unit tests for <see cref="PasswordService"/>.
+/// Verifies BCrypt hash generation (work factor 13), hash/plain-text non-equality,
+/// and successful verification of a hashed password against its plain-text original.
+/// </summary>
 public class PasswordServiceTests
 {
     private readonly PasswordService _sut = new();

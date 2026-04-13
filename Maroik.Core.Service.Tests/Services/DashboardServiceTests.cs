@@ -5,6 +5,12 @@ using Moq;
 
 namespace Maroik.Core.Service.Tests.Services;
 
+/// <summary>
+/// Unit tests for <see cref="DashboardService"/>.
+/// All repository dependencies are replaced with Moq mocks.
+/// Covers the summary aggregation (per-year / per-year-month income and expenditure
+/// breakdowns) and the default monetary unit synchronisation logic.
+/// </summary>
 public class DashboardServiceTests
 {
     private readonly Mock<IAccountRepository> _accountRepo = new();

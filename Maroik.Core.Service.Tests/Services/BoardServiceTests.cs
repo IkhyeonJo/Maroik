@@ -8,6 +8,12 @@ using Moq;
 
 namespace Maroik.Core.Service.Tests.Services;
 
+/// <summary>
+/// Unit tests for <see cref="BoardService"/>.
+/// All external dependencies (repositories, ClamAV client, file client, logger)
+/// are replaced with Moq mocks. Covers board post CRUD, comment management,
+/// attachment upload/delete, and view-count incrementing.
+/// </summary>
 public class BoardServiceTests
 {
     private readonly Mock<IBoardRepository> _boardRepo = new();

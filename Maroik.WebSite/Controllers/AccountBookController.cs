@@ -54,10 +54,10 @@ public class AccountBookController : BaseController
 
     #region Create
 
+    /// <summary>Creates a new asset record.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.User)]
-    /// <summary>Creates a new asset record.</summary>
     public async Task<IActionResult> CreateAsset([FromBody] AssetInputViewModel assetInputViewModel)
     {
         if (!ModelState.IsValid)
@@ -85,8 +85,8 @@ public class AccountBookController : BaseController
 
     #region Read
 
-    [HttpGet]
     /// <summary>Returns the asset grid (AJAX) or the full asset page.</summary>
+    [HttpGet]
     public async Task<IActionResult> Asset(string wholeSearch)
     {
         if (HttpContext.Request.Headers["X-Requested-With"] == "XMLHttpRequest") // ajax
@@ -163,10 +163,10 @@ public class AccountBookController : BaseController
         return View();
     }
 
+    /// <summary>Checks whether an asset with the given product name exists.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.User)]
-    /// <summary>Checks whether an asset with the given product name exists.</summary>
     public async Task<IActionResult> IsAssetExists(string productName)
     {
         try
@@ -191,10 +191,10 @@ public class AccountBookController : BaseController
 
     #region Update
 
+    /// <summary>Updates an existing asset record.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.User)]
-    /// <summary>Updates an existing asset record.</summary>
     public async Task<IActionResult> UpdateAsset([FromBody] AssetInputViewModel assetInputViewModel)
     {
         _ = ModelState.Remove(nameof(assetInputViewModel.MonetaryUnit));
@@ -223,10 +223,10 @@ public class AccountBookController : BaseController
 
     #region Delete
 
+    /// <summary>Soft-deletes an existing asset record.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.User)]
-    /// <summary>Soft-deletes an existing asset record.</summary>
     public async Task<IActionResult> DeleteAsset([FromBody] AssetInputViewModel assetInputViewModel)
     {
         string email = _sessionService.GetAccount()!.Email;
@@ -241,10 +241,10 @@ public class AccountBookController : BaseController
 
     #region Excel
 
+    /// <summary>Exports asset records to an Excel file.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.User)]
-    /// <summary>Exports asset records to an Excel file.</summary>
     public async Task<IActionResult> ExportExcelAsset(string fileName = "")
     {
         await Task.Yield();
@@ -347,10 +347,10 @@ public class AccountBookController : BaseController
 
     #region Create
 
+    /// <summary>Creates a new income transaction.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.User)]
-    /// <summary>Creates a new income transaction.</summary>
     public async Task<IActionResult> CreateIncome([FromBody] IncomeInputViewModel incomeInputViewModel)
     {
         if (!ModelState.IsValid)
@@ -379,8 +379,8 @@ public class AccountBookController : BaseController
 
     #region Read
 
-    [HttpGet]
     /// <summary>Returns the income grid (AJAX) or the full income page.</summary>
+    [HttpGet]
     public async Task<IActionResult> Income(string wholeSearch)
     {
         if (HttpContext.Request.Headers["X-Requested-With"] == "XMLHttpRequest") // ajax
@@ -467,10 +467,10 @@ public class AccountBookController : BaseController
         return View();
     }
 
+    /// <summary>Checks whether an income record with the given ID exists.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.User)]
-    /// <summary>Checks whether an income record with the given ID exists.</summary>
     public async Task<IActionResult> IsIncomeExists(int id)
     {
         try
@@ -504,10 +504,10 @@ public class AccountBookController : BaseController
         }
     }
 
+    /// <summary>Returns a formatted amount label for the given income product.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.User)]
-    /// <summary>Returns a formatted amount label for the given income product.</summary>
     public async Task<IActionResult> GetIncomeAmountLabel(string productName)
     {
         try
@@ -535,10 +535,10 @@ public class AccountBookController : BaseController
 
     #region Update
 
+    /// <summary>Updates an existing income record.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.User)]
-    /// <summary>Updates an existing income record.</summary>
     public async Task<IActionResult> UpdateIncome([FromBody] IncomeInputViewModel incomeInputViewModel)
     {
         if (!ModelState.IsValid)
@@ -568,10 +568,10 @@ public class AccountBookController : BaseController
 
     #region Delete
 
+    /// <summary>Deletes an existing income record.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.User)]
-    /// <summary>Deletes an existing income record.</summary>
     public async Task<IActionResult> DeleteIncome([FromBody] IncomeInputViewModel incomeInputViewModel)
     {
         string email = _sessionService.GetAccount()!.Email;
@@ -586,10 +586,10 @@ public class AccountBookController : BaseController
 
     #region Excel
 
+    /// <summary>Exports income records to an Excel file.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.User)]
-    /// <summary>Exports income records to an Excel file.</summary>
     public async Task<IActionResult> ExportExcelIncome(string fileName = "")
     {
         await Task.Yield();
@@ -702,10 +702,10 @@ public class AccountBookController : BaseController
 
     #region Expenditure
 
+    /// <summary>Creates a new expenditure transaction.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.User)]
-    /// <summary>Creates a new expenditure transaction.</summary>
     public async Task<IActionResult> CreateExpenditure(
         [FromBody] ExpenditureInputViewModel expenditureInputViewModel)
     {
@@ -734,8 +734,8 @@ public class AccountBookController : BaseController
 
     #region Read
 
-    [HttpGet]
     /// <summary>Returns the expenditure grid (AJAX) or the full expenditure page.</summary>
+    [HttpGet]
     public async Task<IActionResult> Expenditure(string wholeSearch)
     {
         if (HttpContext.Request.Headers["X-Requested-With"] == "XMLHttpRequest") // ajax
@@ -825,10 +825,10 @@ public class AccountBookController : BaseController
         return View();
     }
 
+    /// <summary>Checks whether an expenditure record with the given ID exists.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.User)]
-    /// <summary>Checks whether an expenditure record with the given ID exists.</summary>
     public async Task<IActionResult> IsExpenditureExists(int id)
     {
         try
@@ -863,10 +863,10 @@ public class AccountBookController : BaseController
         }
     }
 
+    /// <summary>Returns a formatted amount label for the given expenditure product.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.User)]
-    /// <summary>Returns a formatted amount label for the given expenditure product.</summary>
     public async Task<IActionResult> GetExpenditureAmountLabel(string productName)
     {
         try
@@ -892,10 +892,10 @@ public class AccountBookController : BaseController
 
     #endregion
 
+    /// <summary>Updates an existing expenditure record.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.User)]
-    /// <summary>Updates an existing expenditure record.</summary>
     public async Task<IActionResult> UpdateExpenditure(
         [FromBody] ExpenditureInputViewModel expenditureInputViewModel)
     {
@@ -923,10 +923,10 @@ public class AccountBookController : BaseController
             : Json(new { result = false, error = _localizer[result.ErrorKey].Value });
     }
 
+    /// <summary>Deletes an existing expenditure record.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.User)]
-    /// <summary>Deletes an existing expenditure record.</summary>
     public async Task<IActionResult> DeleteExpenditure(
         [FromBody] ExpenditureInputViewModel expenditureInputViewModel)
     {
@@ -940,10 +940,10 @@ public class AccountBookController : BaseController
 
     #region Excel
 
+    /// <summary>Exports expenditure records to an Excel file.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.User)]
-    /// <summary>Exports expenditure records to an Excel file.</summary>
     public async Task<IActionResult> ExportExcelExpenditure(string fileName = "")
     {
         await Task.Yield();

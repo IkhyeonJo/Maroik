@@ -69,8 +69,8 @@ public class ManagementController : BaseController
 
     #region Read
 
-    [HttpGet]
     /// <summary>Displays the current user's profile page.</summary>
+    [HttpGet]
     public async Task<IActionResult> Profile()
     {
         string loginedAccountTimeZoneIanaId = _sessionService.GetAccount()!.TimeZoneIanaId;
@@ -91,11 +91,11 @@ public class ManagementController : BaseController
 
     #region ProfileAvatar
 
+    /// <summary>Updates the current user's avatar image.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.Admin)]
     [RequiredHttpPostAccess(Role = Role.User)]
-    /// <summary>Updates the current user's avatar image.</summary>
     public async Task<IActionResult> UpdateProfileAvatar(ProfileInputViewModel profileInputViewModel)
     {
         if (profileInputViewModel.ProfileAvatarFiles == null || profileInputViewModel.ProfileAvatarFiles.Count == 0)
@@ -143,11 +143,11 @@ public class ManagementController : BaseController
 
     #region ProfileTimeZone
 
+    /// <summary>Updates the current user's time-zone setting.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.Admin)]
     [RequiredHttpPostAccess(Role = Role.User)]
-    /// <summary>Updates the current user's time-zone setting.</summary>
     public async Task<IActionResult> UpdateProfileTimeZone(ProfileInputViewModel profileInputViewModel)
     {
         _ = ModelState.Remove(nameof(profileInputViewModel.Nickname));
@@ -180,11 +180,11 @@ public class ManagementController : BaseController
 
     #region ProfilePassword
 
+    /// <summary>Changes the current user's password.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.Admin)]
     [RequiredHttpPostAccess(Role = Role.User)]
-    /// <summary>Changes the current user's password.</summary>
     public async Task<IActionResult> UpdateProfilePassword([FromBody] ProfileInputViewModel profileInputViewModel)
     {
         _ = ModelState.Remove(nameof(profileInputViewModel.Nickname));
@@ -222,10 +222,10 @@ public class ManagementController : BaseController
 
     #region Create
 
+    /// <summary>Creates a new user account (admin action).</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.Admin)]
-    /// <summary>Creates a new user account (admin action).</summary>
     public async Task<IActionResult> CreateAccount([FromBody] AccountInputViewModel accountInputViewModel)
     {
         try
@@ -375,8 +375,8 @@ public class ManagementController : BaseController
 
     #region Read
 
-    [HttpGet]
     /// <summary>Returns the account management grid (AJAX) or the full page.</summary>
+    [HttpGet]
     public async Task<IActionResult> Account(string wholeSearch)
     {
         if (HttpContext.Request.Headers["X-Requested-With"] == "XMLHttpRequest") // ajax
@@ -465,10 +465,10 @@ public class ManagementController : BaseController
         return View();
     }
 
+    /// <summary>Checks whether an account with the given email exists.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.Admin)]
-    /// <summary>Checks whether an account with the given email exists.</summary>
     public async Task<IActionResult> IsAccountExists(string email)
     {
         try
@@ -492,10 +492,10 @@ public class ManagementController : BaseController
 
     #region Update
 
+    /// <summary>Updates an existing account's fields.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.Admin)]
-    /// <summary>Updates an existing account's fields.</summary>
     public async Task<IActionResult> UpdateAccount([FromBody] AccountInputViewModel accountInputViewModel)
     {
         try
@@ -536,10 +536,10 @@ public class ManagementController : BaseController
 
     #region Delete
 
+    /// <summary>Soft-deletes an existing account.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.Admin)]
-    /// <summary>Soft-deletes an existing account.</summary>
     public async Task<IActionResult> DeleteAccount([FromBody] AccountInputViewModel accountInputViewModel)
     {
         try
@@ -559,10 +559,10 @@ public class ManagementController : BaseController
 
     #region Excel
 
+    /// <summary>Exports the account list to an Excel file.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.Admin)]
-    /// <summary>Exports the account list to an Excel file.</summary>
     public async Task<IActionResult> ExportExcelAccount(string fileName = "")
     {
         await Task.Yield();
@@ -700,10 +700,10 @@ public class ManagementController : BaseController
 
     #region Create
 
+    /// <summary>Creates a new navigation category.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.Admin)]
-    /// <summary>Creates a new navigation category.</summary>
     public async Task<IActionResult> CreateCategory([FromBody] MenuInputViewModel menuInputViewModel)
     {
         try
@@ -734,10 +734,10 @@ public class ManagementController : BaseController
         }
     }
 
+    /// <summary>Creates a new navigation sub-category.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.Admin)]
-    /// <summary>Creates a new navigation sub-category.</summary>
     public async Task<IActionResult> CreateSubCategory([FromBody] MenuInputViewModel menuInputViewModel)
     {
         try
@@ -772,8 +772,8 @@ public class ManagementController : BaseController
 
     #region Read
 
-    [HttpGet]
     /// <summary>Returns the menu management grid (AJAX) or the full page.</summary>
+    [HttpGet]
     public async Task<IActionResult> Menu(string wholeSearch)
     {
         if (HttpContext.Request.Headers["X-Requested-With"] == "XMLHttpRequest") // ajax
@@ -850,10 +850,10 @@ public class ManagementController : BaseController
         return View();
     }
 
+    /// <summary>Checks whether a category with the given ID exists.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.Admin)]
-    /// <summary>Checks whether a category with the given ID exists.</summary>
     public async Task<IActionResult> IsCategoryExists(int id)
     {
         try
@@ -882,10 +882,10 @@ public class ManagementController : BaseController
         }
     }
 
+    /// <summary>Checks whether a sub-category with the given ID exists.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.Admin)]
-    /// <summary>Checks whether a sub-category with the given ID exists.</summary>
     public async Task<IActionResult> IsSubCategoryExists(int id)
     {
         try
@@ -918,10 +918,10 @@ public class ManagementController : BaseController
 
     #region Update
 
+    /// <summary>Updates an existing navigation category.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.Admin)]
-    /// <summary>Updates an existing navigation category.</summary>
     public async Task<IActionResult> UpdateCategory([FromBody] MenuInputViewModel menuInputViewModel)
     {
         try
@@ -953,10 +953,10 @@ public class ManagementController : BaseController
         }
     }
 
+    /// <summary>Updates an existing navigation sub-category.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.Admin)]
-    /// <summary>Updates an existing navigation sub-category.</summary>
     public async Task<IActionResult> UpdateSubCategory([FromBody] MenuInputViewModel menuInputViewModel)
     {
         try
@@ -992,10 +992,10 @@ public class ManagementController : BaseController
 
     #region Delete
 
+    /// <summary>Deletes a navigation category.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.Admin)]
-    /// <summary>Deletes a navigation category.</summary>
     public async Task<IActionResult> DeleteCategory([FromBody] MenuInputViewModel menuInputViewModel)
     {
         try
@@ -1027,10 +1027,10 @@ public class ManagementController : BaseController
         }
     }
 
+    /// <summary>Deletes a navigation sub-category.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.Admin)]
-    /// <summary>Deletes a navigation sub-category.</summary>
     public async Task<IActionResult> DeleteSubCategory([FromBody] MenuInputViewModel menuInputViewModel)
     {
         try
@@ -1067,10 +1067,10 @@ public class ManagementController : BaseController
 
     #region Excel
 
+    /// <summary>Exports the navigation menu (categories and sub-categories) to an Excel file.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.Admin)]
-    /// <summary>Exports the navigation menu (categories and sub-categories) to an Excel file.</summary>
     public async Task<IActionResult> ExportExcelMenu(string fileName = "")
     {
         await Task.Yield();
@@ -1201,11 +1201,11 @@ public class ManagementController : BaseController
 
     #region PrivateNoteBoard
 
+    /// <summary>Creates or updates a private note board post.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.Admin)]
     [RequiredHttpPostAccess(Role = Role.User)]
-    /// <summary>Creates or updates a private note board post.</summary>
     public async Task<IActionResult> WritePrivateNoteBoard(BoardInputViewModel boardInputViewModel)
     {
         try
@@ -1296,11 +1296,11 @@ public class ManagementController : BaseController
 
     #region PrivateNoteComment
 
+    /// <summary>Submits a new PrivateNoteComment.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.Admin)]
     [RequiredHttpPostAccess(Role = Role.User)]
-    /// <summary>Submits a new PrivateNoteComment.</summary>
     public async Task<IActionResult> WritePrivateNoteComment(
         [FromBody] BoardCommentInputViewModel boardCommentInputViewModel)
     {
@@ -1348,11 +1348,11 @@ public class ManagementController : BaseController
     #endregion
 
     #region Summernote Image File Upload
+    /// <summary>Uploads a ImageFile file.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.Admin)]
     [RequiredHttpPostAccess(Role = Role.User)]
-    /// <summary>Uploads a ImageFile file.</summary>
     public async Task<IActionResult> UploadImageFile(IFormFile summernoteImageFile)
     {
         if (summernoteImageFile == null)
@@ -1778,11 +1778,11 @@ public class ManagementController : BaseController
 
     #region IsBoardExists
 
+    /// <summary>Checks whether a Board record exists.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.Admin)]
     [RequiredHttpPostAccess(Role = Role.User)]
-    /// <summary>Checks whether a Board record exists.</summary>
     public async Task<IActionResult> IsBoardExists(int id)
     {
         try
@@ -1808,11 +1808,11 @@ public class ManagementController : BaseController
 
     #region Edit
 
+    /// <summary>Saves edits to an existing PrivateNoteBoard.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.Admin)]
     [RequiredHttpPostAccess(Role = Role.User)]
-    /// <summary>Saves edits to an existing PrivateNoteBoard.</summary>
     public async Task<IActionResult> EditPrivateNoteBoard(BoardInputViewModel boardInputViewModel)
     {
         try
@@ -1903,11 +1903,11 @@ public class ManagementController : BaseController
 
     #region Board
 
+    /// <summary>Deletes an existing Board record.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.Admin)]
     [RequiredHttpPostAccess(Role = Role.User)]
-    /// <summary>Deletes an existing Board record.</summary>
     public async Task<IActionResult> DeleteBoard([FromBody] BoardInputViewModel boardInputViewModel)
     {
         try
@@ -1934,11 +1934,11 @@ public class ManagementController : BaseController
 
     #region BoardComment
 
+    /// <summary>Deletes an existing Comment record.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.Admin)]
     [RequiredHttpPostAccess(Role = Role.User)]
-    /// <summary>Deletes an existing Comment record.</summary>
     public async Task<IActionResult> DeleteComment(int id)
     {
         try

@@ -6,6 +6,12 @@ using Moq;
 
 namespace Maroik.Core.Service.Tests.Services;
 
+/// <summary>
+/// Unit tests for <see cref="ManagementAccountService"/>.
+/// All repository and password-service dependencies are replaced with Moq mocks.
+/// Covers admin-side account management: list retrieval, create, update,
+/// password reset, lock/unlock, and delete operations.
+/// </summary>
 public class ManagementAccountServiceTests
 {
     private readonly Mock<IAccountRepository> _accountRepo = new();

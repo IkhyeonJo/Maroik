@@ -23,16 +23,16 @@ public class ExceptionController : BaseController
         _logger = logger;
     }
 
-    [HttpGet]
     /// <summary>Returns the access-denied view.</summary>
+    [HttpGet]
     public IActionResult AccessDenied()
     {
         return View();
     }
 
+    /// <summary>Returns the generic error view.</summary>
     [HttpGet]
     [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-    /// <summary>Returns the generic error view.</summary>
     public IActionResult Error()
     {
         return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });

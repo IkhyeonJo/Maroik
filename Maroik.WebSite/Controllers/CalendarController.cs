@@ -53,11 +53,11 @@ public class CalendarController : BaseController
     #region Create
 
     #region Calendar
+    /// <summary>Creates a new calendar.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.Admin)]
     [RequiredHttpPostAccess(Role = Role.User)]
-    /// <summary>Creates a new calendar.</summary>
     public async Task<IActionResult> CreateCalendar([FromBody] CalendarInputViewModel calendarInputViewModel)
     {
         try
@@ -86,11 +86,11 @@ public class CalendarController : BaseController
     #endregion
 
     #region Calendar Event
+    /// <summary>Creates a new calendar event (with optional file attachment and reminders).</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.Admin)]
     [RequiredHttpPostAccess(Role = Role.User)]
-    /// <summary>Creates a new calendar event (with optional file attachment and reminders).</summary>
     public async Task<IActionResult> CreateCalendarEvent([FromForm] CalendarEventInputViewModel calendarEventInputViewModel)
     {
         try
@@ -270,11 +270,11 @@ public class CalendarController : BaseController
     #endregion
 
     #region Summernote Image File Upload
+    /// <summary>Uploads a Summernote inline image for use inside a calendar event description.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.Admin)]
     [RequiredHttpPostAccess(Role = Role.User)]
-    /// <summary>Uploads a Summernote inline image for use inside a calendar event description.</summary>
     public async Task<IActionResult> UploadImageFile(IFormFile summernoteImageFile)
     {
         if (summernoteImageFile == null)
@@ -323,8 +323,8 @@ public class CalendarController : BaseController
 
     #region Read
 
-    [HttpGet]
     /// <summary>Returns the admin calendar view.</summary>
+    [HttpGet]
     public async Task<IActionResult> AdminIndex()
     {
         AccountResponse loginedAccount = _sessionService.GetAccount()!;
@@ -513,8 +513,8 @@ public class CalendarController : BaseController
         return View(calendarOutputViewModel);
     }
 
-    [HttpGet]
     /// <summary>Returns the user calendar view.</summary>
+    [HttpGet]
     public async Task<IActionResult> UserIndex()
     {
         AccountResponse loginedAccount = _sessionService.GetAccount()!;
@@ -867,8 +867,8 @@ public class CalendarController : BaseController
         return View(calendarOutputViewModel);
     }
 
-    [HttpGet]
     /// <summary>Returns the anonymous calendar view.</summary>
+    [HttpGet]
     public async Task<IActionResult> AnonymousIndex()
     {
         AccountResponse loginedAccount = new() { Role = Role.Anonymous, TimeZoneIanaId = "UTC" };
@@ -1062,11 +1062,11 @@ public class CalendarController : BaseController
         return View(calendarOutputViewModel);
     }
 
+    /// <summary>Checks whether a calendar with the given ID exists.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.Admin)]
     [RequiredHttpPostAccess(Role = Role.User)]
-    /// <summary>Checks whether a calendar with the given ID exists.</summary>
     public async Task<IActionResult> IsCalendarExists(int id)
     {
         try
@@ -1092,11 +1092,11 @@ public class CalendarController : BaseController
         }
     }
 
+    /// <summary>Returns the list of the current user's calendars as JSON.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.Admin)]
     [RequiredHttpPostAccess(Role = Role.User)]
-    /// <summary>Returns the list of the current user's calendars as JSON.</summary>
     public async Task<IActionResult> GetCalendars()
     {
         try
@@ -1111,11 +1111,11 @@ public class CalendarController : BaseController
         }
     }
 
+    /// <summary>Returns the list of shared/other calendars as JSON.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.User)]
     [RequiredHttpPostAccess(Role = Role.Anonymous)]
-    /// <summary>Returns the list of shared/other calendars as JSON.</summary>
     public async Task<IActionResult> GetOtherCalendars()
     {
         try
@@ -1165,11 +1165,11 @@ public class CalendarController : BaseController
         }
     }
 
+    /// <summary>Checks whether a calendar event with the given ID exists.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.Admin)]
     [RequiredHttpPostAccess(Role = Role.User)]
-    /// <summary>Checks whether a calendar event with the given ID exists.</summary>
     public async Task<IActionResult> IsCalendarEventExists(int id)
     {
         try
@@ -1399,12 +1399,12 @@ public class CalendarController : BaseController
         }
     }
 
+    /// <summary>Checks whether an event in a shared/other calendar exists.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.Admin)]
     [RequiredHttpPostAccess(Role = Role.User)]
     [RequiredHttpPostAccess(Role = Role.Anonymous)]
-    /// <summary>Checks whether an event in a shared/other calendar exists.</summary>
     public async Task<IActionResult> IsOtherCalendarEventExists(int id)
     {
         try
@@ -1662,12 +1662,12 @@ public class CalendarController : BaseController
         }
     }
 
+    /// <summary>Returns calendar events for the given calendar as JSON.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.Admin)]
     [RequiredHttpPostAccess(Role = Role.User)]
     [RequiredHttpPostAccess(Role = Role.Anonymous)]
-    /// <summary>Returns calendar events for the given calendar as JSON.</summary>
     public async Task<IActionResult> GetCalendarEvents([FromBody] CalendarInputViewModel calendarInputViewModel)
     {
         try
@@ -1904,10 +1904,10 @@ public class CalendarController : BaseController
         }
     }
 
+    /// <summary>Returns the list of calendar-sharing records as JSON.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.Admin)]
-    /// <summary>Returns the list of calendar-sharing records as JSON.</summary>
     public async Task<IActionResult> GetCalendarShareds()
     {
         try
@@ -1951,10 +1951,10 @@ public class CalendarController : BaseController
         }
     }
 
+    /// <summary>Returns the list of shared/public calendars the logged-in user may browse.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.User)]
-    /// <summary>Returns the list of shared/public calendars the logged-in user may browse.</summary>
     public async Task<IActionResult> GetBrowseCalendarsOfInterest()
     {
         try
@@ -2014,11 +2014,11 @@ public class CalendarController : BaseController
     #region Update
 
     #region Calendar
+    /// <summary>Updates an existing calendar's properties.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.Admin)]
     [RequiredHttpPostAccess(Role = Role.User)]
-    /// <summary>Updates an existing calendar's properties.</summary>
     public async Task<IActionResult> UpdateCalendar([FromBody] CalendarInputViewModel calendarInputViewModel)
     {
         try
@@ -2057,11 +2057,11 @@ public class CalendarController : BaseController
     #endregion
 
     #region Calendar Event
+    /// <summary>Updates an existing calendar event (with optional file attachment and reminder changes).</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.Admin)]
     [RequiredHttpPostAccess(Role = Role.User)]
-    /// <summary>Updates an existing calendar event (with optional file attachment and reminder changes).</summary>
     public async Task<IActionResult> UpdateCalendarEvent([FromForm] CalendarEventInputViewModel calendarEventInputViewModel)
     {
         try
@@ -2241,10 +2241,10 @@ public class CalendarController : BaseController
     #endregion
 
     #region Calendar Shared
+    /// <summary>Updates an existing CalendarShared record.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.Admin)]
-    /// <summary>Updates an existing CalendarShared record.</summary>
     public async Task<IActionResult> UpdateCalendarShared([FromBody] IEnumerable<CalendarSharedResponse> calendarShareds)
     {
         try
@@ -2271,10 +2271,10 @@ public class CalendarController : BaseController
     #endregion
 
     #region Other Calendar
+    /// <summary>Updates an existing OtherCalendar record.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.User)]
-    /// <summary>Updates an existing OtherCalendar record.</summary>
     public async Task<IActionResult> UpdateOtherCalendar([FromBody] IEnumerable<OtherCalendarResponse> otherCalendars)
     {
         try
@@ -2314,11 +2314,11 @@ public class CalendarController : BaseController
     #endregion
 
     #region Delete
+    /// <summary>Deletes an existing Calendar record.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.Admin)]
     [RequiredHttpPostAccess(Role = Role.User)]
-    /// <summary>Deletes an existing Calendar record.</summary>
     public async Task<IActionResult> DeleteCalendar([FromBody] CalendarInputViewModel calendarInputViewModel)
     {
         try
@@ -2339,11 +2339,11 @@ public class CalendarController : BaseController
         }
     }
 
+    /// <summary>Deletes an existing CalendarEvent record.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.Admin)]
     [RequiredHttpPostAccess(Role = Role.User)]
-    /// <summary>Deletes an existing CalendarEvent record.</summary>
     public async Task<IActionResult> DeleteCalendarEvent(int id)
     {
         try

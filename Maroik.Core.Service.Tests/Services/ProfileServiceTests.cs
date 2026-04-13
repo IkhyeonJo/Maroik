@@ -8,6 +8,12 @@ using Moq;
 
 namespace Maroik.Core.Service.Tests.Services;
 
+/// <summary>
+/// Unit tests for <see cref="ProfileService"/>.
+/// All repository and dependency-service mocks are provided via Moq.
+/// Covers profile retrieval, nickname update, avatar update,
+/// and password-change validation (current-password verification before update).
+/// </summary>
 public class ProfileServiceTests
 {
     private readonly Mock<IAccountRepository> _accountRepo = new();

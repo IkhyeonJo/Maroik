@@ -5,6 +5,12 @@ using Moq;
 
 namespace Maroik.Core.Service.Tests.Services;
 
+/// <summary>
+/// Unit tests for <see cref="IncomeService"/>.
+/// All repository dependencies are replaced with Moq mocks.
+/// Covers income CRUD, asset-balance adjustments on create/update/delete,
+/// and category-class validation.
+/// </summary>
 public class IncomeServiceTests
 {
     private readonly Mock<IIncomeRepository> _incomeRepo = new();

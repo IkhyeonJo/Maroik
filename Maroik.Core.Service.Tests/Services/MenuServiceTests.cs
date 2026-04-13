@@ -6,6 +6,11 @@ using Moq;
 
 namespace Maroik.Core.Service.Tests.Services;
 
+/// <summary>
+/// Unit tests for <see cref="MenuService"/>.
+/// All repository dependencies are replaced with Moq mocks.
+/// Covers navigation category and sub-category CRUD operations.
+/// </summary>
 public class MenuServiceTests
 {
     private readonly Mock<ICategoryRepository> _categoryRepo = new();

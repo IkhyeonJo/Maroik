@@ -53,10 +53,10 @@ public class NoticeController : BaseController
     #region FixedIncome
 
     #region Create
+    /// <summary>Creates a new fixed-income record.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.User)]
-    /// <summary>Creates a new fixed-income record.</summary>
     public async Task<IActionResult> CreateFixedIncome(
         [FromBody] FixedIncomeInputViewModel fixedIncomeInputViewModel)
     {
@@ -89,8 +89,8 @@ public class NoticeController : BaseController
 
     #region Read
 
-    [HttpGet]
     /// <summary>Returns the fixed-income grid (AJAX) or the full page.</summary>
+    [HttpGet]
     public async Task<IActionResult> FixedIncome(string wholeSearch)
     {
         if (HttpContext.Request.Headers["X-Requested-With"] == "XMLHttpRequest") // ajax
@@ -242,10 +242,10 @@ public class NoticeController : BaseController
         return View();
     }
 
+    /// <summary>Checks whether a fixed-income record with the given ID exists.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.User)]
-    /// <summary>Checks whether a fixed-income record with the given ID exists.</summary>
     public async Task<IActionResult> IsFixedIncomeExists(int id)
     {
         try
@@ -291,10 +291,10 @@ public class NoticeController : BaseController
         }
     }
 
+    /// <summary>Returns a formatted amount label for the given fixed-income product.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.User)]
-    /// <summary>Returns a formatted amount label for the given fixed-income product.</summary>
     public async Task<IActionResult> GetFixedIncomeAmountLabel(string productName)
     {
         try
@@ -321,10 +321,10 @@ public class NoticeController : BaseController
     #endregion
 
     #region Update
+    /// <summary>Updates an existing fixed-income record.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.User)]
-    /// <summary>Updates an existing fixed-income record.</summary>
     public async Task<IActionResult> UpdateFixedIncome(
         [FromBody] FixedIncomeInputViewModel fixedIncomeInputViewModel)
     {
@@ -356,10 +356,10 @@ public class NoticeController : BaseController
     #endregion
 
     #region Delete
+    /// <summary>Deletes an existing fixed-income record.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.User)]
-    /// <summary>Deletes an existing fixed-income record.</summary>
     public async Task<IActionResult> DeleteFixedIncome(
         [FromBody] FixedIncomeInputViewModel fixedIncomeInputViewModel)
     {
@@ -373,10 +373,10 @@ public class NoticeController : BaseController
 
     #region Excel
 
+    /// <summary>Exports fixed-income records to an Excel file.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.User)]
-    /// <summary>Exports fixed-income records to an Excel file.</summary>
     public async Task<IActionResult> ExportExcelFixedIncome(string fileName = "")
     {
         await Task.Yield();
@@ -525,10 +525,10 @@ public class NoticeController : BaseController
     #region FixedExpenditure
 
     #region Create
+    /// <summary>Creates a new fixed-expenditure record.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.User)]
-    /// <summary>Creates a new fixed-expenditure record.</summary>
     public async Task<IActionResult> CreateFixedExpenditure(
         [FromBody] FixedExpenditureInputViewModel fixedExpenditureInputViewModel)
     {
@@ -562,8 +562,8 @@ public class NoticeController : BaseController
 
     #region Read
 
-    [HttpGet]
     /// <summary>Returns the fixed-expenditure grid (AJAX) or the full page.</summary>
+    [HttpGet]
     public async Task<IActionResult> FixedExpenditure(string wholeSearch)
     {
         if (HttpContext.Request.Headers["X-Requested-With"] == "XMLHttpRequest") // ajax
@@ -719,10 +719,10 @@ public class NoticeController : BaseController
         return View();
     }
 
+    /// <summary>Checks whether a fixed-expenditure record with the given ID exists.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.User)]
-    /// <summary>Checks whether a fixed-expenditure record with the given ID exists.</summary>
     public async Task<IActionResult> IsFixedExpenditureExists(int id)
     {
         try
@@ -770,10 +770,10 @@ public class NoticeController : BaseController
         }
     }
 
+    /// <summary>Returns a formatted amount label for the given fixed-expenditure product.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.User)]
-    /// <summary>Returns a formatted amount label for the given fixed-expenditure product.</summary>
     public async Task<IActionResult> GetFixedExpenditureAmountLabel(string productName)
     {
         try
@@ -800,10 +800,10 @@ public class NoticeController : BaseController
     #endregion
 
     #region Update
+    /// <summary>Updates an existing fixed-expenditure record.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.User)]
-    /// <summary>Updates an existing fixed-expenditure record.</summary>
     public async Task<IActionResult> UpdateFixedExpenditure(
         [FromBody] FixedExpenditureInputViewModel fixedExpenditureInputViewModel)
     {
@@ -836,10 +836,10 @@ public class NoticeController : BaseController
     #endregion
 
     #region Delete
+    /// <summary>Deletes an existing fixed-expenditure record.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.User)]
-    /// <summary>Deletes an existing fixed-expenditure record.</summary>
     public async Task<IActionResult> DeleteFixedExpenditure(
         [FromBody] FixedExpenditureInputViewModel fixedExpenditureInputViewModel)
     {
@@ -853,10 +853,10 @@ public class NoticeController : BaseController
 
     #region Excel
 
+    /// <summary>Exports fixed-expenditure records to an Excel file.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.User)]
-    /// <summary>Exports fixed-expenditure records to an Excel file.</summary>
     public async Task<IActionResult> ExportExcelFixedExpenditure(string fileName = "")
     {
         await Task.Yield();

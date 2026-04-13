@@ -35,19 +35,19 @@ public class AccountController : BaseController
     }
 
     #region ConsentForm
-    [HttpGet]
     /// <summary>Displays the service consent form.</summary>
+    [HttpGet]
     public IActionResult ConsentForm() => View();
     #endregion
 
     #region Login
-    [HttpGet]
     /// <summary>Displays the login form (GET) or processes login credentials (POST).</summary>
+    [HttpGet]
     public IActionResult Login() => View();
 
+    /// <summary>Displays the login form (GET) or processes login credentials (POST).</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    /// <summary>Displays the login form (GET) or processes login credentials (POST).</summary>
     public async Task<IActionResult> Login(LoginInputViewModel loginInputViewModel)
     {
         string userAgent = Request.Headers["User-Agent"].ToString();
@@ -76,8 +76,8 @@ public class AccountController : BaseController
     #endregion
 
     #region Logout
-    [HttpGet]
     /// <summary>Clears the session and redirects to the anonymous dashboard.</summary>
+    [HttpGet]
     public IActionResult Logout()
     {
         _sessionService.RemoveAccount();
@@ -86,13 +86,13 @@ public class AccountController : BaseController
     #endregion
 
     #region Register
-    [HttpGet]
     /// <summary>Displays the registration form (GET) or processes new-account / resend-email requests (POST).</summary>
+    [HttpGet]
     public IActionResult Register() => View();
 
+    /// <summary>Displays the registration form (GET) or processes new-account / resend-email requests (POST).</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    /// <summary>Displays the registration form (GET) or processes new-account / resend-email requests (POST).</summary>
     public async Task<IActionResult> Register(LoginInputViewModel loginInputViewModel)
     {
         if (!string.IsNullOrEmpty(loginInputViewModel.Password)) // Registration path
@@ -179,8 +179,8 @@ public class AccountController : BaseController
     #endregion
 
     #region ConfirmEmail
-    [HttpGet]
     /// <summary>Validates the email-confirmation token from the registration link and activates the account.</summary>
+    [HttpGet]
     public async Task<IActionResult> ConfirmEmail(string registrationToken)
     {
         var result = await _accountService.ConfirmEmailAsync(registrationToken);
@@ -195,13 +195,13 @@ public class AccountController : BaseController
     #endregion
 
     #region ForgotPassword
-    [HttpGet]
     /// <summary>Displays the forgot-password form (GET) or sends a reset-password email (POST).</summary>
+    [HttpGet]
     public IActionResult ForgotPassword() => View();
 
+    /// <summary>Displays the forgot-password form (GET) or sends a reset-password email (POST).</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    /// <summary>Displays the forgot-password form (GET) or sends a reset-password email (POST).</summary>
     public async Task<IActionResult> ForgotPassword(LoginInputViewModel loginInputViewModel)
     {
         _ = ModelState.Remove(nameof(loginInputViewModel.Nickname));
@@ -221,8 +221,8 @@ public class AccountController : BaseController
         return View();
     }
 
-    [HttpGet]
     /// <summary>Validates the reset token (GET) or applies the new password (POST).</summary>
+    [HttpGet]
     public async Task<IActionResult> ResetPassword(string resetPasswordToken)
     {
         var result = await _accountService.ValidateResetPasswordTokenAsync(resetPasswordToken);
@@ -231,9 +231,9 @@ public class AccountController : BaseController
         return View();
     }
 
+    /// <summary>Validates the reset token (GET) or applies the new password (POST).</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    /// <summary>Validates the reset token (GET) or applies the new password (POST).</summary>
     public async Task<IActionResult> ResetPassword(LoginInputViewModel loginInputViewModel)
     {
         _ = ModelState.Remove(nameof(loginInputViewModel.Email));

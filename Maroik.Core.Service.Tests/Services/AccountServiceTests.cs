@@ -8,6 +8,12 @@ using Moq;
 
 namespace Maroik.Core.Service.Tests.Services;
 
+/// <summary>
+/// Unit tests for <see cref="AccountService"/>.
+/// All external dependencies (repository, password service, mail client, RSA service)
+/// are replaced with Moq mocks so tests run without a database or SMTP server.
+/// Covers login, registration, email confirmation, and password-reset flows.
+/// </summary>
 public class AccountServiceTests
 {
     private readonly Mock<IAccountRepository> _accountRepo = new();

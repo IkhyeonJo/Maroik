@@ -57,11 +57,11 @@ public class ForumController : BaseController
     #region Write
 
     #region FreeBoard
+    /// <summary>Submits a new free-forum post (with optional file attachment).</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.Admin)]
     [RequiredHttpPostAccess(Role = Role.User)]
-    /// <summary>Submits a new free-forum post (with optional file attachment).</summary>
     public async Task<IActionResult> WriteFreeBoard(BoardInputViewModel boardInputViewModel)
     {
         try
@@ -150,11 +150,11 @@ public class ForumController : BaseController
     #endregion
 
     #region FreeComment
+    /// <summary>Submits a comment on a free-forum post.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.Admin)]
     [RequiredHttpPostAccess(Role = Role.User)]
-    /// <summary>Submits a comment on a free-forum post.</summary>
     public async Task<IActionResult> WriteFreeComment([FromBody] BoardCommentInputViewModel boardCommentInputViewModel)
     {
         try
@@ -201,11 +201,11 @@ public class ForumController : BaseController
     #endregion
 
     #region Summernote Image File Upload
+    /// <summary>Uploads a Summernote inline image and returns its URL.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.Admin)]
     [RequiredHttpPostAccess(Role = Role.User)]
-    /// <summary>Uploads a Summernote inline image and returns its URL.</summary>
     public async Task<IActionResult> UploadImageFile(IFormFile summernoteImageFile)
     {
         if (summernoteImageFile == null)
@@ -611,11 +611,11 @@ public class ForumController : BaseController
     #endregion
 
     #region IsBoardExists
+    /// <summary>Checks whether a board post with the given ID exists (used for edit validation).</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.Admin)]
     [RequiredHttpPostAccess(Role = Role.User)]
-    /// <summary>Checks whether a board post with the given ID exists (used for edit validation).</summary>
     public async Task<IActionResult> IsBoardExists(int id)
     {
         try
@@ -639,11 +639,11 @@ public class ForumController : BaseController
     #region Update
 
     #region Edit
+    /// <summary>Saves edits to an existing free-forum post.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.Admin)]
     [RequiredHttpPostAccess(Role = Role.User)]
-    /// <summary>Saves edits to an existing free-forum post.</summary>
     public async Task<IActionResult> EditFreeBoard(BoardInputViewModel boardInputViewModel)
     {
         try
@@ -732,11 +732,11 @@ public class ForumController : BaseController
     #region Delete
 
     #region Board
+    /// <summary>Soft-deletes a free-forum post.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.Admin)]
     [RequiredHttpPostAccess(Role = Role.User)]
-    /// <summary>Soft-deletes a free-forum post.</summary>
     public async Task<IActionResult> DeleteBoard([FromBody] BoardInputViewModel boardInputViewModel)
     {
         try
@@ -762,11 +762,11 @@ public class ForumController : BaseController
     #endregion
 
     #region BoardComment
+    /// <summary>Soft-deletes a free-forum comment.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequiredHttpPostAccess(Role = Role.Admin)]
     [RequiredHttpPostAccess(Role = Role.User)]
-    /// <summary>Soft-deletes a free-forum comment.</summary>
     public async Task<IActionResult> DeleteComment(int id)
     {
         try

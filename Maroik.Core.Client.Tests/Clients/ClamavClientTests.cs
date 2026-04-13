@@ -2,6 +2,12 @@ using Maroik.Core.Client.Clients;
 
 namespace Maroik.Core.Client.Tests.Clients;
 
+/// <summary>
+/// Unit tests for <see cref="ClamavClient"/>.
+/// Because no real ClamAV daemon is available during the test run, every test targets
+/// an unreachable host or invalid address and verifies that the client handles the
+/// connection failure gracefully by returning <see langword="false"/>.
+/// </summary>
 public class ClamavClientTests
 {
     private readonly ClamavClient _sut = new();

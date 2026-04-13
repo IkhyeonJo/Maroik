@@ -5,6 +5,12 @@ using Moq;
 
 namespace Maroik.Core.Service.Tests.Services;
 
+/// <summary>
+/// Unit tests for <see cref="AssetService"/>.
+/// All repository dependencies are replaced with Moq mocks.
+/// Covers asset CRUD, balance adjustments triggered by income/expenditure changes,
+/// and product-name rename propagation.
+/// </summary>
 public class AssetServiceTests
 {
     private readonly Mock<IAssetRepository> _assetRepo = new();

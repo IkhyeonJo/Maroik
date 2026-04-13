@@ -5,6 +5,12 @@ using Moq;
 
 namespace Maroik.Core.Service.Tests.Services;
 
+/// <summary>
+/// Unit tests for <see cref="ExpenditureService"/>.
+/// All repository dependencies are replaced with Moq mocks.
+/// Covers expenditure CRUD, asset-balance adjustments on create/update/delete,
+/// and category-class validation.
+/// </summary>
 public class ExpenditureServiceTests
 {
     private readonly Mock<IExpenditureRepository> _expenditureRepo = new();

@@ -6,6 +6,11 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Maroik.Core.Repository.Tests.Repositories;
 
+/// <summary>
+/// Tests for <see cref="AccountRepository"/> using an EF Core InMemory database.
+/// Covers CRUD operations, soft-delete behaviour, login-attempt tracking,
+/// email-confirmation token handling, and password-reset token flows.
+/// </summary>
 public class AccountRepositoryTests : IDisposable
 {
     private readonly ApplicationDbContext _context;

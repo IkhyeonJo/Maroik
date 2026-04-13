@@ -6,6 +6,11 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Maroik.Core.Repository.Tests.Repositories;
 
+/// <summary>
+/// Tests for <see cref="AssetRepository"/> using an EF Core InMemory database.
+/// Asset uses a composite primary key (AccountEmail + ProductName); tests verify
+/// that CRUD operations, soft-delete, and monetary-unit updates behave correctly.
+/// </summary>
 public class AssetRepositoryTests : IDisposable
 {
     private readonly ApplicationDbContext _context;

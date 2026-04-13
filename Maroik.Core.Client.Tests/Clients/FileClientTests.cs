@@ -2,6 +2,11 @@ using Maroik.Core.Client.Clients;
 
 namespace Maroik.Core.Client.Tests.Clients;
 
+/// <summary>
+/// Unit tests for <see cref="FileClient"/>.
+/// Exercises null/empty input guards and connection-failure handling when the
+/// file-storage microservice is not available.
+/// </summary>
 public class FileClientTests
 {
     private readonly FileClient _sut = new();

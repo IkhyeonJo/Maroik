@@ -28,22 +28,22 @@ public class DriveController : BaseController
     #region Drive
 
     #region Read
-    [HttpGet]
     /// <summary>Returns the admin drive view.</summary>
+    [HttpGet]
     public IActionResult AdminIndex()
     {
         return View();
     }
 
-    [HttpGet]
     /// <summary>Returns the user drive view.</summary>
+    [HttpGet]
     public IActionResult UserIndex()
     {
         return View();
     }
 
-    [HttpGet]
     /// <summary>Returns the anonymous drive view.</summary>
+    [HttpGet]
     public IActionResult AnonymousIndex()
     {
         return View();

@@ -5,6 +5,12 @@ using Moq;
 
 namespace Maroik.Core.Service.Tests.Services;
 
+/// <summary>
+/// Unit tests for <see cref="FixedExpenditureService"/>.
+/// All repository dependencies are replaced with Moq mocks.
+/// Covers fixed-expenditure CRUD, maturity-date expiry detection,
+/// notification-window (Noticed) flag computation, and unpunctuality tracking.
+/// </summary>
 public class FixedExpenditureServiceTests
 {
     private readonly Mock<IFixedExpenditureRepository> _fixedExpenditureRepo = new();

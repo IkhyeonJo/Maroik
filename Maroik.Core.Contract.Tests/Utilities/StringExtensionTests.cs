@@ -2,6 +2,11 @@ using Maroik.Core.Contract.Utilities;
 
 namespace Maroik.Core.Contract.Tests.Utilities;
 
+/// <summary>
+/// Unit tests for <see cref="Maroik.Core.Contract.Utilities.StringExtension"/>.
+/// Verifies the <c>GetAmountLabel</c> helper that formats a decimal value
+/// with its currency unit for display in the dashboard and account-book views.
+/// </summary>
 public class StringExtensionTests
 {
     // ── GetAmountLabel ───────────────────────────────────────────────────────

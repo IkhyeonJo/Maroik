@@ -2,6 +2,11 @@ using Maroik.Core.Client.Clients;
 
 namespace Maroik.Core.Client.Tests.Clients;
 
+/// <summary>
+/// Unit tests for <see cref="MailClient"/>.
+/// Verifies the HTML email body builders (mail-confirmation and password-reset)
+/// and the SMTP send helper's graceful failure when no real mail server is available.
+/// </summary>
 public class MailClientTests
 {
     private readonly MailClient _sut = new();

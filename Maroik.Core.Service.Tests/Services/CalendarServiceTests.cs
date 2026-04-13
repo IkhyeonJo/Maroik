@@ -8,6 +8,12 @@ using Moq;
 
 namespace Maroik.Core.Service.Tests.Services;
 
+/// <summary>
+/// Unit tests for <see cref="CalendarService"/>.
+/// All external dependencies (repositories, ClamAV client, file client, logger)
+/// are replaced with Moq mocks. Covers calendar and calendar-event CRUD,
+/// calendar sharing / subscription, and reminder management.
+/// </summary>
 public class CalendarServiceTests
 {
     private readonly Mock<ICalendarRepository> _calendarRepo = new();

@@ -5,6 +5,12 @@ using Moq;
 
 namespace Maroik.Core.Service.Tests.Services;
 
+/// <summary>
+/// Unit tests for <see cref="SessionService"/>.
+/// <see cref="IHttpContextAccessor"/> and <see cref="ISession"/> are replaced with Moq mocks.
+/// Verifies that <c>SetAccount</c> serialises an <see cref="Maroik.Core.Contract.Dtos.AccountResponse"/>
+/// to JSON and that <c>GetAccount</c> correctly deserialises it back.
+/// </summary>
 public class SessionServiceTests
 {
     private readonly Mock<IHttpContextAccessor> _httpContextAccessor = new();
