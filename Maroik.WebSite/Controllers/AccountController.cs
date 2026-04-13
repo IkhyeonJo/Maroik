@@ -62,7 +62,7 @@ public class AccountController : BaseController
 
         if (!ModelState.IsValid) return View();
 
-        var result = await _accountService.LoginAsync(loginInputViewModel.Email, loginInputViewModel.Password ?? "");
+        var result = await _accountService.LoginAsync(loginInputViewModel.Email!, loginInputViewModel.Password ?? "");
 
         if (!result.Success)
         {
@@ -161,7 +161,7 @@ public class AccountController : BaseController
             string emailContent0 = _localizer["Click the link below to verify your Email"].Value;
             string emailContent1 = _localizer["If this link does not work, please copy & paste this link to your Internet URL"].Value;
 
-            var result = await _accountService.ResendConfirmationEmailAsync(loginInputViewModel.Email, emailSubject, emailTitle, emailContent0, emailContent1);
+            var result = await _accountService.ResendConfirmationEmailAsync(loginInputViewModel.Email!, emailSubject, emailTitle, emailContent0, emailContent1);
 
             if (!result.Success)
             {
@@ -214,7 +214,7 @@ public class AccountController : BaseController
         string emailContent0 = _localizer["Click the link below to reset your password"].Value;
         string emailContent1 = _localizer["If this link does not work, please copy & paste this link to your Internet URL"].Value;
 
-        await _accountService.ForgotPasswordAsync(loginInputViewModel.Email, emailSubject, emailTitle, emailContent0, emailContent1);
+        await _accountService.ForgotPasswordAsync(loginInputViewModel.Email!, emailSubject, emailTitle, emailContent0, emailContent1);
 
         ViewBag.mailSent = true;
         ViewBag.sentEmailAddress = loginInputViewModel.Email;

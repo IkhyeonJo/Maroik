@@ -78,7 +78,7 @@ public class AccountBookController : BaseController
         var result = await _assetService.CreateAsync(email!, request);
         return result.Success
             ? Json(new { result = true, message = _localizer["The asset has been successfully created."].Value })
-            : Json(new { result = false, error = _localizer[result.ErrorKey].Value });
+            : Json(new { result = false, error = _localizer[result.ErrorKey!].Value });
     }
 
     #endregion
@@ -104,7 +104,7 @@ public class AccountBookController : BaseController
                     assetOutputViewModels.Add(new AssetOutputViewModel()
                     {
                         ProductName = item.ProductName,
-                        Item = _localizer[item.Item.ToString()].Value,
+                        Item = _localizer[item.Item!.ToString()].Value,
                         Amount = Convert.ToDecimal(item.Amount.TrimTrailingZeros()),
                         MonetaryUnit = item.MonetaryUnit,
                         Created = item.Created.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId!),
@@ -129,7 +129,7 @@ public class AccountBookController : BaseController
                         assetOutputViewModels.Add(new AssetOutputViewModel()
                         {
                             ProductName = item.ProductName,
-                            Item = _localizer[item.Item.ToString()].Value,
+                            Item = _localizer[item.Item!.ToString()].Value,
                             Amount = Convert.ToDecimal(item.Amount.TrimTrailingZeros()),
                             MonetaryUnit = item.MonetaryUnit,
                             Created = item.Created.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId!),
@@ -151,7 +151,7 @@ public class AccountBookController : BaseController
         {
             AccountResponse loginedAccount = _sessionService.GetAccount() ?? new AccountResponse();
             string tz = loginedAccount.TimeZoneIanaId ?? "UTC";
-            List<AssetResponse> assets = (await _assetService.GetAssetsAsync(loginedAccount.Email))
+            List<AssetResponse> assets = (await _assetService.GetAssetsAsync(loginedAccount.Email!))
                 .Where(x => !x.Deleted).OrderBy(x => x.ProductName).ToList();
             DateTime ct = DateTime.UtcNow.ConvertTimeByTimeZoneIanaId(tz);
             ViewBag.Assets = assets;
@@ -216,7 +216,7 @@ public class AccountBookController : BaseController
         var result = await _assetService.UpdateAsync(email!, request, assetInputViewModel.OriginalProductName!);
         return result.Success
             ? Json(new { result = true, message = _localizer["The asset has been successfully updated."].Value })
-            : Json(new { result = false, error = _localizer[result.ErrorKey].Value });
+            : Json(new { result = false, error = _localizer[result.ErrorKey!].Value });
     }
 
     #endregion
@@ -234,7 +234,7 @@ public class AccountBookController : BaseController
         var result = await _assetService.DeleteAsync(email!, assetInputViewModel.ProductName!);
         return result.Success
             ? Json(new { result = true, message = _localizer["The asset has been successfully deleted."].Value })
-            : Json(new { result = false, error = _localizer[result.ErrorKey].Value });
+            : Json(new { result = false, error = _localizer[result.ErrorKey!].Value });
     }
 
     #endregion
@@ -319,7 +319,7 @@ public class AccountBookController : BaseController
                 dataRow.Append(
                     CreateCell(item.ProductName ?? ""),
                     CreateCell(_localizer[item?.Item?.ToString() ?? ""].Value),
-                    CreateCell(Convert.ToDecimal(item.Amount.TrimTrailingZeros()).ToString()),
+                    CreateCell(Convert.ToDecimal(item!.Amount.TrimTrailingZeros()).ToString()),
                     CreateCell(item.MonetaryUnit ?? ""),
                     CreateCell(item.Created.ToString()),
                     CreateCell(item.Updated.ToString()),
@@ -372,7 +372,7 @@ public class AccountBookController : BaseController
         var result = await _incomeService.CreateAsync(email!, request);
         return result.Success
             ? Json(new { result = true, message = _localizer["The income has been successfully created."].Value })
-            : Json(new { result = false, error = _localizer[result.ErrorKey].Value });
+            : Json(new { result = false, error = _localizer[result.ErrorKey!].Value });
     }
 
     #endregion
@@ -400,12 +400,12 @@ public class AccountBookController : BaseController
                     incomeOutputViewModels.Add(new IncomeOutputViewModel()
                     {
                         Id = item.Id,
-                        MainClass = _localizer[item.MainClass.ToString()].Value,
-                        SubClass = _localizer[item.SubClass.ToString()].Value,
+                        MainClass = _localizer[item.MainClass!.ToString()].Value,
+                        SubClass = _localizer[item.SubClass!.ToString()].Value,
                         Content = item.Content,
                         Amount = Convert.ToDecimal(item.Amount.TrimTrailingZeros()),
                         MonetaryUnit = assets.Where(x => x.ProductName == item.DepositMyAssetProductName)
-                            .FirstOrDefault().MonetaryUnit,
+                            .FirstOrDefault()!.MonetaryUnit,
                         DepositMyAssetProductName = item.DepositMyAssetProductName,
                         Created = item.Created.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId!),
                         Updated = item.Updated.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId!),
@@ -418,8 +418,8 @@ public class AccountBookController : BaseController
                         _localizer[item.SubClass?.ToString() ?? ""].Value.Contains(wholeSearch) ||
                         (item.Content?.ToString() ?? "").Contains(wholeSearch) ||
                         (item.Amount.TrimTrailingZeros() ?? "").Contains(wholeSearch) ||
-                        (assets.Where(x => x.ProductName == item.DepositMyAssetProductName).FirstOrDefault()
-                            .MonetaryUnit.ToString() ?? "").Contains(wholeSearch) ||
+                        (assets.Where(x => x.ProductName == item.DepositMyAssetProductName).FirstOrDefault()!
+                            .MonetaryUnit?.ToString() ?? "").Contains(wholeSearch) ||
                         (item.DepositMyAssetProductName?.ToString() ?? "").Contains(wholeSearch) ||
                         (item.Created.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId!).ToString() ?? "")
                         .Contains(wholeSearch) ||
@@ -430,12 +430,12 @@ public class AccountBookController : BaseController
                         incomeOutputViewModels.Add(new IncomeOutputViewModel()
                         {
                             Id = item.Id,
-                            MainClass = _localizer[item.MainClass.ToString()].Value,
-                            SubClass = _localizer[item.SubClass.ToString()].Value,
+                            MainClass = _localizer[item.MainClass!.ToString()].Value,
+                            SubClass = _localizer[item.SubClass!.ToString()].Value,
                             Content = item.Content,
                             Amount = Convert.ToDecimal(item.Amount.TrimTrailingZeros()),
                             MonetaryUnit = assets.Where(x => x.ProductName == item.DepositMyAssetProductName)
-                                .FirstOrDefault().MonetaryUnit,
+                                .FirstOrDefault()!.MonetaryUnit,
                             DepositMyAssetProductName = item.DepositMyAssetProductName,
                             Created = item.Created.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId!),
                             Updated = item.Updated.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId!),
@@ -455,7 +455,7 @@ public class AccountBookController : BaseController
         {
             AccountResponse loginedAccount = _sessionService.GetAccount() ?? new AccountResponse();
             string tz = loginedAccount.TimeZoneIanaId ?? "UTC";
-            List<AssetResponse> assets = (await _assetService.GetAssetsAsync(loginedAccount.Email))
+            List<AssetResponse> assets = (await _assetService.GetAssetsAsync(loginedAccount.Email!))
                 .Where(x => !x.Deleted).OrderBy(x => x.ProductName).ToList();
             DateTime ct = DateTime.UtcNow.ConvertTimeByTimeZoneIanaId(tz);
             ViewBag.Assets = assets;
@@ -484,7 +484,7 @@ public class AccountBookController : BaseController
             }
             else
             {
-                IncomeResponse tempIncome = tempIncomes.Where(a => a.Id == id).FirstOrDefault();
+                IncomeResponse? tempIncome = tempIncomes.Where(a => a.Id == id).FirstOrDefault();
 
                 if (tempIncome == null)
                 {
@@ -561,7 +561,7 @@ public class AccountBookController : BaseController
         var result = await _incomeService.UpdateAsync(email!, request);
         return result.Success
             ? Json(new { result = true, message = _localizer["The income has been successfully updated."].Value })
-            : Json(new { result = false, error = _localizer[result.ErrorKey].Value });
+            : Json(new { result = false, error = _localizer[result.ErrorKey!].Value });
     }
 
     #endregion
@@ -579,7 +579,7 @@ public class AccountBookController : BaseController
         var result = await _incomeService.DeleteAsync(email!, incomeInputViewModel.Id);
         return result.Success
             ? Json(new { result = true, message = _localizer["The income has been successfully deleted."].Value })
-            : Json(new { result = false, error = _localizer[result.ErrorKey].Value });
+            : Json(new { result = false, error = _localizer[result.ErrorKey!].Value });
     }
 
     #endregion
@@ -610,7 +610,7 @@ public class AccountBookController : BaseController
                 SubClass = item.SubClass,
                 Content = item.Content,
                 Amount = Convert.ToDecimal(item.Amount.TrimTrailingZeros()),
-                MonetaryUnit = assets.Where(x => x.ProductName == item.DepositMyAssetProductName).FirstOrDefault()
+                MonetaryUnit = assets.Where(x => x.ProductName == item.DepositMyAssetProductName).FirstOrDefault()!
                     .MonetaryUnit,
                 DepositMyAssetProductName = item.DepositMyAssetProductName,
                 Created = item.Created.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId!),
@@ -675,7 +675,7 @@ public class AccountBookController : BaseController
                 dataRow.Append(
                     CreateCell(_localizer[item?.MainClass?.ToString() ?? ""].Value),
                     CreateCell(_localizer[item?.SubClass?.ToString() ?? ""].Value),
-                    CreateCell(item.Content ?? ""),
+                    CreateCell(item!.Content ?? ""),
                     CreateCell(Convert.ToDecimal(item.Amount.TrimTrailingZeros()).ToString()),
                     CreateCell(item.MonetaryUnit ?? ""),
                     CreateCell(item.DepositMyAssetProductName ?? ""),
@@ -729,7 +729,7 @@ public class AccountBookController : BaseController
         var result = await _expenditureService.CreateAsync(email!, request);
         return result.Success
             ? Json(new { result = true, message = _localizer["The expenditure has been successfully created."].Value })
-            : Json(new { result = false, error = _localizer[result.ErrorKey].Value });
+            : Json(new { result = false, error = _localizer[result.ErrorKey!].Value });
     }
 
     #region Read
@@ -755,11 +755,11 @@ public class AccountBookController : BaseController
                     expenditureOutputViewModels.Add(new ExpenditureOutputViewModel()
                     {
                         Id = item.Id,
-                        MainClass = _localizer[item.MainClass.ToString()].Value,
-                        SubClass = _localizer[item.SubClass.ToString()].Value,
+                        MainClass = _localizer[item.MainClass!.ToString()].Value,
+                        SubClass = _localizer[item.SubClass!.ToString()].Value,
                         Content = item.Content,
                         Amount = Convert.ToDecimal(item.Amount.TrimTrailingZeros()),
-                        MonetaryUnit = assets.Where(x => x.ProductName == item.PaymentMethod).FirstOrDefault()
+                        MonetaryUnit = assets.Where(x => x.ProductName == item.PaymentMethod).FirstOrDefault()!
                             .MonetaryUnit,
                         PaymentMethod = item.PaymentMethod,
                         Note = item.Note,
@@ -774,8 +774,8 @@ public class AccountBookController : BaseController
                         _localizer[item.SubClass?.ToString() ?? ""].Value.Contains(wholeSearch) ||
                         (item.Content?.ToString() ?? "").Contains(wholeSearch) ||
                         (item.Amount.TrimTrailingZeros() ?? "").Contains(wholeSearch) ||
-                        (assets.Where(x => x.ProductName == item.PaymentMethod).FirstOrDefault().MonetaryUnit
-                            .ToString() ?? "").Contains(wholeSearch) ||
+                        (assets.Where(x => x.ProductName == item.PaymentMethod).FirstOrDefault()!.MonetaryUnit
+                            ?.ToString() ?? "").Contains(wholeSearch) ||
                         (item.PaymentMethod?.ToString() ?? "").Contains(wholeSearch) ||
                         (item.Note?.ToString() ?? "").Contains(wholeSearch) ||
                         (item.MyDepositAsset?.ToString() ?? "").Contains(wholeSearch) ||
@@ -787,11 +787,11 @@ public class AccountBookController : BaseController
                         expenditureOutputViewModels.Add(new ExpenditureOutputViewModel()
                         {
                             Id = item.Id,
-                            MainClass = _localizer[item.MainClass.ToString()].Value,
-                            SubClass = _localizer[item.SubClass.ToString()].Value,
+                            MainClass = _localizer[item.MainClass!.ToString()].Value,
+                            SubClass = _localizer[item.SubClass!.ToString()].Value,
                             Content = item.Content,
                             Amount = Convert.ToDecimal(item.Amount.TrimTrailingZeros()),
-                            MonetaryUnit = assets.Where(x => x.ProductName == item.PaymentMethod).FirstOrDefault()
+                            MonetaryUnit = assets.Where(x => x.ProductName == item.PaymentMethod).FirstOrDefault()!
                                 .MonetaryUnit,
                             PaymentMethod = item.PaymentMethod,
                             Note = item.Note,
@@ -813,7 +813,7 @@ public class AccountBookController : BaseController
         {
             AccountResponse loginedAccount = _sessionService.GetAccount() ?? new AccountResponse();
             string tz = loginedAccount.TimeZoneIanaId ?? "UTC";
-            List<AssetResponse> assets = (await _assetService.GetAssetsAsync(loginedAccount.Email))
+            List<AssetResponse> assets = (await _assetService.GetAssetsAsync(loginedAccount.Email!))
                 .Where(x => !x.Deleted).OrderBy(x => x.ProductName).ToList();
             DateTime ct = DateTime.UtcNow.ConvertTimeByTimeZoneIanaId(tz);
             ViewBag.Assets = assets;
@@ -843,7 +843,7 @@ public class AccountBookController : BaseController
             }
             else
             {
-                ExpenditureResponse tempExpenditure = tempExpenditures.Where(a => a.Id == id).FirstOrDefault();
+                ExpenditureResponse? tempExpenditure = tempExpenditures.Where(a => a.Id == id).FirstOrDefault();
 
                 if (tempExpenditure == null)
                 {
@@ -920,7 +920,7 @@ public class AccountBookController : BaseController
         var result = await _expenditureService.UpdateAsync(email!, request);
         return result.Success
             ? Json(new { result = true, message = _localizer["The expenditure has been successfully updated."].Value })
-            : Json(new { result = false, error = _localizer[result.ErrorKey].Value });
+            : Json(new { result = false, error = _localizer[result.ErrorKey!].Value });
     }
 
     /// <summary>Deletes an existing expenditure record.</summary>
@@ -935,7 +935,7 @@ public class AccountBookController : BaseController
         var result = await _expenditureService.DeleteAsync(email!, expenditureInputViewModel.Id);
         return result.Success
             ? Json(new { result = true, message = _localizer["The expenditure has been successfully deleted."].Value })
-            : Json(new { result = false, error = _localizer[result.ErrorKey].Value });
+            : Json(new { result = false, error = _localizer[result.ErrorKey!].Value });
     }
 
     #region Excel
@@ -960,11 +960,11 @@ public class AccountBookController : BaseController
         {
             expenditureOutputViewModels.Add(new ExpenditureOutputViewModel()
             {
-                MainClass = _localizer[item.MainClass.ToString()].Value,
-                SubClass = _localizer[item.SubClass.ToString()].Value,
+                MainClass = _localizer[item.MainClass!.ToString()].Value,
+                SubClass = _localizer[item.SubClass!.ToString()].Value,
                 Content = item.Content,
                 Amount = Convert.ToDecimal(item.Amount.TrimTrailingZeros()),
-                MonetaryUnit = assets.Where(x => x.ProductName == item.PaymentMethod).FirstOrDefault().MonetaryUnit,
+                MonetaryUnit = assets.Where(x => x.ProductName == item.PaymentMethod).FirstOrDefault()!.MonetaryUnit,
                 PaymentMethod = item.PaymentMethod,
                 Note = item.Note,
                 MyDepositAsset = item.MyDepositAsset,
@@ -1030,7 +1030,7 @@ public class AccountBookController : BaseController
                 dataRow.Append(
                     CreateCell(_localizer[item?.MainClass?.ToString() ?? ""].Value),
                     CreateCell(_localizer[item?.SubClass?.ToString() ?? ""].Value),
-                    CreateCell(item.Content ?? ""),
+                    CreateCell(item!.Content ?? ""),
                     CreateCell(Convert.ToDecimal(item.Amount.TrimTrailingZeros()).ToString()),
                     CreateCell(item.MonetaryUnit ?? ""),
                     CreateCell(item.PaymentMethod ?? ""),

@@ -43,12 +43,12 @@ public class AuthorizationFilter : ActionFilterAttribute
     /// <summary>Loads (or restores from cache) the navigation menu data and populates ViewBag before the action executes.</summary>
     public override async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
     {
-        if (!_cache.TryGetValue(AdminCategoriesCacheKey, out IEnumerable<CategoryResponse> adminCategories) ||
-            !_cache.TryGetValue(AdminSubCategoriesCacheKey, out IEnumerable<SubCategoryResponse> adminSubCategories) ||
-            !_cache.TryGetValue(UserCategoriesCacheKey, out IEnumerable<CategoryResponse> userCategories) ||
-            !_cache.TryGetValue(UserSubCategoriesCacheKey, out IEnumerable<SubCategoryResponse> userSubCategories) ||
-            !_cache.TryGetValue(AnonymousCategoriesCacheKey, out IEnumerable<CategoryResponse> anonymousCategories) ||
-            !_cache.TryGetValue(AnonymousSubCategoriesCacheKey, out IEnumerable<SubCategoryResponse> anonymousSubCategories))
+        if (!_cache.TryGetValue(AdminCategoriesCacheKey, out IEnumerable<CategoryResponse>? adminCategories) ||
+            !_cache.TryGetValue(AdminSubCategoriesCacheKey, out IEnumerable<SubCategoryResponse>? adminSubCategories) ||
+            !_cache.TryGetValue(UserCategoriesCacheKey, out IEnumerable<CategoryResponse>? userCategories) ||
+            !_cache.TryGetValue(UserSubCategoriesCacheKey, out IEnumerable<SubCategoryResponse>? userSubCategories) ||
+            !_cache.TryGetValue(AnonymousCategoriesCacheKey, out IEnumerable<CategoryResponse>? anonymousCategories) ||
+            !_cache.TryGetValue(AnonymousSubCategoriesCacheKey, out IEnumerable<SubCategoryResponse>? anonymousSubCategories))
         {
             var categories = (await _menuService.GetAllCategoriesAsync()).ToList();
             var subCategories = (await _menuService.GetAllSubCategoriesAsync()).ToList();
@@ -296,7 +296,7 @@ public class AuthorizationFilter : ActionFilterAttribute
                     }
                 }
 
-                foreach (CategoryResponse anonymousCategory in anonymousCategories)
+                foreach (CategoryResponse anonymousCategory in anonymousCategories ?? [])
                 {
                     existingHttpPostMethods = existingControllers
                     .Where(type => type.Name == $"{anonymousCategory.Controller}Controller") // When permission is AnonymousCategory, only registered Category's Controller name is accessible
@@ -335,7 +335,7 @@ public class AuthorizationFilter : ActionFilterAttribute
 
                 if (loginedAccount.Role == Role.Admin) // If logged-in user has Admin role
                 {
-                    foreach (CategoryResponse adminCategory in adminCategories)
+                    foreach (CategoryResponse adminCategory in adminCategories ?? [])
                     {
                         IEnumerable<MethodInfo> existingHttpPostMethods = existingControllers
                         .Where(type => type.Name == $"{adminCategory.Controller}Controller") // When permission is Admin, only registered Category's Controller name is accessible
@@ -369,7 +369,7 @@ public class AuthorizationFilter : ActionFilterAttribute
                 }
                 else if (loginedAccount.Role == Role.User) // If logged-in user has User role
                 {
-                    foreach (CategoryResponse userCategory in userCategories)
+                    foreach (CategoryResponse userCategory in userCategories ?? [])
                     {
                         IEnumerable<MethodInfo> existingHttpPostMethods = existingControllers
                         .Where(type => type.Name == $"{userCategory.Controller}Controller") // When permission is User, only registered Category's Controller name is accessible

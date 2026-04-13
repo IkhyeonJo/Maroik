@@ -610,16 +610,16 @@ public class ManagementController : BaseController
             WorksheetPart worksheetPart = workbookPart.AddNewPart<WorksheetPart>();
             worksheetPart.Worksheet = new Worksheet(new SheetData());
 
-            Sheets sheets = document.WorkbookPart.Workbook.AppendChild(new Sheets());
+            Sheets sheets = document.WorkbookPart!.Workbook.AppendChild(new Sheets());
             Sheet sheet = new Sheet()
             {
-                Id = document.WorkbookPart.GetIdOfPart(worksheetPart),
+                Id = document.WorkbookPart!.GetIdOfPart(worksheetPart),
                 SheetId = 1,
                 Name = "Sheet1"
             };
             sheets.Append(sheet);
 
-            SheetData sheetData = worksheetPart.Worksheet.GetFirstChild<SheetData>();
+            SheetData sheetData = worksheetPart.Worksheet.GetFirstChild<SheetData>()!;
 
             Cell CreateCell(string value)
             {
@@ -1128,16 +1128,16 @@ public class ManagementController : BaseController
             WorksheetPart worksheetPart = workbookPart.AddNewPart<WorksheetPart>();
             worksheetPart.Worksheet = new Worksheet(new SheetData());
 
-            Sheets sheets = spreadsheetDocument.WorkbookPart.Workbook.AppendChild(new Sheets());
+            Sheets sheets = spreadsheetDocument.WorkbookPart!.Workbook.AppendChild(new Sheets());
             Sheet sheet = new Sheet()
             {
-                Id = spreadsheetDocument.WorkbookPart.GetIdOfPart(worksheetPart),
+                Id = spreadsheetDocument.WorkbookPart!.GetIdOfPart(worksheetPart),
                 SheetId = 1,
                 Name = "Sheet1"
             };
             sheets.Append(sheet);
 
-            SheetData sheetData = worksheetPart.Worksheet.GetFirstChild<SheetData>();
+            SheetData sheetData = worksheetPart.Worksheet.GetFirstChild<SheetData>()!;
 
             Cell CreateCell(string value)
             {

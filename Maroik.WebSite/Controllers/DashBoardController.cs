@@ -36,7 +36,7 @@ public class DashBoardController(
     [RequiredHttpPostAccess(Role = Role.Anonymous)]
     public IActionResult CultureManagement([FromBody] LoginInputViewModel loginInputViewModel)
     {
-        Response.Cookies.Append(CookieRequestCultureProvider.DefaultCookieName, CookieRequestCultureProvider.MakeCookieValue(new RequestCulture(loginInputViewModel.Culture)),
+        Response.Cookies.Append(CookieRequestCultureProvider.DefaultCookieName, CookieRequestCultureProvider.MakeCookieValue(new RequestCulture(loginInputViewModel.Culture!)),
             new CookieOptions { Expires = DateTimeOffset.Now.AddDays(30), Secure = true, HttpOnly = true, SameSite = SameSiteMode.Strict });
 
         return Json(new { result = true });
@@ -86,7 +86,7 @@ public class DashBoardController(
         var vm = new UserIndexOutputViewModel
         {
             DefaultMonetaryUnit = summary.DefaultMonetaryUnit,
-            MonetaryUnits = summary.MonetaryUnits,
+            MonetaryUnits = summary.MonetaryUnits?.Where(x => x != null).Select(x => x!),
             StartYear = summary.StartYear,
             EndYear = summary.EndYear,
             SelectedYear = summary.SelectedYear,

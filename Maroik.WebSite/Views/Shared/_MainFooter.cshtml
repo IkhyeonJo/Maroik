@@ -11,15 +11,15 @@
 <footer class="main-footer text-sm">
     @if(Model.Role == Role.Admin)
     {
-        <strong><span id="mainFooterYear">Copyright &copy; 2021-@DateTime.UtcNow.ConvertTimeByTimeZoneIanaId(Model?.TimeZoneIanaId).Year </span><a href="@ViewBag.DomainName">Maroik</a>.</strong>
+        <strong><span id="mainFooterYear">Copyright &copy; 2021-@DateTime.UtcNow.ConvertTimeByTimeZoneIanaId(Model!.TimeZoneIanaId).Year</span><a href="@ViewBag.DomainName">Maroik</a>.</strong>
     }
     else if (Model.Role == Role.User)
     {
-        <strong><span id="mainFooterYear">Copyright &copy; 2021-@DateTime.UtcNow.ConvertTimeByTimeZoneIanaId(Model?.TimeZoneIanaId).Year </span><a href="@ViewBag.DomainName">Maroik</a>.</strong>
+        <strong><span id="mainFooterYear">Copyright &copy; 2021-@DateTime.UtcNow.ConvertTimeByTimeZoneIanaId(Model!.TimeZoneIanaId).Year</span><a href="@ViewBag.DomainName">Maroik</a>.</strong>
     }
     else if (Model.Role == Role.Anonymous)
     {
-        <strong><span id="mainFooterYear">Copyright &copy; 2021-@DateTime.UtcNow.ConvertTimeByTimeZoneIanaId(Model?.TimeZoneIanaId).Year </span><a href="@ViewBag.DomainName">Maroik</a>.</strong>
+        <strong><span id="mainFooterYear">Copyright &copy; 2021-@DateTime.UtcNow.ConvertTimeByTimeZoneIanaId(Model!.TimeZoneIanaId).Year</span><a href="@ViewBag.DomainName">Maroik</a>.</strong>
     }
     All rights reserved.
     <div class="float-right d-none d-sm-inline-block">

@@ -28,7 +28,7 @@ System.Timers.Timer certTimer;
 
 using var startupLoggerFactory = LoggerFactory.Create(b => b.AddConsole());
 var certLogger = startupLoggerFactory.CreateLogger("CertificateManager");
-ILogger certRuntimeLogger = null;
+ILogger? certRuntimeLogger = null;
 
 var builder = WebApplication.CreateBuilder(args);
 

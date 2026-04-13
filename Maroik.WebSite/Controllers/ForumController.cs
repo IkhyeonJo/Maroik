@@ -281,8 +281,8 @@ public class ForumController : BaseController
                 DetailBoardId = boardId ?? default
             };
 
-            BoardResponse freeBoard = await _boardService.GetBoardByIdAsync(boardId ?? 0);
-            BoardAttachedFileResponse boardAttachedFile = await _boardService.GetAttachedFileByBoardIdAsync(boardId ?? 0);
+            BoardResponse? freeBoard = await _boardService.GetBoardByIdAsync(boardId ?? 0);
+            BoardAttachedFileResponse? boardAttachedFile = await _boardService.GetAttachedFileByBoardIdAsync(boardId ?? 0);
 
             try
             {
@@ -303,7 +303,7 @@ public class ForumController : BaseController
 
                 #region Encrypt img tag file path
                 HtmlDocument htmlDocument = new();
-                htmlDocument.LoadHtml(freeBoard.Content);
+                htmlDocument.LoadHtml(freeBoard.Content ?? "");
                 bool isImgTagIncluded = false;
 
                 foreach (HtmlNode imgTag in htmlDocument.DocumentNode.Descendants("img") ?? [])
@@ -312,7 +312,7 @@ public class ForumController : BaseController
                     string filePath = imgTag.GetAttributeValue("alt", "");
 
                     // Method to download file
-                    byte[] fileData = await _boardService.DownloadFileAsync(filePath);
+                    byte[]? fileData = await _boardService.DownloadFileAsync(filePath);
 
                     if (fileData != null)
                     {
@@ -320,7 +320,7 @@ public class ForumController : BaseController
                         FileExtensionContentTypeProvider provider = new();
 
                         // Set default contentType to "application/octet-stream"
-                        if (!provider.TryGetContentType(filePath, out string contentType))
+                        if (!provider.TryGetContentType(filePath, out string? contentType))
                         {
                             contentType = "application/octet-stream";
                         }
@@ -354,7 +354,7 @@ public class ForumController : BaseController
 
                 if (!string.IsNullOrEmpty(freeForumOutputViewModel?.BoardOutputViewModel?.BoardAttachedFilePath ?? ""))
                 {
-                    byte[] fileData = await _boardService.DownloadFileAsync(freeForumOutputViewModel?.BoardOutputViewModel?.BoardAttachedFilePath ?? "");
+                    byte[]? fileData = await _boardService.DownloadFileAsync(freeForumOutputViewModel?.BoardOutputViewModel?.BoardAttachedFilePath ?? "");
 
                     if (fileData != null)
                     {
@@ -362,13 +362,13 @@ public class ForumController : BaseController
                         FileExtensionContentTypeProvider provider = new();
 
                         // Set default contentType to "application/octet-stream"
-                        if (!provider.TryGetContentType(freeForumOutputViewModel?.BoardOutputViewModel?.BoardAttachedFilePath ?? "", out string contentType))
+                        if (!provider.TryGetContentType(freeForumOutputViewModel?.BoardOutputViewModel?.BoardAttachedFilePath ?? "", out string? contentType))
                         {
                             contentType = "application/octet-stream";
                         }
 
                         // Convert file data to Base64
-                        freeForumOutputViewModel.BoardOutputViewModel.BoardAttachedFileBase64Data = Convert.ToBase64String(fileData);
+                        freeForumOutputViewModel!.BoardOutputViewModel.BoardAttachedFileBase64Data = Convert.ToBase64String(fileData);
                         freeForumOutputViewModel.BoardOutputViewModel.BoardAttachedFileContentType = contentType;
                     }
                 }
@@ -378,6 +378,7 @@ public class ForumController : BaseController
                 var detailNicknames = freeForumOutputViewModel.DetailBoardComments.Select(c => c.Writer)
                     .Append(freeBoard.Writer ?? "")
                     .Where(w => !string.IsNullOrEmpty(w))
+                    .Select(w => w!)
                     .Distinct();
                 freeForumOutputViewModel.AllAccounts = await _accountService.GetAccountsByNicknamesAsync(detailNicknames) ?? [];
                 freeForumOutputViewModel.LoginedAccount = _sessionService.GetAccount() ?? new AccountResponse { Role = Role.Anonymous };
@@ -405,8 +406,8 @@ public class ForumController : BaseController
                 EditBoardId = boardId ?? default
             };
 
-            BoardResponse freeBoard = await _boardService.GetBoardByIdAsync(boardId ?? 0);
-            BoardAttachedFileResponse boardAttachedFile = await _boardService.GetAttachedFileByBoardIdAsync(boardId ?? 0);
+            BoardResponse? freeBoard = await _boardService.GetBoardByIdAsync(boardId ?? 0);
+            BoardAttachedFileResponse? boardAttachedFile = await _boardService.GetAttachedFileByBoardIdAsync(boardId ?? 0);
 
             try
             {
@@ -422,7 +423,7 @@ public class ForumController : BaseController
 
                 #region Encrypt img tag file path
                 HtmlDocument htmlDocument = new();
-                htmlDocument.LoadHtml(freeBoard.Content);
+                htmlDocument.LoadHtml(freeBoard.Content ?? "");
                 bool isImgTagIncluded = false;
 
                 foreach (HtmlNode imgTag in htmlDocument.DocumentNode.Descendants("img") ?? [])
@@ -431,7 +432,7 @@ public class ForumController : BaseController
                     string filePath = imgTag.GetAttributeValue("alt", "");
 
                     // Method to download file
-                    byte[] fileData = await _boardService.DownloadFileAsync(filePath);
+                    byte[]? fileData = await _boardService.DownloadFileAsync(filePath);
 
                     if (fileData != null)
                     {
@@ -439,7 +440,7 @@ public class ForumController : BaseController
                         FileExtensionContentTypeProvider provider = new();
 
                         // Set default contentType to "application/octet-stream"
-                        if (!provider.TryGetContentType(filePath, out string contentType))
+                        if (!provider.TryGetContentType(filePath, out string? contentType))
                         {
                             contentType = "application/octet-stream";
                         }
@@ -474,7 +475,7 @@ public class ForumController : BaseController
 
                 if (!string.IsNullOrEmpty(freeForumOutputViewModel?.BoardOutputViewModel?.BoardAttachedFilePath ?? ""))
                 {
-                    byte[] fileData = await _boardService.DownloadFileAsync(freeForumOutputViewModel?.BoardOutputViewModel?.BoardAttachedFilePath ?? "");
+                    byte[]? fileData = await _boardService.DownloadFileAsync(freeForumOutputViewModel?.BoardOutputViewModel?.BoardAttachedFilePath ?? "");
 
                     if (fileData != null)
                     {
@@ -482,13 +483,13 @@ public class ForumController : BaseController
                         FileExtensionContentTypeProvider provider = new();
 
                         // Set default contentType to "application/octet-stream"
-                        if (!provider.TryGetContentType(freeForumOutputViewModel?.BoardOutputViewModel?.BoardAttachedFilePath ?? "", out string contentType))
+                        if (!provider.TryGetContentType(freeForumOutputViewModel?.BoardOutputViewModel?.BoardAttachedFilePath ?? "", out string? contentType))
                         {
                             contentType = "application/octet-stream";
                         }
 
                         // Convert file data to Base64
-                        freeForumOutputViewModel.BoardOutputViewModel.BoardAttachedFileBase64Data = Convert.ToBase64String(fileData);
+                        freeForumOutputViewModel!.BoardOutputViewModel.BoardAttachedFileBase64Data = Convert.ToBase64String(fileData);
                         freeForumOutputViewModel.BoardOutputViewModel.BoardAttachedFileContentType = contentType;
                     }
                 }
@@ -527,13 +528,13 @@ public class ForumController : BaseController
 
                     if (loginedAccount.Role == Role.Admin) // Administrator can see all posts
                     {
-                        freeBoards = freeBoards.Where(a => a.Title.Contains(searchText));
+                        freeBoards = freeBoards.Where(a => (a.Title ?? "").Contains(searchText));
                     }
                     else if (loginedAccount.Role == Role.User) // User can see regular posts + their own private posts
                     {
                         List<BoardResponse> searchFreeBoards = [];
-                        List<BoardResponse> noLockedFreeBoards = freeBoards.Where(a => a.Title.Contains(searchText)).Where(a => !a.Locked).ToList();
-                        List<BoardResponse> myLockedFreeBoards = freeBoards.Where(a => a.Title.Contains(searchText)).Where(a => a.Locked && a.Writer == loginedAccount.Nickname).ToList();
+                        List<BoardResponse> noLockedFreeBoards = freeBoards.Where(a => (a.Title ?? "").Contains(searchText)).Where(a => !a.Locked).ToList();
+                        List<BoardResponse> myLockedFreeBoards = freeBoards.Where(a => (a.Title ?? "").Contains(searchText)).Where(a => a.Locked && a.Writer == loginedAccount.Nickname).ToList();
                         searchFreeBoards.AddRange(noLockedFreeBoards);
                         searchFreeBoards.AddRange(myLockedFreeBoards);
 
@@ -546,12 +547,12 @@ public class ForumController : BaseController
                 }
                 else // If not logged in
                 {
-                    freeBoards = freeBoards.Where(a => a.Title.Contains(searchText)).Where(a => !a.Locked); // When not logged in, private posts should not be searchable
+                    freeBoards = freeBoards.Where(a => (a.Title ?? "").Contains(searchText)).Where(a => !a.Locked); // When not logged in, private posts should not be searchable
                 }
             }
             else if (searchType == "Writer" && !string.IsNullOrEmpty(searchText))
             {
-                freeBoards = freeBoards.Where(a => a.Writer.Contains(searchText));
+                freeBoards = freeBoards.Where(a => (a.Writer ?? "").Contains(searchText));
             }
             #endregion
 
@@ -579,6 +580,7 @@ public class ForumController : BaseController
             var listNicknames = freeForumOutputViewModel.NoticeBoards.Select(b => b.Writer)
                 .Concat(freeForumOutputViewModel.Boards.Select(b => b.Writer))
                 .Where(w => !string.IsNullOrEmpty(w))
+                .Select(w => w!)
                 .Distinct();
             freeForumOutputViewModel.AllAccounts = await _accountService.GetAccountsByNicknamesAsync(listNicknames) ?? [];
 
@@ -587,18 +589,18 @@ public class ForumController : BaseController
                 .Distinct().ToList();
 
             Dictionary<long, int> commentCounts = await _boardService.GetCommentCountsForBoardsAsync(allBoardIds);
-            Dictionary<long, BoardAttachedFileResponse> attachedFiles = await _boardService.GetAttachedFilesForBoardsAsync(allBoardIds);
+            Dictionary<long, BoardAttachedFileResponse?> attachedFiles = await _boardService.GetAttachedFilesForBoardsAsync(allBoardIds);
 
             foreach (var board in freeForumOutputViewModel.NoticeBoards)
             {
                 freeForumOutputViewModel.CommentCountByBoardId[board.Id] = commentCounts.GetValueOrDefault(board.Id, 0);
-                BoardAttachedFileResponse af = attachedFiles.GetValueOrDefault(board.Id);
+                BoardAttachedFileResponse? af = attachedFiles.GetValueOrDefault(board.Id);
                 freeForumOutputViewModel.AttachedFilesByBoardId[board.Id] = af != null && !string.IsNullOrEmpty(af.Name) ? [af] : [];
             }
             foreach (var board in freeForumOutputViewModel.Boards)
             {
                 freeForumOutputViewModel.CommentCountByBoardId[board.Id] = commentCounts.GetValueOrDefault(board.Id, 0);
-                BoardAttachedFileResponse af = attachedFiles.GetValueOrDefault(board.Id);
+                BoardAttachedFileResponse? af = attachedFiles.GetValueOrDefault(board.Id);
                 freeForumOutputViewModel.AttachedFilesByBoardId[board.Id] = af != null && !string.IsNullOrEmpty(af.Name) ? [af] : [];
             }
             #endregion
@@ -620,7 +622,7 @@ public class ForumController : BaseController
     {
         try
         {
-            BoardResponse board = await _boardService.GetBoardByIdAsync(id);
+            BoardResponse? board = await _boardService.GetBoardByIdAsync(id);
 
             return board == null || board.Deleted
                 ? Json(new { result = false, error = _localizer["Input is invalid"].Value })

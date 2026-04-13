@@ -37,14 +37,14 @@ public class MappingConfig : IRegister
         // InputViewModel → Request: Password (plain text) has no matching dest property;
         // HashedPassword is computed server-side and must NOT be overwritten by mapping.
         config.NewConfig<MgmtAccountInput, AccountRequest>()
-            .Ignore(dest => dest.HashedPassword);
+            .Ignore(dest => dest.HashedPassword!);
 
         // ── Asset ─────────────────────────────────────────────────────────────
         config.NewConfig<AssetResponse, AssetOutputViewModel>();
 
         // AccountEmail is set server-side from the session, not from the form.
         config.NewConfig<AssetInputViewModel, AssetRequest>()
-            .Ignore(dest => dest.AccountEmail);
+            .Ignore(dest => dest.AccountEmail!);
 
         // ── Expenditure ───────────────────────────────────────────────────────
         // MonetaryUnit exists in OutputViewModel but not in ExpenditureResponse;
@@ -53,14 +53,14 @@ public class MappingConfig : IRegister
         config.NewConfig<ExpenditureResponse, DashBoardExpOutput>();
 
         config.NewConfig<ExpenditureInputViewModel, ExpenditureRequest>()
-            .Ignore(dest => dest.AccountEmail);
+            .Ignore(dest => dest.AccountEmail!);
 
         // ── Income ────────────────────────────────────────────────────────────
         config.NewConfig<IncomeResponse, AccountBookIncOutput>();
         config.NewConfig<IncomeResponse, DashBoardIncOutput>();
 
         config.NewConfig<IncomeInputViewModel, IncomeRequest>()
-            .Ignore(dest => dest.AccountEmail);
+            .Ignore(dest => dest.AccountEmail!);
 
         // ── Fixed Expenditure ─────────────────────────────────────────────────
         // MaturityDate: DateTime (DTO) ↔ string (ViewModel) - explicit conversion required.
@@ -70,7 +70,7 @@ public class MappingConfig : IRegister
 
         config.NewConfig<FixedExpenditureInputViewModel, FixedExpenditureRequest>()
             .Map(dest => dest.MaturityDate, src => ParseDate(src.MaturityDate))
-            .Ignore(dest => dest.AccountEmail);
+            .Ignore(dest => dest.AccountEmail!);
 
         // ── Fixed Income ──────────────────────────────────────────────────────
         config.NewConfig<FixedIncomeResponse, FixedIncomeOutputViewModel>()
@@ -78,22 +78,22 @@ public class MappingConfig : IRegister
 
         config.NewConfig<FixedIncomeInputViewModel, FixedIncomeRequest>()
             .Map(dest => dest.MaturityDate, src => ParseDate(src.MaturityDate))
-            .Ignore(dest => dest.AccountEmail);
+            .Ignore(dest => dest.AccountEmail!);
 
         // ── Board ─────────────────────────────────────────────────────────────
         // UploadedFile (IFormFile) has no matching property in BoardRequest - ignored automatically.
         // Writer / Type / Created / Updated / View / Deleted are set server-side.
         config.NewConfig<ForumBoardInput, BoardRequest>()
-            .Ignore(dest => dest.Writer)
-            .Ignore(dest => dest.Type)
+            .Ignore(dest => dest.Writer!)
+            .Ignore(dest => dest.Type!)
             .Ignore(dest => dest.Created)
             .Ignore(dest => dest.Updated)
             .Ignore(dest => dest.View)
             .Ignore(dest => dest.Deleted);
 
         config.NewConfig<MgmtBoardInput, BoardRequest>()
-            .Ignore(dest => dest.Writer)
-            .Ignore(dest => dest.Type)
+            .Ignore(dest => dest.Writer!)
+            .Ignore(dest => dest.Type!)
             .Ignore(dest => dest.Created)
             .Ignore(dest => dest.Updated)
             .Ignore(dest => dest.View)

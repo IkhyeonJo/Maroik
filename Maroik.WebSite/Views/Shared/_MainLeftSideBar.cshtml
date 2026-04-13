@@ -10,8 +10,8 @@
 @model Maroik.Core.Contract.Dtos.AccountResponse
 
 @{
-    string currentControllerName = ViewContext.RouteData.Values["Controller"].ToString();
-    string currentActionName = ViewContext.RouteData.Values["Action"].ToString();
+    string currentControllerName = ViewContext.RouteData.Values["Controller"]?.ToString() ?? string.Empty;
+    string currentActionName = ViewContext.RouteData.Values["Action"]?.ToString() ?? string.Empty;
 }
 
 <aside class="main-sidebar sidebar-dark-primary elevation-4">
