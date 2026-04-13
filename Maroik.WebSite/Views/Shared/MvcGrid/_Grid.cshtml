@@ -32,7 +32,7 @@
                 {
                     if (Model.FilterMode == GridFilterMode.Header)
                     {
-                        String[] values = column.Filter.First?.Values ?? [];
+                        String[]? values = column.Filter.First?.Values ?? [];
                         Int32 size = column.Title is String title && title.Length > 0 ? title.Length : 20;
 
                     <div>
@@ -44,7 +44,7 @@
                         }
                         else
                         {
-                        <input class="mvc-grid-value" value="@String.Join(", ", values)" size="@size" placeholder="@(column.Title ?? "")" />
+                        <input class="mvc-grid-value" value="@String.Join(", ", values!)" size="@size" placeholder="@(column.Title ?? "")" />
                         }
                     </div>
                     }
@@ -96,7 +96,7 @@
                     {
                         if (column.Filter.Type == GridFilterType.Multi)
                         {
-                            String[] values = column.Filter.First?.Values ?? [];
+                            String[]? values = column.Filter.First?.Values ?? [];
                             values = column.Filter.Options.Where(option => values.Contains(option.Value)).Select(option => option.Text).ToArray();
 
                         <input class="mvc-grid-value" value="@String.Join(", ", values)" tabindex="-1" readonly />

@@ -86,7 +86,7 @@ public class DashBoardController(
         var vm = new UserIndexOutputViewModel
         {
             DefaultMonetaryUnit = summary.DefaultMonetaryUnit,
-            MonetaryUnits = summary.MonetaryUnits?.Where(x => x != null).Select(x => x!),
+            MonetaryUnits = summary.MonetaryUnits?.Where(x => x != null).Select(x => x!) ?? [],
             StartYear = summary.StartYear,
             EndYear = summary.EndYear,
             SelectedYear = summary.SelectedYear,

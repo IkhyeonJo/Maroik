@@ -374,7 +374,7 @@ public class ForumController : BaseController
                 }
 
                 // Preload comments and accounts for detail view
-                freeForumOutputViewModel.DetailBoardComments = (await _boardService.GetCommentsByBoardIdAsync(boardId ?? 0))?.ToList() ?? [];
+                freeForumOutputViewModel!.DetailBoardComments = (await _boardService.GetCommentsByBoardIdAsync(boardId ?? 0))?.ToList() ?? [];
                 var detailNicknames = freeForumOutputViewModel.DetailBoardComments.Select(c => c.Writer)
                     .Append(freeBoard.Writer ?? "")
                     .Where(w => !string.IsNullOrEmpty(w))

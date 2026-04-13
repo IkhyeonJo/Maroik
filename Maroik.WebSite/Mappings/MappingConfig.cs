@@ -105,7 +105,7 @@ public class MappingConfig : IRegister
         config.NewConfig<CalendarEventInputViewModel, CalendarEventRequest>()
             .Map(dest => dest.StartDate, src => ParseDate(src.StartDate))
             .Map(dest => dest.EndDate, src => ParseDate(src.EndDate))
-            .Ignore(dest => dest.RecurrenceId)
+            .Ignore(dest => dest.RecurrenceId!)
             .Ignore(dest => dest.Created)
             .Ignore(dest => dest.Updated);
 

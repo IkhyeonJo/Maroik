@@ -74,11 +74,11 @@ public class ManagementController : BaseController
     public async Task<IActionResult> Profile()
     {
         string? loginedAccountTimeZoneIanaId = _sessionService.GetAccount()!.TimeZoneIanaId;
-        AccountResponse tempAccount = await _profileService.GetProfileAsync(_sessionService.GetAccount()!.Email!);
+        AccountResponse? tempAccount = await _profileService.GetProfileAsync(_sessionService.GetAccount()!.Email!);
 
         return View(new ProfileOutputViewModel()
         {
-            Email = tempAccount.Email, AvatarImagePath = tempAccount.AvatarImagePath,
+            Email = tempAccount!.Email, AvatarImagePath = tempAccount.AvatarImagePath,
             Nickname = tempAccount.Nickname,
             Created = tempAccount.Created.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId!),
             TimeZoneIanaId = tempAccount.TimeZoneIanaId
@@ -159,12 +159,12 @@ public class ManagementController : BaseController
             try
             {
                 string? email = _sessionService.GetAccount()!.Email;
-                await _profileService.UpdateTimeZoneAsync(email!, profileInputViewModel.TimeZoneIanaId);
+                await _profileService.UpdateTimeZoneAsync(email!, profileInputViewModel.TimeZoneIanaId!);
 
                 // Refresh session with updated timezone
-                AccountResponse updatedAccount = await _profileService.GetProfileAsync(email!);
+                AccountResponse? updatedAccount = await _profileService.GetProfileAsync(email!);
                 _sessionService.RemoveAccount();
-                updatedAccount.HashedPassword = null;
+                updatedAccount!.HashedPassword = null;
                 _sessionService.SetAccount(updatedAccount);
             }
             catch
@@ -241,7 +241,7 @@ public class ManagementController : BaseController
 
                 static bool IsValidEmail(string email)
                 {
-                    if (!MailAddress.TryCreate(email, out MailAddress mailAddress))
+                    if (!MailAddress.TryCreate(email, out MailAddress? mailAddress))
                     {
                         return false;
                     }
@@ -276,7 +276,7 @@ public class ManagementController : BaseController
                     return true;
                 }
 
-                if (!IsValidEmail(accountInputViewModel.Email)) // Invalid email format
+                if (!IsValidEmail(accountInputViewModel.Email!)) // Invalid email format
                 {
                     return Json(new { result = false, error = _localizer["Invalid email form"].Value });
                 }
@@ -287,7 +287,7 @@ public class ManagementController : BaseController
 
                 if (!new Regex(
                             "^((?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])|(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[^a-zA-Z0-9])|(?=.*?[A-Z])(?=.*?[0-9])(?=.*?[^a-zA-Z0-9])|(?=.*?[a-z])(?=.*?[0-9])(?=.*?[^a-zA-Z0-9])).{8,}$")
-                        .IsMatch(accountInputViewModel.Password)) // Invalid password format
+                        .IsMatch(accountInputViewModel.Password!)) // Invalid password format
                 {
                     return Json(new
                     {
@@ -473,7 +473,7 @@ public class ManagementController : BaseController
     {
         try
         {
-            AccountResponse tempAccount = await _managementAccountService.GetAccountByEmailAsync(email);
+            AccountResponse? tempAccount = await _managementAccountService.GetAccountByEmailAsync(email);
 
             return tempAccount == null
                 ? Json(new
@@ -544,7 +544,7 @@ public class ManagementController : BaseController
     {
         try
         {
-            ServiceResult deleteResult = await _managementAccountService.DeleteAccountAsync(accountInputViewModel.Email);
+            ServiceResult deleteResult = await _managementAccountService.DeleteAccountAsync(accountInputViewModel.Email!);
             return deleteResult.Success
                 ? Json(new { result = true, message = _localizer["Successfully deleted the account"].Value })
                 : Json(new { result = false, error = _localizer[deleteResult.ErrorKey ?? "Input is invalid"].Value });
@@ -610,7 +610,7 @@ public class ManagementController : BaseController
             WorksheetPart worksheetPart = workbookPart.AddNewPart<WorksheetPart>();
             worksheetPart.Worksheet = new Worksheet(new SheetData());
 
-            Sheets sheets = document.WorkbookPart!.Workbook.AppendChild(new Sheets());
+            Sheets sheets = document.WorkbookPart!.Workbook!.AppendChild(new Sheets())!;
             Sheet sheet = new Sheet()
             {
                 Id = document.WorkbookPart!.GetIdOfPart(worksheetPart),
@@ -858,7 +858,7 @@ public class ManagementController : BaseController
     {
         try
         {
-            CategoryResponse category = await _menuService.GetCategoryByIdAsync(id);
+            CategoryResponse? category = await _menuService.GetCategoryByIdAsync(id);
             if (category == null)
                 return Json(new { result = false, error = _localizer["Input is invalid"].Value });
 
@@ -890,7 +890,7 @@ public class ManagementController : BaseController
     {
         try
         {
-            SubCategoryResponse subCategory = await _menuService.GetSubCategoryByIdAsync(id);
+            SubCategoryResponse? subCategory = await _menuService.GetSubCategoryByIdAsync(id);
             if (subCategory == null)
                 return Json(new { result = false, error = _localizer["Input is invalid"].Value });
 
@@ -1128,7 +1128,7 @@ public class ManagementController : BaseController
             WorksheetPart worksheetPart = workbookPart.AddNewPart<WorksheetPart>();
             worksheetPart.Worksheet = new Worksheet(new SheetData());
 
-            Sheets sheets = spreadsheetDocument.WorkbookPart!.Workbook.AppendChild(new Sheets());
+            Sheets sheets = spreadsheetDocument.WorkbookPart!.Workbook!.AppendChild(new Sheets())!;
             Sheet sheet = new Sheet()
             {
                 Id = spreadsheetDocument.WorkbookPart!.GetIdOfPart(worksheetPart),
@@ -1434,8 +1434,8 @@ public class ManagementController : BaseController
                 DetailBoardId = boardId ?? default
             };
 
-            BoardResponse privateNoteBoard = await _boardService.GetBoardByIdAsync(boardId ?? 0);
-            BoardAttachedFileResponse attachedFile = await _boardService.GetAttachedFileByBoardIdAsync(boardId ?? 0);
+            BoardResponse? privateNoteBoard = await _boardService.GetBoardByIdAsync(boardId ?? 0);
+            BoardAttachedFileResponse? attachedFile = await _boardService.GetAttachedFileByBoardIdAsync(boardId ?? 0);
 
             try
             {
@@ -1455,7 +1455,7 @@ public class ManagementController : BaseController
                 #region Encrypt img tag file path
 
                 HtmlDocument htmlDocument = new();
-                htmlDocument.LoadHtml(privateNoteBoard.Content);
+                htmlDocument.LoadHtml(privateNoteBoard.Content ?? "");
                 bool isImgTagIncluded = false;
 
                 foreach (HtmlNode imgTag in htmlDocument.DocumentNode.Descendants("img") ?? [])
@@ -1464,7 +1464,7 @@ public class ManagementController : BaseController
                     string filePath = imgTag.GetAttributeValue("alt", "");
 
                     // Method to download file
-                    byte[] fileData = await _boardService.DownloadFileAsync(filePath);
+                    byte[]? fileData = await _boardService.DownloadFileAsync(filePath);
 
                     if (fileData != null)
                     {
@@ -1472,7 +1472,7 @@ public class ManagementController : BaseController
                         FileExtensionContentTypeProvider provider = new();
 
                         // Set default contentType to "application/octet-stream"
-                        if (!provider.TryGetContentType(filePath, out string contentType))
+                        if (!provider.TryGetContentType(filePath, out string? contentType))
                         {
                             contentType = "application/octet-stream";
                         }
@@ -1509,7 +1509,7 @@ public class ManagementController : BaseController
                 if (!string.IsNullOrEmpty(privateNoteOutputViewModel?.BoardOutputViewModel?.BoardAttachedFilePath ??
                                           ""))
                 {
-                    byte[] fileData = await _boardService.DownloadFileAsync(
+                    byte[]? fileData = await _boardService.DownloadFileAsync(
                         privateNoteOutputViewModel?.BoardOutputViewModel?.BoardAttachedFilePath ?? "");
 
                     if (fileData != null)
@@ -1520,19 +1520,19 @@ public class ManagementController : BaseController
                         // Set default contentType to "application/octet-stream"
                         if (!provider.TryGetContentType(
                                 privateNoteOutputViewModel?.BoardOutputViewModel?.BoardAttachedFilePath ?? "",
-                                out string contentType))
+                                out string? contentType))
                         {
                             contentType = "application/octet-stream";
                         }
 
                         // Convert file data to Base64
-                        privateNoteOutputViewModel.BoardOutputViewModel.BoardAttachedFileBase64Data =
+                        privateNoteOutputViewModel!.BoardOutputViewModel.BoardAttachedFileBase64Data =
                             Convert.ToBase64String(fileData);
                         privateNoteOutputViewModel.BoardOutputViewModel.BoardAttachedFileContentType = contentType;
                     }
 
                 // Preload comments and accounts for detail view
-                privateNoteOutputViewModel.DetailBoardComments = (await _boardService.GetCommentsByBoardIdAsync(boardId ?? 0))?.ToList() ?? [];
+                privateNoteOutputViewModel!.DetailBoardComments = (await _boardService.GetCommentsByBoardIdAsync(boardId ?? 0))?.ToList() ?? [];
                 privateNoteOutputViewModel.AllAccounts = await _accountService.GetAllAccountsAsync() ?? [];
                 privateNoteOutputViewModel.LoginedAccount = loginedAccount;
                 privateNoteOutputViewModel.LoginedAccountTimeZoneIanaId = loginedAccount?.TimeZoneIanaId ?? "";
@@ -1562,8 +1562,8 @@ public class ManagementController : BaseController
 
             AccountResponse loginedAccount = _sessionService.GetAccount()!;
 
-            BoardResponse privateNoteBoard = await _boardService.GetBoardByIdAsync(boardId ?? 0);
-            BoardAttachedFileResponse attachedFile = await _boardService.GetAttachedFileByBoardIdAsync(boardId ?? 0);
+            BoardResponse? privateNoteBoard = await _boardService.GetBoardByIdAsync(boardId ?? 0);
+            BoardAttachedFileResponse? attachedFile = await _boardService.GetAttachedFileByBoardIdAsync(boardId ?? 0);
 
             try
             {
@@ -1575,7 +1575,7 @@ public class ManagementController : BaseController
                 #region Encrypt img tag file path
 
                 HtmlDocument htmlDocument = new();
-                htmlDocument.LoadHtml(privateNoteBoard.Content);
+                htmlDocument.LoadHtml(privateNoteBoard.Content ?? "");
                 bool isImgTagIncluded = false;
 
                 foreach (HtmlNode imgTag in htmlDocument.DocumentNode.Descendants("img") ?? [])
@@ -1584,7 +1584,7 @@ public class ManagementController : BaseController
                     string filePath = imgTag.GetAttributeValue("alt", "");
 
                     // Method to download file
-                    byte[] fileData = await _boardService.DownloadFileAsync(filePath);
+                    byte[]? fileData = await _boardService.DownloadFileAsync(filePath);
 
                     if (fileData != null)
                     {
@@ -1592,7 +1592,7 @@ public class ManagementController : BaseController
                         FileExtensionContentTypeProvider provider = new();
 
                         // Set default contentType to "application/octet-stream"
-                        if (!provider.TryGetContentType(filePath, out string contentType))
+                        if (!provider.TryGetContentType(filePath, out string? contentType))
                         {
                             contentType = "application/octet-stream";
                         }
@@ -1630,7 +1630,7 @@ public class ManagementController : BaseController
                 if (!string.IsNullOrEmpty(privateNoteOutputViewModel?.BoardOutputViewModel?.BoardAttachedFilePath ??
                                           ""))
                 {
-                    byte[] fileData = await _boardService.DownloadFileAsync(
+                    byte[]? fileData = await _boardService.DownloadFileAsync(
                         privateNoteOutputViewModel?.BoardOutputViewModel?.BoardAttachedFilePath ?? "");
 
                     if (fileData != null)
@@ -1641,13 +1641,13 @@ public class ManagementController : BaseController
                         // Set default contentType to "application/octet-stream"
                         if (!provider.TryGetContentType(
                                 privateNoteOutputViewModel?.BoardOutputViewModel?.BoardAttachedFilePath ?? "",
-                                out string contentType))
+                                out string? contentType))
                         {
                             contentType = "application/octet-stream";
                         }
 
                         // Convert file data to Base64
-                        privateNoteOutputViewModel.BoardOutputViewModel.BoardAttachedFileBase64Data =
+                        privateNoteOutputViewModel!.BoardOutputViewModel.BoardAttachedFileBase64Data =
                             Convert.ToBase64String(fileData);
                         privateNoteOutputViewModel.BoardOutputViewModel.BoardAttachedFileContentType = contentType;
                     }
@@ -1692,15 +1692,15 @@ public class ManagementController : BaseController
                 {
                     if (loginedAccount.Role == Role.Admin) // Administrator can see all posts
                     {
-                        privateNoteBoards = privateNoteBoards.Where(a => a.Title.Contains(searchText));
+                        privateNoteBoards = privateNoteBoards.Where(a => a.Title!.Contains(searchText));
                     }
                     else if (loginedAccount.Role == Role.User) // User can see regular posts + their own private posts
                     {
                         List<BoardResponse> searchPrivateNoteBoards = [];
                         List<BoardResponse> noLockedPrivateNoteBoards = privateNoteBoards
-                            .Where(a => a.Title.Contains(searchText)).Where(a => !a.Locked).ToList();
+                            .Where(a => a.Title!.Contains(searchText)).Where(a => !a.Locked).ToList();
                         List<BoardResponse> myLockedPrivateNoteBoards = privateNoteBoards
-                            .Where(a => a.Title.Contains(searchText))
+                            .Where(a => a.Title!.Contains(searchText))
                             .Where(a => a.Locked && a.Writer == loginedAccount.Nickname).ToList();
                         searchPrivateNoteBoards.AddRange(noLockedPrivateNoteBoards);
                         searchPrivateNoteBoards.AddRange(myLockedPrivateNoteBoards);
@@ -1713,13 +1713,13 @@ public class ManagementController : BaseController
                 }
                 else // If not logged in
                 {
-                    privateNoteBoards = privateNoteBoards.Where(a => a.Title.Contains(searchText))
+                    privateNoteBoards = privateNoteBoards.Where(a => a.Title!.Contains(searchText))
                         .Where(a => !a.Locked); // When not logged in, private posts should not be searchable
                 }
             }
             else if (searchType == "Writer" && !string.IsNullOrEmpty(searchText))
             {
-                privateNoteBoards = privateNoteBoards.Where(a => a.Writer.Contains(searchText));
+                privateNoteBoards = privateNoteBoards.Where(a => a.Writer!.Contains(searchText));
             }
 
             #endregion
@@ -1758,12 +1758,12 @@ public class ManagementController : BaseController
 
             List<long> boardIds = privateNoteOutputViewModel.Boards.Select(b => b.Id).ToList();
             Dictionary<long, int> commentCounts = await _boardService.GetCommentCountsForBoardsAsync(boardIds);
-            Dictionary<long, BoardAttachedFileResponse> attachedFiles = await _boardService.GetAttachedFilesForBoardsAsync(boardIds);
+            Dictionary<long, BoardAttachedFileResponse?> attachedFiles = await _boardService.GetAttachedFilesForBoardsAsync(boardIds);
 
             foreach (var board in privateNoteOutputViewModel.Boards)
             {
                 privateNoteOutputViewModel.CommentCountByBoardId[board.Id] = commentCounts.GetValueOrDefault(board.Id, 0);
-                BoardAttachedFileResponse af = attachedFiles.GetValueOrDefault(board.Id);
+                BoardAttachedFileResponse? af = attachedFiles.GetValueOrDefault(board.Id);
                 privateNoteOutputViewModel.AttachedFilesByBoardId[board.Id] = af != null && !string.IsNullOrEmpty(af.Name) ? [af] : [];
             }
             #endregion
@@ -1788,7 +1788,7 @@ public class ManagementController : BaseController
         try
         {
             string? nickname = _sessionService.GetAccount()!.Nickname;
-            BoardResponse board = await _boardService.GetBoardByIdAsync(id);
+            BoardResponse? board = await _boardService.GetBoardByIdAsync(id);
 
             return board == null || board.Deleted || board.Writer != nickname
                 ? Json(new { result = false, error = _localizer["Input is invalid"].Value })

@@ -184,13 +184,13 @@ public class CalendarController : BaseController
 
                     foreach (TimeZoneInfo tz in TimeZoneInfo.GetSystemTimeZones())
                     {
-                        string tzId = tz.HasIanaId ? tz.Id : (TimeZoneInfo.TryConvertWindowsIdToIanaId(tz.Id, out string id) ? id : string.Empty);
+                        string tzId = tz.HasIanaId ? tz.Id : (TimeZoneInfo.TryConvertWindowsIdToIanaId(tz.Id, out string? id) ? id : string.Empty);
                         if (!string.IsNullOrEmpty(tzId) && tzId == calendarEventInputViewModel.StartDateTimeZoneIanaId)
                         { tempStartDate = TimeZoneInfo.ConvertTime(tempStartDate, tz, TimeZoneInfo.Utc); break; }
                     }
                     foreach (TimeZoneInfo tz in TimeZoneInfo.GetSystemTimeZones())
                     {
-                        string tzId = tz.HasIanaId ? tz.Id : (TimeZoneInfo.TryConvertWindowsIdToIanaId(tz.Id, out string id) ? id : string.Empty);
+                        string tzId = tz.HasIanaId ? tz.Id : (TimeZoneInfo.TryConvertWindowsIdToIanaId(tz.Id, out string? id) ? id : string.Empty);
                         if (!string.IsNullOrEmpty(tzId) && tzId == calendarEventInputViewModel.EndDateTimeZoneIanaId)
                         { tempEndDate = TimeZoneInfo.ConvertTime(tempEndDate, tz, TimeZoneInfo.Utc); break; }
                     }
@@ -1182,10 +1182,10 @@ public class CalendarController : BaseController
 
                     List<CalendarResponse> calendars = await _calendarService.GetCalendarsAsync(loginedAccount.Email!) ?? [];
 
-                    CalendarEventResponse? tempCalendarEvent = await _calendarService.GetCalendarEventAsync(id);
-                    CalendarResponse tempCalendar = calendars?.Where(x => x.Id == tempCalendarEvent!.CalendarId)?.FirstOrDefault() ?? new CalendarResponse();
+                    CalendarEventResponse tempCalendarEvent = (await _calendarService.GetCalendarEventAsync(id))!;
+                    CalendarResponse tempCalendar = calendars?.Where(x => x.Id == tempCalendarEvent.CalendarId)?.FirstOrDefault() ?? new CalendarResponse();
 
-                    if (!(tempCalendarEvent!.Id > 0))
+                    if (!(tempCalendarEvent.Id > 0))
                     {
                         return Json(new { result = false, error = _localizer["Input is invalid"].Value });
                     }
@@ -1204,14 +1204,14 @@ public class CalendarController : BaseController
                     };
 
                     HtmlDocument htmlDocument = new();
-                    htmlDocument.LoadHtml(tempCalendarEvent.Description);
+                    htmlDocument.LoadHtml(tempCalendarEvent.Description ?? "");
 
                     foreach (HtmlNode imgTag in htmlDocument.DocumentNode.Descendants("img") ?? [])
                     {
                         string filePath = imgTag.GetAttributeValue("alt", "");
 
                         // Method to download file
-                        byte[] fileData = await _calendarService.DownloadFileAsync(filePath);
+                        byte[]? fileData = await _calendarService.DownloadFileAsync(filePath);
 
                         if (fileData != null)
                         {
@@ -1219,7 +1219,7 @@ public class CalendarController : BaseController
                             FileExtensionContentTypeProvider provider = new();
 
                             // Default contentType is set to "application/octet-stream"
-                            if (!provider.TryGetContentType(filePath, out string contentType))
+                            if (!provider.TryGetContentType(filePath, out string? contentType))
                             {
                                 contentType = "application/octet-stream";
                             }
@@ -1246,7 +1246,7 @@ public class CalendarController : BaseController
                             {
                                 systemTimeZoneIanaId = systemTimeZone.Id;
                             }
-                            else if (TimeZoneInfo.TryConvertWindowsIdToIanaId(systemTimeZone.Id, out string ianaId))
+                            else if (TimeZoneInfo.TryConvertWindowsIdToIanaId(systemTimeZone.Id, out string? ianaId))
                             {
                                 systemTimeZoneIanaId = ianaId;
                             }
@@ -1272,7 +1272,7 @@ public class CalendarController : BaseController
                             {
                                 systemTimeZoneIanaId = systemTimeZone.Id;
                             }
-                            else if (TimeZoneInfo.TryConvertWindowsIdToIanaId(systemTimeZone.Id, out string ianaId))
+                            else if (TimeZoneInfo.TryConvertWindowsIdToIanaId(systemTimeZone.Id, out string? ianaId))
                             {
                                 systemTimeZoneIanaId = ianaId;
                             }
@@ -1303,7 +1303,7 @@ public class CalendarController : BaseController
                             {
                                 systemTimeZoneIanaId = systemTimeZone.Id;
                             }
-                            else if (TimeZoneInfo.TryConvertWindowsIdToIanaId(systemTimeZone.Id, out string ianaId))
+                            else if (TimeZoneInfo.TryConvertWindowsIdToIanaId(systemTimeZone.Id, out string? ianaId))
                             {
                                 systemTimeZoneIanaId = ianaId;
                             }
@@ -1329,7 +1329,7 @@ public class CalendarController : BaseController
                             {
                                 systemTimeZoneIanaId = systemTimeZone.Id;
                             }
-                            else if (TimeZoneInfo.TryConvertWindowsIdToIanaId(systemTimeZone.Id, out string ianaId))
+                            else if (TimeZoneInfo.TryConvertWindowsIdToIanaId(systemTimeZone.Id, out string? ianaId))
                             {
                                 systemTimeZoneIanaId = ianaId;
                             }
@@ -1357,7 +1357,7 @@ public class CalendarController : BaseController
 
                     if (!string.IsNullOrEmpty(calendarEvent?.CalendarEventAttachedFile?.Path ?? ""))
                     {
-                        byte[] fileData = await _calendarService.DownloadFileAsync(calendarEvent?.CalendarEventAttachedFile?.Path ?? "");
+                        byte[]? fileData = await _calendarService.DownloadFileAsync(calendarEvent?.CalendarEventAttachedFile?.Path ?? "");
 
                         if (fileData != null)
                         {
@@ -1365,18 +1365,18 @@ public class CalendarController : BaseController
                             FileExtensionContentTypeProvider provider = new();
 
                             // Default contentType is set to "application/octet-stream"
-                            if (!provider.TryGetContentType(calendarEvent?.CalendarEventAttachedFile?.Path ?? "", out string contentType))
+                            if (!provider.TryGetContentType(calendarEvent?.CalendarEventAttachedFile?.Path ?? "", out string? contentType))
                             {
                                 contentType = "application/octet-stream";
                             }
 
                             // Convert file data to Base64
-                            calendarEvent.CalendarEventAttachedFileBase64Data = Convert.ToBase64String(fileData);
-                            calendarEvent.CalendarEventAttachedFileContentType = contentType;
+                            calendarEvent!.CalendarEventAttachedFileBase64Data = Convert.ToBase64String(fileData);
+                            calendarEvent!.CalendarEventAttachedFileContentType = contentType;
                         }
                     }
 
-                    calendarEvent.Calendars = calendars.Select(x => new CalendarResponse { Id = x.Id, Name = x.Name }).OrderBy(x => x.Name).ToList();
+                    calendarEvent!.Calendars = calendars!.Select(x => new CalendarResponse { Id = x.Id, Name = x.Name }).OrderBy(x => x.Name).ToList();
                     calendarEvent.SerializedCalendarReminders = JsonConvert.SerializeObject((await _calendarService.GetCalendarEventRemindersAsync(tempCalendarEvent.Id)).Select(x => new CalendarReminderInfo { Method = x.Method ?? "", MinutesBeforeEvent = (int?)x.MinutesBeforeEvent, HoursBeforeEvent = (int?)x.HoursBeforeEvent, DaysBeforeEvent = (int?)x.DaysBeforeEvent, WeeksBeforeEvent = (int?)x.WeeksBeforeEvent, TimesBeforeEvent = x.TimesBeforeEvent?.ToTimeSpan() }) ?? []);
 
                     calendarEvent.HtmlColorCode = calendars?.Where(x => x.Id == tempCalendarEvent.CalendarId)?.FirstOrDefault()?.HtmlColorCode;
@@ -1445,7 +1445,7 @@ public class CalendarController : BaseController
                         }
                     }
 
-                    CalendarEventResponse tempCalendarEvent = await _calendarService.GetCalendarEventAsync(id);
+                    CalendarEventResponse tempCalendarEvent = (await _calendarService.GetCalendarEventAsync(id))!;
                     CalendarResponse tempCalendar = calendars?.Where(x => x.Id == tempCalendarEvent.CalendarId)?.FirstOrDefault() ?? new CalendarResponse();
 
                     if (!(tempCalendarEvent.Id > 0))
@@ -1467,14 +1467,14 @@ public class CalendarController : BaseController
                     };
 
                     HtmlDocument htmlDocument = new();
-                    htmlDocument.LoadHtml(tempCalendarEvent.Description);
+                    htmlDocument.LoadHtml(tempCalendarEvent.Description ?? "");
 
                     foreach (HtmlNode imgTag in htmlDocument.DocumentNode.Descendants("img") ?? [])
                     {
                         string filePath = imgTag.GetAttributeValue("alt", "");
 
                         // Method to download file
-                        byte[] fileData = await _calendarService.DownloadFileAsync(filePath);
+                        byte[]? fileData = await _calendarService.DownloadFileAsync(filePath);
 
                         if (fileData != null)
                         {
@@ -1482,7 +1482,7 @@ public class CalendarController : BaseController
                             FileExtensionContentTypeProvider provider = new();
 
                             // Default contentType is set to "application/octet-stream"
-                            if (!provider.TryGetContentType(filePath, out string contentType))
+                            if (!provider.TryGetContentType(filePath, out string? contentType))
                             {
                                 contentType = "application/octet-stream";
                             }
@@ -1509,7 +1509,7 @@ public class CalendarController : BaseController
                             {
                                 systemTimeZoneIanaId = systemTimeZone.Id;
                             }
-                            else if (TimeZoneInfo.TryConvertWindowsIdToIanaId(systemTimeZone.Id, out string ianaId))
+                            else if (TimeZoneInfo.TryConvertWindowsIdToIanaId(systemTimeZone.Id, out string? ianaId))
                             {
                                 systemTimeZoneIanaId = ianaId;
                             }
@@ -1535,7 +1535,7 @@ public class CalendarController : BaseController
                             {
                                 systemTimeZoneIanaId = systemTimeZone.Id;
                             }
-                            else if (TimeZoneInfo.TryConvertWindowsIdToIanaId(systemTimeZone.Id, out string ianaId))
+                            else if (TimeZoneInfo.TryConvertWindowsIdToIanaId(systemTimeZone.Id, out string? ianaId))
                             {
                                 systemTimeZoneIanaId = ianaId;
                             }
@@ -1566,7 +1566,7 @@ public class CalendarController : BaseController
                             {
                                 systemTimeZoneIanaId = systemTimeZone.Id;
                             }
-                            else if (TimeZoneInfo.TryConvertWindowsIdToIanaId(systemTimeZone.Id, out string ianaId))
+                            else if (TimeZoneInfo.TryConvertWindowsIdToIanaId(systemTimeZone.Id, out string? ianaId))
                             {
                                 systemTimeZoneIanaId = ianaId;
                             }
@@ -1592,7 +1592,7 @@ public class CalendarController : BaseController
                             {
                                 systemTimeZoneIanaId = systemTimeZone.Id;
                             }
-                            else if (TimeZoneInfo.TryConvertWindowsIdToIanaId(systemTimeZone.Id, out string ianaId))
+                            else if (TimeZoneInfo.TryConvertWindowsIdToIanaId(systemTimeZone.Id, out string? ianaId))
                             {
                                 systemTimeZoneIanaId = ianaId;
                             }
@@ -1620,7 +1620,7 @@ public class CalendarController : BaseController
 
                     if (!string.IsNullOrEmpty(calendarEvent?.CalendarEventAttachedFile?.Path ?? ""))
                     {
-                        byte[] fileData = await _calendarService.DownloadFileAsync(calendarEvent?.CalendarEventAttachedFile?.Path ?? "");
+                        byte[]? fileData = await _calendarService.DownloadFileAsync(calendarEvent?.CalendarEventAttachedFile?.Path ?? "");
 
                         if (fileData != null)
                         {
@@ -1628,18 +1628,18 @@ public class CalendarController : BaseController
                             FileExtensionContentTypeProvider provider = new();
 
                             // Default contentType is set to "application/octet-stream"
-                            if (!provider.TryGetContentType(calendarEvent?.CalendarEventAttachedFile?.Path ?? "", out string contentType))
+                            if (!provider.TryGetContentType(calendarEvent?.CalendarEventAttachedFile?.Path ?? "", out string? contentType))
                             {
                                 contentType = "application/octet-stream";
                             }
 
                             // Convert file data to Base64
-                            calendarEvent.CalendarEventAttachedFileBase64Data = Convert.ToBase64String(fileData);
-                            calendarEvent.CalendarEventAttachedFileContentType = contentType;
+                            calendarEvent!.CalendarEventAttachedFileBase64Data = Convert.ToBase64String(fileData);
+                            calendarEvent!.CalendarEventAttachedFileContentType = contentType;
                         }
                     }
 
-                    calendarEvent.Calendars = calendars.Select(x => new CalendarResponse { Id = x.Id, Name = x.Name }).OrderBy(x => x.Name).ToList();
+                    calendarEvent!.Calendars = calendars!.Select(x => new CalendarResponse { Id = x.Id, Name = x.Name }).OrderBy(x => x.Name).ToList();
                     calendarEvent.SerializedCalendarReminders = JsonConvert.SerializeObject((await _calendarService.GetCalendarEventRemindersAsync(tempCalendarEvent.Id)).Select(x => new CalendarReminderInfo { Method = x.Method ?? "", MinutesBeforeEvent = (int?)x.MinutesBeforeEvent, HoursBeforeEvent = (int?)x.HoursBeforeEvent, DaysBeforeEvent = (int?)x.DaysBeforeEvent, WeeksBeforeEvent = (int?)x.WeeksBeforeEvent, TimesBeforeEvent = x.TimesBeforeEvent?.ToTimeSpan() }) ?? []);
 
                     calendarEvent.HtmlColorCode = calendars?.Where(x => x.Id == tempCalendarEvent.CalendarId)?.FirstOrDefault()?.HtmlColorCode;
@@ -1759,7 +1759,7 @@ public class CalendarController : BaseController
                                         {
                                             systemTimeZoneIanaId = systemTimeZone.Id;
                                         }
-                                        else if (TimeZoneInfo.TryConvertWindowsIdToIanaId(systemTimeZone.Id, out string ianaId))
+                                        else if (TimeZoneInfo.TryConvertWindowsIdToIanaId(systemTimeZone.Id, out string? ianaId))
                                         {
                                             systemTimeZoneIanaId = ianaId;
                                         }
@@ -1784,7 +1784,7 @@ public class CalendarController : BaseController
                                         {
                                             systemTimeZoneIanaId = systemTimeZone.Id;
                                         }
-                                        else if (TimeZoneInfo.TryConvertWindowsIdToIanaId(systemTimeZone.Id, out string ianaId))
+                                        else if (TimeZoneInfo.TryConvertWindowsIdToIanaId(systemTimeZone.Id, out string? ianaId))
                                         {
                                             systemTimeZoneIanaId = ianaId;
                                         }
@@ -1818,7 +1818,7 @@ public class CalendarController : BaseController
                                         {
                                             systemTimeZoneIanaId = systemTimeZone.Id;
                                         }
-                                        else if (TimeZoneInfo.TryConvertWindowsIdToIanaId(systemTimeZone.Id, out string ianaId))
+                                        else if (TimeZoneInfo.TryConvertWindowsIdToIanaId(systemTimeZone.Id, out string? ianaId))
                                         {
                                             systemTimeZoneIanaId = ianaId;
                                         }
@@ -1843,7 +1843,7 @@ public class CalendarController : BaseController
                                         {
                                             systemTimeZoneIanaId = systemTimeZone.Id;
                                         }
-                                        else if (TimeZoneInfo.TryConvertWindowsIdToIanaId(systemTimeZone.Id, out string ianaId))
+                                        else if (TimeZoneInfo.TryConvertWindowsIdToIanaId(systemTimeZone.Id, out string? ianaId))
                                         {
                                             systemTimeZoneIanaId = ianaId;
                                         }
@@ -1912,7 +1912,7 @@ public class CalendarController : BaseController
     {
         try
         {
-            List<CalendarResponse> calendars = (await _calendarService.GetCalendarsAsync(_sessionService.GetAccount()!.Email!) ?? [])?.ToList();
+            List<CalendarResponse> calendars = (await _calendarService.GetCalendarsAsync(_sessionService.GetAccount()!.Email!) ?? []).ToList();
 
             foreach (CalendarResponse calendar in calendars)
             {
@@ -1921,7 +1921,7 @@ public class CalendarController : BaseController
 
             List<CalendarSharedResponse> tempCalendarShareds = [];
 
-            foreach (CalendarSharedResponse calendarShared in (await _calendarService.GetCalendarSharedAsync() ?? [])?.ToList())
+            foreach (CalendarSharedResponse calendarShared in (await _calendarService.GetCalendarSharedAsync() ?? []).ToList())
             {
                 CalendarResponse item = calendars.Where(x => x.Id == calendarShared.CalendarId).FirstOrDefault() ?? new CalendarResponse();
 
@@ -2155,13 +2155,13 @@ public class CalendarController : BaseController
 
                     foreach (TimeZoneInfo tz in TimeZoneInfo.GetSystemTimeZones())
                     {
-                        string tzId = tz.HasIanaId ? tz.Id : (TimeZoneInfo.TryConvertWindowsIdToIanaId(tz.Id, out string id) ? id : string.Empty);
+                        string tzId = tz.HasIanaId ? tz.Id : (TimeZoneInfo.TryConvertWindowsIdToIanaId(tz.Id, out string? id) ? id : string.Empty);
                         if (!string.IsNullOrEmpty(tzId) && tzId == calendarEventInputViewModel.StartDateTimeZoneIanaId)
                         { tempStartDate = TimeZoneInfo.ConvertTime(tempStartDate, tz, TimeZoneInfo.Utc); break; }
                     }
                     foreach (TimeZoneInfo tz in TimeZoneInfo.GetSystemTimeZones())
                     {
-                        string tzId = tz.HasIanaId ? tz.Id : (TimeZoneInfo.TryConvertWindowsIdToIanaId(tz.Id, out string id) ? id : string.Empty);
+                        string tzId = tz.HasIanaId ? tz.Id : (TimeZoneInfo.TryConvertWindowsIdToIanaId(tz.Id, out string? id) ? id : string.Empty);
                         if (!string.IsNullOrEmpty(tzId) && tzId == calendarEventInputViewModel.EndDateTimeZoneIanaId)
                         { tempEndDate = TimeZoneInfo.ConvertTime(tempEndDate, tz, TimeZoneInfo.Utc); break; }
                     }
@@ -2218,7 +2218,7 @@ public class CalendarController : BaseController
 
                 ServiceResult updateEventResult = await _calendarService.UpdateCalendarEventAsync(
                     calendarEventRequest,
-                    loginedAccount.Email,
+                    loginedAccount.Email!,
                     $"{loginedAccount.Role}Index",
                     reminders,
                     attachedFile);
@@ -2291,7 +2291,7 @@ public class CalendarController : BaseController
                     return Json(new { result = false, error = _localizer["Login required."].Value });
 
                 ServiceResult otherCalendarResult = await _calendarService.UpdateOtherCalendarAsync(
-                    loginedAccount.Email,
+                    loginedAccount.Email!,
                     otherCalendars.Select(c => c.Adapt<OtherCalendarRequest>()));
 
                 if (!otherCalendarResult.Success)
@@ -2348,7 +2348,7 @@ public class CalendarController : BaseController
     {
         try
         {
-            string email = _sessionService.GetAccount()!.Email;
+            string email = _sessionService.GetAccount()!.Email!;
 
             ServiceResult deleteEventResult = await _calendarService.DeleteCalendarEventAsync(id, email);
 

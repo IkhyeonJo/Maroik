@@ -164,7 +164,7 @@ public class NoticeController : BaseController
                         (item.Content?.ToString() ?? "").Contains(wholeSearch) ||
                         (item.Amount.TrimTrailingZeros() ?? "").Contains(wholeSearch) ||
                         (assets.Where(x => x.ProductName == item.DepositMyAssetProductName).FirstOrDefault()
-                            ?.MonetaryUnit.ToString() ?? "").Contains(wholeSearch) ||
+                            ?.MonetaryUnit?.ToString() ?? "").Contains(wholeSearch) ||
                         (item.DepositMonth.ToString() ?? "").Contains(wholeSearch) ||
                         (item.DepositDay.ToString() ?? "").Contains(wholeSearch) ||
                         (item.MaturityDate.ToString("yyyy-MM-dd") ?? "").Contains(wholeSearch) ||
@@ -446,7 +446,7 @@ public class NoticeController : BaseController
             WorksheetPart worksheetPart = workbookPart.AddNewPart<WorksheetPart>();
             worksheetPart.Worksheet = new Worksheet(new SheetData());
 
-            Sheets sheets = spreadsheetDocument.WorkbookPart!.Workbook.AppendChild(new Sheets());
+            Sheets sheets = spreadsheetDocument.WorkbookPart!.Workbook!.AppendChild(new Sheets());
             Sheet sheet = new Sheet()
             {
                 Id = spreadsheetDocument.WorkbookPart.GetIdOfPart(worksheetPart),
@@ -639,8 +639,8 @@ public class NoticeController : BaseController
                         (item.Content?.ToString() ?? "").Contains(wholeSearch) ||
                         (item.Amount.TrimTrailingZeros() ?? "").Contains(wholeSearch) ||
                         (assets.Where(x => x.ProductName == item.PaymentMethod).FirstOrDefault()?.MonetaryUnit
-                            .ToString() ?? "").Contains(wholeSearch) ||
-                        (item.PaymentMethod.ToString() ?? "").Contains(wholeSearch) ||
+                            ?.ToString() ?? "").Contains(wholeSearch) ||
+                        (item.PaymentMethod?.ToString() ?? "").Contains(wholeSearch) ||
                         (item.MyDepositAsset?.ToString() ?? "").Contains(wholeSearch) ||
                         (item.DepositMonth.ToString() ?? "").Contains(wholeSearch) ||
                         (item.DepositDay.ToString() ?? "").Contains(wholeSearch) ||
@@ -984,8 +984,8 @@ public class NoticeController : BaseController
                 dataRow.Append(
                     CreateCell(_localizer[item?.MainClass?.ToString() ?? ""].Value),
                     CreateCell(_localizer[item?.SubClass?.ToString() ?? ""].Value),
-                    CreateCell(item.Content ?? ""),
-                    CreateCell(Convert.ToDecimal(item.Amount.TrimTrailingZeros()).ToString()),
+                    CreateCell(item?.Content ?? ""),
+                    CreateCell(Convert.ToDecimal(item!.Amount.TrimTrailingZeros()).ToString()),
                     CreateCell(item.MonetaryUnit ?? ""),
                     CreateCell(item.PaymentMethod ?? ""),
                     CreateCell(item.MyDepositAsset ?? ""),

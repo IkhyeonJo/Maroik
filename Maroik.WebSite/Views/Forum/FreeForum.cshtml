@@ -77,11 +77,11 @@
             else if (Model.Method == "detail")
             {
                 <div class="mailbox-read-info">
-                    <h5>@localizer["Title"].Value: @Model.BoardOutputViewModel.Title</h5>
+                    <h5>@localizer["Title"].Value: @Model.BoardOutputViewModel!.Title</h5>
                     <h6>
-                        @localizer["Writer"].Value: @Model.BoardOutputViewModel.Writer
+                        @localizer["Writer"].Value: @Model.BoardOutputViewModel!.Writer
                     </h6>
-                    <span class="mailbox-read-time float-left">@localizer["Views"].Value: @Model.BoardOutputViewModel.Views</span>
+                    <span class="mailbox-read-time float-left">@localizer["Views"].Value: @Model.BoardOutputViewModel!.Views</span>
 
                     @if (loginedAccount.Role == Role.Admin || loginedAccount.Role == Role.User)
                     {
@@ -265,12 +265,12 @@
                     <div asp-validation-summary="ModelOnly" class="text-danger"></div>
                     <div class="form-group">
                         <label for="editBoardTitle">@localizer["Title"].Value</label>
-                        <input class="form-control" type="text" data-val="true" data-val-required="@localizer["Title is required"].Value" id="editBoardTitle" name="editBoardTitle" value="@Model.BoardOutputViewModel.Title" required maxlength="100">
+                        <input class="form-control" type="text" data-val="true" data-val-required="@localizer["Title is required"].Value" id="editBoardTitle" name="editBoardTitle" value="@Model.BoardOutputViewModel!.Title" required maxlength="100">
                         <span class="field-validation-valid text-danger" data-valmsg-for="editBoardTitle" data-valmsg-replace="true"></span>
                     </div>
-                    <div id="divEditBoardContent" class="form-group" style="@(Model.BoardOutputViewModel.IsImgTagIncluded ? "display:none;" : "")">
+                    <div id="divEditBoardContent" class="form-group" style="@(Model.BoardOutputViewModel!.IsImgTagIncluded ? "display:none;" : "")">
                         <label for="editBoardContent" class="control-label"></label>
-                        <textarea name="editBoardContent" id="editBoardContent" maxlength="16384">@Html.Raw(Model.BoardOutputViewModel.Content)</textarea> @*maxlength: 16KB*@
+                        <textarea name="editBoardContent" id="editBoardContent" maxlength="16384">@Html.Raw(Model.BoardOutputViewModel!.Content)</textarea> @*maxlength: 16KB*@
                     </div>
 
                     <div class="form-group">
@@ -383,7 +383,7 @@
                                     {
                                         @if (loginedAccount.Nickname == noticeBoard.Writer || loginedAccount.Role == Role.Admin)@*If the visitor is the author or admin*@
                                         {
-                                            <td><i class="fa fa-lock-open" aria-hidden="true"></i>@Html.ActionLink($"{noticeBoard.Title} [{commentsOfUndeletedSelectedBoardCount}]", "FreeForum", new {method = "detail", boardId = noticeBoard.Id, page = Model.Pager.CurrentPage}, new { style = "color: green; font-weight: bold;" })</td>
+                                            <td><i class="fa fa-lock-open" aria-hidden="true"></i>@Html!.ActionLink($"{noticeBoard.Title} [{commentsOfUndeletedSelectedBoardCount}]", "FreeForum", new {method = "detail", boardId = noticeBoard.Id, page = Model.Pager!.CurrentPage}, new { style = "color: green; font-weight: bold;" })</td>
                                         }
                                         else
                                         {
@@ -392,7 +392,7 @@
                                     }
                                     else
                                     {
-                                        <td>@Html.ActionLink($"{noticeBoard.Title} [{commentsOfUndeletedSelectedBoardCount}]", "FreeForum", new {method = "detail", boardId = noticeBoard.Id, page = Model.Pager.CurrentPage}, new { style = "color: green; font-weight: bold;" })</td>
+                                        <td>@Html!.ActionLink($"{noticeBoard.Title} [{commentsOfUndeletedSelectedBoardCount}]", "FreeForum", new {method = "detail", boardId = noticeBoard.Id, page = Model.Pager!.CurrentPage}, new { style = "color: green; font-weight: bold;" })</td>
                                     }
 
                                     <td><span style="font-weight:bold; color:green;">@noticeBoard.Writer</span></td>
@@ -432,7 +432,7 @@
                                     {
                                         @if (loginedAccount.Nickname == board.Writer || loginedAccount.Role == Role.Admin)@*If the visitor is the author or admin*@
                                         {
-                                            <td><i class="fa fa-lock-open" aria-hidden="true"></i> @Html.ActionLink($"{board.Title} [{commentsOfUndeletedSelectedBoardCount}]", "FreeForum", new {method = "detail", boardId = board.Id, page = Model.Pager.CurrentPage})</td>
+                                            <td><i class="fa fa-lock-open" aria-hidden="true"></i> @Html!.ActionLink($"{board.Title} [{commentsOfUndeletedSelectedBoardCount}]", "FreeForum", new {method = "detail", boardId = board.Id, page = Model.Pager!.CurrentPage})</td>
                                         }
                                         else
                                         {
@@ -441,7 +441,7 @@
                                     }
                                     else
                                     {
-                                        <td>@Html.ActionLink($"{board.Title} [{commentsOfUndeletedSelectedBoardCount}]", "FreeForum", new {method = "detail", boardId = board.Id, page = Model.Pager.CurrentPage})</td>
+                                        <td>@Html!.ActionLink($"{board.Title} [{commentsOfUndeletedSelectedBoardCount}]", "FreeForum", new {method = "detail", boardId = board.Id, page = Model.Pager!.CurrentPage})</td>
                                     }
 
                                     @if (accounts.Where(m => m.Role == Role.Admin).Where(m => m.Nickname == board.Writer).FirstOrDefault() != null) @*If the post was written by an admin*@
@@ -483,31 +483,31 @@
                 <hr />
 
                 <nav aria-label="Page navigation example">
-                    @if (Model.Pager.TotalPages > 0)
+                    @if (Model.Pager!.TotalPages > 0)
                     {
                         <ul class="pagination justify-content-center">
 
-                            @if (Model.Pager.CurrentPage > 1)
+                            @if (Model.Pager!.CurrentPage > 1)
                             {
                                 <li class="page-item">
                                     <a class="page-link" asp-controller="Forum" asp-action="FreeForum" asp-route-page="1" asp-route-searchType="@selectedSearchType" asp-route-searchText="@typedSearchText">&lt;&lt;</a>
                                 </li>
                                 <li class="page-item">
-                                    <a class="page-link" asp-controller="Forum" asp-action="FreeForum" asp-route-page="@(Model.Pager.CurrentPage-1)" asp-route-searchType="@selectedSearchType" asp-route-searchText="@typedSearchText">&lt;</a>
+                                    <a class="page-link" asp-controller="Forum" asp-action="FreeForum" asp-route-page="@(Model.Pager!.CurrentPage-1)" asp-route-searchType="@selectedSearchType" asp-route-searchText="@typedSearchText">&lt;</a>
                                 </li>
                             }
 
                             @for (int pageNumber = Model.Pager.StartPage; pageNumber <= Model.Pager.EndPage; pageNumber++)
                             {
-                                <li class="page-item @(pageNumber == Model.Pager.CurrentPage ? "active" : "")">
+                                <li class="page-item @(pageNumber == Model.Pager!.CurrentPage ? "active" : "")">
                                     <a class="page-link" asp-controller="Forum" asp-action="FreeForum" asp-route-page="@pageNumber" asp-route-searchType="@selectedSearchType" asp-route-searchText="@typedSearchText">@pageNumber</a>
                                 </li>
                             }
 
-                            @if (Model.Pager.CurrentPage < Model.Pager.TotalPages)
+                            @if (Model.Pager!.CurrentPage < Model.Pager.TotalPages)
                             {
                                 <li class="page-item">
-                                    <a class="page-link" asp-controller="Forum" asp-action="FreeForum" asp-route-page="@(Model.Pager.CurrentPage + 1)" asp-route-searchType="@selectedSearchType" asp-route-searchText="@typedSearchText">&gt;</a>
+                                    <a class="page-link" asp-controller="Forum" asp-action="FreeForum" asp-route-page="@(Model.Pager!.CurrentPage + 1)" asp-route-searchType="@selectedSearchType" asp-route-searchText="@typedSearchText">&gt;</a>
                                 </li>
                                 <li class="page-item">
                                     <a class="page-link" asp-controller="Forum" asp-action="FreeForum" asp-route-page="@(Model.Pager.TotalPages)" asp-route-searchType="@selectedSearchType" asp-route-searchText="@typedSearchText">&gt;&gt;</a>
