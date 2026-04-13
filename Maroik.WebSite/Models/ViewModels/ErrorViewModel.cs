@@ -8,7 +8,7 @@ namespace Maroik.WebSite.Models.ViewModels;
 public class ErrorViewModel
 {
     /// <summary>The HTTP request ID (Activity ID or trace identifier) that caused the error.</summary>
-    public string RequestId { get; set; }
+    public string? RequestId { get; set; }
 
     /// <summary>
     /// Returns <see langword="true"/> when <see cref="RequestId"/> is populated

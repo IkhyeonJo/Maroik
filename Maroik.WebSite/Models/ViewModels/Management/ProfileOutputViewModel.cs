@@ -12,17 +12,17 @@ public class ProfileOutputViewModel
     /// <summary>Account email address (read-only; displayed as the account identifier).</summary>
     [Required(ErrorMessage = "Please enter Email")]
     [Display(Name = "Email")]
-    public string Email { get; set; }
+    public string? Email { get; set; }
 
     /// <summary>Server-side path to the current avatar image file.</summary>
     [Required(ErrorMessage = "Please enter AvatarImagePath")]
     [Display(Name = "AvatarImagePath")]
-    public string AvatarImagePath { get; set; }
+    public string? AvatarImagePath { get; set; }
 
     /// <summary>Current display name (nickname) shown in the profile form.</summary>
     [Required(ErrorMessage = "Please enter Nickname")]
     [Display(Name = "Nickname")]
-    public string Nickname { get; set; }
+    public string? Nickname { get; set; }
 
     /// <summary>UTC timestamp when the account was first created.</summary>
     [Required(ErrorMessage = "Please enter Created")]
@@ -37,7 +37,7 @@ public class ProfileOutputViewModel
     [StringLength(100, ErrorMessage = "The {0} must be at least {2} characters long.", MinimumLength = 8)]
     [DataType(DataType.Password)]
     [RegularExpression("^((?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])|(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[^a-zA-Z0-9])|(?=.*?[A-Z])(?=.*?[0-9])(?=.*?[^a-zA-Z0-9])|(?=.*?[a-z])(?=.*?[0-9])(?=.*?[^a-zA-Z0-9])).{8,}$", ErrorMessage = "Password must be at least 8 characters and contain at 3 of 4 of the following: upper case (A-Z), lower case (a-z), number (0-9) and special character (e.g. !@#$%^&*)")]
-    public string Password { get; set; }
+    public string? Password { get; set; }
 
     /// <summary>
     /// New password the admin wishes to set.
@@ -47,7 +47,7 @@ public class ProfileOutputViewModel
     [StringLength(100, ErrorMessage = "The {0} must be at least {2} characters long.", MinimumLength = 8)]
     [DataType(DataType.Password)]
     [RegularExpression("^((?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])|(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[^a-zA-Z0-9])|(?=.*?[A-Z])(?=.*?[0-9])(?=.*?[^a-zA-Z0-9])|(?=.*?[a-z])(?=.*?[0-9])(?=.*?[^a-zA-Z0-9])).{8,}$", ErrorMessage = "Password must be at least 8 characters and contain at 3 of 4 of the following: upper case (A-Z), lower case (a-z), number (0-9) and special character (e.g. !@#$%^&*)")]
-    public string NewPassword { get; set; }
+    public string? NewPassword { get; set; }
 
 
     /// <summary>
@@ -57,10 +57,10 @@ public class ProfileOutputViewModel
     [StringLength(100, ErrorMessage = "The {0} must be at least {2} characters long.", MinimumLength = 8)]
     [DataType(DataType.Password)]
     [Compare(nameof(NewPassword), ErrorMessage = "The new password do not match")]
-    public string ConfirmNewPassword { get; set; }
+    public string? ConfirmNewPassword { get; set; }
 
     /// <summary>IANA time-zone ID currently set on the account (e.g. "Asia/Seoul").</summary>
     [Required(ErrorMessage = "Please select time zone")]
     [Display(Name = "Time zone")]
-    public string TimeZoneIanaId { get; set; }
+    public string? TimeZoneIanaId { get; set; }
 }

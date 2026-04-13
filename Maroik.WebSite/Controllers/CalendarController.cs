@@ -66,7 +66,7 @@ public class CalendarController : BaseController
                 return Json(new { result = false, error = _localizer["Input is invalid"].Value });
 
             CalendarRequest tempCalendar = calendarInputViewModel?.Calendars?.FirstOrDefault() ?? new CalendarRequest();
-            tempCalendar.AccountEmail = _sessionService.GetAccount()!.Email;
+            tempCalendar.AccountEmail = _sessionService.GetAccount()!.Email!;
 
             ServiceResult result = await _calendarService.CreateCalendarAsync(tempCalendar);
 
@@ -119,12 +119,12 @@ public class CalendarController : BaseController
                 calendarEventInputViewModel.Description = htmlDocument.DocumentNode.OuterHtml;
                 #endregion
 
-                if (calendarEventInputViewModel.Title.Length is not (> 0 and <= 100)) // Title length
+                if ((calendarEventInputViewModel.Title?.Length ?? 0) is not (> 0 and <= 100)) // Title length
                 {
                     return Json(new { result = false, error = _localizer["Name length is must be between 1 and 100 characters."].Value });
                 }
 
-                if (calendarEventInputViewModel.Description.Length > 16384) // Description Maxlength: 16KB
+                if ((calendarEventInputViewModel.Description?.Length ?? 0) > 16384) // Description Maxlength: 16KB
                 {
                     return Json(new { result = false, error = _localizer["Description length is must be between 0 and 16384 characters."].Value });
                 }
@@ -211,13 +211,13 @@ public class CalendarController : BaseController
 
                 #region Build reminders
                 List<CalendarReminderInfo> reminders = [];
-                List<Dictionary<string, object>> calendarReminders = JsonConvert.DeserializeObject<List<Dictionary<string, object>>>(calendarEventInputViewModel.SerializedCalendarReminders);
+                List<Dictionary<string, object>> calendarReminders = JsonConvert.DeserializeObject<List<Dictionary<string, object>>>(calendarEventInputViewModel.SerializedCalendarReminders ?? "[]") ?? [];
                 foreach (Dictionary<string, object> reminder in calendarReminders)
                 {
                     string tempTimes = reminder["TimesBeforeEvent"]?.ToString();
                     reminders.Add(new CalendarReminderInfo
                     {
-                        Method = reminder["Method"].ToString(),
+                        Method = reminder["Method"]?.ToString() ?? "",
                         MinutesBeforeEvent = reminder["MinutesBeforeEvent"] != null ? Convert.ToInt32(reminder["MinutesBeforeEvent"]) : null,
                         HoursBeforeEvent = reminder["HoursBeforeEvent"] != null ? Convert.ToInt32(reminder["HoursBeforeEvent"]) : null,
                         DaysBeforeEvent = reminder["DaysBeforeEvent"] != null ? Convert.ToInt32(reminder["DaysBeforeEvent"]) : null,
@@ -230,7 +230,7 @@ public class CalendarController : BaseController
                 #endregion
 
                 #region Build attached file
-                AttachedFileInfo attachedFile = null;
+                AttachedFileInfo? attachedFile = null;
                 if (calendarEventInputViewModel.CalendarEventUploadedFile != null)
                 {
                     using MemoryStream ms = new();
@@ -247,7 +247,7 @@ public class CalendarController : BaseController
 
                 ServiceResult createEventResult = await _calendarService.CreateCalendarEventAsync(
                     calendarEventRequest,
-                    loginedAccount.Email,
+                    loginedAccount.Email!,
                     $"{loginedAccount.Role}Index",
                     reminders,
                     attachedFile);
@@ -332,14 +332,14 @@ public class CalendarController : BaseController
         CalendarOutputViewModel calendarOutputViewModel = new();
 
         #region Load Calendar
-        List<CalendarResponse> calendars = await _calendarService.GetCalendarsAsync(loginedAccount.Email);
+        List<CalendarResponse> calendars = await _calendarService.GetCalendarsAsync(loginedAccount.Email!);
 
         if (calendars.Count == 0)
         {
             await _calendarService.EnsureDefaultCalendarAsync(new CalendarRequest
             {
-                AccountEmail = loginedAccount.Email,
-                Name = loginedAccount.Nickname,
+                AccountEmail = loginedAccount.Email!,
+                Name = loginedAccount.Nickname!,
                 TimeZoneIanaId = loginedAccount.TimeZoneIanaId,
                 HtmlColorCode = "#fc330e" // Default Html Color Code
             });
@@ -522,14 +522,14 @@ public class CalendarController : BaseController
         CalendarOutputViewModel calendarOutputViewModel = new();
 
         #region Load Calendar
-        List<CalendarResponse> calendars = await _calendarService.GetCalendarsAsync(loginedAccount.Email);
+        List<CalendarResponse> calendars = await _calendarService.GetCalendarsAsync(loginedAccount.Email!);
 
         if (calendars.Count == 0)
         {
             await _calendarService.EnsureDefaultCalendarAsync(new CalendarRequest
             {
-                AccountEmail = loginedAccount.Email,
-                Name = loginedAccount.Nickname,
+                AccountEmail = loginedAccount.Email!,
+                Name = loginedAccount.Nickname!,
                 TimeZoneIanaId = loginedAccount.TimeZoneIanaId,
                 HtmlColorCode = "#fc330e" // Default Html Color Code
             });
@@ -684,7 +684,7 @@ public class CalendarController : BaseController
         List<CalendarResponse> allCalendars = await _calendarService.GetAllCalendarsAsync();
 
         var tempOtherCalendars = (from calendar in allCalendars
-                                  join otherCalendar in await _calendarService.GetOtherCalendarsAsync(loginedAccount.Email)
+                                  join otherCalendar in await _calendarService.GetOtherCalendarsAsync(loginedAccount.Email!)
                                   on calendar.Id equals otherCalendar.CalendarId
                                   select new
                                   {
@@ -1071,7 +1071,7 @@ public class CalendarController : BaseController
     {
         try
         {
-            List<CalendarResponse> tempCalendars = await _calendarService.GetCalendarsAsync(_sessionService.GetAccount()!.Email);
+            List<CalendarResponse> tempCalendars = await _calendarService.GetCalendarsAsync(_sessionService.GetAccount()!.Email!);
 
             if (tempCalendars == null || tempCalendars.Count == 0)
             {
@@ -1101,7 +1101,7 @@ public class CalendarController : BaseController
     {
         try
         {
-            List<CalendarResponse> calendars = await _calendarService.GetCalendarsAsync(_sessionService.GetAccount()!.Email);
+            List<CalendarResponse> calendars = await _calendarService.GetCalendarsAsync(_sessionService.GetAccount()!.Email!);
 
             return Json(new { result = true, calendars });
         }
@@ -1414,14 +1414,14 @@ public class CalendarController : BaseController
                 try
                 {
                     bool isAccountSessionExist = _sessionService.GetAccount() != null;
-                    AccountResponse loginedAccount = null;
-                    List<CalendarResponse> calendars = null;
+                    AccountResponse? loginedAccount = null;
+                    List<CalendarResponse>? calendars = null;
 
                     if (isAccountSessionExist)
                     {
                         loginedAccount = _sessionService.GetAccount()!;
                         calendars = (from calendar in await _calendarService.GetAllCalendarsAsync() ?? []
-                                     join otherCalendar in await _calendarService.GetOtherCalendarsAsync(loginedAccount.Email) ?? []
+                                     join otherCalendar in await _calendarService.GetOtherCalendarsAsync(loginedAccount.Email!) ?? []
                                      on calendar.Id equals otherCalendar.CalendarId
                                      select calendar).ToList();
                     }
@@ -1679,22 +1679,22 @@ public class CalendarController : BaseController
                     List<CalendarEventOutputViewModel> calendarEvents = [];
 
                     bool isAccountSessionExist = _sessionService.GetAccount() != null;
-                    AccountResponse loginedAccount = null;
+                    AccountResponse? loginedAccount = null;
 
-                    List<CalendarResponse> tempCalendars = null;
+                    List<CalendarResponse>? tempCalendars = null;
 
-                    List<CalendarResponse> tempOtherCalendars = null;
+                    List<CalendarResponse>? tempOtherCalendars = null;
 
                     if (isAccountSessionExist)
                     {
                         loginedAccount = _sessionService.GetAccount()!;
 
-                        tempCalendars = await _calendarService.GetCalendarsAsync(_sessionService.GetAccount()!.Email);
+                        tempCalendars = await _calendarService.GetCalendarsAsync(_sessionService.GetAccount()!.Email!);
 
                         tempOtherCalendars = [];
 
                         var otherCalendars = (from calendar in await _calendarService.GetAllCalendarsAsync() ?? []
-                                              join otherCalendar in await _calendarService.GetOtherCalendarsAsync(loginedAccount.Email) ?? []
+                                              join otherCalendar in await _calendarService.GetOtherCalendarsAsync(loginedAccount.Email!) ?? []
                                               on calendar.Id equals otherCalendar.CalendarId
                                               select new
                                               {
@@ -1912,7 +1912,7 @@ public class CalendarController : BaseController
     {
         try
         {
-            List<CalendarResponse> calendars = (await _calendarService.GetCalendarsAsync(_sessionService.GetAccount()!.Email) ?? [])?.ToList();
+            List<CalendarResponse> calendars = (await _calendarService.GetCalendarsAsync(_sessionService.GetAccount()!.Email!) ?? [])?.ToList();
 
             foreach (CalendarResponse calendar in calendars)
             {
@@ -2090,12 +2090,12 @@ public class CalendarController : BaseController
                 calendarEventInputViewModel.Description = htmlDocument.DocumentNode.OuterHtml;
                 #endregion
 
-                if (calendarEventInputViewModel.Title.Length is not (> 0 and <= 100)) // Title length
+                if ((calendarEventInputViewModel.Title?.Length ?? 0) is not (> 0 and <= 100)) // Title length
                 {
                     return Json(new { result = false, error = _localizer["Name length is must be between 1 and 100 characters."].Value });
                 }
 
-                if (calendarEventInputViewModel.Description.Length > 16384) // Description Maxlength: 16KB
+                if ((calendarEventInputViewModel.Description?.Length ?? 0) > 16384) // Description Maxlength: 16KB
                 {
                     return Json(new { result = false, error = _localizer["Description length is must be between 0 and 16384 characters."].Value });
                 }
@@ -2182,13 +2182,13 @@ public class CalendarController : BaseController
 
                 #region Build reminders
                 List<CalendarReminderInfo> reminders = [];
-                List<Dictionary<string, object>> calendarReminders = JsonConvert.DeserializeObject<List<Dictionary<string, object>>>(calendarEventInputViewModel.SerializedCalendarReminders);
+                List<Dictionary<string, object>> calendarReminders = JsonConvert.DeserializeObject<List<Dictionary<string, object>>>(calendarEventInputViewModel.SerializedCalendarReminders ?? "[]") ?? [];
                 foreach (Dictionary<string, object> reminder in calendarReminders)
                 {
                     string tempTimes = reminder["TimesBeforeEvent"]?.ToString();
                     reminders.Add(new CalendarReminderInfo
                     {
-                        Method = reminder["Method"].ToString(),
+                        Method = reminder["Method"]?.ToString() ?? "",
                         MinutesBeforeEvent = reminder["MinutesBeforeEvent"] != null ? Convert.ToInt32(reminder["MinutesBeforeEvent"]) : null,
                         HoursBeforeEvent = reminder["HoursBeforeEvent"] != null ? Convert.ToInt32(reminder["HoursBeforeEvent"]) : null,
                         DaysBeforeEvent = reminder["DaysBeforeEvent"] != null ? Convert.ToInt32(reminder["DaysBeforeEvent"]) : null,
@@ -2201,7 +2201,7 @@ public class CalendarController : BaseController
                 #endregion
 
                 #region Build attached file
-                AttachedFileInfo attachedFile = null;
+                AttachedFileInfo? attachedFile = null;
                 if (calendarEventInputViewModel.CalendarEventUploadedFile != null)
                 {
                     using MemoryStream ms = new();
@@ -2324,7 +2324,7 @@ public class CalendarController : BaseController
         try
         {
             CalendarRequest tempCalendar = calendarInputViewModel?.Calendars?.FirstOrDefault() ?? new CalendarRequest();
-            tempCalendar.AccountEmail = _sessionService.GetAccount()!.Email;
+            tempCalendar.AccountEmail = _sessionService.GetAccount()!.Email!;
 
             ServiceResult deleteCalendarResult = await _calendarService.DeleteCalendarAsync(tempCalendar);
 

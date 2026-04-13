@@ -88,10 +88,10 @@ public class ForumController : BaseController
             boardInputViewModel.Content = htmlDocument.DocumentNode.OuterHtml;
             #endregion
 
-            if (boardInputViewModel.Title.Length is not (> 0 and <= 100))
+            if ((boardInputViewModel.Title?.Length ?? 0) is not (> 0 and <= 100))
                 return Json(new { result = false, error = _localizer["Title length is must be between 1 and 100 characters."].Value });
 
-            if (boardInputViewModel.Content.Length > 16384)
+            if ((boardInputViewModel.Content?.Length ?? 0) > 16384)
                 return Json(new { result = false, error = _localizer["content length is must be between 0 and 16384 characters."].Value });
 
             if (boardInputViewModel.UploadedFile != null)
@@ -117,12 +117,12 @@ public class ForumController : BaseController
                 Type = EnumHelper.GetDescription(BoardType.FreeForum),
                 Title = boardInputViewModel.Title,
                 Content = boardInputViewModel.Content,
-                Writer = loginedAccount.Nickname,
+                Writer = loginedAccount.Nickname!,
                 Locked = boardInputViewModel.Locked,
                 Noticed = loginedAccount.Role == Role.Admin && boardInputViewModel.Noticed
             };
 
-            AttachedFileInfo attachedFile = null;
+            AttachedFileInfo? attachedFile = null;
             if (boardInputViewModel.UploadedFile != null)
             {
                 using MemoryStream ms = new();
@@ -180,8 +180,8 @@ public class ForumController : BaseController
             BoardCommentRequest commentRequest = new()
             {
                 BoardId = boardCommentInputViewModel.BoardId,
-                AvatarImagePath = loginedAccount.AvatarImagePath,
-                Writer = loginedAccount.Nickname,
+                AvatarImagePath = loginedAccount.AvatarImagePath!,
+                Writer = loginedAccount.Nickname!,
                 Content = boardCommentInputViewModel.Content
             };
 
@@ -670,10 +670,10 @@ public class ForumController : BaseController
             boardInputViewModel.Content = htmlDocument.DocumentNode.OuterHtml;
             #endregion
 
-            if (boardInputViewModel.Title.Length is not (> 0 and <= 100))
+            if ((boardInputViewModel.Title?.Length ?? 0) is not (> 0 and <= 100))
                 return Json(new { result = false, error = _localizer["Title length is must be between 1 and 100 characters."].Value });
 
-            if (boardInputViewModel.Content.Length > 16384)
+            if ((boardInputViewModel.Content?.Length ?? 0) > 16384)
                 return Json(new { result = false, error = _localizer["content length is must be between 0 and 16384 characters."].Value });
 
             if (boardInputViewModel.UploadedFile != null)
@@ -700,7 +700,7 @@ public class ForumController : BaseController
                 Locked = boardInputViewModel.Locked
             };
 
-            AttachedFileInfo attachedFile = null;
+            AttachedFileInfo? attachedFile = null;
             if (boardInputViewModel.UploadedFile != null)
             {
                 using MemoryStream ms = new();
@@ -714,7 +714,7 @@ public class ForumController : BaseController
                 };
             }
 
-            ServiceResult result = await _boardService.EditBoardAsync(boardRequest, loginedAccount.Nickname, attachedFile);
+            ServiceResult result = await _boardService.EditBoardAsync(boardRequest, loginedAccount.Nickname!, attachedFile);
             return result.Success
                 ? Json(new { result = true, message = _localizer["The board has been successfully updated."].Value })
                 : Json(new { result = false, error = _localizer["Input is invalid"].Value });
@@ -746,7 +746,7 @@ public class ForumController : BaseController
             ServiceResult result = await _boardService.DeleteBoardAsync(
                 boardInputViewModel.Id,
                 EnumHelper.GetDescription(BoardType.FreeForum),
-                loginedAccount.Nickname,
+                loginedAccount.Nickname!,
                 loginedAccount.Role == Role.Admin);
 
             return result.Success
@@ -775,7 +775,7 @@ public class ForumController : BaseController
 
             ServiceResult result = await _boardService.DeleteCommentAsync(
                 id,
-                loginedAccount.Nickname,
+                loginedAccount.Nickname!,
                 loginedAccount.Role == Role.Admin);
 
             return result.Success

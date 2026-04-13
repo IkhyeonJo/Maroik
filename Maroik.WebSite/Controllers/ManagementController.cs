@@ -73,14 +73,14 @@ public class ManagementController : BaseController
     [HttpGet]
     public async Task<IActionResult> Profile()
     {
-        string loginedAccountTimeZoneIanaId = _sessionService.GetAccount()!.TimeZoneIanaId;
-        AccountResponse tempAccount = await _profileService.GetProfileAsync(_sessionService.GetAccount()!.Email);
+        string? loginedAccountTimeZoneIanaId = _sessionService.GetAccount()!.TimeZoneIanaId;
+        AccountResponse tempAccount = await _profileService.GetProfileAsync(_sessionService.GetAccount()!.Email!);
 
         return View(new ProfileOutputViewModel()
         {
             Email = tempAccount.Email, AvatarImagePath = tempAccount.AvatarImagePath,
             Nickname = tempAccount.Nickname,
-            Created = tempAccount.Created.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId),
+            Created = tempAccount.Created.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId!),
             TimeZoneIanaId = tempAccount.TimeZoneIanaId
         });
     }
@@ -121,9 +121,9 @@ public class ManagementController : BaseController
         }
 
         string avatarDirectoryPath = Path.Combine(_hostEnvironment.ContentRootPath, "wwwroot", "upload", "Management", "Profile", "Avatar");
-        string email = _sessionService.GetAccount()!.Email;
+        string? email = _sessionService.GetAccount()!.Email;
 
-        ServiceResult avatarResult = await _profileService.UploadAndUpdateAvatarAsync(email, imageBytes, extension, avatarDirectoryPath);
+        ServiceResult avatarResult = await _profileService.UploadAndUpdateAvatarAsync(email!, imageBytes, extension, avatarDirectoryPath);
 
         if (!avatarResult.Success)
         {
@@ -158,11 +158,11 @@ public class ManagementController : BaseController
         {
             try
             {
-                string email = _sessionService.GetAccount()!.Email;
-                await _profileService.UpdateTimeZoneAsync(email, profileInputViewModel.TimeZoneIanaId);
+                string? email = _sessionService.GetAccount()!.Email;
+                await _profileService.UpdateTimeZoneAsync(email!, profileInputViewModel.TimeZoneIanaId);
 
                 // Refresh session with updated timezone
-                AccountResponse updatedAccount = await _profileService.GetProfileAsync(email);
+                AccountResponse updatedAccount = await _profileService.GetProfileAsync(email!);
                 _sessionService.RemoveAccount();
                 updatedAccount.HashedPassword = null;
                 _sessionService.SetAccount(updatedAccount);
@@ -195,10 +195,10 @@ public class ManagementController : BaseController
 
         try
         {
-            string email = _sessionService.GetAccount()!.Email;
+            string? email = _sessionService.GetAccount()!.Email;
 
             ServiceResult result = await _profileService.UpdatePasswordAsync(
-                email,
+                email!,
                 profileInputViewModel.Password ?? "",
                 profileInputViewModel.NewPassword ?? "");
 
@@ -382,7 +382,7 @@ public class ManagementController : BaseController
         if (HttpContext.Request.Headers["X-Requested-With"] == "XMLHttpRequest") // ajax
         {
             List<AccountOutputViewModel> accountOutputViewModels = [];
-            string loginedAccountTimeZoneIanaId = _sessionService.GetAccount()!.TimeZoneIanaId;
+            string? loginedAccountTimeZoneIanaId = _sessionService.GetAccount()!.TimeZoneIanaId;
 
             #region Accounts
 
@@ -404,15 +404,15 @@ public class ManagementController : BaseController
                         AgreedServiceTerms = item.AgreedServiceTerms,
                         RegistrationToken = item.RegistrationToken,
                         ResetPasswordToken = item.ResetPasswordToken,
-                        Created = item.Created.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId),
-                        Updated = item.Updated.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId),
+                        Created = item.Created.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId!),
+                        Updated = item.Updated.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId!),
                         Message = item.Message,
                         Deleted = item.Deleted
                     });
                 }
                 else
                 {
-                    if (item.Email.ToString().Contains(wholeSearch) ||
+                    if ((item.Email?.ToString() ?? "").Contains(wholeSearch) ||
                         (item.HashedPassword?.ToString() ?? "").Contains(wholeSearch) ||
                         (item.Nickname?.ToString() ?? "").Contains(wholeSearch) ||
                         (item.AvatarImagePath?.ToString() ?? "").Contains(wholeSearch) ||
@@ -424,9 +424,9 @@ public class ManagementController : BaseController
                         (item.AgreedServiceTerms.ToString() ?? "").Contains(wholeSearch) ||
                         (item.RegistrationToken?.ToString() ?? "").Contains(wholeSearch) ||
                         (item.ResetPasswordToken?.ToString() ?? "").Contains(wholeSearch) ||
-                        (item.Created.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId).ToString() ?? "")
+                        (item.Created.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId!).ToString() ?? "")
                         .Contains(wholeSearch) ||
-                        (item.Updated.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId).ToString() ?? "")
+                        (item.Updated.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId!).ToString() ?? "")
                         .Contains(wholeSearch) ||
                         (item.Message?.ToString() ?? "").Contains(wholeSearch) ||
                         (item.Deleted.ToString() ?? "").Contains(wholeSearch))
@@ -445,8 +445,8 @@ public class ManagementController : BaseController
                             AgreedServiceTerms = item.AgreedServiceTerms,
                             RegistrationToken = item.RegistrationToken,
                             ResetPasswordToken = item.ResetPasswordToken,
-                            Created = item.Created.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId),
-                            Updated = item.Updated.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId),
+                            Created = item.Created.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId!),
+                            Updated = item.Updated.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId!),
                             Message = item.Message,
                             Deleted = item.Deleted
                         });
@@ -568,7 +568,7 @@ public class ManagementController : BaseController
         await Task.Yield();
 
         List<AccountOutputViewModel> accountOutputViewModels = new();
-        string loginedAccountTimeZoneIanaId = _sessionService.GetAccount()!.TimeZoneIanaId;
+        string? loginedAccountTimeZoneIanaId = _sessionService.GetAccount()!.TimeZoneIanaId;
 
         #region Accounts
 
@@ -588,8 +588,8 @@ public class ManagementController : BaseController
                 AgreedServiceTerms = item.AgreedServiceTerms,
                 RegistrationToken = item.RegistrationToken,
                 ResetPasswordToken = item.ResetPasswordToken,
-                Created = item.Created.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId),
-                Updated = item.Updated.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId),
+                Created = item.Created.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId!),
+                Updated = item.Updated.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId!),
                 Message = item.Message,
                 Deleted = item.Deleted
             });
@@ -660,21 +660,21 @@ public class ManagementController : BaseController
                 };
 
                 recordRow.Append(
-                    CreateCell(item.Email),
-                    CreateCell(item.HashedPassword),
-                    CreateCell(item.Nickname),
-                    CreateCell(item.AvatarImagePath),
-                    CreateCell(item.Role),
-                    CreateCell(item.TimeZoneIanaId),
+                    CreateCell(item.Email ?? ""),
+                    CreateCell(item.HashedPassword ?? ""),
+                    CreateCell(item.Nickname ?? ""),
+                    CreateCell(item.AvatarImagePath ?? ""),
+                    CreateCell(item.Role ?? ""),
+                    CreateCell(item.TimeZoneIanaId ?? ""),
                     CreateCell(item.Locked.ToString()),
                     CreateCell(item.LoginAttempt.ToString()),
                     CreateCell(item.EmailConfirmed.ToString()),
                     CreateCell(item.AgreedServiceTerms.ToString()),
-                    CreateCell(item.RegistrationToken),
-                    CreateCell(item.ResetPasswordToken),
+                    CreateCell(item.RegistrationToken ?? ""),
+                    CreateCell(item.ResetPasswordToken ?? ""),
                     CreateCell(item.Created.ToString()),
                     CreateCell(item.Updated.ToString()),
-                    CreateCell(item.Message),
+                    CreateCell(item.Message ?? ""),
                     CreateCell(item.Deleted.ToString())
                 );
                 sheetData.Append(recordRow);
@@ -687,7 +687,7 @@ public class ManagementController : BaseController
 
         stream.Position = 0;
         string excelName =
-            $"{fileName}-{DateTime.UtcNow.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId):yyyy-MM-dd-HH-mm-ss-fff}.xlsx";
+            $"{fileName}-{DateTime.UtcNow.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId!):yyyy-MM-dd-HH-mm-ss-fff}.xlsx";
 
         return File(stream, "application/octet-stream", excelName);
     }
@@ -1076,7 +1076,7 @@ public class ManagementController : BaseController
         await Task.Yield();
 
         List<MenuOutputViewModel> menuOutputViewModels = [];
-        string loginedAccountTimeZoneIanaId = _sessionService.GetAccount()!.TimeZoneIanaId;
+        string? loginedAccountTimeZoneIanaId = _sessionService.GetAccount()!.TimeZoneIanaId;
 
         #region Categories
         foreach (CategoryResponse item in await _menuService.GetAllCategoriesAsync())
@@ -1168,12 +1168,12 @@ public class ManagementController : BaseController
                 dataRow.Append(
                     CreateCell(item.Id.ToString()),
                     CreateCell(item.CategoryId?.ToString() ?? string.Empty),
-                    CreateCell(item.Name),
-                    CreateCell(item.DisplayName),
-                    CreateCell(item.IconPath),
-                    CreateCell(item.Controller),
-                    CreateCell(item.Action),
-                    CreateCell(item.Role),
+                    CreateCell(item.Name ?? ""),
+                    CreateCell(item.DisplayName ?? ""),
+                    CreateCell(item.IconPath ?? ""),
+                    CreateCell(item.Controller ?? ""),
+                    CreateCell(item.Action ?? ""),
+                    CreateCell(item.Role ?? ""),
                     CreateCell(item.Order.ToString())
                 );
                 sheetData.Append(dataRow);
@@ -1184,7 +1184,7 @@ public class ManagementController : BaseController
 
         stream.Position = 0;
         string excelName =
-            $"{fileName}-{DateTime.UtcNow.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId):yyyy-MM-dd-HH-mm-ss-fff}.xlsx";
+            $"{fileName}-{DateTime.UtcNow.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId!):yyyy-MM-dd-HH-mm-ss-fff}.xlsx";
 
         return File(stream, "application/octet-stream", excelName);
     }
@@ -1234,10 +1234,10 @@ public class ManagementController : BaseController
             boardInputViewModel.Content = htmlDocument.DocumentNode.OuterHtml;
             #endregion
 
-            if (boardInputViewModel.Title.Length is not (> 0 and <= 100))
+            if ((boardInputViewModel.Title?.Length ?? 0) is not (> 0 and <= 100))
                 return Json(new { result = false, error = _localizer["Title length is must be between 1 and 100 characters."].Value });
 
-            if (boardInputViewModel.Content.Length > 16384)
+            if ((boardInputViewModel.Content?.Length ?? 0) > 16384)
                 return Json(new { result = false, error = _localizer["content length is must be between 0 and 16384 characters."].Value });
 
             if (boardInputViewModel.UploadedFile != null)
@@ -1263,11 +1263,11 @@ public class ManagementController : BaseController
                 Type = EnumHelper.GetDescription(BoardType.PrivateNote),
                 Title = boardInputViewModel.Title,
                 Content = boardInputViewModel.Content,
-                Writer = loginedAccount.Nickname,
+                Writer = loginedAccount.Nickname!,
                 Noticed = loginedAccount.Role == Role.Admin && boardInputViewModel.Noticed
             };
 
-            AttachedFileInfo attachedFile = null;
+            AttachedFileInfo? attachedFile = null;
             if (boardInputViewModel.UploadedFile != null)
             {
                 using MemoryStream ms = new();
@@ -1327,12 +1327,12 @@ public class ManagementController : BaseController
             BoardCommentRequest commentRequest = new()
             {
                 BoardId = boardCommentInputViewModel.BoardId,
-                AvatarImagePath = loginedAccount.AvatarImagePath,
-                Writer = loginedAccount.Nickname,
+                AvatarImagePath = loginedAccount.AvatarImagePath!,
+                Writer = loginedAccount.Nickname!,
                 Content = boardCommentInputViewModel.Content
             };
 
-            ServiceResult result = await _boardService.WriteCommentAsync(commentRequest, loginedAccount.Nickname);
+            ServiceResult result = await _boardService.WriteCommentAsync(commentRequest, loginedAccount.Nickname!);
             return result.Success
                 ? Json(new { result = true, boardId = boardCommentInputViewModel.BoardId, page = boardCommentInputViewModel.DetailCurrentPage })
                 : Json(new { result = false, error = _localizer["Input is invalid"].Value });
@@ -1787,7 +1787,7 @@ public class ManagementController : BaseController
     {
         try
         {
-            string nickname = _sessionService.GetAccount()!.Nickname;
+            string? nickname = _sessionService.GetAccount()!.Nickname;
             BoardResponse board = await _boardService.GetBoardByIdAsync(id);
 
             return board == null || board.Deleted || board.Writer != nickname
@@ -1841,10 +1841,10 @@ public class ManagementController : BaseController
             boardInputViewModel.Content = htmlDocument.DocumentNode.OuterHtml;
             #endregion
 
-            if (boardInputViewModel.Title.Length is not (> 0 and <= 100))
+            if ((boardInputViewModel.Title?.Length ?? 0) is not (> 0 and <= 100))
                 return Json(new { result = false, error = _localizer["Title length is must be between 1 and 100 characters."].Value });
 
-            if (boardInputViewModel.Content.Length > 16384)
+            if ((boardInputViewModel.Content?.Length ?? 0) > 16384)
                 return Json(new { result = false, error = _localizer["content length is must be between 0 and 16384 characters."].Value });
 
             if (boardInputViewModel.UploadedFile != null)
@@ -1870,7 +1870,7 @@ public class ManagementController : BaseController
                 Content = boardInputViewModel.Content
             };
 
-            AttachedFileInfo attachedFile = null;
+            AttachedFileInfo? attachedFile = null;
             if (boardInputViewModel.UploadedFile != null)
             {
                 using MemoryStream ms = new();
@@ -1884,7 +1884,7 @@ public class ManagementController : BaseController
                 };
             }
 
-            ServiceResult result = await _boardService.EditBoardAsync(boardRequest, loginedAccount.Nickname, attachedFile);
+            ServiceResult result = await _boardService.EditBoardAsync(boardRequest, loginedAccount.Nickname!, attachedFile);
             return result.Success
                 ? Json(new { result = true, message = _localizer["The board has been successfully updated."].Value })
                 : Json(new { result = false, error = _localizer["Input is invalid"].Value });
@@ -1917,7 +1917,7 @@ public class ManagementController : BaseController
             ServiceResult result = await _boardService.DeleteBoardAsync(
                 boardInputViewModel.Id,
                 EnumHelper.GetDescription(BoardType.PrivateNote),
-                loginedAccount.Nickname,
+                loginedAccount.Nickname!,
                 loginedAccount.Role == Role.Admin);
 
             return result.Success
@@ -1947,7 +1947,7 @@ public class ManagementController : BaseController
 
             ServiceResult result = await _boardService.DeleteCommentAsync(
                 id,
-                loginedAccount.Nickname,
+                loginedAccount.Nickname!,
                 loginedAccount.Role == Role.Admin);
 
             return result.Success

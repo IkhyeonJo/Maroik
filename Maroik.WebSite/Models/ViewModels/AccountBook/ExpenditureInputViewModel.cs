@@ -18,17 +18,17 @@ public class ExpenditureInputViewModel
     /// <summary>Top-level expenditure category (e.g. "ConsumerSpending", "NonConsumerSpending").</summary>
     [Required(ErrorMessage = "Please enter MainClass")]
     [Display(Name = "MainClass")]
-    public string MainClass { get; set; }
+    public string? MainClass { get; set; }
 
     /// <summary>Sub-category within the main class (e.g. "MealOrEatOutExpenses", "Tax").</summary>
     [Required(ErrorMessage = "Please enter SubClass")]
     [Display(Name = "SubClass")]
-    public string SubClass { get; set; }
+    public string? SubClass { get; set; }
 
     /// <summary>Free-text description of this spending entry.</summary>
     [Required(ErrorMessage = "Please enter Content")]
     [Display(Name = "Content")]
-    public string Content { get; set; }
+    public string? Content { get; set; }
 
     /// <summary>Amount spent.</summary>
     [Required(ErrorMessage = "Please enter Amount")]
@@ -41,14 +41,14 @@ public class ExpenditureInputViewModel
     /// <summary>Payment instrument used (e.g. "CreditCard", "Cash").</summary>
     [Required(ErrorMessage = "Please enter PaymentMethod")]
     [Display(Name = "PaymentMethod")]
-    public string PaymentMethod { get; set; }
+    public string? PaymentMethod { get; set; }
 
     /// <summary>Optional free-text memo for this expenditure record.</summary>
     [Display(Name = "Note")]
-    public string Note { get; set; }
+    public string? Note { get; set; }
 
     /// <summary>Name of the asset (product) that was debited for this expenditure.</summary>
     [Required(ErrorMessage = "Please enter MyDepositAsset")]
     [Display(Name = "MyDepositAsset")]
-    public string MyDepositAsset { get; set; }
+    public string? MyDepositAsset { get; set; }
 }

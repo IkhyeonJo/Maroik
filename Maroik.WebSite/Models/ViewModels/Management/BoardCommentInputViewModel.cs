@@ -11,7 +11,7 @@ public class BoardCommentInputViewModel
     public int BoardId { get; set; }
 
     /// <summary>Plain-text or HTML body of the comment entered by the admin.</summary>
-    public string Content { get; set; }
+    public string? Content { get; set; }
 
     /// <summary>
     /// The page number of the board list the user was on when they opened the post detail,

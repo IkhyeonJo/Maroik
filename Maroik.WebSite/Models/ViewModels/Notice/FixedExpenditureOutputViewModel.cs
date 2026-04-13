@@ -17,17 +17,17 @@ public class FixedExpenditureOutputViewModel
     /// <summary>Top-level expenditure category (e.g. "ConsumerSpending", "NonConsumerSpending").</summary>
     [Required(ErrorMessage = "Please enter MainClass")]
     [Display(Name = "MainClass")]
-    public string MainClass { get; set; }
+    public string? MainClass { get; set; }
 
     /// <summary>Sub-category within the main class (e.g. "ProtectionTypeInsurance", "Tax").</summary>
     [Required(ErrorMessage = "Please enter SubClass")]
     [Display(Name = "SubClass")]
-    public string SubClass { get; set; }
+    public string? SubClass { get; set; }
 
     /// <summary>Free-text description of this recurring spending entry.</summary>
     [Required(ErrorMessage = "Please enter Content")]
     [Display(Name = "Content")]
-    public string Content { get; set; }
+    public string? Content { get; set; }
 
     /// <summary>Fixed amount that is debited each recurrence.</summary>
     [Required(ErrorMessage = "Please enter Amount")]
@@ -36,17 +36,17 @@ public class FixedExpenditureOutputViewModel
 
     /// <summary>Currency code for the amount (e.g. "KRW", "USD"), sourced from the linked asset.</summary>
     [Display(Name = "MonetaryUnit")]
-    public string MonetaryUnit { get; set; }
+    public string? MonetaryUnit { get; set; }
 
     /// <summary>Payment instrument used (e.g. "CreditCard", "Cash").</summary>
     [Required(ErrorMessage = "Please enter PaymentMethod")]
     [Display(Name = "PaymentMethod")]
-    public string PaymentMethod { get; set; }
+    public string? PaymentMethod { get; set; }
 
     /// <summary>Name of the asset (product) that is debited for this recurring expenditure.</summary>
     [Required(ErrorMessage = "Please enter MyDepositAsset")]
     [Display(Name = "MyDepositAsset")]
-    public string MyDepositAsset { get; set; }
+    public string? MyDepositAsset { get; set; }
 
     /// <summary>Month of the year (1–12) on which this expenditure recurs.</summary>
     [Required(ErrorMessage = "Please enter DepositMonth")]
@@ -61,7 +61,7 @@ public class FixedExpenditureOutputViewModel
     /// <summary>ISO-8601 date string (yyyy-MM-dd) after which this recurring expenditure is considered expired.</summary>
     [Required(ErrorMessage = "Please enter MaturityDate")]
     [Display(Name = "MaturityDate")]
-    public string MaturityDate { get; set; }
+    public string? MaturityDate { get; set; }
 
     /// <summary>UTC timestamp when the record was first created.</summary>
     [Required(ErrorMessage = "Please enter Created")]
@@ -75,7 +75,7 @@ public class FixedExpenditureOutputViewModel
 
     /// <summary>Optional free-text memo for this fixed expenditure record.</summary>
     [Display(Name = "Note")]
-    public string Note { get; set; }
+    public string? Note { get; set; }
 
     /// <summary>
     /// When <see langword="true"/> the recurrence date is approaching (within the notification window),

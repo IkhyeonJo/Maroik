@@ -25,7 +25,7 @@ public class UserIndexOutputViewModel
     public IEnumerable<string> MonetaryUnits { get; set; } = [];
 
     /// <summary>The currency code currently selected by the user for dashboard display.</summary>
-    public string DefaultMonetaryUnit { get; set; }
+    public string? DefaultMonetaryUnit { get; set; }
 
     // Year/Month selectors
 

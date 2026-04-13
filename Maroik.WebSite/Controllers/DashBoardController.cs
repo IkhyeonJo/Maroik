@@ -70,8 +70,8 @@ public class DashBoardController(
     public async Task<IActionResult> UserIndex(string year, string month)
     {
         var loginedAccount = _sessionService1.GetAccount();
-        string email = loginedAccount.Email;
-        string timeZoneId = loginedAccount.TimeZoneIanaId;
+        string? email = loginedAccount?.Email;
+        string? timeZoneId = loginedAccount?.TimeZoneIanaId;
 
         #region For Demo User [Only Demo purpose]
         if (email == "demo@maroik.com")
@@ -81,7 +81,7 @@ public class DashBoardController(
         }
         #endregion
 
-        var summary = await _dashboardService1.GetSummaryAsync(email, year ?? "", month ?? "", timeZoneId);
+        var summary = await _dashboardService1.GetSummaryAsync(email!, year ?? "", month ?? "", timeZoneId!);
 
         var vm = new UserIndexOutputViewModel
         {
@@ -104,8 +104,8 @@ public class DashBoardController(
                 Amount = Convert.ToDecimal(item.Amount.TrimTrailingZeros()),
                 MonetaryUnit = summary.Assets.FirstOrDefault(x => x.ProductName == item.DepositMyAssetProductName)?.MonetaryUnit,
                 DepositMyAssetProductName = item.DepositMyAssetProductName,
-                Created = item.Created.ConvertTimeByTimeZoneIanaId(timeZoneId),
-                Updated = item.Updated.ConvertTimeByTimeZoneIanaId(timeZoneId),
+                Created = item.Created.ConvertTimeByTimeZoneIanaId(timeZoneId!),
+                Updated = item.Updated.ConvertTimeByTimeZoneIanaId(timeZoneId!),
                 Note = item.Note
             }).ToList();
 
@@ -120,8 +120,8 @@ public class DashBoardController(
                 PaymentMethod = item.PaymentMethod,
                 Note = item.Note,
                 MyDepositAsset = item.MyDepositAsset,
-                Created = item.Created.ConvertTimeByTimeZoneIanaId(timeZoneId),
-                Updated = item.Updated.ConvertTimeByTimeZoneIanaId(timeZoneId)
+                Created = item.Created.ConvertTimeByTimeZoneIanaId(timeZoneId!),
+                Updated = item.Updated.ConvertTimeByTimeZoneIanaId(timeZoneId!)
             }).ToList();
 
             vm.IncomeYearMonthOutputViewModels = summary.YearMonthIncomes.Select(item => new IncomeOutputViewModel
@@ -133,8 +133,8 @@ public class DashBoardController(
                 Amount = Convert.ToDecimal(item.Amount.TrimTrailingZeros()),
                 MonetaryUnit = summary.Assets.FirstOrDefault(x => x.ProductName == item.DepositMyAssetProductName)?.MonetaryUnit,
                 DepositMyAssetProductName = item.DepositMyAssetProductName,
-                Created = item.Created.ConvertTimeByTimeZoneIanaId(timeZoneId),
-                Updated = item.Updated.ConvertTimeByTimeZoneIanaId(timeZoneId),
+                Created = item.Created.ConvertTimeByTimeZoneIanaId(timeZoneId!),
+                Updated = item.Updated.ConvertTimeByTimeZoneIanaId(timeZoneId!),
                 Note = item.Note
             }).ToList();
 
@@ -149,8 +149,8 @@ public class DashBoardController(
                 PaymentMethod = item.PaymentMethod,
                 Note = item.Note,
                 MyDepositAsset = item.MyDepositAsset,
-                Created = item.Created.ConvertTimeByTimeZoneIanaId(timeZoneId),
-                Updated = item.Updated.ConvertTimeByTimeZoneIanaId(timeZoneId)
+                Created = item.Created.ConvertTimeByTimeZoneIanaId(timeZoneId!),
+                Updated = item.Updated.ConvertTimeByTimeZoneIanaId(timeZoneId!)
             }).ToList();
 
             // ---- Year Income ----
@@ -368,7 +368,7 @@ public class DashBoardController(
         {
             Role.Admin => RedirectToAction("AdminIndex", "DashBoard"),
             Role.User => RedirectToAction("UserIndex", "DashBoard"),
-            _ => null
+            _ => (IActionResult)View()
         };
     }
     #endregion

@@ -12,10 +12,10 @@ public class ProfileInputViewModel
     /// <summary>New display name (nickname) the admin wishes to use.</summary>
     [Required(ErrorMessage = "Please enter Nickname")]
     [Display(Name = "Nickname")]
-    public string Nickname { get; set; }
+    public string? Nickname { get; set; }
 
     /// <summary>Avatar image files uploaded by the admin (at most one image is processed).</summary>
-    public List<IFormFile> ProfileAvatarFiles { get; set; }
+    public List<IFormFile>? ProfileAvatarFiles { get; set; }
 
     /// <summary>
     /// Current (existing) password — required to authorize profile updates.
@@ -25,7 +25,7 @@ public class ProfileInputViewModel
     [StringLength(100, ErrorMessage = "The {0} must be at least {2} characters long.", MinimumLength = 8)]
     [DataType(DataType.Password)]
     [RegularExpression("^((?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])|(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[^a-zA-Z0-9])|(?=.*?[A-Z])(?=.*?[0-9])(?=.*?[^a-zA-Z0-9])|(?=.*?[a-z])(?=.*?[0-9])(?=.*?[^a-zA-Z0-9])).{8,}$", ErrorMessage = "Password must be at least 8 characters and contain at 3 of 4 of the following: upper case (A-Z), lower case (a-z), number (0-9) and special character (e.g. !@#$%^&*)")]
-    public string Password { get; set; }
+    public string? Password { get; set; }
 
     /// <summary>
     /// New password the admin wishes to set.
@@ -35,10 +35,10 @@ public class ProfileInputViewModel
     [StringLength(100, ErrorMessage = "The {0} must be at least {2} characters long.", MinimumLength = 8)]
     [DataType(DataType.Password)]
     [RegularExpression("^((?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])|(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[^a-zA-Z0-9])|(?=.*?[A-Z])(?=.*?[0-9])(?=.*?[^a-zA-Z0-9])|(?=.*?[a-z])(?=.*?[0-9])(?=.*?[^a-zA-Z0-9])).{8,}$", ErrorMessage = "Password must be at least 8 characters and contain at 3 of 4 of the following: upper case (A-Z), lower case (a-z), number (0-9) and special character (e.g. !@#$%^&*)")]
-    public string NewPassword { get; set; }
+    public string? NewPassword { get; set; }
 
     /// <summary>IANA time-zone ID the admin selects for date/time display (e.g. "Asia/Seoul").</summary>
     [Required(ErrorMessage = "Please select time zone")]
     [Display(Name = "Time zone")]
-    public string TimeZoneIanaId { get; set; }
+    public string? TimeZoneIanaId { get; set; }
 }

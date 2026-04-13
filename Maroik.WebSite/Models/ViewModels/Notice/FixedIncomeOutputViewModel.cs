@@ -17,17 +17,17 @@ public class FixedIncomeOutputViewModel
     /// <summary>Top-level income category (e.g. "RegularIncome", "IrregularIncome").</summary>
     [Required(ErrorMessage = "Please enter MainClass")]
     [Display(Name = "MainClass")]
-    public string MainClass { get; set; }
+    public string? MainClass { get; set; }
 
     /// <summary>Sub-category within the main class (e.g. "LaborIncome", "PensionIncome").</summary>
     [Required(ErrorMessage = "Please enter SubClass")]
     [Display(Name = "SubClass")]
-    public string SubClass { get; set; }
+    public string? SubClass { get; set; }
 
     /// <summary>Free-text description of this recurring income entry.</summary>
     [Required(ErrorMessage = "Please enter Content")]
     [Display(Name = "Content")]
-    public string Content { get; set; }
+    public string? Content { get; set; }
 
     /// <summary>Expected fixed amount deposited each recurrence.</summary>
     [Required(ErrorMessage = "Please enter Amount")]
@@ -36,7 +36,7 @@ public class FixedIncomeOutputViewModel
 
     /// <summary>Currency code for the amount (e.g. "KRW", "USD"), sourced from the linked asset.</summary>
     [Display(Name = "MonetaryUnit")]
-    public string MonetaryUnit { get; set; }
+    public string? MonetaryUnit { get; set; }
 
     /// <summary>Month of the year (1–12) on which this income recurs.</summary>
     [Required(ErrorMessage = "Please enter DepositMonth")]
@@ -51,16 +51,16 @@ public class FixedIncomeOutputViewModel
     /// <summary>ISO-8601 date string (yyyy-MM-dd) after which this recurring income is considered expired.</summary>
     [Required(ErrorMessage = "Please enter MaturityDate")]
     [Display(Name = "MaturityDate")]
-    public string MaturityDate { get; set; }
+    public string? MaturityDate { get; set; }
 
     /// <summary>Optional free-text memo for this fixed income record.</summary>
     [Display(Name = "Note")]
-    public string Note { get; set; }
+    public string? Note { get; set; }
 
     /// <summary>Name of the asset (product) into which this recurring income is deposited.</summary>
     [Required(ErrorMessage = "Please enter DepositMyAssetProductName")]
     [Display(Name = "DepositMyAssetProductName")]
-    public string DepositMyAssetProductName { get; set; }
+    public string? DepositMyAssetProductName { get; set; }
 
     /// <summary>UTC timestamp when the record was first created.</summary>
     [Required(ErrorMessage = "Please enter Created")]

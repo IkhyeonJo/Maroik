@@ -24,7 +24,7 @@ namespace Maroik.WebSite.Mappings;
 public class MappingConfig : IRegister
 {
     // Expression trees (used by Mapster .Map()) do not support inline `out var` declarations.
-    private static DateTime ParseDate(string s) =>
+    private static DateTime ParseDate(string? s) =>
         DateTime.TryParse(s, out var d) ? d : default;
 
     /// <summary>Registers all Mapster type-adapter rules for the WebSite presentation layer.</summary>

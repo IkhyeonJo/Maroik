@@ -14,10 +14,10 @@ public class FreeForumOutputViewModel
     /// The current view mode / action being rendered (e.g. "Index", "Detail", "Edit").
     /// Drives which partial view is shown inside the forum layout.
     /// </summary>
-    public string Method { get; set; }
+    public string? Method { get; set; }
 
     /// <summary>Pagination state for the board post list (current page, total pages, page-link window).</summary>
-    public Pager Pager { get; set; }
+    public Pager? Pager { get; set; }
 
     /// <summary>Pinned (noticed) posts displayed at the top of the board above the regular post list.</summary>
     public IEnumerable<BoardResponse> NoticeBoards { get; set; } = [];
@@ -26,7 +26,7 @@ public class FreeForumOutputViewModel
     public IEnumerable<BoardResponse> Boards { get; set; } = [];
 
     /// <summary>Full detail of the post currently open in the detail panel; null when no post is selected.</summary>
-    public BoardOutputViewModel BoardOutputViewModel { get; set; }
+    public BoardOutputViewModel? BoardOutputViewModel { get; set; }
 
     /// <summary>ID of the post currently open in the detail panel; 0 when none.</summary>
     public int DetailBoardId { get; set; }

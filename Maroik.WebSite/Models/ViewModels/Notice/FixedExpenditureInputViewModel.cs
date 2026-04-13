@@ -18,17 +18,17 @@ public class FixedExpenditureInputViewModel
     /// <summary>Top-level expenditure category (e.g. "ConsumerSpending", "NonConsumerSpending").</summary>
     [Required(ErrorMessage = "Please enter MainClass")]
     [Display(Name = "MainClass")]
-    public string MainClass { get; set; }
+    public string? MainClass { get; set; }
 
     /// <summary>Sub-category within the main class (e.g. "ProtectionTypeInsurance", "Tax").</summary>
     [Required(ErrorMessage = "Please enter SubClass")]
     [Display(Name = "SubClass")]
-    public string SubClass { get; set; }
+    public string? SubClass { get; set; }
 
     /// <summary>Free-text description of this recurring spending entry.</summary>
     [Required(ErrorMessage = "Please enter Content")]
     [Display(Name = "Content")]
-    public string Content { get; set; }
+    public string? Content { get; set; }
 
     /// <summary>Fixed amount that is debited each recurrence.</summary>
     [Required(ErrorMessage = "Please enter Amount")]
@@ -48,21 +48,21 @@ public class FixedExpenditureInputViewModel
     /// <summary>ISO-8601 date string (yyyy-MM-dd) after which this recurring expenditure expires.</summary>
     [Required(ErrorMessage = "Please enter MaturityDate")]
     [Display(Name = "MaturityDate")]
-    public string MaturityDate { get; set; }
+    public string? MaturityDate { get; set; }
 
     /// <summary>Optional free-text memo for this fixed expenditure record.</summary>
     [Display(Name = "Note")]
-    public string Note { get; set; }
+    public string? Note { get; set; }
 
     /// <summary>Payment instrument used (e.g. "CreditCard", "Cash").</summary>
     [Required(ErrorMessage = "Please enter PaymentMethod")]
     [Display(Name = "PaymentMethod")]
-    public string PaymentMethod { get; set; }
+    public string? PaymentMethod { get; set; }
 
     /// <summary>Name of the asset (product) that is debited for this recurring expenditure.</summary>
     [Required(ErrorMessage = "Please enter MyDepositAsset")]
     [Display(Name = "MyDepositAsset")]
-    public string MyDepositAsset { get; set; }
+    public string? MyDepositAsset { get; set; }
 
     /// <summary>
     /// When <see langword="true"/> the payment was not made on the scheduled date (late or missed).

@@ -15,7 +15,7 @@ public class CalendarEventInputViewModel
     public int CalendarId { get; set; }
 
     /// <summary>Title / headline of the calendar event.</summary>
-    public string Title { get; set; }
+    public string? Title { get; set; }
 
     /// <summary>
     /// When <see langword="true"/> the event spans full days and has no specific start/end time.
@@ -23,34 +23,34 @@ public class CalendarEventInputViewModel
     public bool AllDay { get; set; }
 
     /// <summary>ISO-8601 date-time string for when the event starts (interpreted in <see cref="StartDateTimeZoneIanaId"/>).</summary>
-    public string StartDate { get; set; }
+    public string? StartDate { get; set; }
 
     /// <summary>ISO-8601 date-time string for when the event ends (interpreted in <see cref="EndDateTimeZoneIanaId"/>).</summary>
-    public string EndDate { get; set; }
+    public string? EndDate { get; set; }
 
     /// <summary>IANA time-zone ID that applies to <see cref="StartDate"/> (e.g. "Asia/Seoul").</summary>
-    public string StartDateTimeZoneIanaId { get; set; }
+    public string? StartDateTimeZoneIanaId { get; set; }
 
     /// <summary>IANA time-zone ID that applies to <see cref="EndDate"/>.</summary>
-    public string EndDateTimeZoneIanaId { get; set; }
+    public string? EndDateTimeZoneIanaId { get; set; }
 
     /// <summary>Optional physical or virtual location for the event.</summary>
-    public string Location { get; set; }
+    public string? Location { get; set; }
 
     /// <summary>Optional longer description / body text for the event.</summary>
-    public string Description { get; set; }
+    public string? Description { get; set; }
 
     /// <summary>Optional file attachment uploaded with the event (max one file per event).</summary>
-    public IFormFile CalendarEventUploadedFile { get; set; }
+    public IFormFile? CalendarEventUploadedFile { get; set; }
 
     /// <summary>
     /// Event status string (e.g. "Confirmed", "Tentative", "Cancelled") shown on the event card.
     /// </summary>
-    public string Status { get; set; }
+    public string? Status { get; set; }
 
     /// <summary>
     /// JSON-serialized list of <c>CalendarReminderInfo</c> objects representing the reminders
     /// configured for this event. Serialized on the client and deserialized in the service layer.
     /// </summary>
-    public string SerializedCalendarReminders { get; set; }
+    public string? SerializedCalendarReminders { get; set; }
 }

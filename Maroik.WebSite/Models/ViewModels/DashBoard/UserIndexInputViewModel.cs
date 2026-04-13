@@ -11,5 +11,5 @@ public class UserIndexInputViewModel
     /// The currency code the user has selected as their default display currency (e.g. "KRW", "USD").
     /// Passed as a query parameter or form field when the user changes the currency selector.
     /// </summary>
-    public string DefaultMonetaryUnit { get; set; }
+    public string? DefaultMonetaryUnit { get; set; }
 }

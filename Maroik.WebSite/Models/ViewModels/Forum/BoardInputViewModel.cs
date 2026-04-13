@@ -14,10 +14,10 @@ public class BoardInputViewModel
     /// <summary>Post title; must be 1–100 characters.</summary>
     [Required(ErrorMessage = "Title is required.")]
     [StringLength(100, ErrorMessage = "Must be between 1 and 100 characters.", MinimumLength = 1)]
-    public string Title { get; set; }
+    public string? Title { get; set; }
 
     /// <summary>HTML body of the post produced by the Summernote WYSIWYG editor.</summary>
-    public string Content { get; set; }
+    public string? Content { get; set; }
 
     /// <summary>When <see langword="true"/> the post is pinned to the top of the list as a notice.</summary>
     public bool Noticed { get; set; }
@@ -26,5 +26,5 @@ public class BoardInputViewModel
     public bool Locked { get; set; }
 
     /// <summary>Optional single file attachment uploaded with the post (max one file per post).</summary>
-    public IFormFile UploadedFile { get; set; }
+    public IFormFile? UploadedFile { get; set; }
 }

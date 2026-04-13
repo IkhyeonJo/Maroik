@@ -13,7 +13,7 @@ public class LoginInputViewModel
     [Required(ErrorMessage = "Email is required")]
     [DataType(DataType.EmailAddress)]
     [EmailAddress(ErrorMessage = "Invalid Email Address")]
-    public string Email { get; set; }
+    public string? Email { get; set; }
 
     /// <summary>
     /// Plain-text password submitted by the user.
@@ -24,25 +24,25 @@ public class LoginInputViewModel
     [StringLength(100, ErrorMessage = "The {0} must be at least {2} characters long.", MinimumLength = 8)]
     [DataType(DataType.Password)]
     [RegularExpression("^((?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])|(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[^a-zA-Z0-9])|(?=.*?[A-Z])(?=.*?[0-9])(?=.*?[^a-zA-Z0-9])|(?=.*?[a-z])(?=.*?[0-9])(?=.*?[^a-zA-Z0-9])).{8,}$", ErrorMessage = "Password must be at least 8 characters and contain at 3 of 4 of the following: upper case (A-Z), lower case (a-z), number (0-9) and special character (e.g. !@#$%^&*)")]
-    public string Password { get; set; }
+    public string? Password { get; set; }
 
     /// <summary>The display name chosen by the user during registration.</summary>
     [Required(ErrorMessage = "Nickname is required")]
     [StringLength(255, ErrorMessage = "Must be between 1 and 255 characters", MinimumLength = 1)]
-    public string Nickname { get; set; }
+    public string? Nickname { get; set; }
 
     /// <summary>Whether the user has agreed to the service terms of use (required for registration).</summary>
     public bool AgreedServiceTerms { get; set; }
 
     /// <summary>One-time token sent via email to confirm account registration.</summary>
-    public string RegistrationToken { get; set; }
+    public string? RegistrationToken { get; set; }
 
     /// <summary>One-time token sent via email for the password-reset flow.</summary>
-    public string ResetPasswordToken { get; set; }
+    public string? ResetPasswordToken { get; set; }
 
     /// <summary>Locale/culture string (e.g. "en-US") selected by the user on the login page.</summary>
-    public string Culture { get; set; }
+    public string? Culture { get; set; }
 
     /// <summary>IANA time-zone ID (e.g. "Asia/Seoul") chosen by the user; persisted to the account.</summary>
-    public string TimeZoneIanaId { get; set; }
+    public string? TimeZoneIanaId { get; set; }
 }

@@ -81,8 +81,8 @@ public class AuthorizationFilter : ActionFilterAttribute
             ctrl.ViewBag.AnonymousSubCategories = anonymousSubCategories;
         }
 
-        string currentControllerName = context.ActionDescriptor.RouteValues["controller"].ToString(); // Controller name before execution
-        string currentActionName = context.ActionDescriptor.RouteValues["action"].ToString(); // Action name before execution
+        string currentControllerName = context.ActionDescriptor.RouteValues["controller"] ?? ""; // Controller name before execution
+        string currentActionName = context.ActionDescriptor.RouteValues["action"] ?? ""; // Action name before execution
         string currentRequestMethod = context.HttpContext.Request.Method; // GET HTTP METHOD
         bool isAccountSessionExist = _sessionService.GetAccount() != null; // Check if account session exists after login
 
@@ -289,7 +289,7 @@ public class AuthorizationFilter : ActionFilterAttribute
 
                 foreach (MethodInfo existingHttpPostMethod in existingHttpPostMethods)
                 {
-                    if (currentControllerName == existingHttpPostMethod.DeclaringType.Name.Replace("Controller", "") && currentActionName == existingHttpPostMethod.Name) // If current Controller and Action names (sent via POST) match Account Controller's Method(Action) name without NonAction attribute and with HttpPost & ValidateAntiForgeryToken attributes
+                    if (currentControllerName == existingHttpPostMethod.DeclaringType?.Name.Replace("Controller", "") && currentActionName == existingHttpPostMethod.Name) // If current Controller and Action names (sent via POST) match Account Controller's Method(Action) name without NonAction attribute and with HttpPost & ValidateAntiForgeryToken attributes
                     {
                         await next(); // Do Action!!
                         return;
@@ -305,7 +305,7 @@ public class AuthorizationFilter : ActionFilterAttribute
 
                     foreach (MethodInfo existingHttpPostMethod in existingHttpPostMethods)
                     {
-                        if (currentControllerName == existingHttpPostMethod.DeclaringType.Name.Replace("Controller", "") && currentActionName == existingHttpPostMethod.Name) // If current Controller and Action names (sent via POST) match Account Controller's Method(Action) name without NonAction attribute and with HttpPost & ValidateAntiForgeryToken attributes
+                        if (currentControllerName == existingHttpPostMethod.DeclaringType?.Name.Replace("Controller", "") && currentActionName == existingHttpPostMethod.Name) // If current Controller and Action names (sent via POST) match Account Controller's Method(Action) name without NonAction attribute and with HttpPost & ValidateAntiForgeryToken attributes
                         {
                             foreach (CustomAttributeData customAttribute in existingHttpPostMethod.CustomAttributes)
                             {
@@ -344,7 +344,7 @@ public class AuthorizationFilter : ActionFilterAttribute
 
                         foreach (MethodInfo existingHttpPostMethod in existingHttpPostMethods)
                         {
-                            if (currentControllerName == existingHttpPostMethod.DeclaringType.Name.Replace("Controller", "") && currentActionName == existingHttpPostMethod.Name) // If current Controller and Action names (sent via POST) match Account Controller's Method(Action) name without NonAction attribute and with HttpPost & ValidateAntiForgeryToken attributes
+                            if (currentControllerName == existingHttpPostMethod.DeclaringType?.Name.Replace("Controller", "") && currentActionName == existingHttpPostMethod.Name) // If current Controller and Action names (sent via POST) match Account Controller's Method(Action) name without NonAction attribute and with HttpPost & ValidateAntiForgeryToken attributes
                             {
                                 foreach (CustomAttributeData customAttribute in existingHttpPostMethod.CustomAttributes)
                                 {
@@ -378,7 +378,7 @@ public class AuthorizationFilter : ActionFilterAttribute
 
                         foreach (MethodInfo existingHttpPostMethod in existingHttpPostMethods)
                         {
-                            if (currentControllerName == existingHttpPostMethod.DeclaringType.Name.Replace("Controller", "") && currentActionName == existingHttpPostMethod.Name) // If current Controller and Action names (sent via POST) match Account Controller's Method(Action) name without NonAction attribute and with HttpPost & ValidateAntiForgeryToken attributes
+                            if (currentControllerName == existingHttpPostMethod.DeclaringType?.Name.Replace("Controller", "") && currentActionName == existingHttpPostMethod.Name) // If current Controller and Action names (sent via POST) match Account Controller's Method(Action) name without NonAction attribute and with HttpPost & ValidateAntiForgeryToken attributes
                             {
                                 foreach (CustomAttributeData customAttribute in existingHttpPostMethod.CustomAttributes)
                                 {

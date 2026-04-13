@@ -17,17 +17,17 @@ public class IncomeOutputViewModel
     /// <summary>Top-level income category (e.g. "RegularIncome", "IrregularIncome").</summary>
     [Required(ErrorMessage = "Please enter MainClass")]
     [Display(Name = "MainClass")]
-    public string MainClass { get; set; }
+    public string? MainClass { get; set; }
 
     /// <summary>Sub-category within the main class (e.g. "LaborIncome", "FinancialIncome").</summary>
     [Required(ErrorMessage = "Please enter SubClass")]
     [Display(Name = "SubClass")]
-    public string SubClass { get; set; }
+    public string? SubClass { get; set; }
 
     /// <summary>Free-text description of this income entry.</summary>
     [Required(ErrorMessage = "Please enter Content")]
     [Display(Name = "Content")]
-    public string Content { get; set; }
+    public string? Content { get; set; }
 
     /// <summary>Amount of income received.</summary>
     [Required(ErrorMessage = "Please enter Amount")]
@@ -36,12 +36,12 @@ public class IncomeOutputViewModel
 
     /// <summary>Currency code for the amount (e.g. "KRW", "USD"), sourced from the linked asset.</summary>
     [Display(Name = "MonetaryUnit")]
-    public string MonetaryUnit { get; set; }
+    public string? MonetaryUnit { get; set; }
 
     /// <summary>Name of the asset (product) into which this income was deposited.</summary>
     [Required(ErrorMessage = "Please enter DepositMyAssetProductName")]
     [Display(Name = "DepositMyAssetProductName")]
-    public string DepositMyAssetProductName { get; set; }
+    public string? DepositMyAssetProductName { get; set; }
 
     /// <summary>UTC timestamp when the income was recorded.</summary>
     [Required(ErrorMessage = "Please enter Created")]
@@ -55,5 +55,5 @@ public class IncomeOutputViewModel
 
     /// <summary>Optional free-text memo for this income record.</summary>
     [Display(Name = "Note")]
-    public string Note { get; set; }
+    public string? Note { get; set; }
 }

@@ -21,32 +21,32 @@ public class MenuInputViewModel
     /// <summary>Internal programmatic name of the menu item (used in code references).</summary>
     [Required(ErrorMessage = "Please enter Name")]
     [Display(Name = "Name")]
-    public string Name { get; set; }
+    public string? Name { get; set; }
 
     /// <summary>Localised display label shown in the navigation sidebar.</summary>
     [Required(ErrorMessage = "Please enter DisplayName")]
     [Display(Name = "DisplayName")]
-    public string DisplayName { get; set; }
+    public string? DisplayName { get; set; }
 
     /// <summary>Server-side path to the icon image displayed next to the menu label.</summary>
     [Required(ErrorMessage = "Please enter IconPath")]
     [Display(Name = "IconPath")]
-    public string IconPath { get; set; }
+    public string? IconPath { get; set; }
 
     /// <summary>MVC controller name this menu item links to (without the "Controller" suffix).</summary>
     [Required(ErrorMessage = "Please enter Controller")]
     [Display(Name = "Controller")]
-    public string Controller { get; set; }
+    public string? Controller { get; set; }
 
     /// <summary>MVC action method name this menu item links to.</summary>
     [Required(ErrorMessage = "Please enter Action")]
     [Display(Name = "Action")]
-    public string Action { get; set; }
+    public string? Action { get; set; }
 
     /// <summary>Minimum role required to see this menu item (e.g. "Admin", "User", "Anonymous").</summary>
     [Required(ErrorMessage = "Please enter Role")]
     [Display(Name = "Role")]
-    public string Role { get; set; }
+    public string? Role { get; set; }
 
     /// <summary>Display order of this item within its parent category (lower numbers appear first).</summary>
     [Required(ErrorMessage = "Please enter Order")]
