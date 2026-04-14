@@ -159,7 +159,7 @@ public class AccountRepositoryTests : IDisposable
 
         await _sut.CreateAccountAsync(request);
 
-        Account? saved = await _context.Accounts.FirstOrDefaultAsync(a => a.Email == "new@example.com");
+        Account? saved = await _context.Accounts.FirstOrDefaultAsync(a => a.Email == "new@example.com", TestContext.Current.CancellationToken);
         Assert.NotNull(saved);
         Assert.Equal("NewUser", saved.Nickname);
     }
@@ -224,7 +224,7 @@ public class AccountRepositoryTests : IDisposable
 
         await _sut.UpdateAccountAsync(request);
 
-        Account? updated = await _context.Accounts.FirstOrDefaultAsync(a => a.Email == "alice@example.com");
+        Account? updated = await _context.Accounts.FirstOrDefaultAsync(a => a.Email == "alice@example.com", TestContext.Current.CancellationToken);
         Assert.NotNull(updated);
         Assert.Equal("Admin", updated.Role);
         Assert.Equal("Asia/Seoul", updated.TimeZoneIanaId);

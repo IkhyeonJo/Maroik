@@ -77,7 +77,7 @@ public class CalendarEventRepositoryTests : IDisposable
     {
         await SeedAsync(MakeEvent(1, "Team Standup"));
 
-        long id = (await _context.CalendarEvents.FirstAsync()).Id;
+        long id = (await _context.CalendarEvents.FirstAsync(TestContext.Current.CancellationToken)).Id;
         CalendarEventResponse? result = await _sut.GetCalendarEventAsync(id);
 
         Assert.NotNull(result);
@@ -111,7 +111,7 @@ public class CalendarEventRepositoryTests : IDisposable
 
         await _sut.CreateCalendarEventAsync(request);
 
-        CalendarEvent? saved = await _context.CalendarEvents.FirstOrDefaultAsync(e => e.CalendarId == 5);
+        CalendarEvent? saved = await _context.CalendarEvents.FirstOrDefaultAsync(e => e.CalendarId == 5, TestContext.Current.CancellationToken);
         Assert.NotNull(saved);
         Assert.Equal("New Event", saved.Title);
         Assert.True(saved.AllDay);
@@ -124,7 +124,7 @@ public class CalendarEventRepositoryTests : IDisposable
     {
         await SeedAsync(MakeEvent(3, "Old Title"));
 
-        long id = (await _context.CalendarEvents.FirstAsync(e => e.CalendarId == 3)).Id;
+        long id = (await _context.CalendarEvents.FirstAsync(e => e.CalendarId == 3, TestContext.Current.CancellationToken)).Id;
 
         var request = new CalendarEventRequest
         {
@@ -141,7 +141,7 @@ public class CalendarEventRepositoryTests : IDisposable
 
         await _sut.UpdateCalendarEventAsync(request);
 
-        CalendarEvent? updated = await _context.CalendarEvents.FindAsync(id);
+        CalendarEvent? updated = await _context.CalendarEvents.FindAsync(new object[] { id }, TestContext.Current.CancellationToken);
         Assert.NotNull(updated);
         Assert.Equal("Updated Title", updated.Title);
         Assert.Equal("Free", updated.Status);
@@ -154,7 +154,7 @@ public class CalendarEventRepositoryTests : IDisposable
     {
         await SeedAsync(MakeEvent(4, "To Be Deleted"));
 
-        CalendarEvent existing = await _context.CalendarEvents.FirstAsync(e => e.CalendarId == 4);
+        CalendarEvent existing = await _context.CalendarEvents.FirstAsync(e => e.CalendarId == 4, TestContext.Current.CancellationToken);
 
         var request = new CalendarEventRequest
         {
@@ -170,7 +170,7 @@ public class CalendarEventRepositoryTests : IDisposable
 
         await _sut.DeleteCalendarEventAsync(request);
 
-        bool exists = await _context.CalendarEvents.AnyAsync(e => e.Id == existing.Id);
+        bool exists = await _context.CalendarEvents.AnyAsync(e => e.Id == existing.Id, TestContext.Current.CancellationToken);
         Assert.False(exists);
     }
 }

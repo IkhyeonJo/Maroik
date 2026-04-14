@@ -91,7 +91,7 @@ public class IncomeRepositoryTests : IDisposable
         await _sut.CreateIncomeAsync(request);
 
         Income? saved = await _context.Incomes.FirstOrDefaultAsync(
-            i => i.AccountEmail == "alice@example.com" && i.Content == "Monthly salary");
+            i => i.AccountEmail == "alice@example.com" && i.Content == "Monthly salary", TestContext.Current.CancellationToken);
         Assert.NotNull(saved);
         Assert.Equal(3000m, saved.Amount);
     }
@@ -120,7 +120,7 @@ public class IncomeRepositoryTests : IDisposable
 
         await _sut.UpdateIncomeAsync(request);
 
-        Income? updated = await _context.Incomes.FirstOrDefaultAsync(i => i.Id == id);
+        Income? updated = await _context.Incomes.FirstOrDefaultAsync(i => i.Id == id, TestContext.Current.CancellationToken);
         Assert.NotNull(updated);
         Assert.Equal(750m, updated.Amount);
         Assert.Equal("BusinessIncome", updated.SubClass);
@@ -148,7 +148,7 @@ public class IncomeRepositoryTests : IDisposable
 
         await _sut.DeleteIncomeAsync(request);
 
-        Income? deleted = await _context.Incomes.FirstOrDefaultAsync(i => i.Id == id);
+        Income? deleted = await _context.Incomes.FirstOrDefaultAsync(i => i.Id == id, TestContext.Current.CancellationToken);
         Assert.Null(deleted);
     }
 
@@ -172,7 +172,7 @@ public class IncomeRepositoryTests : IDisposable
 
         await _sut.DeleteIncomeAsync(request);
 
-        List<Income> remaining = await _context.Incomes.ToListAsync();
+        List<Income> remaining = await _context.Incomes.ToListAsync(TestContext.Current.CancellationToken);
         Assert.Single(remaining);
         Assert.Equal(income2.Id, remaining[0].Id);
     }

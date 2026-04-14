@@ -65,7 +65,7 @@ public class FileControllerTests : IClassFixture<WebApplicationFactory<Program>>
         content.Add(new StringContent("/tmp/uploads"), "filePath");
         // Intentionally omit the "file" part
 
-        var response = await client.PostAsync("/api/File/upload", content);
+        var response = await client.PostAsync("/api/File/upload", content, TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
@@ -80,7 +80,7 @@ public class FileControllerTests : IClassFixture<WebApplicationFactory<Program>>
         content.Add(emptyFile, "file", "empty.jpg");
         content.Add(new StringContent("/tmp/uploads"), "filePath");
 
-        var response = await client.PostAsync("/api/File/upload", content);
+        var response = await client.PostAsync("/api/File/upload", content, TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
@@ -99,7 +99,7 @@ public class FileControllerTests : IClassFixture<WebApplicationFactory<Program>>
         content.Add(fileContent, "file", fileName);
         content.Add(new StringContent("/tmp/uploads"), "filePath");
 
-        var response = await client.PostAsync("/api/File/upload", content);
+        var response = await client.PostAsync("/api/File/upload", content, TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
@@ -115,7 +115,7 @@ public class FileControllerTests : IClassFixture<WebApplicationFactory<Program>>
         content.Add(fileContent, "file", "large.jpg");
         content.Add(new StringContent("/tmp/uploads"), "filePath");
 
-        var response = await client.PostAsync("/api/File/upload", content);
+        var response = await client.PostAsync("/api/File/upload", content, TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
@@ -133,7 +133,7 @@ public class FileControllerTests : IClassFixture<WebApplicationFactory<Program>>
         content.Add(fileContent, "file", "fake.jpg");
         content.Add(new StringContent("/tmp/uploads"), "filePath");
 
-        var response = await client.PostAsync("/api/File/upload", content);
+        var response = await client.PostAsync("/api/File/upload", content, TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
@@ -148,7 +148,7 @@ public class FileControllerTests : IClassFixture<WebApplicationFactory<Program>>
         content.Add(fileContent, "file", "wrong.jpeg");
         content.Add(new StringContent("/tmp/uploads"), "filePath");
 
-        var response = await client.PostAsync("/api/File/upload", content);
+        var response = await client.PostAsync("/api/File/upload", content, TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
@@ -164,7 +164,7 @@ public class FileControllerTests : IClassFixture<WebApplicationFactory<Program>>
         content.Add(fileContent, "file", "fake.png");
         content.Add(new StringContent("/tmp/uploads"), "filePath");
 
-        var response = await client.PostAsync("/api/File/upload", content);
+        var response = await client.PostAsync("/api/File/upload", content, TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
@@ -180,7 +180,7 @@ public class FileControllerTests : IClassFixture<WebApplicationFactory<Program>>
         content.Add(fileContent, "file", "fake.zip");
         content.Add(new StringContent("/tmp/uploads"), "filePath");
 
-        var response = await client.PostAsync("/api/File/upload", content);
+        var response = await client.PostAsync("/api/File/upload", content, TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
@@ -198,7 +198,7 @@ public class FileControllerTests : IClassFixture<WebApplicationFactory<Program>>
         content.Add(fileContent, "file", "infected.jpg");
         content.Add(new StringContent("/tmp/uploads"), "filePath");
 
-        var response = await client.PostAsync("/api/File/upload", content);
+        var response = await client.PostAsync("/api/File/upload", content, TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
@@ -256,7 +256,7 @@ public class FileControllerTests : IClassFixture<WebApplicationFactory<Program>>
         content.Add(fileContent, "file", "encrypted.zip");
         content.Add(new StringContent("/tmp/uploads"), "filePath");
 
-        var response = await client.PostAsync("/api/File/upload", content);
+        var response = await client.PostAsync("/api/File/upload", content, TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
@@ -270,7 +270,7 @@ public class FileControllerTests : IClassFixture<WebApplicationFactory<Program>>
         using var content = new MultipartFormDataContent();
         content.Add(new StringContent("/nonexistent/path/does_not_exist_xyz.jpg"), "filePath");
 
-        var response = await client.PostAsync("/api/File/download", content);
+        var response = await client.PostAsync("/api/File/download", content, TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
@@ -281,7 +281,7 @@ public class FileControllerTests : IClassFixture<WebApplicationFactory<Program>>
         // Arrange: write a small temp file to disk
         var tempPath = Path.Combine(Path.GetTempPath(), $"maroik_test_{Guid.NewGuid()}.jpg");
         byte[] jpegBytes = [0xFF, 0xD8, 0xFF, 0xE0, 0x00, 0x10];
-        await File.WriteAllBytesAsync(tempPath, jpegBytes);
+        await File.WriteAllBytesAsync(tempPath, jpegBytes, TestContext.Current.CancellationToken);
 
         try
         {
@@ -289,10 +289,10 @@ public class FileControllerTests : IClassFixture<WebApplicationFactory<Program>>
             using var content = new MultipartFormDataContent();
             content.Add(new StringContent(tempPath), "filePath");
 
-            var response = await client.PostAsync("/api/File/download", content);
+            var response = await client.PostAsync("/api/File/download", content, TestContext.Current.CancellationToken);
 
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-            var responseBytes = await response.Content.ReadAsByteArrayAsync();
+            var responseBytes = await response.Content.ReadAsByteArrayAsync(TestContext.Current.CancellationToken);
             Assert.Equal(jpegBytes, responseBytes);
         }
         finally
@@ -306,7 +306,7 @@ public class FileControllerTests : IClassFixture<WebApplicationFactory<Program>>
     {
         var tempPath = Path.Combine(Path.GetTempPath(), $"maroik_test_{Guid.NewGuid()}.png");
         byte[] pngBytes = [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A];
-        await File.WriteAllBytesAsync(tempPath, pngBytes);
+        await File.WriteAllBytesAsync(tempPath, pngBytes, TestContext.Current.CancellationToken);
 
         try
         {
@@ -314,7 +314,7 @@ public class FileControllerTests : IClassFixture<WebApplicationFactory<Program>>
             using var content = new MultipartFormDataContent();
             content.Add(new StringContent(tempPath), "filePath");
 
-            var response = await client.PostAsync("/api/File/download", content);
+            var response = await client.PostAsync("/api/File/download", content, TestContext.Current.CancellationToken);
 
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
             Assert.Equal("image/png", response.Content.Headers.ContentType?.MediaType);

@@ -21,7 +21,7 @@ public class DashBoardControllerTests : IClassFixture<MaroikWebApplicationFactor
     [Fact]
     public async Task AnonymousIndex_Get_Returns200()
     {
-        var response = await _client.GetAsync("/DashBoard/AnonymousIndex");
+        var response = await _client.GetAsync("/DashBoard/AnonymousIndex", TestContext.Current.CancellationToken);
 
         Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
     }
@@ -30,7 +30,7 @@ public class DashBoardControllerTests : IClassFixture<MaroikWebApplicationFactor
     public async Task DefaultRoute_Get_Returns200()
     {
         // The default route pattern is {controller=DashBoard}/{action=AnonymousIndex}/{id?}
-        var response = await _client.GetAsync("/");
+        var response = await _client.GetAsync("/", TestContext.Current.CancellationToken);
 
         Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
     }

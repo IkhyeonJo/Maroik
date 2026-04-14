@@ -112,7 +112,7 @@ public class CalendarEventAttachedFileRepositoryTests : IDisposable
         await _sut.SaveCalendarEventAttachedFileAsync(request);
 
         CalendarEventAttachedFile? saved = await _context.CalendarEventAttachedFiles
-            .FirstOrDefaultAsync(f => f.CalendarEventId == 5);
+            .FirstOrDefaultAsync(f => f.CalendarEventId == 5, TestContext.Current.CancellationToken);
         Assert.NotNull(saved);
         Assert.Equal("new.pdf", saved.Name);
     }
@@ -123,7 +123,7 @@ public class CalendarEventAttachedFileRepositoryTests : IDisposable
     public async Task UpdateCalendarEventAttachedFileAsync_UpdatesExistingFile()
     {
         await SeedAsync(MakeFile(7, "old.pdf"));
-        long id = (await _context.CalendarEventAttachedFiles.FirstAsync(f => f.CalendarEventId == 7)).Id;
+        long id = (await _context.CalendarEventAttachedFiles.FirstAsync(f => f.CalendarEventId == 7, TestContext.Current.CancellationToken)).Id;
 
         var request = new CalendarEventAttachedFileRequest
         {
@@ -137,7 +137,7 @@ public class CalendarEventAttachedFileRepositoryTests : IDisposable
 
         await _sut.UpdateCalendarEventAttachedFileAsync(request);
 
-        CalendarEventAttachedFile? updated = await _context.CalendarEventAttachedFiles.FindAsync(id);
+        CalendarEventAttachedFile? updated = await _context.CalendarEventAttachedFiles.FindAsync(new object[] { id }, TestContext.Current.CancellationToken);
         Assert.NotNull(updated);
         Assert.Equal("updated.pdf", updated.Name);
         Assert.Equal(9999, updated.Size);
@@ -153,8 +153,8 @@ public class CalendarEventAttachedFileRepositoryTests : IDisposable
         int deleted = await _sut.DeleteCalendarEventAttachedFileAsync(20);
 
         Assert.Equal(2, deleted);
-        Assert.False(await _context.CalendarEventAttachedFiles.AnyAsync(f => f.CalendarEventId == 20));
-        Assert.True(await _context.CalendarEventAttachedFiles.AnyAsync(f => f.CalendarEventId == 30));
+        Assert.False(await _context.CalendarEventAttachedFiles.AnyAsync(f => f.CalendarEventId == 20, TestContext.Current.CancellationToken));
+        Assert.True(await _context.CalendarEventAttachedFiles.AnyAsync(f => f.CalendarEventId == 30, TestContext.Current.CancellationToken));
     }
 
     [Fact]

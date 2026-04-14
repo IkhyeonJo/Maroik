@@ -78,7 +78,7 @@ public class BoardRepositoryTests : IDisposable
     public async Task GetBoardByIdAsync_ReturnsBoard_WhenFoundAndNotDeleted()
     {
         await SeedAsync(MakeBoard("FreeForum", "My Post"));
-        Board board = await _context.Boards.FirstAsync();
+        Board board = await _context.Boards.FirstAsync(TestContext.Current.CancellationToken);
 
         BoardResponse? result = await _sut.GetBoardByIdAsync(board.Id);
 
@@ -90,7 +90,7 @@ public class BoardRepositoryTests : IDisposable
     public async Task GetBoardByIdAsync_ReturnsNull_WhenBoardIsDeleted()
     {
         await SeedAsync(MakeBoard("FreeForum", "Deleted Post", deleted: true));
-        Board board = await _context.Boards.FirstAsync();
+        Board board = await _context.Boards.FirstAsync(TestContext.Current.CancellationToken);
 
         BoardResponse? result = await _sut.GetBoardByIdAsync(board.Id);
 
@@ -125,7 +125,7 @@ public class BoardRepositoryTests : IDisposable
 
         await _sut.WriteBoardAsync(request);
 
-        Board? saved = await _context.Boards.FirstOrDefaultAsync(b => b.Title == "New Post");
+        Board? saved = await _context.Boards.FirstOrDefaultAsync(b => b.Title == "New Post", TestContext.Current.CancellationToken);
         Assert.NotNull(saved);
         Assert.Equal("Alice", saved.Writer);
     }
@@ -136,7 +136,7 @@ public class BoardRepositoryTests : IDisposable
     public async Task UpdateBoardAsync_UpdatesExistingBoard()
     {
         await SeedAsync(MakeBoard("FreeForum", "Original Title"));
-        Board board = await _context.Boards.FirstAsync();
+        Board board = await _context.Boards.FirstAsync(TestContext.Current.CancellationToken);
 
         var request = new BoardRequest
         {
@@ -154,7 +154,7 @@ public class BoardRepositoryTests : IDisposable
 
         await _sut.UpdateBoardAsync(request);
 
-        Board? updated = await _context.Boards.FirstOrDefaultAsync(b => b.Id == board.Id);
+        Board? updated = await _context.Boards.FirstOrDefaultAsync(b => b.Id == board.Id, TestContext.Current.CancellationToken);
         Assert.NotNull(updated);
         Assert.Equal("Updated Title", updated.Title);
     }
@@ -166,7 +166,7 @@ public class BoardRepositoryTests : IDisposable
     {
         // DeleteBoardAsync uses Update (soft delete) rather than Remove
         await SeedAsync(MakeBoard("FreeForum", "Post to Delete"));
-        Board board = await _context.Boards.FirstAsync();
+        Board board = await _context.Boards.FirstAsync(TestContext.Current.CancellationToken);
 
         var request = new BoardRequest
         {
@@ -185,7 +185,7 @@ public class BoardRepositoryTests : IDisposable
 
         await _sut.DeleteBoardAsync(request);
 
-        Board? result = await _context.Boards.FirstOrDefaultAsync(b => b.Id == board.Id);
+        Board? result = await _context.Boards.FirstOrDefaultAsync(b => b.Id == board.Id, TestContext.Current.CancellationToken);
         Assert.NotNull(result);
         Assert.True(result.Deleted);
     }

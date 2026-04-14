@@ -22,7 +22,7 @@ public class AccountControllerTests : IClassFixture<MaroikWebApplicationFactory>
     [Fact]
     public async Task ConsentForm_Get_Returns200()
     {
-        var response = await _client.GetAsync("/Account/ConsentForm");
+        var response = await _client.GetAsync("/Account/ConsentForm", TestContext.Current.CancellationToken);
 
         Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
     }
@@ -32,7 +32,7 @@ public class AccountControllerTests : IClassFixture<MaroikWebApplicationFactory>
     [Fact]
     public async Task Login_Get_Returns200()
     {
-        var response = await _client.GetAsync("/Account/Login");
+        var response = await _client.GetAsync("/Account/Login", TestContext.Current.CancellationToken);
 
         Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
     }
@@ -42,7 +42,7 @@ public class AccountControllerTests : IClassFixture<MaroikWebApplicationFactory>
     [Fact]
     public async Task Logout_Get_RedirectsToDashBoard()
     {
-        var response = await _client.GetAsync("/Account/Logout");
+        var response = await _client.GetAsync("/Account/Logout", TestContext.Current.CancellationToken);
 
         // Logout clears session and redirects — no auth required
         Assert.Equal(System.Net.HttpStatusCode.Redirect, response.StatusCode);
@@ -54,7 +54,7 @@ public class AccountControllerTests : IClassFixture<MaroikWebApplicationFactory>
     [Fact]
     public async Task Register_Get_Returns200()
     {
-        var response = await _client.GetAsync("/Account/Register");
+        var response = await _client.GetAsync("/Account/Register", TestContext.Current.CancellationToken);
 
         Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
     }
@@ -66,7 +66,7 @@ public class AccountControllerTests : IClassFixture<MaroikWebApplicationFactory>
     {
         // Providing an invalid/fake token; the controller should handle decryption failure
         // and show the view with InvalidToken = true rather than throwing.
-        var response = await _client.GetAsync("/Account/ConfirmEmail?registrationToken=invalid-token");
+        var response = await _client.GetAsync("/Account/ConfirmEmail?registrationToken=invalid-token", TestContext.Current.CancellationToken);
 
         Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
     }
@@ -76,7 +76,7 @@ public class AccountControllerTests : IClassFixture<MaroikWebApplicationFactory>
     [Fact]
     public async Task ForgotPassword_Get_Returns200()
     {
-        var response = await _client.GetAsync("/Account/ForgotPassword");
+        var response = await _client.GetAsync("/Account/ForgotPassword", TestContext.Current.CancellationToken);
 
         Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
     }
@@ -88,7 +88,7 @@ public class AccountControllerTests : IClassFixture<MaroikWebApplicationFactory>
     {
         // Providing an invalid/fake token; ValidateResetPasswordTokenAsync should catch
         // the decryption failure and show the view with FailToReset = true.
-        var response = await _client.GetAsync("/Account/ResetPassword?resetPasswordToken=invalid-token");
+        var response = await _client.GetAsync("/Account/ResetPassword?resetPasswordToken=invalid-token", TestContext.Current.CancellationToken);
 
         Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
     }

@@ -112,7 +112,7 @@ public class BoardCommentRepositoryTests : IDisposable
     {
         long boardId = await SeedBoardAsync();
         await SeedAsync(MakeComment(boardId, 1, writer: "Bob"));
-        BoardComment comment = await _context.BoardComments.FirstAsync();
+        BoardComment comment = await _context.BoardComments.FirstAsync(TestContext.Current.CancellationToken);
 
         BoardCommentResponse? result = await _sut.GetBoardCommentAsync((int)comment.Id);
 
@@ -178,7 +178,7 @@ public class BoardCommentRepositoryTests : IDisposable
         await _sut.WriteBoardCommentAsync(request);
 
         BoardComment? saved = await _context.BoardComments.FirstOrDefaultAsync(
-            c => c.BoardId == boardId && c.Content == "Great post!");
+            c => c.BoardId == boardId && c.Content == "Great post!", TestContext.Current.CancellationToken);
         Assert.NotNull(saved);
         Assert.Equal("Alice", saved.Writer);
     }
@@ -190,7 +190,7 @@ public class BoardCommentRepositoryTests : IDisposable
     {
         long boardId = await SeedBoardAsync();
         await SeedAsync(MakeComment(boardId, 1));
-        BoardComment comment = await _context.BoardComments.FirstAsync();
+        BoardComment comment = await _context.BoardComments.FirstAsync(TestContext.Current.CancellationToken);
 
         var request = new BoardCommentRequest
         {
@@ -206,7 +206,7 @@ public class BoardCommentRepositoryTests : IDisposable
 
         await _sut.DeleteBoardCommentAsync(request);
 
-        BoardComment? result = await _context.BoardComments.FirstOrDefaultAsync(c => c.Id == comment.Id);
+        BoardComment? result = await _context.BoardComments.FirstOrDefaultAsync(c => c.Id == comment.Id, TestContext.Current.CancellationToken);
         Assert.NotNull(result);
         Assert.True(result.Deleted);
     }

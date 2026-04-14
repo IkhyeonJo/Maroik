@@ -19,7 +19,7 @@ public class DriveControllerTests : IClassFixture<MaroikWebApplicationFactory>
     [Fact]
     public async Task AnonymousIndex_Get_Returns200()
     {
-        var response = await _client.GetAsync("/Drive/AnonymousIndex");
+        var response = await _client.GetAsync("/Drive/AnonymousIndex", TestContext.Current.CancellationToken);
 
         Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
     }
@@ -27,7 +27,7 @@ public class DriveControllerTests : IClassFixture<MaroikWebApplicationFactory>
     [Fact]
     public async Task AdminIndex_Get_Returns200()
     {
-        var response = await _client.GetAsync("/Drive/AdminIndex");
+        var response = await _client.GetAsync("/Drive/AdminIndex", TestContext.Current.CancellationToken);
 
         Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
     }
@@ -35,7 +35,7 @@ public class DriveControllerTests : IClassFixture<MaroikWebApplicationFactory>
     [Fact]
     public async Task UserIndex_Get_Returns200()
     {
-        var response = await _client.GetAsync("/Drive/UserIndex");
+        var response = await _client.GetAsync("/Drive/UserIndex", TestContext.Current.CancellationToken);
 
         Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
     }

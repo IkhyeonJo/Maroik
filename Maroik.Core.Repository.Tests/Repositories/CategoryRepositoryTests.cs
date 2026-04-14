@@ -114,7 +114,7 @@ public class CategoryRepositoryTests : IDisposable
 
         await _sut.CreateCategoryAsync(request);
 
-        Category? saved = await _context.Categories.FirstOrDefaultAsync(c => c.Name == "NewMenu");
+        Category? saved = await _context.Categories.FirstOrDefaultAsync(c => c.Name == "NewMenu", TestContext.Current.CancellationToken);
         Assert.NotNull(saved);
         Assert.Equal("User", saved.Role);
         Assert.Equal(5, saved.Order);
@@ -126,7 +126,7 @@ public class CategoryRepositoryTests : IDisposable
     public async Task UpdateCategoryAsync_UpdatesExistingCategory()
     {
         await SeedAsync(MakeCategory("OldName", order: 1));
-        Category category = await _context.Categories.FirstAsync();
+        Category category = await _context.Categories.FirstAsync(TestContext.Current.CancellationToken);
 
         var request = new CategoryRequest
         {
@@ -142,7 +142,7 @@ public class CategoryRepositoryTests : IDisposable
 
         await _sut.UpdateCategoryAsync(request);
 
-        Category? updated = await _context.Categories.FirstOrDefaultAsync(c => c.Id == category.Id);
+        Category? updated = await _context.Categories.FirstOrDefaultAsync(c => c.Id == category.Id, TestContext.Current.CancellationToken);
         Assert.NotNull(updated);
         Assert.Equal("UpdatedName", updated.Name);
         Assert.Equal("Admin", updated.Role);
@@ -155,7 +155,7 @@ public class CategoryRepositoryTests : IDisposable
     public async Task DeleteCategoryAsync_RemovesCategoryFromDatabase()
     {
         await SeedAsync(MakeCategory("ToDelete"));
-        Category category = await _context.Categories.FirstAsync();
+        Category category = await _context.Categories.FirstAsync(TestContext.Current.CancellationToken);
 
         var request = new CategoryRequest
         {
@@ -168,7 +168,7 @@ public class CategoryRepositoryTests : IDisposable
 
         await _sut.DeleteCategoryAsync(request);
 
-        Category? deleted = await _context.Categories.FirstOrDefaultAsync(c => c.Id == category.Id);
+        Category? deleted = await _context.Categories.FirstOrDefaultAsync(c => c.Id == category.Id, TestContext.Current.CancellationToken);
         Assert.Null(deleted);
     }
 
@@ -176,7 +176,7 @@ public class CategoryRepositoryTests : IDisposable
     public async Task DeleteCategoryAsync_DoesNotAffectOtherCategories()
     {
         await SeedAsync(MakeCategory("Cat1", order: 1), MakeCategory("Cat2", order: 2));
-        List<Category> all = await _context.Categories.ToListAsync();
+        List<Category> all = await _context.Categories.ToListAsync(TestContext.Current.CancellationToken);
 
         var request = new CategoryRequest
         {
@@ -189,7 +189,7 @@ public class CategoryRepositoryTests : IDisposable
 
         await _sut.DeleteCategoryAsync(request);
 
-        List<Category> remaining = await _context.Categories.ToListAsync();
+        List<Category> remaining = await _context.Categories.ToListAsync(TestContext.Current.CancellationToken);
         Assert.Single(remaining);
         Assert.Equal(all[1].Id, remaining[0].Id);
     }

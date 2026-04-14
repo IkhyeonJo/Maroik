@@ -21,7 +21,7 @@ public class ForumControllerTests : IClassFixture<MaroikWebApplicationFactory>
     [Fact]
     public async Task FreeForum_DefaultList_Returns200()
     {
-        var response = await _client.GetAsync("/Forum/FreeForum");
+        var response = await _client.GetAsync("/Forum/FreeForum", TestContext.Current.CancellationToken);
 
         Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
     }
@@ -29,7 +29,7 @@ public class ForumControllerTests : IClassFixture<MaroikWebApplicationFactory>
     [Fact]
     public async Task FreeForum_ListWithTitleSearch_Returns200()
     {
-        var response = await _client.GetAsync("/Forum/FreeForum?method=list&searchType=Title&searchText=hello");
+        var response = await _client.GetAsync("/Forum/FreeForum?method=list&searchType=Title&searchText=hello", TestContext.Current.CancellationToken);
 
         Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
     }
@@ -37,7 +37,7 @@ public class ForumControllerTests : IClassFixture<MaroikWebApplicationFactory>
     [Fact]
     public async Task FreeForum_ListWithWriterSearch_Returns200()
     {
-        var response = await _client.GetAsync("/Forum/FreeForum?method=list&searchType=Writer&searchText=alice");
+        var response = await _client.GetAsync("/Forum/FreeForum?method=list&searchType=Writer&searchText=alice", TestContext.Current.CancellationToken);
 
         Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
     }
@@ -47,7 +47,7 @@ public class ForumControllerTests : IClassFixture<MaroikWebApplicationFactory>
     [Fact]
     public async Task FreeForum_WriteModeWithoutSession_RedirectsToLogin()
     {
-        var response = await _client.GetAsync("/Forum/FreeForum?method=write");
+        var response = await _client.GetAsync("/Forum/FreeForum?method=write", TestContext.Current.CancellationToken);
 
         // Without a session, the controller redirects to Account/Login
         Assert.Equal(System.Net.HttpStatusCode.Redirect, response.StatusCode);
@@ -59,7 +59,7 @@ public class ForumControllerTests : IClassFixture<MaroikWebApplicationFactory>
     [Fact]
     public async Task FreeForum_DetailModeWithMissingBoard_RedirectsToList()
     {
-        var response = await _client.GetAsync("/Forum/FreeForum?method=detail&boardId=99999");
+        var response = await _client.GetAsync("/Forum/FreeForum?method=detail&boardId=99999", TestContext.Current.CancellationToken);
 
         // Board does not exist → controller redirects back to the list
         Assert.Equal(System.Net.HttpStatusCode.Redirect, response.StatusCode);
@@ -68,7 +68,7 @@ public class ForumControllerTests : IClassFixture<MaroikWebApplicationFactory>
     [Fact]
     public async Task FreeForum_DetailModeWithNullBoardId_RedirectsToList()
     {
-        var response = await _client.GetAsync("/Forum/FreeForum?method=detail");
+        var response = await _client.GetAsync("/Forum/FreeForum?method=detail", TestContext.Current.CancellationToken);
 
         // boardId is null → RedirectToAction("FreeForum", "Forum")
         Assert.Equal(System.Net.HttpStatusCode.Redirect, response.StatusCode);

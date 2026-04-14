@@ -22,7 +22,7 @@ public class NoticeControllerTests : IClassFixture<MaroikWebApplicationFactory>
     public async Task FixedIncome_Get_NonAjax_Returns200()
     {
         // Non-AJAX GET falls through to return View() without accessing session
-        var response = await _client.GetAsync("/Notice/FixedIncome");
+        var response = await _client.GetAsync("/Notice/FixedIncome", TestContext.Current.CancellationToken);
 
         Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
     }
@@ -32,7 +32,7 @@ public class NoticeControllerTests : IClassFixture<MaroikWebApplicationFactory>
     [Fact]
     public async Task FixedExpenditure_Get_NonAjax_Returns200()
     {
-        var response = await _client.GetAsync("/Notice/FixedExpenditure");
+        var response = await _client.GetAsync("/Notice/FixedExpenditure", TestContext.Current.CancellationToken);
 
         Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
     }

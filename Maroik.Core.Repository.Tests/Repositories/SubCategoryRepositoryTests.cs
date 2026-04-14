@@ -133,7 +133,7 @@ public class SubCategoryRepositoryTests : IDisposable
 
         await _sut.CreateSubCategoryAsync(request);
 
-        SubCategory? saved = await _context.SubCategories.FirstOrDefaultAsync(sc => sc.Name == "NewSubMenu");
+        SubCategory? saved = await _context.SubCategories.FirstOrDefaultAsync(sc => sc.Name == "NewSubMenu", TestContext.Current.CancellationToken);
         Assert.NotNull(saved);
         Assert.Equal(catId, saved.CategoryId);
         Assert.Equal("User", saved.Role);
@@ -146,7 +146,7 @@ public class SubCategoryRepositoryTests : IDisposable
     {
         long catId = await SeedCategoryAsync();
         await SeedAsync(MakeSubCategory(catId, "OldSub", order: 1));
-        SubCategory sub = await _context.SubCategories.FirstAsync();
+        SubCategory sub = await _context.SubCategories.FirstAsync(TestContext.Current.CancellationToken);
 
         var request = new SubCategoryRequest
         {
@@ -162,7 +162,7 @@ public class SubCategoryRepositoryTests : IDisposable
 
         await _sut.UpdateSubCategoryAsync(request);
 
-        SubCategory? updated = await _context.SubCategories.FirstOrDefaultAsync(sc => sc.Id == sub.Id);
+        SubCategory? updated = await _context.SubCategories.FirstOrDefaultAsync(sc => sc.Id == sub.Id, TestContext.Current.CancellationToken);
         Assert.NotNull(updated);
         Assert.Equal("UpdatedSub", updated.Name);
         Assert.Equal("Admin", updated.Role);
@@ -176,7 +176,7 @@ public class SubCategoryRepositoryTests : IDisposable
     {
         long catId = await SeedCategoryAsync();
         await SeedAsync(MakeSubCategory(catId, "ToDelete"));
-        SubCategory sub = await _context.SubCategories.FirstAsync();
+        SubCategory sub = await _context.SubCategories.FirstAsync(TestContext.Current.CancellationToken);
 
         var request = new SubCategoryRequest
         {
@@ -190,7 +190,7 @@ public class SubCategoryRepositoryTests : IDisposable
 
         await _sut.DeleteSubCategoryAsync(request);
 
-        SubCategory? deleted = await _context.SubCategories.FirstOrDefaultAsync(sc => sc.Id == sub.Id);
+        SubCategory? deleted = await _context.SubCategories.FirstOrDefaultAsync(sc => sc.Id == sub.Id, TestContext.Current.CancellationToken);
         Assert.Null(deleted);
     }
 
@@ -201,7 +201,7 @@ public class SubCategoryRepositoryTests : IDisposable
         await SeedAsync(
             MakeSubCategory(catId, "Sub1", order: 1),
             MakeSubCategory(catId, "Sub2", order: 2));
-        List<SubCategory> all = await _context.SubCategories.ToListAsync();
+        List<SubCategory> all = await _context.SubCategories.ToListAsync(TestContext.Current.CancellationToken);
 
         var request = new SubCategoryRequest
         {
@@ -215,7 +215,7 @@ public class SubCategoryRepositoryTests : IDisposable
 
         await _sut.DeleteSubCategoryAsync(request);
 
-        List<SubCategory> remaining = await _context.SubCategories.ToListAsync();
+        List<SubCategory> remaining = await _context.SubCategories.ToListAsync(TestContext.Current.CancellationToken);
         Assert.Single(remaining);
         Assert.Equal(all[1].Id, remaining[0].Id);
     }

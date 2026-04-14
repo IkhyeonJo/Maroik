@@ -22,7 +22,7 @@ public class AccountBookControllerTests : IClassFixture<MaroikWebApplicationFact
     public async Task Asset_Get_NonAjax_Returns200()
     {
         // Non-AJAX GET falls through to return View() without accessing session
-        var response = await _client.GetAsync("/AccountBook/Asset");
+        var response = await _client.GetAsync("/AccountBook/Asset", TestContext.Current.CancellationToken);
 
         Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
     }
@@ -32,7 +32,7 @@ public class AccountBookControllerTests : IClassFixture<MaroikWebApplicationFact
     [Fact]
     public async Task Income_Get_NonAjax_Returns200()
     {
-        var response = await _client.GetAsync("/AccountBook/Income");
+        var response = await _client.GetAsync("/AccountBook/Income", TestContext.Current.CancellationToken);
 
         Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
     }
@@ -42,7 +42,7 @@ public class AccountBookControllerTests : IClassFixture<MaroikWebApplicationFact
     [Fact]
     public async Task Expenditure_Get_NonAjax_Returns200()
     {
-        var response = await _client.GetAsync("/AccountBook/Expenditure");
+        var response = await _client.GetAsync("/AccountBook/Expenditure", TestContext.Current.CancellationToken);
 
         Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
     }

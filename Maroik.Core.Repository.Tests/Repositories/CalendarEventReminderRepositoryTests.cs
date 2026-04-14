@@ -93,7 +93,7 @@ public class CalendarEventReminderRepositoryTests : IDisposable
         await _sut.CreateCalendarEventReminderAsync(request);
 
         CalendarEventReminder? saved = await _context.CalendarEventReminders
-            .FirstOrDefaultAsync(r => r.CalendarEventId == 5);
+            .FirstOrDefaultAsync(r => r.CalendarEventId == 5, TestContext.Current.CancellationToken);
         Assert.NotNull(saved);
         Assert.Equal("Push", saved.Method);
         Assert.Equal(2, saved.HoursBeforeEvent);
@@ -112,8 +112,8 @@ public class CalendarEventReminderRepositoryTests : IDisposable
         int deleted = await _sut.DeleteCalendarEventReminderAsync(10);
 
         Assert.Equal(2, deleted);
-        Assert.False(await _context.CalendarEventReminders.AnyAsync(r => r.CalendarEventId == 10));
-        Assert.True(await _context.CalendarEventReminders.AnyAsync(r => r.CalendarEventId == 20));
+        Assert.False(await _context.CalendarEventReminders.AnyAsync(r => r.CalendarEventId == 10, TestContext.Current.CancellationToken));
+        Assert.True(await _context.CalendarEventReminders.AnyAsync(r => r.CalendarEventId == 20, TestContext.Current.CancellationToken));
     }
 
     [Fact]

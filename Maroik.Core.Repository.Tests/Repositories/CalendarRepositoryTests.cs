@@ -122,7 +122,7 @@ public class CalendarRepositoryTests : IDisposable
         await _sut.CreateCalendarAsync(request);
 
         Calendar? saved = await _context.Calendars.FirstOrDefaultAsync(
-            c => c.AccountEmail == "alice@example.com" && c.Name == "New Calendar");
+            c => c.AccountEmail == "alice@example.com" && c.Name == "New Calendar", TestContext.Current.CancellationToken);
         Assert.NotNull(saved);
         Assert.Equal("#3498DB", saved.HtmlColorCode);
         Assert.Equal("Asia/Seoul", saved.TimeZoneIanaId);
@@ -134,7 +134,7 @@ public class CalendarRepositoryTests : IDisposable
     public async Task UpdateCalendarAsync_UpdatesExistingCalendar()
     {
         await SeedAsync(MakeCalendar("alice@example.com", "Work", color: "#FF5733"));
-        Calendar calendar = await _context.Calendars.FirstAsync();
+        Calendar calendar = await _context.Calendars.FirstAsync(TestContext.Current.CancellationToken);
 
         var request = new CalendarRequest
         {
@@ -150,7 +150,7 @@ public class CalendarRepositoryTests : IDisposable
 
         await _sut.UpdateCalendarAsync(request);
 
-        Calendar? updated = await _context.Calendars.FirstOrDefaultAsync(c => c.Id == calendar.Id);
+        Calendar? updated = await _context.Calendars.FirstOrDefaultAsync(c => c.Id == calendar.Id, TestContext.Current.CancellationToken);
         Assert.NotNull(updated);
         Assert.Equal("Work Updated", updated.Name);
         Assert.Equal("#2ECC71", updated.HtmlColorCode);
@@ -162,7 +162,7 @@ public class CalendarRepositoryTests : IDisposable
     public async Task DeleteCalendarAsync_RemovesCalendarFromDatabase()
     {
         await SeedAsync(MakeCalendar("alice@example.com", "ToDelete"));
-        Calendar calendar = await _context.Calendars.FirstAsync();
+        Calendar calendar = await _context.Calendars.FirstAsync(TestContext.Current.CancellationToken);
 
         var request = new CalendarRequest
         {
@@ -177,7 +177,7 @@ public class CalendarRepositoryTests : IDisposable
 
         await _sut.DeleteCalendarAsync(request);
 
-        Calendar? deleted = await _context.Calendars.FirstOrDefaultAsync(c => c.Id == calendar.Id);
+        Calendar? deleted = await _context.Calendars.FirstOrDefaultAsync(c => c.Id == calendar.Id, TestContext.Current.CancellationToken);
         Assert.Null(deleted);
     }
 
@@ -187,7 +187,7 @@ public class CalendarRepositoryTests : IDisposable
         await SeedAsync(
             MakeCalendar("alice@example.com", "Cal1"),
             MakeCalendar("alice@example.com", "Cal2"));
-        List<Calendar> all = await _context.Calendars.ToListAsync();
+        List<Calendar> all = await _context.Calendars.ToListAsync(TestContext.Current.CancellationToken);
 
         var request = new CalendarRequest
         {
@@ -202,7 +202,7 @@ public class CalendarRepositoryTests : IDisposable
 
         await _sut.DeleteCalendarAsync(request);
 
-        List<Calendar> remaining = await _context.Calendars.ToListAsync();
+        List<Calendar> remaining = await _context.Calendars.ToListAsync(TestContext.Current.CancellationToken);
         Assert.Single(remaining);
         Assert.Equal(all[1].Id, remaining[0].Id);
     }

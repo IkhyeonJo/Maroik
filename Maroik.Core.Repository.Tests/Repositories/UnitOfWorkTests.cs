@@ -54,11 +54,11 @@ public class UnitOfWorkTests : IDisposable
         await uow.BeginAsync();
 
         // AddAsync explicitly marks the entity as Added — no ChangeTracker tweak needed.
-        await _context.CalendarShareds.AddAsync(new CalendarShared { CalendarId = 1, User = true, Anonymous = false });
-        await _context.SaveChangesAsync();
+        await _context.CalendarShareds.AddAsync(new CalendarShared { CalendarId = 1, User = true, Anonymous = false }, TestContext.Current.CancellationToken);
+        await _context.SaveChangesAsync(TestContext.Current.CancellationToken);
         await uow.CommitAsync();
 
-        bool exists = await _context.CalendarShareds.AnyAsync(cs => cs.CalendarId == 1);
+        bool exists = await _context.CalendarShareds.AnyAsync(cs => cs.CalendarId == 1, TestContext.Current.CancellationToken);
         Assert.True(exists);
     }
 

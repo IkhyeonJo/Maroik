@@ -22,7 +22,7 @@ public abstract class E2ETestBase : IAsyncLifetime
     private IPlaywright? _playwright;
     private IBrowser? _browser;
 
-    public async Task InitializeAsync()
+    public async ValueTask InitializeAsync()
     {
         // Trigger server start by making one HTTP request
         Factory.CreateClient();
@@ -34,7 +34,7 @@ public abstract class E2ETestBase : IAsyncLifetime
         });
     }
 
-    public async Task DisposeAsync()
+    public async ValueTask DisposeAsync()
     {
         if (_browser != null) await _browser.DisposeAsync();
         _playwright?.Dispose();

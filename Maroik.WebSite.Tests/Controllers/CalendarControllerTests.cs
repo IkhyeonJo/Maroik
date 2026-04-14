@@ -19,7 +19,7 @@ public class CalendarControllerTests : IClassFixture<MaroikWebApplicationFactory
     [Fact]
     public async Task AnonymousIndex_Get_Returns200()
     {
-        var response = await _client.GetAsync("/Calendar/AnonymousIndex");
+        var response = await _client.GetAsync("/Calendar/AnonymousIndex", TestContext.Current.CancellationToken);
 
         Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
     }

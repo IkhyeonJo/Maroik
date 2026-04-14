@@ -22,7 +22,7 @@ public class ManagementControllerTests : IClassFixture<MaroikWebApplicationFacto
     public async Task Account_Get_NonAjax_Returns200()
     {
         // Non-AJAX GET falls through to return View() without accessing session
-        var response = await _client.GetAsync("/Management/Account");
+        var response = await _client.GetAsync("/Management/Account", TestContext.Current.CancellationToken);
 
         Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
     }
@@ -32,7 +32,7 @@ public class ManagementControllerTests : IClassFixture<MaroikWebApplicationFacto
     [Fact]
     public async Task Menu_Get_NonAjax_Returns200()
     {
-        var response = await _client.GetAsync("/Management/Menu");
+        var response = await _client.GetAsync("/Management/Menu", TestContext.Current.CancellationToken);
 
         Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
     }

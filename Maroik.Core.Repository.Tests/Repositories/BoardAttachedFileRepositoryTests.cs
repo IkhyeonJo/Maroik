@@ -124,7 +124,7 @@ public class BoardAttachedFileRepositoryTests : IDisposable
 
         await _sut.SaveBoardAttachedFileAsync(request);
 
-        BoardAttachedFile? saved = await _context.BoardAttachedFiles.FirstOrDefaultAsync(f => f.BoardId == 5);
+        BoardAttachedFile? saved = await _context.BoardAttachedFiles.FirstOrDefaultAsync(f => f.BoardId == 5, TestContext.Current.CancellationToken);
         Assert.NotNull(saved);
         Assert.Equal("new.pdf", saved.Name);
         Assert.Equal(2048, saved.Size);
@@ -138,7 +138,7 @@ public class BoardAttachedFileRepositoryTests : IDisposable
         var file = MakeFile(7, "old.pdf", 512);
         await SeedAsync(file);
 
-        long id = (await _context.BoardAttachedFiles.FirstAsync(f => f.BoardId == 7)).Id;
+        long id = (await _context.BoardAttachedFiles.FirstAsync(f => f.BoardId == 7, TestContext.Current.CancellationToken)).Id;
 
         var request = new BoardAttachedFileRequest
         {
@@ -152,7 +152,7 @@ public class BoardAttachedFileRepositoryTests : IDisposable
 
         await _sut.UpdateBoardAttachedFileAsync(request);
 
-        BoardAttachedFile? updated = await _context.BoardAttachedFiles.FindAsync(id);
+        BoardAttachedFile? updated = await _context.BoardAttachedFiles.FindAsync(new object[] { id }, TestContext.Current.CancellationToken);
         Assert.NotNull(updated);
         Assert.Equal("updated.pdf", updated.Name);
         Assert.Equal(9999, updated.Size);

@@ -118,7 +118,7 @@ public class OtherCalendarRepositoryTests : IDisposable
         await _sut.CreateOtherCalendarAsync(request);
 
         bool exists = await _context.OtherCalendars.AnyAsync(
-            oc => oc.AccountEmail == "carol@example.com" && oc.CalendarId == 10);
+            oc => oc.AccountEmail == "carol@example.com" && oc.CalendarId == 10, TestContext.Current.CancellationToken);
         Assert.True(exists);
     }
 
@@ -138,7 +138,7 @@ public class OtherCalendarRepositoryTests : IDisposable
         await _sut.DeleteOtherCalendarAsync(request);
 
         bool exists = await _context.OtherCalendars.AnyAsync(
-            oc => oc.AccountEmail == "dave@example.com" && oc.CalendarId == 7);
+            oc => oc.AccountEmail == "dave@example.com" && oc.CalendarId == 7, TestContext.Current.CancellationToken);
         Assert.False(exists);
     }
 }

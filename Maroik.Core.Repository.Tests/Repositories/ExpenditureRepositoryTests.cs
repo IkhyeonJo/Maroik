@@ -94,7 +94,7 @@ public class ExpenditureRepositoryTests : IDisposable
         await _sut.CreateExpenditureAsync(request);
 
         Expenditure? saved = await _context.Expenditures.FirstOrDefaultAsync(
-            e => e.AccountEmail == "alice@example.com" && e.Content == "Team lunch");
+            e => e.AccountEmail == "alice@example.com" && e.Content == "Team lunch", TestContext.Current.CancellationToken);
         Assert.NotNull(saved);
         Assert.Equal(250m, saved.Amount);
     }
@@ -124,7 +124,7 @@ public class ExpenditureRepositoryTests : IDisposable
 
         await _sut.UpdateExpenditureAsync(request);
 
-        Expenditure? updated = await _context.Expenditures.FirstOrDefaultAsync(e => e.Id == id);
+        Expenditure? updated = await _context.Expenditures.FirstOrDefaultAsync(e => e.Id == id, TestContext.Current.CancellationToken);
         Assert.NotNull(updated);
         Assert.Equal(150m, updated.Amount);
         Assert.Equal("Updated Lunch", updated.Content);
@@ -153,7 +153,7 @@ public class ExpenditureRepositoryTests : IDisposable
 
         await _sut.DeleteExpenditureAsync(request);
 
-        Expenditure? deleted = await _context.Expenditures.FirstOrDefaultAsync(e => e.Id == id);
+        Expenditure? deleted = await _context.Expenditures.FirstOrDefaultAsync(e => e.Id == id, TestContext.Current.CancellationToken);
         Assert.Null(deleted);
     }
 
@@ -178,7 +178,7 @@ public class ExpenditureRepositoryTests : IDisposable
 
         await _sut.DeleteExpenditureAsync(request);
 
-        List<Expenditure> remaining = await _context.Expenditures.ToListAsync();
+        List<Expenditure> remaining = await _context.Expenditures.ToListAsync(TestContext.Current.CancellationToken);
         Assert.Single(remaining);
         Assert.Equal(exp2.Id, remaining[0].Id);
     }

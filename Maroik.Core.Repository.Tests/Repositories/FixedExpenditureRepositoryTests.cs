@@ -101,7 +101,7 @@ public class FixedExpenditureRepositoryTests : IDisposable
         await _sut.CreateFixedExpenditureAsync(request);
 
         FixedExpenditure? saved = await _context.FixedExpenditures.FirstOrDefaultAsync(
-            fe => fe.AccountEmail == "alice@example.com" && fe.Content == "Property tax");
+            fe => fe.AccountEmail == "alice@example.com" && fe.Content == "Property tax", TestContext.Current.CancellationToken);
         Assert.NotNull(saved);
         Assert.Equal(200m, saved.Amount);
         Assert.Equal((short)3, saved.DepositMonth);
@@ -137,7 +137,7 @@ public class FixedExpenditureRepositoryTests : IDisposable
 
         await _sut.UpdateFixedExpenditureAsync(request);
 
-        FixedExpenditure? updated = await _context.FixedExpenditures.FirstOrDefaultAsync(fe => fe.Id == id);
+        FixedExpenditure? updated = await _context.FixedExpenditures.FirstOrDefaultAsync(fe => fe.Id == id, TestContext.Current.CancellationToken);
         Assert.NotNull(updated);
         Assert.Equal(75m, updated.Amount);
         Assert.Equal("Netflix Premium", updated.Content);
@@ -170,7 +170,7 @@ public class FixedExpenditureRepositoryTests : IDisposable
 
         await _sut.DeleteFixedExpenditureAsync(request);
 
-        FixedExpenditure? deleted = await _context.FixedExpenditures.FirstOrDefaultAsync(fe => fe.Id == id);
+        FixedExpenditure? deleted = await _context.FixedExpenditures.FirstOrDefaultAsync(fe => fe.Id == id, TestContext.Current.CancellationToken);
         Assert.Null(deleted);
     }
 
@@ -198,7 +198,7 @@ public class FixedExpenditureRepositoryTests : IDisposable
 
         await _sut.DeleteFixedExpenditureAsync(request);
 
-        List<FixedExpenditure> remaining = await _context.FixedExpenditures.ToListAsync();
+        List<FixedExpenditure> remaining = await _context.FixedExpenditures.ToListAsync(TestContext.Current.CancellationToken);
         Assert.Single(remaining);
         Assert.Equal(item2.Id, remaining[0].Id);
     }

@@ -123,7 +123,7 @@ public class AssetRepositoryTests : IDisposable
         await _sut.CreateAssetAsync(request);
 
         Asset? saved = await _context.Assets.FirstOrDefaultAsync(
-            a => a.AccountEmail == "alice@example.com" && a.ProductName == "NewAccount");
+            a => a.AccountEmail == "alice@example.com" && a.ProductName == "NewAccount", TestContext.Current.CancellationToken);
         Assert.NotNull(saved);
         Assert.Equal(2500m, saved.Amount);
         Assert.Equal("SavingsAsset", saved.Item);
@@ -151,7 +151,7 @@ public class AssetRepositoryTests : IDisposable
         await _sut.UpdateAssetAsync(request);
 
         Asset? updated = await _context.Assets.FirstOrDefaultAsync(
-            a => a.AccountEmail == "alice@example.com" && a.ProductName == "Wallet");
+            a => a.AccountEmail == "alice@example.com" && a.ProductName == "Wallet", TestContext.Current.CancellationToken);
         Assert.NotNull(updated);
         Assert.Equal(1500m, updated.Amount);
     }

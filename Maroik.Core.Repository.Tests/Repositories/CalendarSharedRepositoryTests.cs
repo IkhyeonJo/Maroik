@@ -82,7 +82,7 @@ public class CalendarSharedRepositoryTests : IDisposable
 
         await _sut.CreateCalendarSharedAsync(request);
 
-        CalendarShared? saved = await _context.CalendarShareds.FindAsync(10L);
+        CalendarShared? saved = await _context.CalendarShareds.FindAsync(new object[] { 10L }, TestContext.Current.CancellationToken);
         Assert.NotNull(saved);
         Assert.True(saved.User);
         Assert.False(saved.Anonymous);
@@ -104,7 +104,7 @@ public class CalendarSharedRepositoryTests : IDisposable
 
         await _sut.UpdateCalendarSharedAsync(request);
 
-        CalendarShared? updated = await _context.CalendarShareds.FindAsync(20L);
+        CalendarShared? updated = await _context.CalendarShareds.FindAsync(new object[] { 20L }, TestContext.Current.CancellationToken);
         Assert.NotNull(updated);
         Assert.True(updated.User);
         Assert.True(updated.Anonymous);
