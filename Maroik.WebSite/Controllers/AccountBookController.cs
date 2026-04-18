@@ -28,6 +28,7 @@ public class AccountBookController : BaseController
     private readonly IExpenditureService _expenditureService;
     private readonly ISessionService _sessionService;
 
+    /// <summary>Initializes a new instance of <see cref="AccountBookController"/> with the supplied dependencies.</summary>
     public AccountBookController(
         IHtmlLocalizer<AccountBookController> localizer,
         ILogger<AccountBookController> logger,

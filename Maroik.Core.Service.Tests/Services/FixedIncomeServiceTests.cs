@@ -32,6 +32,7 @@ public class FixedIncomeServiceTests
 
     // ── CreateAsync ──────────────────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>CreateAsync</c> returns fail when class is invalid.</summary>
     [Theory]
     [InlineData("InvalidClass", "LaborIncome")]
     [InlineData("RegularIncome", "InvalidSub")]
@@ -49,6 +50,7 @@ public class FixedIncomeServiceTests
         Assert.False(result.Success);
     }
 
+    /// <summary>Verifies that <c>CreateAsync</c> returns fail when deposit month is out of range.</summary>
     [Theory]
     [InlineData(0)]
     [InlineData(13)]
@@ -63,6 +65,7 @@ public class FixedIncomeServiceTests
         Assert.False(result.Success);
     }
 
+    /// <summary>Verifies that <c>CreateAsync</c> returns fail when deposit day is out of range.</summary>
     [Theory]
     [InlineData(0)]
     [InlineData(32)]
@@ -77,6 +80,7 @@ public class FixedIncomeServiceTests
         Assert.False(result.Success);
     }
 
+    /// <summary>Verifies that <c>CreateAsync</c> returns success for all valid class combinations.</summary>
     [Theory]
     [InlineData("RegularIncome", "LaborIncome")]
     [InlineData("RegularIncome", "BusinessIncome")]
@@ -96,6 +100,7 @@ public class FixedIncomeServiceTests
         Assert.True(result.Success);
     }
 
+    /// <summary>Verifies that <c>CreateAsync</c> sets account email and absolute amount.</summary>
     [Fact]
     public async Task CreateAsync_SetsAccountEmailAndAbsoluteAmount()
     {
@@ -117,6 +122,7 @@ public class FixedIncomeServiceTests
 
     // ── UpdateAsync ──────────────────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>UpdateAsync</c> returns fail when class is invalid.</summary>
     [Fact]
     public async Task UpdateAsync_ReturnsFail_WhenClassIsInvalid()
     {
@@ -130,6 +136,7 @@ public class FixedIncomeServiceTests
         Assert.False(result.Success);
     }
 
+    /// <summary>Verifies that <c>UpdateAsync</c> returns fail when record not found.</summary>
     [Fact]
     public async Task UpdateAsync_ReturnsFail_WhenRecordNotFound()
     {
@@ -143,6 +150,7 @@ public class FixedIncomeServiceTests
         Assert.False(result.Success);
     }
 
+    /// <summary>Verifies that <c>UpdateAsync</c> returns success when valid and record found.</summary>
     [Fact]
     public async Task UpdateAsync_ReturnsSuccess_WhenValidAndRecordFound()
     {
@@ -168,6 +176,7 @@ public class FixedIncomeServiceTests
 
     // ── DeleteAsync ──────────────────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>DeleteAsync</c> returns fail when record not found.</summary>
     [Fact]
     public async Task DeleteAsync_ReturnsFail_WhenRecordNotFound()
     {
@@ -179,6 +188,7 @@ public class FixedIncomeServiceTests
         Assert.False(result.Success);
     }
 
+    /// <summary>Verifies that <c>DeleteAsync</c> returns success when record found.</summary>
     [Fact]
     public async Task DeleteAsync_ReturnsSuccess_WhenRecordFound()
     {
@@ -201,6 +211,7 @@ public class FixedIncomeServiceTests
 
     // ── GetFixedIncomesAsync ─────────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>GetFixedIncomesAsync</c> delegates to repository.</summary>
     [Fact]
     public async Task GetFixedIncomesAsync_DelegatesToRepository()
     {

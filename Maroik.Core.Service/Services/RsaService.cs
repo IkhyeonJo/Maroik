@@ -14,6 +14,7 @@ public class RsaService : IRsaService
 {
     private readonly Rsa _rsa;
 
+    /// <summary>Initializes a new instance of <see cref="RsaService"/> with the supplied dependencies.</summary>
     public RsaService(IOptions<ServerSetting> settings)
     {
         _rsa = new Rsa(

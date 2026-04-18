@@ -16,6 +16,7 @@ public class FixedExpenditureService : IFixedExpenditureService
     private readonly IFixedExpenditureRepository _fixedExpenditureRepository;
     private readonly IAssetRepository _assetRepository;
 
+    /// <summary>Initializes a new instance of <see cref="FixedExpenditureService"/> with the supplied dependencies.</summary>
     public FixedExpenditureService(IFixedExpenditureRepository fixedExpenditureRepository, IAssetRepository assetRepository)
     {
         _fixedExpenditureRepository = fixedExpenditureRepository;

@@ -17,6 +17,7 @@ public class ManagementAccountService : IManagementAccountService
     private readonly IPasswordService _passwordService;
     private readonly ILogger<ManagementAccountService> _logger;
 
+    /// <summary>Initializes a new instance of <see cref="ManagementAccountService"/> with the supplied dependencies.</summary>
     public ManagementAccountService(
         IAccountRepository accountRepository,
         IPasswordService passwordService,

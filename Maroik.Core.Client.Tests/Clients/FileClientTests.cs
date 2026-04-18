@@ -13,6 +13,7 @@ public class FileClientTests
 
     // ── UploadAsync ──────────────────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>UploadAsync</c> returns false when file data is null.</summary>
     [Fact]
     public async Task UploadAsync_ReturnsFalse_WhenFileDataIsNull()
     {
@@ -21,6 +22,7 @@ public class FileClientTests
         Assert.False(result);
     }
 
+    /// <summary>Verifies that <c>UploadAsync</c> returns false when file data is empty.</summary>
     [Fact]
     public async Task UploadAsync_ReturnsFalse_WhenFileDataIsEmpty()
     {
@@ -29,6 +31,7 @@ public class FileClientTests
         Assert.False(result);
     }
 
+    /// <summary>Verifies that <c>UploadAsync</c> returns false when http call fails.</summary>
     [Fact]
     public async Task UploadAsync_ReturnsFalse_WhenHttpCallFails()
     {

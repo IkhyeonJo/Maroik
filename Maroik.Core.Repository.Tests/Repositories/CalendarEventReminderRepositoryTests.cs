@@ -18,6 +18,7 @@ public class CalendarEventReminderRepositoryTests : IDisposable
     private readonly ApplicationDbContext _context;
     private readonly CalendarEventReminderRepository _sut;
 
+    /// <summary>Initializes the test fixture, setting up all required test doubles and the system under test.</summary>
     public CalendarEventReminderRepositoryTests()
     {
         _connection = new SqliteConnection("DataSource=:memory:");
@@ -30,6 +31,7 @@ public class CalendarEventReminderRepositoryTests : IDisposable
         _sut = new CalendarEventReminderRepository(_context);
     }
 
+    /// <summary>Releases resources allocated by this test fixture (disposes the database context).</summary>
     public void Dispose()
     {
         _context.Dispose();
@@ -54,6 +56,7 @@ public class CalendarEventReminderRepositoryTests : IDisposable
 
     // ── GetCalendarEventRemindersAsync ───────────────────────────────────────
 
+    /// <summary>Verifies that <c>GetCalendarEventRemindersAsync</c> returns only reminders for given event.</summary>
     [Fact]
     public async Task GetCalendarEventRemindersAsync_ReturnsOnlyRemindersForGivenEvent()
     {
@@ -69,6 +72,7 @@ public class CalendarEventReminderRepositoryTests : IDisposable
         Assert.All(result, r => Assert.Equal(1, r.CalendarEventId));
     }
 
+    /// <summary>Verifies that <c>GetCalendarEventRemindersAsync</c> returns empty when no reminders for event.</summary>
     [Fact]
     public async Task GetCalendarEventRemindersAsync_ReturnsEmpty_WhenNoRemindersForEvent()
     {
@@ -80,6 +84,7 @@ public class CalendarEventReminderRepositoryTests : IDisposable
 
     // ── CreateCalendarEventReminderAsync ─────────────────────────────────────
 
+    /// <summary>Verifies that <c>CreateCalendarEventReminderAsync</c> persists reminder.</summary>
     [Fact]
     public async Task CreateCalendarEventReminderAsync_PersistsReminder()
     {
@@ -101,6 +106,7 @@ public class CalendarEventReminderRepositoryTests : IDisposable
 
     // ── DeleteCalendarEventReminderAsync ─────────────────────────────────────
 
+    /// <summary>Verifies that <c>DeleteCalendarEventReminderAsync</c> removes reminders by event id.</summary>
     [Fact]
     public async Task DeleteCalendarEventReminderAsync_RemovesRemindersByEventId()
     {
@@ -116,6 +122,7 @@ public class CalendarEventReminderRepositoryTests : IDisposable
         Assert.True(await _context.CalendarEventReminders.AnyAsync(r => r.CalendarEventId == 20, TestContext.Current.CancellationToken));
     }
 
+    /// <summary>Verifies that <c>DeleteCalendarEventReminderAsync</c> returns zero when no reminders match.</summary>
     [Fact]
     public async Task DeleteCalendarEventReminderAsync_ReturnsZero_WhenNoRemindersMatch()
     {

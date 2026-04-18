@@ -16,6 +16,7 @@ public class CalendarControllerTests : IClassFixture<MaroikWebApplicationFactory
         _client = factory.CreateTestClient(followRedirects: false);
     }
 
+    /// <summary>Verifies that <c>AnonymousIndex</c> get when returns200.</summary>
     [Fact]
     public async Task AnonymousIndex_Get_Returns200()
     {

@@ -15,6 +15,7 @@ public class CalendarEventRepositoryTests : IDisposable
     private readonly ApplicationDbContext _context;
     private readonly CalendarEventRepository _sut;
 
+    /// <summary>Initializes the test fixture, setting up all required test doubles and the system under test.</summary>
     public CalendarEventRepositoryTests()
     {
         var options = new DbContextOptionsBuilder<ApplicationDbContext>()
@@ -24,6 +25,7 @@ public class CalendarEventRepositoryTests : IDisposable
         _sut = new CalendarEventRepository(_context);
     }
 
+    /// <summary>Releases resources allocated by this test fixture (disposes the database context).</summary>
     public void Dispose() => _context.Dispose();
 
     // ── Helpers ──────────────────────────────────────────────────────────────
@@ -48,6 +50,7 @@ public class CalendarEventRepositoryTests : IDisposable
 
     // ── GetCalendarEventsAsync ───────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>GetCalendarEventsAsync</c> returns only events for given calendar.</summary>
     [Fact]
     public async Task GetCalendarEventsAsync_ReturnsOnlyEventsForGivenCalendar()
     {
@@ -62,6 +65,7 @@ public class CalendarEventRepositoryTests : IDisposable
         Assert.All(result, e => Assert.Equal(1, e.CalendarId));
     }
 
+    /// <summary>Verifies that <c>GetCalendarEventsAsync</c> returns empty when no events for calendar.</summary>
     [Fact]
     public async Task GetCalendarEventsAsync_ReturnsEmpty_WhenNoEventsForCalendar()
     {
@@ -72,6 +76,7 @@ public class CalendarEventRepositoryTests : IDisposable
 
     // ── GetCalendarEventAsync ────────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>GetCalendarEventAsync</c> returns event when found.</summary>
     [Fact]
     public async Task GetCalendarEventAsync_ReturnsEvent_WhenFound()
     {
@@ -84,6 +89,7 @@ public class CalendarEventRepositoryTests : IDisposable
         Assert.Equal("Team Standup", result.Title);
     }
 
+    /// <summary>Verifies that <c>GetCalendarEventAsync</c> returns null when not found.</summary>
     [Fact]
     public async Task GetCalendarEventAsync_ReturnsNull_WhenNotFound()
     {
@@ -94,6 +100,7 @@ public class CalendarEventRepositoryTests : IDisposable
 
     // ── CreateCalendarEventAsync ─────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>CreateCalendarEventAsync</c> persists event.</summary>
     [Fact]
     public async Task CreateCalendarEventAsync_PersistsEvent()
     {
@@ -119,6 +126,7 @@ public class CalendarEventRepositoryTests : IDisposable
 
     // ── UpdateCalendarEventAsync ─────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>UpdateCalendarEventAsync</c> updates existing event.</summary>
     [Fact]
     public async Task UpdateCalendarEventAsync_UpdatesExistingEvent()
     {
@@ -149,6 +157,7 @@ public class CalendarEventRepositoryTests : IDisposable
 
     // ── DeleteCalendarEventAsync ─────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>DeleteCalendarEventAsync</c> removes event.</summary>
     [Fact]
     public async Task DeleteCalendarEventAsync_RemovesEvent()
     {

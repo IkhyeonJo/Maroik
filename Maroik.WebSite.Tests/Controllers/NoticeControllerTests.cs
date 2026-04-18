@@ -18,6 +18,7 @@ public class NoticeControllerTests : IClassFixture<MaroikWebApplicationFactory>
 
     // ── FixedIncome ──────────────────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>FixedIncome</c> get when non ajax returns 200.</summary>
     [Fact]
     public async Task FixedIncome_Get_NonAjax_Returns200()
     {
@@ -29,6 +30,7 @@ public class NoticeControllerTests : IClassFixture<MaroikWebApplicationFactory>
 
     // ── FixedExpenditure ─────────────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>FixedExpenditure</c> get when non ajax returns 200.</summary>
     [Fact]
     public async Task FixedExpenditure_Get_NonAjax_Returns200()
     {

@@ -61,6 +61,7 @@ public class DashboardServiceTests
 
     // ── GetSummaryAsync ──────────────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>GetSummaryAsync</c> returns expected selected year and month.</summary>
     [Fact]
     public async Task GetSummaryAsync_ReturnsExpectedSelectedYearAndMonth()
     {
@@ -81,6 +82,7 @@ public class DashboardServiceTests
         Assert.Equal(3, summary.SelectedMonth);
     }
 
+    /// <summary>Verifies that <c>GetSummaryAsync</c> uses current year and month when invalid input given.</summary>
     [Fact]
     public async Task GetSummaryAsync_UsesCurrentYearAndMonth_WhenInvalidInputGiven()
     {
@@ -99,6 +101,7 @@ public class DashboardServiceTests
         Assert.Equal(DateTime.UtcNow.Month, summary.SelectedMonth);
     }
 
+    /// <summary>Verifies that <c>GetSummaryAsync</c> sets default monetary unit when account has none but assets exist.</summary>
     [Fact]
     public async Task GetSummaryAsync_SetsDefaultMonetaryUnit_WhenAccountHasNoneButAssetsExist()
     {
@@ -124,6 +127,7 @@ public class DashboardServiceTests
         _accountRepo.Verify(r => r.UpdateAccountAsync(It.IsAny<AccountRequest>()), Times.AtLeastOnce);
     }
 
+    /// <summary>Verifies that <c>GetSummaryAsync</c> clears default monetary unit when no assets exist.</summary>
     [Fact]
     public async Task GetSummaryAsync_ClearsDefaultMonetaryUnit_WhenNoAssetsExist()
     {
@@ -143,6 +147,7 @@ public class DashboardServiceTests
 
     // ── GetNoticeCountsAsync ─────────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>GetNoticeCountsAsync</c> returns zero counts when no fixed items.</summary>
     [Fact]
     public async Task GetNoticeCountsAsync_ReturnsZeroCounts_WhenNoFixedItems()
     {
@@ -159,6 +164,7 @@ public class DashboardServiceTests
         Assert.Equal(0, counts.FixedExpendituresExpired);
     }
 
+    /// <summary>Verifies that <c>GetNoticeCountsAsync</c> counts expired items when maturity date is past.</summary>
     [Fact]
     public async Task GetNoticeCountsAsync_CountsExpiredItems_WhenMaturityDateIsPast()
     {
@@ -191,6 +197,7 @@ public class DashboardServiceTests
         Assert.Equal(1, counts.FixedExpendituresExpired);
     }
 
+    /// <summary>Verifies that <c>GetNoticeCountsAsync</c> counts noticed when unpunctuality is true.</summary>
     [Fact]
     public async Task GetNoticeCountsAsync_CountsNoticed_WhenUnpunctualityIsTrue()
     {
@@ -216,6 +223,7 @@ public class DashboardServiceTests
 
     // ── UpdateDefaultMonetaryUnitAsync ───────────────────────────────────────
 
+    /// <summary>Verifies that <c>UpdateDefaultMonetaryUnitAsync</c> does nothing when account not found.</summary>
     [Fact]
     public async Task UpdateDefaultMonetaryUnitAsync_DoesNothing_WhenAccountNotFound()
     {
@@ -228,6 +236,7 @@ public class DashboardServiceTests
         _accountRepo.Verify(r => r.UpdateAccountAsync(It.IsAny<AccountRequest>()), Times.Never);
     }
 
+    /// <summary>Verifies that <c>UpdateDefaultMonetaryUnitAsync</c> sets unit when unit exists in assets.</summary>
     [Fact]
     public async Task UpdateDefaultMonetaryUnitAsync_SetsUnit_WhenUnitExistsInAssets()
     {
@@ -243,6 +252,7 @@ public class DashboardServiceTests
         _accountRepo.Verify(r => r.UpdateAccountAsync(It.Is<AccountRequest>(req => req.DefaultMonetaryUnit == "KRW")), Times.Once);
     }
 
+    /// <summary>Verifies that <c>UpdateDefaultMonetaryUnitAsync</c> sets null when unit not in assets.</summary>
     [Fact]
     public async Task UpdateDefaultMonetaryUnitAsync_SetsNull_WhenUnitNotInAssets()
     {
@@ -260,6 +270,7 @@ public class DashboardServiceTests
 
     // ── GetServerResourceSummary ─────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>GetServerResourceSummary</c> returns empty when files do not exist.</summary>
     [Fact]
     public void GetServerResourceSummary_ReturnsEmpty_WhenFilesDoNotExist()
     {
@@ -275,6 +286,7 @@ public class DashboardServiceTests
         Assert.Equal(0.0, summary.HostCpuNumeric);
     }
 
+    /// <summary>Verifies that <c>GetServerResourceSummary</c> parses host cpu numeric when from host file.</summary>
     [Fact]
     public void GetServerResourceSummary_ParsesHostCpuNumeric_FromHostFile()
     {

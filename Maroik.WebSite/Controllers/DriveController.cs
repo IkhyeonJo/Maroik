@@ -12,6 +12,7 @@ public class DriveController : BaseController
     private readonly IHtmlLocalizer<DriveController> _localizer;
     private readonly ILogger<DriveController> _logger;
 
+    /// <summary>Initializes a new instance of <see cref="DriveController"/> with the supplied dependencies.</summary>
     public DriveController(
         IHtmlLocalizer<DriveController> localizer,
         ILogger<DriveController> logger,

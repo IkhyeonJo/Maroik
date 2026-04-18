@@ -17,6 +17,7 @@ public class ExpenditureRepositoryTests : IDisposable
     private readonly ApplicationDbContext _context;
     private readonly ExpenditureRepository _sut;
 
+    /// <summary>Initializes the test fixture, setting up all required test doubles and the system under test.</summary>
     public ExpenditureRepositoryTests()
     {
         var options = new DbContextOptionsBuilder<ApplicationDbContext>()
@@ -26,6 +27,7 @@ public class ExpenditureRepositoryTests : IDisposable
         _sut = new ExpenditureRepository(_context);
     }
 
+    /// <summary>Releases resources allocated by this test fixture (disposes the database context).</summary>
     public void Dispose() => _context.Dispose();
 
     // ── Helpers ──────────────────────────────────────────────────────────────
@@ -51,6 +53,7 @@ public class ExpenditureRepositoryTests : IDisposable
 
     // ── GetExpendituresAsync ─────────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>GetExpendituresAsync</c> returns only expenditures for given email.</summary>
     [Fact]
     public async Task GetExpendituresAsync_ReturnsOnlyExpendituresForGivenEmail()
     {
@@ -65,6 +68,7 @@ public class ExpenditureRepositoryTests : IDisposable
         Assert.All(result, e => Assert.Equal("alice@example.com", e.AccountEmail));
     }
 
+    /// <summary>Verifies that <c>GetExpendituresAsync</c> returns empty when no expenditures for email.</summary>
     [Fact]
     public async Task GetExpendituresAsync_ReturnsEmpty_WhenNoExpendituresForEmail()
     {
@@ -75,6 +79,7 @@ public class ExpenditureRepositoryTests : IDisposable
 
     // ── CreateExpenditureAsync ───────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>CreateExpenditureAsync</c> adds expenditure to database.</summary>
     [Fact]
     public async Task CreateExpenditureAsync_AddsExpenditureToDatabase()
     {
@@ -101,6 +106,7 @@ public class ExpenditureRepositoryTests : IDisposable
 
     // ── UpdateExpenditureAsync ───────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>UpdateExpenditureAsync</c> updates existing expenditure.</summary>
     [Fact]
     public async Task UpdateExpenditureAsync_UpdatesExistingExpenditure()
     {
@@ -132,6 +138,7 @@ public class ExpenditureRepositoryTests : IDisposable
 
     // ── DeleteExpenditureAsync ───────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>DeleteExpenditureAsync</c> removes expenditure from database.</summary>
     [Fact]
     public async Task DeleteExpenditureAsync_RemovesExpenditureFromDatabase()
     {
@@ -157,6 +164,7 @@ public class ExpenditureRepositoryTests : IDisposable
         Assert.Null(deleted);
     }
 
+    /// <summary>Verifies that <c>DeleteExpenditureAsync</c> does not affect other expenditures.</summary>
     [Fact]
     public async Task DeleteExpenditureAsync_DoesNotAffectOtherExpenditures()
     {

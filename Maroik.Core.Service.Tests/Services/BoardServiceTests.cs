@@ -24,6 +24,7 @@ public class BoardServiceTests
     private readonly IOptions<ServerSetting> _settings =
         Options.Create(new ServerSetting { FileStorageBaseUrl = "http://files.example.com" });
 
+    /// <summary>Initializes the test fixture, setting up all required test doubles and the system under test.</summary>
     public BoardServiceTests()
     {
         _unitOfWork.Setup(u => u.BeginAsync()).Returns(Task.CompletedTask);
@@ -64,6 +65,7 @@ public class BoardServiceTests
 
     // ── GetBoardsAsync ───────────────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>GetBoardsAsync</c> delegates to repository.</summary>
     [Fact]
     public async Task GetBoardsAsync_DelegatesToRepository()
     {
@@ -78,6 +80,7 @@ public class BoardServiceTests
 
     // ── GetBoardByIdAsync ────────────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>GetBoardByIdAsync</c> delegates to repository.</summary>
     [Fact]
     public async Task GetBoardByIdAsync_DelegatesToRepository()
     {
@@ -92,6 +95,7 @@ public class BoardServiceTests
 
     // ── WriteBoardAsync ──────────────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>WriteBoardAsync</c> returns success with no attachment.</summary>
     [Fact]
     public async Task WriteBoardAsync_ReturnsSuccess_WithNoAttachment()
     {
@@ -104,6 +108,7 @@ public class BoardServiceTests
         _unitOfWork.Verify(u => u.CommitAsync(), Times.Once);
     }
 
+    /// <summary>Verifies that <c>WriteBoardAsync</c> returns success with attachment.</summary>
     [Fact]
     public async Task WriteBoardAsync_ReturnsSuccess_WithAttachment()
     {
@@ -121,6 +126,7 @@ public class BoardServiceTests
         _unitOfWork.Verify(u => u.CommitAsync(), Times.Once);
     }
 
+    /// <summary>Verifies that <c>WriteBoardAsync</c> returns fail when repository throws.</summary>
     [Fact]
     public async Task WriteBoardAsync_ReturnsFail_WhenRepositoryThrows()
     {
@@ -135,6 +141,7 @@ public class BoardServiceTests
 
     // ── EditBoardAsync ───────────────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>EditBoardAsync</c> returns fail when board not found.</summary>
     [Fact]
     public async Task EditBoardAsync_ReturnsFail_WhenBoardNotFound()
     {
@@ -147,6 +154,7 @@ public class BoardServiceTests
         _unitOfWork.Verify(u => u.RollbackAsync(), Times.Once);
     }
 
+    /// <summary>Verifies that <c>EditBoardAsync</c> returns fail when board is deleted.</summary>
     [Fact]
     public async Task EditBoardAsync_ReturnsFail_WhenBoardIsDeleted()
     {
@@ -159,6 +167,7 @@ public class BoardServiceTests
         _unitOfWork.Verify(u => u.RollbackAsync(), Times.Once);
     }
 
+    /// <summary>Verifies that <c>EditBoardAsync</c> returns fail when requester is not writer.</summary>
     [Fact]
     public async Task EditBoardAsync_ReturnsFail_WhenRequesterIsNotWriter()
     {
@@ -171,6 +180,7 @@ public class BoardServiceTests
         _unitOfWork.Verify(u => u.RollbackAsync(), Times.Once);
     }
 
+    /// <summary>Verifies that <c>EditBoardAsync</c> returns success when writer matches and no new file.</summary>
     [Fact]
     public async Task EditBoardAsync_ReturnsSuccess_WhenWriterMatchesAndNoNewFile()
     {
@@ -188,6 +198,7 @@ public class BoardServiceTests
 
     // ── DeleteBoardAsync ─────────────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>DeleteBoardAsync</c> returns fail when board not found.</summary>
     [Fact]
     public async Task DeleteBoardAsync_ReturnsFail_WhenBoardNotFound()
     {
@@ -199,6 +210,7 @@ public class BoardServiceTests
         Assert.False(result.Success);
     }
 
+    /// <summary>Verifies that <c>DeleteBoardAsync</c> returns fail when not owner and not admin.</summary>
     [Fact]
     public async Task DeleteBoardAsync_ReturnsFail_WhenNotOwnerAndNotAdmin()
     {
@@ -211,6 +223,7 @@ public class BoardServiceTests
         Assert.Contains("permission", result.ErrorKey, StringComparison.OrdinalIgnoreCase);
     }
 
+    /// <summary>Verifies that <c>DeleteBoardAsync</c> returns success when owner.</summary>
     [Fact]
     public async Task DeleteBoardAsync_ReturnsSuccess_WhenOwner()
     {
@@ -223,6 +236,7 @@ public class BoardServiceTests
         Assert.True(result.Success);
     }
 
+    /// <summary>Verifies that <c>DeleteBoardAsync</c> returns success when admin.</summary>
     [Fact]
     public async Task DeleteBoardAsync_ReturnsSuccess_WhenAdmin()
     {
@@ -237,6 +251,7 @@ public class BoardServiceTests
 
     // ── WriteCommentAsync ────────────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>WriteCommentAsync</c> returns fail when board not found.</summary>
     [Fact]
     public async Task WriteCommentAsync_ReturnsFail_WhenBoardNotFound()
     {
@@ -248,6 +263,7 @@ public class BoardServiceTests
         Assert.False(result.Success);
     }
 
+    /// <summary>Verifies that <c>WriteCommentAsync</c> returns fail when required owner does not match.</summary>
     [Fact]
     public async Task WriteCommentAsync_ReturnsFail_WhenRequiredOwnerDoesNotMatch()
     {
@@ -260,6 +276,7 @@ public class BoardServiceTests
         Assert.Contains("permission", result.ErrorKey, StringComparison.OrdinalIgnoreCase);
     }
 
+    /// <summary>Verifies that <c>WriteCommentAsync</c> returns success when owner matches and no owner restriction.</summary>
     [Fact]
     public async Task WriteCommentAsync_ReturnsSuccess_WhenOwnerMatchesAndNoOwnerRestriction()
     {
@@ -273,6 +290,7 @@ public class BoardServiceTests
         Assert.True(result.Success);
     }
 
+    /// <summary>Verifies that <c>WriteCommentAsync</c> sets order based on existing comment count.</summary>
     [Fact]
     public async Task WriteCommentAsync_SetsOrderBasedOnExistingCommentCount()
     {
@@ -294,6 +312,7 @@ public class BoardServiceTests
 
     // ── DeleteCommentAsync ───────────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>DeleteCommentAsync</c> returns fail when comment not found.</summary>
     [Fact]
     public async Task DeleteCommentAsync_ReturnsFail_WhenCommentNotFound()
     {
@@ -305,6 +324,7 @@ public class BoardServiceTests
         Assert.False(result.Success);
     }
 
+    /// <summary>Verifies that <c>DeleteCommentAsync</c> returns fail when not owner and not admin.</summary>
     [Fact]
     public async Task DeleteCommentAsync_ReturnsFail_WhenNotOwnerAndNotAdmin()
     {
@@ -317,6 +337,7 @@ public class BoardServiceTests
         Assert.Contains("permission", result.ErrorKey, StringComparison.OrdinalIgnoreCase);
     }
 
+    /// <summary>Verifies that <c>DeleteCommentAsync</c> returns success when owner.</summary>
     [Fact]
     public async Task DeleteCommentAsync_ReturnsSuccess_WhenOwner()
     {
@@ -331,6 +352,7 @@ public class BoardServiceTests
 
     // ── IncrementBoardViewAsync ──────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>IncrementBoardViewAsync</c> returns success when no exception.</summary>
     [Fact]
     public async Task IncrementBoardViewAsync_ReturnsSuccess_WhenNoException()
     {
@@ -343,6 +365,7 @@ public class BoardServiceTests
         _boardRepo.Verify(r => r.IncrementViewAsync(1), Times.Once);
     }
 
+    /// <summary>Verifies that <c>IncrementBoardViewAsync</c> returns fail when repository throws.</summary>
     [Fact]
     public async Task IncrementBoardViewAsync_ReturnsFail_WhenRepositoryThrows()
     {

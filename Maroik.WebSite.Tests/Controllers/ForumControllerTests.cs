@@ -18,6 +18,7 @@ public class ForumControllerTests : IClassFixture<MaroikWebApplicationFactory>
 
     // ── FreeForum list ───────────────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>FreeForum</c> default list when returns200.</summary>
     [Fact]
     public async Task FreeForum_DefaultList_Returns200()
     {
@@ -26,6 +27,7 @@ public class ForumControllerTests : IClassFixture<MaroikWebApplicationFactory>
         Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
     }
 
+    /// <summary>Verifies that <c>FreeForum</c> list with title search when returns200.</summary>
     [Fact]
     public async Task FreeForum_ListWithTitleSearch_Returns200()
     {
@@ -34,6 +36,7 @@ public class ForumControllerTests : IClassFixture<MaroikWebApplicationFactory>
         Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
     }
 
+    /// <summary>Verifies that <c>FreeForum</c> list with writer search when returns200.</summary>
     [Fact]
     public async Task FreeForum_ListWithWriterSearch_Returns200()
     {
@@ -44,6 +47,7 @@ public class ForumControllerTests : IClassFixture<MaroikWebApplicationFactory>
 
     // ── FreeForum write (no session) ─────────────────────────────────────────
 
+    /// <summary>Verifies that <c>FreeForum</c> write mode without session when redirects to login.</summary>
     [Fact]
     public async Task FreeForum_WriteModeWithoutSession_RedirectsToLogin()
     {
@@ -56,6 +60,7 @@ public class ForumControllerTests : IClassFixture<MaroikWebApplicationFactory>
 
     // ── FreeForum detail (nonexistent board) ─────────────────────────────────
 
+    /// <summary>Verifies that <c>FreeForum</c> detail mode with missing board when redirects to list.</summary>
     [Fact]
     public async Task FreeForum_DetailModeWithMissingBoard_RedirectsToList()
     {
@@ -65,6 +70,7 @@ public class ForumControllerTests : IClassFixture<MaroikWebApplicationFactory>
         Assert.Equal(System.Net.HttpStatusCode.Redirect, response.StatusCode);
     }
 
+    /// <summary>Verifies that <c>FreeForum</c> detail mode with null board id when redirects to list.</summary>
     [Fact]
     public async Task FreeForum_DetailModeWithNullBoardId_RedirectsToList()
     {

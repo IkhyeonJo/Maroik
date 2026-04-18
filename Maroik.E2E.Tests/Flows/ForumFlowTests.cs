@@ -11,6 +11,7 @@ public class ForumFlowTests : E2ETestBase
 {
     // ── Forum list ───────────────────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>FreeForumList</c> loads with non empty body.</summary>
     [Fact]
     public async Task FreeForumList_Loads_WithNonEmptyBody()
     {
@@ -21,6 +22,7 @@ public class ForumFlowTests : E2ETestBase
         Assert.False(string.IsNullOrWhiteSpace(bodyText));
     }
 
+    /// <summary>Verifies that <c>FreeForumList</c> has free board heading.</summary>
     [Fact]
     public async Task FreeForumList_HasFreeBoardHeading()
     {
@@ -32,6 +34,7 @@ public class ForumFlowTests : E2ETestBase
         await Assertions.Expect(heading).ToBeVisibleAsync();
     }
 
+    /// <summary>Verifies that <c>FreeForumList</c> contains search form.</summary>
     [Fact]
     public async Task FreeForumList_ContainsSearchForm()
     {
@@ -45,6 +48,7 @@ public class ForumFlowTests : E2ETestBase
 
     // ── Write mode: unauthenticated ──────────────────────────────────────────
 
+    /// <summary>Verifies that <c>FreeForumWriteMode</c> without session when redirects to login.</summary>
     [Fact]
     public async Task FreeForumWriteMode_WithoutSession_RedirectsToLogin()
     {
@@ -58,6 +62,7 @@ public class ForumFlowTests : E2ETestBase
         Assert.Contains("Login", finalUrl, StringComparison.OrdinalIgnoreCase);
     }
 
+    /// <summary>Verifies that <c>FreeForumWriteMode</c> without session when shows login form.</summary>
     [Fact]
     public async Task FreeForumWriteMode_WithoutSession_ShowsLoginForm()
     {
@@ -71,6 +76,7 @@ public class ForumFlowTests : E2ETestBase
 
     // ── Detail mode: missing board ────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>FreeForumDetailMode</c> with missing board id when redirects to list.</summary>
     [Fact]
     public async Task FreeForumDetailMode_WithMissingBoardId_RedirectsToList()
     {
@@ -86,6 +92,7 @@ public class ForumFlowTests : E2ETestBase
 
     // ── Title search ─────────────────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>FreeForumList</c> with title search when renders page.</summary>
     [Fact]
     public async Task FreeForumList_WithTitleSearch_RendersPage()
     {

@@ -56,6 +56,7 @@ public class FixedExpenditureServiceTests
 
     // ── CreateAsync ──────────────────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>CreateAsync</c> returns fail when class is invalid.</summary>
     [Theory]
     [InlineData("InvalidClass", "MealOrEatOutExpenses")]
     [InlineData("ConsumerSpending", "Deposit")] // Deposit is not valid for ConsumerSpending
@@ -78,6 +79,7 @@ public class FixedExpenditureServiceTests
         Assert.False(result.Success);
     }
 
+    /// <summary>Verifies that <c>CreateAsync</c> returns fail when deposit month is invalid.</summary>
     [Theory]
     [InlineData(0)]   // out of range
     [InlineData(13)]  // out of range
@@ -92,6 +94,7 @@ public class FixedExpenditureServiceTests
         Assert.False(result.Success);
     }
 
+    /// <summary>Verifies that <c>CreateAsync</c> returns fail when deposit day is invalid.</summary>
     [Theory]
     [InlineData(0)]   // below 1
     [InlineData(32)]  // above 31
@@ -106,6 +109,7 @@ public class FixedExpenditureServiceTests
         Assert.False(result.Success);
     }
 
+    /// <summary>Verifies that <c>CreateAsync</c> returns fail when payment method asset not found.</summary>
     [Fact]
     public async Task CreateAsync_ReturnsFail_WhenPaymentMethodAssetNotFound()
     {
@@ -117,6 +121,7 @@ public class FixedExpenditureServiceTests
         Assert.False(result.Success);
     }
 
+    /// <summary>Verifies that <c>CreateAsync</c> returns fail when same payment and deposit asset.</summary>
     [Fact]
     public async Task CreateAsync_ReturnsFail_WhenSamePaymentAndDepositAsset()
     {
@@ -131,6 +136,7 @@ public class FixedExpenditureServiceTests
         Assert.Contains("same", result.ErrorKey, StringComparison.OrdinalIgnoreCase);
     }
 
+    /// <summary>Verifies that <c>CreateAsync</c> returns fail when deposit asset not found.</summary>
     [Fact]
     public async Task CreateAsync_ReturnsFail_WhenDepositAssetNotFound()
     {
@@ -143,6 +149,7 @@ public class FixedExpenditureServiceTests
         Assert.False(result.Success);
     }
 
+    /// <summary>Verifies that <c>CreateAsync</c> returns fail when currencies mismatch.</summary>
     [Fact]
     public async Task CreateAsync_ReturnsFail_WhenCurrenciesMismatch()
     {
@@ -156,6 +163,7 @@ public class FixedExpenditureServiceTests
         Assert.Contains("MonetaryUnit", result.ErrorKey);
     }
 
+    /// <summary>Verifies that <c>CreateAsync</c> returns success for consumer spending with valid asset.</summary>
     [Fact]
     public async Task CreateAsync_ReturnsSuccess_ForConsumerSpendingWithValidAsset()
     {
@@ -169,6 +177,7 @@ public class FixedExpenditureServiceTests
         _fixedExpenditureRepo.Verify(r => r.CreateFixedExpenditureAsync(It.IsAny<FixedExpenditureRequest>()), Times.Once);
     }
 
+    /// <summary>Verifies that <c>CreateAsync</c> returns success for regular savings with matching currencies.</summary>
     [Fact]
     public async Task CreateAsync_ReturnsSuccess_ForRegularSavingsWithMatchingCurrencies()
     {
@@ -182,6 +191,7 @@ public class FixedExpenditureServiceTests
         Assert.True(result.Success);
     }
 
+    /// <summary>Verifies that <c>CreateAsync</c> sets amount to absolute value.</summary>
     [Fact]
     public async Task CreateAsync_SetsAmountToAbsoluteValue()
     {
@@ -203,6 +213,7 @@ public class FixedExpenditureServiceTests
 
     // ── UpdateAsync ──────────────────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>UpdateAsync</c> returns fail when class is invalid.</summary>
     [Fact]
     public async Task UpdateAsync_ReturnsFail_WhenClassIsInvalid()
     {
@@ -223,6 +234,7 @@ public class FixedExpenditureServiceTests
         Assert.False(result.Success);
     }
 
+    /// <summary>Verifies that <c>UpdateAsync</c> returns fail when existing record not found.</summary>
     [Fact]
     public async Task UpdateAsync_ReturnsFail_WhenExistingRecordNotFound()
     {
@@ -237,6 +249,7 @@ public class FixedExpenditureServiceTests
         Assert.False(result.Success);
     }
 
+    /// <summary>Verifies that <c>UpdateAsync</c> returns success when valid and record found.</summary>
     [Fact]
     public async Task UpdateAsync_ReturnsSuccess_WhenValidAndRecordFound()
     {
@@ -261,6 +274,7 @@ public class FixedExpenditureServiceTests
 
     // ── DeleteAsync ──────────────────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>DeleteAsync</c> returns fail when record not found.</summary>
     [Fact]
     public async Task DeleteAsync_ReturnsFail_WhenRecordNotFound()
     {
@@ -272,6 +286,7 @@ public class FixedExpenditureServiceTests
         Assert.False(result.Success);
     }
 
+    /// <summary>Verifies that <c>DeleteAsync</c> returns success when record found.</summary>
     [Fact]
     public async Task DeleteAsync_ReturnsSuccess_WhenRecordFound()
     {
@@ -293,6 +308,7 @@ public class FixedExpenditureServiceTests
 
     // ── GetFixedExpendituresAsync ────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>GetFixedExpendituresAsync</c> delegates to repository.</summary>
     [Fact]
     public async Task GetFixedExpendituresAsync_DelegatesToRepository()
     {

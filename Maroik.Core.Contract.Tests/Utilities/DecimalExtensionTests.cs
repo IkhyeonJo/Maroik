@@ -11,6 +11,7 @@ public class DecimalExtensionTests
 {
     // ── TrimTrailingZeros (decimal) ──────────────────────────────────────────
 
+    /// <summary>Verifies that <c>TrimTrailingZeros</c> formats whole number when without decimal point.</summary>
     [Theory]
     [InlineData(1000.00, "1000")]
     [InlineData(0.00, "0")]
@@ -20,6 +21,7 @@ public class DecimalExtensionTests
         Assert.Equal(expected, value.TrimTrailingZeros());
     }
 
+    /// <summary>Verifies that <c>TrimTrailingZeros</c> removes trailing decimal zeros.</summary>
     [Theory]
     [InlineData(3.14, "3.14")]
     [InlineData(1.50, "1.5")]
@@ -30,6 +32,7 @@ public class DecimalExtensionTests
         Assert.Equal(expected, value.TrimTrailingZeros());
     }
 
+    /// <summary>Verifies that <c>TrimTrailingZeros</c> handles large whole number.</summary>
     [Fact]
     public void TrimTrailingZeros_HandlesLargeWholeNumber()
     {
@@ -40,6 +43,7 @@ public class DecimalExtensionTests
 
     // ── TrimTrailingZeros (decimal?) ─────────────────────────────────────────
 
+    /// <summary>Verifies that <c>TrimTrailingZeros</c> nullable treats null as zero.</summary>
     [Fact]
     public void TrimTrailingZeros_NullableTreatsNullAsZero()
     {
@@ -48,6 +52,7 @@ public class DecimalExtensionTests
         Assert.Equal("0", result);
     }
 
+    /// <summary>Verifies that <c>TrimTrailingZeros</c> (nullable overload) behaves identically to the non-nullable overload when the value is non-null.</summary>
     [Theory]
     [InlineData(500.00, "500")]
     [InlineData(3.14, "3.14")]
@@ -58,6 +63,7 @@ public class DecimalExtensionTests
         Assert.Equal(expected, nullable.TrimTrailingZeros());
     }
 
+    /// <summary>Verifies that <c>TrimTrailingZeros</c> (nullable overload) does not include a decimal point for whole-number values.</summary>
     [Fact]
     public void TrimTrailingZeros_Nullable_WholeNumber_DoesNotShowDecimalPoint()
     {

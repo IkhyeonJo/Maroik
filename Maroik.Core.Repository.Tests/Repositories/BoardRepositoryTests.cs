@@ -15,6 +15,7 @@ public class BoardRepositoryTests : IDisposable
     private readonly ApplicationDbContext _context;
     private readonly BoardRepository _sut;
 
+    /// <summary>Initializes the test fixture, setting up all required test doubles and the system under test.</summary>
     public BoardRepositoryTests()
     {
         var options = new DbContextOptionsBuilder<ApplicationDbContext>()
@@ -24,6 +25,7 @@ public class BoardRepositoryTests : IDisposable
         _sut = new BoardRepository(_context);
     }
 
+    /// <summary>Releases resources allocated by this test fixture (disposes the database context).</summary>
     public void Dispose() => _context.Dispose();
 
     // ── Helpers ──────────────────────────────────────────────────────────────
@@ -50,6 +52,7 @@ public class BoardRepositoryTests : IDisposable
 
     // ── GetOneTypeBoardsAsync ────────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>GetOneTypeBoardsAsync</c> returns only boards of given type.</summary>
     [Fact]
     public async Task GetOneTypeBoardsAsync_ReturnsOnlyBoardsOfGivenType()
     {
@@ -64,6 +67,7 @@ public class BoardRepositoryTests : IDisposable
         Assert.All(result, b => Assert.Equal("FreeForum", b.Type));
     }
 
+    /// <summary>Verifies that <c>GetOneTypeBoardsAsync</c> returns empty when no matching type.</summary>
     [Fact]
     public async Task GetOneTypeBoardsAsync_ReturnsEmpty_WhenNoMatchingType()
     {
@@ -74,6 +78,7 @@ public class BoardRepositoryTests : IDisposable
 
     // ── GetBoardByIdAsync ────────────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>GetBoardByIdAsync</c> returns board when found and not deleted.</summary>
     [Fact]
     public async Task GetBoardByIdAsync_ReturnsBoard_WhenFoundAndNotDeleted()
     {
@@ -86,6 +91,7 @@ public class BoardRepositoryTests : IDisposable
         Assert.Equal("My Post", result.Title);
     }
 
+    /// <summary>Verifies that <c>GetBoardByIdAsync</c> returns null when board is deleted.</summary>
     [Fact]
     public async Task GetBoardByIdAsync_ReturnsNull_WhenBoardIsDeleted()
     {
@@ -97,6 +103,7 @@ public class BoardRepositoryTests : IDisposable
         Assert.Null(result);
     }
 
+    /// <summary>Verifies that <c>GetBoardByIdAsync</c> returns null when id does not exist.</summary>
     [Fact]
     public async Task GetBoardByIdAsync_ReturnsNull_WhenIdDoesNotExist()
     {
@@ -107,6 +114,7 @@ public class BoardRepositoryTests : IDisposable
 
     // ── WriteBoardAsync ──────────────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>WriteBoardAsync</c> adds board to database.</summary>
     [Fact]
     public async Task WriteBoardAsync_AddsBoardToDatabase()
     {
@@ -132,6 +140,7 @@ public class BoardRepositoryTests : IDisposable
 
     // ── UpdateBoardAsync ─────────────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>UpdateBoardAsync</c> updates existing board.</summary>
     [Fact]
     public async Task UpdateBoardAsync_UpdatesExistingBoard()
     {
@@ -161,6 +170,7 @@ public class BoardRepositoryTests : IDisposable
 
     // ── DeleteBoardAsync ─────────────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>DeleteBoardAsync</c> sets deleted flag when on board.</summary>
     [Fact]
     public async Task DeleteBoardAsync_SetsDeletedFlag_OnBoard()
     {

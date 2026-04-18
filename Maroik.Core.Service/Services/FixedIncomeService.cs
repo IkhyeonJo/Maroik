@@ -15,6 +15,7 @@ public class FixedIncomeService : IFixedIncomeService
 {
     private readonly IFixedIncomeRepository _fixedIncomeRepository;
 
+    /// <summary>Initializes a new instance of <see cref="FixedIncomeService"/> with the supplied dependencies.</summary>
     public FixedIncomeService(IFixedIncomeRepository fixedIncomeRepository)
         => _fixedIncomeRepository = fixedIncomeRepository;
 

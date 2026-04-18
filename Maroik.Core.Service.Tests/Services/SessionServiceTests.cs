@@ -36,6 +36,7 @@ public class SessionServiceTests
 
     // ── GetAccount ───────────────────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>GetAccount</c> returns null when http context is null.</summary>
     [Fact]
     public void GetAccount_ReturnsNull_WhenHttpContextIsNull()
     {
@@ -47,6 +48,7 @@ public class SessionServiceTests
         Assert.Null(result);
     }
 
+    /// <summary>Verifies that <c>GetAccount</c> returns null when session key does not exist.</summary>
     [Fact]
     public void GetAccount_ReturnsNull_WhenSessionKeyDoesNotExist()
     {
@@ -60,6 +62,7 @@ public class SessionServiceTests
         Assert.Null(result);
     }
 
+    /// <summary>Verifies that <c>GetAccount</c> returns account when valid session data exists.</summary>
     [Fact]
     public void GetAccount_ReturnsAccount_WhenValidSessionDataExists()
     {
@@ -77,6 +80,7 @@ public class SessionServiceTests
         Assert.Equal(account.Nickname, result.Nickname);
     }
 
+    /// <summary>Verifies that <c>GetAccount</c> returns null when session data is invalid json.</summary>
     [Fact]
     public void GetAccount_ReturnsNull_WhenSessionDataIsInvalidJson()
     {
@@ -90,6 +94,7 @@ public class SessionServiceTests
         Assert.Null(result);
     }
 
+    /// <summary>Verifies that <c>GetAccount</c> returns null when session bytes are empty.</summary>
     [Fact]
     public void GetAccount_ReturnsNull_WhenSessionBytesAreEmpty()
     {
@@ -105,6 +110,7 @@ public class SessionServiceTests
 
     // ── SetAccount ───────────────────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>SetAccount</c> calls session set with serialized account.</summary>
     [Fact]
     public void SetAccount_CallsSessionSet_WithSerializedAccount()
     {
@@ -117,6 +123,7 @@ public class SessionServiceTests
         _session.Verify(s => s.Set(It.IsAny<string>(), It.IsAny<byte[]>()), Times.Once);
     }
 
+    /// <summary>Verifies that <c>SetAccount</c> does not throw when http context is null.</summary>
     [Fact]
     public void SetAccount_DoesNotThrow_WhenHttpContextIsNull()
     {
@@ -130,6 +137,7 @@ public class SessionServiceTests
 
     // ── RemoveAccount ────────────────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>RemoveAccount</c> calls session remove.</summary>
     [Fact]
     public void RemoveAccount_CallsSessionRemove()
     {
@@ -142,6 +150,7 @@ public class SessionServiceTests
         _session.Verify(s => s.Remove(It.IsAny<string>()), Times.Once);
     }
 
+    /// <summary>Verifies that <c>RemoveAccount</c> does not throw when http context is null.</summary>
     [Fact]
     public void RemoveAccount_DoesNotThrow_WhenHttpContextIsNull()
     {

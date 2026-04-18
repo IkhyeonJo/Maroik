@@ -19,6 +19,7 @@ public class AccountController : BaseController
     private readonly IAccountService _accountService;
     private readonly ISessionService _sessionService;
 
+    /// <summary>Initializes a new instance of <see cref="AccountController"/> with the supplied dependencies.</summary>
     public AccountController(
         IHtmlLocalizer<AccountController> localizer,
         ILogger<AccountController> logger,

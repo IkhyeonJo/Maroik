@@ -18,6 +18,7 @@ public class ManagementControllerTests : IClassFixture<MaroikWebApplicationFacto
 
     // ── Account ──────────────────────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>Account</c> get when non ajax returns 200.</summary>
     [Fact]
     public async Task Account_Get_NonAjax_Returns200()
     {
@@ -29,6 +30,7 @@ public class ManagementControllerTests : IClassFixture<MaroikWebApplicationFacto
 
     // ── Menu ─────────────────────────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>Menu</c> get when non ajax returns 200.</summary>
     [Fact]
     public async Task Menu_Get_NonAjax_Returns200()
     {

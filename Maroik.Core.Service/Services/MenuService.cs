@@ -16,6 +16,7 @@ public class MenuService : IMenuService
     private readonly ISubCategoryRepository _subCategoryRepository;
     private readonly ILogger<MenuService> _logger;
 
+    /// <summary>Initializes a new instance of <see cref="MenuService"/> with the supplied dependencies.</summary>
     public MenuService(
         ICategoryRepository categoryRepository,
         ISubCategoryRepository subCategoryRepository,

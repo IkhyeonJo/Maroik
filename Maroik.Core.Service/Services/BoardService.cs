@@ -32,6 +32,7 @@ public class BoardService : IBoardService
         ["PrivateNote"] = "Management"
     };
 
+    /// <summary>Initializes a new instance of <see cref="BoardService"/> with the supplied dependencies.</summary>
     public BoardService(
         IBoardRepository boardRepository,
         IBoardAttachedFileRepository boardAttachedFileRepository,

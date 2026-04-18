@@ -18,6 +18,7 @@ public class FileController : ControllerBase
 {
     private readonly IClamavClient _clamavClient;
 
+    /// <summary>Initializes a new instance of <see cref="FileController"/> with <paramref name="clamavClient"/>.</summary>
     public FileController(IClamavClient clamavClient)
     {
         _clamavClient = clamavClient;

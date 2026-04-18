@@ -16,6 +16,7 @@ public class UnitOfWorkTests : IDisposable
     private readonly SqliteConnection _connection;
     private readonly ApplicationDbContext _context;
 
+    /// <summary>Initializes the test fixture, setting up all required test doubles and the system under test.</summary>
     public UnitOfWorkTests()
     {
         _connection = new SqliteConnection("DataSource=:memory:");
@@ -27,6 +28,7 @@ public class UnitOfWorkTests : IDisposable
         _context.Database.EnsureCreated();
     }
 
+    /// <summary>Releases resources allocated by this test fixture (disposes the database context).</summary>
     public void Dispose()
     {
         _context.Dispose();
@@ -35,6 +37,7 @@ public class UnitOfWorkTests : IDisposable
 
     // ── BeginAsync ───────────────────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>BeginAsync</c> does not throw.</summary>
     [Fact]
     public async Task BeginAsync_DoesNotThrow()
     {
@@ -47,6 +50,7 @@ public class UnitOfWorkTests : IDisposable
 
     // ── CommitAsync ──────────────────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>CommitAsync</c> commits data to database.</summary>
     [Fact]
     public async Task CommitAsync_CommitsDataToDatabase()
     {
@@ -62,6 +66,7 @@ public class UnitOfWorkTests : IDisposable
         Assert.True(exists);
     }
 
+    /// <summary>Verifies that <c>CommitAsync</c> does not throw when begin was not called.</summary>
     [Fact]
     public async Task CommitAsync_DoesNotThrow_WhenBeginWasNotCalled()
     {
@@ -75,6 +80,7 @@ public class UnitOfWorkTests : IDisposable
 
     // ── RollbackAsync ────────────────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>RollbackAsync</c> does not throw.</summary>
     [Fact]
     public async Task RollbackAsync_DoesNotThrow()
     {
@@ -86,6 +92,7 @@ public class UnitOfWorkTests : IDisposable
         Assert.Null(ex);
     }
 
+    /// <summary>Verifies that <c>RollbackAsync</c> does not throw when begin was not called.</summary>
     [Fact]
     public async Task RollbackAsync_DoesNotThrow_WhenBeginWasNotCalled()
     {
@@ -99,6 +106,7 @@ public class UnitOfWorkTests : IDisposable
 
     // ── DisposeAsync ─────────────────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>DisposeAsync</c> auto rolls back when not committed.</summary>
     [Fact]
     public async Task DisposeAsync_AutoRollsBack_WhenNotCommitted()
     {
@@ -111,6 +119,7 @@ public class UnitOfWorkTests : IDisposable
         Assert.Null(ex);
     }
 
+    /// <summary>Verifies that <c>DisposeAsync</c> does not throw when called after commit.</summary>
     [Fact]
     public async Task DisposeAsync_DoesNotThrow_WhenCalledAfterCommit()
     {
@@ -123,6 +132,7 @@ public class UnitOfWorkTests : IDisposable
         Assert.Null(ex);
     }
 
+    /// <summary>Verifies that <c>DisposeAsync</c> does not throw when no transaction was started.</summary>
     [Fact]
     public async Task DisposeAsync_DoesNotThrow_WhenNoTransactionWasStarted()
     {

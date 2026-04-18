@@ -14,6 +14,7 @@ public class BoardCommentRepositoryTests : IDisposable
     private readonly ApplicationDbContext _context;
     private readonly BoardCommentRepository _sut;
 
+    /// <summary>Initializes the test fixture, setting up all required test doubles and the system under test.</summary>
     public BoardCommentRepositoryTests()
     {
         var options = new DbContextOptionsBuilder<ApplicationDbContext>()
@@ -23,6 +24,7 @@ public class BoardCommentRepositoryTests : IDisposable
         _sut = new BoardCommentRepository(_context);
     }
 
+    /// <summary>Releases resources allocated by this test fixture (disposes the database context).</summary>
     public void Dispose() => _context.Dispose();
 
     // ── Helpers ──────────────────────────────────────────────────────────────
@@ -62,6 +64,7 @@ public class BoardCommentRepositoryTests : IDisposable
 
     // ── GetOneBoardCommentsAsync ─────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>GetOneBoardCommentsAsync</c> returns only comments for given board.</summary>
     [Fact]
     public async Task GetOneBoardCommentsAsync_ReturnsOnlyCommentsForGivenBoard()
     {
@@ -78,6 +81,7 @@ public class BoardCommentRepositoryTests : IDisposable
         Assert.All(result, c => Assert.Equal(board1Id, c.BoardId));
     }
 
+    /// <summary>Verifies that <c>GetOneBoardCommentsAsync</c> returns ordered by order.</summary>
     [Fact]
     public async Task GetOneBoardCommentsAsync_ReturnsOrderedByOrder()
     {
@@ -95,6 +99,7 @@ public class BoardCommentRepositoryTests : IDisposable
         Assert.Equal(3, list[2].Order);
     }
 
+    /// <summary>Verifies that <c>GetOneBoardCommentsAsync</c> returns empty when no board comments.</summary>
     [Fact]
     public async Task GetOneBoardCommentsAsync_ReturnsEmpty_WhenNoBoardComments()
     {
@@ -107,6 +112,7 @@ public class BoardCommentRepositoryTests : IDisposable
 
     // ── GetBoardCommentAsync ─────────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>GetBoardCommentAsync</c> returns comment when found.</summary>
     [Fact]
     public async Task GetBoardCommentAsync_ReturnsComment_WhenFound()
     {
@@ -120,6 +126,7 @@ public class BoardCommentRepositoryTests : IDisposable
         Assert.Equal("Bob", result.Writer);
     }
 
+    /// <summary>Verifies that <c>GetBoardCommentAsync</c> returns null when not found.</summary>
     [Fact]
     public async Task GetBoardCommentAsync_ReturnsNull_WhenNotFound()
     {
@@ -130,6 +137,7 @@ public class BoardCommentRepositoryTests : IDisposable
 
     // ── GetCommentCountsByBoardIdsAsync ──────────────────────────────────────
 
+    /// <summary>Verifies that <c>GetCommentCountsByBoardIdsAsync</c> returns correct counts.</summary>
     [Fact]
     public async Task GetCommentCountsByBoardIdsAsync_ReturnsCorrectCounts()
     {
@@ -147,6 +155,7 @@ public class BoardCommentRepositoryTests : IDisposable
         Assert.Equal(1, counts[boardId2]);
     }
 
+    /// <summary>Verifies that <c>GetCommentCountsByBoardIdsAsync</c> returns zero for boards with no comments.</summary>
     [Fact]
     public async Task GetCommentCountsByBoardIdsAsync_ReturnsZero_ForBoardsWithNoComments()
     {
@@ -159,6 +168,7 @@ public class BoardCommentRepositoryTests : IDisposable
 
     // ── WriteBoardCommentAsync ───────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>WriteBoardCommentAsync</c> adds comment to database.</summary>
     [Fact]
     public async Task WriteBoardCommentAsync_AddsCommentToDatabase()
     {
@@ -185,6 +195,7 @@ public class BoardCommentRepositoryTests : IDisposable
 
     // ── DeleteBoardCommentAsync ──────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>DeleteBoardCommentAsync</c> soft deletes comment.</summary>
     [Fact]
     public async Task DeleteBoardCommentAsync_SoftDeletesComment()
     {

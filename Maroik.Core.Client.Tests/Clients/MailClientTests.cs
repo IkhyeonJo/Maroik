@@ -13,6 +13,7 @@ public class MailClientTests
 
     // ── GetMailConfirmationBody ──────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>GetMailConfirmationBody</c> contains title and contents.</summary>
     [Fact]
     public void GetMailConfirmationBody_ContainsTitleAndContents()
     {
@@ -24,6 +25,7 @@ public class MailClientTests
         Assert.Contains("Line1", body);
     }
 
+    /// <summary>Verifies that <c>GetMailConfirmationBody</c> contains confirm email url.</summary>
     [Fact]
     public void GetMailConfirmationBody_ContainsConfirmEmailUrl()
     {
@@ -34,6 +36,7 @@ public class MailClientTests
         Assert.Contains("token123", body);
     }
 
+    /// <summary>Verifies that <c>GetMailConfirmationBody</c> url encodes special characters in token.</summary>
     [Fact]
     public void GetMailConfirmationBody_UrlEncodesSpecialCharactersInToken()
     {
@@ -45,6 +48,7 @@ public class MailClientTests
         Assert.DoesNotContain("registrationToken=a+b", body);
     }
 
+    /// <summary>Verifies that <c>GetMailConfirmationBody</c> returns html div.</summary>
     [Fact]
     public void GetMailConfirmationBody_ReturnsHtmlDiv()
     {
@@ -55,6 +59,7 @@ public class MailClientTests
         Assert.Contains("</div>", body);
     }
 
+    /// <summary>Verifies that <c>GetMailConfirmationBody</c> url contains domain name.</summary>
     [Fact]
     public void GetMailConfirmationBody_UrlContainsDomainName()
     {
@@ -66,6 +71,7 @@ public class MailClientTests
 
     // ── GetMailResetPasswordBody ─────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>GetMailResetPasswordBody</c> contains title and contents.</summary>
     [Fact]
     public void GetMailResetPasswordBody_ContainsTitleAndContents()
     {
@@ -77,6 +83,7 @@ public class MailClientTests
         Assert.Contains("Step1", body);
     }
 
+    /// <summary>Verifies that <c>GetMailResetPasswordBody</c> contains reset password url.</summary>
     [Fact]
     public void GetMailResetPasswordBody_ContainsResetPasswordUrl()
     {
@@ -87,6 +94,7 @@ public class MailClientTests
         Assert.Contains("reset-tok", body);
     }
 
+    /// <summary>Verifies that <c>GetMailResetPasswordBody</c> url encodes special characters.</summary>
     [Fact]
     public void GetMailResetPasswordBody_UrlEncodesSpecialCharacters()
     {
@@ -97,6 +105,7 @@ public class MailClientTests
         Assert.Contains("%3D", body);
     }
 
+    /// <summary>Verifies that <c>GetMailResetPasswordBody</c> returns html div.</summary>
     [Fact]
     public void GetMailResetPasswordBody_ReturnsHtmlDiv()
     {

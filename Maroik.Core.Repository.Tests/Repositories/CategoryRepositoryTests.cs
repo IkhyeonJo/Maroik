@@ -14,6 +14,7 @@ public class CategoryRepositoryTests : IDisposable
     private readonly ApplicationDbContext _context;
     private readonly CategoryRepository _sut;
 
+    /// <summary>Initializes the test fixture, setting up all required test doubles and the system under test.</summary>
     public CategoryRepositoryTests()
     {
         var options = new DbContextOptionsBuilder<ApplicationDbContext>()
@@ -23,6 +24,7 @@ public class CategoryRepositoryTests : IDisposable
         _sut = new CategoryRepository(_context);
     }
 
+    /// <summary>Releases resources allocated by this test fixture (disposes the database context).</summary>
     public void Dispose() => _context.Dispose();
 
     // ── Helpers ──────────────────────────────────────────────────────────────
@@ -46,6 +48,7 @@ public class CategoryRepositoryTests : IDisposable
 
     // ── GetCategoryAsync ─────────────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>GetCategoryAsync</c> returns all categories.</summary>
     [Fact]
     public async Task GetCategoryAsync_ReturnsAllCategories()
     {
@@ -58,6 +61,7 @@ public class CategoryRepositoryTests : IDisposable
         Assert.Equal(2, result.Count());
     }
 
+    /// <summary>Verifies that <c>GetCategoryAsync</c> returns empty when no categories.</summary>
     [Fact]
     public async Task GetCategoryAsync_ReturnsEmpty_WhenNoCategories()
     {
@@ -68,6 +72,7 @@ public class CategoryRepositoryTests : IDisposable
 
     // ── GetCategoryByRoleAsync ───────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>GetCategoryByRoleAsync</c> returns only categories for role.</summary>
     [Fact]
     public async Task GetCategoryByRoleAsync_ReturnsOnlyCategoriesForRole()
     {
@@ -82,6 +87,7 @@ public class CategoryRepositoryTests : IDisposable
         Assert.All(result, c => Assert.Equal("User", c.Role));
     }
 
+    /// <summary>Verifies that <c>GetCategoryByRoleAsync</c> returns ordered by order.</summary>
     [Fact]
     public async Task GetCategoryByRoleAsync_ReturnsOrderedByOrder()
     {
@@ -98,6 +104,7 @@ public class CategoryRepositoryTests : IDisposable
 
     // ── CreateCategoryAsync ──────────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>CreateCategoryAsync</c> adds category to database.</summary>
     [Fact]
     public async Task CreateCategoryAsync_AddsCategoryToDatabase()
     {
@@ -122,6 +129,7 @@ public class CategoryRepositoryTests : IDisposable
 
     // ── UpdateCategoryAsync ──────────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>UpdateCategoryAsync</c> updates existing category.</summary>
     [Fact]
     public async Task UpdateCategoryAsync_UpdatesExistingCategory()
     {
@@ -151,6 +159,7 @@ public class CategoryRepositoryTests : IDisposable
 
     // ── DeleteCategoryAsync ──────────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>DeleteCategoryAsync</c> removes category from database.</summary>
     [Fact]
     public async Task DeleteCategoryAsync_RemovesCategoryFromDatabase()
     {
@@ -172,6 +181,7 @@ public class CategoryRepositoryTests : IDisposable
         Assert.Null(deleted);
     }
 
+    /// <summary>Verifies that <c>DeleteCategoryAsync</c> does not affect other categories.</summary>
     [Fact]
     public async Task DeleteCategoryAsync_DoesNotAffectOtherCategories()
     {

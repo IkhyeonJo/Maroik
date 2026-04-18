@@ -12,6 +12,7 @@ public class BoardCommentRepository : IBoardCommentRepository
 {
     private readonly ApplicationDbContext _context;
 
+    /// <summary>Initializes a new instance of <see cref="BoardCommentRepository"/> with <paramref name="context"/>.</summary>
     public BoardCommentRepository(ApplicationDbContext context)
     {
         _context = context;

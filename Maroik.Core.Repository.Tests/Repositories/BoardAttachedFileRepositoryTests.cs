@@ -15,6 +15,7 @@ public class BoardAttachedFileRepositoryTests : IDisposable
     private readonly ApplicationDbContext _context;
     private readonly BoardAttachedFileRepository _sut;
 
+    /// <summary>Initializes the test fixture, setting up all required test doubles and the system under test.</summary>
     public BoardAttachedFileRepositoryTests()
     {
         var options = new DbContextOptionsBuilder<ApplicationDbContext>()
@@ -24,6 +25,7 @@ public class BoardAttachedFileRepositoryTests : IDisposable
         _sut = new BoardAttachedFileRepository(_context);
     }
 
+    /// <summary>Releases resources allocated by this test fixture (disposes the database context).</summary>
     public void Dispose() => _context.Dispose();
 
     // ── Helpers ──────────────────────────────────────────────────────────────
@@ -45,6 +47,7 @@ public class BoardAttachedFileRepositoryTests : IDisposable
 
     // ── GetAllAsync ──────────────────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>GetAllAsync</c> returns all files.</summary>
     [Fact]
     public async Task GetAllAsync_ReturnsAllFiles()
     {
@@ -55,6 +58,7 @@ public class BoardAttachedFileRepositoryTests : IDisposable
         Assert.Equal(2, result.Count);
     }
 
+    /// <summary>Verifies that <c>GetAllAsync</c> returns empty when no files exist.</summary>
     [Fact]
     public async Task GetAllAsync_ReturnsEmpty_WhenNoFilesExist()
     {
@@ -65,6 +69,7 @@ public class BoardAttachedFileRepositoryTests : IDisposable
 
     // ── GetByBoardIdAsync ────────────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>GetByBoardIdAsync</c> returns file when found.</summary>
     [Fact]
     public async Task GetByBoardIdAsync_ReturnsFile_WhenFound()
     {
@@ -77,6 +82,7 @@ public class BoardAttachedFileRepositoryTests : IDisposable
         Assert.Equal("report.pdf", result.Name);
     }
 
+    /// <summary>Verifies that <c>GetByBoardIdAsync</c> returns null when not found.</summary>
     [Fact]
     public async Task GetByBoardIdAsync_ReturnsNull_WhenNotFound()
     {
@@ -87,6 +93,7 @@ public class BoardAttachedFileRepositoryTests : IDisposable
 
     // ── GetByBoardIdsAsync ───────────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>GetByBoardIdsAsync</c> returns mapped dictionary.</summary>
     [Fact]
     public async Task GetByBoardIdsAsync_ReturnsMappedDictionary()
     {
@@ -100,6 +107,7 @@ public class BoardAttachedFileRepositoryTests : IDisposable
         Assert.NotNull(result[3]);
     }
 
+    /// <summary>Verifies that <c>GetByBoardIdsAsync</c> returns null values when none match.</summary>
     [Fact]
     public async Task GetByBoardIdsAsync_ReturnsNullValues_WhenNoneMatch()
     {
@@ -110,6 +118,7 @@ public class BoardAttachedFileRepositoryTests : IDisposable
 
     // ── SaveBoardAttachedFileAsync ───────────────────────────────────────────
 
+    /// <summary>Verifies that <c>SaveBoardAttachedFileAsync</c> persists file.</summary>
     [Fact]
     public async Task SaveBoardAttachedFileAsync_PersistsFile()
     {
@@ -132,6 +141,7 @@ public class BoardAttachedFileRepositoryTests : IDisposable
 
     // ── UpdateBoardAttachedFileAsync ─────────────────────────────────────────
 
+    /// <summary>Verifies that <c>UpdateBoardAttachedFileAsync</c> updates existing file.</summary>
     [Fact]
     public async Task UpdateBoardAttachedFileAsync_UpdatesExistingFile()
     {

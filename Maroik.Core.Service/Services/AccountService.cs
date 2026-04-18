@@ -24,6 +24,7 @@ public class AccountService : IAccountService
     private readonly IOptions<ServerSetting> _settings;
     private readonly ILogger<AccountService> _logger;
 
+    /// <summary>Initializes a new instance of <see cref="AccountService"/> with the supplied dependencies.</summary>
     public AccountService(
         IAccountRepository accountRepository,
         IPasswordService passwordService,

@@ -12,6 +12,7 @@ public class CalendarEventReminderRepository : ICalendarEventReminderRepository
 {
     private readonly ApplicationDbContext _context;
 
+    /// <summary>Initializes a new instance of <see cref="CalendarEventReminderRepository"/> with <paramref name="context"/>.</summary>
     public CalendarEventReminderRepository(ApplicationDbContext context)
     {
         _context = context;

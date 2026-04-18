@@ -28,6 +28,7 @@ public class CalendarService : ICalendarService
     private readonly IOptions<ServerSetting> _settings;
     private readonly ILogger<CalendarService> _logger;
 
+    /// <summary>Initializes a new instance of <see cref="CalendarService"/> with the supplied dependencies.</summary>
     public CalendarService(
         ICalendarRepository calendarRepository,
         ICalendarEventRepository calendarEventRepository,

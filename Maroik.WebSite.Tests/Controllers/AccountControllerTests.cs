@@ -19,6 +19,7 @@ public class AccountControllerTests : IClassFixture<MaroikWebApplicationFactory>
 
     // ── ConsentForm ──────────────────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>ConsentForm</c> get when returns200.</summary>
     [Fact]
     public async Task ConsentForm_Get_Returns200()
     {
@@ -29,6 +30,7 @@ public class AccountControllerTests : IClassFixture<MaroikWebApplicationFactory>
 
     // ── Login ────────────────────────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>Login</c> get when returns200.</summary>
     [Fact]
     public async Task Login_Get_Returns200()
     {
@@ -39,6 +41,7 @@ public class AccountControllerTests : IClassFixture<MaroikWebApplicationFactory>
 
     // ── Logout ───────────────────────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>Logout</c> get when redirects to dash board.</summary>
     [Fact]
     public async Task Logout_Get_RedirectsToDashBoard()
     {
@@ -51,6 +54,7 @@ public class AccountControllerTests : IClassFixture<MaroikWebApplicationFactory>
 
     // ── Register ─────────────────────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>Register</c> get when returns200.</summary>
     [Fact]
     public async Task Register_Get_Returns200()
     {
@@ -61,6 +65,7 @@ public class AccountControllerTests : IClassFixture<MaroikWebApplicationFactory>
 
     // ── ConfirmEmail ─────────────────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>ConfirmEmail</c> get when returns 200 with invalid token.</summary>
     [Fact]
     public async Task ConfirmEmail_Get_Returns200_WithInvalidToken()
     {
@@ -73,6 +78,7 @@ public class AccountControllerTests : IClassFixture<MaroikWebApplicationFactory>
 
     // ── ForgotPassword ───────────────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>ForgotPassword</c> get when returns200.</summary>
     [Fact]
     public async Task ForgotPassword_Get_Returns200()
     {
@@ -83,6 +89,7 @@ public class AccountControllerTests : IClassFixture<MaroikWebApplicationFactory>
 
     // ── ResetPassword ────────────────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>ResetPassword</c> get when returns 200 with invalid token.</summary>
     [Fact]
     public async Task ResetPassword_Get_Returns200_WithInvalidToken()
     {

@@ -12,6 +12,7 @@ public class ExpenditureRepository : IExpenditureRepository
 {
     private readonly ApplicationDbContext _context;
 
+    /// <summary>Initializes a new instance of <see cref="ExpenditureRepository"/> with <paramref name="context"/>.</summary>
     public ExpenditureRepository(ApplicationDbContext context)
     {
         _context = context;

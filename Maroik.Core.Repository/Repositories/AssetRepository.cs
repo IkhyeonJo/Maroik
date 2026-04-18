@@ -12,6 +12,7 @@ public class AssetRepository : IAssetRepository
 {
     private readonly ApplicationDbContext _context;
 
+    /// <summary>Initializes a new instance of <see cref="AssetRepository"/> with <paramref name="context"/>.</summary>
     public AssetRepository(ApplicationDbContext context)
     {
         _context = context;

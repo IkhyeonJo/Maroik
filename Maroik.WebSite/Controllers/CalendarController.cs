@@ -28,6 +28,7 @@ public class CalendarController : BaseController
     private readonly ICalendarService _calendarService;
     private readonly ISessionService _sessionService;
 
+    /// <summary>Initializes a new instance of <see cref="CalendarController"/> with the supplied dependencies.</summary>
     public CalendarController(
         IHtmlLocalizer<CalendarController> localizer,
         ILogger<CalendarController> logger,

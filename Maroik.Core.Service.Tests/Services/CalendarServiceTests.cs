@@ -27,6 +27,7 @@ public class CalendarServiceTests
     private readonly IOptions<ServerSetting> _settings =
         Options.Create(new ServerSetting { FileStorageBaseUrl = "http://files.example.com" });
 
+    /// <summary>Initializes the test fixture, setting up all required test doubles and the system under test.</summary>
     public CalendarServiceTests()
     {
         _unitOfWork.Setup(u => u.BeginAsync()).Returns(Task.CompletedTask);
@@ -60,6 +61,7 @@ public class CalendarServiceTests
 
     // ── CreateCalendarAsync ──────────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>CreateCalendarAsync</c> returns fail when calendar with same name exists.</summary>
     [Fact]
     public async Task CreateCalendarAsync_ReturnsFail_WhenCalendarWithSameNameExists()
     {
@@ -77,6 +79,7 @@ public class CalendarServiceTests
         Assert.Contains("already exists", result.ErrorKey, StringComparison.OrdinalIgnoreCase);
     }
 
+    /// <summary>Verifies that <c>CreateCalendarAsync</c> returns success when name is unique.</summary>
     [Fact]
     public async Task CreateCalendarAsync_ReturnsSuccess_WhenNameIsUnique()
     {
@@ -96,6 +99,7 @@ public class CalendarServiceTests
 
     // ── UpdateCalendarAsync ──────────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>UpdateCalendarAsync</c> returns fail when calendar not found.</summary>
     [Fact]
     public async Task UpdateCalendarAsync_ReturnsFail_WhenCalendarNotFound()
     {
@@ -112,6 +116,7 @@ public class CalendarServiceTests
         Assert.False(result.Success);
     }
 
+    /// <summary>Verifies that <c>UpdateCalendarAsync</c> returns success when calendar found.</summary>
     [Fact]
     public async Task UpdateCalendarAsync_ReturnsSuccess_WhenCalendarFound()
     {
@@ -133,6 +138,7 @@ public class CalendarServiceTests
 
     // ── DeleteCalendarAsync ──────────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>DeleteCalendarAsync</c> returns fail when calendar not found.</summary>
     [Fact]
     public async Task DeleteCalendarAsync_ReturnsFail_WhenCalendarNotFound()
     {
@@ -148,6 +154,7 @@ public class CalendarServiceTests
         Assert.False(result.Success);
     }
 
+    /// <summary>Verifies that <c>DeleteCalendarAsync</c> returns success when calendar found.</summary>
     [Fact]
     public async Task DeleteCalendarAsync_ReturnsSuccess_WhenCalendarFound()
     {
@@ -167,6 +174,7 @@ public class CalendarServiceTests
 
     // ── EnsureDefaultCalendarAsync ───────────────────────────────────────────
 
+    /// <summary>Verifies that <c>EnsureDefaultCalendarAsync</c> creates calendar when none exist.</summary>
     [Fact]
     public async Task EnsureDefaultCalendarAsync_CreatesCalendar_WhenNoneExist()
     {
@@ -184,6 +192,7 @@ public class CalendarServiceTests
         _calendarRepo.Verify(r => r.CreateCalendarAsync(It.IsAny<CalendarRequest>()), Times.Once);
     }
 
+    /// <summary>Verifies that <c>EnsureDefaultCalendarAsync</c> does not create when calendar exists.</summary>
     [Fact]
     public async Task EnsureDefaultCalendarAsync_DoesNotCreate_WhenCalendarExists()
     {
@@ -203,6 +212,7 @@ public class CalendarServiceTests
 
     // ── EnsureCalendarSharedAsync ────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>EnsureCalendarSharedAsync</c> creates shared when not already shared.</summary>
     [Fact]
     public async Task EnsureCalendarSharedAsync_CreatesShared_WhenNotAlreadyShared()
     {
@@ -216,6 +226,7 @@ public class CalendarServiceTests
         _sharedRepo.Verify(r => r.CreateCalendarSharedAsync(It.Is<CalendarSharedRequest>(req => req.CalendarId == 1)), Times.Once);
     }
 
+    /// <summary>Verifies that <c>EnsureCalendarSharedAsync</c> does not create when already shared.</summary>
     [Fact]
     public async Task EnsureCalendarSharedAsync_DoesNotCreate_WhenAlreadyShared()
     {
@@ -231,6 +242,7 @@ public class CalendarServiceTests
 
     // ── CreateCalendarEventAsync ─────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>CreateCalendarEventAsync</c> returns fail when calendar not found.</summary>
     [Fact]
     public async Task CreateCalendarEventAsync_ReturnsFail_WhenCalendarNotFound()
     {
@@ -245,6 +257,7 @@ public class CalendarServiceTests
         _unitOfWork.Verify(u => u.RollbackAsync(), Times.Once);
     }
 
+    /// <summary>Verifies that <c>CreateCalendarEventAsync</c> returns success with no attachment and no reminders.</summary>
     [Fact]
     public async Task CreateCalendarEventAsync_ReturnsSuccess_WithNoAttachmentAndNoReminders()
     {
@@ -260,6 +273,7 @@ public class CalendarServiceTests
         _unitOfWork.Verify(u => u.CommitAsync(), Times.Once);
     }
 
+    /// <summary>Verifies that <c>CreateCalendarEventAsync</c> creates reminders when provided.</summary>
     [Fact]
     public async Task CreateCalendarEventAsync_CreatesReminders_WhenProvided()
     {
@@ -284,6 +298,7 @@ public class CalendarServiceTests
 
     // ── UpdateCalendarEventAsync ─────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>UpdateCalendarEventAsync</c> returns fail when calendar not found.</summary>
     [Fact]
     public async Task UpdateCalendarEventAsync_ReturnsFail_WhenCalendarNotFound()
     {
@@ -297,6 +312,7 @@ public class CalendarServiceTests
         _unitOfWork.Verify(u => u.RollbackAsync(), Times.Once);
     }
 
+    /// <summary>Verifies that <c>UpdateCalendarEventAsync</c> returns fail when event not found.</summary>
     [Fact]
     public async Task UpdateCalendarEventAsync_ReturnsFail_WhenEventNotFound()
     {
@@ -312,6 +328,7 @@ public class CalendarServiceTests
         _unitOfWork.Verify(u => u.RollbackAsync(), Times.Once);
     }
 
+    /// <summary>Verifies that <c>UpdateCalendarEventAsync</c> returns success when valid and no attachment.</summary>
     [Fact]
     public async Task UpdateCalendarEventAsync_ReturnsSuccess_WhenValidAndNoAttachment()
     {
@@ -333,6 +350,7 @@ public class CalendarServiceTests
 
     // ── DeleteCalendarEventAsync ─────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>DeleteCalendarEventAsync</c> returns fail when event not found.</summary>
     [Fact]
     public async Task DeleteCalendarEventAsync_ReturnsFail_WhenEventNotFound()
     {
@@ -345,6 +363,7 @@ public class CalendarServiceTests
         Assert.False(result.Success);
     }
 
+    /// <summary>Verifies that <c>DeleteCalendarEventAsync</c> returns fail when event belongs to different calendar.</summary>
     [Fact]
     public async Task DeleteCalendarEventAsync_ReturnsFail_WhenEventBelongsToDifferentCalendar()
     {
@@ -359,6 +378,7 @@ public class CalendarServiceTests
         Assert.False(result.Success);
     }
 
+    /// <summary>Verifies that <c>DeleteCalendarEventAsync</c> returns success when ownership verified.</summary>
     [Fact]
     public async Task DeleteCalendarEventAsync_ReturnsSuccess_WhenOwnershipVerified()
     {
@@ -376,6 +396,7 @@ public class CalendarServiceTests
 
     // ── UpdateOtherCalendarAsync ─────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>UpdateOtherCalendarAsync</c> clears existing and creates new.</summary>
     [Fact]
     public async Task UpdateOtherCalendarAsync_ClearsExistingAndCreatesNew()
     {

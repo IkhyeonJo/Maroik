@@ -10,6 +10,7 @@ namespace Maroik.Core.Contract.Tests.Utilities;
 /// </summary>
 public class EnumHelperTests
 {
+    /// <summary>Verifies that <c>GetDescription</c> returns description attribute for account message.</summary>
     [Theory]
     [InlineData(AccountMessage.Success, "Success")]
     [InlineData(AccountMessage.MailSent, "Mail Sent")]
@@ -31,6 +32,7 @@ public class EnumHelperTests
         Assert.Equal(expected, result);
     }
 
+    /// <summary>Verifies that <c>GetDescription</c> returns description attribute for board type.</summary>
     [Theory]
     [InlineData(BoardType.FreeForum, "FreeForum")]
     [InlineData(BoardType.PrivateNote, "PrivateNote")]
@@ -41,6 +43,7 @@ public class EnumHelperTests
         Assert.Equal(expected, result);
     }
 
+    /// <summary>Verifies that <c>GetDescription</c> returns description attribute for calendar type.</summary>
     [Theory]
     [InlineData(CalendarType.My, "My")]
     [InlineData(CalendarType.Other, "Other")]
@@ -51,6 +54,7 @@ public class EnumHelperTests
         Assert.Equal(expected, result);
     }
 
+    /// <summary>Verifies that <c>GetDescription</c> returns description attribute for session.</summary>
     [Theory]
     [InlineData(Session.Account, "Account")]
     public void GetDescription_ReturnsDescriptionAttribute_ForSession(Session value, string expected)

@@ -18,6 +18,7 @@ public class DashBoardControllerTests : IClassFixture<MaroikWebApplicationFactor
 
     // ── AnonymousIndex ───────────────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>AnonymousIndex</c> get when returns200.</summary>
     [Fact]
     public async Task AnonymousIndex_Get_Returns200()
     {
@@ -26,6 +27,7 @@ public class DashBoardControllerTests : IClassFixture<MaroikWebApplicationFactor
         Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
     }
 
+    /// <summary>Verifies that <c>DefaultRoute</c> get when returns200.</summary>
     [Fact]
     public async Task DefaultRoute_Get_Returns200()
     {

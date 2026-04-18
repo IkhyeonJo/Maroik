@@ -76,6 +76,7 @@ public class AccountServiceTests
 
     // ── LoginAsync ───────────────────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>LoginAsync</c> returns fail when account not found.</summary>
     [Fact]
     public async Task LoginAsync_ReturnsFail_WhenAccountNotFound()
     {
@@ -88,6 +89,7 @@ public class AccountServiceTests
         Assert.Contains("wrong", result.ErrorKey, StringComparison.OrdinalIgnoreCase);
     }
 
+    /// <summary>Verifies that <c>LoginAsync</c> returns fail when account is deleted.</summary>
     [Fact]
     public async Task LoginAsync_ReturnsFail_WhenAccountIsDeleted()
     {
@@ -102,6 +104,7 @@ public class AccountServiceTests
         Assert.Contains("Deleted", result.ErrorKey, StringComparison.OrdinalIgnoreCase);
     }
 
+    /// <summary>Verifies that <c>LoginAsync</c> returns fail when account is locked.</summary>
     [Fact]
     public async Task LoginAsync_ReturnsFail_WhenAccountIsLocked()
     {
@@ -116,6 +119,7 @@ public class AccountServiceTests
         Assert.Contains("Locked", result.ErrorKey, StringComparison.OrdinalIgnoreCase);
     }
 
+    /// <summary>Verifies that <c>LoginAsync</c> returns a failure result and increments the login attempt count when the password is wrong.</summary>
     [Fact]
     public async Task LoginAsync_ReturnsFail_AndIncrementsAttemptCount_WhenPasswordIsWrong()
     {
@@ -133,6 +137,7 @@ public class AccountServiceTests
         _accountRepo.Verify(r => r.UpdateAccountAsync(It.Is<AccountRequest>(req => req.LoginAttempt == 2)), Times.Once);
     }
 
+    /// <summary>Verifies that <c>LoginAsync</c> locks account when max login attempts reached.</summary>
     [Fact]
     public async Task LoginAsync_LocksAccount_WhenMaxLoginAttemptsReached()
     {
@@ -149,6 +154,7 @@ public class AccountServiceTests
         _accountRepo.Verify(r => r.UpdateAccountAsync(It.Is<AccountRequest>(req => req.Locked == true)), Times.Once);
     }
 
+    /// <summary>Verifies that <c>LoginAsync</c> returns fail when email not confirmed.</summary>
     [Fact]
     public async Task LoginAsync_ReturnsFail_WhenEmailNotConfirmed()
     {
@@ -165,6 +171,7 @@ public class AccountServiceTests
         Assert.Contains("Email verification", result.ErrorKey, StringComparison.OrdinalIgnoreCase);
     }
 
+    /// <summary>Verifies that <c>LoginAsync</c> returns fail when service terms not agreed.</summary>
     [Fact]
     public async Task LoginAsync_ReturnsFail_WhenServiceTermsNotAgreed()
     {
@@ -181,6 +188,7 @@ public class AccountServiceTests
         Assert.Contains("Service Terms", result.ErrorKey, StringComparison.OrdinalIgnoreCase);
     }
 
+    /// <summary>Verifies that <c>LoginAsync</c> returns a success result with account data and clears the hashed password when credentials are valid.</summary>
     [Fact]
     public async Task LoginAsync_ReturnsSuccessWithAccount_AndClearsHashedPassword_WhenCredentialsValid()
     {
@@ -200,6 +208,7 @@ public class AccountServiceTests
 
     // ── RegisterAsync ────────────────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>RegisterAsync</c> creates account and sends email when email does not exist.</summary>
     [Fact]
     public async Task RegisterAsync_CreatesAccountAndSendsEmail_WhenEmailDoesNotExist()
     {
@@ -224,6 +233,7 @@ public class AccountServiceTests
         _accountRepo.Verify(r => r.CreateAccountAsync(It.IsAny<AccountRequest>()), Times.Once);
     }
 
+    /// <summary>Verifies that <c>RegisterAsync</c> returns fail when email sending fails.</summary>
     [Fact]
     public async Task RegisterAsync_ReturnsFail_WhenEmailSendingFails()
     {
@@ -247,6 +257,7 @@ public class AccountServiceTests
         Assert.False(result.Success);
     }
 
+    /// <summary>Verifies that <c>RegisterAsync</c> returns fail when nickname already exists.</summary>
     [Fact]
     public async Task RegisterAsync_ReturnsFail_WhenNicknameAlreadyExists()
     {
@@ -271,6 +282,7 @@ public class AccountServiceTests
         Assert.Contains("TakenNick", result.ErrorKey);
     }
 
+    /// <summary>Verifies that <c>RegisterAsync</c> resends confirmation email when account exists but not confirmed.</summary>
     [Fact]
     public async Task RegisterAsync_ResendsConfirmationEmail_WhenAccountExistsButNotConfirmed()
     {
@@ -290,6 +302,7 @@ public class AccountServiceTests
         Assert.True(result.ShowResendEmail);
     }
 
+    /// <summary>Verifies that <c>RegisterAsync</c> returns fail when account already confirmed.</summary>
     [Fact]
     public async Task RegisterAsync_ReturnsFail_WhenAccountAlreadyConfirmed()
     {
@@ -308,6 +321,7 @@ public class AccountServiceTests
 
     // ── ConfirmEmailAsync ────────────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>ConfirmEmailAsync</c> returns invalid token when decryption fails.</summary>
     [Fact]
     public async Task ConfirmEmailAsync_ReturnsInvalidToken_WhenDecryptionFails()
     {
@@ -320,6 +334,7 @@ public class AccountServiceTests
         Assert.False(result.AccountCreated);
     }
 
+    /// <summary>Verifies that <c>ConfirmEmailAsync</c> returns invalid token when account not found.</summary>
     [Fact]
     public async Task ConfirmEmailAsync_ReturnsInvalidToken_WhenAccountNotFound()
     {
@@ -334,6 +349,7 @@ public class AccountServiceTests
         Assert.False(result.AccountCreated);
     }
 
+    /// <summary>Verifies that <c>ConfirmEmailAsync</c> returns invalid token when token is expired.</summary>
     [Fact]
     public async Task ConfirmEmailAsync_ReturnsInvalidToken_WhenTokenIsExpired()
     {
@@ -349,6 +365,7 @@ public class AccountServiceTests
         Assert.False(result.AccountCreated);
     }
 
+    /// <summary>Verifies that <c>ConfirmEmailAsync</c> confirms account when token is valid.</summary>
     [Fact]
     public async Task ConfirmEmailAsync_ConfirmsAccount_WhenTokenIsValid()
     {
@@ -369,6 +386,7 @@ public class AccountServiceTests
             It.Is<AccountRequest>(req => req.EmailConfirmed && req.RegistrationToken == null)), Times.Once);
     }
 
+    /// <summary>Verifies that <c>ConfirmEmailAsync</c> returns not created when account already confirmed.</summary>
     [Fact]
     public async Task ConfirmEmailAsync_ReturnsNotCreated_WhenAccountAlreadyConfirmed()
     {
@@ -388,6 +406,7 @@ public class AccountServiceTests
 
     // ── ForgotPasswordAsync ──────────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>ForgotPasswordAsync</c> returns true silently when account not found.</summary>
     [Fact]
     public async Task ForgotPasswordAsync_ReturnsTrueSilently_WhenAccountNotFound()
     {
@@ -403,6 +422,7 @@ public class AccountServiceTests
             It.IsAny<string>(), It.IsAny<string>()), Times.Never);
     }
 
+    /// <summary>Verifies that <c>ForgotPasswordAsync</c> returns true silently when account email not confirmed.</summary>
     [Fact]
     public async Task ForgotPasswordAsync_ReturnsTrueSilently_WhenAccountEmailNotConfirmed()
     {
@@ -420,6 +440,7 @@ public class AccountServiceTests
             It.IsAny<string>(), It.IsAny<string>()), Times.Never);
     }
 
+    /// <summary>Verifies that <c>ForgotPasswordAsync</c> sends reset email when account is valid.</summary>
     [Fact]
     public async Task ForgotPasswordAsync_SendsResetEmail_WhenAccountIsValid()
     {
@@ -439,6 +460,7 @@ public class AccountServiceTests
 
     // ── ValidateResetPasswordTokenAsync ─────────────────────────────────────
 
+    /// <summary>Verifies that <c>ValidateResetPasswordTokenAsync</c> returns fail to reset when decryption fails.</summary>
     [Fact]
     public async Task ValidateResetPasswordTokenAsync_ReturnsFailToReset_WhenDecryptionFails()
     {
@@ -450,6 +472,7 @@ public class AccountServiceTests
         Assert.True(result.FailToReset);
     }
 
+    /// <summary>Verifies that <c>ValidateResetPasswordTokenAsync</c> returns fail to reset when token expired.</summary>
     [Fact]
     public async Task ValidateResetPasswordTokenAsync_ReturnsFailToReset_WhenTokenExpired()
     {
@@ -464,6 +487,7 @@ public class AccountServiceTests
         Assert.True(result.FailToReset);
     }
 
+    /// <summary>Verifies that <c>ValidateResetPasswordTokenAsync</c> returns token when valid.</summary>
     [Fact]
     public async Task ValidateResetPasswordTokenAsync_ReturnsToken_WhenValid()
     {
@@ -481,6 +505,7 @@ public class AccountServiceTests
 
     // ── ResetPasswordAsync ───────────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>ResetPasswordAsync</c> returns fail when decryption fails.</summary>
     [Fact]
     public async Task ResetPasswordAsync_ReturnsFail_WhenDecryptionFails()
     {
@@ -492,6 +517,7 @@ public class AccountServiceTests
         Assert.False(result.Success);
     }
 
+    /// <summary>Verifies that <c>ResetPasswordAsync</c> returns fail when token expired.</summary>
     [Fact]
     public async Task ResetPasswordAsync_ReturnsFail_WhenTokenExpired()
     {
@@ -506,6 +532,7 @@ public class AccountServiceTests
         Assert.False(result.Success);
     }
 
+    /// <summary>Verifies that <c>ResetPasswordAsync</c> updates password and unlocks account when valid.</summary>
     [Fact]
     public async Task ResetPasswordAsync_UpdatesPasswordAndUnlocksAccount_WhenValid()
     {
@@ -531,6 +558,7 @@ public class AccountServiceTests
 
     // ── GetAccountsByNicknamesAsync ──────────────────────────────────────────
 
+    /// <summary>Verifies that <c>GetAccountsByNicknamesAsync</c> delegates to repository.</summary>
     [Fact]
     public async Task GetAccountsByNicknamesAsync_DelegatesToRepository()
     {

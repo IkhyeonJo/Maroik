@@ -15,6 +15,7 @@ public class AccountFlowTests : E2ETestBase
 {
     // ── Login ────────────────────────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>LoginPage</c> has email and password inputs and submit button.</summary>
     [Fact]
     public async Task LoginPage_HasEmailAndPasswordInputsAndSubmitButton()
     {
@@ -33,6 +34,7 @@ public class AccountFlowTests : E2ETestBase
         await Assertions.Expect(page.Locator("#btnSignIn")).ToBeEnabledAsync();
     }
 
+    /// <summary>Verifies that <c>LoginPage</c> has title.</summary>
     [Fact]
     public async Task LoginPage_HasTitle()
     {
@@ -46,6 +48,7 @@ public class AccountFlowTests : E2ETestBase
 
     // ── Register ─────────────────────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>RegisterPage</c> has registration form with all fields.</summary>
     [Fact]
     public async Task RegisterPage_HasRegistrationFormWithAllFields()
     {
@@ -63,6 +66,7 @@ public class AccountFlowTests : E2ETestBase
 
     // ── ConsentForm ──────────────────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>ConsentFormPage</c> loads with non empty body.</summary>
     [Fact]
     public async Task ConsentFormPage_Loads_WithNonEmptyBody()
     {
@@ -76,6 +80,7 @@ public class AccountFlowTests : E2ETestBase
 
     // ── ForgotPassword ───────────────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>ForgotPasswordPage</c> has email input and submit button.</summary>
     [Fact]
     public async Task ForgotPasswordPage_HasEmailInputAndSubmitButton()
     {
@@ -91,6 +96,7 @@ public class AccountFlowTests : E2ETestBase
 
     // ── ConfirmEmail (invalid token) ─────────────────────────────────────────
 
+    /// <summary>Verifies that <c>ConfirmEmailPage</c> with invalid token when loads without unhandled error.</summary>
     [Fact]
     public async Task ConfirmEmailPage_WithInvalidToken_LoadsWithoutUnhandledError()
     {
@@ -112,6 +118,7 @@ public class AccountFlowTests : E2ETestBase
 
     // ── ResetPassword (invalid token) ────────────────────────────────────────
 
+    /// <summary>Verifies that <c>ResetPasswordPage</c> with invalid token when loads without unhandled error.</summary>
     [Fact]
     public async Task ResetPasswordPage_WithInvalidToken_LoadsWithoutUnhandledError()
     {
@@ -124,6 +131,7 @@ public class AccountFlowTests : E2ETestBase
 
     // ── Logout → redirect ────────────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>Logout</c> redirects to anonymous dashboard.</summary>
     [Fact]
     public async Task Logout_RedirectsToAnonymousDashboard()
     {

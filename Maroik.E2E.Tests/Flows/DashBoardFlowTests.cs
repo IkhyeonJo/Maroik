@@ -12,6 +12,7 @@ public class DashBoardFlowTests : E2ETestBase
 {
     // ── Anonymous dashboard ──────────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>AnonymousDashboard</c> loads with non empty body.</summary>
     [Fact]
     public async Task AnonymousDashboard_Loads_WithNonEmptyBody()
     {
@@ -22,6 +23,7 @@ public class DashBoardFlowTests : E2ETestBase
         Assert.False(string.IsNullOrWhiteSpace(bodyText));
     }
 
+    /// <summary>Verifies that the default route loads and resolves to the dashboard page.</summary>
     [Fact]
     public async Task DefaultRoute_Loads_AndResolvesToDashBoard()
     {
@@ -36,6 +38,7 @@ public class DashBoardFlowTests : E2ETestBase
         Assert.False(string.IsNullOrWhiteSpace(bodyText));
     }
 
+    /// <summary>Verifies that <c>AnonymousDashboard</c> has html body element.</summary>
     [Fact]
     public async Task AnonymousDashboard_HasHtmlBodyElement()
     {
@@ -46,6 +49,7 @@ public class DashBoardFlowTests : E2ETestBase
         await Assertions.Expect(page.Locator("body")).ToBeVisibleAsync();
     }
 
+    /// <summary>Verifies that <c>AnonymousDashboard</c> has non empty page title.</summary>
     [Fact]
     public async Task AnonymousDashboard_HasNonEmptyPageTitle()
     {
@@ -58,6 +62,7 @@ public class DashBoardFlowTests : E2ETestBase
 
     // ── Navigation links available on the anonymous dashboard ────────────────
 
+    /// <summary>Verifies that <c>AnonymousDashboard</c> contains navigation elements.</summary>
     [Fact]
     public async Task AnonymousDashboard_ContainsNavigationElements()
     {

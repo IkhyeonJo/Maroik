@@ -12,6 +12,7 @@ public class BoardAttachedFileRepository : IBoardAttachedFileRepository
 {
     private readonly ApplicationDbContext _context;
 
+    /// <summary>Initializes a new instance of <see cref="BoardAttachedFileRepository"/> with <paramref name="context"/>.</summary>
     public BoardAttachedFileRepository(ApplicationDbContext context)
     {
         _context = context;

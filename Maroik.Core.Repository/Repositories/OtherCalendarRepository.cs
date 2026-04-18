@@ -12,6 +12,7 @@ public class OtherCalendarRepository : IOtherCalendarRepository
 {
     private readonly ApplicationDbContext _context;
 
+    /// <summary>Initializes a new instance of <see cref="OtherCalendarRepository"/> with <paramref name="context"/>.</summary>
     public OtherCalendarRepository(ApplicationDbContext context)
     {
         _context = context;

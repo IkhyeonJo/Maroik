@@ -12,6 +12,7 @@ public class SubCategoryRepository : ISubCategoryRepository
 {
     private readonly ApplicationDbContext _context;
 
+    /// <summary>Initializes a new instance of <see cref="SubCategoryRepository"/> with <paramref name="context"/>.</summary>
     public SubCategoryRepository(ApplicationDbContext context)
     {
         _context = context;

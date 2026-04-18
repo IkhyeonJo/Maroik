@@ -18,6 +18,7 @@ public class AccountBookControllerTests : IClassFixture<MaroikWebApplicationFact
 
     // ── Asset ────────────────────────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>Asset</c> get when non ajax returns 200.</summary>
     [Fact]
     public async Task Asset_Get_NonAjax_Returns200()
     {
@@ -29,6 +30,7 @@ public class AccountBookControllerTests : IClassFixture<MaroikWebApplicationFact
 
     // ── Income ───────────────────────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>Income</c> get when non ajax returns 200.</summary>
     [Fact]
     public async Task Income_Get_NonAjax_Returns200()
     {
@@ -39,6 +41,7 @@ public class AccountBookControllerTests : IClassFixture<MaroikWebApplicationFact
 
     // ── Expenditure ──────────────────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>Expenditure</c> get when non ajax returns 200.</summary>
     [Fact]
     public async Task Expenditure_Get_NonAjax_Returns200()
     {

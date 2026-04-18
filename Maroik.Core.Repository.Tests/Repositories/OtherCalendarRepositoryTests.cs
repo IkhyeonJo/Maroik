@@ -16,6 +16,7 @@ public class OtherCalendarRepositoryTests : IDisposable
     private readonly ApplicationDbContext _context;
     private readonly OtherCalendarRepository _sut;
 
+    /// <summary>Initializes the test fixture, setting up all required test doubles and the system under test.</summary>
     public OtherCalendarRepositoryTests()
     {
         var options = new DbContextOptionsBuilder<ApplicationDbContext>()
@@ -25,6 +26,7 @@ public class OtherCalendarRepositoryTests : IDisposable
         _sut = new OtherCalendarRepository(_context);
     }
 
+    /// <summary>Releases resources allocated by this test fixture (disposes the database context).</summary>
     public void Dispose() => _context.Dispose();
 
     // ── Helpers ──────────────────────────────────────────────────────────────
@@ -43,6 +45,7 @@ public class OtherCalendarRepositoryTests : IDisposable
 
     // ── GetAllOtherCalendarsAsync ────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>GetAllOtherCalendarsAsync</c> returns all when ordered by calendar id.</summary>
     [Fact]
     public async Task GetAllOtherCalendarsAsync_ReturnsAll_OrderedByCalendarId()
     {
@@ -59,6 +62,7 @@ public class OtherCalendarRepositoryTests : IDisposable
         Assert.Equal(3, result[2].CalendarId);
     }
 
+    /// <summary>Verifies that <c>GetAllOtherCalendarsAsync</c> returns empty when no entries.</summary>
     [Fact]
     public async Task GetAllOtherCalendarsAsync_ReturnsEmpty_WhenNoEntries()
     {
@@ -69,6 +73,7 @@ public class OtherCalendarRepositoryTests : IDisposable
 
     // ── GetOtherCalendarsAsync ───────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>GetOtherCalendarsAsync</c> returns only calendars for given email.</summary>
     [Fact]
     public async Task GetOtherCalendarsAsync_ReturnsOnlyCalendarsForGivenEmail()
     {
@@ -83,6 +88,7 @@ public class OtherCalendarRepositoryTests : IDisposable
         Assert.All(result, r => Assert.Equal("alice@example.com", r.AccountEmail));
     }
 
+    /// <summary>Verifies that <c>GetOtherCalendarsAsync</c> returns results when ordered by calendar id.</summary>
     [Fact]
     public async Task GetOtherCalendarsAsync_ReturnsResults_OrderedByCalendarId()
     {
@@ -96,6 +102,7 @@ public class OtherCalendarRepositoryTests : IDisposable
         Assert.Equal(5, result[1].CalendarId);
     }
 
+    /// <summary>Verifies that <c>GetOtherCalendarsAsync</c> returns empty when email not found.</summary>
     [Fact]
     public async Task GetOtherCalendarsAsync_ReturnsEmpty_WhenEmailNotFound()
     {
@@ -106,6 +113,7 @@ public class OtherCalendarRepositoryTests : IDisposable
 
     // ── CreateOtherCalendarAsync ─────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>CreateOtherCalendarAsync</c> persists entry.</summary>
     [Fact]
     public async Task CreateOtherCalendarAsync_PersistsEntry()
     {
@@ -124,6 +132,7 @@ public class OtherCalendarRepositoryTests : IDisposable
 
     // ── DeleteOtherCalendarAsync ─────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>DeleteOtherCalendarAsync</c> removes entry.</summary>
     [Fact]
     public async Task DeleteOtherCalendarAsync_RemovesEntry()
     {

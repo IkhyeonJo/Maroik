@@ -11,6 +11,7 @@ public class DateTimeExtensionTests
 {
     // ── ConvertTimeByTimeZoneIanaId ──────────────────────────────────────────
 
+    /// <summary>Verifies that <c>ConvertTimeByTimeZoneIanaId</c> converts utc to local time for valid iana id.</summary>
     [Fact]
     public void ConvertTimeByTimeZoneIanaId_ConvertsUtcToLocalTime_ForValidIanaId()
     {
@@ -24,6 +25,7 @@ public class DateTimeExtensionTests
         Assert.Equal(15, result.Minute);
     }
 
+    /// <summary>Verifies that <c>ConvertTimeByTimeZoneIanaId</c> returns original value for invalid iana id.</summary>
     [Fact]
     public void ConvertTimeByTimeZoneIanaId_ReturnsOriginalValue_ForInvalidIanaId()
     {
@@ -34,6 +36,7 @@ public class DateTimeExtensionTests
         Assert.Equal(original, result);
     }
 
+    /// <summary>Verifies that <c>ConvertTimeByTimeZoneIanaId</c> returns original value for empty iana id.</summary>
     [Fact]
     public void ConvertTimeByTimeZoneIanaId_ReturnsOriginalValue_ForEmptyIanaId()
     {
@@ -44,6 +47,7 @@ public class DateTimeExtensionTests
         Assert.Equal(original, result);
     }
 
+    /// <summary>Verifies that <c>ConvertTimeByTimeZoneIanaId</c> returns utc time for utc iana id.</summary>
     [Fact]
     public void ConvertTimeByTimeZoneIanaId_ReturnsUtcTime_ForUtcIanaId()
     {
@@ -55,6 +59,7 @@ public class DateTimeExtensionTests
         Assert.Equal(0, result.Minute);
     }
 
+    /// <summary>Verifies that <c>ConvertTimeByTimeZoneIanaId</c> handles negative offsets.</summary>
     [Fact]
     public void ConvertTimeByTimeZoneIanaId_HandlesNegativeOffsets()
     {

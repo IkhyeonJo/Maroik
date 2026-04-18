@@ -11,6 +11,7 @@ public class StringExtensionTests
 {
     // ── GetAmountLabel ───────────────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>GetAmountLabel</c> returns formatted label with value and unit.</summary>
     [Fact]
     public void GetAmountLabel_ReturnsFormattedLabel_WithValueAndUnit()
     {
@@ -19,6 +20,7 @@ public class StringExtensionTests
         Assert.Equal("Amount (KRW)", result);
     }
 
+    /// <summary>Verifies that <c>GetAmountLabel</c> includes empty parentheses when monetary unit is empty.</summary>
     [Fact]
     public void GetAmountLabel_IncludesEmptyParentheses_WhenMonetaryUnitIsEmpty()
     {
@@ -27,6 +29,7 @@ public class StringExtensionTests
         Assert.Equal("Amount ()", result);
     }
 
+    /// <summary>Verifies that <c>GetAmountLabel</c> includes empty parentheses when monetary unit is null.</summary>
     [Fact]
     public void GetAmountLabel_IncludesEmptyParentheses_WhenMonetaryUnitIsNull()
     {
@@ -35,6 +38,7 @@ public class StringExtensionTests
         Assert.Equal("Amount ()", result);
     }
 
+    /// <summary>Verifies that <c>GetAmountLabel</c> works with various units.</summary>
     [Fact]
     public void GetAmountLabel_WorksWithVariousUnits()
     {

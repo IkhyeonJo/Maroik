@@ -22,6 +22,7 @@ public class IncomeServiceTests
         _assetRepo.Object,
         _unitOfWork.Object);
 
+    /// <summary>Initializes the test fixture, setting up all required test doubles and the system under test.</summary>
     public IncomeServiceTests()
     {
         _unitOfWork.Setup(u => u.BeginAsync()).Returns(Task.CompletedTask);
@@ -52,6 +53,7 @@ public class IncomeServiceTests
 
     // ── CreateAsync ──────────────────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>CreateAsync</c> returns fail when income class is invalid.</summary>
     [Theory]
     [InlineData("InvalidClass", "LaborIncome")]
     [InlineData("RegularIncome", "InvalidSub")]
@@ -68,6 +70,7 @@ public class IncomeServiceTests
         _unitOfWork.Verify(u => u.RollbackAsync(), Times.Once);
     }
 
+    /// <summary>Verifies that <c>CreateAsync</c> returns fail when deposit asset not found.</summary>
     [Fact]
     public async Task CreateAsync_ReturnsFail_WhenDepositAssetNotFound()
     {
@@ -80,6 +83,7 @@ public class IncomeServiceTests
         _unitOfWork.Verify(u => u.RollbackAsync(), Times.Once);
     }
 
+    /// <summary>Verifies that <c>CreateAsync</c> returns fail when deposit asset is deleted.</summary>
     [Fact]
     public async Task CreateAsync_ReturnsFail_WhenDepositAssetIsDeleted()
     {
@@ -95,6 +99,7 @@ public class IncomeServiceTests
         _unitOfWork.Verify(u => u.RollbackAsync(), Times.Once);
     }
 
+    /// <summary>Verifies that <c>CreateAsync</c> increments asset amount when valid.</summary>
     [Fact]
     public async Task CreateAsync_IncrementsAssetAmount_WhenValid()
     {
@@ -117,6 +122,7 @@ public class IncomeServiceTests
         _unitOfWork.Verify(u => u.CommitAsync(), Times.Once);
     }
 
+    /// <summary>Verifies that <c>CreateAsync</c> returns success for all valid income class combinations.</summary>
     [Theory]
     [InlineData("RegularIncome", "LaborIncome")]
     [InlineData("RegularIncome", "BusinessIncome")]
@@ -147,6 +153,7 @@ public class IncomeServiceTests
 
     // ── UpdateAsync ──────────────────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>UpdateAsync</c> returns fail when income class is invalid.</summary>
     [Fact]
     public async Task UpdateAsync_ReturnsFail_WhenIncomeClassIsInvalid()
     {
@@ -159,6 +166,7 @@ public class IncomeServiceTests
         _unitOfWork.Verify(u => u.RollbackAsync(), Times.Once);
     }
 
+    /// <summary>Verifies that <c>UpdateAsync</c> returns fail when income record not found.</summary>
     [Fact]
     public async Task UpdateAsync_ReturnsFail_WhenIncomeRecordNotFound()
     {
@@ -172,6 +180,7 @@ public class IncomeServiceTests
         Assert.False(result.Success);
     }
 
+    /// <summary>Verifies that <c>UpdateAsync</c> returns fail when previous asset is deleted.</summary>
     [Fact]
     public async Task UpdateAsync_ReturnsFail_WhenPreviousAssetIsDeleted()
     {
@@ -195,6 +204,7 @@ public class IncomeServiceTests
         Assert.Contains("deleted", result.ErrorKey, StringComparison.OrdinalIgnoreCase);
     }
 
+    /// <summary>Verifies that <c>UpdateAsync</c> adjusts same asset balance when asset name unchanged.</summary>
     [Fact]
     public async Task UpdateAsync_AdjustsSameAssetBalance_WhenAssetNameUnchanged()
     {
@@ -229,6 +239,7 @@ public class IncomeServiceTests
         _unitOfWork.Verify(u => u.CommitAsync(), Times.Once);
     }
 
+    /// <summary>Verifies that <c>UpdateAsync</c> adjusts both assets when asset name changes.</summary>
     [Fact]
     public async Task UpdateAsync_AdjustsBothAssets_WhenAssetNameChanges()
     {
@@ -266,6 +277,7 @@ public class IncomeServiceTests
 
     // ── DeleteAsync ──────────────────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>DeleteAsync</c> returns fail when income not found.</summary>
     [Fact]
     public async Task DeleteAsync_ReturnsFail_WhenIncomeNotFound()
     {
@@ -278,6 +290,7 @@ public class IncomeServiceTests
         _unitOfWork.Verify(u => u.RollbackAsync(), Times.Once);
     }
 
+    /// <summary>Verifies that <c>DeleteAsync</c> returns fail when asset is deleted.</summary>
     [Fact]
     public async Task DeleteAsync_ReturnsFail_WhenAssetIsDeleted()
     {
@@ -295,6 +308,7 @@ public class IncomeServiceTests
         Assert.Contains("deleted", result.ErrorKey, StringComparison.OrdinalIgnoreCase);
     }
 
+    /// <summary>Verifies that <c>DeleteAsync</c> decrements asset amount when valid.</summary>
     [Fact]
     public async Task DeleteAsync_DecrementsAssetAmount_WhenValid()
     {
@@ -321,6 +335,7 @@ public class IncomeServiceTests
 
     // ── GetIncomesAsync ──────────────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>GetIncomesAsync</c> delegates to repository.</summary>
     [Fact]
     public async Task GetIncomesAsync_DelegatesToRepository()
     {

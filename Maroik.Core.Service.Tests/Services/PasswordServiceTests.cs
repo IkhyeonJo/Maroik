@@ -13,6 +13,7 @@ public class PasswordServiceTests
 
     // ── HashPassword ────────────────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>HashPassword</c> returns non empty bcrypt hash for valid password.</summary>
     [Fact]
     public void HashPassword_ReturnsNonEmptyBcryptHash_ForValidPassword()
     {
@@ -22,6 +23,7 @@ public class PasswordServiceTests
         Assert.StartsWith("$2", hash); // BCrypt hashes start with $2a$ or $2b$
     }
 
+    /// <summary>Verifies that <c>HashPassword</c> produces different hash each call when due to random salt.</summary>
     [Fact]
     public void HashPassword_ProducesDifferentHashEachCall_DueToRandomSalt()
     {
@@ -31,6 +33,7 @@ public class PasswordServiceTests
         Assert.NotEqual(hash1, hash2);
     }
 
+    /// <summary>Verifies that <c>HashPassword</c> throws argument exception for empty or whitespace.</summary>
     [Theory]
     [InlineData("")]
     [InlineData("   ")]
@@ -41,6 +44,7 @@ public class PasswordServiceTests
 
     // ── VerifyPassword ───────────────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>VerifyPassword</c> returns true when password matches stored hash.</summary>
     [Fact]
     public void VerifyPassword_ReturnsTrue_WhenPasswordMatchesStoredHash()
     {
@@ -52,6 +56,7 @@ public class PasswordServiceTests
         Assert.True(result);
     }
 
+    /// <summary>Verifies that <c>VerifyPassword</c> returns false when password does not match hash.</summary>
     [Fact]
     public void VerifyPassword_ReturnsFalse_WhenPasswordDoesNotMatchHash()
     {
@@ -62,6 +67,7 @@ public class PasswordServiceTests
         Assert.False(result);
     }
 
+    /// <summary>Verifies that <c>VerifyPassword</c> returns false when password is empty or whitespace.</summary>
     [Theory]
     [InlineData("", "$2a$13$validhashplaceholder1234567890")]
     [InlineData("   ", "$2a$13$validhashplaceholder1234567890")]
@@ -72,6 +78,7 @@ public class PasswordServiceTests
         Assert.False(result);
     }
 
+    /// <summary>Verifies that <c>VerifyPassword</c> returns false when hash is empty or whitespace.</summary>
     [Theory]
     [InlineData("password", "")]
     [InlineData("password", "   ")]
@@ -82,6 +89,7 @@ public class PasswordServiceTests
         Assert.False(result);
     }
 
+    /// <summary>Verifies that <c>VerifyPassword</c> returns false when hash is malformed.</summary>
     [Fact]
     public void VerifyPassword_ReturnsFalse_WhenHashIsMalformed()
     {

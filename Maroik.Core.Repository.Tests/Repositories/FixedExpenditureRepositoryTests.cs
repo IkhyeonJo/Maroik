@@ -16,6 +16,7 @@ public class FixedExpenditureRepositoryTests : IDisposable
     private readonly ApplicationDbContext _context;
     private readonly FixedExpenditureRepository _sut;
 
+    /// <summary>Initializes the test fixture, setting up all required test doubles and the system under test.</summary>
     public FixedExpenditureRepositoryTests()
     {
         var options = new DbContextOptionsBuilder<ApplicationDbContext>()
@@ -25,6 +26,7 @@ public class FixedExpenditureRepositoryTests : IDisposable
         _sut = new FixedExpenditureRepository(_context);
     }
 
+    /// <summary>Releases resources allocated by this test fixture (disposes the database context).</summary>
     public void Dispose() => _context.Dispose();
 
     // ── Helpers ──────────────────────────────────────────────────────────────
@@ -54,6 +56,7 @@ public class FixedExpenditureRepositoryTests : IDisposable
 
     // ── GetFixedExpendituresAsync ────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>GetFixedExpendituresAsync</c> returns only items for given email.</summary>
     [Fact]
     public async Task GetFixedExpendituresAsync_ReturnsOnlyItemsForGivenEmail()
     {
@@ -68,6 +71,7 @@ public class FixedExpenditureRepositoryTests : IDisposable
         Assert.All(result, fe => Assert.Equal("alice@example.com", fe.AccountEmail));
     }
 
+    /// <summary>Verifies that <c>GetFixedExpendituresAsync</c> returns empty when no items for email.</summary>
     [Fact]
     public async Task GetFixedExpendituresAsync_ReturnsEmpty_WhenNoItemsForEmail()
     {
@@ -78,6 +82,7 @@ public class FixedExpenditureRepositoryTests : IDisposable
 
     // ── CreateFixedExpenditureAsync ──────────────────────────────────────────
 
+    /// <summary>Verifies that <c>CreateFixedExpenditureAsync</c> adds item to database.</summary>
     [Fact]
     public async Task CreateFixedExpenditureAsync_AddsItemToDatabase()
     {
@@ -110,6 +115,7 @@ public class FixedExpenditureRepositoryTests : IDisposable
 
     // ── UpdateFixedExpenditureAsync ──────────────────────────────────────────
 
+    /// <summary>Verifies that <c>UpdateFixedExpenditureAsync</c> updates existing item.</summary>
     [Fact]
     public async Task UpdateFixedExpenditureAsync_UpdatesExistingItem()
     {
@@ -146,6 +152,7 @@ public class FixedExpenditureRepositoryTests : IDisposable
 
     // ── DeleteFixedExpenditureAsync ──────────────────────────────────────────
 
+    /// <summary>Verifies that <c>DeleteFixedExpenditureAsync</c> removes item from database.</summary>
     [Fact]
     public async Task DeleteFixedExpenditureAsync_RemovesItemFromDatabase()
     {
@@ -174,6 +181,7 @@ public class FixedExpenditureRepositoryTests : IDisposable
         Assert.Null(deleted);
     }
 
+    /// <summary>Verifies that <c>DeleteFixedExpenditureAsync</c> does not affect other items.</summary>
     [Fact]
     public async Task DeleteFixedExpenditureAsync_DoesNotAffectOtherItems()
     {

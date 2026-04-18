@@ -16,6 +16,7 @@ public class DriveControllerTests : IClassFixture<MaroikWebApplicationFactory>
         _client = factory.CreateTestClient(followRedirects: false);
     }
 
+    /// <summary>Verifies that <c>AnonymousIndex</c> get when returns200.</summary>
     [Fact]
     public async Task AnonymousIndex_Get_Returns200()
     {
@@ -24,6 +25,7 @@ public class DriveControllerTests : IClassFixture<MaroikWebApplicationFactory>
         Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
     }
 
+    /// <summary>Verifies that <c>AdminIndex</c> get when returns200.</summary>
     [Fact]
     public async Task AdminIndex_Get_Returns200()
     {
@@ -32,6 +34,7 @@ public class DriveControllerTests : IClassFixture<MaroikWebApplicationFactory>
         Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
     }
 
+    /// <summary>Verifies that <c>UserIndex</c> get when returns200.</summary>
     [Fact]
     public async Task UserIndex_Get_Returns200()
     {

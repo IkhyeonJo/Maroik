@@ -14,6 +14,7 @@ public class ClamavClientTests
 
     // ── ScanWithClamavAsync ──────────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>ScanWithClamavAsync</c> returns false when host is unreachable.</summary>
     [Fact]
     public async Task ScanWithClamavAsync_ReturnsFalse_WhenHostIsUnreachable()
     {
@@ -25,6 +26,7 @@ public class ClamavClientTests
         Assert.False(result);
     }
 
+    /// <summary>Verifies that <c>ScanWithClamavAsync</c> returns false when host name is invalid.</summary>
     [Fact]
     public async Task ScanWithClamavAsync_ReturnsFalse_WhenHostNameIsInvalid()
     {
@@ -35,6 +37,7 @@ public class ClamavClientTests
         Assert.False(result);
     }
 
+    /// <summary>Verifies that <c>ScanWithClamavAsync</c> resets stream position before reading.</summary>
     [Fact]
     public async Task ScanWithClamavAsync_ResetsStreamPosition_BeforeReading()
     {
@@ -51,6 +54,7 @@ public class ClamavClientTests
         Assert.False(result);
     }
 
+    /// <summary>Verifies that <c>ScanWithClamavAsync</c> returns false when stream is empty.</summary>
     [Fact]
     public async Task ScanWithClamavAsync_ReturnsFalse_WhenStreamIsEmpty()
     {

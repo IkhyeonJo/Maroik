@@ -9,6 +9,7 @@ namespace Maroik.Core.Contract.Tests.Utilities;
 /// </summary>
 public class GuidTokenTests
 {
+    /// <summary>Verifies that <c>Generate</c> returns non empty base64 string.</summary>
     [Fact]
     public void Generate_ReturnsNonEmptyBase64String()
     {
@@ -21,6 +22,7 @@ public class GuidTokenTests
         Assert.NotEmpty(bytes);
     }
 
+    /// <summary>Verifies that <c>Generate</c> produces unique tokens on each call.</summary>
     [Fact]
     public void Generate_ProducesUniqueTokensOnEachCall()
     {
@@ -30,6 +32,7 @@ public class GuidTokenTests
         Assert.NotEqual(token1, token2);
     }
 
+    /// <summary>Verifies that <c>IsTokenAlive</c> returns true for fresh token.</summary>
     [Fact]
     public void IsTokenAlive_ReturnsTrue_ForFreshToken()
     {
@@ -38,6 +41,7 @@ public class GuidTokenTests
         Assert.True(GuidToken.IsTokenAlive(token));
     }
 
+    /// <summary>Verifies that <c>IsTokenAlive</c> returns true for token created23 hours ago.</summary>
     [Fact]
     public void IsTokenAlive_ReturnsTrue_ForTokenCreated23HoursAgo()
     {
@@ -46,6 +50,7 @@ public class GuidTokenTests
         Assert.True(GuidToken.IsTokenAlive(token));
     }
 
+    /// <summary>Verifies that <c>IsTokenAlive</c> returns false for token created25 hours ago.</summary>
     [Fact]
     public void IsTokenAlive_ReturnsFalse_ForTokenCreated25HoursAgo()
     {
@@ -54,6 +59,7 @@ public class GuidTokenTests
         Assert.False(GuidToken.IsTokenAlive(token));
     }
 
+    /// <summary>Verifies that <c>IsTokenAlive</c> returns false for token created exactly24 hours ago.</summary>
     [Fact]
     public void IsTokenAlive_ReturnsFalse_ForTokenCreatedExactly24HoursAgo()
     {

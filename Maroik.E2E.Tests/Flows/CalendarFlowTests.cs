@@ -10,6 +10,7 @@ namespace Maroik.E2E.Tests.Flows;
 /// </summary>
 public class CalendarFlowTests : E2ETestBase
 {
+    /// <summary>Verifies that <c>AnonymousCalendar</c> loads with non empty body.</summary>
     [Fact]
     public async Task AnonymousCalendar_Loads_WithNonEmptyBody()
     {
@@ -20,6 +21,7 @@ public class CalendarFlowTests : E2ETestBase
         Assert.False(string.IsNullOrWhiteSpace(bodyText));
     }
 
+    /// <summary>Verifies that <c>AnonymousCalendar</c> has html body element.</summary>
     [Fact]
     public async Task AnonymousCalendar_HasHtmlBodyElement()
     {
@@ -29,6 +31,7 @@ public class CalendarFlowTests : E2ETestBase
         await Assertions.Expect(page.Locator("body")).ToBeVisibleAsync();
     }
 
+    /// <summary>Verifies that <c>AnonymousCalendar</c> has non empty title.</summary>
     [Fact]
     public async Task AnonymousCalendar_HasNonEmptyTitle()
     {
@@ -39,6 +42,7 @@ public class CalendarFlowTests : E2ETestBase
         Assert.False(string.IsNullOrWhiteSpace(title));
     }
 
+    /// <summary>Verifies that <c>AnonymousCalendar</c> contains at least one element.</summary>
     [Fact]
     public async Task AnonymousCalendar_ContainsAtLeastOneElement()
     {

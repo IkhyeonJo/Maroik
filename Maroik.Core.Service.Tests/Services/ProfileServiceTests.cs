@@ -41,6 +41,7 @@ public class ProfileServiceTests
 
     // ── GetProfileAsync ──────────────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>GetProfileAsync</c> delegates to repository.</summary>
     [Fact]
     public async Task GetProfileAsync_DelegatesToRepository()
     {
@@ -56,6 +57,7 @@ public class ProfileServiceTests
 
     // ── UpdateAvatarAsync ────────────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>UpdateAvatarAsync</c> returns fail when account not found.</summary>
     [Fact]
     public async Task UpdateAvatarAsync_ReturnsFail_WhenAccountNotFound()
     {
@@ -67,6 +69,7 @@ public class ProfileServiceTests
         Assert.False(result.Success);
     }
 
+    /// <summary>Verifies that <c>UpdateAvatarAsync</c> updates avatar path when account found.</summary>
     [Fact]
     public async Task UpdateAvatarAsync_UpdatesAvatarPath_WhenAccountFound()
     {
@@ -84,6 +87,7 @@ public class ProfileServiceTests
 
     // ── UpdateTimeZoneAsync ──────────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>UpdateTimeZoneAsync</c> returns fail when account not found.</summary>
     [Fact]
     public async Task UpdateTimeZoneAsync_ReturnsFail_WhenAccountNotFound()
     {
@@ -95,6 +99,7 @@ public class ProfileServiceTests
         Assert.False(result.Success);
     }
 
+    /// <summary>Verifies that <c>UpdateTimeZoneAsync</c> updates time zone when account found.</summary>
     [Fact]
     public async Task UpdateTimeZoneAsync_UpdatesTimeZone_WhenAccountFound()
     {
@@ -112,6 +117,7 @@ public class ProfileServiceTests
 
     // ── UpdatePasswordAsync ──────────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>UpdatePasswordAsync</c> returns fail when account not found.</summary>
     [Fact]
     public async Task UpdatePasswordAsync_ReturnsFail_WhenAccountNotFound()
     {
@@ -123,6 +129,7 @@ public class ProfileServiceTests
         Assert.False(result.Success);
     }
 
+    /// <summary>Verifies that <c>UpdatePasswordAsync</c> returns fail when current password is wrong.</summary>
     [Fact]
     public async Task UpdatePasswordAsync_ReturnsFail_WhenCurrentPasswordIsWrong()
     {
@@ -137,6 +144,7 @@ public class ProfileServiceTests
         Assert.Contains("Invalid password", result.ErrorKey, StringComparison.OrdinalIgnoreCase);
     }
 
+    /// <summary>Verifies that <c>UpdatePasswordAsync</c> hashes and updates when current password is correct.</summary>
     [Fact]
     public async Task UpdatePasswordAsync_HashesAndUpdates_WhenCurrentPasswordIsCorrect()
     {

@@ -14,6 +14,7 @@ public class FixedIncomeRepositoryTests : IDisposable
     private readonly ApplicationDbContext _context;
     private readonly FixedIncomeRepository _sut;
 
+    /// <summary>Initializes the test fixture, setting up all required test doubles and the system under test.</summary>
     public FixedIncomeRepositoryTests()
     {
         var options = new DbContextOptionsBuilder<ApplicationDbContext>()
@@ -23,6 +24,7 @@ public class FixedIncomeRepositoryTests : IDisposable
         _sut = new FixedIncomeRepository(_context);
     }
 
+    /// <summary>Releases resources allocated by this test fixture (disposes the database context).</summary>
     public void Dispose() => _context.Dispose();
 
     // ── Helpers ──────────────────────────────────────────────────────────────
@@ -51,6 +53,7 @@ public class FixedIncomeRepositoryTests : IDisposable
 
     // ── GetFixedIncomesAsync ─────────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>GetFixedIncomesAsync</c> returns only items for given email.</summary>
     [Fact]
     public async Task GetFixedIncomesAsync_ReturnsOnlyItemsForGivenEmail()
     {
@@ -65,6 +68,7 @@ public class FixedIncomeRepositoryTests : IDisposable
         Assert.All(result, fi => Assert.Equal("alice@example.com", fi.AccountEmail));
     }
 
+    /// <summary>Verifies that <c>GetFixedIncomesAsync</c> returns empty when no items for email.</summary>
     [Fact]
     public async Task GetFixedIncomesAsync_ReturnsEmpty_WhenNoItemsForEmail()
     {
@@ -75,6 +79,7 @@ public class FixedIncomeRepositoryTests : IDisposable
 
     // ── CreateFixedIncomeAsync ───────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>CreateFixedIncomeAsync</c> adds item to database.</summary>
     [Fact]
     public async Task CreateFixedIncomeAsync_AddsItemToDatabase()
     {
@@ -105,6 +110,7 @@ public class FixedIncomeRepositoryTests : IDisposable
 
     // ── UpdateFixedIncomeAsync ───────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>UpdateFixedIncomeAsync</c> updates existing item.</summary>
     [Fact]
     public async Task UpdateFixedIncomeAsync_UpdatesExistingItem()
     {
@@ -140,6 +146,7 @@ public class FixedIncomeRepositoryTests : IDisposable
 
     // ── DeleteFixedIncomeAsync ───────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>DeleteFixedIncomeAsync</c> removes item from database.</summary>
     [Fact]
     public async Task DeleteFixedIncomeAsync_RemovesItemFromDatabase()
     {
@@ -169,6 +176,7 @@ public class FixedIncomeRepositoryTests : IDisposable
         Assert.Null(deleted);
     }
 
+    /// <summary>Verifies that <c>DeleteFixedIncomeAsync</c> does not affect other items.</summary>
     [Fact]
     public async Task DeleteFixedIncomeAsync_DoesNotAffectOtherItems()
     {

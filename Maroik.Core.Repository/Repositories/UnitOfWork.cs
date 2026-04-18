@@ -17,6 +17,7 @@ public class UnitOfWork : IUnitOfWork
     private IDbContextTransaction? _transaction;
     private bool _committed;
 
+    /// <summary>Initializes a new instance of <see cref="UnitOfWork"/> with <paramref name="context"/>.</summary>
     public UnitOfWork(ApplicationDbContext context) => _context = context;
 
     /// <inheritdoc />

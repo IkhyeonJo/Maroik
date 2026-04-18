@@ -15,6 +15,7 @@ public class ExpenditureService : IExpenditureService
     private readonly IAssetRepository _assetRepository;
     private readonly IUnitOfWork _unitOfWork;
 
+    /// <summary>Initializes a new instance of <see cref="ExpenditureService"/> with the supplied dependencies.</summary>
     public ExpenditureService(
         IExpenditureRepository expenditureRepository,
         IAssetRepository assetRepository,

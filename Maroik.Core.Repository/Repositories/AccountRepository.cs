@@ -12,6 +12,7 @@ public class AccountRepository : IAccountRepository
 {
     private readonly ApplicationDbContext _context;
 
+    /// <summary>Initializes a new instance of <see cref="AccountRepository"/> with <paramref name="context"/>.</summary>
     public AccountRepository(ApplicationDbContext context)
     {
         _context = context;

@@ -16,6 +16,7 @@ public class IncomeRepositoryTests : IDisposable
     private readonly ApplicationDbContext _context;
     private readonly IncomeRepository _sut;
 
+    /// <summary>Initializes the test fixture, setting up all required test doubles and the system under test.</summary>
     public IncomeRepositoryTests()
     {
         var options = new DbContextOptionsBuilder<ApplicationDbContext>()
@@ -25,6 +26,7 @@ public class IncomeRepositoryTests : IDisposable
         _sut = new IncomeRepository(_context);
     }
 
+    /// <summary>Releases resources allocated by this test fixture (disposes the database context).</summary>
     public void Dispose() => _context.Dispose();
 
     // ── Helpers ──────────────────────────────────────────────────────────────
@@ -49,6 +51,7 @@ public class IncomeRepositoryTests : IDisposable
 
     // ── GetIncomesAsync ──────────────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>GetIncomesAsync</c> returns only incomes for given email.</summary>
     [Fact]
     public async Task GetIncomesAsync_ReturnsOnlyIncomesForGivenEmail()
     {
@@ -63,6 +66,7 @@ public class IncomeRepositoryTests : IDisposable
         Assert.All(result, i => Assert.Equal("alice@example.com", i.AccountEmail));
     }
 
+    /// <summary>Verifies that <c>GetIncomesAsync</c> returns empty when no incomes for email.</summary>
     [Fact]
     public async Task GetIncomesAsync_ReturnsEmpty_WhenNoIncomesForEmail()
     {
@@ -73,6 +77,7 @@ public class IncomeRepositoryTests : IDisposable
 
     // ── CreateIncomeAsync ────────────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>CreateIncomeAsync</c> adds income to database.</summary>
     [Fact]
     public async Task CreateIncomeAsync_AddsIncomeToDatabase()
     {
@@ -98,6 +103,7 @@ public class IncomeRepositoryTests : IDisposable
 
     // ── UpdateIncomeAsync ────────────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>UpdateIncomeAsync</c> updates existing income.</summary>
     [Fact]
     public async Task UpdateIncomeAsync_UpdatesExistingIncome()
     {
@@ -128,6 +134,7 @@ public class IncomeRepositoryTests : IDisposable
 
     // ── DeleteIncomeAsync ────────────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>DeleteIncomeAsync</c> removes income from database.</summary>
     [Fact]
     public async Task DeleteIncomeAsync_RemovesIncomeFromDatabase()
     {
@@ -152,6 +159,7 @@ public class IncomeRepositoryTests : IDisposable
         Assert.Null(deleted);
     }
 
+    /// <summary>Verifies that <c>DeleteIncomeAsync</c> does not affect other incomes.</summary>
     [Fact]
     public async Task DeleteIncomeAsync_DoesNotAffectOtherIncomes()
     {

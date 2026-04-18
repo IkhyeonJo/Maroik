@@ -16,6 +16,7 @@ public class AssetRepositoryTests : IDisposable
     private readonly ApplicationDbContext _context;
     private readonly AssetRepository _sut;
 
+    /// <summary>Initializes the test fixture, setting up all required test doubles and the system under test.</summary>
     public AssetRepositoryTests()
     {
         var options = new DbContextOptionsBuilder<ApplicationDbContext>()
@@ -25,6 +26,7 @@ public class AssetRepositoryTests : IDisposable
         _sut = new AssetRepository(_context);
     }
 
+    /// <summary>Releases resources allocated by this test fixture (disposes the database context).</summary>
     public void Dispose() => _context.Dispose();
 
     // ── Helpers ──────────────────────────────────────────────────────────────
@@ -49,6 +51,7 @@ public class AssetRepositoryTests : IDisposable
 
     // ── GetAssetsAsync ───────────────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>GetAssetsAsync</c> returns only assets for given email.</summary>
     [Fact]
     public async Task GetAssetsAsync_ReturnsOnlyAssetsForGivenEmail()
     {
@@ -63,6 +66,7 @@ public class AssetRepositoryTests : IDisposable
         Assert.All(result, a => Assert.Equal("alice@example.com", a.AccountEmail));
     }
 
+    /// <summary>Verifies that <c>GetAssetsAsync</c> returns empty list when email has no assets.</summary>
     [Fact]
     public async Task GetAssetsAsync_ReturnsEmptyList_WhenEmailHasNoAssets()
     {
@@ -73,6 +77,7 @@ public class AssetRepositoryTests : IDisposable
 
     // ── GetAssetAsync ────────────────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>GetAssetAsync</c> returns asset when found.</summary>
     [Fact]
     public async Task GetAssetAsync_ReturnsAsset_WhenFound()
     {
@@ -85,6 +90,7 @@ public class AssetRepositoryTests : IDisposable
         Assert.Equal(5000m, result.Amount);
     }
 
+    /// <summary>Verifies that <c>GetAssetAsync</c> returns null when not found.</summary>
     [Fact]
     public async Task GetAssetAsync_ReturnsNull_WhenNotFound()
     {
@@ -93,6 +99,7 @@ public class AssetRepositoryTests : IDisposable
         Assert.Null(result);
     }
 
+    /// <summary>Verifies that <c>GetAssetAsync</c> does not return asset for different email.</summary>
     [Fact]
     public async Task GetAssetAsync_DoesNotReturnAsset_ForDifferentEmail()
     {
@@ -105,6 +112,7 @@ public class AssetRepositoryTests : IDisposable
 
     // ── CreateAssetAsync ─────────────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>CreateAssetAsync</c> adds asset to database.</summary>
     [Fact]
     public async Task CreateAssetAsync_AddsAssetToDatabase()
     {
@@ -131,6 +139,7 @@ public class AssetRepositoryTests : IDisposable
 
     // ── UpdateAssetAsync ─────────────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>UpdateAssetAsync</c> updates existing asset.</summary>
     [Fact]
     public async Task UpdateAssetAsync_UpdatesExistingAsset()
     {

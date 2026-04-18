@@ -27,6 +27,7 @@ public class NoticeController : BaseController
     private readonly IOptions<ServerSetting> _settings;
     private readonly ISessionService _sessionService;
 
+    /// <summary>Initializes a new instance of <see cref="NoticeController"/> with the supplied dependencies.</summary>
     public NoticeController(
         IHtmlLocalizer<NoticeController> localizer,
         ILogger<NoticeController> logger,

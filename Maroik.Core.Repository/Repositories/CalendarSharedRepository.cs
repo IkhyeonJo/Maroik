@@ -12,6 +12,7 @@ public class CalendarSharedRepository : ICalendarSharedRepository
 {
     private readonly ApplicationDbContext _context;
 
+    /// <summary>Initializes a new instance of <see cref="CalendarSharedRepository"/> with <paramref name="context"/>.</summary>
     public CalendarSharedRepository(ApplicationDbContext context)
     {
         _context = context;

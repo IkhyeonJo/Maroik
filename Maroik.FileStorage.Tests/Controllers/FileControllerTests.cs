@@ -57,6 +57,7 @@ public class FileControllerTests : IClassFixture<WebApplicationFactory<Program>>
 
     // ── Upload: invalid input (no ClamAV call needed) ────────────────────────
 
+    /// <summary>Verifies that <c>Upload</c> returns bad request when no file is provided.</summary>
     [Fact]
     public async Task Upload_ReturnsBadRequest_WhenNoFileIsProvided()
     {
@@ -70,6 +71,7 @@ public class FileControllerTests : IClassFixture<WebApplicationFactory<Program>>
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
 
+    /// <summary>Verifies that <c>Upload</c> returns bad request when file is empty.</summary>
     [Fact]
     public async Task Upload_ReturnsBadRequest_WhenFileIsEmpty()
     {
@@ -85,6 +87,7 @@ public class FileControllerTests : IClassFixture<WebApplicationFactory<Program>>
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
 
+    /// <summary>Verifies that <c>Upload</c> returns bad request when extension is not allowed.</summary>
     [Theory]
     [InlineData("malware.exe")]
     [InlineData("script.sh")]
@@ -104,6 +107,7 @@ public class FileControllerTests : IClassFixture<WebApplicationFactory<Program>>
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
 
+    /// <summary>Verifies that <c>Upload</c> returns bad request when file size exceeds10 mb.</summary>
     [Fact]
     public async Task Upload_ReturnsBadRequest_WhenFileSizeExceeds10MB()
     {
@@ -122,6 +126,7 @@ public class FileControllerTests : IClassFixture<WebApplicationFactory<Program>>
 
     // ── Upload: magic-byte validation ────────────────────────────────────────
 
+    /// <summary>Verifies that <c>Upload</c> returns bad request when jpg has wrong magic bytes.</summary>
     [Fact]
     public async Task Upload_ReturnsBadRequest_WhenJpgHasWrongMagicBytes()
     {
@@ -138,6 +143,7 @@ public class FileControllerTests : IClassFixture<WebApplicationFactory<Program>>
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
 
+    /// <summary>Verifies that <c>Upload</c> returns bad request when jpeg extension has wrong magic bytes.</summary>
     [Fact]
     public async Task Upload_ReturnsBadRequest_WhenJpegExtensionHasWrongMagicBytes()
     {
@@ -153,6 +159,7 @@ public class FileControllerTests : IClassFixture<WebApplicationFactory<Program>>
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
 
+    /// <summary>Verifies that <c>Upload</c> returns bad request when png has wrong magic bytes.</summary>
     [Fact]
     public async Task Upload_ReturnsBadRequest_WhenPngHasWrongMagicBytes()
     {
@@ -169,6 +176,7 @@ public class FileControllerTests : IClassFixture<WebApplicationFactory<Program>>
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
 
+    /// <summary>Verifies that <c>Upload</c> returns bad request when zip has wrong magic bytes.</summary>
     [Fact]
     public async Task Upload_ReturnsBadRequest_WhenZipHasWrongMagicBytes()
     {
@@ -187,6 +195,7 @@ public class FileControllerTests : IClassFixture<WebApplicationFactory<Program>>
 
     // ── Upload: ClamAV scan ──────────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>Upload</c> returns bad request when clam av reports virus.</summary>
     [Fact]
     public async Task Upload_ReturnsBadRequest_WhenClamAvReportsVirus()
     {
@@ -205,6 +214,7 @@ public class FileControllerTests : IClassFixture<WebApplicationFactory<Program>>
 
     // ── Upload: encrypted ZIP ────────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>Upload</c> returns bad request when zip is encrypted.</summary>
     [Fact]
     public async Task Upload_ReturnsBadRequest_WhenZipIsEncrypted()
     {
@@ -263,6 +273,7 @@ public class FileControllerTests : IClassFixture<WebApplicationFactory<Program>>
 
     // ── Download ─────────────────────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>Download</c> returns not found when file does not exist.</summary>
     [Fact]
     public async Task Download_ReturnsNotFound_WhenFileDoesNotExist()
     {
@@ -275,6 +286,7 @@ public class FileControllerTests : IClassFixture<WebApplicationFactory<Program>>
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
 
+    /// <summary>Verifies that <c>Download</c> returns file bytes when file exists.</summary>
     [Fact]
     public async Task Download_ReturnsFileBytes_WhenFileExists()
     {
@@ -301,6 +313,7 @@ public class FileControllerTests : IClassFixture<WebApplicationFactory<Program>>
         }
     }
 
+    /// <summary>Verifies that <c>Download</c> returns correct content type for png.</summary>
     [Fact]
     public async Task Download_ReturnsCorrectContentType_ForPng()
     {

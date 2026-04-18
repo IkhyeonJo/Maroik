@@ -22,6 +22,7 @@ public class ExpenditureServiceTests
         _assetRepo.Object,
         _unitOfWork.Object);
 
+    /// <summary>Initializes the test fixture, setting up all required test doubles and the system under test.</summary>
     public ExpenditureServiceTests()
     {
         _unitOfWork.Setup(u => u.BeginAsync()).Returns(Task.CompletedTask);
@@ -65,6 +66,7 @@ public class ExpenditureServiceTests
 
     // ── CreateAsync ──────────────────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>CreateAsync</c> returns fail when main class is invalid.</summary>
     [Fact]
     public async Task CreateAsync_ReturnsFail_WhenMainClassIsInvalid()
     {
@@ -77,6 +79,7 @@ public class ExpenditureServiceTests
         _unitOfWork.Verify(u => u.RollbackAsync(), Times.Once);
     }
 
+    /// <summary>Verifies that <c>CreateAsync</c> returns fail when sub class is invalid for main class.</summary>
     [Fact]
     public async Task CreateAsync_ReturnsFail_WhenSubClassIsInvalidForMainClass()
     {
@@ -89,6 +92,7 @@ public class ExpenditureServiceTests
         _unitOfWork.Verify(u => u.RollbackAsync(), Times.Once);
     }
 
+    /// <summary>Verifies that <c>CreateAsync</c> returns fail when payment asset not found.</summary>
     [Fact]
     public async Task CreateAsync_ReturnsFail_WhenPaymentAssetNotFound()
     {
@@ -101,6 +105,7 @@ public class ExpenditureServiceTests
         _unitOfWork.Verify(u => u.RollbackAsync(), Times.Once);
     }
 
+    /// <summary>Verifies that <c>CreateAsync</c> returns fail when payment asset is deleted.</summary>
     [Fact]
     public async Task CreateAsync_ReturnsFail_WhenPaymentAssetIsDeleted()
     {
@@ -116,6 +121,7 @@ public class ExpenditureServiceTests
         _unitOfWork.Verify(u => u.RollbackAsync(), Times.Once);
     }
 
+    /// <summary>Verifies that <c>CreateAsync</c> returns fail when payment and deposit asset are same for transfer type.</summary>
     [Fact]
     public async Task CreateAsync_ReturnsFail_WhenPaymentAndDepositAssetAreSame_ForTransferType()
     {
@@ -130,6 +136,7 @@ public class ExpenditureServiceTests
         _unitOfWork.Verify(u => u.RollbackAsync(), Times.Once);
     }
 
+    /// <summary>Verifies that <c>CreateAsync</c> returns fail when deposit asset not found.</summary>
     [Fact]
     public async Task CreateAsync_ReturnsFail_WhenDepositAssetNotFound()
     {
@@ -143,6 +150,7 @@ public class ExpenditureServiceTests
         _unitOfWork.Verify(u => u.RollbackAsync(), Times.Once);
     }
 
+    /// <summary>Verifies that <c>CreateAsync</c> returns fail when deposit asset is deleted.</summary>
     [Fact]
     public async Task CreateAsync_ReturnsFail_WhenDepositAssetIsDeleted()
     {
@@ -158,6 +166,7 @@ public class ExpenditureServiceTests
         Assert.Contains("deleted", result.ErrorKey, StringComparison.OrdinalIgnoreCase);
     }
 
+    /// <summary>Verifies that <c>CreateAsync</c> returns fail when currencies mismatch.</summary>
     [Fact]
     public async Task CreateAsync_ReturnsFail_WhenCurrenciesMismatch()
     {
@@ -171,6 +180,7 @@ public class ExpenditureServiceTests
         Assert.Contains("MonetaryUnit", result.ErrorKey);
     }
 
+    /// <summary>Verifies that <c>CreateAsync</c> deducts payment asset for consumer spending.</summary>
     [Fact]
     public async Task CreateAsync_DeductsPaymentAsset_ForConsumerSpending()
     {
@@ -193,6 +203,7 @@ public class ExpenditureServiceTests
         _unitOfWork.Verify(u => u.CommitAsync(), Times.Once);
     }
 
+    /// <summary>Verifies that <c>CreateAsync</c> deducts payment and credits savings for transfer type.</summary>
     [Fact]
     public async Task CreateAsync_DeductsPaymentAndCreditsSavings_ForTransferType()
     {
@@ -219,6 +230,7 @@ public class ExpenditureServiceTests
 
     // ── UpdateAsync ──────────────────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>UpdateAsync</c> returns fail when class validation fails.</summary>
     [Fact]
     public async Task UpdateAsync_ReturnsFail_WhenClassValidationFails()
     {
@@ -231,6 +243,7 @@ public class ExpenditureServiceTests
         _unitOfWork.Verify(u => u.RollbackAsync(), Times.Once);
     }
 
+    /// <summary>Verifies that <c>UpdateAsync</c> returns fail when expenditure not found.</summary>
     [Fact]
     public async Task UpdateAsync_ReturnsFail_WhenExpenditureNotFound()
     {
@@ -244,6 +257,7 @@ public class ExpenditureServiceTests
         Assert.False(result.Success);
     }
 
+    /// <summary>Verifies that <c>UpdateAsync</c> returns fail when previous payment asset is deleted.</summary>
     [Fact]
     public async Task UpdateAsync_ReturnsFail_WhenPreviousPaymentAssetIsDeleted()
     {
@@ -267,6 +281,7 @@ public class ExpenditureServiceTests
         Assert.Contains("deleted", result.ErrorKey, StringComparison.OrdinalIgnoreCase);
     }
 
+    /// <summary>Verifies that <c>UpdateAsync</c> adjusts asset balance for consumer spending amount change.</summary>
     [Fact]
     public async Task UpdateAsync_AdjustsAssetBalance_ForConsumerSpendingAmountChange()
     {
@@ -301,6 +316,7 @@ public class ExpenditureServiceTests
 
     // ── DeleteAsync ──────────────────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>DeleteAsync</c> returns fail when expenditure not found.</summary>
     [Fact]
     public async Task DeleteAsync_ReturnsFail_WhenExpenditureNotFound()
     {
@@ -313,6 +329,7 @@ public class ExpenditureServiceTests
         _unitOfWork.Verify(u => u.RollbackAsync(), Times.Once);
     }
 
+    /// <summary>Verifies that <c>DeleteAsync</c> reverts payment asset balance for consumer spending.</summary>
     [Fact]
     public async Task DeleteAsync_RevertsPaymentAssetBalance_ForConsumerSpending()
     {
@@ -340,6 +357,7 @@ public class ExpenditureServiceTests
         _unitOfWork.Verify(u => u.CommitAsync(), Times.Once);
     }
 
+    /// <summary>Verifies that <c>DeleteAsync</c> reverts payment and deposit assets for transfer type.</summary>
     [Fact]
     public async Task DeleteAsync_RevertsPaymentAndDepositAssets_ForTransferType()
     {
@@ -371,6 +389,7 @@ public class ExpenditureServiceTests
 
     // ── GetExpendituresAsync ─────────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>GetExpendituresAsync</c> delegates to repository.</summary>
     [Fact]
     public async Task GetExpendituresAsync_DelegatesToRepository()
     {

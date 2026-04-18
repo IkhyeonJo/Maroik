@@ -12,6 +12,7 @@ public class CalendarEventAttachedFileRepository : ICalendarEventAttachedFileRep
 {
     private readonly ApplicationDbContext _context;
 
+    /// <summary>Initializes a new instance of <see cref="CalendarEventAttachedFileRepository"/> with <paramref name="context"/>.</summary>
     public CalendarEventAttachedFileRepository(ApplicationDbContext context)
     {
         _context = context;

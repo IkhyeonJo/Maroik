@@ -46,6 +46,7 @@ public class MenuServiceTests
 
     // ── GetAllCategoriesAsync ────────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>GetAllCategoriesAsync</c> delegates to repository.</summary>
     [Fact]
     public async Task GetAllCategoriesAsync_DelegatesToRepository()
     {
@@ -59,6 +60,7 @@ public class MenuServiceTests
 
     // ── GetAllSubCategoriesAsync ─────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>GetAllSubCategoriesAsync</c> delegates to repository.</summary>
     [Fact]
     public async Task GetAllSubCategoriesAsync_DelegatesToRepository()
     {
@@ -72,6 +74,7 @@ public class MenuServiceTests
 
     // ── GetCategoryByIdAsync ─────────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>GetCategoryByIdAsync</c> returns category when found.</summary>
     [Fact]
     public async Task GetCategoryByIdAsync_ReturnsCategory_WhenFound()
     {
@@ -85,6 +88,7 @@ public class MenuServiceTests
         Assert.Equal("Board", result.Name);
     }
 
+    /// <summary>Verifies that <c>GetCategoryByIdAsync</c> returns null when not found.</summary>
     [Fact]
     public async Task GetCategoryByIdAsync_ReturnsNull_WhenNotFound()
     {
@@ -98,6 +102,7 @@ public class MenuServiceTests
 
     // ── GetSubCategoryByIdAsync ──────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>GetSubCategoryByIdAsync</c> returns sub category when found.</summary>
     [Fact]
     public async Task GetSubCategoryByIdAsync_ReturnsSubCategory_WhenFound()
     {
@@ -110,6 +115,7 @@ public class MenuServiceTests
         Assert.Equal(3, result.Id);
     }
 
+    /// <summary>Verifies that <c>GetSubCategoryByIdAsync</c> returns null when not found.</summary>
     [Fact]
     public async Task GetSubCategoryByIdAsync_ReturnsNull_WhenNotFound()
     {
@@ -123,6 +129,7 @@ public class MenuServiceTests
 
     // ── CreateCategoryAsync ──────────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>CreateCategoryAsync</c> returns success when repository succeeds.</summary>
     [Fact]
     public async Task CreateCategoryAsync_ReturnsSuccess_WhenRepositorySucceeds()
     {
@@ -134,6 +141,7 @@ public class MenuServiceTests
         Assert.True(result.Success);
     }
 
+    /// <summary>Verifies that <c>CreateCategoryAsync</c> returns fail when repository throws.</summary>
     [Fact]
     public async Task CreateCategoryAsync_ReturnsFail_WhenRepositoryThrows()
     {
@@ -147,6 +155,7 @@ public class MenuServiceTests
 
     // ── UpdateCategoryAsync ──────────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>UpdateCategoryAsync</c> returns success when repository succeeds.</summary>
     [Fact]
     public async Task UpdateCategoryAsync_ReturnsSuccess_WhenRepositorySucceeds()
     {
@@ -158,6 +167,7 @@ public class MenuServiceTests
         Assert.True(result.Success);
     }
 
+    /// <summary>Verifies that <c>UpdateCategoryAsync</c> returns fail when repository throws.</summary>
     [Fact]
     public async Task UpdateCategoryAsync_ReturnsFail_WhenRepositoryThrows()
     {
@@ -171,6 +181,7 @@ public class MenuServiceTests
 
     // ── DeleteCategoryAsync ──────────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>DeleteCategoryAsync</c> returns success when repository succeeds.</summary>
     [Fact]
     public async Task DeleteCategoryAsync_ReturnsSuccess_WhenRepositorySucceeds()
     {
@@ -182,6 +193,7 @@ public class MenuServiceTests
         Assert.True(result.Success);
     }
 
+    /// <summary>Verifies that <c>DeleteCategoryAsync</c> returns fail when repository throws.</summary>
     [Fact]
     public async Task DeleteCategoryAsync_ReturnsFail_WhenRepositoryThrows()
     {
@@ -195,6 +207,7 @@ public class MenuServiceTests
 
     // ── CreateSubCategoryAsync ───────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>CreateSubCategoryAsync</c> returns success when repository succeeds.</summary>
     [Fact]
     public async Task CreateSubCategoryAsync_ReturnsSuccess_WhenRepositorySucceeds()
     {
@@ -206,6 +219,7 @@ public class MenuServiceTests
         Assert.True(result.Success);
     }
 
+    /// <summary>Verifies that <c>CreateSubCategoryAsync</c> returns fail when repository throws.</summary>
     [Fact]
     public async Task CreateSubCategoryAsync_ReturnsFail_WhenRepositoryThrows()
     {
@@ -219,6 +233,7 @@ public class MenuServiceTests
 
     // ── UpdateSubCategoryAsync ───────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>UpdateSubCategoryAsync</c> returns success when repository succeeds.</summary>
     [Fact]
     public async Task UpdateSubCategoryAsync_ReturnsSuccess_WhenRepositorySucceeds()
     {
@@ -230,6 +245,7 @@ public class MenuServiceTests
         Assert.True(result.Success);
     }
 
+    /// <summary>Verifies that <c>UpdateSubCategoryAsync</c> returns fail when repository throws.</summary>
     [Fact]
     public async Task UpdateSubCategoryAsync_ReturnsFail_WhenRepositoryThrows()
     {
@@ -243,6 +259,7 @@ public class MenuServiceTests
 
     // ── DeleteSubCategoryAsync ───────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>DeleteSubCategoryAsync</c> returns success when repository succeeds.</summary>
     [Fact]
     public async Task DeleteSubCategoryAsync_ReturnsSuccess_WhenRepositorySucceeds()
     {
@@ -254,6 +271,7 @@ public class MenuServiceTests
         Assert.True(result.Success);
     }
 
+    /// <summary>Verifies that <c>DeleteSubCategoryAsync</c> returns fail when repository throws.</summary>
     [Fact]
     public async Task DeleteSubCategoryAsync_ReturnsFail_WhenRepositoryThrows()
     {

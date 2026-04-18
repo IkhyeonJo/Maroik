@@ -16,6 +16,7 @@ public class CalendarSharedRepositoryTests : IDisposable
     private readonly ApplicationDbContext _context;
     private readonly CalendarSharedRepository _sut;
 
+    /// <summary>Initializes the test fixture, setting up all required test doubles and the system under test.</summary>
     public CalendarSharedRepositoryTests()
     {
         var options = new DbContextOptionsBuilder<ApplicationDbContext>()
@@ -25,6 +26,7 @@ public class CalendarSharedRepositoryTests : IDisposable
         _sut = new CalendarSharedRepository(_context);
     }
 
+    /// <summary>Releases resources allocated by this test fixture (disposes the database context).</summary>
     public void Dispose() => _context.Dispose();
 
     // ── Helpers ──────────────────────────────────────────────────────────────
@@ -44,6 +46,7 @@ public class CalendarSharedRepositoryTests : IDisposable
 
     // ── GetCalendarSharedAsync ───────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>GetCalendarSharedAsync</c> returns all entries when ordered by calendar id.</summary>
     [Fact]
     public async Task GetCalendarSharedAsync_ReturnsAllEntries_OrderedByCalendarId()
     {
@@ -60,6 +63,7 @@ public class CalendarSharedRepositoryTests : IDisposable
         Assert.Equal(3, result[2].CalendarId);
     }
 
+    /// <summary>Verifies that <c>GetCalendarSharedAsync</c> returns empty when no entries exist.</summary>
     [Fact]
     public async Task GetCalendarSharedAsync_ReturnsEmpty_WhenNoEntriesExist()
     {
@@ -70,6 +74,7 @@ public class CalendarSharedRepositoryTests : IDisposable
 
     // ── CreateCalendarSharedAsync ────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>CreateCalendarSharedAsync</c> persists entry.</summary>
     [Fact]
     public async Task CreateCalendarSharedAsync_PersistsEntry()
     {
@@ -90,6 +95,7 @@ public class CalendarSharedRepositoryTests : IDisposable
 
     // ── UpdateCalendarSharedAsync ────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>UpdateCalendarSharedAsync</c> updates existing entry.</summary>
     [Fact]
     public async Task UpdateCalendarSharedAsync_UpdatesExistingEntry()
     {

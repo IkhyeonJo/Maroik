@@ -41,6 +41,7 @@ public class RsaServiceTests
 
     // ── Encrypt / Decrypt ────────────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>Encrypt</c> then decrypt when returns original plaintext.</summary>
     [Fact]
     public void Encrypt_ThenDecrypt_ReturnsOriginalPlaintext()
     {
@@ -53,6 +54,7 @@ public class RsaServiceTests
         Assert.Equal(plaintext, recovered);
     }
 
+    /// <summary>Verifies that <c>Encrypt</c> then decrypt with sha1 algorithm returns original plaintext.</summary>
     [Fact]
     public void Encrypt_ThenDecrypt_WithSha1Algorithm_ReturnsOriginalPlaintext()
     {
@@ -65,6 +67,7 @@ public class RsaServiceTests
         Assert.Equal(plaintext, recovered);
     }
 
+    /// <summary>Verifies that <c>Encrypt</c> produces base64 output.</summary>
     [Fact]
     public void Encrypt_ProducesBase64Output()
     {
@@ -77,6 +80,7 @@ public class RsaServiceTests
         Assert.NotEmpty(decoded);
     }
 
+    /// <summary>Verifies that <c>Encrypt</c> produces different ciphertext each call when due to oaep padding.</summary>
     [Fact]
     public void Encrypt_ProducesDifferentCiphertextEachCall_DueToOaepPadding()
     {
@@ -90,6 +94,7 @@ public class RsaServiceTests
         Assert.NotEqual(c1, c2);
     }
 
+    /// <summary>Verifies that <c>Encrypt</c> then decrypt when round trips various strings.</summary>
     [Theory]
     [InlineData("short")]
     [InlineData("a longer test string with spaces and punctuation!")]
@@ -104,6 +109,7 @@ public class RsaServiceTests
         Assert.Equal(plaintext, recovered);
     }
 
+    /// <summary>Verifies that <c>Decrypt</c> throws when ciphertext is invalid.</summary>
     [Fact]
     public void Decrypt_Throws_WhenCiphertextIsInvalid()
     {
@@ -115,6 +121,7 @@ public class RsaServiceTests
 
     // ── Sign / Verify ────────────────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>Sign</c> then verify when returns true.</summary>
     [Fact]
     public void Sign_ThenVerify_ReturnsTrue()
     {
@@ -127,6 +134,7 @@ public class RsaServiceTests
         Assert.True(valid);
     }
 
+    /// <summary>Verifies that <c>Sign</c> then verify with sha1 algorithm returns true.</summary>
     [Fact]
     public void Sign_ThenVerify_WithSha1Algorithm_ReturnsTrue()
     {
@@ -139,6 +147,7 @@ public class RsaServiceTests
         Assert.True(valid);
     }
 
+    /// <summary>Verifies that <c>Verify</c> returns false when data is tampered.</summary>
     [Fact]
     public void Verify_ReturnsFalse_WhenDataIsTampered()
     {
@@ -150,6 +159,7 @@ public class RsaServiceTests
         Assert.False(valid);
     }
 
+    /// <summary>Verifies that <c>Verify</c> returns false when signature is corrupted.</summary>
     [Fact]
     public void Verify_ReturnsFalse_WhenSignatureIsCorrupted()
     {
@@ -166,6 +176,7 @@ public class RsaServiceTests
         Assert.False(valid);
     }
 
+    /// <summary>Verifies that <c>Sign</c> produces non empty base64 string.</summary>
     [Fact]
     public void Sign_ProducesNonEmptyBase64String()
     {
@@ -180,6 +191,7 @@ public class RsaServiceTests
 
     // ── No-key edge cases ────────────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>Sign</c> returns empty when private key is not configured.</summary>
     [Fact]
     public void Sign_ReturnsEmpty_WhenPrivateKeyIsNotConfigured()
     {
@@ -196,6 +208,7 @@ public class RsaServiceTests
         Assert.Equal(string.Empty, result);
     }
 
+    /// <summary>Verifies that <c>Verify</c> returns false when public key is not configured.</summary>
     [Fact]
     public void Verify_ReturnsFalse_WhenPublicKeyIsNotConfigured()
     {

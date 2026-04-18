@@ -18,6 +18,7 @@ public class CalendarEventAttachedFileRepositoryTests : IDisposable
     private readonly ApplicationDbContext _context;
     private readonly CalendarEventAttachedFileRepository _sut;
 
+    /// <summary>Initializes the test fixture, setting up all required test doubles and the system under test.</summary>
     public CalendarEventAttachedFileRepositoryTests()
     {
         _connection = new SqliteConnection("DataSource=:memory:");
@@ -30,6 +31,7 @@ public class CalendarEventAttachedFileRepositoryTests : IDisposable
         _sut = new CalendarEventAttachedFileRepository(_context);
     }
 
+    /// <summary>Releases resources allocated by this test fixture (disposes the database context).</summary>
     public void Dispose()
     {
         _context.Dispose();
@@ -55,6 +57,7 @@ public class CalendarEventAttachedFileRepositoryTests : IDisposable
 
     // ── GetAllAsync ──────────────────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>GetAllAsync</c> returns all files.</summary>
     [Fact]
     public async Task GetAllAsync_ReturnsAllFiles()
     {
@@ -65,6 +68,7 @@ public class CalendarEventAttachedFileRepositoryTests : IDisposable
         Assert.Equal(2, result.Count);
     }
 
+    /// <summary>Verifies that <c>GetAllAsync</c> returns empty when no files exist.</summary>
     [Fact]
     public async Task GetAllAsync_ReturnsEmpty_WhenNoFilesExist()
     {
@@ -75,6 +79,7 @@ public class CalendarEventAttachedFileRepositoryTests : IDisposable
 
     // ── GetCalendarEventAttachedFileAsync ────────────────────────────────────
 
+    /// <summary>Verifies that <c>GetCalendarEventAttachedFileAsync</c> returns file when found.</summary>
     [Fact]
     public async Task GetCalendarEventAttachedFileAsync_ReturnsFile_WhenFound()
     {
@@ -87,6 +92,7 @@ public class CalendarEventAttachedFileRepositoryTests : IDisposable
         Assert.Equal("slide.pdf", result.Name);
     }
 
+    /// <summary>Verifies that <c>GetCalendarEventAttachedFileAsync</c> returns null when not found.</summary>
     [Fact]
     public async Task GetCalendarEventAttachedFileAsync_ReturnsNull_WhenNotFound()
     {
@@ -97,6 +103,7 @@ public class CalendarEventAttachedFileRepositoryTests : IDisposable
 
     // ── SaveCalendarEventAttachedFileAsync ───────────────────────────────────
 
+    /// <summary>Verifies that <c>SaveCalendarEventAttachedFileAsync</c> persists file.</summary>
     [Fact]
     public async Task SaveCalendarEventAttachedFileAsync_PersistsFile()
     {
@@ -119,6 +126,7 @@ public class CalendarEventAttachedFileRepositoryTests : IDisposable
 
     // ── UpdateCalendarEventAttachedFileAsync ─────────────────────────────────
 
+    /// <summary>Verifies that <c>UpdateCalendarEventAttachedFileAsync</c> updates existing file.</summary>
     [Fact]
     public async Task UpdateCalendarEventAttachedFileAsync_UpdatesExistingFile()
     {
@@ -145,6 +153,7 @@ public class CalendarEventAttachedFileRepositoryTests : IDisposable
 
     // ── DeleteCalendarEventAttachedFileAsync ─────────────────────────────────
 
+    /// <summary>Verifies that <c>DeleteCalendarEventAttachedFileAsync</c> removes files by event id.</summary>
     [Fact]
     public async Task DeleteCalendarEventAttachedFileAsync_RemovesFilesByEventId()
     {
@@ -157,6 +166,7 @@ public class CalendarEventAttachedFileRepositoryTests : IDisposable
         Assert.True(await _context.CalendarEventAttachedFiles.AnyAsync(f => f.CalendarEventId == 30, TestContext.Current.CancellationToken));
     }
 
+    /// <summary>Verifies that <c>DeleteCalendarEventAttachedFileAsync</c> returns zero when no files match.</summary>
     [Fact]
     public async Task DeleteCalendarEventAttachedFileAsync_ReturnsZero_WhenNoFilesMatch()
     {

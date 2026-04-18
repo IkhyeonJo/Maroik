@@ -12,6 +12,7 @@ public class ExceptionController : BaseController
 {
     private readonly ILogger<ExceptionController> _logger;
 
+    /// <summary>Initializes a new instance of <see cref="ExceptionController"/> with the supplied dependencies.</summary>
     public ExceptionController(
         ILogger<ExceptionController> logger,
         IAccountService accountService,

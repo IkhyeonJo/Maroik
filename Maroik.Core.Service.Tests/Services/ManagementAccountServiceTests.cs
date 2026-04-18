@@ -39,6 +39,7 @@ public class ManagementAccountServiceTests
 
     // ── GetAllAccountsAsync ──────────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>GetAllAccountsAsync</c> delegates to repository.</summary>
     [Fact]
     public async Task GetAllAccountsAsync_DelegatesToRepository()
     {
@@ -52,6 +53,7 @@ public class ManagementAccountServiceTests
 
     // ── GetAccountByEmailAsync ───────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>GetAccountByEmailAsync</c> returns null when not found.</summary>
     [Fact]
     public async Task GetAccountByEmailAsync_ReturnsNull_WhenNotFound()
     {
@@ -65,6 +67,7 @@ public class ManagementAccountServiceTests
 
     // ── CreateAccountAsync ───────────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>CreateAccountAsync</c> returns fail when email already exists.</summary>
     [Fact]
     public async Task CreateAccountAsync_ReturnsFail_WhenEmailAlreadyExists()
     {
@@ -81,6 +84,7 @@ public class ManagementAccountServiceTests
         Assert.Contains("already been created", result.ErrorKey, StringComparison.OrdinalIgnoreCase);
     }
 
+    /// <summary>Verifies that <c>CreateAccountAsync</c> hashes password and creates account when email is new.</summary>
     [Fact]
     public async Task CreateAccountAsync_HashesPasswordAndCreatesAccount_WhenEmailIsNew()
     {
@@ -101,6 +105,7 @@ public class ManagementAccountServiceTests
 
     // ── UpdateAccountAsync ───────────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>UpdateAccountAsync</c> returns fail when account not found.</summary>
     [Fact]
     public async Task UpdateAccountAsync_ReturnsFail_WhenAccountNotFound()
     {
@@ -114,6 +119,7 @@ public class ManagementAccountServiceTests
         Assert.Contains("wrong", result.ErrorKey, StringComparison.OrdinalIgnoreCase);
     }
 
+    /// <summary>Verifies that <c>UpdateAccountAsync</c> keeps existing password when new password is empty.</summary>
     [Fact]
     public async Task UpdateAccountAsync_KeepsExistingPassword_WhenNewPasswordIsEmpty()
     {
@@ -131,6 +137,7 @@ public class ManagementAccountServiceTests
         _passwordService.Verify(p => p.HashPassword(It.IsAny<string>()), Times.Never);
     }
 
+    /// <summary>Verifies that <c>UpdateAccountAsync</c> hashes new password when new password provided.</summary>
     [Fact]
     public async Task UpdateAccountAsync_HashesNewPassword_WhenNewPasswordProvided()
     {
@@ -148,6 +155,7 @@ public class ManagementAccountServiceTests
             It.Is<AccountRequest>(req => req.HashedPassword == "$2a$13$newhash")), Times.Once);
     }
 
+    /// <summary>Verifies that <c>UpdateAccountAsync</c> resets login attempt when unlocking.</summary>
     [Fact]
     public async Task UpdateAccountAsync_ResetsLoginAttempt_WhenUnlocking()
     {
@@ -168,6 +176,7 @@ public class ManagementAccountServiceTests
 
     // ── DeleteAccountAsync ───────────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>DeleteAccountAsync</c> returns fail when account not found.</summary>
     [Fact]
     public async Task DeleteAccountAsync_ReturnsFail_WhenAccountNotFound()
     {
@@ -180,6 +189,7 @@ public class ManagementAccountServiceTests
         Assert.Contains("find", result.ErrorKey, StringComparison.OrdinalIgnoreCase);
     }
 
+    /// <summary>Verifies that <c>DeleteAccountAsync</c> sets deleted flag when account found.</summary>
     [Fact]
     public async Task DeleteAccountAsync_SetsDeletedFlag_WhenAccountFound()
     {

@@ -15,6 +15,7 @@ public class IncomeService : IIncomeService
     private readonly IAssetRepository _assetRepository;
     private readonly IUnitOfWork _unitOfWork;
 
+    /// <summary>Initializes a new instance of <see cref="IncomeService"/> with the supplied dependencies.</summary>
     public IncomeService(IIncomeRepository incomeRepository, IAssetRepository assetRepository, IUnitOfWork unitOfWork)
     {
         _incomeRepository = incomeRepository;

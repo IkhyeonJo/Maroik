@@ -21,6 +21,7 @@ public abstract class BaseController : Controller
     private readonly IOptions<ServerSetting> _serverSettings;
     private readonly ISessionService _sessionService;
 
+    /// <summary>Initializes a new instance of <see cref="BaseController"/> with the supplied dependencies.</summary>
     protected BaseController(
         IAccountService accountService,
         IDashboardService dashboardService,

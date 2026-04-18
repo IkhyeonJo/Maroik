@@ -20,6 +20,7 @@ public class DashboardService : IDashboardService
     private readonly IFixedIncomeRepository _fixedIncomeRepository;
     private readonly IFixedExpenditureRepository _fixedExpenditureRepository;
 
+    /// <summary>Initializes a new instance of <see cref="DashboardService"/> with the supplied dependencies.</summary>
     public DashboardService(
         IAccountRepository accountRepository,
         IAssetRepository assetRepository,

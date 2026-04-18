@@ -16,6 +16,7 @@ public class AccountRepositoryTests : IDisposable
     private readonly ApplicationDbContext _context;
     private readonly AccountRepository _sut;
 
+    /// <summary>Initializes the test fixture, setting up all required test doubles and the system under test.</summary>
     public AccountRepositoryTests()
     {
         var options = new DbContextOptionsBuilder<ApplicationDbContext>()
@@ -25,6 +26,7 @@ public class AccountRepositoryTests : IDisposable
         _sut = new AccountRepository(_context);
     }
 
+    /// <summary>Releases resources allocated by this test fixture (disposes the database context).</summary>
     public void Dispose() => _context.Dispose();
 
     // ── Helpers ──────────────────────────────────────────────────────────────
@@ -52,6 +54,7 @@ public class AccountRepositoryTests : IDisposable
 
     // ── GetAllAsync ──────────────────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>GetAllAsync</c> returns all accounts.</summary>
     [Fact]
     public async Task GetAllAsync_ReturnsAllAccounts()
     {
@@ -64,6 +67,7 @@ public class AccountRepositoryTests : IDisposable
         Assert.Equal(2, result.Count);
     }
 
+    /// <summary>Verifies that <c>GetAllAsync</c> returns empty list when no accounts.</summary>
     [Fact]
     public async Task GetAllAsync_ReturnsEmptyList_WhenNoAccounts()
     {
@@ -74,6 +78,7 @@ public class AccountRepositoryTests : IDisposable
 
     // ── GetAccountByEmailAsync ───────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>GetAccountByEmailAsync</c> returns account when found.</summary>
     [Fact]
     public async Task GetAccountByEmailAsync_ReturnsAccount_WhenFound()
     {
@@ -86,6 +91,7 @@ public class AccountRepositoryTests : IDisposable
         Assert.Equal("Alice", result.Nickname);
     }
 
+    /// <summary>Verifies that <c>GetAccountByEmailAsync</c> returns null when not found.</summary>
     [Fact]
     public async Task GetAccountByEmailAsync_ReturnsNull_WhenNotFound()
     {
@@ -96,6 +102,7 @@ public class AccountRepositoryTests : IDisposable
 
     // ── GetAccountByRegistrationTokenAsync ───────────────────────────────────
 
+    /// <summary>Verifies that <c>GetAccountByRegistrationTokenAsync</c> returns account when token matches.</summary>
     [Fact]
     public async Task GetAccountByRegistrationTokenAsync_ReturnsAccount_WhenTokenMatches()
     {
@@ -110,6 +117,7 @@ public class AccountRepositoryTests : IDisposable
         Assert.Equal("alice@example.com", result.Email);
     }
 
+    /// <summary>Verifies that <c>GetAccountByRegistrationTokenAsync</c> returns null when token does not match.</summary>
     [Fact]
     public async Task GetAccountByRegistrationTokenAsync_ReturnsNull_WhenTokenDoesNotMatch()
     {
@@ -120,6 +128,7 @@ public class AccountRepositoryTests : IDisposable
 
     // ── GetAccountByResetPasswordTokenAsync ─────────────────────────────────
 
+    /// <summary>Verifies that <c>GetAccountByResetPasswordTokenAsync</c> returns account when token matches.</summary>
     [Fact]
     public async Task GetAccountByResetPasswordTokenAsync_ReturnsAccount_WhenTokenMatches()
     {
@@ -134,6 +143,7 @@ public class AccountRepositoryTests : IDisposable
         Assert.Equal("alice@example.com", result.Email);
     }
 
+    /// <summary>Verifies that <c>GetAccountByResetPasswordTokenAsync</c> returns null when token not found.</summary>
     [Fact]
     public async Task GetAccountByResetPasswordTokenAsync_ReturnsNull_WhenTokenNotFound()
     {
@@ -144,6 +154,7 @@ public class AccountRepositoryTests : IDisposable
 
     // ── CreateAccountAsync ───────────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>CreateAccountAsync</c> adds account to database.</summary>
     [Fact]
     public async Task CreateAccountAsync_AddsAccountToDatabase()
     {
@@ -166,6 +177,7 @@ public class AccountRepositoryTests : IDisposable
 
     // ── GetAccountsByNicknamesAsync ─────────────────────────────────────────
 
+    /// <summary>Verifies that <c>GetAccountsByNicknamesAsync</c> returns matching accounts.</summary>
     [Fact]
     public async Task GetAccountsByNicknamesAsync_ReturnsMatchingAccounts()
     {
@@ -181,6 +193,7 @@ public class AccountRepositoryTests : IDisposable
         Assert.Contains(result, a => a.Nickname == "Carol");
     }
 
+    /// <summary>Verifies that <c>GetAccountsByNicknamesAsync</c> returns empty when none match.</summary>
     [Fact]
     public async Task GetAccountsByNicknamesAsync_ReturnsEmpty_WhenNoneMatch()
     {
@@ -191,6 +204,7 @@ public class AccountRepositoryTests : IDisposable
         Assert.Empty(result);
     }
 
+    /// <summary>Verifies that <c>GetAccountsByNicknamesAsync</c> returns empty when list is empty.</summary>
     [Fact]
     public async Task GetAccountsByNicknamesAsync_ReturnsEmpty_WhenListIsEmpty()
     {
@@ -203,6 +217,7 @@ public class AccountRepositoryTests : IDisposable
 
     // ── UpdateAccountAsync ───────────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>UpdateAccountAsync</c> updates existing account.</summary>
     [Fact]
     public async Task UpdateAccountAsync_UpdatesExistingAccount()
     {

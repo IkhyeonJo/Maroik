@@ -19,6 +19,7 @@ public class SessionService : ISessionService
 {
     private readonly IHttpContextAccessor _httpContextAccessor;
 
+    /// <summary>Initializes a new instance of <see cref="SessionService"/> with the supplied dependencies.</summary>
     public SessionService(IHttpContextAccessor httpContextAccessor)
     {
         _httpContextAccessor = httpContextAccessor;

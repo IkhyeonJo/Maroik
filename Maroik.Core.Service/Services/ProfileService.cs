@@ -24,6 +24,7 @@ public class ProfileService : IProfileService
     private readonly IOptions<ServerSetting> _settings;
     private readonly ILogger<ProfileService> _logger;
 
+    /// <summary>Initializes a new instance of <see cref="ProfileService"/> with the supplied dependencies.</summary>
     public ProfileService(
         IAccountRepository accountRepository,
         IPasswordService passwordService,

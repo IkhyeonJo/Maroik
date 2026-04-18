@@ -14,6 +14,7 @@ public class SubCategoryRepositoryTests : IDisposable
     private readonly ApplicationDbContext _context;
     private readonly SubCategoryRepository _sut;
 
+    /// <summary>Initializes the test fixture, setting up all required test doubles and the system under test.</summary>
     public SubCategoryRepositoryTests()
     {
         var options = new DbContextOptionsBuilder<ApplicationDbContext>()
@@ -23,6 +24,7 @@ public class SubCategoryRepositoryTests : IDisposable
         _sut = new SubCategoryRepository(_context);
     }
 
+    /// <summary>Releases resources allocated by this test fixture (disposes the database context).</summary>
     public void Dispose() => _context.Dispose();
 
     // ── Helpers ──────────────────────────────────────────────────────────────
@@ -60,6 +62,7 @@ public class SubCategoryRepositoryTests : IDisposable
 
     // ── GetSubCategoryAsync ──────────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>GetSubCategoryAsync</c> returns all sub categories.</summary>
     [Fact]
     public async Task GetSubCategoryAsync_ReturnsAllSubCategories()
     {
@@ -73,6 +76,7 @@ public class SubCategoryRepositoryTests : IDisposable
         Assert.Equal(2, result.Count());
     }
 
+    /// <summary>Verifies that <c>GetSubCategoryAsync</c> returns empty when no sub categories.</summary>
     [Fact]
     public async Task GetSubCategoryAsync_ReturnsEmpty_WhenNoSubCategories()
     {
@@ -83,6 +87,7 @@ public class SubCategoryRepositoryTests : IDisposable
 
     // ── GetSubCategoryByRoleAsync ────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>GetSubCategoryByRoleAsync</c> returns only sub categories for role.</summary>
     [Fact]
     public async Task GetSubCategoryByRoleAsync_ReturnsOnlySubCategoriesForRole()
     {
@@ -98,6 +103,7 @@ public class SubCategoryRepositoryTests : IDisposable
         Assert.All(result, sc => Assert.Equal("User", sc.Role));
     }
 
+    /// <summary>Verifies that <c>GetSubCategoryByRoleAsync</c> returns ordered by order.</summary>
     [Fact]
     public async Task GetSubCategoryByRoleAsync_ReturnsOrderedByOrder()
     {
@@ -115,6 +121,7 @@ public class SubCategoryRepositoryTests : IDisposable
 
     // ── CreateSubCategoryAsync ───────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>CreateSubCategoryAsync</c> adds sub category to database.</summary>
     [Fact]
     public async Task CreateSubCategoryAsync_AddsSubCategoryToDatabase()
     {
@@ -141,6 +148,7 @@ public class SubCategoryRepositoryTests : IDisposable
 
     // ── UpdateSubCategoryAsync ───────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>UpdateSubCategoryAsync</c> updates existing sub category.</summary>
     [Fact]
     public async Task UpdateSubCategoryAsync_UpdatesExistingSubCategory()
     {
@@ -171,6 +179,7 @@ public class SubCategoryRepositoryTests : IDisposable
 
     // ── DeleteSubCategoryAsync ───────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>DeleteSubCategoryAsync</c> removes sub category from database.</summary>
     [Fact]
     public async Task DeleteSubCategoryAsync_RemovesSubCategoryFromDatabase()
     {
@@ -194,6 +203,7 @@ public class SubCategoryRepositoryTests : IDisposable
         Assert.Null(deleted);
     }
 
+    /// <summary>Verifies that <c>DeleteSubCategoryAsync</c> does not affect other sub categories.</summary>
     [Fact]
     public async Task DeleteSubCategoryAsync_DoesNotAffectOtherSubCategories()
     {

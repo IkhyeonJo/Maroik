@@ -29,6 +29,7 @@ public class ForumController : BaseController
     private readonly IAccountService _accountService;
     private readonly ISessionService _sessionService;
 
+    /// <summary>Initializes a new instance of <see cref="ForumController"/> with the supplied dependencies.</summary>
     public ForumController(
         IHtmlLocalizer<ForumController> localizer,
         ILogger<ForumController> logger,

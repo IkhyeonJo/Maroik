@@ -24,6 +24,7 @@ public class AssetServiceTests
         _fixedExpenditureRepo.Object,
         _unitOfWork.Object);
 
+    /// <summary>Initializes the test fixture, setting up all required test doubles and the system under test.</summary>
     public AssetServiceTests()
     {
         _unitOfWork.Setup(u => u.BeginAsync()).Returns(Task.CompletedTask);
@@ -54,6 +55,7 @@ public class AssetServiceTests
 
     // ── CreateAsync ──────────────────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>CreateAsync</c> returns fail when item is invalid.</summary>
     [Theory]
     [InlineData("InvalidItem")]
     [InlineData("")]
@@ -69,6 +71,7 @@ public class AssetServiceTests
         Assert.Contains("invalid", result.ErrorKey, StringComparison.OrdinalIgnoreCase);
     }
 
+    /// <summary>Verifies that <c>CreateAsync</c> returns fail when asset with same name already exists.</summary>
     [Fact]
     public async Task CreateAsync_ReturnsFail_WhenAssetWithSameNameAlreadyExists()
     {
@@ -81,6 +84,7 @@ public class AssetServiceTests
         Assert.Contains("already exists", result.ErrorKey, StringComparison.OrdinalIgnoreCase);
     }
 
+    /// <summary>Verifies that <c>CreateAsync</c> returns success for all valid item types.</summary>
     [Theory]
     [InlineData("FreeDepositAndWithdrawal")]
     [InlineData("TrustAsset")]
@@ -103,6 +107,7 @@ public class AssetServiceTests
         Assert.True(result.Success);
     }
 
+    /// <summary>Verifies that <c>CreateAsync</c> sets account email and timestamps before inserting.</summary>
     [Fact]
     public async Task CreateAsync_SetsAccountEmailAndTimestamps_BeforeInserting()
     {
@@ -125,6 +130,7 @@ public class AssetServiceTests
 
     // ── UpdateAsync ──────────────────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>UpdateAsync</c> returns fail when item is invalid.</summary>
     [Fact]
     public async Task UpdateAsync_ReturnsFail_WhenItemIsInvalid()
     {
@@ -137,6 +143,7 @@ public class AssetServiceTests
         _unitOfWork.Verify(u => u.RollbackAsync(), Times.Once);
     }
 
+    /// <summary>Verifies that <c>UpdateAsync</c> returns fail when original asset not found.</summary>
     [Fact]
     public async Task UpdateAsync_ReturnsFail_WhenOriginalAssetNotFound()
     {
@@ -150,6 +157,7 @@ public class AssetServiceTests
         _unitOfWork.Verify(u => u.RollbackAsync(), Times.Once);
     }
 
+    /// <summary>Verifies that <c>UpdateAsync</c> returns fail when rename returns zero rows affected.</summary>
     [Fact]
     public async Task UpdateAsync_ReturnsFail_WhenRenameReturnsZeroRowsAffected()
     {
@@ -163,6 +171,7 @@ public class AssetServiceTests
         _unitOfWork.Verify(u => u.RollbackAsync(), Times.Once);
     }
 
+    /// <summary>Verifies that <c>UpdateAsync</c> cascades rename to expenditure and fixed expenditure when successful.</summary>
     [Fact]
     public async Task UpdateAsync_CascadesRenameToExpenditureAndFixedExpenditure_WhenSuccessful()
     {
@@ -183,6 +192,7 @@ public class AssetServiceTests
 
     // ── DeleteAsync ──────────────────────────────────────────────────────────
 
+    /// <summary>Verifies that <c>DeleteAsync</c> returns fail when asset not found.</summary>
     [Fact]
     public async Task DeleteAsync_ReturnsFail_WhenAssetNotFound()
     {
@@ -195,6 +205,7 @@ public class AssetServiceTests
         Assert.Contains("find", result.ErrorKey, StringComparison.OrdinalIgnoreCase);
     }
 
+    /// <summary>Verifies that <c>DeleteAsync</c> sets deleted flag and updates when asset found.</summary>
     [Fact]
     public async Task DeleteAsync_SetsDeletedFlagAndUpdates_WhenAssetFound()
     {
@@ -216,6 +227,7 @@ public class AssetServiceTests
 
     // ── GetAssetsAsync / GetAssetAsync ───────────────────────────────────────
 
+    /// <summary>Verifies that <c>GetAssetsAsync</c> delegates to repository.</summary>
     [Fact]
     public async Task GetAssetsAsync_DelegatesToRepository()
     {
@@ -228,6 +240,7 @@ public class AssetServiceTests
         Assert.Single(result);
     }
 
+    /// <summary>Verifies that <c>GetAssetAsync</c> delegates to repository.</summary>
     [Fact]
     public async Task GetAssetAsync_DelegatesToRepository()
     {

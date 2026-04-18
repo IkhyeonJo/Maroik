@@ -38,6 +38,7 @@ public class ManagementController : BaseController
     private readonly IBoardService _boardService;
     private readonly ISessionService _sessionService;
 
+    /// <summary>Initializes a new instance of <see cref="ManagementController"/> with the supplied dependencies.</summary>
     public ManagementController(
         IHtmlLocalizer<ManagementController> localizer,
         ILogger<ManagementController> logger,
