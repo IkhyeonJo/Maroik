@@ -1,6 +1,6 @@
 // Maroik.WebSite — Program.cs
 // Entry point for the Maroik web application.
-// Configures DI services (repositories, services, clients, session, antiforgery, CORS, localisation),
+// Configures DI services (repositories, services, clients, session, antiforgery, CORS, localization),
 // sets up hot-swap TLS certificate polling for Docker deployments, and builds the ASP.NET Core pipeline.
 
 using Mapster;
