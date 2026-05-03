@@ -15,10 +15,10 @@ namespace Maroik.Core.Service.Tests.Services;
 public class FixedIncomeServiceTests
 {
     private readonly Mock<IFixedIncomeRepository> _fixedIncomeRepo = new();
-    private readonly Mock<IAssetRepository> _assetRepo = new();
+    private readonly Mock<IAssetBalanceDomainService> _assetBalance = new();
     private readonly Mock<IDomainEventDispatcher> _dispatcher = new();
 
-    private FixedIncomeService CreateSut() => new(_fixedIncomeRepo.Object, _assetRepo.Object, _dispatcher.Object);
+    private FixedIncomeService CreateSut() => new(_fixedIncomeRepo.Object, _assetBalance.Object, _dispatcher.Object);
 
     // ── Helpers ──────────────────────────────────────────────────────────────
 
@@ -98,7 +98,7 @@ public class FixedIncomeServiceTests
     [InlineData("IrregularIncome", "OtherIncome")]
     public async Task CreateAsync_ReturnsSuccess_ForAllValidClassCombinations(string mainClass, string subClass)
     {
-        _assetRepo.Setup(r => r.GetAssetAsync(It.IsAny<string>(), It.IsAny<string>()))
+        _assetBalance.Setup(r => r.GetAssetAsync(It.IsAny<string>(), It.IsAny<string>()))
             .ReturnsAsync(MakeSavingsAsset());
         _fixedIncomeRepo.Setup(r => r.CreateFixedIncomeAsync(It.IsAny<FixedIncome>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
@@ -112,7 +112,7 @@ public class FixedIncomeServiceTests
     [Fact]
     public async Task CreateAsync_SetsAccountEmailAndAbsoluteAmount()
     {
-        _assetRepo.Setup(r => r.GetAssetAsync(It.IsAny<string>(), It.IsAny<string>()))
+        _assetBalance.Setup(r => r.GetAssetAsync(It.IsAny<string>(), It.IsAny<string>()))
             .ReturnsAsync(MakeSavingsAsset());
         FixedIncome? captured = null;
         _fixedIncomeRepo.Setup(r => r.CreateFixedIncomeAsync(It.IsAny<FixedIncome>()))
@@ -168,7 +168,7 @@ public class FixedIncomeServiceTests
         var existing = FixedIncome.Reconstitute(1, email, "RegularIncome", "LaborIncome", null, 0m, "KRW",
             "SavingsAccount", (short)1, (short)15, new DateTime(2025, 12, 31), null, false, DateTime.UtcNow, DateTime.UtcNow);
         _fixedIncomeRepo.Setup(r => r.GetFixedIncomesAsync(email)).ReturnsAsync(new List<FixedIncome> { existing });
-        _assetRepo.Setup(r => r.GetAssetAsync(It.IsAny<string>(), It.IsAny<string>()))
+        _assetBalance.Setup(r => r.GetAssetAsync(It.IsAny<string>(), It.IsAny<string>()))
             .ReturnsAsync(MakeSavingsAsset());
         _fixedIncomeRepo.Setup(r => r.UpdateFixedIncomeAsync(It.IsAny<FixedIncome>())).Returns(Task.CompletedTask);
         var sut = CreateSut();

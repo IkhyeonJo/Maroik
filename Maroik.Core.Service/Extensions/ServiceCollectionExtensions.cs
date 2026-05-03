@@ -21,6 +21,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IPasswordService, PasswordService>();
         services.AddScoped<IAccountService, AccountService>();
         services.AddScoped<IAssetService, AssetService>();
+        services.AddScoped<IAssetBalanceDomainService, AssetBalanceDomainService>();
         services.AddScoped<IIncomeService, IncomeService>();
         services.AddScoped<IExpenditureService, ExpenditureService>();
         services.AddScoped<IFixedIncomeService, FixedIncomeService>();

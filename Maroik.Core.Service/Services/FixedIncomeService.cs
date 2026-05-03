@@ -15,14 +15,14 @@ namespace Maroik.Core.Service.Services;
 public class FixedIncomeService : IFixedIncomeService
 {
     private readonly IFixedIncomeRepository _fixedIncomeRepository;
-    private readonly IAssetRepository _assetRepository;
+    private readonly IAssetBalanceDomainService _assetBalance;
     private readonly IDomainEventDispatcher _dispatcher;
 
     /// <summary>Initializes a new instance of <see cref="FixedIncomeService"/> with the supplied dependencies.</summary>
-    public FixedIncomeService(IFixedIncomeRepository fixedIncomeRepository, IAssetRepository assetRepository, IDomainEventDispatcher dispatcher)
+    public FixedIncomeService(IFixedIncomeRepository fixedIncomeRepository, IAssetBalanceDomainService assetBalance, IDomainEventDispatcher dispatcher)
     {
         _fixedIncomeRepository = fixedIncomeRepository;
-        _assetRepository = assetRepository;
+        _assetBalance = assetBalance;
         _dispatcher = dispatcher;
     }
 
@@ -36,7 +36,7 @@ public class FixedIncomeService : IFixedIncomeService
         var validation = ValidateRequest(request);
         if (!validation.Success) return validation;
 
-        Asset? asset = await _assetRepository.GetAssetAsync(accountEmail, request.DepositMyAssetProductName ?? "");
+        Asset? asset = await _assetBalance.GetAssetAsync(accountEmail, request.DepositMyAssetProductName ?? "");
         if (asset == null) return ServiceResult.Fail("Input is invalid");
 
         string currency = asset.Balance.Currency;
@@ -64,7 +64,7 @@ public class FixedIncomeService : IFixedIncomeService
         FixedIncome? fi = items.FirstOrDefault(x => x.Id == request.Id);
         if (fi == null) return ServiceResult.Fail("Input is invalid");
 
-        Asset? asset = await _assetRepository.GetAssetAsync(accountEmail, request.DepositMyAssetProductName ?? "");
+        Asset? asset = await _assetBalance.GetAssetAsync(accountEmail, request.DepositMyAssetProductName ?? "");
         string currency = asset?.Balance.Currency ?? fi.Amount.Currency;
 
         var updateResult = fi.Update(request.MainClass, request.SubClass, request.Content,

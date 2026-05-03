@@ -13,19 +13,19 @@ namespace Maroik.Core.Service.Services;
 public class ExpenditureService : IExpenditureService
 {
     private readonly IExpenditureRepository _expenditureRepository;
-    private readonly IAssetRepository _assetRepository;
+    private readonly IAssetBalanceDomainService _assetBalance;
     private readonly IUnitOfWork _unitOfWork;
     private readonly IDomainEventDispatcher _dispatcher;
 
     /// <summary>Initializes a new instance of <see cref="ExpenditureService"/> with the supplied dependencies.</summary>
     public ExpenditureService(
         IExpenditureRepository expenditureRepository,
-        IAssetRepository assetRepository,
+        IAssetBalanceDomainService assetBalance,
         IUnitOfWork unitOfWork,
         IDomainEventDispatcher dispatcher)
     {
         _expenditureRepository = expenditureRepository;
-        _assetRepository = assetRepository;
+        _assetBalance = assetBalance;
         _unitOfWork = unitOfWork;
         _dispatcher = dispatcher;
     }
@@ -47,7 +47,7 @@ public class ExpenditureService : IExpenditureService
                 return ServiceResult.Fail("Input is invalid");
             }
 
-            Asset? paymentAsset = await _assetRepository.GetAssetAsync(accountEmail, request.PaymentMethod ?? "");
+            Asset? paymentAsset = await _assetBalance.GetAssetAsync(accountEmail, request.PaymentMethod ?? "");
             if (paymentAsset == null)
             {
                 await _unitOfWork.RollbackAsync();
@@ -68,7 +68,7 @@ public class ExpenditureService : IExpenditureService
                     return ServiceResult.Fail("The PaymentMethod and MyDepositAsset value cannot be the same.");
                 }
 
-                depositAsset = await _assetRepository.GetAssetAsync(accountEmail, request.MyDepositAsset ?? "");
+                depositAsset = await _assetBalance.GetAssetAsync(accountEmail, request.MyDepositAsset ?? "");
                 if (depositAsset == null)
                 {
                     await _unitOfWork.RollbackAsync();
@@ -102,12 +102,12 @@ public class ExpenditureService : IExpenditureService
             await _dispatcher.DispatchAsync(expenditure.PopDomainEvents());
 
             paymentAsset.Withdraw(expenditure.Amount.Amount, currency);
-            await _assetRepository.UpdateAssetAsync(paymentAsset);
+            await _assetBalance.SaveAsync(paymentAsset);
 
             if (depositAsset != null)
             {
                 depositAsset.Deposit(expenditure.Amount.Amount, currency);
-                await _assetRepository.UpdateAssetAsync(depositAsset);
+                await _assetBalance.SaveAsync(depositAsset);
             }
 
             await _unitOfWork.CommitAsync();
@@ -141,8 +141,8 @@ public class ExpenditureService : IExpenditureService
 
             if (validationResult.RequiresDepositAsset)
             {
-                var pm = await _assetRepository.GetAssetAsync(accountEmail, request.PaymentMethod ?? "");
-                var dep = await _assetRepository.GetAssetAsync(accountEmail, request.MyDepositAsset ?? "");
+                var pm = await _assetBalance.GetAssetAsync(accountEmail, request.PaymentMethod ?? "");
+                var dep = await _assetBalance.GetAssetAsync(accountEmail, request.MyDepositAsset ?? "");
                 if (pm == null || dep == null)
                 {
                     await _unitOfWork.RollbackAsync();
@@ -163,7 +163,7 @@ public class ExpenditureService : IExpenditureService
                 return ServiceResult.Fail("Input is invalid");
             }
 
-            Asset? prevPayAsset = await _assetRepository.GetAssetAsync(accountEmail, previous.PaymentMethod ?? "");
+            Asset? prevPayAsset = await _assetBalance.GetAssetAsync(accountEmail, previous.PaymentMethod ?? "");
             if (prevPayAsset?.Deleted == true)
             {
                 await _unitOfWork.RollbackAsync();
@@ -171,7 +171,7 @@ public class ExpenditureService : IExpenditureService
             }
             if (!string.IsNullOrEmpty(previous.MyDepositAsset))
             {
-                Asset? prevDepAsset = await _assetRepository.GetAssetAsync(accountEmail, previous.MyDepositAsset);
+                Asset? prevDepAsset = await _assetBalance.GetAssetAsync(accountEmail, previous.MyDepositAsset);
                 if (prevDepAsset?.Deleted == true)
                 {
                     await _unitOfWork.RollbackAsync();
@@ -179,7 +179,7 @@ public class ExpenditureService : IExpenditureService
                 }
             }
 
-            Asset? newPayAsset = await _assetRepository.GetAssetAsync(accountEmail, request.PaymentMethod ?? "");
+            Asset? newPayAsset = await _assetBalance.GetAssetAsync(accountEmail, request.PaymentMethod ?? "");
             string newCurrency = newPayAsset?.Balance.Currency ?? prevPayAsset?.Balance.Currency ?? string.Empty;
             string? myDepositAsset = validationResult.RequiresDepositAsset ? request.MyDepositAsset : string.Empty;
 
@@ -256,7 +256,7 @@ public class ExpenditureService : IExpenditureService
         var assets = new Dictionary<string, Asset>(StringComparer.Ordinal);
         foreach (string name in names)
         {
-            Asset? a = await _assetRepository.GetAssetAsync(accountEmail, name);
+            Asset? a = await _assetBalance.GetAssetAsync(accountEmail, name);
             if (a != null) assets[name] = a;
         }
 
@@ -276,7 +276,7 @@ public class ExpenditureService : IExpenditureService
         }
 
         foreach (var asset in assets.Values)
-            await _assetRepository.UpdateAssetAsync(asset);
+            await _assetBalance.SaveAsync(asset);
     }
 
     private readonly record struct ExpenditureSnapshot(string? PaymentMethod, string? MyDepositAsset, decimal Amount);

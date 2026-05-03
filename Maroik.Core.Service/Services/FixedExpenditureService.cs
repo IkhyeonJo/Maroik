@@ -15,14 +15,14 @@ namespace Maroik.Core.Service.Services;
 public class FixedExpenditureService : IFixedExpenditureService
 {
     private readonly IFixedExpenditureRepository _fixedExpenditureRepository;
-    private readonly IAssetRepository _assetRepository;
+    private readonly IAssetBalanceDomainService _assetBalance;
     private readonly IDomainEventDispatcher _dispatcher;
 
     /// <summary>Initializes a new instance of <see cref="FixedExpenditureService"/> with the supplied dependencies.</summary>
-    public FixedExpenditureService(IFixedExpenditureRepository fixedExpenditureRepository, IAssetRepository assetRepository, IDomainEventDispatcher dispatcher)
+    public FixedExpenditureService(IFixedExpenditureRepository fixedExpenditureRepository, IAssetBalanceDomainService assetBalance, IDomainEventDispatcher dispatcher)
     {
         _fixedExpenditureRepository = fixedExpenditureRepository;
-        _assetRepository = assetRepository;
+        _assetBalance = assetBalance;
         _dispatcher = dispatcher;
     }
 
@@ -36,7 +36,7 @@ public class FixedExpenditureService : IFixedExpenditureService
         var validation = ValidateClassAndDate(request);
         if (!validation.IsValid) return ServiceResult.Fail("Input is invalid");
 
-        Asset? payAsset = await _assetRepository.GetAssetAsync(accountEmail, request.PaymentMethod ?? "");
+        Asset? payAsset = await _assetBalance.GetAssetAsync(accountEmail, request.PaymentMethod ?? "");
         if (payAsset == null) return ServiceResult.Fail("Input is invalid");
 
         string? myDepositAsset = null;
@@ -45,7 +45,7 @@ public class FixedExpenditureService : IFixedExpenditureService
             if (request.PaymentMethod == request.MyDepositAsset)
                 return ServiceResult.Fail("The PaymentMethod and MyDepositAsset value cannot be the same.");
 
-            Asset? depAsset = await _assetRepository.GetAssetAsync(accountEmail, request.MyDepositAsset ?? "");
+            Asset? depAsset = await _assetBalance.GetAssetAsync(accountEmail, request.MyDepositAsset ?? "");
             if (depAsset == null) return ServiceResult.Fail("Input is invalid");
             if (payAsset.Balance.Currency != depAsset.Balance.Currency)
                 return ServiceResult.Fail("PaymentMethod MonetaryUnit must be same as MyDepositAsset MonetaryUnit.");
@@ -78,8 +78,8 @@ public class FixedExpenditureService : IFixedExpenditureService
             if (request.PaymentMethod == request.MyDepositAsset)
                 return ServiceResult.Fail("The PaymentMethod and MyDepositAsset value cannot be the same.");
 
-            var payAsset = await _assetRepository.GetAssetAsync(accountEmail, request.PaymentMethod ?? "");
-            var depAsset = await _assetRepository.GetAssetAsync(accountEmail, request.MyDepositAsset ?? "");
+            var payAsset = await _assetBalance.GetAssetAsync(accountEmail, request.PaymentMethod ?? "");
+            var depAsset = await _assetBalance.GetAssetAsync(accountEmail, request.MyDepositAsset ?? "");
             if (payAsset == null || depAsset == null) return ServiceResult.Fail("Input is invalid");
             if (payAsset.Balance.Currency != depAsset.Balance.Currency)
                 return ServiceResult.Fail("PaymentMethod MonetaryUnit must be same as MyDepositAsset MonetaryUnit.");
@@ -89,7 +89,7 @@ public class FixedExpenditureService : IFixedExpenditureService
         FixedExpenditure? fe = items.FirstOrDefault(x => x.Id == request.Id);
         if (fe == null) return ServiceResult.Fail("Input is invalid");
 
-        Asset? payAssetForCurrency = await _assetRepository.GetAssetAsync(accountEmail, request.PaymentMethod ?? "");
+        Asset? payAssetForCurrency = await _assetBalance.GetAssetAsync(accountEmail, request.PaymentMethod ?? "");
         string currency = payAssetForCurrency?.Balance.Currency ?? fe.Amount.Currency;
         string? myDepositAsset = validation.RequiresDepositAsset ? request.MyDepositAsset : string.Empty;
 

@@ -15,12 +15,12 @@ namespace Maroik.Core.Service.Tests.Services;
 public class FixedExpenditureServiceTests
 {
     private readonly Mock<IFixedExpenditureRepository> _fixedExpenditureRepo = new();
-    private readonly Mock<IAssetRepository> _assetRepo = new();
+    private readonly Mock<IAssetBalanceDomainService> _assetBalance = new();
     private readonly Mock<IDomainEventDispatcher> _dispatcher = new();
 
     private FixedExpenditureService CreateSut() => new(
         _fixedExpenditureRepo.Object,
-        _assetRepo.Object,
+        _assetBalance.Object,
         _dispatcher.Object);
 
     // ── Helpers ──────────────────────────────────────────────────────────────
@@ -110,7 +110,7 @@ public class FixedExpenditureServiceTests
     [Fact]
     public async Task CreateAsync_ReturnsFail_WhenPaymentMethodAssetNotFound()
     {
-        _assetRepo.Setup(r => r.GetAssetAsync("user@example.com", "Wallet")).ReturnsAsync((Asset?)null);
+        _assetBalance.Setup(r => r.GetAssetAsync("user@example.com", "Wallet")).ReturnsAsync((Asset?)null);
         var sut = CreateSut();
 
         ServiceResult result = await sut.CreateAsync("user@example.com", ConsumerRequest());
@@ -137,8 +137,8 @@ public class FixedExpenditureServiceTests
     [Fact]
     public async Task CreateAsync_ReturnsFail_WhenDepositAssetNotFound()
     {
-        _assetRepo.Setup(r => r.GetAssetAsync("user@example.com", "Checking")).ReturnsAsync(MakeAsset("Checking"));
-        _assetRepo.Setup(r => r.GetAssetAsync("user@example.com", "Savings")).ReturnsAsync((Asset?)null);
+        _assetBalance.Setup(r => r.GetAssetAsync("user@example.com", "Checking")).ReturnsAsync(MakeAsset("Checking"));
+        _assetBalance.Setup(r => r.GetAssetAsync("user@example.com", "Savings")).ReturnsAsync((Asset?)null);
         var sut = CreateSut();
 
         ServiceResult result = await sut.CreateAsync("user@example.com", SavingsRequest());
@@ -150,8 +150,8 @@ public class FixedExpenditureServiceTests
     [Fact]
     public async Task CreateAsync_ReturnsFail_WhenCurrenciesMismatch()
     {
-        _assetRepo.Setup(r => r.GetAssetAsync("user@example.com", "Checking")).ReturnsAsync(MakeAsset("Checking", "KRW"));
-        _assetRepo.Setup(r => r.GetAssetAsync("user@example.com", "Savings")).ReturnsAsync(MakeAsset("Savings", "USD"));
+        _assetBalance.Setup(r => r.GetAssetAsync("user@example.com", "Checking")).ReturnsAsync(MakeAsset("Checking", "KRW"));
+        _assetBalance.Setup(r => r.GetAssetAsync("user@example.com", "Savings")).ReturnsAsync(MakeAsset("Savings", "USD"));
         var sut = CreateSut();
 
         ServiceResult result = await sut.CreateAsync("user@example.com", SavingsRequest());
@@ -164,7 +164,7 @@ public class FixedExpenditureServiceTests
     [Fact]
     public async Task CreateAsync_ReturnsSuccess_ForConsumerSpendingWithValidAsset()
     {
-        _assetRepo.Setup(r => r.GetAssetAsync("user@example.com", "Wallet")).ReturnsAsync(MakeAsset("Wallet"));
+        _assetBalance.Setup(r => r.GetAssetAsync("user@example.com", "Wallet")).ReturnsAsync(MakeAsset("Wallet"));
         _fixedExpenditureRepo.Setup(r => r.CreateFixedExpenditureAsync(It.IsAny<FixedExpenditure>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
@@ -178,8 +178,8 @@ public class FixedExpenditureServiceTests
     [Fact]
     public async Task CreateAsync_ReturnsSuccess_ForRegularSavingsWithMatchingCurrencies()
     {
-        _assetRepo.Setup(r => r.GetAssetAsync("user@example.com", "Checking")).ReturnsAsync(MakeAsset("Checking", "KRW"));
-        _assetRepo.Setup(r => r.GetAssetAsync("user@example.com", "Savings")).ReturnsAsync(MakeAsset("Savings", "KRW"));
+        _assetBalance.Setup(r => r.GetAssetAsync("user@example.com", "Checking")).ReturnsAsync(MakeAsset("Checking", "KRW"));
+        _assetBalance.Setup(r => r.GetAssetAsync("user@example.com", "Savings")).ReturnsAsync(MakeAsset("Savings", "KRW"));
         _fixedExpenditureRepo.Setup(r => r.CreateFixedExpenditureAsync(It.IsAny<FixedExpenditure>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
@@ -192,7 +192,7 @@ public class FixedExpenditureServiceTests
     [Fact]
     public async Task CreateAsync_SetsAmountToAbsoluteValue()
     {
-        _assetRepo.Setup(r => r.GetAssetAsync("user@example.com", "Wallet")).ReturnsAsync(MakeAsset("Wallet"));
+        _assetBalance.Setup(r => r.GetAssetAsync("user@example.com", "Wallet")).ReturnsAsync(MakeAsset("Wallet"));
 
         FixedExpenditure? captured = null;
         _fixedExpenditureRepo.Setup(r => r.CreateFixedExpenditureAsync(It.IsAny<FixedExpenditure>()))
@@ -235,7 +235,7 @@ public class FixedExpenditureServiceTests
     [Fact]
     public async Task UpdateAsync_ReturnsFail_WhenExistingRecordNotFound()
     {
-        _assetRepo.Setup(r => r.GetAssetAsync("user@example.com", "Wallet")).ReturnsAsync(MakeAsset("Wallet"));
+        _assetBalance.Setup(r => r.GetAssetAsync("user@example.com", "Wallet")).ReturnsAsync(MakeAsset("Wallet"));
         _fixedExpenditureRepo.Setup(r => r.GetFixedExpendituresAsync("user@example.com")).ReturnsAsync(new List<FixedExpenditure>());
         var sut = CreateSut();
 
@@ -253,7 +253,7 @@ public class FixedExpenditureServiceTests
         const string email = "user@example.com";
         var existing = FixedExpenditure.Reconstitute(1, email, "ConsumerSpending", "MealOrEatOutExpenses", null, 100m, "KRW",
             "Wallet", null, (short)1, (short)15, new DateTime(2030, 12, 31), null, false, DateTime.UtcNow, DateTime.UtcNow);
-        _assetRepo.Setup(r => r.GetAssetAsync(email, "Wallet")).ReturnsAsync(MakeAsset("Wallet"));
+        _assetBalance.Setup(r => r.GetAssetAsync(email, "Wallet")).ReturnsAsync(MakeAsset("Wallet"));
         _fixedExpenditureRepo.Setup(r => r.GetFixedExpendituresAsync(email)).ReturnsAsync(new List<FixedExpenditure> { existing });
         _fixedExpenditureRepo.Setup(r => r.UpdateFixedExpenditureAsync(It.IsAny<FixedExpenditure>())).Returns(Task.CompletedTask);
         var sut = CreateSut();

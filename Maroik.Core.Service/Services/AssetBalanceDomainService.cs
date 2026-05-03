@@ -1,0 +1,26 @@
+using Maroik.Core.Contract.Domains.Finance;
+using Maroik.Core.Contract.Interfaces;
+
+namespace Maroik.Core.Service.Services;
+
+/// <summary>
+/// Thin delegating wrapper that exposes only the asset-balance operations
+/// needed by Finance transaction services, keeping them free of a direct
+/// <see cref="IAssetRepository"/> dependency.
+/// </summary>
+public class AssetBalanceDomainService : IAssetBalanceDomainService
+{
+    private readonly IAssetRepository _assetRepository;
+
+    /// <summary>Initializes a new instance of <see cref="AssetBalanceDomainService"/>.</summary>
+    public AssetBalanceDomainService(IAssetRepository assetRepository)
+        => _assetRepository = assetRepository;
+
+    /// <inheritdoc />
+    public Task<Asset?> GetAssetAsync(string accountEmail, string productName)
+        => _assetRepository.GetAssetAsync(accountEmail, productName);
+
+    /// <inheritdoc />
+    public Task SaveAsync(Asset asset)
+        => _assetRepository.UpdateAssetAsync(asset);
+}

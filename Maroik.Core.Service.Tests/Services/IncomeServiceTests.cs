@@ -16,13 +16,13 @@ namespace Maroik.Core.Service.Tests.Services;
 public class IncomeServiceTests
 {
     private readonly Mock<IIncomeRepository> _incomeRepo = new();
-    private readonly Mock<IAssetRepository> _assetRepo = new();
+    private readonly Mock<IAssetBalanceDomainService> _assetBalance = new();
     private readonly Mock<IUnitOfWork> _unitOfWork = new();
     private readonly Mock<IDomainEventDispatcher> _mockDispatcher = new();
 
     private IncomeService CreateSut() => new(
         _incomeRepo.Object,
-        _assetRepo.Object,
+        _assetBalance.Object,
         _unitOfWork.Object,
         _mockDispatcher.Object);
 
@@ -98,7 +98,7 @@ public class IncomeServiceTests
     [Fact]
     public async Task CreateAsync_ReturnsFail_WhenDepositAssetNotFound()
     {
-        _assetRepo.Setup(r => r.GetAssetAsync("user@example.com", "SavingsAccount")).ReturnsAsync((Asset?)null);
+        _assetBalance.Setup(r => r.GetAssetAsync("user@example.com", "SavingsAccount")).ReturnsAsync((Asset?)null);
         var sut = CreateSut();
 
         ServiceResult result = await sut.CreateAsync("user@example.com", ValidRequest("SavingsAccount"));
@@ -112,7 +112,7 @@ public class IncomeServiceTests
     public async Task CreateAsync_ReturnsFail_WhenDepositAssetIsDeleted()
     {
         var asset = MakeAsset("SavingsAccount", deleted: true);
-        _assetRepo.Setup(r => r.GetAssetAsync("user@example.com", "SavingsAccount")).ReturnsAsync(asset);
+        _assetBalance.Setup(r => r.GetAssetAsync("user@example.com", "SavingsAccount")).ReturnsAsync(asset);
         var sut = CreateSut();
 
         ServiceResult result = await sut.CreateAsync("user@example.com", ValidRequest("SavingsAccount"));
@@ -128,11 +128,11 @@ public class IncomeServiceTests
     {
         const string email = "user@example.com";
         var asset = MakeAsset("SavingsAccount", amount: 2000m);
-        _assetRepo.Setup(r => r.GetAssetAsync(email, "SavingsAccount")).ReturnsAsync(asset);
+        _assetBalance.Setup(r => r.GetAssetAsync(email, "SavingsAccount")).ReturnsAsync(asset);
         _incomeRepo.Setup(r => r.CreateIncomeAsync(It.IsAny<Income>())).Returns(Task.CompletedTask);
 
         Asset? captured = null;
-        _assetRepo.Setup(r => r.UpdateAssetAsync(It.IsAny<Asset>()))
+        _assetBalance.Setup(r => r.SaveAsync(It.IsAny<Asset>()))
             .Callback<Asset>(req => captured = req)
             .Returns(Task.CompletedTask);
         var sut = CreateSut();
@@ -159,9 +159,9 @@ public class IncomeServiceTests
     {
         const string email = "user@example.com";
         var asset = MakeAsset("SavingsAccount");
-        _assetRepo.Setup(r => r.GetAssetAsync(email, "SavingsAccount")).ReturnsAsync(asset);
+        _assetBalance.Setup(r => r.GetAssetAsync(email, "SavingsAccount")).ReturnsAsync(asset);
         _incomeRepo.Setup(r => r.CreateIncomeAsync(It.IsAny<Income>())).Returns(Task.CompletedTask);
-        _assetRepo.Setup(r => r.UpdateAssetAsync(It.IsAny<Asset>())).Returns(Task.CompletedTask);
+        _assetBalance.Setup(r => r.SaveAsync(It.IsAny<Asset>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
         var request = new IncomeRequest
@@ -211,7 +211,7 @@ public class IncomeServiceTests
         var existing = MakeIncome(1, "OldAsset", 100m);
         var deletedAsset = MakeAsset("OldAsset", deleted: true);
         _incomeRepo.Setup(r => r.GetIncomesAsync(email)).ReturnsAsync([existing]);
-        _assetRepo.Setup(r => r.GetAssetAsync(email, "OldAsset")).ReturnsAsync(deletedAsset);
+        _assetBalance.Setup(r => r.GetAssetAsync(email, "OldAsset")).ReturnsAsync(deletedAsset);
         var sut = CreateSut();
 
         var request = ValidRequest("NewAsset");
@@ -230,11 +230,11 @@ public class IncomeServiceTests
         var existing = MakeIncome(1, "SavingsAccount", 300m);
         var asset = MakeAsset("SavingsAccount", amount: 1300m);
         _incomeRepo.Setup(r => r.GetIncomesAsync(email)).ReturnsAsync([existing]);
-        _assetRepo.Setup(r => r.GetAssetAsync(email, "SavingsAccount")).ReturnsAsync(asset);
+        _assetBalance.Setup(r => r.GetAssetAsync(email, "SavingsAccount")).ReturnsAsync(asset);
         _incomeRepo.Setup(r => r.UpdateIncomeAsync(It.IsAny<Income>())).Returns(Task.CompletedTask);
 
         Asset? captured = null;
-        _assetRepo.Setup(r => r.UpdateAssetAsync(It.IsAny<Asset>()))
+        _assetBalance.Setup(r => r.SaveAsync(It.IsAny<Asset>()))
             .Callback<Asset>(req => captured = req)
             .Returns(Task.CompletedTask);
         var sut = CreateSut();
@@ -262,12 +262,12 @@ public class IncomeServiceTests
         var oldAsset = MakeAsset("OldAsset", amount: 500m);
         var newAsset = MakeAsset("NewAsset", amount: 100m);
         _incomeRepo.Setup(r => r.GetIncomesAsync(email)).ReturnsAsync([existing]);
-        _assetRepo.Setup(r => r.GetAssetAsync(email, "OldAsset")).ReturnsAsync(oldAsset);
-        _assetRepo.Setup(r => r.GetAssetAsync(email, "NewAsset")).ReturnsAsync(newAsset);
+        _assetBalance.Setup(r => r.GetAssetAsync(email, "OldAsset")).ReturnsAsync(oldAsset);
+        _assetBalance.Setup(r => r.GetAssetAsync(email, "NewAsset")).ReturnsAsync(newAsset);
         _incomeRepo.Setup(r => r.UpdateIncomeAsync(It.IsAny<Income>())).Returns(Task.CompletedTask);
 
         var updatedAssets = new List<Asset>();
-        _assetRepo.Setup(r => r.UpdateAssetAsync(It.IsAny<Asset>()))
+        _assetBalance.Setup(r => r.SaveAsync(It.IsAny<Asset>()))
             .Callback<Asset>(updatedAssets.Add)
             .Returns(Task.CompletedTask);
         var sut = CreateSut();
@@ -308,7 +308,7 @@ public class IncomeServiceTests
         var income = MakeIncome(1, "SavingsAccount", 100m);
         var deletedAsset = MakeAsset("SavingsAccount", deleted: true);
         _incomeRepo.Setup(r => r.GetIncomesAsync(email)).ReturnsAsync([income]);
-        _assetRepo.Setup(r => r.GetAssetAsync(email, "SavingsAccount")).ReturnsAsync(deletedAsset);
+        _assetBalance.Setup(r => r.GetAssetAsync(email, "SavingsAccount")).ReturnsAsync(deletedAsset);
         var sut = CreateSut();
 
         ServiceResult result = await sut.DeleteAsync(email, 1);
@@ -325,11 +325,11 @@ public class IncomeServiceTests
         var income = MakeIncome(1, "SavingsAccount", 250m);
         var asset = MakeAsset("SavingsAccount", amount: 1000m);
         _incomeRepo.Setup(r => r.GetIncomesAsync(email)).ReturnsAsync([income]);
-        _assetRepo.Setup(r => r.GetAssetAsync(email, "SavingsAccount")).ReturnsAsync(asset);
+        _assetBalance.Setup(r => r.GetAssetAsync(email, "SavingsAccount")).ReturnsAsync(asset);
         _incomeRepo.Setup(r => r.DeleteIncomeAsync(It.IsAny<Income>())).Returns(Task.CompletedTask);
 
         Asset? captured = null;
-        _assetRepo.Setup(r => r.UpdateAssetAsync(It.IsAny<Asset>()))
+        _assetBalance.Setup(r => r.SaveAsync(It.IsAny<Asset>()))
             .Callback<Asset>(req => captured = req)
             .Returns(Task.CompletedTask);
         var sut = CreateSut();

@@ -13,15 +13,15 @@ namespace Maroik.Core.Service.Services;
 public class IncomeService : IIncomeService
 {
     private readonly IIncomeRepository _incomeRepository;
-    private readonly IAssetRepository _assetRepository;
+    private readonly IAssetBalanceDomainService _assetBalance;
     private readonly IUnitOfWork _unitOfWork;
     private readonly IDomainEventDispatcher _dispatcher;
 
     /// <summary>Initializes a new instance of <see cref="IncomeService"/> with the supplied dependencies.</summary>
-    public IncomeService(IIncomeRepository incomeRepository, IAssetRepository assetRepository, IUnitOfWork unitOfWork, IDomainEventDispatcher dispatcher)
+    public IncomeService(IIncomeRepository incomeRepository, IAssetBalanceDomainService assetBalance, IUnitOfWork unitOfWork, IDomainEventDispatcher dispatcher)
     {
         _incomeRepository = incomeRepository;
-        _assetRepository = assetRepository;
+        _assetBalance = assetBalance;
         _unitOfWork = unitOfWork;
         _dispatcher = dispatcher;
     }
@@ -42,7 +42,7 @@ public class IncomeService : IIncomeService
                 return ServiceResult.Fail("Input is invalid");
             }
 
-            Asset? depositAsset = await _assetRepository.GetAssetAsync(accountEmail, request.DepositMyAssetProductName ?? "");
+            Asset? depositAsset = await _assetBalance.GetAssetAsync(accountEmail, request.DepositMyAssetProductName ?? "");
             if (depositAsset == null)
             {
                 await _unitOfWork.RollbackAsync();
@@ -68,7 +68,7 @@ public class IncomeService : IIncomeService
             await _dispatcher.DispatchAsync(income.PopDomainEvents());
 
             depositAsset.Deposit(income.Amount.Amount, currency);
-            await _assetRepository.UpdateAssetAsync(depositAsset);
+            await _assetBalance.SaveAsync(depositAsset);
 
             await _unitOfWork.CommitAsync();
             return ServiceResult.Ok();
@@ -100,14 +100,14 @@ public class IncomeService : IIncomeService
                 return ServiceResult.Fail("Input is invalid");
             }
 
-            Asset? prevAsset = await _assetRepository.GetAssetAsync(accountEmail, previous.DepositMyAssetProductName ?? "");
+            Asset? prevAsset = await _assetBalance.GetAssetAsync(accountEmail, previous.DepositMyAssetProductName ?? "");
             if (prevAsset?.Deleted == true)
             {
                 await _unitOfWork.RollbackAsync();
                 return ServiceResult.Fail("Actions cannot be executed with assets that have already been deleted.");
             }
 
-            Asset? newAsset = await _assetRepository.GetAssetAsync(accountEmail, request.DepositMyAssetProductName ?? "");
+            Asset? newAsset = await _assetBalance.GetAssetAsync(accountEmail, request.DepositMyAssetProductName ?? "");
             string newCurrency = newAsset?.Balance.Currency ?? prevAsset?.Balance.Currency ?? string.Empty;
 
             string previousAssetName = previous.DepositMyAssetProductName ?? "";
@@ -130,7 +130,7 @@ public class IncomeService : IIncomeService
                 {
                     prevAsset.Withdraw(Math.Abs(previousAmount), previousCurrency);
                     prevAsset.Deposit(previous.Amount.Amount, previousCurrency);
-                    await _assetRepository.UpdateAssetAsync(prevAsset);
+                    await _assetBalance.SaveAsync(prevAsset);
                 }
             }
             else
@@ -138,12 +138,12 @@ public class IncomeService : IIncomeService
                 if (prevAsset != null)
                 {
                     prevAsset.Withdraw(Math.Abs(previousAmount), previousCurrency);
-                    await _assetRepository.UpdateAssetAsync(prevAsset);
+                    await _assetBalance.SaveAsync(prevAsset);
                 }
                 if (newAsset != null)
                 {
                     newAsset.Deposit(previous.Amount.Amount, newCurrency);
-                    await _assetRepository.UpdateAssetAsync(newAsset);
+                    await _assetBalance.SaveAsync(newAsset);
                 }
             }
 
@@ -171,7 +171,7 @@ public class IncomeService : IIncomeService
                 return ServiceResult.Fail("Input is invalid");
             }
 
-            Asset? asset = await _assetRepository.GetAssetAsync(accountEmail, income.DepositMyAssetProductName ?? "");
+            Asset? asset = await _assetBalance.GetAssetAsync(accountEmail, income.DepositMyAssetProductName ?? "");
             if (asset?.Deleted == true)
             {
                 await _unitOfWork.RollbackAsync();
@@ -181,7 +181,7 @@ public class IncomeService : IIncomeService
             if (asset != null)
             {
                 asset.Withdraw(Math.Abs(income.Amount.Amount), asset.Balance.Currency);
-                await _assetRepository.UpdateAssetAsync(asset);
+                await _assetBalance.SaveAsync(asset);
             }
 
             await _incomeRepository.DeleteIncomeAsync(income);
