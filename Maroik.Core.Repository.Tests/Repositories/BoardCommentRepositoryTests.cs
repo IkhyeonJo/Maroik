@@ -1,8 +1,9 @@
-using Maroik.Core.Contract.Dtos;
+using Maroik.Core.Contract.Domains.Board;
 using Maroik.Core.PostgreSQL.Data;
-using Maroik.Core.PostgreSQL.Models;
 using Maroik.Core.Repository.Repositories;
 using Microsoft.EntityFrameworkCore;
+using EfBoard = Maroik.Core.PostgreSQL.Models.Board;
+using EfBoardComment = Maroik.Core.PostgreSQL.Models.BoardComment;
 
 namespace Maroik.Core.Repository.Tests.Repositories;
 
@@ -29,7 +30,7 @@ public class BoardCommentRepositoryTests : IDisposable
 
     // ── Helpers ──────────────────────────────────────────────────────────────
 
-    private static BoardComment MakeComment(long boardId, long order, string writer = "Alice", bool deleted = false) => new()
+    private static EfBoardComment MakeComment(long boardId, long order, string writer = "Alice", bool deleted = false) => new()
     {
         BoardId = boardId,
         Order = order,
@@ -42,7 +43,7 @@ public class BoardCommentRepositoryTests : IDisposable
 
     private async Task<long> SeedBoardAsync()
     {
-        var board = new Board
+        var board = new EfBoard
         {
             Type = "FreeForum",
             Title = "Parent Board",
@@ -56,7 +57,7 @@ public class BoardCommentRepositoryTests : IDisposable
         return board.Id;
     }
 
-    private async Task SeedAsync(params BoardComment[] comments)
+    private async Task SeedAsync(params EfBoardComment[] comments)
     {
         await _context.BoardComments.AddRangeAsync(comments);
         await _context.SaveChangesAsync();
@@ -75,7 +76,7 @@ public class BoardCommentRepositoryTests : IDisposable
             MakeComment(board1Id, 2),
             MakeComment(board2Id, 1));
 
-        IEnumerable<BoardCommentResponse> result = await _sut.GetOneBoardCommentsAsync(board1Id);
+        IEnumerable<BoardComment> result = await _sut.GetOneBoardCommentsAsync(board1Id);
 
         Assert.Equal(2, result.Count());
         Assert.All(result, c => Assert.Equal(board1Id, c.BoardId));
@@ -91,8 +92,8 @@ public class BoardCommentRepositoryTests : IDisposable
             MakeComment(boardId, 1),
             MakeComment(boardId, 2));
 
-        IEnumerable<BoardCommentResponse> result = await _sut.GetOneBoardCommentsAsync(boardId);
-        List<BoardCommentResponse> list = result.ToList();
+        IEnumerable<BoardComment> result = await _sut.GetOneBoardCommentsAsync(boardId);
+        List<BoardComment> list = result.ToList();
 
         Assert.Equal(1, list[0].Order);
         Assert.Equal(2, list[1].Order);
@@ -105,7 +106,7 @@ public class BoardCommentRepositoryTests : IDisposable
     {
         long boardId = await SeedBoardAsync();
 
-        IEnumerable<BoardCommentResponse> result = await _sut.GetOneBoardCommentsAsync(boardId);
+        IEnumerable<BoardComment> result = await _sut.GetOneBoardCommentsAsync(boardId);
 
         Assert.Empty(result);
     }
@@ -118,9 +119,9 @@ public class BoardCommentRepositoryTests : IDisposable
     {
         long boardId = await SeedBoardAsync();
         await SeedAsync(MakeComment(boardId, 1, writer: "Bob"));
-        BoardComment comment = await _context.BoardComments.FirstAsync(TestContext.Current.CancellationToken);
+        EfBoardComment comment = await _context.BoardComments.FirstAsync(TestContext.Current.CancellationToken);
 
-        BoardCommentResponse? result = await _sut.GetBoardCommentAsync((int)comment.Id);
+        BoardComment? result = await _sut.GetBoardCommentAsync((int)comment.Id);
 
         Assert.NotNull(result);
         Assert.Equal("Bob", result.Writer);
@@ -130,7 +131,7 @@ public class BoardCommentRepositoryTests : IDisposable
     [Fact]
     public async Task GetBoardCommentAsync_ReturnsNull_WhenNotFound()
     {
-        BoardCommentResponse? result = await _sut.GetBoardCommentAsync(99999);
+        BoardComment? result = await _sut.GetBoardCommentAsync(99999);
 
         Assert.Null(result);
     }
@@ -174,20 +175,19 @@ public class BoardCommentRepositoryTests : IDisposable
     {
         long boardId = await SeedBoardAsync();
 
-        var request = new BoardCommentRequest
-        {
-            BoardId = boardId,
-            Order = 1,
-            AvatarImagePath = "/upload/alice.jpg",
-            Writer = "Alice",
-            Content = "Great post!",
-            Created = DateTime.UtcNow,
-            Deleted = false
-        };
+        var comment = BoardComment.Reconstitute(
+            id: 0,
+            boardId: boardId,
+            order: 1,
+            avatarImagePath: "/upload/alice.jpg",
+            writer: "Alice",
+            content: "Great post!",
+            created: DateTime.UtcNow,
+            deleted: false);
 
-        await _sut.WriteBoardCommentAsync(request);
+        await _sut.WriteBoardCommentAsync(comment);
 
-        BoardComment? saved = await _context.BoardComments.FirstOrDefaultAsync(
+        EfBoardComment? saved = await _context.BoardComments.FirstOrDefaultAsync(
             c => c.BoardId == boardId && c.Content == "Great post!", TestContext.Current.CancellationToken);
         Assert.NotNull(saved);
         Assert.Equal("Alice", saved.Writer);
@@ -201,23 +201,21 @@ public class BoardCommentRepositoryTests : IDisposable
     {
         long boardId = await SeedBoardAsync();
         await SeedAsync(MakeComment(boardId, 1));
-        BoardComment comment = await _context.BoardComments.FirstAsync(TestContext.Current.CancellationToken);
+        EfBoardComment efComment = await _context.BoardComments.FirstAsync(TestContext.Current.CancellationToken);
 
-        var request = new BoardCommentRequest
-        {
-            Id = comment.Id,
-            BoardId = comment.BoardId,
-            Order = comment.Order,
-            AvatarImagePath = comment.AvatarImagePath,
-            Writer = comment.Writer,
-            Content = comment.Content,
-            Created = comment.Created,
-            Deleted = true   // soft-delete
-        };
+        var comment = BoardComment.Reconstitute(
+            id: efComment.Id,
+            boardId: efComment.BoardId,
+            order: efComment.Order,
+            avatarImagePath: efComment.AvatarImagePath,
+            writer: efComment.Writer ?? "",
+            content: efComment.Content,
+            created: efComment.Created,
+            deleted: true);   // soft-delete
 
-        await _sut.DeleteBoardCommentAsync(request);
+        await _sut.DeleteBoardCommentAsync(comment);
 
-        BoardComment? result = await _context.BoardComments.FirstOrDefaultAsync(c => c.Id == comment.Id, TestContext.Current.CancellationToken);
+        EfBoardComment? result = await _context.BoardComments.FirstOrDefaultAsync(c => c.Id == efComment.Id, TestContext.Current.CancellationToken);
         Assert.NotNull(result);
         Assert.True(result.Deleted);
     }

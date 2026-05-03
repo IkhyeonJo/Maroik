@@ -49,4 +49,7 @@ public class FixedExpenditureResponse
 
     /// <summary>True when the scheduled payment was late or missed.</summary>
     public bool Unpunctuality { get; set; }
+
+    /// <summary>Currency code (e.g. "KRW", "USD"). Populated by the service from the payment-method asset.</summary>
+    public string? MonetaryUnit { get; set; }
 }

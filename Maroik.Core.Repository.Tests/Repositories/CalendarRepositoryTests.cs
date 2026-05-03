@@ -1,8 +1,8 @@
-using Maroik.Core.Contract.Dtos;
+using Maroik.Core.Contract.Domains.Calendar;
 using Maroik.Core.PostgreSQL.Data;
-using Maroik.Core.PostgreSQL.Models;
 using Maroik.Core.Repository.Repositories;
 using Microsoft.EntityFrameworkCore;
+using EfCalendar = Maroik.Core.PostgreSQL.Models.Calendar;
 
 namespace Maroik.Core.Repository.Tests.Repositories;
 
@@ -29,7 +29,7 @@ public class CalendarRepositoryTests : IDisposable
 
     // ── Helpers ──────────────────────────────────────────────────────────────
 
-    private static Calendar MakeCalendar(string email, string name, string color = "#FF5733") => new()
+    private static EfCalendar MakeCalendar(string email, string name, string color = "#FF5733") => new()
     {
         AccountEmail = email,
         Name = name,
@@ -40,7 +40,7 @@ public class CalendarRepositoryTests : IDisposable
         Updated = DateTime.UtcNow
     };
 
-    private async Task SeedAsync(params Calendar[] calendars)
+    private async Task SeedAsync(params EfCalendar[] calendars)
     {
         await _context.Calendars.AddRangeAsync(calendars);
         await _context.SaveChangesAsync();
@@ -56,7 +56,7 @@ public class CalendarRepositoryTests : IDisposable
             MakeCalendar("alice@example.com", "Work"),
             MakeCalendar("bob@example.com", "Personal"));
 
-        List<CalendarResponse> result = await _sut.GetAllCalendarsAsync();
+        List<Calendar> result = await _sut.GetAllCalendarsAsync();
 
         Assert.Equal(2, result.Count);
     }
@@ -65,7 +65,7 @@ public class CalendarRepositoryTests : IDisposable
     [Fact]
     public async Task GetAllCalendarsAsync_ReturnsEmpty_WhenNoCalendars()
     {
-        List<CalendarResponse> result = await _sut.GetAllCalendarsAsync();
+        List<Calendar> result = await _sut.GetAllCalendarsAsync();
 
         Assert.Empty(result);
     }
@@ -78,7 +78,7 @@ public class CalendarRepositoryTests : IDisposable
             MakeCalendar("alice@example.com", "Work"),
             MakeCalendar("alice@example.com", "Personal"));
 
-        List<CalendarResponse> result = await _sut.GetAllCalendarsAsync();
+        List<Calendar> result = await _sut.GetAllCalendarsAsync();
 
         Assert.Equal("Personal", result[0].Name);
         Assert.Equal("Work", result[1].Name);
@@ -95,17 +95,17 @@ public class CalendarRepositoryTests : IDisposable
             MakeCalendar("alice@example.com", "Personal"),
             MakeCalendar("bob@example.com", "Bob Calendar"));
 
-        List<CalendarResponse> result = await _sut.GetCalendarsAsync("alice@example.com");
+        List<Calendar> result = await _sut.GetCalendarsAsync("alice@example.com");
 
         Assert.Equal(2, result.Count);
-        Assert.All(result, c => Assert.Equal("alice@example.com", c.AccountEmail));
+        Assert.All(result, c => Assert.Equal("alice@example.com", c.AccountEmail.Value));
     }
 
     /// <summary>Verifies that <c>GetCalendarsAsync</c> returns empty when no calendars for email.</summary>
     [Fact]
     public async Task GetCalendarsAsync_ReturnsEmpty_WhenNoCalendarsForEmail()
     {
-        List<CalendarResponse> result = await _sut.GetCalendarsAsync("nobody@example.com");
+        List<Calendar> result = await _sut.GetCalendarsAsync("nobody@example.com");
 
         Assert.Empty(result);
     }
@@ -116,20 +116,19 @@ public class CalendarRepositoryTests : IDisposable
     [Fact]
     public async Task CreateCalendarAsync_AddsCalendarToDatabase()
     {
-        var request = new CalendarRequest
-        {
-            AccountEmail = "alice@example.com",
-            Name = "New Calendar",
-            Description = "My new calendar",
-            TimeZoneIanaId = "Asia/Seoul",
-            HtmlColorCode = "#3498DB",
-            Created = DateTime.UtcNow,
-            Updated = DateTime.UtcNow
-        };
+        var calendar = Calendar.Reconstitute(
+            id: 0,
+            accountEmail: "alice@example.com",
+            name: "New Calendar",
+            description: "My new calendar",
+            timeZoneIanaId: "Asia/Seoul",
+            htmlColorCode: "#3498DB",
+            created: DateTime.UtcNow,
+            updated: DateTime.UtcNow);
 
-        await _sut.CreateCalendarAsync(request);
+        await _sut.CreateCalendarAsync(calendar);
 
-        Calendar? saved = await _context.Calendars.FirstOrDefaultAsync(
+        EfCalendar? saved = await _context.Calendars.FirstOrDefaultAsync(
             c => c.AccountEmail == "alice@example.com" && c.Name == "New Calendar", TestContext.Current.CancellationToken);
         Assert.NotNull(saved);
         Assert.Equal("#3498DB", saved.HtmlColorCode);
@@ -143,23 +142,21 @@ public class CalendarRepositoryTests : IDisposable
     public async Task UpdateCalendarAsync_UpdatesExistingCalendar()
     {
         await SeedAsync(MakeCalendar("alice@example.com", "Work", color: "#FF5733"));
-        Calendar calendar = await _context.Calendars.FirstAsync(TestContext.Current.CancellationToken);
+        EfCalendar efCalendar = await _context.Calendars.FirstAsync(TestContext.Current.CancellationToken);
 
-        var request = new CalendarRequest
-        {
-            Id = calendar.Id,
-            AccountEmail = "alice@example.com",
-            Name = "Work Updated",
-            Description = "Updated description",
-            TimeZoneIanaId = "Asia/Seoul",
-            HtmlColorCode = "#2ECC71",
-            Created = calendar.Created,
-            Updated = DateTime.UtcNow
-        };
+        var calendar = Calendar.Reconstitute(
+            id: efCalendar.Id,
+            accountEmail: "alice@example.com",
+            name: "Work Updated",
+            description: "Updated description",
+            timeZoneIanaId: "Asia/Seoul",
+            htmlColorCode: "#2ECC71",
+            created: efCalendar.Created,
+            updated: DateTime.UtcNow);
 
-        await _sut.UpdateCalendarAsync(request);
+        await _sut.UpdateCalendarAsync(calendar);
 
-        Calendar? updated = await _context.Calendars.FirstOrDefaultAsync(c => c.Id == calendar.Id, TestContext.Current.CancellationToken);
+        EfCalendar? updated = await _context.Calendars.FirstOrDefaultAsync(c => c.Id == efCalendar.Id, TestContext.Current.CancellationToken);
         Assert.NotNull(updated);
         Assert.Equal("Work Updated", updated.Name);
         Assert.Equal("#2ECC71", updated.HtmlColorCode);
@@ -172,22 +169,21 @@ public class CalendarRepositoryTests : IDisposable
     public async Task DeleteCalendarAsync_RemovesCalendarFromDatabase()
     {
         await SeedAsync(MakeCalendar("alice@example.com", "ToDelete"));
-        Calendar calendar = await _context.Calendars.FirstAsync(TestContext.Current.CancellationToken);
+        EfCalendar efCalendar = await _context.Calendars.FirstAsync(TestContext.Current.CancellationToken);
 
-        var request = new CalendarRequest
-        {
-            Id = calendar.Id,
-            AccountEmail = "alice@example.com",
-            Name = "ToDelete",
-            TimeZoneIanaId = "UTC",
-            HtmlColorCode = "#FF5733",
-            Created = calendar.Created,
-            Updated = calendar.Updated
-        };
+        var calendar = Calendar.Reconstitute(
+            id: efCalendar.Id,
+            accountEmail: "alice@example.com",
+            name: "ToDelete",
+            description: null,
+            timeZoneIanaId: "UTC",
+            htmlColorCode: "#FF5733",
+            created: efCalendar.Created,
+            updated: efCalendar.Updated);
 
-        await _sut.DeleteCalendarAsync(request);
+        await _sut.DeleteCalendarAsync(calendar);
 
-        Calendar? deleted = await _context.Calendars.FirstOrDefaultAsync(c => c.Id == calendar.Id, TestContext.Current.CancellationToken);
+        EfCalendar? deleted = await _context.Calendars.FirstOrDefaultAsync(c => c.Id == efCalendar.Id, TestContext.Current.CancellationToken);
         Assert.Null(deleted);
     }
 
@@ -198,22 +194,21 @@ public class CalendarRepositoryTests : IDisposable
         await SeedAsync(
             MakeCalendar("alice@example.com", "Cal1"),
             MakeCalendar("alice@example.com", "Cal2"));
-        List<Calendar> all = await _context.Calendars.ToListAsync(TestContext.Current.CancellationToken);
+        List<EfCalendar> all = await _context.Calendars.ToListAsync(TestContext.Current.CancellationToken);
 
-        var request = new CalendarRequest
-        {
-            Id = all[0].Id,
-            AccountEmail = all[0].AccountEmail,
-            Name = all[0].Name,
-            TimeZoneIanaId = all[0].TimeZoneIanaId,
-            HtmlColorCode = all[0].HtmlColorCode,
-            Created = all[0].Created,
-            Updated = all[0].Updated
-        };
+        var calendar = Calendar.Reconstitute(
+            id: all[0].Id,
+            accountEmail: all[0].AccountEmail ?? "",
+            name: all[0].Name ?? "",
+            description: all[0].Description,
+            timeZoneIanaId: all[0].TimeZoneIanaId ?? "UTC",
+            htmlColorCode: all[0].HtmlColorCode ?? "#000000",
+            created: all[0].Created,
+            updated: all[0].Updated);
 
-        await _sut.DeleteCalendarAsync(request);
+        await _sut.DeleteCalendarAsync(calendar);
 
-        List<Calendar> remaining = await _context.Calendars.ToListAsync(TestContext.Current.CancellationToken);
+        List<EfCalendar> remaining = await _context.Calendars.ToListAsync(TestContext.Current.CancellationToken);
         Assert.Single(remaining);
         Assert.Equal(all[1].Id, remaining[0].Id);
     }

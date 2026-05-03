@@ -1,46 +1,42 @@
-using Mapster;
-using Maroik.Core.Contract.Dtos;
+using Maroik.Core.Contract.Domains.Calendar;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.PostgreSQL.Data;
-using Maroik.Core.PostgreSQL.Models;
 using Microsoft.EntityFrameworkCore;
+using OrmOtherCalendar = Maroik.Core.PostgreSQL.Models.OtherCalendar;
 
 namespace Maroik.Core.Repository.Repositories;
 
 /// <summary>EF Core implementation of <see cref="IOtherCalendarRepository"/>.</summary>
-public class OtherCalendarRepository : IOtherCalendarRepository
+public class OtherCalendarRepository(ApplicationDbContext context) : IOtherCalendarRepository
 {
-    private readonly ApplicationDbContext _context;
+    /// <inheritdoc />
+    public async Task<List<OtherCalendar>> GetAllOtherCalendarsAsync()
+        => (await context.OtherCalendars.OrderBy(x => x.CalendarId).ToListAsync()).Select(ToDomain).ToList();
 
-    /// <summary>Initializes a new instance of <see cref="OtherCalendarRepository"/> with <paramref name="context"/>.</summary>
-    public OtherCalendarRepository(ApplicationDbContext context)
+    /// <inheritdoc />
+    public async Task<List<OtherCalendar>> GetOtherCalendarsAsync(string email)
+        => (await context.OtherCalendars.Where(x => x.AccountEmail == email).OrderBy(x => x.CalendarId).ToListAsync()).Select(ToDomain).ToList();
+
+    /// <inheritdoc />
+    public async Task CreateOtherCalendarAsync(OtherCalendar otherCalendar)
     {
-        _context = context;
+        _ = await context.OtherCalendars.AddAsync(ToEntity(otherCalendar));
+        _ = await context.SaveChangesAsync();
     }
 
     /// <inheritdoc />
-    public async Task<List<OtherCalendarResponse>> GetAllOtherCalendarsAsync()
+    public async Task DeleteOtherCalendarAsync(OtherCalendar otherCalendar)
     {
-        return (await _context.OtherCalendars.OrderBy(x => x.CalendarId).ToListAsync()).Adapt<List<OtherCalendarResponse>>();
+        _ = context.OtherCalendars.Remove(ToEntity(otherCalendar));
+        _ = await context.SaveChangesAsync();
     }
 
-    /// <inheritdoc />
-    public async Task<List<OtherCalendarResponse>> GetOtherCalendarsAsync(string email)
-    {
-        return (await _context.OtherCalendars.Where(x => x.AccountEmail == email).OrderBy(x => x.CalendarId).ToListAsync()).Adapt<List<OtherCalendarResponse>>();
-    }
+    private static OtherCalendar ToDomain(OrmOtherCalendar e)
+        => OtherCalendar.Reconstitute(e.AccountEmail ?? string.Empty, e.CalendarId);
 
-    /// <inheritdoc />
-    public async Task CreateOtherCalendarAsync(OtherCalendarRequest request)
+    private static OrmOtherCalendar ToEntity(OtherCalendar o) => new()
     {
-        _ = await _context.OtherCalendars.AddAsync(request.Adapt<OtherCalendar>());
-        _ = await _context.SaveChangesAsync();
-    }
-
-    /// <inheritdoc />
-    public async Task DeleteOtherCalendarAsync(OtherCalendarRequest request)
-    {
-        _ = _context.OtherCalendars.Remove(request.Adapt<OtherCalendar>());
-        _ = await _context.SaveChangesAsync();
-    }
+        AccountEmail = o.AccountEmail.Value,
+        CalendarId = o.CalendarId
+    };
 }

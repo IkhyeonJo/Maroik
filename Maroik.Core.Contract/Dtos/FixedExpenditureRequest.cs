@@ -50,4 +50,7 @@ public class FixedExpenditureRequest
 
     /// <summary>When true, the charge was not made on the scheduled day (payment was late or missed).</summary>
     public bool Unpunctuality { get; set; }
+
+    /// <summary>Currency code (e.g. "KRW", "USD"). Derived from the payment-method asset.</summary>
+    public string? MonetaryUnit { get; set; }
 }

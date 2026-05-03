@@ -1,4 +1,3 @@
-using Mapster;
 using Ganss.Xss;
 using HtmlAgilityPack;
 using Maroik.Core.Contract.Dtos;
@@ -119,29 +118,6 @@ public class CalendarController : BaseController
 
                 calendarEventInputViewModel.Description = htmlDocument.DocumentNode.OuterHtml;
                 #endregion
-
-                if ((calendarEventInputViewModel.Title?.Length ?? 0) is not (> 0 and <= 100)) // Title length
-                {
-                    return Json(new { result = false, error = _localizer["Name length is must be between 1 and 100 characters."].Value });
-                }
-
-                if ((calendarEventInputViewModel.Description?.Length ?? 0) > 16384) // Description Maxlength: 16KB
-                {
-                    return Json(new { result = false, error = _localizer["Description length is must be between 0 and 16384 characters."].Value });
-                }
-
-                if (calendarEventInputViewModel.CalendarEventUploadedFile != null) // If a file is attached
-                {
-                    if (!(Path.GetExtension(calendarEventInputViewModel.CalendarEventUploadedFile.FileName) == ".zip")) // Only zip extension allowed
-                    {
-                        return Json(new { result = false, error = _localizer["Only zip extension allowed."].Value });
-                    }
-
-                    if (calendarEventInputViewModel.CalendarEventUploadedFile.Length is not (> 0 and <= 10485760)) // Only 10MB or less allowed
-                    {
-                        return Json(new { result = false, error = _localizer["uploaded file size must be smaller than 10MB."].Value });
-                    }
-                }
 
                 bool isAccountSessionExist = _sessionService.GetAccount() != null;
                 if (!isAccountSessionExist)
@@ -2091,29 +2067,6 @@ public class CalendarController : BaseController
                 calendarEventInputViewModel.Description = htmlDocument.DocumentNode.OuterHtml;
                 #endregion
 
-                if ((calendarEventInputViewModel.Title?.Length ?? 0) is not (> 0 and <= 100)) // Title length
-                {
-                    return Json(new { result = false, error = _localizer["Name length is must be between 1 and 100 characters."].Value });
-                }
-
-                if ((calendarEventInputViewModel.Description?.Length ?? 0) > 16384) // Description Maxlength: 16KB
-                {
-                    return Json(new { result = false, error = _localizer["Description length is must be between 0 and 16384 characters."].Value });
-                }
-
-                if (calendarEventInputViewModel.CalendarEventUploadedFile != null) // If a file is attached
-                {
-                    if (!(Path.GetExtension(calendarEventInputViewModel.CalendarEventUploadedFile.FileName) == ".zip")) // Only zip extension allowed
-                    {
-                        return Json(new { result = false, error = _localizer["Only zip extension allowed."].Value });
-                    }
-
-                    if (calendarEventInputViewModel.CalendarEventUploadedFile.Length is not (> 0 and <= 10485760)) // Only 10MB or less allowed
-                    {
-                        return Json(new { result = false, error = _localizer["uploaded file size must be smaller than 10MB."].Value });
-                    }
-                }
-
                 bool isAccountSessionExist = _sessionService.GetAccount() != null;
                 if (!isAccountSessionExist)
                     return Json(new { result = false, error = _localizer["Please Login to update calendar event"].Value });
@@ -2252,7 +2205,7 @@ public class CalendarController : BaseController
         {
             if (ModelState.IsValid)
             {
-                ServiceResult sharedResult = await _calendarService.UpdateCalendarSharedAsync(calendarShareds.Select(c => c.Adapt<CalendarSharedRequest>()));
+                ServiceResult sharedResult = await _calendarService.UpdateCalendarSharedAsync(calendarShareds.Select(c => new CalendarSharedRequest { CalendarId = c.CalendarId, User = c.User, Anonymous = c.Anonymous }));
 
                 if (!sharedResult.Success)
                     return Json(new { result = false, error = _localizer[sharedResult.ErrorKey ?? "Input is invalid"].Value });
@@ -2293,7 +2246,7 @@ public class CalendarController : BaseController
 
                 ServiceResult otherCalendarResult = await _calendarService.UpdateOtherCalendarAsync(
                     loginedAccount.Email!,
-                    otherCalendars.Select(c => c.Adapt<OtherCalendarRequest>()));
+                    otherCalendars.Select(c => new OtherCalendarRequest { AccountEmail = c.AccountEmail, CalendarId = c.CalendarId }));
 
                 if (!otherCalendarResult.Success)
                     return Json(new { result = false, error = _localizer[otherCalendarResult.ErrorKey ?? "Input is invalid"].Value });

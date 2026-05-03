@@ -1,4 +1,4 @@
-using Maroik.Core.Contract.Dtos;
+using Maroik.Core.Contract.Domains.Finance;
 using Maroik.Core.PostgreSQL.Data;
 using Maroik.Core.PostgreSQL.Models;
 using Maroik.Core.Repository.Repositories;
@@ -60,17 +60,17 @@ public class AssetRepositoryTests : IDisposable
             MakeAsset("Savings", "alice@example.com"),
             MakeAsset("Wallet", "bob@example.com"));
 
-        List<AssetResponse> result = await _sut.GetAssetsAsync("alice@example.com");
+        List<Asset> result = await _sut.GetAssetsAsync("alice@example.com");
 
         Assert.Equal(2, result.Count);
-        Assert.All(result, a => Assert.Equal("alice@example.com", a.AccountEmail));
+        Assert.All(result, a => Assert.Equal("alice@example.com", a.AccountEmail.Value));
     }
 
     /// <summary>Verifies that <c>GetAssetsAsync</c> returns empty list when email has no assets.</summary>
     [Fact]
     public async Task GetAssetsAsync_ReturnsEmptyList_WhenEmailHasNoAssets()
     {
-        List<AssetResponse> result = await _sut.GetAssetsAsync("nobody@example.com");
+        List<Asset> result = await _sut.GetAssetsAsync("nobody@example.com");
 
         Assert.Empty(result);
     }
@@ -83,18 +83,18 @@ public class AssetRepositoryTests : IDisposable
     {
         await SeedAsync(MakeAsset("Wallet", "alice@example.com", amount: 5000m));
 
-        AssetResponse? result = await _sut.GetAssetAsync("alice@example.com", "Wallet");
+        Asset? result = await _sut.GetAssetAsync("alice@example.com", "Wallet");
 
         Assert.NotNull(result);
         Assert.Equal("Wallet", result.ProductName);
-        Assert.Equal(5000m, result.Amount);
+        Assert.Equal(5000m, result.Balance.Amount);
     }
 
     /// <summary>Verifies that <c>GetAssetAsync</c> returns null when not found.</summary>
     [Fact]
     public async Task GetAssetAsync_ReturnsNull_WhenNotFound()
     {
-        AssetResponse? result = await _sut.GetAssetAsync("alice@example.com", "NonExistent");
+        Asset? result = await _sut.GetAssetAsync("alice@example.com", "NonExistent");
 
         Assert.Null(result);
     }
@@ -105,7 +105,7 @@ public class AssetRepositoryTests : IDisposable
     {
         await SeedAsync(MakeAsset("Wallet", "bob@example.com"));
 
-        AssetResponse? result = await _sut.GetAssetAsync("alice@example.com", "Wallet");
+        Asset? result = await _sut.GetAssetAsync("alice@example.com", "Wallet");
 
         Assert.Null(result);
     }
@@ -116,19 +116,18 @@ public class AssetRepositoryTests : IDisposable
     [Fact]
     public async Task CreateAssetAsync_AddsAssetToDatabase()
     {
-        var request = new AssetRequest
-        {
-            ProductName = "NewAccount",
-            AccountEmail = "alice@example.com",
-            Item = "SavingsAsset",
-            Amount = 2500m,
-            MonetaryUnit = "KRW",
-            Deleted = false,
-            Created = DateTime.UtcNow,
-            Updated = DateTime.UtcNow
-        };
+        var asset = Asset.Reconstitute(
+            productName: "NewAccount",
+            accountEmail: "alice@example.com",
+            item: "SavingsAsset",
+            amount: 2500m,
+            monetaryUnit: "KRW",
+            note: null,
+            deleted: false,
+            created: DateTime.UtcNow,
+            updated: DateTime.UtcNow);
 
-        await _sut.CreateAssetAsync(request);
+        await _sut.CreateAssetAsync(asset);
 
         Asset? saved = await _context.Assets.FirstOrDefaultAsync(
             a => a.AccountEmail == "alice@example.com" && a.ProductName == "NewAccount", TestContext.Current.CancellationToken);
@@ -145,19 +144,18 @@ public class AssetRepositoryTests : IDisposable
     {
         await SeedAsync(MakeAsset("Wallet", "alice@example.com", amount: 1000m));
 
-        var request = new AssetRequest
-        {
-            ProductName = "Wallet",
-            AccountEmail = "alice@example.com",
-            Item = "FreeDepositAndWithdrawal",
-            Amount = 1500m,
-            MonetaryUnit = "KRW",
-            Deleted = false,
-            Created = DateTime.UtcNow,
-            Updated = DateTime.UtcNow
-        };
+        var asset = Asset.Reconstitute(
+            productName: "Wallet",
+            accountEmail: "alice@example.com",
+            item: "FreeDepositAndWithdrawal",
+            amount: 1500m,
+            monetaryUnit: "KRW",
+            note: null,
+            deleted: false,
+            created: DateTime.UtcNow,
+            updated: DateTime.UtcNow);
 
-        await _sut.UpdateAssetAsync(request);
+        await _sut.UpdateAssetAsync(asset);
 
         Asset? updated = await _context.Assets.FirstOrDefaultAsync(
             a => a.AccountEmail == "alice@example.com" && a.ProductName == "Wallet", TestContext.Current.CancellationToken);

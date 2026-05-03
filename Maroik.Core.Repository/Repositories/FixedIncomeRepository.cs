@@ -1,47 +1,60 @@
-using Mapster;
-using Maroik.Core.Contract.Dtos;
+using Maroik.Core.Contract.Domains.Finance;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.PostgreSQL.Data;
-using Maroik.Core.PostgreSQL.Models;
 using Microsoft.EntityFrameworkCore;
+using OrmFixedIncome = Maroik.Core.PostgreSQL.Models.FixedIncome;
 
 namespace Maroik.Core.Repository.Repositories;
 
 /// <summary>EF Core implementation of <see cref="IFixedIncomeRepository"/>.</summary>
-public class FixedIncomeRepository : IFixedIncomeRepository
+public class FixedIncomeRepository(ApplicationDbContext context) : IFixedIncomeRepository
 {
-    private readonly ApplicationDbContext _context;
+    /// <inheritdoc />
+    public async Task<List<FixedIncome>> GetFixedIncomesAsync(string email)
+        => (await context.FixedIncomes.Where(x => x.AccountEmail == email).ToListAsync()).Select(ToDomain).ToList();
 
-    /// <summary>Initializes a new instance of <see cref="FixedIncomeRepository"/> with <paramref name="context"/>.</summary>
-    public FixedIncomeRepository(ApplicationDbContext context)
+    /// <inheritdoc />
+    public async Task CreateFixedIncomeAsync(FixedIncome fixedIncome)
     {
-        _context = context;
+        _ = await context.FixedIncomes.AddAsync(ToEntity(fixedIncome));
+        _ = await context.SaveChangesAsync();
     }
 
     /// <inheritdoc />
-    public async Task<List<FixedIncomeResponse>> GetFixedIncomesAsync(string email)
+    public async Task UpdateFixedIncomeAsync(FixedIncome fixedIncome)
     {
-        return (await _context.FixedIncomes.Where(x => x.AccountEmail == email).ToListAsync()).Adapt<List<FixedIncomeResponse>>();
+        _ = context.FixedIncomes.Update(ToEntity(fixedIncome));
+        _ = await context.SaveChangesAsync();
     }
 
     /// <inheritdoc />
-    public async Task CreateFixedIncomeAsync(FixedIncomeRequest request)
+    public async Task DeleteFixedIncomeAsync(FixedIncome fixedIncome)
     {
-        _ = await _context.FixedIncomes.AddAsync(request.Adapt<FixedIncome>());
-        _ = await _context.SaveChangesAsync();
+        _ = context.FixedIncomes.Remove(ToEntity(fixedIncome));
+        _ = await context.SaveChangesAsync();
     }
 
-    /// <inheritdoc />
-    public async Task UpdateFixedIncomeAsync(FixedIncomeRequest request)
-    {
-        _ = _context.FixedIncomes.Update(request.Adapt<FixedIncome>());
-        _ = await _context.SaveChangesAsync();
-    }
+    private static FixedIncome ToDomain(OrmFixedIncome e) => FixedIncome.Reconstitute(
+        e.Id, e.AccountEmail ?? string.Empty, e.MainClass ?? string.Empty,
+        e.SubClass ?? string.Empty, e.Content, e.Amount, string.Empty,
+        e.DepositMyAssetProductName ?? string.Empty, e.DepositMonth, e.DepositDay,
+        e.MaturityDate, e.Note, e.Unpunctuality, e.Created, e.Updated);
 
-    /// <inheritdoc />
-    public async Task DeleteFixedIncomeAsync(FixedIncomeRequest request)
+    private static OrmFixedIncome ToEntity(FixedIncome fi) => new()
     {
-        _ = _context.FixedIncomes.Remove(request.Adapt<FixedIncome>());
-        _ = await _context.SaveChangesAsync();
-    }
+        Id = fi.Id,
+        AccountEmail = fi.AccountEmail.Value,
+        MainClass = fi.MainClass,
+        SubClass = fi.SubClass,
+        Content = fi.Content,
+        Amount = fi.Amount.Amount,
+        DepositMyAssetProductName = fi.DepositMyAssetProductName,
+        DepositMonth = fi.DepositMonth,
+        DepositDay = fi.DepositDay,
+        MaturityDate = fi.MaturityDate,
+        Note = fi.Note,
+        Unpunctuality = fi.Unpunctuality,
+        Created = fi.Created,
+        Updated = fi.Updated
+    };
 }

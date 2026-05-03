@@ -1,8 +1,10 @@
 using ImageMagick;
+using Maroik.Core.Contract.Domains.Account;
+using Maroik.Core.Contract.Domains.ValueObjects;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Contract.Utilities;
-using Mapster;
+using Maroik.Core.Service.Mappers;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System.Diagnostics;
@@ -41,19 +43,23 @@ public class ProfileService : IProfileService
 
     /// <inheritdoc />
     public async Task<AccountResponse?> GetProfileAsync(string email)
-        => await _accountRepository.GetAccountByEmailAsync(email);
+    {
+        Account? account = await _accountRepository.GetAccountByEmailAsync(email);
+        return account == null ? null : AccountMapper.ToResponse(account);
+    }
 
     /// <inheritdoc />
     public async Task<ServiceResult> UpdateAvatarAsync(string email, string avatarPath)
     {
         try
         {
-            AccountResponse? account = await _accountRepository.GetAccountByEmailAsync(email);
+            Account? account = await _accountRepository.GetAccountByEmailAsync(email);
             if (account == null)
                 return ServiceResult.Fail("Input is invalid");
 
-            account.AvatarImagePath = avatarPath;
-            await _accountRepository.UpdateAccountAsync(account.Adapt<AccountRequest>());
+            account.UpdateProfile(account.Nickname, avatarPath, account.TimeZone, account.DefaultMonetaryUnit);
+
+            await _accountRepository.UpdateAccountAsync(account);
             return ServiceResult.Ok();
         }
         catch (Exception e)
@@ -68,12 +74,17 @@ public class ProfileService : IProfileService
     {
         try
         {
-            AccountResponse? account = await _accountRepository.GetAccountByEmailAsync(email);
+            Account? account = await _accountRepository.GetAccountByEmailAsync(email);
             if (account == null)
                 return ServiceResult.Fail("Input is invalid");
 
-            account.TimeZoneIanaId = timeZoneIanaId;
-            await _accountRepository.UpdateAccountAsync(account.Adapt<AccountRequest>());
+            var tzResult = TimeZoneId.Create(timeZoneIanaId);
+            if (tzResult.IsError)
+                return ServiceResult.Fail(tzResult.FirstError.Description);
+
+            account.UpdateProfile(account.Nickname, account.AvatarImagePath, tzResult.Value, account.DefaultMonetaryUnit);
+
+            await _accountRepository.UpdateAccountAsync(account);
             return ServiceResult.Ok();
         }
         catch (Exception e)
@@ -88,15 +99,16 @@ public class ProfileService : IProfileService
     {
         try
         {
-            AccountResponse? account = await _accountRepository.GetAccountByEmailAsync(email);
+            Account? account = await _accountRepository.GetAccountByEmailAsync(email);
             if (account == null)
                 return ServiceResult.Fail("Input is invalid");
 
-            if (!_passwordService.VerifyPassword(currentPassword, account.HashedPassword ?? ""))
+            if (!_passwordService.VerifyPassword(currentPassword, account.HashedPassword))
                 return ServiceResult.Fail("Invalid password. Please check again.");
 
-            account.HashedPassword = _passwordService.HashPassword(newPassword);
-            await _accountRepository.UpdateAccountAsync(account.Adapt<AccountRequest>());
+            account.ChangePassword(_passwordService.HashPassword(newPassword));
+
+            await _accountRepository.UpdateAccountAsync(account);
             return ServiceResult.Ok();
         }
         catch (Exception e)

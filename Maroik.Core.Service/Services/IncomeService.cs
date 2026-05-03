@@ -1,6 +1,7 @@
+using Maroik.Core.Contract.Domains.Finance;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
-using Mapster;
+using Maroik.Core.Service.Mappers;
 
 namespace Maroik.Core.Service.Services;
 
@@ -14,18 +15,20 @@ public class IncomeService : IIncomeService
     private readonly IIncomeRepository _incomeRepository;
     private readonly IAssetRepository _assetRepository;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IDomainEventDispatcher _dispatcher;
 
     /// <summary>Initializes a new instance of <see cref="IncomeService"/> with the supplied dependencies.</summary>
-    public IncomeService(IIncomeRepository incomeRepository, IAssetRepository assetRepository, IUnitOfWork unitOfWork)
+    public IncomeService(IIncomeRepository incomeRepository, IAssetRepository assetRepository, IUnitOfWork unitOfWork, IDomainEventDispatcher dispatcher)
     {
         _incomeRepository = incomeRepository;
         _assetRepository = assetRepository;
         _unitOfWork = unitOfWork;
+        _dispatcher = dispatcher;
     }
 
     /// <inheritdoc />
-    public Task<List<IncomeResponse>> GetIncomesAsync(string accountEmail)
-        => _incomeRepository.GetIncomesAsync(accountEmail);
+    public async Task<List<IncomeResponse>> GetIncomesAsync(string accountEmail)
+        => (await _incomeRepository.GetIncomesAsync(accountEmail)).Select(IncomeMapper.ToResponse).ToList();
 
     /// <inheritdoc />
     public async Task<ServiceResult> CreateAsync(string accountEmail, IncomeRequest request)
@@ -39,26 +42,33 @@ public class IncomeService : IIncomeService
                 return ServiceResult.Fail("Input is invalid");
             }
 
-            AssetResponse? asset = await _assetRepository.GetAssetAsync(accountEmail, request.DepositMyAssetProductName ?? "");
-            if (asset == null)
+            Asset? depositAsset = await _assetRepository.GetAssetAsync(accountEmail, request.DepositMyAssetProductName ?? "");
+            if (depositAsset == null)
             {
                 await _unitOfWork.RollbackAsync();
                 return ServiceResult.Fail("Input is invalid");
             }
-            if (asset.Deleted)
+            if (depositAsset.Deleted)
             {
                 await _unitOfWork.RollbackAsync();
                 return ServiceResult.Fail("Actions cannot be executed with assets that have already been deleted.");
             }
 
-            request.AccountEmail = accountEmail;
-            request.Amount = Math.Abs(request.Amount);
-            request.Updated = DateTime.UtcNow;
-            await _incomeRepository.CreateIncomeAsync(request);
+            string currency = depositAsset.Balance.Currency;
+            var incomeResult = Income.Record(0, accountEmail, request.MainClass, request.SubClass,
+                request.Content, Math.Abs(request.Amount), currency, request.DepositMyAssetProductName, request.Note);
+            if (incomeResult.IsError)
+            {
+                await _unitOfWork.RollbackAsync();
+                return ServiceResult.Fail(incomeResult.FirstError.Description);
+            }
 
-            asset.Amount += Math.Abs(request.Amount);
-            asset.Updated = DateTime.UtcNow;
-            await _assetRepository.UpdateAssetAsync(asset.Adapt<AssetRequest>());
+            var income = incomeResult.Value;
+            await _incomeRepository.CreateIncomeAsync(income);
+            await _dispatcher.DispatchAsync(income.PopDomainEvents());
+
+            depositAsset.Deposit(income.Amount.Amount, currency);
+            await _assetRepository.UpdateAssetAsync(depositAsset);
 
             await _unitOfWork.CommitAsync();
             return ServiceResult.Ok();
@@ -82,60 +92,58 @@ public class IncomeService : IIncomeService
                 return ServiceResult.Fail("Input is invalid");
             }
 
-            List<IncomeResponse> incomes = await _incomeRepository.GetIncomesAsync(accountEmail);
-            IncomeResponse? existing = incomes.FirstOrDefault(x => x.Id == request.Id);
-            if (existing == null)
+            List<Income> incomes = await _incomeRepository.GetIncomesAsync(accountEmail);
+            Income? previous = incomes.FirstOrDefault(x => x.Id == request.Id);
+            if (previous == null)
             {
                 await _unitOfWork.RollbackAsync();
                 return ServiceResult.Fail("Input is invalid");
             }
 
-            AssetResponse? assetToValidate = await _assetRepository.GetAssetAsync(accountEmail, existing.DepositMyAssetProductName ?? "");
-            if (assetToValidate?.Deleted == true)
+            Asset? prevAsset = await _assetRepository.GetAssetAsync(accountEmail, previous.DepositMyAssetProductName ?? "");
+            if (prevAsset?.Deleted == true)
             {
                 await _unitOfWork.RollbackAsync();
                 return ServiceResult.Fail("Actions cannot be executed with assets that have already been deleted.");
             }
 
-            string previousAssetName = existing.DepositMyAssetProductName ?? "";
-            decimal previousAmount = existing.Amount;
+            Asset? newAsset = await _assetRepository.GetAssetAsync(accountEmail, request.DepositMyAssetProductName ?? "");
+            string newCurrency = newAsset?.Balance.Currency ?? prevAsset?.Balance.Currency ?? string.Empty;
 
-            existing.MainClass = request.MainClass;
-            existing.SubClass = request.SubClass;
-            existing.Content = request.Content;
-            existing.Amount = Math.Abs(request.Amount);
-            existing.DepositMyAssetProductName = request.DepositMyAssetProductName;
-            existing.Note = request.Note;
-            existing.Created = request.Created;
-            existing.Updated = DateTime.UtcNow;
-            await _incomeRepository.UpdateIncomeAsync(existing.Adapt<IncomeRequest>());
+            string previousAssetName = previous.DepositMyAssetProductName ?? "";
+            decimal previousAmount = previous.Amount.Amount;
+            string previousCurrency = prevAsset?.Balance.Currency ?? string.Empty;
 
-            if (existing.DepositMyAssetProductName == previousAssetName)
+            var updateResult = previous.Update(request.MainClass, request.SubClass, request.Content,
+                Math.Abs(request.Amount), newCurrency, request.DepositMyAssetProductName, request.Note);
+            if (updateResult.IsError)
             {
-                AssetResponse? asset = await _assetRepository.GetAssetAsync(accountEmail, existing.DepositMyAssetProductName!);
-                if (asset != null)
+                await _unitOfWork.RollbackAsync();
+                return ServiceResult.Fail(updateResult.FirstError.Description);
+            }
+
+            await _incomeRepository.UpdateIncomeAsync(previous);
+
+            if (previous.DepositMyAssetProductName == previousAssetName)
+            {
+                if (prevAsset != null)
                 {
-                    asset.Amount = asset.Amount - Math.Abs(previousAmount) + Math.Abs(existing.Amount);
-                    asset.Updated = DateTime.UtcNow;
-                    await _assetRepository.UpdateAssetAsync(asset.Adapt<AssetRequest>());
+                    prevAsset.Withdraw(Math.Abs(previousAmount), previousCurrency);
+                    prevAsset.Deposit(previous.Amount.Amount, previousCurrency);
+                    await _assetRepository.UpdateAssetAsync(prevAsset);
                 }
             }
             else
             {
-                AssetResponse? oldAsset = await _assetRepository.GetAssetAsync(accountEmail, previousAssetName);
-                if (oldAsset != null)
+                if (prevAsset != null)
                 {
-                    oldAsset.Amount -= Math.Abs(previousAmount);
-                    oldAsset.Updated = DateTime.UtcNow;
-                    await _assetRepository.UpdateAssetAsync(oldAsset.Adapt<AssetRequest>());
+                    prevAsset.Withdraw(Math.Abs(previousAmount), previousCurrency);
+                    await _assetRepository.UpdateAssetAsync(prevAsset);
                 }
-
-                AssetResponse? newAsset = await _assetRepository.GetAssetAsync(accountEmail, existing.DepositMyAssetProductName!);
                 if (newAsset != null)
                 {
-                    newAsset.Amount += Math.Abs(existing.Amount);
-                    newAsset.Updated = DateTime.UtcNow;
-                    await _assetRepository.UpdateAssetAsync(newAsset.Adapt<AssetRequest>());
+                    newAsset.Deposit(previous.Amount.Amount, newCurrency);
+                    await _assetRepository.UpdateAssetAsync(newAsset);
                 }
             }
 
@@ -155,15 +163,15 @@ public class IncomeService : IIncomeService
         await _unitOfWork.BeginAsync();
         try
         {
-            List<IncomeResponse> incomes = await _incomeRepository.GetIncomesAsync(accountEmail);
-            IncomeResponse? income = incomes.FirstOrDefault(x => x.Id == id);
+            List<Income> incomes = await _incomeRepository.GetIncomesAsync(accountEmail);
+            Income? income = incomes.FirstOrDefault(x => x.Id == id);
             if (income == null)
             {
                 await _unitOfWork.RollbackAsync();
                 return ServiceResult.Fail("Input is invalid");
             }
 
-            AssetResponse? asset = await _assetRepository.GetAssetAsync(accountEmail, income.DepositMyAssetProductName ?? "");
+            Asset? asset = await _assetRepository.GetAssetAsync(accountEmail, income.DepositMyAssetProductName ?? "");
             if (asset?.Deleted == true)
             {
                 await _unitOfWork.RollbackAsync();
@@ -172,12 +180,11 @@ public class IncomeService : IIncomeService
 
             if (asset != null)
             {
-                asset.Amount -= Math.Abs(income.Amount);
-                asset.Updated = DateTime.UtcNow;
-                await _assetRepository.UpdateAssetAsync(asset.Adapt<AssetRequest>());
+                asset.Withdraw(Math.Abs(income.Amount.Amount), asset.Balance.Currency);
+                await _assetRepository.UpdateAssetAsync(asset);
             }
 
-            await _incomeRepository.DeleteIncomeAsync(income.Adapt<IncomeRequest>());
+            await _incomeRepository.DeleteIncomeAsync(income);
 
             await _unitOfWork.CommitAsync();
             return ServiceResult.Ok();

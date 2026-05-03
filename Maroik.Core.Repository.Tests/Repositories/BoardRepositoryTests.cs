@@ -1,8 +1,8 @@
-using Maroik.Core.Contract.Dtos;
+using Maroik.Core.Contract.Domains.Board;
 using Maroik.Core.PostgreSQL.Data;
-using Maroik.Core.PostgreSQL.Models;
 using Maroik.Core.Repository.Repositories;
 using Microsoft.EntityFrameworkCore;
+using EfBoard = Maroik.Core.PostgreSQL.Models.Board;
 
 namespace Maroik.Core.Repository.Tests.Repositories;
 
@@ -30,7 +30,7 @@ public class BoardRepositoryTests : IDisposable
 
     // ── Helpers ──────────────────────────────────────────────────────────────
 
-    private static Board MakeBoard(string type, string title, string writer = "Alice", bool deleted = false) => new()
+    private static EfBoard MakeBoard(string type, string title, string writer = "Alice", bool deleted = false) => new()
     {
         Type = type,
         Title = title,
@@ -44,7 +44,7 @@ public class BoardRepositoryTests : IDisposable
         Noticed = false
     };
 
-    private async Task SeedAsync(params Board[] boards)
+    private async Task SeedAsync(params EfBoard[] boards)
     {
         await _context.Boards.AddRangeAsync(boards);
         await _context.SaveChangesAsync();
@@ -61,7 +61,7 @@ public class BoardRepositoryTests : IDisposable
             MakeBoard("FreeForum", "World"),
             MakeBoard("PrivateNote", "Note1"));
 
-        IEnumerable<BoardResponse> result = await _sut.GetOneTypeBoardsAsync("FreeForum");
+        IEnumerable<Board> result = await _sut.GetOneTypeBoardsAsync("FreeForum");
 
         Assert.Equal(2, result.Count());
         Assert.All(result, b => Assert.Equal("FreeForum", b.Type));
@@ -71,7 +71,7 @@ public class BoardRepositoryTests : IDisposable
     [Fact]
     public async Task GetOneTypeBoardsAsync_ReturnsEmpty_WhenNoMatchingType()
     {
-        IEnumerable<BoardResponse> result = await _sut.GetOneTypeBoardsAsync("NonExistentType");
+        IEnumerable<Board> result = await _sut.GetOneTypeBoardsAsync("NonExistentType");
 
         Assert.Empty(result);
     }
@@ -83,9 +83,9 @@ public class BoardRepositoryTests : IDisposable
     public async Task GetBoardByIdAsync_ReturnsBoard_WhenFoundAndNotDeleted()
     {
         await SeedAsync(MakeBoard("FreeForum", "My Post"));
-        Board board = await _context.Boards.FirstAsync(TestContext.Current.CancellationToken);
+        EfBoard efBoard = await _context.Boards.FirstAsync(TestContext.Current.CancellationToken);
 
-        BoardResponse? result = await _sut.GetBoardByIdAsync(board.Id);
+        Board? result = await _sut.GetBoardByIdAsync(efBoard.Id);
 
         Assert.NotNull(result);
         Assert.Equal("My Post", result.Title);
@@ -96,9 +96,9 @@ public class BoardRepositoryTests : IDisposable
     public async Task GetBoardByIdAsync_ReturnsNull_WhenBoardIsDeleted()
     {
         await SeedAsync(MakeBoard("FreeForum", "Deleted Post", deleted: true));
-        Board board = await _context.Boards.FirstAsync(TestContext.Current.CancellationToken);
+        EfBoard efBoard = await _context.Boards.FirstAsync(TestContext.Current.CancellationToken);
 
-        BoardResponse? result = await _sut.GetBoardByIdAsync(board.Id);
+        Board? result = await _sut.GetBoardByIdAsync(efBoard.Id);
 
         Assert.Null(result);
     }
@@ -107,7 +107,7 @@ public class BoardRepositoryTests : IDisposable
     [Fact]
     public async Task GetBoardByIdAsync_ReturnsNull_WhenIdDoesNotExist()
     {
-        BoardResponse? result = await _sut.GetBoardByIdAsync(99999);
+        Board? result = await _sut.GetBoardByIdAsync(99999);
 
         Assert.Null(result);
     }
@@ -118,22 +118,22 @@ public class BoardRepositoryTests : IDisposable
     [Fact]
     public async Task WriteBoardAsync_AddsBoardToDatabase()
     {
-        var request = new BoardRequest
-        {
-            Type = "FreeForum",
-            Title = "New Post",
-            Content = "Post content",
-            Writer = "Alice",
-            Created = DateTime.UtcNow,
-            Updated = DateTime.UtcNow,
-            Deleted = false,
-            Locked = false,
-            Noticed = false
-        };
+        var board = Board.Reconstitute(
+            id: 0,
+            type: "FreeForum",
+            title: "New Post",
+            content: "Post content",
+            writer: "Alice",
+            created: DateTime.UtcNow,
+            updated: DateTime.UtcNow,
+            view: 0,
+            deleted: false,
+            locked: false,
+            noticed: false);
 
-        await _sut.WriteBoardAsync(request);
+        await _sut.WriteBoardAsync(board);
 
-        Board? saved = await _context.Boards.FirstOrDefaultAsync(b => b.Title == "New Post", TestContext.Current.CancellationToken);
+        EfBoard? saved = await _context.Boards.FirstOrDefaultAsync(b => b.Title == "New Post", TestContext.Current.CancellationToken);
         Assert.NotNull(saved);
         Assert.Equal("Alice", saved.Writer);
     }
@@ -145,25 +145,24 @@ public class BoardRepositoryTests : IDisposable
     public async Task UpdateBoardAsync_UpdatesExistingBoard()
     {
         await SeedAsync(MakeBoard("FreeForum", "Original Title"));
-        Board board = await _context.Boards.FirstAsync(TestContext.Current.CancellationToken);
+        EfBoard efBoard = await _context.Boards.FirstAsync(TestContext.Current.CancellationToken);
 
-        var request = new BoardRequest
-        {
-            Id = board.Id,
-            Type = "FreeForum",
-            Title = "Updated Title",
-            Content = "Updated content",
-            Writer = "Alice",
-            Created = board.Created,
-            Updated = DateTime.UtcNow,
-            Deleted = false,
-            Locked = false,
-            Noticed = false
-        };
+        var board = Board.Reconstitute(
+            id: efBoard.Id,
+            type: "FreeForum",
+            title: "Updated Title",
+            content: "Updated content",
+            writer: "Alice",
+            created: efBoard.Created,
+            updated: DateTime.UtcNow,
+            view: efBoard.View,
+            deleted: false,
+            locked: false,
+            noticed: false);
 
-        await _sut.UpdateBoardAsync(request);
+        await _sut.UpdateBoardAsync(board);
 
-        Board? updated = await _context.Boards.FirstOrDefaultAsync(b => b.Id == board.Id, TestContext.Current.CancellationToken);
+        EfBoard? updated = await _context.Boards.FirstOrDefaultAsync(b => b.Id == efBoard.Id, TestContext.Current.CancellationToken);
         Assert.NotNull(updated);
         Assert.Equal("Updated Title", updated.Title);
     }
@@ -176,26 +175,24 @@ public class BoardRepositoryTests : IDisposable
     {
         // DeleteBoardAsync uses Update (soft delete) rather than Remove
         await SeedAsync(MakeBoard("FreeForum", "Post to Delete"));
-        Board board = await _context.Boards.FirstAsync(TestContext.Current.CancellationToken);
+        EfBoard efBoard = await _context.Boards.FirstAsync(TestContext.Current.CancellationToken);
 
-        var request = new BoardRequest
-        {
-            Id = board.Id,
-            Type = board.Type,
-            Title = board.Title,
-            Content = board.Content,
-            Writer = board.Writer,
-            Created = board.Created,
-            Updated = DateTime.UtcNow,
-            View = board.View,
-            Deleted = true,   // soft-delete
-            Locked = board.Locked,
-            Noticed = board.Noticed
-        };
+        var board = Board.Reconstitute(
+            id: efBoard.Id,
+            type: efBoard.Type ?? "",
+            title: efBoard.Title ?? "",
+            content: efBoard.Content,
+            writer: efBoard.Writer ?? "",
+            created: efBoard.Created,
+            updated: DateTime.UtcNow,
+            view: efBoard.View,
+            deleted: true,   // soft-delete
+            locked: efBoard.Locked,
+            noticed: efBoard.Noticed);
 
-        await _sut.DeleteBoardAsync(request);
+        await _sut.DeleteBoardAsync(board);
 
-        Board? result = await _context.Boards.FirstOrDefaultAsync(b => b.Id == board.Id, TestContext.Current.CancellationToken);
+        EfBoard? result = await _context.Boards.FirstOrDefaultAsync(b => b.Id == efBoard.Id, TestContext.Current.CancellationToken);
         Assert.NotNull(result);
         Assert.True(result.Deleted);
     }

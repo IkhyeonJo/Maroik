@@ -1,8 +1,8 @@
-using Maroik.Core.Contract.Dtos;
+using Maroik.Core.Contract.Domains.Finance;
 using Maroik.Core.PostgreSQL.Data;
-using Maroik.Core.PostgreSQL.Models;
 using Maroik.Core.Repository.Repositories;
 using Microsoft.EntityFrameworkCore;
+using EfIncome = Maroik.Core.PostgreSQL.Models.Income;
 
 namespace Maroik.Core.Repository.Tests.Repositories;
 
@@ -31,7 +31,7 @@ public class IncomeRepositoryTests : IDisposable
 
     // ── Helpers ──────────────────────────────────────────────────────────────
 
-    private static Income MakeIncome(string email, string assetName, decimal amount = 500m) => new()
+    private static EfIncome MakeIncome(string email, string assetName, decimal amount = 500m) => new()
     {
         AccountEmail = email,
         DepositMyAssetProductName = assetName,
@@ -43,7 +43,7 @@ public class IncomeRepositoryTests : IDisposable
         Updated = DateTime.UtcNow
     };
 
-    private async Task SeedAsync(params Income[] incomes)
+    private async Task SeedAsync(params EfIncome[] incomes)
     {
         await _context.Incomes.AddRangeAsync(incomes);
         await _context.SaveChangesAsync();
@@ -60,17 +60,17 @@ public class IncomeRepositoryTests : IDisposable
             MakeIncome("alice@example.com", "SavingsB"),
             MakeIncome("bob@example.com", "BobSavings"));
 
-        List<IncomeResponse> result = await _sut.GetIncomesAsync("alice@example.com");
+        List<Income> result = await _sut.GetIncomesAsync("alice@example.com");
 
         Assert.Equal(2, result.Count);
-        Assert.All(result, i => Assert.Equal("alice@example.com", i.AccountEmail));
+        Assert.All(result, i => Assert.Equal("alice@example.com", i.AccountEmail.Value));
     }
 
     /// <summary>Verifies that <c>GetIncomesAsync</c> returns empty when no incomes for email.</summary>
     [Fact]
     public async Task GetIncomesAsync_ReturnsEmpty_WhenNoIncomesForEmail()
     {
-        List<IncomeResponse> result = await _sut.GetIncomesAsync("nobody@example.com");
+        List<Income> result = await _sut.GetIncomesAsync("nobody@example.com");
 
         Assert.Empty(result);
     }
@@ -81,21 +81,22 @@ public class IncomeRepositoryTests : IDisposable
     [Fact]
     public async Task CreateIncomeAsync_AddsIncomeToDatabase()
     {
-        var request = new IncomeRequest
-        {
-            AccountEmail = "alice@example.com",
-            DepositMyAssetProductName = "SavingsAccount",
-            MainClass = "RegularIncome",
-            SubClass = "LaborIncome",
-            Content = "Monthly salary",
-            Amount = 3000m,
-            Created = DateTime.UtcNow,
-            Updated = DateTime.UtcNow
-        };
+        var income = Income.Reconstitute(
+            id: 0,
+            accountEmail: "alice@example.com",
+            mainClass: "RegularIncome",
+            subClass: "LaborIncome",
+            content: "Monthly salary",
+            amount: 3000m,
+            monetaryUnit: string.Empty,
+            depositMyAssetProductName: "SavingsAccount",
+            note: null,
+            created: DateTime.UtcNow,
+            updated: DateTime.UtcNow);
 
-        await _sut.CreateIncomeAsync(request);
+        await _sut.CreateIncomeAsync(income);
 
-        Income? saved = await _context.Incomes.FirstOrDefaultAsync(
+        EfIncome? saved = await _context.Incomes.FirstOrDefaultAsync(
             i => i.AccountEmail == "alice@example.com" && i.Content == "Monthly salary", TestContext.Current.CancellationToken);
         Assert.NotNull(saved);
         Assert.Equal(3000m, saved.Amount);
@@ -107,26 +108,26 @@ public class IncomeRepositoryTests : IDisposable
     [Fact]
     public async Task UpdateIncomeAsync_UpdatesExistingIncome()
     {
-        var income = MakeIncome("alice@example.com", "SavingsAccount", amount: 500m);
-        await SeedAsync(income);
-        long id = income.Id;
+        var efIncome = MakeIncome("alice@example.com", "SavingsAccount", amount: 500m);
+        await SeedAsync(efIncome);
+        long id = efIncome.Id;
 
-        var request = new IncomeRequest
-        {
-            Id = id,
-            AccountEmail = "alice@example.com",
-            DepositMyAssetProductName = "SavingsAccount",
-            MainClass = "RegularIncome",
-            SubClass = "BusinessIncome",
-            Content = "Updated Content",
-            Amount = 750m,
-            Created = income.Created,
-            Updated = DateTime.UtcNow
-        };
+        var income = Income.Reconstitute(
+            id: id,
+            accountEmail: "alice@example.com",
+            mainClass: "RegularIncome",
+            subClass: "BusinessIncome",
+            content: "Updated Content",
+            amount: 750m,
+            monetaryUnit: string.Empty,
+            depositMyAssetProductName: "SavingsAccount",
+            note: null,
+            created: efIncome.Created,
+            updated: DateTime.UtcNow);
 
-        await _sut.UpdateIncomeAsync(request);
+        await _sut.UpdateIncomeAsync(income);
 
-        Income? updated = await _context.Incomes.FirstOrDefaultAsync(i => i.Id == id, TestContext.Current.CancellationToken);
+        EfIncome? updated = await _context.Incomes.FirstOrDefaultAsync(i => i.Id == id, TestContext.Current.CancellationToken);
         Assert.NotNull(updated);
         Assert.Equal(750m, updated.Amount);
         Assert.Equal("BusinessIncome", updated.SubClass);
@@ -138,24 +139,26 @@ public class IncomeRepositoryTests : IDisposable
     [Fact]
     public async Task DeleteIncomeAsync_RemovesIncomeFromDatabase()
     {
-        var income = MakeIncome("alice@example.com", "SavingsAccount");
-        await SeedAsync(income);
-        long id = income.Id;
+        var efIncome = MakeIncome("alice@example.com", "SavingsAccount");
+        await SeedAsync(efIncome);
+        long id = efIncome.Id;
 
-        var request = new IncomeRequest
-        {
-            Id = id,
-            AccountEmail = "alice@example.com",
-            DepositMyAssetProductName = "SavingsAccount",
-            MainClass = "RegularIncome",
-            SubClass = "LaborIncome",
-            Content = "Salary",
-            Amount = 500m
-        };
+        var income = Income.Reconstitute(
+            id: id,
+            accountEmail: "alice@example.com",
+            mainClass: "RegularIncome",
+            subClass: "LaborIncome",
+            content: "Salary",
+            amount: 500m,
+            monetaryUnit: string.Empty,
+            depositMyAssetProductName: "SavingsAccount",
+            note: null,
+            created: efIncome.Created,
+            updated: efIncome.Updated);
 
-        await _sut.DeleteIncomeAsync(request);
+        await _sut.DeleteIncomeAsync(income);
 
-        Income? deleted = await _context.Incomes.FirstOrDefaultAsync(i => i.Id == id, TestContext.Current.CancellationToken);
+        EfIncome? deleted = await _context.Incomes.FirstOrDefaultAsync(i => i.Id == id, TestContext.Current.CancellationToken);
         Assert.Null(deleted);
     }
 
@@ -163,25 +166,27 @@ public class IncomeRepositoryTests : IDisposable
     [Fact]
     public async Task DeleteIncomeAsync_DoesNotAffectOtherIncomes()
     {
-        var income1 = MakeIncome("alice@example.com", "SavingsA");
-        var income2 = MakeIncome("alice@example.com", "SavingsB");
-        await SeedAsync(income1, income2);
+        var efIncome1 = MakeIncome("alice@example.com", "SavingsA");
+        var efIncome2 = MakeIncome("alice@example.com", "SavingsB");
+        await SeedAsync(efIncome1, efIncome2);
 
-        var request = new IncomeRequest
-        {
-            Id = income1.Id,
-            AccountEmail = "alice@example.com",
-            DepositMyAssetProductName = "SavingsA",
-            MainClass = "RegularIncome",
-            SubClass = "LaborIncome",
-            Content = "Salary",
-            Amount = 500m
-        };
+        var income = Income.Reconstitute(
+            id: efIncome1.Id,
+            accountEmail: "alice@example.com",
+            mainClass: "RegularIncome",
+            subClass: "LaborIncome",
+            content: "Salary",
+            amount: 500m,
+            monetaryUnit: string.Empty,
+            depositMyAssetProductName: "SavingsA",
+            note: null,
+            created: efIncome1.Created,
+            updated: efIncome1.Updated);
 
-        await _sut.DeleteIncomeAsync(request);
+        await _sut.DeleteIncomeAsync(income);
 
-        List<Income> remaining = await _context.Incomes.ToListAsync(TestContext.Current.CancellationToken);
+        List<EfIncome> remaining = await _context.Incomes.ToListAsync(TestContext.Current.CancellationToken);
         Assert.Single(remaining);
-        Assert.Equal(income2.Id, remaining[0].Id);
+        Assert.Equal(efIncome2.Id, remaining[0].Id);
     }
 }

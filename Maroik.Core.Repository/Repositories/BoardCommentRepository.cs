@@ -1,41 +1,30 @@
-using Mapster;
-using Maroik.Core.Contract.Dtos;
+using Maroik.Core.Contract.Domains.Board;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.PostgreSQL.Data;
-using Maroik.Core.PostgreSQL.Models;
 using Microsoft.EntityFrameworkCore;
+using OrmBoardComment = Maroik.Core.PostgreSQL.Models.BoardComment;
 
 namespace Maroik.Core.Repository.Repositories;
 
 /// <summary>EF Core implementation of <see cref="IBoardCommentRepository"/>.</summary>
-public class BoardCommentRepository : IBoardCommentRepository
+public class BoardCommentRepository(ApplicationDbContext context) : IBoardCommentRepository
 {
-    private readonly ApplicationDbContext _context;
-
-    /// <summary>Initializes a new instance of <see cref="BoardCommentRepository"/> with <paramref name="context"/>.</summary>
-    public BoardCommentRepository(ApplicationDbContext context)
-    {
-        _context = context;
-    }
+    /// <inheritdoc />
+    public async Task<IEnumerable<BoardComment>> GetOneBoardCommentsAsync(long boardId)
+        => (await context.BoardComments.Where(x => x.BoardId == boardId).OrderBy(m => m.Order).ToListAsync()).Select(ToDomain);
 
     /// <inheritdoc />
-    public async Task<IEnumerable<BoardCommentResponse>> GetOneBoardCommentsAsync(long boardId)
+    public async Task<BoardComment?> GetBoardCommentAsync(int id)
     {
-        return (await _context.BoardComments.Where(x => x.BoardId == boardId).OrderBy(m => m.Order).ToListAsync()).Adapt<List<BoardCommentResponse>>();
-    }
-
-    /// <inheritdoc />
-    public async Task<BoardCommentResponse?> GetBoardCommentAsync(int id)
-    {
-        BoardComment? comment = await _context.BoardComments.Where(x => x.Id == id).FirstOrDefaultAsync();
-        return comment?.Adapt<BoardCommentResponse>();
+        OrmBoardComment? entity = await context.BoardComments.Where(x => x.Id == id).FirstOrDefaultAsync();
+        return entity == null ? null : ToDomain(entity);
     }
 
     /// <inheritdoc />
     public async Task<Dictionary<long, int>> GetCommentCountsByBoardIdsAsync(IEnumerable<long> boardIds)
     {
         List<long> ids = boardIds.ToList();
-        Dictionary<long, int> counts = await _context.BoardComments
+        Dictionary<long, int> counts = await context.BoardComments
             .Where(x => ids.Contains(x.BoardId) && !x.Deleted)
             .GroupBy(x => x.BoardId)
             .Select(g => new { BoardId = g.Key, Count = g.Count() })
@@ -46,16 +35,32 @@ public class BoardCommentRepository : IBoardCommentRepository
     }
 
     /// <inheritdoc />
-    public async Task WriteBoardCommentAsync(BoardCommentRequest request)
+    public async Task WriteBoardCommentAsync(BoardComment comment)
     {
-        _ = await _context.BoardComments.AddAsync(request.Adapt<BoardComment>());
-        _ = await _context.SaveChangesAsync();
+        _ = await context.BoardComments.AddAsync(ToEntity(comment));
+        _ = await context.SaveChangesAsync();
     }
 
     /// <inheritdoc />
-    public async Task DeleteBoardCommentAsync(BoardCommentRequest request)
+    public async Task DeleteBoardCommentAsync(BoardComment comment)
     {
-        _ = _context.BoardComments.Update(request.Adapt<BoardComment>());
-        _ = await _context.SaveChangesAsync();
+        _ = context.BoardComments.Update(ToEntity(comment));
+        _ = await context.SaveChangesAsync();
     }
+
+    private static BoardComment ToDomain(OrmBoardComment e) => BoardComment.Reconstitute(
+        e.Id, e.BoardId, e.Order, e.AvatarImagePath, e.Writer ?? string.Empty,
+        e.Content, e.Created, e.Deleted);
+
+    private static OrmBoardComment ToEntity(BoardComment c) => new()
+    {
+        Id = c.Id,
+        BoardId = c.BoardId,
+        Order = c.Order,
+        AvatarImagePath = c.AvatarImagePath,
+        Writer = c.Writer,
+        Content = c.Content,
+        Created = c.Created,
+        Deleted = c.Deleted
+    };
 }

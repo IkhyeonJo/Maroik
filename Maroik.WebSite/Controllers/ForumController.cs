@@ -89,21 +89,6 @@ public class ForumController : BaseController
             boardInputViewModel.Content = htmlDocument.DocumentNode.OuterHtml;
             #endregion
 
-            if ((boardInputViewModel.Title?.Length ?? 0) is not (> 0 and <= 100))
-                return Json(new { result = false, error = _localizer["Title length is must be between 1 and 100 characters."].Value });
-
-            if ((boardInputViewModel.Content?.Length ?? 0) > 16384)
-                return Json(new { result = false, error = _localizer["content length is must be between 0 and 16384 characters."].Value });
-
-            if (boardInputViewModel.UploadedFile != null)
-            {
-                if (Path.GetExtension(boardInputViewModel.UploadedFile.FileName) != ".zip")
-                    return Json(new { result = false, error = _localizer["Only zip extension allowed."].Value });
-
-                if (boardInputViewModel.UploadedFile.Length is not (> 0 and <= 10485760))
-                    return Json(new { result = false, error = _localizer["uploaded file size must be smaller than 10MB."].Value });
-            }
-
             bool isAccountSessionExist = _sessionService.GetAccount() != null;
             if (!isAccountSessionExist)
                 return Json(new { result = false, error = _localizer["Please Login to write board"].Value });
@@ -672,21 +657,6 @@ public class ForumController : BaseController
             }
             boardInputViewModel.Content = htmlDocument.DocumentNode.OuterHtml;
             #endregion
-
-            if ((boardInputViewModel.Title?.Length ?? 0) is not (> 0 and <= 100))
-                return Json(new { result = false, error = _localizer["Title length is must be between 1 and 100 characters."].Value });
-
-            if ((boardInputViewModel.Content?.Length ?? 0) > 16384)
-                return Json(new { result = false, error = _localizer["content length is must be between 0 and 16384 characters."].Value });
-
-            if (boardInputViewModel.UploadedFile != null)
-            {
-                if (Path.GetExtension(boardInputViewModel.UploadedFile.FileName) != ".zip")
-                    return Json(new { result = false, error = _localizer["Only zip extension allowed."].Value });
-
-                if (boardInputViewModel.UploadedFile.Length is not (> 0 and <= 10485760))
-                    return Json(new { result = false, error = _localizer["uploaded file size must be smaller than 10MB."].Value });
-            }
 
             bool isAccountSessionExist = _sessionService.GetAccount() != null;
             if (!isAccountSessionExist)

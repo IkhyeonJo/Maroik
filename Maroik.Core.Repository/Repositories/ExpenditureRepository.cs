@@ -1,33 +1,22 @@
-using Mapster;
-using Maroik.Core.Contract.Dtos;
+using Maroik.Core.Contract.Domains.Finance;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.PostgreSQL.Data;
-using Maroik.Core.PostgreSQL.Models;
 using Microsoft.EntityFrameworkCore;
+using OrmExpenditure = Maroik.Core.PostgreSQL.Models.Expenditure;
 
 namespace Maroik.Core.Repository.Repositories;
 
 /// <summary>EF Core implementation of <see cref="IExpenditureRepository"/>.</summary>
-public class ExpenditureRepository : IExpenditureRepository
+public class ExpenditureRepository(ApplicationDbContext context) : IExpenditureRepository
 {
-    private readonly ApplicationDbContext _context;
-
-    /// <summary>Initializes a new instance of <see cref="ExpenditureRepository"/> with <paramref name="context"/>.</summary>
-    public ExpenditureRepository(ApplicationDbContext context)
-    {
-        _context = context;
-    }
+    /// <inheritdoc />
+    public async Task<List<Expenditure>> GetExpendituresAsync(string email)
+        => (await context.Expenditures.Where(x => x.AccountEmail == email).ToListAsync()).Select(ToDomain).ToList();
 
     /// <inheritdoc />
-    public async Task<List<ExpenditureResponse>> GetExpendituresAsync(string email)
+    public async Task<List<Expenditure>> GetCurrentYearExpendituresAsync(string email, string year, string timeZoneIanaId)
     {
-        return (await _context.Expenditures.Where(x => x.AccountEmail == email).ToListAsync()).Adapt<List<ExpenditureResponse>>();
-    }
-
-    /// <inheritdoc />
-    public async Task<List<ExpenditureResponse>> GetCurrentYearExpendituresAsync(string email, string year, string timeZoneIanaId)
-    {
-        return (await _context.Expenditures.FromSqlInterpolated
+        return (await context.Expenditures.FromSqlInterpolated
         (
             $"""
              SELECT *
@@ -36,13 +25,13 @@ public class ExpenditureRepository : IExpenditureRepository
                  TO_CHAR("Created" AT TIME ZONE 'UTC' AT TIME ZONE {timeZoneIanaId}, 'YYYY') = {year}
                  AND "AccountEmail" = {email}
              """
-        ).ToListAsync()).Adapt<List<ExpenditureResponse>>();
+        ).ToListAsync()).Select(ToDomain).ToList();
     }
 
     /// <inheritdoc />
-    public async Task<List<ExpenditureResponse>> GetCurrentYearMonthExpendituresAsync(string email, string yearMonth, string timeZoneIanaId)
+    public async Task<List<Expenditure>> GetCurrentYearMonthExpendituresAsync(string email, string yearMonth, string timeZoneIanaId)
     {
-        return (await _context.Expenditures.FromSqlInterpolated
+        return (await context.Expenditures.FromSqlInterpolated
         (
             $"""
              SELECT *
@@ -51,34 +40,34 @@ public class ExpenditureRepository : IExpenditureRepository
                  TO_CHAR("Created" AT TIME ZONE 'UTC' AT TIME ZONE {timeZoneIanaId}, 'YYYY-MM') = {yearMonth}
                  AND "AccountEmail" = {email}
              """
-        ).ToListAsync()).Adapt<List<ExpenditureResponse>>();
+        ).ToListAsync()).Select(ToDomain).ToList();
     }
 
     /// <inheritdoc />
-    public async Task CreateExpenditureAsync(ExpenditureRequest request)
+    public async Task CreateExpenditureAsync(Expenditure expenditure)
     {
-        _ = await _context.Expenditures.AddAsync(request.Adapt<Expenditure>());
-        _ = await _context.SaveChangesAsync();
+        _ = await context.Expenditures.AddAsync(ToEntity(expenditure));
+        _ = await context.SaveChangesAsync();
     }
 
     /// <inheritdoc />
-    public async Task UpdateExpenditureAsync(ExpenditureRequest request)
+    public async Task UpdateExpenditureAsync(Expenditure expenditure)
     {
-        _ = _context.Expenditures.Update(request.Adapt<Expenditure>());
-        _ = await _context.SaveChangesAsync();
+        _ = context.Expenditures.Update(ToEntity(expenditure));
+        _ = await context.SaveChangesAsync();
     }
 
     /// <inheritdoc />
-    public async Task DeleteExpenditureAsync(ExpenditureRequest request)
+    public async Task DeleteExpenditureAsync(Expenditure expenditure)
     {
-        _ = _context.Expenditures.Remove(request.Adapt<Expenditure>());
-        _ = await _context.SaveChangesAsync();
+        _ = context.Expenditures.Remove(ToEntity(expenditure));
+        _ = await context.SaveChangesAsync();
     }
 
     /// <inheritdoc />
     public async Task<int> UpdateMyDepositAssetWithProductNameAsync(string accountEmail, string oldMyDepositAsset, string newMyDepositAsset)
     {
-        return await _context.Database.ExecuteSqlInterpolatedAsync
+        return await context.Database.ExecuteSqlInterpolatedAsync
         (
             $"""
               UPDATE "Expenditure"
@@ -87,4 +76,25 @@ public class ExpenditureRepository : IExpenditureRepository
               """
         );
     }
+
+    private static Expenditure ToDomain(OrmExpenditure e) => Expenditure.Reconstitute(
+        e.Id, e.AccountEmail ?? string.Empty, e.MainClass ?? string.Empty,
+        e.SubClass ?? string.Empty, e.Content, e.Amount, string.Empty,
+        e.PaymentMethod ?? string.Empty, e.MyDepositAsset, e.Note,
+        e.Created, e.Updated);
+
+    private static OrmExpenditure ToEntity(Expenditure e) => new()
+    {
+        Id = e.Id,
+        AccountEmail = e.AccountEmail.Value,
+        MainClass = e.MainClass,
+        SubClass = e.SubClass,
+        Content = e.Content,
+        Amount = e.Amount.Amount,
+        PaymentMethod = e.PaymentMethod,
+        MyDepositAsset = e.MyDepositAsset,
+        Note = e.Note,
+        Created = e.Created,
+        Updated = e.Updated
+    };
 }

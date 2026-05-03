@@ -1,57 +1,61 @@
-using Mapster;
-using Maroik.Core.Contract.Dtos;
+using Maroik.Core.Contract.Domains.Board;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.PostgreSQL.Data;
-using Maroik.Core.PostgreSQL.Models;
 using Microsoft.EntityFrameworkCore;
+using OrmFile = Maroik.Core.PostgreSQL.Models.BoardAttachedFile;
 
 namespace Maroik.Core.Repository.Repositories;
 
 /// <summary>EF Core implementation of <see cref="IBoardAttachedFileRepository"/>.</summary>
-public class BoardAttachedFileRepository : IBoardAttachedFileRepository
+public class BoardAttachedFileRepository(ApplicationDbContext context) : IBoardAttachedFileRepository
 {
-    private readonly ApplicationDbContext _context;
+    /// <inheritdoc />
+    public async Task<List<BoardAttachedFile>> GetAllAsync()
+        => (await context.BoardAttachedFiles.ToListAsync()).Select(ToDomain).ToList();
 
-    /// <summary>Initializes a new instance of <see cref="BoardAttachedFileRepository"/> with <paramref name="context"/>.</summary>
-    public BoardAttachedFileRepository(ApplicationDbContext context)
+    /// <inheritdoc />
+    public async Task<BoardAttachedFile?> GetByBoardIdAsync(long boardId)
     {
-        _context = context;
+        OrmFile? file = await context.BoardAttachedFiles.FirstOrDefaultAsync(x => x.BoardId == boardId);
+        return file == null ? null : ToDomain(file);
     }
 
     /// <inheritdoc />
-    public async Task<List<BoardAttachedFileResponse>> GetAllAsync()
-    {
-        return (await _context.BoardAttachedFiles.ToListAsync()).Adapt<List<BoardAttachedFileResponse>>();
-    }
-
-    /// <inheritdoc />
-    public async Task<BoardAttachedFileResponse?> GetByBoardIdAsync(long boardId)
-    {
-        BoardAttachedFile? file = await _context.BoardAttachedFiles.FirstOrDefaultAsync(x => x.BoardId == boardId);
-        return file?.Adapt<BoardAttachedFileResponse>();
-    }
-
-    /// <inheritdoc />
-    public async Task<Dictionary<long, BoardAttachedFileResponse?>> GetByBoardIdsAsync(IEnumerable<long> boardIds)
+    public async Task<Dictionary<long, BoardAttachedFile?>> GetByBoardIdsAsync(IEnumerable<long> boardIds)
     {
         List<long> ids = boardIds.ToList();
-        List<BoardAttachedFile> files = await _context.BoardAttachedFiles
+        List<OrmFile> files = await context.BoardAttachedFiles
             .Where(x => ids.Contains(x.BoardId))
             .ToListAsync();
-        return ids.ToDictionary(id => id, id => files.FirstOrDefault(f => f.BoardId == id)?.Adapt<BoardAttachedFileResponse>());
+        return ids.ToDictionary(
+            id => id,
+            id => (BoardAttachedFile?)(files.FirstOrDefault(f => f.BoardId == id) is { } f ? ToDomain(f) : null));
     }
 
     /// <inheritdoc />
-    public async Task SaveBoardAttachedFileAsync(BoardAttachedFileRequest request)
+    public async Task SaveBoardAttachedFileAsync(BoardAttachedFile file)
     {
-        _ = await _context.BoardAttachedFiles.AddAsync(request.Adapt<BoardAttachedFile>());
-        _ = await _context.SaveChangesAsync();
+        _ = await context.BoardAttachedFiles.AddAsync(ToEntity(file));
+        _ = await context.SaveChangesAsync();
     }
 
     /// <inheritdoc />
-    public async Task UpdateBoardAttachedFileAsync(BoardAttachedFileRequest request)
+    public async Task UpdateBoardAttachedFileAsync(BoardAttachedFile file)
     {
-        _ = _context.BoardAttachedFiles.Update(request.Adapt<BoardAttachedFile>());
-        _ = await _context.SaveChangesAsync();
+        _ = context.BoardAttachedFiles.Update(ToEntity(file));
+        _ = await context.SaveChangesAsync();
     }
+
+    private static BoardAttachedFile ToDomain(OrmFile e)
+        => BoardAttachedFile.Reconstitute(e.Id, e.BoardId, e.Size, e.Name, e.Extension, e.Path);
+
+    private static OrmFile ToEntity(BoardAttachedFile f) => new()
+    {
+        Id = f.Id,
+        BoardId = f.BoardId,
+        Size = f.Size,
+        Name = f.Name,
+        Extension = f.Extension,
+        Path = f.Path
+    };
 }

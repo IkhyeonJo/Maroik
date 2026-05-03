@@ -1,4 +1,4 @@
-using Maroik.Core.Contract.Dtos;
+using Maroik.Core.Contract.Domains.Board;
 
 namespace Maroik.Core.Contract.Interfaces;
 
@@ -9,17 +9,17 @@ namespace Maroik.Core.Contract.Interfaces;
 public interface IBoardAttachedFileRepository
 {
     /// <summary>Returns all attached-file records (admin / migration use).</summary>
-    public Task<List<BoardAttachedFileResponse>> GetAllAsync();
+    public Task<List<BoardAttachedFile>> GetAllAsync();
 
     /// <summary>Returns the attached file for the given board post, or null if none exists.</summary>
-    public Task<BoardAttachedFileResponse?> GetByBoardIdAsync(long boardId);
+    public Task<BoardAttachedFile?> GetByBoardIdAsync(long boardId);
 
     /// <summary>Batch-loads attached files for multiple board IDs; value is null when no file is attached.</summary>
-    public Task<Dictionary<long, BoardAttachedFileResponse?>> GetByBoardIdsAsync(IEnumerable<long> boardIds);
+    public Task<Dictionary<long, BoardAttachedFile?>> GetByBoardIdsAsync(IEnumerable<long> boardIds);
 
     /// <summary>Inserts a new attached-file record.</summary>
-    public Task SaveBoardAttachedFileAsync(BoardAttachedFileRequest request);
+    public Task SaveBoardAttachedFileAsync(BoardAttachedFile file);
 
     /// <summary>Updates the metadata (name, path, size, extension) of an existing attached-file record.</summary>
-    public Task UpdateBoardAttachedFileAsync(BoardAttachedFileRequest request);
+    public Task UpdateBoardAttachedFileAsync(BoardAttachedFile file);
 }

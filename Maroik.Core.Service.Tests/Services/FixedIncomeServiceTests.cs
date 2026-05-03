@@ -14,8 +14,9 @@ namespace Maroik.Core.Service.Tests.Services;
 public class FixedIncomeServiceTests
 {
     private readonly Mock<IFixedIncomeRepository> _fixedIncomeRepo = new();
+    private readonly Mock<IAssetRepository> _assetRepo = new();
 
-    private FixedIncomeService CreateSut() => new(_fixedIncomeRepo.Object);
+    private FixedIncomeService CreateSut() => new(_fixedIncomeRepo.Object, _assetRepo.Object);
 
     // ── Helpers ──────────────────────────────────────────────────────────────
 
@@ -92,6 +93,8 @@ public class FixedIncomeServiceTests
     [InlineData("IrregularIncome", "OtherIncome")]
     public async Task CreateAsync_ReturnsSuccess_ForAllValidClassCombinations(string mainClass, string subClass)
     {
+        _assetRepo.Setup(r => r.GetAssetAsync(It.IsAny<string>(), It.IsAny<string>()))
+            .ReturnsAsync(new AssetResponse { ProductName = "SavingsAccount", MonetaryUnit = "KRW" });
         _fixedIncomeRepo.Setup(r => r.CreateFixedIncomeAsync(It.IsAny<FixedIncomeRequest>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
@@ -104,6 +107,8 @@ public class FixedIncomeServiceTests
     [Fact]
     public async Task CreateAsync_SetsAccountEmailAndAbsoluteAmount()
     {
+        _assetRepo.Setup(r => r.GetAssetAsync(It.IsAny<string>(), It.IsAny<string>()))
+            .ReturnsAsync(new AssetResponse { ProductName = "SavingsAccount", MonetaryUnit = "KRW" });
         FixedIncomeRequest? captured = null;
         _fixedIncomeRepo.Setup(r => r.CreateFixedIncomeAsync(It.IsAny<FixedIncomeRequest>()))
             .Callback<FixedIncomeRequest>(req => captured = req)

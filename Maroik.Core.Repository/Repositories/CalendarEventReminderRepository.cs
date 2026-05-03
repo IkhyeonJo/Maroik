@@ -1,41 +1,48 @@
-using Mapster;
-using Maroik.Core.Contract.Dtos;
+using Maroik.Core.Contract.Domains.Calendar;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.PostgreSQL.Data;
-using Maroik.Core.PostgreSQL.Models;
 using Microsoft.EntityFrameworkCore;
+using OrmReminder = Maroik.Core.PostgreSQL.Models.CalendarEventReminder;
 
 namespace Maroik.Core.Repository.Repositories;
 
 /// <summary>EF Core implementation of <see cref="ICalendarEventReminderRepository"/>.</summary>
-public class CalendarEventReminderRepository : ICalendarEventReminderRepository
+public class CalendarEventReminderRepository(ApplicationDbContext context) : ICalendarEventReminderRepository
 {
-    private readonly ApplicationDbContext _context;
-
-    /// <summary>Initializes a new instance of <see cref="CalendarEventReminderRepository"/> with <paramref name="context"/>.</summary>
-    public CalendarEventReminderRepository(ApplicationDbContext context)
-    {
-        _context = context;
-    }
+    /// <inheritdoc />
+    public async Task<IEnumerable<CalendarEventReminder>> GetCalendarEventRemindersAsync(long calendarEventId)
+        => (await context.CalendarEventReminders
+            .Where(x => x.CalendarEventId == calendarEventId)
+            .ToListAsync())
+            .Select(ToDomain);
 
     /// <inheritdoc />
-    public async Task<IEnumerable<CalendarEventReminderResponse>> GetCalendarEventRemindersAsync(long calendarEventId)
+    public async Task CreateCalendarEventReminderAsync(CalendarEventReminder reminder)
     {
-        return (await _context.CalendarEventReminders.Where(x => x.CalendarEventId == calendarEventId).ToListAsync()).Adapt<List<CalendarEventReminderResponse>>();
-    }
-
-    /// <inheritdoc />
-    public async Task CreateCalendarEventReminderAsync(CalendarEventReminderRequest request)
-    {
-        _ = await _context.CalendarEventReminders.AddAsync(request.Adapt<CalendarEventReminder>());
-        _ = await _context.SaveChangesAsync();
+        _ = await context.CalendarEventReminders.AddAsync(ToEntity(reminder));
+        _ = await context.SaveChangesAsync();
     }
 
     /// <inheritdoc />
     public async Task<int> DeleteCalendarEventReminderAsync(long calendarEventId)
+        => await context.Database.ExecuteSqlInterpolatedAsync(
+            $"""DELETE FROM "CalendarEventReminder" WHERE "CalendarEventId" = {calendarEventId}""");
+
+    private static CalendarEventReminder ToDomain(OrmReminder e)
+        => CalendarEventReminder.Reconstitute(
+            e.Id, e.CalendarEventId, e.Method,
+            e.MinutesBeforeEvent, e.HoursBeforeEvent,
+            e.DaysBeforeEvent, e.WeeksBeforeEvent, e.TimesBeforeEvent);
+
+    private static OrmReminder ToEntity(CalendarEventReminder r) => new()
     {
-        return await _context.Database.ExecuteSqlInterpolatedAsync(
-            $"""DELETE FROM "CalendarEventReminder" WHERE "CalendarEventId" = {calendarEventId}"""
-        );
-    }
+        Id = r.Id,
+        CalendarEventId = r.CalendarEventId,
+        Method = r.Method,
+        MinutesBeforeEvent = r.MinutesBeforeEvent,
+        HoursBeforeEvent = r.HoursBeforeEvent,
+        DaysBeforeEvent = r.DaysBeforeEvent,
+        WeeksBeforeEvent = r.WeeksBeforeEvent,
+        TimesBeforeEvent = r.TimesBeforeEvent
+    };
 }

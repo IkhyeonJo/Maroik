@@ -83,8 +83,7 @@ builder.Services.AddRepositoryContext(builder.Configuration);
 #region Mapster
 var globalConfig = TypeAdapterConfig.GlobalSettings;
 globalConfig.Scan(
-    typeof(Maroik.Core.Repository.Mappings.MappingConfig).Assembly,  // Repository mappings (Entity <-> DTO)
-    typeof(Maroik.WebSite.Mappings.MappingConfig).Assembly            // WebSite mappings (DTO <-> ViewModel)
+    typeof(Maroik.WebSite.Mappings.MappingConfig).Assembly  // WebSite mappings (DTO <-> ViewModel)
 );
 builder.Services.AddSingleton(globalConfig);
 #endregion

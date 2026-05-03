@@ -37,4 +37,7 @@ public class ExpenditureRequest
 
     /// <summary>Optional free-text note.</summary>
     public string? Note { get; set; }
+
+    /// <summary>Currency code (e.g. "KRW", "USD"). Derived from the payment-method asset.</summary>
+    public string? MonetaryUnit { get; set; }
 }

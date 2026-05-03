@@ -1,40 +1,39 @@
-using Mapster;
-using Maroik.Core.Contract.Dtos;
+using Maroik.Core.Contract.Domains.Calendar;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.PostgreSQL.Data;
-using Maroik.Core.PostgreSQL.Models;
 using Microsoft.EntityFrameworkCore;
+using OrmCalendarShared = Maroik.Core.PostgreSQL.Models.CalendarShared;
 
 namespace Maroik.Core.Repository.Repositories;
 
 /// <summary>EF Core implementation of <see cref="ICalendarSharedRepository"/>.</summary>
-public class CalendarSharedRepository : ICalendarSharedRepository
+public class CalendarSharedRepository(ApplicationDbContext context) : ICalendarSharedRepository
 {
-    private readonly ApplicationDbContext _context;
+    /// <inheritdoc />
+    public async Task<List<CalendarShared>> GetCalendarSharedAsync()
+        => (await context.CalendarShareds.OrderBy(x => x.CalendarId).ToListAsync()).Select(ToDomain).ToList();
 
-    /// <summary>Initializes a new instance of <see cref="CalendarSharedRepository"/> with <paramref name="context"/>.</summary>
-    public CalendarSharedRepository(ApplicationDbContext context)
+    /// <inheritdoc />
+    public async Task CreateCalendarSharedAsync(CalendarShared shared)
     {
-        _context = context;
+        _ = await context.CalendarShareds.AddAsync(ToEntity(shared));
+        _ = await context.SaveChangesAsync();
     }
 
     /// <inheritdoc />
-    public async Task<List<CalendarSharedResponse>> GetCalendarSharedAsync()
+    public async Task UpdateCalendarSharedAsync(CalendarShared shared)
     {
-        return (await _context.CalendarShareds.OrderBy(x => x.CalendarId).ToListAsync()).Adapt<List<CalendarSharedResponse>>();
+        _ = context.CalendarShareds.Update(ToEntity(shared));
+        _ = await context.SaveChangesAsync();
     }
 
-    /// <inheritdoc />
-    public async Task CreateCalendarSharedAsync(CalendarSharedRequest request)
-    {
-        _ = await _context.CalendarShareds.AddAsync(request.Adapt<CalendarShared>());
-        _ = await _context.SaveChangesAsync();
-    }
+    private static CalendarShared ToDomain(OrmCalendarShared e)
+        => CalendarShared.Reconstitute(e.CalendarId, e.User, e.Anonymous);
 
-    /// <inheritdoc />
-    public async Task UpdateCalendarSharedAsync(CalendarSharedRequest request)
+    private static OrmCalendarShared ToEntity(CalendarShared s) => new()
     {
-        _ = _context.CalendarShareds.Update(request.Adapt<CalendarShared>());
-        _ = await _context.SaveChangesAsync();
-    }
+        CalendarId = s.Id,
+        User = s.User,
+        Anonymous = s.Anonymous
+    };
 }

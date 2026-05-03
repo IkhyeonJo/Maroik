@@ -1,6 +1,7 @@
+using Maroik.Core.Contract.Domains.Finance;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
-using Mapster;
+using Maroik.Core.Service.Mappers;
 
 namespace Maroik.Core.Service.Services;
 
@@ -15,27 +16,33 @@ public class AssetService : IAssetService
     private readonly IExpenditureRepository _expenditureRepository;
     private readonly IFixedExpenditureRepository _fixedExpenditureRepository;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IDomainEventDispatcher _dispatcher;
 
     /// <summary>Initializes a new instance of <see cref="AssetService"/> with the supplied dependencies.</summary>
     public AssetService(
         IAssetRepository assetRepository,
         IExpenditureRepository expenditureRepository,
         IFixedExpenditureRepository fixedExpenditureRepository,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        IDomainEventDispatcher dispatcher)
     {
         _assetRepository = assetRepository;
         _expenditureRepository = expenditureRepository;
         _fixedExpenditureRepository = fixedExpenditureRepository;
         _unitOfWork = unitOfWork;
+        _dispatcher = dispatcher;
     }
 
     /// <inheritdoc />
-    public Task<List<AssetResponse>> GetAssetsAsync(string accountEmail)
-        => _assetRepository.GetAssetsAsync(accountEmail);
+    public async Task<List<AssetResponse>> GetAssetsAsync(string accountEmail)
+        => (await _assetRepository.GetAssetsAsync(accountEmail)).Select(AssetMapper.ToResponse).ToList();
 
     /// <inheritdoc />
-    public Task<AssetResponse?> GetAssetAsync(string accountEmail, string productName)
-        => _assetRepository.GetAssetAsync(accountEmail, productName);
+    public async Task<AssetResponse?> GetAssetAsync(string accountEmail, string productName)
+    {
+        Asset? asset = await _assetRepository.GetAssetAsync(accountEmail, productName);
+        return asset == null ? null : AssetMapper.ToResponse(asset);
+    }
 
     /// <inheritdoc />
     public async Task<ServiceResult> CreateAsync(string accountEmail, AssetRequest request)
@@ -43,16 +50,24 @@ public class AssetService : IAssetService
         if (!IsValidAssetItem(request.Item))
             return ServiceResult.Fail("Input is invalid");
 
-        AssetResponse? existing = await _assetRepository.GetAssetAsync(accountEmail, request.ProductName ?? "");
+        Asset? existing = await _assetRepository.GetAssetAsync(accountEmail, request.ProductName ?? "");
         if (existing != null)
             return ServiceResult.Fail("The asset already exists.");
 
-        request.AccountEmail = accountEmail;
-        request.Created = DateTime.UtcNow;
-        request.Updated = DateTime.UtcNow;
-        request.Deleted = false;
+        var createResult = Asset.Create(
+            request.ProductName,
+            accountEmail,
+            request.Item,
+            request.Amount,
+            request.MonetaryUnit,
+            request.Note);
 
-        await _assetRepository.CreateAssetAsync(request);
+        if (createResult.IsError)
+            return ServiceResult.Fail(createResult.FirstError.Description);
+
+        var asset = createResult.Value;
+        await _assetRepository.CreateAssetAsync(asset);
+        await _dispatcher.DispatchAsync(asset.PopDomainEvents());
         return ServiceResult.Ok();
     }
 
@@ -68,22 +83,22 @@ public class AssetService : IAssetService
                 return ServiceResult.Fail("Input is invalid");
             }
 
-            AssetResponse? existing = await _assetRepository.GetAssetAsync(accountEmail, originalProductName);
-            if (existing == null)
+            Asset? asset = await _assetRepository.GetAssetAsync(accountEmail, originalProductName);
+            if (asset == null)
             {
                 await _unitOfWork.RollbackAsync();
                 return ServiceResult.Fail("Fail to find the asset by given product name");
             }
 
-            existing.ProductName = request.ProductName;
-            existing.Item = request.Item;
-            existing.Amount = request.Amount;
-            existing.MonetaryUnit = request.MonetaryUnit;
-            existing.Note = request.Note;
-            existing.Deleted = request.Deleted;
-            existing.Updated = DateTime.UtcNow;
+            string currency = request.MonetaryUnit ?? asset.Balance.Currency;
+            var updateResult = asset.Update(request.ProductName ?? originalProductName, request.Item ?? asset.Item, request.Amount, currency, request.Note, request.Deleted);
+            if (updateResult.IsError)
+            {
+                await _unitOfWork.RollbackAsync();
+                return ServiceResult.Fail(updateResult.FirstError.Description);
+            }
 
-            int updated = await _assetRepository.UpdateAssetWithProductNameAsync(existing.Adapt<AssetRequest>(), originalProductName);
+            int updated = await _assetRepository.UpdateAssetWithProductNameAsync(asset, originalProductName);
             if (updated <= 0)
             {
                 await _unitOfWork.RollbackAsync();
@@ -91,9 +106,9 @@ public class AssetService : IAssetService
             }
 
             await _fixedExpenditureRepository.UpdateMyDepositAssetWithProductNameAsync(
-                accountEmail, originalProductName, request.ProductName ?? "");
+                accountEmail, originalProductName, asset.ProductName);
             await _expenditureRepository.UpdateMyDepositAssetWithProductNameAsync(
-                accountEmail, originalProductName, request.ProductName ?? "");
+                accountEmail, originalProductName, asset.ProductName);
 
             await _unitOfWork.CommitAsync();
             return ServiceResult.Ok();
@@ -108,12 +123,13 @@ public class AssetService : IAssetService
     /// <inheritdoc />
     public async Task<ServiceResult> DeleteAsync(string accountEmail, string productName)
     {
-        AssetResponse? asset = await _assetRepository.GetAssetAsync(accountEmail, productName);
+        Asset? asset = await _assetRepository.GetAssetAsync(accountEmail, productName);
         if (asset == null)
             return ServiceResult.Fail("Fail to find the asset by given product name");
 
-        asset.Deleted = true;
-        await _assetRepository.UpdateAssetAsync(asset.Adapt<AssetRequest>());
+        asset.SoftDelete();
+
+        await _assetRepository.UpdateAssetAsync(asset);
         return ServiceResult.Ok();
     }
 

@@ -1,4 +1,4 @@
-using Maroik.Core.Contract.Dtos;
+using Maroik.Core.Contract.Domains.Calendar;
 
 namespace Maroik.Core.Contract.Interfaces;
 
@@ -9,11 +9,11 @@ namespace Maroik.Core.Contract.Interfaces;
 public interface ICalendarSharedRepository
 {
     /// <summary>Returns sharing-permission rows for all calendars.</summary>
-    public Task<List<CalendarSharedResponse>> GetCalendarSharedAsync();
+    public Task<List<CalendarShared>> GetCalendarSharedAsync();
 
     /// <summary>Inserts a new CalendarShared row (called when a calendar is first created).</summary>
-    public Task CreateCalendarSharedAsync(CalendarSharedRequest request);
+    public Task CreateCalendarSharedAsync(CalendarShared shared);
 
     /// <summary>Updates the User and Anonymous visibility flags for the given calendar.</summary>
-    public Task UpdateCalendarSharedAsync(CalendarSharedRequest request);
+    public Task UpdateCalendarSharedAsync(CalendarShared shared);
 }

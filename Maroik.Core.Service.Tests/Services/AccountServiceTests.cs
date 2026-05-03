@@ -20,6 +20,7 @@ public class AccountServiceTests
     private readonly Mock<IPasswordService> _passwordService = new();
     private readonly Mock<IMailClient> _mailClient = new();
     private readonly Mock<IRsaService> _rsa = new();
+    private readonly Mock<IDomainEventDispatcher> _dispatcher = new();
     private readonly IOptions<ServerSetting> _settings =
         Options.Create(new ServerSetting { MaxLoginAttempt = 5, DomainName = "https://example.com" });
 
@@ -29,6 +30,7 @@ public class AccountServiceTests
         _mailClient.Object,
         _settings,
         _rsa.Object,
+        _dispatcher.Object,
         NullLogger<AccountService>.Instance);
 
     // ── Helpers ──────────────────────────────────────────────────────────────

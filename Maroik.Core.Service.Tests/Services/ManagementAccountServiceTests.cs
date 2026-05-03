@@ -16,10 +16,12 @@ public class ManagementAccountServiceTests
 {
     private readonly Mock<IAccountRepository> _accountRepo = new();
     private readonly Mock<IPasswordService> _passwordService = new();
+    private readonly Mock<IDomainEventDispatcher> _dispatcher = new();
 
     private ManagementAccountService CreateSut() => new(
         _accountRepo.Object,
         _passwordService.Object,
+        _dispatcher.Object,
         NullLogger<ManagementAccountService>.Instance);
 
     // ── Helpers ──────────────────────────────────────────────────────────────

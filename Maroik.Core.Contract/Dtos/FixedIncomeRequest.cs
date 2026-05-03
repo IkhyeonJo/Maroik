@@ -47,4 +47,7 @@ public class FixedIncomeRequest
 
     /// <summary>When true, the income was not received on the scheduled day.</summary>
     public bool Unpunctuality { get; set; }
+
+    /// <summary>Currency code (e.g. "KRW", "USD"). Derived from the deposit asset.</summary>
+    public string? MonetaryUnit { get; set; }
 }

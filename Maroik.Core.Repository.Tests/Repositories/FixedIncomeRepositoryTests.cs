@@ -1,8 +1,8 @@
-using Maroik.Core.Contract.Dtos;
+using Maroik.Core.Contract.Domains.Finance;
 using Maroik.Core.PostgreSQL.Data;
-using Maroik.Core.PostgreSQL.Models;
 using Maroik.Core.Repository.Repositories;
 using Microsoft.EntityFrameworkCore;
+using EfFixedIncome = Maroik.Core.PostgreSQL.Models.FixedIncome;
 
 namespace Maroik.Core.Repository.Tests.Repositories;
 
@@ -29,7 +29,7 @@ public class FixedIncomeRepositoryTests : IDisposable
 
     // ── Helpers ──────────────────────────────────────────────────────────────
 
-    private static FixedIncome MakeFixedIncome(string email, string content, decimal amount = 3000m) => new()
+    private static EfFixedIncome MakeFixedIncome(string email, string content, decimal amount = 3000m) => new()
     {
         AccountEmail = email,
         MainClass = "RegularIncome",
@@ -45,7 +45,7 @@ public class FixedIncomeRepositoryTests : IDisposable
         Unpunctuality = false
     };
 
-    private async Task SeedAsync(params FixedIncome[] items)
+    private async Task SeedAsync(params EfFixedIncome[] items)
     {
         await _context.FixedIncomes.AddRangeAsync(items);
         await _context.SaveChangesAsync();
@@ -62,17 +62,17 @@ public class FixedIncomeRepositoryTests : IDisposable
             MakeFixedIncome("alice@example.com", "Side job"),
             MakeFixedIncome("bob@example.com", "Bob salary"));
 
-        List<FixedIncomeResponse> result = await _sut.GetFixedIncomesAsync("alice@example.com");
+        List<FixedIncome> result = await _sut.GetFixedIncomesAsync("alice@example.com");
 
         Assert.Equal(2, result.Count);
-        Assert.All(result, fi => Assert.Equal("alice@example.com", fi.AccountEmail));
+        Assert.All(result, fi => Assert.Equal("alice@example.com", fi.AccountEmail.Value));
     }
 
     /// <summary>Verifies that <c>GetFixedIncomesAsync</c> returns empty when no items for email.</summary>
     [Fact]
     public async Task GetFixedIncomesAsync_ReturnsEmpty_WhenNoItemsForEmail()
     {
-        List<FixedIncomeResponse> result = await _sut.GetFixedIncomesAsync("nobody@example.com");
+        List<FixedIncome> result = await _sut.GetFixedIncomesAsync("nobody@example.com");
 
         Assert.Empty(result);
     }
@@ -83,25 +83,26 @@ public class FixedIncomeRepositoryTests : IDisposable
     [Fact]
     public async Task CreateFixedIncomeAsync_AddsItemToDatabase()
     {
-        var request = new FixedIncomeRequest
-        {
-            AccountEmail = "alice@example.com",
-            MainClass = "RegularIncome",
-            SubClass = "LaborIncome",
-            Content = "Monthly salary",
-            Amount = 5000m,
-            DepositMyAssetProductName = "BankAccount",
-            DepositMonth = 0,
-            DepositDay = 25,
-            MaturityDate = DateTime.UtcNow.AddYears(2),
-            Created = DateTime.UtcNow,
-            Updated = DateTime.UtcNow,
-            Unpunctuality = false
-        };
+        var fixedIncome = FixedIncome.Reconstitute(
+            id: 0,
+            accountEmail: "alice@example.com",
+            mainClass: "RegularIncome",
+            subClass: "LaborIncome",
+            content: "Monthly salary",
+            amount: 5000m,
+            monetaryUnit: string.Empty,
+            depositMyAssetProductName: "BankAccount",
+            depositMonth: 0,
+            depositDay: 25,
+            maturityDate: DateTime.UtcNow.AddYears(2),
+            note: null,
+            unpunctuality: false,
+            created: DateTime.UtcNow,
+            updated: DateTime.UtcNow);
 
-        await _sut.CreateFixedIncomeAsync(request);
+        await _sut.CreateFixedIncomeAsync(fixedIncome);
 
-        FixedIncome? saved = await _context.FixedIncomes.FirstOrDefaultAsync(
+        EfFixedIncome? saved = await _context.FixedIncomes.FirstOrDefaultAsync(
             fi => fi.AccountEmail == "alice@example.com" && fi.Content == "Monthly salary", TestContext.Current.CancellationToken);
         Assert.NotNull(saved);
         Assert.Equal(5000m, saved.Amount);
@@ -114,30 +115,30 @@ public class FixedIncomeRepositoryTests : IDisposable
     [Fact]
     public async Task UpdateFixedIncomeAsync_UpdatesExistingItem()
     {
-        var item = MakeFixedIncome("alice@example.com", "Salary", amount: 3000m);
-        await SeedAsync(item);
-        long id = item.Id;
+        var efItem = MakeFixedIncome("alice@example.com", "Salary", amount: 3000m);
+        await SeedAsync(efItem);
+        long id = efItem.Id;
 
-        var request = new FixedIncomeRequest
-        {
-            Id = id,
-            AccountEmail = "alice@example.com",
-            MainClass = "RegularIncome",
-            SubClass = "LaborIncome",
-            Content = "Salary (Raise)",
-            Amount = 3500m,
-            DepositMyAssetProductName = "BankAccount",
-            DepositMonth = 0,
-            DepositDay = 25,
-            MaturityDate = item.MaturityDate,
-            Created = item.Created,
-            Updated = DateTime.UtcNow,
-            Unpunctuality = true
-        };
+        var fixedIncome = FixedIncome.Reconstitute(
+            id: id,
+            accountEmail: "alice@example.com",
+            mainClass: "RegularIncome",
+            subClass: "LaborIncome",
+            content: "Salary (Raise)",
+            amount: 3500m,
+            monetaryUnit: string.Empty,
+            depositMyAssetProductName: "BankAccount",
+            depositMonth: 0,
+            depositDay: 25,
+            maturityDate: efItem.MaturityDate,
+            note: null,
+            unpunctuality: true,
+            created: efItem.Created,
+            updated: DateTime.UtcNow);
 
-        await _sut.UpdateFixedIncomeAsync(request);
+        await _sut.UpdateFixedIncomeAsync(fixedIncome);
 
-        FixedIncome? updated = await _context.FixedIncomes.FirstOrDefaultAsync(fi => fi.Id == id, TestContext.Current.CancellationToken);
+        EfFixedIncome? updated = await _context.FixedIncomes.FirstOrDefaultAsync(fi => fi.Id == id, TestContext.Current.CancellationToken);
         Assert.NotNull(updated);
         Assert.Equal(3500m, updated.Amount);
         Assert.Equal("Salary (Raise)", updated.Content);
@@ -150,29 +151,30 @@ public class FixedIncomeRepositoryTests : IDisposable
     [Fact]
     public async Task DeleteFixedIncomeAsync_RemovesItemFromDatabase()
     {
-        var item = MakeFixedIncome("alice@example.com", "Pension");
-        await SeedAsync(item);
-        long id = item.Id;
+        var efItem = MakeFixedIncome("alice@example.com", "Pension");
+        await SeedAsync(efItem);
+        long id = efItem.Id;
 
-        var request = new FixedIncomeRequest
-        {
-            Id = id,
-            AccountEmail = "alice@example.com",
-            MainClass = "RegularIncome",
-            SubClass = "LaborIncome",
-            Content = "Pension",
-            Amount = 3000m,
-            DepositMyAssetProductName = "BankAccount",
-            DepositMonth = 0,
-            DepositDay = 25,
-            MaturityDate = item.MaturityDate,
-            Created = item.Created,
-            Updated = item.Updated
-        };
+        var fixedIncome = FixedIncome.Reconstitute(
+            id: id,
+            accountEmail: "alice@example.com",
+            mainClass: "RegularIncome",
+            subClass: "LaborIncome",
+            content: "Pension",
+            amount: 3000m,
+            monetaryUnit: string.Empty,
+            depositMyAssetProductName: "BankAccount",
+            depositMonth: 0,
+            depositDay: 25,
+            maturityDate: efItem.MaturityDate,
+            note: null,
+            unpunctuality: false,
+            created: efItem.Created,
+            updated: efItem.Updated);
 
-        await _sut.DeleteFixedIncomeAsync(request);
+        await _sut.DeleteFixedIncomeAsync(fixedIncome);
 
-        FixedIncome? deleted = await _context.FixedIncomes.FirstOrDefaultAsync(fi => fi.Id == id, TestContext.Current.CancellationToken);
+        EfFixedIncome? deleted = await _context.FixedIncomes.FirstOrDefaultAsync(fi => fi.Id == id, TestContext.Current.CancellationToken);
         Assert.Null(deleted);
     }
 
@@ -180,30 +182,31 @@ public class FixedIncomeRepositoryTests : IDisposable
     [Fact]
     public async Task DeleteFixedIncomeAsync_DoesNotAffectOtherItems()
     {
-        var item1 = MakeFixedIncome("alice@example.com", "Salary");
-        var item2 = MakeFixedIncome("alice@example.com", "Side job");
-        await SeedAsync(item1, item2);
+        var efItem1 = MakeFixedIncome("alice@example.com", "Salary");
+        var efItem2 = MakeFixedIncome("alice@example.com", "Side job");
+        await SeedAsync(efItem1, efItem2);
 
-        var request = new FixedIncomeRequest
-        {
-            Id = item1.Id,
-            AccountEmail = "alice@example.com",
-            MainClass = "RegularIncome",
-            SubClass = "LaborIncome",
-            Content = "Salary",
-            Amount = 3000m,
-            DepositMyAssetProductName = "BankAccount",
-            DepositMonth = 0,
-            DepositDay = 25,
-            MaturityDate = item1.MaturityDate,
-            Created = item1.Created,
-            Updated = item1.Updated
-        };
+        var fixedIncome = FixedIncome.Reconstitute(
+            id: efItem1.Id,
+            accountEmail: "alice@example.com",
+            mainClass: "RegularIncome",
+            subClass: "LaborIncome",
+            content: "Salary",
+            amount: 3000m,
+            monetaryUnit: string.Empty,
+            depositMyAssetProductName: "BankAccount",
+            depositMonth: 0,
+            depositDay: 25,
+            maturityDate: efItem1.MaturityDate,
+            note: null,
+            unpunctuality: false,
+            created: efItem1.Created,
+            updated: efItem1.Updated);
 
-        await _sut.DeleteFixedIncomeAsync(request);
+        await _sut.DeleteFixedIncomeAsync(fixedIncome);
 
-        List<FixedIncome> remaining = await _context.FixedIncomes.ToListAsync(TestContext.Current.CancellationToken);
+        List<EfFixedIncome> remaining = await _context.FixedIncomes.ToListAsync(TestContext.Current.CancellationToken);
         Assert.Single(remaining);
-        Assert.Equal(item2.Id, remaining[0].Id);
+        Assert.Equal(efItem2.Id, remaining[0].Id);
     }
 }

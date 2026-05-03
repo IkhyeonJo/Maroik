@@ -21,6 +21,7 @@ public class BoardServiceTests
     private readonly Mock<IBoardCommentRepository> _commentRepo = new();
     private readonly Mock<IFileClient> _fileClient = new();
     private readonly Mock<IUnitOfWork> _unitOfWork = new();
+    private readonly Mock<IDomainEventDispatcher> _dispatcher = new();
     private readonly IOptions<ServerSetting> _settings =
         Options.Create(new ServerSetting { FileStorageBaseUrl = "http://files.example.com" });
 
@@ -39,6 +40,7 @@ public class BoardServiceTests
         _commentRepo.Object,
         _fileClient.Object,
         _unitOfWork.Object,
+        _dispatcher.Object,
         _settings,
         NullLogger<BoardService>.Instance);
 
@@ -285,7 +287,7 @@ public class BoardServiceTests
         _commentRepo.Setup(r => r.WriteBoardCommentAsync(It.IsAny<BoardCommentRequest>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
-        ServiceResult result = await sut.WriteCommentAsync(new BoardCommentRequest { BoardId = 1, Writer = "Bob" });
+        ServiceResult result = await sut.WriteCommentAsync(new BoardCommentRequest { BoardId = 1, Writer = "Bob", Content = "Hello" });
 
         Assert.True(result.Success);
     }
@@ -304,7 +306,7 @@ public class BoardServiceTests
             .Returns(Task.CompletedTask);
         var sut = CreateSut();
 
-        await sut.WriteCommentAsync(new BoardCommentRequest { BoardId = 1 });
+        await sut.WriteCommentAsync(new BoardCommentRequest { BoardId = 1, Writer = "Bob", Content = "Hi" });
 
         Assert.NotNull(captured);
         Assert.Equal(2, captured.Order);

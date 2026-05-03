@@ -24,6 +24,7 @@ public class CalendarServiceTests
     private readonly Mock<IOtherCalendarRepository> _otherCalendarRepo = new();
     private readonly Mock<IFileClient> _fileClient = new();
     private readonly Mock<IUnitOfWork> _unitOfWork = new();
+    private readonly Mock<IDomainEventDispatcher> _dispatcher = new();
     private readonly IOptions<ServerSetting> _settings =
         Options.Create(new ServerSetting { FileStorageBaseUrl = "http://files.example.com" });
 
@@ -45,6 +46,7 @@ public class CalendarServiceTests
         _otherCalendarRepo.Object,
         _fileClient.Object,
         _unitOfWork.Object,
+        _dispatcher.Object,
         _settings,
         NullLogger<CalendarService>.Instance);
 

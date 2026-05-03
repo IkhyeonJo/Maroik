@@ -1,53 +1,55 @@
-using Mapster;
-using Maroik.Core.Contract.Dtos;
+using Maroik.Core.Contract.Domains.Menu;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.PostgreSQL.Data;
-using Maroik.Core.PostgreSQL.Models;
 using Microsoft.EntityFrameworkCore;
+using OrmCategory = Maroik.Core.PostgreSQL.Models.Category;
 
 namespace Maroik.Core.Repository.Repositories;
 
 /// <summary>EF Core implementation of <see cref="ICategoryRepository"/>.</summary>
-public class CategoryRepository : ICategoryRepository
+public class CategoryRepository(ApplicationDbContext context) : ICategoryRepository
 {
-    private readonly ApplicationDbContext _context;
+    /// <inheritdoc />
+    public async Task<IEnumerable<Category>> GetCategoryAsync()
+        => (await context.Categories.ToListAsync()).Select(ToDomain);
 
-    /// <summary>Initializes a new instance of <see cref="CategoryRepository"/> with <paramref name="context"/>.</summary>
-    public CategoryRepository(ApplicationDbContext context)
+    /// <inheritdoc />
+    public async Task<IEnumerable<Category>> GetCategoryByRoleAsync(string role)
+        => (await context.Categories.Where(c => c.Role == role).OrderBy(c => c.Order).ToListAsync()).Select(ToDomain);
+
+    /// <inheritdoc />
+    public async Task CreateCategoryAsync(Category category)
     {
-        _context = context;
+        _ = await context.Categories.AddAsync(ToEntity(category));
+        _ = await context.SaveChangesAsync();
     }
 
     /// <inheritdoc />
-    public async Task<IEnumerable<CategoryResponse>> GetCategoryAsync()
+    public async Task UpdateCategoryAsync(Category category)
     {
-        return (await _context.Categories.ToListAsync()).Adapt<List<CategoryResponse>>();
+        _ = context.Categories.Update(ToEntity(category));
+        _ = await context.SaveChangesAsync();
     }
 
     /// <inheritdoc />
-    public async Task<IEnumerable<CategoryResponse>> GetCategoryByRoleAsync(string role)
+    public async Task DeleteCategoryAsync(Category category)
     {
-        return (await _context.Categories.Where(a => a.Role == role).OrderBy(a => a.Order).ToListAsync()).Adapt<List<CategoryResponse>>();
+        _ = context.Categories.Remove(ToEntity(category));
+        _ = await context.SaveChangesAsync();
     }
 
-    /// <inheritdoc />
-    public async Task CreateCategoryAsync(CategoryRequest request)
-    {
-        _ = await _context.Categories.AddAsync(request.Adapt<Category>());
-        _ = await _context.SaveChangesAsync();
-    }
+    private static Category ToDomain(OrmCategory e)
+        => Category.Reconstitute(e.Id, e.Name, e.DisplayName, e.IconPath, e.Controller, e.Action, e.Role, e.Order);
 
-    /// <inheritdoc />
-    public async Task UpdateCategoryAsync(CategoryRequest request)
+    private static OrmCategory ToEntity(Category c) => new()
     {
-        _ = _context.Categories.Update(request.Adapt<Category>());
-        _ = await _context.SaveChangesAsync();
-    }
-
-    /// <inheritdoc />
-    public async Task DeleteCategoryAsync(CategoryRequest request)
-    {
-        _ = _context.Categories.Remove(request.Adapt<Category>());
-        _ = await _context.SaveChangesAsync();
-    }
+        Id = c.Id,
+        Name = c.Name,
+        DisplayName = c.DisplayName,
+        IconPath = c.IconPath,
+        Controller = c.Controller,
+        Action = c.Action,
+        Role = c.Role,
+        Order = c.Order
+    };
 }

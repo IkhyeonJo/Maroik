@@ -1,8 +1,8 @@
-using Maroik.Core.Contract.Dtos;
+using Maroik.Core.Contract.Domains.Finance;
 using Maroik.Core.PostgreSQL.Data;
-using Maroik.Core.PostgreSQL.Models;
 using Maroik.Core.Repository.Repositories;
 using Microsoft.EntityFrameworkCore;
+using EfExpenditure = Maroik.Core.PostgreSQL.Models.Expenditure;
 
 namespace Maroik.Core.Repository.Tests.Repositories;
 
@@ -32,7 +32,7 @@ public class ExpenditureRepositoryTests : IDisposable
 
     // ── Helpers ──────────────────────────────────────────────────────────────
 
-    private static Expenditure MakeExpenditure(string email, string content, decimal amount = 100m) => new()
+    private static EfExpenditure MakeExpenditure(string email, string content, decimal amount = 100m) => new()
     {
         AccountEmail = email,
         MainClass = "ConsumerSpending",
@@ -45,7 +45,7 @@ public class ExpenditureRepositoryTests : IDisposable
         Updated = DateTime.UtcNow
     };
 
-    private async Task SeedAsync(params Expenditure[] expenditures)
+    private async Task SeedAsync(params EfExpenditure[] expenditures)
     {
         await _context.Expenditures.AddRangeAsync(expenditures);
         await _context.SaveChangesAsync();
@@ -62,17 +62,17 @@ public class ExpenditureRepositoryTests : IDisposable
             MakeExpenditure("alice@example.com", "Dinner"),
             MakeExpenditure("bob@example.com", "Coffee"));
 
-        List<ExpenditureResponse> result = await _sut.GetExpendituresAsync("alice@example.com");
+        List<Expenditure> result = await _sut.GetExpendituresAsync("alice@example.com");
 
         Assert.Equal(2, result.Count);
-        Assert.All(result, e => Assert.Equal("alice@example.com", e.AccountEmail));
+        Assert.All(result, e => Assert.Equal("alice@example.com", e.AccountEmail.Value));
     }
 
     /// <summary>Verifies that <c>GetExpendituresAsync</c> returns empty when no expenditures for email.</summary>
     [Fact]
     public async Task GetExpendituresAsync_ReturnsEmpty_WhenNoExpendituresForEmail()
     {
-        List<ExpenditureResponse> result = await _sut.GetExpendituresAsync("nobody@example.com");
+        List<Expenditure> result = await _sut.GetExpendituresAsync("nobody@example.com");
 
         Assert.Empty(result);
     }
@@ -83,22 +83,23 @@ public class ExpenditureRepositoryTests : IDisposable
     [Fact]
     public async Task CreateExpenditureAsync_AddsExpenditureToDatabase()
     {
-        var request = new ExpenditureRequest
-        {
-            AccountEmail = "alice@example.com",
-            MainClass = "ConsumerSpending",
-            SubClass = "MealOrEatOutExpenses",
-            Content = "Team lunch",
-            Amount = 250m,
-            PaymentMethod = "CreditCard",
-            MyDepositAsset = "CreditCard",
-            Created = DateTime.UtcNow,
-            Updated = DateTime.UtcNow
-        };
+        var expenditure = Expenditure.Reconstitute(
+            id: 0,
+            accountEmail: "alice@example.com",
+            mainClass: "ConsumerSpending",
+            subClass: "MealOrEatOutExpenses",
+            content: "Team lunch",
+            amount: 250m,
+            monetaryUnit: string.Empty,
+            paymentMethod: "CreditCard",
+            myDepositAsset: "CreditCard",
+            note: null,
+            created: DateTime.UtcNow,
+            updated: DateTime.UtcNow);
 
-        await _sut.CreateExpenditureAsync(request);
+        await _sut.CreateExpenditureAsync(expenditure);
 
-        Expenditure? saved = await _context.Expenditures.FirstOrDefaultAsync(
+        EfExpenditure? saved = await _context.Expenditures.FirstOrDefaultAsync(
             e => e.AccountEmail == "alice@example.com" && e.Content == "Team lunch", TestContext.Current.CancellationToken);
         Assert.NotNull(saved);
         Assert.Equal(250m, saved.Amount);
@@ -110,27 +111,27 @@ public class ExpenditureRepositoryTests : IDisposable
     [Fact]
     public async Task UpdateExpenditureAsync_UpdatesExistingExpenditure()
     {
-        var expenditure = MakeExpenditure("alice@example.com", "Lunch", amount: 100m);
-        await SeedAsync(expenditure);
-        long id = expenditure.Id;
+        var efExpenditure = MakeExpenditure("alice@example.com", "Lunch", amount: 100m);
+        await SeedAsync(efExpenditure);
+        long id = efExpenditure.Id;
 
-        var request = new ExpenditureRequest
-        {
-            Id = id,
-            AccountEmail = "alice@example.com",
-            MainClass = "ConsumerSpending",
-            SubClass = "MealOrEatOutExpenses",
-            Content = "Updated Lunch",
-            Amount = 150m,
-            PaymentMethod = "Wallet",
-            MyDepositAsset = "Wallet",
-            Created = expenditure.Created,
-            Updated = DateTime.UtcNow
-        };
+        var expenditure = Expenditure.Reconstitute(
+            id: id,
+            accountEmail: "alice@example.com",
+            mainClass: "ConsumerSpending",
+            subClass: "MealOrEatOutExpenses",
+            content: "Updated Lunch",
+            amount: 150m,
+            monetaryUnit: string.Empty,
+            paymentMethod: "Wallet",
+            myDepositAsset: "Wallet",
+            note: null,
+            created: efExpenditure.Created,
+            updated: DateTime.UtcNow);
 
-        await _sut.UpdateExpenditureAsync(request);
+        await _sut.UpdateExpenditureAsync(expenditure);
 
-        Expenditure? updated = await _context.Expenditures.FirstOrDefaultAsync(e => e.Id == id, TestContext.Current.CancellationToken);
+        EfExpenditure? updated = await _context.Expenditures.FirstOrDefaultAsync(e => e.Id == id, TestContext.Current.CancellationToken);
         Assert.NotNull(updated);
         Assert.Equal(150m, updated.Amount);
         Assert.Equal("Updated Lunch", updated.Content);
@@ -142,25 +143,27 @@ public class ExpenditureRepositoryTests : IDisposable
     [Fact]
     public async Task DeleteExpenditureAsync_RemovesExpenditureFromDatabase()
     {
-        var expenditure = MakeExpenditure("alice@example.com", "Taxi");
-        await SeedAsync(expenditure);
-        long id = expenditure.Id;
+        var efExpenditure = MakeExpenditure("alice@example.com", "Taxi");
+        await SeedAsync(efExpenditure);
+        long id = efExpenditure.Id;
 
-        var request = new ExpenditureRequest
-        {
-            Id = id,
-            AccountEmail = "alice@example.com",
-            MainClass = "ConsumerSpending",
-            SubClass = "MealOrEatOutExpenses",
-            Content = "Taxi",
-            Amount = 100m,
-            Created = expenditure.Created,
-            Updated = expenditure.Updated
-        };
+        var expenditure = Expenditure.Reconstitute(
+            id: id,
+            accountEmail: "alice@example.com",
+            mainClass: "ConsumerSpending",
+            subClass: "MealOrEatOutExpenses",
+            content: "Taxi",
+            amount: 100m,
+            monetaryUnit: string.Empty,
+            paymentMethod: "Wallet",
+            myDepositAsset: "Wallet",
+            note: null,
+            created: efExpenditure.Created,
+            updated: efExpenditure.Updated);
 
-        await _sut.DeleteExpenditureAsync(request);
+        await _sut.DeleteExpenditureAsync(expenditure);
 
-        Expenditure? deleted = await _context.Expenditures.FirstOrDefaultAsync(e => e.Id == id, TestContext.Current.CancellationToken);
+        EfExpenditure? deleted = await _context.Expenditures.FirstOrDefaultAsync(e => e.Id == id, TestContext.Current.CancellationToken);
         Assert.Null(deleted);
     }
 
@@ -168,26 +171,28 @@ public class ExpenditureRepositoryTests : IDisposable
     [Fact]
     public async Task DeleteExpenditureAsync_DoesNotAffectOtherExpenditures()
     {
-        var exp1 = MakeExpenditure("alice@example.com", "Lunch");
-        var exp2 = MakeExpenditure("alice@example.com", "Dinner");
-        await SeedAsync(exp1, exp2);
+        var efExp1 = MakeExpenditure("alice@example.com", "Lunch");
+        var efExp2 = MakeExpenditure("alice@example.com", "Dinner");
+        await SeedAsync(efExp1, efExp2);
 
-        var request = new ExpenditureRequest
-        {
-            Id = exp1.Id,
-            AccountEmail = "alice@example.com",
-            MainClass = "ConsumerSpending",
-            SubClass = "MealOrEatOutExpenses",
-            Content = "Lunch",
-            Amount = 100m,
-            Created = exp1.Created,
-            Updated = exp1.Updated
-        };
+        var expenditure = Expenditure.Reconstitute(
+            id: efExp1.Id,
+            accountEmail: "alice@example.com",
+            mainClass: "ConsumerSpending",
+            subClass: "MealOrEatOutExpenses",
+            content: "Lunch",
+            amount: 100m,
+            monetaryUnit: string.Empty,
+            paymentMethod: "Wallet",
+            myDepositAsset: "Wallet",
+            note: null,
+            created: efExp1.Created,
+            updated: efExp1.Updated);
 
-        await _sut.DeleteExpenditureAsync(request);
+        await _sut.DeleteExpenditureAsync(expenditure);
 
-        List<Expenditure> remaining = await _context.Expenditures.ToListAsync(TestContext.Current.CancellationToken);
+        List<EfExpenditure> remaining = await _context.Expenditures.ToListAsync(TestContext.Current.CancellationToken);
         Assert.Single(remaining);
-        Assert.Equal(exp2.Id, remaining[0].Id);
+        Assert.Equal(efExp2.Id, remaining[0].Id);
     }
 }

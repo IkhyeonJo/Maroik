@@ -1,8 +1,8 @@
-using Maroik.Core.Contract.Dtos;
+using Maroik.Core.Contract.Domains.Calendar;
 using Maroik.Core.PostgreSQL.Data;
-using Maroik.Core.PostgreSQL.Models;
 using Maroik.Core.Repository.Repositories;
 using Microsoft.EntityFrameworkCore;
+using EfCalendarShared = Maroik.Core.PostgreSQL.Models.CalendarShared;
 
 namespace Maroik.Core.Repository.Tests.Repositories;
 
@@ -31,14 +31,14 @@ public class CalendarSharedRepositoryTests : IDisposable
 
     // ── Helpers ──────────────────────────────────────────────────────────────
 
-    private static CalendarShared MakeShared(long calendarId, bool user = false, bool anonymous = false) => new()
+    private static EfCalendarShared MakeShared(long calendarId, bool user = false, bool anonymous = false) => new()
     {
         CalendarId = calendarId,
         User = user,
         Anonymous = anonymous
     };
 
-    private async Task SeedAsync(params CalendarShared[] entries)
+    private async Task SeedAsync(params EfCalendarShared[] entries)
     {
         await _context.CalendarShareds.AddRangeAsync(entries);
         await _context.SaveChangesAsync();
@@ -55,19 +55,19 @@ public class CalendarSharedRepositoryTests : IDisposable
             MakeShared(1, anonymous: true),
             MakeShared(2));
 
-        List<CalendarSharedResponse> result = await _sut.GetCalendarSharedAsync();
+        List<CalendarShared> result = await _sut.GetCalendarSharedAsync();
 
         Assert.Equal(3, result.Count);
-        Assert.Equal(1, result[0].CalendarId);
-        Assert.Equal(2, result[1].CalendarId);
-        Assert.Equal(3, result[2].CalendarId);
+        Assert.Equal(1, result[0].Id);
+        Assert.Equal(2, result[1].Id);
+        Assert.Equal(3, result[2].Id);
     }
 
     /// <summary>Verifies that <c>GetCalendarSharedAsync</c> returns empty when no entries exist.</summary>
     [Fact]
     public async Task GetCalendarSharedAsync_ReturnsEmpty_WhenNoEntriesExist()
     {
-        List<CalendarSharedResponse> result = await _sut.GetCalendarSharedAsync();
+        List<CalendarShared> result = await _sut.GetCalendarSharedAsync();
 
         Assert.Empty(result);
     }
@@ -78,16 +78,14 @@ public class CalendarSharedRepositoryTests : IDisposable
     [Fact]
     public async Task CreateCalendarSharedAsync_PersistsEntry()
     {
-        var request = new CalendarSharedRequest
-        {
-            CalendarId = 10,
-            User = true,
-            Anonymous = false
-        };
+        var shared = CalendarShared.Reconstitute(
+            calendarId: 10,
+            user: true,
+            anonymous: false);
 
-        await _sut.CreateCalendarSharedAsync(request);
+        await _sut.CreateCalendarSharedAsync(shared);
 
-        CalendarShared? saved = await _context.CalendarShareds.FindAsync(new object[] { 10L }, TestContext.Current.CancellationToken);
+        EfCalendarShared? saved = await _context.CalendarShareds.FindAsync(new object[] { 10L }, TestContext.Current.CancellationToken);
         Assert.NotNull(saved);
         Assert.True(saved.User);
         Assert.False(saved.Anonymous);
@@ -101,16 +99,14 @@ public class CalendarSharedRepositoryTests : IDisposable
     {
         await SeedAsync(MakeShared(20, user: false, anonymous: false));
 
-        var request = new CalendarSharedRequest
-        {
-            CalendarId = 20,
-            User = true,
-            Anonymous = true
-        };
+        var shared = CalendarShared.Reconstitute(
+            calendarId: 20,
+            user: true,
+            anonymous: true);
 
-        await _sut.UpdateCalendarSharedAsync(request);
+        await _sut.UpdateCalendarSharedAsync(shared);
 
-        CalendarShared? updated = await _context.CalendarShareds.FindAsync(new object[] { 20L }, TestContext.Current.CancellationToken);
+        EfCalendarShared? updated = await _context.CalendarShareds.FindAsync(new object[] { 20L }, TestContext.Current.CancellationToken);
         Assert.NotNull(updated);
         Assert.True(updated.User);
         Assert.True(updated.Anonymous);

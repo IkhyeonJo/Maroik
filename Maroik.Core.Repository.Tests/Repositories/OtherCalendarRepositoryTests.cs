@@ -1,8 +1,8 @@
-using Maroik.Core.Contract.Dtos;
+using Maroik.Core.Contract.Domains.Calendar;
 using Maroik.Core.PostgreSQL.Data;
-using Maroik.Core.PostgreSQL.Models;
 using Maroik.Core.Repository.Repositories;
 using Microsoft.EntityFrameworkCore;
+using EfOtherCalendar = Maroik.Core.PostgreSQL.Models.OtherCalendar;
 
 namespace Maroik.Core.Repository.Tests.Repositories;
 
@@ -31,13 +31,13 @@ public class OtherCalendarRepositoryTests : IDisposable
 
     // ── Helpers ──────────────────────────────────────────────────────────────
 
-    private static OtherCalendar MakeOtherCalendar(string email, long calendarId) => new()
+    private static EfOtherCalendar MakeOtherCalendar(string email, long calendarId) => new()
     {
         AccountEmail = email,
         CalendarId = calendarId
     };
 
-    private async Task SeedAsync(params OtherCalendar[] entries)
+    private async Task SeedAsync(params EfOtherCalendar[] entries)
     {
         await _context.OtherCalendars.AddRangeAsync(entries);
         await _context.SaveChangesAsync();
@@ -54,7 +54,7 @@ public class OtherCalendarRepositoryTests : IDisposable
             MakeOtherCalendar("bob@example.com", 1),
             MakeOtherCalendar("alice@example.com", 2));
 
-        List<OtherCalendarResponse> result = await _sut.GetAllOtherCalendarsAsync();
+        List<OtherCalendar> result = await _sut.GetAllOtherCalendarsAsync();
 
         Assert.Equal(3, result.Count);
         Assert.Equal(1, result[0].CalendarId);
@@ -66,7 +66,7 @@ public class OtherCalendarRepositoryTests : IDisposable
     [Fact]
     public async Task GetAllOtherCalendarsAsync_ReturnsEmpty_WhenNoEntries()
     {
-        List<OtherCalendarResponse> result = await _sut.GetAllOtherCalendarsAsync();
+        List<OtherCalendar> result = await _sut.GetAllOtherCalendarsAsync();
 
         Assert.Empty(result);
     }
@@ -82,10 +82,10 @@ public class OtherCalendarRepositoryTests : IDisposable
             MakeOtherCalendar("alice@example.com", 2),
             MakeOtherCalendar("bob@example.com", 3));
 
-        List<OtherCalendarResponse> result = await _sut.GetOtherCalendarsAsync("alice@example.com");
+        List<OtherCalendar> result = await _sut.GetOtherCalendarsAsync("alice@example.com");
 
         Assert.Equal(2, result.Count);
-        Assert.All(result, r => Assert.Equal("alice@example.com", r.AccountEmail));
+        Assert.All(result, r => Assert.Equal("alice@example.com", r.AccountEmail.Value));
     }
 
     /// <summary>Verifies that <c>GetOtherCalendarsAsync</c> returns results when ordered by calendar id.</summary>
@@ -96,7 +96,7 @@ public class OtherCalendarRepositoryTests : IDisposable
             MakeOtherCalendar("alice@example.com", 5),
             MakeOtherCalendar("alice@example.com", 2));
 
-        List<OtherCalendarResponse> result = await _sut.GetOtherCalendarsAsync("alice@example.com");
+        List<OtherCalendar> result = await _sut.GetOtherCalendarsAsync("alice@example.com");
 
         Assert.Equal(2, result[0].CalendarId);
         Assert.Equal(5, result[1].CalendarId);
@@ -106,7 +106,7 @@ public class OtherCalendarRepositoryTests : IDisposable
     [Fact]
     public async Task GetOtherCalendarsAsync_ReturnsEmpty_WhenEmailNotFound()
     {
-        List<OtherCalendarResponse> result = await _sut.GetOtherCalendarsAsync("ghost@example.com");
+        List<OtherCalendar> result = await _sut.GetOtherCalendarsAsync("ghost@example.com");
 
         Assert.Empty(result);
     }
@@ -117,13 +117,11 @@ public class OtherCalendarRepositoryTests : IDisposable
     [Fact]
     public async Task CreateOtherCalendarAsync_PersistsEntry()
     {
-        var request = new OtherCalendarRequest
-        {
-            AccountEmail = "carol@example.com",
-            CalendarId = 10
-        };
+        var otherCalendar = OtherCalendar.Reconstitute(
+            accountEmail: "carol@example.com",
+            calendarId: 10);
 
-        await _sut.CreateOtherCalendarAsync(request);
+        await _sut.CreateOtherCalendarAsync(otherCalendar);
 
         bool exists = await _context.OtherCalendars.AnyAsync(
             oc => oc.AccountEmail == "carol@example.com" && oc.CalendarId == 10, TestContext.Current.CancellationToken);
@@ -138,13 +136,11 @@ public class OtherCalendarRepositoryTests : IDisposable
     {
         await SeedAsync(MakeOtherCalendar("dave@example.com", 7));
 
-        var request = new OtherCalendarRequest
-        {
-            AccountEmail = "dave@example.com",
-            CalendarId = 7
-        };
+        var otherCalendar = OtherCalendar.Reconstitute(
+            accountEmail: "dave@example.com",
+            calendarId: 7);
 
-        await _sut.DeleteOtherCalendarAsync(request);
+        await _sut.DeleteOtherCalendarAsync(otherCalendar);
 
         bool exists = await _context.OtherCalendars.AnyAsync(
             oc => oc.AccountEmail == "dave@example.com" && oc.CalendarId == 7, TestContext.Current.CancellationToken);

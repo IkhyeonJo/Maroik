@@ -1,6 +1,7 @@
+using Maroik.Core.Contract.Domains.Finance;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
-using Mapster;
+using Maroik.Core.Service.Mappers;
 using System.Text.RegularExpressions;
 
 namespace Maroik.Core.Service.Services;
@@ -14,14 +15,20 @@ namespace Maroik.Core.Service.Services;
 public class FixedIncomeService : IFixedIncomeService
 {
     private readonly IFixedIncomeRepository _fixedIncomeRepository;
+    private readonly IAssetRepository _assetRepository;
+    private readonly IDomainEventDispatcher _dispatcher;
 
     /// <summary>Initializes a new instance of <see cref="FixedIncomeService"/> with the supplied dependencies.</summary>
-    public FixedIncomeService(IFixedIncomeRepository fixedIncomeRepository)
-        => _fixedIncomeRepository = fixedIncomeRepository;
+    public FixedIncomeService(IFixedIncomeRepository fixedIncomeRepository, IAssetRepository assetRepository, IDomainEventDispatcher dispatcher)
+    {
+        _fixedIncomeRepository = fixedIncomeRepository;
+        _assetRepository = assetRepository;
+        _dispatcher = dispatcher;
+    }
 
     /// <inheritdoc />
-    public Task<List<FixedIncomeResponse>> GetFixedIncomesAsync(string accountEmail)
-        => _fixedIncomeRepository.GetFixedIncomesAsync(accountEmail);
+    public async Task<List<FixedIncomeResponse>> GetFixedIncomesAsync(string accountEmail)
+        => (await _fixedIncomeRepository.GetFixedIncomesAsync(accountEmail)).Select(FixedIncomeMapper.ToResponse).ToList();
 
     /// <inheritdoc />
     public async Task<ServiceResult> CreateAsync(string accountEmail, FixedIncomeRequest request)
@@ -29,12 +36,21 @@ public class FixedIncomeService : IFixedIncomeService
         var validation = ValidateRequest(request);
         if (!validation.Success) return validation;
 
-        request.AccountEmail = accountEmail;
-        request.Amount = Math.Abs(request.Amount);
-        request.Created = DateTime.UtcNow;
-        request.Updated = DateTime.UtcNow;
+        Asset? asset = await _assetRepository.GetAssetAsync(accountEmail, request.DepositMyAssetProductName ?? "");
+        if (asset == null) return ServiceResult.Fail("Input is invalid");
 
-        await _fixedIncomeRepository.CreateFixedIncomeAsync(request);
+        string currency = asset.Balance.Currency;
+        var registerResult = FixedIncome.Register(0, accountEmail, request.MainClass, request.SubClass,
+            request.Content, Math.Abs(request.Amount), currency,
+            request.DepositMyAssetProductName, request.DepositMonth, request.DepositDay,
+            request.MaturityDate, request.Note);
+
+        if (registerResult.IsError)
+            return ServiceResult.Fail(registerResult.FirstError.Description);
+
+        var fixedIncome = registerResult.Value;
+        await _fixedIncomeRepository.CreateFixedIncomeAsync(fixedIncome);
+        await _dispatcher.DispatchAsync(fixedIncome.PopDomainEvents());
         return ServiceResult.Ok();
     }
 
@@ -44,36 +60,31 @@ public class FixedIncomeService : IFixedIncomeService
         var validation = ValidateRequest(request);
         if (!validation.Success) return validation;
 
-        List<FixedIncomeResponse> items = await _fixedIncomeRepository.GetFixedIncomesAsync(accountEmail);
-        FixedIncomeResponse? existing = items.FirstOrDefault(x => x.Id == request.Id);
-        if (existing == null)
-            return ServiceResult.Fail("Input is invalid");
+        List<FixedIncome> items = await _fixedIncomeRepository.GetFixedIncomesAsync(accountEmail);
+        FixedIncome? fi = items.FirstOrDefault(x => x.Id == request.Id);
+        if (fi == null) return ServiceResult.Fail("Input is invalid");
 
-        existing.MainClass = request.MainClass;
-        existing.SubClass = request.SubClass;
-        existing.Content = request.Content ?? "";
-        existing.Amount = Math.Abs(request.Amount);
-        existing.DepositMyAssetProductName = request.DepositMyAssetProductName;
-        existing.DepositMonth = request.DepositMonth;
-        existing.DepositDay = request.DepositDay;
-        existing.MaturityDate = request.MaturityDate;
-        existing.Updated = DateTime.UtcNow;
-        existing.Note = request.Note ?? "";
-        existing.Unpunctuality = request.Unpunctuality;
+        Asset? asset = await _assetRepository.GetAssetAsync(accountEmail, request.DepositMyAssetProductName ?? "");
+        string currency = asset?.Balance.Currency ?? fi.Amount.Currency;
 
-        await _fixedIncomeRepository.UpdateFixedIncomeAsync(existing.Adapt<FixedIncomeRequest>());
+        var updateResult = fi.Update(request.MainClass, request.SubClass, request.Content,
+            Math.Abs(request.Amount), currency, request.DepositMyAssetProductName,
+            request.DepositMonth, request.DepositDay, request.MaturityDate, request.Note);
+
+        if (updateResult.IsError) return ServiceResult.Fail(updateResult.FirstError.Description);
+
+        await _fixedIncomeRepository.UpdateFixedIncomeAsync(fi);
         return ServiceResult.Ok();
     }
 
     /// <inheritdoc />
     public async Task<ServiceResult> DeleteAsync(string accountEmail, long id)
     {
-        List<FixedIncomeResponse> items = await _fixedIncomeRepository.GetFixedIncomesAsync(accountEmail);
-        FixedIncomeResponse? existing = items.FirstOrDefault(x => x.Id == id);
-        if (existing == null)
-            return ServiceResult.Fail("Input is invalid");
+        List<FixedIncome> items = await _fixedIncomeRepository.GetFixedIncomesAsync(accountEmail);
+        FixedIncome? fi = items.FirstOrDefault(x => x.Id == id);
+        if (fi == null) return ServiceResult.Fail("Input is invalid");
 
-        await _fixedIncomeRepository.DeleteFixedIncomeAsync(existing.Adapt<FixedIncomeRequest>());
+        await _fixedIncomeRepository.DeleteFixedIncomeAsync(fi);
         return ServiceResult.Ok();
     }
 
@@ -91,12 +102,7 @@ public class FixedIncomeService : IFixedIncomeService
         if (request.DepositMonth is < 1 or > 12)
             return ServiceResult.Fail("Input is invalid");
 
-        int maxDay = request.DepositMonth switch
-        {
-            2 => 29,
-            4 or 6 or 9 or 11 => 30,
-            _ => 31
-        };
+        int maxDay = request.DepositMonth switch { 2 => 29, 4 or 6 or 9 or 11 => 30, _ => 31 };
         if (request.DepositDay < 1 || request.DepositDay > maxDay)
             return ServiceResult.Fail("Input is invalid");
 

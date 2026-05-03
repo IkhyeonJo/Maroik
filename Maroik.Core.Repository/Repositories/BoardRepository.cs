@@ -1,62 +1,72 @@
-using Mapster;
-using Maroik.Core.Contract.Dtos;
+using Maroik.Core.Contract.Domains.Board;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.PostgreSQL.Data;
-using Maroik.Core.PostgreSQL.Models;
 using Microsoft.EntityFrameworkCore;
+using OrmBoard = Maroik.Core.PostgreSQL.Models.Board;
 
 namespace Maroik.Core.Repository.Repositories;
 
 /// <summary>EF Core implementation of <see cref="IBoardRepository"/>.</summary>
-public class BoardRepository : IBoardRepository
+public class BoardRepository(ApplicationDbContext context) : IBoardRepository
 {
-    private readonly ApplicationDbContext _context;
-
-    /// <summary>Initializes a new instance of <see cref="BoardRepository"/> with <paramref name="context"/>.</summary>
-    public BoardRepository(ApplicationDbContext context)
-    {
-        _context = context;
-    }
+    /// <inheritdoc />
+    public async Task<IEnumerable<Board>> GetOneTypeBoardsAsync(string type)
+        => (await context.Boards.Where(x => x.Type == type).ToListAsync()).Select(ToDomain);
 
     /// <inheritdoc />
-    public async Task<IEnumerable<BoardResponse>> GetOneTypeBoardsAsync(string type)
+    public async Task<Board?> GetBoardByIdAsync(long id)
     {
-        return (await _context.Boards.Where(x => x.Type == type).ToListAsync()).Adapt<List<BoardResponse>>();
-    }
-
-    /// <inheritdoc />
-    public async Task<BoardResponse?> GetBoardByIdAsync(long id)
-    {
-        var board = await _context.Boards.FirstOrDefaultAsync(x => x.Id == id && !x.Deleted);
-        return board?.Adapt<BoardResponse>();
+        OrmBoard? entity = await context.Boards.FirstOrDefaultAsync(x => x.Id == id && !x.Deleted);
+        return entity == null ? null : ToDomain(entity);
     }
 
     /// <inheritdoc />
     public async Task IncrementViewAsync(long id)
     {
-        await _context.Boards
+        await context.Boards
             .Where(x => x.Id == id)
             .ExecuteUpdateAsync(s => s.SetProperty(b => b.View, b => b.View + 1));
     }
 
     /// <inheritdoc />
-    public async Task WriteBoardAsync(BoardRequest request)
+    public async Task<long> WriteBoardAsync(Board board)
     {
-        _ = await _context.Boards.AddAsync(request.Adapt<Board>());
-        _ = await _context.SaveChangesAsync();
+        OrmBoard entity = ToEntity(board);
+        _ = await context.Boards.AddAsync(entity);
+        _ = await context.SaveChangesAsync();
+        return entity.Id;
     }
 
     /// <inheritdoc />
-    public async Task UpdateBoardAsync(BoardRequest request)
+    public async Task UpdateBoardAsync(Board board)
     {
-        _ = _context.Boards.Update(request.Adapt<Board>());
-        _ = await _context.SaveChangesAsync();
+        _ = context.Boards.Update(ToEntity(board));
+        _ = await context.SaveChangesAsync();
     }
 
     /// <inheritdoc />
-    public async Task DeleteBoardAsync(BoardRequest request)
+    public async Task DeleteBoardAsync(Board board)
     {
-        _ = _context.Boards.Update(request.Adapt<Board>());
-        _ = await _context.SaveChangesAsync();
+        _ = context.Boards.Update(ToEntity(board));
+        _ = await context.SaveChangesAsync();
     }
+
+    private static Board ToDomain(OrmBoard e) => Board.Reconstitute(
+        e.Id, e.Type ?? string.Empty, e.Title ?? string.Empty, e.Content,
+        e.Writer ?? string.Empty, e.Created, e.Updated, e.View, e.Deleted, e.Locked, e.Noticed);
+
+    private static OrmBoard ToEntity(Board b) => new()
+    {
+        Id = b.Id,
+        Type = b.Type,
+        Title = b.Title,
+        Content = b.Content,
+        Writer = b.Writer,
+        Created = b.Created,
+        Updated = b.Updated,
+        View = b.View,
+        Deleted = b.Deleted,
+        Locked = b.Locked,
+        Noticed = b.Noticed
+    };
 }

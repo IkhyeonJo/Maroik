@@ -1,53 +1,55 @@
-using Mapster;
-using Maroik.Core.Contract.Dtos;
+using Maroik.Core.Contract.Domains.Menu;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.PostgreSQL.Data;
-using Maroik.Core.PostgreSQL.Models;
 using Microsoft.EntityFrameworkCore;
+using OrmSubCategory = Maroik.Core.PostgreSQL.Models.SubCategory;
 
 namespace Maroik.Core.Repository.Repositories;
 
 /// <summary>EF Core implementation of <see cref="ISubCategoryRepository"/>.</summary>
-public class SubCategoryRepository : ISubCategoryRepository
+public class SubCategoryRepository(ApplicationDbContext context) : ISubCategoryRepository
 {
-    private readonly ApplicationDbContext _context;
+    /// <inheritdoc />
+    public async Task<IEnumerable<SubCategory>> GetSubCategoryAsync()
+        => (await context.SubCategories.ToListAsync()).Select(ToDomain);
 
-    /// <summary>Initializes a new instance of <see cref="SubCategoryRepository"/> with <paramref name="context"/>.</summary>
-    public SubCategoryRepository(ApplicationDbContext context)
+    /// <inheritdoc />
+    public async Task<IEnumerable<SubCategory>> GetSubCategoryByRoleAsync(string role)
+        => (await context.SubCategories.Where(s => s.Role == role).OrderBy(s => s.Order).ToListAsync()).Select(ToDomain);
+
+    /// <inheritdoc />
+    public async Task CreateSubCategoryAsync(SubCategory subCategory)
     {
-        _context = context;
+        _ = await context.SubCategories.AddAsync(ToEntity(subCategory));
+        _ = await context.SaveChangesAsync();
     }
 
     /// <inheritdoc />
-    public async Task<IEnumerable<SubCategoryResponse>> GetSubCategoryAsync()
+    public async Task UpdateSubCategoryAsync(SubCategory subCategory)
     {
-        return (await _context.SubCategories.ToListAsync()).Adapt<List<SubCategoryResponse>>();
+        _ = context.SubCategories.Update(ToEntity(subCategory));
+        _ = await context.SaveChangesAsync();
     }
 
     /// <inheritdoc />
-    public async Task<IEnumerable<SubCategoryResponse>> GetSubCategoryByRoleAsync(string role)
+    public async Task DeleteSubCategoryAsync(SubCategory subCategory)
     {
-        return (await _context.SubCategories.Where(a => a.Role == role).OrderBy(a => a.Order).ToListAsync()).Adapt<List<SubCategoryResponse>>();
+        _ = context.SubCategories.Remove(ToEntity(subCategory));
+        _ = await context.SaveChangesAsync();
     }
 
-    /// <inheritdoc />
-    public async Task CreateSubCategoryAsync(SubCategoryRequest request)
-    {
-        _ = await _context.SubCategories.AddAsync(request.Adapt<SubCategory>());
-        _ = await _context.SaveChangesAsync();
-    }
+    private static SubCategory ToDomain(OrmSubCategory e)
+        => SubCategory.Reconstitute(e.Id, e.CategoryId, e.Name, e.DisplayName, e.IconPath, e.Action, e.Role, e.Order);
 
-    /// <inheritdoc />
-    public async Task UpdateSubCategoryAsync(SubCategoryRequest request)
+    private static OrmSubCategory ToEntity(SubCategory s) => new()
     {
-        _ = _context.SubCategories.Update(request.Adapt<SubCategory>());
-        _ = await _context.SaveChangesAsync();
-    }
-
-    /// <inheritdoc />
-    public async Task DeleteSubCategoryAsync(SubCategoryRequest request)
-    {
-        _ = _context.SubCategories.Remove(request.Adapt<SubCategory>());
-        _ = await _context.SaveChangesAsync();
-    }
+        Id = s.Id,
+        CategoryId = s.CategoryId,
+        Name = s.Name,
+        DisplayName = s.DisplayName,
+        IconPath = s.IconPath,
+        Action = s.Action,
+        Role = s.Role,
+        Order = s.Order
+    };
 }

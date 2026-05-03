@@ -1,4 +1,4 @@
-using Maroik.Core.Contract.Dtos;
+using Maroik.Core.Contract.Domains.Board;
 using Maroik.Core.PostgreSQL.Data;
 using Maroik.Core.PostgreSQL.Models;
 using Maroik.Core.Repository.Repositories;
@@ -53,7 +53,7 @@ public class BoardAttachedFileRepositoryTests : IDisposable
     {
         await SeedAsync(MakeFile(1, "a.pdf"), MakeFile(2, "b.pdf"));
 
-        List<BoardAttachedFileResponse> result = await _sut.GetAllAsync();
+        List<BoardAttachedFile> result = await _sut.GetAllAsync();
 
         Assert.Equal(2, result.Count);
     }
@@ -62,7 +62,7 @@ public class BoardAttachedFileRepositoryTests : IDisposable
     [Fact]
     public async Task GetAllAsync_ReturnsEmpty_WhenNoFilesExist()
     {
-        List<BoardAttachedFileResponse> result = await _sut.GetAllAsync();
+        List<BoardAttachedFile> result = await _sut.GetAllAsync();
 
         Assert.Empty(result);
     }
@@ -75,7 +75,7 @@ public class BoardAttachedFileRepositoryTests : IDisposable
     {
         await SeedAsync(MakeFile(10, "report.pdf"));
 
-        BoardAttachedFileResponse? result = await _sut.GetByBoardIdAsync(10);
+        BoardAttachedFile? result = await _sut.GetByBoardIdAsync(10);
 
         Assert.NotNull(result);
         Assert.Equal(10, result.BoardId);
@@ -86,7 +86,7 @@ public class BoardAttachedFileRepositoryTests : IDisposable
     [Fact]
     public async Task GetByBoardIdAsync_ReturnsNull_WhenNotFound()
     {
-        BoardAttachedFileResponse? result = await _sut.GetByBoardIdAsync(999);
+        BoardAttachedFile? result = await _sut.GetByBoardIdAsync(999);
 
         Assert.Null(result);
     }
@@ -99,7 +99,7 @@ public class BoardAttachedFileRepositoryTests : IDisposable
     {
         await SeedAsync(MakeFile(1, "a.pdf"), MakeFile(3, "c.pdf"));
 
-        Dictionary<long, BoardAttachedFileResponse?> result = await _sut.GetByBoardIdsAsync([1L, 2L, 3L]);
+        Dictionary<long, BoardAttachedFile?> result = await _sut.GetByBoardIdsAsync([1L, 2L, 3L]);
 
         Assert.Equal(3, result.Count);
         Assert.NotNull(result[1]);
@@ -111,7 +111,7 @@ public class BoardAttachedFileRepositoryTests : IDisposable
     [Fact]
     public async Task GetByBoardIdsAsync_ReturnsNullValues_WhenNoneMatch()
     {
-        Dictionary<long, BoardAttachedFileResponse?> result = await _sut.GetByBoardIdsAsync([100L, 200L]);
+        Dictionary<long, BoardAttachedFile?> result = await _sut.GetByBoardIdsAsync([100L, 200L]);
 
         Assert.All(result.Values, v => Assert.Null(v));
     }
@@ -122,16 +122,15 @@ public class BoardAttachedFileRepositoryTests : IDisposable
     [Fact]
     public async Task SaveBoardAttachedFileAsync_PersistsFile()
     {
-        var request = new BoardAttachedFileRequest
-        {
-            BoardId = 5,
-            Name = "new.pdf",
-            Extension = ".pdf",
-            Path = "/upload/boards/new.pdf",
-            Size = 2048
-        };
+        var file = BoardAttachedFile.Reconstitute(
+            id: 0,
+            boardId: 5,
+            size: 2048,
+            name: "new.pdf",
+            extension: ".pdf",
+            path: "/upload/boards/new.pdf");
 
-        await _sut.SaveBoardAttachedFileAsync(request);
+        await _sut.SaveBoardAttachedFileAsync(file);
 
         BoardAttachedFile? saved = await _context.BoardAttachedFiles.FirstOrDefaultAsync(f => f.BoardId == 5, TestContext.Current.CancellationToken);
         Assert.NotNull(saved);
@@ -145,22 +144,20 @@ public class BoardAttachedFileRepositoryTests : IDisposable
     [Fact]
     public async Task UpdateBoardAttachedFileAsync_UpdatesExistingFile()
     {
-        var file = MakeFile(7, "old.pdf", 512);
-        await SeedAsync(file);
+        var seedFile = MakeFile(7, "old.pdf", 512);
+        await SeedAsync(seedFile);
 
         long id = (await _context.BoardAttachedFiles.FirstAsync(f => f.BoardId == 7, TestContext.Current.CancellationToken)).Id;
 
-        var request = new BoardAttachedFileRequest
-        {
-            Id = id,
-            BoardId = 7,
-            Name = "updated.pdf",
-            Extension = ".pdf",
-            Path = "/upload/boards/updated.pdf",
-            Size = 9999
-        };
+        var file = BoardAttachedFile.Reconstitute(
+            id: id,
+            boardId: 7,
+            size: 9999,
+            name: "updated.pdf",
+            extension: ".pdf",
+            path: "/upload/boards/updated.pdf");
 
-        await _sut.UpdateBoardAttachedFileAsync(request);
+        await _sut.UpdateBoardAttachedFileAsync(file);
 
         BoardAttachedFile? updated = await _context.BoardAttachedFiles.FindAsync(new object[] { id }, TestContext.Current.CancellationToken);
         Assert.NotNull(updated);

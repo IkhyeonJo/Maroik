@@ -1,6 +1,8 @@
+using Maroik.Core.Contract.Domains.Account;
+using Maroik.Core.Contract.Domains.Finance;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
-using Mapster;
+using Maroik.Core.Service.Mappers;
 
 namespace Maroik.Core.Service.Services;
 
@@ -47,43 +49,43 @@ public class DashboardService : IDashboardService
         string normalizedMonth = monthInt.ToString("00");
         string normalizedYearMonth = $"{normalizedYear}-{normalizedMonth}";
 
-        var assets = (await _assetRepository.GetAssetsAsync(accountEmail)) ?? [];
-        var account = await _accountRepository.GetAccountByEmailAsync(accountEmail);
+        List<Asset> assets = await _assetRepository.GetAssetsAsync(accountEmail);
+        Account? account = await _accountRepository.GetAccountByEmailAsync(accountEmail);
 
-        // Sync DefaultMonetaryUnit
-        await SyncDefaultMonetaryUnitInternalAsync(account, assets);
+        // Sync DefaultMonetaryUnit and get the effective value
+        string? defaultMonetaryUnit = await SyncDefaultMonetaryUnitInternalAsync(account, assets);
 
         var summary = new DashboardSummary
         {
-            DefaultMonetaryUnit = account?.DefaultMonetaryUnit,
-            Assets = assets,
+            DefaultMonetaryUnit = defaultMonetaryUnit,
+            Assets = assets.Select(AssetMapper.ToResponse).ToList(),
             SelectedYear = yearInt,
             SelectedMonth = monthInt,
             EndYear = DateTime.UtcNow.Year,
-            MonetaryUnits = assets.Select(x => x.MonetaryUnit).Distinct()
+            MonetaryUnits = assets.Select(x => x.Balance.Currency).Distinct()
         };
 
         if (summary.DefaultMonetaryUnit != null)
         {
-            var yearIncomes = await _incomeRepository.GetCurrentYearIncomesAsync(accountEmail, normalizedYear, timeZoneId);
-            var yearExpenditures = await _expenditureRepository.GetCurrentYearExpendituresAsync(accountEmail, normalizedYear, timeZoneId);
-            var ymIncomes = await _incomeRepository.GetCurrentYearMonthIncomesAsync(accountEmail, normalizedYearMonth, timeZoneId);
-            var ymExpenditures = await _expenditureRepository.GetCurrentYearMonthExpendituresAsync(accountEmail, normalizedYearMonth, timeZoneId);
+            List<Income> yearIncomes = await _incomeRepository.GetCurrentYearIncomesAsync(accountEmail, normalizedYear, timeZoneId);
+            List<Expenditure> yearExpenditures = await _expenditureRepository.GetCurrentYearExpendituresAsync(accountEmail, normalizedYear, timeZoneId);
+            List<Income> ymIncomes = await _incomeRepository.GetCurrentYearMonthIncomesAsync(accountEmail, normalizedYearMonth, timeZoneId);
+            List<Expenditure> ymExpenditures = await _expenditureRepository.GetCurrentYearMonthExpendituresAsync(accountEmail, normalizedYearMonth, timeZoneId);
 
             // Filter by default monetary unit via asset lookup
             string defaultUnit = summary.DefaultMonetaryUnit;
             summary.YearIncomes = yearIncomes
-                .Where(x => assets.FirstOrDefault(a => a.ProductName == x.DepositMyAssetProductName)?.MonetaryUnit == defaultUnit)
-                .ToList();
+                .Where(x => assets.FirstOrDefault(a => a.ProductName == x.DepositMyAssetProductName)?.Balance.Currency == defaultUnit)
+                .Select(IncomeMapper.ToResponse).ToList();
             summary.YearExpenditures = yearExpenditures
-                .Where(x => assets.FirstOrDefault(a => a.ProductName == x.PaymentMethod)?.MonetaryUnit == defaultUnit)
-                .ToList();
+                .Where(x => assets.FirstOrDefault(a => a.ProductName == x.PaymentMethod)?.Balance.Currency == defaultUnit)
+                .Select(ExpenditureMapper.ToResponse).ToList();
             summary.YearMonthIncomes = ymIncomes
-                .Where(x => assets.FirstOrDefault(a => a.ProductName == x.DepositMyAssetProductName)?.MonetaryUnit == defaultUnit)
-                .ToList();
+                .Where(x => assets.FirstOrDefault(a => a.ProductName == x.DepositMyAssetProductName)?.Balance.Currency == defaultUnit)
+                .Select(IncomeMapper.ToResponse).ToList();
             summary.YearMonthExpenditures = ymExpenditures
-                .Where(x => assets.FirstOrDefault(a => a.ProductName == x.PaymentMethod)?.MonetaryUnit == defaultUnit)
-                .ToList();
+                .Where(x => assets.FirstOrDefault(a => a.ProductName == x.PaymentMethod)?.Balance.Currency == defaultUnit)
+                .Select(ExpenditureMapper.ToResponse).ToList();
         }
 
         // Compute StartYear
@@ -111,15 +113,15 @@ public class DashboardService : IDashboardService
     /// <inheritdoc />
     public async Task UpdateDefaultMonetaryUnitAsync(string accountEmail, string? monetaryUnit)
     {
-        var assets = (await _assetRepository.GetAssetsAsync(accountEmail)) ?? [];
-        var account = await _accountRepository.GetAccountByEmailAsync(accountEmail);
+        List<Asset> assets = await _assetRepository.GetAssetsAsync(accountEmail);
+        Account? account = await _accountRepository.GetAccountByEmailAsync(accountEmail);
         if (account == null) return;
 
-        account.DefaultMonetaryUnit = assets.Select(x => x.MonetaryUnit).Distinct().Contains(monetaryUnit)
+        string? newUnit = assets.Select(x => x.Balance.Currency).Distinct().Contains(monetaryUnit)
             ? monetaryUnit
             : null;
-
-        await _accountRepository.UpdateAccountAsync(account.Adapt<AccountRequest>());
+        account.UpdateProfile(account.Nickname, account.AvatarImagePath, account.TimeZone, newUnit);
+        await _accountRepository.UpdateAccountAsync(account);
     }
 
     /// <inheritdoc />
@@ -169,38 +171,44 @@ public class DashboardService : IDashboardService
         };
     }
 
-    private async Task SyncDefaultMonetaryUnitInternalAsync(AccountResponse? account, List<AssetResponse> assets)
+    /// <summary>
+    /// Ensures <see cref="Account.DefaultMonetaryUnit"/> is consistent with the user's assets.
+    /// Returns the effective monetary unit (which may differ from the stored value when an update occurs).
+    /// </summary>
+    private async Task<string?> SyncDefaultMonetaryUnitInternalAsync(Account? account, List<Asset> assets)
     {
-        if (account == null) return;
+        if (account == null) return null;
 
-        bool needsUpdate = false;
-        if (account.DefaultMonetaryUnit == null && assets.Count == 0)
+        string? currentUnit = account.DefaultMonetaryUnit;
+
+        if (currentUnit == null && assets.Count == 0)
+            return null;
+
+        if (currentUnit == null && assets.Count != 0)
         {
-            // nothing to do
-        }
-        else if (account.DefaultMonetaryUnit == null && assets.Count != 0)
-        {
-            var mostUsed = assets.GroupBy(a => a.MonetaryUnit).OrderByDescending(g => g.Count()).FirstOrDefault();
-            account.DefaultMonetaryUnit = mostUsed?.Key;
-            needsUpdate = true;
-        }
-        else if (account.DefaultMonetaryUnit != null && assets.Count == 0)
-        {
-            account.DefaultMonetaryUnit = null;
-            needsUpdate = true;
-        }
-        else if (account.DefaultMonetaryUnit != null && assets.Count != 0)
-        {
-            if (!assets.Select(x => x.MonetaryUnit).Distinct().Contains(account.DefaultMonetaryUnit))
-            {
-                var mostUsed = assets.GroupBy(a => a.MonetaryUnit).OrderByDescending(g => g.Count()).FirstOrDefault();
-                account.DefaultMonetaryUnit = mostUsed?.Key;
-                needsUpdate = true;
-            }
+            string? newUnit = assets.GroupBy(a => a.Balance.Currency).OrderByDescending(g => g.Count()).FirstOrDefault()?.Key;
+            account.UpdateProfile(account.Nickname, account.AvatarImagePath, account.TimeZone, newUnit);
+            await _accountRepository.UpdateAccountAsync(account);
+            return newUnit;
         }
 
-        if (needsUpdate)
-            await _accountRepository.UpdateAccountAsync(account.Adapt<AccountRequest>());
+        if (currentUnit != null && assets.Count == 0)
+        {
+            account.UpdateProfile(account.Nickname, account.AvatarImagePath, account.TimeZone, null);
+            await _accountRepository.UpdateAccountAsync(account);
+            return null;
+        }
+
+        // currentUnit != null && assets.Count != 0
+        if (!assets.Select(x => x.Balance.Currency).Distinct().Contains(currentUnit))
+        {
+            string? newUnit = assets.GroupBy(a => a.Balance.Currency).OrderByDescending(g => g.Count()).FirstOrDefault()?.Key;
+            account.UpdateProfile(account.Nickname, account.AvatarImagePath, account.TimeZone, newUnit);
+            await _accountRepository.UpdateAccountAsync(account);
+            return newUnit;
+        }
+
+        return currentUnit;
     }
 
     /// <inheritdoc />

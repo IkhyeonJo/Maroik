@@ -1,9 +1,8 @@
-using Mapster;
-using Maroik.Core.Contract.Dtos;
+using Maroik.Core.Contract.Domains.Account;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.PostgreSQL.Data;
-using Maroik.Core.PostgreSQL.Models;
 using Microsoft.EntityFrameworkCore;
+using OrmAccount = Maroik.Core.PostgreSQL.Models.Account;
 
 namespace Maroik.Core.Repository.Repositories;
 
@@ -19,53 +18,79 @@ public class AccountRepository : IAccountRepository
     }
 
     /// <inheritdoc />
-    public async Task<List<AccountResponse>> GetAllAsync()
-    {
-        return (await _context.Accounts.ToListAsync()).Adapt<List<AccountResponse>>();
-    }
+    public async Task<List<Account>> GetAllAsync()
+        => (await _context.Accounts.ToListAsync()).Select(ToDomain).ToList();
 
     /// <inheritdoc />
-    public async Task<List<AccountResponse>> GetAccountsByNicknamesAsync(IEnumerable<string> nicknames)
+    public async Task<List<Account>> GetAccountsByNicknamesAsync(IEnumerable<string> nicknames)
     {
         var list = nicknames.ToList();
         return (await _context.Accounts
             .Where(a => list.Contains(a.Nickname ?? ""))
             .ToListAsync())
-            .Adapt<List<AccountResponse>>();
+            .Select(ToDomain).ToList();
     }
 
     /// <inheritdoc />
-    public async Task<AccountResponse?> GetAccountByEmailAsync(string email)
+    public async Task<Account?> GetAccountByEmailAsync(string email)
     {
-        Account? account = await _context.Accounts.FirstOrDefaultAsync(x => x.Email == email);
-        return account?.Adapt<AccountResponse>();
+        OrmAccount? entity = await _context.Accounts.FirstOrDefaultAsync(x => x.Email == email);
+        return entity == null ? null : ToDomain(entity);
     }
 
     /// <inheritdoc />
-    public async Task<AccountResponse?> GetAccountByRegistrationTokenAsync(string rawToken)
+    public async Task<Account?> GetAccountByRegistrationTokenAsync(string rawToken)
     {
-        Account? account = await _context.Accounts.FirstOrDefaultAsync(x => x.RegistrationToken == rawToken);
-        return account?.Adapt<AccountResponse>();
+        OrmAccount? entity = await _context.Accounts.FirstOrDefaultAsync(x => x.RegistrationToken == rawToken);
+        return entity == null ? null : ToDomain(entity);
     }
 
     /// <inheritdoc />
-    public async Task<AccountResponse?> GetAccountByResetPasswordTokenAsync(string rawToken)
+    public async Task<Account?> GetAccountByResetPasswordTokenAsync(string rawToken)
     {
-        Account? account = await _context.Accounts.FirstOrDefaultAsync(x => x.ResetPasswordToken == rawToken);
-        return account?.Adapt<AccountResponse>();
+        OrmAccount? entity = await _context.Accounts.FirstOrDefaultAsync(x => x.ResetPasswordToken == rawToken);
+        return entity == null ? null : ToDomain(entity);
     }
 
     /// <inheritdoc />
-    public async Task CreateAccountAsync(AccountRequest request)
+    public async Task CreateAccountAsync(Account account)
     {
-        _ = await _context.Accounts.AddAsync(request.Adapt<Account>());
+        _ = await _context.Accounts.AddAsync(ToEntity(account));
         _ = await _context.SaveChangesAsync();
     }
 
     /// <inheritdoc />
-    public async Task UpdateAccountAsync(AccountRequest request)
+    public async Task UpdateAccountAsync(Account account)
     {
-        _ = _context.Accounts.Update(request.Adapt<Account>());
+        _ = _context.Accounts.Update(ToEntity(account));
         _ = await _context.SaveChangesAsync();
     }
+
+    private static Account ToDomain(OrmAccount e) => Account.Reconstitute(
+        e.Email ?? string.Empty, e.HashedPassword ?? string.Empty, e.Nickname ?? string.Empty,
+        e.AvatarImagePath, e.Role ?? string.Empty, e.TimeZoneIanaId ?? "UTC",
+        e.DefaultMonetaryUnit, e.Locked, e.LoginAttempt, e.EmailConfirmed,
+        e.AgreedServiceTerms, e.RegistrationToken, e.ResetPasswordToken,
+        e.Created, e.Updated, e.Message, e.Deleted);
+
+    private static OrmAccount ToEntity(Account a) => new()
+    {
+        Email = a.Email.Value,
+        HashedPassword = a.HashedPassword,
+        Nickname = a.Nickname,
+        AvatarImagePath = a.AvatarImagePath,
+        Role = a.Role,
+        TimeZoneIanaId = a.TimeZone.Value,
+        DefaultMonetaryUnit = a.DefaultMonetaryUnit,
+        Locked = a.Locked,
+        LoginAttempt = a.LoginAttempt,
+        EmailConfirmed = a.EmailConfirmed,
+        AgreedServiceTerms = a.AgreedServiceTerms,
+        RegistrationToken = a.RegistrationToken,
+        ResetPasswordToken = a.ResetPasswordToken,
+        Created = a.Created,
+        Updated = a.Updated,
+        Message = a.Message,
+        Deleted = a.Deleted
+    };
 }

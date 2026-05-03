@@ -34,4 +34,7 @@ public class IncomeRequest
 
     /// <summary>Optional free-text note.</summary>
     public string? Note { get; set; }
+
+    /// <summary>Currency code (e.g. "KRW", "USD"). Derived from the deposit asset.</summary>
+    public string? MonetaryUnit { get; set; }
 }

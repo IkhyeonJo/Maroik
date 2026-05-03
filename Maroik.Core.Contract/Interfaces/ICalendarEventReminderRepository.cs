@@ -1,4 +1,4 @@
-using Maroik.Core.Contract.Dtos;
+using Maroik.Core.Contract.Domains.Calendar;
 
 namespace Maroik.Core.Contract.Interfaces;
 
@@ -9,10 +9,10 @@ namespace Maroik.Core.Contract.Interfaces;
 public interface ICalendarEventReminderRepository
 {
     /// <summary>Returns all reminders configured for the given calendar event.</summary>
-    public Task<IEnumerable<CalendarEventReminderResponse>> GetCalendarEventRemindersAsync(long calendarEventId);
+    public Task<IEnumerable<CalendarEventReminder>> GetCalendarEventRemindersAsync(long calendarEventId);
 
     /// <summary>Inserts a new reminder row for a calendar event.</summary>
-    public Task CreateCalendarEventReminderAsync(CalendarEventReminderRequest request);
+    public Task CreateCalendarEventReminderAsync(CalendarEventReminder reminder);
 
     /// <summary>Deletes all reminder rows for the given calendar event. Returns the number of rows deleted.</summary>
     public Task<int> DeleteCalendarEventReminderAsync(long calendarEventId);

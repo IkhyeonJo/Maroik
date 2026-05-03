@@ -1,9 +1,9 @@
-using Maroik.Core.Contract.Dtos;
+using Maroik.Core.Contract.Domains.Calendar;
 using Maroik.Core.PostgreSQL.Data;
-using Maroik.Core.PostgreSQL.Models;
 using Maroik.Core.Repository.Repositories;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
+using EfCalendarEventReminder = Maroik.Core.PostgreSQL.Models.CalendarEventReminder;
 
 namespace Maroik.Core.Repository.Tests.Repositories;
 
@@ -40,7 +40,7 @@ public class CalendarEventReminderRepositoryTests : IDisposable
 
     // ── Helpers ──────────────────────────────────────────────────────────────
 
-    private static CalendarEventReminder MakeReminder(long calendarEventId, string method = "Email",
+    private static EfCalendarEventReminder MakeReminder(long calendarEventId, string method = "Email",
         long minutesBefore = 30) => new()
     {
         CalendarEventId = calendarEventId,
@@ -48,7 +48,7 @@ public class CalendarEventReminderRepositoryTests : IDisposable
         MinutesBeforeEvent = minutesBefore
     };
 
-    private async Task SeedAsync(params CalendarEventReminder[] reminders)
+    private async Task SeedAsync(params EfCalendarEventReminder[] reminders)
     {
         await _context.CalendarEventReminders.AddRangeAsync(reminders);
         await _context.SaveChangesAsync();
@@ -65,7 +65,7 @@ public class CalendarEventReminderRepositoryTests : IDisposable
             MakeReminder(1, "Push", 60),
             MakeReminder(2, "Email", 30));
 
-        IEnumerable<CalendarEventReminderResponse> result =
+        IEnumerable<CalendarEventReminder> result =
             await _sut.GetCalendarEventRemindersAsync(1);
 
         Assert.Equal(2, result.Count());
@@ -76,7 +76,7 @@ public class CalendarEventReminderRepositoryTests : IDisposable
     [Fact]
     public async Task GetCalendarEventRemindersAsync_ReturnsEmpty_WhenNoRemindersForEvent()
     {
-        IEnumerable<CalendarEventReminderResponse> result =
+        IEnumerable<CalendarEventReminder> result =
             await _sut.GetCalendarEventRemindersAsync(99);
 
         Assert.Empty(result);
@@ -88,16 +88,19 @@ public class CalendarEventReminderRepositoryTests : IDisposable
     [Fact]
     public async Task CreateCalendarEventReminderAsync_PersistsReminder()
     {
-        var request = new CalendarEventReminderRequest
-        {
-            CalendarEventId = 5,
-            Method = "Push",
-            HoursBeforeEvent = 2
-        };
+        var reminder = CalendarEventReminder.Reconstitute(
+            id: 0,
+            calendarEventId: 5,
+            method: "Push",
+            minutesBefore: null,
+            hoursBefore: 2,
+            daysBefore: null,
+            weeksBefore: null,
+            timesBefore: null);
 
-        await _sut.CreateCalendarEventReminderAsync(request);
+        await _sut.CreateCalendarEventReminderAsync(reminder);
 
-        CalendarEventReminder? saved = await _context.CalendarEventReminders
+        EfCalendarEventReminder? saved = await _context.CalendarEventReminders
             .FirstOrDefaultAsync(r => r.CalendarEventId == 5, TestContext.Current.CancellationToken);
         Assert.NotNull(saved);
         Assert.Equal("Push", saved.Method);

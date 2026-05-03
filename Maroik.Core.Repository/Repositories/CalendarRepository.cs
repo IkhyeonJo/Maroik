@@ -1,53 +1,57 @@
-using Mapster;
-using Maroik.Core.Contract.Dtos;
+using Maroik.Core.Contract.Domains.Calendar;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.PostgreSQL.Data;
-using Maroik.Core.PostgreSQL.Models;
 using Microsoft.EntityFrameworkCore;
+using OrmCalendar = Maroik.Core.PostgreSQL.Models.Calendar;
 
 namespace Maroik.Core.Repository.Repositories;
 
 /// <summary>EF Core implementation of <see cref="ICalendarRepository"/>.</summary>
-public class CalendarRepository : ICalendarRepository
+public class CalendarRepository(ApplicationDbContext context) : ICalendarRepository
 {
-    private readonly ApplicationDbContext _context;
+    /// <inheritdoc />
+    public async Task<List<Calendar>> GetAllCalendarsAsync()
+        => (await context.Calendars.OrderBy(x => x.Name).ToListAsync()).Select(ToDomain).ToList();
 
-    /// <summary>Initializes a new instance of <see cref="CalendarRepository"/> with <paramref name="context"/>.</summary>
-    public CalendarRepository(ApplicationDbContext context)
+    /// <inheritdoc />
+    public async Task<List<Calendar>> GetCalendarsAsync(string email)
+        => (await context.Calendars.Where(x => x.AccountEmail == email).OrderBy(x => x.Name).ToListAsync()).Select(ToDomain).ToList();
+
+    /// <inheritdoc />
+    public async Task CreateCalendarAsync(Calendar calendar)
     {
-        _context = context;
+        _ = await context.Calendars.AddAsync(ToEntity(calendar));
+        _ = await context.SaveChangesAsync();
     }
 
     /// <inheritdoc />
-    public async Task<List<CalendarResponse>> GetAllCalendarsAsync()
+    public async Task UpdateCalendarAsync(Calendar calendar)
     {
-        return (await _context.Calendars.OrderBy(x => x.Name).ToListAsync()).Adapt<List<CalendarResponse>>();
+        _ = context.Calendars.Update(ToEntity(calendar));
+        _ = await context.SaveChangesAsync();
     }
 
     /// <inheritdoc />
-    public async Task<List<CalendarResponse>> GetCalendarsAsync(string email)
+    public async Task DeleteCalendarAsync(Calendar calendar)
     {
-        return (await _context.Calendars.Where(x => x.AccountEmail == email).OrderBy(x => x.Name).ToListAsync()).Adapt<List<CalendarResponse>>();
+        _ = context.Calendars.Remove(ToEntity(calendar));
+        _ = await context.SaveChangesAsync();
     }
 
-    /// <inheritdoc />
-    public async Task CreateCalendarAsync(CalendarRequest request)
-    {
-        _ = await _context.Calendars.AddAsync(request.Adapt<Calendar>());
-        _ = await _context.SaveChangesAsync();
-    }
+    private static Calendar ToDomain(OrmCalendar e) => Calendar.Reconstitute(
+        e.Id, e.AccountEmail ?? string.Empty, e.Name ?? string.Empty,
+        e.Description, e.TimeZoneIanaId ?? "UTC", e.HtmlColorCode ?? string.Empty,
+        e.Created, e.Updated);
 
-    /// <inheritdoc />
-    public async Task UpdateCalendarAsync(CalendarRequest request)
+    private static OrmCalendar ToEntity(Calendar c) => new()
     {
-        _ = _context.Calendars.Update(request.Adapt<Calendar>());
-        _ = await _context.SaveChangesAsync();
-    }
-
-    /// <inheritdoc />
-    public async Task DeleteCalendarAsync(CalendarRequest request)
-    {
-        _ = _context.Calendars.Remove(request.Adapt<Calendar>());
-        _ = await _context.SaveChangesAsync();
-    }
+        Id = c.Id,
+        AccountEmail = c.AccountEmail.Value,
+        Name = c.Name,
+        Description = c.Description,
+        TimeZoneIanaId = c.TimeZone.Value,
+        HtmlColorCode = c.ColorCode.Value,
+        Created = c.Created,
+        Updated = c.Updated
+    };
 }

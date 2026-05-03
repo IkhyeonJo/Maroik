@@ -1,4 +1,4 @@
-using Maroik.Core.Contract.Dtos;
+using Maroik.Core.Contract.Domains.Menu;
 
 namespace Maroik.Core.Contract.Interfaces;
 
@@ -8,17 +8,17 @@ namespace Maroik.Core.Contract.Interfaces;
 public interface ISubCategoryRepository
 {
     /// <summary>Returns all sub-category rows regardless of role.</summary>
-    public Task<IEnumerable<SubCategoryResponse>> GetSubCategoryAsync();
+    public Task<IEnumerable<SubCategory>> GetSubCategoryAsync();
 
     /// <summary>Returns only the sub-categories visible to the given role.</summary>
-    public Task<IEnumerable<SubCategoryResponse>> GetSubCategoryByRoleAsync(string role);
+    public Task<IEnumerable<SubCategory>> GetSubCategoryByRoleAsync(string role);
 
     /// <summary>Inserts a new sub-category row.</summary>
-    public Task CreateSubCategoryAsync(SubCategoryRequest request);
+    public Task CreateSubCategoryAsync(SubCategory subCategory);
 
     /// <summary>Updates an existing sub-category's metadata and display order.</summary>
-    public Task UpdateSubCategoryAsync(SubCategoryRequest request);
+    public Task UpdateSubCategoryAsync(SubCategory subCategory);
 
     /// <summary>Deletes a sub-category row.</summary>
-    public Task DeleteSubCategoryAsync(SubCategoryRequest request);
+    public Task DeleteSubCategoryAsync(SubCategory subCategory);
 }

@@ -1,6 +1,7 @@
+using Maroik.Core.Contract.Domains.Account;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
-using Mapster;
+using Maroik.Core.Service.Mappers;
 using Microsoft.Extensions.Logging;
 
 namespace Maroik.Core.Service.Services;
@@ -15,26 +16,32 @@ public class ManagementAccountService : IManagementAccountService
 {
     private readonly IAccountRepository _accountRepository;
     private readonly IPasswordService _passwordService;
+    private readonly IDomainEventDispatcher _dispatcher;
     private readonly ILogger<ManagementAccountService> _logger;
 
     /// <summary>Initializes a new instance of <see cref="ManagementAccountService"/> with the supplied dependencies.</summary>
     public ManagementAccountService(
         IAccountRepository accountRepository,
         IPasswordService passwordService,
+        IDomainEventDispatcher dispatcher,
         ILogger<ManagementAccountService> logger)
     {
         _accountRepository = accountRepository;
         _passwordService = passwordService;
+        _dispatcher = dispatcher;
         _logger = logger;
     }
 
     /// <inheritdoc />
     public async Task<List<AccountResponse>> GetAllAccountsAsync()
-        => await _accountRepository.GetAllAsync();
+        => (await _accountRepository.GetAllAsync()).Select(AccountMapper.ToResponse).ToList();
 
     /// <inheritdoc />
     public async Task<AccountResponse?> GetAccountByEmailAsync(string email)
-        => await _accountRepository.GetAccountByEmailAsync(email);
+    {
+        Account? account = await _accountRepository.GetAccountByEmailAsync(email);
+        return account == null ? null : AccountMapper.ToResponse(account);
+    }
 
     /// <inheritdoc />
     public async Task<ServiceResult> CreateAccountAsync(AccountRequest request)
@@ -44,8 +51,29 @@ public class ManagementAccountService : IManagementAccountService
             if (await _accountRepository.GetAccountByEmailAsync(request.Email ?? "") != null)
                 return ServiceResult.Fail("This account has already been created.");
 
-            request.HashedPassword = _passwordService.HashPassword(request.HashedPassword ?? "");
-            await _accountRepository.CreateAccountAsync(request);
+            string hashedPassword = _passwordService.HashPassword(request.HashedPassword ?? "");
+
+            var createResult = Account.Create(
+                request.Email ?? string.Empty,
+                hashedPassword,
+                request.Nickname ?? string.Empty,
+                request.Role ?? "User",
+                request.TimeZoneIanaId ?? "UTC",
+                request.DefaultMonetaryUnit,
+                request.RegistrationToken,
+                request.AgreedServiceTerms);
+
+            if (createResult.IsError)
+                return ServiceResult.Fail(createResult.FirstError.Description);
+
+            var account = createResult.Value;
+            account.SetMessage(request.Message);
+
+            if (request.EmailConfirmed)
+                account.ForceConfirmEmail();
+
+            await _accountRepository.CreateAccountAsync(account);
+            await _dispatcher.DispatchAsync(account.PopDomainEvents());
             return ServiceResult.Ok();
         }
         catch (Exception e)
@@ -60,25 +88,27 @@ public class ManagementAccountService : IManagementAccountService
     {
         try
         {
-            AccountResponse? existing = await _accountRepository.GetAccountByEmailAsync(request.Email ?? "");
-            if (existing == null)
+            Account? account = await _accountRepository.GetAccountByEmailAsync(request.Email ?? "");
+            if (account == null)
                 return ServiceResult.Fail("Email address is wrong");
 
-            existing.HashedPassword = string.IsNullOrEmpty(newPassword)
-                ? existing.HashedPassword
-                : _passwordService.HashPassword(newPassword);
-            existing.Role = request.Role;
-            existing.TimeZoneIanaId = request.TimeZoneIanaId;
-            existing.Locked = request.Locked;
-            if (!request.Locked)
-                existing.LoginAttempt = 0;
-            existing.EmailConfirmed = request.EmailConfirmed;
-            existing.AgreedServiceTerms = request.AgreedServiceTerms;
-            existing.Updated = DateTime.UtcNow;
-            existing.Message = request.Message;
-            existing.Deleted = request.Deleted;
+            if (!string.IsNullOrEmpty(newPassword))
+                account.ChangePassword(_passwordService.HashPassword(newPassword));
 
-            await _accountRepository.UpdateAccountAsync(existing.Adapt<AccountRequest>());
+            var updateResult = account.AdminUpdate(
+                request.Role,
+                request.TimeZoneIanaId,
+                request.Locked,
+                request.LoginAttempt,
+                request.EmailConfirmed,
+                request.AgreedServiceTerms,
+                request.Message,
+                request.Deleted);
+
+            if (updateResult.IsError)
+                return ServiceResult.Fail(updateResult.FirstError.Description);
+
+            await _accountRepository.UpdateAccountAsync(account);
             return ServiceResult.Ok();
         }
         catch (Exception e)
@@ -93,12 +123,13 @@ public class ManagementAccountService : IManagementAccountService
     {
         try
         {
-            AccountResponse? existing = await _accountRepository.GetAccountByEmailAsync(email);
-            if (existing == null)
+            Account? account = await _accountRepository.GetAccountByEmailAsync(email);
+            if (account == null)
                 return ServiceResult.Fail("Fail to find the account by given email address");
 
-            existing.Deleted = true;
-            await _accountRepository.UpdateAccountAsync(existing.Adapt<AccountRequest>());
+            account.SoftDelete();
+
+            await _accountRepository.UpdateAccountAsync(account);
             return ServiceResult.Ok();
         }
         catch (Exception e)

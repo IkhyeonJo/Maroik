@@ -17,12 +17,14 @@ public class AssetServiceTests
     private readonly Mock<IExpenditureRepository> _expenditureRepo = new();
     private readonly Mock<IFixedExpenditureRepository> _fixedExpenditureRepo = new();
     private readonly Mock<IUnitOfWork> _unitOfWork = new();
+    private readonly Mock<IDomainEventDispatcher> _dispatcher = new();
 
     private AssetService CreateSut() => new(
         _assetRepo.Object,
         _expenditureRepo.Object,
         _fixedExpenditureRepo.Object,
-        _unitOfWork.Object);
+        _unitOfWork.Object,
+        _dispatcher.Object);
 
     /// <summary>Initializes the test fixture, setting up all required test doubles and the system under test.</summary>
     public AssetServiceTests()

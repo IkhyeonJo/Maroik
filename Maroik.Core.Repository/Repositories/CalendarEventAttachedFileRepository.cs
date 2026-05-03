@@ -1,57 +1,56 @@
-using Mapster;
-using Maroik.Core.Contract.Dtos;
+using Maroik.Core.Contract.Domains.Calendar;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.PostgreSQL.Data;
-using Maroik.Core.PostgreSQL.Models;
 using Microsoft.EntityFrameworkCore;
+using OrmFile = Maroik.Core.PostgreSQL.Models.CalendarEventAttachedFile;
 
 namespace Maroik.Core.Repository.Repositories;
 
 /// <summary>EF Core implementation of <see cref="ICalendarEventAttachedFileRepository"/>.</summary>
-public class CalendarEventAttachedFileRepository : ICalendarEventAttachedFileRepository
+public class CalendarEventAttachedFileRepository(ApplicationDbContext context) : ICalendarEventAttachedFileRepository
 {
-    private readonly ApplicationDbContext _context;
+    /// <inheritdoc />
+    public async Task<List<CalendarEventAttachedFile>> GetAllAsync()
+        => (await context.CalendarEventAttachedFiles.ToListAsync()).Select(ToDomain).ToList();
 
-    /// <summary>Initializes a new instance of <see cref="CalendarEventAttachedFileRepository"/> with <paramref name="context"/>.</summary>
-    public CalendarEventAttachedFileRepository(ApplicationDbContext context)
+    /// <inheritdoc />
+    public async Task<CalendarEventAttachedFile?> GetCalendarEventAttachedFileAsync(long calendarEventId)
     {
-        _context = context;
+        OrmFile? file = await context.CalendarEventAttachedFiles
+            .Where(x => x.CalendarEventId == calendarEventId)
+            .FirstOrDefaultAsync();
+        return file == null ? null : ToDomain(file);
     }
 
     /// <inheritdoc />
-    public async Task<List<CalendarEventAttachedFileResponse>> GetAllAsync()
+    public async Task SaveCalendarEventAttachedFileAsync(CalendarEventAttachedFile file)
     {
-        return (await _context.CalendarEventAttachedFiles.ToListAsync()).Adapt<List<CalendarEventAttachedFileResponse>>();
+        _ = await context.CalendarEventAttachedFiles.AddAsync(ToEntity(file));
+        _ = await context.SaveChangesAsync();
     }
 
     /// <inheritdoc />
-    public async Task<CalendarEventAttachedFileResponse?> GetCalendarEventAttachedFileAsync(long calendarEventId)
+    public async Task UpdateCalendarEventAttachedFileAsync(CalendarEventAttachedFile file)
     {
-        CalendarEventAttachedFile? file = await _context.CalendarEventAttachedFiles
-            .Where(x => x.CalendarEventId == calendarEventId).FirstOrDefaultAsync();
-        return file?.Adapt<CalendarEventAttachedFileResponse>();
-    }
-
-    /// <inheritdoc />
-    public async Task SaveCalendarEventAttachedFileAsync(CalendarEventAttachedFileRequest request)
-    {
-        _ = await _context.CalendarEventAttachedFiles.AddAsync(request.Adapt<CalendarEventAttachedFile>());
-        _ = await _context.SaveChangesAsync();
-    }
-
-    /// <inheritdoc />
-    public async Task UpdateCalendarEventAttachedFileAsync(CalendarEventAttachedFileRequest request)
-    {
-        _ = _context.CalendarEventAttachedFiles.Update(request.Adapt<CalendarEventAttachedFile>());
-        _ = await _context.SaveChangesAsync();
+        _ = context.CalendarEventAttachedFiles.Update(ToEntity(file));
+        _ = await context.SaveChangesAsync();
     }
 
     /// <inheritdoc />
     public async Task<int> DeleteCalendarEventAttachedFileAsync(long calendarEventId)
+        => await context.Database.ExecuteSqlInterpolatedAsync(
+            $"""DELETE FROM "CalendarEventAttachedFile" WHERE "CalendarEventId" = {calendarEventId}""");
+
+    private static CalendarEventAttachedFile ToDomain(OrmFile e)
+        => CalendarEventAttachedFile.Reconstitute(e.Id, e.CalendarEventId, e.Size, e.Name, e.Extension, e.Path);
+
+    private static OrmFile ToEntity(CalendarEventAttachedFile f) => new()
     {
-        return await _context.Database.ExecuteSqlInterpolatedAsync
-        (
-            $"""DELETE FROM "CalendarEventAttachedFile" WHERE "CalendarEventId" = {calendarEventId}"""
-        );
-    }
+        Id = f.Id,
+        CalendarEventId = f.CalendarEventId,
+        Size = f.Size,
+        Name = f.Name,
+        Extension = f.Extension,
+        Path = f.Path
+    };
 }

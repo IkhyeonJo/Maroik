@@ -1,4 +1,5 @@
 using Maroik.Core.Contract.Interfaces;
+using Maroik.Core.Service;
 using Maroik.Core.Service.Services;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -32,5 +33,6 @@ public static class ServiceCollectionExtensions
         services.AddScoped<ICalendarService, CalendarService>();
         services.AddScoped<ISessionService, SessionService>();
         services.AddSingleton<IRsaService, RsaService>();
+        services.AddScoped<IDomainEventDispatcher, DomainEventDispatcher>();
     }
 }

@@ -1,8 +1,9 @@
 using ImageMagick;
+using Maroik.Core.Contract.Domains.Calendar;
 using Maroik.Core.Contract.Utilities;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
-using Mapster;
+using Maroik.Core.Service.Mappers;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -25,6 +26,7 @@ public class CalendarService : ICalendarService
     private readonly IOtherCalendarRepository _otherCalendarRepository;
     private readonly IFileClient _fileClient;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IDomainEventDispatcher _dispatcher;
     private readonly IOptions<ServerSetting> _settings;
     private readonly ILogger<CalendarService> _logger;
 
@@ -38,6 +40,7 @@ public class CalendarService : ICalendarService
         IOtherCalendarRepository otherCalendarRepository,
         IFileClient fileClient,
         IUnitOfWork unitOfWork,
+        IDomainEventDispatcher dispatcher,
         IOptions<ServerSetting> settings,
         ILogger<CalendarService> logger)
     {
@@ -49,57 +52,58 @@ public class CalendarService : ICalendarService
         _otherCalendarRepository = otherCalendarRepository;
         _fileClient = fileClient;
         _unitOfWork = unitOfWork;
+        _dispatcher = dispatcher;
         _settings = settings;
         _logger = logger;
     }
 
     /// <inheritdoc />
     public async Task<List<CalendarResponse>> GetCalendarsAsync(string email)
-        => await _calendarRepository.GetCalendarsAsync(email);
+        => (await _calendarRepository.GetCalendarsAsync(email)).Select(CalendarMapper.ToResponse).ToList();
 
     /// <inheritdoc />
     public async Task<List<CalendarResponse>> GetAllCalendarsAsync()
-        => await _calendarRepository.GetAllCalendarsAsync();
+        => (await _calendarRepository.GetAllCalendarsAsync()).Select(CalendarMapper.ToResponse).ToList();
 
     /// <inheritdoc />
     public async Task<IEnumerable<CalendarEventResponse>> GetCalendarEventsAsync(long calendarId)
-        => await _calendarEventRepository.GetCalendarEventsAsync(calendarId);
+        => (await _calendarEventRepository.GetCalendarEventsAsync(calendarId)).Select(CalendarEventMapper.ToResponse);
 
     /// <inheritdoc />
     public async Task<CalendarEventResponse?> GetCalendarEventAsync(long id)
-        => await _calendarEventRepository.GetCalendarEventAsync(id);
+    {
+        CalendarEvent? evt = await _calendarEventRepository.GetCalendarEventAsync(id);
+        return evt == null ? null : CalendarEventMapper.ToResponse(evt);
+    }
 
     /// <inheritdoc />
     public async Task<CalendarEventAttachedFileResponse?> GetCalendarEventAttachedFileAsync(long calendarEventId)
-        => await _calendarEventAttachedFileRepository.GetCalendarEventAttachedFileAsync(calendarEventId);
+    {
+        CalendarEventAttachedFile? file = await _calendarEventAttachedFileRepository.GetCalendarEventAttachedFileAsync(calendarEventId);
+        return file == null ? null : CalendarEventAttachedFileMapper.ToResponse(file);
+    }
 
     /// <inheritdoc />
     public async Task<IEnumerable<CalendarEventReminderResponse>> GetCalendarEventRemindersAsync(long calendarEventId)
-        => await _calendarEventReminderRepository.GetCalendarEventRemindersAsync(calendarEventId);
+        => (await _calendarEventReminderRepository.GetCalendarEventRemindersAsync(calendarEventId)).Select(CalendarEventReminderMapper.ToResponse);
 
     /// <inheritdoc />
     public async Task<List<OtherCalendarResponse>> GetOtherCalendarsAsync(string email)
-        => await _otherCalendarRepository.GetOtherCalendarsAsync(email);
+        => (await _otherCalendarRepository.GetOtherCalendarsAsync(email)).Select(OtherCalendarMapper.ToResponse).ToList();
 
     /// <inheritdoc />
     public async Task<List<CalendarSharedResponse>> GetCalendarSharedAsync()
-        => await _calendarSharedRepository.GetCalendarSharedAsync();
+        => (await _calendarSharedRepository.GetCalendarSharedAsync()).Select(CalendarSharedMapper.ToResponse).ToList();
 
     /// <inheritdoc />
     public async Task<ServiceResult> EnsureCalendarSharedAsync(long calendarId)
     {
         try
         {
-            List<CalendarSharedResponse> shareds = await _calendarSharedRepository.GetCalendarSharedAsync();
-            if (!shareds.Any(s => s.CalendarId == calendarId))
-            {
-                await _calendarSharedRepository.CreateCalendarSharedAsync(new CalendarSharedRequest
-                {
-                    CalendarId = calendarId,
-                    User = false,
-                    Anonymous = false
-                });
-            }
+            List<CalendarShared> shareds = await _calendarSharedRepository.GetCalendarSharedAsync();
+            if (!shareds.Any(s => s.Id == calendarId))
+                await _calendarSharedRepository.CreateCalendarSharedAsync(CalendarShared.CreatePrivate(calendarId));
+
             return ServiceResult.Ok();
         }
         catch { return ServiceResult.Fail("Input is invalid"); }
@@ -110,14 +114,17 @@ public class CalendarService : ICalendarService
     {
         try
         {
-            CalendarResponse? existing = (await _calendarRepository.GetCalendarsAsync(request.AccountEmail ?? ""))
-                .FirstOrDefault(c => c.Name == request.Name);
-            if (existing != null)
+            List<Calendar> calendars = await _calendarRepository.GetCalendarsAsync(request.AccountEmail ?? "");
+            if (calendars.Any(c => c.Name == request.Name))
                 return ServiceResult.Fail("The calendar already exists.");
 
-            request.Created = DateTime.UtcNow;
-            request.Updated = DateTime.UtcNow;
-            await _calendarRepository.CreateCalendarAsync(request);
+            var calendarResult = Calendar.Create(0, request.AccountEmail, request.Name, request.Description, request.TimeZoneIanaId, request.HtmlColorCode);
+            if (calendarResult.IsError)
+                return ServiceResult.Fail(calendarResult.FirstError.Description);
+
+            var calendar = calendarResult.Value;
+            await _calendarRepository.CreateCalendarAsync(calendar);
+            await _dispatcher.DispatchAsync(calendar.PopDomainEvents());
             return ServiceResult.Ok();
         }
         catch { return ServiceResult.Fail("Input is invalid"); }
@@ -128,14 +135,16 @@ public class CalendarService : ICalendarService
     {
         try
         {
-            List<CalendarResponse> calendars = await _calendarRepository.GetCalendarsAsync(request.AccountEmail ?? "");
-            CalendarResponse? previous = calendars.FirstOrDefault(c => c.Id == request.Id);
+            List<Calendar> calendars = await _calendarRepository.GetCalendarsAsync(request.AccountEmail ?? "");
+            Calendar? previous = calendars.FirstOrDefault(c => c.Id == request.Id);
             if (previous == null)
                 return ServiceResult.Fail("Input is invalid");
 
-            request.Created = previous.Created;
-            request.Updated = DateTime.UtcNow;
-            await _calendarRepository.UpdateCalendarAsync(request);
+            var updateResult = previous.Update(request.Name, request.Description, request.TimeZoneIanaId, request.HtmlColorCode);
+            if (updateResult.IsError)
+                return ServiceResult.Fail(updateResult.FirstError.Description);
+
+            await _calendarRepository.UpdateCalendarAsync(previous);
             return ServiceResult.Ok();
         }
         catch { return ServiceResult.Fail("Input is invalid"); }
@@ -146,11 +155,12 @@ public class CalendarService : ICalendarService
     {
         try
         {
-            List<CalendarResponse> calendars = await _calendarRepository.GetCalendarsAsync(request.AccountEmail ?? "");
-            if (!calendars.Any(c => c.Id == request.Id))
+            List<Calendar> calendars = await _calendarRepository.GetCalendarsAsync(request.AccountEmail ?? "");
+            Calendar? existing = calendars.FirstOrDefault(c => c.Id == request.Id);
+            if (existing == null)
                 return ServiceResult.Fail("Input is invalid");
 
-            await _calendarRepository.DeleteCalendarAsync(request);
+            await _calendarRepository.DeleteCalendarAsync(existing);
             return ServiceResult.Ok();
         }
         catch { return ServiceResult.Fail("Input is invalid"); }
@@ -161,12 +171,16 @@ public class CalendarService : ICalendarService
     {
         try
         {
-            List<CalendarResponse> calendars = await _calendarRepository.GetCalendarsAsync(request.AccountEmail ?? "");
+            List<Calendar> calendars = await _calendarRepository.GetCalendarsAsync(request.AccountEmail ?? "");
             if (calendars.Count == 0)
             {
-                request.Created = DateTime.UtcNow;
-                request.Updated = DateTime.UtcNow;
-                await _calendarRepository.CreateCalendarAsync(request);
+                var calendarResult = Calendar.Create(0, request.AccountEmail, request.Name, request.Description, request.TimeZoneIanaId, request.HtmlColorCode);
+                if (calendarResult.IsError)
+                    return ServiceResult.Fail(calendarResult.FirstError.Description);
+
+                var calendar = calendarResult.Value;
+                await _calendarRepository.CreateCalendarAsync(calendar);
+                await _dispatcher.DispatchAsync(calendar.PopDomainEvents());
             }
             return ServiceResult.Ok();
         }
@@ -179,13 +193,18 @@ public class CalendarService : ICalendarService
         await _unitOfWork.BeginAsync();
         try
         {
-            foreach (OtherCalendarResponse previous in await _otherCalendarRepository.GetOtherCalendarsAsync(email) ?? [])
-                await _otherCalendarRepository.DeleteOtherCalendarAsync(previous.Adapt<OtherCalendarRequest>());
+            foreach (OtherCalendar previous in await _otherCalendarRepository.GetOtherCalendarsAsync(email) ?? [])
+                await _otherCalendarRepository.DeleteOtherCalendarAsync(previous);
 
             foreach (OtherCalendarRequest req in requests)
             {
-                req.AccountEmail = email;
-                await _otherCalendarRepository.CreateOtherCalendarAsync(req);
+                var createResult = OtherCalendar.Create(email, req.CalendarId);
+                if (createResult.IsError)
+                {
+                    await _unitOfWork.RollbackAsync();
+                    return ServiceResult.Fail(createResult.FirstError.Description);
+                }
+                await _otherCalendarRepository.CreateOtherCalendarAsync(createResult.Value);
             }
 
             await _unitOfWork.CommitAsync();
@@ -205,15 +224,18 @@ public class CalendarService : ICalendarService
         try
         {
             foreach (CalendarSharedRequest req in requests)
-                await _calendarSharedRepository.UpdateCalendarSharedAsync(req);
+            {
+                var shared = CalendarShared.CreatePrivate(req.CalendarId).Update(req.User, req.Anonymous);
+                await _calendarSharedRepository.UpdateCalendarSharedAsync(shared);
+            }
 
-            List<OtherCalendarResponse> allOtherCalendars = await _otherCalendarRepository.GetAllOtherCalendarsAsync() ?? [];
+            List<OtherCalendar> allOtherCalendars = await _otherCalendarRepository.GetAllOtherCalendarsAsync() ?? [];
             foreach (CalendarSharedRequest req in requests.Where(r => !r.User))
             {
-                OtherCalendarResponse? other = allOtherCalendars.FirstOrDefault(o => o.CalendarId == req.CalendarId);
+                OtherCalendar? other = allOtherCalendars.FirstOrDefault(o => o.CalendarId == req.CalendarId);
                 if (other != null)
                 {
-                    try { await _otherCalendarRepository.DeleteOtherCalendarAsync(other.Adapt<OtherCalendarRequest>()); }
+                    try { await _otherCalendarRepository.DeleteOtherCalendarAsync(other); }
                     catch { /* best effort */ }
                 }
             }
@@ -228,42 +250,76 @@ public class CalendarService : ICalendarService
         }
     }
 
+    private static ServiceResult? ValidateAttachedFile(AttachedFileInfo? attachedFile)
+    {
+        if (attachedFile == null) return null;
+        if (Path.GetExtension(attachedFile.FileName) != ".zip")
+            return ServiceResult.Fail("Only zip extension allowed.");
+        if (attachedFile.Size is not (> 0 and <= 10485760))
+            return ServiceResult.Fail("Uploaded file size must be smaller than 10MB.");
+        return null;
+    }
+
     /// <inheritdoc />
     public async Task<ServiceResult> CreateCalendarEventAsync(
         CalendarEventRequest request, string email, string roleIndex,
         List<CalendarReminderInfo> reminders, AttachedFileInfo? attachedFile)
     {
+        var fileError = ValidateAttachedFile(attachedFile);
+        if (fileError != null) return fileError;
+
         await _unitOfWork.BeginAsync();
         try
         {
-            CalendarResponse? calendar = (await _calendarRepository.GetCalendarsAsync(email))
-                .FirstOrDefault(c => c.Id == request.CalendarId);
-            if (calendar == null)
+            List<Calendar> calendars = await _calendarRepository.GetCalendarsAsync(email);
+            if (!calendars.Any(c => c.Id == request.CalendarId))
             {
                 await _unitOfWork.RollbackAsync();
                 return ServiceResult.Fail("The calendar does not exists.");
             }
 
-            request.Created = DateTime.UtcNow;
-            request.Updated = DateTime.UtcNow;
-            await _calendarEventRepository.CreateCalendarEventAsync(request);
+            var eventResult = CalendarEvent.Create(0, request.CalendarId, request.Title, request.Description,
+                request.AllDay, request.StartDate, request.EndDate,
+                request.StartDateTimeZoneIanaId, request.EndDateTimeZoneIanaId,
+                request.Location, request.Status, request.RecurrenceId);
+            if (eventResult.IsError)
+            {
+                await _unitOfWork.RollbackAsync();
+                return ServiceResult.Fail(eventResult.FirstError.Description);
+            }
+
+            var calendarEvent = eventResult.Value;
+            long eventId = await _calendarEventRepository.CreateCalendarEventAsync(calendarEvent);
+            await _dispatcher.DispatchAsync(calendarEvent.PopDomainEvents());
 
             if (attachedFile != null)
             {
-                string filePath = BuildEventFilePath(roleIndex, request.Id, attachedFile.FileName);
+                string filePath = BuildEventFilePath(roleIndex, eventId, attachedFile.FileName);
                 await _fileClient.UploadAsync(attachedFile.Bytes, attachedFile.ContentType, filePath, _settings.Value.FileStorageBaseUrl ?? string.Empty);
-                await _calendarEventAttachedFileRepository.SaveCalendarEventAttachedFileAsync(new CalendarEventAttachedFileRequest
+                var fileResult = CalendarEventAttachedFile.Create(0, eventId, attachedFile.Size,
+                    Path.GetFileNameWithoutExtension(attachedFile.FileName),
+                    Path.GetExtension(attachedFile.FileName),
+                    filePath.Replace('\\', '/'));
+                if (fileResult.IsError)
                 {
-                    CalendarEventId = request.Id,
-                    Size = Convert.ToInt32(attachedFile.Size),
-                    Name = Path.GetFileNameWithoutExtension(attachedFile.FileName),
-                    Extension = Path.GetExtension(attachedFile.FileName),
-                    Path = filePath.Replace('\\', '/')
-                });
+                    await _unitOfWork.RollbackAsync();
+                    return ServiceResult.Fail(fileResult.FirstError.Description);
+                }
+                await _calendarEventAttachedFileRepository.SaveCalendarEventAttachedFileAsync(fileResult.Value);
             }
 
             foreach (CalendarReminderInfo r in reminders)
-                await _calendarEventReminderRepository.CreateCalendarEventReminderAsync(ToReminderRequest(request.Id, r));
+            {
+                var reminderResult = CalendarEventReminder.Create(0, eventId, r.Method,
+                    r.MinutesBeforeEvent, r.HoursBeforeEvent, r.DaysBeforeEvent, r.WeeksBeforeEvent,
+                    r.TimesBeforeEvent.HasValue ? TimeOnly.FromTimeSpan(r.TimesBeforeEvent.Value) : null);
+                if (reminderResult.IsError)
+                {
+                    await _unitOfWork.RollbackAsync();
+                    return ServiceResult.Fail(reminderResult.FirstError.Description);
+                }
+                await _calendarEventReminderRepository.CreateCalendarEventReminderAsync(reminderResult.Value);
+            }
 
             await _unitOfWork.CommitAsync();
             return ServiceResult.Ok();
@@ -280,47 +336,71 @@ public class CalendarService : ICalendarService
         CalendarEventRequest request, string email, string roleIndex,
         List<CalendarReminderInfo> reminders, AttachedFileInfo? attachedFile)
     {
+        var fileError = ValidateAttachedFile(attachedFile);
+        if (fileError != null) return fileError;
+
         await _unitOfWork.BeginAsync();
         try
         {
-            CalendarResponse? calendar = (await _calendarRepository.GetCalendarsAsync(email))
-                .FirstOrDefault(c => c.Id == request.CalendarId);
-            if (calendar == null)
+            List<Calendar> calendars = await _calendarRepository.GetCalendarsAsync(email);
+            if (!calendars.Any(c => c.Id == request.CalendarId))
             {
                 await _unitOfWork.RollbackAsync();
                 return ServiceResult.Fail("The calendar does not exists.");
             }
 
-            CalendarEventResponse? existing = await _calendarEventRepository.GetCalendarEventAsync(request.Id);
+            CalendarEvent? existing = await _calendarEventRepository.GetCalendarEventAsync(request.Id);
             if (existing == null || existing.Id <= 0)
             {
                 await _unitOfWork.RollbackAsync();
                 return ServiceResult.Fail("Input is invalid");
             }
 
-            request.Updated = DateTime.UtcNow;
-            await _calendarEventRepository.UpdateCalendarEventAsync(request);
+            var updateResult = existing.Update(request.Title, request.Description, request.AllDay,
+                request.StartDate, request.EndDate,
+                request.StartDateTimeZoneIanaId, request.EndDateTimeZoneIanaId,
+                request.Location, request.Status);
+            if (updateResult.IsError)
+            {
+                await _unitOfWork.RollbackAsync();
+                return ServiceResult.Fail(updateResult.FirstError.Description);
+            }
+
+            existing.Reassign(request.CalendarId, request.RecurrenceId);
+            await _calendarEventRepository.UpdateCalendarEventAsync(existing);
 
             // Replace attachment
-            await _calendarEventAttachedFileRepository.DeleteCalendarEventAttachedFileAsync(request.Id);
+            await _calendarEventAttachedFileRepository.DeleteCalendarEventAttachedFileAsync(existing.Id);
             if (attachedFile != null)
             {
-                string filePath = BuildEventFilePath(roleIndex, request.Id, attachedFile.FileName);
+                string filePath = BuildEventFilePath(roleIndex, existing.Id, attachedFile.FileName);
                 await _fileClient.UploadAsync(attachedFile.Bytes, attachedFile.ContentType, filePath, _settings.Value.FileStorageBaseUrl ?? string.Empty);
-                await _calendarEventAttachedFileRepository.SaveCalendarEventAttachedFileAsync(new CalendarEventAttachedFileRequest
+                var fileResult = CalendarEventAttachedFile.Create(0, existing.Id, attachedFile.Size,
+                    Path.GetFileNameWithoutExtension(attachedFile.FileName),
+                    Path.GetExtension(attachedFile.FileName),
+                    filePath.Replace('\\', '/'));
+                if (fileResult.IsError)
                 {
-                    CalendarEventId = request.Id,
-                    Size = Convert.ToInt32(attachedFile.Size),
-                    Name = Path.GetFileNameWithoutExtension(attachedFile.FileName),
-                    Extension = Path.GetExtension(attachedFile.FileName),
-                    Path = filePath.Replace('\\', '/')
-                });
+                    await _unitOfWork.RollbackAsync();
+                    return ServiceResult.Fail(fileResult.FirstError.Description);
+                }
+                await _calendarEventAttachedFileRepository.SaveCalendarEventAttachedFileAsync(fileResult.Value);
             }
 
             // Replace reminders
-            await _calendarEventReminderRepository.DeleteCalendarEventReminderAsync(request.Id);
+            await _calendarEventReminderRepository.DeleteCalendarEventReminderAsync(existing.Id);
             foreach (CalendarReminderInfo r in reminders)
-                await _calendarEventReminderRepository.CreateCalendarEventReminderAsync(ToReminderRequest(request.Id, r));
+            {
+                var reminderResult = CalendarEventReminder.Create(0, existing.Id, r.Method,
+                    r.MinutesBeforeEvent, r.HoursBeforeEvent, r.DaysBeforeEvent, r.WeeksBeforeEvent,
+                    r.TimesBeforeEvent.HasValue ? TimeOnly.FromTimeSpan(r.TimesBeforeEvent.Value) : null);
+                if (reminderResult.IsError)
+                {
+                    await _unitOfWork.RollbackAsync();
+                    return ServiceResult.Fail(reminderResult.FirstError.Description);
+                }
+                await _calendarEventReminderRepository.CreateCalendarEventReminderAsync(reminderResult.Value);
+            }
 
             await _unitOfWork.CommitAsync();
             return ServiceResult.Ok();
@@ -337,13 +417,13 @@ public class CalendarService : ICalendarService
     {
         try
         {
-            List<CalendarResponse> calendars = await _calendarRepository.GetCalendarsAsync(email) ?? [];
-            CalendarEventResponse? evt = await _calendarEventRepository.GetCalendarEventAsync(calendarEventId);
+            List<Calendar> calendars = await _calendarRepository.GetCalendarsAsync(email);
+            CalendarEvent? evt = await _calendarEventRepository.GetCalendarEventAsync(calendarEventId);
 
             if (evt == null || !calendars.Any(c => c.Id == evt.CalendarId))
                 return ServiceResult.Fail("Input is invalid");
 
-            await _calendarEventRepository.DeleteCalendarEventAsync(evt.Adapt<CalendarEventRequest>());
+            await _calendarEventRepository.DeleteCalendarEventAsync(evt);
             return ServiceResult.Ok();
         }
         catch { return ServiceResult.Fail("Input is invalid"); }
@@ -355,20 +435,6 @@ public class CalendarService : ICalendarService
         string ext = Path.GetExtension(fileName);
         return Path.Combine("upload", "Calendar", roleIndex, "calendarEventAttachedFiles", $"{eventId}", $"{guid}{ext}");
     }
-
-    private static CalendarEventReminderRequest ToReminderRequest(long eventId, CalendarReminderInfo r) =>
-        new()
-        {
-            CalendarEventId = eventId,
-            Method = r.Method,
-            MinutesBeforeEvent = r.MinutesBeforeEvent,
-            HoursBeforeEvent = r.HoursBeforeEvent,
-            DaysBeforeEvent = r.DaysBeforeEvent,
-            WeeksBeforeEvent = r.WeeksBeforeEvent,
-            TimesBeforeEvent = r.TimesBeforeEvent.HasValue
-                ? TimeOnly.FromTimeSpan(r.TimesBeforeEvent.Value)
-                : null
-        };
 
     /// <inheritdoc />
     public async Task<SummernoteUploadResult> UploadSummernoteImageAsync(AttachedFileInfo file, string roleIndex)

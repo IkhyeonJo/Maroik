@@ -1,4 +1,4 @@
-using Maroik.Core.Contract.Dtos;
+using Maroik.Core.Contract.Domains.Calendar;
 
 namespace Maroik.Core.Contract.Interfaces;
 
@@ -8,17 +8,17 @@ namespace Maroik.Core.Contract.Interfaces;
 public interface ICalendarRepository
 {
     /// <summary>Returns every calendar in the database (admin use or shared-calendar discovery).</summary>
-    public Task<List<CalendarResponse>> GetAllCalendarsAsync();
+    public Task<List<Calendar>> GetAllCalendarsAsync();
 
     /// <summary>Returns all calendars owned by the account with the given email.</summary>
-    public Task<List<CalendarResponse>> GetCalendarsAsync(string email);
+    public Task<List<Calendar>> GetCalendarsAsync(string email);
 
     /// <summary>Inserts a new calendar row.</summary>
-    public Task CreateCalendarAsync(CalendarRequest request);
+    public Task CreateCalendarAsync(Calendar calendar);
 
     /// <summary>Updates the name, description, colour, and time-zone of an existing calendar.</summary>
-    public Task UpdateCalendarAsync(CalendarRequest request);
+    public Task UpdateCalendarAsync(Calendar calendar);
 
     /// <summary>Deletes a calendar row and cascades to its events via the database constraint.</summary>
-    public Task DeleteCalendarAsync(CalendarRequest request);
+    public Task DeleteCalendarAsync(Calendar calendar);
 }

@@ -1,4 +1,4 @@
-using Maroik.Core.Contract.Dtos;
+using Maroik.Core.Contract.Domains.Calendar;
 
 namespace Maroik.Core.Contract.Interfaces;
 
@@ -9,14 +9,14 @@ namespace Maroik.Core.Contract.Interfaces;
 public interface IOtherCalendarRepository
 {
     /// <summary>Returns all subscription rows across all accounts (admin use).</summary>
-    public Task<List<OtherCalendarResponse>> GetAllOtherCalendarsAsync();
+    public Task<List<OtherCalendar>> GetAllOtherCalendarsAsync();
 
     /// <summary>Returns all calendars that the given account has subscribed to.</summary>
-    public Task<List<OtherCalendarResponse>> GetOtherCalendarsAsync(string email);
+    public Task<List<OtherCalendar>> GetOtherCalendarsAsync(string email);
 
     /// <summary>Inserts a subscription row (account subscribes to a shared calendar).</summary>
-    public Task CreateOtherCalendarAsync(OtherCalendarRequest request);
+    public Task CreateOtherCalendarAsync(OtherCalendar otherCalendar);
 
     /// <summary>Removes a subscription row (account unsubscribes from a calendar).</summary>
-    public Task DeleteOtherCalendarAsync(OtherCalendarRequest request);
+    public Task DeleteOtherCalendarAsync(OtherCalendar otherCalendar);
 }

@@ -1,9 +1,8 @@
-using Mapster;
-using Maroik.Core.Contract.Dtos;
+using Maroik.Core.Contract.Domains.Finance;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.PostgreSQL.Data;
-using Maroik.Core.PostgreSQL.Models;
 using Microsoft.EntityFrameworkCore;
+using OrmAsset = Maroik.Core.PostgreSQL.Models.Asset;
 
 namespace Maroik.Core.Repository.Repositories;
 
@@ -19,51 +18,79 @@ public class AssetRepository : IAssetRepository
     }
 
     /// <inheritdoc />
-    public async Task<List<AssetResponse>> GetAssetsAsync(string email)
+    public async Task<List<Asset>> GetAssetsAsync(string email)
+        => (await _context.Assets.Where(x => x.AccountEmail == email).ToListAsync()).Select(ToDomain).ToList();
+
+    /// <inheritdoc />
+    public async Task<Asset?> GetAssetAsync(string email, string productName)
     {
-        return (await _context.Assets.Where(x => x.AccountEmail == email).ToListAsync()).Adapt<List<AssetResponse>>();
+        OrmAsset? entity = await _context.Assets.FirstOrDefaultAsync(a => a.AccountEmail == email && a.ProductName == productName);
+        return entity == null ? null : ToDomain(entity);
     }
 
     /// <inheritdoc />
-    public async Task<AssetResponse?> GetAssetAsync(string email, string productName)
+    public async Task CreateAssetAsync(Asset asset)
     {
-        Asset? asset = await _context.Assets.FirstOrDefaultAsync(a => a.AccountEmail == email && a.ProductName == productName);
-        return asset?.Adapt<AssetResponse>();
-    }
-
-    /// <inheritdoc />
-    public async Task CreateAssetAsync(AssetRequest request)
-    {
-        _ = await _context.Assets.AddAsync(request.Adapt<Asset>());
+        _ = await _context.Assets.AddAsync(ToEntity(asset));
         _ = await _context.SaveChangesAsync();
     }
 
     /// <inheritdoc />
-    public async Task UpdateAssetAsync(AssetRequest request)
+    public async Task UpdateAssetAsync(Asset asset)
     {
-        _ = _context.Assets.Update(request.Adapt<Asset>());
+        _ = _context.Assets.Update(ToEntity(asset));
         _ = await _context.SaveChangesAsync();
     }
 
     /// <inheritdoc />
-    public async Task<int> UpdateAssetWithProductNameAsync(AssetRequest request, string originalProductName)
+    public async Task<int> UpdateAssetWithProductNameAsync(Asset asset, string originalProductName)
     {
         return await _context.Database.ExecuteSqlInterpolatedAsync
         (
             $"""
              UPDATE "Asset"
              SET
-                 "ProductName" = {request.ProductName},
-                 "Item" = {request.Item},
-                 "Amount" = {request.Amount},
-                 "MonetaryUnit" = {request.MonetaryUnit},
-                 "Note" = {request.Note},
-                 "Deleted" = {request.Deleted},
-                 "Updated" = {request.Updated}
+                 "ProductName" = {asset.ProductName},
+                 "Item" = {asset.Item},
+                 "Amount" = {asset.Balance.Amount},
+                 "MonetaryUnit" = {asset.Balance.Currency},
+                 "Note" = {asset.Note},
+                 "Deleted" = {asset.Deleted},
+                 "Updated" = {asset.Updated}
              WHERE
                  "ProductName" = {originalProductName}
-                 AND "AccountEmail" = {request.AccountEmail}
+                 AND "AccountEmail" = {asset.AccountEmail.Value}
              """
         );
     }
+
+    /// <inheritdoc />
+    public async Task UpdateMyDepositAssetWithProductNameAsync(string accountEmail, string originalProductName, string newProductName)
+    {
+        await _context.Database.ExecuteSqlInterpolatedAsync
+        (
+            $"""
+             UPDATE "Asset"
+             SET "ProductName" = {newProductName}
+             WHERE "ProductName" = {originalProductName} AND "AccountEmail" = {accountEmail}
+             """
+        );
+    }
+
+    private static Asset ToDomain(OrmAsset e) => Asset.Reconstitute(
+        e.ProductName ?? string.Empty, e.AccountEmail ?? string.Empty, e.Item ?? string.Empty,
+        e.Amount, e.MonetaryUnit ?? string.Empty, e.Note, e.Deleted, e.Created, e.Updated);
+
+    private static OrmAsset ToEntity(Asset a) => new()
+    {
+        ProductName = a.ProductName,
+        AccountEmail = a.AccountEmail.Value,
+        Item = a.Item,
+        Amount = a.Balance.Amount,
+        MonetaryUnit = a.Balance.Currency,
+        Note = a.Note,
+        Deleted = a.Deleted,
+        Created = a.Created,
+        Updated = a.Updated
+    };
 }
