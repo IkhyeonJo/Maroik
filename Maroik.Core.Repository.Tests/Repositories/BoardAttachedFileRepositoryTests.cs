@@ -1,8 +1,8 @@
 using Maroik.Core.Contract.Domains.Board;
 using Maroik.Core.PostgreSQL.Data;
-using Maroik.Core.PostgreSQL.Models;
 using Maroik.Core.Repository.Repositories;
 using Microsoft.EntityFrameworkCore;
+using OrmBoardAttachedFile = Maroik.Core.PostgreSQL.Models.BoardAttachedFile;
 
 namespace Maroik.Core.Repository.Tests.Repositories;
 
@@ -30,7 +30,7 @@ public class BoardAttachedFileRepositoryTests : IDisposable
 
     // ── Helpers ──────────────────────────────────────────────────────────────
 
-    private static BoardAttachedFile MakeFile(long boardId, string name = "file.pdf", long size = 1024) => new()
+    private static OrmBoardAttachedFile MakeFile(long boardId, string name = "file.pdf", long size = 1024) => new()
     {
         BoardId = boardId,
         Name = name,
@@ -39,7 +39,7 @@ public class BoardAttachedFileRepositoryTests : IDisposable
         Size = size
     };
 
-    private async Task SeedAsync(params BoardAttachedFile[] files)
+    private async Task SeedAsync(params OrmBoardAttachedFile[] files)
     {
         await _context.BoardAttachedFiles.AddRangeAsync(files);
         await _context.SaveChangesAsync();
@@ -132,7 +132,7 @@ public class BoardAttachedFileRepositoryTests : IDisposable
 
         await _sut.SaveBoardAttachedFileAsync(file);
 
-        BoardAttachedFile? saved = await _context.BoardAttachedFiles.FirstOrDefaultAsync(f => f.BoardId == 5, TestContext.Current.CancellationToken);
+        OrmBoardAttachedFile? saved = await _context.BoardAttachedFiles.FirstOrDefaultAsync(f => f.BoardId == 5, TestContext.Current.CancellationToken);
         Assert.NotNull(saved);
         Assert.Equal("new.pdf", saved.Name);
         Assert.Equal(2048, saved.Size);
@@ -159,7 +159,7 @@ public class BoardAttachedFileRepositoryTests : IDisposable
 
         await _sut.UpdateBoardAttachedFileAsync(file);
 
-        BoardAttachedFile? updated = await _context.BoardAttachedFiles.FindAsync(new object[] { id }, TestContext.Current.CancellationToken);
+        OrmBoardAttachedFile? updated = await _context.BoardAttachedFiles.FindAsync(new object[] { id }, TestContext.Current.CancellationToken);
         Assert.NotNull(updated);
         Assert.Equal("updated.pdf", updated.Name);
         Assert.Equal(9999, updated.Size);

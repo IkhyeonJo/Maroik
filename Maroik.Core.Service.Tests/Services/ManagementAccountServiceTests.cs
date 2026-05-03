@@ -1,3 +1,4 @@
+using Maroik.Core.Contract.Domains.Account;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Service.Services;
@@ -26,18 +27,28 @@ public class ManagementAccountServiceTests
 
     // ── Helpers ──────────────────────────────────────────────────────────────
 
-    private static AccountResponse ActiveAccount(string email = "user@example.com") => new()
-    {
-        Email = email,
-        HashedPassword = "$2a$13$placeholder",
-        Nickname = "User",
-        Role = "User",
-        Locked = false,
-        Deleted = false,
-        EmailConfirmed = true,
-        AgreedServiceTerms = true,
-        LoginAttempt = 0
-    };
+    private static Account ActiveAccount(
+        string email = "user@example.com",
+        bool locked = false,
+        long loginAttempt = 0) =>
+        Account.Reconstitute(
+            email: email,
+            hashedPassword: "$2a$13$placeholder",
+            nickname: "User",
+            avatarImagePath: null,
+            role: "User",
+            timeZoneIanaId: "UTC",
+            defaultMonetaryUnit: null,
+            locked: locked,
+            loginAttempt: loginAttempt,
+            emailConfirmed: true,
+            agreedServiceTerms: true,
+            registrationToken: null,
+            resetPasswordToken: null,
+            created: DateTime.UtcNow,
+            updated: DateTime.UtcNow,
+            message: null,
+            deleted: false);
 
     // ── GetAllAccountsAsync ──────────────────────────────────────────────────
 
@@ -59,7 +70,7 @@ public class ManagementAccountServiceTests
     [Fact]
     public async Task GetAccountByEmailAsync_ReturnsNull_WhenNotFound()
     {
-        _accountRepo.Setup(r => r.GetAccountByEmailAsync("ghost@example.com")).ReturnsAsync((AccountResponse?)null);
+        _accountRepo.Setup(r => r.GetAccountByEmailAsync("ghost@example.com")).ReturnsAsync((Account?)null);
         var sut = CreateSut();
 
         AccountResponse? result = await sut.GetAccountByEmailAsync("ghost@example.com");
@@ -90,19 +101,21 @@ public class ManagementAccountServiceTests
     [Fact]
     public async Task CreateAccountAsync_HashesPasswordAndCreatesAccount_WhenEmailIsNew()
     {
-        _accountRepo.Setup(r => r.GetAccountByEmailAsync("new@example.com")).ReturnsAsync((AccountResponse?)null);
+        _accountRepo.Setup(r => r.GetAccountByEmailAsync("new@example.com")).ReturnsAsync((Account?)null);
         _passwordService.Setup(p => p.HashPassword("plain")).Returns("$2a$13$hashed");
-        _accountRepo.Setup(r => r.CreateAccountAsync(It.IsAny<AccountRequest>())).Returns(Task.CompletedTask);
+        _accountRepo.Setup(r => r.CreateAccountAsync(It.IsAny<Account>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
         ServiceResult result = await sut.CreateAccountAsync(new AccountRequest
         {
             Email = "new@example.com",
-            HashedPassword = "plain"
+            HashedPassword = "plain",
+            Nickname = "NewUser",
+            EmailConfirmed = true
         });
 
         Assert.True(result.Success);
-        _accountRepo.Verify(r => r.CreateAccountAsync(It.Is<AccountRequest>(req => req.HashedPassword == "$2a$13$hashed")), Times.Once);
+        _accountRepo.Verify(r => r.CreateAccountAsync(It.Is<Account>(a => a.HashedPassword == "$2a$13$hashed")), Times.Once);
     }
 
     // ── UpdateAccountAsync ───────────────────────────────────────────────────
@@ -111,7 +124,7 @@ public class ManagementAccountServiceTests
     [Fact]
     public async Task UpdateAccountAsync_ReturnsFail_WhenAccountNotFound()
     {
-        _accountRepo.Setup(r => r.GetAccountByEmailAsync("ghost@example.com")).ReturnsAsync((AccountResponse?)null);
+        _accountRepo.Setup(r => r.GetAccountByEmailAsync("ghost@example.com")).ReturnsAsync((Account?)null);
         var sut = CreateSut();
 
         ServiceResult result = await sut.UpdateAccountAsync(
@@ -126,16 +139,16 @@ public class ManagementAccountServiceTests
     public async Task UpdateAccountAsync_KeepsExistingPassword_WhenNewPasswordIsEmpty()
     {
         var account = ActiveAccount();
-        _accountRepo.Setup(r => r.GetAccountByEmailAsync(account.Email!)).ReturnsAsync(account);
-        _accountRepo.Setup(r => r.UpdateAccountAsync(It.IsAny<AccountRequest>())).Returns(Task.CompletedTask);
+        _accountRepo.Setup(r => r.GetAccountByEmailAsync(account.Email.Value)).ReturnsAsync(account);
+        _accountRepo.Setup(r => r.UpdateAccountAsync(It.IsAny<Account>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
         ServiceResult result = await sut.UpdateAccountAsync(
-            new AccountRequest { Email = account.Email, Role = "User" }, null);
+            new AccountRequest { Email = account.Email.Value, Role = "User" }, null);
 
         Assert.True(result.Success);
         _accountRepo.Verify(r => r.UpdateAccountAsync(
-            It.Is<AccountRequest>(req => req.HashedPassword == account.HashedPassword)), Times.Once);
+            It.Is<Account>(a => a.HashedPassword == account.HashedPassword)), Times.Once);
         _passwordService.Verify(p => p.HashPassword(It.IsAny<string>()), Times.Never);
     }
 
@@ -144,36 +157,34 @@ public class ManagementAccountServiceTests
     public async Task UpdateAccountAsync_HashesNewPassword_WhenNewPasswordProvided()
     {
         var account = ActiveAccount();
-        _accountRepo.Setup(r => r.GetAccountByEmailAsync(account.Email!)).ReturnsAsync(account);
+        _accountRepo.Setup(r => r.GetAccountByEmailAsync(account.Email.Value)).ReturnsAsync(account);
         _passwordService.Setup(p => p.HashPassword("newpass")).Returns("$2a$13$newhash");
-        _accountRepo.Setup(r => r.UpdateAccountAsync(It.IsAny<AccountRequest>())).Returns(Task.CompletedTask);
+        _accountRepo.Setup(r => r.UpdateAccountAsync(It.IsAny<Account>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
         ServiceResult result = await sut.UpdateAccountAsync(
-            new AccountRequest { Email = account.Email, Role = "User" }, "newpass");
+            new AccountRequest { Email = account.Email.Value, Role = "User" }, "newpass");
 
         Assert.True(result.Success);
         _accountRepo.Verify(r => r.UpdateAccountAsync(
-            It.Is<AccountRequest>(req => req.HashedPassword == "$2a$13$newhash")), Times.Once);
+            It.Is<Account>(a => a.HashedPassword == "$2a$13$newhash")), Times.Once);
     }
 
     /// <summary>Verifies that <c>UpdateAccountAsync</c> resets login attempt when unlocking.</summary>
     [Fact]
     public async Task UpdateAccountAsync_ResetsLoginAttempt_WhenUnlocking()
     {
-        var account = ActiveAccount();
-        account.Locked = true;
-        account.LoginAttempt = 5;
-        _accountRepo.Setup(r => r.GetAccountByEmailAsync(account.Email!)).ReturnsAsync(account);
-        _accountRepo.Setup(r => r.UpdateAccountAsync(It.IsAny<AccountRequest>())).Returns(Task.CompletedTask);
+        var account = ActiveAccount(locked: true, loginAttempt: 5);
+        _accountRepo.Setup(r => r.GetAccountByEmailAsync(account.Email.Value)).ReturnsAsync(account);
+        _accountRepo.Setup(r => r.UpdateAccountAsync(It.IsAny<Account>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
         ServiceResult result = await sut.UpdateAccountAsync(
-            new AccountRequest { Email = account.Email, Locked = false }, null);
+            new AccountRequest { Email = account.Email.Value, Locked = false }, null);
 
         Assert.True(result.Success);
         _accountRepo.Verify(r => r.UpdateAccountAsync(
-            It.Is<AccountRequest>(req => req.Locked == false && req.LoginAttempt == 0)), Times.Once);
+            It.Is<Account>(a => a.Locked == false && a.LoginAttempt == 0)), Times.Once);
     }
 
     // ── DeleteAccountAsync ───────────────────────────────────────────────────
@@ -182,7 +193,7 @@ public class ManagementAccountServiceTests
     [Fact]
     public async Task DeleteAccountAsync_ReturnsFail_WhenAccountNotFound()
     {
-        _accountRepo.Setup(r => r.GetAccountByEmailAsync("ghost@example.com")).ReturnsAsync((AccountResponse?)null);
+        _accountRepo.Setup(r => r.GetAccountByEmailAsync("ghost@example.com")).ReturnsAsync((Account?)null);
         var sut = CreateSut();
 
         ServiceResult result = await sut.DeleteAccountAsync("ghost@example.com");
@@ -196,14 +207,14 @@ public class ManagementAccountServiceTests
     public async Task DeleteAccountAsync_SetsDeletedFlag_WhenAccountFound()
     {
         var account = ActiveAccount();
-        _accountRepo.Setup(r => r.GetAccountByEmailAsync(account.Email!)).ReturnsAsync(account);
-        _accountRepo.Setup(r => r.UpdateAccountAsync(It.IsAny<AccountRequest>())).Returns(Task.CompletedTask);
+        _accountRepo.Setup(r => r.GetAccountByEmailAsync(account.Email.Value)).ReturnsAsync(account);
+        _accountRepo.Setup(r => r.UpdateAccountAsync(It.IsAny<Account>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
-        ServiceResult result = await sut.DeleteAccountAsync(account.Email!);
+        ServiceResult result = await sut.DeleteAccountAsync(account.Email.Value);
 
         Assert.True(result.Success);
         _accountRepo.Verify(r => r.UpdateAccountAsync(
-            It.Is<AccountRequest>(req => req.Deleted == true)), Times.Once);
+            It.Is<Account>(a => a.Deleted == true)), Times.Once);
     }
 }

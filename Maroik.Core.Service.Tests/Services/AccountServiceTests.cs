@@ -1,3 +1,4 @@
+using Maroik.Core.Contract.Domains.Account;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Contract.Utilities;
@@ -35,16 +36,33 @@ public class AccountServiceTests
 
     // ── Helpers ──────────────────────────────────────────────────────────────
 
-    private static AccountResponse ActiveAccount(string email = "user@example.com") => new()
-    {
-        Email = email,
-        HashedPassword = "$2a$13$placeholder",
-        EmailConfirmed = true,
-        AgreedServiceTerms = true,
-        Deleted = false,
-        Locked = false,
-        LoginAttempt = 0
-    };
+    private static Account ActiveAccount(
+        string email = "user@example.com",
+        bool deleted = false,
+        bool locked = false,
+        bool emailConfirmed = true,
+        bool agreedServiceTerms = true,
+        long loginAttempt = 0,
+        string? registrationToken = null,
+        string? resetPasswordToken = null) =>
+        Account.Reconstitute(
+            email: email,
+            hashedPassword: "$2a$13$placeholder",
+            nickname: "User",
+            avatarImagePath: null,
+            role: "User",
+            timeZoneIanaId: "UTC",
+            defaultMonetaryUnit: null,
+            locked: locked,
+            loginAttempt: loginAttempt,
+            emailConfirmed: emailConfirmed,
+            agreedServiceTerms: agreedServiceTerms,
+            registrationToken: registrationToken,
+            resetPasswordToken: resetPasswordToken,
+            created: DateTime.UtcNow,
+            updated: DateTime.UtcNow,
+            message: null,
+            deleted: deleted);
 
     private void SetupMailSuccess()
     {
@@ -82,7 +100,7 @@ public class AccountServiceTests
     [Fact]
     public async Task LoginAsync_ReturnsFail_WhenAccountNotFound()
     {
-        _accountRepo.Setup(r => r.GetAccountByEmailAsync("missing@example.com")).ReturnsAsync((AccountResponse?)null);
+        _accountRepo.Setup(r => r.GetAccountByEmailAsync("missing@example.com")).ReturnsAsync((Account?)null);
         var sut = CreateSut();
 
         LoginResult result = await sut.LoginAsync("missing@example.com", "any");
@@ -95,12 +113,11 @@ public class AccountServiceTests
     [Fact]
     public async Task LoginAsync_ReturnsFail_WhenAccountIsDeleted()
     {
-        var account = ActiveAccount();
-        account.Deleted = true;
-        _accountRepo.Setup(r => r.GetAccountByEmailAsync(account.Email!)).ReturnsAsync(account);
+        var account = ActiveAccount(deleted: true);
+        _accountRepo.Setup(r => r.GetAccountByEmailAsync(account.Email.Value)).ReturnsAsync(account);
         var sut = CreateSut();
 
-        LoginResult result = await sut.LoginAsync(account.Email!, "any");
+        LoginResult result = await sut.LoginAsync(account.Email.Value, "any");
 
         Assert.False(result.Success);
         Assert.Contains("Deleted", result.ErrorKey, StringComparison.OrdinalIgnoreCase);
@@ -110,12 +127,11 @@ public class AccountServiceTests
     [Fact]
     public async Task LoginAsync_ReturnsFail_WhenAccountIsLocked()
     {
-        var account = ActiveAccount();
-        account.Locked = true;
-        _accountRepo.Setup(r => r.GetAccountByEmailAsync(account.Email!)).ReturnsAsync(account);
+        var account = ActiveAccount(locked: true);
+        _accountRepo.Setup(r => r.GetAccountByEmailAsync(account.Email.Value)).ReturnsAsync(account);
         var sut = CreateSut();
 
-        LoginResult result = await sut.LoginAsync(account.Email!, "any");
+        LoginResult result = await sut.LoginAsync(account.Email.Value, "any");
 
         Assert.False(result.Success);
         Assert.Contains("Locked", result.ErrorKey, StringComparison.OrdinalIgnoreCase);
@@ -125,49 +141,46 @@ public class AccountServiceTests
     [Fact]
     public async Task LoginAsync_ReturnsFail_AndIncrementsAttemptCount_WhenPasswordIsWrong()
     {
-        var account = ActiveAccount();
-        account.LoginAttempt = 1;
-        _accountRepo.Setup(r => r.GetAccountByEmailAsync(account.Email!)).ReturnsAsync(account);
+        var account = ActiveAccount(loginAttempt: 1);
+        _accountRepo.Setup(r => r.GetAccountByEmailAsync(account.Email.Value)).ReturnsAsync(account);
         _passwordService.Setup(p => p.VerifyPassword(It.IsAny<string>(), It.IsAny<string>())).Returns(false);
-        _accountRepo.Setup(r => r.UpdateAccountAsync(It.IsAny<AccountRequest>())).Returns(Task.CompletedTask);
+        _accountRepo.Setup(r => r.UpdateAccountAsync(It.IsAny<Account>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
-        LoginResult result = await sut.LoginAsync(account.Email!, "wrong");
+        LoginResult result = await sut.LoginAsync(account.Email.Value, "wrong");
 
         Assert.False(result.Success);
         // Verify UpdateAccountAsync was called (attempt count incremented)
-        _accountRepo.Verify(r => r.UpdateAccountAsync(It.Is<AccountRequest>(req => req.LoginAttempt == 2)), Times.Once);
+        _accountRepo.Verify(r => r.UpdateAccountAsync(It.Is<Account>(a => a.LoginAttempt == 2)), Times.Once);
     }
 
     /// <summary>Verifies that <c>LoginAsync</c> locks account when max login attempts reached.</summary>
     [Fact]
     public async Task LoginAsync_LocksAccount_WhenMaxLoginAttemptsReached()
     {
-        var account = ActiveAccount();
-        account.LoginAttempt = _settings.Value.MaxLoginAttempt - 1;
-        _accountRepo.Setup(r => r.GetAccountByEmailAsync(account.Email!)).ReturnsAsync(account);
+        var account = ActiveAccount(loginAttempt: _settings.Value.MaxLoginAttempt - 1);
+        _accountRepo.Setup(r => r.GetAccountByEmailAsync(account.Email.Value)).ReturnsAsync(account);
         _passwordService.Setup(p => p.VerifyPassword(It.IsAny<string>(), It.IsAny<string>())).Returns(false);
-        _accountRepo.Setup(r => r.UpdateAccountAsync(It.IsAny<AccountRequest>())).Returns(Task.CompletedTask);
+        _accountRepo.Setup(r => r.UpdateAccountAsync(It.IsAny<Account>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
-        LoginResult result = await sut.LoginAsync(account.Email!, "wrong");
+        LoginResult result = await sut.LoginAsync(account.Email.Value, "wrong");
 
         Assert.False(result.Success);
-        _accountRepo.Verify(r => r.UpdateAccountAsync(It.Is<AccountRequest>(req => req.Locked == true)), Times.Once);
+        _accountRepo.Verify(r => r.UpdateAccountAsync(It.Is<Account>(a => a.Locked == true)), Times.Once);
     }
 
     /// <summary>Verifies that <c>LoginAsync</c> returns fail when email not confirmed.</summary>
     [Fact]
     public async Task LoginAsync_ReturnsFail_WhenEmailNotConfirmed()
     {
-        var account = ActiveAccount();
-        account.EmailConfirmed = false;
-        _accountRepo.Setup(r => r.GetAccountByEmailAsync(account.Email!)).ReturnsAsync(account);
+        var account = ActiveAccount(emailConfirmed: false);
+        _accountRepo.Setup(r => r.GetAccountByEmailAsync(account.Email.Value)).ReturnsAsync(account);
         _passwordService.Setup(p => p.VerifyPassword(It.IsAny<string>(), It.IsAny<string>())).Returns(true);
-        _accountRepo.Setup(r => r.UpdateAccountAsync(It.IsAny<AccountRequest>())).Returns(Task.CompletedTask);
+        _accountRepo.Setup(r => r.UpdateAccountAsync(It.IsAny<Account>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
-        LoginResult result = await sut.LoginAsync(account.Email!, "correct");
+        LoginResult result = await sut.LoginAsync(account.Email.Value, "correct");
 
         Assert.False(result.Success);
         Assert.Contains("Email verification", result.ErrorKey, StringComparison.OrdinalIgnoreCase);
@@ -177,14 +190,13 @@ public class AccountServiceTests
     [Fact]
     public async Task LoginAsync_ReturnsFail_WhenServiceTermsNotAgreed()
     {
-        var account = ActiveAccount();
-        account.AgreedServiceTerms = false;
-        _accountRepo.Setup(r => r.GetAccountByEmailAsync(account.Email!)).ReturnsAsync(account);
+        var account = ActiveAccount(agreedServiceTerms: false);
+        _accountRepo.Setup(r => r.GetAccountByEmailAsync(account.Email.Value)).ReturnsAsync(account);
         _passwordService.Setup(p => p.VerifyPassword(It.IsAny<string>(), It.IsAny<string>())).Returns(true);
-        _accountRepo.Setup(r => r.UpdateAccountAsync(It.IsAny<AccountRequest>())).Returns(Task.CompletedTask);
+        _accountRepo.Setup(r => r.UpdateAccountAsync(It.IsAny<Account>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
-        LoginResult result = await sut.LoginAsync(account.Email!, "correct");
+        LoginResult result = await sut.LoginAsync(account.Email.Value, "correct");
 
         Assert.False(result.Success);
         Assert.Contains("Service Terms", result.ErrorKey, StringComparison.OrdinalIgnoreCase);
@@ -195,16 +207,16 @@ public class AccountServiceTests
     public async Task LoginAsync_ReturnsSuccessWithAccount_AndClearsHashedPassword_WhenCredentialsValid()
     {
         var account = ActiveAccount();
-        _accountRepo.Setup(r => r.GetAccountByEmailAsync(account.Email!)).ReturnsAsync(account);
+        _accountRepo.Setup(r => r.GetAccountByEmailAsync(account.Email.Value)).ReturnsAsync(account);
         _passwordService.Setup(p => p.VerifyPassword(It.IsAny<string>(), It.IsAny<string>())).Returns(true);
-        _accountRepo.Setup(r => r.UpdateAccountAsync(It.IsAny<AccountRequest>())).Returns(Task.CompletedTask);
+        _accountRepo.Setup(r => r.UpdateAccountAsync(It.IsAny<Account>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
-        LoginResult result = await sut.LoginAsync(account.Email!, "correct");
+        LoginResult result = await sut.LoginAsync(account.Email.Value, "correct");
 
         Assert.True(result.Success);
         Assert.NotNull(result.Account);
-        Assert.Equal(account.Email, result.Account.Email);
+        Assert.Equal(account.Email.Value, result.Account.Email);
         Assert.Null(result.Account.HashedPassword); // must be cleared
     }
 
@@ -214,9 +226,9 @@ public class AccountServiceTests
     [Fact]
     public async Task RegisterAsync_CreatesAccountAndSendsEmail_WhenEmailDoesNotExist()
     {
-        _accountRepo.Setup(r => r.GetAccountByEmailAsync(It.IsAny<string>())).ReturnsAsync((AccountResponse?)null);
+        _accountRepo.Setup(r => r.GetAccountByEmailAsync(It.IsAny<string>())).ReturnsAsync((Account?)null);
         _passwordService.Setup(p => p.HashPassword(It.IsAny<string>())).Returns("$2a$13$hashed");
-        _accountRepo.Setup(r => r.CreateAccountAsync(It.IsAny<AccountRequest>())).Returns(Task.CompletedTask);
+        _accountRepo.Setup(r => r.CreateAccountAsync(It.IsAny<Account>())).Returns(Task.CompletedTask);
         _rsa.Setup(r => r.Encrypt(It.IsAny<string>())).Returns("enc-token");
         SetupMailSuccess();
         var sut = CreateSut();
@@ -232,17 +244,17 @@ public class AccountServiceTests
 
         Assert.True(result.Success);
         Assert.True(result.ShowResendEmail);
-        _accountRepo.Verify(r => r.CreateAccountAsync(It.IsAny<AccountRequest>()), Times.Once);
+        _accountRepo.Verify(r => r.CreateAccountAsync(It.IsAny<Account>()), Times.Once);
     }
 
     /// <summary>Verifies that <c>RegisterAsync</c> returns fail when email sending fails.</summary>
     [Fact]
     public async Task RegisterAsync_ReturnsFail_WhenEmailSendingFails()
     {
-        _accountRepo.Setup(r => r.GetAccountByEmailAsync(It.IsAny<string>())).ReturnsAsync((AccountResponse?)null);
+        _accountRepo.Setup(r => r.GetAccountByEmailAsync(It.IsAny<string>())).ReturnsAsync((Account?)null);
         _passwordService.Setup(p => p.HashPassword(It.IsAny<string>())).Returns("$2a$13$hashed");
-        _accountRepo.Setup(r => r.CreateAccountAsync(It.IsAny<AccountRequest>())).Returns(Task.CompletedTask);
-        _accountRepo.Setup(r => r.UpdateAccountAsync(It.IsAny<AccountRequest>())).Returns(Task.CompletedTask);
+        _accountRepo.Setup(r => r.CreateAccountAsync(It.IsAny<Account>())).Returns(Task.CompletedTask);
+        _accountRepo.Setup(r => r.UpdateAccountAsync(It.IsAny<Account>())).Returns(Task.CompletedTask);
         _rsa.Setup(r => r.Encrypt(It.IsAny<string>())).Returns("enc-token");
         SetupMailFailure();
         var sut = CreateSut();
@@ -263,10 +275,10 @@ public class AccountServiceTests
     [Fact]
     public async Task RegisterAsync_ReturnsFail_WhenNicknameAlreadyExists()
     {
-        _accountRepo.Setup(r => r.GetAccountByEmailAsync(It.IsAny<string>())).ReturnsAsync((AccountResponse?)null);
+        _accountRepo.Setup(r => r.GetAccountByEmailAsync(It.IsAny<string>())).ReturnsAsync((Account?)null);
         _passwordService.Setup(p => p.HashPassword(It.IsAny<string>())).Returns("$2a$13$hashed");
         // Simulate unique constraint violation (Npgsql error code 23505)
-        _accountRepo.Setup(r => r.CreateAccountAsync(It.IsAny<AccountRequest>()))
+        _accountRepo.Setup(r => r.CreateAccountAsync(It.IsAny<Account>()))
             .ThrowsAsync(new Exception("duplicate key", new Exception("23505 unique")));
         var sut = CreateSut();
 
@@ -288,16 +300,15 @@ public class AccountServiceTests
     [Fact]
     public async Task RegisterAsync_ResendsConfirmationEmail_WhenAccountExistsButNotConfirmed()
     {
-        var existing = ActiveAccount();
-        existing.EmailConfirmed = false;
-        existing.RegistrationToken = GuidToken.Generate();
-        _accountRepo.Setup(r => r.GetAccountByEmailAsync(existing.Email!)).ReturnsAsync(existing);
-        _accountRepo.Setup(r => r.UpdateAccountAsync(It.IsAny<AccountRequest>())).Returns(Task.CompletedTask);
+        string token = GuidToken.Generate();
+        var existing = ActiveAccount(emailConfirmed: false, registrationToken: token);
+        _accountRepo.Setup(r => r.GetAccountByEmailAsync(existing.Email.Value)).ReturnsAsync(existing);
+        _accountRepo.Setup(r => r.UpdateAccountAsync(It.IsAny<Account>())).Returns(Task.CompletedTask);
         _rsa.Setup(r => r.Encrypt(It.IsAny<string>())).Returns("enc-token");
         SetupMailSuccess();
         var sut = CreateSut();
 
-        var request = new AccountRequest { Email = existing.Email, HashedPassword = "pw" };
+        var request = new AccountRequest { Email = existing.Email.Value, HashedPassword = "pw" };
         RegisterResult result = await sut.RegisterAsync(request, "subject", "title", "c0", "c1");
 
         Assert.True(result.Success);
@@ -308,13 +319,12 @@ public class AccountServiceTests
     [Fact]
     public async Task RegisterAsync_ReturnsFail_WhenAccountAlreadyConfirmed()
     {
-        var existing = ActiveAccount();
-        existing.EmailConfirmed = true;
-        _accountRepo.Setup(r => r.GetAccountByEmailAsync(existing.Email!)).ReturnsAsync(existing);
-        _accountRepo.Setup(r => r.UpdateAccountAsync(It.IsAny<AccountRequest>())).Returns(Task.CompletedTask);
+        var existing = ActiveAccount(emailConfirmed: true);
+        _accountRepo.Setup(r => r.GetAccountByEmailAsync(existing.Email.Value)).ReturnsAsync(existing);
+        _accountRepo.Setup(r => r.UpdateAccountAsync(It.IsAny<Account>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
-        var request = new AccountRequest { Email = existing.Email, HashedPassword = "pw" };
+        var request = new AccountRequest { Email = existing.Email.Value, HashedPassword = "pw" };
         RegisterResult result = await sut.RegisterAsync(request, "subject", "title", "c0", "c1");
 
         Assert.False(result.Success);
@@ -342,7 +352,7 @@ public class AccountServiceTests
     {
         string freshToken = GuidToken.Generate();
         _rsa.Setup(r => r.Decrypt("enc")).Returns(freshToken);
-        _accountRepo.Setup(r => r.GetAccountByRegistrationTokenAsync(freshToken)).ReturnsAsync((AccountResponse?)null);
+        _accountRepo.Setup(r => r.GetAccountByRegistrationTokenAsync(freshToken)).ReturnsAsync((Account?)null);
         var sut = CreateSut();
 
         ConfirmEmailResult result = await sut.ConfirmEmailAsync("enc");
@@ -372,12 +382,10 @@ public class AccountServiceTests
     public async Task ConfirmEmailAsync_ConfirmsAccount_WhenTokenIsValid()
     {
         string freshToken = GuidToken.Generate();
-        var account = ActiveAccount();
-        account.EmailConfirmed = false;
-        account.RegistrationToken = freshToken;
+        var account = ActiveAccount(emailConfirmed: false, registrationToken: freshToken);
         _rsa.Setup(r => r.Decrypt("enc")).Returns(freshToken);
         _accountRepo.Setup(r => r.GetAccountByRegistrationTokenAsync(freshToken)).ReturnsAsync(account);
-        _accountRepo.Setup(r => r.UpdateAccountAsync(It.IsAny<AccountRequest>())).Returns(Task.CompletedTask);
+        _accountRepo.Setup(r => r.UpdateAccountAsync(It.IsAny<Account>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
         ConfirmEmailResult result = await sut.ConfirmEmailAsync("enc");
@@ -385,7 +393,7 @@ public class AccountServiceTests
         Assert.False(result.InvalidToken);
         Assert.True(result.AccountCreated);
         _accountRepo.Verify(r => r.UpdateAccountAsync(
-            It.Is<AccountRequest>(req => req.EmailConfirmed && req.RegistrationToken == null)), Times.Once);
+            It.Is<Account>(a => a.EmailConfirmed && a.RegistrationToken == null)), Times.Once);
     }
 
     /// <summary>Verifies that <c>ConfirmEmailAsync</c> returns not created when account already confirmed.</summary>
@@ -393,11 +401,10 @@ public class AccountServiceTests
     public async Task ConfirmEmailAsync_ReturnsNotCreated_WhenAccountAlreadyConfirmed()
     {
         string freshToken = GuidToken.Generate();
-        var account = ActiveAccount();
-        account.EmailConfirmed = true; // already confirmed
+        var account = ActiveAccount(emailConfirmed: true);
         _rsa.Setup(r => r.Decrypt("enc")).Returns(freshToken);
         _accountRepo.Setup(r => r.GetAccountByRegistrationTokenAsync(freshToken)).ReturnsAsync(account);
-        _accountRepo.Setup(r => r.UpdateAccountAsync(It.IsAny<AccountRequest>())).Returns(Task.CompletedTask);
+        _accountRepo.Setup(r => r.UpdateAccountAsync(It.IsAny<Account>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
         ConfirmEmailResult result = await sut.ConfirmEmailAsync("enc");
@@ -412,7 +419,7 @@ public class AccountServiceTests
     [Fact]
     public async Task ForgotPasswordAsync_ReturnsTrueSilently_WhenAccountNotFound()
     {
-        _accountRepo.Setup(r => r.GetAccountByEmailAsync(It.IsAny<string>())).ReturnsAsync((AccountResponse?)null);
+        _accountRepo.Setup(r => r.GetAccountByEmailAsync(It.IsAny<string>())).ReturnsAsync((Account?)null);
         var sut = CreateSut();
 
         bool result = await sut.ForgotPasswordAsync("ghost@example.com", "s", "t", "c0", "c1");
@@ -428,12 +435,11 @@ public class AccountServiceTests
     [Fact]
     public async Task ForgotPasswordAsync_ReturnsTrueSilently_WhenAccountEmailNotConfirmed()
     {
-        var account = ActiveAccount();
-        account.EmailConfirmed = false;
-        _accountRepo.Setup(r => r.GetAccountByEmailAsync(account.Email!)).ReturnsAsync(account);
+        var account = ActiveAccount(emailConfirmed: false);
+        _accountRepo.Setup(r => r.GetAccountByEmailAsync(account.Email.Value)).ReturnsAsync(account);
         var sut = CreateSut();
 
-        bool result = await sut.ForgotPasswordAsync(account.Email!, "s", "t", "c0", "c1");
+        bool result = await sut.ForgotPasswordAsync(account.Email.Value, "s", "t", "c0", "c1");
 
         Assert.True(result);
         _mailClient.Verify(m => m.SendMailAsync(
@@ -447,17 +453,17 @@ public class AccountServiceTests
     public async Task ForgotPasswordAsync_SendsResetEmail_WhenAccountIsValid()
     {
         var account = ActiveAccount();
-        _accountRepo.Setup(r => r.GetAccountByEmailAsync(account.Email!)).ReturnsAsync(account);
-        _accountRepo.Setup(r => r.UpdateAccountAsync(It.IsAny<AccountRequest>())).Returns(Task.CompletedTask);
+        _accountRepo.Setup(r => r.GetAccountByEmailAsync(account.Email.Value)).ReturnsAsync(account);
+        _accountRepo.Setup(r => r.UpdateAccountAsync(It.IsAny<Account>())).Returns(Task.CompletedTask);
         _rsa.Setup(r => r.Encrypt(It.IsAny<string>())).Returns("enc-reset-token");
         SetupMailSuccess();
         var sut = CreateSut();
 
-        bool result = await sut.ForgotPasswordAsync(account.Email!, "s", "t", "c0", "c1");
+        bool result = await sut.ForgotPasswordAsync(account.Email.Value, "s", "t", "c0", "c1");
 
         Assert.True(result);
         _accountRepo.Verify(r => r.UpdateAccountAsync(
-            It.Is<AccountRequest>(req => req.ResetPasswordToken != null)), Times.Once);
+            It.Is<Account>(a => a.ResetPasswordToken != null)), Times.Once);
     }
 
     // ── ValidateResetPasswordTokenAsync ─────────────────────────────────────
@@ -539,23 +545,21 @@ public class AccountServiceTests
     public async Task ResetPasswordAsync_UpdatesPasswordAndUnlocksAccount_WhenValid()
     {
         string freshToken = GuidToken.Generate();
-        var account = ActiveAccount();
-        account.Locked = true;
-        account.LoginAttempt = 3;
+        var account = ActiveAccount(locked: true, loginAttempt: 3);
         _rsa.Setup(r => r.Decrypt("enc")).Returns(freshToken);
         _accountRepo.Setup(r => r.GetAccountByResetPasswordTokenAsync(freshToken)).ReturnsAsync(account);
         _passwordService.Setup(p => p.HashPassword("newpass")).Returns("$2a$13$newhash");
-        _accountRepo.Setup(r => r.UpdateAccountAsync(It.IsAny<AccountRequest>())).Returns(Task.CompletedTask);
+        _accountRepo.Setup(r => r.UpdateAccountAsync(It.IsAny<Account>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
         ServiceResult result = await sut.ResetPasswordAsync("enc", "newpass");
 
         Assert.True(result.Success);
-        _accountRepo.Verify(r => r.UpdateAccountAsync(It.Is<AccountRequest>(req =>
-            req.HashedPassword == "$2a$13$newhash" &&
-            req.Locked == false &&
-            req.LoginAttempt == 0 &&
-            req.ResetPasswordToken == null)), Times.Once);
+        _accountRepo.Verify(r => r.UpdateAccountAsync(It.Is<Account>(a =>
+            a.HashedPassword == "$2a$13$newhash" &&
+            a.Locked == false &&
+            a.LoginAttempt == 0 &&
+            a.ResetPasswordToken == null)), Times.Once);
     }
 
     // ── GetAccountsByNicknamesAsync ──────────────────────────────────────────
@@ -565,10 +569,10 @@ public class AccountServiceTests
     public async Task GetAccountsByNicknamesAsync_DelegatesToRepository()
     {
         var nicknames = new[] { "Alice", "Bob" };
-        var expected = new List<AccountResponse>
+        var expected = new List<Account>
         {
-            new() { Nickname = "Alice" },
-            new() { Nickname = "Bob" }
+            ActiveAccount("alice@example.com"),
+            ActiveAccount("bob@example.com")
         };
         _accountRepo.Setup(r => r.GetAccountsByNicknamesAsync(nicknames)).ReturnsAsync(expected);
 

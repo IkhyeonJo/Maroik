@@ -1,3 +1,4 @@
+using Maroik.Core.Contract.Domains.Finance;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Service.Services;
@@ -15,10 +16,14 @@ public class FixedIncomeServiceTests
 {
     private readonly Mock<IFixedIncomeRepository> _fixedIncomeRepo = new();
     private readonly Mock<IAssetRepository> _assetRepo = new();
+    private readonly Mock<IDomainEventDispatcher> _dispatcher = new();
 
-    private FixedIncomeService CreateSut() => new(_fixedIncomeRepo.Object, _assetRepo.Object);
+    private FixedIncomeService CreateSut() => new(_fixedIncomeRepo.Object, _assetRepo.Object, _dispatcher.Object);
 
     // ── Helpers ──────────────────────────────────────────────────────────────
+
+    private static Asset MakeSavingsAsset(string name = "SavingsAccount", string currency = "KRW") =>
+        Asset.Reconstitute(name, "user@example.com", "SavingsAsset", 0m, currency, null, false, DateTime.UtcNow, DateTime.UtcNow);
 
     private static FixedIncomeRequest ValidRequest(string mainClass = "RegularIncome", string subClass = "LaborIncome") => new()
     {
@@ -94,8 +99,8 @@ public class FixedIncomeServiceTests
     public async Task CreateAsync_ReturnsSuccess_ForAllValidClassCombinations(string mainClass, string subClass)
     {
         _assetRepo.Setup(r => r.GetAssetAsync(It.IsAny<string>(), It.IsAny<string>()))
-            .ReturnsAsync(new AssetResponse { ProductName = "SavingsAccount", MonetaryUnit = "KRW" });
-        _fixedIncomeRepo.Setup(r => r.CreateFixedIncomeAsync(It.IsAny<FixedIncomeRequest>())).Returns(Task.CompletedTask);
+            .ReturnsAsync(MakeSavingsAsset());
+        _fixedIncomeRepo.Setup(r => r.CreateFixedIncomeAsync(It.IsAny<FixedIncome>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
         ServiceResult result = await sut.CreateAsync("user@example.com", ValidRequest(mainClass, subClass));
@@ -108,10 +113,10 @@ public class FixedIncomeServiceTests
     public async Task CreateAsync_SetsAccountEmailAndAbsoluteAmount()
     {
         _assetRepo.Setup(r => r.GetAssetAsync(It.IsAny<string>(), It.IsAny<string>()))
-            .ReturnsAsync(new AssetResponse { ProductName = "SavingsAccount", MonetaryUnit = "KRW" });
-        FixedIncomeRequest? captured = null;
-        _fixedIncomeRepo.Setup(r => r.CreateFixedIncomeAsync(It.IsAny<FixedIncomeRequest>()))
-            .Callback<FixedIncomeRequest>(req => captured = req)
+            .ReturnsAsync(MakeSavingsAsset());
+        FixedIncome? captured = null;
+        _fixedIncomeRepo.Setup(r => r.CreateFixedIncomeAsync(It.IsAny<FixedIncome>()))
+            .Callback<FixedIncome>(fi => captured = fi)
             .Returns(Task.CompletedTask);
         var sut = CreateSut();
 
@@ -120,8 +125,8 @@ public class FixedIncomeServiceTests
         await sut.CreateAsync("user@example.com", request);
 
         Assert.NotNull(captured);
-        Assert.Equal("user@example.com", captured.AccountEmail);
-        Assert.Equal(250m, captured.Amount);
+        Assert.Equal("user@example.com", captured.AccountEmail.Value);
+        Assert.Equal(250m, captured.Amount.Amount);
         Assert.True(captured.Created > DateTime.MinValue);
     }
 
@@ -145,7 +150,7 @@ public class FixedIncomeServiceTests
     [Fact]
     public async Task UpdateAsync_ReturnsFail_WhenRecordNotFound()
     {
-        _fixedIncomeRepo.Setup(r => r.GetFixedIncomesAsync("user@example.com")).ReturnsAsync([]);
+        _fixedIncomeRepo.Setup(r => r.GetFixedIncomesAsync("user@example.com")).ReturnsAsync(new List<FixedIncome>());
         var sut = CreateSut();
 
         var request = ValidRequest();
@@ -160,14 +165,12 @@ public class FixedIncomeServiceTests
     public async Task UpdateAsync_ReturnsSuccess_WhenValidAndRecordFound()
     {
         const string email = "user@example.com";
-        var existing = new FixedIncomeResponse
-        {
-            Id = 1, MainClass = "RegularIncome", SubClass = "LaborIncome",
-            DepositMyAssetProductName = "SavingsAccount", DepositMonth = 1, DepositDay = 15,
-            MaturityDate = new DateTime(2025, 12, 31)
-        };
-        _fixedIncomeRepo.Setup(r => r.GetFixedIncomesAsync(email)).ReturnsAsync([existing]);
-        _fixedIncomeRepo.Setup(r => r.UpdateFixedIncomeAsync(It.IsAny<FixedIncomeRequest>())).Returns(Task.CompletedTask);
+        var existing = FixedIncome.Reconstitute(1, email, "RegularIncome", "LaborIncome", null, 0m, "KRW",
+            "SavingsAccount", (short)1, (short)15, new DateTime(2025, 12, 31), null, false, DateTime.UtcNow, DateTime.UtcNow);
+        _fixedIncomeRepo.Setup(r => r.GetFixedIncomesAsync(email)).ReturnsAsync(new List<FixedIncome> { existing });
+        _assetRepo.Setup(r => r.GetAssetAsync(It.IsAny<string>(), It.IsAny<string>()))
+            .ReturnsAsync(MakeSavingsAsset());
+        _fixedIncomeRepo.Setup(r => r.UpdateFixedIncomeAsync(It.IsAny<FixedIncome>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
         var request = ValidRequest();
@@ -176,7 +179,7 @@ public class FixedIncomeServiceTests
         ServiceResult result = await sut.UpdateAsync(email, request);
 
         Assert.True(result.Success);
-        _fixedIncomeRepo.Verify(r => r.UpdateFixedIncomeAsync(It.Is<FixedIncomeRequest>(req => req.Amount == 600m)), Times.Once);
+        _fixedIncomeRepo.Verify(r => r.UpdateFixedIncomeAsync(It.Is<FixedIncome>(fi => fi.Amount.Amount == 600m)), Times.Once);
     }
 
     // ── DeleteAsync ──────────────────────────────────────────────────────────
@@ -185,7 +188,7 @@ public class FixedIncomeServiceTests
     [Fact]
     public async Task DeleteAsync_ReturnsFail_WhenRecordNotFound()
     {
-        _fixedIncomeRepo.Setup(r => r.GetFixedIncomesAsync("user@example.com")).ReturnsAsync([]);
+        _fixedIncomeRepo.Setup(r => r.GetFixedIncomesAsync("user@example.com")).ReturnsAsync(new List<FixedIncome>());
         var sut = CreateSut();
 
         ServiceResult result = await sut.DeleteAsync("user@example.com", 99);
@@ -198,20 +201,16 @@ public class FixedIncomeServiceTests
     public async Task DeleteAsync_ReturnsSuccess_WhenRecordFound()
     {
         const string email = "user@example.com";
-        var existing = new FixedIncomeResponse
-        {
-            Id = 1, MainClass = "RegularIncome", SubClass = "LaborIncome",
-            DepositMyAssetProductName = "SavingsAccount", DepositMonth = 1, DepositDay = 15,
-            MaturityDate = new DateTime(2030, 12, 31)
-        };
-        _fixedIncomeRepo.Setup(r => r.GetFixedIncomesAsync(email)).ReturnsAsync([existing]);
-        _fixedIncomeRepo.Setup(r => r.DeleteFixedIncomeAsync(It.IsAny<FixedIncomeRequest>())).Returns(Task.CompletedTask);
+        var existing = FixedIncome.Reconstitute(1, email, "RegularIncome", "LaborIncome", null, 0m, "KRW",
+            "SavingsAccount", (short)1, (short)15, new DateTime(2030, 12, 31), null, false, DateTime.UtcNow, DateTime.UtcNow);
+        _fixedIncomeRepo.Setup(r => r.GetFixedIncomesAsync(email)).ReturnsAsync(new List<FixedIncome> { existing });
+        _fixedIncomeRepo.Setup(r => r.DeleteFixedIncomeAsync(It.IsAny<FixedIncome>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
         ServiceResult result = await sut.DeleteAsync(email, 1);
 
         Assert.True(result.Success);
-        _fixedIncomeRepo.Verify(r => r.DeleteFixedIncomeAsync(It.IsAny<FixedIncomeRequest>()), Times.Once);
+        _fixedIncomeRepo.Verify(r => r.DeleteFixedIncomeAsync(It.IsAny<FixedIncome>()), Times.Once);
     }
 
     // ── GetFixedIncomesAsync ─────────────────────────────────────────────────
@@ -221,7 +220,11 @@ public class FixedIncomeServiceTests
     public async Task GetFixedIncomesAsync_DelegatesToRepository()
     {
         const string email = "user@example.com";
-        var list = new List<FixedIncomeResponse> { new() { Id = 1 } };
+        var list = new List<FixedIncome>
+        {
+            FixedIncome.Reconstitute(1, email, "RegularIncome", "LaborIncome", null, 500m, "KRW",
+                "SavingsAccount", (short)1, (short)15, new DateTime(2030, 12, 31), null, false, DateTime.UtcNow, DateTime.UtcNow)
+        };
         _fixedIncomeRepo.Setup(r => r.GetFixedIncomesAsync(email)).ReturnsAsync(list);
         var sut = CreateSut();
 

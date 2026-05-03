@@ -1,3 +1,4 @@
+using Maroik.Core.Contract.Domains.Calendar;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Contract.Utilities;
@@ -52,14 +53,33 @@ public class CalendarServiceTests
 
     // ── Helpers ──────────────────────────────────────────────────────────────
 
-    private static CalendarResponse MakeCalendar(long id = 1, string name = "MyCalendar", string email = "user@example.com") => new()
-    {
-        Id = id,
-        Name = name,
-        AccountEmail = email,
-        HtmlColorCode = "#3788d8",
-        TimeZoneIanaId = "UTC"
-    };
+    private static Calendar MakeCalendar(long id = 1, string name = "MyCalendar", string email = "user@example.com") =>
+        Calendar.Reconstitute(
+            id: id,
+            accountEmail: email,
+            name: name,
+            description: null,
+            timeZoneIanaId: "UTC",
+            htmlColorCode: "#3788d8",
+            created: DateTime.UtcNow,
+            updated: DateTime.UtcNow);
+
+    private static CalendarEvent MakeCalendarEvent(long id = 1, long calendarId = 1, string title = "Event") =>
+        CalendarEvent.Reconstitute(
+            id: id,
+            calendarId: calendarId,
+            title: title,
+            description: null,
+            allDay: false,
+            startDate: DateTime.UtcNow,
+            endDate: DateTime.UtcNow.AddHours(1),
+            startTz: null,
+            endTz: null,
+            location: null,
+            status: null,
+            recurrenceId: null,
+            created: DateTime.UtcNow,
+            updated: DateTime.UtcNow);
 
     // ── CreateCalendarAsync ──────────────────────────────────────────────────
 
@@ -86,7 +106,7 @@ public class CalendarServiceTests
     public async Task CreateCalendarAsync_ReturnsSuccess_WhenNameIsUnique()
     {
         _calendarRepo.Setup(r => r.GetCalendarsAsync("user@example.com")).ReturnsAsync([]);
-        _calendarRepo.Setup(r => r.CreateCalendarAsync(It.IsAny<CalendarRequest>())).Returns(Task.CompletedTask);
+        _calendarRepo.Setup(r => r.CreateCalendarAsync(It.IsAny<Calendar>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
         ServiceResult result = await sut.CreateCalendarAsync(new CalendarRequest
@@ -96,7 +116,7 @@ public class CalendarServiceTests
         });
 
         Assert.True(result.Success);
-        _calendarRepo.Verify(r => r.CreateCalendarAsync(It.IsAny<CalendarRequest>()), Times.Once);
+        _calendarRepo.Verify(r => r.CreateCalendarAsync(It.IsAny<Calendar>()), Times.Once);
     }
 
     // ── UpdateCalendarAsync ──────────────────────────────────────────────────
@@ -124,7 +144,7 @@ public class CalendarServiceTests
     {
         _calendarRepo.Setup(r => r.GetCalendarsAsync("user@example.com"))
             .ReturnsAsync([MakeCalendar(id: 1)]);
-        _calendarRepo.Setup(r => r.UpdateCalendarAsync(It.IsAny<CalendarRequest>())).Returns(Task.CompletedTask);
+        _calendarRepo.Setup(r => r.UpdateCalendarAsync(It.IsAny<Calendar>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
         ServiceResult result = await sut.UpdateCalendarAsync(new CalendarRequest
@@ -135,7 +155,7 @@ public class CalendarServiceTests
         });
 
         Assert.True(result.Success);
-        _calendarRepo.Verify(r => r.UpdateCalendarAsync(It.IsAny<CalendarRequest>()), Times.Once);
+        _calendarRepo.Verify(r => r.UpdateCalendarAsync(It.IsAny<Calendar>()), Times.Once);
     }
 
     // ── DeleteCalendarAsync ──────────────────────────────────────────────────
@@ -162,7 +182,7 @@ public class CalendarServiceTests
     {
         _calendarRepo.Setup(r => r.GetCalendarsAsync("user@example.com"))
             .ReturnsAsync([MakeCalendar(id: 1)]);
-        _calendarRepo.Setup(r => r.DeleteCalendarAsync(It.IsAny<CalendarRequest>())).Returns(Task.CompletedTask);
+        _calendarRepo.Setup(r => r.DeleteCalendarAsync(It.IsAny<Calendar>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
         ServiceResult result = await sut.DeleteCalendarAsync(new CalendarRequest
@@ -181,7 +201,7 @@ public class CalendarServiceTests
     public async Task EnsureDefaultCalendarAsync_CreatesCalendar_WhenNoneExist()
     {
         _calendarRepo.Setup(r => r.GetCalendarsAsync("user@example.com")).ReturnsAsync([]);
-        _calendarRepo.Setup(r => r.CreateCalendarAsync(It.IsAny<CalendarRequest>())).Returns(Task.CompletedTask);
+        _calendarRepo.Setup(r => r.CreateCalendarAsync(It.IsAny<Calendar>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
         ServiceResult result = await sut.EnsureDefaultCalendarAsync(new CalendarRequest
@@ -191,7 +211,7 @@ public class CalendarServiceTests
         });
 
         Assert.True(result.Success);
-        _calendarRepo.Verify(r => r.CreateCalendarAsync(It.IsAny<CalendarRequest>()), Times.Once);
+        _calendarRepo.Verify(r => r.CreateCalendarAsync(It.IsAny<Calendar>()), Times.Once);
     }
 
     /// <summary>Verifies that <c>EnsureDefaultCalendarAsync</c> does not create when calendar exists.</summary>
@@ -209,7 +229,7 @@ public class CalendarServiceTests
         });
 
         Assert.True(result.Success);
-        _calendarRepo.Verify(r => r.CreateCalendarAsync(It.IsAny<CalendarRequest>()), Times.Never);
+        _calendarRepo.Verify(r => r.CreateCalendarAsync(It.IsAny<Calendar>()), Times.Never);
     }
 
     // ── EnsureCalendarSharedAsync ────────────────────────────────────────────
@@ -219,13 +239,13 @@ public class CalendarServiceTests
     public async Task EnsureCalendarSharedAsync_CreatesShared_WhenNotAlreadyShared()
     {
         _sharedRepo.Setup(r => r.GetCalendarSharedAsync()).ReturnsAsync([]);
-        _sharedRepo.Setup(r => r.CreateCalendarSharedAsync(It.IsAny<CalendarSharedRequest>())).Returns(Task.CompletedTask);
+        _sharedRepo.Setup(r => r.CreateCalendarSharedAsync(It.IsAny<CalendarShared>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
         ServiceResult result = await sut.EnsureCalendarSharedAsync(1);
 
         Assert.True(result.Success);
-        _sharedRepo.Verify(r => r.CreateCalendarSharedAsync(It.Is<CalendarSharedRequest>(req => req.CalendarId == 1)), Times.Once);
+        _sharedRepo.Verify(r => r.CreateCalendarSharedAsync(It.Is<CalendarShared>(s => s.Id == 1)), Times.Once);
     }
 
     /// <summary>Verifies that <c>EnsureCalendarSharedAsync</c> does not create when already shared.</summary>
@@ -233,13 +253,13 @@ public class CalendarServiceTests
     public async Task EnsureCalendarSharedAsync_DoesNotCreate_WhenAlreadyShared()
     {
         _sharedRepo.Setup(r => r.GetCalendarSharedAsync())
-            .ReturnsAsync([new CalendarSharedResponse { CalendarId = 1 }]);
+            .ReturnsAsync([CalendarShared.Reconstitute(1, false, false)]);
         var sut = CreateSut();
 
         ServiceResult result = await sut.EnsureCalendarSharedAsync(1);
 
         Assert.True(result.Success);
-        _sharedRepo.Verify(r => r.CreateCalendarSharedAsync(It.IsAny<CalendarSharedRequest>()), Times.Never);
+        _sharedRepo.Verify(r => r.CreateCalendarSharedAsync(It.IsAny<CalendarShared>()), Times.Never);
     }
 
     // ── CreateCalendarEventAsync ─────────────────────────────────────────────
@@ -265,7 +285,7 @@ public class CalendarServiceTests
     {
         _calendarRepo.Setup(r => r.GetCalendarsAsync("user@example.com"))
             .ReturnsAsync([MakeCalendar(id: 1)]);
-        _eventRepo.Setup(r => r.CreateCalendarEventAsync(It.IsAny<CalendarEventRequest>())).Returns(Task.CompletedTask);
+        _eventRepo.Setup(r => r.CreateCalendarEventAsync(It.IsAny<CalendarEvent>())).ReturnsAsync(1L);
         var sut = CreateSut();
 
         ServiceResult result = await sut.CreateCalendarEventAsync(
@@ -281,8 +301,8 @@ public class CalendarServiceTests
     {
         _calendarRepo.Setup(r => r.GetCalendarsAsync("user@example.com"))
             .ReturnsAsync([MakeCalendar(id: 1)]);
-        _eventRepo.Setup(r => r.CreateCalendarEventAsync(It.IsAny<CalendarEventRequest>())).Returns(Task.CompletedTask);
-        _reminderRepo.Setup(r => r.CreateCalendarEventReminderAsync(It.IsAny<CalendarEventReminderRequest>())).Returns(Task.CompletedTask);
+        _eventRepo.Setup(r => r.CreateCalendarEventAsync(It.IsAny<CalendarEvent>())).ReturnsAsync(1L);
+        _reminderRepo.Setup(r => r.CreateCalendarEventReminderAsync(It.IsAny<CalendarEventReminder>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
         var reminders = new List<CalendarReminderInfo>
@@ -295,7 +315,7 @@ public class CalendarServiceTests
             new CalendarEventRequest { CalendarId = 1, Title = "Meeting" }, "user@example.com", "1", reminders, null);
 
         Assert.True(result.Success);
-        _reminderRepo.Verify(r => r.CreateCalendarEventReminderAsync(It.IsAny<CalendarEventReminderRequest>()), Times.Exactly(2));
+        _reminderRepo.Verify(r => r.CreateCalendarEventReminderAsync(It.IsAny<CalendarEventReminder>()), Times.Exactly(2));
     }
 
     // ── UpdateCalendarEventAsync ─────────────────────────────────────────────
@@ -320,7 +340,7 @@ public class CalendarServiceTests
     {
         _calendarRepo.Setup(r => r.GetCalendarsAsync("user@example.com"))
             .ReturnsAsync([MakeCalendar(id: 1)]);
-        _eventRepo.Setup(r => r.GetCalendarEventAsync(1)).ReturnsAsync((CalendarEventResponse?)null);
+        _eventRepo.Setup(r => r.GetCalendarEventAsync(1)).ReturnsAsync((CalendarEvent?)null);
         var sut = CreateSut();
 
         ServiceResult result = await sut.UpdateCalendarEventAsync(
@@ -337,8 +357,8 @@ public class CalendarServiceTests
         _calendarRepo.Setup(r => r.GetCalendarsAsync("user@example.com"))
             .ReturnsAsync([MakeCalendar(id: 1)]);
         _eventRepo.Setup(r => r.GetCalendarEventAsync(1))
-            .ReturnsAsync(new CalendarEventResponse { Id = 1, CalendarId = 1, Title = "Old" });
-        _eventRepo.Setup(r => r.UpdateCalendarEventAsync(It.IsAny<CalendarEventRequest>())).Returns(Task.CompletedTask);
+            .ReturnsAsync(MakeCalendarEvent(id: 1, calendarId: 1, title: "Old"));
+        _eventRepo.Setup(r => r.UpdateCalendarEventAsync(It.IsAny<CalendarEvent>())).Returns(Task.CompletedTask);
         _eventFileRepo.Setup(r => r.DeleteCalendarEventAttachedFileAsync(1)).ReturnsAsync(0);
         _reminderRepo.Setup(r => r.DeleteCalendarEventReminderAsync(1)).ReturnsAsync(0);
         var sut = CreateSut();
@@ -357,7 +377,7 @@ public class CalendarServiceTests
     public async Task DeleteCalendarEventAsync_ReturnsFail_WhenEventNotFound()
     {
         _calendarRepo.Setup(r => r.GetCalendarsAsync("user@example.com")).ReturnsAsync([MakeCalendar(id: 1)]);
-        _eventRepo.Setup(r => r.GetCalendarEventAsync(99)).ReturnsAsync((CalendarEventResponse?)null);
+        _eventRepo.Setup(r => r.GetCalendarEventAsync(99)).ReturnsAsync((CalendarEvent?)null);
         var sut = CreateSut();
 
         ServiceResult result = await sut.DeleteCalendarEventAsync(99, "user@example.com");
@@ -372,7 +392,7 @@ public class CalendarServiceTests
         _calendarRepo.Setup(r => r.GetCalendarsAsync("user@example.com"))
             .ReturnsAsync([MakeCalendar(id: 1)]);
         _eventRepo.Setup(r => r.GetCalendarEventAsync(1))
-            .ReturnsAsync(new CalendarEventResponse { Id = 1, CalendarId = 999 }); // different calendar
+            .ReturnsAsync(MakeCalendarEvent(id: 1, calendarId: 999)); // different calendar
         var sut = CreateSut();
 
         ServiceResult result = await sut.DeleteCalendarEventAsync(1, "user@example.com");
@@ -387,8 +407,8 @@ public class CalendarServiceTests
         _calendarRepo.Setup(r => r.GetCalendarsAsync("user@example.com"))
             .ReturnsAsync([MakeCalendar(id: 1)]);
         _eventRepo.Setup(r => r.GetCalendarEventAsync(1))
-            .ReturnsAsync(new CalendarEventResponse { Id = 1, CalendarId = 1 });
-        _eventRepo.Setup(r => r.DeleteCalendarEventAsync(It.IsAny<CalendarEventRequest>())).Returns(Task.CompletedTask);
+            .ReturnsAsync(MakeCalendarEvent(id: 1, calendarId: 1));
+        _eventRepo.Setup(r => r.DeleteCalendarEventAsync(It.IsAny<CalendarEvent>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
         ServiceResult result = await sut.DeleteCalendarEventAsync(1, "user@example.com");
@@ -403,22 +423,22 @@ public class CalendarServiceTests
     public async Task UpdateOtherCalendarAsync_ClearsExistingAndCreatesNew()
     {
         const string email = "user@example.com";
-        var existing = new List<OtherCalendarResponse>
+        var existing = new List<OtherCalendar>
         {
-            new() { AccountEmail = email, CalendarId = 10 },
-            new() { AccountEmail = email, CalendarId = 11 }
+            OtherCalendar.Reconstitute(email, 10),
+            OtherCalendar.Reconstitute(email, 11)
         };
         _otherCalendarRepo.Setup(r => r.GetOtherCalendarsAsync(email)).ReturnsAsync(existing);
-        _otherCalendarRepo.Setup(r => r.DeleteOtherCalendarAsync(It.IsAny<OtherCalendarRequest>())).Returns(Task.CompletedTask);
-        _otherCalendarRepo.Setup(r => r.CreateOtherCalendarAsync(It.IsAny<OtherCalendarRequest>())).Returns(Task.CompletedTask);
+        _otherCalendarRepo.Setup(r => r.DeleteOtherCalendarAsync(It.IsAny<OtherCalendar>())).Returns(Task.CompletedTask);
+        _otherCalendarRepo.Setup(r => r.CreateOtherCalendarAsync(It.IsAny<OtherCalendar>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
         var newEntries = new List<OtherCalendarRequest> { new() { CalendarId = 20 } };
         ServiceResult result = await sut.UpdateOtherCalendarAsync(email, newEntries);
 
         Assert.True(result.Success);
-        _otherCalendarRepo.Verify(r => r.DeleteOtherCalendarAsync(It.IsAny<OtherCalendarRequest>()), Times.Exactly(2));
-        _otherCalendarRepo.Verify(r => r.CreateOtherCalendarAsync(It.IsAny<OtherCalendarRequest>()), Times.Once);
+        _otherCalendarRepo.Verify(r => r.DeleteOtherCalendarAsync(It.IsAny<OtherCalendar>()), Times.Exactly(2));
+        _otherCalendarRepo.Verify(r => r.CreateOtherCalendarAsync(It.IsAny<OtherCalendar>()), Times.Once);
         _unitOfWork.Verify(u => u.CommitAsync(), Times.Once);
     }
 }

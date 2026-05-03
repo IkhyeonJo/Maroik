@@ -1,4 +1,5 @@
 using Maroik.Core.Contract.Domains.Finance;
+using Maroik.Core.Contract.Domains.Primitives;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Service.Services;

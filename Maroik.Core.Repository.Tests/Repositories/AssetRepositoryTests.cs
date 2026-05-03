@@ -1,8 +1,8 @@
 using Maroik.Core.Contract.Domains.Finance;
 using Maroik.Core.PostgreSQL.Data;
-using Maroik.Core.PostgreSQL.Models;
 using Maroik.Core.Repository.Repositories;
 using Microsoft.EntityFrameworkCore;
+using OrmAsset = Maroik.Core.PostgreSQL.Models.Asset;
 
 namespace Maroik.Core.Repository.Tests.Repositories;
 
@@ -31,7 +31,7 @@ public class AssetRepositoryTests : IDisposable
 
     // ── Helpers ──────────────────────────────────────────────────────────────
 
-    private static Asset MakeAsset(string productName, string email, string unit = "KRW", decimal amount = 1000m) => new()
+    private static OrmAsset MakeAsset(string productName, string email, string unit = "KRW", decimal amount = 1000m) => new()
     {
         ProductName = productName,
         AccountEmail = email,
@@ -43,7 +43,7 @@ public class AssetRepositoryTests : IDisposable
         Updated = DateTime.UtcNow
     };
 
-    private async Task SeedAsync(params Asset[] assets)
+    private async Task SeedAsync(params OrmAsset[] assets)
     {
         await _context.Assets.AddRangeAsync(assets);
         await _context.SaveChangesAsync();
@@ -129,7 +129,7 @@ public class AssetRepositoryTests : IDisposable
 
         await _sut.CreateAssetAsync(asset);
 
-        Asset? saved = await _context.Assets.FirstOrDefaultAsync(
+        OrmAsset? saved = await _context.Assets.FirstOrDefaultAsync(
             a => a.AccountEmail == "alice@example.com" && a.ProductName == "NewAccount", TestContext.Current.CancellationToken);
         Assert.NotNull(saved);
         Assert.Equal(2500m, saved.Amount);
@@ -157,7 +157,7 @@ public class AssetRepositoryTests : IDisposable
 
         await _sut.UpdateAssetAsync(asset);
 
-        Asset? updated = await _context.Assets.FirstOrDefaultAsync(
+        OrmAsset? updated = await _context.Assets.FirstOrDefaultAsync(
             a => a.AccountEmail == "alice@example.com" && a.ProductName == "Wallet", TestContext.Current.CancellationToken);
         Assert.NotNull(updated);
         Assert.Equal(1500m, updated.Amount);

@@ -1,3 +1,5 @@
+using Maroik.Core.Contract.Domains.Account;
+using Maroik.Core.Contract.Domains.Finance;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Service.Services;
@@ -30,20 +32,37 @@ public class DashboardServiceTests
 
     // ── Helpers ──────────────────────────────────────────────────────────────
 
-    private static AssetResponse MakeAsset(string name, string unit = "KRW") => new()
-    {
-        ProductName = name,
-        AccountEmail = "user@example.com",
-        MonetaryUnit = unit,
-        Amount = 1000m,
-        Deleted = false
-    };
+    private static Asset MakeAsset(string name, string unit = "KRW") =>
+        Asset.Reconstitute(
+            productName: name,
+            accountEmail: "user@example.com",
+            item: "Deposit",
+            amount: 1000m,
+            monetaryUnit: unit,
+            note: null,
+            deleted: false,
+            created: DateTime.UtcNow,
+            updated: DateTime.UtcNow);
 
-    private static AccountResponse MakeAccount(string email = "user@example.com", string? unit = null) => new()
-    {
-        Email = email,
-        DefaultMonetaryUnit = unit
-    };
+    private static Account MakeAccount(string email = "user@example.com", string? unit = null) =>
+        Account.Reconstitute(
+            email: email,
+            hashedPassword: "hash",
+            nickname: "TestUser",
+            avatarImagePath: null,
+            role: "User",
+            timeZoneIanaId: "UTC",
+            defaultMonetaryUnit: unit,
+            locked: false,
+            loginAttempt: 0,
+            emailConfirmed: true,
+            agreedServiceTerms: true,
+            registrationToken: null,
+            resetPasswordToken: null,
+            created: DateTime.UtcNow,
+            updated: DateTime.UtcNow,
+            message: null,
+            deleted: false);
 
     private void SetupEmptyFinancials(string email)
     {
@@ -67,11 +86,11 @@ public class DashboardServiceTests
     {
         const string email = "user@example.com";
         var account = MakeAccount(unit: null);
-        var assets = new List<AssetResponse>();
+        var assets = new List<Asset>();
 
         _accountRepo.Setup(r => r.GetAccountByEmailAsync(email)).ReturnsAsync(account);
         _assetRepo.Setup(r => r.GetAssetsAsync(email)).ReturnsAsync(assets);
-        _accountRepo.Setup(r => r.UpdateAccountAsync(It.IsAny<AccountRequest>())).Returns(Task.CompletedTask);
+        _accountRepo.Setup(r => r.UpdateAccountAsync(It.IsAny<Account>())).Returns(Task.CompletedTask);
         _incomeRepo.Setup(r => r.GetIncomesAsync(email)).ReturnsAsync([]);
         _expenditureRepo.Setup(r => r.GetExpendituresAsync(email)).ReturnsAsync([]);
         var sut = CreateSut();
@@ -90,7 +109,7 @@ public class DashboardServiceTests
         var account = MakeAccount(unit: null);
         _accountRepo.Setup(r => r.GetAccountByEmailAsync(email)).ReturnsAsync(account);
         _assetRepo.Setup(r => r.GetAssetsAsync(email)).ReturnsAsync([]);
-        _accountRepo.Setup(r => r.UpdateAccountAsync(It.IsAny<AccountRequest>())).Returns(Task.CompletedTask);
+        _accountRepo.Setup(r => r.UpdateAccountAsync(It.IsAny<Account>())).Returns(Task.CompletedTask);
         _incomeRepo.Setup(r => r.GetIncomesAsync(email)).ReturnsAsync([]);
         _expenditureRepo.Setup(r => r.GetExpendituresAsync(email)).ReturnsAsync([]);
         var sut = CreateSut();
@@ -107,7 +126,7 @@ public class DashboardServiceTests
     {
         const string email = "user@example.com";
         var account = MakeAccount(unit: null);
-        var assets = new List<AssetResponse>
+        var assets = new List<Asset>
         {
             MakeAsset("Wallet", "KRW"),
             MakeAsset("Checking", "KRW"),
@@ -116,7 +135,7 @@ public class DashboardServiceTests
 
         _accountRepo.Setup(r => r.GetAccountByEmailAsync(email)).ReturnsAsync(account);
         _assetRepo.Setup(r => r.GetAssetsAsync(email)).ReturnsAsync(assets);
-        _accountRepo.Setup(r => r.UpdateAccountAsync(It.IsAny<AccountRequest>())).Returns(Task.CompletedTask);
+        _accountRepo.Setup(r => r.UpdateAccountAsync(It.IsAny<Account>())).Returns(Task.CompletedTask);
         SetupEmptyFinancials(email);
         var sut = CreateSut();
 
@@ -124,7 +143,7 @@ public class DashboardServiceTests
 
         // Most-used unit is KRW (2 assets)
         Assert.Equal("KRW", summary.DefaultMonetaryUnit);
-        _accountRepo.Verify(r => r.UpdateAccountAsync(It.IsAny<AccountRequest>()), Times.AtLeastOnce);
+        _accountRepo.Verify(r => r.UpdateAccountAsync(It.IsAny<Account>()), Times.AtLeastOnce);
     }
 
     /// <summary>Verifies that <c>GetSummaryAsync</c> clears default monetary unit when no assets exist.</summary>
@@ -135,7 +154,7 @@ public class DashboardServiceTests
         var account = MakeAccount(unit: "KRW");
         _accountRepo.Setup(r => r.GetAccountByEmailAsync(email)).ReturnsAsync(account);
         _assetRepo.Setup(r => r.GetAssetsAsync(email)).ReturnsAsync([]);
-        _accountRepo.Setup(r => r.UpdateAccountAsync(It.IsAny<AccountRequest>())).Returns(Task.CompletedTask);
+        _accountRepo.Setup(r => r.UpdateAccountAsync(It.IsAny<Account>())).Returns(Task.CompletedTask);
         _incomeRepo.Setup(r => r.GetIncomesAsync(email)).ReturnsAsync([]);
         _expenditureRepo.Setup(r => r.GetExpendituresAsync(email)).ReturnsAsync([]);
         var sut = CreateSut();
@@ -173,21 +192,42 @@ public class DashboardServiceTests
 
         _fixedIncomeRepo.Setup(r => r.GetFixedIncomesAsync(email)).ReturnsAsync(
         [
-            new FixedIncomeResponse
-            {
-                DepositMonth = 1, DepositDay = 1,
-                MaturityDate = pastDate,
-                Unpunctuality = false
-            }
+            FixedIncome.Reconstitute(
+                id: 1,
+                accountEmail: email,
+                mainClass: "RegularIncome",
+                subClass: "LaborIncome",
+                content: null,
+                amount: 100m,
+                monetaryUnit: "KRW",
+                depositMyAssetProductName: "Wallet",
+                depositMonth: 1,
+                depositDay: 1,
+                maturityDate: pastDate,
+                note: null,
+                unpunctuality: false,
+                created: DateTime.UtcNow,
+                updated: DateTime.UtcNow)
         ]);
         _fixedExpenditureRepo.Setup(r => r.GetFixedExpendituresAsync(email)).ReturnsAsync(
         [
-            new FixedExpenditureResponse
-            {
-                DepositMonth = 1, DepositDay = 1,
-                MaturityDate = pastDate,
-                Unpunctuality = false
-            }
+            FixedExpenditure.Reconstitute(
+                id: 1,
+                accountEmail: email,
+                mainClass: "RegularExpenditure",
+                subClass: "LivingExpenditure",
+                content: null,
+                amount: 100m,
+                monetaryUnit: "KRW",
+                paymentMethod: "Wallet",
+                myDepositAsset: null,
+                depositMonth: 1,
+                depositDay: 1,
+                maturityDate: pastDate,
+                note: null,
+                unpunctuality: false,
+                created: DateTime.UtcNow,
+                updated: DateTime.UtcNow)
         ]);
         var sut = CreateSut();
 
@@ -206,12 +246,22 @@ public class DashboardServiceTests
 
         _fixedIncomeRepo.Setup(r => r.GetFixedIncomesAsync(email)).ReturnsAsync(
         [
-            new FixedIncomeResponse
-            {
-                DepositMonth = 1, DepositDay = 1,
-                MaturityDate = futureDate,
-                Unpunctuality = true
-            }
+            FixedIncome.Reconstitute(
+                id: 1,
+                accountEmail: email,
+                mainClass: "RegularIncome",
+                subClass: "LaborIncome",
+                content: null,
+                amount: 100m,
+                monetaryUnit: "KRW",
+                depositMyAssetProductName: "Wallet",
+                depositMonth: 1,
+                depositDay: 1,
+                maturityDate: futureDate,
+                note: null,
+                unpunctuality: true,
+                created: DateTime.UtcNow,
+                updated: DateTime.UtcNow)
         ]);
         _fixedExpenditureRepo.Setup(r => r.GetFixedExpendituresAsync(email)).ReturnsAsync([]);
         var sut = CreateSut();
@@ -227,13 +277,13 @@ public class DashboardServiceTests
     [Fact]
     public async Task UpdateDefaultMonetaryUnitAsync_DoesNothing_WhenAccountNotFound()
     {
-        _accountRepo.Setup(r => r.GetAccountByEmailAsync("missing@example.com")).ReturnsAsync((AccountResponse?)null);
+        _accountRepo.Setup(r => r.GetAccountByEmailAsync("missing@example.com")).ReturnsAsync((Account?)null);
         _assetRepo.Setup(r => r.GetAssetsAsync("missing@example.com")).ReturnsAsync([]);
         var sut = CreateSut();
 
         await sut.UpdateDefaultMonetaryUnitAsync("missing@example.com", "KRW");
 
-        _accountRepo.Verify(r => r.UpdateAccountAsync(It.IsAny<AccountRequest>()), Times.Never);
+        _accountRepo.Verify(r => r.UpdateAccountAsync(It.IsAny<Account>()), Times.Never);
     }
 
     /// <summary>Verifies that <c>UpdateDefaultMonetaryUnitAsync</c> sets unit when unit exists in assets.</summary>
@@ -244,12 +294,12 @@ public class DashboardServiceTests
         var account = MakeAccount(unit: null);
         _assetRepo.Setup(r => r.GetAssetsAsync(email)).ReturnsAsync([MakeAsset("Wallet", "KRW")]);
         _accountRepo.Setup(r => r.GetAccountByEmailAsync(email)).ReturnsAsync(account);
-        _accountRepo.Setup(r => r.UpdateAccountAsync(It.IsAny<AccountRequest>())).Returns(Task.CompletedTask);
+        _accountRepo.Setup(r => r.UpdateAccountAsync(It.IsAny<Account>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
         await sut.UpdateDefaultMonetaryUnitAsync(email, "KRW");
 
-        _accountRepo.Verify(r => r.UpdateAccountAsync(It.Is<AccountRequest>(req => req.DefaultMonetaryUnit == "KRW")), Times.Once);
+        _accountRepo.Verify(r => r.UpdateAccountAsync(It.Is<Account>(acc => acc.DefaultMonetaryUnit == "KRW")), Times.Once);
     }
 
     /// <summary>Verifies that <c>UpdateDefaultMonetaryUnitAsync</c> sets null when unit not in assets.</summary>
@@ -260,12 +310,12 @@ public class DashboardServiceTests
         var account = MakeAccount(unit: "KRW");
         _assetRepo.Setup(r => r.GetAssetsAsync(email)).ReturnsAsync([MakeAsset("Wallet", "USD")]);
         _accountRepo.Setup(r => r.GetAccountByEmailAsync(email)).ReturnsAsync(account);
-        _accountRepo.Setup(r => r.UpdateAccountAsync(It.IsAny<AccountRequest>())).Returns(Task.CompletedTask);
+        _accountRepo.Setup(r => r.UpdateAccountAsync(It.IsAny<Account>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
         await sut.UpdateDefaultMonetaryUnitAsync(email, "KRW"); // KRW not in assets
 
-        _accountRepo.Verify(r => r.UpdateAccountAsync(It.Is<AccountRequest>(req => req.DefaultMonetaryUnit == null)), Times.Once);
+        _accountRepo.Verify(r => r.UpdateAccountAsync(It.Is<Account>(acc => acc.DefaultMonetaryUnit == null)), Times.Once);
     }
 
     // ── GetServerResourceSummary ─────────────────────────────────────────────

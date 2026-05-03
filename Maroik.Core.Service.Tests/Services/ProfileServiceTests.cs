@@ -1,3 +1,4 @@
+using Maroik.Core.Contract.Domains.Account;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Contract.Utilities;
@@ -31,13 +32,25 @@ public class ProfileServiceTests
 
     // ── Helpers ──────────────────────────────────────────────────────────────
 
-    private static AccountResponse ActiveAccount(string email = "user@example.com") => new()
-    {
-        Email = email,
-        HashedPassword = "$2a$13$placeholder",
-        Nickname = "TestUser",
-        AvatarImagePath = "/upload/Management/Profile/default-avatar.jpg"
-    };
+    private static Account ActiveAccount(string email = "user@example.com") =>
+        Account.Reconstitute(
+            email: email,
+            hashedPassword: "$2a$13$placeholder",
+            nickname: "TestUser",
+            avatarImagePath: "/upload/Management/Profile/default-avatar.jpg",
+            role: "User",
+            timeZoneIanaId: "UTC",
+            defaultMonetaryUnit: null,
+            locked: false,
+            loginAttempt: 0,
+            emailConfirmed: true,
+            agreedServiceTerms: true,
+            registrationToken: null,
+            resetPasswordToken: null,
+            created: DateTime.UtcNow,
+            updated: DateTime.UtcNow,
+            message: null,
+            deleted: false);
 
     // ── GetProfileAsync ──────────────────────────────────────────────────────
 
@@ -46,13 +59,13 @@ public class ProfileServiceTests
     public async Task GetProfileAsync_DelegatesToRepository()
     {
         var account = ActiveAccount();
-        _accountRepo.Setup(r => r.GetAccountByEmailAsync(account.Email!)).ReturnsAsync(account);
+        _accountRepo.Setup(r => r.GetAccountByEmailAsync(account.Email.Value)).ReturnsAsync(account);
         var sut = CreateSut();
 
-        AccountResponse? result = await sut.GetProfileAsync(account.Email!);
+        AccountResponse? result = await sut.GetProfileAsync(account.Email.Value);
 
         Assert.NotNull(result);
-        Assert.Equal(account.Email, result.Email);
+        Assert.Equal(account.Email.Value, result.Email);
     }
 
     // ── UpdateAvatarAsync ────────────────────────────────────────────────────
@@ -61,7 +74,7 @@ public class ProfileServiceTests
     [Fact]
     public async Task UpdateAvatarAsync_ReturnsFail_WhenAccountNotFound()
     {
-        _accountRepo.Setup(r => r.GetAccountByEmailAsync("ghost@example.com")).ReturnsAsync((AccountResponse?)null);
+        _accountRepo.Setup(r => r.GetAccountByEmailAsync("ghost@example.com")).ReturnsAsync((Account?)null);
         var sut = CreateSut();
 
         ServiceResult result = await sut.UpdateAvatarAsync("ghost@example.com", "/new/path.jpg");
@@ -74,15 +87,15 @@ public class ProfileServiceTests
     public async Task UpdateAvatarAsync_UpdatesAvatarPath_WhenAccountFound()
     {
         var account = ActiveAccount();
-        _accountRepo.Setup(r => r.GetAccountByEmailAsync(account.Email!)).ReturnsAsync(account);
-        _accountRepo.Setup(r => r.UpdateAccountAsync(It.IsAny<AccountRequest>())).Returns(Task.CompletedTask);
+        _accountRepo.Setup(r => r.GetAccountByEmailAsync(account.Email.Value)).ReturnsAsync(account);
+        _accountRepo.Setup(r => r.UpdateAccountAsync(It.IsAny<Account>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
-        ServiceResult result = await sut.UpdateAvatarAsync(account.Email!, "/new/avatar.jpg");
+        ServiceResult result = await sut.UpdateAvatarAsync(account.Email.Value, "/new/avatar.jpg");
 
         Assert.True(result.Success);
         _accountRepo.Verify(r => r.UpdateAccountAsync(
-            It.Is<AccountRequest>(req => req.AvatarImagePath == "/new/avatar.jpg")), Times.Once);
+            It.Is<Account>(a => a.AvatarImagePath == "/new/avatar.jpg")), Times.Once);
     }
 
     // ── UpdateTimeZoneAsync ──────────────────────────────────────────────────
@@ -91,7 +104,7 @@ public class ProfileServiceTests
     [Fact]
     public async Task UpdateTimeZoneAsync_ReturnsFail_WhenAccountNotFound()
     {
-        _accountRepo.Setup(r => r.GetAccountByEmailAsync("ghost@example.com")).ReturnsAsync((AccountResponse?)null);
+        _accountRepo.Setup(r => r.GetAccountByEmailAsync("ghost@example.com")).ReturnsAsync((Account?)null);
         var sut = CreateSut();
 
         ServiceResult result = await sut.UpdateTimeZoneAsync("ghost@example.com", "Asia/Seoul");
@@ -104,15 +117,15 @@ public class ProfileServiceTests
     public async Task UpdateTimeZoneAsync_UpdatesTimeZone_WhenAccountFound()
     {
         var account = ActiveAccount();
-        _accountRepo.Setup(r => r.GetAccountByEmailAsync(account.Email!)).ReturnsAsync(account);
-        _accountRepo.Setup(r => r.UpdateAccountAsync(It.IsAny<AccountRequest>())).Returns(Task.CompletedTask);
+        _accountRepo.Setup(r => r.GetAccountByEmailAsync(account.Email.Value)).ReturnsAsync(account);
+        _accountRepo.Setup(r => r.UpdateAccountAsync(It.IsAny<Account>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
-        ServiceResult result = await sut.UpdateTimeZoneAsync(account.Email!, "Asia/Seoul");
+        ServiceResult result = await sut.UpdateTimeZoneAsync(account.Email.Value, "Asia/Seoul");
 
         Assert.True(result.Success);
         _accountRepo.Verify(r => r.UpdateAccountAsync(
-            It.Is<AccountRequest>(req => req.TimeZoneIanaId == "Asia/Seoul")), Times.Once);
+            It.Is<Account>(a => a.TimeZone.Value == "Asia/Seoul")), Times.Once);
     }
 
     // ── UpdatePasswordAsync ──────────────────────────────────────────────────
@@ -121,7 +134,7 @@ public class ProfileServiceTests
     [Fact]
     public async Task UpdatePasswordAsync_ReturnsFail_WhenAccountNotFound()
     {
-        _accountRepo.Setup(r => r.GetAccountByEmailAsync("ghost@example.com")).ReturnsAsync((AccountResponse?)null);
+        _accountRepo.Setup(r => r.GetAccountByEmailAsync("ghost@example.com")).ReturnsAsync((Account?)null);
         var sut = CreateSut();
 
         ServiceResult result = await sut.UpdatePasswordAsync("ghost@example.com", "old", "new");
@@ -134,11 +147,11 @@ public class ProfileServiceTests
     public async Task UpdatePasswordAsync_ReturnsFail_WhenCurrentPasswordIsWrong()
     {
         var account = ActiveAccount();
-        _accountRepo.Setup(r => r.GetAccountByEmailAsync(account.Email!)).ReturnsAsync(account);
-        _passwordService.Setup(p => p.VerifyPassword("wrongpass", account.HashedPassword!)).Returns(false);
+        _accountRepo.Setup(r => r.GetAccountByEmailAsync(account.Email.Value)).ReturnsAsync(account);
+        _passwordService.Setup(p => p.VerifyPassword("wrongpass", account.HashedPassword)).Returns(false);
         var sut = CreateSut();
 
-        ServiceResult result = await sut.UpdatePasswordAsync(account.Email!, "wrongpass", "newpass");
+        ServiceResult result = await sut.UpdatePasswordAsync(account.Email.Value, "wrongpass", "newpass");
 
         Assert.False(result.Success);
         Assert.Contains("Invalid password", result.ErrorKey, StringComparison.OrdinalIgnoreCase);
@@ -149,16 +162,16 @@ public class ProfileServiceTests
     public async Task UpdatePasswordAsync_HashesAndUpdates_WhenCurrentPasswordIsCorrect()
     {
         var account = ActiveAccount();
-        _accountRepo.Setup(r => r.GetAccountByEmailAsync(account.Email!)).ReturnsAsync(account);
-        _passwordService.Setup(p => p.VerifyPassword("oldpass", account.HashedPassword!)).Returns(true);
+        _accountRepo.Setup(r => r.GetAccountByEmailAsync(account.Email.Value)).ReturnsAsync(account);
+        _passwordService.Setup(p => p.VerifyPassword("oldpass", account.HashedPassword)).Returns(true);
         _passwordService.Setup(p => p.HashPassword("newpass")).Returns("$2a$13$newhash");
-        _accountRepo.Setup(r => r.UpdateAccountAsync(It.IsAny<AccountRequest>())).Returns(Task.CompletedTask);
+        _accountRepo.Setup(r => r.UpdateAccountAsync(It.IsAny<Account>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
-        ServiceResult result = await sut.UpdatePasswordAsync(account.Email!, "oldpass", "newpass");
+        ServiceResult result = await sut.UpdatePasswordAsync(account.Email.Value, "oldpass", "newpass");
 
         Assert.True(result.Success);
         _accountRepo.Verify(r => r.UpdateAccountAsync(
-            It.Is<AccountRequest>(req => req.HashedPassword == "$2a$13$newhash")), Times.Once);
+            It.Is<Account>(a => a.HashedPassword == "$2a$13$newhash")), Times.Once);
     }
 }

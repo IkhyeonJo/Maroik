@@ -1,3 +1,4 @@
+using Maroik.Core.Contract.Domains.Finance;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Service.Services;
@@ -37,15 +38,8 @@ public class AssetServiceTests
 
     // ── Helpers ──────────────────────────────────────────────────────────────
 
-    private static AssetResponse MakeAsset(string name) => new()
-    {
-        ProductName = name,
-        AccountEmail = "user@example.com",
-        Item = "FreeDepositAndWithdrawal",
-        Amount = 1000m,
-        MonetaryUnit = "KRW",
-        Deleted = false
-    };
+    private static Asset MakeAsset(string name, decimal amount = 1000m, string currency = "KRW", bool deleted = false) =>
+        Asset.Reconstitute(name, "user@example.com", "FreeDepositAndWithdrawal", amount, currency, null, deleted, DateTime.UtcNow, DateTime.UtcNow);
 
     private static AssetRequest ValidRequest(string name = "MyBank") => new()
     {
@@ -99,8 +93,8 @@ public class AssetServiceTests
     [InlineData("InsuranceAsset")]
     public async Task CreateAsync_ReturnsSuccess_ForAllValidItemTypes(string item)
     {
-        _assetRepo.Setup(r => r.GetAssetAsync("user@example.com", "MyBank")).ReturnsAsync((AssetResponse?)null);
-        _assetRepo.Setup(r => r.CreateAssetAsync(It.IsAny<AssetRequest>())).Returns(Task.CompletedTask);
+        _assetRepo.Setup(r => r.GetAssetAsync("user@example.com", "MyBank")).ReturnsAsync((Asset?)null);
+        _assetRepo.Setup(r => r.CreateAssetAsync(It.IsAny<Asset>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
         var request = new AssetRequest { ProductName = "MyBank", Item = item };
@@ -113,18 +107,18 @@ public class AssetServiceTests
     [Fact]
     public async Task CreateAsync_SetsAccountEmailAndTimestamps_BeforeInserting()
     {
-        _assetRepo.Setup(r => r.GetAssetAsync("user@example.com", "MyBank")).ReturnsAsync((AssetResponse?)null);
+        _assetRepo.Setup(r => r.GetAssetAsync("user@example.com", "MyBank")).ReturnsAsync((Asset?)null);
 
-        AssetRequest? captured = null;
-        _assetRepo.Setup(r => r.CreateAssetAsync(It.IsAny<AssetRequest>()))
-            .Callback<AssetRequest>(req => captured = req)
+        Asset? captured = null;
+        _assetRepo.Setup(r => r.CreateAssetAsync(It.IsAny<Asset>()))
+            .Callback<Asset>(asset => captured = asset)
             .Returns(Task.CompletedTask);
         var sut = CreateSut();
 
         await sut.CreateAsync("user@example.com", ValidRequest("MyBank"));
 
         Assert.NotNull(captured);
-        Assert.Equal("user@example.com", captured.AccountEmail);
+        Assert.Equal("user@example.com", captured.AccountEmail.Value);
         Assert.False(captured.Deleted);
         Assert.True(captured.Created > DateTime.MinValue);
         Assert.True(captured.Updated > DateTime.MinValue);
@@ -149,7 +143,7 @@ public class AssetServiceTests
     [Fact]
     public async Task UpdateAsync_ReturnsFail_WhenOriginalAssetNotFound()
     {
-        _assetRepo.Setup(r => r.GetAssetAsync("user@example.com", "OldName")).ReturnsAsync((AssetResponse?)null);
+        _assetRepo.Setup(r => r.GetAssetAsync("user@example.com", "OldName")).ReturnsAsync((Asset?)null);
         var sut = CreateSut();
 
         ServiceResult result = await sut.UpdateAsync("user@example.com", ValidRequest("NewName"), "OldName");
@@ -164,7 +158,7 @@ public class AssetServiceTests
     public async Task UpdateAsync_ReturnsFail_WhenRenameReturnsZeroRowsAffected()
     {
         _assetRepo.Setup(r => r.GetAssetAsync("user@example.com", "OldName")).ReturnsAsync(MakeAsset("OldName"));
-        _assetRepo.Setup(r => r.UpdateAssetWithProductNameAsync(It.IsAny<AssetRequest>(), "OldName")).ReturnsAsync(0);
+        _assetRepo.Setup(r => r.UpdateAssetWithProductNameAsync(It.IsAny<Asset>(), "OldName")).ReturnsAsync(0);
         var sut = CreateSut();
 
         ServiceResult result = await sut.UpdateAsync("user@example.com", ValidRequest("NewName"), "OldName");
@@ -179,7 +173,7 @@ public class AssetServiceTests
     {
         const string email = "user@example.com";
         _assetRepo.Setup(r => r.GetAssetAsync(email, "OldName")).ReturnsAsync(MakeAsset("OldName"));
-        _assetRepo.Setup(r => r.UpdateAssetWithProductNameAsync(It.IsAny<AssetRequest>(), "OldName")).ReturnsAsync(1);
+        _assetRepo.Setup(r => r.UpdateAssetWithProductNameAsync(It.IsAny<Asset>(), "OldName")).ReturnsAsync(1);
         _fixedExpenditureRepo.Setup(r => r.UpdateMyDepositAssetWithProductNameAsync(email, "OldName", "NewName")).ReturnsAsync(0);
         _expenditureRepo.Setup(r => r.UpdateMyDepositAssetWithProductNameAsync(email, "OldName", "NewName")).ReturnsAsync(0);
         var sut = CreateSut();
@@ -198,7 +192,7 @@ public class AssetServiceTests
     [Fact]
     public async Task DeleteAsync_ReturnsFail_WhenAssetNotFound()
     {
-        _assetRepo.Setup(r => r.GetAssetAsync("user@example.com", "MyBank")).ReturnsAsync((AssetResponse?)null);
+        _assetRepo.Setup(r => r.GetAssetAsync("user@example.com", "MyBank")).ReturnsAsync((Asset?)null);
         var sut = CreateSut();
 
         ServiceResult result = await sut.DeleteAsync("user@example.com", "MyBank");
@@ -214,9 +208,9 @@ public class AssetServiceTests
         const string email = "user@example.com";
         _assetRepo.Setup(r => r.GetAssetAsync(email, "MyBank")).ReturnsAsync(MakeAsset("MyBank"));
 
-        AssetRequest? captured = null;
-        _assetRepo.Setup(r => r.UpdateAssetAsync(It.IsAny<AssetRequest>()))
-            .Callback<AssetRequest>(req => captured = req)
+        Asset? captured = null;
+        _assetRepo.Setup(r => r.UpdateAssetAsync(It.IsAny<Asset>()))
+            .Callback<Asset>(asset => captured = asset)
             .Returns(Task.CompletedTask);
         var sut = CreateSut();
 
@@ -233,7 +227,7 @@ public class AssetServiceTests
     [Fact]
     public async Task GetAssetsAsync_DelegatesToRepository()
     {
-        var list = new List<AssetResponse> { MakeAsset("MyBank") };
+        var list = new List<Asset> { MakeAsset("MyBank") };
         _assetRepo.Setup(r => r.GetAssetsAsync("user@example.com")).ReturnsAsync(list);
         var sut = CreateSut();
 

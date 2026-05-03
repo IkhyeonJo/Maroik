@@ -1,8 +1,8 @@
 using Maroik.Core.Contract.Domains.Account;
 using Maroik.Core.PostgreSQL.Data;
-using Maroik.Core.PostgreSQL.Models;
 using Maroik.Core.Repository.Repositories;
 using Microsoft.EntityFrameworkCore;
+using OrmAccount = Maroik.Core.PostgreSQL.Models.Account;
 
 namespace Maroik.Core.Repository.Tests.Repositories;
 
@@ -31,7 +31,7 @@ public class AccountRepositoryTests : IDisposable
 
     // ── Helpers ──────────────────────────────────────────────────────────────
 
-    private static Account MakeAccount(string email, string nickname) => new()
+    private static OrmAccount MakeAccount(string email, string nickname) => new()
     {
         Email = email,
         Nickname = nickname,
@@ -46,7 +46,7 @@ public class AccountRepositoryTests : IDisposable
         LoginAttempt = 0
     };
 
-    private async Task SeedAsync(params Account[] accounts)
+    private async Task SeedAsync(params OrmAccount[] accounts)
     {
         await _context.Accounts.AddRangeAsync(accounts);
         await _context.SaveChangesAsync();
@@ -179,7 +179,7 @@ public class AccountRepositoryTests : IDisposable
 
         await _sut.CreateAccountAsync(account);
 
-        Account? saved = await _context.Accounts.FirstOrDefaultAsync(a => a.Email == "new@example.com", TestContext.Current.CancellationToken);
+        OrmAccount? saved = await _context.Accounts.FirstOrDefaultAsync(a => a.Email == "new@example.com", TestContext.Current.CancellationToken);
         Assert.NotNull(saved);
         Assert.Equal("NewUser", saved.Nickname);
     }
@@ -253,7 +253,7 @@ public class AccountRepositoryTests : IDisposable
 
         await _sut.UpdateAccountAsync(account);
 
-        Account? updated = await _context.Accounts.FirstOrDefaultAsync(a => a.Email == "alice@example.com", TestContext.Current.CancellationToken);
+        OrmAccount? updated = await _context.Accounts.FirstOrDefaultAsync(a => a.Email == "alice@example.com", TestContext.Current.CancellationToken);
         Assert.NotNull(updated);
         Assert.Equal("Admin", updated.Role);
         Assert.Equal("Asia/Seoul", updated.TimeZoneIanaId);
