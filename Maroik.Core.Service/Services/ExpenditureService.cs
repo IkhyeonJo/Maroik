@@ -40,8 +40,8 @@ public class ExpenditureService : IExpenditureService
         await _unitOfWork.BeginAsync();
         try
         {
-            var validationResult = ValidateExpenditureClass(request.MainClass, request.SubClass);
-            if (!validationResult.IsValid)
+            var classResult = ExpenditureClassPolicy.Validate(request.MainClass, request.SubClass);
+            if (classResult.IsError)
             {
                 await _unitOfWork.RollbackAsync();
                 return ServiceResult.Fail("Input is invalid");
@@ -60,7 +60,7 @@ public class ExpenditureService : IExpenditureService
             }
 
             Asset? depositAsset = null;
-            if (validationResult.RequiresDepositAsset)
+            if (classResult.Value)
             {
                 if (request.PaymentMethod == request.MyDepositAsset)
                 {
@@ -87,7 +87,7 @@ public class ExpenditureService : IExpenditureService
             }
 
             string currency = paymentAsset.Balance.Currency;
-            string? myDepositAsset = validationResult.RequiresDepositAsset ? request.MyDepositAsset : string.Empty;
+            string? myDepositAsset = classResult.Value ? request.MyDepositAsset : string.Empty;
 
             var expenditureResult = Expenditure.Record(0, accountEmail, request.MainClass, request.SubClass,
                 request.Content, Math.Abs(request.Amount), currency, request.PaymentMethod, myDepositAsset, request.Note);
@@ -126,20 +126,20 @@ public class ExpenditureService : IExpenditureService
         await _unitOfWork.BeginAsync();
         try
         {
-            var validationResult = ValidateExpenditureClass(request.MainClass, request.SubClass);
-            if (!validationResult.IsValid)
+            var classResult = ExpenditureClassPolicy.Validate(request.MainClass, request.SubClass);
+            if (classResult.IsError)
             {
                 await _unitOfWork.RollbackAsync();
                 return ServiceResult.Fail("Input is invalid");
             }
 
-            if (validationResult.RequiresDepositAsset && request.PaymentMethod == request.MyDepositAsset)
+            if (classResult.Value && request.PaymentMethod == request.MyDepositAsset)
             {
                 await _unitOfWork.RollbackAsync();
                 return ServiceResult.Fail("The PaymentMethod and MyDepositAsset value cannot be the same.");
             }
 
-            if (validationResult.RequiresDepositAsset)
+            if (classResult.Value)
             {
                 var pm = await _assetBalance.GetAssetAsync(accountEmail, request.PaymentMethod ?? "");
                 var dep = await _assetBalance.GetAssetAsync(accountEmail, request.MyDepositAsset ?? "");
@@ -181,9 +181,8 @@ public class ExpenditureService : IExpenditureService
 
             Asset? newPayAsset = await _assetBalance.GetAssetAsync(accountEmail, request.PaymentMethod ?? "");
             string newCurrency = newPayAsset?.Balance.Currency ?? prevPayAsset?.Balance.Currency ?? string.Empty;
-            string? myDepositAsset = validationResult.RequiresDepositAsset ? request.MyDepositAsset : string.Empty;
+            string? myDepositAsset = classResult.Value ? request.MyDepositAsset : string.Empty;
 
-            // Capture old state before mutating
             var oldSnapshot = new ExpenditureSnapshot(previous.PaymentMethod, previous.MyDepositAsset, previous.Amount.Amount);
 
             var updateResult = previous.Update(request.MainClass, request.SubClass, request.Content,
@@ -280,29 +279,4 @@ public class ExpenditureService : IExpenditureService
     }
 
     private readonly record struct ExpenditureSnapshot(string? PaymentMethod, string? MyDepositAsset, decimal Amount);
-
-    private static (bool IsValid, bool RequiresDepositAsset) ValidateExpenditureClass(string? mainClass, string? subClass)
-    {
-        return mainClass switch
-        {
-            "RegularSavings" => subClass is "Deposit" or "Investment"
-                ? (true, true) : (false, false),
-
-            "NonConsumerSpending" => subClass switch
-            {
-                "PublicPension" or "DebtRepayment" => (true, true),
-                "Tax" or "SocialInsurance" or "InterHouseholdTranserExpenses" or "NonProfitOrganizationTransfer" => (true, false),
-                _ => (false, false)
-            },
-
-            "ConsumerSpending" => subClass is
-                "MealOrEatOutExpenses" or "HousingOrSuppliesCost" or "EducationExpenses" or
-                "MedicalExpenses" or "TransportationCost" or "CommunicationCost" or
-                "LeisureOrCulture" or "ClothingOrShoes" or "PinMoney" or
-                "ProtectionTypeInsurance" or "OtherExpenses" or "UnknownExpenditure"
-                    ? (true, false) : (false, false),
-
-            _ => (false, false)
-        };
-    }
 }

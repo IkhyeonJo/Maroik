@@ -15,7 +15,10 @@ public class ExpenditureRepository(ApplicationDbContext context) : IExpenditureR
 {
     /// <inheritdoc />
     public async Task<List<Expenditure>> GetExpendituresAsync(string email)
-        => (await context.Expenditures.Where(x => x.AccountEmail == email).ToListAsync()).Select(ToDomain).ToList();
+        => (await context.Expenditures
+            .Include(x => x.Asset)
+            .Where(x => x.AccountEmail == email)
+            .ToListAsync()).Select(ToDomain).ToList();
 
     /// <inheritdoc />
     public async Task<List<Expenditure>> GetCurrentYearExpendituresAsync(string email, string year, string timeZoneIanaId)
@@ -31,7 +34,7 @@ public class ExpenditureRepository(ApplicationDbContext context) : IExpenditureR
                  TO_CHAR("Created" AT TIME ZONE 'UTC' AT TIME ZONE {timeZoneIanaId}, 'YYYY') = {year}
                  AND "AccountEmail" = {email}
              """
-        ).ToListAsync()).Select(ToDomain).ToList();
+        ).Include(x => x.Asset).ToListAsync()).Select(ToDomain).ToList();
     }
 
     /// <inheritdoc />
@@ -47,7 +50,7 @@ public class ExpenditureRepository(ApplicationDbContext context) : IExpenditureR
                  TO_CHAR("Created" AT TIME ZONE 'UTC' AT TIME ZONE {timeZoneIanaId}, 'YYYY-MM') = {yearMonth}
                  AND "AccountEmail" = {email}
              """
-        ).ToListAsync()).Select(ToDomain).ToList();
+        ).Include(x => x.Asset).ToListAsync()).Select(ToDomain).ToList();
     }
 
     /// <inheritdoc />
@@ -88,16 +91,15 @@ public class ExpenditureRepository(ApplicationDbContext context) : IExpenditureR
     }
 
     /// <summary>
-    /// Maps an ORM <see cref="OrmExpenditure"/> row to the <see cref="Expenditure"/> domain object,
-    /// applying null-coalescing defaults for required string fields.
-    /// An empty string is passed for the monetary-unit currency symbol because it is not stored
-    /// on the Expenditure table (it is derived from the associated Asset).
+    /// Maps an ORM <see cref="OrmExpenditure"/> row to the <see cref="Expenditure"/> domain object.
+    /// Currency is read from the joined <see cref="OrmExpenditure.Asset"/> navigation property;
+    /// falls back to an empty string when the join yields no row (e.g. asset was hard-deleted).
     /// </summary>
     /// <param name="e">The ORM entity loaded from the database.</param>
     /// <returns>A fully reconstituted <see cref="Expenditure"/> domain object.</returns>
     private static Expenditure ToDomain(OrmExpenditure e) => Expenditure.Reconstitute(
         e.Id, e.AccountEmail ?? string.Empty, e.MainClass ?? string.Empty,
-        e.SubClass ?? string.Empty, e.Content, e.Amount, string.Empty,
+        e.SubClass ?? string.Empty, e.Content, e.Amount, e.Asset?.MonetaryUnit ?? string.Empty,
         e.PaymentMethod ?? string.Empty, e.MyDepositAsset, e.Note,
         e.Created, e.Updated);
 

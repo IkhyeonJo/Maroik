@@ -47,4 +47,13 @@ public class AccountResponse
 
     /// <summary>Soft-delete flag.</summary>
     public bool Deleted { get; set; }
+
+    /// <summary>Hashed password (cleared before storing in session; admin-only field).</summary>
+    public string? HashedPassword { get; set; }
+
+    /// <summary>One-time token used to confirm the registration e-mail.</summary>
+    public string? RegistrationToken { get; set; }
+
+    /// <summary>One-time token used to authorise a password-reset request.</summary>
+    public string? ResetPasswordToken { get; set; }
 }
