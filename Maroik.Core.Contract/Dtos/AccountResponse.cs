@@ -9,9 +9,6 @@ public class AccountResponse
     /// <summary>Email address (primary key / login ID).</summary>
     public string? Email { get; set; }
 
-    /// <summary>BCrypt-hashed password stored in the database.</summary>
-    public string? HashedPassword { get; set; }
-
     /// <summary>Unique display name shown in the UI.</summary>
     public string? Nickname { get; set; }
 
@@ -38,12 +35,6 @@ public class AccountResponse
 
     /// <summary>Whether the user agreed to the service terms of use.</summary>
     public bool AgreedServiceTerms { get; set; }
-
-    /// <summary>Registration email confirmation token.</summary>
-    public string? RegistrationToken { get; set; }
-
-    /// <summary>Password-reset email token.</summary>
-    public string? ResetPasswordToken { get; set; }
 
     /// <summary>UTC timestamp when the account was created.</summary>
     public DateTime Created { get; set; }

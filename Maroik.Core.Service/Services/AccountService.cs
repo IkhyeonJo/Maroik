@@ -105,10 +105,7 @@ public class AccountService : IAccountService
         account.ResetLoginAttempt();
         await _accountRepository.UpdateAccountAsync(account);
 
-        var result = AccountMapper.ToResponse(account);
-        // Do not expose the hashed password to the caller.
-        result.HashedPassword = null;
-        return LoginResult.Ok(result);
+        return LoginResult.Ok(AccountMapper.ToResponse(account));
     }
 
     /// <inheritdoc />

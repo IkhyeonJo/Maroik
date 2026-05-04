@@ -146,7 +146,6 @@ public class AssetService : IAssetService
     /// Returns <see langword="true"/> when <paramref name="item"/> is one of the recognised asset category values.
     /// Prevents invalid category strings from reaching the domain layer.
     /// </summary>
-    private static bool IsValidAssetItem(string? item) => item is
-        "FreeDepositAndWithdrawal" or "TrustAsset" or "CashAsset" or "SavingsAsset" or
-        "InvestmentAsset" or "RealEstate" or "Movables" or "OtherPhysicalAsset" or "InsuranceAsset";
+    private static bool IsValidAssetItem(string? item) =>
+        item != null && Enum.TryParse<AssetItemType>(item, out _);
 }

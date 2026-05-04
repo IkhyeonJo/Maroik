@@ -8,6 +8,8 @@
 
   <ItemGroup>
     <PackageReference Include="BCrypt.Net-Next" />
+    <PackageReference Include="HtmlAgilityPack" />
+    <PackageReference Include="HtmlSanitizer" />
     <PackageReference Include="Magick.NET-Q8-AnyCPU" />
     <PackageReference Include="Mapster" />
     <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" />

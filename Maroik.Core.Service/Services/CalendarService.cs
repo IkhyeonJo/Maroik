@@ -1,3 +1,5 @@
+using Ganss.Xss;
+using HtmlAgilityPack;
 using ImageMagick;
 using Maroik.Core.Contract.Domains.Calendar;
 using Maroik.Core.Contract.Utilities;
@@ -27,6 +29,7 @@ public class CalendarService : ICalendarService
     private readonly IFileClient _fileClient;
     private readonly IUnitOfWork _unitOfWork;
     private readonly IDomainEventDispatcher _dispatcher;
+    private readonly IRsaService _rsa;
     private readonly IOptions<ServerSetting> _settings;
     private readonly ILogger<CalendarService> _logger;
 
@@ -40,6 +43,7 @@ public class CalendarService : ICalendarService
     /// <param name="fileClient">Remote file-storage client for upload/download operations.</param>
     /// <param name="unitOfWork">Unit-of-work abstraction that wraps multi-step writes in a single transaction.</param>
     /// <param name="dispatcher">Domain event dispatcher invoked after calendar/event creation.</param>
+    /// <param name="rsa">RSA service used to encrypt/decrypt inline image paths in HTML content.</param>
     /// <param name="settings">Server configuration options including the file-storage base URL.</param>
     /// <param name="logger">Logger for error diagnostics.</param>
     public CalendarService(
@@ -52,6 +56,7 @@ public class CalendarService : ICalendarService
         IFileClient fileClient,
         IUnitOfWork unitOfWork,
         IDomainEventDispatcher dispatcher,
+        IRsaService rsa,
         IOptions<ServerSetting> settings,
         ILogger<CalendarService> logger)
     {
@@ -64,6 +69,7 @@ public class CalendarService : ICalendarService
         _fileClient = fileClient;
         _unitOfWork = unitOfWork;
         _dispatcher = dispatcher;
+        _rsa = rsa;
         _settings = settings;
         _logger = logger;
     }
@@ -294,6 +300,8 @@ public class CalendarService : ICalendarService
         var fileError = ValidateAttachedFile(attachedFile);
         if (fileError != null) return fileError;
 
+        string description = SanitizeAndDecryptContent(request.Description ?? "");
+
         await _unitOfWork.BeginAsync();
         try
         {
@@ -306,7 +314,7 @@ public class CalendarService : ICalendarService
                 return ServiceResult.Fail("The calendar does not exists.");
             }
 
-            var eventResult = CalendarEvent.Create(0, request.CalendarId, request.Title, request.Description,
+            var eventResult = CalendarEvent.Create(0, request.CalendarId, request.Title, description,
                 request.AllDay, request.StartDate, request.EndDate,
                 request.StartDateTimeZoneIanaId, request.EndDateTimeZoneIanaId,
                 request.Location, request.Status, request.RecurrenceId);
@@ -368,6 +376,8 @@ public class CalendarService : ICalendarService
         var fileError = ValidateAttachedFile(attachedFile);
         if (fileError != null) return fileError;
 
+        string description = SanitizeAndDecryptContent(request.Description ?? "");
+
         await _unitOfWork.BeginAsync();
         try
         {
@@ -387,7 +397,7 @@ public class CalendarService : ICalendarService
                 return ServiceResult.Fail("Input is invalid");
             }
 
-            var updateResult = existing.Update(request.Title, request.Description, request.AllDay,
+            var updateResult = existing.Update(request.Title, description, request.AllDay,
                 request.StartDate, request.EndDate,
                 request.StartDateTimeZoneIanaId, request.EndDateTimeZoneIanaId,
                 request.Location, request.Status);
@@ -515,4 +525,55 @@ public class CalendarService : ICalendarService
             return null;
         }
     }
+
+    /// <inheritdoc />
+    public async Task<(string Html, bool HasImages)> PrepareHtmlForDisplayAsync(string html)
+    {
+        var doc = new HtmlDocument();
+        doc.LoadHtml(html);
+        bool hasImages = false;
+
+        foreach (HtmlNode imgTag in doc.DocumentNode.Descendants("img") ?? [])
+        {
+            hasImages = true;
+            string filePath = imgTag.GetAttributeValue("alt", "");
+            byte[]? fileData = await _fileClient.DownloadAsync(filePath, _settings.Value.FileStorageBaseUrl ?? string.Empty);
+            if (fileData != null)
+            {
+                _ = imgTag.SetAttributeValue("data-file", Convert.ToBase64String(fileData));
+                _ = imgTag.SetAttributeValue("data-contenttype", GetImageContentType(filePath));
+                _ = imgTag.SetAttributeValue("alt", _rsa.Encrypt(filePath));
+            }
+        }
+
+        return (doc.DocumentNode.OuterHtml, hasImages);
+    }
+
+    /// <summary>Sanitizes HTML to remove unsafe markup and decrypts RSA-encrypted file paths in img alt attributes.</summary>
+    private string SanitizeAndDecryptContent(string html)
+    {
+        var sanitizer = new HtmlSanitizer();
+        sanitizer.AllowedAttributes.Add("class");
+        string sanitized = sanitizer.Sanitize(html);
+
+        var doc = new HtmlDocument();
+        doc.LoadHtml(sanitized);
+        foreach (HtmlNode imgTag in doc.DocumentNode.Descendants("img") ?? [])
+        {
+            string encryptedPath = imgTag.GetAttributeValue("alt", "");
+            _ = imgTag.SetAttributeValue("alt", _rsa.Decrypt(encryptedPath));
+        }
+        return doc.DocumentNode.OuterHtml;
+    }
+
+    /// <summary>Returns the MIME content type for Summernote-uploaded images by file extension.</summary>
+    private static string GetImageContentType(string filePath) =>
+        Path.GetExtension(filePath).ToLowerInvariant() switch
+        {
+            ".jpg" or ".jpeg" => "image/jpeg",
+            ".png"            => "image/png",
+            ".gif"            => "image/gif",
+            ".webp"           => "image/webp",
+            _                 => "application/octet-stream"
+        };
 }

@@ -1,8 +1,6 @@
 using DocumentFormat.OpenXml;
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Spreadsheet;
-using Ganss.Xss;
-using HtmlAgilityPack;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Contract.Utilities;
@@ -11,7 +9,6 @@ using Maroik.WebSite.Models;
 using Maroik.WebSite.Models.ViewModels.Management;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Localization;
-using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using System.Net.Mail;
@@ -1217,23 +1214,6 @@ public class ManagementController : BaseController
 
             boardInputViewModel.Content ??= "";
 
-            #region HtmlSanitizer
-            HtmlSanitizer sanitizer = new();
-            _ = sanitizer.AllowedAttributes.Add("class");
-            boardInputViewModel.Content = sanitizer.Sanitize(boardInputViewModel.Content);
-            #endregion
-
-            #region Decrypt img tag file path
-            HtmlDocument htmlDocument = new();
-            htmlDocument.LoadHtml(boardInputViewModel.Content);
-            foreach (HtmlNode imgTag in htmlDocument.DocumentNode.Descendants("img") ?? [])
-            {
-                string encryptedFilePath = imgTag.GetAttributeValue("alt", "");
-                _ = imgTag.SetAttributeValue("alt", _rsa.Decrypt(encryptedFilePath));
-            }
-            boardInputViewModel.Content = htmlDocument.DocumentNode.OuterHtml;
-            #endregion
-
             bool isAccountSessionExist = _sessionService.GetAccount() != null;
             if (!isAccountSessionExist)
                 return Json(new { result = false, error = _localizer["Please Login to write board"].Value });
@@ -1296,12 +1276,6 @@ public class ManagementController : BaseController
 
             if (string.IsNullOrEmpty(boardCommentInputViewModel.Content))
                 return Json(new { result = false, error = _localizer["Please enter a comment."].Value });
-
-            #region HtmlSanitizer
-            HtmlSanitizer sanitizer = new();
-            _ = sanitizer.AllowedAttributes.Add("class");
-            boardCommentInputViewModel.Content = sanitizer.Sanitize(boardCommentInputViewModel.Content);
-            #endregion
 
             bool isAccountSessionExist = _sessionService.GetAccount() != null;
             if (!isAccountSessionExist)
@@ -1437,44 +1411,7 @@ public class ManagementController : BaseController
 
                 await _boardService.IncrementBoardViewAsync(boardId ?? 0);
 
-                #region Encrypt img tag file path
-
-                HtmlDocument htmlDocument = new();
-                htmlDocument.LoadHtml(privateNoteBoard.Content ?? "");
-                bool isImgTagIncluded = false;
-
-                foreach (HtmlNode imgTag in htmlDocument.DocumentNode.Descendants("img") ?? [])
-                {
-                    isImgTagIncluded = true;
-                    string filePath = imgTag.GetAttributeValue("alt", "");
-
-                    // Method to download file
-                    byte[]? fileData = await _boardService.DownloadFileAsync(filePath);
-
-                    if (fileData != null)
-                    {
-                        // Use FileExtensionContentTypeProvider to extract ContentType
-                        FileExtensionContentTypeProvider provider = new();
-
-                        // Set default contentType to "application/octet-stream"
-                        if (!provider.TryGetContentType(filePath, out string? contentType))
-                        {
-                            contentType = "application/octet-stream";
-                        }
-
-                        // Convert file data to Base64
-                        string base64Data = Convert.ToBase64String(fileData);
-
-                        // Store base64 data in img tag (use data-file attribute instead of src)
-                        _ = imgTag.SetAttributeValue("data-file", base64Data);
-                        _ = imgTag.SetAttributeValue("data-contenttype", contentType);
-                        _ = imgTag.SetAttributeValue("alt", _rsa.Encrypt(filePath));
-                    }
-                }
-
-                privateNoteBoard.Content = htmlDocument.DocumentNode.OuterHtml;
-
-                #endregion
+                (privateNoteBoard.Content, bool isImgTagIncluded) = await _boardService.PrepareHtmlForDisplayAsync(privateNoteBoard.Content ?? "");
 
                 privateNoteOutputViewModel.BoardOutputViewModel =
                     new Maroik.WebSite.Models.ViewModels.Management.BoardOutputViewModel()
@@ -1491,29 +1428,16 @@ public class ManagementController : BaseController
                         IsImgTagIncluded = isImgTagIncluded
                     };
 
-                if (!string.IsNullOrEmpty(privateNoteOutputViewModel?.BoardOutputViewModel?.BoardAttachedFilePath ??
-                                          ""))
+                if (!string.IsNullOrEmpty(privateNoteOutputViewModel?.BoardOutputViewModel?.BoardAttachedFilePath ?? ""))
                 {
                     byte[]? fileData = await _boardService.DownloadFileAsync(
                         privateNoteOutputViewModel?.BoardOutputViewModel?.BoardAttachedFilePath ?? "");
 
                     if (fileData != null)
                     {
-                        // Use FileExtensionContentTypeProvider to extract ContentType
-                        FileExtensionContentTypeProvider provider = new();
-
-                        // Set default contentType to "application/octet-stream"
-                        if (!provider.TryGetContentType(
-                                privateNoteOutputViewModel?.BoardOutputViewModel?.BoardAttachedFilePath ?? "",
-                                out string? contentType))
-                        {
-                            contentType = "application/octet-stream";
-                        }
-
-                        // Convert file data to Base64
                         privateNoteOutputViewModel!.BoardOutputViewModel.BoardAttachedFileBase64Data =
                             Convert.ToBase64String(fileData);
-                        privateNoteOutputViewModel.BoardOutputViewModel.BoardAttachedFileContentType = contentType;
+                        privateNoteOutputViewModel.BoardOutputViewModel.BoardAttachedFileContentType = "application/octet-stream";
                     }
 
                 // Preload comments and accounts for detail view
@@ -1557,44 +1481,7 @@ public class ManagementController : BaseController
                     return RedirectToAction("PrivateNote", "Management");
                 }
 
-                #region Encrypt img tag file path
-
-                HtmlDocument htmlDocument = new();
-                htmlDocument.LoadHtml(privateNoteBoard.Content ?? "");
-                bool isImgTagIncluded = false;
-
-                foreach (HtmlNode imgTag in htmlDocument.DocumentNode.Descendants("img") ?? [])
-                {
-                    isImgTagIncluded = true;
-                    string filePath = imgTag.GetAttributeValue("alt", "");
-
-                    // Method to download file
-                    byte[]? fileData = await _boardService.DownloadFileAsync(filePath);
-
-                    if (fileData != null)
-                    {
-                        // Use FileExtensionContentTypeProvider to extract ContentType
-                        FileExtensionContentTypeProvider provider = new();
-
-                        // Set default contentType to "application/octet-stream"
-                        if (!provider.TryGetContentType(filePath, out string? contentType))
-                        {
-                            contentType = "application/octet-stream";
-                        }
-
-                        // Convert file data to Base64
-                        string base64Data = Convert.ToBase64String(fileData);
-
-                        // Store base64 data in img tag (use data-file attribute instead of src)
-                        _ = imgTag.SetAttributeValue("data-file", base64Data);
-                        _ = imgTag.SetAttributeValue("data-contenttype", contentType);
-                        _ = imgTag.SetAttributeValue("alt", _rsa.Encrypt(filePath));
-                    }
-                }
-
-                privateNoteBoard.Content = htmlDocument.DocumentNode.OuterHtml;
-
-                #endregion
+                (privateNoteBoard.Content, bool isImgTagIncluded) = await _boardService.PrepareHtmlForDisplayAsync(privateNoteBoard.Content ?? "");
 
                 privateNoteOutputViewModel.BoardOutputViewModel =
                     new Maroik.WebSite.Models.ViewModels.Management.BoardOutputViewModel()
@@ -1612,29 +1499,16 @@ public class ManagementController : BaseController
                         IsImgTagIncluded = isImgTagIncluded
                     };
 
-                if (!string.IsNullOrEmpty(privateNoteOutputViewModel?.BoardOutputViewModel?.BoardAttachedFilePath ??
-                                          ""))
+                if (!string.IsNullOrEmpty(privateNoteOutputViewModel?.BoardOutputViewModel?.BoardAttachedFilePath ?? ""))
                 {
                     byte[]? fileData = await _boardService.DownloadFileAsync(
                         privateNoteOutputViewModel?.BoardOutputViewModel?.BoardAttachedFilePath ?? "");
 
                     if (fileData != null)
                     {
-                        // Use FileExtensionContentTypeProvider to extract ContentType
-                        FileExtensionContentTypeProvider provider = new();
-
-                        // Set default contentType to "application/octet-stream"
-                        if (!provider.TryGetContentType(
-                                privateNoteOutputViewModel?.BoardOutputViewModel?.BoardAttachedFilePath ?? "",
-                                out string? contentType))
-                        {
-                            contentType = "application/octet-stream";
-                        }
-
-                        // Convert file data to Base64
                         privateNoteOutputViewModel!.BoardOutputViewModel.BoardAttachedFileBase64Data =
                             Convert.ToBase64String(fileData);
-                        privateNoteOutputViewModel.BoardOutputViewModel.BoardAttachedFileContentType = contentType;
+                        privateNoteOutputViewModel.BoardOutputViewModel.BoardAttachedFileContentType = "application/octet-stream";
                     }
                 }
 
@@ -1808,23 +1682,6 @@ public class ManagementController : BaseController
                 return Json(new { result = false, error = _localizer["Input is invalid"].Value });
 
             boardInputViewModel.Content ??= "";
-
-            #region HtmlSanitizer
-            HtmlSanitizer sanitizer = new();
-            _ = sanitizer.AllowedAttributes.Add("class");
-            boardInputViewModel.Content = sanitizer.Sanitize(boardInputViewModel.Content);
-            #endregion
-
-            #region Decrypt img tag file path
-            HtmlDocument htmlDocument = new();
-            htmlDocument.LoadHtml(boardInputViewModel.Content);
-            foreach (HtmlNode imgTag in htmlDocument.DocumentNode.Descendants("img") ?? [])
-            {
-                string encryptedFilePath = imgTag.GetAttributeValue("alt", "");
-                _ = imgTag.SetAttributeValue("alt", _rsa.Decrypt(encryptedFilePath));
-            }
-            boardInputViewModel.Content = htmlDocument.DocumentNode.OuterHtml;
-            #endregion
 
             bool isAccountSessionExist = _sessionService.GetAccount() != null;
             if (!isAccountSessionExist)

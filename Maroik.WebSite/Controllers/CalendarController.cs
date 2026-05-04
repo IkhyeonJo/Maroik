@@ -1,5 +1,3 @@
-using Ganss.Xss;
-using HtmlAgilityPack;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Contract.Utilities;
@@ -98,26 +96,6 @@ public class CalendarController : BaseController
             if (ModelState.IsValid)
             {
                 calendarEventInputViewModel.Description ??= ""; // If no content was entered
-
-                #region HtmlSanitizer
-                HtmlSanitizer sanitizer = new();
-                _ = sanitizer.AllowedAttributes.Add("class");
-                string sanitized = sanitizer.Sanitize(calendarEventInputViewModel.Description);
-                calendarEventInputViewModel.Description = sanitized;
-                #endregion
-
-                #region Decrypt img tag file path
-                HtmlDocument htmlDocument = new();
-                htmlDocument.LoadHtml(calendarEventInputViewModel.Description);
-
-                foreach (HtmlNode imgTag in htmlDocument.DocumentNode.Descendants("img") ?? [])
-                {
-                    string encryptedFilePath = imgTag.GetAttributeValue("alt", "");
-                    _ = imgTag.SetAttributeValue("alt", _rsa.Decrypt(encryptedFilePath));
-                }
-
-                calendarEventInputViewModel.Description = htmlDocument.DocumentNode.OuterHtml;
-                #endregion
 
                 bool isAccountSessionExist = _sessionService.GetAccount() != null;
                 if (!isAccountSessionExist)
@@ -1180,38 +1158,7 @@ public class CalendarController : BaseController
                         AllDay = tempCalendarEvent.AllDay
                     };
 
-                    HtmlDocument htmlDocument = new();
-                    htmlDocument.LoadHtml(tempCalendarEvent.Description ?? "");
-
-                    foreach (HtmlNode imgTag in htmlDocument.DocumentNode.Descendants("img") ?? [])
-                    {
-                        string filePath = imgTag.GetAttributeValue("alt", "");
-
-                        // Method to download file
-                        byte[]? fileData = await _calendarService.DownloadFileAsync(filePath);
-
-                        if (fileData != null)
-                        {
-                            // Use FileExtensionContentTypeProvider to extract ContentType
-                            FileExtensionContentTypeProvider provider = new();
-
-                            // Default contentType is set to "application/octet-stream"
-                            if (!provider.TryGetContentType(filePath, out string? contentType))
-                            {
-                                contentType = "application/octet-stream";
-                            }
-
-                            // Convert file data to Base64
-                            string base64Data = Convert.ToBase64String(fileData);
-
-                            // Store base64 data in img tag (use data-file attribute instead of src)
-                            _ = imgTag.SetAttributeValue("data-file", base64Data);
-                            _ = imgTag.SetAttributeValue("data-contenttype", contentType);
-                            _ = imgTag.SetAttributeValue("alt", _rsa.Encrypt(filePath));
-                        }
-                    }
-
-                    calendarEvent.Description = htmlDocument.DocumentNode.OuterHtml;
+                    (calendarEvent.Description, _) = await _calendarService.PrepareHtmlForDisplayAsync(tempCalendarEvent.Description ?? "");
 
                     if (tempCalendarEvent.AllDay)
                     {
@@ -1443,38 +1390,7 @@ public class CalendarController : BaseController
                         AllDay = tempCalendarEvent.AllDay
                     };
 
-                    HtmlDocument htmlDocument = new();
-                    htmlDocument.LoadHtml(tempCalendarEvent.Description ?? "");
-
-                    foreach (HtmlNode imgTag in htmlDocument.DocumentNode.Descendants("img") ?? [])
-                    {
-                        string filePath = imgTag.GetAttributeValue("alt", "");
-
-                        // Method to download file
-                        byte[]? fileData = await _calendarService.DownloadFileAsync(filePath);
-
-                        if (fileData != null)
-                        {
-                            // Use FileExtensionContentTypeProvider to extract ContentType
-                            FileExtensionContentTypeProvider provider = new();
-
-                            // Default contentType is set to "application/octet-stream"
-                            if (!provider.TryGetContentType(filePath, out string? contentType))
-                            {
-                                contentType = "application/octet-stream";
-                            }
-
-                            // Convert file data to Base64
-                            string base64Data = Convert.ToBase64String(fileData);
-
-                            // Store base64 data in img tag (use data-file attribute instead of src)
-                            _ = imgTag.SetAttributeValue("data-file", base64Data);
-                            _ = imgTag.SetAttributeValue("data-contenttype", contentType);
-                            _ = imgTag.SetAttributeValue("alt", _rsa.Encrypt(filePath));
-                        }
-                    }
-
-                    calendarEvent.Description = htmlDocument.DocumentNode.OuterHtml;
+                    (calendarEvent.Description, _) = await _calendarService.PrepareHtmlForDisplayAsync(tempCalendarEvent.Description ?? "");
 
                     if (tempCalendarEvent.AllDay)
                     {
@@ -2046,26 +1962,6 @@ public class CalendarController : BaseController
             if (ModelState.IsValid)
             {
                 calendarEventInputViewModel.Description ??= ""; // If no content was entered
-
-                #region HtmlSanitizer
-                HtmlSanitizer sanitizer = new();
-                _ = sanitizer.AllowedAttributes.Add("class");
-                string sanitized = sanitizer.Sanitize(calendarEventInputViewModel.Description);
-                calendarEventInputViewModel.Description = sanitized;
-                #endregion
-
-                #region Decrypt img tag file path
-                HtmlDocument htmlDocument = new();
-                htmlDocument.LoadHtml(calendarEventInputViewModel.Description);
-
-                foreach (HtmlNode imgTag in htmlDocument.DocumentNode.Descendants("img") ?? [])
-                {
-                    string encryptedFilePath = imgTag.GetAttributeValue("alt", "");
-                    _ = imgTag.SetAttributeValue("alt", _rsa.Decrypt(encryptedFilePath));
-                }
-
-                calendarEventInputViewModel.Description = htmlDocument.DocumentNode.OuterHtml;
-                #endregion
 
                 bool isAccountSessionExist = _sessionService.GetAccount() != null;
                 if (!isAccountSessionExist)

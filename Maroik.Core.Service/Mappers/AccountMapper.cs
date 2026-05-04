@@ -8,7 +8,6 @@ internal static class AccountMapper
     internal static AccountResponse ToResponse(Account account) => new()
     {
         Email = account.Email.Value,
-        HashedPassword = account.HashedPassword,
         Nickname = account.Nickname,
         AvatarImagePath = account.AvatarImagePath,
         Role = account.Role,
@@ -18,8 +17,6 @@ internal static class AccountMapper
         LoginAttempt = account.LoginAttempt,
         EmailConfirmed = account.EmailConfirmed,
         AgreedServiceTerms = account.AgreedServiceTerms,
-        RegistrationToken = account.RegistrationToken,
-        ResetPasswordToken = account.ResetPasswordToken,
         Created = account.Created,
         Updated = account.Updated,
         Message = account.Message,

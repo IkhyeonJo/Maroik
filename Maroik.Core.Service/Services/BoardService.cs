@@ -1,3 +1,5 @@
+using Ganss.Xss;
+using HtmlAgilityPack;
 using ImageMagick;
 using Maroik.Core.Contract.Domains.Board;
 using Maroik.Core.Contract.Utilities;
@@ -25,6 +27,7 @@ public class BoardService : IBoardService
     private readonly IFileClient _fileClient;
     private readonly IUnitOfWork _unitOfWork;
     private readonly IDomainEventDispatcher _dispatcher;
+    private readonly IRsaService _rsa;
     private readonly IOptions<ServerSetting> _settings;
     private readonly ILogger<BoardService> _logger;
 
@@ -45,6 +48,7 @@ public class BoardService : IBoardService
     /// <param name="fileClient">Remote file-storage client for upload/download operations.</param>
     /// <param name="unitOfWork">Unit-of-work abstraction that wraps multi-step writes in a single transaction.</param>
     /// <param name="dispatcher">Domain event dispatcher invoked after board state changes.</param>
+    /// <param name="rsa">RSA service used to encrypt/decrypt inline image paths in HTML content.</param>
     /// <param name="settings">Server configuration options including the file-storage base URL.</param>
     /// <param name="logger">Logger for error diagnostics.</param>
     public BoardService(
@@ -54,6 +58,7 @@ public class BoardService : IBoardService
         IFileClient fileClient,
         IUnitOfWork unitOfWork,
         IDomainEventDispatcher dispatcher,
+        IRsaService rsa,
         IOptions<ServerSetting> settings,
         ILogger<BoardService> logger)
     {
@@ -63,6 +68,7 @@ public class BoardService : IBoardService
         _fileClient = fileClient;
         _unitOfWork = unitOfWork;
         _dispatcher = dispatcher;
+        _rsa = rsa;
         _settings = settings;
         _logger = logger;
     }
@@ -124,10 +130,12 @@ public class BoardService : IBoardService
         var fileError = ValidateAttachedFile(attachedFile);
         if (fileError != null) return fileError;
 
+        string content = SanitizeAndDecryptContent(request.Content ?? "");
+
         await _unitOfWork.BeginAsync();
         try
         {
-            var boardResult = Board.Create(0, request.Type, request.Title, request.Content, request.Writer);
+            var boardResult = Board.Create(0, request.Type, request.Title, content, request.Writer);
             if (boardResult.IsError)
             {
                 await _unitOfWork.RollbackAsync();
@@ -167,6 +175,8 @@ public class BoardService : IBoardService
         var fileError = ValidateAttachedFile(newFile);
         if (fileError != null) return fileError;
 
+        string content = SanitizeAndDecryptContent(request.Content ?? "");
+
         await _unitOfWork.BeginAsync();
         try
         {
@@ -185,7 +195,7 @@ public class BoardService : IBoardService
                 return ServiceResult.Fail("Input is invalid");
             }
 
-            var updateResult = board.Update(request.Title, request.Content);
+            var updateResult = board.Update(request.Title, content);
             if (updateResult.IsError)
             {
                 await _unitOfWork.RollbackAsync();
@@ -244,6 +254,8 @@ public class BoardService : IBoardService
     /// <inheritdoc />
     public async Task<ServiceResult> WriteCommentAsync(BoardCommentRequest request, string? requiredOwnerNickname = null)
     {
+        string content = SanitizeContent(request.Content ?? "");
+
         try
         {
             Board? board = await _boardRepository.GetBoardByIdAsync(request.BoardId);
@@ -259,7 +271,7 @@ public class BoardService : IBoardService
             // The comment order is the current count, giving sequential ordering starting at 0.
             long order = (long)(existing?.Count() ?? 0);
 
-            var commentResult = BoardComment.Create(0, request.BoardId, order, request.AvatarImagePath, request.Writer, request.Content);
+            var commentResult = BoardComment.Create(0, request.BoardId, order, request.AvatarImagePath, request.Writer, content);
             if (commentResult.IsError)
                 return ServiceResult.Fail(commentResult.FirstError.Description);
 
@@ -414,4 +426,63 @@ public class BoardService : IBoardService
         string ext = Path.GetExtension(fileName);
         return Path.Combine("upload", area, boardType, "boardAttachedFiles", $"{boardId}", $"{guid}{ext}");
     }
+
+    /// <inheritdoc />
+    public async Task<(string Html, bool HasImages)> PrepareHtmlForDisplayAsync(string html)
+    {
+        var doc = new HtmlDocument();
+        doc.LoadHtml(html);
+        bool hasImages = false;
+
+        foreach (HtmlNode imgTag in doc.DocumentNode.Descendants("img") ?? [])
+        {
+            hasImages = true;
+            string filePath = imgTag.GetAttributeValue("alt", "");
+            byte[]? fileData = await _fileClient.DownloadAsync(filePath, _settings.Value.FileStorageBaseUrl ?? string.Empty);
+            if (fileData != null)
+            {
+                _ = imgTag.SetAttributeValue("data-file", Convert.ToBase64String(fileData));
+                _ = imgTag.SetAttributeValue("data-contenttype", GetImageContentType(filePath));
+                _ = imgTag.SetAttributeValue("alt", _rsa.Encrypt(filePath));
+            }
+        }
+
+        return (doc.DocumentNode.OuterHtml, hasImages);
+    }
+
+    /// <summary>Sanitizes HTML to remove unsafe markup and decrypts RSA-encrypted file paths in img alt attributes.</summary>
+    private string SanitizeAndDecryptContent(string html)
+    {
+        var sanitizer = new HtmlSanitizer();
+        sanitizer.AllowedAttributes.Add("class");
+        string sanitized = sanitizer.Sanitize(html);
+
+        var doc = new HtmlDocument();
+        doc.LoadHtml(sanitized);
+        foreach (HtmlNode imgTag in doc.DocumentNode.Descendants("img") ?? [])
+        {
+            string encryptedPath = imgTag.GetAttributeValue("alt", "");
+            _ = imgTag.SetAttributeValue("alt", _rsa.Decrypt(encryptedPath));
+        }
+        return doc.DocumentNode.OuterHtml;
+    }
+
+    /// <summary>Sanitizes HTML to remove unsafe markup (used for comment content, which contains no inline images).</summary>
+    private static string SanitizeContent(string html)
+    {
+        var sanitizer = new HtmlSanitizer();
+        sanitizer.AllowedAttributes.Add("class");
+        return sanitizer.Sanitize(html);
+    }
+
+    /// <summary>Returns the MIME content type for Summernote-uploaded images by file extension.</summary>
+    private static string GetImageContentType(string filePath) =>
+        Path.GetExtension(filePath).ToLowerInvariant() switch
+        {
+            ".jpg" or ".jpeg" => "image/jpeg",
+            ".png"            => "image/png",
+            ".gif"            => "image/gif",
+            ".webp"           => "image/webp",
+            _                 => "application/octet-stream"
+        };
 }
