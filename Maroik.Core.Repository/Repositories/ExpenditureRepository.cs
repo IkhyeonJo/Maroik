@@ -6,7 +6,11 @@ using OrmExpenditure = Maroik.Core.PostgreSQL.Models.Expenditure;
 
 namespace Maroik.Core.Repository.Repositories;
 
-/// <summary>EF Core implementation of <see cref="IExpenditureRepository"/>.</summary>
+/// <summary>
+/// EF Core implementation of <see cref="IExpenditureRepository"/> that persists and retrieves
+/// <see cref="Expenditure"/> domain objects via <see cref="ApplicationDbContext"/>.
+/// Uses a primary constructor to receive the context from the DI container.
+/// </summary>
 public class ExpenditureRepository(ApplicationDbContext context) : IExpenditureRepository
 {
     /// <inheritdoc />
@@ -16,6 +20,8 @@ public class ExpenditureRepository(ApplicationDbContext context) : IExpenditureR
     /// <inheritdoc />
     public async Task<List<Expenditure>> GetCurrentYearExpendituresAsync(string email, string year, string timeZoneIanaId)
     {
+        // Use a raw SQL query so that PostgreSQL's AT TIME ZONE operator can convert UTC timestamps
+        // to the user's local time zone before extracting the year portion for filtering.
         return (await context.Expenditures.FromSqlInterpolated
         (
             $"""
@@ -31,6 +37,7 @@ public class ExpenditureRepository(ApplicationDbContext context) : IExpenditureR
     /// <inheritdoc />
     public async Task<List<Expenditure>> GetCurrentYearMonthExpendituresAsync(string email, string yearMonth, string timeZoneIanaId)
     {
+        // Same time-zone conversion as above, but filters to a specific year-month (e.g. "2024-03").
         return (await context.Expenditures.FromSqlInterpolated
         (
             $"""
@@ -60,6 +67,7 @@ public class ExpenditureRepository(ApplicationDbContext context) : IExpenditureR
     /// <inheritdoc />
     public async Task DeleteExpenditureAsync(Expenditure expenditure)
     {
+        // Hard-delete: the expenditure row is physically removed from the database.
         _ = context.Expenditures.Remove(ToEntity(expenditure));
         _ = await context.SaveChangesAsync();
     }
@@ -67,6 +75,8 @@ public class ExpenditureRepository(ApplicationDbContext context) : IExpenditureR
     /// <inheritdoc />
     public async Task<int> UpdateMyDepositAssetWithProductNameAsync(string accountEmail, string oldMyDepositAsset, string newMyDepositAsset)
     {
+        // Raw SQL is used to rename the deposit-asset reference across all matching expenditure rows
+        // without loading each row into memory individually.
         return await context.Database.ExecuteSqlInterpolatedAsync
         (
             $"""
@@ -77,12 +87,26 @@ public class ExpenditureRepository(ApplicationDbContext context) : IExpenditureR
         );
     }
 
+    /// <summary>
+    /// Maps an ORM <see cref="OrmExpenditure"/> row to the <see cref="Expenditure"/> domain object,
+    /// applying null-coalescing defaults for required string fields.
+    /// An empty string is passed for the monetary-unit currency symbol because it is not stored
+    /// on the Expenditure table (it is derived from the associated Asset).
+    /// </summary>
+    /// <param name="e">The ORM entity loaded from the database.</param>
+    /// <returns>A fully reconstituted <see cref="Expenditure"/> domain object.</returns>
     private static Expenditure ToDomain(OrmExpenditure e) => Expenditure.Reconstitute(
         e.Id, e.AccountEmail ?? string.Empty, e.MainClass ?? string.Empty,
         e.SubClass ?? string.Empty, e.Content, e.Amount, string.Empty,
         e.PaymentMethod ?? string.Empty, e.MyDepositAsset, e.Note,
         e.Created, e.Updated);
 
+    /// <summary>
+    /// Maps an <see cref="Expenditure"/> domain object to an ORM <see cref="OrmExpenditure"/> entity
+    /// ready for insertion or update.
+    /// </summary>
+    /// <param name="e">The domain object to convert.</param>
+    /// <returns>An <see cref="OrmExpenditure"/> entity suitable for EF Core tracking.</returns>
     private static OrmExpenditure ToEntity(Expenditure e) => new()
     {
         Id = e.Id,

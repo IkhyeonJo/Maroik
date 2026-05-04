@@ -6,7 +6,11 @@ using OrmCategory = Maroik.Core.PostgreSQL.Models.Category;
 
 namespace Maroik.Core.Repository.Repositories;
 
-/// <summary>EF Core implementation of <see cref="ICategoryRepository"/>.</summary>
+/// <summary>
+/// EF Core implementation of <see cref="ICategoryRepository"/> that persists and retrieves
+/// <see cref="Category"/> domain objects via <see cref="ApplicationDbContext"/>.
+/// Uses a primary constructor to receive the context from the DI container.
+/// </summary>
 public class CategoryRepository(ApplicationDbContext context) : ICategoryRepository
 {
     /// <inheritdoc />
@@ -34,13 +38,25 @@ public class CategoryRepository(ApplicationDbContext context) : ICategoryReposit
     /// <inheritdoc />
     public async Task DeleteCategoryAsync(Category category)
     {
+        // Hard-delete: the category row is physically removed from the database.
         _ = context.Categories.Remove(ToEntity(category));
         _ = await context.SaveChangesAsync();
     }
 
+    /// <summary>
+    /// Maps an ORM <see cref="OrmCategory"/> row to the <see cref="Category"/> domain object.
+    /// </summary>
+    /// <param name="e">The ORM entity loaded from the database.</param>
+    /// <returns>A fully reconstituted <see cref="Category"/> domain object.</returns>
     private static Category ToDomain(OrmCategory e)
         => Category.Reconstitute(e.Id, e.Name, e.DisplayName, e.IconPath, e.Controller, e.Action, e.Role, e.Order);
 
+    /// <summary>
+    /// Maps a <see cref="Category"/> domain object to an ORM <see cref="OrmCategory"/> entity
+    /// ready for insertion or update.
+    /// </summary>
+    /// <param name="c">The domain object to convert.</param>
+    /// <returns>An <see cref="OrmCategory"/> entity suitable for EF Core tracking.</returns>
     private static OrmCategory ToEntity(Category c) => new()
     {
         Id = c.Id,

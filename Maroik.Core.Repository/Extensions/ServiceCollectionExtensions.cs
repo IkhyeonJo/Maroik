@@ -23,13 +23,19 @@ public static class ServiceCollectionExtensions
         /// Retry-on-failure is disabled (count = 0) — transient errors are expected to be handled
         /// by the application tier.
         /// </summary>
+        /// <param name="configuration">
+        /// The application configuration that contains the "DefaultConnection" connection string.
+        /// </param>
         public void AddRepositoryContext(IConfiguration configuration)
         {
+            // Tell Npgsql to handle DateTime values as local timestamps without UTC offset metadata,
+            // preserving the behaviour of older Npgsql versions.
             AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
             services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseNpgsql(
                     configuration.GetConnectionString("DefaultConnection"),
+                    // Disable automatic retry so transient failures surface immediately to the caller.
                     npgsqlOptions => npgsqlOptions.EnableRetryOnFailure(0)
                 ).EnableSensitiveDataLogging()
             );

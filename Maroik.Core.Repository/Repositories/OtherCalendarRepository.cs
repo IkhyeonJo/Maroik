@@ -6,7 +6,13 @@ using OrmOtherCalendar = Maroik.Core.PostgreSQL.Models.OtherCalendar;
 
 namespace Maroik.Core.Repository.Repositories;
 
-/// <summary>EF Core implementation of <see cref="IOtherCalendarRepository"/>.</summary>
+/// <summary>
+/// EF Core implementation of <see cref="IOtherCalendarRepository"/> that persists and retrieves
+/// <see cref="OtherCalendar"/> domain objects via <see cref="ApplicationDbContext"/>.
+/// An "other calendar" represents a calendar owned by a different user that this account
+/// has been granted access to.
+/// Uses a primary constructor to receive the context from the DI container.
+/// </summary>
 public class OtherCalendarRepository(ApplicationDbContext context) : IOtherCalendarRepository
 {
     /// <inheritdoc />
@@ -27,13 +33,26 @@ public class OtherCalendarRepository(ApplicationDbContext context) : IOtherCalen
     /// <inheritdoc />
     public async Task DeleteOtherCalendarAsync(OtherCalendar otherCalendar)
     {
+        // Hard-delete: removes the subscription row so the account no longer sees the shared calendar.
         _ = context.OtherCalendars.Remove(ToEntity(otherCalendar));
         _ = await context.SaveChangesAsync();
     }
 
+    /// <summary>
+    /// Maps an ORM <see cref="OrmOtherCalendar"/> row to the <see cref="OtherCalendar"/> domain object,
+    /// applying a null-coalescing default for the required AccountEmail field.
+    /// </summary>
+    /// <param name="e">The ORM entity loaded from the database.</param>
+    /// <returns>A fully reconstituted <see cref="OtherCalendar"/> domain object.</returns>
     private static OtherCalendar ToDomain(OrmOtherCalendar e)
         => OtherCalendar.Reconstitute(e.AccountEmail ?? string.Empty, e.CalendarId);
 
+    /// <summary>
+    /// Maps an <see cref="OtherCalendar"/> domain object to an ORM <see cref="OrmOtherCalendar"/> entity
+    /// ready for insertion or deletion.
+    /// </summary>
+    /// <param name="o">The domain object to convert.</param>
+    /// <returns>An <see cref="OrmOtherCalendar"/> entity suitable for EF Core tracking.</returns>
     private static OrmOtherCalendar ToEntity(OtherCalendar o) => new()
     {
         AccountEmail = o.AccountEmail.Value,

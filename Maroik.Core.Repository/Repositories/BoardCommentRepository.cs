@@ -6,7 +6,11 @@ using OrmBoardComment = Maroik.Core.PostgreSQL.Models.BoardComment;
 
 namespace Maroik.Core.Repository.Repositories;
 
-/// <summary>EF Core implementation of <see cref="IBoardCommentRepository"/>.</summary>
+/// <summary>
+/// EF Core implementation of <see cref="IBoardCommentRepository"/> that persists and retrieves
+/// <see cref="BoardComment"/> domain objects via <see cref="ApplicationDbContext"/>.
+/// Uses a primary constructor to receive the context from the DI container.
+/// </summary>
 public class BoardCommentRepository(ApplicationDbContext context) : IBoardCommentRepository
 {
     /// <inheritdoc />
@@ -23,14 +27,20 @@ public class BoardCommentRepository(ApplicationDbContext context) : IBoardCommen
     /// <inheritdoc />
     public async Task<Dictionary<long, int>> GetCommentCountsByBoardIdsAsync(IEnumerable<long> boardIds)
     {
+        // Materialise to a list so the same collection can be used in both the query and the gap-fill loop.
         List<long> ids = boardIds.ToList();
+
+        // Group non-deleted comments by board ID and count them in a single database round-trip.
         Dictionary<long, int> counts = await context.BoardComments
             .Where(x => ids.Contains(x.BoardId) && !x.Deleted)
             .GroupBy(x => x.BoardId)
             .Select(g => new { BoardId = g.Key, Count = g.Count() })
             .ToDictionaryAsync(x => x.BoardId, x => x.Count);
+
+        // Fill in zero for board IDs that had no comments, so every requested ID is present.
         foreach (long id in ids.Where(id => !counts.ContainsKey(id)))
             counts[id] = 0;
+
         return counts;
     }
 
@@ -44,14 +54,28 @@ public class BoardCommentRepository(ApplicationDbContext context) : IBoardCommen
     /// <inheritdoc />
     public async Task DeleteBoardCommentAsync(BoardComment comment)
     {
+        // Soft-delete: the domain object sets Deleted = true before calling this method,
+        // so we issue an Update rather than a Remove.
         _ = context.BoardComments.Update(ToEntity(comment));
         _ = await context.SaveChangesAsync();
     }
 
+    /// <summary>
+    /// Maps an ORM <see cref="OrmBoardComment"/> row to the <see cref="BoardComment"/> domain object,
+    /// applying a null-coalescing default for the required Writer field.
+    /// </summary>
+    /// <param name="e">The ORM entity loaded from the database.</param>
+    /// <returns>A fully reconstituted <see cref="BoardComment"/> domain object.</returns>
     private static BoardComment ToDomain(OrmBoardComment e) => BoardComment.Reconstitute(
         e.Id, e.BoardId, e.Order, e.AvatarImagePath, e.Writer ?? string.Empty,
         e.Content, e.Created, e.Deleted);
 
+    /// <summary>
+    /// Maps a <see cref="BoardComment"/> domain object to an ORM <see cref="OrmBoardComment"/> entity
+    /// ready for insertion or update.
+    /// </summary>
+    /// <param name="c">The domain object to convert.</param>
+    /// <returns>An <see cref="OrmBoardComment"/> entity suitable for EF Core tracking.</returns>
     private static OrmBoardComment ToEntity(BoardComment c) => new()
     {
         Id = c.Id,

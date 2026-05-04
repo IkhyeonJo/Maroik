@@ -6,7 +6,11 @@ using OrmFixedExpenditure = Maroik.Core.PostgreSQL.Models.FixedExpenditure;
 
 namespace Maroik.Core.Repository.Repositories;
 
-/// <summary>EF Core implementation of <see cref="IFixedExpenditureRepository"/>.</summary>
+/// <summary>
+/// EF Core implementation of <see cref="IFixedExpenditureRepository"/> that persists and retrieves
+/// <see cref="FixedExpenditure"/> domain objects via <see cref="ApplicationDbContext"/>.
+/// Uses a primary constructor to receive the context from the DI container.
+/// </summary>
 public class FixedExpenditureRepository(ApplicationDbContext context) : IFixedExpenditureRepository
 {
     /// <inheritdoc />
@@ -30,6 +34,7 @@ public class FixedExpenditureRepository(ApplicationDbContext context) : IFixedEx
     /// <inheritdoc />
     public async Task DeleteFixedExpenditureAsync(FixedExpenditure fixedExpenditure)
     {
+        // Hard-delete: the fixed expenditure row is physically removed from the database.
         _ = context.FixedExpenditures.Remove(ToEntity(fixedExpenditure));
         _ = await context.SaveChangesAsync();
     }
@@ -37,6 +42,8 @@ public class FixedExpenditureRepository(ApplicationDbContext context) : IFixedEx
     /// <inheritdoc />
     public async Task<int> UpdateMyDepositAssetWithProductNameAsync(string accountEmail, string oldMyDepositAsset, string newMyDepositAsset)
     {
+        // Raw SQL renames the deposit-asset reference across all matching fixed-expenditure rows
+        // without loading each row into memory individually.
         return await context.Database.ExecuteSqlInterpolatedAsync
         (
             $"""
@@ -47,12 +54,26 @@ public class FixedExpenditureRepository(ApplicationDbContext context) : IFixedEx
         );
     }
 
+    /// <summary>
+    /// Maps an ORM <see cref="OrmFixedExpenditure"/> row to the <see cref="FixedExpenditure"/> domain object,
+    /// applying null-coalescing defaults for required string fields.
+    /// An empty string is passed for the monetary-unit currency symbol because it is not stored
+    /// on the FixedExpenditure table (it is derived from the associated Asset).
+    /// </summary>
+    /// <param name="e">The ORM entity loaded from the database.</param>
+    /// <returns>A fully reconstituted <see cref="FixedExpenditure"/> domain object.</returns>
     private static FixedExpenditure ToDomain(OrmFixedExpenditure e) => FixedExpenditure.Reconstitute(
         e.Id, e.AccountEmail ?? string.Empty, e.MainClass ?? string.Empty,
         e.SubClass ?? string.Empty, e.Content, e.Amount, string.Empty,
         e.PaymentMethod ?? string.Empty, e.MyDepositAsset, e.DepositMonth, e.DepositDay,
         e.MaturityDate, e.Note, e.Unpunctuality, e.Created, e.Updated);
 
+    /// <summary>
+    /// Maps a <see cref="FixedExpenditure"/> domain object to an ORM <see cref="OrmFixedExpenditure"/> entity
+    /// ready for insertion or update.
+    /// </summary>
+    /// <param name="fe">The domain object to convert.</param>
+    /// <returns>An <see cref="OrmFixedExpenditure"/> entity suitable for EF Core tracking.</returns>
     private static OrmFixedExpenditure ToEntity(FixedExpenditure fe) => new()
     {
         Id = fe.Id,

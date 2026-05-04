@@ -6,12 +6,20 @@ using OrmAccount = Maroik.Core.PostgreSQL.Models.Account;
 
 namespace Maroik.Core.Repository.Repositories;
 
-/// <summary>EF Core implementation of <see cref="IAccountRepository"/>.</summary>
+/// <summary>
+/// EF Core implementation of <see cref="IAccountRepository"/> that persists and retrieves
+/// <see cref="Account"/> domain objects via <see cref="ApplicationDbContext"/>.
+/// </summary>
 public class AccountRepository : IAccountRepository
 {
+    /// <summary>The EF Core database context used for all data access operations.</summary>
     private readonly ApplicationDbContext _context;
 
-    /// <summary>Initializes a new instance of <see cref="AccountRepository"/> with <paramref name="context"/>.</summary>
+    /// <summary>
+    /// Initializes a new instance of <see cref="AccountRepository"/> with the given
+    /// <paramref name="context"/>.
+    /// </summary>
+    /// <param name="context">The EF Core database context injected by the DI container.</param>
     public AccountRepository(ApplicationDbContext context)
     {
         _context = context;
@@ -24,6 +32,7 @@ public class AccountRepository : IAccountRepository
     /// <inheritdoc />
     public async Task<List<Account>> GetAccountsByNicknamesAsync(IEnumerable<string> nicknames)
     {
+        // Materialise the sequence to avoid multiple enumeration inside the LINQ query.
         var list = nicknames.ToList();
         return (await _context.Accounts
             .Where(a => list.Contains(a.Nickname ?? ""))
@@ -66,6 +75,12 @@ public class AccountRepository : IAccountRepository
         _ = await _context.SaveChangesAsync();
     }
 
+    /// <summary>
+    /// Maps an ORM <see cref="OrmAccount"/> row to the <see cref="Account"/> domain object,
+    /// applying null-coalescing defaults for required fields.
+    /// </summary>
+    /// <param name="e">The ORM entity loaded from the database.</param>
+    /// <returns>A fully reconstituted <see cref="Account"/> domain object.</returns>
     private static Account ToDomain(OrmAccount e) => Account.Reconstitute(
         e.Email ?? string.Empty, e.HashedPassword ?? string.Empty, e.Nickname ?? string.Empty,
         e.AvatarImagePath, e.Role ?? string.Empty, e.TimeZoneIanaId ?? "UTC",
@@ -73,6 +88,12 @@ public class AccountRepository : IAccountRepository
         e.AgreedServiceTerms, e.RegistrationToken, e.ResetPasswordToken,
         e.Created, e.Updated, e.Message, e.Deleted);
 
+    /// <summary>
+    /// Maps an <see cref="Account"/> domain object to an ORM <see cref="OrmAccount"/> entity
+    /// ready for insertion or update.
+    /// </summary>
+    /// <param name="a">The domain object to convert.</param>
+    /// <returns>An <see cref="OrmAccount"/> entity suitable for EF Core tracking.</returns>
     private static OrmAccount ToEntity(Account a) => new()
     {
         Email = a.Email.Value,
