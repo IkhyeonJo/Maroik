@@ -19,6 +19,11 @@ public class AssetService : IAssetService
     private readonly IDomainEventDispatcher _dispatcher;
 
     /// <summary>Initializes a new instance of <see cref="AssetService"/> with the supplied dependencies.</summary>
+    /// <param name="assetRepository">Repository for asset persistence.</param>
+    /// <param name="expenditureRepository">Repository used to cascade product-name renames to expenditure records.</param>
+    /// <param name="fixedExpenditureRepository">Repository used to cascade product-name renames to fixed-expenditure records.</param>
+    /// <param name="unitOfWork">Unit-of-work abstraction that wraps multi-step writes in a single transaction.</param>
+    /// <param name="dispatcher">Domain event dispatcher invoked after asset creation.</param>
     public AssetService(
         IAssetRepository assetRepository,
         IExpenditureRepository expenditureRepository,
@@ -50,6 +55,7 @@ public class AssetService : IAssetService
         if (!IsValidAssetItem(request.Item))
             return ServiceResult.Fail("Input is invalid");
 
+        // Reject duplicate product names within the same account.
         Asset? existing = await _assetRepository.GetAssetAsync(accountEmail, request.ProductName ?? "");
         if (existing != null)
             return ServiceResult.Fail("The asset already exists.");
@@ -90,6 +96,7 @@ public class AssetService : IAssetService
                 return ServiceResult.Fail("Fail to find the asset by given product name");
             }
 
+            // Fall back to the existing currency when the request does not specify one.
             string currency = request.MonetaryUnit ?? asset.Balance.Currency;
             var updateResult = asset.Update(request.ProductName ?? originalProductName, request.Item ?? asset.Item, request.Amount, currency, request.Note, request.Deleted);
             if (updateResult.IsError)
@@ -105,6 +112,7 @@ public class AssetService : IAssetService
                 return ServiceResult.Fail("Input is invalid");
             }
 
+            // Cascade the renamed product name to all related expenditure records within the same transaction.
             await _fixedExpenditureRepository.UpdateMyDepositAssetWithProductNameAsync(
                 accountEmail, originalProductName, asset.ProductName);
             await _expenditureRepository.UpdateMyDepositAssetWithProductNameAsync(
@@ -127,12 +135,17 @@ public class AssetService : IAssetService
         if (asset == null)
             return ServiceResult.Fail("Fail to find the asset by given product name");
 
+        // Soft-delete preserves the record for historical reporting while hiding it from active use.
         asset.SoftDelete();
 
         await _assetRepository.UpdateAssetAsync(asset);
         return ServiceResult.Ok();
     }
 
+    /// <summary>
+    /// Returns <see langword="true"/> when <paramref name="item"/> is one of the recognised asset category values.
+    /// Prevents invalid category strings from reaching the domain layer.
+    /// </summary>
     private static bool IsValidAssetItem(string? item) => item is
         "FreeDepositAndWithdrawal" or "TrustAsset" or "CashAsset" or "SavingsAsset" or
         "InvestmentAsset" or "RealEstate" or "Movables" or "OtherPhysicalAsset" or "InsuranceAsset";

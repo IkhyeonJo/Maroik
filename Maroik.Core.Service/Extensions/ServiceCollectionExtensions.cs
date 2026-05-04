@@ -16,6 +16,7 @@ public static class ServiceCollectionExtensions
     /// except <see cref="IRsaService"/> which is registered as a singleton
     /// because RSA key material is loaded once and reused across requests.
     /// </summary>
+    /// <param name="services">The <see cref="IServiceCollection"/> to add the services to.</param>
     public static void AddApplicationServices(this IServiceCollection services)
     {
         services.AddScoped<IPasswordService, PasswordService>();
@@ -33,7 +34,10 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IBoardService, BoardService>();
         services.AddScoped<ICalendarService, CalendarService>();
         services.AddScoped<ISessionService, SessionService>();
+
+        // IRsaService is a singleton: key material is loaded once at startup and reused for all requests.
         services.AddSingleton<IRsaService, RsaService>();
+
         services.AddScoped<IDomainEventDispatcher, DomainEventDispatcher>();
     }
 }

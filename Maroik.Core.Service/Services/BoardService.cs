@@ -28,6 +28,10 @@ public class BoardService : IBoardService
     private readonly IOptions<ServerSetting> _settings;
     private readonly ILogger<BoardService> _logger;
 
+    /// <summary>
+    /// Maps each board type name to its corresponding file-storage area folder name.
+    /// Used when building attachment storage paths.
+    /// </summary>
     private static readonly Dictionary<string, string> BoardAreaMap = new(StringComparer.OrdinalIgnoreCase)
     {
         ["FreeForum"]   = "Forum",
@@ -35,6 +39,14 @@ public class BoardService : IBoardService
     };
 
     /// <summary>Initializes a new instance of <see cref="BoardService"/> with the supplied dependencies.</summary>
+    /// <param name="boardRepository">Repository for board post persistence.</param>
+    /// <param name="boardAttachedFileRepository">Repository for board file attachments.</param>
+    /// <param name="boardCommentRepository">Repository for board comments.</param>
+    /// <param name="fileClient">Remote file-storage client for upload/download operations.</param>
+    /// <param name="unitOfWork">Unit-of-work abstraction that wraps multi-step writes in a single transaction.</param>
+    /// <param name="dispatcher">Domain event dispatcher invoked after board state changes.</param>
+    /// <param name="settings">Server configuration options including the file-storage base URL.</param>
+    /// <param name="logger">Logger for error diagnostics.</param>
     public BoardService(
         IBoardRepository boardRepository,
         IBoardAttachedFileRepository boardAttachedFileRepository,
@@ -90,6 +102,12 @@ public class BoardService : IBoardService
     public async Task<Dictionary<long, int>> GetCommentCountsForBoardsAsync(IEnumerable<long> boardIds)
         => await _boardCommentRepository.GetCommentCountsByBoardIdsAsync(boardIds);
 
+    /// <summary>
+    /// Validates an attached file: only <c>.zip</c> files up to 10 MB are accepted.
+    /// Returns <see langword="null"/> when the file passes validation (or when no file is provided).
+    /// </summary>
+    /// <param name="attachedFile">The file to validate, or <see langword="null"/> when no file was uploaded.</param>
+    /// <returns>A failure <see cref="ServiceResult"/> describing the violation, or <see langword="null"/> on success.</returns>
     private static ServiceResult? ValidateAttachedFile(AttachedFileInfo? attachedFile)
     {
         if (attachedFile == null) return null;
@@ -121,13 +139,14 @@ public class BoardService : IBoardService
 
             if (attachedFile != null)
             {
+                // Build a unique storage path and upload the file, then persist the attachment record.
                 string filePath = BuildAttachedFilePath(request.Type!, boardId, attachedFile.FileName);
                 await _fileClient.UploadAsync(attachedFile.Bytes, attachedFile.ContentType, filePath, _settings.Value.FileStorageBaseUrl ?? string.Empty);
                 await _boardAttachedFileRepository.SaveBoardAttachedFileAsync(
                     BoardAttachedFile.Reconstitute(0, boardId, attachedFile.Size,
                         Path.GetFileNameWithoutExtension(attachedFile.FileName),
                         Path.GetExtension(attachedFile.FileName),
-                        filePath.Replace('\\', '/')));
+                        filePath.Replace('\\', '/'))); // Normalise path separators for URL use.
             }
 
             await _unitOfWork.CommitAsync();
@@ -159,6 +178,7 @@ public class BoardService : IBoardService
                 return ServiceResult.Fail("Input is invalid");
             }
 
+            // Only the original writer may edit their own post.
             if (board.Writer != writerNickname)
             {
                 await _unitOfWork.RollbackAsync();
@@ -172,6 +192,7 @@ public class BoardService : IBoardService
                 return ServiceResult.Fail(updateResult.FirstError.Description);
             }
 
+            // Apply lock and pin toggles from the request.
             if (request.Locked) board.Lock(); else board.Unlock();
             if (request.Noticed) board.Pin(); else board.Unpin();
 
@@ -201,6 +222,7 @@ public class BoardService : IBoardService
             if (board == null || board.Deleted)
                 return ServiceResult.Fail("Input is invalid");
 
+            // Admins may delete any post; non-admins may only delete their own.
             if (board.Writer != requesterNickname && !isAdmin)
                 return ServiceResult.Fail("You do not have permission to delete.");
 
@@ -228,10 +250,13 @@ public class BoardService : IBoardService
             if (board == null)
                 return ServiceResult.Fail("Input is invalid");
 
+            // When requiredOwnerNickname is set, restrict commenting to the post owner only.
             if (requiredOwnerNickname != null && board.Writer != requiredOwnerNickname)
                 return ServiceResult.Fail("You do not have permission to write a comment.");
 
             IEnumerable<BoardComment> existing = await _boardCommentRepository.GetOneBoardCommentsAsync(request.BoardId);
+
+            // The comment order is the current count, giving sequential ordering starting at 0.
             long order = (long)(existing?.Count() ?? 0);
 
             var commentResult = BoardComment.Create(0, request.BoardId, order, request.AvatarImagePath, request.Writer, request.Content);
@@ -277,6 +302,7 @@ public class BoardService : IBoardService
             if (comment == null)
                 return ServiceResult.Fail("Input is invalid");
 
+            // Admins may delete any comment; non-admins may only delete their own.
             if (comment.Writer != requesterNickname && !isAdmin)
                 return ServiceResult.Fail("You do not have permission to delete.");
 
@@ -291,10 +317,19 @@ public class BoardService : IBoardService
         }
     }
 
+    /// <summary>
+    /// Handles the four possible attachment states when editing a board post:
+    /// replace (previous + new), clear (previous only), add (new only), or no-op (neither).
+    /// </summary>
+    /// <param name="boardType">Board type, used to build the storage path.</param>
+    /// <param name="boardId">ID of the board post the attachment belongs to.</param>
+    /// <param name="previous">The existing attachment record, or <see langword="null"/> if none exists.</param>
+    /// <param name="newFile">The incoming file from the edit request, or <see langword="null"/> if not provided.</param>
     private async Task HandleAttachmentAsync(string boardType, long boardId, BoardAttachedFile? previous, AttachedFileInfo? newFile)
     {
         if (previous != null && newFile != null)
         {
+            // Replace: upload the new file and overwrite the existing attachment record.
             string filePath = BuildAttachedFilePath(boardType, boardId, newFile.FileName);
             await _fileClient.UploadAsync(newFile.Bytes, newFile.ContentType, filePath, _settings.Value.FileStorageBaseUrl ?? string.Empty);
             await _boardAttachedFileRepository.UpdateBoardAttachedFileAsync(
@@ -305,11 +340,13 @@ public class BoardService : IBoardService
         }
         else if (previous != null && newFile == null)
         {
+            // Clear: zero-out the attachment record without uploading anything.
             await _boardAttachedFileRepository.UpdateBoardAttachedFileAsync(
                 BoardAttachedFile.Reconstitute(previous.Id, previous.BoardId, 0, "", "", ""));
         }
         else if (previous == null && newFile != null)
         {
+            // Add: upload and create a new attachment record for a post that had none before.
             string filePath = BuildAttachedFilePath(boardType, boardId, newFile.FileName);
             await _fileClient.UploadAsync(newFile.Bytes, newFile.ContentType, filePath, _settings.Value.FileStorageBaseUrl ?? string.Empty);
             await _boardAttachedFileRepository.SaveBoardAttachedFileAsync(
@@ -318,12 +355,13 @@ public class BoardService : IBoardService
                     Path.GetExtension(newFile.FileName),
                     filePath.Replace('\\', '/')));
         }
-        // previous == null && newFile == null → nothing to do
+        // previous == null && newFile == null: nothing to do.
     }
 
     /// <inheritdoc />
     public async Task<SummernoteUploadResult> UploadSummernoteImageAsync(AttachedFileInfo file, string area, string boardType)
     {
+        // Validate the bytes as a real image by parsing them with ImageMagick before storing.
         try
         {
             using var image = new MagickImage(new MemoryStream(file.Bytes));
@@ -334,6 +372,7 @@ public class BoardService : IBoardService
         }
 
         string ext = Path.GetExtension(file.FileName).ToLowerInvariant();
+        // Use a GUID-based file name to avoid collisions and prevent path traversal via the original name.
         string imageFile = $"{Guid.NewGuid():N}{ext}";
         string filePath = Path.Combine("upload", area, boardType, "summernote", "images", imageFile);
 
@@ -359,8 +398,17 @@ public class BoardService : IBoardService
         }
     }
 
+    /// <summary>
+    /// Builds the remote storage path for a board attachment.
+    /// A GUID prefix is prepended to the file name to prevent collisions.
+    /// </summary>
+    /// <param name="boardType">The board type string (e.g., <c>"FreeForum"</c>).</param>
+    /// <param name="boardId">The board post ID used as a directory segment.</param>
+    /// <param name="fileName">The original file name (extension is preserved).</param>
+    /// <returns>A platform-native path string suitable for passing to <see cref="IFileClient"/>.</returns>
     private static string BuildAttachedFilePath(string boardType, long boardId, string fileName)
     {
+        // Map the board type to the correct storage area; default to "Forum" for unknown types.
         string area = BoardAreaMap.TryGetValue(boardType, out string? a) ? a : "Forum";
         string guid = Guid.NewGuid().ToString().ToUpper();
         string ext = Path.GetExtension(fileName);

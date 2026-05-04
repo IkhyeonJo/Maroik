@@ -27,6 +27,13 @@ public class AccountService : IAccountService
     private readonly ILogger<AccountService> _logger;
 
     /// <summary>Initializes a new instance of <see cref="AccountService"/> with the supplied dependencies.</summary>
+    /// <param name="accountRepository">Repository for account persistence operations.</param>
+    /// <param name="passwordService">Service for hashing and verifying BCrypt passwords.</param>
+    /// <param name="mailClient">SMTP mail client for sending confirmation and reset emails.</param>
+    /// <param name="settings">Server configuration options (SMTP, domain, login attempt limits, RSA keys).</param>
+    /// <param name="rsa">RSA service used to encrypt/decrypt registration and reset tokens.</param>
+    /// <param name="dispatcher">Domain event dispatcher invoked after state-changing operations.</param>
+    /// <param name="logger">Logger for error and warning diagnostics.</param>
     public AccountService(
         IAccountRepository accountRepository,
         IPasswordService passwordService,
@@ -75,6 +82,7 @@ public class AccountService : IAccountService
 
         if (!_passwordService.VerifyPassword(password, account.HashedPassword))
         {
+            // Record the failed attempt and lock the account if the threshold is reached.
             account.RecordLoginFailure();
             if (account.LoginAttempt == _settings.Value.MaxLoginAttempt)
                 account.Lock(EnumHelper.GetDescription(AccountMessage.AccountLocked));
@@ -93,10 +101,12 @@ public class AccountService : IAccountService
         if (!account.AgreedServiceTerms)
             return LoginResult.Fail("Agreed Service Terms was not checked. Please try sign up again and login again.");
 
+        // Successful login: clear any prior failed attempt counter.
         account.ResetLoginAttempt();
         await _accountRepository.UpdateAccountAsync(account);
 
         var result = AccountMapper.ToResponse(account);
+        // Do not expose the hashed password to the caller.
         result.HashedPassword = null;
         return LoginResult.Ok(result);
     }
@@ -108,6 +118,7 @@ public class AccountService : IAccountService
 
         if (existing == null)
         {
+            // Brand-new account: hash the plain-text password and create the domain entity.
             newAccount.HashedPassword = _passwordService.HashPassword(newAccount.HashedPassword ?? "");
 
             var createResult = Account.Create(
@@ -132,12 +143,14 @@ public class AccountService : IAccountService
             }
             catch (Exception e)
             {
+                // A unique constraint violation means the nickname is already taken.
                 if (IsUniqueViolation(e))
                     return RegisterResult.Fail($"'{newAccount.Nickname}' is a Nickname that already exists. Please enter another Nickname.");
                 _logger.LogError(e, "Failed to create account for {Email}", newAccount.Email);
                 return RegisterResult.Fail("Error occurred while processing about account registration");
             }
 
+            // Encrypt the registration token before embedding it in the confirmation URL.
             string body = _mailClient.GetMailConfirmationBody(_rsa.Encrypt(account.RegistrationToken!), emailTitle, emailContent0, emailContent1, _settings.Value.DomainName ?? string.Empty);
             string mailResult = await SendMailAsync(account.Email.Value, emailSubject, body);
             if (mailResult != EnumHelper.GetDescription(AccountMessage.MailSent))
@@ -156,6 +169,7 @@ public class AccountService : IAccountService
 
         if (!existing.EmailConfirmed)
         {
+            // Account exists but email was never confirmed: regenerate the token if missing and resend.
             existing.RegenerateRegistrationTokenIfEmpty(GuidToken.Generate());
 
             string body = _mailClient.GetMailConfirmationBody(_rsa.Encrypt(existing.RegistrationToken!), emailTitle, emailContent0, emailContent1, _settings.Value.DomainName ?? string.Empty);
@@ -186,6 +200,7 @@ public class AccountService : IAccountService
             return RegisterResult.Ok(showResendEmail: true, email: existing.Email.Value);
         }
 
+        // Account is fully confirmed: mark it as already created and return a failure so the user knows.
         try
         {
             existing.SetMessage(EnumHelper.GetDescription(AccountMessage.UserAlreadyCreated));
@@ -210,6 +225,7 @@ public class AccountService : IAccountService
 
         if (!account.EmailConfirmed)
         {
+            // Ensure a valid token exists before building the confirmation URL.
             account.RegenerateRegistrationTokenIfEmpty(GuidToken.Generate());
 
             string body = _mailClient.GetMailConfirmationBody(_rsa.Encrypt(account.RegistrationToken!), emailTitle, emailContent0, emailContent1, _settings.Value.DomainName ?? string.Empty);
@@ -240,9 +256,11 @@ public class AccountService : IAccountService
                 return RegisterResult.Fail("Error occurred while processing about mail send account status");
             }
 
+            // repeat: true signals the UI that this is a resend, not the first confirmation.
             return RegisterResult.Ok(showResendEmail: true, email: account.Email.Value, repeat: true);
         }
 
+        // Email is already confirmed: inform the caller the account is fully created.
         try
         {
             account.SetMessage(EnumHelper.GetDescription(AccountMessage.UserAlreadyCreated));
@@ -272,6 +290,7 @@ public class AccountService : IAccountService
         if (account == null)
             return new ConfirmEmailResult { InvalidToken = true, AccountCreated = false };
 
+        // Reject tokens that have passed their time-to-live window.
         if (!GuidToken.IsTokenAlive(rawToken))
             return new ConfirmEmailResult { InvalidToken = true, AccountCreated = false };
 
@@ -281,7 +300,7 @@ public class AccountService : IAccountService
         {
             if (confirmResult.FirstError.Type == ErrorOr.ErrorType.Conflict)
             {
-                // already confirmed
+                // Email was already confirmed by a previous request.
                 account.SetMessage(EnumHelper.GetDescription(AccountMessage.UserAlreadyCreated));
                 try { await _accountRepository.UpdateAccountAsync(account); }
                 catch (Exception e) { _logger.LogError(e, "Failed to update account status for {Email}", account.Email.Value); }
@@ -313,8 +332,10 @@ public class AccountService : IAccountService
     public async Task<bool> ForgotPasswordAsync(string email, string emailSubject, string emailTitle, string emailContent0, string emailContent1)
     {
         Account? account = await _accountRepository.GetAccountByEmailAsync(email);
+
+        // Silently succeed even when the email is unknown to avoid user enumeration attacks.
         if (account == null || !account.EmailConfirmed)
-            return true; // silently succeed (security: don't reveal if email exists)
+            return true;
 
         string resetPasswordToken = GuidToken.Generate();
 
@@ -355,9 +376,12 @@ public class AccountService : IAccountService
         }
 
         Account? account = await _accountRepository.GetAccountByResetPasswordTokenAsync(rawToken);
+
+        // Reject if account not found, token has expired, or email is unconfirmed.
         if (account == null || !GuidToken.IsTokenAlive(rawToken) || !account.EmailConfirmed)
             return new ResetPasswordValidationResult { FailToReset = true };
 
+        // Return the still-encrypted token so the client can pass it back during the actual reset.
         return new ResetPasswordValidationResult { FailToReset = false, ResetPasswordToken = encryptedToken };
     }
 
@@ -381,6 +405,7 @@ public class AccountService : IAccountService
         if (resetResult.IsError)
             return ServiceResult.Fail("reset-password-invalid");
 
+        // Unlock the account so the user can log in immediately after resetting their password.
         account.Unlock();
         account.SetMessage(EnumHelper.GetDescription(AccountMessage.SuccessToResetPassword));
 
@@ -397,6 +422,13 @@ public class AccountService : IAccountService
         return ServiceResult.Ok();
     }
 
+    /// <summary>
+    /// Sends a mail via <see cref="IMailClient"/> using the SMTP settings from <see cref="ServerSetting"/>.
+    /// </summary>
+    /// <param name="to">Recipient email address.</param>
+    /// <param name="subject">Email subject line.</param>
+    /// <param name="body">HTML body of the email.</param>
+    /// <returns>A status string; equals <c>AccountMessage.MailSent</c> description on success.</returns>
     private Task<string> SendMailAsync(string to, string subject, string body)
         => _mailClient.SendMailAsync(
             to, subject, body,
@@ -408,6 +440,10 @@ public class AccountService : IAccountService
             _settings.Value.FromEmail ?? string.Empty,
             _settings.Value.FromFullName ?? string.Empty);
 
+    /// <summary>
+    /// Returns <see langword="true"/> when the exception represents a PostgreSQL unique-constraint violation (error code 23505).
+    /// Used to detect duplicate nickname conflicts during account creation.
+    /// </summary>
     private static bool IsUniqueViolation(Exception e)
         => e.InnerException?.Message?.Contains("23505") == true
            || (e.InnerException?.GetType().Name.Contains("NpgsqlException") == true

@@ -31,6 +31,17 @@ public class CalendarService : ICalendarService
     private readonly ILogger<CalendarService> _logger;
 
     /// <summary>Initializes a new instance of <see cref="CalendarService"/> with the supplied dependencies.</summary>
+    /// <param name="calendarRepository">Repository for calendar persistence.</param>
+    /// <param name="calendarEventRepository">Repository for calendar event persistence.</param>
+    /// <param name="calendarEventAttachedFileRepository">Repository for event file attachments.</param>
+    /// <param name="calendarEventReminderRepository">Repository for event reminders.</param>
+    /// <param name="calendarSharedRepository">Repository for calendar sharing settings.</param>
+    /// <param name="otherCalendarRepository">Repository for subscriptions to other users' calendars.</param>
+    /// <param name="fileClient">Remote file-storage client for upload/download operations.</param>
+    /// <param name="unitOfWork">Unit-of-work abstraction that wraps multi-step writes in a single transaction.</param>
+    /// <param name="dispatcher">Domain event dispatcher invoked after calendar/event creation.</param>
+    /// <param name="settings">Server configuration options including the file-storage base URL.</param>
+    /// <param name="logger">Logger for error diagnostics.</param>
     public CalendarService(
         ICalendarRepository calendarRepository,
         ICalendarEventRepository calendarEventRepository,
@@ -101,6 +112,8 @@ public class CalendarService : ICalendarService
         try
         {
             List<CalendarShared> shareds = await _calendarSharedRepository.GetCalendarSharedAsync();
+
+            // Only create a sharing record if one does not already exist for this calendar.
             if (!shareds.Any(s => s.Id == calendarId))
                 await _calendarSharedRepository.CreateCalendarSharedAsync(CalendarShared.CreatePrivate(calendarId));
 
@@ -115,6 +128,8 @@ public class CalendarService : ICalendarService
         try
         {
             List<Calendar> calendars = await _calendarRepository.GetCalendarsAsync(request.AccountEmail ?? "");
+
+            // Prevent duplicate calendar names for the same account.
             if (calendars.Any(c => c.Name == request.Name))
                 return ServiceResult.Fail("The calendar already exists.");
 
@@ -172,6 +187,8 @@ public class CalendarService : ICalendarService
         try
         {
             List<Calendar> calendars = await _calendarRepository.GetCalendarsAsync(request.AccountEmail ?? "");
+
+            // Create the default calendar only when the user has none yet (e.g., first login).
             if (calendars.Count == 0)
             {
                 var calendarResult = Calendar.Create(0, request.AccountEmail, request.Name, request.Description, request.TimeZoneIanaId, request.HtmlColorCode);
@@ -193,6 +210,7 @@ public class CalendarService : ICalendarService
         await _unitOfWork.BeginAsync();
         try
         {
+            // Replace-all strategy: delete existing subscriptions then re-insert from the new list.
             foreach (OtherCalendar previous in await _otherCalendarRepository.GetOtherCalendarsAsync(email) ?? [])
                 await _otherCalendarRepository.DeleteOtherCalendarAsync(previous);
 
@@ -230,13 +248,15 @@ public class CalendarService : ICalendarService
             }
 
             List<OtherCalendar> allOtherCalendars = await _otherCalendarRepository.GetAllOtherCalendarsAsync() ?? [];
+
+            // When a calendar is set to non-user-visible, remove any existing subscriptions to it.
             foreach (CalendarSharedRequest req in requests.Where(r => !r.User))
             {
                 OtherCalendar? other = allOtherCalendars.FirstOrDefault(o => o.CalendarId == req.CalendarId);
                 if (other != null)
                 {
                     try { await _otherCalendarRepository.DeleteOtherCalendarAsync(other); }
-                    catch { /* best effort */ }
+                    catch { /* best effort: subscription removal is non-critical */ }
                 }
             }
 
@@ -250,6 +270,12 @@ public class CalendarService : ICalendarService
         }
     }
 
+    /// <summary>
+    /// Validates an event attached file: only <c>.zip</c> files up to 10 MB are accepted.
+    /// Returns <see langword="null"/> when the file passes validation (or when no file is provided).
+    /// </summary>
+    /// <param name="attachedFile">The file to validate, or <see langword="null"/> when no file was uploaded.</param>
+    /// <returns>A failure <see cref="ServiceResult"/> describing the violation, or <see langword="null"/> on success.</returns>
     private static ServiceResult? ValidateAttachedFile(AttachedFileInfo? attachedFile)
     {
         if (attachedFile == null) return null;
@@ -272,6 +298,8 @@ public class CalendarService : ICalendarService
         try
         {
             List<Calendar> calendars = await _calendarRepository.GetCalendarsAsync(email);
+
+            // Verify the target calendar belongs to the requesting user.
             if (!calendars.Any(c => c.Id == request.CalendarId))
             {
                 await _unitOfWork.RollbackAsync();
@@ -299,7 +327,7 @@ public class CalendarService : ICalendarService
                 var fileResult = CalendarEventAttachedFile.Create(0, eventId, attachedFile.Size,
                     Path.GetFileNameWithoutExtension(attachedFile.FileName),
                     Path.GetExtension(attachedFile.FileName),
-                    filePath.Replace('\\', '/'));
+                    filePath.Replace('\\', '/')); // Normalise path separators for URL use.
                 if (fileResult.IsError)
                 {
                     await _unitOfWork.RollbackAsync();
@@ -308,6 +336,7 @@ public class CalendarService : ICalendarService
                 await _calendarEventAttachedFileRepository.SaveCalendarEventAttachedFileAsync(fileResult.Value);
             }
 
+            // Create all reminder entries for the event within the same transaction.
             foreach (CalendarReminderInfo r in reminders)
             {
                 var reminderResult = CalendarEventReminder.Create(0, eventId, r.Method,
@@ -343,6 +372,8 @@ public class CalendarService : ICalendarService
         try
         {
             List<Calendar> calendars = await _calendarRepository.GetCalendarsAsync(email);
+
+            // Verify the target calendar belongs to the requesting user.
             if (!calendars.Any(c => c.Id == request.CalendarId))
             {
                 await _unitOfWork.RollbackAsync();
@@ -369,7 +400,7 @@ public class CalendarService : ICalendarService
             existing.Reassign(request.CalendarId, request.RecurrenceId);
             await _calendarEventRepository.UpdateCalendarEventAsync(existing);
 
-            // Replace attachment
+            // Replace attachment: delete existing record then optionally upload and re-create.
             await _calendarEventAttachedFileRepository.DeleteCalendarEventAttachedFileAsync(existing.Id);
             if (attachedFile != null)
             {
@@ -387,7 +418,7 @@ public class CalendarService : ICalendarService
                 await _calendarEventAttachedFileRepository.SaveCalendarEventAttachedFileAsync(fileResult.Value);
             }
 
-            // Replace reminders
+            // Replace reminders: delete all existing then re-create from the updated list.
             await _calendarEventReminderRepository.DeleteCalendarEventReminderAsync(existing.Id);
             foreach (CalendarReminderInfo r in reminders)
             {
@@ -420,6 +451,7 @@ public class CalendarService : ICalendarService
             List<Calendar> calendars = await _calendarRepository.GetCalendarsAsync(email);
             CalendarEvent? evt = await _calendarEventRepository.GetCalendarEventAsync(calendarEventId);
 
+            // Ensure the event exists and belongs to one of the requesting user's calendars.
             if (evt == null || !calendars.Any(c => c.Id == evt.CalendarId))
                 return ServiceResult.Fail("Input is invalid");
 
@@ -429,6 +461,14 @@ public class CalendarService : ICalendarService
         catch { return ServiceResult.Fail("Input is invalid"); }
     }
 
+    /// <summary>
+    /// Builds the remote storage path for a calendar event attachment.
+    /// Uses a GUID prefix to avoid collisions and isolate files per event.
+    /// </summary>
+    /// <param name="roleIndex">Role-based directory segment (e.g., user role identifier).</param>
+    /// <param name="eventId">The calendar event ID used as a sub-directory.</param>
+    /// <param name="fileName">The original file name (extension is preserved).</param>
+    /// <returns>A platform-native path string suitable for passing to <see cref="IFileClient"/>.</returns>
     private static string BuildEventFilePath(string roleIndex, long eventId, string fileName)
     {
         string guid = Guid.NewGuid().ToString().ToUpper();
@@ -439,6 +479,7 @@ public class CalendarService : ICalendarService
     /// <inheritdoc />
     public async Task<SummernoteUploadResult> UploadSummernoteImageAsync(AttachedFileInfo file, string roleIndex)
     {
+        // Validate the bytes as a real image by parsing them with ImageMagick before storing.
         try
         {
             using var image = new MagickImage(new MemoryStream(file.Bytes));
@@ -449,6 +490,7 @@ public class CalendarService : ICalendarService
         }
 
         string ext = Path.GetExtension(file.FileName).ToLowerInvariant();
+        // Use a GUID-based file name to avoid collisions and prevent path traversal via the original name.
         string imageFile = $"{Guid.NewGuid():N}{ext}";
         string filePath = Path.Combine("upload", "Calendar", roleIndex, "summernote", "images", imageFile);
 

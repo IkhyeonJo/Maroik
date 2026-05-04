@@ -13,6 +13,7 @@ public class AssetBalanceDomainService : IAssetBalanceDomainService
     private readonly IAssetRepository _assetRepository;
 
     /// <summary>Initializes a new instance of <see cref="AssetBalanceDomainService"/>.</summary>
+    /// <param name="assetRepository">The repository used for asset read and update operations.</param>
     public AssetBalanceDomainService(IAssetRepository assetRepository)
         => _assetRepository = assetRepository;
 
