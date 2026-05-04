@@ -1,0 +1,95 @@
+<wpf:ResourceDictionary xml:space="preserve"
+	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+	xmlns:s="clr-namespace:System;assembly=mscorlib"
+	xmlns:ss="urn:shemas-jetbrains-com:settings-storage-xaml"
+	xmlns:wpf="http://schemas.microsoft.com/winfx/2006/xaml/presentation">
+
+	<!--
+		ReSharper Default Settings for Maroik Solution
+		Team-shared settings: commit this file to source control.
+		Personal overrides go in Maroik.sln.DotSettings.user (add to .gitignore).
+	-->
+
+	<!-- Namespace provider: skip obj folders -->
+	<s:Boolean x:Key="/Default/CodeInspection/NamespaceProvider/NamespaceFoldersToSkip/=obj/@EntryIndexedValue">True</s:Boolean>
+
+	<!-- ===== Naming Rules ===== -->
+	<!-- Interfaces: I prefix, PascalCase -->
+	<s:String x:Key="/Default/CodeStyle/CSharp/Naming/PredefinedNamingRules/=Interfaces/@EntryIndexedValue">&lt;Policy Inspect="True" Prefix="I" Suffix="" Style="AaBb" /&gt;</s:String>
+	<!-- Type Parameters: T prefix, PascalCase -->
+	<s:String x:Key="/Default/CodeStyle/CSharp/Naming/PredefinedNamingRules/=TypeParameters/@EntryIndexedValue">&lt;Policy Inspect="True" Prefix="T" Suffix="" Style="AaBb" /&gt;</s:String>
+	<!-- Private instance fields: _ prefix, camelCase -->
+	<s:String x:Key="/Default/CodeStyle/CSharp/Naming/PredefinedNamingRules/=PrivateInstanceFields/@EntryIndexedValue">&lt;Policy Inspect="True" Prefix="_" Suffix="" Style="aaBb" /&gt;</s:String>
+	<!-- Private static fields: _ prefix, camelCase -->
+	<s:String x:Key="/Default/CodeStyle/CSharp/Naming/PredefinedNamingRules/=PrivateStaticFields/@EntryIndexedValue">&lt;Policy Inspect="True" Prefix="_" Suffix="" Style="aaBb" /&gt;</s:String>
+	<!-- Private static readonly fields: _ prefix, camelCase -->
+	<s:String x:Key="/Default/CodeStyle/CSharp/Naming/PredefinedNamingRules/=PrivateStaticReadonlyFields/@EntryIndexedValue">&lt;Policy Inspect="True" Prefix="_" Suffix="" Style="aaBb" /&gt;</s:String>
+	<!-- Constants: PascalCase (no ALL_CAPS) -->
+	<s:String x:Key="/Default/CodeStyle/CSharp/Naming/PredefinedNamingRules/=Constants/@EntryIndexedValue">&lt;Policy Inspect="True" Prefix="" Suffix="" Style="AaBb" /&gt;</s:String>
+	<!-- Local constants: PascalCase -->
+	<s:String x:Key="/Default/CodeStyle/CSharp/Naming/PredefinedNamingRules/=LocalConstants/@EntryIndexedValue">&lt;Policy Inspect="True" Prefix="" Suffix="" Style="AaBb" /&gt;</s:String>
+	<!-- Enum members: PascalCase -->
+	<s:String x:Key="/Default/CodeStyle/CSharp/Naming/PredefinedNamingRules/=EnumMember/@EntryIndexedValue">&lt;Policy Inspect="True" Prefix="" Suffix="" Style="AaBb" /&gt;</s:String>
+
+	<!-- ===== Braces ===== -->
+	<!-- Opening brace on new line (Allman style) -->
+	<s:String x:Key="/Default/CodeStyle/CSharp/Formatting/BRACE_STYLE/@EntryValue">NEXT_LINE</s:String>
+	<s:String x:Key="/Default/CodeStyle/CSharp/Formatting/INITIALIZER_BRACES/@EntryValue">NEXT_LINE</s:String>
+	<s:Boolean x:Key="/Default/CodeStyle/CSharp/Formatting/EMPTY_BLOCK_STYLE_ONELINE/@EntryValue">False</s:Boolean>
+
+	<!-- ===== Single-line placement ===== -->
+	<s:Boolean x:Key="/Default/CodeStyle/CSharp/Formatting/PLACE_SIMPLE_METHOD_ON_SINGLE_LINE/@EntryValue">False</s:Boolean>
+	<s:Boolean x:Key="/Default/CodeStyle/CSharp/Formatting/PLACE_SIMPLE_ACCESSORHOLDER_ON_SINGLE_LINE/@EntryValue">False</s:Boolean>
+	<s:Boolean x:Key="/Default/CodeStyle/CSharp/Formatting/PLACE_ABSTRACT_ACCESSORHOLDER_ON_SINGLE_LINE/@EntryValue">False</s:Boolean>
+	<s:Boolean x:Key="/Default/CodeStyle/CSharp/Formatting/PLACE_SIMPLE_ANONYMOUSMETHOD_ON_SINGLE_LINE/@EntryValue">True</s:Boolean>
+	<s:Boolean x:Key="/Default/CodeStyle/CSharp/Formatting/PLACE_SIMPLE_INITIALIZER_ON_SINGLE_LINE/@EntryValue">True</s:Boolean>
+	<s:Boolean x:Key="/Default/CodeStyle/CSharp/Formatting/PLACE_SIMPLE_LINQ_ON_SINGLE_LINE/@EntryValue">True</s:Boolean>
+	<s:Boolean x:Key="/Default/CodeStyle/CSharp/Formatting/PLACE_SIMPLE_CASE_STATEMENT_ON_SAME_LINE/@EntryValue">False</s:Boolean>
+	<s:Boolean x:Key="/Default/CodeStyle/CSharp/Formatting/PLACE_TYPE_CONSTRAINTS_ON_SAME_LINE/@EntryValue">True</s:Boolean>
+
+	<!-- ===== Attributes ===== -->
+	<s:Boolean x:Key="/Default/CodeStyle/CSharp/Formatting/PLACE_TYPE_ATTRIBUTE_ON_SAME_LINE/@EntryValue">False</s:Boolean>
+	<s:Boolean x:Key="/Default/CodeStyle/CSharp/Formatting/PLACE_ATTRIBUTE_ON_SAME_LINE/@EntryValue">False</s:Boolean>
+	<s:Boolean x:Key="/Default/CodeStyle/CSharp/Formatting/PLACE_ACCESSORHOLDER_ATTRIBUTE_ON_SAME_LINE/@EntryValue">False</s:Boolean>
+	<s:Boolean x:Key="/Default/CodeStyle/CSharp/Formatting/PLACE_FIELD_ATTRIBUTE_ON_SAME_LINE/@EntryValue">False</s:Boolean>
+
+	<!-- ===== Spaces ===== -->
+	<s:Boolean x:Key="/Default/CodeStyle/CSharp/Formatting/SPACE_AFTER_TYPECAST_PARENTHESES/@EntryValue">False</s:Boolean>
+	<s:Boolean x:Key="/Default/CodeStyle/CSharp/Formatting/SPACE_BEFORE_SINGLE_LINE_ACCESSOR_BRACES/@EntryValue">True</s:Boolean>
+	<s:Boolean x:Key="/Default/CodeStyle/CSharp/Formatting/SPACE_BETWEEN_KEYWORD_AND_EXPRESSION/@EntryValue">True</s:Boolean>
+	<s:Boolean x:Key="/Default/CodeStyle/CSharp/Formatting/SPACE_WITHIN_SINGLE_LINE_ARRAY_INITIALIZER_BRACES/@EntryValue">True</s:Boolean>
+
+	<!-- ===== Alignment ===== -->
+	<s:Boolean x:Key="/Default/CodeStyle/CSharp/Formatting/ALIGN_MULTILINE_ARGUMENT/@EntryValue">False</s:Boolean>
+	<s:Boolean x:Key="/Default/CodeStyle/CSharp/Formatting/ALIGN_MULTILINE_PARAMETER/@EntryValue">False</s:Boolean>
+	<s:Boolean x:Key="/Default/CodeStyle/CSharp/Formatting/ALIGN_MULTILINE_CALLS_CHAIN/@EntryValue">False</s:Boolean>
+	<s:Boolean x:Key="/Default/CodeStyle/CSharp/Formatting/ALIGN_MULTILINE_EXPRESSION/@EntryValue">False</s:Boolean>
+	<s:Boolean x:Key="/Default/CodeStyle/CSharp/Formatting/ALIGN_MULTILINE_FOR_STMT/@EntryValue">False</s:Boolean>
+	<s:Boolean x:Key="/Default/CodeStyle/CSharp/Formatting/ALIGN_MULTILINE_ARRAY_AND_OBJECT_INITIALIZER/@EntryValue">False</s:Boolean>
+	<s:Boolean x:Key="/Default/CodeStyle/CSharp/Formatting/ALIGN_MULTIPLE_DECLARATION/@EntryValue">False</s:Boolean>
+	<s:Boolean x:Key="/Default/CodeStyle/CSharp/Formatting/ALIGN_TUPLE_COMPONENTS/@EntryValue">False</s:Boolean>
+
+	<!-- ===== Wrapping ===== -->
+	<s:Boolean x:Key="/Default/CodeStyle/CSharp/Formatting/WRAP_LINES/@EntryValue">False</s:Boolean>
+	<s:String x:Key="/Default/CodeStyle/CSharp/Formatting/WRAP_EXTENDS_LIST_STYLE/@EntryValue">CHOP_IF_LONG</s:String>
+	<s:Boolean x:Key="/Default/CodeStyle/CSharp/Formatting/WRAP_BEFORE_EXTENDS_COLON/@EntryValue">False</s:Boolean>
+	<s:Boolean x:Key="/Default/CodeStyle/CSharp/Formatting/WRAP_BEFORE_FIRST_TYPE_PARAMETER_CONSTRAINT/@EntryValue">True</s:Boolean>
+	<s:Boolean x:Key="/Default/CodeStyle/CSharp/Formatting/WRAP_BEFORE_TYPE_PARAMETER_LANGLE/@EntryValue">False</s:Boolean>
+	<s:Boolean x:Key="/Default/CodeStyle/CSharp/Formatting/WRAP_BEFORE_BINARY_OPSIGN/@EntryValue">False</s:Boolean>
+	<s:Boolean x:Key="/Default/CodeStyle/CSharp/Formatting/WRAP_AFTER_DECLARATION_LPAR/@EntryValue">False</s:Boolean>
+	<s:Boolean x:Key="/Default/CodeStyle/CSharp/Formatting/WRAP_BEFORE_DECLARATION_LPAR/@EntryValue">False</s:Boolean>
+	<s:Boolean x:Key="/Default/CodeStyle/CSharp/Formatting/WRAP_AFTER_INVOCATION_LPAR/@EntryValue">False</s:Boolean>
+	<s:Boolean x:Key="/Default/CodeStyle/CSharp/Formatting/WRAP_BEFORE_INVOCATION_LPAR/@EntryValue">False</s:Boolean>
+	<s:Boolean x:Key="/Default/CodeStyle/CSharp/Formatting/KEEP_EXISTING_LINEBREAKS/@EntryValue">True</s:Boolean>
+	<s:Boolean x:Key="/Default/CodeStyle/CSharp/Formatting/STICK_COMMENT/@EntryValue">False</s:Boolean>
+	<s:Boolean x:Key="/Default/CodeStyle/CSharp/Formatting/CASE_BLOCK_BRACES_WHEN_MULTILINE/@EntryValue">True</s:Boolean>
+
+	<!-- ===== var usage: respect .editorconfig (do not prefer explicit type) ===== -->
+	<s:String x:Key="/Default/SmartResolve/UseExplicitTypeForBuiltInTypes/@EntryValue">DO_NOT_PREFER</s:String>
+	<s:String x:Key="/Default/SmartResolve/UseExplicitTypeWhereApparent/@EntryValue">DO_NOT_PREFER</s:String>
+	<s:String x:Key="/Default/SmartResolve/UseExplicitTypeWherePossible/@EntryValue">DO_NOT_PREFER</s:String>
+
+	<!-- ===== Migration marker ===== -->
+	<s:Boolean x:Key="/Default/Environment/SettingsMigration/IsMigratedToUnifiedSettings/@EntryValue">True</s:Boolean>
+
+</wpf:ResourceDictionary>
