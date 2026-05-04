@@ -22,7 +22,7 @@ public class SummernoteUploadResult
     /// <summary>Server-side storage path where the file was saved.</summary>
     public string? FilePath { get; init; }
 
-    /// <summary>localization key describing the error (null on success).</summary>
+    /// <summary>Localization key describing the error (null on success).</summary>
     public string? ErrorKey { get; init; }
 
     /// <summary>Creates a successful upload result with the stored file data.</summary>

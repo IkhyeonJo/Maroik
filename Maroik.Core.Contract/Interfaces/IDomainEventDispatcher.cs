@@ -9,5 +9,10 @@ namespace Maroik.Core.Contract.Interfaces;
 /// </summary>
 public interface IDomainEventDispatcher
 {
+    /// <summary>
+    /// Dispatches each event in <paramref name="domainEvents"/> to all registered handlers.
+    /// </summary>
+    /// <param name="domainEvents">The ordered list of domain events to dispatch.</param>
+    /// <param name="cancellationToken">Optional cancellation token propagated to each handler.</param>
     Task DispatchAsync(IReadOnlyList<IDomainEvent> domainEvents, CancellationToken cancellationToken = default);
 }

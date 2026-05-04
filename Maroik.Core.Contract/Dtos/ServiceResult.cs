@@ -10,7 +10,7 @@ public class ServiceResult
     /// <summary>True when the operation completed successfully.</summary>
     public bool Success { get; init; }
 
-    /// <summary>localization key that describes the error (empty string on success).</summary>
+    /// <summary>Localization key that describes the error (empty string on success).</summary>
     public string ErrorKey { get; init; } = string.Empty;
 
     /// <summary>Creates a successful result.</summary>

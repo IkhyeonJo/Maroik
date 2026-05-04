@@ -9,7 +9,7 @@ public class LoginResult
     /// <summary>True when login succeeded.</summary>
     public bool Success { get; init; }
 
-    /// <summary>localization key describing the error (empty string on success).</summary>
+    /// <summary>Localization key describing the error (empty string on success).</summary>
     public string ErrorKey { get; init; } = string.Empty;
 
     /// <summary>The authenticated account data (null on failure).</summary>
@@ -31,7 +31,7 @@ public class RegisterResult
     /// <summary>True when registration succeeded.</summary>
     public bool Success { get; init; }
 
-    /// <summary>localization key describing the error (empty string on success).</summary>
+    /// <summary>Localization key describing the error (empty string on success).</summary>
     public string ErrorKey { get; init; } = string.Empty;
 
     /// <summary>True when the UI should display the "resend confirmation email" button.</summary>
@@ -63,7 +63,7 @@ public class ConfirmEmailResult
     /// <summary>True when the account was successfully activated.</summary>
     public bool AccountCreated { get; init; }
 
-    /// <summary>localization key describing the error (empty string on success).</summary>
+    /// <summary>Localization key describing the error (empty string on success).</summary>
     public string ErrorKey { get; init; } = string.Empty;
 }
 
