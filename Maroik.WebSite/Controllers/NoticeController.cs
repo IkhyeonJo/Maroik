@@ -1018,6 +1018,12 @@ public class NoticeController : BaseController
 
     #endregion
 
+    /// <summary>
+    /// Parses a maturity-date string in "yyyy-MM-dd" format into a <see cref="DateTime"/> value.
+    /// The string is split on "-" and each part is converted to an integer to construct the date.
+    /// </summary>
+    /// <param name="maturityDate">ISO-8601 date string, e.g. "2025-12-31".</param>
+    /// <returns>A <see cref="DateTime"/> representing the parsed date with no time component.</returns>
     private static DateTime ParseMaturityDate(string maturityDate)
     {
         var parts = Regex.Split(maturityDate, "-");

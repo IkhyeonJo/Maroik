@@ -33,6 +33,10 @@ public class AuthorizationFilter : ActionFilterAttribute
             .Where(type => typeof(Controller).IsAssignableFrom(type))
             .ToList();
 
+    /// <summary>Initializes a new instance of <see cref="AuthorizationFilter"/> with the required dependencies.</summary>
+    /// <param name="menuService">Service used to load category and sub-category navigation data.</param>
+    /// <param name="cache">In-process memory cache used to store the navigation menu for 10 minutes.</param>
+    /// <param name="sessionService">Service used to retrieve the currently logged-in account from the session.</param>
     public AuthorizationFilter(IMenuService menuService, IMemoryCache cache, ISessionService sessionService)
     {
         _menuService = menuService;
