@@ -33,7 +33,6 @@ System.Timers.Timer certTimer;
 
 using var startupLoggerFactory = LoggerFactory.Create(b => b.AddConsole());
 var certLogger = startupLoggerFactory.CreateLogger("CertificateManager");
-ILogger? certRuntimeLogger = null;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -207,6 +206,8 @@ builder.Services.AddControllersWithViews(options =>
     options.Filters.Add(new AutoValidateAntiforgeryTokenAttribute()); // Globally enables token validation for all requests except for GET, HEAD, OPTIONS, and TRACE
 });
 
+var app = builder.Build();
+
 #region Hot Swap Cert
 string ComputeFileHash(string filePath)
 {
@@ -287,7 +288,7 @@ if (!string.IsNullOrEmpty(cfgDockerCertPath) && !string.IsNullOrEmpty(cfgDockerK
             {
                 lock (certLock)
                 {
-                    return currentCert!;
+                    return currentCert;
                 }
             };
         });
@@ -296,6 +297,7 @@ if (!string.IsNullOrEmpty(cfgDockerCertPath) && !string.IsNullOrEmpty(cfgDockerK
     certTimer = new System.Timers.Timer(TimeSpan.FromHours(1).TotalMilliseconds); // for debug [TimeSpan.FromSeconds(5)]
     certTimer.AutoReset = true;
 
+    var logger = app.Logger;
     certTimer.Elapsed += (_, _) =>
     {
         if (isReloading) return;
@@ -309,23 +311,23 @@ if (!string.IsNullOrEmpty(cfgDockerCertPath) && !string.IsNullOrEmpty(cfgDockerK
             if (currentCertHash != previousCertHash &&
                 currentCertKeyHash != previousCertKeyHash)
             {
-                certRuntimeLogger?.LogInformation("Certificate file changed, reloading...");
+                logger.LogInformation("Certificate file changed, reloading...");
 
                 var newCert = LoadCertificate(cfgDockerCertPath, cfgDockerKeyPath);
 
                 lock (certLock)
                 {
-                    currentCert?.Dispose();
+                    currentCert.Dispose();
                     currentCert = newCert;
                     previousCertHash = currentCertHash;
                     previousCertKeyHash = currentCertKeyHash;
                 }
-                certRuntimeLogger?.LogInformation("Certificate reloaded successfully.");
+                logger.LogInformation("Certificate reloaded successfully.");
             }
         }
         catch (Exception ex)
         {
-            certRuntimeLogger?.LogError(ex, "Failed to reload certificate");
+            logger.LogError(ex, "Failed to reload certificate");
         }
         finally
         {
@@ -337,11 +339,6 @@ if (!string.IsNullOrEmpty(cfgDockerCertPath) && !string.IsNullOrEmpty(cfgDockerK
     certLogger.LogInformation("Certificate polling started.");
 }
 #endregion
-
-var app = builder.Build();
-
-if (!string.IsNullOrEmpty(cfgDockerCertPath) && !string.IsNullOrEmpty(cfgDockerKeyPath))
-    certRuntimeLogger = app.Logger;
 
 //1.Exception / error handling
 
