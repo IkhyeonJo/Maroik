@@ -90,7 +90,6 @@ public class DashboardServiceTests
 
         _accountRepo.Setup(r => r.GetAccountByEmailAsync(email)).ReturnsAsync(account);
         _assetRepo.Setup(r => r.GetAssetsAsync(email)).ReturnsAsync(assets);
-        _accountRepo.Setup(r => r.UpdateAccountAsync(It.IsAny<Account>())).Returns(Task.CompletedTask);
         _incomeRepo.Setup(r => r.GetIncomesAsync(email)).ReturnsAsync([]);
         _expenditureRepo.Setup(r => r.GetExpendituresAsync(email)).ReturnsAsync([]);
         var sut = CreateSut();
@@ -109,7 +108,6 @@ public class DashboardServiceTests
         var account = MakeAccount(unit: null);
         _accountRepo.Setup(r => r.GetAccountByEmailAsync(email)).ReturnsAsync(account);
         _assetRepo.Setup(r => r.GetAssetsAsync(email)).ReturnsAsync([]);
-        _accountRepo.Setup(r => r.UpdateAccountAsync(It.IsAny<Account>())).Returns(Task.CompletedTask);
         _incomeRepo.Setup(r => r.GetIncomesAsync(email)).ReturnsAsync([]);
         _expenditureRepo.Setup(r => r.GetExpendituresAsync(email)).ReturnsAsync([]);
         var sut = CreateSut();
@@ -135,15 +133,14 @@ public class DashboardServiceTests
 
         _accountRepo.Setup(r => r.GetAccountByEmailAsync(email)).ReturnsAsync(account);
         _assetRepo.Setup(r => r.GetAssetsAsync(email)).ReturnsAsync(assets);
-        _accountRepo.Setup(r => r.UpdateAccountAsync(It.IsAny<Account>())).Returns(Task.CompletedTask);
         SetupEmptyFinancials(email);
         var sut = CreateSut();
 
         DashboardSummary summary = await sut.GetSummaryAsync(email, "2025", "1", "UTC");
 
-        // Most-used unit is KRW (2 assets)
+        // Most-used unit is KRW (2 assets) — computed in-memory, no DB write
         Assert.Equal("KRW", summary.DefaultMonetaryUnit);
-        _accountRepo.Verify(r => r.UpdateAccountAsync(It.IsAny<Account>()), Times.AtLeastOnce);
+        _accountRepo.Verify(r => r.UpdateAccountAsync(It.IsAny<Account>()), Times.Never);
     }
 
     /// <summary>Verifies that <c>GetSummaryAsync</c> clears default monetary unit when no assets exist.</summary>
@@ -154,7 +151,6 @@ public class DashboardServiceTests
         var account = MakeAccount(unit: "KRW");
         _accountRepo.Setup(r => r.GetAccountByEmailAsync(email)).ReturnsAsync(account);
         _assetRepo.Setup(r => r.GetAssetsAsync(email)).ReturnsAsync([]);
-        _accountRepo.Setup(r => r.UpdateAccountAsync(It.IsAny<Account>())).Returns(Task.CompletedTask);
         _incomeRepo.Setup(r => r.GetIncomesAsync(email)).ReturnsAsync([]);
         _expenditureRepo.Setup(r => r.GetExpendituresAsync(email)).ReturnsAsync([]);
         var sut = CreateSut();
@@ -162,6 +158,7 @@ public class DashboardServiceTests
         DashboardSummary summary = await sut.GetSummaryAsync(email, "2025", "1", "UTC");
 
         Assert.Null(summary.DefaultMonetaryUnit);
+        _accountRepo.Verify(r => r.UpdateAccountAsync(It.IsAny<Account>()), Times.Never);
     }
 
     // ── GetNoticeCountsAsync ─────────────────────────────────────────────────
@@ -269,53 +266,6 @@ public class DashboardServiceTests
         NotificationCounts counts = await sut.GetNoticeCountsAsync(email, 7);
 
         Assert.Equal(1, counts.FixedIncomesNoticed);
-    }
-
-    // ── UpdateDefaultMonetaryUnitAsync ───────────────────────────────────────
-
-    /// <summary>Verifies that <c>UpdateDefaultMonetaryUnitAsync</c> does nothing when account not found.</summary>
-    [Fact]
-    public async Task UpdateDefaultMonetaryUnitAsync_DoesNothing_WhenAccountNotFound()
-    {
-        _accountRepo.Setup(r => r.GetAccountByEmailAsync("missing@example.com")).ReturnsAsync((Account?)null);
-        _assetRepo.Setup(r => r.GetAssetsAsync("missing@example.com")).ReturnsAsync([]);
-        var sut = CreateSut();
-
-        await sut.UpdateDefaultMonetaryUnitAsync("missing@example.com", "KRW");
-
-        _accountRepo.Verify(r => r.UpdateAccountAsync(It.IsAny<Account>()), Times.Never);
-    }
-
-    /// <summary>Verifies that <c>UpdateDefaultMonetaryUnitAsync</c> sets unit when unit exists in assets.</summary>
-    [Fact]
-    public async Task UpdateDefaultMonetaryUnitAsync_SetsUnit_WhenUnitExistsInAssets()
-    {
-        const string email = "user@example.com";
-        var account = MakeAccount(unit: null);
-        _assetRepo.Setup(r => r.GetAssetsAsync(email)).ReturnsAsync([MakeAsset("Wallet", "KRW")]);
-        _accountRepo.Setup(r => r.GetAccountByEmailAsync(email)).ReturnsAsync(account);
-        _accountRepo.Setup(r => r.UpdateAccountAsync(It.IsAny<Account>())).Returns(Task.CompletedTask);
-        var sut = CreateSut();
-
-        await sut.UpdateDefaultMonetaryUnitAsync(email, "KRW");
-
-        _accountRepo.Verify(r => r.UpdateAccountAsync(It.Is<Account>(acc => acc.DefaultMonetaryUnit == "KRW")), Times.Once);
-    }
-
-    /// <summary>Verifies that <c>UpdateDefaultMonetaryUnitAsync</c> sets null when unit not in assets.</summary>
-    [Fact]
-    public async Task UpdateDefaultMonetaryUnitAsync_SetsNull_WhenUnitNotInAssets()
-    {
-        const string email = "user@example.com";
-        var account = MakeAccount(unit: "KRW");
-        _assetRepo.Setup(r => r.GetAssetsAsync(email)).ReturnsAsync([MakeAsset("Wallet", "USD")]);
-        _accountRepo.Setup(r => r.GetAccountByEmailAsync(email)).ReturnsAsync(account);
-        _accountRepo.Setup(r => r.UpdateAccountAsync(It.IsAny<Account>())).Returns(Task.CompletedTask);
-        var sut = CreateSut();
-
-        await sut.UpdateDefaultMonetaryUnitAsync(email, "KRW"); // KRW not in assets
-
-        _accountRepo.Verify(r => r.UpdateAccountAsync(It.Is<Account>(acc => acc.DefaultMonetaryUnit == null)), Times.Once);
     }
 
     // ── GetServerResourceSummary ─────────────────────────────────────────────

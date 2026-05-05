@@ -52,8 +52,7 @@ public class DashboardService : IDashboardService
         List<Asset> assets = await _assetRepository.GetAssetsAsync(accountEmail);
         Account? account = await _accountRepository.GetAccountByEmailAsync(accountEmail);
 
-        // Sync DefaultMonetaryUnit and get the effective value
-        string? defaultMonetaryUnit = await SyncDefaultMonetaryUnitInternalAsync(account, assets);
+        string? defaultMonetaryUnit = GetEffectiveMonetaryUnit(account, assets);
 
         var summary = new DashboardSummary
         {
@@ -111,20 +110,6 @@ public class DashboardService : IDashboardService
     }
 
     /// <inheritdoc />
-    public async Task UpdateDefaultMonetaryUnitAsync(string accountEmail, string? monetaryUnit)
-    {
-        List<Asset> assets = await _assetRepository.GetAssetsAsync(accountEmail);
-        Account? account = await _accountRepository.GetAccountByEmailAsync(accountEmail);
-        if (account == null) return;
-
-        string? newUnit = assets.Select(x => x.Balance.Currency).Distinct().Contains(monetaryUnit)
-            ? monetaryUnit
-            : null;
-        account.UpdateProfile(account.Nickname, account.AvatarImagePath, account.TimeZone, newUnit);
-        await _accountRepository.UpdateAccountAsync(account);
-    }
-
-    /// <inheritdoc />
     public async Task<NotificationCounts> GetNoticeCountsAsync(string email, int noticeMaturityDateDay)
     {
         int incomesNoticed = 0, expendituresNoticed = 0;
@@ -172,43 +157,22 @@ public class DashboardService : IDashboardService
     }
 
     /// <summary>
-    /// Ensures <see cref="Account.DefaultMonetaryUnit"/> is consistent with the user's assets.
-    /// Returns the effective monetary unit (which may differ from the stored value when an update occurs).
+    /// Computes the monetary unit the dashboard should display without persisting any changes.
+    /// When the stored unit is missing or no longer valid (asset deleted, no assets), returns
+    /// the best available unit so the view remains consistent until the user explicitly saves.
     /// </summary>
-    private async Task<string?> SyncDefaultMonetaryUnitInternalAsync(Account? account, List<Asset> assets)
+    private static string? GetEffectiveMonetaryUnit(Account? account, List<Asset> assets)
     {
         if (account == null) return null;
 
         string? currentUnit = account.DefaultMonetaryUnit;
+        HashSet<string> availableUnits = assets.Select(a => a.Balance.Currency).ToHashSet();
 
-        if (currentUnit == null && assets.Count == 0)
-            return null;
+        if (availableUnits.Count == 0) return null;
 
-        if (currentUnit == null && assets.Count != 0)
-        {
-            string? newUnit = assets.GroupBy(a => a.Balance.Currency).OrderByDescending(g => g.Count()).FirstOrDefault()?.Key;
-            account.UpdateProfile(account.Nickname, account.AvatarImagePath, account.TimeZone, newUnit);
-            await _accountRepository.UpdateAccountAsync(account);
-            return newUnit;
-        }
+        if (currentUnit != null && availableUnits.Contains(currentUnit)) return currentUnit;
 
-        if (currentUnit != null && assets.Count == 0)
-        {
-            account.UpdateProfile(account.Nickname, account.AvatarImagePath, account.TimeZone, null);
-            await _accountRepository.UpdateAccountAsync(account);
-            return null;
-        }
-
-        // currentUnit != null && assets.Count != 0
-        if (!assets.Select(x => x.Balance.Currency).Distinct().Contains(currentUnit))
-        {
-            string? newUnit = assets.GroupBy(a => a.Balance.Currency).OrderByDescending(g => g.Count()).FirstOrDefault()?.Key;
-            account.UpdateProfile(account.Nickname, account.AvatarImagePath, account.TimeZone, newUnit);
-            await _accountRepository.UpdateAccountAsync(account);
-            return newUnit;
-        }
-
-        return currentUnit;
+        return assets.GroupBy(a => a.Balance.Currency).OrderByDescending(g => g.Count()).FirstOrDefault()?.Key;
     }
 
     /// <inheritdoc />

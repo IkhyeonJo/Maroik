@@ -1,21 +1,19 @@
+using Maroik.Core.Contract.Domains.Primitives;
 using Maroik.Core.Contract.Dtos;
 
 namespace Maroik.Core.Contract.Interfaces;
 
 /// <summary>
-/// Service interface for the user dashboard, aggregating income, expenditure, and asset data
-/// and computing notification badge counts.
+/// Pure query service for the user dashboard, aggregating income, expenditure, and asset data
+/// and computing notification badge counts. Performs no state mutations.
 /// </summary>
-public interface IDashboardService
+public interface IDashboardService : IQueryService
 {
     /// <summary>
     /// Builds the full dashboard summary for the given account, year, and month.
     /// All date comparisons are performed in the user's <paramref name="timeZoneId"/>.
     /// </summary>
     Task<DashboardSummary> GetSummaryAsync(string accountEmail, string year, string month, string timeZoneId);
-
-    /// <summary>Persists the user's preferred currency unit selection from the dashboard filter.</summary>
-    Task UpdateDefaultMonetaryUnitAsync(string accountEmail, string? monetaryUnit);
 
     /// <summary>
     /// Counts fixed income and expenditure items that are approaching their deposit day

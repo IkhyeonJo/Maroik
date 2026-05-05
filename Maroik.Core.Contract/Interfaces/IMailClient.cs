@@ -26,6 +26,19 @@ public interface IMailClient
     public string GetMailConfirmationBody(string registrationToken, string title, string content0, string content1, string domainName);
 
     /// <summary>
+    /// Builds the HTML body for an account-locked notification email.
+    /// Includes a link to the password-reset page so the owner can immediately regain access.
+    /// </summary>
+    /// <param name="domainName">Application domain used to construct the reset-password URL.</param>
+    public string GetMailAccountLockedBody(string domainName);
+
+    /// <summary>
+    /// Builds the HTML body for a post-registration welcome email sent after email confirmation.
+    /// </summary>
+    /// <param name="nickname">The user's display name, included in the greeting.</param>
+    public string GetMailWelcomeBody(string nickname);
+
+    /// <summary>
     /// Sends an HTML email via SMTP. Returns an empty string on success or the exception message on failure.
     /// </summary>
     public Task<string> SendMailAsync(string toEmail, string subject, string body, string smtpHost, string smtpPort, string smtpUserName, string smtpPassword, string smtpSsl, string fromEmail, string fromFullName);

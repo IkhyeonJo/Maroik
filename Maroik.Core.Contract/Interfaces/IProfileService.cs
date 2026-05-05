@@ -25,4 +25,11 @@ public interface IProfileService
     /// Changes the account's password after verifying <paramref name="currentPassword"/> matches the stored hash.
     /// </summary>
     Task<ServiceResult> UpdatePasswordAsync(string email, string currentPassword, string newPassword);
+
+    /// <summary>
+    /// Persists the user's preferred default currency unit.
+    /// Sets the unit only when it matches one of the account's existing asset currencies;
+    /// otherwise clears the preference to null.
+    /// </summary>
+    Task UpdateDefaultMonetaryUnitAsync(string accountEmail, string? monetaryUnit);
 }

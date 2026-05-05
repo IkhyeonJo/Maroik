@@ -1,4 +1,5 @@
 using Maroik.Core.Contract.Domains.Account;
+using Maroik.Core.Contract.Domains.Finance;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Contract.Utilities;
@@ -18,6 +19,7 @@ namespace Maroik.Core.Service.Tests.Services;
 public class ProfileServiceTests
 {
     private readonly Mock<IAccountRepository> _accountRepo = new();
+    private readonly Mock<IAssetRepository> _assetRepo = new();
     private readonly Mock<IPasswordService> _passwordService = new();
     private readonly Mock<IClamavClient> _clamavClient = new();
     private readonly IOptions<ServerSetting> _settings =
@@ -25,12 +27,25 @@ public class ProfileServiceTests
 
     private ProfileService CreateSut() => new(
         _accountRepo.Object,
+        _assetRepo.Object,
         _passwordService.Object,
         _clamavClient.Object,
         _settings,
         NullLogger<ProfileService>.Instance);
 
     // ── Helpers ──────────────────────────────────────────────────────────────
+
+    private static Asset MakeAsset(string name, string unit = "KRW") =>
+        Asset.Reconstitute(
+            productName: name,
+            accountEmail: "user@example.com",
+            item: "Deposit",
+            amount: 1000m,
+            monetaryUnit: unit,
+            note: null,
+            deleted: false,
+            created: DateTime.UtcNow,
+            updated: DateTime.UtcNow);
 
     private static Account ActiveAccount(string email = "user@example.com") =>
         Account.Reconstitute(
@@ -173,5 +188,52 @@ public class ProfileServiceTests
         Assert.True(result.Success);
         _accountRepo.Verify(r => r.UpdateAccountAsync(
             It.Is<Account>(a => a.HashedPassword == "$2a$13$newhash")), Times.Once);
+    }
+
+    // ── UpdateDefaultMonetaryUnitAsync ──────────────────────────────────────
+
+    /// <summary>Verifies that <c>UpdateDefaultMonetaryUnitAsync</c> does nothing when account not found.</summary>
+    [Fact]
+    public async Task UpdateDefaultMonetaryUnitAsync_DoesNothing_WhenAccountNotFound()
+    {
+        _assetRepo.Setup(r => r.GetAssetsAsync("missing@example.com")).ReturnsAsync([]);
+        _accountRepo.Setup(r => r.GetAccountByEmailAsync("missing@example.com")).ReturnsAsync((Account?)null);
+        var sut = CreateSut();
+
+        await sut.UpdateDefaultMonetaryUnitAsync("missing@example.com", "KRW");
+
+        _accountRepo.Verify(r => r.UpdateAccountAsync(It.IsAny<Account>()), Times.Never);
+    }
+
+    /// <summary>Verifies that <c>UpdateDefaultMonetaryUnitAsync</c> persists unit when it exists in assets.</summary>
+    [Fact]
+    public async Task UpdateDefaultMonetaryUnitAsync_SetsUnit_WhenUnitExistsInAssets()
+    {
+        var account = ActiveAccount();
+        _assetRepo.Setup(r => r.GetAssetsAsync(account.Email.Value)).ReturnsAsync([MakeAsset("Wallet", "KRW")]);
+        _accountRepo.Setup(r => r.GetAccountByEmailAsync(account.Email.Value)).ReturnsAsync(account);
+        _accountRepo.Setup(r => r.UpdateAccountAsync(It.IsAny<Account>())).Returns(Task.CompletedTask);
+        var sut = CreateSut();
+
+        await sut.UpdateDefaultMonetaryUnitAsync(account.Email.Value, "KRW");
+
+        _accountRepo.Verify(r => r.UpdateAccountAsync(
+            It.Is<Account>(a => a.DefaultMonetaryUnit == "KRW")), Times.Once);
+    }
+
+    /// <summary>Verifies that <c>UpdateDefaultMonetaryUnitAsync</c> clears unit when it is not in assets.</summary>
+    [Fact]
+    public async Task UpdateDefaultMonetaryUnitAsync_SetsNull_WhenUnitNotInAssets()
+    {
+        var account = ActiveAccount();
+        _assetRepo.Setup(r => r.GetAssetsAsync(account.Email.Value)).ReturnsAsync([MakeAsset("Wallet", "USD")]);
+        _accountRepo.Setup(r => r.GetAccountByEmailAsync(account.Email.Value)).ReturnsAsync(account);
+        _accountRepo.Setup(r => r.UpdateAccountAsync(It.IsAny<Account>())).Returns(Task.CompletedTask);
+        var sut = CreateSut();
+
+        await sut.UpdateDefaultMonetaryUnitAsync(account.Email.Value, "KRW");
+
+        _accountRepo.Verify(r => r.UpdateAccountAsync(
+            It.Is<Account>(a => a.DefaultMonetaryUnit == null)), Times.Once);
     }
 }

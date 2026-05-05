@@ -18,11 +18,13 @@ namespace Maroik.WebSite.Controllers;
 public class DashBoardController(
     IAccountService accountService,
     IDashboardService dashboardService,
+    IProfileService profileService,
     IOptions<ServerSetting> serverSettings,
     ISessionService sessionService)
     : BaseController(accountService, dashboardService, serverSettings, sessionService)
 {
     private readonly IDashboardService _dashboardService1 = dashboardService;
+    private readonly IProfileService _profileService = profileService;
     private readonly ISessionService _sessionService1 = sessionService;
     private const string HostResourceFilePath = "/app/Maroik.Log/HostResourceInfo.txt";
     private const string DockerResourceFilePath = "/app/Maroik.Log/DockerResourceInfo.txt";
@@ -344,7 +346,7 @@ public class DashBoardController(
         try
         {
             string email = _sessionService1.GetAccount()?.Email ?? "";
-            await _dashboardService1.UpdateDefaultMonetaryUnitAsync(email, userIndexInputViewModel.DefaultMonetaryUnit);
+            await _profileService.UpdateDefaultMonetaryUnitAsync(email, userIndexInputViewModel.DefaultMonetaryUnit);
             return Json(new { result = true });
         }
         catch

@@ -41,6 +41,28 @@ public class MailClient : IMailClient
     }
 
     /// <inheritdoc />
+    public string GetMailAccountLockedBody(string domainName)
+    {
+        string url = $"{domainName}Account/ForgotPassword";
+        return @$"<div style='text-align:center;'>
+                        <h1>Your account has been locked</h1>
+                        <h3>Too many consecutive failed login attempts have triggered an automatic account lock.</h3>
+                        <h3>Reset your password using the link below to regain access.</h3>
+                        <a href='{url}' target='_blank' rel='noopener noreferrer'>{url}</a>
+                      </div>";
+    }
+
+    /// <inheritdoc />
+    public string GetMailWelcomeBody(string nickname)
+    {
+        return @$"<div style='text-align:center;'>
+                        <h1>Welcome, {nickname}!</h1>
+                        <h3>Your email has been confirmed and your account is now active.</h3>
+                        <h3>You can now log in and start using the service.</h3>
+                      </div>";
+    }
+
+    /// <inheritdoc />
     public async Task<string> SendMailAsync(string toEmail, string subject, string body, string smtpHost, string smtpPort, string smtpUserName, string smtpPassword, string smtpSsl, string fromEmail, string fromFullName)
     {
         try

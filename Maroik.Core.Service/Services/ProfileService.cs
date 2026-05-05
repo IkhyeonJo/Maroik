@@ -1,5 +1,6 @@
 using ImageMagick;
 using Maroik.Core.Contract.Domains.Account;
+using Maroik.Core.Contract.Domains.Finance;
 using Maroik.Core.Contract.Domains.ValueObjects;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
@@ -21,6 +22,7 @@ namespace Maroik.Core.Service.Services;
 public class ProfileService : IProfileService
 {
     private readonly IAccountRepository _accountRepository;
+    private readonly IAssetRepository _assetRepository;
     private readonly IPasswordService _passwordService;
     private readonly IClamavClient _clamavClient;
     private readonly IOptions<ServerSetting> _settings;
@@ -29,12 +31,14 @@ public class ProfileService : IProfileService
     /// <summary>Initializes a new instance of <see cref="ProfileService"/> with the supplied dependencies.</summary>
     public ProfileService(
         IAccountRepository accountRepository,
+        IAssetRepository assetRepository,
         IPasswordService passwordService,
         IClamavClient clamavClient,
         IOptions<ServerSetting> settings,
         ILogger<ProfileService> logger)
     {
         _accountRepository = accountRepository;
+        _assetRepository = assetRepository;
         _passwordService = passwordService;
         _clamavClient = clamavClient;
         _settings = settings;
@@ -171,5 +175,19 @@ public class ProfileService : IProfileService
         }
 
         return await UpdateAvatarAsync(email, $"/upload/Management/Profile/Avatar/{avatarFile}");
+    }
+
+    /// <inheritdoc />
+    public async Task UpdateDefaultMonetaryUnitAsync(string accountEmail, string? monetaryUnit)
+    {
+        List<Asset> assets = await _assetRepository.GetAssetsAsync(accountEmail);
+        Account? account = await _accountRepository.GetAccountByEmailAsync(accountEmail);
+        if (account == null) return;
+
+        string? newUnit = assets.Select(x => x.Balance.Currency).Distinct().Contains(monetaryUnit)
+            ? monetaryUnit
+            : null;
+        account.UpdateProfile(account.Nickname, account.AvatarImagePath, account.TimeZone, newUnit);
+        await _accountRepository.UpdateAccountAsync(account);
     }
 }

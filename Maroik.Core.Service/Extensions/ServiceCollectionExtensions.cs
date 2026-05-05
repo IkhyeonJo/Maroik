@@ -1,5 +1,8 @@
+using Maroik.Core.Contract.Domains.Account.Events;
+using Maroik.Core.Contract.Domains.Primitives;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Service;
+using Maroik.Core.Service.EventHandlers;
 using Maroik.Core.Service.Services;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -39,5 +42,9 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IRsaService, RsaService>();
 
         services.AddScoped<IDomainEventDispatcher, DomainEventDispatcher>();
+
+        // Domain event handlers
+        services.AddScoped<IDomainEventHandler<AccountLockedEvent>, AccountLockedEventHandler>();
+        services.AddScoped<IDomainEventHandler<EmailConfirmedEvent>, EmailConfirmedEventHandler>();
     }
 }
