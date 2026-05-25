@@ -16,14 +16,12 @@ public class FixedIncomeService : IFixedIncomeService
 {
     private readonly IFixedIncomeRepository _fixedIncomeRepository;
     private readonly IAssetBalanceDomainService _assetBalance;
-    private readonly IDomainEventDispatcher _dispatcher;
 
     /// <summary>Initializes a new instance of <see cref="FixedIncomeService"/> with the supplied dependencies.</summary>
-    public FixedIncomeService(IFixedIncomeRepository fixedIncomeRepository, IAssetBalanceDomainService assetBalance, IDomainEventDispatcher dispatcher)
+    public FixedIncomeService(IFixedIncomeRepository fixedIncomeRepository, IAssetBalanceDomainService assetBalance)
     {
         _fixedIncomeRepository = fixedIncomeRepository;
         _assetBalance = assetBalance;
-        _dispatcher = dispatcher;
     }
 
     /// <inheritdoc />
@@ -50,7 +48,6 @@ public class FixedIncomeService : IFixedIncomeService
 
         var fixedIncome = registerResult.Value;
         await _fixedIncomeRepository.CreateFixedIncomeAsync(fixedIncome);
-        await _dispatcher.DispatchAsync(fixedIncome.PopDomainEvents());
         return ServiceResult.Ok();
     }
 

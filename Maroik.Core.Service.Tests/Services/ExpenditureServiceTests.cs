@@ -17,13 +17,11 @@ public class ExpenditureServiceTests
     private readonly Mock<IExpenditureRepository> _expenditureRepo = new();
     private readonly Mock<IAssetBalanceDomainService> _assetBalance = new();
     private readonly Mock<IUnitOfWork> _unitOfWork = new();
-    private readonly Mock<IDomainEventDispatcher> _dispatcher = new();
 
     private ExpenditureService CreateSut() => new(
         _expenditureRepo.Object,
         _assetBalance.Object,
-        _unitOfWork.Object,
-        _dispatcher.Object);
+        _unitOfWork.Object);
 
     /// <summary>Initializes the test fixture, setting up all required test doubles and the system under test.</summary>
     public ExpenditureServiceTests()

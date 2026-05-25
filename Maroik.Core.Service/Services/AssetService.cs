@@ -16,26 +16,18 @@ public class AssetService : IAssetService
     private readonly IExpenditureRepository _expenditureRepository;
     private readonly IFixedExpenditureRepository _fixedExpenditureRepository;
     private readonly IUnitOfWork _unitOfWork;
-    private readonly IDomainEventDispatcher _dispatcher;
 
     /// <summary>Initializes a new instance of <see cref="AssetService"/> with the supplied dependencies.</summary>
-    /// <param name="assetRepository">Repository for asset persistence.</param>
-    /// <param name="expenditureRepository">Repository used to cascade product-name renames to expenditure records.</param>
-    /// <param name="fixedExpenditureRepository">Repository used to cascade product-name renames to fixed-expenditure records.</param>
-    /// <param name="unitOfWork">Unit-of-work abstraction that wraps multi-step writes in a single transaction.</param>
-    /// <param name="dispatcher">Domain event dispatcher invoked after asset creation.</param>
     public AssetService(
         IAssetRepository assetRepository,
         IExpenditureRepository expenditureRepository,
         IFixedExpenditureRepository fixedExpenditureRepository,
-        IUnitOfWork unitOfWork,
-        IDomainEventDispatcher dispatcher)
+        IUnitOfWork unitOfWork)
     {
         _assetRepository = assetRepository;
         _expenditureRepository = expenditureRepository;
         _fixedExpenditureRepository = fixedExpenditureRepository;
         _unitOfWork = unitOfWork;
-        _dispatcher = dispatcher;
     }
 
     /// <inheritdoc />
@@ -73,7 +65,6 @@ public class AssetService : IAssetService
 
         var asset = createResult.Value;
         await _assetRepository.CreateAssetAsync(asset);
-        await _dispatcher.DispatchAsync(asset.PopDomainEvents());
         return ServiceResult.Ok();
     }
 

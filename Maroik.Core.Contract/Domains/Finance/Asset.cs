@@ -1,5 +1,4 @@
 using ErrorOr;
-using Maroik.Core.Contract.Domains.Finance.Events;
 using Maroik.Core.Contract.Domains.Primitives;
 using Maroik.Core.Contract.Domains.ValueObjects;
 
@@ -111,7 +110,6 @@ public sealed class Asset : AggregateRoot<(string ProductName, string AccountEma
             Note = note
         };
 
-        asset.RaiseDomainEvent(new AssetCreatedEvent(productName, emailResult.Value, moneyResult.Value));
         return asset;
     }
 

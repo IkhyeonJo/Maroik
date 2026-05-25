@@ -16,19 +16,16 @@ public class ManagementAccountService : IManagementAccountService
 {
     private readonly IAccountRepository _accountRepository;
     private readonly IPasswordService _passwordService;
-    private readonly IDomainEventDispatcher _dispatcher;
     private readonly ILogger<ManagementAccountService> _logger;
 
     /// <summary>Initializes a new instance of <see cref="ManagementAccountService"/> with the supplied dependencies.</summary>
     public ManagementAccountService(
         IAccountRepository accountRepository,
         IPasswordService passwordService,
-        IDomainEventDispatcher dispatcher,
         ILogger<ManagementAccountService> logger)
     {
         _accountRepository = accountRepository;
         _passwordService = passwordService;
-        _dispatcher = dispatcher;
         _logger = logger;
     }
 
@@ -73,7 +70,6 @@ public class ManagementAccountService : IManagementAccountService
                 account.ForceConfirmEmail();
 
             await _accountRepository.CreateAccountAsync(account);
-            await _dispatcher.DispatchAsync(account.PopDomainEvents());
             return ServiceResult.Ok();
         }
         catch (Exception e)

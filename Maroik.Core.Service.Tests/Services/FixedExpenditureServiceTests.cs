@@ -16,12 +16,10 @@ public class FixedExpenditureServiceTests
 {
     private readonly Mock<IFixedExpenditureRepository> _fixedExpenditureRepo = new();
     private readonly Mock<IAssetBalanceDomainService> _assetBalance = new();
-    private readonly Mock<IDomainEventDispatcher> _dispatcher = new();
 
     private FixedExpenditureService CreateSut() => new(
         _fixedExpenditureRepo.Object,
-        _assetBalance.Object,
-        _dispatcher.Object);
+        _assetBalance.Object);
 
     // ── Helpers ──────────────────────────────────────────────────────────────
 
@@ -122,6 +120,7 @@ public class FixedExpenditureServiceTests
     [Fact]
     public async Task CreateAsync_ReturnsFail_WhenSamePaymentAndDepositAsset()
     {
+        _assetBalance.Setup(r => r.GetAssetAsync("user@example.com", "Wallet")).ReturnsAsync(MakeAsset("Wallet"));
         var sut = CreateSut();
         var request = SavingsRequest();
         request.PaymentMethod = "Wallet";

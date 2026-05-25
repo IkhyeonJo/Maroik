@@ -1,5 +1,4 @@
 using ErrorOr;
-using Maroik.Core.Contract.Domains.Finance.Events;
 using Maroik.Core.Contract.Domains.Primitives;
 using Maroik.Core.Contract.Domains.ValueObjects;
 
@@ -170,9 +169,6 @@ public sealed class FixedExpenditure : AggregateRoot<long>
 
         var fixedExpenditure = new FixedExpenditure(id, emailResult.Value, mainClass, subClass, content,
             moneyResult.Value, paymentMethod, myDepositAsset, depositMonth, depositDay, maturityDate, note);
-
-        fixedExpenditure.RaiseDomainEvent(new FixedExpenditureRegisteredEvent(
-            id, emailResult.Value, moneyResult.Value, content ?? string.Empty));
 
         return fixedExpenditure;
     }

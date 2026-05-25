@@ -22,25 +22,16 @@ public class AccountService : IAccountService
     private readonly IPasswordService _passwordService;
     private readonly IMailClient _mailClient;
     private readonly IRsaService _rsa;
-    private readonly IDomainEventDispatcher _dispatcher;
     private readonly IOptions<ServerSetting> _settings;
     private readonly ILogger<AccountService> _logger;
 
     /// <summary>Initializes a new instance of <see cref="AccountService"/> with the supplied dependencies.</summary>
-    /// <param name="accountRepository">Repository for account persistence operations.</param>
-    /// <param name="passwordService">Service for hashing and verifying BCrypt passwords.</param>
-    /// <param name="mailClient">SMTP mail client for sending confirmation and reset emails.</param>
-    /// <param name="settings">Server configuration options (SMTP, domain, login attempt limits, RSA keys).</param>
-    /// <param name="rsa">RSA service used to encrypt/decrypt registration and reset tokens.</param>
-    /// <param name="dispatcher">Domain event dispatcher invoked after state-changing operations.</param>
-    /// <param name="logger">Logger for error and warning diagnostics.</param>
     public AccountService(
         IAccountRepository accountRepository,
         IPasswordService passwordService,
         IMailClient mailClient,
         IOptions<ServerSetting> settings,
         IRsaService rsa,
-        IDomainEventDispatcher dispatcher,
         ILogger<AccountService> logger)
     {
         _accountRepository = accountRepository;
@@ -48,7 +39,6 @@ public class AccountService : IAccountService
         _mailClient = mailClient;
         _settings = settings;
         _rsa = rsa;
-        _dispatcher = dispatcher;
         _logger = logger;
     }
 
@@ -88,7 +78,6 @@ public class AccountService : IAccountService
                 account.Lock(EnumHelper.GetDescription(AccountMessage.AccountLocked));
 
             await _accountRepository.UpdateAccountAsync(account);
-            await _dispatcher.DispatchAsync(account.PopDomainEvents());
 
             return account.Locked
                 ? LoginResult.Fail("Your Account is Locked, Please reset your password by clicking Forgot password Button")
@@ -136,7 +125,6 @@ public class AccountService : IAccountService
             try
             {
                 await _accountRepository.CreateAccountAsync(account);
-                await _dispatcher.DispatchAsync(account.PopDomainEvents());
             }
             catch (Exception e)
             {
@@ -310,7 +298,6 @@ public class AccountService : IAccountService
         try
         {
             await _accountRepository.UpdateAccountAsync(account);
-            await _dispatcher.DispatchAsync(account.PopDomainEvents());
         }
         catch (Exception e)
         {
@@ -353,7 +340,6 @@ public class AccountService : IAccountService
             {
                 account.SetMessage(EnumHelper.GetDescription(AccountMessage.ResetPasswordMail));
                 await _accountRepository.UpdateAccountAsync(account);
-                await _dispatcher.DispatchAsync(account.PopDomainEvents());
             }
         }
         catch (Exception e) { _logger.LogWarning(e, "ForgotPassword failed for {Email}", email); }

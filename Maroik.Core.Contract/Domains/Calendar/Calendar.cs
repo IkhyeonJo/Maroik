@@ -1,5 +1,4 @@
 using ErrorOr;
-using Maroik.Core.Contract.Domains.Calendar.Events;
 using Maroik.Core.Contract.Domains.Primitives;
 using Maroik.Core.Contract.Domains.ValueObjects;
 
@@ -114,7 +113,6 @@ public sealed class Calendar : AggregateRoot<long>
         if (colorResult.IsError) return colorResult.Errors;
 
         var calendar = new Calendar(id, emailResult.Value, name, description, tzResult.Value, colorResult.Value);
-        calendar.RaiseDomainEvent(new CalendarCreatedEvent(id, emailResult.Value, name));
         return calendar;
     }
 
@@ -157,8 +155,6 @@ public sealed class Calendar : AggregateRoot<long>
 
         Shared.Update(sharedWithUsers, sharedWithAnonymous);
         Updated = DateTime.UtcNow;
-
-        RaiseDomainEvent(new CalendarSharedEvent(Id, sharedWithUsers, sharedWithAnonymous));
     }
 
     /// <summary>Adds a subscriber to this calendar (another account subscribing).</summary>

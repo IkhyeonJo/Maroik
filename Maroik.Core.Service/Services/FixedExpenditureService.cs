@@ -16,14 +16,12 @@ public class FixedExpenditureService : IFixedExpenditureService
 {
     private readonly IFixedExpenditureRepository _fixedExpenditureRepository;
     private readonly IAssetBalanceDomainService _assetBalance;
-    private readonly IDomainEventDispatcher _dispatcher;
 
     /// <summary>Initializes a new instance of <see cref="FixedExpenditureService"/> with the supplied dependencies.</summary>
-    public FixedExpenditureService(IFixedExpenditureRepository fixedExpenditureRepository, IAssetBalanceDomainService assetBalance, IDomainEventDispatcher dispatcher)
+    public FixedExpenditureService(IFixedExpenditureRepository fixedExpenditureRepository, IAssetBalanceDomainService assetBalance)
     {
         _fixedExpenditureRepository = fixedExpenditureRepository;
         _assetBalance = assetBalance;
-        _dispatcher = dispatcher;
     }
 
     /// <inheritdoc />
@@ -63,7 +61,6 @@ public class FixedExpenditureService : IFixedExpenditureService
 
         var fixedExpenditure = registerResult.Value;
         await _fixedExpenditureRepository.CreateFixedExpenditureAsync(fixedExpenditure);
-        await _dispatcher.DispatchAsync(fixedExpenditure.PopDomainEvents());
         return ServiceResult.Ok();
     }
 

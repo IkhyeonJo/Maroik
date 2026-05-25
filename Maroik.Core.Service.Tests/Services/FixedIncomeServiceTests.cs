@@ -16,9 +16,8 @@ public class FixedIncomeServiceTests
 {
     private readonly Mock<IFixedIncomeRepository> _fixedIncomeRepo = new();
     private readonly Mock<IAssetBalanceDomainService> _assetBalance = new();
-    private readonly Mock<IDomainEventDispatcher> _dispatcher = new();
 
-    private FixedIncomeService CreateSut() => new(_fixedIncomeRepo.Object, _assetBalance.Object, _dispatcher.Object);
+    private FixedIncomeService CreateSut() => new(_fixedIncomeRepo.Object, _assetBalance.Object);
 
     // ── Helpers ──────────────────────────────────────────────────────────────
 

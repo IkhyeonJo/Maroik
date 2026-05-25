@@ -22,7 +22,6 @@ public class BoardServiceTests
     private readonly Mock<IBoardCommentRepository> _commentRepo = new();
     private readonly Mock<IFileClient> _fileClient = new();
     private readonly Mock<IUnitOfWork> _unitOfWork = new();
-    private readonly Mock<IDomainEventDispatcher> _dispatcher = new();
     private readonly Mock<IRsaService> _rsa = new();
     private readonly IOptions<ServerSetting> _settings =
         Options.Create(new ServerSetting { FileStorageBaseUrl = "http://files.example.com" });
@@ -42,7 +41,6 @@ public class BoardServiceTests
         _commentRepo.Object,
         _fileClient.Object,
         _unitOfWork.Object,
-        _dispatcher.Object,
         _rsa.Object,
         _settings,
         NullLogger<BoardService>.Instance);

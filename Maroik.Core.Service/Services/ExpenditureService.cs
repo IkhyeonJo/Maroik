@@ -15,19 +15,16 @@ public class ExpenditureService : IExpenditureService
     private readonly IExpenditureRepository _expenditureRepository;
     private readonly IAssetBalanceDomainService _assetBalance;
     private readonly IUnitOfWork _unitOfWork;
-    private readonly IDomainEventDispatcher _dispatcher;
 
     /// <summary>Initializes a new instance of <see cref="ExpenditureService"/> with the supplied dependencies.</summary>
     public ExpenditureService(
         IExpenditureRepository expenditureRepository,
         IAssetBalanceDomainService assetBalance,
-        IUnitOfWork unitOfWork,
-        IDomainEventDispatcher dispatcher)
+        IUnitOfWork unitOfWork)
     {
         _expenditureRepository = expenditureRepository;
         _assetBalance = assetBalance;
         _unitOfWork = unitOfWork;
-        _dispatcher = dispatcher;
     }
 
     /// <inheritdoc />
@@ -99,7 +96,6 @@ public class ExpenditureService : IExpenditureService
 
             var expenditure = expenditureResult.Value;
             await _expenditureRepository.CreateExpenditureAsync(expenditure);
-            await _dispatcher.DispatchAsync(expenditure.PopDomainEvents());
 
             paymentAsset.Withdraw(expenditure.Amount.Amount, currency);
             await _assetBalance.SaveAsync(paymentAsset);

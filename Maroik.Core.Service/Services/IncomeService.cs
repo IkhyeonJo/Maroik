@@ -15,15 +15,13 @@ public class IncomeService : IIncomeService
     private readonly IIncomeRepository _incomeRepository;
     private readonly IAssetBalanceDomainService _assetBalance;
     private readonly IUnitOfWork _unitOfWork;
-    private readonly IDomainEventDispatcher _dispatcher;
 
     /// <summary>Initializes a new instance of <see cref="IncomeService"/> with the supplied dependencies.</summary>
-    public IncomeService(IIncomeRepository incomeRepository, IAssetBalanceDomainService assetBalance, IUnitOfWork unitOfWork, IDomainEventDispatcher dispatcher)
+    public IncomeService(IIncomeRepository incomeRepository, IAssetBalanceDomainService assetBalance, IUnitOfWork unitOfWork)
     {
         _incomeRepository = incomeRepository;
         _assetBalance = assetBalance;
         _unitOfWork = unitOfWork;
-        _dispatcher = dispatcher;
     }
 
     /// <inheritdoc />
@@ -65,7 +63,6 @@ public class IncomeService : IIncomeService
 
             var income = incomeResult.Value;
             await _incomeRepository.CreateIncomeAsync(income);
-            await _dispatcher.DispatchAsync(income.PopDomainEvents());
 
             depositAsset.Deposit(income.Amount.Amount, currency);
             await _assetBalance.SaveAsync(depositAsset);

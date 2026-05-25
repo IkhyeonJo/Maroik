@@ -1,5 +1,4 @@
 using Maroik.Core.Contract.Domains.Finance;
-using Maroik.Core.Contract.Domains.Primitives;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Service.Services;
@@ -18,13 +17,11 @@ public class IncomeServiceTests
     private readonly Mock<IIncomeRepository> _incomeRepo = new();
     private readonly Mock<IAssetBalanceDomainService> _assetBalance = new();
     private readonly Mock<IUnitOfWork> _unitOfWork = new();
-    private readonly Mock<IDomainEventDispatcher> _mockDispatcher = new();
 
     private IncomeService CreateSut() => new(
         _incomeRepo.Object,
         _assetBalance.Object,
-        _unitOfWork.Object,
-        _mockDispatcher.Object);
+        _unitOfWork.Object);
 
     /// <summary>Initializes the test fixture, setting up all required test doubles and the system under test.</summary>
     public IncomeServiceTests()
@@ -33,8 +30,6 @@ public class IncomeServiceTests
         _unitOfWork.Setup(u => u.CommitAsync()).Returns(Task.CompletedTask);
         _unitOfWork.Setup(u => u.RollbackAsync()).Returns(Task.CompletedTask);
         _unitOfWork.Setup(u => u.DisposeAsync()).Returns(ValueTask.CompletedTask);
-        _mockDispatcher.Setup(d => d.DispatchAsync(It.IsAny<IReadOnlyList<IDomainEvent>>(), It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
     }
 
     // ── Helpers ──────────────────────────────────────────────────────────────

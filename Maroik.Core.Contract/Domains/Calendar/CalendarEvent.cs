@@ -1,5 +1,4 @@
 using ErrorOr;
-using Maroik.Core.Contract.Domains.Calendar.Events;
 using Maroik.Core.Contract.Domains.Primitives;
 
 namespace Maroik.Core.Contract.Domains.Calendar;
@@ -154,7 +153,6 @@ public sealed class CalendarEvent : AggregateRoot<long>
         var calendarEvent = new CalendarEvent(id, calendarId, title, description, allDay,
             startDate, endDate, startTz, endTz, location, status, recurrenceId);
 
-        calendarEvent.RaiseDomainEvent(new CalendarEventAddedEvent(calendarId, id, title, startDate));
         return calendarEvent;
     }
 

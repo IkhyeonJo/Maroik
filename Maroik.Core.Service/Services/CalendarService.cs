@@ -28,24 +28,11 @@ public class CalendarService : ICalendarService
     private readonly IOtherCalendarRepository _otherCalendarRepository;
     private readonly IFileClient _fileClient;
     private readonly IUnitOfWork _unitOfWork;
-    private readonly IDomainEventDispatcher _dispatcher;
     private readonly IRsaService _rsa;
     private readonly IOptions<ServerSetting> _settings;
     private readonly ILogger<CalendarService> _logger;
 
     /// <summary>Initializes a new instance of <see cref="CalendarService"/> with the supplied dependencies.</summary>
-    /// <param name="calendarRepository">Repository for calendar persistence.</param>
-    /// <param name="calendarEventRepository">Repository for calendar event persistence.</param>
-    /// <param name="calendarEventAttachedFileRepository">Repository for event file attachments.</param>
-    /// <param name="calendarEventReminderRepository">Repository for event reminders.</param>
-    /// <param name="calendarSharedRepository">Repository for calendar sharing settings.</param>
-    /// <param name="otherCalendarRepository">Repository for subscriptions to other users' calendars.</param>
-    /// <param name="fileClient">Remote file-storage client for upload/download operations.</param>
-    /// <param name="unitOfWork">Unit-of-work abstraction that wraps multi-step writes in a single transaction.</param>
-    /// <param name="dispatcher">Domain event dispatcher invoked after calendar/event creation.</param>
-    /// <param name="rsa">RSA service used to encrypt/decrypt inline image paths in HTML content.</param>
-    /// <param name="settings">Server configuration options including the file-storage base URL.</param>
-    /// <param name="logger">Logger for error diagnostics.</param>
     public CalendarService(
         ICalendarRepository calendarRepository,
         ICalendarEventRepository calendarEventRepository,
@@ -55,7 +42,6 @@ public class CalendarService : ICalendarService
         IOtherCalendarRepository otherCalendarRepository,
         IFileClient fileClient,
         IUnitOfWork unitOfWork,
-        IDomainEventDispatcher dispatcher,
         IRsaService rsa,
         IOptions<ServerSetting> settings,
         ILogger<CalendarService> logger)
@@ -68,7 +54,6 @@ public class CalendarService : ICalendarService
         _otherCalendarRepository = otherCalendarRepository;
         _fileClient = fileClient;
         _unitOfWork = unitOfWork;
-        _dispatcher = dispatcher;
         _rsa = rsa;
         _settings = settings;
         _logger = logger;
@@ -145,7 +130,6 @@ public class CalendarService : ICalendarService
 
             var calendar = calendarResult.Value;
             await _calendarRepository.CreateCalendarAsync(calendar);
-            await _dispatcher.DispatchAsync(calendar.PopDomainEvents());
             return ServiceResult.Ok();
         }
         catch { return ServiceResult.Fail("Input is invalid"); }
@@ -203,7 +187,6 @@ public class CalendarService : ICalendarService
 
                 var calendar = calendarResult.Value;
                 await _calendarRepository.CreateCalendarAsync(calendar);
-                await _dispatcher.DispatchAsync(calendar.PopDomainEvents());
             }
             return ServiceResult.Ok();
         }
@@ -326,7 +309,6 @@ public class CalendarService : ICalendarService
 
             var calendarEvent = eventResult.Value;
             long eventId = await _calendarEventRepository.CreateCalendarEventAsync(calendarEvent);
-            await _dispatcher.DispatchAsync(calendarEvent.PopDomainEvents());
 
             if (attachedFile != null)
             {

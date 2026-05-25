@@ -25,7 +25,6 @@ public class CalendarServiceTests
     private readonly Mock<IOtherCalendarRepository> _otherCalendarRepo = new();
     private readonly Mock<IFileClient> _fileClient = new();
     private readonly Mock<IUnitOfWork> _unitOfWork = new();
-    private readonly Mock<IDomainEventDispatcher> _dispatcher = new();
     private readonly Mock<IRsaService> _rsa = new();
     private readonly IOptions<ServerSetting> _settings =
         Options.Create(new ServerSetting { FileStorageBaseUrl = "http://files.example.com" });
@@ -48,7 +47,6 @@ public class CalendarServiceTests
         _otherCalendarRepo.Object,
         _fileClient.Object,
         _unitOfWork.Object,
-        _dispatcher.Object,
         _rsa.Object,
         _settings,
         NullLogger<CalendarService>.Instance);
@@ -114,7 +112,9 @@ public class CalendarServiceTests
         ServiceResult result = await sut.CreateCalendarAsync(new CalendarRequest
         {
             AccountEmail = "user@example.com",
-            Name = "NewCalendar"
+            Name = "NewCalendar",
+            TimeZoneIanaId = "UTC",
+            HtmlColorCode = "#3788d8"
         });
 
         Assert.True(result.Success);
@@ -153,7 +153,9 @@ public class CalendarServiceTests
         {
             AccountEmail = "user@example.com",
             Id = 1,
-            Name = "Updated"
+            Name = "Updated",
+            TimeZoneIanaId = "UTC",
+            HtmlColorCode = "#3788d8"
         });
 
         Assert.True(result.Success);
@@ -209,7 +211,9 @@ public class CalendarServiceTests
         ServiceResult result = await sut.EnsureDefaultCalendarAsync(new CalendarRequest
         {
             AccountEmail = "user@example.com",
-            Name = "Default"
+            Name = "Default",
+            TimeZoneIanaId = "UTC",
+            HtmlColorCode = "#3788d8"
         });
 
         Assert.True(result.Success);

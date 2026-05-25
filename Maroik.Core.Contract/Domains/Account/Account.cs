@@ -1,5 +1,4 @@
 using ErrorOr;
-using Maroik.Core.Contract.Domains.Account.Events;
 using Maroik.Core.Contract.Domains.Primitives;
 using Maroik.Core.Contract.Domains.ValueObjects;
 
@@ -164,7 +163,6 @@ public sealed class Account : AggregateRoot<string>
             emailResult.Value, hashedPassword, nickname, role,
             tzResult.Value, defaultMonetaryUnit, registrationToken, agreedServiceTerms);
 
-        account.RaiseDomainEvent(new AccountCreatedEvent(emailResult.Value));
         return account;
     }
 
@@ -187,8 +185,6 @@ public sealed class Account : AggregateRoot<string>
         EmailConfirmed = true;
         RegistrationToken = null;
         Updated = DateTime.UtcNow;
-
-        RaiseDomainEvent(new EmailConfirmedEvent(Email));
         return Result.Success;
     }
 
@@ -206,8 +202,6 @@ public sealed class Account : AggregateRoot<string>
 
         ResetPasswordToken = resetToken;
         Updated = DateTime.UtcNow;
-
-        RaiseDomainEvent(new PasswordResetRequestedEvent(Email, resetToken));
         return Result.Success;
     }
 
@@ -251,7 +245,6 @@ public sealed class Account : AggregateRoot<string>
         Locked = true;
         Message = message;
         Updated = DateTime.UtcNow;
-        RaiseDomainEvent(new AccountLockedEvent(Email));
     }
 
     /// <summary>Unlocks the account and resets the login-attempt counter.</summary>

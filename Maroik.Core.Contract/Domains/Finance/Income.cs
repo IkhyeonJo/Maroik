@@ -1,5 +1,4 @@
 using ErrorOr;
-using Maroik.Core.Contract.Domains.Finance.Events;
 using Maroik.Core.Contract.Domains.Primitives;
 using Maroik.Core.Contract.Domains.ValueObjects;
 
@@ -130,7 +129,6 @@ public sealed class Income : AggregateRoot<long>
         var income = new Income(id, emailResult.Value, mainClass, subClass, content,
             moneyResult.Value, depositMyAssetProductName, note);
 
-        income.RaiseDomainEvent(new IncomeRecordedEvent(id, emailResult.Value, moneyResult.Value, depositMyAssetProductName));
         return income;
     }
 

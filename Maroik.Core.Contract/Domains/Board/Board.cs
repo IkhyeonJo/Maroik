@@ -1,5 +1,4 @@
 using ErrorOr;
-using Maroik.Core.Contract.Domains.Board.Events;
 using Maroik.Core.Contract.Domains.Primitives;
 
 namespace Maroik.Core.Contract.Domains.Board;
@@ -123,7 +122,6 @@ public sealed class Board : AggregateRoot<long>
             return Error.Validation("Board.WriterEmpty", "Post author (writer) cannot be empty.");
 
         var board = new Board(id, type, title, content, writer);
-        board.RaiseDomainEvent(new BoardCreatedEvent(id, type, title, writer));
         return board;
     }
 
@@ -175,8 +173,6 @@ public sealed class Board : AggregateRoot<long>
 
         _comments.Add(comment);
         Updated = DateTime.UtcNow;
-
-        RaiseDomainEvent(new BoardCommentAddedEvent(Id, comment.Id, comment.Writer));
         return Result.Success;
     }
 
@@ -239,8 +235,6 @@ public sealed class Board : AggregateRoot<long>
 
         Deleted = true;
         Updated = DateTime.UtcNow;
-
-        RaiseDomainEvent(new BoardDeletedEvent(Id, Writer));
         return Result.Success;
     }
 }

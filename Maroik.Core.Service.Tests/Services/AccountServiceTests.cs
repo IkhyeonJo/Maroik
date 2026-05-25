@@ -21,7 +21,6 @@ public class AccountServiceTests
     private readonly Mock<IPasswordService> _passwordService = new();
     private readonly Mock<IMailClient> _mailClient = new();
     private readonly Mock<IRsaService> _rsa = new();
-    private readonly Mock<IDomainEventDispatcher> _dispatcher = new();
     private readonly IOptions<ServerSetting> _settings =
         Options.Create(new ServerSetting { MaxLoginAttempt = 5, DomainName = "https://example.com" });
 
@@ -31,7 +30,6 @@ public class AccountServiceTests
         _mailClient.Object,
         _settings,
         _rsa.Object,
-        _dispatcher.Object,
         NullLogger<AccountService>.Instance);
 
     // ── Helpers ──────────────────────────────────────────────────────────────
@@ -237,6 +235,7 @@ public class AccountServiceTests
         {
             Email = "new@example.com",
             HashedPassword = "plain-password",
+            Nickname = "TestUser",
             RegistrationToken = GuidToken.Generate()
         };
 
@@ -545,7 +544,7 @@ public class AccountServiceTests
     public async Task ResetPasswordAsync_UpdatesPasswordAndUnlocksAccount_WhenValid()
     {
         string freshToken = GuidToken.Generate();
-        var account = ActiveAccount(locked: true, loginAttempt: 3);
+        var account = ActiveAccount(locked: true, loginAttempt: 3, resetPasswordToken: freshToken);
         _rsa.Setup(r => r.Decrypt("enc")).Returns(freshToken);
         _accountRepo.Setup(r => r.GetAccountByResetPasswordTokenAsync(freshToken)).ReturnsAsync(account);
         _passwordService.Setup(p => p.HashPassword("newpass")).Returns("$2a$13$newhash");

@@ -26,7 +26,6 @@ public class BoardService : IBoardService
     private readonly IBoardCommentRepository _boardCommentRepository;
     private readonly IFileClient _fileClient;
     private readonly IUnitOfWork _unitOfWork;
-    private readonly IDomainEventDispatcher _dispatcher;
     private readonly IRsaService _rsa;
     private readonly IOptions<ServerSetting> _settings;
     private readonly ILogger<BoardService> _logger;
@@ -42,22 +41,12 @@ public class BoardService : IBoardService
     };
 
     /// <summary>Initializes a new instance of <see cref="BoardService"/> with the supplied dependencies.</summary>
-    /// <param name="boardRepository">Repository for board post persistence.</param>
-    /// <param name="boardAttachedFileRepository">Repository for board file attachments.</param>
-    /// <param name="boardCommentRepository">Repository for board comments.</param>
-    /// <param name="fileClient">Remote file-storage client for upload/download operations.</param>
-    /// <param name="unitOfWork">Unit-of-work abstraction that wraps multi-step writes in a single transaction.</param>
-    /// <param name="dispatcher">Domain event dispatcher invoked after board state changes.</param>
-    /// <param name="rsa">RSA service used to encrypt/decrypt inline image paths in HTML content.</param>
-    /// <param name="settings">Server configuration options including the file-storage base URL.</param>
-    /// <param name="logger">Logger for error diagnostics.</param>
     public BoardService(
         IBoardRepository boardRepository,
         IBoardAttachedFileRepository boardAttachedFileRepository,
         IBoardCommentRepository boardCommentRepository,
         IFileClient fileClient,
         IUnitOfWork unitOfWork,
-        IDomainEventDispatcher dispatcher,
         IRsaService rsa,
         IOptions<ServerSetting> settings,
         ILogger<BoardService> logger)
@@ -67,7 +56,6 @@ public class BoardService : IBoardService
         _boardCommentRepository = boardCommentRepository;
         _fileClient = fileClient;
         _unitOfWork = unitOfWork;
-        _dispatcher = dispatcher;
         _rsa = rsa;
         _settings = settings;
         _logger = logger;
@@ -158,7 +146,6 @@ public class BoardService : IBoardService
             }
 
             await _unitOfWork.CommitAsync();
-            await _dispatcher.DispatchAsync(board.PopDomainEvents());
             return ServiceResult.Ok();
         }
         catch (Exception e)
@@ -241,7 +228,6 @@ public class BoardService : IBoardService
                 return ServiceResult.Fail(deleteResult.FirstError.Description);
 
             await _boardRepository.DeleteBoardAsync(board);
-            await _dispatcher.DispatchAsync(board.PopDomainEvents());
             return ServiceResult.Ok();
         }
         catch (Exception e)
@@ -280,7 +266,6 @@ public class BoardService : IBoardService
                 return ServiceResult.Fail(addResult.FirstError.Description);
 
             await _boardCommentRepository.WriteBoardCommentAsync(commentResult.Value);
-            await _dispatcher.DispatchAsync(board.PopDomainEvents());
             return ServiceResult.Ok();
         }
         catch (Exception e)
