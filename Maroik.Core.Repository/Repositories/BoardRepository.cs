@@ -47,7 +47,9 @@ public class BoardRepository(ApplicationDbContext context) : IBoardRepository
     /// <inheritdoc />
     public async Task UpdateBoardAsync(Board board)
     {
-        _ = context.Boards.Update(ToEntity(board));
+        var existing = await context.Boards.FindAsync(board.Id);
+        if (existing == null) return;
+        context.Entry(existing).CurrentValues.SetValues(ToEntity(board));
         _ = await context.SaveChangesAsync();
     }
 
@@ -56,7 +58,9 @@ public class BoardRepository(ApplicationDbContext context) : IBoardRepository
     {
         // Soft-delete: the domain object sets Deleted = true before calling this method,
         // so we issue an Update rather than a Remove.
-        _ = context.Boards.Update(ToEntity(board));
+        var existing = await context.Boards.FindAsync(board.Id);
+        if (existing == null) return;
+        context.Entry(existing).CurrentValues.SetValues(ToEntity(board));
         _ = await context.SaveChangesAsync();
     }
 

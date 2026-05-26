@@ -27,7 +27,9 @@ public class FixedExpenditureRepository(ApplicationDbContext context) : IFixedEx
     /// <inheritdoc />
     public async Task UpdateFixedExpenditureAsync(FixedExpenditure fixedExpenditure)
     {
-        _ = context.FixedExpenditures.Update(ToEntity(fixedExpenditure));
+        var existing = await context.FixedExpenditures.FindAsync(fixedExpenditure.Id);
+        if (existing == null) return;
+        context.Entry(existing).CurrentValues.SetValues(ToEntity(fixedExpenditure));
         _ = await context.SaveChangesAsync();
     }
 
@@ -35,7 +37,9 @@ public class FixedExpenditureRepository(ApplicationDbContext context) : IFixedEx
     public async Task DeleteFixedExpenditureAsync(FixedExpenditure fixedExpenditure)
     {
         // Hard-delete: the fixed expenditure row is physically removed from the database.
-        _ = context.FixedExpenditures.Remove(ToEntity(fixedExpenditure));
+        var existing = await context.FixedExpenditures.FindAsync(fixedExpenditure.Id);
+        if (existing == null) return;
+        _ = context.FixedExpenditures.Remove(existing);
         _ = await context.SaveChangesAsync();
     }
 

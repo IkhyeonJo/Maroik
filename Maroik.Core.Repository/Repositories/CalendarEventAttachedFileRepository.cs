@@ -36,15 +36,27 @@ public class CalendarEventAttachedFileRepository(ApplicationDbContext context) :
     /// <inheritdoc />
     public async Task UpdateCalendarEventAttachedFileAsync(CalendarEventAttachedFile file)
     {
-        _ = context.CalendarEventAttachedFiles.Update(ToEntity(file));
+        var existing = await context.CalendarEventAttachedFiles.FindAsync(file.Id);
+        if (existing == null) return;
+        context.Entry(existing).CurrentValues.SetValues(ToEntity(file));
         _ = await context.SaveChangesAsync();
     }
 
     /// <inheritdoc />
     public async Task<int> DeleteCalendarEventAttachedFileAsync(long calendarEventId)
-        // Raw SQL delete is used to remove all files for the given event in a single statement.
-        => await context.Database.ExecuteSqlInterpolatedAsync(
-            $"""DELETE FROM "CalendarEventAttachedFile" WHERE "CalendarEventId" = {calendarEventId}""");
+    {
+        var ids = await context.CalendarEventAttachedFiles
+            .Where(x => x.CalendarEventId == calendarEventId)
+            .Select(x => x.Id)
+            .ToListAsync();
+        foreach (var id in ids)
+        {
+            var file = await context.CalendarEventAttachedFiles.FindAsync(id);
+            if (file != null)
+                context.CalendarEventAttachedFiles.Remove(file);
+        }
+        return await context.SaveChangesAsync();
+    }
 
     /// <summary>
     /// Maps an ORM <see cref="OrmFile"/> row to the <see cref="CalendarEventAttachedFile"/> domain object.

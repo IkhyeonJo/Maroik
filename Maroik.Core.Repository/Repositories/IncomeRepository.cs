@@ -60,7 +60,9 @@ public class IncomeRepository(ApplicationDbContext context) : IIncomeRepository
     /// <inheritdoc />
     public async Task UpdateIncomeAsync(Income income)
     {
-        _ = context.Incomes.Update(ToEntity(income));
+        var existing = await context.Incomes.FindAsync(income.Id);
+        if (existing == null) return;
+        context.Entry(existing).CurrentValues.SetValues(ToEntity(income));
         _ = await context.SaveChangesAsync();
     }
 
@@ -68,7 +70,9 @@ public class IncomeRepository(ApplicationDbContext context) : IIncomeRepository
     public async Task DeleteIncomeAsync(Income income)
     {
         // Hard-delete: the income row is physically removed from the database.
-        _ = context.Incomes.Remove(ToEntity(income));
+        var existing = await context.Incomes.FindAsync(income.Id);
+        if (existing == null) return;
+        _ = context.Incomes.Remove(existing);
         _ = await context.SaveChangesAsync();
     }
 

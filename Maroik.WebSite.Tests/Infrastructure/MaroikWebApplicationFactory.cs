@@ -1,8 +1,10 @@
 using Maroik.Core.Contract.Utilities;
 using Maroik.Core.PostgreSQL.Data;
 using Maroik.Core.PostgreSQL.Models;
+using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -78,12 +80,27 @@ public class MaroikWebApplicationFactory : WebApplicationFactory<Program>
                 d => d.ServiceType == typeof(ApplicationDbContext));
             if (dbContextDescriptor != null) services.Remove(dbContextDescriptor);
 
+            // Use an explicit internal service provider so EF Core does not scan the app's
+            // DI container and find both Npgsql (from AddRepositoryContext) and InMemory,
+            // which would throw "multiple database providers registered".
+            var internalServiceProvider = new ServiceCollection()
+                .AddEntityFrameworkInMemoryDatabase()
+                .BuildServiceProvider();
+
             // Capture the DB name once per factory instance so all request scopes share
             // the same in-memory database (DbContextOptions is Scoped, so Guid.NewGuid()
             // inside the lambda would produce a new database name on every request).
             var dbName = $"WebSiteIntegration_{Guid.NewGuid()}";
             services.AddDbContext<ApplicationDbContext>(options =>
-                options.UseInMemoryDatabase(dbName));
+                options
+                    .UseInternalServiceProvider(internalServiceProvider)
+                    .UseInMemoryDatabase(dbName));
+
+            // Program.cs reads DomainName before ConfigureAppConfiguration overrides take effect,
+            // so Session/Antiforgery cookies end up with Domain=localhost (from appsettings.Development.json).
+            // PostConfigure clears the domain so the CookieContainerHandler accepts cookies for www.localhost.
+            services.PostConfigure<SessionOptions>(options => options.Cookie.Domain = null);
+            services.PostConfigure<AntiforgeryOptions>(options => options.Cookie.Domain = null);
         });
     }
 
@@ -95,9 +112,19 @@ public class MaroikWebApplicationFactory : WebApplicationFactory<Program>
         {
             var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
             db.Categories.AddRange(
-                new Category { Id = 1, Name = "Dashboard", DisplayName = "Dashboard", IconPath = "", Controller = "DashBoard", Action = "AnonymousIndex", Role = Role.Anonymous, Order = 1 },
-                new Category { Id = 2, Name = "Calendar",  DisplayName = "Calendar",  IconPath = "", Controller = "Calendar",  Action = "AnonymousIndex", Role = Role.Anonymous, Order = 2 },
-                new Category { Id = 3, Name = "Forum",     DisplayName = "Forum",     IconPath = "", Controller = "Forum",     Action = "FreeForum",      Role = Role.Anonymous, Order = 3 }
+                new Category { Id = 1,  Name = "Dashboard",       DisplayName = "Dashboard",       IconPath = "", Controller = "DashBoard",   Action = "AnonymousIndex",   Role = Role.Anonymous, Order = 1  },
+                new Category { Id = 2,  Name = "Calendar",        DisplayName = "Calendar",        IconPath = "", Controller = "Calendar",    Action = "AnonymousIndex",   Role = Role.Anonymous, Order = 2  },
+                new Category { Id = 3,  Name = "Forum",           DisplayName = "Forum",           IconPath = "", Controller = "Forum",       Action = "FreeForum",        Role = Role.Anonymous, Order = 3  },
+                new Category { Id = 4,  Name = "DriveAnon",       DisplayName = "Drive",           IconPath = "", Controller = "Drive",       Action = "AnonymousIndex",   Role = Role.Anonymous, Order = 4  },
+                new Category { Id = 5,  Name = "DriveAdmin",      DisplayName = "Drive (Admin)",   IconPath = "", Controller = "Drive",       Action = "AdminIndex",       Role = Role.Anonymous, Order = 5  },
+                new Category { Id = 6,  Name = "DriveUser",       DisplayName = "Drive (User)",    IconPath = "", Controller = "Drive",       Action = "UserIndex",        Role = Role.Anonymous, Order = 6  },
+                new Category { Id = 7,  Name = "Asset",           DisplayName = "Asset",           IconPath = "", Controller = "AccountBook", Action = "Asset",            Role = Role.Anonymous, Order = 7  },
+                new Category { Id = 8,  Name = "Income",          DisplayName = "Income",          IconPath = "", Controller = "AccountBook", Action = "Income",           Role = Role.Anonymous, Order = 8  },
+                new Category { Id = 9,  Name = "Expenditure",     DisplayName = "Expenditure",     IconPath = "", Controller = "AccountBook", Action = "Expenditure",      Role = Role.Anonymous, Order = 9  },
+                new Category { Id = 10, Name = "ManageAccount",   DisplayName = "Accounts",        IconPath = "", Controller = "Management",  Action = "Account",          Role = Role.Anonymous, Order = 10 },
+                new Category { Id = 11, Name = "ManageMenu",      DisplayName = "Menu",            IconPath = "", Controller = "Management",  Action = "Menu",             Role = Role.Anonymous, Order = 11 },
+                new Category { Id = 12, Name = "FixedIncome",     DisplayName = "Fixed Income",    IconPath = "", Controller = "Notice",      Action = "FixedIncome",      Role = Role.Anonymous, Order = 12 },
+                new Category { Id = 13, Name = "FixedExpenditure",DisplayName = "Fixed Expend",   IconPath = "", Controller = "Notice",      Action = "FixedExpenditure", Role = Role.Anonymous, Order = 13 }
             );
             db.SaveChanges();
         }

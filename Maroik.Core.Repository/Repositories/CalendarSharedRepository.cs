@@ -27,7 +27,9 @@ public class CalendarSharedRepository(ApplicationDbContext context) : ICalendarS
     /// <inheritdoc />
     public async Task UpdateCalendarSharedAsync(CalendarShared shared)
     {
-        _ = context.CalendarShareds.Update(ToEntity(shared));
+        var existing = await context.CalendarShareds.FindAsync(shared.Id);
+        if (existing == null) return;
+        context.Entry(existing).CurrentValues.SetValues(ToEntity(shared));
         _ = await context.SaveChangesAsync();
     }
 

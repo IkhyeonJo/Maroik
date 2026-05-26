@@ -46,7 +46,9 @@ public class AssetRepository : IAssetRepository
     /// <inheritdoc />
     public async Task UpdateAssetAsync(Asset asset)
     {
-        _ = _context.Assets.Update(ToEntity(asset));
+        var existing = await _context.Assets.FindAsync(asset.ProductName, asset.AccountEmail.Value);
+        if (existing == null) return;
+        _context.Entry(existing).CurrentValues.SetValues(ToEntity(asset));
         _ = await _context.SaveChangesAsync();
     }
 

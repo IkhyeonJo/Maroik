@@ -1,42 +1,31 @@
 using Maroik.Core.Contract.Domains.Calendar;
 using Maroik.Core.PostgreSQL.Data;
 using Maroik.Core.Repository.Repositories;
-using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using EfCalendarEventReminder = Maroik.Core.PostgreSQL.Models.CalendarEventReminder;
 
 namespace Maroik.Core.Repository.Tests.Repositories;
 
 /// <summary>
-/// Tests for <see cref="CalendarEventReminderRepository"/>.
-/// SQLite in-memory is used throughout because <see cref="CalendarEventReminderRepository.DeleteCalendarEventReminderAsync"/>
-/// calls <c>ExecuteSqlInterpolatedAsync</c>, which requires a relational provider.
+/// Tests for <see cref="CalendarEventReminderRepository"/> using an EF Core InMemory database.
 /// </summary>
 public class CalendarEventReminderRepositoryTests : IDisposable
 {
-    private readonly SqliteConnection _connection;
     private readonly ApplicationDbContext _context;
     private readonly CalendarEventReminderRepository _sut;
 
     /// <summary>Initializes the test fixture, setting up all required test doubles and the system under test.</summary>
     public CalendarEventReminderRepositoryTests()
     {
-        _connection = new SqliteConnection("DataSource=:memory:");
-        _connection.Open();
         var options = new DbContextOptionsBuilder<ApplicationDbContext>()
-            .UseSqlite(_connection)
+            .UseInMemoryDatabase(Guid.NewGuid().ToString())
             .Options;
         _context = new ApplicationDbContext(options);
-        _context.Database.EnsureCreated();
         _sut = new CalendarEventReminderRepository(_context);
     }
 
     /// <summary>Releases resources allocated by this test fixture (disposes the database context).</summary>
-    public void Dispose()
-    {
-        _context.Dispose();
-        _connection.Dispose();
-    }
+    public void Dispose() => _context.Dispose();
 
     // ── Helpers ──────────────────────────────────────────────────────────────
 

@@ -71,7 +71,9 @@ public class AccountRepository : IAccountRepository
     /// <inheritdoc />
     public async Task UpdateAccountAsync(Account account)
     {
-        _ = _context.Accounts.Update(ToEntity(account));
+        var existing = await _context.Accounts.FindAsync(account.Email.Value);
+        if (existing == null) return;
+        _context.Entry(existing).CurrentValues.SetValues(ToEntity(account));
         _ = await _context.SaveChangesAsync();
     }
 

@@ -63,7 +63,9 @@ public class ExpenditureRepository(ApplicationDbContext context) : IExpenditureR
     /// <inheritdoc />
     public async Task UpdateExpenditureAsync(Expenditure expenditure)
     {
-        _ = context.Expenditures.Update(ToEntity(expenditure));
+        var existing = await context.Expenditures.FindAsync(expenditure.Id);
+        if (existing == null) return;
+        context.Entry(existing).CurrentValues.SetValues(ToEntity(expenditure));
         _ = await context.SaveChangesAsync();
     }
 
@@ -71,7 +73,9 @@ public class ExpenditureRepository(ApplicationDbContext context) : IExpenditureR
     public async Task DeleteExpenditureAsync(Expenditure expenditure)
     {
         // Hard-delete: the expenditure row is physically removed from the database.
-        _ = context.Expenditures.Remove(ToEntity(expenditure));
+        var existing = await context.Expenditures.FindAsync(expenditure.Id);
+        if (existing == null) return;
+        _ = context.Expenditures.Remove(existing);
         _ = await context.SaveChangesAsync();
     }
 

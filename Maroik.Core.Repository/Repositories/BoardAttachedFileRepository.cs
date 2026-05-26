@@ -49,7 +49,9 @@ public class BoardAttachedFileRepository(ApplicationDbContext context) : IBoardA
     /// <inheritdoc />
     public async Task UpdateBoardAttachedFileAsync(BoardAttachedFile file)
     {
-        _ = context.BoardAttachedFiles.Update(ToEntity(file));
+        var existing = await context.BoardAttachedFiles.FindAsync(file.Id);
+        if (existing == null) return;
+        context.Entry(existing).CurrentValues.SetValues(ToEntity(file));
         _ = await context.SaveChangesAsync();
     }
 

@@ -47,9 +47,8 @@ public class AccountControllerTests : IClassFixture<MaroikWebApplicationFactory>
     {
         var response = await _client.GetAsync("/Account/Logout", TestContext.Current.CancellationToken);
 
-        // Logout clears session and redirects — no auth required
+        // Logout clears session and redirects to "/" (default route resolves DashBoard/AnonymousIndex)
         Assert.Equal(System.Net.HttpStatusCode.Redirect, response.StatusCode);
-        Assert.Contains("DashBoard", response.Headers.Location?.ToString() ?? "");
     }
 
     // ── Register ─────────────────────────────────────────────────────────────

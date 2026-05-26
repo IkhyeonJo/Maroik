@@ -34,7 +34,9 @@ public class OtherCalendarRepository(ApplicationDbContext context) : IOtherCalen
     public async Task DeleteOtherCalendarAsync(OtherCalendar otherCalendar)
     {
         // Hard-delete: removes the subscription row so the account no longer sees the shared calendar.
-        _ = context.OtherCalendars.Remove(ToEntity(otherCalendar));
+        var existing = await context.OtherCalendars.FindAsync(otherCalendar.AccountEmail.Value, otherCalendar.CalendarId);
+        if (existing == null) return;
+        _ = context.OtherCalendars.Remove(existing);
         _ = await context.SaveChangesAsync();
     }
 

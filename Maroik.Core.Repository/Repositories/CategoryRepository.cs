@@ -31,7 +31,9 @@ public class CategoryRepository(ApplicationDbContext context) : ICategoryReposit
     /// <inheritdoc />
     public async Task UpdateCategoryAsync(Category category)
     {
-        _ = context.Categories.Update(ToEntity(category));
+        var existing = await context.Categories.FindAsync(category.Id);
+        if (existing == null) return;
+        context.Entry(existing).CurrentValues.SetValues(ToEntity(category));
         _ = await context.SaveChangesAsync();
     }
 
@@ -39,7 +41,9 @@ public class CategoryRepository(ApplicationDbContext context) : ICategoryReposit
     public async Task DeleteCategoryAsync(Category category)
     {
         // Hard-delete: the category row is physically removed from the database.
-        _ = context.Categories.Remove(ToEntity(category));
+        var existing = await context.Categories.FindAsync(category.Id);
+        if (existing == null) return;
+        _ = context.Categories.Remove(existing);
         _ = await context.SaveChangesAsync();
     }
 

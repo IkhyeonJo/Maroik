@@ -22,7 +22,7 @@ public class DateTimeExtensionTests
 
         // Asia/Seoul is UTC+9; noon UTC = 21:00 KST
         Assert.Equal(21, result.Hour);
-        Assert.Equal(15, result.Minute);
+        Assert.Equal(0, result.Minute);
     }
 
     /// <summary>Verifies that <c>ConvertTimeByTimeZoneIanaId</c> returns original value for invalid iana id.</summary>

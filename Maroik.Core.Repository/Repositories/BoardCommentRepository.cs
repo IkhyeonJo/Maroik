@@ -54,9 +54,9 @@ public class BoardCommentRepository(ApplicationDbContext context) : IBoardCommen
     /// <inheritdoc />
     public async Task DeleteBoardCommentAsync(BoardComment comment)
     {
-        // Soft-delete: the domain object sets Deleted = true before calling this method,
-        // so we issue an Update rather than a Remove.
-        _ = context.BoardComments.Update(ToEntity(comment));
+        var existing = await context.BoardComments.FindAsync(comment.Id);
+        if (existing == null) return;
+        context.Entry(existing).CurrentValues.SetValues(ToEntity(comment));
         _ = await context.SaveChangesAsync();
     }
 

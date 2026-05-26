@@ -47,6 +47,8 @@ public class SubCategoryRepositoryTests : IDisposable
         {
             Name = "ParentCategory",
             DisplayName = "Parent",
+            Controller = "ParentCategory",
+            IconPath = "/icons/icon.svg",
             Role = "User",
             Order = 1
         };

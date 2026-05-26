@@ -29,9 +29,19 @@ public class CalendarEventReminderRepository(ApplicationDbContext context) : ICa
 
     /// <inheritdoc />
     public async Task<int> DeleteCalendarEventReminderAsync(long calendarEventId)
-        // Raw SQL delete removes all reminders for the event atomically in one statement.
-        => await context.Database.ExecuteSqlInterpolatedAsync(
-            $"""DELETE FROM "CalendarEventReminder" WHERE "CalendarEventId" = {calendarEventId}""");
+    {
+        var ids = await context.CalendarEventReminders
+            .Where(x => x.CalendarEventId == calendarEventId)
+            .Select(x => x.Id)
+            .ToListAsync();
+        foreach (var id in ids)
+        {
+            var reminder = await context.CalendarEventReminders.FindAsync(id);
+            if (reminder != null)
+                context.CalendarEventReminders.Remove(reminder);
+        }
+        return await context.SaveChangesAsync();
+    }
 
     /// <summary>
     /// Maps an ORM <see cref="OrmReminder"/> row to the <see cref="CalendarEventReminder"/> domain object.

@@ -37,7 +37,9 @@ public class CalendarEventRepository(ApplicationDbContext context) : ICalendarEv
     /// <inheritdoc />
     public async Task UpdateCalendarEventAsync(CalendarEvent calendarEvent)
     {
-        _ = context.CalendarEvents.Update(ToEntity(calendarEvent));
+        var existing = await context.CalendarEvents.FindAsync(calendarEvent.Id);
+        if (existing == null) return;
+        context.Entry(existing).CurrentValues.SetValues(ToEntity(calendarEvent));
         _ = await context.SaveChangesAsync();
     }
 
@@ -45,7 +47,9 @@ public class CalendarEventRepository(ApplicationDbContext context) : ICalendarEv
     public async Task DeleteCalendarEventAsync(CalendarEvent calendarEvent)
     {
         // Hard-delete: the event row is physically removed from the database.
-        _ = context.CalendarEvents.Remove(ToEntity(calendarEvent));
+        var existing = await context.CalendarEvents.FindAsync(calendarEvent.Id);
+        if (existing == null) return;
+        _ = context.CalendarEvents.Remove(existing);
         _ = await context.SaveChangesAsync();
     }
 

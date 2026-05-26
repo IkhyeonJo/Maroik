@@ -31,7 +31,9 @@ public class CalendarRepository(ApplicationDbContext context) : ICalendarReposit
     /// <inheritdoc />
     public async Task UpdateCalendarAsync(Calendar calendar)
     {
-        _ = context.Calendars.Update(ToEntity(calendar));
+        var existing = await context.Calendars.FindAsync(calendar.Id);
+        if (existing == null) return;
+        context.Entry(existing).CurrentValues.SetValues(ToEntity(calendar));
         _ = await context.SaveChangesAsync();
     }
 
@@ -39,7 +41,9 @@ public class CalendarRepository(ApplicationDbContext context) : ICalendarReposit
     public async Task DeleteCalendarAsync(Calendar calendar)
     {
         // Hard-delete: the calendar row is physically removed from the database.
-        _ = context.Calendars.Remove(ToEntity(calendar));
+        var existing = await context.Calendars.FindAsync(calendar.Id);
+        if (existing == null) return;
+        _ = context.Calendars.Remove(existing);
         _ = await context.SaveChangesAsync();
     }
 

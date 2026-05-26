@@ -2,6 +2,7 @@ using Maroik.Core.Contract.Domains.Finance;
 using Maroik.Core.PostgreSQL.Data;
 using Maroik.Core.Repository.Repositories;
 using Microsoft.EntityFrameworkCore;
+using EfAsset = Maroik.Core.PostgreSQL.Models.Asset;
 using EfExpenditure = Maroik.Core.PostgreSQL.Models.Expenditure;
 
 namespace Maroik.Core.Repository.Tests.Repositories;
@@ -57,6 +58,12 @@ public class ExpenditureRepositoryTests : IDisposable
     [Fact]
     public async Task GetExpendituresAsync_ReturnsOnlyExpendituresForGivenEmail()
     {
+        // Include(x => x.Asset) requires matching Asset rows to exist in InMemory; seed them first.
+        await _context.Assets.AddRangeAsync(
+            new EfAsset { ProductName = "Wallet", AccountEmail = "alice@example.com", Item = "Wallet", MonetaryUnit = "KRW", Amount = 0, Created = DateTime.UtcNow, Updated = DateTime.UtcNow },
+            new EfAsset { ProductName = "Wallet", AccountEmail = "bob@example.com", Item = "Wallet", MonetaryUnit = "KRW", Amount = 0, Created = DateTime.UtcNow, Updated = DateTime.UtcNow });
+        await _context.SaveChangesAsync();
+
         await SeedAsync(
             MakeExpenditure("alice@example.com", "Lunch"),
             MakeExpenditure("alice@example.com", "Dinner"),

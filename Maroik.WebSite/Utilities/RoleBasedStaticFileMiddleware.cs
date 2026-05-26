@@ -9,10 +9,10 @@ namespace Maroik.WebSite.Utilities;
 /// Requests to <c>/admin/…</c> are blocked (HTTP 403) for non-Admin sessions,
 /// and requests to <c>/user/…</c> are blocked for non-User sessions.
 /// </summary>
-public class RoleBasedStaticFileMiddleware(RequestDelegate next, ISessionService sessionService)
+public class RoleBasedStaticFileMiddleware(RequestDelegate next)
 {
     /// <summary>Checks the request path against the session role and either blocks (403) or forwards the request.</summary>
-    public async Task InvokeAsync(HttpContext context)
+    public async Task InvokeAsync(HttpContext context, ISessionService sessionService)
     {
         var path = context.Request.Path.Value;
 

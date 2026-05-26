@@ -27,14 +27,18 @@ public class SubCategoryRepository(ApplicationDbContext context) : ISubCategoryR
     /// <inheritdoc />
     public async Task UpdateSubCategoryAsync(SubCategory subCategory)
     {
-        _ = context.SubCategories.Update(ToEntity(subCategory));
+        var existing = await context.SubCategories.FindAsync(subCategory.Id);
+        if (existing == null) return;
+        context.Entry(existing).CurrentValues.SetValues(ToEntity(subCategory));
         _ = await context.SaveChangesAsync();
     }
 
     /// <inheritdoc />
     public async Task DeleteSubCategoryAsync(SubCategory subCategory)
     {
-        _ = context.SubCategories.Remove(ToEntity(subCategory));
+        var existing = await context.SubCategories.FindAsync(subCategory.Id);
+        if (existing == null) return;
+        _ = context.SubCategories.Remove(existing);
         _ = await context.SaveChangesAsync();
     }
 

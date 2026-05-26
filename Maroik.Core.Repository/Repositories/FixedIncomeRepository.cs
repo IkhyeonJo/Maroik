@@ -27,7 +27,9 @@ public class FixedIncomeRepository(ApplicationDbContext context) : IFixedIncomeR
     /// <inheritdoc />
     public async Task UpdateFixedIncomeAsync(FixedIncome fixedIncome)
     {
-        _ = context.FixedIncomes.Update(ToEntity(fixedIncome));
+        var existing = await context.FixedIncomes.FindAsync(fixedIncome.Id);
+        if (existing == null) return;
+        context.Entry(existing).CurrentValues.SetValues(ToEntity(fixedIncome));
         _ = await context.SaveChangesAsync();
     }
 
@@ -35,7 +37,9 @@ public class FixedIncomeRepository(ApplicationDbContext context) : IFixedIncomeR
     public async Task DeleteFixedIncomeAsync(FixedIncome fixedIncome)
     {
         // Hard-delete: the fixed income row is physically removed from the database.
-        _ = context.FixedIncomes.Remove(ToEntity(fixedIncome));
+        var existing = await context.FixedIncomes.FindAsync(fixedIncome.Id);
+        if (existing == null) return;
+        _ = context.FixedIncomes.Remove(existing);
         _ = await context.SaveChangesAsync();
     }
 
