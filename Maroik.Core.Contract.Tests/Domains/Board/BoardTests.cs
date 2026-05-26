@@ -1,11 +1,12 @@
 using Maroik.Core.Contract.Domains.Board;
+using Maroik.Core.Contract.Utilities;
 
 namespace Maroik.Core.Contract.Tests.Domain.Post;
 
 public class BoardTests
 {
     private static Board ValidBoard(long id = 1) =>
-        Board.Reconstitute(id, "FreeForum", "Hello World", "content", "Alice", DateTime.UtcNow, DateTime.UtcNow, 0, false, false, false);
+        Board.Reconstitute(id, nameof(BoardType.FreeForum), "Hello World", "content", "Alice", DateTime.UtcNow, DateTime.UtcNow, 0, false, false, false);
 
     private static BoardComment ValidComment(long boardId = 1) =>
         BoardComment.Create(boardId, 1, null, "Bob", "Nice post!").Value;
@@ -18,10 +19,10 @@ public class BoardTests
     [Fact]
     public void Create_ReturnsBoard_WhenValid()
     {
-        var result = Board.Create("FreeForum", "Title", "body", "Alice");
+        var result = Board.Create(nameof(BoardType.FreeForum), "Title", "body", "Alice");
 
         Assert.False(result.IsError);
-        Assert.Equal("FreeForum", result.Value.Type);
+        Assert.Equal(nameof(BoardType.FreeForum), result.Value.Type);
         Assert.Equal("Alice", result.Value.Writer);
     }
 
@@ -43,7 +44,7 @@ public class BoardTests
     [InlineData("   ")]
     public void Create_ReturnsError_WhenTitleEmpty(string? title)
     {
-        var result = Board.Create("FreeForum", title, null, "Alice");
+        var result = Board.Create(nameof(BoardType.FreeForum), title, null, "Alice");
 
         Assert.True(result.IsError);
         Assert.Equal("Board.TitleEmpty", result.FirstError.Code);
@@ -52,7 +53,7 @@ public class BoardTests
     [Fact]
     public void Create_ReturnsError_WhenTitleTooLong()
     {
-        var result = Board.Create("FreeForum", new string('x', 101), null, "Alice");
+        var result = Board.Create(nameof(BoardType.FreeForum), new string('x', 101), null, "Alice");
 
         Assert.True(result.IsError);
         Assert.Equal("Board.TitleTooLong", result.FirstError.Code);
@@ -61,7 +62,7 @@ public class BoardTests
     [Fact]
     public void Create_ReturnsError_WhenContentTooLong()
     {
-        var result = Board.Create("FreeForum", "Title", new string('x', 16385), "Alice");
+        var result = Board.Create(nameof(BoardType.FreeForum), "Title", new string('x', 16385), "Alice");
 
         Assert.True(result.IsError);
         Assert.Equal("Board.ContentTooLong", result.FirstError.Code);
@@ -73,7 +74,7 @@ public class BoardTests
     [InlineData("   ")]
     public void Create_ReturnsError_WhenWriterEmpty(string? writer)
     {
-        var result = Board.Create("FreeForum", "Title", null, writer);
+        var result = Board.Create(nameof(BoardType.FreeForum), "Title", null, writer);
 
         Assert.True(result.IsError);
         Assert.Equal("Board.WriterEmpty", result.FirstError.Code);

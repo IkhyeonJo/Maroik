@@ -119,7 +119,7 @@ public sealed class PlaywrightWebApplicationFactory : WebApplicationFactory<Prog
             db.Categories.AddRange(
                 new Category { Id = 1, Name = "Dashboard", DisplayName = "Dashboard", IconPath = "", Controller = "DashBoard", Action = "AnonymousIndex", Role = Role.Anonymous, Order = 1 },
                 new Category { Id = 2, Name = "Calendar",  DisplayName = "Calendar",  IconPath = "", Controller = "Calendar",  Action = "AnonymousIndex", Role = Role.Anonymous, Order = 2 },
-                new Category { Id = 3, Name = "Forum",     DisplayName = "Forum",     IconPath = "", Controller = "Forum",     Action = "FreeForum",      Role = Role.Anonymous, Order = 3 }
+                new Category { Id = 3, Name = "Forum",     DisplayName = "Forum",     IconPath = "", Controller = "Forum",     Action = nameof(BoardType.FreeForum),      Role = Role.Anonymous, Order = 3 }
             );
             db.SaveChanges();
         }

@@ -1,4 +1,5 @@
 using Maroik.Core.Contract.Domains.Account;
+using Maroik.Core.Contract.Utilities;
 using Maroik.Core.PostgreSQL.Data;
 using Maroik.Core.Repository.Repositories;
 using Microsoft.EntityFrameworkCore;
@@ -37,7 +38,7 @@ public class AccountRepositoryTests : IDisposable
         Nickname = nickname,
         HashedPassword = "$2a$13$placeholder",
         AvatarImagePath = "/upload/Management/Profile/default-avatar.jpg",
-        Role = "User",
+        Role = Role.User,
         TimeZoneIanaId = "UTC",
         Deleted = false,
         Locked = false,
@@ -163,7 +164,7 @@ public class AccountRepositoryTests : IDisposable
             hashedPassword: "$2a$13$hash",
             nickname: "NewUser",
             avatarImagePath: "/upload/Management/Profile/default-avatar.jpg",
-            role: "User",
+            role: Role.User,
             timeZoneIanaId: "UTC",
             defaultMonetaryUnit: null,
             locked: false,
@@ -237,7 +238,7 @@ public class AccountRepositoryTests : IDisposable
             hashedPassword: "$2a$13$newhash",
             nickname: "Alice",
             avatarImagePath: "/upload/Management/Profile/default-avatar.jpg",
-            role: "Admin",
+            role: Role.Admin,
             timeZoneIanaId: "Asia/Seoul",
             defaultMonetaryUnit: null,
             locked: false,
@@ -255,7 +256,7 @@ public class AccountRepositoryTests : IDisposable
 
         OrmAccount? updated = await _context.Accounts.FirstOrDefaultAsync(a => a.Email == "alice@example.com", TestContext.Current.CancellationToken);
         Assert.NotNull(updated);
-        Assert.Equal("Admin", updated.Role);
+        Assert.Equal(Role.Admin, updated.Role);
         Assert.Equal("Asia/Seoul", updated.TimeZoneIanaId);
     }
 }

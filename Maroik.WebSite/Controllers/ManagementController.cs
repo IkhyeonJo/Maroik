@@ -1383,7 +1383,7 @@ public class ManagementController : BaseController
 
             if (boardId == null)
             {
-                return RedirectToAction("PrivateNote", "Management");
+                return RedirectToAction(nameof(BoardType.PrivateNote), "Management");
             }
 
             PrivateNoteOutputViewModel privateNoteOutputViewModel = new()
@@ -1399,13 +1399,13 @@ public class ManagementController : BaseController
             try
             {
                 if (privateNoteBoard == null || privateNoteBoard.Deleted || privateNoteBoard.Writer != loginedAccount.Nickname)
-                    return RedirectToAction("PrivateNote", "Management");
+                    return RedirectToAction(nameof(BoardType.PrivateNote), "Management");
 
                 if (privateNoteBoard.Locked)
                 {
                     if (!(loginedAccount.Nickname == privateNoteBoard.Writer || loginedAccount.Role == Role.Admin))
                     {
-                        return RedirectToAction("PrivateNote", "Management");
+                        return RedirectToAction(nameof(BoardType.PrivateNote), "Management");
                     }
                 }
 
@@ -1452,14 +1452,14 @@ public class ManagementController : BaseController
             }
             catch
             {
-                return RedirectToAction("PrivateNote", "Management");
+                return RedirectToAction(nameof(BoardType.PrivateNote), "Management");
             }
         }
         else if (method == "edit") // Edit
         {
             if (boardId == null)
             {
-                return RedirectToAction("PrivateNote", "Management");
+                return RedirectToAction(nameof(BoardType.PrivateNote), "Management");
             }
 
             PrivateNoteOutputViewModel privateNoteOutputViewModel = new()
@@ -1478,7 +1478,7 @@ public class ManagementController : BaseController
             {
                 if (privateNoteBoard == null || privateNoteBoard.Deleted || privateNoteBoard.Writer != loginedAccount.Nickname)
                 {
-                    return RedirectToAction("PrivateNote", "Management");
+                    return RedirectToAction(nameof(BoardType.PrivateNote), "Management");
                 }
 
                 (privateNoteBoard.Content, bool isImgTagIncluded) = await _boardService.PrepareHtmlForDisplayAsync(privateNoteBoard.Content ?? "");
@@ -1516,7 +1516,7 @@ public class ManagementController : BaseController
             }
             catch
             {
-                return RedirectToAction("PrivateNote", "Management");
+                return RedirectToAction(nameof(BoardType.PrivateNote), "Management");
             }
         }
         else // List

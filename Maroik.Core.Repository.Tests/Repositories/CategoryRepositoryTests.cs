@@ -1,4 +1,5 @@
 using Maroik.Core.Contract.Domains.Menu;
+using Maroik.Core.Contract.Utilities;
 using Maroik.Core.PostgreSQL.Data;
 using Maroik.Core.Repository.Repositories;
 using Microsoft.EntityFrameworkCore;
@@ -29,7 +30,7 @@ public class CategoryRepositoryTests : IDisposable
 
     // ── Helpers ──────────────────────────────────────────────────────────────
 
-    private static EfCategory MakeCategory(string name, string role = "User", long order = 1) => new()
+    private static EfCategory MakeCategory(string name, string role = Role.User, long order = 1) => new()
     {
         Name = name,
         DisplayName = name,
@@ -77,14 +78,14 @@ public class CategoryRepositoryTests : IDisposable
     public async Task GetCategoryByRoleAsync_ReturnsOnlyCategoriesForRole()
     {
         await SeedAsync(
-            MakeCategory("Dashboard", role: "User", order: 1),
-            MakeCategory("Admin", role: "Admin", order: 2),
-            MakeCategory("Finance", role: "User", order: 3));
+            MakeCategory("Dashboard", role: Role.User, order: 1),
+            MakeCategory("Admin", role: Role.Admin, order: 2),
+            MakeCategory("Finance", role: Role.User, order: 3));
 
-        IEnumerable<Category> result = await _sut.GetCategoryByRoleAsync("User");
+        IEnumerable<Category> result = await _sut.GetCategoryByRoleAsync(Role.User);
 
         Assert.Equal(2, result.Count());
-        Assert.All(result, c => Assert.Equal("User", c.Role));
+        Assert.All(result, c => Assert.Equal(Role.User, c.Role));
     }
 
     /// <summary>Verifies that <c>GetCategoryByRoleAsync</c> returns ordered by order.</summary>
@@ -92,10 +93,10 @@ public class CategoryRepositoryTests : IDisposable
     public async Task GetCategoryByRoleAsync_ReturnsOrderedByOrder()
     {
         await SeedAsync(
-            MakeCategory("Finance", role: "User", order: 2),
-            MakeCategory("Dashboard", role: "User", order: 1));
+            MakeCategory("Finance", role: Role.User, order: 2),
+            MakeCategory("Dashboard", role: Role.User, order: 1));
 
-        IEnumerable<Category> result = await _sut.GetCategoryByRoleAsync("User");
+        IEnumerable<Category> result = await _sut.GetCategoryByRoleAsync(Role.User);
         List<Category> list = result.ToList();
 
         Assert.Equal("Dashboard", list[0].Name);
@@ -115,14 +116,14 @@ public class CategoryRepositoryTests : IDisposable
             iconPath: "/icons/new.svg",
             controller: "NewMenu",
             action: "Index",
-            role: "User",
+            role: Role.User,
             order: 5);
 
         await _sut.CreateCategoryAsync(category);
 
         EfCategory? saved = await _context.Categories.FirstOrDefaultAsync(c => c.Name == "NewMenu", TestContext.Current.CancellationToken);
         Assert.NotNull(saved);
-        Assert.Equal("User", saved.Role);
+        Assert.Equal(Role.User, saved.Role);
         Assert.Equal(5, saved.Order);
     }
 
@@ -142,7 +143,7 @@ public class CategoryRepositoryTests : IDisposable
             iconPath: "/icons/updated.svg",
             controller: "UpdatedName",
             action: "Index",
-            role: "Admin",
+            role: Role.Admin,
             order: 10);
 
         await _sut.UpdateCategoryAsync(category);
@@ -150,7 +151,7 @@ public class CategoryRepositoryTests : IDisposable
         EfCategory? updated = await _context.Categories.FirstOrDefaultAsync(c => c.Id == efCategory.Id, TestContext.Current.CancellationToken);
         Assert.NotNull(updated);
         Assert.Equal("UpdatedName", updated.Name);
-        Assert.Equal("Admin", updated.Role);
+        Assert.Equal(Role.Admin, updated.Role);
         Assert.Equal(10, updated.Order);
     }
 

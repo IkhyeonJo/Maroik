@@ -229,7 +229,7 @@ public class ForumController : BaseController
         {
             if (boardId == null)
             {
-                return RedirectToAction("FreeForum", "Forum");
+                return RedirectToAction(nameof(BoardType.FreeForum), "Forum");
             }
 
             FreeForumOutputViewModel freeForumOutputViewModel = new()
@@ -245,7 +245,7 @@ public class ForumController : BaseController
             try
             {
                 if (freeBoard == null || freeBoard.Deleted)
-                    return RedirectToAction("FreeForum", "Forum");
+                    return RedirectToAction(nameof(BoardType.FreeForum), "Forum");
 
                 if (freeBoard.Locked)
                 {
@@ -253,7 +253,7 @@ public class ForumController : BaseController
 
                     if (!(loginedAccount.Nickname == freeBoard.Writer || loginedAccount.Role == Role.Admin))
                     {
-                        return RedirectToAction("FreeForum", "Forum");
+                        return RedirectToAction(nameof(BoardType.FreeForum), "Forum");
                     }
                 }
 
@@ -302,14 +302,14 @@ public class ForumController : BaseController
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Unhandled exception in FreeForum action");
-                return RedirectToAction("FreeForum", "Forum");
+                return RedirectToAction(nameof(BoardType.FreeForum), "Forum");
             }
         }
         else if (method == "edit") // Edit
         {
             if (boardId == null)
             {
-                return RedirectToAction("FreeForum", "Forum");
+                return RedirectToAction(nameof(BoardType.FreeForum), "Forum");
             }
 
             FreeForumOutputViewModel freeForumOutputViewModel = new()
@@ -325,13 +325,13 @@ public class ForumController : BaseController
             try
             {
                 if (freeBoard == null || freeBoard.Deleted)
-                    return RedirectToAction("FreeForum", "Forum");
+                    return RedirectToAction(nameof(BoardType.FreeForum), "Forum");
 
                 AccountResponse loginedAccount = _sessionService.GetAccount()!;
 
                 if (freeBoard.Writer != loginedAccount.Nickname) // If writer and logged-in user are not the same
                 {
-                    return RedirectToAction("FreeForum", "Forum");
+                    return RedirectToAction(nameof(BoardType.FreeForum), "Forum");
                 }
 
                 (freeBoard.Content, bool isImgTagIncluded) = await _boardService.PrepareHtmlForDisplayAsync(freeBoard.Content ?? "");
@@ -367,7 +367,7 @@ public class ForumController : BaseController
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Unhandled exception in FreeForum action");
-                return RedirectToAction("FreeForum", "Forum");
+                return RedirectToAction(nameof(BoardType.FreeForum), "Forum");
             }
 
         }

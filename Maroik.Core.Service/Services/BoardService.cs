@@ -36,8 +36,8 @@ public class BoardService : IBoardService
     /// </summary>
     private static readonly Dictionary<string, string> BoardAreaMap = new(StringComparer.OrdinalIgnoreCase)
     {
-        ["FreeForum"]   = "Forum",
-        ["PrivateNote"] = "Management"
+        [nameof(BoardType.FreeForum)]   = "Forum",
+        [nameof(BoardType.PrivateNote)] = "Management"
     };
 
     /// <summary>Initializes a new instance of <see cref="BoardService"/> with the supplied dependencies.</summary>

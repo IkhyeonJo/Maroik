@@ -114,7 +114,7 @@ public class MaroikWebApplicationFactory : WebApplicationFactory<Program>
             db.Categories.AddRange(
                 new Category { Id = 1,  Name = "Dashboard",       DisplayName = "Dashboard",       IconPath = "", Controller = "DashBoard",   Action = "AnonymousIndex",   Role = Role.Anonymous, Order = 1  },
                 new Category { Id = 2,  Name = "Calendar",        DisplayName = "Calendar",        IconPath = "", Controller = "Calendar",    Action = "AnonymousIndex",   Role = Role.Anonymous, Order = 2  },
-                new Category { Id = 3,  Name = "Forum",           DisplayName = "Forum",           IconPath = "", Controller = "Forum",       Action = "FreeForum",        Role = Role.Anonymous, Order = 3  },
+                new Category { Id = 3,  Name = "Forum",           DisplayName = "Forum",           IconPath = "", Controller = "Forum",       Action = nameof(BoardType.FreeForum),        Role = Role.Anonymous, Order = 3  },
                 new Category { Id = 4,  Name = "DriveAnon",       DisplayName = "Drive",           IconPath = "", Controller = "Drive",       Action = "AnonymousIndex",   Role = Role.Anonymous, Order = 4  },
                 new Category { Id = 5,  Name = "DriveAdmin",      DisplayName = "Drive (Admin)",   IconPath = "", Controller = "Drive",       Action = "AdminIndex",       Role = Role.Anonymous, Order = 5  },
                 new Category { Id = 6,  Name = "DriveUser",       DisplayName = "Drive (User)",    IconPath = "", Controller = "Drive",       Action = "UserIndex",        Role = Role.Anonymous, Order = 6  },

@@ -1,4 +1,5 @@
 using Maroik.Core.Contract.Domains.Menu;
+using Maroik.Core.Contract.Utilities;
 using Maroik.Core.PostgreSQL.Data;
 using Maroik.Core.Repository.Repositories;
 using Microsoft.EntityFrameworkCore;
@@ -30,7 +31,7 @@ public class SubCategoryRepositoryTests : IDisposable
 
     // ── Helpers ──────────────────────────────────────────────────────────────
 
-    private static EfSubCategory MakeSubCategory(long categoryId, string name, string role = "User", long order = 1) => new()
+    private static EfSubCategory MakeSubCategory(long categoryId, string name, string role = Role.User, long order = 1) => new()
     {
         CategoryId = categoryId,
         Name = name,
@@ -49,7 +50,7 @@ public class SubCategoryRepositoryTests : IDisposable
             DisplayName = "Parent",
             Controller = "ParentCategory",
             IconPath = "/icons/icon.svg",
-            Role = "User",
+            Role = Role.User,
             Order = 1
         };
         await _context.Categories.AddAsync(category);
@@ -96,14 +97,14 @@ public class SubCategoryRepositoryTests : IDisposable
     {
         long catId = await SeedCategoryAsync();
         await SeedAsync(
-            MakeSubCategory(catId, "UserSub1", role: "User", order: 1),
-            MakeSubCategory(catId, "AdminSub", role: "Admin", order: 2),
-            MakeSubCategory(catId, "UserSub2", role: "User", order: 3));
+            MakeSubCategory(catId, "UserSub1", role: Role.User, order: 1),
+            MakeSubCategory(catId, "AdminSub", role: Role.Admin, order: 2),
+            MakeSubCategory(catId, "UserSub2", role: Role.User, order: 3));
 
-        IEnumerable<SubCategory> result = await _sut.GetSubCategoryByRoleAsync("User");
+        IEnumerable<SubCategory> result = await _sut.GetSubCategoryByRoleAsync(Role.User);
 
         Assert.Equal(2, result.Count());
-        Assert.All(result, sc => Assert.Equal("User", sc.Role));
+        Assert.All(result, sc => Assert.Equal(Role.User, sc.Role));
     }
 
     /// <summary>Verifies that <c>GetSubCategoryByRoleAsync</c> returns ordered by order.</summary>
@@ -112,10 +113,10 @@ public class SubCategoryRepositoryTests : IDisposable
     {
         long catId = await SeedCategoryAsync();
         await SeedAsync(
-            MakeSubCategory(catId, "SecondItem", role: "User", order: 2),
-            MakeSubCategory(catId, "FirstItem", role: "User", order: 1));
+            MakeSubCategory(catId, "SecondItem", role: Role.User, order: 2),
+            MakeSubCategory(catId, "FirstItem", role: Role.User, order: 1));
 
-        IEnumerable<SubCategory> result = await _sut.GetSubCategoryByRoleAsync("User");
+        IEnumerable<SubCategory> result = await _sut.GetSubCategoryByRoleAsync(Role.User);
         List<SubCategory> list = result.ToList();
 
         Assert.Equal("FirstItem", list[0].Name);
@@ -137,7 +138,7 @@ public class SubCategoryRepositoryTests : IDisposable
             displayName: "New Sub Menu",
             iconPath: "/icons/new.svg",
             action: "NewAction",
-            role: "User",
+            role: Role.User,
             order: 5);
 
         await _sut.CreateSubCategoryAsync(subCategory);
@@ -145,7 +146,7 @@ public class SubCategoryRepositoryTests : IDisposable
         EfSubCategory? saved = await _context.SubCategories.FirstOrDefaultAsync(sc => sc.Name == "NewSubMenu", TestContext.Current.CancellationToken);
         Assert.NotNull(saved);
         Assert.Equal(catId, saved.CategoryId);
-        Assert.Equal("User", saved.Role);
+        Assert.Equal(Role.User, saved.Role);
     }
 
     // ── UpdateSubCategoryAsync ───────────────────────────────────────────────
@@ -165,7 +166,7 @@ public class SubCategoryRepositoryTests : IDisposable
             displayName: "Updated Sub",
             iconPath: "/icons/updated.svg",
             action: "UpdatedAction",
-            role: "Admin",
+            role: Role.Admin,
             order: 10);
 
         await _sut.UpdateSubCategoryAsync(subCategory);
@@ -173,7 +174,7 @@ public class SubCategoryRepositoryTests : IDisposable
         EfSubCategory? updated = await _context.SubCategories.FirstOrDefaultAsync(sc => sc.Id == efSub.Id, TestContext.Current.CancellationToken);
         Assert.NotNull(updated);
         Assert.Equal("UpdatedSub", updated.Name);
-        Assert.Equal("Admin", updated.Role);
+        Assert.Equal(Role.Admin, updated.Role);
         Assert.Equal(10, updated.Order);
     }
 

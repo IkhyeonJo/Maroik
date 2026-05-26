@@ -1,4 +1,5 @@
 using Maroik.Core.Contract.Domains.Account;
+using Maroik.Core.Contract.Utilities;
 
 namespace Maroik.Core.Contract.Tests.Domains.AccountDomain;
 
@@ -8,7 +9,7 @@ public class AccountTests
         string email = "user@example.com",
         string hashedPassword = "hashed",
         string nickname = "TestUser",
-        string role = "User",
+        string role = Role.User,
         string timeZone = "UTC",
         string? registrationToken = "token-123",
         bool agreedServiceTerms = true)
@@ -246,10 +247,10 @@ public class AccountTests
     {
         var account = ValidAccount();
 
-        var result = account.AdminUpdate("Admin", "UTC", false, 0, true, true, null, false);
+        var result = account.AdminUpdate(Role.Admin, "UTC", false, 0, true, true, null, false);
 
         Assert.False(result.IsError);
-        Assert.Equal("Admin", account.Role);
+        Assert.Equal(Role.Admin, account.Role);
         Assert.True(account.EmailConfirmed);
     }
 

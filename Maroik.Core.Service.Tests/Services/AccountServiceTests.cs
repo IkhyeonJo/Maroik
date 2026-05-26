@@ -48,7 +48,7 @@ public class AccountServiceTests
             hashedPassword: "$2a$13$placeholder",
             nickname: "User",
             avatarImagePath: null,
-            role: "User",
+            role: Role.User,
             timeZoneIanaId: "UTC",
             defaultMonetaryUnit: null,
             locked: locked,
