@@ -1,8 +1,6 @@
 name: CI
 
 on:
-  push:
-    branches: [ main ]
   pull_request:
     branches: [ main ]
 
@@ -36,7 +34,9 @@ jobs:
             --no-build \
             --configuration Release \
             --filter "FullyQualifiedName!~E2E" \
-            --logger "github;annotations.format=json"
+            --logger "github;annotations.format=json" \
+            --collect:"XPlat Code Coverage" \
+            --results-directory ./coverage
 
       # ── E2E Tests (Playwright) ───────────────────────────────────────────────
       - name: Install Playwright browsers
