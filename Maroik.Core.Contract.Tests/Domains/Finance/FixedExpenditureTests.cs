@@ -7,7 +7,7 @@ public class FixedExpenditureTests
     private static readonly DateTime Maturity = DateTime.UtcNow.AddYears(1);
 
     private static FixedExpenditure ValidFixedExpenditure() =>
-        FixedExpenditure.Register(1, "user@example.com", "ConsumerSpending", "SubscriptionService", "Netflix",
+        FixedExpenditure.Register("user@example.com", "ConsumerSpending", "SubscriptionService", "Netflix",
             15000m, "KRW", "My Card", null, 0, 1, Maturity).Value;
 
     // ── Register ─────────────────────────────────────────────────────────────
@@ -15,7 +15,7 @@ public class FixedExpenditureTests
     [Fact]
     public void Register_ReturnsFixedExpenditure_WhenValid()
     {
-        var result = FixedExpenditure.Register(1, "user@example.com", "ConsumerSpending", "SubscriptionService", "Netflix",
+        var result = FixedExpenditure.Register("user@example.com", "ConsumerSpending", "SubscriptionService", "Netflix",
             15000m, "KRW", "My Card", null, 0, 1, Maturity);
 
         Assert.False(result.IsError);
@@ -28,7 +28,7 @@ public class FixedExpenditureTests
     [InlineData(32)]
     public void Register_ReturnsError_WhenDepositDayOutOfRange(short day)
     {
-        var result = FixedExpenditure.Register(1, "user@example.com", "ConsumerSpending", "SubscriptionService", null,
+        var result = FixedExpenditure.Register("user@example.com", "ConsumerSpending", "SubscriptionService", null,
             0m, "KRW", "My Card", null, 0, day, Maturity);
 
         Assert.True(result.IsError);
@@ -40,7 +40,7 @@ public class FixedExpenditureTests
     [InlineData(13)]
     public void Register_ReturnsError_WhenDepositMonthOutOfRange(short month)
     {
-        var result = FixedExpenditure.Register(1, "user@example.com", "ConsumerSpending", "SubscriptionService", null,
+        var result = FixedExpenditure.Register("user@example.com", "ConsumerSpending", "SubscriptionService", null,
             0m, "KRW", "My Card", null, month, 1, Maturity);
 
         Assert.True(result.IsError);
@@ -52,7 +52,7 @@ public class FixedExpenditureTests
     [InlineData("")]
     public void Register_ReturnsError_WhenPaymentMethodEmpty(string? method)
     {
-        var result = FixedExpenditure.Register(1, "user@example.com", "ConsumerSpending", "SubscriptionService", null,
+        var result = FixedExpenditure.Register("user@example.com", "ConsumerSpending", "SubscriptionService", null,
             0m, "KRW", method, null, 0, 1, Maturity);
 
         Assert.True(result.IsError);

@@ -52,7 +52,7 @@ public class FixedExpenditureService : IFixedExpenditureService
         }
 
         string currency = payAsset.Balance.Currency;
-        var registerResult = FixedExpenditure.Register(0, accountEmail, request.MainClass, request.SubClass,
+        var registerResult = FixedExpenditure.Register(accountEmail, request.MainClass, request.SubClass,
             request.Content, Math.Abs(request.Amount), currency, request.PaymentMethod,
             myDepositAsset, request.DepositMonth, request.DepositDay, request.MaturityDate, request.Note);
 

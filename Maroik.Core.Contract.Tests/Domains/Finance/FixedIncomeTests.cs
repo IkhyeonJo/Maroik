@@ -7,7 +7,7 @@ public class FixedIncomeTests
     private static readonly DateTime Maturity = DateTime.UtcNow.AddYears(1);
 
     private static FixedIncome ValidFixedIncome() =>
-        FixedIncome.Register(1, "user@example.com", "RegularIncome", "LaborIncome", "Salary",
+        FixedIncome.Register("user@example.com", "RegularIncome", "LaborIncome", "Salary",
             3000000m, "KRW", "My Bank", 0, 25, Maturity).Value;
 
     // ── Register ─────────────────────────────────────────────────────────────
@@ -15,7 +15,7 @@ public class FixedIncomeTests
     [Fact]
     public void Register_ReturnsFixedIncome_WhenValid()
     {
-        var result = FixedIncome.Register(1, "user@example.com", "RegularIncome", "LaborIncome", "Salary",
+        var result = FixedIncome.Register("user@example.com", "RegularIncome", "LaborIncome", "Salary",
             3000000m, "KRW", "My Bank", 0, 25, Maturity);
 
         Assert.False(result.IsError);
@@ -28,7 +28,7 @@ public class FixedIncomeTests
     [InlineData(32)]
     public void Register_ReturnsError_WhenDepositDayOutOfRange(short day)
     {
-        var result = FixedIncome.Register(1, "user@example.com", "RegularIncome", "LaborIncome", null,
+        var result = FixedIncome.Register("user@example.com", "RegularIncome", "LaborIncome", null,
             0m, "KRW", "My Bank", 0, day, Maturity);
 
         Assert.True(result.IsError);
@@ -40,7 +40,7 @@ public class FixedIncomeTests
     [InlineData(13)]
     public void Register_ReturnsError_WhenDepositMonthOutOfRange(short month)
     {
-        var result = FixedIncome.Register(1, "user@example.com", "RegularIncome", "LaborIncome", null,
+        var result = FixedIncome.Register("user@example.com", "RegularIncome", "LaborIncome", null,
             0m, "KRW", "My Bank", month, 1, Maturity);
 
         Assert.True(result.IsError);
@@ -52,7 +52,7 @@ public class FixedIncomeTests
     [InlineData("")]
     public void Register_ReturnsError_WhenMainClassEmpty(string? mainClass)
     {
-        var result = FixedIncome.Register(1, "user@example.com", mainClass, "LaborIncome", null,
+        var result = FixedIncome.Register("user@example.com", mainClass, "LaborIncome", null,
             0m, "KRW", "My Bank", 0, 1, Maturity);
 
         Assert.True(result.IsError);

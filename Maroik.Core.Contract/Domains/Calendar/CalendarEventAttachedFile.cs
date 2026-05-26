@@ -49,7 +49,6 @@ public sealed class CalendarEventAttachedFile : Entity<long>
 
     /// <summary>Creates a new attached-file entity after validating required fields.</summary>
     public static ErrorOr<CalendarEventAttachedFile> Create(
-        long id,
         long calendarEventId,
         long size,
         string? name,
@@ -65,6 +64,6 @@ public sealed class CalendarEventAttachedFile : Entity<long>
         if (size < 0)
             return Error.Validation("CalendarEventAttachedFile.InvalidSize", "File size cannot be negative.");
 
-        return new CalendarEventAttachedFile(id, calendarEventId, size, name, extension, path);
+        return new CalendarEventAttachedFile(0, calendarEventId, size, name, extension, path);
     }
 }

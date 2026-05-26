@@ -1,5 +1,6 @@
 using Maroik.Core.Contract.Domains.Account;
 using Maroik.Core.Contract.Dtos;
+using Maroik.Core.Contract.Utilities;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Service.Mappers;
 using Microsoft.Extensions.Logging;
@@ -54,7 +55,7 @@ public class ManagementAccountService : IManagementAccountService
                 request.Email ?? string.Empty,
                 hashedPassword,
                 request.Nickname ?? string.Empty,
-                request.Role ?? "User",
+                request.Role ?? Role.User,
                 request.TimeZoneIanaId ?? "UTC",
                 request.DefaultMonetaryUnit,
                 request.RegistrationToken,

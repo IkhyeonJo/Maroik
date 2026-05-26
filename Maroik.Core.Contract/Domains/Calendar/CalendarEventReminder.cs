@@ -64,7 +64,6 @@ public sealed class CalendarEventReminder : Entity<long>
     /// Exactly one of the "before" parameters must be non-null.
     /// </summary>
     public static ErrorOr<CalendarEventReminder> Create(
-        long id,
         long calendarEventId,
         string? method,
         long? minutesBefore,
@@ -82,7 +81,7 @@ public sealed class CalendarEventReminder : Entity<long>
         if (!hasLeadTime)
             return Error.Validation("Reminder.NoLeadTime", "At least one lead-time field (minutes/hours/days/weeks) must be set.");
 
-        return new CalendarEventReminder(id, calendarEventId, method,
+        return new CalendarEventReminder(0, calendarEventId, method,
             minutesBefore, hoursBefore, daysBefore, weeksBefore, timesBefore);
     }
 }

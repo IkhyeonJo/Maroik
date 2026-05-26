@@ -111,7 +111,7 @@ public class AccountService : IAccountService
                 newAccount.Email ?? string.Empty,
                 newAccount.HashedPassword,
                 newAccount.Nickname ?? string.Empty,
-                newAccount.Role ?? "User",
+                newAccount.Role ?? Role.User,
                 newAccount.TimeZoneIanaId ?? "UTC",
                 newAccount.DefaultMonetaryUnit,
                 newAccount.RegistrationToken,

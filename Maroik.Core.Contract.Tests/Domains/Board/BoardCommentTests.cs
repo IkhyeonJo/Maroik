@@ -9,7 +9,7 @@ public class BoardCommentTests
     [Fact]
     public void Create_ReturnsComment_WhenValid()
     {
-        var result = BoardComment.Create(1, 10, 1, null, "Alice", "Hello!");
+        var result = BoardComment.Create(10, 1, null, "Alice", "Hello!");
 
         Assert.False(result.IsError);
         Assert.Equal("Alice", result.Value.Writer);
@@ -22,7 +22,7 @@ public class BoardCommentTests
     [InlineData("   ")]
     public void Create_ReturnsError_WhenWriterEmpty(string? writer)
     {
-        var result = BoardComment.Create(1, 10, 1, null, writer, "content");
+        var result = BoardComment.Create(10, 1, null, writer, "content");
 
         Assert.True(result.IsError);
         Assert.Equal("BoardComment.WriterEmpty", result.FirstError.Code);
@@ -34,7 +34,7 @@ public class BoardCommentTests
     [InlineData("   ")]
     public void Create_ReturnsError_WhenContentEmpty(string? content)
     {
-        var result = BoardComment.Create(1, 10, 1, null, "Alice", content);
+        var result = BoardComment.Create(10, 1, null, "Alice", content);
 
         Assert.True(result.IsError);
         Assert.Equal("BoardComment.ContentEmpty", result.FirstError.Code);
@@ -45,7 +45,7 @@ public class BoardCommentTests
     [Fact]
     public void SoftDelete_SetsDeletedTrue()
     {
-        var comment = BoardComment.Create(1, 10, 1, null, "Alice", "Hello!").Value;
+        var comment = BoardComment.Create(10, 1, null, "Alice", "Hello!").Value;
 
         comment.SoftDelete();
 

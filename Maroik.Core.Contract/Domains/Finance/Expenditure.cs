@@ -105,10 +105,8 @@ public sealed class Expenditure : AggregateRoot<long>
 
     /// <summary>
     /// Records a new expenditure and raises <see cref="ExpenditureRecordedEvent"/>.
-    /// Pass <paramref name="id"/> as 0 for new records (the repository assigns the real ID).
     /// </summary>
     public static ErrorOr<Expenditure> Record(
-        long id,
         string? accountEmailValue,
         string? mainClass,
         string? subClass,
@@ -134,7 +132,7 @@ public sealed class Expenditure : AggregateRoot<long>
         var moneyResult = Money.Create(amount, currency);
         if (moneyResult.IsError) return moneyResult.Errors;
 
-        var expenditure = new Expenditure(id, emailResult.Value, mainClass, subClass, content,
+        var expenditure = new Expenditure(0, emailResult.Value, mainClass, subClass, content,
             moneyResult.Value, paymentMethod, myDepositAsset, note);
 
         return expenditure;

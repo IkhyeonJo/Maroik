@@ -49,7 +49,6 @@ public sealed class BoardAttachedFile : Entity<long>
 
     /// <summary>Creates a new attached-file entity after validating required fields.</summary>
     public static ErrorOr<BoardAttachedFile> Create(
-        long id,
         long boardId,
         long size,
         string? name,
@@ -65,6 +64,6 @@ public sealed class BoardAttachedFile : Entity<long>
         if (size < 0)
             return Error.Validation("BoardAttachedFile.InvalidSize", "File size cannot be negative.");
 
-        return new BoardAttachedFile(id, boardId, size, name, extension, path);
+        return new BoardAttachedFile(0, boardId, size, name, extension, path);
     }
 }

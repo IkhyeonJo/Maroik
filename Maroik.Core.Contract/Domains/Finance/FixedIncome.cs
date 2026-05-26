@@ -125,7 +125,6 @@ public sealed class FixedIncome : AggregateRoot<long>
     /// Registers a new fixed income and raises <see cref="FixedIncomeRegisteredEvent"/>.
     /// </summary>
     public static ErrorOr<FixedIncome> Register(
-        long id,
         string? accountEmailValue,
         string? mainClass,
         string? subClass,
@@ -159,7 +158,7 @@ public sealed class FixedIncome : AggregateRoot<long>
         var moneyResult = Money.Create(amount, currency);
         if (moneyResult.IsError) return moneyResult.Errors;
 
-        var fixedIncome = new FixedIncome(id, emailResult.Value, mainClass, subClass, content,
+        var fixedIncome = new FixedIncome(0, emailResult.Value, mainClass, subClass, content,
             moneyResult.Value, depositMyAssetProductName, depositMonth, depositDay, maturityDate, note);
 
         return fixedIncome;

@@ -132,7 +132,6 @@ public sealed class FixedExpenditure : AggregateRoot<long>
     /// Registers a new fixed expenditure and raises <see cref="FixedExpenditureRegisteredEvent"/>.
     /// </summary>
     public static ErrorOr<FixedExpenditure> Register(
-        long id,
         string? accountEmailValue,
         string? mainClass,
         string? subClass,
@@ -167,7 +166,7 @@ public sealed class FixedExpenditure : AggregateRoot<long>
         var moneyResult = Money.Create(amount, currency);
         if (moneyResult.IsError) return moneyResult.Errors;
 
-        var fixedExpenditure = new FixedExpenditure(id, emailResult.Value, mainClass, subClass, content,
+        var fixedExpenditure = new FixedExpenditure(0, emailResult.Value, mainClass, subClass, content,
             moneyResult.Value, paymentMethod, myDepositAsset, depositMonth, depositDay, maturityDate, note);
 
         return fixedExpenditure;

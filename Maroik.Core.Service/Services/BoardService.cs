@@ -123,7 +123,7 @@ public class BoardService : IBoardService
         await _unitOfWork.BeginAsync();
         try
         {
-            var boardResult = Board.Create(0, request.Type, request.Title, content, request.Writer);
+            var boardResult = Board.Create(request.Type, request.Title, content, request.Writer);
             if (boardResult.IsError)
             {
                 await _unitOfWork.RollbackAsync();
@@ -257,7 +257,7 @@ public class BoardService : IBoardService
             // The comment order is the current count, giving sequential ordering starting at 0.
             long order = (long)(existing?.Count() ?? 0);
 
-            var commentResult = BoardComment.Create(0, request.BoardId, order, request.AvatarImagePath, request.Writer, content);
+            var commentResult = BoardComment.Create(request.BoardId, order, request.AvatarImagePath, request.Writer, content);
             if (commentResult.IsError)
                 return ServiceResult.Fail(commentResult.FirstError.Description);
 

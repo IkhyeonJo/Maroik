@@ -124,7 +124,7 @@ public class CalendarService : ICalendarService
             if (calendars.Any(c => c.Name == request.Name))
                 return ServiceResult.Fail("The calendar already exists.");
 
-            var calendarResult = Calendar.Create(0, request.AccountEmail, request.Name, request.Description, request.TimeZoneIanaId, request.HtmlColorCode);
+            var calendarResult = Calendar.Create(request.AccountEmail, request.Name, request.Description, request.TimeZoneIanaId, request.HtmlColorCode);
             if (calendarResult.IsError)
                 return ServiceResult.Fail(calendarResult.FirstError.Description);
 
@@ -181,7 +181,7 @@ public class CalendarService : ICalendarService
             // Create the default calendar only when the user has none yet (e.g., first login).
             if (calendars.Count == 0)
             {
-                var calendarResult = Calendar.Create(0, request.AccountEmail, request.Name, request.Description, request.TimeZoneIanaId, request.HtmlColorCode);
+                var calendarResult = Calendar.Create(request.AccountEmail, request.Name, request.Description, request.TimeZoneIanaId, request.HtmlColorCode);
                 if (calendarResult.IsError)
                     return ServiceResult.Fail(calendarResult.FirstError.Description);
 
@@ -297,7 +297,7 @@ public class CalendarService : ICalendarService
                 return ServiceResult.Fail("The calendar does not exists.");
             }
 
-            var eventResult = CalendarEvent.Create(0, request.CalendarId, request.Title, description,
+            var eventResult = CalendarEvent.Create(request.CalendarId, request.Title, description,
                 request.AllDay, request.StartDate, request.EndDate,
                 request.StartDateTimeZoneIanaId, request.EndDateTimeZoneIanaId,
                 request.Location, request.Status, request.RecurrenceId);
@@ -314,7 +314,7 @@ public class CalendarService : ICalendarService
             {
                 string filePath = BuildEventFilePath(roleIndex, eventId, attachedFile.FileName);
                 await _fileClient.UploadAsync(attachedFile.Bytes, attachedFile.ContentType, filePath, _settings.Value.FileStorageBaseUrl ?? string.Empty);
-                var fileResult = CalendarEventAttachedFile.Create(0, eventId, attachedFile.Size,
+                var fileResult = CalendarEventAttachedFile.Create(eventId, attachedFile.Size,
                     Path.GetFileNameWithoutExtension(attachedFile.FileName),
                     Path.GetExtension(attachedFile.FileName),
                     filePath.Replace('\\', '/')); // Normalise path separators for URL use.
@@ -329,7 +329,7 @@ public class CalendarService : ICalendarService
             // Create all reminder entries for the event within the same transaction.
             foreach (CalendarReminderInfo r in reminders)
             {
-                var reminderResult = CalendarEventReminder.Create(0, eventId, r.Method,
+                var reminderResult = CalendarEventReminder.Create(eventId, r.Method,
                     r.MinutesBeforeEvent, r.HoursBeforeEvent, r.DaysBeforeEvent, r.WeeksBeforeEvent,
                     r.TimesBeforeEvent.HasValue ? TimeOnly.FromTimeSpan(r.TimesBeforeEvent.Value) : null);
                 if (reminderResult.IsError)
@@ -398,7 +398,7 @@ public class CalendarService : ICalendarService
             {
                 string filePath = BuildEventFilePath(roleIndex, existing.Id, attachedFile.FileName);
                 await _fileClient.UploadAsync(attachedFile.Bytes, attachedFile.ContentType, filePath, _settings.Value.FileStorageBaseUrl ?? string.Empty);
-                var fileResult = CalendarEventAttachedFile.Create(0, existing.Id, attachedFile.Size,
+                var fileResult = CalendarEventAttachedFile.Create(existing.Id, attachedFile.Size,
                     Path.GetFileNameWithoutExtension(attachedFile.FileName),
                     Path.GetExtension(attachedFile.FileName),
                     filePath.Replace('\\', '/'));
@@ -414,7 +414,7 @@ public class CalendarService : ICalendarService
             await _calendarEventReminderRepository.DeleteCalendarEventReminderAsync(existing.Id);
             foreach (CalendarReminderInfo r in reminders)
             {
-                var reminderResult = CalendarEventReminder.Create(0, existing.Id, r.Method,
+                var reminderResult = CalendarEventReminder.Create(existing.Id, r.Method,
                     r.MinutesBeforeEvent, r.HoursBeforeEvent, r.DaysBeforeEvent, r.WeeksBeforeEvent,
                     r.TimesBeforeEvent.HasValue ? TimeOnly.FromTimeSpan(r.TimesBeforeEvent.Value) : null);
                 if (reminderResult.IsError)

@@ -93,7 +93,6 @@ public sealed class Calendar : AggregateRoot<long>
     /// Creates a new calendar and raises <see cref="CalendarCreatedEvent"/>.
     /// </summary>
     public static ErrorOr<Calendar> Create(
-        long id,
         string? accountEmailValue,
         string? name,
         string? description,
@@ -112,7 +111,7 @@ public sealed class Calendar : AggregateRoot<long>
         var colorResult = HtmlColorCode.Create(htmlColorCode);
         if (colorResult.IsError) return colorResult.Errors;
 
-        var calendar = new Calendar(id, emailResult.Value, name, description, tzResult.Value, colorResult.Value);
+        var calendar = new Calendar(0, emailResult.Value, name, description, tzResult.Value, colorResult.Value);
         return calendar;
     }
 

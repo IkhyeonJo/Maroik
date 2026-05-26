@@ -18,8 +18,7 @@
     <PackageReference Include="HtmlAgilityPack" />
     <PackageReference Include="HtmlSanitizer" />
     <PackageReference Include="Magick.NET-Q8-AnyCPU" />
-    <PackageReference Include="MailKit" />
-    <PackageReference Include="Mapster.DependencyInjection" />
+<PackageReference Include="Mapster.DependencyInjection" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation" />
     <PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" />
     <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" />

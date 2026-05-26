@@ -86,7 +86,7 @@ public class ExpenditureService : IExpenditureService
             string currency = paymentAsset.Balance.Currency;
             string? myDepositAsset = classResult.Value ? request.MyDepositAsset : string.Empty;
 
-            var expenditureResult = Expenditure.Record(0, accountEmail, request.MainClass, request.SubClass,
+            var expenditureResult = Expenditure.Record(accountEmail, request.MainClass, request.SubClass,
                 request.Content, Math.Abs(request.Amount), currency, request.PaymentMethod, myDepositAsset, request.Note);
             if (expenditureResult.IsError)
             {

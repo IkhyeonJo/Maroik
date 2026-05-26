@@ -125,7 +125,6 @@ public sealed class CalendarEvent : AggregateRoot<long>
     /// Creates a new calendar event and raises <see cref="CalendarEventAddedEvent"/>.
     /// </summary>
     public static ErrorOr<CalendarEvent> Create(
-        long id,
         long calendarId,
         string? title,
         string? description,
@@ -150,7 +149,7 @@ public sealed class CalendarEvent : AggregateRoot<long>
         if (!allDay && endDate < startDate)
             return Error.Validation("CalendarEvent.InvalidDateRange", "End date must not be earlier than start date.");
 
-        var calendarEvent = new CalendarEvent(id, calendarId, title, description, allDay,
+        var calendarEvent = new CalendarEvent(0, calendarId, title, description, allDay,
             startDate, endDate, startTz, endTz, location, status, recurrenceId);
 
         return calendarEvent;

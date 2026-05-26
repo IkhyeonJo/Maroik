@@ -5,20 +5,20 @@ namespace Maroik.Core.Contract.Tests.Domain.Post;
 public class BoardTests
 {
     private static Board ValidBoard(long id = 1) =>
-        Board.Create(id, "FreeForum", "Hello World", "content", "Alice").Value;
+        Board.Reconstitute(id, "FreeForum", "Hello World", "content", "Alice", DateTime.UtcNow, DateTime.UtcNow, 0, false, false, false);
 
     private static BoardComment ValidComment(long boardId = 1) =>
-        BoardComment.Create(1, boardId, 1, null, "Bob", "Nice post!").Value;
+        BoardComment.Create(boardId, 1, null, "Bob", "Nice post!").Value;
 
     private static BoardAttachedFile ValidFile(long boardId = 1) =>
-        BoardAttachedFile.Create(1, boardId, 1024, "doc.pdf", ".pdf", "/files/doc.pdf").Value;
+        BoardAttachedFile.Create(boardId, 1024, "doc.pdf", ".pdf", "/files/doc.pdf").Value;
 
     // ── Create ───────────────────────────────────────────────────────────────
 
     [Fact]
     public void Create_ReturnsBoard_WhenValid()
     {
-        var result = Board.Create(1, "FreeForum", "Title", "body", "Alice");
+        var result = Board.Create("FreeForum", "Title", "body", "Alice");
 
         Assert.False(result.IsError);
         Assert.Equal("FreeForum", result.Value.Type);
@@ -31,7 +31,7 @@ public class BoardTests
     [InlineData("   ")]
     public void Create_ReturnsError_WhenTypeEmpty(string? type)
     {
-        var result = Board.Create(1, type, "Title", null, "Alice");
+        var result = Board.Create(type, "Title", null, "Alice");
 
         Assert.True(result.IsError);
         Assert.Equal("Board.TypeEmpty", result.FirstError.Code);
@@ -43,7 +43,7 @@ public class BoardTests
     [InlineData("   ")]
     public void Create_ReturnsError_WhenTitleEmpty(string? title)
     {
-        var result = Board.Create(1, "FreeForum", title, null, "Alice");
+        var result = Board.Create("FreeForum", title, null, "Alice");
 
         Assert.True(result.IsError);
         Assert.Equal("Board.TitleEmpty", result.FirstError.Code);
@@ -52,7 +52,7 @@ public class BoardTests
     [Fact]
     public void Create_ReturnsError_WhenTitleTooLong()
     {
-        var result = Board.Create(1, "FreeForum", new string('x', 101), null, "Alice");
+        var result = Board.Create("FreeForum", new string('x', 101), null, "Alice");
 
         Assert.True(result.IsError);
         Assert.Equal("Board.TitleTooLong", result.FirstError.Code);
@@ -61,7 +61,7 @@ public class BoardTests
     [Fact]
     public void Create_ReturnsError_WhenContentTooLong()
     {
-        var result = Board.Create(1, "FreeForum", "Title", new string('x', 16385), "Alice");
+        var result = Board.Create("FreeForum", "Title", new string('x', 16385), "Alice");
 
         Assert.True(result.IsError);
         Assert.Equal("Board.ContentTooLong", result.FirstError.Code);
@@ -73,7 +73,7 @@ public class BoardTests
     [InlineData("   ")]
     public void Create_ReturnsError_WhenWriterEmpty(string? writer)
     {
-        var result = Board.Create(1, "FreeForum", "Title", null, writer);
+        var result = Board.Create("FreeForum", "Title", null, writer);
 
         Assert.True(result.IsError);
         Assert.Equal("Board.WriterEmpty", result.FirstError.Code);

@@ -38,7 +38,7 @@ public class FixedIncomeService : IFixedIncomeService
         if (asset == null) return ServiceResult.Fail("Input is invalid");
 
         string currency = asset.Balance.Currency;
-        var registerResult = FixedIncome.Register(0, accountEmail, request.MainClass, request.SubClass,
+        var registerResult = FixedIncome.Register(accountEmail, request.MainClass, request.SubClass,
             request.Content, Math.Abs(request.Amount), currency,
             request.DepositMyAssetProductName, request.DepositMonth, request.DepositDay,
             request.MaturityDate, request.Note);

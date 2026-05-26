@@ -100,7 +100,6 @@ public sealed class Board : AggregateRoot<long>
     /// Creates a new board post and raises <see cref="BoardCreatedEvent"/>.
     /// </summary>
     public static ErrorOr<Board> Create(
-        long id,
         string? type,
         string? title,
         string? content,
@@ -121,7 +120,7 @@ public sealed class Board : AggregateRoot<long>
         if (string.IsNullOrWhiteSpace(writer))
             return Error.Validation("Board.WriterEmpty", "Post author (writer) cannot be empty.");
 
-        var board = new Board(id, type, title, content, writer);
+        var board = new Board(0, type, title, content, writer);
         return board;
     }
 

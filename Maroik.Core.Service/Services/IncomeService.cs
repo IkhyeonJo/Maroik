@@ -53,7 +53,7 @@ public class IncomeService : IIncomeService
             }
 
             string currency = depositAsset.Balance.Currency;
-            var incomeResult = Income.Record(0, accountEmail, request.MainClass, request.SubClass,
+            var incomeResult = Income.Record(accountEmail, request.MainClass, request.SubClass,
                 request.Content, Math.Abs(request.Amount), currency, request.DepositMyAssetProductName, request.Note);
             if (incomeResult.IsError)
             {

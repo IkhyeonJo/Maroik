@@ -98,10 +98,8 @@ public sealed class Income : AggregateRoot<long>
 
     /// <summary>
     /// Records a new income entry and raises <see cref="IncomeRecordedEvent"/>.
-    /// Pass <paramref name="id"/> as 0 for new records (the repository assigns the real ID).
     /// </summary>
     public static ErrorOr<Income> Record(
-        long id,
         string? accountEmailValue,
         string? mainClass,
         string? subClass,
@@ -126,7 +124,7 @@ public sealed class Income : AggregateRoot<long>
         var moneyResult = Money.Create(amount, currency);
         if (moneyResult.IsError) return moneyResult.Errors;
 
-        var income = new Income(id, emailResult.Value, mainClass, subClass, content,
+        var income = new Income(0, emailResult.Value, mainClass, subClass, content,
             moneyResult.Value, depositMyAssetProductName, note);
 
         return income;

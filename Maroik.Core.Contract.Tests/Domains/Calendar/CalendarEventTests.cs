@@ -8,20 +8,20 @@ public class CalendarEventTests
     private static readonly DateTime End = new(2025, 6, 1, 10, 0, 0, DateTimeKind.Utc);
 
     private static CalendarEvent ValidEvent(long id = 1, long calendarId = 10) =>
-        CalendarEvent.Create(id, calendarId, "Team Meeting", null, false, Start, End, "UTC", "UTC", null, null).Value;
+        CalendarEvent.Reconstitute(id, calendarId, "Team Meeting", null, false, Start, End, "UTC", "UTC", null, null, null, DateTime.UtcNow, DateTime.UtcNow);
 
     private static CalendarEventReminder ValidReminder(long eventId = 1) =>
-        CalendarEventReminder.Create(1, eventId, "Email", 30, null, null, null, null).Value;
+        CalendarEventReminder.Create(eventId, "Email", 30, null, null, null, null).Value;
 
     private static CalendarEventAttachedFile ValidFile(long eventId = 1) =>
-        CalendarEventAttachedFile.Create(1, eventId, 512, "agenda.pdf", ".pdf", "/files/agenda.pdf").Value;
+        CalendarEventAttachedFile.Create(eventId, 512, "agenda.pdf", ".pdf", "/files/agenda.pdf").Value;
 
     // ── Create ───────────────────────────────────────────────────────────────
 
     [Fact]
     public void Create_ReturnsCalendarEvent_WhenValid()
     {
-        var result = CalendarEvent.Create(1, 10, "Stand-up", null, false, Start, End, "UTC", "UTC", null, null);
+        var result = CalendarEvent.Create(10, "Stand-up", null, false, Start, End, "UTC", "UTC", null, null);
 
         Assert.False(result.IsError);
         Assert.Equal("Stand-up", result.Value.Title);
@@ -34,7 +34,7 @@ public class CalendarEventTests
     [InlineData("   ")]
     public void Create_ReturnsError_WhenTitleEmpty(string? title)
     {
-        var result = CalendarEvent.Create(1, 10, title, null, false, Start, End, null, null, null, null);
+        var result = CalendarEvent.Create(10, title, null, false, Start, End, null, null, null, null);
 
         Assert.True(result.IsError);
         Assert.Equal("CalendarEvent.TitleEmpty", result.FirstError.Code);
@@ -43,7 +43,7 @@ public class CalendarEventTests
     [Fact]
     public void Create_ReturnsError_WhenTitleTooLong()
     {
-        var result = CalendarEvent.Create(1, 10, new string('x', 101), null, false, Start, End, null, null, null, null);
+        var result = CalendarEvent.Create(10, new string('x', 101), null, false, Start, End, null, null, null, null);
 
         Assert.True(result.IsError);
         Assert.Equal("CalendarEvent.TitleTooLong", result.FirstError.Code);
@@ -52,7 +52,7 @@ public class CalendarEventTests
     [Fact]
     public void Create_ReturnsError_WhenDescriptionTooLong()
     {
-        var result = CalendarEvent.Create(1, 10, "Title", new string('x', 16385), false, Start, End, null, null, null, null);
+        var result = CalendarEvent.Create(10, "Title", new string('x', 16385), false, Start, End, null, null, null, null);
 
         Assert.True(result.IsError);
         Assert.Equal("CalendarEvent.DescriptionTooLong", result.FirstError.Code);
@@ -61,7 +61,7 @@ public class CalendarEventTests
     [Fact]
     public void Create_ReturnsError_WhenEndBeforeStart_AndNotAllDay()
     {
-        var result = CalendarEvent.Create(1, 10, "Title", null, false, End, Start, null, null, null, null);
+        var result = CalendarEvent.Create(10, "Title", null, false, End, Start, null, null, null, null);
 
         Assert.True(result.IsError);
         Assert.Equal("CalendarEvent.InvalidDateRange", result.FirstError.Code);
@@ -70,7 +70,7 @@ public class CalendarEventTests
     [Fact]
     public void Create_Succeeds_WhenEndBeforeStart_AndAllDay()
     {
-        var result = CalendarEvent.Create(1, 10, "All Day", null, true, End, Start, null, null, null, null);
+        var result = CalendarEvent.Create(10, "All Day", null, true, End, Start, null, null, null, null);
 
         Assert.False(result.IsError);
     }

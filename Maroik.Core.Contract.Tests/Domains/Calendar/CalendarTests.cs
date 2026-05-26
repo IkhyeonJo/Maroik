@@ -5,7 +5,7 @@ namespace Maroik.Core.Contract.Tests.Domains.CalendarDomain;
 public class CalendarTests
 {
     private static Calendar ValidCalendar(long id = 1) =>
-        Calendar.Create(id, "user@example.com", "Work", "My work calendar", "UTC", "#3498DB").Value;
+        Calendar.Reconstitute(id, "user@example.com", "Work", "My work calendar", "UTC", "#3498DB", DateTime.UtcNow, DateTime.UtcNow);
 
     private static OtherCalendar ValidSubscription(string email = "sub@example.com", long calendarId = 1) =>
         OtherCalendar.Create(email, calendarId).Value;
@@ -15,7 +15,7 @@ public class CalendarTests
     [Fact]
     public void Create_ReturnsCalendar_WhenValid()
     {
-        var result = Calendar.Create(1, "user@example.com", "Personal", null, "UTC", "#FF0000");
+        var result = Calendar.Create("user@example.com", "Personal", null, "UTC", "#FF0000");
 
         Assert.False(result.IsError);
         Assert.Equal("Personal", result.Value.Name);
@@ -28,7 +28,7 @@ public class CalendarTests
     [InlineData("   ")]
     public void Create_ReturnsError_WhenNameEmpty(string? name)
     {
-        var result = Calendar.Create(1, "user@example.com", name, null, "UTC", "#FF0000");
+        var result = Calendar.Create("user@example.com", name, null, "UTC", "#FF0000");
 
         Assert.True(result.IsError);
         Assert.Equal("Calendar.NameEmpty", result.FirstError.Code);
@@ -37,7 +37,7 @@ public class CalendarTests
     [Fact]
     public void Create_ReturnsError_WhenEmailInvalid()
     {
-        var result = Calendar.Create(1, "bademail", "Work", null, "UTC", "#FF0000");
+        var result = Calendar.Create("bademail", "Work", null, "UTC", "#FF0000");
 
         Assert.True(result.IsError);
     }
@@ -45,7 +45,7 @@ public class CalendarTests
     [Fact]
     public void Create_ReturnsError_WhenTimeZoneInvalid()
     {
-        var result = Calendar.Create(1, "user@example.com", "Work", null, "Not/Valid", "#FF0000");
+        var result = Calendar.Create("user@example.com", "Work", null, "Not/Valid", "#FF0000");
 
         Assert.True(result.IsError);
         Assert.Equal("TimeZoneId.Invalid", result.FirstError.Code);
@@ -54,7 +54,7 @@ public class CalendarTests
     [Fact]
     public void Create_ReturnsError_WhenColorCodeInvalid()
     {
-        var result = Calendar.Create(1, "user@example.com", "Work", null, "UTC", "red");
+        var result = Calendar.Create("user@example.com", "Work", null, "UTC", "red");
 
         Assert.True(result.IsError);
         Assert.Equal("HtmlColorCode.Invalid", result.FirstError.Code);

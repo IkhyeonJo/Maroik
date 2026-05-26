@@ -69,7 +69,6 @@ public sealed class BoardComment : Entity<long>
 
     /// <summary>Creates a new comment after validating required fields.</summary>
     public static ErrorOr<BoardComment> Create(
-        long id,
         long boardId,
         long order,
         string? avatarImagePath,
@@ -82,7 +81,7 @@ public sealed class BoardComment : Entity<long>
         if (string.IsNullOrWhiteSpace(content))
             return Error.Validation("BoardComment.ContentEmpty", "Comment content cannot be empty.");
 
-        return new BoardComment(id, boardId, order, avatarImagePath, writer, content);
+        return new BoardComment(0, boardId, order, avatarImagePath, writer, content);
     }
 
     /// <summary>Marks the comment as soft-deleted (content is retained in the database).</summary>
