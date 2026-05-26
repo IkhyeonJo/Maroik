@@ -1,9 +1,12 @@
+using Maroik.Core.Contract.Utilities;
 using Maroik.Core.PostgreSQL.Data;
+using Maroik.Core.PostgreSQL.Models;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 
 namespace Maroik.WebSite.Tests.Infrastructure;
 
@@ -75,10 +78,31 @@ public class MaroikWebApplicationFactory : WebApplicationFactory<Program>
                 d => d.ServiceType == typeof(ApplicationDbContext));
             if (dbContextDescriptor != null) services.Remove(dbContextDescriptor);
 
-            // Add InMemory replacement — fresh database per factory instance
+            // Capture the DB name once per factory instance so all request scopes share
+            // the same in-memory database (DbContextOptions is Scoped, so Guid.NewGuid()
+            // inside the lambda would produce a new database name on every request).
+            var dbName = $"WebSiteIntegration_{Guid.NewGuid()}";
             services.AddDbContext<ApplicationDbContext>(options =>
-                options.UseInMemoryDatabase($"WebSiteIntegration_{Guid.NewGuid()}"));
+                options.UseInMemoryDatabase(dbName));
         });
+    }
+
+    protected override IHost CreateHost(IHostBuilder builder)
+    {
+        var host = base.CreateHost(builder);
+
+        using (var scope = host.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            db.Categories.AddRange(
+                new Category { Id = 1, Name = "Dashboard", DisplayName = "Dashboard", IconPath = "", Controller = "DashBoard", Action = "AnonymousIndex", Role = Role.Anonymous, Order = 1 },
+                new Category { Id = 2, Name = "Calendar",  DisplayName = "Calendar",  IconPath = "", Controller = "Calendar",  Action = "AnonymousIndex", Role = Role.Anonymous, Order = 2 },
+                new Category { Id = 3, Name = "Forum",     DisplayName = "Forum",     IconPath = "", Controller = "Forum",     Action = "FreeForum",      Role = Role.Anonymous, Order = 3 }
+            );
+            db.SaveChanges();
+        }
+
+        return host;
     }
 
     /// <summary>

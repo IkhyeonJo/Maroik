@@ -30,7 +30,8 @@ public abstract class E2ETestBase : IAsyncLifetime
         _playwright = await Playwright.CreateAsync();
         _browser = await _playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions
         {
-            Headless = true
+            Headless = true,
+            Channel = "chrome"  // use system-installed Chrome; avoids downloading Playwright's bundled Chromium
         });
     }
 
@@ -46,7 +47,8 @@ public abstract class E2ETestBase : IAsyncLifetime
     {
         var context = await _browser!.NewContextAsync(new BrowserNewContextOptions
         {
-            BaseURL = BaseUrl
+            BaseURL = BaseUrl,
+            IgnoreHTTPSErrors = true  // trust the ASP.NET Core dev certificate used by the test server
         });
         return await context.NewPageAsync();
     }

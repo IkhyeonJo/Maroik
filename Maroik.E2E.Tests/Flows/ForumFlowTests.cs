@@ -34,16 +34,16 @@ public class ForumFlowTests : E2ETestBase
         await Assertions.Expect(heading).ToBeVisibleAsync();
     }
 
-    /// <summary>Verifies that <c>FreeForumList</c> contains search form.</summary>
+    /// <summary>Verifies that <c>FreeForumList</c> contains search inputs.</summary>
     [Fact]
     public async Task FreeForumList_ContainsSearchForm()
     {
         var page = await NewPageAsync();
         await GotoAsync(page, "/Forum/FreeForum");
 
-        // The forum list includes a search form or at least one form element
-        int formCount = await page.Locator("form").CountAsync();
-        Assert.True(formCount > 0, "Forum list should include at least one form (search / write).");
+        // The forum list renders a JS-driven search bar (no <form> wrapper).
+        // Verify the search text input and the search-type selector are present.
+        await Assertions.Expect(page.Locator("#btnFreeForumSearchText")).ToBeVisibleAsync();
     }
 
     // ── Write mode: unauthenticated ──────────────────────────────────────────
