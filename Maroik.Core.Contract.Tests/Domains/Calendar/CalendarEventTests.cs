@@ -11,10 +11,10 @@ public class CalendarEventTests
         CalendarEvent.Reconstitute(id, calendarId, "Team Meeting", null, false, Start, End, "UTC", "UTC", null, null, null, DateTime.UtcNow, DateTime.UtcNow);
 
     private static CalendarEventReminder ValidReminder(long eventId = 1) =>
-        CalendarEventReminder.Create(eventId, "Email", 30, null, null, null, null).Value;
+        CalendarEventReminder.Reconstitute(1, eventId, "Email", 30, null, null, null, null);
 
     private static CalendarEventAttachedFile ValidFile(long eventId = 1) =>
-        CalendarEventAttachedFile.Create(eventId, 512, "agenda.pdf", ".pdf", "/files/agenda.pdf").Value;
+        CalendarEventAttachedFile.Reconstitute(1, eventId, 512, "agenda.pdf", ".pdf", "/files/agenda.pdf");
 
     // ── Create ───────────────────────────────────────────────────────────────
 

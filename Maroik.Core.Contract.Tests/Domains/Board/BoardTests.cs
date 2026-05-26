@@ -9,7 +9,7 @@ public class BoardTests
         Board.Reconstitute(id, nameof(BoardType.FreeForum), "Hello World", "content", "Alice", DateTime.UtcNow, DateTime.UtcNow, 0, false, false, false);
 
     private static BoardComment ValidComment(long boardId = 1) =>
-        BoardComment.Create(boardId, 1, null, "Bob", "Nice post!").Value;
+        BoardComment.Reconstitute(1, boardId, 1, null, "Bob", "Nice post!", DateTime.UtcNow, false);
 
     private static BoardAttachedFile ValidFile(long boardId = 1) =>
         BoardAttachedFile.Create(boardId, 1024, "doc.pdf", ".pdf", "/files/doc.pdf").Value;
