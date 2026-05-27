@@ -111,7 +111,7 @@ public class AccountRepositoryIntegrationTests : IAsyncLifetime
 
         Assert.NotNull(retrieved);
         Assert.Equal("NewUser", retrieved.Nickname);
-        Assert.Equal("Asia/Seoul", retrieved.TimeZoneIanaId);
+        Assert.Equal("Asia/Seoul", retrieved.TimeZone.Value);
     }
 
     // ── UpdateAccountAsync ───────────────────────────────────────────────────
@@ -147,7 +147,7 @@ public class AccountRepositoryIntegrationTests : IAsyncLifetime
 
         Assert.NotNull(result);
         Assert.Equal(Role.Admin, result.Role);
-        Assert.Equal("America/New_York", result.TimeZoneIanaId);
+        Assert.Equal("America/New_York", result.TimeZone.Value);
     }
 
     // ── Unique constraint ────────────────────────────────────────────────────
