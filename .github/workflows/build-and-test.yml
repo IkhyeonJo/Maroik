@@ -44,7 +44,8 @@ jobs:
             -reports:"./coverage/**/coverage.cobertura.xml" \
             -targetdir:"./coverage/report" \
             -reporttypes:"TextSummary;Html" \
-            -assemblyfilters:"-*Tests*;-*E2E*"
+            -assemblyfilters:"-*Tests*;-*E2E*" \
+            -classfilters:"-AspNetCoreGeneratedDocument.*"
           cat ./coverage/report/Summary.txt
           python3 -c "
           import re, sys
