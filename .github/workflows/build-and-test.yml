@@ -34,6 +34,35 @@ jobs:
             --collect:"XPlat Code Coverage" \
             --results-directory ./coverage
 
+      # ── Coverage Threshold ───────────────────────────────────────────────────
+      - name: Install ReportGenerator
+        run: dotnet tool install --global dotnet-reportgenerator-globaltool
+
+      - name: Check Coverage Threshold (60%)
+        run: |
+          reportgenerator \
+            -reports:"./coverage/**/coverage.cobertura.xml" \
+            -targetdir:"./coverage/report" \
+            -reporttypes:"TextSummary" \
+            -assemblyfilters:"-*Tests*;-*E2E*"
+          cat ./coverage/report/Summary.txt
+          python3 -c "
+          import re, sys
+          with open('./coverage/report/Summary.txt') as f:
+              content = f.read()
+          m = re.search(r'Line coverage:\s+([\d.]+)%', content)
+          if not m:
+              print('ERROR: Could not parse line coverage', file=sys.stderr)
+              sys.exit(1)
+          cov = float(m.group(1))
+          threshold = 60.0
+          print(f'Line coverage: {cov}%')
+          if cov < threshold:
+              print(f'::error::Coverage {cov}% is below the {threshold}% minimum threshold', file=sys.stderr)
+              sys.exit(1)
+          print(f'Coverage check passed: {cov}% >= {threshold}%')
+          "
+
       # ── E2E Tests (Playwright) ───────────────────────────────────────────────
       - name: Install Playwright browsers
         run: pwsh Maroik.E2E.Tests/bin/Release/net10.0/playwright.ps1 install --with-deps chromium

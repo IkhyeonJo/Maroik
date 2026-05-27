@@ -33,3 +33,24 @@ jobs:
             chmod +x Maroik.DeployOps/UnDeploy.sh Maroik.DeployOps/Deploy.sh
             ./Maroik.DeployOps/UnDeploy.sh
             ./Maroik.DeployOps/Deploy.sh
+
+      # ── Post-Deploy Health Check ─────────────────────────────────────────────
+      - name: Health Check
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            for i in $(seq 1 12); do
+              STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost/health 2>/dev/null || echo "000")
+              if [ "$STATUS" = "200" ]; then
+                echo "Health check passed (attempt $i/12)"
+                exit 0
+              fi
+              echo "Attempt $i/12: HTTP $STATUS — waiting 10s..."
+              sleep 10
+            done
+            echo "Health check failed after 12 attempts (2 minutes)"
+            docker logs Maroik.WebSite --tail 80
+            exit 1

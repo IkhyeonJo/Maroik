@@ -198,6 +198,8 @@ builder.Services.Configure<RequestLocalizationOptions>(
     });
 #endregion
 
+builder.Services.AddHealthChecks();
+
 builder.Services.AddControllersWithViews(options =>
 {
 #pragma warning disable CA2263
@@ -370,10 +372,16 @@ app.UseExceptionHandler("/Exception/Error");
 
 // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
 app.UseHsts();
-app.UseHttpsRedirection();
 
-app.UseRewriter(new RewriteOptions()
-  .AddRedirectToWww());
+// /health bypasses HTTPS redirect and www-redirect so it is reachable on HTTP port 80
+// from the deployment server (used by the CI/CD post-deploy health check).
+app.UseWhen(
+    ctx => !ctx.Request.Path.StartsWithSegments("/health"),
+    pipeline =>
+    {
+        pipeline.UseHttpsRedirection();
+        pipeline.UseRewriter(new RewriteOptions().AddRedirectToWww());
+    });
 
 app.UseRouting(); // 5. Routing middleware for routing requests (UseRouting)
 app.UseCors();
@@ -435,6 +443,7 @@ var localizationOptions = new RequestLocalizationOptions().SetDefaultCulture(sup
 app.UseRequestLocalization(localizationOptions);
 #endregion
 
+app.MapHealthChecks("/health");
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=DashBoard}/{action=AnonymousIndex}/{id?}");
