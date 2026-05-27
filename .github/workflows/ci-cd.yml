@@ -29,6 +29,8 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             cd /home/ubuntu/Maroik
+            git rev-parse HEAD > /tmp/maroik_prev_commit
+            echo "Saved rollback point: $(cat /tmp/maroik_prev_commit)"
             git pull origin main
             chmod +x Maroik.DeployOps/UnDeploy.sh Maroik.DeployOps/Deploy.sh
             ./Maroik.DeployOps/UnDeploy.sh
@@ -46,6 +48,7 @@ jobs:
               STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost/health 2>/dev/null || echo "000")
               if [ "$STATUS" = "200" ]; then
                 echo "Health check passed (attempt $i/12)"
+                rm -f /tmp/maroik_prev_commit
                 exit 0
               fi
               echo "Attempt $i/12: HTTP $STATUS — waiting 10s..."
@@ -54,3 +57,26 @@ jobs:
             echo "Health check failed after 12 attempts (2 minutes)"
             docker logs Maroik.WebSite --tail 80
             exit 1
+
+      # ── Rollback on Failure ──────────────────────────────────────────────────
+      - name: Rollback
+        if: failure()
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            PREV_COMMIT=$(cat /tmp/maroik_prev_commit 2>/dev/null)
+            if [ -z "$PREV_COMMIT" ]; then
+              echo "Cannot rollback: no previous commit recorded"
+              exit 1
+            fi
+            echo "Rolling back to $PREV_COMMIT"
+            cd /home/ubuntu/Maroik
+            git checkout "$PREV_COMMIT"
+            chmod +x Maroik.DeployOps/UnDeploy.sh Maroik.DeployOps/Deploy.sh
+            ./Maroik.DeployOps/UnDeploy.sh
+            ./Maroik.DeployOps/Deploy.sh
+            rm -f /tmp/maroik_prev_commit
+            echo "Rollback complete"
