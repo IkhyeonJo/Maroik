@@ -72,11 +72,7 @@ public class AccountService : IAccountService
 
         if (!_passwordService.VerifyPassword(password, account.HashedPassword))
         {
-            // Record the failed attempt and lock the account if the threshold is reached.
-            account.RecordLoginFailure();
-            if (account.LoginAttempt == _settings.Value.MaxLoginAttempt)
-                account.Lock(EnumHelper.GetDescription(AccountMessage.AccountLocked));
-
+            account.RecordLoginFailure(_settings.Value.MaxLoginAttempt);
             await _accountRepository.UpdateAccountAsync(account);
 
             return account.Locked

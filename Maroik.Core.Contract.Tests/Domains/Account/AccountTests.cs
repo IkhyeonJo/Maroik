@@ -202,18 +202,44 @@ public class AccountTests
     {
         var account = ValidAccount();
 
-        account.RecordLoginFailure();
-        account.RecordLoginFailure();
+        account.RecordLoginFailure(maxAttempts: 5);
+        account.RecordLoginFailure(maxAttempts: 5);
 
         Assert.Equal(2, account.LoginAttempt);
+        Assert.False(account.Locked);
+    }
+
+    [Fact]
+    public void RecordLoginFailure_LocksAccount_WhenMaxAttemptsReached()
+    {
+        var account = ValidAccount();
+
+        account.RecordLoginFailure(maxAttempts: 3);
+        account.RecordLoginFailure(maxAttempts: 3);
+        account.RecordLoginFailure(maxAttempts: 3);
+
+        Assert.Equal(3, account.LoginAttempt);
+        Assert.True(account.Locked);
+    }
+
+    [Fact]
+    public void RecordLoginFailure_LocksAccount_WhenCounterExceedsMax()
+    {
+        var account = ValidAccount();
+
+        account.RecordLoginFailure(maxAttempts: 2);
+        account.RecordLoginFailure(maxAttempts: 2);
+        account.RecordLoginFailure(maxAttempts: 2);
+
+        Assert.True(account.Locked);
     }
 
     [Fact]
     public void ResetLoginAttempt_SetsCounterToZero()
     {
         var account = ValidAccount();
-        account.RecordLoginFailure();
-        account.RecordLoginFailure();
+        account.RecordLoginFailure(maxAttempts: 5);
+        account.RecordLoginFailure(maxAttempts: 5);
 
         account.ResetLoginAttempt();
 
@@ -237,7 +263,7 @@ public class AccountTests
     public void Unlock_SetsLockedFalseAndResetsAttempts()
     {
         var account = ValidAccount();
-        account.RecordLoginFailure();
+        account.RecordLoginFailure(maxAttempts: 5);
         account.Lock();
 
         account.Unlock();
@@ -264,7 +290,7 @@ public class AccountTests
     public void AdminUpdate_ResetsLoginAttempt_WhenUnlocked()
     {
         var account = ValidAccount();
-        account.RecordLoginFailure();
+        account.RecordLoginFailure(maxAttempts: 5);
 
         var result = account.AdminUpdate(null, "UTC", false, 5, false, true, null, false);
 

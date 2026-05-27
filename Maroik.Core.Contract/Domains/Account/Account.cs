@@ -1,6 +1,7 @@
 using ErrorOr;
 using Maroik.Core.Contract.Domains.Primitives;
 using Maroik.Core.Contract.Domains.ValueObjects;
+using Maroik.Core.Contract.Utilities;
 
 namespace Maroik.Core.Contract.Domains.Account;
 
@@ -222,11 +223,15 @@ public sealed class Account : AggregateRoot<string>
         return Result.Success;
     }
 
-    /// <summary>Increments the failed-login counter.</summary>
-    public void RecordLoginFailure()
+    /// <summary>
+    /// Increments the failed-login counter and locks the account when <paramref name="maxAttempts"/> is reached.
+    /// </summary>
+    public void RecordLoginFailure(int maxAttempts)
     {
         LoginAttempt++;
         Updated = DateTime.UtcNow;
+        if (LoginAttempt >= maxAttempts)
+            Lock(EnumHelper.GetDescription(AccountMessage.AccountLocked));
     }
 
     /// <summary>Resets the failed-login counter to zero (called after a successful login).</summary>
