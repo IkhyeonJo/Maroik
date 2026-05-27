@@ -34,7 +34,7 @@ public class IncomeService : IIncomeService
         await _unitOfWork.BeginAsync();
         try
         {
-            if (!IsValidIncomeClass(request.MainClass, request.SubClass))
+            if (IncomeClassPolicy.Validate(request.MainClass, request.SubClass).IsError)
             {
                 await _unitOfWork.RollbackAsync();
                 return ServiceResult.Fail("Input is invalid");
@@ -83,7 +83,7 @@ public class IncomeService : IIncomeService
         await _unitOfWork.BeginAsync();
         try
         {
-            if (!IsValidIncomeClass(request.MainClass, request.SubClass))
+            if (IncomeClassPolicy.Validate(request.MainClass, request.SubClass).IsError)
             {
                 await _unitOfWork.RollbackAsync();
                 return ServiceResult.Fail("Input is invalid");
@@ -193,10 +193,4 @@ public class IncomeService : IIncomeService
         }
     }
 
-    private static bool IsValidIncomeClass(string? mainClass, string? subClass) => mainClass switch
-    {
-        "RegularIncome" => subClass is "LaborIncome" or "BusinessIncome" or "PensionIncome" or "FinancialIncome" or "RentalIncome" or "OtherIncome",
-        "IrregularIncome" => subClass is "LaborIncome" or "OtherIncome",
-        _ => false
-    };
 }

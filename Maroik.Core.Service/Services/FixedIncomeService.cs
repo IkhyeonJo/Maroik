@@ -87,14 +87,8 @@ public class FixedIncomeService : IFixedIncomeService
 
     private static ServiceResult ValidateRequest(FixedIncomeRequest request)
     {
-        bool classValid = request.MainClass switch
-        {
-            "RegularIncome" => request.SubClass is "LaborIncome" or "BusinessIncome" or "PensionIncome"
-                or "FinancialIncome" or "RentalIncome" or "OtherIncome",
-            "IrregularIncome" => request.SubClass is "LaborIncome" or "OtherIncome",
-            _ => false
-        };
-        if (!classValid) return ServiceResult.Fail("Input is invalid");
+        if (IncomeClassPolicy.Validate(request.MainClass, request.SubClass).IsError)
+            return ServiceResult.Fail("Input is invalid");
 
         if (request.DepositMonth is < 1 or > 12)
             return ServiceResult.Fail("Input is invalid");
