@@ -1,4 +1,5 @@
 using Maroik.Core.Contract.Domains.Account;
+using Maroik.Core.Contract.Domains.ValueObjects;
 using Maroik.Core.Contract.Utilities;
 
 namespace Maroik.Core.Contract.Tests.Domains.AccountDomain;
@@ -311,5 +312,105 @@ public class AccountTests
         account.RegenerateRegistrationTokenIfEmpty("new-tok");
 
         Assert.Equal("existing", account.RegistrationToken);
+    }
+
+    // ── UpdateProfile ────────────────────────────────────────────────────────
+
+    [Fact]
+    public void UpdateProfile_UpdatesAllFields()
+    {
+        var account = ValidAccount();
+        var newTz = TimeZoneId.Create("Asia/Seoul").Value;
+
+        account.UpdateProfile("NewNick", "/avatar.png", newTz, "USD");
+
+        Assert.Equal("NewNick", account.Nickname);
+        Assert.Equal("/avatar.png", account.AvatarImagePath);
+        Assert.Equal("Asia/Seoul", account.TimeZone.Value);
+        Assert.Equal("USD", account.DefaultMonetaryUnit);
+    }
+
+    [Fact]
+    public void UpdateProfile_ClearsAvatarAndCurrency_WhenNull()
+    {
+        var account = ValidAccount();
+        var tz = TimeZoneId.Create("UTC").Value;
+        account.UpdateProfile("Nick", "/avatar.png", tz, "KRW");
+
+        account.UpdateProfile("Nick", null, tz, null);
+
+        Assert.Null(account.AvatarImagePath);
+        Assert.Null(account.DefaultMonetaryUnit);
+    }
+
+    // ── ChangePassword ───────────────────────────────────────────────────────
+
+    [Fact]
+    public void ChangePassword_ReplacesHashedPassword()
+    {
+        var account = ValidAccount();
+
+        account.ChangePassword("newHash");
+
+        Assert.Equal("newHash", account.HashedPassword);
+    }
+
+    // ── SetMessage ───────────────────────────────────────────────────────────
+
+    [Fact]
+    public void SetMessage_StoresText()
+    {
+        var account = ValidAccount();
+
+        account.SetMessage("Under review");
+
+        Assert.Equal("Under review", account.Message);
+    }
+
+    [Fact]
+    public void SetMessage_ClearsMessage_WhenNull()
+    {
+        var account = ValidAccount();
+        account.SetMessage("some message");
+
+        account.SetMessage(null);
+
+        Assert.Null(account.Message);
+    }
+
+    // ── ForceConfirmEmail ────────────────────────────────────────────────────
+
+    [Fact]
+    public void ForceConfirmEmail_ConfirmsEmailAndClearsToken()
+    {
+        var account = ValidAccount(registrationToken: "tok");
+
+        account.ForceConfirmEmail();
+
+        Assert.True(account.EmailConfirmed);
+        Assert.Null(account.RegistrationToken);
+    }
+
+    [Fact]
+    public void ForceConfirmEmail_IsIdempotent_WhenAlreadyConfirmed()
+    {
+        var account = ValidAccount(registrationToken: "tok");
+        account.ForceConfirmEmail();
+
+        account.ForceConfirmEmail();
+
+        Assert.True(account.EmailConfirmed);
+    }
+
+    // ── AcceptServiceTerms ───────────────────────────────────────────────────
+
+    [Fact]
+    public void AcceptServiceTerms_SetsAgreedToTrue()
+    {
+        var account = ValidAccount(agreedServiceTerms: false);
+
+        account.AcceptServiceTerms();
+
+        Assert.True(account.AgreedServiceTerms);
     }
 }

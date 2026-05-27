@@ -140,6 +140,42 @@ public class AssetTests
         Assert.Equal("Asset.ProductNameEmpty", result.FirstError.Code);
     }
 
+    // ── Update (item validation) ──────────────────────────────────────────────
+
+    [Fact]
+    public void Update_ReturnsError_WhenItemEmpty()
+    {
+        var asset = ValidAsset();
+
+        var result = asset.Update("Name", "", 0m, "KRW", null, false);
+
+        Assert.True(result.IsError);
+        Assert.Equal("Asset.ItemEmpty", result.FirstError.Code);
+    }
+
+    // ── UpdateNote ────────────────────────────────────────────────────────────
+
+    [Fact]
+    public void UpdateNote_SetsNote()
+    {
+        var asset = ValidAsset();
+
+        asset.UpdateNote("memo text");
+
+        Assert.Equal("memo text", asset.Note);
+    }
+
+    [Fact]
+    public void UpdateNote_ClearsNote_WhenNull()
+    {
+        var asset = ValidAsset();
+        asset.UpdateNote("memo");
+
+        asset.UpdateNote(null);
+
+        Assert.Null(asset.Note);
+    }
+
     // ── SoftDelete ────────────────────────────────────────────────────────────
 
     [Fact]
