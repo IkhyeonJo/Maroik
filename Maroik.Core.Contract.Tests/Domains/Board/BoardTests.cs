@@ -3,6 +3,10 @@ using Maroik.Core.Contract.Utilities;
 
 namespace Maroik.Core.Contract.Tests.Domain.Post;
 
+/// <summary>
+/// Unit tests for <see cref="Maroik.Core.Contract.Domains.Board.Board"/>.
+/// Covers board creation, update, view incrementing, comment management, file attachment, lock/pin, and soft-delete.
+/// </summary>
 public class BoardTests
 {
     private static Board ValidBoard(long id = 1) =>

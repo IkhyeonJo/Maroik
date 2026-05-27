@@ -2,6 +2,10 @@ using Maroik.Core.Contract.Domains.ValueObjects;
 
 namespace Maroik.Core.Contract.Tests.Domains.ValueObjects;
 
+/// <summary>
+/// Unit tests for <see cref="Maroik.Core.Contract.Domains.ValueObjects.TimeZoneId"/>.
+/// Covers acceptance of valid IANA zone identifiers, rejection of empty and unrecognised values, and equality.
+/// </summary>
 public class TimeZoneIdTests
 {
     [Theory]

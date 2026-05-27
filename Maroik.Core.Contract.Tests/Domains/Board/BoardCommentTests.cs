@@ -2,6 +2,10 @@ using Maroik.Core.Contract.Domains.Board;
 
 namespace Maroik.Core.Contract.Tests.Domains.Board;
 
+/// <summary>
+/// Unit tests for <see cref="Maroik.Core.Contract.Domains.Board.BoardComment"/>.
+/// Covers creation validation (writer and content empty guards) and soft-delete behaviour.
+/// </summary>
 public class BoardCommentTests
 {
     // ── Create ───────────────────────────────────────────────────────────────

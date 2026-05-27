@@ -3,6 +3,11 @@ using Maroik.Core.Contract.Domains.ValueObjects;
 
 namespace Maroik.Core.Contract.Tests.Domains.Finance;
 
+/// <summary>
+/// Unit tests for <see cref="Maroik.Core.Contract.Domains.Finance.Asset"/>.
+/// Covers creation validation, deposit/withdraw operations, balance setting with currency-mismatch guard,
+/// update logic, note management, and soft-delete.
+/// </summary>
 public class AssetTests
 {
     private static Asset ValidAsset(

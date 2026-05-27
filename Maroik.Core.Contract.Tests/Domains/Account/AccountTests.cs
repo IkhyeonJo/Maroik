@@ -4,6 +4,11 @@ using Maroik.Core.Contract.Utilities;
 
 namespace Maroik.Core.Contract.Tests.Domains.AccountDomain;
 
+/// <summary>
+/// Unit tests for <see cref="Maroik.Core.Contract.Domains.Account.Account"/>.
+/// Covers creation validation, email confirmation, password reset flow, login attempt tracking,
+/// lock/unlock, admin update, soft-delete, profile update, and service-terms acceptance.
+/// </summary>
 public class AccountTests
 {
     private static Account ValidAccount(

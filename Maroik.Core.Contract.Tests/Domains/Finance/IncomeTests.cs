@@ -2,6 +2,10 @@ using Maroik.Core.Contract.Domains.Finance;
 
 namespace Maroik.Core.Contract.Tests.Domains.Finance;
 
+/// <summary>
+/// Unit tests for <see cref="Maroik.Core.Contract.Domains.Finance.Income"/>.
+/// Covers income recording validation (empty main/sub class, deposit asset) and update logic.
+/// </summary>
 public class IncomeTests
 {
     private static Income ValidIncome() =>

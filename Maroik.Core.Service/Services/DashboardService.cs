@@ -246,6 +246,11 @@ public class DashboardService : IDashboardService
         };
     }
 
+    /// <summary>
+    /// Extracts the text between <paramref name="startMarker"/> and <paramref name="endMarker"/> from <paramref name="input"/>.
+    /// When <paramref name="endMarker"/> is <see langword="null"/>, the text from <paramref name="startMarker"/> to the end of
+    /// <paramref name="input"/> is returned.  Returns an empty string on any parse error.
+    /// </summary>
     private static string ExtractSection(string input, string startMarker, string? endMarker = null)
     {
         try

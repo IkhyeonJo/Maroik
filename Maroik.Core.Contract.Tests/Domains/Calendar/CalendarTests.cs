@@ -2,6 +2,10 @@ using Maroik.Core.Contract.Domains.Calendar;
 
 namespace Maroik.Core.Contract.Tests.Domains.CalendarDomain;
 
+/// <summary>
+/// Unit tests for <see cref="Maroik.Core.Contract.Domains.Calendar.Calendar"/>.
+/// Covers calendar creation, update, sharing settings, and subscriber management.
+/// </summary>
 public class CalendarTests
 {
     private static Calendar ValidCalendar(long id = 1) =>

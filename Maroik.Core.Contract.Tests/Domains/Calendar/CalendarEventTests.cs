@@ -2,6 +2,10 @@ using Maroik.Core.Contract.Domains.Calendar;
 
 namespace Maroik.Core.Contract.Tests.Domains.CalendarDomain;
 
+/// <summary>
+/// Unit tests for <see cref="Maroik.Core.Contract.Domains.Calendar.CalendarEvent"/>.
+/// Covers event creation, update, reminder management, and file attachment.
+/// </summary>
 public class CalendarEventTests
 {
     private static readonly DateTime Start = new(2025, 6, 1, 9, 0, 0, DateTimeKind.Utc);

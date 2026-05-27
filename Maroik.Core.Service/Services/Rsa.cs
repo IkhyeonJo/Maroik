@@ -277,6 +277,11 @@ internal class Rsa
 
     #region Key parsing helpers
 
+    /// <summary>
+    /// Reads a DER-encoded INTEGER size from <paramref name="binr"/>.
+    /// Handles single-byte (0x81) and two-byte (0x82) length encodings and
+    /// skips any leading zero padding bytes included by DER for sign-safety.
+    /// </summary>
     private int GetIntegerSize(BinaryReader binr)
     {
         byte bt = binr.ReadByte();
@@ -312,6 +317,7 @@ internal class Rsa
         return count;
     }
 
+    /// <summary>Returns <see langword="true"/> when arrays <paramref name="a"/> and <paramref name="b"/> are equal in length and content.</summary>
     private bool CompareBytearrays(byte[] a, byte[] b)
     {
         if (a.Length != b.Length)

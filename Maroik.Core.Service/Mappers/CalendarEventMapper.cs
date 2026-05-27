@@ -3,8 +3,10 @@ using Maroik.Core.Contract.Dtos;
 
 namespace Maroik.Core.Service.Mappers;
 
+/// <summary>Maps <see cref="CalendarEvent"/> domain objects to <see cref="CalendarEventResponse"/> DTOs.</summary>
 internal static class CalendarEventMapper
 {
+    /// <summary>Converts a <see cref="CalendarEvent"/> domain object to its corresponding <see cref="CalendarEventResponse"/> DTO.</summary>
     internal static CalendarEventResponse ToResponse(CalendarEvent evt) => new()
     {
         Id = evt.Id,

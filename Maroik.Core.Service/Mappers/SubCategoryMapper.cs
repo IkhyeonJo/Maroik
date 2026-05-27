@@ -3,8 +3,10 @@ using Maroik.Core.Contract.Dtos;
 
 namespace Maroik.Core.Service.Mappers;
 
+/// <summary>Maps <see cref="SubCategory"/> domain objects to <see cref="SubCategoryResponse"/> DTOs.</summary>
 internal static class SubCategoryMapper
 {
+    /// <summary>Converts a <see cref="SubCategory"/> domain object to its corresponding <see cref="SubCategoryResponse"/> DTO.</summary>
     internal static SubCategoryResponse ToResponse(SubCategory s) => new()
     {
         Id = s.Id,

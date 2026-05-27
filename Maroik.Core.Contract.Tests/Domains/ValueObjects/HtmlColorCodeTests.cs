@@ -2,6 +2,10 @@ using Maroik.Core.Contract.Domains.ValueObjects;
 
 namespace Maroik.Core.Contract.Tests.Domains.ValueObjects;
 
+/// <summary>
+/// Unit tests for <see cref="Maroik.Core.Contract.Domains.ValueObjects.HtmlColorCode"/>.
+/// Covers creation with valid 3- and 6-digit hex codes, upper-case normalisation, empty/invalid format rejections, and equality.
+/// </summary>
 public class HtmlColorCodeTests
 {
     [Theory]

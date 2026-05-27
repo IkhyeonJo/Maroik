@@ -2,6 +2,10 @@ using Maroik.Core.Contract.Domains.Finance;
 
 namespace Maroik.Core.Contract.Tests.Domains.Finance;
 
+/// <summary>
+/// Unit tests for <see cref="Maroik.Core.Contract.Domains.Finance.FixedExpenditure"/>.
+/// Covers registration validation (deposit day/month range, payment method), unpunctuality flag management, and update logic.
+/// </summary>
 public class FixedExpenditureTests
 {
     private static readonly DateTime Maturity = DateTime.UtcNow.AddYears(1);

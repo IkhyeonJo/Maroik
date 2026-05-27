@@ -6,7 +6,11 @@ using OrmSubCategory = Maroik.Core.PostgreSQL.Models.SubCategory;
 
 namespace Maroik.Core.Repository.Repositories;
 
-/// <summary>EF Core implementation of <see cref="ISubCategoryRepository"/>.</summary>
+/// <summary>
+/// EF Core implementation of <see cref="ISubCategoryRepository"/> that persists and retrieves
+/// <see cref="SubCategory"/> domain objects via <see cref="ApplicationDbContext"/>.
+/// Uses a primary constructor to receive the context from the DI container.
+/// </summary>
 public class SubCategoryRepository(ApplicationDbContext context) : ISubCategoryRepository
 {
     /// <inheritdoc />
@@ -42,9 +46,20 @@ public class SubCategoryRepository(ApplicationDbContext context) : ISubCategoryR
         _ = await context.SaveChangesAsync();
     }
 
+    /// <summary>
+    /// Maps an ORM <see cref="OrmSubCategory"/> row to the <see cref="SubCategory"/> domain object.
+    /// </summary>
+    /// <param name="e">The ORM entity loaded from the database.</param>
+    /// <returns>A fully reconstituted <see cref="SubCategory"/> domain object.</returns>
     private static SubCategory ToDomain(OrmSubCategory e)
         => SubCategory.Reconstitute(e.Id, e.CategoryId, e.Name, e.DisplayName, e.IconPath, e.Action, e.Role, e.Order);
 
+    /// <summary>
+    /// Maps a <see cref="SubCategory"/> domain object to an ORM <see cref="OrmSubCategory"/> entity
+    /// ready for insertion or update.
+    /// </summary>
+    /// <param name="s">The domain object to convert.</param>
+    /// <returns>An <see cref="OrmSubCategory"/> entity suitable for EF Core tracking.</returns>
     private static OrmSubCategory ToEntity(SubCategory s) => new()
     {
         Id = s.Id,

@@ -85,6 +85,14 @@ public class FixedIncomeService : IFixedIncomeService
         return ServiceResult.Ok();
     }
 
+    /// <summary>
+    /// Validates the income class, deposit month/day, and maturity date format of a fixed-income request.
+    /// </summary>
+    /// <param name="request">The request to validate.</param>
+    /// <returns>
+    /// <see cref="ServiceResult.Ok()"/> when all fields are valid;
+    /// <see cref="ServiceResult.Fail(string)"/> with a descriptive message otherwise.
+    /// </returns>
     private static ServiceResult ValidateRequest(FixedIncomeRequest request)
     {
         if (IncomeClassPolicy.Validate(request.MainClass, request.SubClass).IsError)

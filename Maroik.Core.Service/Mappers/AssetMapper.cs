@@ -3,8 +3,10 @@ using Maroik.Core.Contract.Dtos;
 
 namespace Maroik.Core.Service.Mappers;
 
+/// <summary>Maps <see cref="Asset"/> domain objects to <see cref="AssetResponse"/> DTOs.</summary>
 internal static class AssetMapper
 {
+    /// <summary>Converts an <see cref="Asset"/> domain object to its corresponding <see cref="AssetResponse"/> DTO.</summary>
     internal static AssetResponse ToResponse(Asset asset) => new()
     {
         ProductName = asset.ProductName,

@@ -4,8 +4,16 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Maroik.Core.Service.Extensions;
 
+/// <summary>
+/// Extension methods for registering all application-layer services into the DI container.
+/// </summary>
 public static class ServiceCollectionExtensions
 {
+    /// <summary>
+    /// Registers all application service implementations as scoped (or singleton where appropriate)
+    /// so they are available for constructor injection throughout the application.
+    /// </summary>
+    /// <param name="services">The <see cref="IServiceCollection"/> to add the services to.</param>
     public static void AddApplicationServices(this IServiceCollection services)
     {
         services.AddScoped<IPasswordService, PasswordService>();

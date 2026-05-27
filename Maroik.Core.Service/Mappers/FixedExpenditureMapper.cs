@@ -3,8 +3,10 @@ using Maroik.Core.Contract.Dtos;
 
 namespace Maroik.Core.Service.Mappers;
 
+/// <summary>Maps <see cref="FixedExpenditure"/> domain objects to <see cref="FixedExpenditureResponse"/> DTOs.</summary>
 internal static class FixedExpenditureMapper
 {
+    /// <summary>Converts a <see cref="FixedExpenditure"/> domain object to its corresponding <see cref="FixedExpenditureResponse"/> DTO.</summary>
     internal static FixedExpenditureResponse ToResponse(FixedExpenditure fe) => new()
     {
         Id = fe.Id,

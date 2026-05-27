@@ -111,6 +111,15 @@ public class FixedExpenditureService : IFixedExpenditureService
         return ServiceResult.Ok();
     }
 
+    /// <summary>
+    /// Validates the MainClass/SubClass combination and the deposit date fields of a fixed-expenditure request.
+    /// Also determines whether the entry requires a deposit asset (e.g., savings or debt repayment categories).
+    /// </summary>
+    /// <param name="req">The request to validate.</param>
+    /// <returns>
+    /// A tuple where <c>IsValid</c> indicates overall validity and <c>RequiresDepositAsset</c>
+    /// indicates whether a <see cref="FixedExpenditureRequest.MyDepositAsset"/> must be provided.
+    /// </returns>
     private static (bool IsValid, bool RequiresDepositAsset) ValidateClassAndDate(FixedExpenditureRequest req)
     {
         bool requiresDeposit;

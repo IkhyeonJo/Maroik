@@ -274,5 +274,9 @@ public class ExpenditureService : IExpenditureService
             await _assetBalance.SaveAsync(asset);
     }
 
+    /// <summary>
+    /// Captures the asset-related fields of an <see cref="Expenditure"/> at a point in time so that
+    /// the corresponding asset balances can be correctly reversed during update or delete operations.
+    /// </summary>
     private readonly record struct ExpenditureSnapshot(string? PaymentMethod, string? MyDepositAsset, decimal Amount);
 }
