@@ -1,4 +1,5 @@
-using Maroik.Core.Contract.Domains.Account;
+﻿using Maroik.Core.Contract.Domains.Account;
+using Maroik.Core.Contract.Filters;
 using Maroik.Core.Contract.Utilities;
 using Maroik.Core.PostgreSQL.Data;
 using Maroik.Core.Repository.Repositories;
@@ -25,6 +26,9 @@ public class AccountRepositoryIntegrationTests : IAsyncLifetime
 
     public async ValueTask InitializeAsync()
     {
+        // Npgsql 9+ requires DateTimeKind.Unspecified for timestamp-without-timezone columns.
+        AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
+
         await _postgres.StartAsync();
 
         var options = new DbContextOptionsBuilder<ApplicationDbContext>()
@@ -42,7 +46,7 @@ public class AccountRepositoryIntegrationTests : IAsyncLifetime
         await _postgres.DisposeAsync();
     }
 
-    // ── Helpers ──────────────────────────────────────────────────────────────
+    // -- Helpers --------------------------------------------------------------
 
     private static OrmAccount MakeOrm(string email, string nickname) => new()
     {
@@ -66,7 +70,7 @@ public class AccountRepositoryIntegrationTests : IAsyncLifetime
         _context.ChangeTracker.Clear();
     }
 
-    // ── GetAllAsync ──────────────────────────────────────────────────────────
+    // -- GetAllAsync ----------------------------------------------------------
 
     [Fact]
     public async Task GetAllAsync_ReturnsAllAccounts_FromPostgreSQL()
@@ -75,12 +79,12 @@ public class AccountRepositoryIntegrationTests : IAsyncLifetime
             MakeOrm("alice@example.com", "Alice"),
             MakeOrm("bob@example.com", "Bob"));
 
-        List<Account> result = await _sut.GetAllAsync();
+        List<Account> result = await _sut.FindAsync([]);
 
         Assert.Equal(2, result.Count);
     }
 
-    // ── CreateAccountAsync ───────────────────────────────────────────────────
+    // -- CreateAccountAsync ---------------------------------------------------
 
     [Fact]
     public async Task CreateAccountAsync_PersistsToPostgreSQL_AndIsRetrievable()
@@ -104,20 +108,20 @@ public class AccountRepositoryIntegrationTests : IAsyncLifetime
             message: null,
             deleted: false);
 
-        await _sut.CreateAccountAsync(account);
+        await _sut.CreateAsync(account);
         _context.ChangeTracker.Clear();
 
-        Account? retrieved = await _sut.GetAccountByEmailAsync("newuser@example.com");
+        Account? retrieved = (await _sut.FindAsync([FilterCondition.Equal("Email", "newuser@example.com")])).FirstOrDefault();
 
         Assert.NotNull(retrieved);
         Assert.Equal("NewUser", retrieved.Nickname);
         Assert.Equal("Asia/Seoul", retrieved.TimeZone.Value);
     }
 
-    // ── UpdateAccountAsync ───────────────────────────────────────────────────
+    // -- UpdateEntityAsync ---------------------------------------------------
 
     [Fact]
-    public async Task UpdateAccountAsync_ChangesArePersisted_InPostgreSQL()
+    public async Task UpdateEntityAsync_ChangesArePersisted_InPostgreSQL()
     {
         await SeedAsync(MakeOrm("alice@example.com", "Alice"));
 
@@ -140,17 +144,17 @@ public class AccountRepositoryIntegrationTests : IAsyncLifetime
             message: null,
             deleted: false);
 
-        await _sut.UpdateAccountAsync(updated);
+        await _sut.UpdateEntityAsync(updated);
         _context.ChangeTracker.Clear();
 
-        Account? result = await _sut.GetAccountByEmailAsync("alice@example.com");
+        Account? result = (await _sut.FindAsync([FilterCondition.Equal("Email", "alice@example.com")])).FirstOrDefault();
 
         Assert.NotNull(result);
         Assert.Equal(Role.Admin, result.Role);
         Assert.Equal("America/New_York", result.TimeZone.Value);
     }
 
-    // ── Unique constraint ────────────────────────────────────────────────────
+    // -- Unique constraint ----------------------------------------------------
 
     [Fact]
     public async Task CreateAccountAsync_ThrowsDbUpdateException_WhenEmailAlreadyExists()
@@ -178,13 +182,13 @@ public class AccountRepositoryIntegrationTests : IAsyncLifetime
 
         // PostgreSQL enforces the PK/unique constraint — InMemory does not
         await Assert.ThrowsAsync<DbUpdateException>(
-            () => _sut.CreateAccountAsync(duplicate));
+            () => _sut.CreateAsync(duplicate));
     }
 
-    // ── Soft delete visibility ───────────────────────────────────────────────
+    // -- Soft delete visibility -----------------------------------------------
 
     [Fact]
-    public async Task GetAllAsync_ExcludesSoftDeletedAccounts_InPostgreSQL()
+    public async Task FindAsync_WithDeletedFilter_ExcludesSoftDeletedAccounts_InPostgreSQL()
     {
         var deleted = MakeOrm("deleted@example.com", "Deleted");
         deleted.Deleted = true;
@@ -193,8 +197,10 @@ public class AccountRepositoryIntegrationTests : IAsyncLifetime
             MakeOrm("active@example.com", "Active"),
             deleted);
 
-        List<Account> result = await _sut.GetAllAsync();
+        // Repository has no implicit soft-delete filter; callers must pass an explicit condition.
+        List<Account> result = await _sut.FindAsync([FilterCondition.Equal("Deleted", false)]);
 
         Assert.DoesNotContain(result, a => a.Email.Value == "deleted@example.com");
+        Assert.Contains(result, a => a.Email.Value == "active@example.com");
     }
 }

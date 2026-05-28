@@ -1,4 +1,5 @@
-using Maroik.Core.Contract.Domains.Menu;
+﻿using Maroik.Core.Contract.Domains.Menu;
+using Maroik.Core.Contract.Filters;
 using Maroik.Core.Contract.Utilities;
 using Maroik.Core.PostgreSQL.Data;
 using Maroik.Core.Repository.Repositories;
@@ -28,7 +29,7 @@ public class CategoryRepositoryTests : IDisposable
     /// <summary>Releases resources allocated by this test fixture (disposes the database context).</summary>
     public void Dispose() => _context.Dispose();
 
-    // ── Helpers ──────────────────────────────────────────────────────────────
+    // -- Helpers --------------------------------------------------------------
 
     private static EfCategory MakeCategory(string name, string role = Role.User, long order = 1) => new()
     {
@@ -47,7 +48,7 @@ public class CategoryRepositoryTests : IDisposable
         await _context.SaveChangesAsync();
     }
 
-    // ── GetCategoryAsync ─────────────────────────────────────────────────────
+    // -- GetCategoryAsync -----------------------------------------------------
 
     /// <summary>Verifies that <c>GetCategoryAsync</c> returns all categories.</summary>
     [Fact]
@@ -57,7 +58,7 @@ public class CategoryRepositoryTests : IDisposable
             MakeCategory("Dashboard", order: 1),
             MakeCategory("Finance", order: 2));
 
-        IEnumerable<Category> result = await _sut.GetCategoryAsync();
+        IEnumerable<Category> result = await _sut.FindAsync([]);
 
         Assert.Equal(2, result.Count());
     }
@@ -66,12 +67,12 @@ public class CategoryRepositoryTests : IDisposable
     [Fact]
     public async Task GetCategoryAsync_ReturnsEmpty_WhenNoCategories()
     {
-        IEnumerable<Category> result = await _sut.GetCategoryAsync();
+        IEnumerable<Category> result = await _sut.FindAsync([]);
 
         Assert.Empty(result);
     }
 
-    // ── GetCategoryByRoleAsync ───────────────────────────────────────────────
+    // -- GetCategoryByRoleAsync -----------------------------------------------
 
     /// <summary>Verifies that <c>GetCategoryByRoleAsync</c> returns only categories for role.</summary>
     [Fact]
@@ -82,7 +83,7 @@ public class CategoryRepositoryTests : IDisposable
             MakeCategory("Admin", role: Role.Admin, order: 2),
             MakeCategory("Finance", role: Role.User, order: 3));
 
-        IEnumerable<Category> result = await _sut.GetCategoryByRoleAsync(Role.User);
+        IEnumerable<Category> result = await _sut.FindAsync([FilterCondition.Equal("Role", Role.User)]);
 
         Assert.Equal(2, result.Count());
         Assert.All(result, c => Assert.Equal(Role.User, c.Role));
@@ -96,14 +97,14 @@ public class CategoryRepositoryTests : IDisposable
             MakeCategory("Finance", role: Role.User, order: 2),
             MakeCategory("Dashboard", role: Role.User, order: 1));
 
-        IEnumerable<Category> result = await _sut.GetCategoryByRoleAsync(Role.User);
+        IEnumerable<Category> result = await _sut.FindAsync([FilterCondition.Equal("Role", Role.User)], "Order");
         List<Category> list = result.ToList();
 
         Assert.Equal("Dashboard", list[0].Name);
         Assert.Equal("Finance", list[1].Name);
     }
 
-    // ── CreateCategoryAsync ──────────────────────────────────────────────────
+    // -- CreateCategoryAsync --------------------------------------------------
 
     /// <summary>Verifies that <c>CreateCategoryAsync</c> adds category to database.</summary>
     [Fact]
@@ -119,7 +120,7 @@ public class CategoryRepositoryTests : IDisposable
             role: Role.User,
             order: 5);
 
-        await _sut.CreateCategoryAsync(category);
+        await _sut.CreateAsync(category);
 
         EfCategory? saved = await _context.Categories.FirstOrDefaultAsync(c => c.Name == "NewMenu", TestContext.Current.CancellationToken);
         Assert.NotNull(saved);
@@ -127,11 +128,11 @@ public class CategoryRepositoryTests : IDisposable
         Assert.Equal(5, saved.Order);
     }
 
-    // ── UpdateCategoryAsync ──────────────────────────────────────────────────
+    // -- UpdateEntityAsync --------------------------------------------------
 
-    /// <summary>Verifies that <c>UpdateCategoryAsync</c> updates existing category.</summary>
+    /// <summary>Verifies that <c>UpdateEntityAsync</c> updates existing category.</summary>
     [Fact]
-    public async Task UpdateCategoryAsync_UpdatesExistingCategory()
+    public async Task UpdateEntityAsync_UpdatesExistingCategory()
     {
         await SeedAsync(MakeCategory("OldName", order: 1));
         EfCategory efCategory = await _context.Categories.FirstAsync(TestContext.Current.CancellationToken);
@@ -146,7 +147,7 @@ public class CategoryRepositoryTests : IDisposable
             role: Role.Admin,
             order: 10);
 
-        await _sut.UpdateCategoryAsync(category);
+        await _sut.UpdateEntityAsync(category);
 
         EfCategory? updated = await _context.Categories.FirstOrDefaultAsync(c => c.Id == efCategory.Id, TestContext.Current.CancellationToken);
         Assert.NotNull(updated);
@@ -155,7 +156,7 @@ public class CategoryRepositoryTests : IDisposable
         Assert.Equal(10, updated.Order);
     }
 
-    // ── DeleteCategoryAsync ──────────────────────────────────────────────────
+    // -- DeleteCategoryAsync --------------------------------------------------
 
     /// <summary>Verifies that <c>DeleteCategoryAsync</c> removes category from database.</summary>
     [Fact]
@@ -174,7 +175,7 @@ public class CategoryRepositoryTests : IDisposable
             role: efCategory.Role,
             order: efCategory.Order);
 
-        await _sut.DeleteCategoryAsync(category);
+        await _sut.DeleteAsync([FilterCondition.Equal("Id", efCategory.Id)]);
 
         EfCategory? deleted = await _context.Categories.FirstOrDefaultAsync(c => c.Id == efCategory.Id, TestContext.Current.CancellationToken);
         Assert.Null(deleted);
@@ -197,7 +198,7 @@ public class CategoryRepositoryTests : IDisposable
             role: all[0].Role,
             order: all[0].Order);
 
-        await _sut.DeleteCategoryAsync(category);
+        await _sut.DeleteAsync([FilterCondition.Equal("Id", all[0].Id)]);
 
         List<EfCategory> remaining = await _context.Categories.ToListAsync(TestContext.Current.CancellationToken);
         Assert.Single(remaining);

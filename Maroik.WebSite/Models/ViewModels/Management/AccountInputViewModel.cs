@@ -1,4 +1,4 @@
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace Maroik.WebSite.Models.ViewModels.Management;
 
@@ -9,7 +9,7 @@ namespace Maroik.WebSite.Models.ViewModels.Management;
 /// </summary>
 public class AccountInputViewModel
 {
-    /// <summary>Account email address — acts as the primary key in the database.</summary>
+    /// <summary>Account email address ?? acts as the primary key in the database.</summary>
     [Required(ErrorMessage = "Please enter Email")]
     [Display(Name = "Email")]
     public string? Email { get; set; }

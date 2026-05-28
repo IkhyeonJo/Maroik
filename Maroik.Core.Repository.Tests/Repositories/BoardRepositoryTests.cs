@@ -1,4 +1,5 @@
-using Maroik.Core.Contract.Domains.Board;
+﻿using Maroik.Core.Contract.Domains.Board;
+using Maroik.Core.Contract.Filters;
 using Maroik.Core.Contract.Utilities;
 using Maroik.Core.PostgreSQL.Data;
 using Maroik.Core.Repository.Repositories;
@@ -29,7 +30,7 @@ public class BoardRepositoryTests : IDisposable
     /// <summary>Releases resources allocated by this test fixture (disposes the database context).</summary>
     public void Dispose() => _context.Dispose();
 
-    // ── Helpers ──────────────────────────────────────────────────────────────
+    // -- Helpers --------------------------------------------------------------
 
     private static EfBoard MakeBoard(string type, string title, string writer = "Alice", bool deleted = false) => new()
     {
@@ -51,7 +52,7 @@ public class BoardRepositoryTests : IDisposable
         await _context.SaveChangesAsync();
     }
 
-    // ── GetOneTypeBoardsAsync ────────────────────────────────────────────────
+    // -- GetOneTypeBoardsAsync ------------------------------------------------
 
     /// <summary>Verifies that <c>GetOneTypeBoardsAsync</c> returns only boards of given type.</summary>
     [Fact]
@@ -62,7 +63,7 @@ public class BoardRepositoryTests : IDisposable
             MakeBoard(nameof(BoardType.FreeForum), "World"),
             MakeBoard(nameof(BoardType.PrivateNote), "Note1"));
 
-        IEnumerable<Board> result = await _sut.GetOneTypeBoardsAsync(nameof(BoardType.FreeForum));
+        IEnumerable<Board> result = await _sut.FindAsync([FilterCondition.Equal("Type", nameof(BoardType.FreeForum))]);
 
         Assert.Equal(2, result.Count());
         Assert.All(result, b => Assert.Equal(nameof(BoardType.FreeForum), b.Type));
@@ -72,12 +73,12 @@ public class BoardRepositoryTests : IDisposable
     [Fact]
     public async Task GetOneTypeBoardsAsync_ReturnsEmpty_WhenNoMatchingType()
     {
-        IEnumerable<Board> result = await _sut.GetOneTypeBoardsAsync("NonExistentType");
+        IEnumerable<Board> result = await _sut.FindAsync([FilterCondition.Equal("Type", "NonExistentType")]);
 
         Assert.Empty(result);
     }
 
-    // ── GetBoardByIdAsync ────────────────────────────────────────────────────
+    // -- GetBoardByIdAsync ----------------------------------------------------
 
     /// <summary>Verifies that <c>GetBoardByIdAsync</c> returns board when found and not deleted.</summary>
     [Fact]
@@ -86,7 +87,7 @@ public class BoardRepositoryTests : IDisposable
         await SeedAsync(MakeBoard(nameof(BoardType.FreeForum), "My Post"));
         EfBoard efBoard = await _context.Boards.FirstAsync(TestContext.Current.CancellationToken);
 
-        Board? result = await _sut.GetBoardByIdAsync(efBoard.Id);
+        Board? result = (await _sut.FindAsync([FilterCondition.Equal("Id", efBoard.Id)])).FirstOrDefault();
 
         Assert.NotNull(result);
         Assert.Equal("My Post", result.Title);
@@ -99,7 +100,7 @@ public class BoardRepositoryTests : IDisposable
         await SeedAsync(MakeBoard(nameof(BoardType.FreeForum), "Deleted Post", deleted: true));
         EfBoard efBoard = await _context.Boards.FirstAsync(TestContext.Current.CancellationToken);
 
-        Board? result = await _sut.GetBoardByIdAsync(efBoard.Id);
+        Board? result = (await _sut.FindAsync([FilterCondition.Equal("Id", efBoard.Id), FilterCondition.Equal("Deleted", false)])).FirstOrDefault();
 
         Assert.Null(result);
     }
@@ -108,12 +109,12 @@ public class BoardRepositoryTests : IDisposable
     [Fact]
     public async Task GetBoardByIdAsync_ReturnsNull_WhenIdDoesNotExist()
     {
-        Board? result = await _sut.GetBoardByIdAsync(99999);
+        Board? result = (await _sut.FindAsync([FilterCondition.Equal("Id", 99999L)])).FirstOrDefault();
 
         Assert.Null(result);
     }
 
-    // ── WriteBoardAsync ──────────────────────────────────────────────────────
+    // -- WriteBoardAsync ------------------------------------------------------
 
     /// <summary>Verifies that <c>WriteBoardAsync</c> adds board to database.</summary>
     [Fact]
@@ -139,11 +140,11 @@ public class BoardRepositoryTests : IDisposable
         Assert.Equal("Alice", saved.Writer);
     }
 
-    // ── UpdateBoardAsync ─────────────────────────────────────────────────────
+    // -- UpdateEntityAsync -----------------------------------------------------
 
-    /// <summary>Verifies that <c>UpdateBoardAsync</c> updates existing board.</summary>
+    /// <summary>Verifies that <c>UpdateEntityAsync</c> updates existing board.</summary>
     [Fact]
-    public async Task UpdateBoardAsync_UpdatesExistingBoard()
+    public async Task UpdateEntityAsync_UpdatesExistingBoard()
     {
         await SeedAsync(MakeBoard(nameof(BoardType.FreeForum), "Original Title"));
         EfBoard efBoard = await _context.Boards.FirstAsync(TestContext.Current.CancellationToken);
@@ -161,20 +162,20 @@ public class BoardRepositoryTests : IDisposable
             locked: false,
             noticed: false);
 
-        await _sut.UpdateBoardAsync(board);
+        await _sut.UpdateEntityAsync(board);
 
         EfBoard? updated = await _context.Boards.FirstOrDefaultAsync(b => b.Id == efBoard.Id, TestContext.Current.CancellationToken);
         Assert.NotNull(updated);
         Assert.Equal("Updated Title", updated.Title);
     }
 
-    // ── DeleteBoardAsync ─────────────────────────────────────────────────────
+    // -- UpdateEntityAsync -----------------------------------------------------
 
-    /// <summary>Verifies that <c>DeleteBoardAsync</c> sets deleted flag when on board.</summary>
+    /// <summary>Verifies that <c>UpdateEntityAsync</c> sets deleted flag when on board.</summary>
     [Fact]
-    public async Task DeleteBoardAsync_SetsDeletedFlag_OnBoard()
+    public async Task UpdateEntityAsync_SetsDeletedFlag_OnBoard()
     {
-        // DeleteBoardAsync uses Update (soft delete) rather than Remove
+        // UpdateEntityAsync uses Update (soft delete) rather than Remove
         await SeedAsync(MakeBoard(nameof(BoardType.FreeForum), "Post to Delete"));
         EfBoard efBoard = await _context.Boards.FirstAsync(TestContext.Current.CancellationToken);
 
@@ -191,7 +192,7 @@ public class BoardRepositoryTests : IDisposable
             locked: efBoard.Locked,
             noticed: efBoard.Noticed);
 
-        await _sut.DeleteBoardAsync(board);
+        await _sut.UpdateEntityAsync(board);
 
         EfBoard? result = await _context.Boards.FirstOrDefaultAsync(b => b.Id == efBoard.Id, TestContext.Current.CancellationToken);
         Assert.NotNull(result);

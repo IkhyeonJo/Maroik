@@ -1,4 +1,4 @@
-using Maroik.E2E.Tests.Infrastructure;
+﻿using Maroik.E2E.Tests.Infrastructure;
 using Microsoft.Playwright;
 
 namespace Maroik.E2E.Tests.Flows;
@@ -8,12 +8,12 @@ namespace Maroik.E2E.Tests.Flows;
 ///
 /// Each test launches headless Chromium via Playwright against the real Kestrel server
 /// started by <see cref="PlaywrightWebApplicationFactory"/>.  Tests verify that the
-/// correct HTML elements are present on the page — no form submission is made
+/// correct HTML elements are present on the page ?? no form submission is made
 /// (POST requires a real DB and SMTP server).
 /// </summary>
 public class AccountFlowTests : E2ETestBase
 {
-    // ── Login ────────────────────────────────────────────────────────────────
+    // -- Login ----------------------------------------------------------------
 
     /// <summary>Verifies that <c>LoginPage</c> has email and password inputs and submit button.</summary>
     [Fact]
@@ -46,7 +46,7 @@ public class AccountFlowTests : E2ETestBase
         Assert.False(string.IsNullOrWhiteSpace(title));
     }
 
-    // ── Register ─────────────────────────────────────────────────────────────
+    // -- Register -------------------------------------------------------------
 
     /// <summary>Verifies that <c>RegisterPage</c> has registration form with all fields.</summary>
     [Fact]
@@ -64,7 +64,7 @@ public class AccountFlowTests : E2ETestBase
         await Assertions.Expect(page.Locator("#btnRegister")).ToBeVisibleAsync();
     }
 
-    // ── ConsentForm ──────────────────────────────────────────────────────────
+    // -- ConsentForm ----------------------------------------------------------
 
     /// <summary>Verifies that <c>ConsentFormPage</c> loads with non empty body.</summary>
     [Fact]
@@ -73,12 +73,12 @@ public class AccountFlowTests : E2ETestBase
         var page = await NewPageAsync();
         await GotoAsync(page, "/Account/ConsentForm");
 
-        // Page loaded successfully — body element must have content
+        // Page loaded successfully ?? body element must have content
         string bodyText = await page.Locator("body").InnerTextAsync();
         Assert.False(string.IsNullOrWhiteSpace(bodyText));
     }
 
-    // ── ForgotPassword ───────────────────────────────────────────────────────
+    // -- ForgotPassword -------------------------------------------------------
 
     /// <summary>Verifies that <c>ForgotPasswordPage</c> has email input and submit button.</summary>
     [Fact]
@@ -94,7 +94,7 @@ public class AccountFlowTests : E2ETestBase
         await Assertions.Expect(submitButton).ToBeVisibleAsync();
     }
 
-    // ── ConfirmEmail (invalid token) ─────────────────────────────────────────
+    // -- ConfirmEmail (invalid token) -----------------------------------------
 
     /// <summary>Verifies that <c>ConfirmEmailPage</c> with invalid token when loads without unhandled error.</summary>
     [Fact]
@@ -116,7 +116,7 @@ public class AccountFlowTests : E2ETestBase
         Assert.False(string.IsNullOrWhiteSpace(bodyText));
     }
 
-    // ── ResetPassword (invalid token) ────────────────────────────────────────
+    // -- ResetPassword (invalid token) ----------------------------------------
 
     /// <summary>Verifies that <c>ResetPasswordPage</c> with invalid token when loads without unhandled error.</summary>
     [Fact]
@@ -129,7 +129,7 @@ public class AccountFlowTests : E2ETestBase
         Assert.False(string.IsNullOrWhiteSpace(bodyText));
     }
 
-    // ── Logout → redirect ────────────────────────────────────────────────────
+    // -- Logout → redirect ----------------------------------------------------
 
     /// <summary>Verifies that <c>Logout</c> redirects to anonymous dashboard.</summary>
     [Fact]
@@ -140,7 +140,7 @@ public class AccountFlowTests : E2ETestBase
         await GotoAsync(page, "/Account/Logout");
 
         // RedirectToAction("AnonymousIndex","DashBoard") produces "/" because those are
-        // the default-route defaults — the URL generator picks the shortest path.
+        // the default-route defaults ?? the URL generator picks the shortest path.
         // Verify the page loaded by checking that the body is non-empty.
         string bodyText = await page.Locator("body").InnerTextAsync();
         Assert.False(string.IsNullOrWhiteSpace(bodyText));

@@ -1,4 +1,4 @@
-using Maroik.Core.Client.Clients;
+﻿using Maroik.Core.Client.Clients;
 
 namespace Maroik.Core.Client.Tests.Clients;
 
@@ -11,7 +11,7 @@ public class MailClientTests
 {
     private readonly MailClient _sut = new();
 
-    // ── GetMailConfirmationBody ──────────────────────────────────────────────
+    // -- GetMailConfirmationBody ----------------------------------------------
 
     /// <summary>Verifies that <c>GetMailConfirmationBody</c> contains title and contents.</summary>
     [Fact]
@@ -69,7 +69,7 @@ public class MailClientTests
         Assert.Contains("https://mysite.io/Account/ConfirmEmail", body);
     }
 
-    // ── GetMailResetPasswordBody ─────────────────────────────────────────────
+    // -- GetMailResetPasswordBody ---------------------------------------------
 
     /// <summary>Verifies that <c>GetMailResetPasswordBody</c> contains title and contents.</summary>
     [Fact]

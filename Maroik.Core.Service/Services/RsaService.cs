@@ -1,4 +1,4 @@
-using Maroik.Core.Contract.Interfaces;
+﻿using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Contract.Utilities;
 using Microsoft.Extensions.Options;
 

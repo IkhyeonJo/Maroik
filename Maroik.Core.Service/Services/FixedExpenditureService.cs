@@ -1,4 +1,5 @@
-using Maroik.Core.Contract.Domains.Finance;
+﻿using Maroik.Core.Contract.Domains.Finance;
+using Maroik.Core.Contract.Filters;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Service.Mappers;
@@ -26,7 +27,7 @@ public class FixedExpenditureService : IFixedExpenditureService
 
     /// <inheritdoc />
     public async Task<List<FixedExpenditureResponse>> GetFixedExpendituresAsync(string accountEmail)
-        => (await _fixedExpenditureRepository.GetFixedExpendituresAsync(accountEmail)).Select(FixedExpenditureMapper.ToResponse).ToList();
+        => (await _fixedExpenditureRepository.FindAsync([FilterCondition.Equal("AccountEmail", accountEmail)])).Select(FixedExpenditureMapper.ToResponse).ToList();
 
     /// <inheritdoc />
     public async Task<ServiceResult> CreateAsync(string accountEmail, FixedExpenditureRequest request)
@@ -60,7 +61,7 @@ public class FixedExpenditureService : IFixedExpenditureService
             return ServiceResult.Fail(registerResult.FirstError.Description);
 
         var fixedExpenditure = registerResult.Value;
-        await _fixedExpenditureRepository.CreateFixedExpenditureAsync(fixedExpenditure);
+        await _fixedExpenditureRepository.CreateAsync(fixedExpenditure);
         return ServiceResult.Ok();
     }
 
@@ -82,7 +83,7 @@ public class FixedExpenditureService : IFixedExpenditureService
                 return ServiceResult.Fail("PaymentMethod MonetaryUnit must be same as MyDepositAsset MonetaryUnit.");
         }
 
-        List<FixedExpenditure> items = await _fixedExpenditureRepository.GetFixedExpendituresAsync(accountEmail);
+        List<FixedExpenditure> items = await _fixedExpenditureRepository.FindAsync([FilterCondition.Equal("AccountEmail", accountEmail)]);
         FixedExpenditure? fe = items.FirstOrDefault(x => x.Id == request.Id);
         if (fe == null) return ServiceResult.Fail("Input is invalid");
 
@@ -96,18 +97,18 @@ public class FixedExpenditureService : IFixedExpenditureService
 
         if (updateResult.IsError) return ServiceResult.Fail(updateResult.FirstError.Description);
 
-        await _fixedExpenditureRepository.UpdateFixedExpenditureAsync(fe);
+        await _fixedExpenditureRepository.UpdateEntityAsync(fe);
         return ServiceResult.Ok();
     }
 
     /// <inheritdoc />
     public async Task<ServiceResult> DeleteAsync(string accountEmail, long id)
     {
-        List<FixedExpenditure> items = await _fixedExpenditureRepository.GetFixedExpendituresAsync(accountEmail);
+        List<FixedExpenditure> items = await _fixedExpenditureRepository.FindAsync([FilterCondition.Equal("AccountEmail", accountEmail)]);
         FixedExpenditure? fe = items.FirstOrDefault(x => x.Id == id);
         if (fe == null) return ServiceResult.Fail("Input is invalid");
 
-        await _fixedExpenditureRepository.DeleteFixedExpenditureAsync(fe);
+        await _fixedExpenditureRepository.DeleteAsync([FilterCondition.Equal("Id", fe.Id)]);
         return ServiceResult.Ok();
     }
 

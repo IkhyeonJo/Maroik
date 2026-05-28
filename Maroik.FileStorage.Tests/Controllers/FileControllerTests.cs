@@ -1,4 +1,4 @@
-using Maroik.Core.Contract.Interfaces;
+﻿using Maroik.Core.Contract.Interfaces;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
@@ -13,8 +13,8 @@ namespace Maroik.FileStorage.Tests.Controllers;
 /// in memory, replacing <see cref="IClamavClient"/> with a controllable mock.
 ///
 /// Note: the "happy-path" upload (file actually written to disk) is not tested here because
-/// the action calls /bin/chmod which is Linux-only. All validation paths — extension,
-/// size, magic bytes, ClamAV, and encrypted-ZIP checks — are fully covered.
+/// the action calls /bin/chmod which is Linux-only. All validation paths ?? extension,
+/// size, magic bytes, ClamAV, and encrypted-ZIP checks ?? are fully covered.
 /// </summary>
 public class FileControllerTests : IClassFixture<WebApplicationFactory<Program>>
 {
@@ -25,7 +25,7 @@ public class FileControllerTests : IClassFixture<WebApplicationFactory<Program>>
         _baseFactory = factory;
     }
 
-    // ── Factory helpers ──────────────────────────────────────────────────────
+    // -- Factory helpers ------------------------------------------------------
 
     /// <summary>Returns a factory whose ClamAV mock always marks files as clean.</summary>
     private WebApplicationFactory<Program> FactoryWithCleanScan() =>
@@ -55,7 +55,7 @@ public class FileControllerTests : IClassFixture<WebApplicationFactory<Program>>
         if (descriptor != null) services.Remove(descriptor);
     }
 
-    // ── Upload: invalid input (no ClamAV call needed) ────────────────────────
+    // -- Upload: invalid input (no ClamAV call needed) ------------------------
 
     /// <summary>Verifies that <c>Upload</c> returns bad request when no file is provided.</summary>
     [Fact]
@@ -124,7 +124,7 @@ public class FileControllerTests : IClassFixture<WebApplicationFactory<Program>>
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
 
-    // ── Upload: magic-byte validation ────────────────────────────────────────
+    // -- Upload: magic-byte validation ----------------------------------------
 
     /// <summary>Verifies that <c>Upload</c> returns bad request when jpg has wrong magic bytes.</summary>
     [Fact]
@@ -165,7 +165,7 @@ public class FileControllerTests : IClassFixture<WebApplicationFactory<Program>>
     {
         var client = FactoryWithCleanScan().CreateClient();
         using var content = new MultipartFormDataContent();
-        // PNG requires: 89 50 4E 47 0D 0A 1A 0A — use wrong bytes
+        // PNG requires: 89 50 4E 47 0D 0A 1A 0A ?? use wrong bytes
         var fileContent = new ByteArrayContent([0x89, 0x50, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]);
         fileContent.Headers.ContentType = MediaTypeHeaderValue.Parse("image/png");
         content.Add(fileContent, "file", "fake.png");
@@ -182,7 +182,7 @@ public class FileControllerTests : IClassFixture<WebApplicationFactory<Program>>
     {
         var client = FactoryWithCleanScan().CreateClient();
         using var content = new MultipartFormDataContent();
-        // ZIP requires: 50 4B 03 04 — use wrong bytes
+        // ZIP requires: 50 4B 03 04 ?? use wrong bytes
         var fileContent = new ByteArrayContent([0x00, 0x00, 0x00, 0x00, 0x05, 0x06, 0x07, 0x08]);
         fileContent.Headers.ContentType = MediaTypeHeaderValue.Parse("application/zip");
         content.Add(fileContent, "file", "fake.zip");
@@ -193,7 +193,7 @@ public class FileControllerTests : IClassFixture<WebApplicationFactory<Program>>
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
 
-    // ── Upload: ClamAV scan ──────────────────────────────────────────────────
+    // -- Upload: ClamAV scan --------------------------------------------------
 
     /// <summary>Verifies that <c>Upload</c> returns bad request when clam av reports virus.</summary>
     [Fact]
@@ -212,7 +212,7 @@ public class FileControllerTests : IClassFixture<WebApplicationFactory<Program>>
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
 
-    // ── Upload: encrypted ZIP ────────────────────────────────────────────────
+    // -- Upload: encrypted ZIP ------------------------------------------------
 
     /// <summary>Verifies that <c>Upload</c> returns bad request when zip is encrypted.</summary>
     [Fact]
@@ -271,7 +271,7 @@ public class FileControllerTests : IClassFixture<WebApplicationFactory<Program>>
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
 
-    // ── Download ─────────────────────────────────────────────────────────────
+    // -- Download -------------------------------------------------------------
 
     /// <summary>Verifies that <c>Download</c> returns not found when file does not exist.</summary>
     [Fact]

@@ -1,4 +1,4 @@
-using Maroik.Core.Contract.Utilities;
+﻿using Maroik.Core.Contract.Utilities;
 using Maroik.Core.PostgreSQL.Data;
 using Maroik.Core.PostgreSQL.Models;
 using Microsoft.AspNetCore.Hosting;
@@ -29,13 +29,13 @@ public sealed class PlaywrightWebApplicationFactory : WebApplicationFactory<Prog
     /// <summary>Base URL of the real Kestrel server (e.g. <c>http://localhost:57432</c>).</summary>
     public string ServerBaseUrl { get; private set; } = string.Empty;
 
-    // ── WebApplicationFactory overrides ──────────────────────────────────────
+    // -- WebApplicationFactory overrides --------------------------------------
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("Testing");
 
-        // ── Override configuration ───────────────────────────────────────────
+        // -- Override configuration -------------------------------------------
         builder.ConfigureAppConfiguration((_, config) =>
         {
             config.AddInMemoryCollection(new Dictionary<string, string>
@@ -65,7 +65,7 @@ public sealed class PlaywrightWebApplicationFactory : WebApplicationFactory<Prog
             }!);
         });
 
-        // ── Replace PostgreSQL with InMemory ────────────────────────────────
+        // -- Replace PostgreSQL with InMemory --------------------------------
         builder.ConfigureServices(services =>
         {
             var dbOptionsDescriptor = services.SingleOrDefault(

@@ -1,6 +1,7 @@
-using Maroik.Core.Contract.Domains.Account;
+﻿using Maroik.Core.Contract.Domains.Account;
 using Maroik.Core.Contract.Domains.Finance;
 using Maroik.Core.Contract.Dtos;
+using Maroik.Core.Contract.Filters;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Contract.Utilities;
 using Maroik.Core.Service.Services;
@@ -31,7 +32,7 @@ public class DashboardServiceTests
         _fixedIncomeRepo.Object,
         _fixedExpenditureRepo.Object);
 
-    // ── Helpers ──────────────────────────────────────────────────────────────
+    // -- Helpers --------------------------------------------------------------
 
     private static Asset MakeAsset(string name, string unit = "KRW") =>
         Asset.Reconstitute(
@@ -67,19 +68,13 @@ public class DashboardServiceTests
 
     private void SetupEmptyFinancials(string email)
     {
-        _incomeRepo.Setup(r => r.GetCurrentYearIncomesAsync(email, It.IsAny<string>(), It.IsAny<string>()))
+        _incomeRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>()))
             .ReturnsAsync([]);
-        _expenditureRepo.Setup(r => r.GetCurrentYearExpendituresAsync(email, It.IsAny<string>(), It.IsAny<string>()))
+        _expenditureRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>()))
             .ReturnsAsync([]);
-        _incomeRepo.Setup(r => r.GetCurrentYearMonthIncomesAsync(email, It.IsAny<string>(), It.IsAny<string>()))
-            .ReturnsAsync([]);
-        _expenditureRepo.Setup(r => r.GetCurrentYearMonthExpendituresAsync(email, It.IsAny<string>(), It.IsAny<string>()))
-            .ReturnsAsync([]);
-        _incomeRepo.Setup(r => r.GetIncomesAsync(email)).ReturnsAsync([]);
-        _expenditureRepo.Setup(r => r.GetExpendituresAsync(email)).ReturnsAsync([]);
     }
 
-    // ── GetSummaryAsync ──────────────────────────────────────────────────────
+    // -- GetSummaryAsync ------------------------------------------------------
 
     /// <summary>Verifies that <c>GetSummaryAsync</c> returns expected selected year and month.</summary>
     [Fact]
@@ -89,10 +84,10 @@ public class DashboardServiceTests
         var account = MakeAccount(unit: null);
         var assets = new List<Asset>();
 
-        _accountRepo.Setup(r => r.GetAccountByEmailAsync(email)).ReturnsAsync(account);
-        _assetRepo.Setup(r => r.GetAssetsAsync(email)).ReturnsAsync(assets);
-        _incomeRepo.Setup(r => r.GetIncomesAsync(email)).ReturnsAsync([]);
-        _expenditureRepo.Setup(r => r.GetExpendituresAsync(email)).ReturnsAsync([]);
+        _accountRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>())).ReturnsAsync([account]);
+        _assetRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>())).ReturnsAsync(assets);
+        _incomeRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>())).ReturnsAsync([]);
+        _expenditureRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>())).ReturnsAsync([]);
         var sut = CreateSut();
 
         DashboardSummary summary = await sut.GetSummaryAsync(email, "2025", "3", "UTC");
@@ -107,10 +102,10 @@ public class DashboardServiceTests
     {
         const string email = "user@example.com";
         var account = MakeAccount(unit: null);
-        _accountRepo.Setup(r => r.GetAccountByEmailAsync(email)).ReturnsAsync(account);
-        _assetRepo.Setup(r => r.GetAssetsAsync(email)).ReturnsAsync([]);
-        _incomeRepo.Setup(r => r.GetIncomesAsync(email)).ReturnsAsync([]);
-        _expenditureRepo.Setup(r => r.GetExpendituresAsync(email)).ReturnsAsync([]);
+        _accountRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>())).ReturnsAsync([account]);
+        _assetRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>())).ReturnsAsync([]);
+        _incomeRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>())).ReturnsAsync([]);
+        _expenditureRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>())).ReturnsAsync([]);
         var sut = CreateSut();
 
         DashboardSummary summary = await sut.GetSummaryAsync(email, "bad", "bad", "UTC");
@@ -132,8 +127,8 @@ public class DashboardServiceTests
             MakeAsset("Savings", "USD")
         };
 
-        _accountRepo.Setup(r => r.GetAccountByEmailAsync(email)).ReturnsAsync(account);
-        _assetRepo.Setup(r => r.GetAssetsAsync(email)).ReturnsAsync(assets);
+        _accountRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>())).ReturnsAsync([account]);
+        _assetRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>())).ReturnsAsync(assets);
         SetupEmptyFinancials(email);
         var sut = CreateSut();
 
@@ -141,7 +136,7 @@ public class DashboardServiceTests
 
         // Most-used unit is KRW (2 assets) — computed in-memory, no DB write
         Assert.Equal("KRW", summary.DefaultMonetaryUnit);
-        _accountRepo.Verify(r => r.UpdateAccountAsync(It.IsAny<Account>()), Times.Never);
+        _accountRepo.Verify(r => r.UpdateEntityAsync(It.IsAny<Account>()), Times.Never);
     }
 
     /// <summary>Verifies that <c>GetSummaryAsync</c> clears default monetary unit when no assets exist.</summary>
@@ -150,27 +145,27 @@ public class DashboardServiceTests
     {
         const string email = "user@example.com";
         var account = MakeAccount(unit: "KRW");
-        _accountRepo.Setup(r => r.GetAccountByEmailAsync(email)).ReturnsAsync(account);
-        _assetRepo.Setup(r => r.GetAssetsAsync(email)).ReturnsAsync([]);
-        _incomeRepo.Setup(r => r.GetIncomesAsync(email)).ReturnsAsync([]);
-        _expenditureRepo.Setup(r => r.GetExpendituresAsync(email)).ReturnsAsync([]);
+        _accountRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>())).ReturnsAsync([account]);
+        _assetRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>())).ReturnsAsync([]);
+        _incomeRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>())).ReturnsAsync([]);
+        _expenditureRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>())).ReturnsAsync([]);
         var sut = CreateSut();
 
         DashboardSummary summary = await sut.GetSummaryAsync(email, "2025", "1", "UTC");
 
         Assert.Null(summary.DefaultMonetaryUnit);
-        _accountRepo.Verify(r => r.UpdateAccountAsync(It.IsAny<Account>()), Times.Never);
+        _accountRepo.Verify(r => r.UpdateEntityAsync(It.IsAny<Account>()), Times.Never);
     }
 
-    // ── GetNoticeCountsAsync ─────────────────────────────────────────────────
+    // -- GetNoticeCountsAsync -------------------------------------------------
 
     /// <summary>Verifies that <c>GetNoticeCountsAsync</c> returns zero counts when no fixed items.</summary>
     [Fact]
     public async Task GetNoticeCountsAsync_ReturnsZeroCounts_WhenNoFixedItems()
     {
         const string email = "user@example.com";
-        _fixedIncomeRepo.Setup(r => r.GetFixedIncomesAsync(email)).ReturnsAsync([]);
-        _fixedExpenditureRepo.Setup(r => r.GetFixedExpendituresAsync(email)).ReturnsAsync([]);
+        _fixedIncomeRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>())).ReturnsAsync([]);
+        _fixedExpenditureRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>())).ReturnsAsync([]);
         var sut = CreateSut();
 
         NotificationCounts counts = await sut.GetNoticeCountsAsync(email, 7);
@@ -188,7 +183,7 @@ public class DashboardServiceTests
         const string email = "user@example.com";
         var pastDate = DateTime.UtcNow.Date.AddDays(-10);
 
-        _fixedIncomeRepo.Setup(r => r.GetFixedIncomesAsync(email)).ReturnsAsync(
+        _fixedIncomeRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>())).ReturnsAsync(
         [
             FixedIncome.Reconstitute(
                 id: 1,
@@ -207,7 +202,7 @@ public class DashboardServiceTests
                 created: DateTime.UtcNow,
                 updated: DateTime.UtcNow)
         ]);
-        _fixedExpenditureRepo.Setup(r => r.GetFixedExpendituresAsync(email)).ReturnsAsync(
+        _fixedExpenditureRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>())).ReturnsAsync(
         [
             FixedExpenditure.Reconstitute(
                 id: 1,
@@ -242,7 +237,7 @@ public class DashboardServiceTests
         const string email = "user@example.com";
         var futureDate = DateTime.UtcNow.Date.AddYears(1);
 
-        _fixedIncomeRepo.Setup(r => r.GetFixedIncomesAsync(email)).ReturnsAsync(
+        _fixedIncomeRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>())).ReturnsAsync(
         [
             FixedIncome.Reconstitute(
                 id: 1,
@@ -261,7 +256,7 @@ public class DashboardServiceTests
                 created: DateTime.UtcNow,
                 updated: DateTime.UtcNow)
         ]);
-        _fixedExpenditureRepo.Setup(r => r.GetFixedExpendituresAsync(email)).ReturnsAsync([]);
+        _fixedExpenditureRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>())).ReturnsAsync([]);
         var sut = CreateSut();
 
         NotificationCounts counts = await sut.GetNoticeCountsAsync(email, 7);
@@ -269,7 +264,7 @@ public class DashboardServiceTests
         Assert.Equal(1, counts.FixedIncomesNoticed);
     }
 
-    // ── GetServerResourceSummary ─────────────────────────────────────────────
+    // -- GetServerResourceSummary ---------------------------------------------
 
     /// <summary>Verifies that <c>GetServerResourceSummary</c> returns empty when files do not exist.</summary>
     [Fact]

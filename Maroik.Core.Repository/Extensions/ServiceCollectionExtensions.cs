@@ -1,4 +1,4 @@
-using Maroik.Core.Contract.Interfaces;
+﻿using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.PostgreSQL.Data;
 using Maroik.Core.Repository.Repositories;
 using Microsoft.EntityFrameworkCore;
@@ -20,7 +20,7 @@ public static class ServiceCollectionExtensions
         /// Configures the PostgreSQL <see cref="ApplicationDbContext"/> using the
         /// "DefaultConnection" connection string from <paramref name="configuration"/>.
         /// Enables legacy timestamp behaviour for Npgsql (treats DateTime as UTC without offset).
-        /// Retry-on-failure is disabled (count = 0) — transient errors are expected to be handled
+        /// Retry-on-failure is disabled (count = 0) ?? transient errors are expected to be handled
         /// by the application tier.
         /// </summary>
         /// <param name="configuration">

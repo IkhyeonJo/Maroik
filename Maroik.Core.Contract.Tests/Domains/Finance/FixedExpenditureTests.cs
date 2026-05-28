@@ -1,4 +1,4 @@
-using Maroik.Core.Contract.Domains.Finance;
+﻿using Maroik.Core.Contract.Domains.Finance;
 
 namespace Maroik.Core.Contract.Tests.Domains.Finance;
 
@@ -14,7 +14,7 @@ public class FixedExpenditureTests
         FixedExpenditure.Register("user@example.com", "ConsumerSpending", "SubscriptionService", "Netflix",
             15000m, "KRW", "My Card", null, 0, 1, Maturity).Value;
 
-    // ── Register ─────────────────────────────────────────────────────────────
+    // -- Register -------------------------------------------------------------
 
     [Fact]
     public void Register_ReturnsFixedExpenditure_WhenValid()
@@ -63,7 +63,7 @@ public class FixedExpenditureTests
         Assert.Equal("FixedExpenditure.PaymentMethodEmpty", result.FirstError.Code);
     }
 
-    // ── MarkUnpunctual / ClearUnpunctuality ───────────────────────────────────
+    // -- MarkUnpunctual / ClearUnpunctuality -----------------------------------
 
     [Fact]
     public void MarkUnpunctual_SetsFlag()
@@ -86,7 +86,7 @@ public class FixedExpenditureTests
         Assert.False(fe.Unpunctuality);
     }
 
-    // ── Update ────────────────────────────────────────────────────────────────
+    // -- Update ----------------------------------------------------------------
 
     [Fact]
     public void Update_Succeeds_WhenValid()

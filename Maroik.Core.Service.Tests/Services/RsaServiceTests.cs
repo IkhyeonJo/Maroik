@@ -1,4 +1,4 @@
-using Maroik.Core.Contract.Utilities;
+﻿using Maroik.Core.Contract.Utilities;
 using Maroik.Core.Service.Services;
 using Microsoft.Extensions.Options;
 using System.Security.Cryptography;
@@ -17,7 +17,7 @@ namespace Maroik.Core.Service.Tests.Services;
 /// </summary>
 public class RsaServiceTests
 {
-    // ── Shared 2048-bit key pair generated once per test class ───────────────
+    // -- Shared 2048-bit key pair generated once per test class ---------------
 
     private static readonly string PrivateKeyBase64;
     private static readonly string PublicKeyBase64;
@@ -29,7 +29,7 @@ public class RsaServiceTests
         PublicKeyBase64 = Convert.ToBase64String(rsa.ExportSubjectPublicKeyInfo());
     }
 
-    // ── Helpers ──────────────────────────────────────────────────────────────
+    // -- Helpers --------------------------------------------------------------
 
     private static RsaService CreateSut(RsaType algorithm = RsaType.Rsa2) =>
         new(Options.Create(new ServerSetting
@@ -39,7 +39,7 @@ public class RsaServiceTests
             RsaPublicKey = PublicKeyBase64
         }));
 
-    // ── Encrypt / Decrypt ────────────────────────────────────────────────────
+    // -- Encrypt / Decrypt ----------------------------------------------------
 
     /// <summary>Verifies that <c>Encrypt</c> then decrypt when returns original plaintext.</summary>
     [Fact]
@@ -114,12 +114,12 @@ public class RsaServiceTests
     public void Decrypt_Throws_WhenCiphertextIsInvalid()
     {
         var sut = CreateSut();
-        string badCipher = Convert.ToBase64String(new byte[256]); // zeros — not a valid RSA ciphertext
+        string badCipher = Convert.ToBase64String(new byte[256]); // zeros ?? not a valid RSA ciphertext
 
         Assert.Throws<CryptographicException>(() => sut.Decrypt(badCipher));
     }
 
-    // ── Sign / Verify ────────────────────────────────────────────────────────
+    // -- Sign / Verify --------------------------------------------------------
 
     /// <summary>Verifies that <c>Sign</c> then verify when returns true.</summary>
     [Fact]
@@ -189,7 +189,7 @@ public class RsaServiceTests
         Assert.NotEmpty(bytes);
     }
 
-    // ── No-key edge cases ────────────────────────────────────────────────────
+    // -- No-key edge cases ----------------------------------------------------
 
     /// <summary>Verifies that <c>Sign</c> returns empty when private key is not configured.</summary>
     [Fact]

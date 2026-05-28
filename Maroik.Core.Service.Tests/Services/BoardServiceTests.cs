@@ -1,5 +1,6 @@
-using Maroik.Core.Contract.Domains.Board;
+﻿using Maroik.Core.Contract.Domains.Board;
 using Maroik.Core.Contract.Dtos;
+using Maroik.Core.Contract.Filters;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Contract.Utilities;
 using Maroik.Core.Service.Services;
@@ -45,7 +46,7 @@ public class BoardServiceTests
         _settings,
         NullLogger<BoardService>.Instance);
 
-    // ── Helpers ──────────────────────────────────────────────────────────────
+    // -- Helpers --------------------------------------------------------------
 
     private static Board MakeBoard(long id = 1, string writer = "Alice", bool deleted = false) =>
         Board.Reconstitute(id, nameof(BoardType.FreeForum), "Test Title", "Test Content", writer,
@@ -54,14 +55,14 @@ public class BoardServiceTests
     private static BoardComment MakeComment(long id = 1, string writer = "Alice") =>
         BoardComment.Reconstitute(id, 1L, 0L, null, writer, "Comment", DateTime.UtcNow, false);
 
-    // ── GetBoardsAsync ───────────────────────────────────────────────────────
+    // -- GetBoardsAsync -------------------------------------------------------
 
     /// <summary>Verifies that <c>GetBoardsAsync</c> delegates to repository.</summary>
     [Fact]
     public async Task GetBoardsAsync_DelegatesToRepository()
     {
         var list = new List<Board> { MakeBoard() };
-        _boardRepo.Setup(r => r.GetOneTypeBoardsAsync(nameof(BoardType.FreeForum))).ReturnsAsync(list);
+        _boardRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>())).ReturnsAsync(list);
         var sut = CreateSut();
 
         IEnumerable<BoardResponse> result = await sut.GetBoardsAsync(nameof(BoardType.FreeForum));
@@ -69,13 +70,13 @@ public class BoardServiceTests
         Assert.Single(result);
     }
 
-    // ── GetBoardByIdAsync ────────────────────────────────────────────────────
+    // -- GetBoardByIdAsync ----------------------------------------------------
 
     /// <summary>Verifies that <c>GetBoardByIdAsync</c> delegates to repository.</summary>
     [Fact]
     public async Task GetBoardByIdAsync_DelegatesToRepository()
     {
-        _boardRepo.Setup(r => r.GetBoardByIdAsync(1)).ReturnsAsync(MakeBoard());
+        _boardRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>())).ReturnsAsync([MakeBoard()]);
         var sut = CreateSut();
 
         BoardResponse? result = await sut.GetBoardByIdAsync(1);
@@ -84,7 +85,7 @@ public class BoardServiceTests
         Assert.Equal(1, result.Id);
     }
 
-    // ── WriteBoardAsync ──────────────────────────────────────────────────────
+    // -- WriteBoardAsync ------------------------------------------------------
 
     /// <summary>Verifies that <c>WriteBoardAsync</c> returns success with no attachment.</summary>
     [Fact]
@@ -107,7 +108,7 @@ public class BoardServiceTests
         _boardRepo.Setup(r => r.WriteBoardAsync(It.IsAny<Board>())).ReturnsAsync(1L);
         _fileClient.Setup(f => f.UploadAsync(It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
             .ReturnsAsync(true);
-        _attachedFileRepo.Setup(r => r.SaveBoardAttachedFileAsync(It.IsAny<BoardAttachedFile>())).Returns(Task.CompletedTask);
+        _attachedFileRepo.Setup(r => r.CreateAsync(It.IsAny<BoardAttachedFile>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
         var file = new AttachedFileInfo { FileName = "doc.zip", ContentType = "application/zip", Bytes = [1, 2], Size = 2 };
@@ -115,7 +116,7 @@ public class BoardServiceTests
             new BoardRequest { Type = nameof(BoardType.FreeForum), Title = "Test Title", Writer = "Alice" }, file);
 
         Assert.True(result.Success);
-        _attachedFileRepo.Verify(r => r.SaveBoardAttachedFileAsync(It.IsAny<BoardAttachedFile>()), Times.Once);
+        _attachedFileRepo.Verify(r => r.CreateAsync(It.IsAny<BoardAttachedFile>()), Times.Once);
         _unitOfWork.Verify(u => u.CommitAsync(), Times.Once);
     }
 
@@ -133,13 +134,13 @@ public class BoardServiceTests
         _unitOfWork.Verify(u => u.RollbackAsync(), Times.Once);
     }
 
-    // ── EditBoardAsync ───────────────────────────────────────────────────────
+    // -- EditBoardAsync -------------------------------------------------------
 
     /// <summary>Verifies that <c>EditBoardAsync</c> returns fail when board not found.</summary>
     [Fact]
     public async Task EditBoardAsync_ReturnsFail_WhenBoardNotFound()
     {
-        _boardRepo.Setup(r => r.GetBoardByIdAsync(99)).ReturnsAsync((Board?)null);
+        _boardRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>())).ReturnsAsync([]);
         var sut = CreateSut();
 
         ServiceResult result = await sut.EditBoardAsync(new BoardRequest { Id = 99, Type = nameof(BoardType.FreeForum) }, "Alice", null);
@@ -152,7 +153,7 @@ public class BoardServiceTests
     [Fact]
     public async Task EditBoardAsync_ReturnsFail_WhenBoardIsDeleted()
     {
-        _boardRepo.Setup(r => r.GetBoardByIdAsync(1)).ReturnsAsync(MakeBoard(deleted: true));
+        _boardRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>())).ReturnsAsync([MakeBoard(deleted: true)]);
         var sut = CreateSut();
 
         ServiceResult result = await sut.EditBoardAsync(new BoardRequest { Id = 1, Type = nameof(BoardType.FreeForum) }, "Alice", null);
@@ -165,7 +166,7 @@ public class BoardServiceTests
     [Fact]
     public async Task EditBoardAsync_ReturnsFail_WhenRequesterIsNotWriter()
     {
-        _boardRepo.Setup(r => r.GetBoardByIdAsync(1)).ReturnsAsync(MakeBoard(writer: "Alice"));
+        _boardRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>())).ReturnsAsync([MakeBoard(writer: "Alice")]);
         var sut = CreateSut();
 
         ServiceResult result = await sut.EditBoardAsync(new BoardRequest { Id = 1, Type = nameof(BoardType.FreeForum) }, "Bob", null);
@@ -178,9 +179,9 @@ public class BoardServiceTests
     [Fact]
     public async Task EditBoardAsync_ReturnsSuccess_WhenWriterMatchesAndNoNewFile()
     {
-        _boardRepo.Setup(r => r.GetBoardByIdAsync(1)).ReturnsAsync(MakeBoard(writer: "Alice"));
-        _boardRepo.Setup(r => r.UpdateBoardAsync(It.IsAny<Board>())).Returns(Task.CompletedTask);
-        _attachedFileRepo.Setup(r => r.GetByBoardIdAsync(1)).ReturnsAsync((BoardAttachedFile?)null);
+        _boardRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>())).ReturnsAsync([MakeBoard(writer: "Alice")]);
+        _boardRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Board>())).Returns(Task.CompletedTask);
+        _attachedFileRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>())).ReturnsAsync([]);
         var sut = CreateSut();
 
         ServiceResult result = await sut.EditBoardAsync(
@@ -190,13 +191,13 @@ public class BoardServiceTests
         _unitOfWork.Verify(u => u.CommitAsync(), Times.Once);
     }
 
-    // ── DeleteBoardAsync ─────────────────────────────────────────────────────
+    // -- DeleteBoardAsync -----------------------------------------------------
 
     /// <summary>Verifies that <c>DeleteBoardAsync</c> returns fail when board not found.</summary>
     [Fact]
     public async Task DeleteBoardAsync_ReturnsFail_WhenBoardNotFound()
     {
-        _boardRepo.Setup(r => r.GetBoardByIdAsync(99)).ReturnsAsync((Board?)null);
+        _boardRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>())).ReturnsAsync([]);
         var sut = CreateSut();
 
         ServiceResult result = await sut.DeleteBoardAsync(99, nameof(BoardType.FreeForum), "Alice", false);
@@ -208,7 +209,7 @@ public class BoardServiceTests
     [Fact]
     public async Task DeleteBoardAsync_ReturnsFail_WhenNotOwnerAndNotAdmin()
     {
-        _boardRepo.Setup(r => r.GetBoardByIdAsync(1)).ReturnsAsync(MakeBoard(writer: "Alice"));
+        _boardRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>())).ReturnsAsync([MakeBoard(writer: "Alice")]);
         var sut = CreateSut();
 
         ServiceResult result = await sut.DeleteBoardAsync(1, nameof(BoardType.FreeForum), "Bob", false);
@@ -221,8 +222,8 @@ public class BoardServiceTests
     [Fact]
     public async Task DeleteBoardAsync_ReturnsSuccess_WhenOwner()
     {
-        _boardRepo.Setup(r => r.GetBoardByIdAsync(1)).ReturnsAsync(MakeBoard(writer: "Alice"));
-        _boardRepo.Setup(r => r.DeleteBoardAsync(It.IsAny<Board>())).Returns(Task.CompletedTask);
+        _boardRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>())).ReturnsAsync([MakeBoard(writer: "Alice")]);
+        _boardRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Board>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
         ServiceResult result = await sut.DeleteBoardAsync(1, nameof(BoardType.FreeForum), "Alice", false);
@@ -234,8 +235,8 @@ public class BoardServiceTests
     [Fact]
     public async Task DeleteBoardAsync_ReturnsSuccess_WhenAdmin()
     {
-        _boardRepo.Setup(r => r.GetBoardByIdAsync(1)).ReturnsAsync(MakeBoard(writer: "Alice"));
-        _boardRepo.Setup(r => r.DeleteBoardAsync(It.IsAny<Board>())).Returns(Task.CompletedTask);
+        _boardRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>())).ReturnsAsync([MakeBoard(writer: "Alice")]);
+        _boardRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Board>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
         ServiceResult result = await sut.DeleteBoardAsync(1, nameof(BoardType.FreeForum), "Admin", true);
@@ -243,13 +244,13 @@ public class BoardServiceTests
         Assert.True(result.Success);
     }
 
-    // ── WriteCommentAsync ────────────────────────────────────────────────────
+    // -- WriteCommentAsync ----------------------------------------------------
 
     /// <summary>Verifies that <c>WriteCommentAsync</c> returns fail when board not found.</summary>
     [Fact]
     public async Task WriteCommentAsync_ReturnsFail_WhenBoardNotFound()
     {
-        _boardRepo.Setup(r => r.GetBoardByIdAsync(99)).ReturnsAsync((Board?)null);
+        _boardRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>())).ReturnsAsync([]);
         var sut = CreateSut();
 
         ServiceResult result = await sut.WriteCommentAsync(new BoardCommentRequest { BoardId = 99 });
@@ -261,7 +262,7 @@ public class BoardServiceTests
     [Fact]
     public async Task WriteCommentAsync_ReturnsFail_WhenRequiredOwnerDoesNotMatch()
     {
-        _boardRepo.Setup(r => r.GetBoardByIdAsync(1)).ReturnsAsync(MakeBoard(writer: "Alice"));
+        _boardRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>())).ReturnsAsync([MakeBoard(writer: "Alice")]);
         var sut = CreateSut();
 
         ServiceResult result = await sut.WriteCommentAsync(new BoardCommentRequest { BoardId = 1 }, "Bob");
@@ -274,9 +275,9 @@ public class BoardServiceTests
     [Fact]
     public async Task WriteCommentAsync_ReturnsSuccess_WhenOwnerMatchesAndNoOwnerRestriction()
     {
-        _boardRepo.Setup(r => r.GetBoardByIdAsync(1)).ReturnsAsync(MakeBoard(writer: "Alice"));
-        _commentRepo.Setup(r => r.GetOneBoardCommentsAsync(1)).ReturnsAsync(new List<BoardComment>());
-        _commentRepo.Setup(r => r.WriteBoardCommentAsync(It.IsAny<BoardComment>())).Returns(Task.CompletedTask);
+        _boardRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>())).ReturnsAsync([MakeBoard(writer: "Alice")]);
+        _commentRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>())).ReturnsAsync([]);
+        _commentRepo.Setup(r => r.CreateAsync(It.IsAny<BoardComment>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
         ServiceResult result = await sut.WriteCommentAsync(new BoardCommentRequest { BoardId = 1, Writer = "Bob", Content = "Hello" });
@@ -288,12 +289,12 @@ public class BoardServiceTests
     [Fact]
     public async Task WriteCommentAsync_SetsOrderBasedOnExistingCommentCount()
     {
-        _boardRepo.Setup(r => r.GetBoardByIdAsync(1)).ReturnsAsync(MakeBoard());
-        _commentRepo.Setup(r => r.GetOneBoardCommentsAsync(1))
+        _boardRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>())).ReturnsAsync([MakeBoard()]);
+        _commentRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>()))
             .ReturnsAsync(new List<BoardComment> { MakeComment(1), MakeComment(2) });
 
         BoardComment? captured = null;
-        _commentRepo.Setup(r => r.WriteBoardCommentAsync(It.IsAny<BoardComment>()))
+        _commentRepo.Setup(r => r.CreateAsync(It.IsAny<BoardComment>()))
             .Callback<BoardComment>(c => captured = c)
             .Returns(Task.CompletedTask);
         var sut = CreateSut();
@@ -304,13 +305,13 @@ public class BoardServiceTests
         Assert.Equal(2L, captured.Order);
     }
 
-    // ── DeleteCommentAsync ───────────────────────────────────────────────────
+    // -- DeleteCommentAsync ---------------------------------------------------
 
     /// <summary>Verifies that <c>DeleteCommentAsync</c> returns fail when comment not found.</summary>
     [Fact]
     public async Task DeleteCommentAsync_ReturnsFail_WhenCommentNotFound()
     {
-        _commentRepo.Setup(r => r.GetBoardCommentAsync(99)).ReturnsAsync((BoardComment?)null);
+        _commentRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>())).ReturnsAsync([]);
         var sut = CreateSut();
 
         ServiceResult result = await sut.DeleteCommentAsync(99, "Alice", false);
@@ -322,7 +323,7 @@ public class BoardServiceTests
     [Fact]
     public async Task DeleteCommentAsync_ReturnsFail_WhenNotOwnerAndNotAdmin()
     {
-        _commentRepo.Setup(r => r.GetBoardCommentAsync(1)).ReturnsAsync(MakeComment(writer: "Alice"));
+        _commentRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>())).ReturnsAsync([MakeComment(writer: "Alice")]);
         var sut = CreateSut();
 
         ServiceResult result = await sut.DeleteCommentAsync(1, "Bob", false);
@@ -335,8 +336,8 @@ public class BoardServiceTests
     [Fact]
     public async Task DeleteCommentAsync_ReturnsSuccess_WhenOwner()
     {
-        _commentRepo.Setup(r => r.GetBoardCommentAsync(1)).ReturnsAsync(MakeComment(writer: "Alice"));
-        _commentRepo.Setup(r => r.DeleteBoardCommentAsync(It.IsAny<BoardComment>())).Returns(Task.CompletedTask);
+        _commentRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>())).ReturnsAsync([MakeComment(writer: "Alice")]);
+        _commentRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<BoardComment>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
         ServiceResult result = await sut.DeleteCommentAsync(1, "Alice", false);
@@ -344,7 +345,7 @@ public class BoardServiceTests
         Assert.True(result.Success);
     }
 
-    // ── IncrementBoardViewAsync ──────────────────────────────────────────────
+    // -- IncrementBoardViewAsync ----------------------------------------------
 
     /// <summary>Verifies that <c>IncrementBoardViewAsync</c> returns success when no exception.</summary>
     [Fact]

@@ -1,5 +1,6 @@
-using Maroik.Core.Contract.Domains.Menu;
+﻿using Maroik.Core.Contract.Domains.Menu;
 using Maroik.Core.Contract.Dtos;
+using Maroik.Core.Contract.Filters;
 using Maroik.Core.Contract.Utilities;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Service.Services;
@@ -23,7 +24,7 @@ public class MenuServiceTests
         _subCategoryRepo.Object,
         NullLogger<MenuService>.Instance);
 
-    // ── Helpers ──────────────────────────────────────────────────────────────
+    // -- Helpers --------------------------------------------------------------
 
     private static Category MakeCategory(long id = 1, string name = "Forum") =>
         Category.Reconstitute(id, name, name, "/icons/forum.png", "Board", "Index", Role.User, 0L);
@@ -31,13 +32,13 @@ public class MenuServiceTests
     private static SubCategory MakeSubCategory(long id = 1, string name = nameof(BoardType.FreeForum), long categoryId = 1) =>
         SubCategory.Reconstitute(id, categoryId, name, name, "/icons/forum.png", "Index", Role.User, 0L);
 
-    // ── GetAllCategoriesAsync ────────────────────────────────────────────────
+    // -- GetAllCategoriesAsync ------------------------------------------------
 
     /// <summary>Verifies that <c>GetAllCategoriesAsync</c> delegates to repository.</summary>
     [Fact]
     public async Task GetAllCategoriesAsync_DelegatesToRepository()
     {
-        _categoryRepo.Setup(r => r.GetCategoryAsync()).ReturnsAsync([MakeCategory()]);
+        _categoryRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>())).ReturnsAsync([MakeCategory()]);
         var sut = CreateSut();
 
         IEnumerable<CategoryResponse> result = await sut.GetAllCategoriesAsync();
@@ -45,13 +46,13 @@ public class MenuServiceTests
         Assert.Single(result);
     }
 
-    // ── GetAllSubCategoriesAsync ─────────────────────────────────────────────
+    // -- GetAllSubCategoriesAsync ---------------------------------------------
 
     /// <summary>Verifies that <c>GetAllSubCategoriesAsync</c> delegates to repository.</summary>
     [Fact]
     public async Task GetAllSubCategoriesAsync_DelegatesToRepository()
     {
-        _subCategoryRepo.Setup(r => r.GetSubCategoryAsync()).ReturnsAsync([MakeSubCategory()]);
+        _subCategoryRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>())).ReturnsAsync([MakeSubCategory()]);
         var sut = CreateSut();
 
         IEnumerable<SubCategoryResponse> result = await sut.GetAllSubCategoriesAsync();
@@ -59,13 +60,13 @@ public class MenuServiceTests
         Assert.Single(result);
     }
 
-    // ── GetCategoryByIdAsync ─────────────────────────────────────────────────
+    // -- GetCategoryByIdAsync -------------------------------------------------
 
     /// <summary>Verifies that <c>GetCategoryByIdAsync</c> returns category when found.</summary>
     [Fact]
     public async Task GetCategoryByIdAsync_ReturnsCategory_WhenFound()
     {
-        _categoryRepo.Setup(r => r.GetCategoryAsync()).ReturnsAsync([MakeCategory(id: 5, name: "Board")]);
+        _categoryRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>())).ReturnsAsync([MakeCategory(id: 5, name: "Board")]);
         var sut = CreateSut();
 
         CategoryResponse? result = await sut.GetCategoryByIdAsync(5);
@@ -79,7 +80,7 @@ public class MenuServiceTests
     [Fact]
     public async Task GetCategoryByIdAsync_ReturnsNull_WhenNotFound()
     {
-        _categoryRepo.Setup(r => r.GetCategoryAsync()).ReturnsAsync([MakeCategory(id: 1)]);
+        _categoryRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>())).ReturnsAsync([MakeCategory(id: 1)]);
         var sut = CreateSut();
 
         CategoryResponse? result = await sut.GetCategoryByIdAsync(999);
@@ -87,13 +88,13 @@ public class MenuServiceTests
         Assert.Null(result);
     }
 
-    // ── GetSubCategoryByIdAsync ──────────────────────────────────────────────
+    // -- GetSubCategoryByIdAsync ----------------------------------------------
 
     /// <summary>Verifies that <c>GetSubCategoryByIdAsync</c> returns sub category when found.</summary>
     [Fact]
     public async Task GetSubCategoryByIdAsync_ReturnsSubCategory_WhenFound()
     {
-        _subCategoryRepo.Setup(r => r.GetSubCategoryAsync()).ReturnsAsync([MakeSubCategory(id: 3, name: nameof(BoardType.PrivateNote))]);
+        _subCategoryRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>())).ReturnsAsync([MakeSubCategory(id: 3, name: nameof(BoardType.PrivateNote))]);
         var sut = CreateSut();
 
         SubCategoryResponse? result = await sut.GetSubCategoryByIdAsync(3);
@@ -106,7 +107,7 @@ public class MenuServiceTests
     [Fact]
     public async Task GetSubCategoryByIdAsync_ReturnsNull_WhenNotFound()
     {
-        _subCategoryRepo.Setup(r => r.GetSubCategoryAsync()).ReturnsAsync([MakeSubCategory(id: 1)]);
+        _subCategoryRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>())).ReturnsAsync([MakeSubCategory(id: 1)]);
         var sut = CreateSut();
 
         SubCategoryResponse? result = await sut.GetSubCategoryByIdAsync(999);
@@ -114,13 +115,13 @@ public class MenuServiceTests
         Assert.Null(result);
     }
 
-    // ── CreateCategoryAsync ──────────────────────────────────────────────────
+    // -- CreateCategoryAsync --------------------------------------------------
 
     /// <summary>Verifies that <c>CreateCategoryAsync</c> returns success when repository succeeds.</summary>
     [Fact]
     public async Task CreateCategoryAsync_ReturnsSuccess_WhenRepositorySucceeds()
     {
-        _categoryRepo.Setup(r => r.CreateCategoryAsync(It.IsAny<Category>())).Returns(Task.CompletedTask);
+        _categoryRepo.Setup(r => r.CreateAsync(It.IsAny<Category>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
         ServiceResult result = await sut.CreateCategoryAsync(new CategoryRequest { Name = "NewCategory" });
@@ -132,7 +133,7 @@ public class MenuServiceTests
     [Fact]
     public async Task CreateCategoryAsync_ReturnsFail_WhenRepositoryThrows()
     {
-        _categoryRepo.Setup(r => r.CreateCategoryAsync(It.IsAny<Category>())).ThrowsAsync(new Exception("DB error"));
+        _categoryRepo.Setup(r => r.CreateAsync(It.IsAny<Category>())).ThrowsAsync(new Exception("DB error"));
         var sut = CreateSut();
 
         ServiceResult result = await sut.CreateCategoryAsync(new CategoryRequest { Name = "Bad" });
@@ -140,13 +141,13 @@ public class MenuServiceTests
         Assert.False(result.Success);
     }
 
-    // ── UpdateCategoryAsync ──────────────────────────────────────────────────
+    // -- UpdateCategoryAsync --------------------------------------------------
 
     /// <summary>Verifies that <c>UpdateCategoryAsync</c> returns success when repository succeeds.</summary>
     [Fact]
     public async Task UpdateCategoryAsync_ReturnsSuccess_WhenRepositorySucceeds()
     {
-        _categoryRepo.Setup(r => r.UpdateCategoryAsync(It.IsAny<Category>())).Returns(Task.CompletedTask);
+        _categoryRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Category>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
         ServiceResult result = await sut.UpdateCategoryAsync(new CategoryRequest { Id = 1, Name = "Updated" });
@@ -158,7 +159,7 @@ public class MenuServiceTests
     [Fact]
     public async Task UpdateCategoryAsync_ReturnsFail_WhenRepositoryThrows()
     {
-        _categoryRepo.Setup(r => r.UpdateCategoryAsync(It.IsAny<Category>())).ThrowsAsync(new Exception("DB error"));
+        _categoryRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Category>())).ThrowsAsync(new Exception("DB error"));
         var sut = CreateSut();
 
         ServiceResult result = await sut.UpdateCategoryAsync(new CategoryRequest { Id = 1 });
@@ -166,13 +167,13 @@ public class MenuServiceTests
         Assert.False(result.Success);
     }
 
-    // ── DeleteCategoryAsync ──────────────────────────────────────────────────
+    // -- DeleteCategoryAsync --------------------------------------------------
 
     /// <summary>Verifies that <c>DeleteCategoryAsync</c> returns success when repository succeeds.</summary>
     [Fact]
     public async Task DeleteCategoryAsync_ReturnsSuccess_WhenRepositorySucceeds()
     {
-        _categoryRepo.Setup(r => r.DeleteCategoryAsync(It.IsAny<Category>())).Returns(Task.CompletedTask);
+        _categoryRepo.Setup(r => r.DeleteAsync(It.IsAny<IReadOnlyList<FilterCondition>>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
         ServiceResult result = await sut.DeleteCategoryAsync(new CategoryRequest { Id = 1 });
@@ -184,7 +185,7 @@ public class MenuServiceTests
     [Fact]
     public async Task DeleteCategoryAsync_ReturnsFail_WhenRepositoryThrows()
     {
-        _categoryRepo.Setup(r => r.DeleteCategoryAsync(It.IsAny<Category>())).ThrowsAsync(new Exception("DB error"));
+        _categoryRepo.Setup(r => r.DeleteAsync(It.IsAny<IReadOnlyList<FilterCondition>>())).ThrowsAsync(new Exception("DB error"));
         var sut = CreateSut();
 
         ServiceResult result = await sut.DeleteCategoryAsync(new CategoryRequest { Id = 1 });
@@ -192,13 +193,13 @@ public class MenuServiceTests
         Assert.False(result.Success);
     }
 
-    // ── CreateSubCategoryAsync ───────────────────────────────────────────────
+    // -- CreateSubCategoryAsync -----------------------------------------------
 
     /// <summary>Verifies that <c>CreateSubCategoryAsync</c> returns success when repository succeeds.</summary>
     [Fact]
     public async Task CreateSubCategoryAsync_ReturnsSuccess_WhenRepositorySucceeds()
     {
-        _subCategoryRepo.Setup(r => r.CreateSubCategoryAsync(It.IsAny<SubCategory>())).Returns(Task.CompletedTask);
+        _subCategoryRepo.Setup(r => r.CreateAsync(It.IsAny<SubCategory>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
         ServiceResult result = await sut.CreateSubCategoryAsync(new SubCategoryRequest { Name = "NewSub" });
@@ -210,7 +211,7 @@ public class MenuServiceTests
     [Fact]
     public async Task CreateSubCategoryAsync_ReturnsFail_WhenRepositoryThrows()
     {
-        _subCategoryRepo.Setup(r => r.CreateSubCategoryAsync(It.IsAny<SubCategory>())).ThrowsAsync(new Exception("DB error"));
+        _subCategoryRepo.Setup(r => r.CreateAsync(It.IsAny<SubCategory>())).ThrowsAsync(new Exception("DB error"));
         var sut = CreateSut();
 
         ServiceResult result = await sut.CreateSubCategoryAsync(new SubCategoryRequest { Name = "Bad" });
@@ -218,13 +219,13 @@ public class MenuServiceTests
         Assert.False(result.Success);
     }
 
-    // ── UpdateSubCategoryAsync ───────────────────────────────────────────────
+    // -- UpdateSubCategoryAsync -----------------------------------------------
 
     /// <summary>Verifies that <c>UpdateSubCategoryAsync</c> returns success when repository succeeds.</summary>
     [Fact]
     public async Task UpdateSubCategoryAsync_ReturnsSuccess_WhenRepositorySucceeds()
     {
-        _subCategoryRepo.Setup(r => r.UpdateSubCategoryAsync(It.IsAny<SubCategory>())).Returns(Task.CompletedTask);
+        _subCategoryRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<SubCategory>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
         ServiceResult result = await sut.UpdateSubCategoryAsync(new SubCategoryRequest { Id = 1, Name = "Updated" });
@@ -236,7 +237,7 @@ public class MenuServiceTests
     [Fact]
     public async Task UpdateSubCategoryAsync_ReturnsFail_WhenRepositoryThrows()
     {
-        _subCategoryRepo.Setup(r => r.UpdateSubCategoryAsync(It.IsAny<SubCategory>())).ThrowsAsync(new Exception("DB error"));
+        _subCategoryRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<SubCategory>())).ThrowsAsync(new Exception("DB error"));
         var sut = CreateSut();
 
         ServiceResult result = await sut.UpdateSubCategoryAsync(new SubCategoryRequest { Id = 1 });
@@ -244,13 +245,13 @@ public class MenuServiceTests
         Assert.False(result.Success);
     }
 
-    // ── DeleteSubCategoryAsync ───────────────────────────────────────────────
+    // -- DeleteSubCategoryAsync -----------------------------------------------
 
     /// <summary>Verifies that <c>DeleteSubCategoryAsync</c> returns success when repository succeeds.</summary>
     [Fact]
     public async Task DeleteSubCategoryAsync_ReturnsSuccess_WhenRepositorySucceeds()
     {
-        _subCategoryRepo.Setup(r => r.DeleteSubCategoryAsync(It.IsAny<SubCategory>())).Returns(Task.CompletedTask);
+        _subCategoryRepo.Setup(r => r.DeleteAsync(It.IsAny<IReadOnlyList<FilterCondition>>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
         ServiceResult result = await sut.DeleteSubCategoryAsync(new SubCategoryRequest { Id = 1 });
@@ -262,7 +263,7 @@ public class MenuServiceTests
     [Fact]
     public async Task DeleteSubCategoryAsync_ReturnsFail_WhenRepositoryThrows()
     {
-        _subCategoryRepo.Setup(r => r.DeleteSubCategoryAsync(It.IsAny<SubCategory>())).ThrowsAsync(new Exception("DB error"));
+        _subCategoryRepo.Setup(r => r.DeleteAsync(It.IsAny<IReadOnlyList<FilterCondition>>())).ThrowsAsync(new Exception("DB error"));
         var sut = CreateSut();
 
         ServiceResult result = await sut.DeleteSubCategoryAsync(new SubCategoryRequest { Id = 1 });

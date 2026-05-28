@@ -1,4 +1,4 @@
-using Maroik.WebSite.Tests.Infrastructure;
+﻿using Maroik.WebSite.Tests.Infrastructure;
 using Microsoft.AspNetCore.Mvc.Testing;
 
 namespace Maroik.WebSite.Tests.Controllers;
@@ -17,7 +17,7 @@ public class AccountControllerTests : IClassFixture<MaroikWebApplicationFactory>
         _client = factory.CreateTestClient(followRedirects: false);
     }
 
-    // ── ConsentForm ──────────────────────────────────────────────────────────
+    // -- ConsentForm ----------------------------------------------------------
 
     /// <summary>Verifies that <c>ConsentForm</c> get when returns200.</summary>
     [Fact]
@@ -28,7 +28,7 @@ public class AccountControllerTests : IClassFixture<MaroikWebApplicationFactory>
         Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
     }
 
-    // ── Login ────────────────────────────────────────────────────────────────
+    // -- Login ----------------------------------------------------------------
 
     /// <summary>Verifies that <c>Login</c> get when returns200.</summary>
     [Fact]
@@ -39,7 +39,7 @@ public class AccountControllerTests : IClassFixture<MaroikWebApplicationFactory>
         Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
     }
 
-    // ── Logout ───────────────────────────────────────────────────────────────
+    // -- Logout ---------------------------------------------------------------
 
     /// <summary>Verifies that <c>Logout</c> get when redirects to dash board.</summary>
     [Fact]
@@ -51,7 +51,7 @@ public class AccountControllerTests : IClassFixture<MaroikWebApplicationFactory>
         Assert.Equal(System.Net.HttpStatusCode.Redirect, response.StatusCode);
     }
 
-    // ── Register ─────────────────────────────────────────────────────────────
+    // -- Register -------------------------------------------------------------
 
     /// <summary>Verifies that <c>Register</c> get when returns200.</summary>
     [Fact]
@@ -62,7 +62,7 @@ public class AccountControllerTests : IClassFixture<MaroikWebApplicationFactory>
         Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
     }
 
-    // ── ConfirmEmail ─────────────────────────────────────────────────────────
+    // -- ConfirmEmail ---------------------------------------------------------
 
     /// <summary>Verifies that <c>ConfirmEmail</c> get when returns 200 with invalid token.</summary>
     [Fact]
@@ -75,7 +75,7 @@ public class AccountControllerTests : IClassFixture<MaroikWebApplicationFactory>
         Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
     }
 
-    // ── ForgotPassword ───────────────────────────────────────────────────────
+    // -- ForgotPassword -------------------------------------------------------
 
     /// <summary>Verifies that <c>ForgotPassword</c> get when returns200.</summary>
     [Fact]
@@ -86,7 +86,7 @@ public class AccountControllerTests : IClassFixture<MaroikWebApplicationFactory>
         Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
     }
 
-    // ── ResetPassword ────────────────────────────────────────────────────────
+    // -- ResetPassword --------------------------------------------------------
 
     /// <summary>Verifies that <c>ResetPassword</c> get when returns 200 with invalid token.</summary>
     [Fact]

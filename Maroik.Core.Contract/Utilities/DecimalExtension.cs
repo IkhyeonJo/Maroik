@@ -1,4 +1,4 @@
-namespace Maroik.Core.Contract.Utilities;
+﻿namespace Maroik.Core.Contract.Utilities;
 
 /// <summary>
 /// Extension methods for <see cref="decimal"/> to produce clean display strings

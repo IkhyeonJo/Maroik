@@ -1,4 +1,4 @@
-using Maroik.WebSite.Tests.Infrastructure;
+﻿using Maroik.WebSite.Tests.Infrastructure;
 
 namespace Maroik.WebSite.Tests.Controllers;
 
@@ -16,7 +16,7 @@ public class ForumControllerTests : IClassFixture<MaroikWebApplicationFactory>
         _client = factory.CreateTestClient(followRedirects: false);
     }
 
-    // ── FreeForum list ───────────────────────────────────────────────────────
+    // -- FreeForum list -------------------------------------------------------
 
     /// <summary>Verifies that <c>FreeForum</c> default list when returns200.</summary>
     [Fact]
@@ -45,7 +45,7 @@ public class ForumControllerTests : IClassFixture<MaroikWebApplicationFactory>
         Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
     }
 
-    // ── FreeForum write (no session) ─────────────────────────────────────────
+    // -- FreeForum write (no session) -----------------------------------------
 
     /// <summary>Verifies that <c>FreeForum</c> write mode without session when redirects to login.</summary>
     [Fact]
@@ -58,7 +58,7 @@ public class ForumControllerTests : IClassFixture<MaroikWebApplicationFactory>
         Assert.Contains("Login", response.Headers.Location?.ToString() ?? "");
     }
 
-    // ── FreeForum detail (nonexistent board) ─────────────────────────────────
+    // -- FreeForum detail (nonexistent board) ---------------------------------
 
     /// <summary>Verifies that <c>FreeForum</c> detail mode with missing board when redirects to list.</summary>
     [Fact]

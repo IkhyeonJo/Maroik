@@ -1,4 +1,4 @@
-using ErrorOr;
+﻿using ErrorOr;
 using Maroik.Core.Contract.Domains.Primitives;
 using Maroik.Core.Contract.Domains.ValueObjects;
 
@@ -81,13 +81,13 @@ public sealed class FixedExpenditure : AggregateRoot<long>
         Updated = DateTime.UtcNow;
     }
 
-    // ────────────────────────────────────────────────────────────────────────
+    // ------------------------------------------------------------------------
     // Factory / Reconstitution
-    // ────────────────────────────────────────────────────────────────────────
+    // ------------------------------------------------------------------------
 
     /// <summary>
     /// Rebuilds a <see cref="FixedExpenditure"/> from trusted raw values from the repository layer.
-    /// Bypasses validation — use only with data from the trusted repository layer.
+    /// Bypasses validation ?? use only with data from the trusted repository layer.
     /// Does NOT raise domain events.
     /// </summary>
     public static FixedExpenditure Reconstitute(
@@ -172,9 +172,9 @@ public sealed class FixedExpenditure : AggregateRoot<long>
         return fixedExpenditure;
     }
 
-    // ────────────────────────────────────────────────────────────────────────
+    // ------------------------------------------------------------------------
     // Domain behaviours
-    // ────────────────────────────────────────────────────────────────────────
+    // ------------------------------------------------------------------------
 
     /// <summary>Marks this charge as not collected on the scheduled day.</summary>
     public void MarkUnpunctual()

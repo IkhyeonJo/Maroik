@@ -1,4 +1,4 @@
-using Maroik.Core.Contract.Utilities;
+﻿using Maroik.Core.Contract.Utilities;
 
 namespace Maroik.Core.Contract.Tests.Utilities;
 
@@ -9,7 +9,7 @@ namespace Maroik.Core.Contract.Tests.Utilities;
 /// </summary>
 public class DecimalExtensionTests
 {
-    // ── TrimTrailingZeros (decimal) ──────────────────────────────────────────
+    // -- TrimTrailingZeros (decimal) ------------------------------------------
 
     /// <summary>Verifies that <c>TrimTrailingZeros</c> formats whole number when without decimal point.</summary>
     [Theory]
@@ -41,7 +41,7 @@ public class DecimalExtensionTests
         Assert.Equal("1000000", result);
     }
 
-    // ── TrimTrailingZeros (decimal?) ─────────────────────────────────────────
+    // -- TrimTrailingZeros (decimal?) -----------------------------------------
 
     /// <summary>Verifies that <c>TrimTrailingZeros</c> nullable treats null as zero.</summary>
     [Fact]

@@ -1,4 +1,4 @@
-using Maroik.Core.Contract.Domains.Board;
+﻿using Maroik.Core.Contract.Domains.Board;
 
 namespace Maroik.Core.Contract.Tests.Domains.Board;
 
@@ -8,7 +8,7 @@ namespace Maroik.Core.Contract.Tests.Domains.Board;
 /// </summary>
 public class BoardCommentTests
 {
-    // ── Create ───────────────────────────────────────────────────────────────
+    // -- Create ---------------------------------------------------------------
 
     [Fact]
     public void Create_ReturnsComment_WhenValid()
@@ -44,7 +44,7 @@ public class BoardCommentTests
         Assert.Equal("BoardComment.ContentEmpty", result.FirstError.Code);
     }
 
-    // ── SoftDelete ────────────────────────────────────────────────────────────
+    // -- SoftDelete ------------------------------------------------------------
 
     [Fact]
     public void SoftDelete_SetsDeletedTrue()

@@ -1,4 +1,4 @@
-using ErrorOr;
+﻿using ErrorOr;
 using Maroik.Core.Contract.Domains.Primitives;
 using Maroik.Core.Contract.Domains.ValueObjects;
 
@@ -49,13 +49,13 @@ public sealed class Asset : AggregateRoot<(string ProductName, string AccountEma
         Updated = DateTime.UtcNow;
     }
 
-    // ────────────────────────────────────────────────────────────────────────
+    // ------------------------------------------------------------------------
     // Factory / Reconstitution
-    // ────────────────────────────────────────────────────────────────────────
+    // ------------------------------------------------------------------------
 
     /// <summary>
     /// Rebuilds an <see cref="Asset"/> from trusted raw values from the repository layer.
-    /// Bypasses validation — use only with data from the trusted repository layer.
+    /// Bypasses validation ?? use only with data from the trusted repository layer.
     /// Does NOT raise domain events.
     /// </summary>
     public static Asset Reconstitute(
@@ -113,9 +113,9 @@ public sealed class Asset : AggregateRoot<(string ProductName, string AccountEma
         return asset;
     }
 
-    // ────────────────────────────────────────────────────────────────────────
+    // ------------------------------------------------------------------------
     // Domain behaviours
-    // ────────────────────────────────────────────────────────────────────────
+    // ------------------------------------------------------------------------
 
     /// <summary>Adds the given amount to the balance (e.g. on income deposit).</summary>
     public void Deposit(decimal amount, string currency)

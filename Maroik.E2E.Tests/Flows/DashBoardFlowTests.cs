@@ -1,4 +1,4 @@
-using Maroik.E2E.Tests.Infrastructure;
+﻿using Maroik.E2E.Tests.Infrastructure;
 using Microsoft.Playwright;
 
 namespace Maroik.E2E.Tests.Flows;
@@ -10,7 +10,7 @@ namespace Maroik.E2E.Tests.Flows;
 /// </summary>
 public class DashBoardFlowTests : E2ETestBase
 {
-    // ── Anonymous dashboard ──────────────────────────────────────────────────
+    // -- Anonymous dashboard --------------------------------------------------
 
     /// <summary>Verifies that <c>AnonymousDashboard</c> loads with non empty body.</summary>
     [Fact]
@@ -60,7 +60,7 @@ public class DashBoardFlowTests : E2ETestBase
         Assert.False(string.IsNullOrWhiteSpace(title));
     }
 
-    // ── Navigation links available on the anonymous dashboard ────────────────
+    // -- Navigation links available on the anonymous dashboard ----------------
 
     /// <summary>Verifies that <c>AnonymousDashboard</c> contains navigation elements.</summary>
     [Fact]

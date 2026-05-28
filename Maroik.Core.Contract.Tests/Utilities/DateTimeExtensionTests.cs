@@ -1,4 +1,4 @@
-using Maroik.Core.Contract.Utilities;
+﻿using Maroik.Core.Contract.Utilities;
 
 namespace Maroik.Core.Contract.Tests.Utilities;
 
@@ -9,7 +9,7 @@ namespace Maroik.Core.Contract.Tests.Utilities;
 /// </summary>
 public class DateTimeExtensionTests
 {
-    // ── ConvertTimeByTimeZoneIanaId ──────────────────────────────────────────
+    // -- ConvertTimeByTimeZoneIanaId ------------------------------------------
 
     /// <summary>Verifies that <c>ConvertTimeByTimeZoneIanaId</c> converts utc to local time for valid iana id.</summary>
     [Fact]

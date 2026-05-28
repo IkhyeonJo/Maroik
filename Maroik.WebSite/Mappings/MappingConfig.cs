@@ -1,4 +1,4 @@
-using Mapster;
+﻿using Mapster;
 using Maroik.Core.Contract.Dtos;
 using Maroik.WebSite.Models.ViewModels.AccountBook;
 using Maroik.WebSite.Models.ViewModels.Calendar;
@@ -30,7 +30,7 @@ public class MappingConfig : IRegister
     /// <summary>Registers all Mapster type-adapter rules for the WebSite presentation layer.</summary>
     public void Register(TypeAdapterConfig config)
     {
-        // ── Account ──────────────────────────────────────────────────────────
+        // -- Account ----------------------------------------------------------
         // Response → OutputViewModel: property names are identical, convention handles it.
         config.NewConfig<AccountResponse, MgmtAccountOutput>();
 
@@ -39,14 +39,14 @@ public class MappingConfig : IRegister
         config.NewConfig<MgmtAccountInput, AccountRequest>()
             .Ignore(dest => dest.HashedPassword!);
 
-        // ── Asset ─────────────────────────────────────────────────────────────
+        // -- Asset -------------------------------------------------------------
         config.NewConfig<AssetResponse, AssetOutputViewModel>();
 
         // AccountEmail is set server-side from the session, not from the form.
         config.NewConfig<AssetInputViewModel, AssetRequest>()
             .Ignore(dest => dest.AccountEmail!);
 
-        // ── Expenditure ───────────────────────────────────────────────────────
+        // -- Expenditure -------------------------------------------------------
         // MonetaryUnit exists in OutputViewModel but not in ExpenditureResponse;
         // Mapster leaves it at its default - controller populates it from account settings.
         config.NewConfig<ExpenditureResponse, AccountBookExpOutput>();
@@ -55,14 +55,14 @@ public class MappingConfig : IRegister
         config.NewConfig<ExpenditureInputViewModel, ExpenditureRequest>()
             .Ignore(dest => dest.AccountEmail!);
 
-        // ── Income ────────────────────────────────────────────────────────────
+        // -- Income ------------------------------------------------------------
         config.NewConfig<IncomeResponse, AccountBookIncOutput>();
         config.NewConfig<IncomeResponse, DashBoardIncOutput>();
 
         config.NewConfig<IncomeInputViewModel, IncomeRequest>()
             .Ignore(dest => dest.AccountEmail!);
 
-        // ── Fixed Expenditure ─────────────────────────────────────────────────
+        // -- Fixed Expenditure -------------------------------------------------
         // MaturityDate: DateTime (DTO) ↔ string (ViewModel) - explicit conversion required.
         // Noticed / Expired exist only in OutputViewModel; controller sets them after mapping.
         config.NewConfig<FixedExpenditureResponse, FixedExpenditureOutputViewModel>()
@@ -72,7 +72,7 @@ public class MappingConfig : IRegister
             .Map(dest => dest.MaturityDate, src => ParseDate(src.MaturityDate))
             .Ignore(dest => dest.AccountEmail!);
 
-        // ── Fixed Income ──────────────────────────────────────────────────────
+        // -- Fixed Income ------------------------------------------------------
         config.NewConfig<FixedIncomeResponse, FixedIncomeOutputViewModel>()
             .Map(dest => dest.MaturityDate, src => src.MaturityDate.ToString("yyyy-MM-dd"));
 
@@ -80,7 +80,7 @@ public class MappingConfig : IRegister
             .Map(dest => dest.MaturityDate, src => ParseDate(src.MaturityDate))
             .Ignore(dest => dest.AccountEmail!);
 
-        // ── Board ─────────────────────────────────────────────────────────────
+        // -- Board -------------------------------------------------------------
         // UploadedFile (IFormFile) has no matching property in BoardRequest - ignored automatically.
         // Writer / Type / Created / Updated / View / Deleted are set server-side.
         config.NewConfig<ForumBoardInput, BoardRequest>()
@@ -99,7 +99,7 @@ public class MappingConfig : IRegister
             .Ignore(dest => dest.View)
             .Ignore(dest => dest.Deleted);
 
-        // ── Calendar Event ────────────────────────────────────────────────────
+        // -- Calendar Event ----------------------------------------------------
         // StartDate / EndDate come in as strings from the form; parse to DateTime.
         // CalendarEventUploadedFile / SerializedCalendarReminders have no dest match - ignored automatically.
         config.NewConfig<CalendarEventInputViewModel, CalendarEventRequest>()

@@ -1,4 +1,4 @@
-namespace Maroik.Core.Contract.Utilities;
+﻿namespace Maroik.Core.Contract.Utilities;
 
 /// <summary>
 /// Extension methods for <see cref="string"/> used in the account-book UI.

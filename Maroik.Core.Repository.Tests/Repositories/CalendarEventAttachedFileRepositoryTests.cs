@@ -1,4 +1,5 @@
-using Maroik.Core.Contract.Domains.Calendar;
+﻿using Maroik.Core.Contract.Domains.Calendar;
+using Maroik.Core.Contract.Filters;
 using Maroik.Core.PostgreSQL.Data;
 using Maroik.Core.Repository.Repositories;
 using Microsoft.EntityFrameworkCore;
@@ -27,7 +28,7 @@ public class CalendarEventAttachedFileRepositoryTests : IDisposable
     /// <summary>Releases resources allocated by this test fixture (disposes the database context).</summary>
     public void Dispose() => _context.Dispose();
 
-    // ── Helpers ──────────────────────────────────────────────────────────────
+    // -- Helpers --------------------------------------------------------------
 
     private static EfCalendarEventAttachedFile MakeFile(long calendarEventId, string name = "doc.pdf") => new()
     {
@@ -44,7 +45,7 @@ public class CalendarEventAttachedFileRepositoryTests : IDisposable
         await _context.SaveChangesAsync();
     }
 
-    // ── GetAllAsync ──────────────────────────────────────────────────────────
+    // -- GetAllAsync ----------------------------------------------------------
 
     /// <summary>Verifies that <c>GetAllAsync</c> returns all files.</summary>
     [Fact]
@@ -52,7 +53,7 @@ public class CalendarEventAttachedFileRepositoryTests : IDisposable
     {
         await SeedAsync(MakeFile(1, "a.pdf"), MakeFile(2, "b.pdf"));
 
-        List<CalendarEventAttachedFile> result = await _sut.GetAllAsync();
+        List<CalendarEventAttachedFile> result = await _sut.FindAsync([]);
 
         Assert.Equal(2, result.Count);
     }
@@ -61,12 +62,12 @@ public class CalendarEventAttachedFileRepositoryTests : IDisposable
     [Fact]
     public async Task GetAllAsync_ReturnsEmpty_WhenNoFilesExist()
     {
-        List<CalendarEventAttachedFile> result = await _sut.GetAllAsync();
+        List<CalendarEventAttachedFile> result = await _sut.FindAsync([]);
 
         Assert.Empty(result);
     }
 
-    // ── GetCalendarEventAttachedFileAsync ────────────────────────────────────
+    // -- GetCalendarEventAttachedFileAsync ------------------------------------
 
     /// <summary>Verifies that <c>GetCalendarEventAttachedFileAsync</c> returns file when found.</summary>
     [Fact]
@@ -74,7 +75,7 @@ public class CalendarEventAttachedFileRepositoryTests : IDisposable
     {
         await SeedAsync(MakeFile(10, "slide.pdf"));
 
-        CalendarEventAttachedFile? result = await _sut.GetCalendarEventAttachedFileAsync(10);
+        CalendarEventAttachedFile? result = (await _sut.FindAsync([FilterCondition.Equal("CalendarEventId", 10L)])).FirstOrDefault();
 
         Assert.NotNull(result);
         Assert.Equal(10, result.CalendarEventId);
@@ -85,12 +86,12 @@ public class CalendarEventAttachedFileRepositoryTests : IDisposable
     [Fact]
     public async Task GetCalendarEventAttachedFileAsync_ReturnsNull_WhenNotFound()
     {
-        CalendarEventAttachedFile? result = await _sut.GetCalendarEventAttachedFileAsync(999);
+        CalendarEventAttachedFile? result = (await _sut.FindAsync([FilterCondition.Equal("CalendarEventId", 999L)])).FirstOrDefault();
 
         Assert.Null(result);
     }
 
-    // ── SaveCalendarEventAttachedFileAsync ───────────────────────────────────
+    // -- SaveCalendarEventAttachedFileAsync -----------------------------------
 
     /// <summary>Verifies that <c>SaveCalendarEventAttachedFileAsync</c> persists file.</summary>
     [Fact]
@@ -104,7 +105,7 @@ public class CalendarEventAttachedFileRepositoryTests : IDisposable
             extension: ".pdf",
             path: "/upload/calendar/new.pdf");
 
-        await _sut.SaveCalendarEventAttachedFileAsync(file);
+        await _sut.CreateAsync(file);
 
         EfCalendarEventAttachedFile? saved = await _context.CalendarEventAttachedFiles
             .FirstOrDefaultAsync(f => f.CalendarEventId == 5, TestContext.Current.CancellationToken);
@@ -112,11 +113,11 @@ public class CalendarEventAttachedFileRepositoryTests : IDisposable
         Assert.Equal("new.pdf", saved.Name);
     }
 
-    // ── UpdateCalendarEventAttachedFileAsync ─────────────────────────────────
+    // -- UpdateEntityAsync ---------------------------------
 
-    /// <summary>Verifies that <c>UpdateCalendarEventAttachedFileAsync</c> updates existing file.</summary>
+    /// <summary>Verifies that <c>UpdateEntityAsync</c> updates existing file.</summary>
     [Fact]
-    public async Task UpdateCalendarEventAttachedFileAsync_UpdatesExistingFile()
+    public async Task UpdateEntityAsync_UpdatesExistingFile()
     {
         await SeedAsync(MakeFile(7, "old.pdf"));
         long id = (await _context.CalendarEventAttachedFiles.FirstAsync(f => f.CalendarEventId == 7, TestContext.Current.CancellationToken)).Id;
@@ -129,7 +130,7 @@ public class CalendarEventAttachedFileRepositoryTests : IDisposable
             extension: ".pdf",
             path: "/upload/calendar/updated.pdf");
 
-        await _sut.UpdateCalendarEventAttachedFileAsync(file);
+        await _sut.UpdateEntityAsync(file);
 
         EfCalendarEventAttachedFile? updated = await _context.CalendarEventAttachedFiles.FindAsync(new object[] { id }, TestContext.Current.CancellationToken);
         Assert.NotNull(updated);
@@ -137,7 +138,7 @@ public class CalendarEventAttachedFileRepositoryTests : IDisposable
         Assert.Equal(9999, updated.Size);
     }
 
-    // ── DeleteCalendarEventAttachedFileAsync ─────────────────────────────────
+    // -- DeleteCalendarEventAttachedFileAsync ---------------------------------
 
     /// <summary>Verifies that <c>DeleteCalendarEventAttachedFileAsync</c> removes files by event id.</summary>
     [Fact]
@@ -145,19 +146,18 @@ public class CalendarEventAttachedFileRepositoryTests : IDisposable
     {
         await SeedAsync(MakeFile(20, "x.pdf"), MakeFile(20, "y.pdf"), MakeFile(30, "z.pdf"));
 
-        int deleted = await _sut.DeleteCalendarEventAttachedFileAsync(20);
+        await _sut.DeleteAsync([FilterCondition.Equal("CalendarEventId", 20L)]);
 
-        Assert.Equal(2, deleted);
         Assert.False(await _context.CalendarEventAttachedFiles.AnyAsync(f => f.CalendarEventId == 20, TestContext.Current.CancellationToken));
         Assert.True(await _context.CalendarEventAttachedFiles.AnyAsync(f => f.CalendarEventId == 30, TestContext.Current.CancellationToken));
     }
 
-    /// <summary>Verifies that <c>DeleteCalendarEventAttachedFileAsync</c> returns zero when no files match.</summary>
+    /// <summary>Verifies that <c>DeleteCalendarEventAttachedFileAsync</c> does nothing when no files match.</summary>
     [Fact]
     public async Task DeleteCalendarEventAttachedFileAsync_ReturnsZero_WhenNoFilesMatch()
     {
-        int deleted = await _sut.DeleteCalendarEventAttachedFileAsync(999);
+        await _sut.DeleteAsync([FilterCondition.Equal("CalendarEventId", 999L)]);
 
-        Assert.Equal(0, deleted);
+        Assert.False(await _context.CalendarEventAttachedFiles.AnyAsync(TestContext.Current.CancellationToken));
     }
 }

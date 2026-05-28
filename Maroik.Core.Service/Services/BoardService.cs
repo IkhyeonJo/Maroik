@@ -1,7 +1,8 @@
-using Ganss.Xss;
+﻿using Ganss.Xss;
 using HtmlAgilityPack;
 using ImageMagick;
 using Maroik.Core.Contract.Domains.Board;
+using Maroik.Core.Contract.Filters;
 using Maroik.Core.Contract.Utilities;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
@@ -63,19 +64,22 @@ public class BoardService : IBoardService
 
     /// <inheritdoc />
     public async Task<IEnumerable<BoardResponse>> GetBoardsAsync(string type)
-        => (await _boardRepository.GetOneTypeBoardsAsync(type)).Select(BoardMapper.ToResponse);
+        => (await _boardRepository.FindAsync([FilterCondition.Equal("Type", type)])).Select(BoardMapper.ToResponse);
 
     /// <inheritdoc />
     public async Task<BoardResponse?> GetBoardByIdAsync(long id)
     {
-        Board? board = await _boardRepository.GetBoardByIdAsync(id);
+        Board? board = (await _boardRepository.FindAsync([
+            FilterCondition.Equal("Id", id),
+            FilterCondition.Equal("Deleted", false)
+        ])).FirstOrDefault();
         return board == null ? null : BoardMapper.ToResponse(board);
     }
 
     /// <inheritdoc />
     public async Task<BoardAttachedFileResponse?> GetAttachedFileByBoardIdAsync(long boardId)
     {
-        BoardAttachedFile? file = await _boardAttachedFileRepository.GetByBoardIdAsync(boardId);
+        BoardAttachedFile? file = (await _boardAttachedFileRepository.FindAsync([FilterCondition.Equal("BoardId", boardId)])).FirstOrDefault();
         return file == null ? null : BoardAttachedFileMapper.ToResponse(file);
     }
 
@@ -90,7 +94,7 @@ public class BoardService : IBoardService
 
     /// <inheritdoc />
     public async Task<IEnumerable<BoardCommentResponse>> GetCommentsByBoardIdAsync(long boardId)
-        => (await _boardCommentRepository.GetOneBoardCommentsAsync(boardId)).Select(BoardCommentMapper.ToResponse);
+        => (await _boardCommentRepository.FindAsync([FilterCondition.Equal("BoardId", boardId)], orderByProperty: "Order")).Select(BoardCommentMapper.ToResponse);
 
     /// <inheritdoc />
     public async Task<Dictionary<long, int>> GetCommentCountsForBoardsAsync(IEnumerable<long> boardIds)
@@ -138,7 +142,7 @@ public class BoardService : IBoardService
                 // Build a unique storage path and upload the file, then persist the attachment record.
                 string filePath = BuildAttachedFilePath(request.Type!, boardId, attachedFile.FileName);
                 await _fileClient.UploadAsync(attachedFile.Bytes, attachedFile.ContentType, filePath, _settings.Value.FileStorageBaseUrl ?? string.Empty);
-                await _boardAttachedFileRepository.SaveBoardAttachedFileAsync(
+                await _boardAttachedFileRepository.CreateAsync(
                     BoardAttachedFile.Reconstitute(0, boardId, attachedFile.Size,
                         Path.GetFileNameWithoutExtension(attachedFile.FileName),
                         Path.GetExtension(attachedFile.FileName),
@@ -167,7 +171,7 @@ public class BoardService : IBoardService
         await _unitOfWork.BeginAsync();
         try
         {
-            Board? board = await _boardRepository.GetBoardByIdAsync(request.Id);
+            Board? board = (await _boardRepository.FindAsync([FilterCondition.Equal("Id", request.Id), FilterCondition.Equal("Deleted", false)])).FirstOrDefault();
 
             if (board == null || board.Deleted)
             {
@@ -193,9 +197,9 @@ public class BoardService : IBoardService
             if (request.Locked) board.Lock(); else board.Unlock();
             if (request.Noticed) board.Pin(); else board.Unpin();
 
-            await _boardRepository.UpdateBoardAsync(board);
+            await _boardRepository.UpdateEntityAsync(board);
 
-            BoardAttachedFile? previous = await _boardAttachedFileRepository.GetByBoardIdAsync(request.Id);
+            BoardAttachedFile? previous = (await _boardAttachedFileRepository.FindAsync([FilterCondition.Equal("BoardId", request.Id)])).FirstOrDefault();
             await HandleAttachmentAsync(board.Type, board.Id, previous, newFile);
 
             await _unitOfWork.CommitAsync();
@@ -214,7 +218,7 @@ public class BoardService : IBoardService
     {
         try
         {
-            Board? board = await _boardRepository.GetBoardByIdAsync(boardId);
+            Board? board = (await _boardRepository.FindAsync([FilterCondition.Equal("Id", boardId), FilterCondition.Equal("Deleted", false)])).FirstOrDefault();
 
             if (board == null || board.Deleted)
                 return ServiceResult.Fail("Input is invalid");
@@ -227,7 +231,7 @@ public class BoardService : IBoardService
             if (deleteResult.IsError)
                 return ServiceResult.Fail(deleteResult.FirstError.Description);
 
-            await _boardRepository.DeleteBoardAsync(board);
+            await _boardRepository.UpdateEntityAsync(board);
             return ServiceResult.Ok();
         }
         catch (Exception e)
@@ -244,7 +248,7 @@ public class BoardService : IBoardService
 
         try
         {
-            Board? board = await _boardRepository.GetBoardByIdAsync(request.BoardId);
+            Board? board = (await _boardRepository.FindAsync([FilterCondition.Equal("Id", request.BoardId), FilterCondition.Equal("Deleted", false)])).FirstOrDefault();
             if (board == null)
                 return ServiceResult.Fail("Input is invalid");
 
@@ -252,7 +256,7 @@ public class BoardService : IBoardService
             if (requiredOwnerNickname != null && board.Writer != requiredOwnerNickname)
                 return ServiceResult.Fail("You do not have permission to write a comment.");
 
-            IEnumerable<BoardComment> existing = await _boardCommentRepository.GetOneBoardCommentsAsync(request.BoardId);
+            IEnumerable<BoardComment> existing = await _boardCommentRepository.FindAsync([FilterCondition.Equal("BoardId", request.BoardId)], orderByProperty: "Order");
 
             // The comment order is the current count, giving sequential ordering starting at 0.
             long order = (long)(existing?.Count() ?? 0);
@@ -265,7 +269,7 @@ public class BoardService : IBoardService
             if (addResult.IsError)
                 return ServiceResult.Fail(addResult.FirstError.Description);
 
-            await _boardCommentRepository.WriteBoardCommentAsync(commentResult.Value);
+            await _boardCommentRepository.CreateAsync(commentResult.Value);
             return ServiceResult.Ok();
         }
         catch (Exception e)
@@ -295,7 +299,7 @@ public class BoardService : IBoardService
     {
         try
         {
-            BoardComment? comment = await _boardCommentRepository.GetBoardCommentAsync((int)commentId);
+            BoardComment? comment = (await _boardCommentRepository.FindAsync([FilterCondition.Equal("Id", (int)commentId)])).FirstOrDefault();
             if (comment == null)
                 return ServiceResult.Fail("Input is invalid");
 
@@ -304,7 +308,7 @@ public class BoardService : IBoardService
                 return ServiceResult.Fail("You do not have permission to delete.");
 
             comment.SoftDelete();
-            await _boardCommentRepository.DeleteBoardCommentAsync(comment);
+            await _boardCommentRepository.UpdateEntityAsync(comment);
             return ServiceResult.Ok();
         }
         catch (Exception e)
@@ -329,7 +333,7 @@ public class BoardService : IBoardService
             // Replace: upload the new file and overwrite the existing attachment record.
             string filePath = BuildAttachedFilePath(boardType, boardId, newFile.FileName);
             await _fileClient.UploadAsync(newFile.Bytes, newFile.ContentType, filePath, _settings.Value.FileStorageBaseUrl ?? string.Empty);
-            await _boardAttachedFileRepository.UpdateBoardAttachedFileAsync(
+            await _boardAttachedFileRepository.UpdateEntityAsync(
                 BoardAttachedFile.Reconstitute(previous.Id, previous.BoardId, newFile.Size,
                     Path.GetFileNameWithoutExtension(newFile.FileName),
                     Path.GetExtension(newFile.FileName),
@@ -338,7 +342,7 @@ public class BoardService : IBoardService
         else if (previous != null && newFile == null)
         {
             // Clear: zero-out the attachment record without uploading anything.
-            await _boardAttachedFileRepository.UpdateBoardAttachedFileAsync(
+            await _boardAttachedFileRepository.UpdateEntityAsync(
                 BoardAttachedFile.Reconstitute(previous.Id, previous.BoardId, 0, "", "", ""));
         }
         else if (previous == null && newFile != null)
@@ -346,7 +350,7 @@ public class BoardService : IBoardService
             // Add: upload and create a new attachment record for a post that had none before.
             string filePath = BuildAttachedFilePath(boardType, boardId, newFile.FileName);
             await _fileClient.UploadAsync(newFile.Bytes, newFile.ContentType, filePath, _settings.Value.FileStorageBaseUrl ?? string.Empty);
-            await _boardAttachedFileRepository.SaveBoardAttachedFileAsync(
+            await _boardAttachedFileRepository.CreateAsync(
                 BoardAttachedFile.Reconstitute(0, boardId, newFile.Size,
                     Path.GetFileNameWithoutExtension(newFile.FileName),
                     Path.GetExtension(newFile.FileName),

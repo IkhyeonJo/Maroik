@@ -1,4 +1,4 @@
-using ErrorOr;
+﻿using ErrorOr;
 using Maroik.Core.Contract.Domains.Primitives;
 
 namespace Maroik.Core.Contract.Domains.Board;
@@ -49,7 +49,7 @@ public sealed class BoardComment : Entity<long>
 
     /// <summary>
     /// Rebuilds a <see cref="BoardComment"/> from trusted raw values from the repository layer.
-    /// Bypasses validation — use only with data from the trusted repository layer.
+    /// Bypasses validation ?? use only with data from the trusted repository layer.
     /// </summary>
     public static BoardComment Reconstitute(
         long id,

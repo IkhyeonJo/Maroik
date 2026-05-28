@@ -1,4 +1,4 @@
-using Maroik.Core.Contract.Domains.Finance;
+﻿using Maroik.Core.Contract.Domains.Finance;
 
 namespace Maroik.Core.Contract.Tests.Domains.Finance;
 
@@ -9,7 +9,7 @@ namespace Maroik.Core.Contract.Tests.Domains.Finance;
 /// </summary>
 public class ExpenditureClassPolicyTests
 {
-    // ── RegularSavings ────────────────────────────────────────────────────────
+    // -- RegularSavings --------------------------------------------------------
 
     [Theory]
     [InlineData("Deposit")]
@@ -34,7 +34,7 @@ public class ExpenditureClassPolicyTests
         Assert.Equal("ExpenditureClass.Invalid", result.FirstError.Code);
     }
 
-    // ── NonConsumerSpending ───────────────────────────────────────────────────
+    // -- NonConsumerSpending ---------------------------------------------------
 
     [Theory]
     [InlineData("PublicPension")]
@@ -72,7 +72,7 @@ public class ExpenditureClassPolicyTests
         Assert.Equal("ExpenditureClass.Invalid", result.FirstError.Code);
     }
 
-    // ── ConsumerSpending ──────────────────────────────────────────────────────
+    // -- ConsumerSpending ------------------------------------------------------
 
     [Theory]
     [InlineData("MealOrEatOutExpenses")]
@@ -107,7 +107,7 @@ public class ExpenditureClassPolicyTests
         Assert.Equal("ExpenditureClass.Invalid", result.FirstError.Code);
     }
 
-    // ── Unknown main class ────────────────────────────────────────────────────
+    // -- Unknown main class ----------------------------------------------------
 
     [Theory]
     [InlineData("Unknown")]

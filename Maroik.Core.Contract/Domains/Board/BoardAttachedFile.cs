@@ -1,4 +1,4 @@
-using ErrorOr;
+﻿using ErrorOr;
 using Maroik.Core.Contract.Domains.Primitives;
 
 namespace Maroik.Core.Contract.Domains.Board;
@@ -41,7 +41,7 @@ public sealed class BoardAttachedFile : Entity<long>
 
     /// <summary>
     /// Rebuilds a <see cref="BoardAttachedFile"/> from trusted data from the repository layer.
-    /// Bypasses validation — use only with data from the trusted repository layer.
+    /// Bypasses validation ?? use only with data from the trusted repository layer.
     /// </summary>
     public static BoardAttachedFile Reconstitute(
         long id, long boardId, long size, string? name, string? extension, string? path)

@@ -1,4 +1,4 @@
-using Maroik.Core.PostgreSQL.Data;
+﻿using Maroik.Core.PostgreSQL.Data;
 using Maroik.Core.Repository.Repositories;
 using Microsoft.EntityFrameworkCore;
 
@@ -27,7 +27,7 @@ public class UnitOfWorkTests : IDisposable
     /// <summary>Releases resources allocated by this test fixture.</summary>
     public void Dispose() => _context.Dispose();
 
-    // ── CommitAsync ──────────────────────────────────────────────────────────
+    // -- CommitAsync ----------------------------------------------------------
 
     /// <summary>Verifies that <c>CommitAsync</c> does not throw when begin was not called.</summary>
     [Fact]
@@ -40,7 +40,7 @@ public class UnitOfWorkTests : IDisposable
         Assert.Null(ex);
     }
 
-    // ── RollbackAsync ────────────────────────────────────────────────────────
+    // -- RollbackAsync --------------------------------------------------------
 
     /// <summary>Verifies that <c>RollbackAsync</c> does not throw when begin was not called.</summary>
     [Fact]
@@ -53,7 +53,7 @@ public class UnitOfWorkTests : IDisposable
         Assert.Null(ex);
     }
 
-    // ── DisposeAsync ─────────────────────────────────────────────────────────
+    // -- DisposeAsync ---------------------------------------------------------
 
     /// <summary>Verifies that <c>DisposeAsync</c> does not throw when no transaction was started.</summary>
     [Fact]

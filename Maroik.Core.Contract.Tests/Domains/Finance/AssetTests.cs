@@ -1,4 +1,4 @@
-using Maroik.Core.Contract.Domains.Finance;
+﻿using Maroik.Core.Contract.Domains.Finance;
 using Maroik.Core.Contract.Domains.ValueObjects;
 
 namespace Maroik.Core.Contract.Tests.Domains.Finance;
@@ -18,7 +18,7 @@ public class AssetTests
         string currency = "KRW")
         => Asset.Create(productName, email, item, amount, currency).Value;
 
-    // ── Create ───────────────────────────────────────────────────────────────
+    // -- Create ---------------------------------------------------------------
 
     [Fact]
     public void Create_ReturnsAsset_WhenValid()
@@ -71,7 +71,7 @@ public class AssetTests
         Assert.Equal("Money.CurrencyEmpty", result.FirstError.Code);
     }
 
-    // ── Deposit / Withdraw ────────────────────────────────────────────────────
+    // -- Deposit / Withdraw ----------------------------------------------------
 
     [Fact]
     public void Deposit_IncreasesBalance()
@@ -93,7 +93,7 @@ public class AssetTests
         Assert.Equal(700m, asset.Balance.Amount);
     }
 
-    // ── SetBalance ────────────────────────────────────────────────────────────
+    // -- SetBalance ------------------------------------------------------------
 
     [Fact]
     public void SetBalance_Succeeds_WhenSameCurrency()
@@ -119,7 +119,7 @@ public class AssetTests
         Assert.Equal("Asset.CurrencyMismatch", result.FirstError.Code);
     }
 
-    // ── Update ────────────────────────────────────────────────────────────────
+    // -- Update ----------------------------------------------------------------
 
     [Fact]
     public void Update_Succeeds_WhenValid()
@@ -145,7 +145,7 @@ public class AssetTests
         Assert.Equal("Asset.ProductNameEmpty", result.FirstError.Code);
     }
 
-    // ── Update (item validation) ──────────────────────────────────────────────
+    // -- Update (item validation) ----------------------------------------------
 
     [Fact]
     public void Update_ReturnsError_WhenItemEmpty()
@@ -158,7 +158,7 @@ public class AssetTests
         Assert.Equal("Asset.ItemEmpty", result.FirstError.Code);
     }
 
-    // ── UpdateNote ────────────────────────────────────────────────────────────
+    // -- UpdateNote ------------------------------------------------------------
 
     [Fact]
     public void UpdateNote_SetsNote()
@@ -181,7 +181,7 @@ public class AssetTests
         Assert.Null(asset.Note);
     }
 
-    // ── SoftDelete ────────────────────────────────────────────────────────────
+    // -- SoftDelete ------------------------------------------------------------
 
     [Fact]
     public void SoftDelete_SetsDeletedTrue()

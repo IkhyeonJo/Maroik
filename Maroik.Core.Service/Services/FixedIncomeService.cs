@@ -1,4 +1,5 @@
-using Maroik.Core.Contract.Domains.Finance;
+﻿using Maroik.Core.Contract.Domains.Finance;
+using Maroik.Core.Contract.Filters;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Service.Mappers;
@@ -26,7 +27,7 @@ public class FixedIncomeService : IFixedIncomeService
 
     /// <inheritdoc />
     public async Task<List<FixedIncomeResponse>> GetFixedIncomesAsync(string accountEmail)
-        => (await _fixedIncomeRepository.GetFixedIncomesAsync(accountEmail)).Select(FixedIncomeMapper.ToResponse).ToList();
+        => (await _fixedIncomeRepository.FindAsync([FilterCondition.Equal("AccountEmail", accountEmail)])).Select(FixedIncomeMapper.ToResponse).ToList();
 
     /// <inheritdoc />
     public async Task<ServiceResult> CreateAsync(string accountEmail, FixedIncomeRequest request)
@@ -47,7 +48,7 @@ public class FixedIncomeService : IFixedIncomeService
             return ServiceResult.Fail(registerResult.FirstError.Description);
 
         var fixedIncome = registerResult.Value;
-        await _fixedIncomeRepository.CreateFixedIncomeAsync(fixedIncome);
+        await _fixedIncomeRepository.CreateAsync(fixedIncome);
         return ServiceResult.Ok();
     }
 
@@ -57,7 +58,7 @@ public class FixedIncomeService : IFixedIncomeService
         var validation = ValidateRequest(request);
         if (!validation.Success) return validation;
 
-        List<FixedIncome> items = await _fixedIncomeRepository.GetFixedIncomesAsync(accountEmail);
+        List<FixedIncome> items = await _fixedIncomeRepository.FindAsync([FilterCondition.Equal("AccountEmail", accountEmail)]);
         FixedIncome? fi = items.FirstOrDefault(x => x.Id == request.Id);
         if (fi == null) return ServiceResult.Fail("Input is invalid");
 
@@ -70,18 +71,18 @@ public class FixedIncomeService : IFixedIncomeService
 
         if (updateResult.IsError) return ServiceResult.Fail(updateResult.FirstError.Description);
 
-        await _fixedIncomeRepository.UpdateFixedIncomeAsync(fi);
+        await _fixedIncomeRepository.UpdateEntityAsync(fi);
         return ServiceResult.Ok();
     }
 
     /// <inheritdoc />
     public async Task<ServiceResult> DeleteAsync(string accountEmail, long id)
     {
-        List<FixedIncome> items = await _fixedIncomeRepository.GetFixedIncomesAsync(accountEmail);
+        List<FixedIncome> items = await _fixedIncomeRepository.FindAsync([FilterCondition.Equal("AccountEmail", accountEmail)]);
         FixedIncome? fi = items.FirstOrDefault(x => x.Id == id);
         if (fi == null) return ServiceResult.Fail("Input is invalid");
 
-        await _fixedIncomeRepository.DeleteFixedIncomeAsync(fi);
+        await _fixedIncomeRepository.DeleteAsync([FilterCondition.Equal("Id", fi.Id)]);
         return ServiceResult.Ok();
     }
 

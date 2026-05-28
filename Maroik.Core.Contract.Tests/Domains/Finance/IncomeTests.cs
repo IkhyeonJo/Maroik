@@ -1,4 +1,4 @@
-using Maroik.Core.Contract.Domains.Finance;
+﻿using Maroik.Core.Contract.Domains.Finance;
 
 namespace Maroik.Core.Contract.Tests.Domains.Finance;
 
@@ -11,7 +11,7 @@ public class IncomeTests
     private static Income ValidIncome() =>
         Income.Record("user@example.com", "RegularIncome", "LaborIncome", "Salary", 3000000m, "KRW", "My Bank").Value;
 
-    // ── Record ───────────────────────────────────────────────────────────────
+    // -- Record ---------------------------------------------------------------
 
     [Fact]
     public void Record_ReturnsIncome_WhenValid()
@@ -67,7 +67,7 @@ public class IncomeTests
         Assert.True(result.IsError);
     }
 
-    // ── Update ───────────────────────────────────────────────────────────────
+    // -- Update ---------------------------------------------------------------
 
     [Fact]
     public void Update_Succeeds_WhenValid()

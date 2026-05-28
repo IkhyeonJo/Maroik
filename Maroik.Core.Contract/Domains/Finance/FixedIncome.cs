@@ -1,4 +1,4 @@
-using ErrorOr;
+﻿using ErrorOr;
 using Maroik.Core.Contract.Domains.Primitives;
 using Maroik.Core.Contract.Domains.ValueObjects;
 
@@ -76,13 +76,13 @@ public sealed class FixedIncome : AggregateRoot<long>
         Updated = DateTime.UtcNow;
     }
 
-    // ────────────────────────────────────────────────────────────────────────
+    // ------------------------------------------------------------------------
     // Factory / Reconstitution
-    // ────────────────────────────────────────────────────────────────────────
+    // ------------------------------------------------------------------------
 
     /// <summary>
     /// Rebuilds a <see cref="FixedIncome"/> from trusted raw values from the repository layer.
-    /// Bypasses validation — use only with data from the trusted repository layer.
+    /// Bypasses validation ?? use only with data from the trusted repository layer.
     /// Does NOT raise domain events.
     /// </summary>
     public static FixedIncome Reconstitute(
@@ -164,9 +164,9 @@ public sealed class FixedIncome : AggregateRoot<long>
         return fixedIncome;
     }
 
-    // ────────────────────────────────────────────────────────────────────────
+    // ------------------------------------------------------------------------
     // Domain behaviours
-    // ────────────────────────────────────────────────────────────────────────
+    // ------------------------------------------------------------------------
 
     /// <summary>Marks this income as not received on the scheduled day.</summary>
     public void MarkUnpunctual()

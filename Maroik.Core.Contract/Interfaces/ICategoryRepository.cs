@@ -4,21 +4,8 @@ namespace Maroik.Core.Contract.Interfaces;
 
 /// <summary>
 /// Low-level repository for the Category (top-level navigation menu) table.
+/// Lookup/create/delete operations are provided by <see cref="IGenericRepository{TDomain}"/>.
 /// </summary>
-public interface ICategoryRepository
+public interface ICategoryRepository : IGenericRepository<Category>
 {
-    /// <summary>Returns all navigation categories regardless of role.</summary>
-    public Task<IEnumerable<Category>> GetCategoryAsync();
-
-    /// <summary>Returns only the categories visible to the given role (e.g. "Admin", "User").</summary>
-    public Task<IEnumerable<Category>> GetCategoryByRoleAsync(string role);
-
-    /// <summary>Inserts a new category row.</summary>
-    public Task CreateCategoryAsync(Category category);
-
-    /// <summary>Updates an existing category's metadata and display order.</summary>
-    public Task UpdateCategoryAsync(Category category);
-
-    /// <summary>Deletes a category row (and cascades to its sub-categories via the DB constraint).</summary>
-    public Task DeleteCategoryAsync(Category category);
 }

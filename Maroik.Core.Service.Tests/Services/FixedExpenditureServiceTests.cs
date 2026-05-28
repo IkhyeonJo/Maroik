@@ -1,5 +1,6 @@
-using Maroik.Core.Contract.Domains.Finance;
+﻿using Maroik.Core.Contract.Domains.Finance;
 using Maroik.Core.Contract.Dtos;
+using Maroik.Core.Contract.Filters;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Service.Services;
 using Moq;
@@ -21,7 +22,7 @@ public class FixedExpenditureServiceTests
         _fixedExpenditureRepo.Object,
         _assetBalance.Object);
 
-    // ── Helpers ──────────────────────────────────────────────────────────────
+    // -- Helpers --------------------------------------------------------------
 
     private static Asset MakeAsset(string name, string unit = "KRW") =>
         Asset.Reconstitute(name, "user@example.com", "FreeDepositAndWithdrawal", 1000m, unit, null, false, DateTime.UtcNow, DateTime.UtcNow);
@@ -49,7 +50,7 @@ public class FixedExpenditureServiceTests
         MaturityDate = new DateTime(2030, 12, 31)
     };
 
-    // ── CreateAsync ──────────────────────────────────────────────────────────
+    // -- CreateAsync ----------------------------------------------------------
 
     /// <summary>Verifies that <c>CreateAsync</c> returns fail when class is invalid.</summary>
     [Theory]
@@ -164,13 +165,13 @@ public class FixedExpenditureServiceTests
     public async Task CreateAsync_ReturnsSuccess_ForConsumerSpendingWithValidAsset()
     {
         _assetBalance.Setup(r => r.GetAssetAsync("user@example.com", "Wallet")).ReturnsAsync(MakeAsset("Wallet"));
-        _fixedExpenditureRepo.Setup(r => r.CreateFixedExpenditureAsync(It.IsAny<FixedExpenditure>())).Returns(Task.CompletedTask);
+        _fixedExpenditureRepo.Setup(r => r.CreateAsync(It.IsAny<FixedExpenditure>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
         ServiceResult result = await sut.CreateAsync("user@example.com", ConsumerRequest());
 
         Assert.True(result.Success);
-        _fixedExpenditureRepo.Verify(r => r.CreateFixedExpenditureAsync(It.IsAny<FixedExpenditure>()), Times.Once);
+        _fixedExpenditureRepo.Verify(r => r.CreateAsync(It.IsAny<FixedExpenditure>()), Times.Once);
     }
 
     /// <summary>Verifies that <c>CreateAsync</c> returns success for regular savings with matching currencies.</summary>
@@ -179,7 +180,7 @@ public class FixedExpenditureServiceTests
     {
         _assetBalance.Setup(r => r.GetAssetAsync("user@example.com", "Checking")).ReturnsAsync(MakeAsset("Checking", "KRW"));
         _assetBalance.Setup(r => r.GetAssetAsync("user@example.com", "Savings")).ReturnsAsync(MakeAsset("Savings", "KRW"));
-        _fixedExpenditureRepo.Setup(r => r.CreateFixedExpenditureAsync(It.IsAny<FixedExpenditure>())).Returns(Task.CompletedTask);
+        _fixedExpenditureRepo.Setup(r => r.CreateAsync(It.IsAny<FixedExpenditure>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
         ServiceResult result = await sut.CreateAsync("user@example.com", SavingsRequest());
@@ -194,7 +195,7 @@ public class FixedExpenditureServiceTests
         _assetBalance.Setup(r => r.GetAssetAsync("user@example.com", "Wallet")).ReturnsAsync(MakeAsset("Wallet"));
 
         FixedExpenditure? captured = null;
-        _fixedExpenditureRepo.Setup(r => r.CreateFixedExpenditureAsync(It.IsAny<FixedExpenditure>()))
+        _fixedExpenditureRepo.Setup(r => r.CreateAsync(It.IsAny<FixedExpenditure>()))
             .Callback<FixedExpenditure>(fe => captured = fe)
             .Returns(Task.CompletedTask);
         var sut = CreateSut();
@@ -207,7 +208,7 @@ public class FixedExpenditureServiceTests
         Assert.Equal(150m, captured.Amount.Amount);
     }
 
-    // ── UpdateAsync ──────────────────────────────────────────────────────────
+    // -- UpdateAsync ----------------------------------------------------------
 
     /// <summary>Verifies that <c>UpdateAsync</c> returns fail when class is invalid.</summary>
     [Fact]
@@ -235,7 +236,7 @@ public class FixedExpenditureServiceTests
     public async Task UpdateAsync_ReturnsFail_WhenExistingRecordNotFound()
     {
         _assetBalance.Setup(r => r.GetAssetAsync("user@example.com", "Wallet")).ReturnsAsync(MakeAsset("Wallet"));
-        _fixedExpenditureRepo.Setup(r => r.GetFixedExpendituresAsync("user@example.com")).ReturnsAsync(new List<FixedExpenditure>());
+        _fixedExpenditureRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>())).ReturnsAsync(new List<FixedExpenditure>());
         var sut = CreateSut();
 
         var request = ConsumerRequest();
@@ -253,8 +254,8 @@ public class FixedExpenditureServiceTests
         var existing = FixedExpenditure.Reconstitute(1, email, "ConsumerSpending", "MealOrEatOutExpenses", null, 100m, "KRW",
             "Wallet", null, (short)1, (short)15, new DateTime(2030, 12, 31), null, false, DateTime.UtcNow, DateTime.UtcNow);
         _assetBalance.Setup(r => r.GetAssetAsync(email, "Wallet")).ReturnsAsync(MakeAsset("Wallet"));
-        _fixedExpenditureRepo.Setup(r => r.GetFixedExpendituresAsync(email)).ReturnsAsync(new List<FixedExpenditure> { existing });
-        _fixedExpenditureRepo.Setup(r => r.UpdateFixedExpenditureAsync(It.IsAny<FixedExpenditure>())).Returns(Task.CompletedTask);
+        _fixedExpenditureRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>())).ReturnsAsync(new List<FixedExpenditure> { existing });
+        _fixedExpenditureRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<FixedExpenditure>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
         var request = ConsumerRequest();
@@ -262,16 +263,16 @@ public class FixedExpenditureServiceTests
         ServiceResult result = await sut.UpdateAsync(email, request);
 
         Assert.True(result.Success);
-        _fixedExpenditureRepo.Verify(r => r.UpdateFixedExpenditureAsync(It.IsAny<FixedExpenditure>()), Times.Once);
+        _fixedExpenditureRepo.Verify(r => r.UpdateEntityAsync(It.IsAny<FixedExpenditure>()), Times.Once);
     }
 
-    // ── DeleteAsync ──────────────────────────────────────────────────────────
+    // -- DeleteAsync ----------------------------------------------------------
 
     /// <summary>Verifies that <c>DeleteAsync</c> returns fail when record not found.</summary>
     [Fact]
     public async Task DeleteAsync_ReturnsFail_WhenRecordNotFound()
     {
-        _fixedExpenditureRepo.Setup(r => r.GetFixedExpendituresAsync("user@example.com")).ReturnsAsync(new List<FixedExpenditure>());
+        _fixedExpenditureRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>())).ReturnsAsync(new List<FixedExpenditure>());
         var sut = CreateSut();
 
         ServiceResult result = await sut.DeleteAsync("user@example.com", 99);
@@ -286,17 +287,17 @@ public class FixedExpenditureServiceTests
         const string email = "user@example.com";
         var existing = FixedExpenditure.Reconstitute(1, email, "ConsumerSpending", "MealOrEatOutExpenses", null, 100m, "KRW",
             "Wallet", null, (short)1, (short)15, new DateTime(2030, 12, 31), null, false, DateTime.UtcNow, DateTime.UtcNow);
-        _fixedExpenditureRepo.Setup(r => r.GetFixedExpendituresAsync(email)).ReturnsAsync(new List<FixedExpenditure> { existing });
-        _fixedExpenditureRepo.Setup(r => r.DeleteFixedExpenditureAsync(It.IsAny<FixedExpenditure>())).Returns(Task.CompletedTask);
+        _fixedExpenditureRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>())).ReturnsAsync(new List<FixedExpenditure> { existing });
+        _fixedExpenditureRepo.Setup(r => r.DeleteAsync(It.IsAny<IReadOnlyList<FilterCondition>>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
         ServiceResult result = await sut.DeleteAsync(email, 1);
 
         Assert.True(result.Success);
-        _fixedExpenditureRepo.Verify(r => r.DeleteFixedExpenditureAsync(It.IsAny<FixedExpenditure>()), Times.Once);
+        _fixedExpenditureRepo.Verify(r => r.DeleteAsync(It.IsAny<IReadOnlyList<FilterCondition>>()), Times.Once);
     }
 
-    // ── GetFixedExpendituresAsync ────────────────────────────────────────────
+    // -- GetFixedExpendituresAsync --------------------------------------------
 
     /// <summary>Verifies that <c>GetFixedExpendituresAsync</c> delegates to repository.</summary>
     [Fact]
@@ -308,7 +309,7 @@ public class FixedExpenditureServiceTests
             FixedExpenditure.Reconstitute(1, email, "ConsumerSpending", "MealOrEatOutExpenses", null, 100m, "KRW",
                 "Wallet", null, (short)1, (short)15, new DateTime(2030, 12, 31), null, false, DateTime.UtcNow, DateTime.UtcNow)
         };
-        _fixedExpenditureRepo.Setup(r => r.GetFixedExpendituresAsync(email)).ReturnsAsync(list);
+        _fixedExpenditureRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>())).ReturnsAsync(list);
         var sut = CreateSut();
 
         List<FixedExpenditureResponse> result = await sut.GetFixedExpendituresAsync(email);

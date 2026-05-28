@@ -1,4 +1,5 @@
-using Maroik.Core.Contract.Domains.Calendar;
+﻿using Maroik.Core.Contract.Domains.Calendar;
+using Maroik.Core.Contract.Filters;
 using Maroik.Core.PostgreSQL.Data;
 using Maroik.Core.Repository.Repositories;
 using Microsoft.EntityFrameworkCore;
@@ -27,7 +28,7 @@ public class CalendarEventReminderRepositoryTests : IDisposable
     /// <summary>Releases resources allocated by this test fixture (disposes the database context).</summary>
     public void Dispose() => _context.Dispose();
 
-    // ── Helpers ──────────────────────────────────────────────────────────────
+    // -- Helpers --------------------------------------------------------------
 
     private static EfCalendarEventReminder MakeReminder(long calendarEventId, string method = "Email",
         long minutesBefore = 30) => new()
@@ -43,7 +44,7 @@ public class CalendarEventReminderRepositoryTests : IDisposable
         await _context.SaveChangesAsync();
     }
 
-    // ── GetCalendarEventRemindersAsync ───────────────────────────────────────
+    // -- GetCalendarEventRemindersAsync ---------------------------------------
 
     /// <summary>Verifies that <c>GetCalendarEventRemindersAsync</c> returns only reminders for given event.</summary>
     [Fact]
@@ -55,7 +56,7 @@ public class CalendarEventReminderRepositoryTests : IDisposable
             MakeReminder(2, "Email", 30));
 
         IEnumerable<CalendarEventReminder> result =
-            await _sut.GetCalendarEventRemindersAsync(1);
+            await _sut.FindAsync([FilterCondition.Equal("CalendarEventId", 1L)]);
 
         Assert.Equal(2, result.Count());
         Assert.All(result, r => Assert.Equal(1, r.CalendarEventId));
@@ -66,12 +67,12 @@ public class CalendarEventReminderRepositoryTests : IDisposable
     public async Task GetCalendarEventRemindersAsync_ReturnsEmpty_WhenNoRemindersForEvent()
     {
         IEnumerable<CalendarEventReminder> result =
-            await _sut.GetCalendarEventRemindersAsync(99);
+            await _sut.FindAsync([FilterCondition.Equal("CalendarEventId", 99L)]);
 
         Assert.Empty(result);
     }
 
-    // ── CreateCalendarEventReminderAsync ─────────────────────────────────────
+    // -- CreateCalendarEventReminderAsync -------------------------------------
 
     /// <summary>Verifies that <c>CreateCalendarEventReminderAsync</c> persists reminder.</summary>
     [Fact]
@@ -87,7 +88,7 @@ public class CalendarEventReminderRepositoryTests : IDisposable
             weeksBefore: null,
             timesBefore: null);
 
-        await _sut.CreateCalendarEventReminderAsync(reminder);
+        await _sut.CreateAsync(reminder);
 
         EfCalendarEventReminder? saved = await _context.CalendarEventReminders
             .FirstOrDefaultAsync(r => r.CalendarEventId == 5, TestContext.Current.CancellationToken);
@@ -96,7 +97,7 @@ public class CalendarEventReminderRepositoryTests : IDisposable
         Assert.Equal(2, saved.HoursBeforeEvent);
     }
 
-    // ── DeleteCalendarEventReminderAsync ─────────────────────────────────────
+    // -- DeleteCalendarEventReminderAsync -------------------------------------
 
     /// <summary>Verifies that <c>DeleteCalendarEventReminderAsync</c> removes reminders by event id.</summary>
     [Fact]
@@ -107,19 +108,18 @@ public class CalendarEventReminderRepositoryTests : IDisposable
             MakeReminder(10, "Push", 20),
             MakeReminder(20, "Email", 30));
 
-        int deleted = await _sut.DeleteCalendarEventReminderAsync(10);
+        await _sut.DeleteAsync([FilterCondition.Equal("CalendarEventId", 10L)]);
 
-        Assert.Equal(2, deleted);
         Assert.False(await _context.CalendarEventReminders.AnyAsync(r => r.CalendarEventId == 10, TestContext.Current.CancellationToken));
         Assert.True(await _context.CalendarEventReminders.AnyAsync(r => r.CalendarEventId == 20, TestContext.Current.CancellationToken));
     }
 
-    /// <summary>Verifies that <c>DeleteCalendarEventReminderAsync</c> returns zero when no reminders match.</summary>
+    /// <summary>Verifies that <c>DeleteCalendarEventReminderAsync</c> does nothing when no reminders match.</summary>
     [Fact]
     public async Task DeleteCalendarEventReminderAsync_ReturnsZero_WhenNoRemindersMatch()
     {
-        int deleted = await _sut.DeleteCalendarEventReminderAsync(999);
+        await _sut.DeleteAsync([FilterCondition.Equal("CalendarEventId", 999L)]);
 
-        Assert.Equal(0, deleted);
+        Assert.False(await _context.CalendarEventReminders.AnyAsync(TestContext.Current.CancellationToken));
     }
 }

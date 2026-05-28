@@ -1,4 +1,5 @@
-using Maroik.Core.Contract.Domains.Finance;
+﻿using Maroik.Core.Contract.Domains.Finance;
+using Maroik.Core.Contract.Filters;
 using Maroik.Core.PostgreSQL.Data;
 using Maroik.Core.Repository.Repositories;
 using Microsoft.EntityFrameworkCore;
@@ -29,7 +30,7 @@ public class IncomeRepositoryTests : IDisposable
     /// <summary>Releases resources allocated by this test fixture (disposes the database context).</summary>
     public void Dispose() => _context.Dispose();
 
-    // ── Helpers ──────────────────────────────────────────────────────────────
+    // -- Helpers --------------------------------------------------------------
 
     private static EfIncome MakeIncome(string email, string assetName, decimal amount = 500m) => new()
     {
@@ -49,7 +50,7 @@ public class IncomeRepositoryTests : IDisposable
         await _context.SaveChangesAsync();
     }
 
-    // ── GetIncomesAsync ──────────────────────────────────────────────────────
+    // -- GetIncomesAsync ------------------------------------------------------
 
     /// <summary>Verifies that <c>GetIncomesAsync</c> returns only incomes for given email.</summary>
     [Fact]
@@ -60,7 +61,7 @@ public class IncomeRepositoryTests : IDisposable
             MakeIncome("alice@example.com", "SavingsB"),
             MakeIncome("bob@example.com", "BobSavings"));
 
-        List<Income> result = await _sut.GetIncomesAsync("alice@example.com");
+        List<Income> result = await _sut.FindAsync([FilterCondition.Equal("AccountEmail", "alice@example.com")]);
 
         Assert.Equal(2, result.Count);
         Assert.All(result, i => Assert.Equal("alice@example.com", i.AccountEmail.Value));
@@ -70,12 +71,12 @@ public class IncomeRepositoryTests : IDisposable
     [Fact]
     public async Task GetIncomesAsync_ReturnsEmpty_WhenNoIncomesForEmail()
     {
-        List<Income> result = await _sut.GetIncomesAsync("nobody@example.com");
+        List<Income> result = await _sut.FindAsync([FilterCondition.Equal("AccountEmail", "nobody@example.com")]);
 
         Assert.Empty(result);
     }
 
-    // ── CreateIncomeAsync ────────────────────────────────────────────────────
+    // -- CreateIncomeAsync ----------------------------------------------------
 
     /// <summary>Verifies that <c>CreateIncomeAsync</c> adds income to database.</summary>
     [Fact]
@@ -94,7 +95,7 @@ public class IncomeRepositoryTests : IDisposable
             created: DateTime.UtcNow,
             updated: DateTime.UtcNow);
 
-        await _sut.CreateIncomeAsync(income);
+        await _sut.CreateAsync(income);
 
         EfIncome? saved = await _context.Incomes.FirstOrDefaultAsync(
             i => i.AccountEmail == "alice@example.com" && i.Content == "Monthly salary", TestContext.Current.CancellationToken);
@@ -102,11 +103,11 @@ public class IncomeRepositoryTests : IDisposable
         Assert.Equal(3000m, saved.Amount);
     }
 
-    // ── UpdateIncomeAsync ────────────────────────────────────────────────────
+    // -- UpdateEntityAsync ----------------------------------------------------
 
-    /// <summary>Verifies that <c>UpdateIncomeAsync</c> updates existing income.</summary>
+    /// <summary>Verifies that <c>UpdateEntityAsync</c> updates existing income.</summary>
     [Fact]
-    public async Task UpdateIncomeAsync_UpdatesExistingIncome()
+    public async Task UpdateEntityAsync_UpdatesExistingIncome()
     {
         var efIncome = MakeIncome("alice@example.com", "SavingsAccount", amount: 500m);
         await SeedAsync(efIncome);
@@ -125,7 +126,7 @@ public class IncomeRepositoryTests : IDisposable
             created: efIncome.Created,
             updated: DateTime.UtcNow);
 
-        await _sut.UpdateIncomeAsync(income);
+        await _sut.UpdateEntityAsync(income);
 
         EfIncome? updated = await _context.Incomes.FirstOrDefaultAsync(i => i.Id == id, TestContext.Current.CancellationToken);
         Assert.NotNull(updated);
@@ -133,7 +134,7 @@ public class IncomeRepositoryTests : IDisposable
         Assert.Equal("BusinessIncome", updated.SubClass);
     }
 
-    // ── DeleteIncomeAsync ────────────────────────────────────────────────────
+    // -- DeleteIncomeAsync ----------------------------------------------------
 
     /// <summary>Verifies that <c>DeleteIncomeAsync</c> removes income from database.</summary>
     [Fact]
@@ -156,7 +157,7 @@ public class IncomeRepositoryTests : IDisposable
             created: efIncome.Created,
             updated: efIncome.Updated);
 
-        await _sut.DeleteIncomeAsync(income);
+        await _sut.DeleteAsync([FilterCondition.Equal("Id", income.Id)]);
 
         EfIncome? deleted = await _context.Incomes.FirstOrDefaultAsync(i => i.Id == id, TestContext.Current.CancellationToken);
         Assert.Null(deleted);
@@ -183,7 +184,7 @@ public class IncomeRepositoryTests : IDisposable
             created: efIncome1.Created,
             updated: efIncome1.Updated);
 
-        await _sut.DeleteIncomeAsync(income);
+        await _sut.DeleteAsync([FilterCondition.Equal("Id", income.Id)]);
 
         List<EfIncome> remaining = await _context.Incomes.ToListAsync(TestContext.Current.CancellationToken);
         Assert.Single(remaining);

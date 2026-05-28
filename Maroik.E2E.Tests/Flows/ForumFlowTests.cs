@@ -1,4 +1,4 @@
-using Maroik.E2E.Tests.Infrastructure;
+﻿using Maroik.E2E.Tests.Infrastructure;
 using Microsoft.Playwright;
 
 namespace Maroik.E2E.Tests.Flows;
@@ -9,7 +9,7 @@ namespace Maroik.E2E.Tests.Flows;
 /// </summary>
 public class ForumFlowTests : E2ETestBase
 {
-    // ── Forum list ───────────────────────────────────────────────────────────
+    // -- Forum list -----------------------------------------------------------
 
     /// <summary>Verifies that <c>FreeForumList</c> loads with non empty body.</summary>
     [Fact]
@@ -46,7 +46,7 @@ public class ForumFlowTests : E2ETestBase
         await Assertions.Expect(page.Locator("#btnFreeForumSearchText")).ToBeVisibleAsync();
     }
 
-    // ── Write mode: unauthenticated ──────────────────────────────────────────
+    // -- Write mode: unauthenticated ------------------------------------------
 
     /// <summary>Verifies that <c>FreeForumWriteMode</c> without session when redirects to login.</summary>
     [Fact]
@@ -54,7 +54,7 @@ public class ForumFlowTests : E2ETestBase
     {
         var page = await NewPageAsync();
 
-        // Navigate to write mode — without a session the controller redirects to Login
+        // Navigate to write mode ?? without a session the controller redirects to Login
         await GotoAsync(page, "/Forum/FreeForum?method=write");
 
         // After following the redirect, the page URL should contain "Login"
@@ -74,7 +74,7 @@ public class ForumFlowTests : E2ETestBase
         await Assertions.Expect(page.Locator("#loginForm")).ToBeVisibleAsync();
     }
 
-    // ── Detail mode: missing board ────────────────────────────────────────────
+    // -- Detail mode: missing board --------------------------------------------
 
     /// <summary>Verifies that <c>FreeForumDetailMode</c> with missing board id when redirects to list.</summary>
     [Fact]
@@ -90,7 +90,7 @@ public class ForumFlowTests : E2ETestBase
         await Assertions.Expect(heading).ToBeVisibleAsync();
     }
 
-    // ── Title search ─────────────────────────────────────────────────────────
+    // -- Title search ---------------------------------------------------------
 
     /// <summary>Verifies that <c>FreeForumList</c> with title search when renders page.</summary>
     [Fact]

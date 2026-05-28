@@ -1,4 +1,4 @@
-using Maroik.Core.Contract.Domains.Finance;
+﻿using Maroik.Core.Contract.Domains.Finance;
 
 namespace Maroik.Core.Contract.Tests.Domains.Finance;
 
@@ -14,7 +14,7 @@ public class FixedIncomeTests
         FixedIncome.Register("user@example.com", "RegularIncome", "LaborIncome", "Salary",
             3000000m, "KRW", "My Bank", 0, 25, Maturity).Value;
 
-    // ── Register ─────────────────────────────────────────────────────────────
+    // -- Register -------------------------------------------------------------
 
     [Fact]
     public void Register_ReturnsFixedIncome_WhenValid()
@@ -63,7 +63,7 @@ public class FixedIncomeTests
         Assert.Equal("FixedIncome.MainClassEmpty", result.FirstError.Code);
     }
 
-    // ── MarkUnpunctual / ClearUnpunctuality ───────────────────────────────────
+    // -- MarkUnpunctual / ClearUnpunctuality -----------------------------------
 
     [Fact]
     public void MarkUnpunctual_SetsFlag()
@@ -86,7 +86,7 @@ public class FixedIncomeTests
         Assert.False(fi.Unpunctuality);
     }
 
-    // ── Update ────────────────────────────────────────────────────────────────
+    // -- Update ----------------------------------------------------------------
 
     [Fact]
     public void Update_Succeeds_WhenValid()

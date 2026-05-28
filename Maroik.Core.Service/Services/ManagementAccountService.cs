@@ -1,4 +1,5 @@
-using Maroik.Core.Contract.Domains.Account;
+﻿using Maroik.Core.Contract.Domains.Account;
+using Maroik.Core.Contract.Filters;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Utilities;
 using Maroik.Core.Contract.Interfaces;
@@ -32,12 +33,12 @@ public class ManagementAccountService : IManagementAccountService
 
     /// <inheritdoc />
     public async Task<List<AccountResponse>> GetAllAccountsAsync()
-        => (await _accountRepository.GetAllAsync()).Select(AccountMapper.ToResponse).ToList();
+        => (await _accountRepository.FindAsync([])).Select(AccountMapper.ToResponse).ToList();
 
     /// <inheritdoc />
     public async Task<AccountResponse?> GetAccountByEmailAsync(string email)
     {
-        Account? account = await _accountRepository.GetAccountByEmailAsync(email);
+        Account? account = await FindByEmailAsync(email);
         return account == null ? null : AccountMapper.ToResponse(account);
     }
 
@@ -46,7 +47,7 @@ public class ManagementAccountService : IManagementAccountService
     {
         try
         {
-            if (await _accountRepository.GetAccountByEmailAsync(request.Email ?? "") != null)
+            if (await FindByEmailAsync(request.Email ?? "") != null)
                 return ServiceResult.Fail("This account has already been created.");
 
             string hashedPassword = _passwordService.HashPassword(request.HashedPassword ?? "");
@@ -70,7 +71,7 @@ public class ManagementAccountService : IManagementAccountService
             if (request.EmailConfirmed)
                 account.ForceConfirmEmail();
 
-            await _accountRepository.CreateAccountAsync(account);
+            await _accountRepository.CreateAsync(account);
             return ServiceResult.Ok();
         }
         catch (Exception e)
@@ -85,7 +86,7 @@ public class ManagementAccountService : IManagementAccountService
     {
         try
         {
-            Account? account = await _accountRepository.GetAccountByEmailAsync(request.Email ?? "");
+            Account? account = await FindByEmailAsync(request.Email ?? "");
             if (account == null)
                 return ServiceResult.Fail("Email address is wrong");
 
@@ -105,7 +106,7 @@ public class ManagementAccountService : IManagementAccountService
             if (updateResult.IsError)
                 return ServiceResult.Fail(updateResult.FirstError.Description);
 
-            await _accountRepository.UpdateAccountAsync(account);
+            await _accountRepository.UpdateEntityAsync(account);
             return ServiceResult.Ok();
         }
         catch (Exception e)
@@ -115,18 +116,21 @@ public class ManagementAccountService : IManagementAccountService
         }
     }
 
+    private async Task<Account?> FindByEmailAsync(string email)
+        => (await _accountRepository.FindAsync([FilterCondition.Equal("Email", email)])).FirstOrDefault();
+
     /// <inheritdoc />
     public async Task<ServiceResult> DeleteAccountAsync(string email)
     {
         try
         {
-            Account? account = await _accountRepository.GetAccountByEmailAsync(email);
+            Account? account = await FindByEmailAsync(email);
             if (account == null)
                 return ServiceResult.Fail("Fail to find the account by given email address");
 
             account.SoftDelete();
 
-            await _accountRepository.UpdateAccountAsync(account);
+            await _accountRepository.UpdateEntityAsync(account);
             return ServiceResult.Ok();
         }
         catch (Exception e)

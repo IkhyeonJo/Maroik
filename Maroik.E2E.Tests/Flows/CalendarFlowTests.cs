@@ -1,4 +1,4 @@
-using Maroik.E2E.Tests.Infrastructure;
+﻿using Maroik.E2E.Tests.Infrastructure;
 using Microsoft.Playwright;
 
 namespace Maroik.E2E.Tests.Flows;
@@ -49,7 +49,7 @@ public class CalendarFlowTests : E2ETestBase
         var page = await NewPageAsync();
         await GotoAsync(page, "/Calendar/AnonymousIndex");
 
-        // The page must render at least one <div> — confirming the layout loaded
+        // The page must render at least one <div> ?? confirming the layout loaded
         int divCount = await page.Locator("div").CountAsync();
         Assert.True(divCount > 0);
     }

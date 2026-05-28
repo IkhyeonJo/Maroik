@@ -1,4 +1,4 @@
-using Maroik.Core.Contract.Domains.Board;
+﻿using Maroik.Core.Contract.Domains.Board;
 using Maroik.Core.Contract.Utilities;
 
 namespace Maroik.Core.Contract.Tests.Domain.Post;
@@ -18,7 +18,7 @@ public class BoardTests
     private static BoardAttachedFile ValidFile(long boardId = 1) =>
         BoardAttachedFile.Create(boardId, 1024, "doc.pdf", ".pdf", "/files/doc.pdf").Value;
 
-    // ── Create ───────────────────────────────────────────────────────────────
+    // -- Create ---------------------------------------------------------------
 
     [Fact]
     public void Create_ReturnsBoard_WhenValid()
@@ -84,7 +84,7 @@ public class BoardTests
         Assert.Equal("Board.WriterEmpty", result.FirstError.Code);
     }
 
-    // ── Update ───────────────────────────────────────────────────────────────
+    // -- Update ---------------------------------------------------------------
 
     [Fact]
     public void Update_Succeeds_WhenValid()
@@ -120,7 +120,7 @@ public class BoardTests
         Assert.Equal("Board.TitleTooLong", result.FirstError.Code);
     }
 
-    // ── IncrementView ─────────────────────────────────────────────────────────
+    // -- IncrementView ---------------------------------------------------------
 
     [Fact]
     public void IncrementView_IncrementsCounter()
@@ -133,7 +133,7 @@ public class BoardTests
         Assert.Equal(2, board.View);
     }
 
-    // ── AddComment ────────────────────────────────────────────────────────────
+    // -- AddComment ------------------------------------------------------------
 
     [Fact]
     public void AddComment_Succeeds_WhenNotLockedOrDeleted()
@@ -183,7 +183,7 @@ public class BoardTests
         Assert.Equal("Board.CommentMismatch", result.FirstError.Code);
     }
 
-    // ── DeleteComment ─────────────────────────────────────────────────────────
+    // -- DeleteComment ---------------------------------------------------------
 
     [Fact]
     public void DeleteComment_Succeeds_WhenCommentExists()
@@ -208,7 +208,7 @@ public class BoardTests
         Assert.Equal("Board.CommentNotFound", result.FirstError.Code);
     }
 
-    // ── AttachFile ────────────────────────────────────────────────────────────
+    // -- AttachFile ------------------------------------------------------------
 
     [Fact]
     public void AttachFile_Succeeds_WhenFileMatchesBoard()
@@ -232,7 +232,7 @@ public class BoardTests
         Assert.Equal("Board.FileMismatch", result.FirstError.Code);
     }
 
-    // ── Lock / Unlock ─────────────────────────────────────────────────────────
+    // -- Lock / Unlock ---------------------------------------------------------
 
     [Fact]
     public void Lock_SetsLockedTrue()
@@ -255,7 +255,7 @@ public class BoardTests
         Assert.False(board.Locked);
     }
 
-    // ── Pin / Unpin ───────────────────────────────────────────────────────────
+    // -- Pin / Unpin -----------------------------------------------------------
 
     [Fact]
     public void Pin_SetsNoticedTrue()
@@ -278,7 +278,7 @@ public class BoardTests
         Assert.False(board.Noticed);
     }
 
-    // ── SoftDelete ────────────────────────────────────────────────────────────
+    // -- SoftDelete ------------------------------------------------------------
 
     [Fact]
     public void SoftDelete_Succeeds_WhenNotDeleted()

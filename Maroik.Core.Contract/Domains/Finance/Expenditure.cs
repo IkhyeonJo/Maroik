@@ -1,4 +1,4 @@
-using ErrorOr;
+﻿using ErrorOr;
 using Maroik.Core.Contract.Domains.Primitives;
 using Maroik.Core.Contract.Domains.ValueObjects;
 
@@ -7,7 +7,7 @@ namespace Maroik.Core.Contract.Domains.Finance;
 /// <summary>
 /// Aggregate root representing a single one-time expenditure record.
 /// The payment method and deposit-asset references point to <see cref="Asset"/> identities
-/// (ProductName) — they are not object references, preserving aggregate boundaries.
+/// (ProductName) ?? they are not object references, preserving aggregate boundaries.
 /// </summary>
 public sealed class Expenditure : AggregateRoot<long>
 {
@@ -64,13 +64,13 @@ public sealed class Expenditure : AggregateRoot<long>
         Updated = DateTime.UtcNow;
     }
 
-    // ────────────────────────────────────────────────────────────────────────
+    // ------------------------------------------------------------------------
     // Factory / Reconstitution
-    // ────────────────────────────────────────────────────────────────────────
+    // ------------------------------------------------------------------------
 
     /// <summary>
     /// Rebuilds an <see cref="Expenditure"/> from trusted raw values from the repository layer.
-    /// Bypasses validation — use only with data from the trusted repository layer.
+    /// Bypasses validation ?? use only with data from the trusted repository layer.
     /// Does NOT raise domain events.
     /// </summary>
     public static Expenditure Reconstitute(
@@ -138,9 +138,9 @@ public sealed class Expenditure : AggregateRoot<long>
         return expenditure;
     }
 
-    // ────────────────────────────────────────────────────────────────────────
+    // ------------------------------------------------------------------------
     // Domain behaviours
-    // ────────────────────────────────────────────────────────────────────────
+    // ------------------------------------------------------------------------
 
     /// <summary>Updates all editable fields of this expenditure record.</summary>
     public ErrorOr<Success> Update(

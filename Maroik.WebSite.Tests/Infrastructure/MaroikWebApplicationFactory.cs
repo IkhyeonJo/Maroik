@@ -1,4 +1,4 @@
-using Maroik.Core.Contract.Utilities;
+﻿using Maroik.Core.Contract.Utilities;
 using Maroik.Core.PostgreSQL.Data;
 using Maroik.Core.PostgreSQL.Models;
 using Microsoft.AspNetCore.Antiforgery;
@@ -27,7 +27,7 @@ public class MaroikWebApplicationFactory : WebApplicationFactory<Program>
 {
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
-        // ── Override configuration ───────────────────────────────────────────
+        // -- Override configuration -------------------------------------------
         builder.ConfigureAppConfiguration((_, config) =>
         {
             config.AddInMemoryCollection(new Dictionary<string, string>
@@ -46,7 +46,7 @@ public class MaroikWebApplicationFactory : WebApplicationFactory<Program>
                 ["ServerSetting:RsaAlgorithm"] = "Rsa2",
                 ["ServerSetting:FileStorageBaseUrl"] = "http://localhost:5001",
 
-                // SMTP — not used in route tests
+                // SMTP ?? not used in route tests
                 ["ServerSetting:SmtpOptions:smtpUserName"] = "test",
                 ["ServerSetting:SmtpOptions:smtpPassword"] = "test",
                 ["ServerSetting:SmtpOptions:smtpHost"] = "localhost",
@@ -56,19 +56,19 @@ public class MaroikWebApplicationFactory : WebApplicationFactory<Program>
                 ["ServerSetting:SmtpOptions:fromFullName"] = "Test",
                 ["ServerSetting:SmtpOptions:IsDefault"] = "true",
 
-                // ClamAV — not used in route tests
+                // ClamAV ?? not used in route tests
                 ["Clamav:Host"] = "localhost",
                 ["Clamav:Port"] = "3310",
 
                 // FileStorage
                 ["FileStorage:BaseUrl"] = "http://localhost:5001",
 
-                // DB — overridden below with InMemory, but a value is required to avoid null errors
+                // DB ?? overridden below with InMemory, but a value is required to avoid null errors
                 ["ConnectionStrings:DefaultConnection"] = "Host=localhost;Database=test;Username=test;Password=test"
             }!);
         });
 
-        // ── Replace PostgreSQL with InMemory ────────────────────────────────
+        // -- Replace PostgreSQL with InMemory --------------------------------
         builder.ConfigureServices(services =>
         {
             // Remove existing DbContext registrations registered by AddRepositoryContext()

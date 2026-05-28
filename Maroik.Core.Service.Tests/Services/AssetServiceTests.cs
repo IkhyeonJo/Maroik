@@ -1,5 +1,6 @@
-using Maroik.Core.Contract.Domains.Finance;
+﻿using Maroik.Core.Contract.Domains.Finance;
 using Maroik.Core.Contract.Dtos;
+using Maroik.Core.Contract.Filters;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Service.Services;
 using Moq;
@@ -34,10 +35,14 @@ public class AssetServiceTests
         _unitOfWork.Setup(u => u.DisposeAsync()).Returns(ValueTask.CompletedTask);
     }
 
-    // ── Helpers ──────────────────────────────────────────────────────────────
+    // -- Helpers --------------------------------------------------------------
 
     private static Asset MakeAsset(string name, decimal amount = 1000m, string currency = "KRW", bool deleted = false) =>
         Asset.Reconstitute(name, "user@example.com", "FreeDepositAndWithdrawal", amount, currency, null, deleted, DateTime.UtcNow, DateTime.UtcNow);
+
+    private void SetupFindAsset(string productName, Asset? asset)
+        => _assetRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>()))
+            .ReturnsAsync(asset == null ? [] : [asset]);
 
     private static AssetRequest ValidRequest(string name = "MyBank") => new()
     {
@@ -47,7 +52,7 @@ public class AssetServiceTests
         MonetaryUnit = "KRW"
     };
 
-    // ── CreateAsync ──────────────────────────────────────────────────────────
+    // -- CreateAsync ----------------------------------------------------------
 
     /// <summary>Verifies that <c>CreateAsync</c> returns fail when item is invalid.</summary>
     [Theory]
@@ -69,7 +74,7 @@ public class AssetServiceTests
     [Fact]
     public async Task CreateAsync_ReturnsFail_WhenAssetWithSameNameAlreadyExists()
     {
-        _assetRepo.Setup(r => r.GetAssetAsync("user@example.com", "MyBank")).ReturnsAsync(MakeAsset("MyBank"));
+        SetupFindAsset("MyBank", MakeAsset("MyBank"));
         var sut = CreateSut();
 
         ServiceResult result = await sut.CreateAsync("user@example.com", ValidRequest("MyBank"));
@@ -91,8 +96,8 @@ public class AssetServiceTests
     [InlineData("InsuranceAsset")]
     public async Task CreateAsync_ReturnsSuccess_ForAllValidItemTypes(string item)
     {
-        _assetRepo.Setup(r => r.GetAssetAsync("user@example.com", "MyBank")).ReturnsAsync((Asset?)null);
-        _assetRepo.Setup(r => r.CreateAssetAsync(It.IsAny<Asset>())).Returns(Task.CompletedTask);
+        SetupFindAsset("MyBank", null);
+        _assetRepo.Setup(r => r.CreateAsync(It.IsAny<Asset>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
         var request = new AssetRequest { ProductName = "MyBank", Item = item, MonetaryUnit = "KRW" };
@@ -105,10 +110,10 @@ public class AssetServiceTests
     [Fact]
     public async Task CreateAsync_SetsAccountEmailAndTimestamps_BeforeInserting()
     {
-        _assetRepo.Setup(r => r.GetAssetAsync("user@example.com", "MyBank")).ReturnsAsync((Asset?)null);
+        SetupFindAsset("MyBank", null);
 
         Asset? captured = null;
-        _assetRepo.Setup(r => r.CreateAssetAsync(It.IsAny<Asset>()))
+        _assetRepo.Setup(r => r.CreateAsync(It.IsAny<Asset>()))
             .Callback<Asset>(asset => captured = asset)
             .Returns(Task.CompletedTask);
         var sut = CreateSut();
@@ -122,7 +127,7 @@ public class AssetServiceTests
         Assert.True(captured.Updated > DateTime.MinValue);
     }
 
-    // ── UpdateAsync ──────────────────────────────────────────────────────────
+    // -- UpdateAsync ----------------------------------------------------------
 
     /// <summary>Verifies that <c>UpdateAsync</c> returns fail when item is invalid.</summary>
     [Fact]
@@ -141,7 +146,7 @@ public class AssetServiceTests
     [Fact]
     public async Task UpdateAsync_ReturnsFail_WhenOriginalAssetNotFound()
     {
-        _assetRepo.Setup(r => r.GetAssetAsync("user@example.com", "OldName")).ReturnsAsync((Asset?)null);
+        SetupFindAsset("OldName", null);
         var sut = CreateSut();
 
         ServiceResult result = await sut.UpdateAsync("user@example.com", ValidRequest("NewName"), "OldName");
@@ -155,7 +160,7 @@ public class AssetServiceTests
     [Fact]
     public async Task UpdateAsync_ReturnsFail_WhenRenameReturnsZeroRowsAffected()
     {
-        _assetRepo.Setup(r => r.GetAssetAsync("user@example.com", "OldName")).ReturnsAsync(MakeAsset("OldName"));
+        SetupFindAsset("OldName", MakeAsset("OldName"));
         _assetRepo.Setup(r => r.UpdateAssetWithProductNameAsync(It.IsAny<Asset>(), "OldName")).ReturnsAsync(0);
         var sut = CreateSut();
 
@@ -170,27 +175,27 @@ public class AssetServiceTests
     public async Task UpdateAsync_CascadesRenameToExpenditureAndFixedExpenditure_WhenSuccessful()
     {
         const string email = "user@example.com";
-        _assetRepo.Setup(r => r.GetAssetAsync(email, "OldName")).ReturnsAsync(MakeAsset("OldName"));
+        SetupFindAsset("OldName", MakeAsset("OldName"));
         _assetRepo.Setup(r => r.UpdateAssetWithProductNameAsync(It.IsAny<Asset>(), "OldName")).ReturnsAsync(1);
-        _fixedExpenditureRepo.Setup(r => r.UpdateMyDepositAssetWithProductNameAsync(email, "OldName", "NewName")).ReturnsAsync(0);
-        _expenditureRepo.Setup(r => r.UpdateMyDepositAssetWithProductNameAsync(email, "OldName", "NewName")).ReturnsAsync(0);
+        _fixedExpenditureRepo.Setup(r => r.UpdateAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<IReadOnlyDictionary<string, object?>>())).Returns(Task.CompletedTask);
+        _expenditureRepo.Setup(r => r.UpdateAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<IReadOnlyDictionary<string, object?>>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
         ServiceResult result = await sut.UpdateAsync(email, ValidRequest("NewName"), "OldName");
 
         Assert.True(result.Success);
-        _fixedExpenditureRepo.Verify(r => r.UpdateMyDepositAssetWithProductNameAsync(email, "OldName", "NewName"), Times.Once);
-        _expenditureRepo.Verify(r => r.UpdateMyDepositAssetWithProductNameAsync(email, "OldName", "NewName"), Times.Once);
+        _fixedExpenditureRepo.Verify(r => r.UpdateAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<IReadOnlyDictionary<string, object?>>()), Times.Once);
+        _expenditureRepo.Verify(r => r.UpdateAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<IReadOnlyDictionary<string, object?>>()), Times.Once);
         _unitOfWork.Verify(u => u.CommitAsync(), Times.Once);
     }
 
-    // ── DeleteAsync ──────────────────────────────────────────────────────────
+    // -- DeleteAsync ----------------------------------------------------------
 
     /// <summary>Verifies that <c>DeleteAsync</c> returns fail when asset not found.</summary>
     [Fact]
     public async Task DeleteAsync_ReturnsFail_WhenAssetNotFound()
     {
-        _assetRepo.Setup(r => r.GetAssetAsync("user@example.com", "MyBank")).ReturnsAsync((Asset?)null);
+        SetupFindAsset("MyBank", null);
         var sut = CreateSut();
 
         ServiceResult result = await sut.DeleteAsync("user@example.com", "MyBank");
@@ -204,10 +209,10 @@ public class AssetServiceTests
     public async Task DeleteAsync_SetsDeletedFlagAndUpdates_WhenAssetFound()
     {
         const string email = "user@example.com";
-        _assetRepo.Setup(r => r.GetAssetAsync(email, "MyBank")).ReturnsAsync(MakeAsset("MyBank"));
+        SetupFindAsset("MyBank", MakeAsset("MyBank"));
 
         Asset? captured = null;
-        _assetRepo.Setup(r => r.UpdateAssetAsync(It.IsAny<Asset>()))
+        _assetRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Asset>()))
             .Callback<Asset>(asset => captured = asset)
             .Returns(Task.CompletedTask);
         var sut = CreateSut();
@@ -219,14 +224,14 @@ public class AssetServiceTests
         Assert.True(captured.Deleted);
     }
 
-    // ── GetAssetsAsync / GetAssetAsync ───────────────────────────────────────
+    // -- GetAssetsAsync / GetAssetAsync ---------------------------------------
 
     /// <summary>Verifies that <c>GetAssetsAsync</c> delegates to repository.</summary>
     [Fact]
     public async Task GetAssetsAsync_DelegatesToRepository()
     {
         var list = new List<Asset> { MakeAsset("MyBank") };
-        _assetRepo.Setup(r => r.GetAssetsAsync("user@example.com")).ReturnsAsync(list);
+        _assetRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>())).ReturnsAsync(list);
         var sut = CreateSut();
 
         List<AssetResponse> result = await sut.GetAssetsAsync("user@example.com");
@@ -239,7 +244,7 @@ public class AssetServiceTests
     public async Task GetAssetAsync_DelegatesToRepository()
     {
         var asset = MakeAsset("MyBank");
-        _assetRepo.Setup(r => r.GetAssetAsync("user@example.com", "MyBank")).ReturnsAsync(asset);
+        SetupFindAsset("MyBank", asset);
         var sut = CreateSut();
 
         AssetResponse? result = await sut.GetAssetAsync("user@example.com", "MyBank");

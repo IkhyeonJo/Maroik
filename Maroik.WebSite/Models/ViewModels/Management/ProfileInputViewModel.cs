@@ -1,4 +1,4 @@
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace Maroik.WebSite.Models.ViewModels.Management;
 
@@ -18,7 +18,7 @@ public class ProfileInputViewModel
     public List<IFormFile>? ProfileAvatarFiles { get; set; }
 
     /// <summary>
-    /// Current (existing) password — required to authorize profile updates.
+    /// Current (existing) password ?? required to authorize profile updates.
     /// Must satisfy the password complexity rule.
     /// </summary>
     [Required(ErrorMessage = "Password is required")]

@@ -1,4 +1,4 @@
-using Maroik.Core.Contract.Dtos;
+﻿using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Utilities;
 using Maroik.Core.Service.Services;
 using Microsoft.AspNetCore.Http;
@@ -26,7 +26,7 @@ public class SessionServiceTests
         _httpContextAccessor.Setup(a => a.HttpContext).Returns(httpContext.Object);
     }
 
-    // ── Helpers ──────────────────────────────────────────────────────────────
+    // -- Helpers --------------------------------------------------------------
 
     private static AccountResponse SampleAccount() => new()
     {
@@ -35,7 +35,7 @@ public class SessionServiceTests
         Role = Role.User
     };
 
-    // ── GetAccount ───────────────────────────────────────────────────────────
+    // -- GetAccount -----------------------------------------------------------
 
     /// <summary>Verifies that <c>GetAccount</c> returns null when http context is null.</summary>
     [Fact]
@@ -109,7 +109,7 @@ public class SessionServiceTests
         Assert.Null(result);
     }
 
-    // ── SetAccount ───────────────────────────────────────────────────────────
+    // -- SetAccount -----------------------------------------------------------
 
     /// <summary>Verifies that <c>SetAccount</c> calls session set with serialized account.</summary>
     [Fact]
@@ -136,7 +136,7 @@ public class SessionServiceTests
         Assert.Null(ex);
     }
 
-    // ── RemoveAccount ────────────────────────────────────────────────────────
+    // -- RemoveAccount --------------------------------------------------------
 
     /// <summary>Verifies that <c>RemoveAccount</c> calls session remove.</summary>
     [Fact]

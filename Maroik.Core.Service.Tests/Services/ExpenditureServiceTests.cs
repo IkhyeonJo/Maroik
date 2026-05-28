@@ -1,5 +1,6 @@
-using Maroik.Core.Contract.Domains.Finance;
+﻿using Maroik.Core.Contract.Domains.Finance;
 using Maroik.Core.Contract.Dtos;
+using Maroik.Core.Contract.Filters;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Service.Services;
 using Moq;
@@ -32,7 +33,7 @@ public class ExpenditureServiceTests
         _unitOfWork.Setup(u => u.DisposeAsync()).Returns(ValueTask.CompletedTask);
     }
 
-    // ── Helpers ──────────────────────────────────────────────────────────────
+    // -- Helpers --------------------------------------------------------------
 
     private static Asset MakeAsset(string name, decimal amount = 1000m, string currency = "KRW", bool deleted = false) =>
         Asset.Reconstitute(name, "user@example.com", "FreeDepositAndWithdrawal", amount, currency, null, deleted, DateTime.UtcNow, DateTime.UtcNow);
@@ -59,7 +60,7 @@ public class ExpenditureServiceTests
         Content = "Monthly savings"
     };
 
-    // ── CreateAsync ──────────────────────────────────────────────────────────
+    // -- CreateAsync ----------------------------------------------------------
 
     /// <summary>Verifies that <c>CreateAsync</c> returns fail when main class is invalid.</summary>
     [Fact]
@@ -178,7 +179,7 @@ public class ExpenditureServiceTests
         const string email = "user@example.com";
         var wallet = MakeAsset("Wallet", amount: 1000m);
         _assetBalance.Setup(r => r.GetAssetAsync(email, "Wallet")).ReturnsAsync(wallet);
-        _expenditureRepo.Setup(r => r.CreateExpenditureAsync(It.IsAny<Expenditure>())).Returns(Task.CompletedTask);
+        _expenditureRepo.Setup(r => r.CreateAsync(It.IsAny<Expenditure>())).Returns(Task.CompletedTask);
 
         Asset? updatedAsset = null;
         _assetBalance.Setup(r => r.SaveAsync(It.IsAny<Asset>()))
@@ -203,7 +204,7 @@ public class ExpenditureServiceTests
         var savings = MakeAsset("Savings", amount: 500m);
         _assetBalance.Setup(r => r.GetAssetAsync(email, "Checking")).ReturnsAsync(checking);
         _assetBalance.Setup(r => r.GetAssetAsync(email, "Savings")).ReturnsAsync(savings);
-        _expenditureRepo.Setup(r => r.CreateExpenditureAsync(It.IsAny<Expenditure>())).Returns(Task.CompletedTask);
+        _expenditureRepo.Setup(r => r.CreateAsync(It.IsAny<Expenditure>())).Returns(Task.CompletedTask);
 
         var updatedAssets = new List<Asset>();
         _assetBalance.Setup(r => r.SaveAsync(It.IsAny<Asset>()))
@@ -219,7 +220,7 @@ public class ExpenditureServiceTests
         Assert.Equal(800m, updatedAssets.First(a => a.ProductName == "Savings").Balance.Amount);
     }
 
-    // ── UpdateAsync ──────────────────────────────────────────────────────────
+    // -- UpdateAsync ----------------------------------------------------------
 
     /// <summary>Verifies that <c>UpdateAsync</c> returns fail when class validation fails.</summary>
     [Fact]
@@ -238,7 +239,7 @@ public class ExpenditureServiceTests
     [Fact]
     public async Task UpdateAsync_ReturnsFail_WhenExpenditureNotFound()
     {
-        _expenditureRepo.Setup(r => r.GetExpendituresAsync("user@example.com")).ReturnsAsync(new List<Expenditure>());
+        _expenditureRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>())).ReturnsAsync(new List<Expenditure>());
         var sut = CreateSut();
         var request = ConsumerRequest();
         request.Id = 99;
@@ -254,7 +255,7 @@ public class ExpenditureServiceTests
     {
         const string email = "user@example.com";
         var previous = Expenditure.Reconstitute(1, email, "ConsumerSpending", "MealOrEatOutExpenses", null, 50m, "KRW", "Wallet", "", null, DateTime.UtcNow, DateTime.UtcNow);
-        _expenditureRepo.Setup(r => r.GetExpendituresAsync(email)).ReturnsAsync(new List<Expenditure> { previous });
+        _expenditureRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>())).ReturnsAsync(new List<Expenditure> { previous });
         _assetBalance.Setup(r => r.GetAssetAsync(email, "Wallet")).ReturnsAsync(MakeAsset("Wallet", deleted: true));
         var sut = CreateSut();
 
@@ -274,9 +275,9 @@ public class ExpenditureServiceTests
         // Previous expenditure: spent 50 from Wallet
         var previous = Expenditure.Reconstitute(1, email, "ConsumerSpending", "MealOrEatOutExpenses", null, 50m, "KRW", "Wallet", "", null, DateTime.UtcNow, DateTime.UtcNow);
         var wallet = MakeAsset("Wallet", amount: 1000m);
-        _expenditureRepo.Setup(r => r.GetExpendituresAsync(email)).ReturnsAsync(new List<Expenditure> { previous });
+        _expenditureRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>())).ReturnsAsync(new List<Expenditure> { previous });
         _assetBalance.Setup(r => r.GetAssetAsync(email, "Wallet")).ReturnsAsync(wallet);
-        _expenditureRepo.Setup(r => r.UpdateExpenditureAsync(It.IsAny<Expenditure>())).Returns(Task.CompletedTask);
+        _expenditureRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Expenditure>())).Returns(Task.CompletedTask);
 
         Asset? captured = null;
         _assetBalance.Setup(r => r.SaveAsync(It.IsAny<Asset>()))
@@ -295,13 +296,13 @@ public class ExpenditureServiceTests
         _unitOfWork.Verify(u => u.CommitAsync(), Times.Once);
     }
 
-    // ── DeleteAsync ──────────────────────────────────────────────────────────
+    // -- DeleteAsync ----------------------------------------------------------
 
     /// <summary>Verifies that <c>DeleteAsync</c> returns fail when expenditure not found.</summary>
     [Fact]
     public async Task DeleteAsync_ReturnsFail_WhenExpenditureNotFound()
     {
-        _expenditureRepo.Setup(r => r.GetExpendituresAsync("user@example.com")).ReturnsAsync(new List<Expenditure>());
+        _expenditureRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>())).ReturnsAsync(new List<Expenditure>());
         var sut = CreateSut();
 
         ServiceResult result = await sut.DeleteAsync("user@example.com", 99);
@@ -317,9 +318,9 @@ public class ExpenditureServiceTests
         const string email = "user@example.com";
         var expenditure = Expenditure.Reconstitute(1, email, "ConsumerSpending", "MealOrEatOutExpenses", null, 200m, "KRW", "Wallet", "", null, DateTime.UtcNow, DateTime.UtcNow);
         var wallet = MakeAsset("Wallet", amount: 800m);
-        _expenditureRepo.Setup(r => r.GetExpendituresAsync(email)).ReturnsAsync(new List<Expenditure> { expenditure });
+        _expenditureRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>())).ReturnsAsync(new List<Expenditure> { expenditure });
         _assetBalance.Setup(r => r.GetAssetAsync(email, "Wallet")).ReturnsAsync(wallet);
-        _expenditureRepo.Setup(r => r.DeleteExpenditureAsync(It.IsAny<Expenditure>())).Returns(Task.CompletedTask);
+        _expenditureRepo.Setup(r => r.DeleteAsync(It.IsAny<IReadOnlyList<FilterCondition>>())).Returns(Task.CompletedTask);
 
         Asset? captured = null;
         _assetBalance.Setup(r => r.SaveAsync(It.IsAny<Asset>()))
@@ -343,10 +344,10 @@ public class ExpenditureServiceTests
         var expenditure = Expenditure.Reconstitute(1, email, "RegularSavings", "Deposit", null, 300m, "KRW", "Checking", "Savings", null, DateTime.UtcNow, DateTime.UtcNow);
         var checking = MakeAsset("Checking", amount: 700m);
         var savings = MakeAsset("Savings", amount: 800m);
-        _expenditureRepo.Setup(r => r.GetExpendituresAsync(email)).ReturnsAsync(new List<Expenditure> { expenditure });
+        _expenditureRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>())).ReturnsAsync(new List<Expenditure> { expenditure });
         _assetBalance.Setup(r => r.GetAssetAsync(email, "Checking")).ReturnsAsync(checking);
         _assetBalance.Setup(r => r.GetAssetAsync(email, "Savings")).ReturnsAsync(savings);
-        _expenditureRepo.Setup(r => r.DeleteExpenditureAsync(It.IsAny<Expenditure>())).Returns(Task.CompletedTask);
+        _expenditureRepo.Setup(r => r.DeleteAsync(It.IsAny<IReadOnlyList<FilterCondition>>())).Returns(Task.CompletedTask);
 
         var updatedAssets = new List<Asset>();
         _assetBalance.Setup(r => r.SaveAsync(It.IsAny<Asset>()))
@@ -362,7 +363,7 @@ public class ExpenditureServiceTests
         Assert.Equal(500m, updatedAssets.First(a => a.ProductName == "Savings").Balance.Amount);   // 800 - 300
     }
 
-    // ── GetExpendituresAsync ─────────────────────────────────────────────────
+    // -- GetExpendituresAsync -------------------------------------------------
 
     /// <summary>Verifies that <c>GetExpendituresAsync</c> delegates to repository.</summary>
     [Fact]
@@ -373,7 +374,7 @@ public class ExpenditureServiceTests
         {
             Expenditure.Reconstitute(1, email, "ConsumerSpending", "MealOrEatOutExpenses", null, 100m, "KRW", "Wallet", "", null, DateTime.UtcNow, DateTime.UtcNow)
         };
-        _expenditureRepo.Setup(r => r.GetExpendituresAsync(email)).ReturnsAsync(list);
+        _expenditureRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>())).ReturnsAsync(list);
         var sut = CreateSut();
 
         List<ExpenditureResponse> result = await sut.GetExpendituresAsync(email);

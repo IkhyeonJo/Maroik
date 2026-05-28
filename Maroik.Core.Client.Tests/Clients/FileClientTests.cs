@@ -1,4 +1,4 @@
-using Maroik.Core.Client.Clients;
+﻿using Maroik.Core.Client.Clients;
 
 namespace Maroik.Core.Client.Tests.Clients;
 
@@ -11,7 +11,7 @@ public class FileClientTests
 {
     private readonly FileClient _sut = new();
 
-    // ── UploadAsync ──────────────────────────────────────────────────────────
+    // -- UploadAsync ----------------------------------------------------------
 
     /// <summary>Verifies that <c>UploadAsync</c> returns false when file data is null.</summary>
     [Fact]

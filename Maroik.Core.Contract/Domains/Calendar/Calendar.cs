@@ -1,4 +1,4 @@
-using ErrorOr;
+﻿using ErrorOr;
 using Maroik.Core.Contract.Domains.Primitives;
 using Maroik.Core.Contract.Domains.ValueObjects;
 
@@ -57,13 +57,13 @@ public sealed class Calendar : AggregateRoot<long>
         Updated = DateTime.UtcNow;
     }
 
-    // ────────────────────────────────────────────────────────────────────────
+    // ------------------------------------------------------------------------
     // Factory / Reconstitution
-    // ────────────────────────────────────────────────────────────────────────
+    // ------------------------------------------------------------------------
 
     /// <summary>
     /// Rebuilds a <see cref="Calendar"/> from trusted raw values from the repository layer.
-    /// Bypasses validation — use only with data from the trusted repository layer.
+    /// Bypasses validation ?? use only with data from the trusted repository layer.
     /// Does NOT raise domain events.
     /// </summary>
     public static Calendar Reconstitute(
@@ -115,9 +115,9 @@ public sealed class Calendar : AggregateRoot<long>
         return calendar;
     }
 
-    // ────────────────────────────────────────────────────────────────────────
+    // ------------------------------------------------------------------------
     // Domain behaviours
-    // ────────────────────────────────────────────────────────────────────────
+    // ------------------------------------------------------------------------
 
     /// <summary>Updates the calendar's display fields.</summary>
     public ErrorOr<Success> Update(

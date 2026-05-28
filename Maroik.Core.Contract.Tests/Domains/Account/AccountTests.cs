@@ -1,4 +1,4 @@
-using Maroik.Core.Contract.Domains.Account;
+﻿using Maroik.Core.Contract.Domains.Account;
 using Maroik.Core.Contract.Domains.ValueObjects;
 using Maroik.Core.Contract.Utilities;
 
@@ -21,7 +21,7 @@ public class AccountTests
         bool agreedServiceTerms = true)
         => Account.Create(email, hashedPassword, nickname, role, timeZone, "KRW", registrationToken, agreedServiceTerms).Value;
 
-    // ── Create ───────────────────────────────────────────────────────────────
+    // -- Create ---------------------------------------------------------------
 
     [Fact]
     public void Create_ReturnsAccount_WhenAllInputsValid()
@@ -77,7 +77,7 @@ public class AccountTests
         Assert.Equal("TimeZoneId.Invalid", result.FirstError.Code);
     }
 
-    // ── ConfirmEmail ─────────────────────────────────────────────────────────
+    // -- ConfirmEmail ---------------------------------------------------------
 
     [Fact]
     public void ConfirmEmail_Succeeds_WhenTokenMatches()
@@ -115,7 +115,7 @@ public class AccountTests
         Assert.False(account.EmailConfirmed);
     }
 
-    // ── RequestPasswordReset ─────────────────────────────────────────────────
+    // -- RequestPasswordReset -------------------------------------------------
 
     [Fact]
     public void RequestPasswordReset_Succeeds_WhenEmailConfirmed()
@@ -153,7 +153,7 @@ public class AccountTests
         Assert.Equal("Account.Locked", result.FirstError.Code);
     }
 
-    // ── ResetPassword ────────────────────────────────────────────────────────
+    // -- ResetPassword --------------------------------------------------------
 
     [Fact]
     public void ResetPassword_Succeeds_WhenTokenValid()
@@ -195,7 +195,7 @@ public class AccountTests
         Assert.Equal("Account.PasswordEmpty", result.FirstError.Code);
     }
 
-    // ── Login attempt tracking ────────────────────────────────────────────────
+    // -- Login attempt tracking ------------------------------------------------
 
     [Fact]
     public void RecordLoginFailure_IncrementsCounter()
@@ -246,7 +246,7 @@ public class AccountTests
         Assert.Equal(0, account.LoginAttempt);
     }
 
-    // ── Lock / Unlock ────────────────────────────────────────────────────────
+    // -- Lock / Unlock --------------------------------------------------------
 
     [Fact]
     public void Lock_SetsLockedTrueAndStoresMessage()
@@ -272,7 +272,7 @@ public class AccountTests
         Assert.Equal(0, account.LoginAttempt);
     }
 
-    // ── AdminUpdate ──────────────────────────────────────────────────────────
+    // -- AdminUpdate ----------------------------------------------------------
 
     [Fact]
     public void AdminUpdate_ReturnsSuccess_WhenValid()
@@ -309,7 +309,7 @@ public class AccountTests
         Assert.Equal("TimeZoneId.Invalid", result.FirstError.Code);
     }
 
-    // ── SoftDelete ───────────────────────────────────────────────────────────
+    // -- SoftDelete -----------------------------------------------------------
 
     [Fact]
     public void SoftDelete_SetsDeletedTrue()
@@ -321,7 +321,7 @@ public class AccountTests
         Assert.True(account.Deleted);
     }
 
-    // ── RegenerateRegistrationTokenIfEmpty ───────────────────────────────────
+    // -- RegenerateRegistrationTokenIfEmpty -----------------------------------
 
     [Fact]
     public void RegenerateRegistrationTokenIfEmpty_SetsToken_WhenCurrentIsNull()
@@ -345,7 +345,7 @@ public class AccountTests
         Assert.Equal("existing", account.RegistrationToken);
     }
 
-    // ── UpdateProfile ────────────────────────────────────────────────────────
+    // -- UpdateProfile --------------------------------------------------------
 
     [Fact]
     public void UpdateProfile_UpdatesAllFields()
@@ -374,7 +374,7 @@ public class AccountTests
         Assert.Null(account.DefaultMonetaryUnit);
     }
 
-    // ── ChangePassword ───────────────────────────────────────────────────────
+    // -- ChangePassword -------------------------------------------------------
 
     [Fact]
     public void ChangePassword_ReplacesHashedPassword()
@@ -386,7 +386,7 @@ public class AccountTests
         Assert.Equal("newHash", account.HashedPassword);
     }
 
-    // ── SetMessage ───────────────────────────────────────────────────────────
+    // -- SetMessage -----------------------------------------------------------
 
     [Fact]
     public void SetMessage_StoresText()
@@ -409,7 +409,7 @@ public class AccountTests
         Assert.Null(account.Message);
     }
 
-    // ── ForceConfirmEmail ────────────────────────────────────────────────────
+    // -- ForceConfirmEmail ----------------------------------------------------
 
     [Fact]
     public void ForceConfirmEmail_ConfirmsEmailAndClearsToken()
@@ -433,7 +433,7 @@ public class AccountTests
         Assert.True(account.EmailConfirmed);
     }
 
-    // ── AcceptServiceTerms ───────────────────────────────────────────────────
+    // -- AcceptServiceTerms ---------------------------------------------------
 
     [Fact]
     public void AcceptServiceTerms_SetsAgreedToTrue()

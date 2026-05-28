@@ -1,4 +1,4 @@
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace Maroik.WebSite.Models.ViewModels.Management;
 
@@ -30,7 +30,7 @@ public class ProfileOutputViewModel
     public DateTime Created { get; set; }
 
     /// <summary>
-    /// Current (existing) password — required to authorize any profile changes.
+    /// Current (existing) password ?? required to authorize any profile changes.
     /// Must satisfy the password complexity rule.
     /// </summary>
     [Required(ErrorMessage = "Password is required")]
@@ -51,7 +51,7 @@ public class ProfileOutputViewModel
 
 
     /// <summary>
-    /// Confirmation of the new password — must match <see cref="NewPassword"/> exactly.
+    /// Confirmation of the new password ?? must match <see cref="NewPassword"/> exactly.
     /// </summary>
     [Required(ErrorMessage = "Confirm new password is required")]
     [StringLength(100, ErrorMessage = "The {0} must be at least {2} characters long.", MinimumLength = 8)]

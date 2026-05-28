@@ -1,4 +1,4 @@
-using Maroik.Core.Contract.Domains.Calendar;
+﻿using Maroik.Core.Contract.Domains.Calendar;
 
 namespace Maroik.Core.Contract.Tests.Domains.CalendarDomain;
 
@@ -14,7 +14,7 @@ public class CalendarTests
     private static OtherCalendar ValidSubscription(string email = "sub@example.com", long calendarId = 1) =>
         OtherCalendar.Create(email, calendarId).Value;
 
-    // ── Create ───────────────────────────────────────────────────────────────
+    // -- Create ---------------------------------------------------------------
 
     [Fact]
     public void Create_ReturnsCalendar_WhenValid()
@@ -64,7 +64,7 @@ public class CalendarTests
         Assert.Equal("HtmlColorCode.Invalid", result.FirstError.Code);
     }
 
-    // ── Update ───────────────────────────────────────────────────────────────
+    // -- Update ---------------------------------------------------------------
 
     [Fact]
     public void Update_Succeeds_WhenValid()
@@ -90,7 +90,7 @@ public class CalendarTests
         Assert.Equal("Calendar.NameEmpty", result.FirstError.Code);
     }
 
-    // ── UpdateSharing ─────────────────────────────────────────────────────────
+    // -- UpdateSharing ---------------------------------------------------------
 
     [Fact]
     public void UpdateSharing_CreatesShared_WhenSharedIsNull()
@@ -116,7 +116,7 @@ public class CalendarTests
         Assert.True(calendar.Shared!.Anonymous);
     }
 
-    // ── AddSubscriber ─────────────────────────────────────────────────────────
+    // -- AddSubscriber ---------------------------------------------------------
 
     [Fact]
     public void AddSubscriber_Succeeds_WhenNotAlreadySubscribed()
@@ -154,7 +154,7 @@ public class CalendarTests
         Assert.Equal("Calendar.SubscriberMismatch", result.FirstError.Code);
     }
 
-    // ── RemoveSubscriber ──────────────────────────────────────────────────────
+    // -- RemoveSubscriber ------------------------------------------------------
 
     [Fact]
     public void RemoveSubscriber_Succeeds_WhenSubscriberExists()

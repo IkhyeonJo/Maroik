@@ -1,4 +1,4 @@
-using Maroik.Core.Contract.Domains.Calendar;
+﻿using Maroik.Core.Contract.Domains.Calendar;
 
 namespace Maroik.Core.Contract.Tests.Domains.CalendarDomain;
 
@@ -20,7 +20,7 @@ public class CalendarEventTests
     private static CalendarEventAttachedFile ValidFile(long eventId = 1) =>
         CalendarEventAttachedFile.Reconstitute(1, eventId, 512, "agenda.pdf", ".pdf", "/files/agenda.pdf");
 
-    // ── Create ───────────────────────────────────────────────────────────────
+    // -- Create ---------------------------------------------------------------
 
     [Fact]
     public void Create_ReturnsCalendarEvent_WhenValid()
@@ -79,7 +79,7 @@ public class CalendarEventTests
         Assert.False(result.IsError);
     }
 
-    // ── Update ───────────────────────────────────────────────────────────────
+    // -- Update ---------------------------------------------------------------
 
     [Fact]
     public void Update_Succeeds_WhenValid()
@@ -105,7 +105,7 @@ public class CalendarEventTests
         Assert.Equal("CalendarEvent.InvalidDateRange", result.FirstError.Code);
     }
 
-    // ── AddReminder ───────────────────────────────────────────────────────────
+    // -- AddReminder -----------------------------------------------------------
 
     [Fact]
     public void AddReminder_Succeeds_WhenReminderMatchesEvent()
@@ -129,7 +129,7 @@ public class CalendarEventTests
         Assert.Equal("CalendarEvent.ReminderMismatch", result.FirstError.Code);
     }
 
-    // ── RemoveReminder ────────────────────────────────────────────────────────
+    // -- RemoveReminder --------------------------------------------------------
 
     [Fact]
     public void RemoveReminder_Succeeds_WhenReminderExists()
@@ -154,7 +154,7 @@ public class CalendarEventTests
         Assert.Equal("CalendarEvent.ReminderNotFound", result.FirstError.Code);
     }
 
-    // ── AttachFile ────────────────────────────────────────────────────────────
+    // -- AttachFile ------------------------------------------------------------
 
     [Fact]
     public void AttachFile_Succeeds_WhenFileMatchesEvent()
@@ -178,7 +178,7 @@ public class CalendarEventTests
         Assert.Equal("CalendarEvent.FileMismatch", result.FirstError.Code);
     }
 
-    // ── RemoveFile ────────────────────────────────────────────────────────────
+    // -- RemoveFile ------------------------------------------------------------
 
     [Fact]
     public void RemoveFile_Succeeds_WhenFileExists()

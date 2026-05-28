@@ -1,4 +1,4 @@
-// Maroik.FileStorage — Program.cs
+﻿// Maroik.FileStorage ?? Program.cs
 // Entry point for the file-storage microservice.
 // Configures DI, Swagger/OpenAPI, CORS, and the HTTP pipeline, then starts Kestrel.
 
@@ -24,7 +24,7 @@ builder.Services.AddSwaggerGen(c =>
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "Maroik.FileStorage", Version = "v1" });
 });
 
-// Open CORS policy — the file-storage service is called from the WebSite origin only in production;
+// Open CORS policy ?? the file-storage service is called from the WebSite origin only in production;
 // the permissive policy here is intentional for local development convenience.
 builder.Services.AddCors(options =>
 {

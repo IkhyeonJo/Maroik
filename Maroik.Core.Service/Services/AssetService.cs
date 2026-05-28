@@ -1,4 +1,5 @@
-using Maroik.Core.Contract.Domains.Finance;
+﻿using Maroik.Core.Contract.Domains.Finance;
+using Maroik.Core.Contract.Filters;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Service.Mappers;
@@ -32,12 +33,12 @@ public class AssetService : IAssetService
 
     /// <inheritdoc />
     public async Task<List<AssetResponse>> GetAssetsAsync(string accountEmail)
-        => (await _assetRepository.GetAssetsAsync(accountEmail)).Select(AssetMapper.ToResponse).ToList();
+        => (await _assetRepository.FindAsync([FilterCondition.Equal("AccountEmail", accountEmail)])).Select(AssetMapper.ToResponse).ToList();
 
     /// <inheritdoc />
     public async Task<AssetResponse?> GetAssetAsync(string accountEmail, string productName)
     {
-        Asset? asset = await _assetRepository.GetAssetAsync(accountEmail, productName);
+        Asset? asset = await FindAssetAsync(accountEmail, productName);
         return asset == null ? null : AssetMapper.ToResponse(asset);
     }
 
@@ -48,7 +49,7 @@ public class AssetService : IAssetService
             return ServiceResult.Fail("Input is invalid");
 
         // Reject duplicate product names within the same account.
-        Asset? existing = await _assetRepository.GetAssetAsync(accountEmail, request.ProductName ?? "");
+        Asset? existing = await FindAssetAsync(accountEmail, request.ProductName ?? "");
         if (existing != null)
             return ServiceResult.Fail("The asset already exists.");
 
@@ -64,7 +65,7 @@ public class AssetService : IAssetService
             return ServiceResult.Fail(createResult.FirstError.Description);
 
         var asset = createResult.Value;
-        await _assetRepository.CreateAssetAsync(asset);
+        await _assetRepository.CreateAsync(asset);
         return ServiceResult.Ok();
     }
 
@@ -80,7 +81,7 @@ public class AssetService : IAssetService
                 return ServiceResult.Fail("Input is invalid");
             }
 
-            Asset? asset = await _assetRepository.GetAssetAsync(accountEmail, originalProductName);
+            Asset? asset = await FindAssetAsync(accountEmail, originalProductName);
             if (asset == null)
             {
                 await _unitOfWork.RollbackAsync();
@@ -104,10 +105,12 @@ public class AssetService : IAssetService
             }
 
             // Cascade the renamed product name to all related expenditure records within the same transaction.
-            await _fixedExpenditureRepository.UpdateMyDepositAssetWithProductNameAsync(
-                accountEmail, originalProductName, asset.ProductName);
-            await _expenditureRepository.UpdateMyDepositAssetWithProductNameAsync(
-                accountEmail, originalProductName, asset.ProductName);
+            await _fixedExpenditureRepository.UpdateAsync(
+                [FilterCondition.Equal("AccountEmail", accountEmail), FilterCondition.Equal("MyDepositAsset", originalProductName)],
+                new Dictionary<string, object?> { ["MyDepositAsset"] = asset.ProductName });
+            await _expenditureRepository.UpdateAsync(
+                [FilterCondition.Equal("AccountEmail", accountEmail), FilterCondition.Equal("MyDepositAsset", originalProductName)],
+                new Dictionary<string, object?> { ["MyDepositAsset"] = asset.ProductName });
 
             await _unitOfWork.CommitAsync();
             return ServiceResult.Ok();
@@ -122,16 +125,22 @@ public class AssetService : IAssetService
     /// <inheritdoc />
     public async Task<ServiceResult> DeleteAsync(string accountEmail, string productName)
     {
-        Asset? asset = await _assetRepository.GetAssetAsync(accountEmail, productName);
+        Asset? asset = await FindAssetAsync(accountEmail, productName);
         if (asset == null)
             return ServiceResult.Fail("Fail to find the asset by given product name");
 
         // Soft-delete preserves the record for historical reporting while hiding it from active use.
         asset.SoftDelete();
 
-        await _assetRepository.UpdateAssetAsync(asset);
+        await _assetRepository.UpdateEntityAsync(asset);
         return ServiceResult.Ok();
     }
+
+    private async Task<Asset?> FindAssetAsync(string accountEmail, string productName)
+        => (await _assetRepository.FindAsync([
+            FilterCondition.Equal("AccountEmail", accountEmail),
+            FilterCondition.Equal("ProductName", productName)
+        ])).FirstOrDefault();
 
     /// <summary>
     /// Returns <see langword="true"/> when <paramref name="item"/> is one of the recognised asset category values.

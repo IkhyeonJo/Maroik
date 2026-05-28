@@ -1,4 +1,4 @@
-using Maroik.Core.Contract.Domains.Finance;
+﻿using Maroik.Core.Contract.Domains.Finance;
 
 namespace Maroik.Core.Contract.Tests.Domains.Finance;
 
@@ -9,7 +9,7 @@ namespace Maroik.Core.Contract.Tests.Domains.Finance;
 /// </summary>
 public class IncomeClassPolicyTests
 {
-    // ── RegularIncome ─────────────────────────────────────────────────────────
+    // -- RegularIncome ---------------------------------------------------------
 
     [Theory]
     [InlineData("LaborIncome")]
@@ -37,7 +37,7 @@ public class IncomeClassPolicyTests
         Assert.Equal("IncomeClass.Invalid", result.FirstError.Code);
     }
 
-    // ── IrregularIncome ───────────────────────────────────────────────────────
+    // -- IrregularIncome -------------------------------------------------------
 
     [Theory]
     [InlineData("LaborIncome")]
@@ -62,7 +62,7 @@ public class IncomeClassPolicyTests
         Assert.Equal("IncomeClass.Invalid", result.FirstError.Code);
     }
 
-    // ── Unknown main class ────────────────────────────────────────────────────
+    // -- Unknown main class ----------------------------------------------------
 
     [Theory]
     [InlineData("Unknown")]

@@ -1,8 +1,8 @@
-namespace Maroik.Core.Contract.Domains.Primitives;
+﻿namespace Maroik.Core.Contract.Domains.Primitives;
 
 /// <summary>
 /// Base class for all value objects.
-/// Value objects have no identity — equality is determined entirely by their atomic values.
+/// Value objects have no identity ?? equality is determined entirely by their atomic values.
 /// Subclasses must implement <see cref="GetAtomicValues"/> to declare which fields compose the value.
 /// </summary>
 public abstract class ValueObject : IEquatable<ValueObject>

@@ -1,4 +1,5 @@
-using Maroik.Core.Contract.Domains.Finance;
+﻿using Maroik.Core.Contract.Domains.Finance;
+using Maroik.Core.Contract.Filters;
 using Maroik.Core.PostgreSQL.Data;
 using Maroik.Core.Repository.Repositories;
 using Microsoft.EntityFrameworkCore;
@@ -29,7 +30,7 @@ public class FixedExpenditureRepositoryTests : IDisposable
     /// <summary>Releases resources allocated by this test fixture (disposes the database context).</summary>
     public void Dispose() => _context.Dispose();
 
-    // ── Helpers ──────────────────────────────────────────────────────────────
+    // -- Helpers --------------------------------------------------------------
 
     private static EfFixedExpenditure MakeFixedExpenditure(string email, string content, decimal amount = 50m) => new()
     {
@@ -54,7 +55,7 @@ public class FixedExpenditureRepositoryTests : IDisposable
         await _context.SaveChangesAsync();
     }
 
-    // ── GetFixedExpendituresAsync ────────────────────────────────────────────
+    // -- GetFixedExpendituresAsync --------------------------------------------
 
     /// <summary>Verifies that <c>GetFixedExpendituresAsync</c> returns only items for given email.</summary>
     [Fact]
@@ -65,7 +66,7 @@ public class FixedExpenditureRepositoryTests : IDisposable
             MakeFixedExpenditure("alice@example.com", "Insurance"),
             MakeFixedExpenditure("bob@example.com", "Gym"));
 
-        List<FixedExpenditure> result = await _sut.GetFixedExpendituresAsync("alice@example.com");
+        List<FixedExpenditure> result = await _sut.FindAsync([FilterCondition.Equal("AccountEmail", "alice@example.com")]);
 
         Assert.Equal(2, result.Count);
         Assert.All(result, fe => Assert.Equal("alice@example.com", fe.AccountEmail.Value));
@@ -75,12 +76,12 @@ public class FixedExpenditureRepositoryTests : IDisposable
     [Fact]
     public async Task GetFixedExpendituresAsync_ReturnsEmpty_WhenNoItemsForEmail()
     {
-        List<FixedExpenditure> result = await _sut.GetFixedExpendituresAsync("nobody@example.com");
+        List<FixedExpenditure> result = await _sut.FindAsync([FilterCondition.Equal("AccountEmail", "nobody@example.com")]);
 
         Assert.Empty(result);
     }
 
-    // ── CreateFixedExpenditureAsync ──────────────────────────────────────────
+    // -- CreateFixedExpenditureAsync ------------------------------------------
 
     /// <summary>Verifies that <c>CreateFixedExpenditureAsync</c> adds item to database.</summary>
     [Fact]
@@ -104,7 +105,7 @@ public class FixedExpenditureRepositoryTests : IDisposable
             created: DateTime.UtcNow,
             updated: DateTime.UtcNow);
 
-        await _sut.CreateFixedExpenditureAsync(fixedExpenditure);
+        await _sut.CreateAsync(fixedExpenditure);
 
         EfFixedExpenditure? saved = await _context.FixedExpenditures.FirstOrDefaultAsync(
             fe => fe.AccountEmail == "alice@example.com" && fe.Content == "Property tax", TestContext.Current.CancellationToken);
@@ -114,11 +115,11 @@ public class FixedExpenditureRepositoryTests : IDisposable
         Assert.Equal((short)31, saved.DepositDay);
     }
 
-    // ── UpdateFixedExpenditureAsync ──────────────────────────────────────────
+    // -- UpdateEntityAsync ------------------------------------------
 
-    /// <summary>Verifies that <c>UpdateFixedExpenditureAsync</c> updates existing item.</summary>
+    /// <summary>Verifies that <c>UpdateEntityAsync</c> updates existing item.</summary>
     [Fact]
-    public async Task UpdateFixedExpenditureAsync_UpdatesExistingItem()
+    public async Task UpdateEntityAsync_UpdatesExistingItem()
     {
         var efItem = MakeFixedExpenditure("alice@example.com", "Netflix", amount: 50m);
         await SeedAsync(efItem);
@@ -142,7 +143,7 @@ public class FixedExpenditureRepositoryTests : IDisposable
             created: efItem.Created,
             updated: DateTime.UtcNow);
 
-        await _sut.UpdateFixedExpenditureAsync(fixedExpenditure);
+        await _sut.UpdateEntityAsync(fixedExpenditure);
 
         EfFixedExpenditure? updated = await _context.FixedExpenditures.FirstOrDefaultAsync(fe => fe.Id == id, TestContext.Current.CancellationToken);
         Assert.NotNull(updated);
@@ -151,7 +152,7 @@ public class FixedExpenditureRepositoryTests : IDisposable
         Assert.True(updated.Unpunctuality);
     }
 
-    // ── DeleteFixedExpenditureAsync ──────────────────────────────────────────
+    // -- DeleteFixedExpenditureAsync ------------------------------------------
 
     /// <summary>Verifies that <c>DeleteFixedExpenditureAsync</c> removes item from database.</summary>
     [Fact]
@@ -179,7 +180,7 @@ public class FixedExpenditureRepositoryTests : IDisposable
             created: efItem.Created,
             updated: efItem.Updated);
 
-        await _sut.DeleteFixedExpenditureAsync(fixedExpenditure);
+        await _sut.DeleteAsync([FilterCondition.Equal("Id", fixedExpenditure.Id)]);
 
         EfFixedExpenditure? deleted = await _context.FixedExpenditures.FirstOrDefaultAsync(fe => fe.Id == id, TestContext.Current.CancellationToken);
         Assert.Null(deleted);
@@ -211,7 +212,7 @@ public class FixedExpenditureRepositoryTests : IDisposable
             created: efItem1.Created,
             updated: efItem1.Updated);
 
-        await _sut.DeleteFixedExpenditureAsync(fixedExpenditure);
+        await _sut.DeleteAsync([FilterCondition.Equal("Id", fixedExpenditure.Id)]);
 
         List<EfFixedExpenditure> remaining = await _context.FixedExpenditures.ToListAsync(TestContext.Current.CancellationToken);
         Assert.Single(remaining);

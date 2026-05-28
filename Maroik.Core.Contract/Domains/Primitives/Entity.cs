@@ -1,8 +1,8 @@
-namespace Maroik.Core.Contract.Domains.Primitives;
+﻿namespace Maroik.Core.Contract.Domains.Primitives;
 
 /// <summary>
 /// Base class for all domain entities.
-/// Entities have a persistent identity — equality is determined by <typeparamref name="TId"/>, not by field values.
+/// Entities have a persistent identity ?? equality is determined by <typeparamref name="TId"/>, not by field values.
 /// </summary>
 /// <typeparam name="TId">Type of the entity's primary key.</typeparam>
 public abstract class Entity<TId> : IEquatable<Entity<TId>>

@@ -1,4 +1,4 @@
-using ErrorOr;
+﻿using ErrorOr;
 using Maroik.Core.Contract.Domains.Primitives;
 
 namespace Maroik.Core.Contract.Domains.Board;
@@ -63,13 +63,13 @@ public sealed class Board : AggregateRoot<long>
         Updated = DateTime.UtcNow;
     }
 
-    // ────────────────────────────────────────────────────────────────────────
+    // ------------------------------------------------------------------------
     // Factory / Reconstitution
-    // ────────────────────────────────────────────────────────────────────────
+    // ------------------------------------------------------------------------
 
     /// <summary>
     /// Rebuilds a <see cref="Board"/> from trusted raw values from the repository layer.
-    /// Bypasses validation — use only with data from the trusted repository layer.
+    /// Bypasses validation ?? use only with data from the trusted repository layer.
     /// Does NOT raise domain events. Child comments and attached files must be loaded separately.
     /// </summary>
     public static Board Reconstitute(
@@ -124,9 +124,9 @@ public sealed class Board : AggregateRoot<long>
         return board;
     }
 
-    // ────────────────────────────────────────────────────────────────────────
+    // ------------------------------------------------------------------------
     // Domain behaviours
-    // ────────────────────────────────────────────────────────────────────────
+    // ------------------------------------------------------------------------
 
     /// <summary>Updates the post title and content.</summary>
     public ErrorOr<Success> Update(string? title, string? content)

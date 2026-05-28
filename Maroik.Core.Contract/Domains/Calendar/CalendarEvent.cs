@@ -1,4 +1,4 @@
-using ErrorOr;
+﻿using ErrorOr;
 using Maroik.Core.Contract.Domains.Primitives;
 
 namespace Maroik.Core.Contract.Domains.Calendar;
@@ -87,13 +87,13 @@ public sealed class CalendarEvent : AggregateRoot<long>
         Updated = DateTime.UtcNow;
     }
 
-    // ────────────────────────────────────────────────────────────────────────
+    // ------------------------------------------------------------------------
     // Factory / Reconstitution
-    // ────────────────────────────────────────────────────────────────────────
+    // ------------------------------------------------------------------------
 
     /// <summary>
     /// Rebuilds a <see cref="CalendarEvent"/> from trusted raw values from the repository layer.
-    /// Bypasses validation — use only with data from the trusted repository layer.
+    /// Bypasses validation ?? use only with data from the trusted repository layer.
     /// Does NOT raise domain events. Child reminders and files must be loaded separately.
     /// </summary>
     public static CalendarEvent Reconstitute(
@@ -155,9 +155,9 @@ public sealed class CalendarEvent : AggregateRoot<long>
         return calendarEvent;
     }
 
-    // ────────────────────────────────────────────────────────────────────────
+    // ------------------------------------------------------------------------
     // Domain behaviours
-    // ────────────────────────────────────────────────────────────────────────
+    // ------------------------------------------------------------------------
 
     /// <summary>Re-assigns the event to a different calendar or changes its recurrence rule.</summary>
     public void Reassign(long calendarId, long? recurrenceId)

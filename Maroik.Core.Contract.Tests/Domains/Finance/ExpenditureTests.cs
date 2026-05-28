@@ -1,4 +1,4 @@
-using Maroik.Core.Contract.Domains.Finance;
+﻿using Maroik.Core.Contract.Domains.Finance;
 
 namespace Maroik.Core.Contract.Tests.Domains.Finance;
 
@@ -11,7 +11,7 @@ public class ExpenditureTests
     private static Expenditure ValidExpenditure() =>
         Expenditure.Record("user@example.com", "ConsumerSpending", "MealOrEatOutExpenses", "Lunch", 15000m, "KRW", "My Card", null).Value;
 
-    // ── Record ───────────────────────────────────────────────────────────────
+    // -- Record ---------------------------------------------------------------
 
     [Fact]
     public void Record_ReturnsExpenditure_WhenValid()
@@ -67,7 +67,7 @@ public class ExpenditureTests
         Assert.True(result.IsError);
     }
 
-    // ── Update ───────────────────────────────────────────────────────────────
+    // -- Update ---------------------------------------------------------------
 
     [Fact]
     public void Update_Succeeds_WhenValid()

@@ -1,4 +1,5 @@
-using Maroik.Core.Contract.Domains.Board;
+﻿using Maroik.Core.Contract.Domains.Board;
+using Maroik.Core.Contract.Filters;
 using Maroik.Core.PostgreSQL.Data;
 using Maroik.Core.Repository.Repositories;
 using Microsoft.EntityFrameworkCore;
@@ -28,7 +29,7 @@ public class BoardAttachedFileRepositoryTests : IDisposable
     /// <summary>Releases resources allocated by this test fixture (disposes the database context).</summary>
     public void Dispose() => _context.Dispose();
 
-    // ── Helpers ──────────────────────────────────────────────────────────────
+    // -- Helpers --------------------------------------------------------------
 
     private static OrmBoardAttachedFile MakeFile(long boardId, string name = "file.pdf", long size = 1024) => new()
     {
@@ -45,7 +46,7 @@ public class BoardAttachedFileRepositoryTests : IDisposable
         await _context.SaveChangesAsync();
     }
 
-    // ── GetAllAsync ──────────────────────────────────────────────────────────
+    // -- GetAllAsync ----------------------------------------------------------
 
     /// <summary>Verifies that <c>GetAllAsync</c> returns all files.</summary>
     [Fact]
@@ -53,7 +54,7 @@ public class BoardAttachedFileRepositoryTests : IDisposable
     {
         await SeedAsync(MakeFile(1, "a.pdf"), MakeFile(2, "b.pdf"));
 
-        List<BoardAttachedFile> result = await _sut.GetAllAsync();
+        List<BoardAttachedFile> result = await _sut.FindAsync([]);
 
         Assert.Equal(2, result.Count);
     }
@@ -62,12 +63,12 @@ public class BoardAttachedFileRepositoryTests : IDisposable
     [Fact]
     public async Task GetAllAsync_ReturnsEmpty_WhenNoFilesExist()
     {
-        List<BoardAttachedFile> result = await _sut.GetAllAsync();
+        List<BoardAttachedFile> result = await _sut.FindAsync([]);
 
         Assert.Empty(result);
     }
 
-    // ── GetByBoardIdAsync ────────────────────────────────────────────────────
+    // -- GetByBoardIdAsync ----------------------------------------------------
 
     /// <summary>Verifies that <c>GetByBoardIdAsync</c> returns file when found.</summary>
     [Fact]
@@ -75,7 +76,7 @@ public class BoardAttachedFileRepositoryTests : IDisposable
     {
         await SeedAsync(MakeFile(10, "report.pdf"));
 
-        BoardAttachedFile? result = await _sut.GetByBoardIdAsync(10);
+        BoardAttachedFile? result = (await _sut.FindAsync([FilterCondition.Equal("BoardId", 10L)])).FirstOrDefault();
 
         Assert.NotNull(result);
         Assert.Equal(10, result.BoardId);
@@ -86,12 +87,12 @@ public class BoardAttachedFileRepositoryTests : IDisposable
     [Fact]
     public async Task GetByBoardIdAsync_ReturnsNull_WhenNotFound()
     {
-        BoardAttachedFile? result = await _sut.GetByBoardIdAsync(999);
+        BoardAttachedFile? result = (await _sut.FindAsync([FilterCondition.Equal("BoardId", 999L)])).FirstOrDefault();
 
         Assert.Null(result);
     }
 
-    // ── GetByBoardIdsAsync ───────────────────────────────────────────────────
+    // -- GetByBoardIdsAsync ---------------------------------------------------
 
     /// <summary>Verifies that <c>GetByBoardIdsAsync</c> returns mapped dictionary.</summary>
     [Fact]
@@ -116,7 +117,7 @@ public class BoardAttachedFileRepositoryTests : IDisposable
         Assert.All(result.Values, v => Assert.Null(v));
     }
 
-    // ── SaveBoardAttachedFileAsync ───────────────────────────────────────────
+    // -- SaveBoardAttachedFileAsync -------------------------------------------
 
     /// <summary>Verifies that <c>SaveBoardAttachedFileAsync</c> persists file.</summary>
     [Fact]
@@ -130,7 +131,7 @@ public class BoardAttachedFileRepositoryTests : IDisposable
             extension: ".pdf",
             path: "/upload/boards/new.pdf");
 
-        await _sut.SaveBoardAttachedFileAsync(file);
+        await _sut.CreateAsync(file);
 
         OrmBoardAttachedFile? saved = await _context.BoardAttachedFiles.FirstOrDefaultAsync(f => f.BoardId == 5, TestContext.Current.CancellationToken);
         Assert.NotNull(saved);
@@ -138,11 +139,11 @@ public class BoardAttachedFileRepositoryTests : IDisposable
         Assert.Equal(2048, saved.Size);
     }
 
-    // ── UpdateBoardAttachedFileAsync ─────────────────────────────────────────
+    // -- UpdateEntityAsync -----------------------------------------
 
-    /// <summary>Verifies that <c>UpdateBoardAttachedFileAsync</c> updates existing file.</summary>
+    /// <summary>Verifies that <c>UpdateEntityAsync</c> updates existing file.</summary>
     [Fact]
-    public async Task UpdateBoardAttachedFileAsync_UpdatesExistingFile()
+    public async Task UpdateEntityAsync_UpdatesExistingFile()
     {
         var seedFile = MakeFile(7, "old.pdf", 512);
         await SeedAsync(seedFile);
@@ -157,7 +158,7 @@ public class BoardAttachedFileRepositoryTests : IDisposable
             extension: ".pdf",
             path: "/upload/boards/updated.pdf");
 
-        await _sut.UpdateBoardAttachedFileAsync(file);
+        await _sut.UpdateEntityAsync(file);
 
         OrmBoardAttachedFile? updated = await _context.BoardAttachedFiles.FindAsync(new object[] { id }, TestContext.Current.CancellationToken);
         Assert.NotNull(updated);

@@ -1,4 +1,4 @@
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace Maroik.WebSite.Models.ViewModels.AccountBook;
 
@@ -8,7 +8,7 @@ namespace Maroik.WebSite.Models.ViewModels.AccountBook;
 /// </summary>
 public class AssetOutputViewModel
 {
-    /// <summary>Name of the financial product — forms part of the composite primary key.</summary>
+    /// <summary>Name of the financial product ?? forms part of the composite primary key.</summary>
     [Required(ErrorMessage = "Please enter ProductName")]
     [Display(Name = "ProductName")]
     public string? ProductName { get; set; }

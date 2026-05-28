@@ -1,4 +1,4 @@
-using Maroik.Core.Service.Services;
+﻿using Maroik.Core.Service.Services;
 
 namespace Maroik.Core.Service.Tests.Services;
 
@@ -11,7 +11,7 @@ public class PasswordServiceTests
 {
     private readonly PasswordService _sut = new();
 
-    // ── HashPassword ────────────────────────────────────────────────────────
+    // -- HashPassword --------------------------------------------------------
 
     /// <summary>Verifies that <c>HashPassword</c> returns non empty bcrypt hash for valid password.</summary>
     [Fact]
@@ -42,7 +42,7 @@ public class PasswordServiceTests
         Assert.Throws<ArgumentException>(() => _sut.HashPassword(password));
     }
 
-    // ── VerifyPassword ───────────────────────────────────────────────────────
+    // -- VerifyPassword -------------------------------------------------------
 
     /// <summary>Verifies that <c>VerifyPassword</c> returns true when password matches stored hash.</summary>
     [Fact]

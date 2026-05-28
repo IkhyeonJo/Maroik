@@ -1,4 +1,4 @@
-using Maroik.Core.Contract.Utilities;
+﻿using Maroik.Core.Contract.Utilities;
 
 namespace Maroik.Core.Contract.Tests.Utilities;
 
@@ -9,7 +9,7 @@ namespace Maroik.Core.Contract.Tests.Utilities;
 /// </summary>
 public class StringExtensionTests
 {
-    // ── GetAmountLabel ───────────────────────────────────────────────────────
+    // -- GetAmountLabel -------------------------------------------------------
 
     /// <summary>Verifies that <c>GetAmountLabel</c> returns formatted label with value and unit.</summary>
     [Fact]

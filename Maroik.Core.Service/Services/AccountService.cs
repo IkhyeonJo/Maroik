@@ -1,4 +1,5 @@
-using Maroik.Core.Contract.Domains.Account;
+﻿using Maroik.Core.Contract.Domains.Account;
+using Maroik.Core.Contract.Filters;
 using Maroik.Core.Contract.Utilities;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
@@ -44,23 +45,23 @@ public class AccountService : IAccountService
 
     /// <inheritdoc />
     public async Task<List<AccountResponse>> GetAllAccountsAsync()
-        => (await _accountRepository.GetAllAsync()).Select(AccountMapper.ToResponse).ToList();
+        => (await _accountRepository.FindAsync([])).Select(AccountMapper.ToResponse).ToList();
 
     /// <inheritdoc />
     public async Task<List<AccountResponse>> GetAccountsByNicknamesAsync(IEnumerable<string> nicknames)
-        => (await _accountRepository.GetAccountsByNicknamesAsync(nicknames)).Select(AccountMapper.ToResponse).ToList();
+        => (await _accountRepository.FindAsync([FilterCondition.In("Nickname", nicknames)])).Select(AccountMapper.ToResponse).ToList();
 
     /// <inheritdoc />
     public async Task<AccountResponse?> GetAccountByEmailAsync(string email)
     {
-        Account? account = await _accountRepository.GetAccountByEmailAsync(email);
+        Account? account = await FindByEmailAsync(email);
         return account == null ? null : AccountMapper.ToResponse(account);
     }
 
     /// <inheritdoc />
     public async Task<LoginResult> LoginAsync(string email, string password)
     {
-        Account? account = await _accountRepository.GetAccountByEmailAsync(email);
+        Account? account = await FindByEmailAsync(email);
         if (account == null)
             return LoginResult.Fail("Email or Password is wrong");
 
@@ -73,7 +74,7 @@ public class AccountService : IAccountService
         if (!_passwordService.VerifyPassword(password, account.HashedPassword))
         {
             account.RecordLoginFailure(_settings.Value.MaxLoginAttempt);
-            await _accountRepository.UpdateAccountAsync(account);
+            await _accountRepository.UpdateEntityAsync(account);
 
             return account.Locked
                 ? LoginResult.Fail("Your Account is Locked, Please reset your password by clicking Forgot password Button")
@@ -88,7 +89,7 @@ public class AccountService : IAccountService
 
         // Successful login: clear any prior failed attempt counter.
         account.ResetLoginAttempt();
-        await _accountRepository.UpdateAccountAsync(account);
+        await _accountRepository.UpdateEntityAsync(account);
 
         return LoginResult.Ok(AccountMapper.ToResponse(account));
     }
@@ -96,7 +97,7 @@ public class AccountService : IAccountService
     /// <inheritdoc />
     public async Task<RegisterResult> RegisterAsync(AccountRequest newAccount, string emailSubject, string emailTitle, string emailContent0, string emailContent1)
     {
-        Account? existing = await _accountRepository.GetAccountByEmailAsync(newAccount.Email ?? "");
+        Account? existing = await FindByEmailAsync(newAccount.Email ?? "");
 
         if (existing == null)
         {
@@ -120,7 +121,7 @@ public class AccountService : IAccountService
 
             try
             {
-                await _accountRepository.CreateAccountAsync(account);
+                await _accountRepository.CreateAsync(account);
             }
             catch (Exception e)
             {
@@ -139,7 +140,7 @@ public class AccountService : IAccountService
                 try
                 {
                     account.SetMessage(EnumHelper.GetDescription(AccountMessage.FailToMailSent));
-                    await _accountRepository.UpdateAccountAsync(account);
+                    await _accountRepository.UpdateEntityAsync(account);
                 }
                 catch (Exception e) { _logger.LogWarning(e, "Failed to update account message after mail send failure"); }
                 return RegisterResult.Fail("Error occurred while processing about sending account authentication mail");
@@ -161,7 +162,7 @@ public class AccountService : IAccountService
                 try
                 {
                     existing.SetMessage(EnumHelper.GetDescription(AccountMessage.FailToMailSent));
-                    await _accountRepository.UpdateAccountAsync(existing);
+                    await _accountRepository.UpdateEntityAsync(existing);
                 }
                 catch (Exception e) { _logger.LogWarning(e, "Failed to update account message after mail send failure for {Email}", existing.Email.Value); }
                 return RegisterResult.Fail("Error occurred while processing about sending account authentication mail");
@@ -170,7 +171,7 @@ public class AccountService : IAccountService
             try
             {
                 existing.SetMessage(EnumHelper.GetDescription(AccountMessage.VerifyEmail));
-                await _accountRepository.UpdateAccountAsync(existing);
+                await _accountRepository.UpdateEntityAsync(existing);
             }
             catch (Exception e)
             {
@@ -186,7 +187,7 @@ public class AccountService : IAccountService
         {
             existing.SetMessage(EnumHelper.GetDescription(AccountMessage.UserAlreadyCreated));
             existing.AcceptServiceTerms();
-            await _accountRepository.UpdateAccountAsync(existing);
+            await _accountRepository.UpdateEntityAsync(existing);
         }
         catch (Exception e)
         {
@@ -200,7 +201,7 @@ public class AccountService : IAccountService
     /// <inheritdoc />
     public async Task<RegisterResult> ResendConfirmationEmailAsync(string email, string emailSubject, string emailTitle, string emailContent0, string emailContent1)
     {
-        Account? account = await _accountRepository.GetAccountByEmailAsync(email);
+        Account? account = await FindByEmailAsync(email);
         if (account == null)
             return RegisterResult.Fail("Failed to resend email", showResendEmail: true);
 
@@ -216,7 +217,7 @@ public class AccountService : IAccountService
                 try
                 {
                     account.SetMessage(EnumHelper.GetDescription(AccountMessage.FailToMailSent));
-                    await _accountRepository.UpdateAccountAsync(account);
+                    await _accountRepository.UpdateEntityAsync(account);
                 }
                 catch (Exception e)
                 {
@@ -229,7 +230,7 @@ public class AccountService : IAccountService
             try
             {
                 account.SetMessage(EnumHelper.GetDescription(AccountMessage.VerifyEmail));
-                await _accountRepository.UpdateAccountAsync(account);
+                await _accountRepository.UpdateEntityAsync(account);
             }
             catch (Exception e)
             {
@@ -245,7 +246,7 @@ public class AccountService : IAccountService
         try
         {
             account.SetMessage(EnumHelper.GetDescription(AccountMessage.UserAlreadyCreated));
-            await _accountRepository.UpdateAccountAsync(account);
+            await _accountRepository.UpdateEntityAsync(account);
         }
         catch (Exception e)
         {
@@ -267,7 +268,7 @@ public class AccountService : IAccountService
             return new ConfirmEmailResult { InvalidToken = true, AccountCreated = false };
         }
 
-        Account? account = await _accountRepository.GetAccountByRegistrationTokenAsync(rawToken);
+        Account? account = await FindByRegistrationTokenAsync(rawToken);
         if (account == null)
             return new ConfirmEmailResult { InvalidToken = true, AccountCreated = false };
 
@@ -283,7 +284,7 @@ public class AccountService : IAccountService
             {
                 // Email was already confirmed by a previous request.
                 account.SetMessage(EnumHelper.GetDescription(AccountMessage.UserAlreadyCreated));
-                try { await _accountRepository.UpdateAccountAsync(account); }
+                try { await _accountRepository.UpdateEntityAsync(account); }
                 catch (Exception e) { _logger.LogError(e, "Failed to update account status for {Email}", account.Email.Value); }
                 return new ConfirmEmailResult { InvalidToken = false, AccountCreated = false };
             }
@@ -293,7 +294,7 @@ public class AccountService : IAccountService
         account.SetMessage(EnumHelper.GetDescription(AccountMessage.Success));
         try
         {
-            await _accountRepository.UpdateAccountAsync(account);
+            await _accountRepository.UpdateEntityAsync(account);
         }
         catch (Exception e)
         {
@@ -311,7 +312,7 @@ public class AccountService : IAccountService
     /// <inheritdoc />
     public async Task<bool> ForgotPasswordAsync(string email, string emailSubject, string emailTitle, string emailContent0, string emailContent1)
     {
-        Account? account = await _accountRepository.GetAccountByEmailAsync(email);
+        Account? account = await FindByEmailAsync(email);
 
         // Silently succeed even when the email is unknown to avoid user enumeration attacks.
         if (account == null || !account.EmailConfirmed)
@@ -327,7 +328,7 @@ public class AccountService : IAccountService
             if (mailResult != EnumHelper.GetDescription(AccountMessage.MailSent))
             {
                 account.SetMessage(EnumHelper.GetDescription(AccountMessage.FailToMailSent));
-                await _accountRepository.UpdateAccountAsync(account);
+                await _accountRepository.UpdateEntityAsync(account);
                 return true;
             }
 
@@ -335,7 +336,7 @@ public class AccountService : IAccountService
             if (!resetResult.IsError)
             {
                 account.SetMessage(EnumHelper.GetDescription(AccountMessage.ResetPasswordMail));
-                await _accountRepository.UpdateAccountAsync(account);
+                await _accountRepository.UpdateEntityAsync(account);
             }
         }
         catch (Exception e) { _logger.LogWarning(e, "ForgotPassword failed for {Email}", email); }
@@ -354,7 +355,7 @@ public class AccountService : IAccountService
             return new ResetPasswordValidationResult { FailToReset = true };
         }
 
-        Account? account = await _accountRepository.GetAccountByResetPasswordTokenAsync(rawToken);
+        Account? account = await FindByResetPasswordTokenAsync(rawToken);
 
         // Reject if account not found, token has expired, or email is unconfirmed.
         if (account == null || !GuidToken.IsTokenAlive(rawToken) || !account.EmailConfirmed)
@@ -375,7 +376,7 @@ public class AccountService : IAccountService
             return ServiceResult.Fail("reset-password-invalid");
         }
 
-        Account? account = await _accountRepository.GetAccountByResetPasswordTokenAsync(rawToken);
+        Account? account = await FindByResetPasswordTokenAsync(rawToken);
         if (account == null || !GuidToken.IsTokenAlive(rawToken) || !account.EmailConfirmed)
             return ServiceResult.Fail("reset-password-invalid");
 
@@ -390,7 +391,7 @@ public class AccountService : IAccountService
 
         try
         {
-            await _accountRepository.UpdateAccountAsync(account);
+            await _accountRepository.UpdateEntityAsync(account);
         }
         catch (Exception e)
         {
@@ -400,6 +401,15 @@ public class AccountService : IAccountService
 
         return ServiceResult.Ok();
     }
+
+    private async Task<Account?> FindByEmailAsync(string email)
+        => (await _accountRepository.FindAsync([FilterCondition.Equal("Email", email)])).FirstOrDefault();
+
+    private async Task<Account?> FindByRegistrationTokenAsync(string token)
+        => (await _accountRepository.FindAsync([FilterCondition.Equal("RegistrationToken", token)])).FirstOrDefault();
+
+    private async Task<Account?> FindByResetPasswordTokenAsync(string token)
+        => (await _accountRepository.FindAsync([FilterCondition.Equal("ResetPasswordToken", token)])).FirstOrDefault();
 
     /// <summary>
     /// Sends a mail via <see cref="IMailClient"/> using the SMTP settings from <see cref="ServerSetting"/>.

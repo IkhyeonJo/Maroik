@@ -1,4 +1,4 @@
-using Maroik.WebSite.Tests.Infrastructure;
+﻿using Maroik.WebSite.Tests.Infrastructure;
 
 namespace Maroik.WebSite.Tests.Controllers;
 
@@ -16,7 +16,7 @@ public class NoticeControllerTests : IClassFixture<MaroikWebApplicationFactory>
         _client = factory.CreateTestClient(followRedirects: false);
     }
 
-    // ── FixedIncome ──────────────────────────────────────────────────────────
+    // -- FixedIncome ----------------------------------------------------------
 
     /// <summary>Verifies that <c>FixedIncome</c> get when non ajax returns 200.</summary>
     [Fact]
@@ -28,7 +28,7 @@ public class NoticeControllerTests : IClassFixture<MaroikWebApplicationFactory>
         Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
     }
 
-    // ── FixedExpenditure ─────────────────────────────────────────────────────
+    // -- FixedExpenditure -----------------------------------------------------
 
     /// <summary>Verifies that <c>FixedExpenditure</c> get when non ajax returns 200.</summary>
     [Fact]

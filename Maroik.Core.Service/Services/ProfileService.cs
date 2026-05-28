@@ -1,5 +1,6 @@
-using ImageMagick;
+﻿using ImageMagick;
 using Maroik.Core.Contract.Domains.Account;
+using Maroik.Core.Contract.Filters;
 using Maroik.Core.Contract.Domains.Finance;
 using Maroik.Core.Contract.Domains.ValueObjects;
 using Maroik.Core.Contract.Dtos;
@@ -48,7 +49,7 @@ public class ProfileService : IProfileService
     /// <inheritdoc />
     public async Task<AccountResponse?> GetProfileAsync(string email)
     {
-        Account? account = await _accountRepository.GetAccountByEmailAsync(email);
+        Account? account = await FindByEmailAsync(email);
         return account == null ? null : AccountMapper.ToResponse(account);
     }
 
@@ -57,13 +58,13 @@ public class ProfileService : IProfileService
     {
         try
         {
-            Account? account = await _accountRepository.GetAccountByEmailAsync(email);
+            Account? account = await FindByEmailAsync(email);
             if (account == null)
                 return ServiceResult.Fail("Input is invalid");
 
             account.UpdateProfile(account.Nickname, avatarPath, account.TimeZone, account.DefaultMonetaryUnit);
 
-            await _accountRepository.UpdateAccountAsync(account);
+            await _accountRepository.UpdateEntityAsync(account);
             return ServiceResult.Ok();
         }
         catch (Exception e)
@@ -78,7 +79,7 @@ public class ProfileService : IProfileService
     {
         try
         {
-            Account? account = await _accountRepository.GetAccountByEmailAsync(email);
+            Account? account = await FindByEmailAsync(email);
             if (account == null)
                 return ServiceResult.Fail("Input is invalid");
 
@@ -88,7 +89,7 @@ public class ProfileService : IProfileService
 
             account.UpdateProfile(account.Nickname, account.AvatarImagePath, tzResult.Value, account.DefaultMonetaryUnit);
 
-            await _accountRepository.UpdateAccountAsync(account);
+            await _accountRepository.UpdateEntityAsync(account);
             return ServiceResult.Ok();
         }
         catch (Exception e)
@@ -103,7 +104,7 @@ public class ProfileService : IProfileService
     {
         try
         {
-            Account? account = await _accountRepository.GetAccountByEmailAsync(email);
+            Account? account = await FindByEmailAsync(email);
             if (account == null)
                 return ServiceResult.Fail("Input is invalid");
 
@@ -112,7 +113,7 @@ public class ProfileService : IProfileService
 
             account.ChangePassword(_passwordService.HashPassword(newPassword));
 
-            await _accountRepository.UpdateAccountAsync(account);
+            await _accountRepository.UpdateEntityAsync(account);
             return ServiceResult.Ok();
         }
         catch (Exception e)
@@ -177,17 +178,20 @@ public class ProfileService : IProfileService
         return await UpdateAvatarAsync(email, $"/upload/Management/Profile/Avatar/{avatarFile}");
     }
 
+    private async Task<Account?> FindByEmailAsync(string email)
+        => (await _accountRepository.FindAsync([FilterCondition.Equal("Email", email)])).FirstOrDefault();
+
     /// <inheritdoc />
     public async Task UpdateDefaultMonetaryUnitAsync(string accountEmail, string? monetaryUnit)
     {
-        List<Asset> assets = await _assetRepository.GetAssetsAsync(accountEmail);
-        Account? account = await _accountRepository.GetAccountByEmailAsync(accountEmail);
+        List<Asset> assets = await _assetRepository.FindAsync([FilterCondition.Equal("AccountEmail", accountEmail)]);
+        Account? account = await FindByEmailAsync(accountEmail);
         if (account == null) return;
 
         string? newUnit = assets.Select(x => x.Balance.Currency).Distinct().Contains(monetaryUnit)
             ? monetaryUnit
             : null;
         account.UpdateProfile(account.Nickname, account.AvatarImagePath, account.TimeZone, newUnit);
-        await _accountRepository.UpdateAccountAsync(account);
+        await _accountRepository.UpdateEntityAsync(account);
     }
 }

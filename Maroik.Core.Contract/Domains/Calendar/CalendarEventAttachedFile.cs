@@ -1,4 +1,4 @@
-using ErrorOr;
+﻿using ErrorOr;
 using Maroik.Core.Contract.Domains.Primitives;
 
 namespace Maroik.Core.Contract.Domains.Calendar;
@@ -41,7 +41,7 @@ public sealed class CalendarEventAttachedFile : Entity<long>
 
     /// <summary>
     /// Rebuilds a <see cref="CalendarEventAttachedFile"/> from trusted data from the repository layer.
-    /// Bypasses validation — use only with data from the trusted repository layer.
+    /// Bypasses validation ?? use only with data from the trusted repository layer.
     /// </summary>
     public static CalendarEventAttachedFile Reconstitute(
         long id, long calendarEventId, long size, string? name, string? extension, string? path)

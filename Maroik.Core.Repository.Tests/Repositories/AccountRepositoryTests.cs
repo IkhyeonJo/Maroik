@@ -1,4 +1,5 @@
-using Maroik.Core.Contract.Domains.Account;
+﻿using Maroik.Core.Contract.Domains.Account;
+using Maroik.Core.Contract.Filters;
 using Maroik.Core.Contract.Utilities;
 using Maroik.Core.PostgreSQL.Data;
 using Maroik.Core.Repository.Repositories;
@@ -30,7 +31,7 @@ public class AccountRepositoryTests : IDisposable
     /// <summary>Releases resources allocated by this test fixture (disposes the database context).</summary>
     public void Dispose() => _context.Dispose();
 
-    // ── Helpers ──────────────────────────────────────────────────────────────
+    // -- Helpers --------------------------------------------------------------
 
     private static OrmAccount MakeAccount(string email, string nickname) => new()
     {
@@ -53,7 +54,7 @@ public class AccountRepositoryTests : IDisposable
         await _context.SaveChangesAsync();
     }
 
-    // ── GetAllAsync ──────────────────────────────────────────────────────────
+    // -- GetAllAsync ----------------------------------------------------------
 
     /// <summary>Verifies that <c>GetAllAsync</c> returns all accounts.</summary>
     [Fact]
@@ -63,7 +64,7 @@ public class AccountRepositoryTests : IDisposable
             MakeAccount("alice@example.com", "Alice"),
             MakeAccount("bob@example.com", "Bob"));
 
-        List<Account> result = await _sut.GetAllAsync();
+        List<Account> result = await _sut.FindAsync([]);
 
         Assert.Equal(2, result.Count);
     }
@@ -72,12 +73,12 @@ public class AccountRepositoryTests : IDisposable
     [Fact]
     public async Task GetAllAsync_ReturnsEmptyList_WhenNoAccounts()
     {
-        List<Account> result = await _sut.GetAllAsync();
+        List<Account> result = await _sut.FindAsync([]);
 
         Assert.Empty(result);
     }
 
-    // ── GetAccountByEmailAsync ───────────────────────────────────────────────
+    // -- GetAccountByEmailAsync -----------------------------------------------
 
     /// <summary>Verifies that <c>GetAccountByEmailAsync</c> returns account when found.</summary>
     [Fact]
@@ -85,7 +86,7 @@ public class AccountRepositoryTests : IDisposable
     {
         await SeedAsync(MakeAccount("alice@example.com", "Alice"));
 
-        Account? result = await _sut.GetAccountByEmailAsync("alice@example.com");
+        Account? result = (await _sut.FindAsync([FilterCondition.Equal("Email", "alice@example.com")])).FirstOrDefault();
 
         Assert.NotNull(result);
         Assert.Equal("alice@example.com", result.Email.Value);
@@ -96,12 +97,12 @@ public class AccountRepositoryTests : IDisposable
     [Fact]
     public async Task GetAccountByEmailAsync_ReturnsNull_WhenNotFound()
     {
-        Account? result = await _sut.GetAccountByEmailAsync("ghost@example.com");
+        Account? result = (await _sut.FindAsync([FilterCondition.Equal("Email", "ghost@example.com")])).FirstOrDefault();
 
         Assert.Null(result);
     }
 
-    // ── GetAccountByRegistrationTokenAsync ───────────────────────────────────
+    // -- GetAccountByRegistrationTokenAsync -----------------------------------
 
     /// <summary>Verifies that <c>GetAccountByRegistrationTokenAsync</c> returns account when token matches.</summary>
     [Fact]
@@ -112,7 +113,7 @@ public class AccountRepositoryTests : IDisposable
         account.RegistrationToken = token;
         await SeedAsync(account);
 
-        Account? result = await _sut.GetAccountByRegistrationTokenAsync(token);
+        Account? result = (await _sut.FindAsync([FilterCondition.Equal("RegistrationToken", token)])).FirstOrDefault();
 
         Assert.NotNull(result);
         Assert.Equal("alice@example.com", result.Email.Value);
@@ -122,12 +123,12 @@ public class AccountRepositoryTests : IDisposable
     [Fact]
     public async Task GetAccountByRegistrationTokenAsync_ReturnsNull_WhenTokenDoesNotMatch()
     {
-        Account? result = await _sut.GetAccountByRegistrationTokenAsync("nonexistent-token");
+        Account? result = (await _sut.FindAsync([FilterCondition.Equal("RegistrationToken", "nonexistent-token")])).FirstOrDefault();
 
         Assert.Null(result);
     }
 
-    // ── GetAccountByResetPasswordTokenAsync ─────────────────────────────────
+    // -- GetAccountByResetPasswordTokenAsync ---------------------------------
 
     /// <summary>Verifies that <c>GetAccountByResetPasswordTokenAsync</c> returns account when token matches.</summary>
     [Fact]
@@ -138,7 +139,7 @@ public class AccountRepositoryTests : IDisposable
         account.ResetPasswordToken = token;
         await SeedAsync(account);
 
-        Account? result = await _sut.GetAccountByResetPasswordTokenAsync(token);
+        Account? result = (await _sut.FindAsync([FilterCondition.Equal("ResetPasswordToken", token)])).FirstOrDefault();
 
         Assert.NotNull(result);
         Assert.Equal("alice@example.com", result.Email.Value);
@@ -148,12 +149,12 @@ public class AccountRepositoryTests : IDisposable
     [Fact]
     public async Task GetAccountByResetPasswordTokenAsync_ReturnsNull_WhenTokenNotFound()
     {
-        Account? result = await _sut.GetAccountByResetPasswordTokenAsync("no-such-token");
+        Account? result = (await _sut.FindAsync([FilterCondition.Equal("ResetPasswordToken", "no-such-token")])).FirstOrDefault();
 
         Assert.Null(result);
     }
 
-    // ── CreateAccountAsync ───────────────────────────────────────────────────
+    // -- CreateAccountAsync ---------------------------------------------------
 
     /// <summary>Verifies that <c>CreateAccountAsync</c> adds account to database.</summary>
     [Fact]
@@ -178,14 +179,14 @@ public class AccountRepositoryTests : IDisposable
             message: null,
             deleted: false);
 
-        await _sut.CreateAccountAsync(account);
+        await _sut.CreateAsync(account);
 
         OrmAccount? saved = await _context.Accounts.FirstOrDefaultAsync(a => a.Email == "new@example.com", TestContext.Current.CancellationToken);
         Assert.NotNull(saved);
         Assert.Equal("NewUser", saved.Nickname);
     }
 
-    // ── GetAccountsByNicknamesAsync ─────────────────────────────────────────
+    // -- GetAccountsByNicknamesAsync -----------------------------------------
 
     /// <summary>Verifies that <c>GetAccountsByNicknamesAsync</c> returns matching accounts.</summary>
     [Fact]
@@ -196,7 +197,7 @@ public class AccountRepositoryTests : IDisposable
             MakeAccount("bob@example.com", "Bob"),
             MakeAccount("carol@example.com", "Carol"));
 
-        List<Account> result = await _sut.GetAccountsByNicknamesAsync(["Alice", "Carol"]);
+        List<Account> result = await _sut.FindAsync([FilterCondition.In("Nickname", new[] { "Alice", "Carol" })]);
 
         Assert.Equal(2, result.Count);
         Assert.Contains(result, a => a.Nickname == "Alice");
@@ -209,7 +210,7 @@ public class AccountRepositoryTests : IDisposable
     {
         await SeedAsync(MakeAccount("alice@example.com", "Alice"));
 
-        List<Account> result = await _sut.GetAccountsByNicknamesAsync(["Ghost"]);
+        List<Account> result = await _sut.FindAsync([FilterCondition.In("Nickname", new[] { "Ghost" })]);
 
         Assert.Empty(result);
     }
@@ -220,16 +221,16 @@ public class AccountRepositoryTests : IDisposable
     {
         await SeedAsync(MakeAccount("alice@example.com", "Alice"));
 
-        List<Account> result = await _sut.GetAccountsByNicknamesAsync([]);
+        List<Account> result = await _sut.FindAsync([FilterCondition.In("Nickname", Array.Empty<string>())]);
 
         Assert.Empty(result);
     }
 
-    // ── UpdateAccountAsync ───────────────────────────────────────────────────
+    // -- UpdateEntityAsync ---------------------------------------------------
 
-    /// <summary>Verifies that <c>UpdateAccountAsync</c> updates existing account.</summary>
+    /// <summary>Verifies that <c>UpdateEntityAsync</c> updates existing account.</summary>
     [Fact]
-    public async Task UpdateAccountAsync_UpdatesExistingAccount()
+    public async Task UpdateEntityAsync_UpdatesExistingAccount()
     {
         await SeedAsync(MakeAccount("alice@example.com", "Alice"));
 
@@ -252,7 +253,7 @@ public class AccountRepositoryTests : IDisposable
             message: null,
             deleted: false);
 
-        await _sut.UpdateAccountAsync(account);
+        await _sut.UpdateEntityAsync(account);
 
         OrmAccount? updated = await _context.Accounts.FirstOrDefaultAsync(a => a.Email == "alice@example.com", TestContext.Current.CancellationToken);
         Assert.NotNull(updated);

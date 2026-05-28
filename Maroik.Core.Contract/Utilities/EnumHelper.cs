@@ -1,4 +1,4 @@
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using System.Reflection;
 
 namespace Maroik.Core.Contract.Utilities;
@@ -33,7 +33,7 @@ public static class EnumHelper
             }
         }
 
-        // No [Description] attribute found — return the member name as-is
+        // No [Description] attribute found ?? return the member name as-is
         return en.ToString();
     }
 }

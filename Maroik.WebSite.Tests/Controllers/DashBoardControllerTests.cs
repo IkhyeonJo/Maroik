@@ -1,4 +1,4 @@
-using Maroik.WebSite.Tests.Infrastructure;
+﻿using Maroik.WebSite.Tests.Infrastructure;
 
 namespace Maroik.WebSite.Tests.Controllers;
 
@@ -16,7 +16,7 @@ public class DashBoardControllerTests : IClassFixture<MaroikWebApplicationFactor
         _client = factory.CreateTestClient(followRedirects: false);
     }
 
-    // ── AnonymousIndex ───────────────────────────────────────────────────────
+    // -- AnonymousIndex -------------------------------------------------------
 
     /// <summary>Verifies that <c>AnonymousIndex</c> get when returns200.</summary>
     [Fact]

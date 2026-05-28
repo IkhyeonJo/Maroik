@@ -1,4 +1,4 @@
-using Maroik.WebSite.Tests.Infrastructure;
+﻿using Maroik.WebSite.Tests.Infrastructure;
 
 namespace Maroik.WebSite.Tests.Controllers;
 
@@ -16,7 +16,7 @@ public class ManagementControllerTests : IClassFixture<MaroikWebApplicationFacto
         _client = factory.CreateTestClient(followRedirects: false);
     }
 
-    // ── Account ──────────────────────────────────────────────────────────────
+    // -- Account --------------------------------------------------------------
 
     /// <summary>Verifies that <c>Account</c> get when non ajax returns 200.</summary>
     [Fact]
@@ -28,7 +28,7 @@ public class ManagementControllerTests : IClassFixture<MaroikWebApplicationFacto
         Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
     }
 
-    // ── Menu ─────────────────────────────────────────────────────────────────
+    // -- Menu -----------------------------------------------------------------
 
     /// <summary>Verifies that <c>Menu</c> get when non ajax returns 200.</summary>
     [Fact]

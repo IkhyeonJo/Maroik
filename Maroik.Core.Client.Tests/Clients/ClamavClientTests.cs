@@ -1,4 +1,4 @@
-using Maroik.Core.Client.Clients;
+﻿using Maroik.Core.Client.Clients;
 
 namespace Maroik.Core.Client.Tests.Clients;
 
@@ -12,7 +12,7 @@ public class ClamavClientTests
 {
     private readonly ClamavClient _sut = new();
 
-    // ── ScanWithClamavAsync ──────────────────────────────────────────────────
+    // -- ScanWithClamavAsync --------------------------------------------------
 
     /// <summary>Verifies that <c>ScanWithClamavAsync</c> returns false when host is unreachable.</summary>
     [Fact]

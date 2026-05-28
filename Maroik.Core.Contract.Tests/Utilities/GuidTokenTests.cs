@@ -1,4 +1,4 @@
-using Maroik.Core.Contract.Utilities;
+﻿using Maroik.Core.Contract.Utilities;
 
 namespace Maroik.Core.Contract.Tests.Utilities;
 
@@ -63,7 +63,7 @@ public class GuidTokenTests
     [Fact]
     public void IsTokenAlive_ReturnsFalse_ForTokenCreatedExactly24HoursAgo()
     {
-        // Exactly on the boundary (24 h ago) — the check is strict less-than, so expired.
+        // Exactly on the boundary (24 h ago) ?? the check is strict less-than, so expired.
         string token = BuildTokenWithAge(hours: -24);
 
         Assert.False(GuidToken.IsTokenAlive(token));

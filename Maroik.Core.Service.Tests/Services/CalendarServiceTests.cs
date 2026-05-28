@@ -1,5 +1,6 @@
-using Maroik.Core.Contract.Domains.Calendar;
+﻿using Maroik.Core.Contract.Domains.Calendar;
 using Maroik.Core.Contract.Dtos;
+using Maroik.Core.Contract.Filters;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Contract.Utilities;
 using Maroik.Core.Service.Services;
@@ -51,7 +52,7 @@ public class CalendarServiceTests
         _settings,
         NullLogger<CalendarService>.Instance);
 
-    // ── Helpers ──────────────────────────────────────────────────────────────
+    // -- Helpers --------------------------------------------------------------
 
     private static Calendar MakeCalendar(long id = 1, string name = "MyCalendar", string email = "user@example.com") =>
         Calendar.Reconstitute(
@@ -81,13 +82,13 @@ public class CalendarServiceTests
             created: DateTime.UtcNow,
             updated: DateTime.UtcNow);
 
-    // ── CreateCalendarAsync ──────────────────────────────────────────────────
+    // -- CreateCalendarAsync --------------------------------------------------
 
     /// <summary>Verifies that <c>CreateCalendarAsync</c> returns fail when calendar with same name exists.</summary>
     [Fact]
     public async Task CreateCalendarAsync_ReturnsFail_WhenCalendarWithSameNameExists()
     {
-        _calendarRepo.Setup(r => r.GetCalendarsAsync("user@example.com"))
+        _calendarRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>()))
             .ReturnsAsync([MakeCalendar(name: "MyCalendar")]);
         var sut = CreateSut();
 
@@ -105,8 +106,8 @@ public class CalendarServiceTests
     [Fact]
     public async Task CreateCalendarAsync_ReturnsSuccess_WhenNameIsUnique()
     {
-        _calendarRepo.Setup(r => r.GetCalendarsAsync("user@example.com")).ReturnsAsync([]);
-        _calendarRepo.Setup(r => r.CreateCalendarAsync(It.IsAny<Calendar>())).Returns(Task.CompletedTask);
+        _calendarRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>())).ReturnsAsync([]);
+        _calendarRepo.Setup(r => r.CreateAsync(It.IsAny<Calendar>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
         ServiceResult result = await sut.CreateCalendarAsync(new CalendarRequest
@@ -118,16 +119,16 @@ public class CalendarServiceTests
         });
 
         Assert.True(result.Success);
-        _calendarRepo.Verify(r => r.CreateCalendarAsync(It.IsAny<Calendar>()), Times.Once);
+        _calendarRepo.Verify(r => r.CreateAsync(It.IsAny<Calendar>()), Times.Once);
     }
 
-    // ── UpdateCalendarAsync ──────────────────────────────────────────────────
+    // -- UpdateCalendarAsync --------------------------------------------------
 
     /// <summary>Verifies that <c>UpdateCalendarAsync</c> returns fail when calendar not found.</summary>
     [Fact]
     public async Task UpdateCalendarAsync_ReturnsFail_WhenCalendarNotFound()
     {
-        _calendarRepo.Setup(r => r.GetCalendarsAsync("user@example.com")).ReturnsAsync([]);
+        _calendarRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>())).ReturnsAsync([]);
         var sut = CreateSut();
 
         ServiceResult result = await sut.UpdateCalendarAsync(new CalendarRequest
@@ -144,9 +145,9 @@ public class CalendarServiceTests
     [Fact]
     public async Task UpdateCalendarAsync_ReturnsSuccess_WhenCalendarFound()
     {
-        _calendarRepo.Setup(r => r.GetCalendarsAsync("user@example.com"))
+        _calendarRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>()))
             .ReturnsAsync([MakeCalendar(id: 1)]);
-        _calendarRepo.Setup(r => r.UpdateCalendarAsync(It.IsAny<Calendar>())).Returns(Task.CompletedTask);
+        _calendarRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Calendar>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
         ServiceResult result = await sut.UpdateCalendarAsync(new CalendarRequest
@@ -159,16 +160,16 @@ public class CalendarServiceTests
         });
 
         Assert.True(result.Success);
-        _calendarRepo.Verify(r => r.UpdateCalendarAsync(It.IsAny<Calendar>()), Times.Once);
+        _calendarRepo.Verify(r => r.UpdateEntityAsync(It.IsAny<Calendar>()), Times.Once);
     }
 
-    // ── DeleteCalendarAsync ──────────────────────────────────────────────────
+    // -- DeleteCalendarAsync --------------------------------------------------
 
     /// <summary>Verifies that <c>DeleteCalendarAsync</c> returns fail when calendar not found.</summary>
     [Fact]
     public async Task DeleteCalendarAsync_ReturnsFail_WhenCalendarNotFound()
     {
-        _calendarRepo.Setup(r => r.GetCalendarsAsync("user@example.com")).ReturnsAsync([]);
+        _calendarRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>())).ReturnsAsync([]);
         var sut = CreateSut();
 
         ServiceResult result = await sut.DeleteCalendarAsync(new CalendarRequest
@@ -184,9 +185,9 @@ public class CalendarServiceTests
     [Fact]
     public async Task DeleteCalendarAsync_ReturnsSuccess_WhenCalendarFound()
     {
-        _calendarRepo.Setup(r => r.GetCalendarsAsync("user@example.com"))
+        _calendarRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>()))
             .ReturnsAsync([MakeCalendar(id: 1)]);
-        _calendarRepo.Setup(r => r.DeleteCalendarAsync(It.IsAny<Calendar>())).Returns(Task.CompletedTask);
+        _calendarRepo.Setup(r => r.DeleteAsync(It.IsAny<IReadOnlyList<FilterCondition>>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
         ServiceResult result = await sut.DeleteCalendarAsync(new CalendarRequest
@@ -198,14 +199,14 @@ public class CalendarServiceTests
         Assert.True(result.Success);
     }
 
-    // ── EnsureDefaultCalendarAsync ───────────────────────────────────────────
+    // -- EnsureDefaultCalendarAsync -------------------------------------------
 
     /// <summary>Verifies that <c>EnsureDefaultCalendarAsync</c> creates calendar when none exist.</summary>
     [Fact]
     public async Task EnsureDefaultCalendarAsync_CreatesCalendar_WhenNoneExist()
     {
-        _calendarRepo.Setup(r => r.GetCalendarsAsync("user@example.com")).ReturnsAsync([]);
-        _calendarRepo.Setup(r => r.CreateCalendarAsync(It.IsAny<Calendar>())).Returns(Task.CompletedTask);
+        _calendarRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>())).ReturnsAsync([]);
+        _calendarRepo.Setup(r => r.CreateAsync(It.IsAny<Calendar>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
         ServiceResult result = await sut.EnsureDefaultCalendarAsync(new CalendarRequest
@@ -217,14 +218,14 @@ public class CalendarServiceTests
         });
 
         Assert.True(result.Success);
-        _calendarRepo.Verify(r => r.CreateCalendarAsync(It.IsAny<Calendar>()), Times.Once);
+        _calendarRepo.Verify(r => r.CreateAsync(It.IsAny<Calendar>()), Times.Once);
     }
 
     /// <summary>Verifies that <c>EnsureDefaultCalendarAsync</c> does not create when calendar exists.</summary>
     [Fact]
     public async Task EnsureDefaultCalendarAsync_DoesNotCreate_WhenCalendarExists()
     {
-        _calendarRepo.Setup(r => r.GetCalendarsAsync("user@example.com"))
+        _calendarRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>()))
             .ReturnsAsync([MakeCalendar()]);
         var sut = CreateSut();
 
@@ -235,46 +236,46 @@ public class CalendarServiceTests
         });
 
         Assert.True(result.Success);
-        _calendarRepo.Verify(r => r.CreateCalendarAsync(It.IsAny<Calendar>()), Times.Never);
+        _calendarRepo.Verify(r => r.CreateAsync(It.IsAny<Calendar>()), Times.Never);
     }
 
-    // ── EnsureCalendarSharedAsync ────────────────────────────────────────────
+    // -- EnsureCalendarSharedAsync --------------------------------------------
 
     /// <summary>Verifies that <c>EnsureCalendarSharedAsync</c> creates shared when not already shared.</summary>
     [Fact]
     public async Task EnsureCalendarSharedAsync_CreatesShared_WhenNotAlreadyShared()
     {
-        _sharedRepo.Setup(r => r.GetCalendarSharedAsync()).ReturnsAsync([]);
-        _sharedRepo.Setup(r => r.CreateCalendarSharedAsync(It.IsAny<CalendarShared>())).Returns(Task.CompletedTask);
+        _sharedRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>())).ReturnsAsync([]);
+        _sharedRepo.Setup(r => r.CreateAsync(It.IsAny<CalendarShared>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
         ServiceResult result = await sut.EnsureCalendarSharedAsync(1);
 
         Assert.True(result.Success);
-        _sharedRepo.Verify(r => r.CreateCalendarSharedAsync(It.Is<CalendarShared>(s => s.Id == 1)), Times.Once);
+        _sharedRepo.Verify(r => r.CreateAsync(It.Is<CalendarShared>(s => s.Id == 1)), Times.Once);
     }
 
     /// <summary>Verifies that <c>EnsureCalendarSharedAsync</c> does not create when already shared.</summary>
     [Fact]
     public async Task EnsureCalendarSharedAsync_DoesNotCreate_WhenAlreadyShared()
     {
-        _sharedRepo.Setup(r => r.GetCalendarSharedAsync())
+        _sharedRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>()))
             .ReturnsAsync([CalendarShared.Reconstitute(1, false, false)]);
         var sut = CreateSut();
 
         ServiceResult result = await sut.EnsureCalendarSharedAsync(1);
 
         Assert.True(result.Success);
-        _sharedRepo.Verify(r => r.CreateCalendarSharedAsync(It.IsAny<CalendarShared>()), Times.Never);
+        _sharedRepo.Verify(r => r.CreateAsync(It.IsAny<CalendarShared>()), Times.Never);
     }
 
-    // ── CreateCalendarEventAsync ─────────────────────────────────────────────
+    // -- CreateCalendarEventAsync ---------------------------------------------
 
     /// <summary>Verifies that <c>CreateCalendarEventAsync</c> returns fail when calendar not found.</summary>
     [Fact]
     public async Task CreateCalendarEventAsync_ReturnsFail_WhenCalendarNotFound()
     {
-        _calendarRepo.Setup(r => r.GetCalendarsAsync("user@example.com")).ReturnsAsync([]);
+        _calendarRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>())).ReturnsAsync([]);
         var sut = CreateSut();
 
         ServiceResult result = await sut.CreateCalendarEventAsync(
@@ -289,7 +290,7 @@ public class CalendarServiceTests
     [Fact]
     public async Task CreateCalendarEventAsync_ReturnsSuccess_WithNoAttachmentAndNoReminders()
     {
-        _calendarRepo.Setup(r => r.GetCalendarsAsync("user@example.com"))
+        _calendarRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>()))
             .ReturnsAsync([MakeCalendar(id: 1)]);
         _eventRepo.Setup(r => r.CreateCalendarEventAsync(It.IsAny<CalendarEvent>())).ReturnsAsync(1L);
         var sut = CreateSut();
@@ -305,10 +306,10 @@ public class CalendarServiceTests
     [Fact]
     public async Task CreateCalendarEventAsync_CreatesReminders_WhenProvided()
     {
-        _calendarRepo.Setup(r => r.GetCalendarsAsync("user@example.com"))
+        _calendarRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>()))
             .ReturnsAsync([MakeCalendar(id: 1)]);
         _eventRepo.Setup(r => r.CreateCalendarEventAsync(It.IsAny<CalendarEvent>())).ReturnsAsync(1L);
-        _reminderRepo.Setup(r => r.CreateCalendarEventReminderAsync(It.IsAny<CalendarEventReminder>())).Returns(Task.CompletedTask);
+        _reminderRepo.Setup(r => r.CreateAsync(It.IsAny<CalendarEventReminder>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
         var reminders = new List<CalendarReminderInfo>
@@ -321,16 +322,16 @@ public class CalendarServiceTests
             new CalendarEventRequest { CalendarId = 1, Title = "Meeting" }, "user@example.com", "1", reminders, null);
 
         Assert.True(result.Success);
-        _reminderRepo.Verify(r => r.CreateCalendarEventReminderAsync(It.IsAny<CalendarEventReminder>()), Times.Exactly(2));
+        _reminderRepo.Verify(r => r.CreateAsync(It.IsAny<CalendarEventReminder>()), Times.Exactly(2));
     }
 
-    // ── UpdateCalendarEventAsync ─────────────────────────────────────────────
+    // -- UpdateCalendarEventAsync ---------------------------------------------
 
     /// <summary>Verifies that <c>UpdateCalendarEventAsync</c> returns fail when calendar not found.</summary>
     [Fact]
     public async Task UpdateCalendarEventAsync_ReturnsFail_WhenCalendarNotFound()
     {
-        _calendarRepo.Setup(r => r.GetCalendarsAsync("user@example.com")).ReturnsAsync([]);
+        _calendarRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>())).ReturnsAsync([]);
         var sut = CreateSut();
 
         ServiceResult result = await sut.UpdateCalendarEventAsync(
@@ -344,9 +345,9 @@ public class CalendarServiceTests
     [Fact]
     public async Task UpdateCalendarEventAsync_ReturnsFail_WhenEventNotFound()
     {
-        _calendarRepo.Setup(r => r.GetCalendarsAsync("user@example.com"))
+        _calendarRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>()))
             .ReturnsAsync([MakeCalendar(id: 1)]);
-        _eventRepo.Setup(r => r.GetCalendarEventAsync(1)).ReturnsAsync((CalendarEvent?)null);
+        _eventRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>())).ReturnsAsync([]);
         var sut = CreateSut();
 
         ServiceResult result = await sut.UpdateCalendarEventAsync(
@@ -360,13 +361,13 @@ public class CalendarServiceTests
     [Fact]
     public async Task UpdateCalendarEventAsync_ReturnsSuccess_WhenValidAndNoAttachment()
     {
-        _calendarRepo.Setup(r => r.GetCalendarsAsync("user@example.com"))
+        _calendarRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>()))
             .ReturnsAsync([MakeCalendar(id: 1)]);
-        _eventRepo.Setup(r => r.GetCalendarEventAsync(1))
-            .ReturnsAsync(MakeCalendarEvent(id: 1, calendarId: 1, title: "Old"));
-        _eventRepo.Setup(r => r.UpdateCalendarEventAsync(It.IsAny<CalendarEvent>())).Returns(Task.CompletedTask);
-        _eventFileRepo.Setup(r => r.DeleteCalendarEventAttachedFileAsync(1)).ReturnsAsync(0);
-        _reminderRepo.Setup(r => r.DeleteCalendarEventReminderAsync(1)).ReturnsAsync(0);
+        _eventRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>()))
+            .ReturnsAsync([MakeCalendarEvent(id: 1, calendarId: 1, title: "Old")]);
+        _eventRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<CalendarEvent>())).Returns(Task.CompletedTask);
+        _eventFileRepo.Setup(r => r.DeleteAsync(It.IsAny<IReadOnlyList<FilterCondition>>())).Returns(Task.CompletedTask);
+        _reminderRepo.Setup(r => r.DeleteAsync(It.IsAny<IReadOnlyList<FilterCondition>>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
         ServiceResult result = await sut.UpdateCalendarEventAsync(
@@ -376,14 +377,14 @@ public class CalendarServiceTests
         _unitOfWork.Verify(u => u.CommitAsync(), Times.Once);
     }
 
-    // ── DeleteCalendarEventAsync ─────────────────────────────────────────────
+    // -- DeleteCalendarEventAsync ---------------------------------------------
 
     /// <summary>Verifies that <c>DeleteCalendarEventAsync</c> returns fail when event not found.</summary>
     [Fact]
     public async Task DeleteCalendarEventAsync_ReturnsFail_WhenEventNotFound()
     {
-        _calendarRepo.Setup(r => r.GetCalendarsAsync("user@example.com")).ReturnsAsync([MakeCalendar(id: 1)]);
-        _eventRepo.Setup(r => r.GetCalendarEventAsync(99)).ReturnsAsync((CalendarEvent?)null);
+        _calendarRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>())).ReturnsAsync([MakeCalendar(id: 1)]);
+        _eventRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>())).ReturnsAsync([]);
         var sut = CreateSut();
 
         ServiceResult result = await sut.DeleteCalendarEventAsync(99, "user@example.com");
@@ -395,10 +396,10 @@ public class CalendarServiceTests
     [Fact]
     public async Task DeleteCalendarEventAsync_ReturnsFail_WhenEventBelongsToDifferentCalendar()
     {
-        _calendarRepo.Setup(r => r.GetCalendarsAsync("user@example.com"))
+        _calendarRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>()))
             .ReturnsAsync([MakeCalendar(id: 1)]);
-        _eventRepo.Setup(r => r.GetCalendarEventAsync(1))
-            .ReturnsAsync(MakeCalendarEvent(id: 1, calendarId: 999)); // different calendar
+        _eventRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>()))
+            .ReturnsAsync([MakeCalendarEvent(id: 1, calendarId: 999)]); // different calendar
         var sut = CreateSut();
 
         ServiceResult result = await sut.DeleteCalendarEventAsync(1, "user@example.com");
@@ -410,11 +411,11 @@ public class CalendarServiceTests
     [Fact]
     public async Task DeleteCalendarEventAsync_ReturnsSuccess_WhenOwnershipVerified()
     {
-        _calendarRepo.Setup(r => r.GetCalendarsAsync("user@example.com"))
+        _calendarRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>()))
             .ReturnsAsync([MakeCalendar(id: 1)]);
-        _eventRepo.Setup(r => r.GetCalendarEventAsync(1))
-            .ReturnsAsync(MakeCalendarEvent(id: 1, calendarId: 1));
-        _eventRepo.Setup(r => r.DeleteCalendarEventAsync(It.IsAny<CalendarEvent>())).Returns(Task.CompletedTask);
+        _eventRepo.Setup(r => r.FindAsync(It.IsAny<IReadOnlyList<FilterCondition>>(), It.IsAny<string?>(), It.IsAny<bool>()))
+            .ReturnsAsync([MakeCalendarEvent(id: 1, calendarId: 1)]);
+        _eventRepo.Setup(r => r.DeleteAsync(It.IsAny<IReadOnlyList<FilterCondition>>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
         ServiceResult result = await sut.DeleteCalendarEventAsync(1, "user@example.com");
@@ -422,29 +423,23 @@ public class CalendarServiceTests
         Assert.True(result.Success);
     }
 
-    // ── UpdateOtherCalendarAsync ─────────────────────────────────────────────
+    // -- UpdateOtherCalendarAsync ---------------------------------------------
 
     /// <summary>Verifies that <c>UpdateOtherCalendarAsync</c> clears existing and creates new.</summary>
     [Fact]
     public async Task UpdateOtherCalendarAsync_ClearsExistingAndCreatesNew()
     {
         const string email = "user@example.com";
-        var existing = new List<OtherCalendar>
-        {
-            OtherCalendar.Reconstitute(email, 10),
-            OtherCalendar.Reconstitute(email, 11)
-        };
-        _otherCalendarRepo.Setup(r => r.GetOtherCalendarsAsync(email)).ReturnsAsync(existing);
-        _otherCalendarRepo.Setup(r => r.DeleteOtherCalendarAsync(It.IsAny<OtherCalendar>())).Returns(Task.CompletedTask);
-        _otherCalendarRepo.Setup(r => r.CreateOtherCalendarAsync(It.IsAny<OtherCalendar>())).Returns(Task.CompletedTask);
+        _otherCalendarRepo.Setup(r => r.DeleteAsync(It.IsAny<IReadOnlyList<FilterCondition>>())).Returns(Task.CompletedTask);
+        _otherCalendarRepo.Setup(r => r.CreateAsync(It.IsAny<OtherCalendar>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
         var newEntries = new List<OtherCalendarRequest> { new() { CalendarId = 20 } };
         ServiceResult result = await sut.UpdateOtherCalendarAsync(email, newEntries);
 
         Assert.True(result.Success);
-        _otherCalendarRepo.Verify(r => r.DeleteOtherCalendarAsync(It.IsAny<OtherCalendar>()), Times.Exactly(2));
-        _otherCalendarRepo.Verify(r => r.CreateOtherCalendarAsync(It.IsAny<OtherCalendar>()), Times.Once);
+        _otherCalendarRepo.Verify(r => r.DeleteAsync(It.IsAny<IReadOnlyList<FilterCondition>>()), Times.Once);
+        _otherCalendarRepo.Verify(r => r.CreateAsync(It.IsAny<OtherCalendar>()), Times.Once);
         _unitOfWork.Verify(u => u.CommitAsync(), Times.Once);
     }
 }

@@ -1,4 +1,5 @@
-using Maroik.Core.Contract.Domains.Finance;
+﻿using Maroik.Core.Contract.Domains.Finance;
+using Maroik.Core.Contract.Filters;
 using Maroik.Core.PostgreSQL.Data;
 using Maroik.Core.Repository.Repositories;
 using Microsoft.EntityFrameworkCore;
@@ -27,7 +28,7 @@ public class FixedIncomeRepositoryTests : IDisposable
     /// <summary>Releases resources allocated by this test fixture (disposes the database context).</summary>
     public void Dispose() => _context.Dispose();
 
-    // ── Helpers ──────────────────────────────────────────────────────────────
+    // -- Helpers --------------------------------------------------------------
 
     private static EfFixedIncome MakeFixedIncome(string email, string content, decimal amount = 3000m) => new()
     {
@@ -51,7 +52,7 @@ public class FixedIncomeRepositoryTests : IDisposable
         await _context.SaveChangesAsync();
     }
 
-    // ── GetFixedIncomesAsync ─────────────────────────────────────────────────
+    // -- GetFixedIncomesAsync -------------------------------------------------
 
     /// <summary>Verifies that <c>GetFixedIncomesAsync</c> returns only items for given email.</summary>
     [Fact]
@@ -62,7 +63,7 @@ public class FixedIncomeRepositoryTests : IDisposable
             MakeFixedIncome("alice@example.com", "Side job"),
             MakeFixedIncome("bob@example.com", "Bob salary"));
 
-        List<FixedIncome> result = await _sut.GetFixedIncomesAsync("alice@example.com");
+        List<FixedIncome> result = await _sut.FindAsync([FilterCondition.Equal("AccountEmail", "alice@example.com")]);
 
         Assert.Equal(2, result.Count);
         Assert.All(result, fi => Assert.Equal("alice@example.com", fi.AccountEmail.Value));
@@ -72,12 +73,12 @@ public class FixedIncomeRepositoryTests : IDisposable
     [Fact]
     public async Task GetFixedIncomesAsync_ReturnsEmpty_WhenNoItemsForEmail()
     {
-        List<FixedIncome> result = await _sut.GetFixedIncomesAsync("nobody@example.com");
+        List<FixedIncome> result = await _sut.FindAsync([FilterCondition.Equal("AccountEmail", "nobody@example.com")]);
 
         Assert.Empty(result);
     }
 
-    // ── CreateFixedIncomeAsync ───────────────────────────────────────────────
+    // -- CreateFixedIncomeAsync -----------------------------------------------
 
     /// <summary>Verifies that <c>CreateFixedIncomeAsync</c> adds item to database.</summary>
     [Fact]
@@ -100,7 +101,7 @@ public class FixedIncomeRepositoryTests : IDisposable
             created: DateTime.UtcNow,
             updated: DateTime.UtcNow);
 
-        await _sut.CreateFixedIncomeAsync(fixedIncome);
+        await _sut.CreateAsync(fixedIncome);
 
         EfFixedIncome? saved = await _context.FixedIncomes.FirstOrDefaultAsync(
             fi => fi.AccountEmail == "alice@example.com" && fi.Content == "Monthly salary", TestContext.Current.CancellationToken);
@@ -109,11 +110,11 @@ public class FixedIncomeRepositoryTests : IDisposable
         Assert.Equal((short)25, saved.DepositDay);
     }
 
-    // ── UpdateFixedIncomeAsync ───────────────────────────────────────────────
+    // -- UpdateEntityAsync -----------------------------------------------
 
-    /// <summary>Verifies that <c>UpdateFixedIncomeAsync</c> updates existing item.</summary>
+    /// <summary>Verifies that <c>UpdateEntityAsync</c> updates existing item.</summary>
     [Fact]
-    public async Task UpdateFixedIncomeAsync_UpdatesExistingItem()
+    public async Task UpdateEntityAsync_UpdatesExistingItem()
     {
         var efItem = MakeFixedIncome("alice@example.com", "Salary", amount: 3000m);
         await SeedAsync(efItem);
@@ -136,7 +137,7 @@ public class FixedIncomeRepositoryTests : IDisposable
             created: efItem.Created,
             updated: DateTime.UtcNow);
 
-        await _sut.UpdateFixedIncomeAsync(fixedIncome);
+        await _sut.UpdateEntityAsync(fixedIncome);
 
         EfFixedIncome? updated = await _context.FixedIncomes.FirstOrDefaultAsync(fi => fi.Id == id, TestContext.Current.CancellationToken);
         Assert.NotNull(updated);
@@ -145,7 +146,7 @@ public class FixedIncomeRepositoryTests : IDisposable
         Assert.True(updated.Unpunctuality);
     }
 
-    // ── DeleteFixedIncomeAsync ───────────────────────────────────────────────
+    // -- DeleteFixedIncomeAsync -----------------------------------------------
 
     /// <summary>Verifies that <c>DeleteFixedIncomeAsync</c> removes item from database.</summary>
     [Fact]
@@ -172,7 +173,7 @@ public class FixedIncomeRepositoryTests : IDisposable
             created: efItem.Created,
             updated: efItem.Updated);
 
-        await _sut.DeleteFixedIncomeAsync(fixedIncome);
+        await _sut.DeleteAsync([FilterCondition.Equal("Id", fixedIncome.Id)]);
 
         EfFixedIncome? deleted = await _context.FixedIncomes.FirstOrDefaultAsync(fi => fi.Id == id, TestContext.Current.CancellationToken);
         Assert.Null(deleted);
@@ -203,7 +204,7 @@ public class FixedIncomeRepositoryTests : IDisposable
             created: efItem1.Created,
             updated: efItem1.Updated);
 
-        await _sut.DeleteFixedIncomeAsync(fixedIncome);
+        await _sut.DeleteAsync([FilterCondition.Equal("Id", fixedIncome.Id)]);
 
         List<EfFixedIncome> remaining = await _context.FixedIncomes.ToListAsync(TestContext.Current.CancellationToken);
         Assert.Single(remaining);

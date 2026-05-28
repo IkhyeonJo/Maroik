@@ -1,4 +1,5 @@
-using Maroik.Core.Contract.Domains.Finance;
+﻿using Maroik.Core.Contract.Domains.Finance;
+using Maroik.Core.Contract.Filters;
 using Maroik.Core.PostgreSQL.Data;
 using Maroik.Core.Repository.Repositories;
 using Microsoft.EntityFrameworkCore;
@@ -29,7 +30,7 @@ public class AssetRepositoryTests : IDisposable
     /// <summary>Releases resources allocated by this test fixture (disposes the database context).</summary>
     public void Dispose() => _context.Dispose();
 
-    // ── Helpers ──────────────────────────────────────────────────────────────
+    // -- Helpers --------------------------------------------------------------
 
     private static OrmAsset MakeAsset(string productName, string email, string unit = "KRW", decimal amount = 1000m) => new()
     {
@@ -49,7 +50,7 @@ public class AssetRepositoryTests : IDisposable
         await _context.SaveChangesAsync();
     }
 
-    // ── GetAssetsAsync ───────────────────────────────────────────────────────
+    // -- GetAssetsAsync -------------------------------------------------------
 
     /// <summary>Verifies that <c>GetAssetsAsync</c> returns only assets for given email.</summary>
     [Fact]
@@ -60,7 +61,7 @@ public class AssetRepositoryTests : IDisposable
             MakeAsset("Savings", "alice@example.com"),
             MakeAsset("Wallet", "bob@example.com"));
 
-        List<Asset> result = await _sut.GetAssetsAsync("alice@example.com");
+        List<Asset> result = await _sut.FindAsync([FilterCondition.Equal("AccountEmail", "alice@example.com")]);
 
         Assert.Equal(2, result.Count);
         Assert.All(result, a => Assert.Equal("alice@example.com", a.AccountEmail.Value));
@@ -70,12 +71,12 @@ public class AssetRepositoryTests : IDisposable
     [Fact]
     public async Task GetAssetsAsync_ReturnsEmptyList_WhenEmailHasNoAssets()
     {
-        List<Asset> result = await _sut.GetAssetsAsync("nobody@example.com");
+        List<Asset> result = await _sut.FindAsync([FilterCondition.Equal("AccountEmail", "nobody@example.com")]);
 
         Assert.Empty(result);
     }
 
-    // ── GetAssetAsync ────────────────────────────────────────────────────────
+    // -- GetAssetAsync --------------------------------------------------------
 
     /// <summary>Verifies that <c>GetAssetAsync</c> returns asset when found.</summary>
     [Fact]
@@ -83,7 +84,7 @@ public class AssetRepositoryTests : IDisposable
     {
         await SeedAsync(MakeAsset("Wallet", "alice@example.com", amount: 5000m));
 
-        Asset? result = await _sut.GetAssetAsync("alice@example.com", "Wallet");
+        Asset? result = (await _sut.FindAsync([FilterCondition.Equal("AccountEmail", "alice@example.com"), FilterCondition.Equal("ProductName", "Wallet")])).FirstOrDefault();
 
         Assert.NotNull(result);
         Assert.Equal("Wallet", result.ProductName);
@@ -94,7 +95,7 @@ public class AssetRepositoryTests : IDisposable
     [Fact]
     public async Task GetAssetAsync_ReturnsNull_WhenNotFound()
     {
-        Asset? result = await _sut.GetAssetAsync("alice@example.com", "NonExistent");
+        Asset? result = (await _sut.FindAsync([FilterCondition.Equal("AccountEmail", "alice@example.com"), FilterCondition.Equal("ProductName", "NonExistent")])).FirstOrDefault();
 
         Assert.Null(result);
     }
@@ -105,12 +106,12 @@ public class AssetRepositoryTests : IDisposable
     {
         await SeedAsync(MakeAsset("Wallet", "bob@example.com"));
 
-        Asset? result = await _sut.GetAssetAsync("alice@example.com", "Wallet");
+        Asset? result = (await _sut.FindAsync([FilterCondition.Equal("AccountEmail", "alice@example.com"), FilterCondition.Equal("ProductName", "Wallet")])).FirstOrDefault();
 
         Assert.Null(result);
     }
 
-    // ── CreateAssetAsync ─────────────────────────────────────────────────────
+    // -- CreateAssetAsync -----------------------------------------------------
 
     /// <summary>Verifies that <c>CreateAssetAsync</c> adds asset to database.</summary>
     [Fact]
@@ -127,7 +128,7 @@ public class AssetRepositoryTests : IDisposable
             created: DateTime.UtcNow,
             updated: DateTime.UtcNow);
 
-        await _sut.CreateAssetAsync(asset);
+        await _sut.CreateAsync(asset);
 
         OrmAsset? saved = await _context.Assets.FirstOrDefaultAsync(
             a => a.AccountEmail == "alice@example.com" && a.ProductName == "NewAccount", TestContext.Current.CancellationToken);
@@ -136,11 +137,11 @@ public class AssetRepositoryTests : IDisposable
         Assert.Equal("SavingsAsset", saved.Item);
     }
 
-    // ── UpdateAssetAsync ─────────────────────────────────────────────────────
+    // -- UpdateEntityAsync -----------------------------------------------------
 
-    /// <summary>Verifies that <c>UpdateAssetAsync</c> updates existing asset.</summary>
+    /// <summary>Verifies that <c>UpdateEntityAsync</c> updates existing asset.</summary>
     [Fact]
-    public async Task UpdateAssetAsync_UpdatesExistingAsset()
+    public async Task UpdateEntityAsync_UpdatesExistingAsset()
     {
         await SeedAsync(MakeAsset("Wallet", "alice@example.com", amount: 1000m));
 
@@ -155,7 +156,7 @@ public class AssetRepositoryTests : IDisposable
             created: DateTime.UtcNow,
             updated: DateTime.UtcNow);
 
-        await _sut.UpdateAssetAsync(asset);
+        await _sut.UpdateEntityAsync(asset);
 
         OrmAsset? updated = await _context.Assets.FirstOrDefaultAsync(
             a => a.AccountEmail == "alice@example.com" && a.ProductName == "Wallet", TestContext.Current.CancellationToken);
