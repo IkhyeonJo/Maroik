@@ -1,17 +1,21 @@
 using Maroik.Core.Contract.Dtos;
+using Maroik.Core.Contract.Utilities;
 using Maroik.WebSite.Utilities;
 
 namespace Maroik.WebSite.Tests.Utilities;
 
-/// <summary>Unit tests for <see cref="NoticeViewModelMapper"/>.</summary>
+/// <summary>
+/// Unit tests for <see cref="FixedSchedulePolicy"/> (schedule status rules)
+/// and <see cref="NoticeViewModelMapper"/> (presentation mapping).
+/// </summary>
 public class NoticeViewModelMapperTests
 {
-    // ── IsNoticed ─────────────────────────────────────────────────────────────
+    // ── FixedSchedulePolicy.IsNoticed ─────────────────────────────────────────
 
     [Fact]
     public void IsNoticed_Unpunctuality_AlwaysTrue()
     {
-        var result = NoticeViewModelMapper.IsNoticed(1, 1, DateTime.Today, 7, unpunctuality: true);
+        var result = FixedSchedulePolicy.IsNoticed(1, 1, DateTime.Today, 7, unpunctuality: true);
         Assert.True(result);
     }
 
@@ -19,7 +23,7 @@ public class NoticeViewModelMapperTests
     public void IsNoticed_DepositTodayWithinWindow_True()
     {
         var today = new DateTime(2025, 6, 15);
-        var result = NoticeViewModelMapper.IsNoticed(6, 15, today, 7, unpunctuality: false);
+        var result = FixedSchedulePolicy.IsNoticed(6, 15, today, 7, unpunctuality: false);
         Assert.True(result);
     }
 
@@ -27,7 +31,7 @@ public class NoticeViewModelMapperTests
     public void IsNoticed_DepositBeyondWindow_False()
     {
         var today = new DateTime(2025, 6, 1);
-        var result = NoticeViewModelMapper.IsNoticed(6, 15, today, 7, unpunctuality: false);
+        var result = FixedSchedulePolicy.IsNoticed(6, 15, today, 7, unpunctuality: false);
         Assert.False(result);
     }
 
@@ -35,7 +39,7 @@ public class NoticeViewModelMapperTests
     public void IsNoticed_DepositAlreadyPast_False()
     {
         var today = new DateTime(2025, 6, 20);
-        var result = NoticeViewModelMapper.IsNoticed(6, 15, today, 7, unpunctuality: false);
+        var result = FixedSchedulePolicy.IsNoticed(6, 15, today, 7, unpunctuality: false);
         Assert.False(result);
     }
 
@@ -43,17 +47,17 @@ public class NoticeViewModelMapperTests
     public void IsNoticed_Feb29NonLeapYear_False()
     {
         var today = new DateTime(2025, 2, 27);
-        var result = NoticeViewModelMapper.IsNoticed(2, 29, today, 7, unpunctuality: false);
+        var result = FixedSchedulePolicy.IsNoticed(2, 29, today, 7, unpunctuality: false);
         Assert.False(result);
     }
 
-    // ── IsExpired ─────────────────────────────────────────────────────────────
+    // ── FixedSchedulePolicy.IsExpired ─────────────────────────────────────────
 
     [Fact]
     public void IsExpired_MaturityInPast_True()
     {
         var today = new DateTime(2025, 6, 15);
-        var result = NoticeViewModelMapper.IsExpired(new DateTime(2025, 6, 14), today);
+        var result = FixedSchedulePolicy.IsExpired(new DateTime(2025, 6, 14), today);
         Assert.True(result);
     }
 
@@ -61,7 +65,7 @@ public class NoticeViewModelMapperTests
     public void IsExpired_MaturityToday_False()
     {
         var today = new DateTime(2025, 6, 15);
-        var result = NoticeViewModelMapper.IsExpired(today, today);
+        var result = FixedSchedulePolicy.IsExpired(today, today);
         Assert.False(result);
     }
 
@@ -69,11 +73,11 @@ public class NoticeViewModelMapperTests
     public void IsExpired_MaturityInFuture_False()
     {
         var today = new DateTime(2025, 6, 15);
-        var result = NoticeViewModelMapper.IsExpired(new DateTime(2025, 12, 31), today);
+        var result = FixedSchedulePolicy.IsExpired(new DateTime(2025, 12, 31), today);
         Assert.False(result);
     }
 
-    // ── ToDisplayViewModels ───────────────────────────────────────────────────
+    // ── NoticeViewModelMapper.ToDisplayViewModels ────────────────────────────
 
     [Fact]
     public void FixedIncomesToDisplayViewModels_LocalizesClassFields()

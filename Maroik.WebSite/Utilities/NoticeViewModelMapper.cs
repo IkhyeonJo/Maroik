@@ -6,36 +6,11 @@ namespace Maroik.WebSite.Utilities;
 
 /// <summary>
 /// Maps fixed-income and fixed-expenditure response objects to display view models.
-/// Computes the <c>Noticed</c> and <c>Expired</c> presentation flags so the controller
-/// does not need to contain date-comparison logic.
+/// Schedule status flags (<c>Noticed</c>, <c>Expired</c>) are computed via
+/// <see cref="FixedSchedulePolicy"/>, which is shared with the service layer.
 /// </summary>
 public static class NoticeViewModelMapper
 {
-    /// <summary>
-    /// Returns <see langword="true"/> when the next scheduled deposit date is within
-    /// <paramref name="noticeWindowDays"/> days of <paramref name="today"/>,
-    /// or when <paramref name="unpunctuality"/> is set.
-    /// Returns <see langword="false"/> on invalid dates (e.g. Feb 29 in a non-leap year).
-    /// </summary>
-    public static bool IsNoticed(int depositMonth, int depositDay, DateTime today, int noticeWindowDays, bool unpunctuality)
-    {
-        if (unpunctuality) return true;
-        try
-        {
-            var depositDate = new DateTime(today.Year, depositMonth, depositDay);
-            double daysUntil = (depositDate - today).TotalDays;
-            return daysUntil >= 0 && daysUntil <= noticeWindowDays;
-        }
-        catch
-        {
-            return false;
-        }
-    }
-
-    /// <summary>Returns <see langword="true"/> when <paramref name="maturityDate"/> is in the past relative to <paramref name="today"/>.</summary>
-    public static bool IsExpired(DateTime maturityDate, DateTime today)
-        => (maturityDate - today).TotalDays < 0;
-
     /// <summary>Maps a single <see cref="FixedIncomeResponse"/> to a <see cref="FixedIncomeOutputViewModel"/> for display.</summary>
     public static FixedIncomeOutputViewModel ToDisplayViewModel(
         this FixedIncomeResponse item,
@@ -58,8 +33,8 @@ public static class NoticeViewModelMapper
         DepositMyAssetProductName = item.DepositMyAssetProductName,
         Created                   = item.Created.ConvertTimeByTimeZoneIanaId(timeZoneIanaId),
         Updated                   = item.Updated.ConvertTimeByTimeZoneIanaId(timeZoneIanaId),
-        Noticed                   = IsNoticed(item.DepositMonth, item.DepositDay, today, noticeWindowDays, item.Unpunctuality),
-        Expired                   = IsExpired(item.MaturityDate, today),
+        Noticed                   = FixedSchedulePolicy.IsNoticed(item.DepositMonth, item.DepositDay, today, noticeWindowDays, item.Unpunctuality),
+        Expired                   = FixedSchedulePolicy.IsExpired(item.MaturityDate, today),
         Unpunctuality             = item.Unpunctuality
     };
 
@@ -99,8 +74,8 @@ public static class NoticeViewModelMapper
         Note           = item.Note,
         Created        = item.Created.ConvertTimeByTimeZoneIanaId(timeZoneIanaId),
         Updated        = item.Updated.ConvertTimeByTimeZoneIanaId(timeZoneIanaId),
-        Noticed        = IsNoticed(item.DepositMonth, item.DepositDay, today, noticeWindowDays, item.Unpunctuality),
-        Expired        = IsExpired(item.MaturityDate, today),
+        Noticed        = FixedSchedulePolicy.IsNoticed(item.DepositMonth, item.DepositDay, today, noticeWindowDays, item.Unpunctuality),
+        Expired        = FixedSchedulePolicy.IsExpired(item.MaturityDate, today),
         Unpunctuality  = item.Unpunctuality
     };
 

@@ -3,6 +3,7 @@ using Maroik.Core.Contract.Domains.Finance;
 using Maroik.Core.Contract.Filters;
 using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
+using Maroik.Core.Contract.Utilities;
 using Maroik.Core.Service.Mappers;
 
 namespace Maroik.Core.Service.Services;
@@ -153,32 +154,18 @@ public class DashboardService : IDashboardService
 
         foreach (var item in await _fixedIncomeRepository.FindAsync([FilterCondition.Equal("AccountEmail", email)]))
         {
-            bool noticed = false;
-            try
-            {
-                var paymentDate = new DateTime(currentDate.Year, item.DepositMonth, item.DepositDay);
-                double daysUntilPayment = paymentDate.Subtract(currentDate).TotalDays;
-                noticed = daysUntilPayment >= 0 && daysUntilPayment <= noticeMaturityDateDay;
-            }
-            catch { /* invalid DepositMonth/Day combination - treat as not noticed */ }
-            if (item.Unpunctuality) noticed = true;
-            if (noticed) incomesNoticed++;
-            if (item.MaturityDate.Subtract(currentDate).TotalDays < 0) incomesExpired++;
+            if (FixedSchedulePolicy.IsNoticed(item.DepositMonth, item.DepositDay, currentDate, noticeMaturityDateDay, item.Unpunctuality))
+                incomesNoticed++;
+            if (FixedSchedulePolicy.IsExpired(item.MaturityDate, currentDate))
+                incomesExpired++;
         }
 
         foreach (var item in await _fixedExpenditureRepository.FindAsync([FilterCondition.Equal("AccountEmail", email)]))
         {
-            bool noticed = false;
-            try
-            {
-                var paymentDate = new DateTime(currentDate.Year, item.DepositMonth, item.DepositDay);
-                double daysUntilPayment = paymentDate.Subtract(currentDate).TotalDays;
-                noticed = daysUntilPayment >= 0 && daysUntilPayment <= noticeMaturityDateDay;
-            }
-            catch { /* invalid DepositMonth/Day combination - treat as not noticed */ }
-            if (item.Unpunctuality) noticed = true;
-            if (noticed) expendituresNoticed++;
-            if (item.MaturityDate.Subtract(currentDate).TotalDays < 0) expendituresExpired++;
+            if (FixedSchedulePolicy.IsNoticed(item.DepositMonth, item.DepositDay, currentDate, noticeMaturityDateDay, item.Unpunctuality))
+                expendituresNoticed++;
+            if (FixedSchedulePolicy.IsExpired(item.MaturityDate, currentDate))
+                expendituresExpired++;
         }
 
         return new NotificationCounts
