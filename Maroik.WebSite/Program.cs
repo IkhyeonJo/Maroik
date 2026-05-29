@@ -93,6 +93,7 @@ builder.Services.AddRepositoryServices();
 
 #region AddServices
 builder.Services.AddApplicationServices();
+builder.Services.AddScoped<Maroik.WebSite.Services.IExcelExportService, Maroik.WebSite.Services.ExcelExportService>();
 #endregion
 
 #region AddClients

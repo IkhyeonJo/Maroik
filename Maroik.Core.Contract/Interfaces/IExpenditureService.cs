@@ -10,6 +10,9 @@ public interface IExpenditureService
     /// <summary>Returns all expenditure records for the given account.</summary>
     Task<List<ExpenditureResponse>> GetExpendituresAsync(string accountEmail);
 
+    /// <summary>Returns a single expenditure record owned by the account, or null if not found.</summary>
+    Task<ExpenditureResponse?> GetByIdAsync(string accountEmail, long id);
+
     /// <summary>Validates and creates a new expenditure record owned by the given account.</summary>
     Task<ServiceResult> CreateAsync(string accountEmail, ExpenditureRequest request);
 

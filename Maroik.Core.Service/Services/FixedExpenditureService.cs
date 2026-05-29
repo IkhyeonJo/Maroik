@@ -30,6 +30,17 @@ public class FixedExpenditureService : IFixedExpenditureService
         => (await _fixedExpenditureRepository.FindAsync([FilterCondition.Equal("AccountEmail", accountEmail)])).Select(FixedExpenditureMapper.ToResponse).ToList();
 
     /// <inheritdoc />
+    public async Task<FixedExpenditureResponse?> GetByIdAsync(string accountEmail, long id)
+    {
+        var results = await _fixedExpenditureRepository.FindAsync([
+            FilterCondition.Equal("AccountEmail", accountEmail),
+            FilterCondition.Equal("Id", id)
+        ]);
+        var item = results.FirstOrDefault();
+        return item == null ? null : FixedExpenditureMapper.ToResponse(item);
+    }
+
+    /// <inheritdoc />
     public async Task<ServiceResult> CreateAsync(string accountEmail, FixedExpenditureRequest request)
     {
         var validation = ValidateClassAndDate(request);

@@ -30,6 +30,17 @@ public class FixedIncomeService : IFixedIncomeService
         => (await _fixedIncomeRepository.FindAsync([FilterCondition.Equal("AccountEmail", accountEmail)])).Select(FixedIncomeMapper.ToResponse).ToList();
 
     /// <inheritdoc />
+    public async Task<FixedIncomeResponse?> GetByIdAsync(string accountEmail, long id)
+    {
+        var results = await _fixedIncomeRepository.FindAsync([
+            FilterCondition.Equal("AccountEmail", accountEmail),
+            FilterCondition.Equal("Id", id)
+        ]);
+        var item = results.FirstOrDefault();
+        return item == null ? null : FixedIncomeMapper.ToResponse(item);
+    }
+
+    /// <inheritdoc />
     public async Task<ServiceResult> CreateAsync(string accountEmail, FixedIncomeRequest request)
     {
         var validation = ValidateRequest(request);

@@ -1,10 +1,9 @@
-﻿using DocumentFormat.OpenXml;
-using DocumentFormat.OpenXml.Packaging;
-using DocumentFormat.OpenXml.Spreadsheet;
-using Maroik.Core.Contract.Dtos;
+﻿using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Contract.Utilities;
+using Maroik.WebSite.Services;
 using Maroik.WebSite.Utilities;
+// ReSharper disable ConvertToConstant.Local
 using Maroik.WebSite.Models;
 using Maroik.WebSite.Models.ViewModels.Management;
 using Microsoft.AspNetCore.Mvc;
@@ -33,6 +32,7 @@ public class ManagementController : BaseController
     private readonly IMenuService _menuService;
     private readonly IBoardService _boardService;
     private readonly ISessionService _sessionService;
+    private readonly IExcelExportService _excelExportService;
 
     /// <summary>Initializes a new instance of <see cref="ManagementController"/> with the supplied dependencies.</summary>
     public ManagementController(
@@ -47,7 +47,8 @@ public class ManagementController : BaseController
         IRsaService rsa,
         IDashboardService dashboardService,
         IOptions<ServerSetting> serverSettings,
-        ISessionService sessionService)
+        ISessionService sessionService,
+        IExcelExportService excelExportService)
         : base(accountService, dashboardService, serverSettings, sessionService)
     {
         _rsa = rsa;
@@ -60,7 +61,10 @@ public class ManagementController : BaseController
         _managementAccountService = managementAccountService;
         _menuService = menuService;
         _boardService = boardService;
+        _excelExportService = excelExportService;
     }
+
+    private Func<string, string> Localize => key => _localizer[key].Value;
 
     #region Profile
 
@@ -376,87 +380,17 @@ public class ManagementController : BaseController
     [HttpGet]
     public async Task<IActionResult> Account(string wholeSearch)
     {
-        if (HttpContext.Request.Headers["X-Requested-With"] == "XMLHttpRequest") // ajax
+        if (HttpContext.Request.Headers["X-Requested-With"] == "XMLHttpRequest")
         {
-            List<AccountOutputViewModel> accountOutputViewModels = [];
-            string? loginedAccountTimeZoneIanaId = _sessionService.GetAccount()!.TimeZoneIanaId;
-
-            #region Accounts
-
-            foreach (AccountResponse item in await _managementAccountService.GetAllAccountsAsync())
-            {
-                if (string.IsNullOrEmpty(wholeSearch))
-                {
-                    accountOutputViewModels.Add(new AccountOutputViewModel()
-                    {
-                        Email = item.Email,
-                        HashedPassword = item.HashedPassword,
-                        Nickname = item.Nickname,
-                        AvatarImagePath = item.AvatarImagePath,
-                        Role = item.Role,
-                        TimeZoneIanaId = item.TimeZoneIanaId,
-                        Locked = item.Locked,
-                        LoginAttempt = item.LoginAttempt,
-                        EmailConfirmed = item.EmailConfirmed,
-                        AgreedServiceTerms = item.AgreedServiceTerms,
-                        RegistrationToken = item.RegistrationToken,
-                        ResetPasswordToken = item.ResetPasswordToken,
-                        Created = item.Created.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId!),
-                        Updated = item.Updated.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId!),
-                        Message = item.Message,
-                        Deleted = item.Deleted
-                    });
-                }
-                else
-                {
-                    if ((item.Email?.ToString() ?? "").Contains(wholeSearch) ||
-                        (item.HashedPassword?.ToString() ?? "").Contains(wholeSearch) ||
-                        (item.Nickname?.ToString() ?? "").Contains(wholeSearch) ||
-                        (item.AvatarImagePath?.ToString() ?? "").Contains(wholeSearch) ||
-                        (item.Role?.ToString() ?? "").Contains(wholeSearch) ||
-                        (item.TimeZoneIanaId?.ToString() ?? "").Contains(wholeSearch) ||
-                        (item.Locked.ToString() ?? "").Contains(wholeSearch) ||
-                        (item.LoginAttempt.ToString() ?? "").Contains(wholeSearch) ||
-                        (item.EmailConfirmed.ToString() ?? "").Contains(wholeSearch) ||
-                        (item.AgreedServiceTerms.ToString() ?? "").Contains(wholeSearch) ||
-                        (item.RegistrationToken?.ToString() ?? "").Contains(wholeSearch) ||
-                        (item.ResetPasswordToken?.ToString() ?? "").Contains(wholeSearch) ||
-                        (item.Created.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId!).ToString() ?? "")
-                        .Contains(wholeSearch) ||
-                        (item.Updated.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId!).ToString() ?? "")
-                        .Contains(wholeSearch) ||
-                        (item.Message?.ToString() ?? "").Contains(wholeSearch) ||
-                        (item.Deleted.ToString() ?? "").Contains(wholeSearch))
-                    {
-                        accountOutputViewModels.Add(new AccountOutputViewModel()
-                        {
-                            Email = item.Email,
-                            HashedPassword = item.HashedPassword,
-                            Nickname = item.Nickname,
-                            AvatarImagePath = item.AvatarImagePath,
-                            Role = item.Role,
-                            TimeZoneIanaId = item.TimeZoneIanaId,
-                            Locked = item.Locked,
-                            LoginAttempt = item.LoginAttempt,
-                            EmailConfirmed = item.EmailConfirmed,
-                            AgreedServiceTerms = item.AgreedServiceTerms,
-                            RegistrationToken = item.RegistrationToken,
-                            ResetPasswordToken = item.ResetPasswordToken,
-                            Created = item.Created.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId!),
-                            Updated = item.Updated.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId!),
-                            Message = item.Message,
-                            Deleted = item.Deleted
-                        });
-                    }
-                }
-            }
-
-            #endregion
-
-            IQueryable<AccountOutputViewModel> result = accountOutputViewModels.OrderBy(m => m.Email)
-                .ThenBy(m => m.Nickname).ThenByDescending(m => m.Created).ThenByDescending(m => m.Updated)
+            string tz = _sessionService.GetAccount()!.TimeZoneIanaId!;
+            var accounts = await _managementAccountService.GetAllAccountsAsync();
+            var viewModels = accounts
+                .ToDisplayViewModels(tz)
+                .ApplySearch(wholeSearch)
+                .OrderBy(m => m.Email).ThenBy(m => m.Nickname)
+                .ThenByDescending(m => m.Created).ThenByDescending(m => m.Updated)
                 .AsQueryable();
-            return PartialView("_AccountGrid", result);
+            return PartialView("_AccountGrid", viewModels);
         }
 
         return View();
@@ -562,131 +496,11 @@ public class ManagementController : BaseController
     [RequiredHttpPostAccess(Role = Role.Admin)]
     public async Task<IActionResult> ExportExcelAccount(string fileName = "")
     {
-        await Task.Yield();
-
-        List<AccountOutputViewModel> accountOutputViewModels = new();
-        string? loginedAccountTimeZoneIanaId = _sessionService.GetAccount()!.TimeZoneIanaId;
-
-        #region Accounts
-
-        foreach (AccountResponse item in await _managementAccountService.GetAllAccountsAsync())
-        {
-            accountOutputViewModels.Add(new AccountOutputViewModel()
-            {
-                Email = item.Email,
-                HashedPassword = item.HashedPassword,
-                Nickname = item.Nickname,
-                AvatarImagePath = item.AvatarImagePath,
-                Role = item.Role,
-                TimeZoneIanaId = item.TimeZoneIanaId,
-                Locked = item.Locked,
-                LoginAttempt = item.LoginAttempt,
-                EmailConfirmed = item.EmailConfirmed,
-                AgreedServiceTerms = item.AgreedServiceTerms,
-                RegistrationToken = item.RegistrationToken,
-                ResetPasswordToken = item.ResetPasswordToken,
-                Created = item.Created.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId!),
-                Updated = item.Updated.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId!),
-                Message = item.Message,
-                Deleted = item.Deleted
-            });
-        }
-
-        accountOutputViewModels = accountOutputViewModels.OrderBy(m => m.Email).ThenBy(m => m.Nickname)
-            .ThenByDescending(m => m.Created).ThenByDescending(m => m.Updated).ToList();
-
-        #endregion
-
-        MemoryStream stream = new();
-
-        using (SpreadsheetDocument document = SpreadsheetDocument.Create(stream, SpreadsheetDocumentType.Workbook))
-        {
-            WorkbookPart workbookPart = document.AddWorkbookPart();
-            workbookPart.Workbook = new Workbook();
-
-            WorksheetPart worksheetPart = workbookPart.AddNewPart<WorksheetPart>();
-            worksheetPart.Worksheet = new Worksheet(new SheetData());
-
-            Sheets sheets = document.WorkbookPart!.Workbook!.AppendChild(new Sheets())!;
-            Sheet sheet = new Sheet()
-            {
-                Id = document.WorkbookPart!.GetIdOfPart(worksheetPart),
-                SheetId = 1,
-                Name = "Sheet1"
-            };
-            sheets.Append(sheet);
-
-            SheetData sheetData = worksheetPart.Worksheet.GetFirstChild<SheetData>()!;
-
-            Cell CreateCell(string value)
-            {
-                return new Cell()
-                {
-                    CellValue = new CellValue(value),
-                    DataType = CellValues.String
-                };
-            }
-
-            Row headerRow = new Row();
-            headerRow.Append(
-                CreateCell(_localizer[nameof(AccountOutputViewModel.Email)].Value),
-                CreateCell(_localizer[nameof(AccountOutputViewModel.HashedPassword)].Value),
-                CreateCell(_localizer[nameof(AccountOutputViewModel.Nickname)].Value),
-                CreateCell(_localizer[nameof(AccountOutputViewModel.AvatarImagePath)].Value),
-                CreateCell(_localizer[nameof(AccountOutputViewModel.Role)].Value),
-                CreateCell(_localizer[nameof(AccountOutputViewModel.TimeZoneIanaId)].Value),
-                CreateCell(_localizer[nameof(AccountOutputViewModel.Locked)].Value),
-                CreateCell(_localizer[nameof(AccountOutputViewModel.LoginAttempt)].Value),
-                CreateCell(_localizer[nameof(AccountOutputViewModel.EmailConfirmed)].Value),
-                CreateCell(_localizer[nameof(AccountOutputViewModel.AgreedServiceTerms)].Value),
-                CreateCell(_localizer[nameof(AccountOutputViewModel.RegistrationToken)].Value),
-                CreateCell(_localizer[nameof(AccountOutputViewModel.ResetPasswordToken)].Value),
-                CreateCell(_localizer[nameof(AccountOutputViewModel.Created)].Value),
-                CreateCell(_localizer[nameof(AccountOutputViewModel.Updated)].Value),
-                CreateCell(_localizer[nameof(AccountOutputViewModel.Message)].Value),
-                CreateCell(_localizer[nameof(AccountOutputViewModel.Deleted)].Value)
-            );
-            sheetData.Append(headerRow);
-
-            int recordIndex = 2;
-            foreach (AccountOutputViewModel item in accountOutputViewModels)
-            {
-                Row recordRow = new Row()
-                {
-                    RowIndex = (uint)recordIndex
-                };
-
-                recordRow.Append(
-                    CreateCell(item.Email ?? ""),
-                    CreateCell(item.HashedPassword ?? ""),
-                    CreateCell(item.Nickname ?? ""),
-                    CreateCell(item.AvatarImagePath ?? ""),
-                    CreateCell(item.Role ?? ""),
-                    CreateCell(item.TimeZoneIanaId ?? ""),
-                    CreateCell(item.Locked.ToString()),
-                    CreateCell(item.LoginAttempt.ToString()),
-                    CreateCell(item.EmailConfirmed.ToString()),
-                    CreateCell(item.AgreedServiceTerms.ToString()),
-                    CreateCell(item.RegistrationToken ?? ""),
-                    CreateCell(item.ResetPasswordToken ?? ""),
-                    CreateCell(item.Created.ToString()),
-                    CreateCell(item.Updated.ToString()),
-                    CreateCell(item.Message ?? ""),
-                    CreateCell(item.Deleted.ToString())
-                );
-                sheetData.Append(recordRow);
-
-                recordIndex++;
-            }
-
-            workbookPart.Workbook.Save();
-        }
-
-        stream.Position = 0;
-        string excelName =
-            $"{fileName}-{DateTime.UtcNow.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId!):yyyy-MM-dd-HH-mm-ss-fff}.xlsx";
-
-        return File(stream, "application/octet-stream", excelName);
+        var account  = _sessionService.GetAccount()!;
+        var accounts = await _managementAccountService.GetAllAccountsAsync();
+        var stream   = _excelExportService.CreateAccountExcel(accounts, Localize, account.TimeZoneIanaId!);
+        string name  = $"{fileName}-{DateTime.UtcNow.ConvertTimeByTimeZoneIanaId(account.TimeZoneIanaId!):yyyy-MM-dd-HH-mm-ss-fff}.xlsx";
+        return File(stream, "application/octet-stream", name);
     }
 
     #endregion
@@ -1070,120 +884,12 @@ public class ManagementController : BaseController
     [RequiredHttpPostAccess(Role = Role.Admin)]
     public async Task<IActionResult> ExportExcelMenu(string fileName = "")
     {
-        await Task.Yield();
-
-        List<MenuOutputViewModel> menuOutputViewModels = [];
-        string? loginedAccountTimeZoneIanaId = _sessionService.GetAccount()!.TimeZoneIanaId;
-
-        #region Categories
-        foreach (CategoryResponse item in await _menuService.GetAllCategoriesAsync())
-        {
-            menuOutputViewModels.Add(new MenuOutputViewModel()
-            {
-                Id = item.Id,
-                CategoryId = null,
-                Name = item.Name,
-                DisplayName = item.DisplayName,
-                IconPath = item.IconPath,
-                Controller = item.Controller,
-                Action = item.Action,
-                Role = item.Role,
-                Order = item.Order
-            });
-        }
-        #endregion
-
-        #region SubCategories
-        foreach (SubCategoryResponse item in await _menuService.GetAllSubCategoriesAsync())
-        {
-            menuOutputViewModels.Add(new MenuOutputViewModel()
-            {
-                Id = item.Id,
-                CategoryId = item.CategoryId,
-                Name = item.Name,
-                DisplayName = item.DisplayName,
-                IconPath = item.IconPath,
-                Controller = null,
-                Action = item.Action,
-                Role = item.Role,
-                Order = item.Order
-            });
-        }
-        #endregion
-
-        menuOutputViewModels = menuOutputViewModels.OrderByDescending(m => m.Id).ThenByDescending(m => m.CategoryId)
-            .ToList();
-
-        MemoryStream stream = new MemoryStream();
-
-        using (SpreadsheetDocument spreadsheetDocument =
-               SpreadsheetDocument.Create(stream, SpreadsheetDocumentType.Workbook))
-        {
-            WorkbookPart workbookPart = spreadsheetDocument.AddWorkbookPart();
-            workbookPart.Workbook = new Workbook();
-
-            WorksheetPart worksheetPart = workbookPart.AddNewPart<WorksheetPart>();
-            worksheetPart.Worksheet = new Worksheet(new SheetData());
-
-            Sheets sheets = spreadsheetDocument.WorkbookPart!.Workbook!.AppendChild(new Sheets())!;
-            Sheet sheet = new Sheet()
-            {
-                Id = spreadsheetDocument.WorkbookPart!.GetIdOfPart(worksheetPart),
-                SheetId = 1,
-                Name = "Sheet1"
-            };
-            sheets.Append(sheet);
-
-            SheetData sheetData = worksheetPart.Worksheet.GetFirstChild<SheetData>()!;
-
-            Cell CreateCell(string value)
-            {
-                return new Cell()
-                {
-                    CellValue = new CellValue(value),
-                    DataType = CellValues.String
-                };
-            }
-
-            Row headerRow = new Row();
-            headerRow.Append(
-                CreateCell(_localizer[nameof(MenuOutputViewModel.Id).ToString()].Value),
-                CreateCell(_localizer[nameof(MenuOutputViewModel.CategoryId).ToString()].Value),
-                CreateCell(_localizer[nameof(MenuOutputViewModel.Name).ToString()].Value),
-                CreateCell(_localizer[nameof(MenuOutputViewModel.DisplayName).ToString()].Value),
-                CreateCell(_localizer[nameof(MenuOutputViewModel.IconPath).ToString()].Value),
-                CreateCell(_localizer[nameof(MenuOutputViewModel.Controller).ToString()].Value),
-                CreateCell(_localizer[nameof(MenuOutputViewModel.Action).ToString()].Value),
-                CreateCell(_localizer[nameof(MenuOutputViewModel.Role).ToString()].Value),
-                CreateCell(_localizer[nameof(MenuOutputViewModel.Order).ToString()].Value)
-            );
-            sheetData.Append(headerRow);
-
-            foreach (MenuOutputViewModel item in menuOutputViewModels)
-            {
-                Row dataRow = new Row();
-                dataRow.Append(
-                    CreateCell(item.Id.ToString()),
-                    CreateCell(item.CategoryId?.ToString() ?? string.Empty),
-                    CreateCell(item.Name ?? ""),
-                    CreateCell(item.DisplayName ?? ""),
-                    CreateCell(item.IconPath ?? ""),
-                    CreateCell(item.Controller ?? ""),
-                    CreateCell(item.Action ?? ""),
-                    CreateCell(item.Role ?? ""),
-                    CreateCell(item.Order.ToString())
-                );
-                sheetData.Append(dataRow);
-            }
-
-            workbookPart.Workbook.Save();
-        }
-
-        stream.Position = 0;
-        string excelName =
-            $"{fileName}-{DateTime.UtcNow.ConvertTimeByTimeZoneIanaId(loginedAccountTimeZoneIanaId!):yyyy-MM-dd-HH-mm-ss-fff}.xlsx";
-
-        return File(stream, "application/octet-stream", excelName);
+        var account     = _sessionService.GetAccount()!;
+        var categories  = await _menuService.GetAllCategoriesAsync();
+        var subCats     = await _menuService.GetAllSubCategoriesAsync();
+        var stream      = _excelExportService.CreateMenuExcel(categories, subCats, Localize);
+        string name     = $"{fileName}-{DateTime.UtcNow.ConvertTimeByTimeZoneIanaId(account.TimeZoneIanaId!):yyyy-MM-dd-HH-mm-ss-fff}.xlsx";
+        return File(stream, "application/octet-stream", name);
     }
 
     #endregion

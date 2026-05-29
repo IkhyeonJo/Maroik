@@ -10,6 +10,9 @@ public interface IFixedExpenditureService
     /// <summary>Returns all fixed expenditure records for the given account.</summary>
     Task<List<FixedExpenditureResponse>> GetFixedExpendituresAsync(string accountEmail);
 
+    /// <summary>Returns a single fixed expenditure record owned by the account, or null if not found.</summary>
+    Task<FixedExpenditureResponse?> GetByIdAsync(string accountEmail, long id);
+
     /// <summary>Validates and creates a new fixed expenditure record.</summary>
     Task<ServiceResult> CreateAsync(string accountEmail, FixedExpenditureRequest request);
 

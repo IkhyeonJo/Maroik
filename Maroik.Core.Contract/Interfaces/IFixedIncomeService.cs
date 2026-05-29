@@ -10,6 +10,9 @@ public interface IFixedIncomeService
     /// <summary>Returns all fixed income records for the given account.</summary>
     Task<List<FixedIncomeResponse>> GetFixedIncomesAsync(string accountEmail);
 
+    /// <summary>Returns a single fixed income record owned by the account, or null if not found.</summary>
+    Task<FixedIncomeResponse?> GetByIdAsync(string accountEmail, long id);
+
     /// <summary>Validates and creates a new fixed income record.</summary>
     Task<ServiceResult> CreateAsync(string accountEmail, FixedIncomeRequest request);
 

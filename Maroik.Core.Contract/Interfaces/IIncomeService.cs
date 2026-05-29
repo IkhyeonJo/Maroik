@@ -10,6 +10,9 @@ public interface IIncomeService
     /// <summary>Returns all income records for the given account.</summary>
     Task<List<IncomeResponse>> GetIncomesAsync(string accountEmail);
 
+    /// <summary>Returns a single income record owned by the account, or null if not found.</summary>
+    Task<IncomeResponse?> GetByIdAsync(string accountEmail, long id);
+
     /// <summary>Validates and creates a new income record owned by the given account.</summary>
     Task<ServiceResult> CreateAsync(string accountEmail, IncomeRequest request);
 

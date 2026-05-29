@@ -5,6 +5,7 @@
 using Microsoft.OpenApi;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Client.Clients;
+using Maroik.FileStorage.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -13,6 +14,7 @@ builder.Services.AddControllers();
 
 // Register the ClamAV virus-scan client so FileController can inject it.
 builder.Services.AddScoped<IClamavClient, ClamavClient>();
+builder.Services.AddScoped<IFileValidationService, FileValidationService>();
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 // Exposes the OpenAPI metadata endpoint consumed by SwaggerUI.

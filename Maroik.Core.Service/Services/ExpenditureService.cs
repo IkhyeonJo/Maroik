@@ -33,6 +33,17 @@ public class ExpenditureService : IExpenditureService
         => (await _expenditureRepository.FindAsync([FilterCondition.Equal("AccountEmail", accountEmail)])).Select(ExpenditureMapper.ToResponse).ToList();
 
     /// <inheritdoc />
+    public async Task<ExpenditureResponse?> GetByIdAsync(string accountEmail, long id)
+    {
+        var results = await _expenditureRepository.FindAsync([
+            FilterCondition.Equal("AccountEmail", accountEmail),
+            FilterCondition.Equal("Id", id)
+        ]);
+        var expenditure = results.FirstOrDefault();
+        return expenditure == null ? null : ExpenditureMapper.ToResponse(expenditure);
+    }
+
+    /// <inheritdoc />
     public async Task<ServiceResult> CreateAsync(string accountEmail, ExpenditureRequest request)
     {
         await _unitOfWork.BeginAsync();

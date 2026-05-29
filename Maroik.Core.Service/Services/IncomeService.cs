@@ -30,6 +30,17 @@ public class IncomeService : IIncomeService
         => (await _incomeRepository.FindAsync([FilterCondition.Equal("AccountEmail", accountEmail)])).Select(IncomeMapper.ToResponse).ToList();
 
     /// <inheritdoc />
+    public async Task<IncomeResponse?> GetByIdAsync(string accountEmail, long id)
+    {
+        var results = await _incomeRepository.FindAsync([
+            FilterCondition.Equal("AccountEmail", accountEmail),
+            FilterCondition.Equal("Id", id)
+        ]);
+        var income = results.FirstOrDefault();
+        return income == null ? null : IncomeMapper.ToResponse(income);
+    }
+
+    /// <inheritdoc />
     public async Task<ServiceResult> CreateAsync(string accountEmail, IncomeRequest request)
     {
         await _unitOfWork.BeginAsync();
