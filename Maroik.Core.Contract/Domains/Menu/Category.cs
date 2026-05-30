@@ -48,7 +48,7 @@ public sealed class Category : Entity<long>
 
     /// <summary>
     /// Rebuilds a <see cref="Category"/> from trusted repository data.
-    /// Bypasses validation ?? use only with data from the trusted repository layer.
+    /// Bypasses validation — use only with data from the trusted repository layer.
     /// </summary>
     public static Category Reconstitute(
         long id, string? name, string? displayName, string? iconPath,

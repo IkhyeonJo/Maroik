@@ -87,7 +87,7 @@ public sealed class FixedExpenditure : AggregateRoot<long>
 
     /// <summary>
     /// Rebuilds a <see cref="FixedExpenditure"/> from trusted raw values from the repository layer.
-    /// Bypasses validation ?? use only with data from the trusted repository layer.
+    /// Bypasses validation — use only with data from the trusted repository layer.
     /// Does NOT raise domain events.
     /// </summary>
     public static FixedExpenditure Reconstitute(

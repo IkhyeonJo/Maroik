@@ -6,6 +6,10 @@ using OrmAsset = Maroik.Core.PostgreSQL.Models.Asset;
 
 namespace Maroik.Core.Repository.Repositories;
 
+/// <summary>
+/// EF Core repository for <see cref="Asset"/> domain objects.
+/// Includes a raw SQL update method for cases where the composite primary key (ProductName, AccountEmail) changes.
+/// </summary>
 public class AssetRepository(ApplicationDbContext context)
     : GenericRepository<Asset, OrmAsset>(context), IAssetRepository
 {

@@ -15,7 +15,7 @@ public sealed class Account : AggregateRoot<string>
     /// <summary>Validated email address (also serves as the primary key).</summary>
     public Email Email { get; private set; }
 
-    /// <summary>BCrypt-hashed password ?? never exposed as plain text.</summary>
+    /// <summary>BCrypt-hashed password — never exposed as plain text.</summary>
     public string HashedPassword { get; private set; }
 
     /// <summary>Unique display name shown throughout the UI.</summary>
@@ -60,7 +60,7 @@ public sealed class Account : AggregateRoot<string>
     /// <summary>Optional admin-facing note (used for lock reason, etc.).</summary>
     public string? Message { get; private set; }
 
-    /// <summary>Soft-delete flag ?? the row is kept but the account is treated as deleted.</summary>
+    /// <summary>Soft-delete flag — the row is kept but the account is treated as deleted.</summary>
     public bool Deleted { get; private set; }
 
     private Account(
@@ -91,7 +91,7 @@ public sealed class Account : AggregateRoot<string>
 
     /// <summary>
     /// Rebuilds an <see cref="Account"/> from trusted raw values from the repository layer.
-    /// Bypasses validation ?? use only with data from the trusted repository layer.
+    /// Bypasses validation — use only with data from the trusted repository layer.
     /// Does NOT raise domain events.
     /// </summary>
     public static Account Reconstitute(

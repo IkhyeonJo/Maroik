@@ -6,6 +6,10 @@ using OrmFixedIncome = Maroik.Core.PostgreSQL.Models.FixedIncome;
 
 namespace Maroik.Core.Repository.Repositories;
 
+/// <summary>
+/// EF Core repository for <see cref="FixedIncome"/> domain objects,
+/// representing recurring monthly income entries with a scheduled deposit day.
+/// </summary>
 public class FixedIncomeRepository(ApplicationDbContext context)
     : GenericRepository<FixedIncome, OrmFixedIncome>(context), IFixedIncomeRepository
 {

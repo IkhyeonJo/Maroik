@@ -48,7 +48,7 @@ public sealed class SubCategory : Entity<long>
 
     /// <summary>
     /// Rebuilds a <see cref="SubCategory"/> from trusted repository data.
-    /// Bypasses validation ?? use only with data from the trusted repository layer.
+    /// Bypasses validation — use only with data from the trusted repository layer.
     /// </summary>
     public static SubCategory Reconstitute(
         long id, long categoryId, string? name, string? displayName,

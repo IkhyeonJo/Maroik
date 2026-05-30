@@ -6,6 +6,11 @@ using OrmExpenditure = Maroik.Core.PostgreSQL.Models.Expenditure;
 
 namespace Maroik.Core.Repository.Repositories;
 
+/// <summary>
+/// EF Core repository for <see cref="Expenditure"/> domain objects.
+/// Always eager-loads the linked <see cref="OrmExpenditure.Asset"/> so that the monetary unit
+/// is available without a separate query.
+/// </summary>
 public class ExpenditureRepository(ApplicationDbContext context)
     : GenericRepository<Expenditure, OrmExpenditure>(context), IExpenditureRepository
 {

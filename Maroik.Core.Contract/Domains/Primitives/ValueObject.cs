@@ -2,7 +2,7 @@
 
 /// <summary>
 /// Base class for all value objects.
-/// Value objects have no identity ?? equality is determined entirely by their atomic values.
+/// Value objects have no identity — equality is determined entirely by their atomic values.
 /// Subclasses must implement <see cref="GetAtomicValues"/> to declare which fields compose the value.
 /// </summary>
 public abstract class ValueObject : IEquatable<ValueObject>
@@ -28,6 +28,9 @@ public abstract class ValueObject : IEquatable<ValueObject>
             default(int),
             (hash, value) => HashCode.Combine(hash, value?.GetHashCode() ?? 0));
 
+    /// <summary>Returns true when both value objects have the same atomic values.</summary>
     public static bool operator ==(ValueObject? left, ValueObject? right) => Equals(left, right);
+
+    /// <summary>Returns true when the value objects have different atomic values.</summary>
     public static bool operator !=(ValueObject? left, ValueObject? right) => !Equals(left, right);
 }

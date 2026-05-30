@@ -6,6 +6,10 @@ using OrmCategory = Maroik.Core.PostgreSQL.Models.Category;
 
 namespace Maroik.Core.Repository.Repositories;
 
+/// <summary>
+/// EF Core repository for <see cref="Category"/> domain objects,
+/// representing top-level navigation menu categories.
+/// </summary>
 public class CategoryRepository(ApplicationDbContext context)
     : GenericRepository<Category, OrmCategory>(context), ICategoryRepository
 {

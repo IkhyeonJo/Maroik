@@ -6,6 +6,10 @@ using OrmFile = Maroik.Core.PostgreSQL.Models.BoardAttachedFile;
 
 namespace Maroik.Core.Repository.Repositories;
 
+/// <summary>
+/// EF Core repository for <see cref="BoardAttachedFile"/> domain objects.
+/// Provides a batched lookup that retrieves one representative file per board ID.
+/// </summary>
 public class BoardAttachedFileRepository(ApplicationDbContext context)
     : GenericRepository<BoardAttachedFile, OrmFile>(context), IBoardAttachedFileRepository
 {

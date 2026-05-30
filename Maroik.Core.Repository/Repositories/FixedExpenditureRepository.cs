@@ -6,6 +6,10 @@ using OrmFixedExpenditure = Maroik.Core.PostgreSQL.Models.FixedExpenditure;
 
 namespace Maroik.Core.Repository.Repositories;
 
+/// <summary>
+/// EF Core repository for <see cref="FixedExpenditure"/> domain objects,
+/// representing recurring monthly expenditures with a scheduled deposit day.
+/// </summary>
 public class FixedExpenditureRepository(ApplicationDbContext context)
     : GenericRepository<FixedExpenditure, OrmFixedExpenditure>(context), IFixedExpenditureRepository
 {

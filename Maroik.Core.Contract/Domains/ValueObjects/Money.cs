@@ -23,7 +23,7 @@ public sealed class Money : ValueObject
 
     /// <summary>
     /// Re-creates a <see cref="Money"/> from values already stored in the database.
-    /// Skips validation ?? only call this when the source is trusted (repository layer).
+    /// Skips validation — only call this when the source is trusted (repository layer).
     /// </summary>
     internal static Money FromTrustedSource(decimal amount, string currency) =>
         new(amount, currency.ToUpperInvariant());

@@ -6,6 +6,9 @@ using OrmFile = Maroik.Core.PostgreSQL.Models.CalendarEventAttachedFile;
 
 namespace Maroik.Core.Repository.Repositories;
 
+/// <summary>
+/// EF Core repository for <see cref="CalendarEventAttachedFile"/> domain objects.
+/// </summary>
 public class CalendarEventAttachedFileRepository(ApplicationDbContext context)
     : GenericRepository<CalendarEventAttachedFile, OrmFile>(context), ICalendarEventAttachedFileRepository
 {

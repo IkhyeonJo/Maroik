@@ -55,7 +55,7 @@ public sealed class Asset : AggregateRoot<(string ProductName, string AccountEma
 
     /// <summary>
     /// Rebuilds an <see cref="Asset"/> from trusted raw values from the repository layer.
-    /// Bypasses validation ?? use only with data from the trusted repository layer.
+    /// Bypasses validation — use only with data from the trusted repository layer.
     /// Does NOT raise domain events.
     /// </summary>
     public static Asset Reconstitute(

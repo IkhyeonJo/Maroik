@@ -6,6 +6,10 @@ using OrmBoard = Maroik.Core.PostgreSQL.Models.Board;
 
 namespace Maroik.Core.Repository.Repositories;
 
+/// <summary>
+/// EF Core repository for <see cref="Board"/> domain objects.
+/// Provides board-specific operations such as incrementing the view counter and returning the generated ID on write.
+/// </summary>
 public class BoardRepository(ApplicationDbContext context)
     : GenericRepository<Board, OrmBoard>(context), IBoardRepository
 {

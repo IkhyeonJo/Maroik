@@ -25,7 +25,7 @@ public sealed class OtherCalendar : Entity<(string AccountEmail, long CalendarId
 
     /// <summary>
     /// Rebuilds an <see cref="OtherCalendar"/> from trusted raw values from the repository layer.
-    /// Bypasses validation ?? use only with data from the trusted repository layer.
+    /// Bypasses validation — use only with data from the trusted repository layer.
     /// </summary>
     public static OtherCalendar Reconstitute(string accountEmail, long calendarId)
         => new(Email.FromTrustedSource(accountEmail), calendarId);

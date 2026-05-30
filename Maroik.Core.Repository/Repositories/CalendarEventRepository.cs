@@ -6,6 +6,10 @@ using OrmCalendarEvent = Maroik.Core.PostgreSQL.Models.CalendarEvent;
 
 namespace Maroik.Core.Repository.Repositories;
 
+/// <summary>
+/// EF Core repository for <see cref="CalendarEvent"/> domain objects.
+/// Returns the database-generated ID when creating a new event.
+/// </summary>
 public class CalendarEventRepository(ApplicationDbContext context)
     : GenericRepository<CalendarEvent, OrmCalendarEvent>(context), ICalendarEventRepository
 {

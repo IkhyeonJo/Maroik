@@ -2,7 +2,7 @@
 
 /// <summary>
 /// Base class for all domain entities.
-/// Entities have a persistent identity ?? equality is determined by <typeparamref name="TId"/>, not by field values.
+/// Entities have a persistent identity — equality is determined by <typeparamref name="TId"/>, not by field values.
 /// </summary>
 /// <typeparam name="TId">Type of the entity's primary key.</typeparam>
 public abstract class Entity<TId> : IEquatable<Entity<TId>>
@@ -23,6 +23,9 @@ public abstract class Entity<TId> : IEquatable<Entity<TId>>
     /// <inheritdoc/>
     public override int GetHashCode() => HashCode.Combine(GetType(), Id);
 
+    /// <summary>Returns true when both entities are equal (same type and same ID).</summary>
     public static bool operator ==(Entity<TId>? left, Entity<TId>? right) => Equals(left, right);
+
+    /// <summary>Returns true when the entities are not equal.</summary>
     public static bool operator !=(Entity<TId>? left, Entity<TId>? right) => !Equals(left, right);
 }

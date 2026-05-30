@@ -21,7 +21,7 @@ public sealed class HtmlColorCode : ValueObject
 
     /// <summary>
     /// Re-creates an <see cref="HtmlColorCode"/> from a value already stored in the database.
-    /// Skips validation ?? only call this when the source is trusted (repository layer).
+    /// Skips validation — only call this when the source is trusted (repository layer).
     /// </summary>
     internal static HtmlColorCode FromTrustedSource(string value) => new(value.ToUpperInvariant());
 

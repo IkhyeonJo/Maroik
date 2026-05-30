@@ -6,6 +6,10 @@ using OrmAccount = Maroik.Core.PostgreSQL.Models.Account;
 
 namespace Maroik.Core.Repository.Repositories;
 
+/// <summary>
+/// EF Core repository for <see cref="Account"/> domain objects.
+/// Maps between the <see cref="Account"/> domain aggregate and the <see cref="OrmAccount"/> PostgreSQL entity.
+/// </summary>
 public class AccountRepository(ApplicationDbContext context)
     : GenericRepository<Account, OrmAccount>(context), IAccountRepository
 {

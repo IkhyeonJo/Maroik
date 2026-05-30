@@ -6,6 +6,10 @@ using OrmOtherCalendar = Maroik.Core.PostgreSQL.Models.OtherCalendar;
 
 namespace Maroik.Core.Repository.Repositories;
 
+/// <summary>
+/// EF Core repository for <see cref="OtherCalendar"/> domain objects,
+/// which link an account to calendars they have subscribed to but do not own.
+/// </summary>
 public class OtherCalendarRepository(ApplicationDbContext context)
     : GenericRepository<OtherCalendar, OrmOtherCalendar>(context), IOtherCalendarRepository
 {

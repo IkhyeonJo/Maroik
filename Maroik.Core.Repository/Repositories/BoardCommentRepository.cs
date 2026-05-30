@@ -6,6 +6,10 @@ using OrmBoardComment = Maroik.Core.PostgreSQL.Models.BoardComment;
 
 namespace Maroik.Core.Repository.Repositories;
 
+/// <summary>
+/// EF Core repository for <see cref="BoardComment"/> domain objects.
+/// Includes a batched comment-count query used to populate board list views efficiently.
+/// </summary>
 public class BoardCommentRepository(ApplicationDbContext context)
     : GenericRepository<BoardComment, OrmBoardComment>(context), IBoardCommentRepository
 {

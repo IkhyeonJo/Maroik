@@ -23,7 +23,7 @@ public sealed class CalendarShared : Entity<long>
 
     /// <summary>
     /// Rebuilds a <see cref="CalendarShared"/> from trusted raw values from the repository layer.
-    /// Bypasses validation ?? use only with data from the trusted repository layer.
+    /// Bypasses validation — use only with data from the trusted repository layer.
     /// </summary>
     public static CalendarShared Reconstitute(long calendarId, bool user, bool anonymous)
         => new(calendarId, user, anonymous);

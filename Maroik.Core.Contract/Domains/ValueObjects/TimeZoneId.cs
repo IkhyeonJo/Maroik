@@ -17,7 +17,7 @@ public sealed class TimeZoneId : ValueObject
 
     /// <summary>
     /// Re-creates a <see cref="TimeZoneId"/> from a value already stored in the database.
-    /// Skips validation ?? only call this when the source is trusted (repository layer).
+    /// Skips validation — only call this when the source is trusted (repository layer).
     /// </summary>
     internal static TimeZoneId FromTrustedSource(string value) => new(value);
 

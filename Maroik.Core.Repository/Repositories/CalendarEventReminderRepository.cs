@@ -6,6 +6,9 @@ using OrmReminder = Maroik.Core.PostgreSQL.Models.CalendarEventReminder;
 
 namespace Maroik.Core.Repository.Repositories;
 
+/// <summary>
+/// EF Core repository for <see cref="CalendarEventReminder"/> domain objects.
+/// </summary>
 public class CalendarEventReminderRepository(ApplicationDbContext context)
     : GenericRepository<CalendarEventReminder, OrmReminder>(context), ICalendarEventReminderRepository
 {

@@ -52,7 +52,7 @@ public sealed class CalendarEventReminder : Entity<long>
 
     /// <summary>
     /// Rebuilds a <see cref="CalendarEventReminder"/> from trusted data from the repository layer.
-    /// Bypasses validation ?? use only with data from the trusted repository layer.
+    /// Bypasses validation — use only with data from the trusted repository layer.
     /// </summary>
     public static CalendarEventReminder Reconstitute(
         long id, long calendarEventId, string? method,

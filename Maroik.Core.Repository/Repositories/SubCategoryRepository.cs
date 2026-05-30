@@ -6,6 +6,10 @@ using OrmSubCategory = Maroik.Core.PostgreSQL.Models.SubCategory;
 
 namespace Maroik.Core.Repository.Repositories;
 
+/// <summary>
+/// EF Core repository for <see cref="SubCategory"/> domain objects,
+/// representing child navigation menu items under a <see cref="Category"/>.
+/// </summary>
 public class SubCategoryRepository(ApplicationDbContext context)
     : GenericRepository<SubCategory, OrmSubCategory>(context), ISubCategoryRepository
 {

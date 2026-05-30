@@ -6,6 +6,9 @@ using OrmIncome = Maroik.Core.PostgreSQL.Models.Income;
 
 namespace Maroik.Core.Repository.Repositories;
 
+/// <summary>
+/// EF Core repository for <see cref="Income"/> domain objects.
+/// </summary>
 public class IncomeRepository(ApplicationDbContext context)
     : GenericRepository<Income, OrmIncome>(context), IIncomeRepository
 {

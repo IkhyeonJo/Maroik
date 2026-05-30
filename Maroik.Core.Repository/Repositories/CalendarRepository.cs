@@ -6,6 +6,10 @@ using OrmCalendar = Maroik.Core.PostgreSQL.Models.Calendar;
 
 namespace Maroik.Core.Repository.Repositories;
 
+/// <summary>
+/// EF Core repository for <see cref="Calendar"/> domain objects.
+/// Maps color codes and IANA time zone IDs between domain value objects and plain strings.
+/// </summary>
 public class CalendarRepository(ApplicationDbContext context)
     : GenericRepository<Calendar, OrmCalendar>(context), ICalendarRepository
 {
