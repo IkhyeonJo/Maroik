@@ -17,8 +17,7 @@ namespace Maroik.Core.Repository.Tests.Repositories;
 [Trait("Category", "Integration")]
 public class AccountRepositoryIntegrationTests : IAsyncLifetime
 {
-    private readonly PostgreSqlContainer _postgres = new PostgreSqlBuilder()
-        .WithImage("postgres:17")
+    private readonly PostgreSqlContainer _postgres = new PostgreSqlBuilder("postgres:17")
         .Build();
 
     private ApplicationDbContext _context = null!;
