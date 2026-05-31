@@ -13,6 +13,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Serilog.AspNetCore" />
     <PackageReference Include="Mapster" />
     <PackageReference Include="DocumentFormat.OpenXml" />
     <PackageReference Include="HtmlAgilityPack" />

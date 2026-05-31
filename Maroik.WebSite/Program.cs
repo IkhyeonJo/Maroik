@@ -1,4 +1,4 @@
-﻿// Maroik.WebSite ?? Program.cs
+﻿// Maroik.WebSite - Program.cs
 // Entry point for the Maroik web application.
 // Configures DI services (repositories, services, clients, session, antiforgery, CORS, localization),
 // sets up hot-swap TLS certificate polling for Docker deployments, and builds the ASP.NET Core pipeline.
@@ -22,6 +22,16 @@ using System.Security.Cryptography.X509Certificates;
 using System.Security.Cryptography;
 using System.Runtime.InteropServices;
 //using StackExchange.Redis;
+using Serilog;
+using Serilog.Events;
+
+// Bootstrap logger captures startup errors before the host is built.
+Log.Logger = new LoggerConfiguration()
+    .WriteTo.Console()
+    .CreateBootstrapLogger();
+
+try
+{
 
 X509Certificate2 currentCert;
 string previousCertHash;
@@ -31,10 +41,18 @@ var isReloading = false;
 // ReSharper disable once TooWideLocalVariableScope
 System.Timers.Timer certTimer;
 
-using var startupLoggerFactory = LoggerFactory.Create(b => b.AddConsole());
-var certLogger = startupLoggerFactory.CreateLogger("CertificateManager");
+// Serilog context logger for the certificate manager (used before host DI is available).
+var certLogger = Log.ForContext("SourceContext", "CertificateManager");
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Host.UseSerilog((context, services, configuration) => configuration
+    .MinimumLevel.Information()
+    .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
+    .MinimumLevel.Override("Microsoft.Hosting.Lifetime", LogEventLevel.Information)
+    .MinimumLevel.Override("System", LogEventLevel.Warning)
+    .Enrich.FromLogContext()
+    .WriteTo.Console(outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {SourceContext}: {Message:lj}{NewLine}{Exception}"));
 
 const string cookiePrefix = "__Secure-";
 
@@ -270,7 +288,7 @@ X509Certificate2 LoadCertificate(string certPath, string keyPath)
     }
     catch (Exception ex)
     {
-        certLogger.LogError(ex, "Failed to load certificate from {CertPath} and {KeyPath}", certPath, keyPath);
+        certLogger.Error(ex, "Failed to load certificate from {CertPath} and {KeyPath}", certPath, keyPath);
         throw;
     }
 }
@@ -339,7 +357,7 @@ if (!string.IsNullOrEmpty(cfgDockerCertPath) && !string.IsNullOrEmpty(cfgDockerK
     };
 
     certTimer.Start();
-    certLogger.LogInformation("Certificate polling started.");
+    certLogger.Information("Certificate polling started.");
 }
 #endregion
 
@@ -384,6 +402,7 @@ app.UseWhen(
         pipeline.UseRewriter(new RewriteOptions().AddRedirectToWww());
     });
 
+app.UseSerilogRequestLogging(); // Log each HTTP request (method, path, status, duration) via Serilog
 app.UseRouting(); // 5. Routing middleware for routing requests (UseRouting)
 app.UseCors();
 
@@ -452,3 +471,13 @@ app.UseMiddleware<RoleBasedStaticFileMiddleware>();
 app.MapStaticAssets();
 
 app.Run();
+
+}
+catch (Exception ex)
+{
+    Log.Fatal(ex, "Maroik.WebSite terminated unexpectedly");
+}
+finally
+{
+    Log.CloseAndFlush();
+}

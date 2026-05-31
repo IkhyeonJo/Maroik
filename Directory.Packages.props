@@ -1,5 +1,7 @@
 <Project>
   <ItemGroup>
+    <!-- Logging -->
+    <PackageVersion Include="Serilog.AspNetCore" Version="10.0.0" />
     <!-- Core -->
     <PackageVersion Include="BCrypt.Net-Next" Version="4.2.0" />
     <PackageVersion Include="ErrorOr" Version="2.1.1" />
