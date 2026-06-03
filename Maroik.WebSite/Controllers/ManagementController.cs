@@ -1,7 +1,7 @@
 ﻿using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Contract.Utilities;
-using Maroik.WebSite.Services;
+using Maroik.WebSite.Contracts;
 using Maroik.WebSite.Utilities;
 // ReSharper disable ConvertToConstant.Local
 using Maroik.WebSite.Models;

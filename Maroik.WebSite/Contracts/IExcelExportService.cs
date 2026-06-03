@@ -1,6 +1,6 @@
 using Maroik.Core.Contract.Dtos;
 
-namespace Maroik.WebSite.Services;
+namespace Maroik.WebSite.Contracts;
 
 /// <summary>
 /// Builds in-memory Excel workbooks for account-book data export.
