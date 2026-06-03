@@ -19,7 +19,7 @@ public static class ServiceCollectionExtensions
         /// <summary>
         /// Configures the PostgreSQL <see cref="ApplicationDbContext"/> using the
         /// "DefaultConnection" connection string from <paramref name="configuration"/>.
-        /// Enables legacy timestamp behaviour for Npgsql (treats DateTime as UTC without offset).
+        /// Enables legacy timestamp behavior for Npgsql (treats DateTime as UTC without offset).
         /// Retry-on-failure is disabled (count = 0) ?? transient errors are expected to be handled
         /// by the application tier.
         /// </summary>
@@ -29,7 +29,7 @@ public static class ServiceCollectionExtensions
         public void AddRepositoryContext(IConfiguration configuration)
         {
             // Tell Npgsql to handle DateTime values as local timestamps without UTC offset metadata,
-            // preserving the behaviour of older Npgsql versions.
+            // preserving the behavior of older Npgsql versions.
             AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
             services.AddDbContext<ApplicationDbContext>(options =>
