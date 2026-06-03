@@ -177,31 +177,31 @@
   <data name="Search..." xml:space="preserve">
     <value>Search...</value>
   </data>
-  <data name="기타 실물 자산" xml:space="preserve">
+  <data name="OtherPhysicalAsset" xml:space="preserve">
     <value>Other physical asset</value>
   </data>
-  <data name="동산" xml:space="preserve">
+  <data name="Movables" xml:space="preserve">
     <value>Movables</value>
   </data>
-  <data name="보험 자산" xml:space="preserve">
+  <data name="InsuranceAsset" xml:space="preserve">
     <value>Insurance asset</value>
   </data>
-  <data name="부동산" xml:space="preserve">
+  <data name="RealEstate" xml:space="preserve">
     <value>Real estate</value>
   </data>
-  <data name="신탁 자산" xml:space="preserve">
+  <data name="TrustAsset" xml:space="preserve">
     <value>Trust asset</value>
   </data>
-  <data name="자유입출금 자산" xml:space="preserve">
+  <data name="FreeDepositAndWithdrawal" xml:space="preserve">
     <value>Free deposit and withdrawal</value>
   </data>
-  <data name="저축성 자산" xml:space="preserve">
+  <data name="SavingsAsset" xml:space="preserve">
     <value>Savings asset</value>
   </data>
-  <data name="투자성 자산" xml:space="preserve">
+  <data name="InvestmentAsset" xml:space="preserve">
     <value>Investment asset</value>
   </data>
-  <data name="현금 자산" xml:space="preserve">
+  <data name="CashAsset" xml:space="preserve">
     <value>Cash asset</value>
   </data>
 </root>

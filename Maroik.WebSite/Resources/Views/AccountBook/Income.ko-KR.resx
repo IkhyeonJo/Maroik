@@ -189,28 +189,28 @@
   <data name="SubClass" xml:space="preserve">
     <value>소분류</value>
   </data>
-  <data name="근로수입" xml:space="preserve">
+  <data name="LaborIncome" xml:space="preserve">
     <value>근로수입</value>
   </data>
-  <data name="금융소득" xml:space="preserve">
+  <data name="FinancialIncome" xml:space="preserve">
     <value>금융소득</value>
   </data>
-  <data name="기타수입" xml:space="preserve">
+  <data name="OtherIncome" xml:space="preserve">
     <value>기타수입</value>
   </data>
-  <data name="비정기수입" xml:space="preserve">
+  <data name="IrregularIncome" xml:space="preserve">
     <value>비정기수입</value>
   </data>
-  <data name="사업수입" xml:space="preserve">
+  <data name="BusinessIncome" xml:space="preserve">
     <value>사업수입</value>
   </data>
-  <data name="연금수입" xml:space="preserve">
+  <data name="PensionIncome" xml:space="preserve">
     <value>연금수입</value>
   </data>
-  <data name="임대수입" xml:space="preserve">
+  <data name="RentalIncome" xml:space="preserve">
     <value>임대수입</value>
   </data>
-  <data name="정기수입" xml:space="preserve">
+  <data name="RegularIncome" xml:space="preserve">
     <value>정기수입</value>
   </data>
   <data name="PrevText" xml:space="preserve">

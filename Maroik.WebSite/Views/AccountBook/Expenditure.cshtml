@@ -1,4 +1,4 @@
-@*
+﻿@*
     AccountBook/Expenditure.cshtml
     Expenditure transaction management page.
     Displays a NonFactors MVC Grid listing all spending records (partial view _ExpenditureGrid).
@@ -114,9 +114,9 @@
                                 <label for="createExpenditureMainClass">@localizer["MainClass"].Value</label>
                                 <br />
                                 <select id="createExpenditureMainClass" name="createExpenditureMainClass" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
-                                    <option value="RegularSavings" selected="selected">@localizer["정기저축"].Value</option>
-                                    <option value="NonConsumerSpending">@localizer["비소비지출"].Value</option>
-                                    <option value="ConsumerSpending">@localizer["소비지출"].Value</option>
+                                    <option value="RegularSavings" selected="selected">@localizer["RegularSavings"].Value</option>
+                                    <option value="NonConsumerSpending">@localizer["NonConsumerSpending"].Value</option>
+                                    <option value="ConsumerSpending">@localizer["ConsumerSpending"].Value</option>
                                 </select>
                             </div>
                             <div class="form-group col-md-6 mb-3">
@@ -124,28 +124,28 @@
                                 <br />
                                 <select id="createExpenditureSubClass" name="createExpenditureSubClass" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
                                     @*Regular Savings*@
-                                    <option value="Deposit" selected="selected">@localizer["예적금"].Value</option>
-                                    <option value="Investment">@localizer["투자"].Value</option>
+                                    <option value="Deposit" selected="selected">@localizer["Deposit"].Value</option>
+                                    <option value="Investment">@localizer["Investment"].Value</option>
                                     @*Non-Consumer Spending*@
-                                    <option value="PublicPension" hidden="hidden">@localizer["공적연금"].Value</option>
-                                    <option value="DebtRepayment" hidden="hidden">@localizer["부채상환"].Value</option>
-                                    <option value="Tax" hidden="hidden">@localizer["세금"].Value</option>
-                                    <option value="SocialInsurance" hidden="hidden">@localizer["사회보험"].Value</option>
-                                    <option value="InterHouseholdTranserExpenses" hidden="hidden">@localizer["가구간 이전지출"].Value</option>
-                                    <option value="NonProfitOrganizationTransfer" hidden="hidden">@localizer["비영리단체 이전"].Value</option>
+                                    <option value="PublicPension" hidden="hidden">@localizer["PublicPension"].Value</option>
+                                    <option value="DebtRepayment" hidden="hidden">@localizer["DebtRepayment"].Value</option>
+                                    <option value="Tax" hidden="hidden">@localizer["Tax"].Value</option>
+                                    <option value="SocialInsurance" hidden="hidden">@localizer["SocialInsurance"].Value</option>
+                                    <option value="InterHouseholdTranserExpenses" hidden="hidden">@localizer["InterHouseholdTransferExpenses"].Value</option>
+                                    <option value="NonProfitOrganizationTransfer" hidden="hidden">@localizer["NonProfitOrganizationTransfer"].Value</option>
                                     @*Consumer Spending*@
                                     <option value="MealOrEatOutExpenses" hidden="hidden">@localizer["식비/외식비"].Value</option>
                                     <option value="HousingOrSuppliesCost" hidden="hidden">@localizer["주거/용품비"].Value</option>
-                                    <option value="EducationExpenses" hidden="hidden">@localizer["교육비"].Value</option>
-                                    <option value="MedicalExpenses" hidden="hidden">@localizer["의료비"].Value</option>
-                                    <option value="TransportationCost" hidden="hidden">@localizer["교통비"].Value</option>
-                                    <option value="CommunicationCost" hidden="hidden">@localizer["통신비"].Value</option>
+                                    <option value="EducationExpenses" hidden="hidden">@localizer["EducationExpenses"].Value</option>
+                                    <option value="MedicalExpenses" hidden="hidden">@localizer["MedicalExpenses"].Value</option>
+                                    <option value="TransportationCost" hidden="hidden">@localizer["TransportationCost"].Value</option>
+                                    <option value="CommunicationCost" hidden="hidden">@localizer["CommunicationCost"].Value</option>
                                     <option value="LeisureOrCulture" hidden="hidden">@localizer["여가/문화"].Value</option>
                                     <option value="ClothingOrShoes" hidden="hidden">@localizer["의류/신발"].Value</option>
-                                    <option value="PinMoney" hidden="hidden">@localizer["용돈"].Value</option>
-                                    <option value="ProtectionTypeInsurance" hidden="hidden">@localizer["보장성보험"].Value</option>
-                                    <option value="OtherExpenses" hidden="hidden">@localizer["기타지출"].Value</option>
-                                    <option value="UnknownExpenditure" hidden="hidden">@localizer["미파악지출"].Value</option>
+                                    <option value="PinMoney" hidden="hidden">@localizer["PinMoney"].Value</option>
+                                    <option value="ProtectionTypeInsurance" hidden="hidden">@localizer["ProtectionTypeInsurance"].Value</option>
+                                    <option value="OtherExpenses" hidden="hidden">@localizer["OtherExpenses"].Value</option>
+                                    <option value="UnknownExpenditure" hidden="hidden">@localizer["UnknownExpenditure"].Value</option>
                                 </select>
                             </div>
                         </div>
@@ -285,9 +285,9 @@
                                 <label for="editExpenditureMainClass">@localizer["MainClass"].Value</label>
                                 <br />
                                 <select id="editExpenditureMainClass" name="editExpenditureMainClass" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
-                                    <option value="RegularSavings" selected="selected">@localizer["정기저축"].Value</option>
-                                    <option value="NonConsumerSpending">@localizer["비소비지출"].Value</option>
-                                    <option value="ConsumerSpending">@localizer["소비지출"].Value</option>
+                                    <option value="RegularSavings" selected="selected">@localizer["RegularSavings"].Value</option>
+                                    <option value="NonConsumerSpending">@localizer["NonConsumerSpending"].Value</option>
+                                    <option value="ConsumerSpending">@localizer["ConsumerSpending"].Value</option>
                                 </select>
                             </div>
                             <div class="form-group col-md-6 mb-3">
@@ -295,28 +295,28 @@
                                 <br />
                                 <select id="editExpenditureSubClass" name="editExpenditureSubClass" class="form-control form-control-sm" style="max-width:100%;text-overflow:ellipsis;">
                                     @*Regular Savings*@
-                                    <option value="Deposit" selected="selected">@localizer["예적금"].Value</option>
-                                    <option value="Investment">@localizer["투자"].Value</option>
+                                    <option value="Deposit" selected="selected">@localizer["Deposit"].Value</option>
+                                    <option value="Investment">@localizer["Investment"].Value</option>
                                     @*Non-Consumer Spending*@
-                                    <option value="PublicPension" hidden="hidden">@localizer["공적연금"].Value</option>
-                                    <option value="DebtRepayment" hidden="hidden">@localizer["부채상환"].Value</option>
-                                    <option value="Tax" hidden="hidden">@localizer["세금"].Value</option>
-                                    <option value="SocialInsurance" hidden="hidden">@localizer["사회보험"].Value</option>
-                                    <option value="InterHouseholdTranserExpenses" hidden="hidden">@localizer["가구간 이전지출"].Value</option>
-                                    <option value="NonProfitOrganizationTransfer" hidden="hidden">@localizer["비영리단체 이전"].Value</option>
+                                    <option value="PublicPension" hidden="hidden">@localizer["PublicPension"].Value</option>
+                                    <option value="DebtRepayment" hidden="hidden">@localizer["DebtRepayment"].Value</option>
+                                    <option value="Tax" hidden="hidden">@localizer["Tax"].Value</option>
+                                    <option value="SocialInsurance" hidden="hidden">@localizer["SocialInsurance"].Value</option>
+                                    <option value="InterHouseholdTranserExpenses" hidden="hidden">@localizer["InterHouseholdTransferExpenses"].Value</option>
+                                    <option value="NonProfitOrganizationTransfer" hidden="hidden">@localizer["NonProfitOrganizationTransfer"].Value</option>
                                     @*Consumer Spending*@
                                     <option value="MealOrEatOutExpenses" hidden="hidden">@localizer["식비/외식비"].Value</option>
                                     <option value="HousingOrSuppliesCost" hidden="hidden">@localizer["주거/용품비"].Value</option>
-                                    <option value="EducationExpenses" hidden="hidden">@localizer["교육비"].Value</option>
-                                    <option value="MedicalExpenses" hidden="hidden">@localizer["의료비"].Value</option>
-                                    <option value="TransportationCost" hidden="hidden">@localizer["교통비"].Value</option>
-                                    <option value="CommunicationCost" hidden="hidden">@localizer["통신비"].Value</option>
+                                    <option value="EducationExpenses" hidden="hidden">@localizer["EducationExpenses"].Value</option>
+                                    <option value="MedicalExpenses" hidden="hidden">@localizer["MedicalExpenses"].Value</option>
+                                    <option value="TransportationCost" hidden="hidden">@localizer["TransportationCost"].Value</option>
+                                    <option value="CommunicationCost" hidden="hidden">@localizer["CommunicationCost"].Value</option>
                                     <option value="LeisureOrCulture" hidden="hidden">@localizer["여가/문화"].Value</option>
                                     <option value="ClothingOrShoes" hidden="hidden">@localizer["의류/신발"].Value</option>
-                                    <option value="PinMoney" hidden="hidden">@localizer["용돈"].Value</option>
-                                    <option value="ProtectionTypeInsurance" hidden="hidden">@localizer["보장성보험"].Value</option>
-                                    <option value="OtherExpenses" hidden="hidden">@localizer["기타지출"].Value</option>
-                                    <option value="UnknownExpenditure" hidden="hidden">@localizer["미파악지출"].Value</option>
+                                    <option value="PinMoney" hidden="hidden">@localizer["PinMoney"].Value</option>
+                                    <option value="ProtectionTypeInsurance" hidden="hidden">@localizer["ProtectionTypeInsurance"].Value</option>
+                                    <option value="OtherExpenses" hidden="hidden">@localizer["OtherExpenses"].Value</option>
+                                    <option value="UnknownExpenditure" hidden="hidden">@localizer["UnknownExpenditure"].Value</option>
                                 </select>
                             </div>
                         </div>

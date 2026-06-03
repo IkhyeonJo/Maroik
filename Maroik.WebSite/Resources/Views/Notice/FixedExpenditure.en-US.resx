@@ -204,46 +204,46 @@
   <data name="LightBlue Row" xml:space="preserve">
     <value>LightBlue Row</value>
   </data>
-  <data name="가구간 이전지출" xml:space="preserve">
+  <data name="InterHouseholdTransferExpenses" xml:space="preserve">
     <value>Inter household transer</value>
   </data>
-  <data name="공적연금" xml:space="preserve">
+  <data name="PublicPension" xml:space="preserve">
     <value>Public pension</value>
   </data>
-  <data name="교육비" xml:space="preserve">
+  <data name="EducationExpenses" xml:space="preserve">
     <value>Education expenses</value>
   </data>
-  <data name="교통비" xml:space="preserve">
+  <data name="TransportationCost" xml:space="preserve">
     <value>Transportation cost</value>
   </data>
-  <data name="기타지출" xml:space="preserve">
+  <data name="OtherExpenses" xml:space="preserve">
     <value>Other expenses</value>
   </data>
   <data name="내자산이체" xml:space="preserve">
     <value>My asset transfer</value>
   </data>
-  <data name="미파악지출" xml:space="preserve">
+  <data name="UnknownExpenditure" xml:space="preserve">
     <value>Unknown expenditure</value>
   </data>
-  <data name="보장성보험" xml:space="preserve">
+  <data name="ProtectionTypeInsurance" xml:space="preserve">
     <value>Protection type insurance</value>
   </data>
-  <data name="부채상환" xml:space="preserve">
+  <data name="DebtRepayment" xml:space="preserve">
     <value>Debt repayment</value>
   </data>
-  <data name="비소비지출" xml:space="preserve">
+  <data name="NonConsumerSpending" xml:space="preserve">
     <value>NonConsumer spending</value>
   </data>
-  <data name="비영리단체 이전" xml:space="preserve">
+  <data name="NonProfitOrganizationTransfer" xml:space="preserve">
     <value>NonProfit organization</value>
   </data>
-  <data name="사회보험" xml:space="preserve">
+  <data name="SocialInsurance" xml:space="preserve">
     <value>Social insurance</value>
   </data>
-  <data name="세금" xml:space="preserve">
+  <data name="Tax" xml:space="preserve">
     <value>Tax</value>
   </data>
-  <data name="소비지출" xml:space="preserve">
+  <data name="ConsumerSpending" xml:space="preserve">
     <value>Consumer spending</value>
   </data>
   <data name="식비/외식비" xml:space="preserve">
@@ -252,28 +252,28 @@
   <data name="여가/문화" xml:space="preserve">
     <value>Leisure or culture</value>
   </data>
-  <data name="예적금" xml:space="preserve">
+  <data name="Deposit" xml:space="preserve">
     <value>Deposit</value>
   </data>
-  <data name="용돈" xml:space="preserve">
+  <data name="PinMoney" xml:space="preserve">
     <value>Pin money</value>
   </data>
-  <data name="의료비" xml:space="preserve">
+  <data name="MedicalExpenses" xml:space="preserve">
     <value>Medical expenses</value>
   </data>
   <data name="의류/신발" xml:space="preserve">
     <value>Clothing or shoes</value>
   </data>
-  <data name="정기저축" xml:space="preserve">
+  <data name="RegularSavings" xml:space="preserve">
     <value>Regular savings</value>
   </data>
   <data name="주거/용품비" xml:space="preserve">
     <value>Housing or suppliesCost</value>
   </data>
-  <data name="통신비" xml:space="preserve">
+  <data name="CommunicationCost" xml:space="preserve">
     <value>Communication cost</value>
   </data>
-  <data name="투자" xml:space="preserve">
+  <data name="Investment" xml:space="preserve">
     <value>Investment</value>
   </data>
   <data name="PrevText" xml:space="preserve">
