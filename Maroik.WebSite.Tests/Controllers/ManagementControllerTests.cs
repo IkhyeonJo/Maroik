@@ -7,7 +7,8 @@ namespace Maroik.WebSite.Tests.Controllers;
 /// The Account and Menu GET actions return <c>View()</c> for non-AJAX requests
 /// (no session dependency on the non-AJAX path), so they must respond 200 OK.
 /// </summary>
-public class ManagementControllerTests : IClassFixture<MaroikWebApplicationFactory>
+[Collection("WebSite Integration")]
+public class ManagementControllerTests
 {
     private readonly HttpClient _client;
 

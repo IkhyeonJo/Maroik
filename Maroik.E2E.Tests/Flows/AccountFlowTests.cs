@@ -11,8 +11,11 @@ namespace Maroik.E2E.Tests.Flows;
 /// correct HTML elements are present on the page ?? no form submission is made
 /// (POST requires a real DB and SMTP server).
 /// </summary>
+[Collection("E2E")]
 public class AccountFlowTests : E2ETestBase
 {
+    public AccountFlowTests(E2ESharedFixture fixture) : base(fixture) { }
+
     // -- Login ----------------------------------------------------------------
 
     /// <summary>Verifies that <c>LoginPage</c> has email and password inputs and submit button.</summary>

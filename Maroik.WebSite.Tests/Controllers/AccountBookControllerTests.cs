@@ -7,7 +7,8 @@ namespace Maroik.WebSite.Tests.Controllers;
 /// The Asset, Income, and Expenditure GET actions return <c>View()</c> for non-AJAX requests
 /// (no session dependency for the non-AJAX path), so they must respond 200 OK.
 /// </summary>
-public class AccountBookControllerTests : IClassFixture<MaroikWebApplicationFactory>
+[Collection("WebSite Integration")]
+public class AccountBookControllerTests
 {
     private readonly HttpClient _client;
 

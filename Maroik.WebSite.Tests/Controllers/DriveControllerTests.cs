@@ -7,7 +7,8 @@ namespace Maroik.WebSite.Tests.Controllers;
 /// All three index views (Admin/User/Anonymous) simply return <c>View()</c>
 /// with no session dependency and must respond 200 OK.
 /// </summary>
-public class DriveControllerTests : IClassFixture<MaroikWebApplicationFactory>
+[Collection("WebSite Integration")]
+public class DriveControllerTests
 {
     private readonly HttpClient _client;
 

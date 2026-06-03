@@ -4,51 +4,29 @@ namespace Maroik.E2E.Tests.Infrastructure;
 
 /// <summary>
 /// Base class for Playwright E2E tests.
-///
-/// Lifecycle per test class:
-/// <list type="number">
-///   <item>The <see cref="PlaywrightWebApplicationFactory"/> starts a real Kestrel server.</item>
-///   <item><see cref="Playwright.CreateAsync"/> instantiates the Playwright engine.</item>
-///   <item><see cref="IBrowser"/> launches headless Chromium.</item>
-///   <item>Each test creates a fresh <see cref="IPage"/> in a new browser context (no shared cookies/session).</item>
-///   <item>Everything is torn down in <see cref="DisposeAsync"/>.</item>
-/// </list>
+/// Receives the shared <see cref="E2ESharedFixture"/> from the "E2E" collection,
+/// which holds a single <see cref="PlaywrightWebApplicationFactory"/> and browser
+/// instance for the entire test session.  Each test creates a fresh
+/// <see cref="IPage"/> in a new isolated browser context via <see cref="NewPageAsync"/>.
 /// </summary>
-public abstract class E2ETestBase : IAsyncLifetime
+public abstract class E2ETestBase
 {
-    protected PlaywrightWebApplicationFactory Factory { get; } = new();
-    protected string BaseUrl => Factory.ServerBaseUrl;
+    private readonly E2ESharedFixture _fixture;
 
-    private IPlaywright? _playwright;
-    private IBrowser? _browser;
+    protected string BaseUrl => _fixture.ServerBaseUrl;
 
-    public async ValueTask InitializeAsync()
+    protected E2ETestBase(E2ESharedFixture fixture)
     {
-        // Trigger server start by making one HTTP request
-        Factory.CreateClient();
-
-        _playwright = await Playwright.CreateAsync();
-        _browser = await _playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions
-        {
-            Headless = true,
-            Channel = "chrome"  // use system-installed Chrome; avoids downloading Playwright's bundled Chromium
-        });
-    }
-
-    public async ValueTask DisposeAsync()
-    {
-        if (_browser != null) await _browser.DisposeAsync();
-        _playwright?.Dispose();
-        Factory.Dispose();
+        _fixture = fixture;
     }
 
     /// <summary>Creates a fresh <see cref="IPage"/> in a new isolated browser context.</summary>
     protected async Task<IPage> NewPageAsync()
     {
-        var context = await _browser!.NewContextAsync(new BrowserNewContextOptions
+        var context = await _fixture.Browser.NewContextAsync(new BrowserNewContextOptions
         {
             BaseURL = BaseUrl,
-            IgnoreHTTPSErrors = true  // trust the ASP.NET Core dev certificate used by the test server
+            IgnoreHTTPSErrors = true
         });
         return await context.NewPageAsync();
     }

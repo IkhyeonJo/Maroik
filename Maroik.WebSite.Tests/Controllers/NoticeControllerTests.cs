@@ -7,7 +7,8 @@ namespace Maroik.WebSite.Tests.Controllers;
 /// The FixedIncome and FixedExpenditure GET actions return <c>View()</c> for non-AJAX requests
 /// (no session dependency on the non-AJAX path), so they must respond 200 OK.
 /// </summary>
-public class NoticeControllerTests : IClassFixture<MaroikWebApplicationFactory>
+[Collection("WebSite Integration")]
+public class NoticeControllerTests
 {
     private readonly HttpClient _client;
 

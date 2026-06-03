@@ -8,8 +8,11 @@ namespace Maroik.E2E.Tests.Flows;
 /// The anonymous dashboard is the application's default landing page and the only
 /// dashboard that an unauthenticated browser can reach without a session.
 /// </summary>
+[Collection("E2E")]
 public class DashBoardFlowTests : E2ETestBase
 {
+    public DashBoardFlowTests(E2ESharedFixture fixture) : base(fixture) { }
+
     // -- Anonymous dashboard --------------------------------------------------
 
     /// <summary>Verifies that <c>AnonymousDashboard</c> loads with non empty body.</summary>

@@ -7,7 +7,8 @@ namespace Maroik.WebSite.Tests.Controllers;
 /// The anonymous dashboard is the application's default route and must be
 /// reachable without authentication.
 /// </summary>
-public class DashBoardControllerTests : IClassFixture<MaroikWebApplicationFactory>
+[Collection("WebSite Integration")]
+public class DashBoardControllerTests
 {
     private readonly HttpClient _client;
 

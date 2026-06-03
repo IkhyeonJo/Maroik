@@ -7,7 +7,8 @@ namespace Maroik.WebSite.Tests.Controllers;
 /// The free-forum list view uses <c>GetAccount() ?? anonymous</c> so it works
 /// without a session and must respond 200 OK.
 /// </summary>
-public class ForumControllerTests : IClassFixture<MaroikWebApplicationFactory>
+[Collection("WebSite Integration")]
+public class ForumControllerTests
 {
     private readonly HttpClient _client;
 

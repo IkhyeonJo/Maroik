@@ -7,7 +7,8 @@ namespace Maroik.WebSite.Tests.Controllers;
 /// The anonymous index uses an anonymous-default <see cref="Maroik.Core.Contract.Dtos.AccountResponse"/>
 /// and requires no session; it must respond 200 OK.
 /// </summary>
-public class CalendarControllerTests : IClassFixture<MaroikWebApplicationFactory>
+[Collection("WebSite Integration")]
+public class CalendarControllerTests
 {
     private readonly HttpClient _client;
 

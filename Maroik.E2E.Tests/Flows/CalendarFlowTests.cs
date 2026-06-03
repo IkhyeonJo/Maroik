@@ -8,8 +8,11 @@ namespace Maroik.E2E.Tests.Flows;
 /// The anonymous calendar view uses a hard-coded anonymous <c>AccountResponse</c>
 /// so it is reachable without a session.
 /// </summary>
+[Collection("E2E")]
 public class CalendarFlowTests : E2ETestBase
 {
+    public CalendarFlowTests(E2ESharedFixture fixture) : base(fixture) { }
+
     /// <summary>Verifies that <c>AnonymousCalendar</c> loads with non empty body.</summary>
     [Fact]
     public async Task AnonymousCalendar_Loads_WithNonEmptyBody()

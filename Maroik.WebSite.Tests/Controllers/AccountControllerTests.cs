@@ -8,7 +8,8 @@ namespace Maroik.WebSite.Tests.Controllers;
 /// All self-service account flows (consent, login, register, forgot-password, etc.)
 /// are accessible without authentication and should respond with 200 OK.
 /// </summary>
-public class AccountControllerTests : IClassFixture<MaroikWebApplicationFactory>
+[Collection("WebSite Integration")]
+public class AccountControllerTests
 {
     private readonly HttpClient _client;
 

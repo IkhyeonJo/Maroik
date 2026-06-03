@@ -7,8 +7,11 @@ namespace Maroik.E2E.Tests.Flows;
 /// End-to-end tests for the FreeForum user flow.
 /// The forum list is accessible without authentication; write mode requires a login.
 /// </summary>
+[Collection("E2E")]
 public class ForumFlowTests : E2ETestBase
 {
+    public ForumFlowTests(E2ESharedFixture fixture) : base(fixture) { }
+
     // -- Forum list -----------------------------------------------------------
 
     /// <summary>Verifies that <c>FreeForumList</c> loads with non empty body.</summary>
