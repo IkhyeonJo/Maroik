@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -64,7 +65,8 @@ public class MaroikWebApplicationFactory : WebApplicationFactory<Program>
                 ["FileStorage:BaseUrl"] = "http://localhost:5001",
 
                 // DB ?? overridden below with InMemory, but a value is required to avoid null errors
-                ["ConnectionStrings:DefaultConnection"] = "Host=localhost;Database=test;Username=test;Password=test"
+                ["ConnectionStrings:DefaultConnection"] = "Host=localhost;Database=test;Username=test;Password=test",
+                ["ConnectionStrings:Redis"] = ""
             }!);
         });
 
@@ -95,6 +97,13 @@ public class MaroikWebApplicationFactory : WebApplicationFactory<Program>
                 options
                     .UseInternalServiceProvider(internalServiceProvider)
                     .UseInMemoryDatabase(dbName));
+
+            // Replace Redis distributed cache with in-memory so tests run without a Redis instance.
+            var distributedCacheDescriptors = services
+                .Where(d => d.ServiceType == typeof(IDistributedCache))
+                .ToList();
+            foreach (var d in distributedCacheDescriptors) services.Remove(d);
+            services.AddDistributedMemoryCache();
 
             // Program.cs reads DomainName before ConfigureAppConfiguration overrides take effect,
             // so Session/Antiforgery cookies end up with Domain=localhost (from appsettings.Development.json).

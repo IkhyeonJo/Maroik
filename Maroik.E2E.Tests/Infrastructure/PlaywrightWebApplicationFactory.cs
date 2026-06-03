@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Hosting.Server;
 using Microsoft.AspNetCore.Hosting.Server.Features;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -61,13 +62,21 @@ public sealed class PlaywrightWebApplicationFactory : WebApplicationFactory<Prog
                 ["Clamav:Host"] = "localhost",
                 ["Clamav:Port"] = "3310",
                 ["FileStorage:BaseUrl"] = "http://localhost:5001",
-                ["ConnectionStrings:DefaultConnection"] = "Host=localhost;Database=test;Username=test;Password=test"
+                ["ConnectionStrings:DefaultConnection"] = "Host=localhost;Database=test;Username=test;Password=test",
+                ["ConnectionStrings:Redis"] = ""
             }!);
         });
 
-        // -- Replace PostgreSQL with InMemory --------------------------------
+        // -- Replace PostgreSQL with InMemory, Redis with in-memory distributed cache --------
         builder.ConfigureServices(services =>
         {
+            // Replace Redis distributed cache with in-memory so tests run without a Redis instance.
+            var distributedCacheDescriptors = services
+                .Where(d => d.ServiceType == typeof(IDistributedCache))
+                .ToList();
+            foreach (var d in distributedCacheDescriptors) services.Remove(d);
+            services.AddDistributedMemoryCache();
+
             var dbOptionsDescriptor = services.SingleOrDefault(
                 d => d.ServiceType == typeof(DbContextOptions<ApplicationDbContext>));
             if (dbOptionsDescriptor != null) services.Remove(dbOptionsDescriptor);

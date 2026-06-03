@@ -1,12 +1,11 @@
-﻿using Maroik.Core.Contract.Dtos;
+using Maroik.Core.Contract.Dtos;
 using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Contract.Utilities;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
-using Microsoft.Extensions.Caching.Memory;
-using Newtonsoft.Json;
+using Microsoft.Extensions.Caching.Distributed;
 using System.Reflection;
-using System.Text;
+using System.Text.Json;
 
 namespace Maroik.WebSite.Utilities;
 
@@ -18,15 +17,15 @@ namespace Maroik.WebSite.Utilities;
 public class AuthorizationFilter : ActionFilterAttribute
 {
     private readonly IMenuService _menuService;
-    private readonly IMemoryCache _cache;
+    private readonly IDistributedCache _cache;
     private readonly ISessionService _sessionService;
 
-    private const string AdminCategoriesCacheKey = "nav_admin_categories";
-    private const string AdminSubCategoriesCacheKey = "nav_admin_subcategories";
-    private const string UserCategoriesCacheKey = "nav_user_categories";
-    private const string UserSubCategoriesCacheKey = "nav_user_subcategories";
-    private const string AnonymousCategoriesCacheKey = "nav_anonymous_categories";
-    private const string AnonymousSubCategoriesCacheKey = "nav_anonymous_subcategories";
+    private const string AdminCategoriesCacheKey        = NavigationCacheKeys.AdminCategories;
+    private const string AdminSubCategoriesCacheKey     = NavigationCacheKeys.AdminSubCategories;
+    private const string UserCategoriesCacheKey         = NavigationCacheKeys.UserCategories;
+    private const string UserSubCategoriesCacheKey      = NavigationCacheKeys.UserSubCategories;
+    private const string AnonymousCategoriesCacheKey    = NavigationCacheKeys.AnonymousCategories;
+    private const string AnonymousSubCategoriesCacheKey = NavigationCacheKeys.AnonymousSubCategories;
 
     private static readonly IReadOnlyList<Type> CachedControllerTypes =
         Assembly.GetExecutingAssembly().GetTypes()
@@ -35,9 +34,9 @@ public class AuthorizationFilter : ActionFilterAttribute
 
     /// <summary>Initializes a new instance of <see cref="AuthorizationFilter"/> with the required dependencies.</summary>
     /// <param name="menuService">Service used to load category and sub-category navigation data.</param>
-    /// <param name="cache">In-process memory cache used to store the navigation menu for 10 minutes.</param>
+    /// <param name="cache">Distributed cache (Redis) used to store the navigation menu for 10 minutes.</param>
     /// <param name="sessionService">Service used to retrieve the currently logged-in account from the session.</param>
-    public AuthorizationFilter(IMenuService menuService, IMemoryCache cache, ISessionService sessionService)
+    public AuthorizationFilter(IMenuService menuService, IDistributedCache cache, ISessionService sessionService)
     {
         _menuService = menuService;
         _cache = cache;
@@ -47,32 +46,53 @@ public class AuthorizationFilter : ActionFilterAttribute
     /// <summary>Loads (or restores from cache) the navigation menu data and populates ViewBag before the action executes.</summary>
     public override async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
     {
-        if (!_cache.TryGetValue(AdminCategoriesCacheKey, out IEnumerable<CategoryResponse>? adminCategories) ||
-            !_cache.TryGetValue(AdminSubCategoriesCacheKey, out IEnumerable<SubCategoryResponse>? adminSubCategories) ||
-            !_cache.TryGetValue(UserCategoriesCacheKey, out IEnumerable<CategoryResponse>? userCategories) ||
-            !_cache.TryGetValue(UserSubCategoriesCacheKey, out IEnumerable<SubCategoryResponse>? userSubCategories) ||
-            !_cache.TryGetValue(AnonymousCategoriesCacheKey, out IEnumerable<CategoryResponse>? anonymousCategories) ||
-            !_cache.TryGetValue(AnonymousSubCategoriesCacheKey, out IEnumerable<SubCategoryResponse>? anonymousSubCategories))
+        var results = await Task.WhenAll(
+            _cache.GetAsync(AdminCategoriesCacheKey),
+            _cache.GetAsync(AdminSubCategoriesCacheKey),
+            _cache.GetAsync(UserCategoriesCacheKey),
+            _cache.GetAsync(UserSubCategoriesCacheKey),
+            _cache.GetAsync(AnonymousCategoriesCacheKey),
+            _cache.GetAsync(AnonymousSubCategoriesCacheKey));
+
+        IEnumerable<CategoryResponse> adminCategories;
+        IEnumerable<SubCategoryResponse> adminSubCategories;
+        IEnumerable<CategoryResponse> userCategories;
+        IEnumerable<SubCategoryResponse> userSubCategories;
+        IEnumerable<CategoryResponse> anonymousCategories;
+        IEnumerable<SubCategoryResponse> anonymousSubCategories;
+
+        if (results[0] == null || results[1] == null || results[2] == null ||
+            results[3] == null || results[4] == null || results[5] == null)
         {
-            var categories = (await _menuService.GetAllCategoriesAsync()).ToList();
+            var categories    = (await _menuService.GetAllCategoriesAsync()).ToList();
             var subCategories = (await _menuService.GetAllSubCategoriesAsync()).ToList();
 
-            var entryOptions = new MemoryCacheEntryOptions()
+            var entryOptions = new DistributedCacheEntryOptions()
                 .SetSlidingExpiration(TimeSpan.FromMinutes(10));
 
-            adminCategories = categories.Where(c => c.Role == Role.Admin).ToList();
-            adminSubCategories = subCategories.Where(s => s.Role == Role.Admin).ToList();
-            userCategories = categories.Where(c => c.Role == Role.User).ToList();
-            userSubCategories = subCategories.Where(s => s.Role == Role.User).ToList();
-            anonymousCategories = categories.Where(c => c.Role == Role.Anonymous).ToList();
+            adminCategories        = categories.Where(c => c.Role == Role.Admin).ToList();
+            adminSubCategories     = subCategories.Where(s => s.Role == Role.Admin).ToList();
+            userCategories         = categories.Where(c => c.Role == Role.User).ToList();
+            userSubCategories      = subCategories.Where(s => s.Role == Role.User).ToList();
+            anonymousCategories    = categories.Where(c => c.Role == Role.Anonymous).ToList();
             anonymousSubCategories = subCategories.Where(s => s.Role == Role.Anonymous).ToList();
 
-            _cache.Set(AdminCategoriesCacheKey, adminCategories, entryOptions);
-            _cache.Set(AdminSubCategoriesCacheKey, adminSubCategories, entryOptions);
-            _cache.Set(UserCategoriesCacheKey, userCategories, entryOptions);
-            _cache.Set(UserSubCategoriesCacheKey, userSubCategories, entryOptions);
-            _cache.Set(AnonymousCategoriesCacheKey, anonymousCategories, entryOptions);
-            _cache.Set(AnonymousSubCategoriesCacheKey, anonymousSubCategories, entryOptions);
+            await Task.WhenAll(
+                _cache.SetAsync(AdminCategoriesCacheKey,        JsonSerializer.SerializeToUtf8Bytes(adminCategories),        entryOptions),
+                _cache.SetAsync(AdminSubCategoriesCacheKey,     JsonSerializer.SerializeToUtf8Bytes(adminSubCategories),     entryOptions),
+                _cache.SetAsync(UserCategoriesCacheKey,         JsonSerializer.SerializeToUtf8Bytes(userCategories),         entryOptions),
+                _cache.SetAsync(UserSubCategoriesCacheKey,      JsonSerializer.SerializeToUtf8Bytes(userSubCategories),      entryOptions),
+                _cache.SetAsync(AnonymousCategoriesCacheKey,    JsonSerializer.SerializeToUtf8Bytes(anonymousCategories),    entryOptions),
+                _cache.SetAsync(AnonymousSubCategoriesCacheKey, JsonSerializer.SerializeToUtf8Bytes(anonymousSubCategories), entryOptions));
+        }
+        else
+        {
+            adminCategories        = JsonSerializer.Deserialize<List<CategoryResponse>>(results[0]!)!;
+            adminSubCategories     = JsonSerializer.Deserialize<List<SubCategoryResponse>>(results[1]!)!;
+            userCategories         = JsonSerializer.Deserialize<List<CategoryResponse>>(results[2]!)!;
+            userSubCategories      = JsonSerializer.Deserialize<List<SubCategoryResponse>>(results[3]!)!;
+            anonymousCategories    = JsonSerializer.Deserialize<List<CategoryResponse>>(results[4]!)!;
+            anonymousSubCategories = JsonSerializer.Deserialize<List<SubCategoryResponse>>(results[5]!)!;
         }
 
         if (context.Controller is Controller ctrl)

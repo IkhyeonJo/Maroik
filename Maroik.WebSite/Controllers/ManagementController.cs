@@ -3,6 +3,7 @@ using Maroik.Core.Contract.Interfaces;
 using Maroik.Core.Contract.Utilities;
 using Maroik.WebSite.Contracts;
 using Maroik.WebSite.Utilities;
+using Microsoft.Extensions.Caching.Distributed;
 // ReSharper disable ConvertToConstant.Local
 using Maroik.WebSite.Models;
 using Maroik.WebSite.Models.ViewModels.Management;
@@ -33,6 +34,7 @@ public class ManagementController : BaseController
     private readonly IBoardService _boardService;
     private readonly ISessionService _sessionService;
     private readonly IExcelExportService _excelExportService;
+    private readonly IDistributedCache _cache;
 
     /// <summary>Initializes a new instance of <see cref="ManagementController"/> with the supplied dependencies.</summary>
     public ManagementController(
@@ -48,7 +50,8 @@ public class ManagementController : BaseController
         IDashboardService dashboardService,
         IOptions<ServerSetting> serverSettings,
         ISessionService sessionService,
-        IExcelExportService excelExportService)
+        IExcelExportService excelExportService,
+        IDistributedCache cache)
         : base(accountService, dashboardService, serverSettings, sessionService)
     {
         _rsa = rsa;
@@ -62,9 +65,18 @@ public class ManagementController : BaseController
         _menuService = menuService;
         _boardService = boardService;
         _excelExportService = excelExportService;
+        _cache = cache;
     }
 
     private Func<string, string> Localize => key => _localizer[key].Value;
+
+    private Task InvalidateNavigationCacheAsync() => Task.WhenAll(
+        _cache.RemoveAsync(NavigationCacheKeys.AdminCategories),
+        _cache.RemoveAsync(NavigationCacheKeys.AdminSubCategories),
+        _cache.RemoveAsync(NavigationCacheKeys.UserCategories),
+        _cache.RemoveAsync(NavigationCacheKeys.UserSubCategories),
+        _cache.RemoveAsync(NavigationCacheKeys.AnonymousCategories),
+        _cache.RemoveAsync(NavigationCacheKeys.AnonymousSubCategories));
 
     #region Profile
 
@@ -535,9 +547,10 @@ public class ManagementController : BaseController
                 Role = menuInputViewModel.Role,
                 Order = menuInputViewModel.Order
             });
-            return createCatResult.Success
-                ? Json(new { result = true, message = _localizer["Successfully created the category"].Value })
-                : Json(new { result = false, error = _localizer["Input is invalid"].Value });
+            if (!createCatResult.Success)
+                return Json(new { result = false, error = _localizer["Input is invalid"].Value });
+            await InvalidateNavigationCacheAsync();
+            return Json(new { result = true, message = _localizer["Successfully created the category"].Value });
         }
         catch
         {
@@ -569,9 +582,10 @@ public class ManagementController : BaseController
                 Role = menuInputViewModel.Role,
                 Order = menuInputViewModel.Order
             });
-            return createSubCatResult.Success
-                ? Json(new { result = true, message = _localizer["Successfully created the subCategory"].Value })
-                : Json(new { result = false, error = _localizer["Input is invalid"].Value });
+            if (!createSubCatResult.Success)
+                return Json(new { result = false, error = _localizer["Input is invalid"].Value });
+            await InvalidateNavigationCacheAsync();
+            return Json(new { result = true, message = _localizer["Successfully created the subCategory"].Value });
         }
         catch
         {
@@ -754,9 +768,10 @@ public class ManagementController : BaseController
                 Role = menuInputViewModel.Role,
                 Order = menuInputViewModel.Order
             });
-            return updateCatResult.Success
-                ? Json(new { result = true, message = _localizer["Successfully updated the category"].Value })
-                : Json(new { result = false, error = _localizer["Input is invalid"].Value });
+            if (!updateCatResult.Success)
+                return Json(new { result = false, error = _localizer["Input is invalid"].Value });
+            await InvalidateNavigationCacheAsync();
+            return Json(new { result = true, message = _localizer["Successfully updated the category"].Value });
         }
         catch
         {
@@ -789,9 +804,10 @@ public class ManagementController : BaseController
                 Role = menuInputViewModel.Role,
                 Order = menuInputViewModel.Order
             });
-            return updateSubCatResult.Success
-                ? Json(new { result = true, message = _localizer["Successfully updated the subCategory"].Value })
-                : Json(new { result = false, error = _localizer["Input is invalid"].Value });
+            if (!updateSubCatResult.Success)
+                return Json(new { result = false, error = _localizer["Input is invalid"].Value });
+            await InvalidateNavigationCacheAsync();
+            return Json(new { result = true, message = _localizer["Successfully updated the subCategory"].Value });
         }
         catch
         {
@@ -828,9 +844,10 @@ public class ManagementController : BaseController
                 Role = menuInputViewModel.Role,
                 Order = menuInputViewModel.Order
             });
-            return deleteCatResult.Success
-                ? Json(new { result = true, message = _localizer["Successfully deleted the category"].Value })
-                : Json(new { result = false, error = _localizer["Input is invalid"].Value });
+            if (!deleteCatResult.Success)
+                return Json(new { result = false, error = _localizer["Input is invalid"].Value });
+            await InvalidateNavigationCacheAsync();
+            return Json(new { result = true, message = _localizer["Successfully deleted the category"].Value });
         }
         catch
         {
@@ -864,9 +881,10 @@ public class ManagementController : BaseController
                 Order = menuInputViewModel.Order
             });
 
-            return deleteSubCatResult.Success
-                ? Json(new { result = true, message = _localizer["Successfully deleted the subCategory"].Value })
-                : Json(new { result = false, error = _localizer["Input is invalid"].Value });
+            if (!deleteSubCatResult.Success)
+                return Json(new { result = false, error = _localizer["Input is invalid"].Value });
+            await InvalidateNavigationCacheAsync();
+            return Json(new { result = true, message = _localizer["Successfully deleted the subCategory"].Value });
         }
         catch
         {

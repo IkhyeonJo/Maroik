@@ -1,23 +1,28 @@
 volumes:
       datasource:
       dataprotection-keys:
-      #redis-data:
+      redis-data:
 
-networks:       
+networks:
        backend:
 
 services:
-    #redis:
-      #image: redis:7-alpine
-      #container_name: Maroik.Redis
-      #restart: unless-stopped
-      #expose:
-        #- "6379"
-      #volumes:
-        #- redis-data:/data
-      #networks:
-        #- backend
-      #command: redis-server --appendonly yes
+    redis:
+      image: redis:7-alpine
+      container_name: Maroik.Redis
+      restart: unless-stopped
+      expose:
+        - "6379"
+      volumes:
+        - redis-data:/data
+      networks:
+        - backend
+      command: redis-server --appendonly yes
+      healthcheck:
+        test: ["CMD", "redis-cli", "ping"]
+        interval: 5s
+        timeout: 3s
+        retries: 5
 
     clamav:
       image: clamav/clamav:latest
@@ -52,13 +57,17 @@ services:
           - "443:443"
         env_file:
           - .env.prod
+        environment:
+          - ConnectionStrings__Redis=Maroik.Redis:6379,abortConnect=false
         volumes:
           - ./Maroik.SSL/conf:/etc/letsencrypt:ro
           - ./Maroik.Log/:/app/Maroik.Log:rw
           - dataprotection-keys:/root/.aspnet/DataProtection-Keys
-        depends_on :
-          - postgresql  
-          #- redis  
+        depends_on:
+          postgresql:
+            condition: service_started
+          redis:
+            condition: service_healthy
           
     maroik.filestorage:
         build :

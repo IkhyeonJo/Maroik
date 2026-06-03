@@ -131,38 +131,13 @@ try
 
   #endregion
 
-//#region REDIS
-// NuGet: Microsoft.Extensions.Caching.StackExchangeRedis
-//builder.Services.AddSingleton<IConnectionMultiplexer>(provider =>
-//{
-//    var connectionString = builder.Configuration.GetConnectionString("Redis");
-//    return ConnectionMultiplexer.Connect(connectionString!);
-//});
-
-// NuGet: Microsoft.Extensions.Caching.StackExchangeRedis
-//builder.Services.AddStackExchangeRedisCache(options =>
-//{
-//    options.Configuration = builder.Configuration.GetConnectionString("Redis");
-//    options.InstanceName = "MaroikWebSite";
-//
-//    // Additional settings for Redis connection stability
-//    options.ConfigurationOptions = new StackExchange.Redis.ConfigurationOptions
-//    {
-//        EndPoints = { builder.Configuration.GetConnectionString("Redis")! },
-//        AbortOnConnectFail = false,
-//        ConnectTimeout = 10000,
-//        SyncTimeout = 10000,
-//        AsyncTimeout = 10000,
-//        ConnectRetry = 3,
-//        ReconnectRetryPolicy = new ExponentialRetry(1000),
-//        KeepAlive = 60
-//    };
-//});
-//#endregion
-
   #region AddSession
 
-  builder.Services.AddDistributedMemoryCache(); // Server Memory
+  builder.Services.AddStackExchangeRedisCache(options =>
+  {
+    options.Configuration = builder.Configuration.GetConnectionString("Redis");
+    options.InstanceName = "MaroikWebSite:";
+  });
   builder.Services.AddSession(options =>
   {
     options.IdleTimeout = TimeSpan.FromMinutes(cfgSessionExpireMinutes);
