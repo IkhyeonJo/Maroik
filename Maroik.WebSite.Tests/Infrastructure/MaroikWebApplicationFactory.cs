@@ -2,6 +2,7 @@
 using Maroik.Core.PostgreSQL.Data;
 using Maroik.Core.PostgreSQL.Models;
 using Microsoft.AspNetCore.Antiforgery;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.Builder;
@@ -104,6 +105,9 @@ public class MaroikWebApplicationFactory : WebApplicationFactory<Program>
                 .ToList();
             foreach (var d in distributedCacheDescriptors) services.Remove(d);
             services.AddDistributedMemoryCache();
+
+            // Replace Redis-backed Data Protection with ephemeral in-memory keys.
+            services.AddDataProtection().UseEphemeralDataProtectionProvider();
 
             // Program.cs reads DomainName before ConfigureAppConfiguration overrides take effect,
             // so Session/Antiforgery cookies end up with Domain=localhost (from appsettings.Development.json).

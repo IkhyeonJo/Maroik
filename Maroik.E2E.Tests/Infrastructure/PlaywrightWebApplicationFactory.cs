@@ -1,6 +1,7 @@
 ﻿using Maroik.Core.Contract.Utilities;
 using Maroik.Core.PostgreSQL.Data;
 using Maroik.Core.PostgreSQL.Models;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Hosting.Server;
 using Microsoft.AspNetCore.Hosting.Server.Features;
@@ -76,6 +77,9 @@ public sealed class PlaywrightWebApplicationFactory : WebApplicationFactory<Prog
                 .ToList();
             foreach (var d in distributedCacheDescriptors) services.Remove(d);
             services.AddDistributedMemoryCache();
+
+            // Replace Redis-backed Data Protection with ephemeral in-memory keys.
+            services.AddDataProtection().UseEphemeralDataProtectionProvider();
 
             var dbOptionsDescriptor = services.SingleOrDefault(
                 d => d.ServiceType == typeof(DbContextOptions<ApplicationDbContext>));

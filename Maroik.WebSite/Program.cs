@@ -21,7 +21,8 @@ using System.Globalization;
 using System.Security.Cryptography.X509Certificates;
 using System.Security.Cryptography;
 using System.Runtime.InteropServices;
-//using StackExchange.Redis;
+using Microsoft.AspNetCore.DataProtection;
+using StackExchange.Redis;
 using Serilog;
 using Serilog.Events;
 
@@ -131,13 +132,30 @@ try
 
   #endregion
 
-  #region AddSession
+  #region Redis / Session / DataProtection
 
-  builder.Services.AddStackExchangeRedisCache(options =>
+  var redisConnectionString = builder.Configuration.GetConnectionString("Redis");
+  IConnectionMultiplexer? redis = string.IsNullOrEmpty(redisConnectionString)
+    ? null
+    : ConnectionMultiplexer.Connect(redisConnectionString);
+
+  if (redis != null)
   {
-    options.Configuration = builder.Configuration.GetConnectionString("Redis");
-    options.InstanceName = "MaroikWebSite:";
-  });
+    builder.Services.AddSingleton<IConnectionMultiplexer>(redis);
+    builder.Services.AddStackExchangeRedisCache(options =>
+    {
+      options.ConnectionMultiplexerFactory = () => Task.FromResult(redis);
+      options.InstanceName = "MaroikWebSite:";
+    });
+    builder.Services.AddDataProtection()
+      .PersistKeysToStackExchangeRedis(redis, "MaroikWebSite:DataProtection-Keys")
+      .SetApplicationName("Maroik");
+  }
+  else
+  {
+    builder.Services.AddDistributedMemoryCache();
+  }
+
   builder.Services.AddSession(options =>
   {
     options.IdleTimeout = TimeSpan.FromMinutes(cfgSessionExpireMinutes);
