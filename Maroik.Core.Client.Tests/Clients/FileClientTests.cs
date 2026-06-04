@@ -9,7 +9,12 @@ namespace Maroik.Core.Client.Tests.Clients;
 /// </summary>
 public class FileClientTests
 {
-    private readonly FileClient _sut = new();
+    private sealed class FakeHttpClientFactory : IHttpClientFactory
+    {
+        public HttpClient CreateClient(string name) => new();
+    }
+
+    private readonly FileClient _sut = new(new FakeHttpClientFactory());
 
     // -- UploadAsync ----------------------------------------------------------
 

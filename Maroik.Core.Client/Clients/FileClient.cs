@@ -7,12 +7,12 @@ namespace Maroik.Core.Client.Clients;
 /// Concrete implementation of <see cref="IFileClient"/> that communicates with the
 /// Maroik.FileStorage microservice via HTTP multipart/form-data requests.
 /// </summary>
-public class FileClient : IFileClient
+public class FileClient(IHttpClientFactory httpClientFactory) : IFileClient
 {
     /// <inheritdoc />
     public async Task<byte[]> DownloadAsync(string filePath, string fileStorageBaseUrl, CancellationToken ct = default)
     {
-        using HttpClient httpClient = new();
+        using HttpClient httpClient = httpClientFactory.CreateClient();
         using MultipartFormDataContent content = [];
 
         // Pass the server-side file path to the storage service
@@ -35,7 +35,7 @@ public class FileClient : IFileClient
             // Reject empty uploads immediately
             if (fileData != null && fileData.Length > 0)
             {
-                using HttpClient httpClient = new();
+                using HttpClient httpClient = httpClientFactory.CreateClient();
                 using MultipartFormDataContent content = [];
 
                 // Wrap raw bytes with the correct MIME type
