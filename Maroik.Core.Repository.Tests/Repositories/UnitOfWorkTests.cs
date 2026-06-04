@@ -1,4 +1,4 @@
-﻿using Maroik.Core.PostgreSQL.Data;
+using Maroik.Core.PostgreSQL.Data;
 using Maroik.Core.Repository.Repositories;
 using Microsoft.EntityFrameworkCore;
 
@@ -35,7 +35,7 @@ public class UnitOfWorkTests : IDisposable
     {
         await using var uow = new UnitOfWork(_context);
 
-        var ex = await Record.ExceptionAsync(() => uow.CommitAsync());
+        var ex = await Record.ExceptionAsync(() => uow.CommitAsync(TestContext.Current.CancellationToken));
 
         Assert.Null(ex);
     }
@@ -48,7 +48,7 @@ public class UnitOfWorkTests : IDisposable
     {
         await using var uow = new UnitOfWork(_context);
 
-        var ex = await Record.ExceptionAsync(() => uow.RollbackAsync());
+        var ex = await Record.ExceptionAsync(() => uow.RollbackAsync(TestContext.Current.CancellationToken));
 
         Assert.Null(ex);
     }

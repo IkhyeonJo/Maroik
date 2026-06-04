@@ -69,7 +69,7 @@ public class ExpenditureRepositoryTests : IDisposable
             MakeExpenditure("alice@example.com", "Dinner"),
             MakeExpenditure("bob@example.com", "Coffee"));
 
-        List<Expenditure> result = await _sut.GetByAccountEmailAsync("alice@example.com");
+        List<Expenditure> result = await _sut.GetByAccountEmailAsync("alice@example.com", TestContext.Current.CancellationToken);
 
         Assert.Equal(2, result.Count);
         Assert.All(result, e => Assert.Equal("alice@example.com", e.AccountEmail.Value));
@@ -79,7 +79,7 @@ public class ExpenditureRepositoryTests : IDisposable
     [Fact]
     public async Task GetExpendituresAsync_ReturnsEmpty_WhenNoExpendituresForEmail()
     {
-        List<Expenditure> result = await _sut.GetByAccountEmailAsync("nobody@example.com");
+        List<Expenditure> result = await _sut.GetByAccountEmailAsync("nobody@example.com", TestContext.Current.CancellationToken);
 
         Assert.Empty(result);
     }
@@ -104,7 +104,7 @@ public class ExpenditureRepositoryTests : IDisposable
             created: DateTime.UtcNow,
             updated: DateTime.UtcNow);
 
-        await _sut.CreateAsync(expenditure);
+        await _sut.CreateAsync(expenditure, TestContext.Current.CancellationToken);
 
         EfExpenditure? saved = await _context.Expenditures.FirstOrDefaultAsync(
             e => e.AccountEmail == "alice@example.com" && e.Content == "Team lunch", TestContext.Current.CancellationToken);
@@ -136,7 +136,7 @@ public class ExpenditureRepositoryTests : IDisposable
             created: efExpenditure.Created,
             updated: DateTime.UtcNow);
 
-        await _sut.UpdateEntityAsync(expenditure);
+        await _sut.UpdateEntityAsync(expenditure, TestContext.Current.CancellationToken);
 
         EfExpenditure? updated = await _context.Expenditures.FirstOrDefaultAsync(e => e.Id == id, TestContext.Current.CancellationToken);
         Assert.NotNull(updated);
@@ -154,7 +154,7 @@ public class ExpenditureRepositoryTests : IDisposable
         await SeedAsync(efExpenditure);
         long id = efExpenditure.Id;
 
-        await _sut.DeleteByIdAsync(id);
+        await _sut.DeleteByIdAsync(id, TestContext.Current.CancellationToken);
 
         EfExpenditure? deleted = await _context.Expenditures.FirstOrDefaultAsync(e => e.Id == id, TestContext.Current.CancellationToken);
         Assert.Null(deleted);
@@ -168,7 +168,7 @@ public class ExpenditureRepositoryTests : IDisposable
         var efExp2 = MakeExpenditure("alice@example.com", "Dinner");
         await SeedAsync(efExp1, efExp2);
 
-        await _sut.DeleteByIdAsync(efExp1.Id);
+        await _sut.DeleteByIdAsync(efExp1.Id, TestContext.Current.CancellationToken);
 
         List<EfExpenditure> remaining = await _context.Expenditures.ToListAsync(TestContext.Current.CancellationToken);
         Assert.Single(remaining);

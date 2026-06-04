@@ -53,7 +53,7 @@ public class BoardAttachedFileRepositoryTests : IDisposable
     {
         await SeedAsync(MakeFile(10, "report.pdf"));
 
-        BoardAttachedFile? result = await _sut.FindByBoardIdAsync(10L);
+        BoardAttachedFile? result = await _sut.FindByBoardIdAsync(10L, TestContext.Current.CancellationToken);
 
         Assert.NotNull(result);
         Assert.Equal(10, result.BoardId);
@@ -64,7 +64,7 @@ public class BoardAttachedFileRepositoryTests : IDisposable
     [Fact]
     public async Task GetByBoardIdAsync_ReturnsNull_WhenNotFound()
     {
-        BoardAttachedFile? result = await _sut.FindByBoardIdAsync(999L);
+        BoardAttachedFile? result = await _sut.FindByBoardIdAsync(999L, TestContext.Current.CancellationToken);
 
         Assert.Null(result);
     }
@@ -77,7 +77,7 @@ public class BoardAttachedFileRepositoryTests : IDisposable
     {
         await SeedAsync(MakeFile(1, "a.pdf"), MakeFile(3, "c.pdf"));
 
-        Dictionary<long, BoardAttachedFile?> result = await _sut.GetByBoardIdsAsync([1L, 2L, 3L]);
+        Dictionary<long, BoardAttachedFile?> result = await _sut.GetByBoardIdsAsync([1L, 2L, 3L], TestContext.Current.CancellationToken);
 
         Assert.Equal(3, result.Count);
         Assert.NotNull(result[1]);
@@ -89,7 +89,7 @@ public class BoardAttachedFileRepositoryTests : IDisposable
     [Fact]
     public async Task GetByBoardIdsAsync_ReturnsNullValues_WhenNoneMatch()
     {
-        Dictionary<long, BoardAttachedFile?> result = await _sut.GetByBoardIdsAsync([100L, 200L]);
+        Dictionary<long, BoardAttachedFile?> result = await _sut.GetByBoardIdsAsync([100L, 200L], TestContext.Current.CancellationToken);
 
         Assert.All(result.Values, v => Assert.Null(v));
     }
@@ -108,7 +108,7 @@ public class BoardAttachedFileRepositoryTests : IDisposable
             extension: ".pdf",
             path: "/upload/boards/new.pdf");
 
-        await _sut.CreateAsync(file);
+        await _sut.CreateAsync(file, TestContext.Current.CancellationToken);
 
         OrmBoardAttachedFile? saved = await _context.BoardAttachedFiles.FirstOrDefaultAsync(f => f.BoardId == 5, TestContext.Current.CancellationToken);
         Assert.NotNull(saved);
@@ -135,7 +135,7 @@ public class BoardAttachedFileRepositoryTests : IDisposable
             extension: ".pdf",
             path: "/upload/boards/updated.pdf");
 
-        await _sut.UpdateEntityAsync(file);
+        await _sut.UpdateEntityAsync(file, TestContext.Current.CancellationToken);
 
         OrmBoardAttachedFile? updated = await _context.BoardAttachedFiles.FindAsync(new object[] { id }, TestContext.Current.CancellationToken);
         Assert.NotNull(updated);

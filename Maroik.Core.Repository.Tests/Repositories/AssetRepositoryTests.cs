@@ -60,7 +60,7 @@ public class AssetRepositoryTests : IDisposable
             MakeAsset("Savings", "alice@example.com"),
             MakeAsset("Wallet", "bob@example.com"));
 
-        List<Asset> result = await _sut.GetByAccountEmailAsync("alice@example.com");
+        List<Asset> result = await _sut.GetByAccountEmailAsync("alice@example.com", TestContext.Current.CancellationToken);
 
         Assert.Equal(2, result.Count);
         Assert.All(result, a => Assert.Equal("alice@example.com", a.AccountEmail.Value));
@@ -70,7 +70,7 @@ public class AssetRepositoryTests : IDisposable
     [Fact]
     public async Task GetAssetsAsync_ReturnsEmptyList_WhenEmailHasNoAssets()
     {
-        List<Asset> result = await _sut.GetByAccountEmailAsync("nobody@example.com");
+        List<Asset> result = await _sut.GetByAccountEmailAsync("nobody@example.com", TestContext.Current.CancellationToken);
 
         Assert.Empty(result);
     }
@@ -83,7 +83,7 @@ public class AssetRepositoryTests : IDisposable
     {
         await SeedAsync(MakeAsset("Wallet", "alice@example.com", amount: 5000m));
 
-        Asset? result = await _sut.FindByEmailAndProductNameAsync("alice@example.com", "Wallet");
+        Asset? result = await _sut.FindByEmailAndProductNameAsync("alice@example.com", "Wallet", TestContext.Current.CancellationToken);
 
         Assert.NotNull(result);
         Assert.Equal("Wallet", result.ProductName);
@@ -94,7 +94,7 @@ public class AssetRepositoryTests : IDisposable
     [Fact]
     public async Task GetAssetAsync_ReturnsNull_WhenNotFound()
     {
-        Asset? result = await _sut.FindByEmailAndProductNameAsync("alice@example.com", "NonExistent");
+        Asset? result = await _sut.FindByEmailAndProductNameAsync("alice@example.com", "NonExistent", TestContext.Current.CancellationToken);
 
         Assert.Null(result);
     }
@@ -105,7 +105,7 @@ public class AssetRepositoryTests : IDisposable
     {
         await SeedAsync(MakeAsset("Wallet", "bob@example.com"));
 
-        Asset? result = await _sut.FindByEmailAndProductNameAsync("alice@example.com", "Wallet");
+        Asset? result = await _sut.FindByEmailAndProductNameAsync("alice@example.com", "Wallet", TestContext.Current.CancellationToken);
 
         Assert.Null(result);
     }
@@ -127,7 +127,7 @@ public class AssetRepositoryTests : IDisposable
             created: DateTime.UtcNow,
             updated: DateTime.UtcNow);
 
-        await _sut.CreateAsync(asset);
+        await _sut.CreateAsync(asset, TestContext.Current.CancellationToken);
 
         OrmAsset? saved = await _context.Assets.FirstOrDefaultAsync(
             a => a.AccountEmail == "alice@example.com" && a.ProductName == "NewAccount", TestContext.Current.CancellationToken);
@@ -155,7 +155,7 @@ public class AssetRepositoryTests : IDisposable
             created: DateTime.UtcNow,
             updated: DateTime.UtcNow);
 
-        await _sut.UpdateEntityAsync(asset);
+        await _sut.UpdateEntityAsync(asset, TestContext.Current.CancellationToken);
 
         OrmAsset? updated = await _context.Assets.FirstOrDefaultAsync(
             a => a.AccountEmail == "alice@example.com" && a.ProductName == "Wallet", TestContext.Current.CancellationToken);

@@ -75,7 +75,7 @@ public class SubCategoryRepositoryTests : IDisposable
             MakeSubCategory(catId, "SubA", order: 1),
             MakeSubCategory(catId, "SubB", order: 2));
 
-        IEnumerable<SubCategory> result = await _sut.GetAllAsync();
+        IEnumerable<SubCategory> result = await _sut.GetAllAsync(TestContext.Current.CancellationToken);
 
         Assert.Equal(2, result.Count());
     }
@@ -84,7 +84,7 @@ public class SubCategoryRepositoryTests : IDisposable
     [Fact]
     public async Task GetSubCategoryAsync_ReturnsEmpty_WhenNoSubCategories()
     {
-        IEnumerable<SubCategory> result = await _sut.GetAllAsync();
+        IEnumerable<SubCategory> result = await _sut.GetAllAsync(TestContext.Current.CancellationToken);
 
         Assert.Empty(result);
     }
@@ -107,7 +107,7 @@ public class SubCategoryRepositoryTests : IDisposable
             role: Role.User,
             order: 5);
 
-        await _sut.CreateAsync(subCategory);
+        await _sut.CreateAsync(subCategory, TestContext.Current.CancellationToken);
 
         EfSubCategory? saved = await _context.SubCategories.FirstOrDefaultAsync(sc => sc.Name == "NewSubMenu", TestContext.Current.CancellationToken);
         Assert.NotNull(saved);
@@ -135,7 +135,7 @@ public class SubCategoryRepositoryTests : IDisposable
             role: Role.Admin,
             order: 10);
 
-        await _sut.UpdateEntityAsync(subCategory);
+        await _sut.UpdateEntityAsync(subCategory, TestContext.Current.CancellationToken);
 
         EfSubCategory? updated = await _context.SubCategories.FirstOrDefaultAsync(sc => sc.Id == efSub.Id, TestContext.Current.CancellationToken);
         Assert.NotNull(updated);
@@ -154,7 +154,7 @@ public class SubCategoryRepositoryTests : IDisposable
         await SeedAsync(MakeSubCategory(catId, "ToDelete"));
         EfSubCategory efSub = await _context.SubCategories.FirstAsync(TestContext.Current.CancellationToken);
 
-        await _sut.DeleteByIdAsync(efSub.Id);
+        await _sut.DeleteByIdAsync(efSub.Id, TestContext.Current.CancellationToken);
 
         EfSubCategory? deleted = await _context.SubCategories.FirstOrDefaultAsync(sc => sc.Id == efSub.Id, TestContext.Current.CancellationToken);
         Assert.Null(deleted);
@@ -170,7 +170,7 @@ public class SubCategoryRepositoryTests : IDisposable
             MakeSubCategory(catId, "Sub2", order: 2));
         List<EfSubCategory> all = await _context.SubCategories.ToListAsync(TestContext.Current.CancellationToken);
 
-        await _sut.DeleteByIdAsync(all[0].Id);
+        await _sut.DeleteByIdAsync(all[0].Id, TestContext.Current.CancellationToken);
 
         List<EfSubCategory> remaining = await _context.SubCategories.ToListAsync(TestContext.Current.CancellationToken);
         Assert.Single(remaining);

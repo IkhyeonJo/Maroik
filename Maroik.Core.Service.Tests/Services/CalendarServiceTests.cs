@@ -95,7 +95,7 @@ public class CalendarServiceTests
         {
             AccountEmail = "user@example.com",
             Name = "MyCalendar"
-        });
+        }, TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
         Assert.Contains("already exists", result.ErrorKey, StringComparison.OrdinalIgnoreCase);
@@ -115,7 +115,7 @@ public class CalendarServiceTests
             Name = "NewCalendar",
             TimeZoneIanaId = "UTC",
             HtmlColorCode = "#3788d8"
-        });
+        }, TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
         _calendarRepo.Verify(r => r.CreateAsync(It.IsAny<Calendar>(), It.IsAny<CancellationToken>()), Times.Once);
@@ -135,7 +135,7 @@ public class CalendarServiceTests
             AccountEmail = "user@example.com",
             Id = 99,
             Name = "Updated"
-        });
+        }, TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
     }
@@ -156,7 +156,7 @@ public class CalendarServiceTests
             Name = "Updated",
             TimeZoneIanaId = "UTC",
             HtmlColorCode = "#3788d8"
-        });
+        }, TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
         _calendarRepo.Verify(r => r.UpdateEntityAsync(It.IsAny<Calendar>(), It.IsAny<CancellationToken>()), Times.Once);
@@ -175,7 +175,7 @@ public class CalendarServiceTests
         {
             AccountEmail = "user@example.com",
             Id = 99
-        });
+        }, TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
     }
@@ -193,7 +193,7 @@ public class CalendarServiceTests
         {
             AccountEmail = "user@example.com",
             Id = 1
-        });
+        }, TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
     }
@@ -214,7 +214,7 @@ public class CalendarServiceTests
             Name = "Default",
             TimeZoneIanaId = "UTC",
             HtmlColorCode = "#3788d8"
-        });
+        }, TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
         _calendarRepo.Verify(r => r.CreateAsync(It.IsAny<Calendar>(), It.IsAny<CancellationToken>()), Times.Once);
@@ -232,7 +232,7 @@ public class CalendarServiceTests
         {
             AccountEmail = "user@example.com",
             Name = "Default"
-        });
+        }, TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
         _calendarRepo.Verify(r => r.CreateAsync(It.IsAny<Calendar>(), It.IsAny<CancellationToken>()), Times.Never);
@@ -248,7 +248,7 @@ public class CalendarServiceTests
         _sharedRepo.Setup(r => r.CreateAsync(It.IsAny<CalendarShared>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
-        ServiceResult result = await sut.EnsureCalendarSharedAsync(1);
+        ServiceResult result = await sut.EnsureCalendarSharedAsync(1, TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
         _sharedRepo.Verify(r => r.CreateAsync(It.Is<CalendarShared>(s => s.Id == 1), It.IsAny<CancellationToken>()), Times.Once);
@@ -262,7 +262,7 @@ public class CalendarServiceTests
             .ReturnsAsync([CalendarShared.Reconstitute(1, false, false)]);
         var sut = CreateSut();
 
-        ServiceResult result = await sut.EnsureCalendarSharedAsync(1);
+        ServiceResult result = await sut.EnsureCalendarSharedAsync(1, TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
         _sharedRepo.Verify(r => r.CreateAsync(It.IsAny<CalendarShared>(), It.IsAny<CancellationToken>()), Times.Never);
@@ -278,7 +278,7 @@ public class CalendarServiceTests
         var sut = CreateSut();
 
         ServiceResult result = await sut.CreateCalendarEventAsync(
-            new CalendarEventRequest { CalendarId = 1 }, "user@example.com", "1", [], null);
+            new CalendarEventRequest { CalendarId = 1 }, "user@example.com", "1", [], null, TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
         Assert.Contains("does not exist", result.ErrorKey, StringComparison.OrdinalIgnoreCase);
@@ -295,7 +295,7 @@ public class CalendarServiceTests
         var sut = CreateSut();
 
         ServiceResult result = await sut.CreateCalendarEventAsync(
-            new CalendarEventRequest { CalendarId = 1, Title = "Meeting" }, "user@example.com", "1", [], null);
+            new CalendarEventRequest { CalendarId = 1, Title = "Meeting" }, "user@example.com", "1", [], null, TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
         _unitOfWork.Verify(u => u.CommitAsync(), Times.Once);
@@ -318,7 +318,7 @@ public class CalendarServiceTests
         };
 
         ServiceResult result = await sut.CreateCalendarEventAsync(
-            new CalendarEventRequest { CalendarId = 1, Title = "Meeting" }, "user@example.com", "1", reminders, null);
+            new CalendarEventRequest { CalendarId = 1, Title = "Meeting" }, "user@example.com", "1", reminders, null, TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
         _reminderRepo.Verify(r => r.CreateAsync(It.IsAny<CalendarEventReminder>(), It.IsAny<CancellationToken>()), Times.Exactly(2));
@@ -334,7 +334,7 @@ public class CalendarServiceTests
         var sut = CreateSut();
 
         ServiceResult result = await sut.UpdateCalendarEventAsync(
-            new CalendarEventRequest { Id = 1, CalendarId = 1 }, "user@example.com", "1", [], null);
+            new CalendarEventRequest { Id = 1, CalendarId = 1 }, "user@example.com", "1", [], null, TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
         _unitOfWork.Verify(u => u.RollbackAsync(), Times.Once);
@@ -350,7 +350,7 @@ public class CalendarServiceTests
         var sut = CreateSut();
 
         ServiceResult result = await sut.UpdateCalendarEventAsync(
-            new CalendarEventRequest { Id = 1, CalendarId = 1 }, "user@example.com", "1", [], null);
+            new CalendarEventRequest { Id = 1, CalendarId = 1 }, "user@example.com", "1", [], null, TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
         _unitOfWork.Verify(u => u.RollbackAsync(), Times.Once);
@@ -370,7 +370,7 @@ public class CalendarServiceTests
         var sut = CreateSut();
 
         ServiceResult result = await sut.UpdateCalendarEventAsync(
-            new CalendarEventRequest { Id = 1, CalendarId = 1, Title = "New Title" }, "user@example.com", "1", [], null);
+            new CalendarEventRequest { Id = 1, CalendarId = 1, Title = "New Title" }, "user@example.com", "1", [], null, TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
         _unitOfWork.Verify(u => u.CommitAsync(), Times.Once);
@@ -386,7 +386,7 @@ public class CalendarServiceTests
         _eventRepo.Setup(r => r.FindByIdAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).ReturnsAsync((CalendarEvent?)null);
         var sut = CreateSut();
 
-        ServiceResult result = await sut.DeleteCalendarEventAsync(99, "user@example.com");
+        ServiceResult result = await sut.DeleteCalendarEventAsync(99, "user@example.com", TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
     }
@@ -401,7 +401,7 @@ public class CalendarServiceTests
             .ReturnsAsync(MakeCalendarEvent(id: 1, calendarId: 999)); // different calendar
         var sut = CreateSut();
 
-        ServiceResult result = await sut.DeleteCalendarEventAsync(1, "user@example.com");
+        ServiceResult result = await sut.DeleteCalendarEventAsync(1, "user@example.com", TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
     }
@@ -417,7 +417,7 @@ public class CalendarServiceTests
         _eventRepo.Setup(r => r.DeleteByIdAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
-        ServiceResult result = await sut.DeleteCalendarEventAsync(1, "user@example.com");
+        ServiceResult result = await sut.DeleteCalendarEventAsync(1, "user@example.com", TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
     }
@@ -434,7 +434,7 @@ public class CalendarServiceTests
         var sut = CreateSut();
 
         var newEntries = new List<OtherCalendarRequest> { new() { CalendarId = 20 } };
-        ServiceResult result = await sut.UpdateOtherCalendarAsync(email, newEntries);
+        ServiceResult result = await sut.UpdateOtherCalendarAsync(email, newEntries, TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
         _otherCalendarRepo.Verify(r => r.DeleteByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);

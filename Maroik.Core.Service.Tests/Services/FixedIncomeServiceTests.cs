@@ -50,7 +50,7 @@ public class FixedIncomeServiceTests
         request.MainClass = mainClass;
         request.SubClass = subClass;
 
-        ServiceResult result = await sut.CreateAsync("user@example.com", request);
+        ServiceResult result = await sut.CreateAsync("user@example.com", request, TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
     }
@@ -65,7 +65,7 @@ public class FixedIncomeServiceTests
         var request = ValidRequest();
         request.DepositMonth = month;
 
-        ServiceResult result = await sut.CreateAsync("user@example.com", request);
+        ServiceResult result = await sut.CreateAsync("user@example.com", request, TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
     }
@@ -80,7 +80,7 @@ public class FixedIncomeServiceTests
         var request = ValidRequest();
         request.DepositDay = day;
 
-        ServiceResult result = await sut.CreateAsync("user@example.com", request);
+        ServiceResult result = await sut.CreateAsync("user@example.com", request, TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
     }
@@ -102,7 +102,7 @@ public class FixedIncomeServiceTests
         _fixedIncomeRepo.Setup(r => r.CreateAsync(It.IsAny<FixedIncome>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
-        ServiceResult result = await sut.CreateAsync("user@example.com", ValidRequest(mainClass, subClass));
+        ServiceResult result = await sut.CreateAsync("user@example.com", ValidRequest(mainClass, subClass), TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
     }
@@ -121,7 +121,7 @@ public class FixedIncomeServiceTests
 
         var request = ValidRequest();
         request.Amount = -250m;
-        await sut.CreateAsync("user@example.com", request);
+        await sut.CreateAsync("user@example.com", request, TestContext.Current.CancellationToken);
 
         Assert.NotNull(captured);
         Assert.Equal("user@example.com", captured.AccountEmail.Value);
@@ -140,7 +140,7 @@ public class FixedIncomeServiceTests
         request.MainClass = "BadClass";
         request.Id = 1;
 
-        ServiceResult result = await sut.UpdateAsync("user@example.com", request);
+        ServiceResult result = await sut.UpdateAsync("user@example.com", request, TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
     }
@@ -154,7 +154,7 @@ public class FixedIncomeServiceTests
 
         var request = ValidRequest();
         request.Id = 99;
-        ServiceResult result = await sut.UpdateAsync("user@example.com", request);
+        ServiceResult result = await sut.UpdateAsync("user@example.com", request, TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
     }
@@ -175,7 +175,7 @@ public class FixedIncomeServiceTests
         var request = ValidRequest();
         request.Id = 1;
         request.Amount = 600m;
-        ServiceResult result = await sut.UpdateAsync(email, request);
+        ServiceResult result = await sut.UpdateAsync(email, request, TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
         _fixedIncomeRepo.Verify(r => r.UpdateEntityAsync(It.Is<FixedIncome>(fi => fi.Amount.Amount == 600m), It.IsAny<CancellationToken>()), Times.Once);
@@ -190,7 +190,7 @@ public class FixedIncomeServiceTests
         _fixedIncomeRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(new List<FixedIncome>());
         var sut = CreateSut();
 
-        ServiceResult result = await sut.DeleteAsync("user@example.com", 99);
+        ServiceResult result = await sut.DeleteAsync("user@example.com", 99, TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
     }
@@ -206,7 +206,7 @@ public class FixedIncomeServiceTests
         _fixedIncomeRepo.Setup(r => r.DeleteByIdAsync(It.IsAny<long>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
-        ServiceResult result = await sut.DeleteAsync(email, 1);
+        ServiceResult result = await sut.DeleteAsync(email, 1, TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
         _fixedIncomeRepo.Verify(r => r.DeleteByIdAsync(It.IsAny<long>(), It.IsAny<CancellationToken>()), Times.Once);
@@ -227,7 +227,7 @@ public class FixedIncomeServiceTests
         _fixedIncomeRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(list);
         var sut = CreateSut();
 
-        List<FixedIncomeResponse> result = await sut.GetFixedIncomesAsync(email);
+        List<FixedIncomeResponse> result = await sut.GetFixedIncomesAsync(email, TestContext.Current.CancellationToken);
 
         Assert.Single(result);
     }

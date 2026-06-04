@@ -62,7 +62,7 @@ public class BoardRepositoryTests : IDisposable
             MakeBoard(nameof(BoardType.FreeForum), "World"),
             MakeBoard(nameof(BoardType.PrivateNote), "Note1"));
 
-        IEnumerable<Board> result = await _sut.GetByTypeAsync(nameof(BoardType.FreeForum));
+        IEnumerable<Board> result = await _sut.GetByTypeAsync(nameof(BoardType.FreeForum), TestContext.Current.CancellationToken);
 
         Assert.Equal(2, result.Count());
         Assert.All(result, b => Assert.Equal(nameof(BoardType.FreeForum), b.Type));
@@ -72,7 +72,7 @@ public class BoardRepositoryTests : IDisposable
     [Fact]
     public async Task GetOneTypeBoardsAsync_ReturnsEmpty_WhenNoMatchingType()
     {
-        IEnumerable<Board> result = await _sut.GetByTypeAsync("NonExistentType");
+        IEnumerable<Board> result = await _sut.GetByTypeAsync("NonExistentType", TestContext.Current.CancellationToken);
 
         Assert.Empty(result);
     }
@@ -86,7 +86,7 @@ public class BoardRepositoryTests : IDisposable
         await SeedAsync(MakeBoard(nameof(BoardType.FreeForum), "My Post"));
         EfBoard efBoard = await _context.Boards.FirstAsync(TestContext.Current.CancellationToken);
 
-        Board? result = await _sut.FindActiveByIdAsync(efBoard.Id);
+        Board? result = await _sut.FindActiveByIdAsync(efBoard.Id, TestContext.Current.CancellationToken);
 
         Assert.NotNull(result);
         Assert.Equal("My Post", result.Title);
@@ -99,7 +99,7 @@ public class BoardRepositoryTests : IDisposable
         await SeedAsync(MakeBoard(nameof(BoardType.FreeForum), "Deleted Post", deleted: true));
         EfBoard efBoard = await _context.Boards.FirstAsync(TestContext.Current.CancellationToken);
 
-        Board? result = await _sut.FindActiveByIdAsync(efBoard.Id);
+        Board? result = await _sut.FindActiveByIdAsync(efBoard.Id, TestContext.Current.CancellationToken);
 
         Assert.Null(result);
     }
@@ -108,7 +108,7 @@ public class BoardRepositoryTests : IDisposable
     [Fact]
     public async Task GetBoardByIdAsync_ReturnsNull_WhenIdDoesNotExist()
     {
-        Board? result = await _sut.FindActiveByIdAsync(99999L);
+        Board? result = await _sut.FindActiveByIdAsync(99999L, TestContext.Current.CancellationToken);
 
         Assert.Null(result);
     }
@@ -132,7 +132,7 @@ public class BoardRepositoryTests : IDisposable
             locked: false,
             noticed: false);
 
-        await _sut.WriteBoardAsync(board);
+        await _sut.WriteBoardAsync(board, TestContext.Current.CancellationToken);
 
         EfBoard? saved = await _context.Boards.FirstOrDefaultAsync(b => b.Title == "New Post", TestContext.Current.CancellationToken);
         Assert.NotNull(saved);
@@ -161,7 +161,7 @@ public class BoardRepositoryTests : IDisposable
             locked: false,
             noticed: false);
 
-        await _sut.UpdateEntityAsync(board);
+        await _sut.UpdateEntityAsync(board, TestContext.Current.CancellationToken);
 
         EfBoard? updated = await _context.Boards.FirstOrDefaultAsync(b => b.Id == efBoard.Id, TestContext.Current.CancellationToken);
         Assert.NotNull(updated);
@@ -191,7 +191,7 @@ public class BoardRepositoryTests : IDisposable
             locked: efBoard.Locked,
             noticed: efBoard.Noticed);
 
-        await _sut.UpdateEntityAsync(board);
+        await _sut.UpdateEntityAsync(board, TestContext.Current.CancellationToken);
 
         EfBoard? result = await _context.Boards.FirstOrDefaultAsync(b => b.Id == efBoard.Id, TestContext.Current.CancellationToken);
         Assert.NotNull(result);

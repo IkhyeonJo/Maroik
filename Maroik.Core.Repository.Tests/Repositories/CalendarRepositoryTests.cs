@@ -56,7 +56,7 @@ public class CalendarRepositoryTests : IDisposable
             MakeCalendar("alice@example.com", "Work"),
             MakeCalendar("bob@example.com", "Personal"));
 
-        List<Calendar> result = await _sut.GetAllOrderedByNameAsync();
+        List<Calendar> result = await _sut.GetAllOrderedByNameAsync(TestContext.Current.CancellationToken);
 
         Assert.Equal(2, result.Count);
     }
@@ -65,7 +65,7 @@ public class CalendarRepositoryTests : IDisposable
     [Fact]
     public async Task GetAllCalendarsAsync_ReturnsEmpty_WhenNoCalendars()
     {
-        List<Calendar> result = await _sut.GetAllOrderedByNameAsync();
+        List<Calendar> result = await _sut.GetAllOrderedByNameAsync(TestContext.Current.CancellationToken);
 
         Assert.Empty(result);
     }
@@ -78,7 +78,7 @@ public class CalendarRepositoryTests : IDisposable
             MakeCalendar("alice@example.com", "Work"),
             MakeCalendar("alice@example.com", "Personal"));
 
-        List<Calendar> result = await _sut.GetAllOrderedByNameAsync();
+        List<Calendar> result = await _sut.GetAllOrderedByNameAsync(TestContext.Current.CancellationToken);
 
         Assert.Equal("Personal", result[0].Name);
         Assert.Equal("Work", result[1].Name);
@@ -95,7 +95,7 @@ public class CalendarRepositoryTests : IDisposable
             MakeCalendar("alice@example.com", "Personal"),
             MakeCalendar("bob@example.com", "Bob Calendar"));
 
-        List<Calendar> result = await _sut.GetByAccountEmailAsync("alice@example.com");
+        List<Calendar> result = await _sut.GetByAccountEmailAsync("alice@example.com", TestContext.Current.CancellationToken);
 
         Assert.Equal(2, result.Count);
         Assert.All(result, c => Assert.Equal("alice@example.com", c.AccountEmail.Value));
@@ -105,7 +105,7 @@ public class CalendarRepositoryTests : IDisposable
     [Fact]
     public async Task GetCalendarsAsync_ReturnsEmpty_WhenNoCalendarsForEmail()
     {
-        List<Calendar> result = await _sut.GetByAccountEmailAsync("nobody@example.com");
+        List<Calendar> result = await _sut.GetByAccountEmailAsync("nobody@example.com", TestContext.Current.CancellationToken);
 
         Assert.Empty(result);
     }
@@ -126,7 +126,7 @@ public class CalendarRepositoryTests : IDisposable
             created: DateTime.UtcNow,
             updated: DateTime.UtcNow);
 
-        await _sut.CreateAsync(calendar);
+        await _sut.CreateAsync(calendar, TestContext.Current.CancellationToken);
 
         EfCalendar? saved = await _context.Calendars.FirstOrDefaultAsync(
             c => c.AccountEmail == "alice@example.com" && c.Name == "New Calendar", TestContext.Current.CancellationToken);
@@ -154,7 +154,7 @@ public class CalendarRepositoryTests : IDisposable
             created: efCalendar.Created,
             updated: DateTime.UtcNow);
 
-        await _sut.UpdateEntityAsync(calendar);
+        await _sut.UpdateEntityAsync(calendar, TestContext.Current.CancellationToken);
 
         EfCalendar? updated = await _context.Calendars.FirstOrDefaultAsync(c => c.Id == efCalendar.Id, TestContext.Current.CancellationToken);
         Assert.NotNull(updated);
@@ -181,7 +181,7 @@ public class CalendarRepositoryTests : IDisposable
             created: efCalendar.Created,
             updated: efCalendar.Updated);
 
-        await _sut.DeleteByIdAsync(calendar.Id);
+        await _sut.DeleteByIdAsync(calendar.Id, TestContext.Current.CancellationToken);
 
         EfCalendar? deleted = await _context.Calendars.FirstOrDefaultAsync(c => c.Id == efCalendar.Id, TestContext.Current.CancellationToken);
         Assert.Null(deleted);
@@ -206,7 +206,7 @@ public class CalendarRepositoryTests : IDisposable
             created: all[0].Created,
             updated: all[0].Updated);
 
-        await _sut.DeleteByIdAsync(calendar.Id);
+        await _sut.DeleteByIdAsync(calendar.Id, TestContext.Current.CancellationToken);
 
         List<EfCalendar> remaining = await _context.Calendars.ToListAsync(TestContext.Current.CancellationToken);
         Assert.Single(remaining);

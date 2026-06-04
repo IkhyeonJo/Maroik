@@ -77,7 +77,7 @@ public class BoardCommentRepositoryTests : IDisposable
             MakeComment(board1Id, 2),
             MakeComment(board2Id, 1));
 
-        IEnumerable<BoardComment> result = await _sut.GetByBoardIdOrderedAsync(board1Id);
+        IEnumerable<BoardComment> result = await _sut.GetByBoardIdOrderedAsync(board1Id, TestContext.Current.CancellationToken);
 
         Assert.Equal(2, result.Count());
         Assert.All(result, c => Assert.Equal(board1Id, c.BoardId));
@@ -93,7 +93,7 @@ public class BoardCommentRepositoryTests : IDisposable
             MakeComment(boardId, 1),
             MakeComment(boardId, 2));
 
-        IEnumerable<BoardComment> result = await _sut.GetByBoardIdOrderedAsync(boardId);
+        IEnumerable<BoardComment> result = await _sut.GetByBoardIdOrderedAsync(boardId, TestContext.Current.CancellationToken);
         List<BoardComment> list = result.ToList();
 
         Assert.Equal(1, list[0].Order);
@@ -107,7 +107,7 @@ public class BoardCommentRepositoryTests : IDisposable
     {
         long boardId = await SeedBoardAsync();
 
-        IEnumerable<BoardComment> result = await _sut.GetByBoardIdOrderedAsync(boardId);
+        IEnumerable<BoardComment> result = await _sut.GetByBoardIdOrderedAsync(boardId, TestContext.Current.CancellationToken);
 
         Assert.Empty(result);
     }
@@ -122,7 +122,7 @@ public class BoardCommentRepositoryTests : IDisposable
         await SeedAsync(MakeComment(boardId, 1, writer: "Bob"));
         EfBoardComment comment = await _context.BoardComments.FirstAsync(TestContext.Current.CancellationToken);
 
-        BoardComment? result = await _sut.FindByIdAsync(comment.Id);
+        BoardComment? result = await _sut.FindByIdAsync(comment.Id, TestContext.Current.CancellationToken);
 
         Assert.NotNull(result);
         Assert.Equal("Bob", result.Writer);
@@ -132,7 +132,7 @@ public class BoardCommentRepositoryTests : IDisposable
     [Fact]
     public async Task GetBoardCommentAsync_ReturnsNull_WhenNotFound()
     {
-        BoardComment? result = await _sut.FindByIdAsync(99999L);
+        BoardComment? result = await _sut.FindByIdAsync(99999L, TestContext.Current.CancellationToken);
 
         Assert.Null(result);
     }
@@ -151,7 +151,7 @@ public class BoardCommentRepositoryTests : IDisposable
             MakeComment(boardId1, 3, deleted: true),  // deleted, not counted
             MakeComment(boardId2, 1, deleted: false));
 
-        Dictionary<long, int> counts = await _sut.GetCommentCountsByBoardIdsAsync([boardId1, boardId2]);
+        Dictionary<long, int> counts = await _sut.GetCommentCountsByBoardIdsAsync([boardId1, boardId2], TestContext.Current.CancellationToken);
 
         Assert.Equal(2, counts[boardId1]);  // 2 non-deleted
         Assert.Equal(1, counts[boardId2]);
@@ -163,7 +163,7 @@ public class BoardCommentRepositoryTests : IDisposable
     {
         long boardId = await SeedBoardAsync();
 
-        Dictionary<long, int> counts = await _sut.GetCommentCountsByBoardIdsAsync([boardId]);
+        Dictionary<long, int> counts = await _sut.GetCommentCountsByBoardIdsAsync([boardId], TestContext.Current.CancellationToken);
 
         Assert.Equal(0, counts[boardId]);
     }
@@ -186,7 +186,7 @@ public class BoardCommentRepositoryTests : IDisposable
             created: DateTime.UtcNow,
             deleted: false);
 
-        await _sut.CreateAsync(comment);
+        await _sut.CreateAsync(comment, TestContext.Current.CancellationToken);
 
         EfBoardComment? saved = await _context.BoardComments.FirstOrDefaultAsync(
             c => c.BoardId == boardId && c.Content == "Great post!", TestContext.Current.CancellationToken);
@@ -214,7 +214,7 @@ public class BoardCommentRepositoryTests : IDisposable
             created: efComment.Created,
             deleted: true);   // soft-delete
 
-        await _sut.UpdateEntityAsync(comment);
+        await _sut.UpdateEntityAsync(comment, TestContext.Current.CancellationToken);
 
         EfBoardComment? result = await _context.BoardComments.FirstOrDefaultAsync(c => c.Id == efComment.Id, TestContext.Current.CancellationToken);
         Assert.NotNull(result);

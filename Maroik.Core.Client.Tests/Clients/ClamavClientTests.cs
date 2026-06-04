@@ -1,4 +1,4 @@
-﻿using Maroik.Core.Client.Clients;
+using Maroik.Core.Client.Clients;
 
 namespace Maroik.Core.Client.Tests.Clients;
 
@@ -21,7 +21,7 @@ public class ClamavClientTests
         using var stream = new MemoryStream([0x01, 0x02, 0x03]);
 
         // Any host that won't have ClamAV running → connection refused → returns false
-        bool result = await _sut.ScanWithClamavAsync(stream, "127.0.0.1", 19999);
+        bool result = await _sut.ScanWithClamavAsync(stream, "127.0.0.1", 19999, TestContext.Current.CancellationToken);
 
         Assert.False(result);
     }
@@ -32,7 +32,7 @@ public class ClamavClientTests
     {
         using var stream = new MemoryStream([0x01, 0x02, 0x03]);
 
-        bool result = await _sut.ScanWithClamavAsync(stream, "invalid.host.that.does.not.exist.local", 3310);
+        bool result = await _sut.ScanWithClamavAsync(stream, "invalid.host.that.does.not.exist.local", 3310, TestContext.Current.CancellationToken);
 
         Assert.False(result);
     }
@@ -48,7 +48,7 @@ public class ClamavClientTests
 
         // Should not throw even though stream is at end initially;
         // implementation rewinds to position 0 before reading
-        bool result = await _sut.ScanWithClamavAsync(stream, "127.0.0.1", 19999);
+        bool result = await _sut.ScanWithClamavAsync(stream, "127.0.0.1", 19999, TestContext.Current.CancellationToken);
 
         // Unreachable host returns false; the key assertion is no exception thrown
         Assert.False(result);
@@ -60,7 +60,7 @@ public class ClamavClientTests
     {
         using var stream = new MemoryStream();
 
-        bool result = await _sut.ScanWithClamavAsync(stream, "127.0.0.1", 19999);
+        bool result = await _sut.ScanWithClamavAsync(stream, "127.0.0.1", 19999, TestContext.Current.CancellationToken);
 
         Assert.False(result);
     }

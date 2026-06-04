@@ -77,7 +77,7 @@ public class ProfileServiceTests
         _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(account);
         var sut = CreateSut();
 
-        AccountResponse? result = await sut.GetProfileAsync(account.Email.Value);
+        AccountResponse? result = await sut.GetProfileAsync(account.Email.Value, TestContext.Current.CancellationToken);
 
         Assert.NotNull(result);
         Assert.Equal(account.Email.Value, result.Email);
@@ -92,7 +92,7 @@ public class ProfileServiceTests
         _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((Account?)null);
         var sut = CreateSut();
 
-        ServiceResult result = await sut.UpdateAvatarAsync("ghost@example.com", "/new/path.jpg");
+        ServiceResult result = await sut.UpdateAvatarAsync("ghost@example.com", "/new/path.jpg", TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
     }
@@ -106,7 +106,7 @@ public class ProfileServiceTests
         _accountRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
-        ServiceResult result = await sut.UpdateAvatarAsync(account.Email.Value, "/new/avatar.jpg");
+        ServiceResult result = await sut.UpdateAvatarAsync(account.Email.Value, "/new/avatar.jpg", TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
         _accountRepo.Verify(r => r.UpdateEntityAsync(
@@ -122,7 +122,7 @@ public class ProfileServiceTests
         _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((Account?)null);
         var sut = CreateSut();
 
-        ServiceResult result = await sut.UpdateTimeZoneAsync("ghost@example.com", "Asia/Seoul");
+        ServiceResult result = await sut.UpdateTimeZoneAsync("ghost@example.com", "Asia/Seoul", TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
     }
@@ -136,7 +136,7 @@ public class ProfileServiceTests
         _accountRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
-        ServiceResult result = await sut.UpdateTimeZoneAsync(account.Email.Value, "Asia/Seoul");
+        ServiceResult result = await sut.UpdateTimeZoneAsync(account.Email.Value, "Asia/Seoul", TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
         _accountRepo.Verify(r => r.UpdateEntityAsync(
@@ -152,7 +152,7 @@ public class ProfileServiceTests
         _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((Account?)null);
         var sut = CreateSut();
 
-        ServiceResult result = await sut.UpdatePasswordAsync("ghost@example.com", "old", "new");
+        ServiceResult result = await sut.UpdatePasswordAsync("ghost@example.com", "old", "new", TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
     }
@@ -166,7 +166,7 @@ public class ProfileServiceTests
         _passwordService.Setup(p => p.VerifyPassword("wrongpass", account.HashedPassword)).Returns(false);
         var sut = CreateSut();
 
-        ServiceResult result = await sut.UpdatePasswordAsync(account.Email.Value, "wrongpass", "newpass");
+        ServiceResult result = await sut.UpdatePasswordAsync(account.Email.Value, "wrongpass", "newpass", TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
         Assert.Contains("Invalid password", result.ErrorKey, StringComparison.OrdinalIgnoreCase);
@@ -183,7 +183,7 @@ public class ProfileServiceTests
         _accountRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
-        ServiceResult result = await sut.UpdatePasswordAsync(account.Email.Value, "oldpass", "newpass");
+        ServiceResult result = await sut.UpdatePasswordAsync(account.Email.Value, "oldpass", "newpass", TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
         _accountRepo.Verify(r => r.UpdateEntityAsync(
@@ -200,7 +200,7 @@ public class ProfileServiceTests
         _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((Account?)null);
         var sut = CreateSut();
 
-        await sut.UpdateDefaultMonetaryUnitAsync("missing@example.com", "KRW");
+        await sut.UpdateDefaultMonetaryUnitAsync("missing@example.com", "KRW", TestContext.Current.CancellationToken);
 
         _accountRepo.Verify(r => r.UpdateEntityAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>()), Times.Never);
     }
@@ -215,7 +215,7 @@ public class ProfileServiceTests
         _accountRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
-        await sut.UpdateDefaultMonetaryUnitAsync(account.Email.Value, "KRW");
+        await sut.UpdateDefaultMonetaryUnitAsync(account.Email.Value, "KRW", TestContext.Current.CancellationToken);
 
         _accountRepo.Verify(r => r.UpdateEntityAsync(
             It.Is<Account>(a => a.DefaultMonetaryUnit == "KRW"), It.IsAny<CancellationToken>()), Times.Once);
@@ -231,7 +231,7 @@ public class ProfileServiceTests
         _accountRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
-        await sut.UpdateDefaultMonetaryUnitAsync(account.Email.Value, "KRW");
+        await sut.UpdateDefaultMonetaryUnitAsync(account.Email.Value, "KRW", TestContext.Current.CancellationToken);
 
         _accountRepo.Verify(r => r.UpdateEntityAsync(
             It.Is<Account>(a => a.DefaultMonetaryUnit == null), It.IsAny<CancellationToken>()), Times.Once);

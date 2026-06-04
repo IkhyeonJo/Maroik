@@ -58,7 +58,7 @@ public class ManagementAccountServiceTests
         _accountRepo.Setup(r => r.GetAllAsync(It.IsAny<CancellationToken>())).ReturnsAsync([ActiveAccount()]);
         var sut = CreateSut();
 
-        List<AccountResponse> result = await sut.GetAllAccountsAsync();
+        List<AccountResponse> result = await sut.GetAllAccountsAsync(TestContext.Current.CancellationToken);
 
         Assert.Single(result);
     }
@@ -72,7 +72,7 @@ public class ManagementAccountServiceTests
         _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((Account?)null);
         var sut = CreateSut();
 
-        AccountResponse? result = await sut.GetAccountByEmailAsync("ghost@example.com");
+        AccountResponse? result = await sut.GetAccountByEmailAsync("ghost@example.com", TestContext.Current.CancellationToken);
 
         Assert.Null(result);
     }
@@ -90,7 +90,7 @@ public class ManagementAccountServiceTests
         {
             Email = "existing@example.com",
             HashedPassword = "plain"
-        });
+        }, TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
         Assert.Contains("already been created", result.ErrorKey, StringComparison.OrdinalIgnoreCase);
@@ -111,7 +111,7 @@ public class ManagementAccountServiceTests
             HashedPassword = "plain",
             Nickname = "NewUser",
             EmailConfirmed = true
-        });
+        }, TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
         _accountRepo.Verify(r => r.CreateAsync(It.Is<Account>(a => a.HashedPassword == "$2a$13$hashed"), It.IsAny<CancellationToken>()), Times.Once);
@@ -127,7 +127,7 @@ public class ManagementAccountServiceTests
         var sut = CreateSut();
 
         ServiceResult result = await sut.UpdateAccountAsync(
-            new AccountRequest { Email = "ghost@example.com" }, null);
+            new AccountRequest { Email = "ghost@example.com" }, null, TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
         Assert.Contains("wrong", result.ErrorKey, StringComparison.OrdinalIgnoreCase);
@@ -143,7 +143,7 @@ public class ManagementAccountServiceTests
         var sut = CreateSut();
 
         ServiceResult result = await sut.UpdateAccountAsync(
-            new AccountRequest { Email = account.Email.Value, Role = "User" }, null);
+            new AccountRequest { Email = account.Email.Value, Role = "User" }, null, TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
         _accountRepo.Verify(r => r.UpdateEntityAsync(
@@ -162,7 +162,7 @@ public class ManagementAccountServiceTests
         var sut = CreateSut();
 
         ServiceResult result = await sut.UpdateAccountAsync(
-            new AccountRequest { Email = account.Email.Value, Role = "User" }, "newpass");
+            new AccountRequest { Email = account.Email.Value, Role = "User" }, "newpass", TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
         _accountRepo.Verify(r => r.UpdateEntityAsync(
@@ -179,7 +179,7 @@ public class ManagementAccountServiceTests
         var sut = CreateSut();
 
         ServiceResult result = await sut.UpdateAccountAsync(
-            new AccountRequest { Email = account.Email.Value, Locked = false }, null);
+            new AccountRequest { Email = account.Email.Value, Locked = false }, null, TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
         _accountRepo.Verify(r => r.UpdateEntityAsync(
@@ -195,7 +195,7 @@ public class ManagementAccountServiceTests
         _accountRepo.Setup(r => r.FindByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((Account?)null);
         var sut = CreateSut();
 
-        ServiceResult result = await sut.DeleteAccountAsync("ghost@example.com");
+        ServiceResult result = await sut.DeleteAccountAsync("ghost@example.com", TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
         Assert.Contains("find", result.ErrorKey, StringComparison.OrdinalIgnoreCase);
@@ -210,7 +210,7 @@ public class ManagementAccountServiceTests
         _accountRepo.Setup(r => r.UpdateEntityAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
-        ServiceResult result = await sut.DeleteAccountAsync(account.Email.Value);
+        ServiceResult result = await sut.DeleteAccountAsync(account.Email.Value, TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
         _accountRepo.Verify(r => r.UpdateEntityAsync(

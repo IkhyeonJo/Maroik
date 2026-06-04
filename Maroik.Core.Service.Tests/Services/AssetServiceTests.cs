@@ -63,7 +63,7 @@ public class AssetServiceTests
         var sut = CreateSut();
         var request = new AssetRequest { ProductName = "MyBank", Item = item };
 
-        ServiceResult result = await sut.CreateAsync("user@example.com", request);
+        ServiceResult result = await sut.CreateAsync("user@example.com", request, TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
         Assert.Contains("invalid", result.ErrorKey, StringComparison.OrdinalIgnoreCase);
@@ -76,7 +76,7 @@ public class AssetServiceTests
         SetupFindAsset("MyBank", MakeAsset("MyBank"));
         var sut = CreateSut();
 
-        ServiceResult result = await sut.CreateAsync("user@example.com", ValidRequest("MyBank"));
+        ServiceResult result = await sut.CreateAsync("user@example.com", ValidRequest("MyBank"), TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
         Assert.Contains("already exists", result.ErrorKey, StringComparison.OrdinalIgnoreCase);
@@ -100,7 +100,7 @@ public class AssetServiceTests
         var sut = CreateSut();
 
         var request = new AssetRequest { ProductName = "MyBank", Item = item, MonetaryUnit = "KRW" };
-        ServiceResult result = await sut.CreateAsync("user@example.com", request);
+        ServiceResult result = await sut.CreateAsync("user@example.com", request, TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
     }
@@ -117,7 +117,7 @@ public class AssetServiceTests
             .Returns(Task.CompletedTask);
         var sut = CreateSut();
 
-        await sut.CreateAsync("user@example.com", ValidRequest("MyBank"));
+        await sut.CreateAsync("user@example.com", ValidRequest("MyBank"), TestContext.Current.CancellationToken);
 
         Assert.NotNull(captured);
         Assert.Equal("user@example.com", captured.AccountEmail.Value);
@@ -135,7 +135,7 @@ public class AssetServiceTests
         var sut = CreateSut();
         var request = new AssetRequest { ProductName = "MyBank", Item = "InvalidItem" };
 
-        ServiceResult result = await sut.UpdateAsync("user@example.com", request, "MyBank");
+        ServiceResult result = await sut.UpdateAsync("user@example.com", request, "MyBank", TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
         _unitOfWork.Verify(u => u.RollbackAsync(), Times.Once);
@@ -148,7 +148,7 @@ public class AssetServiceTests
         SetupFindAsset("OldName", null);
         var sut = CreateSut();
 
-        ServiceResult result = await sut.UpdateAsync("user@example.com", ValidRequest("NewName"), "OldName");
+        ServiceResult result = await sut.UpdateAsync("user@example.com", ValidRequest("NewName"), "OldName", TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
         Assert.Contains("find", result.ErrorKey, StringComparison.OrdinalIgnoreCase);
@@ -163,7 +163,7 @@ public class AssetServiceTests
         _assetRepo.Setup(r => r.UpdateAssetWithProductNameAsync(It.IsAny<Asset>(), "OldName", It.IsAny<CancellationToken>())).ReturnsAsync(0);
         var sut = CreateSut();
 
-        ServiceResult result = await sut.UpdateAsync("user@example.com", ValidRequest("NewName"), "OldName");
+        ServiceResult result = await sut.UpdateAsync("user@example.com", ValidRequest("NewName"), "OldName", TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
         _unitOfWork.Verify(u => u.RollbackAsync(), Times.Once);
@@ -180,7 +180,7 @@ public class AssetServiceTests
         _expenditureRepo.Setup(r => r.UpdateMyDepositAssetNameAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         var sut = CreateSut();
 
-        ServiceResult result = await sut.UpdateAsync(email, ValidRequest("NewName"), "OldName");
+        ServiceResult result = await sut.UpdateAsync(email, ValidRequest("NewName"), "OldName", TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
         _fixedExpenditureRepo.Verify(r => r.UpdateMyDepositAssetNameAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
@@ -197,7 +197,7 @@ public class AssetServiceTests
         SetupFindAsset("MyBank", null);
         var sut = CreateSut();
 
-        ServiceResult result = await sut.DeleteAsync("user@example.com", "MyBank");
+        ServiceResult result = await sut.DeleteAsync("user@example.com", "MyBank", TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
         Assert.Contains("find", result.ErrorKey, StringComparison.OrdinalIgnoreCase);
@@ -216,7 +216,7 @@ public class AssetServiceTests
             .Returns(Task.CompletedTask);
         var sut = CreateSut();
 
-        ServiceResult result = await sut.DeleteAsync(email, "MyBank");
+        ServiceResult result = await sut.DeleteAsync(email, "MyBank", TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
         Assert.NotNull(captured);
@@ -233,7 +233,7 @@ public class AssetServiceTests
         _assetRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(list);
         var sut = CreateSut();
 
-        List<AssetResponse> result = await sut.GetAssetsAsync("user@example.com");
+        List<AssetResponse> result = await sut.GetAssetsAsync("user@example.com", TestContext.Current.CancellationToken);
 
         Assert.Single(result);
     }
@@ -246,7 +246,7 @@ public class AssetServiceTests
         SetupFindAsset("MyBank", asset);
         var sut = CreateSut();
 
-        AssetResponse? result = await sut.GetAssetAsync("user@example.com", "MyBank");
+        AssetResponse? result = await sut.GetAssetAsync("user@example.com", "MyBank", TestContext.Current.CancellationToken);
 
         Assert.NotNull(result);
         Assert.Equal("MyBank", result.ProductName);

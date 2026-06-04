@@ -62,7 +62,7 @@ public class FixedIncomeRepositoryTests : IDisposable
             MakeFixedIncome("alice@example.com", "Side job"),
             MakeFixedIncome("bob@example.com", "Bob salary"));
 
-        List<FixedIncome> result = await _sut.GetByAccountEmailAsync("alice@example.com");
+        List<FixedIncome> result = await _sut.GetByAccountEmailAsync("alice@example.com", TestContext.Current.CancellationToken);
 
         Assert.Equal(2, result.Count);
         Assert.All(result, fi => Assert.Equal("alice@example.com", fi.AccountEmail.Value));
@@ -72,7 +72,7 @@ public class FixedIncomeRepositoryTests : IDisposable
     [Fact]
     public async Task GetFixedIncomesAsync_ReturnsEmpty_WhenNoItemsForEmail()
     {
-        List<FixedIncome> result = await _sut.GetByAccountEmailAsync("nobody@example.com");
+        List<FixedIncome> result = await _sut.GetByAccountEmailAsync("nobody@example.com", TestContext.Current.CancellationToken);
 
         Assert.Empty(result);
     }
@@ -100,7 +100,7 @@ public class FixedIncomeRepositoryTests : IDisposable
             created: DateTime.UtcNow,
             updated: DateTime.UtcNow);
 
-        await _sut.CreateAsync(fixedIncome);
+        await _sut.CreateAsync(fixedIncome, TestContext.Current.CancellationToken);
 
         EfFixedIncome? saved = await _context.FixedIncomes.FirstOrDefaultAsync(
             fi => fi.AccountEmail == "alice@example.com" && fi.Content == "Monthly salary", TestContext.Current.CancellationToken);
@@ -136,7 +136,7 @@ public class FixedIncomeRepositoryTests : IDisposable
             created: efItem.Created,
             updated: DateTime.UtcNow);
 
-        await _sut.UpdateEntityAsync(fixedIncome);
+        await _sut.UpdateEntityAsync(fixedIncome, TestContext.Current.CancellationToken);
 
         EfFixedIncome? updated = await _context.FixedIncomes.FirstOrDefaultAsync(fi => fi.Id == id, TestContext.Current.CancellationToken);
         Assert.NotNull(updated);
@@ -155,7 +155,7 @@ public class FixedIncomeRepositoryTests : IDisposable
         await SeedAsync(efItem);
         long id = efItem.Id;
 
-        await _sut.DeleteByIdAsync(id);
+        await _sut.DeleteByIdAsync(id, TestContext.Current.CancellationToken);
 
         EfFixedIncome? deleted = await _context.FixedIncomes.FirstOrDefaultAsync(fi => fi.Id == id, TestContext.Current.CancellationToken);
         Assert.Null(deleted);
@@ -169,7 +169,7 @@ public class FixedIncomeRepositoryTests : IDisposable
         var efItem2 = MakeFixedIncome("alice@example.com", "Side job");
         await SeedAsync(efItem1, efItem2);
 
-        await _sut.DeleteByIdAsync(efItem1.Id);
+        await _sut.DeleteByIdAsync(efItem1.Id, TestContext.Current.CancellationToken);
 
         List<EfFixedIncome> remaining = await _context.FixedIncomes.ToListAsync(TestContext.Current.CancellationToken);
         Assert.Single(remaining);

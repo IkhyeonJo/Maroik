@@ -68,7 +68,7 @@ public class ExpenditureServiceTests
         var sut = CreateSut();
         var request = new ExpenditureRequest { MainClass = "InvalidClass", SubClass = "Anything" };
 
-        ServiceResult result = await sut.CreateAsync("user@example.com", request);
+        ServiceResult result = await sut.CreateAsync("user@example.com", request, TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
         _unitOfWork.Verify(u => u.RollbackAsync(), Times.Once);
@@ -81,7 +81,7 @@ public class ExpenditureServiceTests
         var sut = CreateSut();
         var request = new ExpenditureRequest { MainClass = "ConsumerSpending", SubClass = "Deposit" };
 
-        ServiceResult result = await sut.CreateAsync("user@example.com", request);
+        ServiceResult result = await sut.CreateAsync("user@example.com", request, TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
         _unitOfWork.Verify(u => u.RollbackAsync(), Times.Once);
@@ -94,7 +94,7 @@ public class ExpenditureServiceTests
         _assetBalance.Setup(r => r.GetAssetAsync("user@example.com", "Wallet")).ReturnsAsync((Asset?)null);
         var sut = CreateSut();
 
-        ServiceResult result = await sut.CreateAsync("user@example.com", ConsumerRequest("Wallet"));
+        ServiceResult result = await sut.CreateAsync("user@example.com", ConsumerRequest("Wallet"), TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
         _unitOfWork.Verify(u => u.RollbackAsync(), Times.Once);
@@ -107,7 +107,7 @@ public class ExpenditureServiceTests
         _assetBalance.Setup(r => r.GetAssetAsync("user@example.com", "Wallet")).ReturnsAsync(MakeAsset("Wallet", deleted: true));
         var sut = CreateSut();
 
-        ServiceResult result = await sut.CreateAsync("user@example.com", ConsumerRequest("Wallet"));
+        ServiceResult result = await sut.CreateAsync("user@example.com", ConsumerRequest("Wallet"), TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
         Assert.Contains("deleted", result.ErrorKey, StringComparison.OrdinalIgnoreCase);
@@ -122,7 +122,7 @@ public class ExpenditureServiceTests
         var sut = CreateSut();
         var request = SavingsTransferRequest(paymentMethod: "Wallet", depositAsset: "Wallet");
 
-        ServiceResult result = await sut.CreateAsync("user@example.com", request);
+        ServiceResult result = await sut.CreateAsync("user@example.com", request, TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
         Assert.Contains("same", result.ErrorKey, StringComparison.OrdinalIgnoreCase);
@@ -137,7 +137,7 @@ public class ExpenditureServiceTests
         _assetBalance.Setup(r => r.GetAssetAsync("user@example.com", "Savings")).ReturnsAsync((Asset?)null);
         var sut = CreateSut();
 
-        ServiceResult result = await sut.CreateAsync("user@example.com", SavingsTransferRequest());
+        ServiceResult result = await sut.CreateAsync("user@example.com", SavingsTransferRequest(), TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
         _unitOfWork.Verify(u => u.RollbackAsync(), Times.Once);
@@ -151,7 +151,7 @@ public class ExpenditureServiceTests
         _assetBalance.Setup(r => r.GetAssetAsync("user@example.com", "Savings")).ReturnsAsync(MakeAsset("Savings", deleted: true));
         var sut = CreateSut();
 
-        ServiceResult result = await sut.CreateAsync("user@example.com", SavingsTransferRequest());
+        ServiceResult result = await sut.CreateAsync("user@example.com", SavingsTransferRequest(), TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
         Assert.Contains("deleted", result.ErrorKey, StringComparison.OrdinalIgnoreCase);
@@ -165,7 +165,7 @@ public class ExpenditureServiceTests
         _assetBalance.Setup(r => r.GetAssetAsync("user@example.com", "Savings")).ReturnsAsync(MakeAsset("Savings", currency: "USD"));
         var sut = CreateSut();
 
-        ServiceResult result = await sut.CreateAsync("user@example.com", SavingsTransferRequest());
+        ServiceResult result = await sut.CreateAsync("user@example.com", SavingsTransferRequest(), TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
         Assert.Contains("MonetaryUnit", result.ErrorKey);
@@ -186,7 +186,7 @@ public class ExpenditureServiceTests
             .Returns(Task.CompletedTask);
         var sut = CreateSut();
 
-        ServiceResult result = await sut.CreateAsync(email, ConsumerRequest("Wallet", 150m));
+        ServiceResult result = await sut.CreateAsync(email, ConsumerRequest("Wallet", 150m), TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
         Assert.NotNull(updatedAsset);
@@ -211,7 +211,7 @@ public class ExpenditureServiceTests
             .Returns(Task.CompletedTask);
         var sut = CreateSut();
 
-        ServiceResult result = await sut.CreateAsync(email, SavingsTransferRequest("Checking", "Savings", 300m));
+        ServiceResult result = await sut.CreateAsync(email, SavingsTransferRequest("Checking", "Savings", 300m), TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
         Assert.Equal(2, updatedAssets.Count);
@@ -228,7 +228,7 @@ public class ExpenditureServiceTests
         var sut = CreateSut();
         var request = new ExpenditureRequest { Id = 1, MainClass = "BadClass", SubClass = "Anything" };
 
-        ServiceResult result = await sut.UpdateAsync("user@example.com", request);
+        ServiceResult result = await sut.UpdateAsync("user@example.com", request, TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
         _unitOfWork.Verify(u => u.RollbackAsync(), Times.Once);
@@ -243,7 +243,7 @@ public class ExpenditureServiceTests
         var request = ConsumerRequest();
         request.Id = 99;
 
-        ServiceResult result = await sut.UpdateAsync("user@example.com", request);
+        ServiceResult result = await sut.UpdateAsync("user@example.com", request, TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
     }
@@ -260,7 +260,7 @@ public class ExpenditureServiceTests
 
         var request = ConsumerRequest("Wallet", 100m);
         request.Id = 1;
-        ServiceResult result = await sut.UpdateAsync(email, request);
+        ServiceResult result = await sut.UpdateAsync(email, request, TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
         Assert.Contains("deleted", result.ErrorKey, StringComparison.OrdinalIgnoreCase);
@@ -287,7 +287,7 @@ public class ExpenditureServiceTests
         // New request: spend 100 from Wallet (revert 50, apply 100 → net -50)
         var request = ConsumerRequest("Wallet", 100m);
         request.Id = 1;
-        ServiceResult result = await sut.UpdateAsync(email, request);
+        ServiceResult result = await sut.UpdateAsync(email, request, TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
         Assert.NotNull(captured);
@@ -304,7 +304,7 @@ public class ExpenditureServiceTests
         _expenditureRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(new List<Expenditure>());
         var sut = CreateSut();
 
-        ServiceResult result = await sut.DeleteAsync("user@example.com", 99);
+        ServiceResult result = await sut.DeleteAsync("user@example.com", 99, TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
         _unitOfWork.Verify(u => u.RollbackAsync(), Times.Once);
@@ -327,7 +327,7 @@ public class ExpenditureServiceTests
             .Returns(Task.CompletedTask);
         var sut = CreateSut();
 
-        ServiceResult result = await sut.DeleteAsync(email, 1);
+        ServiceResult result = await sut.DeleteAsync(email, 1, TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
         Assert.NotNull(captured);
@@ -354,7 +354,7 @@ public class ExpenditureServiceTests
             .Returns(Task.CompletedTask);
         var sut = CreateSut();
 
-        ServiceResult result = await sut.DeleteAsync(email, 1);
+        ServiceResult result = await sut.DeleteAsync(email, 1, TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
         Assert.Equal(2, updatedAssets.Count);
@@ -376,7 +376,7 @@ public class ExpenditureServiceTests
         _expenditureRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(list);
         var sut = CreateSut();
 
-        List<ExpenditureResponse> result = await sut.GetExpendituresAsync(email);
+        List<ExpenditureResponse> result = await sut.GetExpendituresAsync(email, TestContext.Current.CancellationToken);
 
         Assert.Single(result);
         Assert.Equal(1, result[0].Id);

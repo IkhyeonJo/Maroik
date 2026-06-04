@@ -83,7 +83,7 @@ public class IncomeServiceTests
         var sut = CreateSut();
         var request = new IncomeRequest { MainClass = mainClass, SubClass = subClass, DepositMyAssetProductName = "Any" };
 
-        ServiceResult result = await sut.CreateAsync("user@example.com", request);
+        ServiceResult result = await sut.CreateAsync("user@example.com", request, TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
         _unitOfWork.Verify(u => u.RollbackAsync(), Times.Once);
@@ -96,7 +96,7 @@ public class IncomeServiceTests
         _assetBalance.Setup(r => r.GetAssetAsync("user@example.com", "SavingsAccount")).ReturnsAsync((Asset?)null);
         var sut = CreateSut();
 
-        ServiceResult result = await sut.CreateAsync("user@example.com", ValidRequest("SavingsAccount"));
+        ServiceResult result = await sut.CreateAsync("user@example.com", ValidRequest("SavingsAccount"), TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
         _unitOfWork.Verify(u => u.RollbackAsync(), Times.Once);
@@ -110,7 +110,7 @@ public class IncomeServiceTests
         _assetBalance.Setup(r => r.GetAssetAsync("user@example.com", "SavingsAccount")).ReturnsAsync(asset);
         var sut = CreateSut();
 
-        ServiceResult result = await sut.CreateAsync("user@example.com", ValidRequest("SavingsAccount"));
+        ServiceResult result = await sut.CreateAsync("user@example.com", ValidRequest("SavingsAccount"), TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
         Assert.Contains("deleted", result.ErrorKey, StringComparison.OrdinalIgnoreCase);
@@ -132,7 +132,7 @@ public class IncomeServiceTests
             .Returns(Task.CompletedTask);
         var sut = CreateSut();
 
-        ServiceResult result = await sut.CreateAsync(email, ValidRequest("SavingsAccount")); // Amount = 500
+        ServiceResult result = await sut.CreateAsync(email, ValidRequest("SavingsAccount"), TestContext.Current.CancellationToken); // Amount = 500
 
         Assert.True(result.Success);
         Assert.NotNull(captured);
@@ -164,7 +164,7 @@ public class IncomeServiceTests
             MainClass = mainClass, SubClass = subClass,
             DepositMyAssetProductName = "SavingsAccount", Amount = 100m
         };
-        ServiceResult result = await sut.CreateAsync(email, request);
+        ServiceResult result = await sut.CreateAsync(email, request, TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
     }
@@ -178,7 +178,7 @@ public class IncomeServiceTests
         var sut = CreateSut();
         var request = new IncomeRequest { Id = 1, MainClass = "BadClass", SubClass = "LaborIncome" };
 
-        ServiceResult result = await sut.UpdateAsync("user@example.com", request);
+        ServiceResult result = await sut.UpdateAsync("user@example.com", request, TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
         _unitOfWork.Verify(u => u.RollbackAsync(), Times.Once);
@@ -193,7 +193,7 @@ public class IncomeServiceTests
         var request = ValidRequest();
         request.Id = 99;
 
-        ServiceResult result = await sut.UpdateAsync("user@example.com", request);
+        ServiceResult result = await sut.UpdateAsync("user@example.com", request, TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
     }
@@ -211,7 +211,7 @@ public class IncomeServiceTests
 
         var request = ValidRequest("NewAsset");
         request.Id = 1;
-        ServiceResult result = await sut.UpdateAsync(email, request);
+        ServiceResult result = await sut.UpdateAsync(email, request, TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
         Assert.Contains("deleted", result.ErrorKey, StringComparison.OrdinalIgnoreCase);
@@ -240,7 +240,7 @@ public class IncomeServiceTests
             Id = 1, MainClass = "RegularIncome", SubClass = "LaborIncome",
             DepositMyAssetProductName = "SavingsAccount", Amount = 500m
         };
-        ServiceResult result = await sut.UpdateAsync(email, request);
+        ServiceResult result = await sut.UpdateAsync(email, request, TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
         Assert.NotNull(captured);
@@ -272,7 +272,7 @@ public class IncomeServiceTests
             Id = 1, MainClass = "RegularIncome", SubClass = "LaborIncome",
             DepositMyAssetProductName = "NewAsset", Amount = 400m
         };
-        ServiceResult result = await sut.UpdateAsync(email, request);
+        ServiceResult result = await sut.UpdateAsync(email, request, TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
         Assert.Equal(2, updatedAssets.Count);
@@ -289,7 +289,7 @@ public class IncomeServiceTests
         _incomeRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
         var sut = CreateSut();
 
-        ServiceResult result = await sut.DeleteAsync("user@example.com", 99);
+        ServiceResult result = await sut.DeleteAsync("user@example.com", 99, TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
         _unitOfWork.Verify(u => u.RollbackAsync(), Times.Once);
@@ -306,7 +306,7 @@ public class IncomeServiceTests
         _assetBalance.Setup(r => r.GetAssetAsync(email, "SavingsAccount")).ReturnsAsync(deletedAsset);
         var sut = CreateSut();
 
-        ServiceResult result = await sut.DeleteAsync(email, 1);
+        ServiceResult result = await sut.DeleteAsync(email, 1, TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
         Assert.Contains("deleted", result.ErrorKey, StringComparison.OrdinalIgnoreCase);
@@ -329,7 +329,7 @@ public class IncomeServiceTests
             .Returns(Task.CompletedTask);
         var sut = CreateSut();
 
-        ServiceResult result = await sut.DeleteAsync(email, 1);
+        ServiceResult result = await sut.DeleteAsync(email, 1, TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
         Assert.NotNull(captured);
@@ -348,7 +348,7 @@ public class IncomeServiceTests
         _incomeRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(list);
         var sut = CreateSut();
 
-        List<IncomeResponse> result = await sut.GetIncomesAsync(email);
+        List<IncomeResponse> result = await sut.GetIncomesAsync(email, TestContext.Current.CancellationToken);
 
         Assert.Single(result);
     }

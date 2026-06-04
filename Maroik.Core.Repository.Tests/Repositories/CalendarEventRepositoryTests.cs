@@ -59,7 +59,7 @@ public class CalendarEventRepositoryTests : IDisposable
             MakeEvent(1, "Event B"),
             MakeEvent(2, "Other Calendar Event"));
 
-        IEnumerable<CalendarEvent> result = await _sut.GetByCalendarIdAsync(1L);
+        IEnumerable<CalendarEvent> result = await _sut.GetByCalendarIdAsync(1L, TestContext.Current.CancellationToken);
 
         Assert.Equal(2, result.Count());
         Assert.All(result, e => Assert.Equal(1, e.CalendarId));
@@ -69,7 +69,7 @@ public class CalendarEventRepositoryTests : IDisposable
     [Fact]
     public async Task GetCalendarEventsAsync_ReturnsEmpty_WhenNoEventsForCalendar()
     {
-        IEnumerable<CalendarEvent> result = await _sut.GetByCalendarIdAsync(99L);
+        IEnumerable<CalendarEvent> result = await _sut.GetByCalendarIdAsync(99L, TestContext.Current.CancellationToken);
 
         Assert.Empty(result);
     }
@@ -83,7 +83,7 @@ public class CalendarEventRepositoryTests : IDisposable
         await SeedAsync(MakeEvent(1, "Team Standup"));
 
         long id = (await _context.CalendarEvents.FirstAsync(TestContext.Current.CancellationToken)).Id;
-        CalendarEvent? result = await _sut.FindByIdAsync(id);
+        CalendarEvent? result = await _sut.FindByIdAsync(id, TestContext.Current.CancellationToken);
 
         Assert.NotNull(result);
         Assert.Equal("Team Standup", result.Title);
@@ -93,7 +93,7 @@ public class CalendarEventRepositoryTests : IDisposable
     [Fact]
     public async Task GetCalendarEventAsync_ReturnsNull_WhenNotFound()
     {
-        CalendarEvent? result = await _sut.FindByIdAsync(999L);
+        CalendarEvent? result = await _sut.FindByIdAsync(999L, TestContext.Current.CancellationToken);
 
         Assert.Null(result);
     }
@@ -120,7 +120,7 @@ public class CalendarEventRepositoryTests : IDisposable
             created: DateTime.UtcNow,
             updated: DateTime.UtcNow);
 
-        await _sut.CreateCalendarEventAsync(calendarEvent);
+        await _sut.CreateCalendarEventAsync(calendarEvent, TestContext.Current.CancellationToken);
 
         EfCalendarEvent? saved = await _context.CalendarEvents.FirstOrDefaultAsync(e => e.CalendarId == 5, TestContext.Current.CancellationToken);
         Assert.NotNull(saved);
@@ -154,7 +154,7 @@ public class CalendarEventRepositoryTests : IDisposable
             created: efEvent.Created,
             updated: DateTime.UtcNow);
 
-        await _sut.UpdateEntityAsync(calendarEvent);
+        await _sut.UpdateEntityAsync(calendarEvent, TestContext.Current.CancellationToken);
 
         EfCalendarEvent? updated = await _context.CalendarEvents.FindAsync(new object[] { efEvent.Id }, TestContext.Current.CancellationToken);
         Assert.NotNull(updated);
@@ -188,7 +188,7 @@ public class CalendarEventRepositoryTests : IDisposable
             created: efEvent.Created,
             updated: efEvent.Updated);
 
-        await _sut.DeleteByIdAsync(calendarEvent.Id);
+        await _sut.DeleteByIdAsync(calendarEvent.Id, TestContext.Current.CancellationToken);
 
         bool exists = await _context.CalendarEvents.AnyAsync(e => e.Id == efEvent.Id, TestContext.Current.CancellationToken);
         Assert.False(exists);

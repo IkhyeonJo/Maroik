@@ -63,7 +63,7 @@ public class AccountRepositoryTests : IDisposable
             MakeAccount("alice@example.com", "Alice"),
             MakeAccount("bob@example.com", "Bob"));
 
-        List<Account> result = await _sut.GetAllAsync();
+        List<Account> result = await _sut.GetAllAsync(TestContext.Current.CancellationToken);
 
         Assert.Equal(2, result.Count);
     }
@@ -72,7 +72,7 @@ public class AccountRepositoryTests : IDisposable
     [Fact]
     public async Task GetAllAsync_ReturnsEmptyList_WhenNoAccounts()
     {
-        List<Account> result = await _sut.GetAllAsync();
+        List<Account> result = await _sut.GetAllAsync(TestContext.Current.CancellationToken);
 
         Assert.Empty(result);
     }
@@ -85,7 +85,7 @@ public class AccountRepositoryTests : IDisposable
     {
         await SeedAsync(MakeAccount("alice@example.com", "Alice"));
 
-        Account? result = await _sut.FindByEmailAsync("alice@example.com");
+        Account? result = await _sut.FindByEmailAsync("alice@example.com", TestContext.Current.CancellationToken);
 
         Assert.NotNull(result);
         Assert.Equal("alice@example.com", result.Email.Value);
@@ -96,7 +96,7 @@ public class AccountRepositoryTests : IDisposable
     [Fact]
     public async Task GetAccountByEmailAsync_ReturnsNull_WhenNotFound()
     {
-        Account? result = await _sut.FindByEmailAsync("ghost@example.com");
+        Account? result = await _sut.FindByEmailAsync("ghost@example.com", TestContext.Current.CancellationToken);
 
         Assert.Null(result);
     }
@@ -112,7 +112,7 @@ public class AccountRepositoryTests : IDisposable
         account.RegistrationToken = token;
         await SeedAsync(account);
 
-        Account? result = await _sut.FindByRegistrationTokenAsync(token);
+        Account? result = await _sut.FindByRegistrationTokenAsync(token, TestContext.Current.CancellationToken);
 
         Assert.NotNull(result);
         Assert.Equal("alice@example.com", result.Email.Value);
@@ -122,7 +122,7 @@ public class AccountRepositoryTests : IDisposable
     [Fact]
     public async Task GetAccountByRegistrationTokenAsync_ReturnsNull_WhenTokenDoesNotMatch()
     {
-        Account? result = await _sut.FindByRegistrationTokenAsync("nonexistent-token");
+        Account? result = await _sut.FindByRegistrationTokenAsync("nonexistent-token", TestContext.Current.CancellationToken);
 
         Assert.Null(result);
     }
@@ -138,7 +138,7 @@ public class AccountRepositoryTests : IDisposable
         account.ResetPasswordToken = token;
         await SeedAsync(account);
 
-        Account? result = await _sut.FindByResetPasswordTokenAsync(token);
+        Account? result = await _sut.FindByResetPasswordTokenAsync(token, TestContext.Current.CancellationToken);
 
         Assert.NotNull(result);
         Assert.Equal("alice@example.com", result.Email.Value);
@@ -148,7 +148,7 @@ public class AccountRepositoryTests : IDisposable
     [Fact]
     public async Task GetAccountByResetPasswordTokenAsync_ReturnsNull_WhenTokenNotFound()
     {
-        Account? result = await _sut.FindByResetPasswordTokenAsync("no-such-token");
+        Account? result = await _sut.FindByResetPasswordTokenAsync("no-such-token", TestContext.Current.CancellationToken);
 
         Assert.Null(result);
     }
@@ -178,7 +178,7 @@ public class AccountRepositoryTests : IDisposable
             message: null,
             deleted: false);
 
-        await _sut.CreateAsync(account);
+        await _sut.CreateAsync(account, TestContext.Current.CancellationToken);
 
         OrmAccount? saved = await _context.Accounts.FirstOrDefaultAsync(a => a.Email == "new@example.com", TestContext.Current.CancellationToken);
         Assert.NotNull(saved);
@@ -196,7 +196,7 @@ public class AccountRepositoryTests : IDisposable
             MakeAccount("bob@example.com", "Bob"),
             MakeAccount("carol@example.com", "Carol"));
 
-        List<Account> result = await _sut.FindByNicknamesAsync(new[] { "Alice", "Carol" });
+        List<Account> result = await _sut.FindByNicknamesAsync(new[] { "Alice", "Carol" }, TestContext.Current.CancellationToken);
 
         Assert.Equal(2, result.Count);
         Assert.Contains(result, a => a.Nickname == "Alice");
@@ -209,7 +209,7 @@ public class AccountRepositoryTests : IDisposable
     {
         await SeedAsync(MakeAccount("alice@example.com", "Alice"));
 
-        List<Account> result = await _sut.FindByNicknamesAsync(new[] { "Ghost" });
+        List<Account> result = await _sut.FindByNicknamesAsync(new[] { "Ghost" }, TestContext.Current.CancellationToken);
 
         Assert.Empty(result);
     }
@@ -220,7 +220,7 @@ public class AccountRepositoryTests : IDisposable
     {
         await SeedAsync(MakeAccount("alice@example.com", "Alice"));
 
-        List<Account> result = await _sut.FindByNicknamesAsync(Array.Empty<string>());
+        List<Account> result = await _sut.FindByNicknamesAsync(Array.Empty<string>(), TestContext.Current.CancellationToken);
 
         Assert.Empty(result);
     }
@@ -252,7 +252,7 @@ public class AccountRepositoryTests : IDisposable
             message: null,
             deleted: false);
 
-        await _sut.UpdateEntityAsync(account);
+        await _sut.UpdateEntityAsync(account, TestContext.Current.CancellationToken);
 
         OrmAccount? updated = await _context.Accounts.FirstOrDefaultAsync(a => a.Email == "alice@example.com", TestContext.Current.CancellationToken);
         Assert.NotNull(updated);

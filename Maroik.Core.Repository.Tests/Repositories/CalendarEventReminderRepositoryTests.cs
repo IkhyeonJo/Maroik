@@ -54,7 +54,7 @@ public class CalendarEventReminderRepositoryTests : IDisposable
             MakeReminder(1, "Push", 60),
             MakeReminder(2, "Email", 30));
 
-        IEnumerable<CalendarEventReminder> result = await _sut.GetByCalendarEventIdAsync(1L);
+        IEnumerable<CalendarEventReminder> result = await _sut.GetByCalendarEventIdAsync(1L, TestContext.Current.CancellationToken);
 
         Assert.Equal(2, result.Count());
         Assert.All(result, r => Assert.Equal(1, r.CalendarEventId));
@@ -64,7 +64,7 @@ public class CalendarEventReminderRepositoryTests : IDisposable
     [Fact]
     public async Task GetCalendarEventRemindersAsync_ReturnsEmpty_WhenNoRemindersForEvent()
     {
-        IEnumerable<CalendarEventReminder> result = await _sut.GetByCalendarEventIdAsync(99L);
+        IEnumerable<CalendarEventReminder> result = await _sut.GetByCalendarEventIdAsync(99L, TestContext.Current.CancellationToken);
 
         Assert.Empty(result);
     }
@@ -85,7 +85,7 @@ public class CalendarEventReminderRepositoryTests : IDisposable
             weeksBefore: null,
             timesBefore: null);
 
-        await _sut.CreateAsync(reminder);
+        await _sut.CreateAsync(reminder, TestContext.Current.CancellationToken);
 
         EfCalendarEventReminder? saved = await _context.CalendarEventReminders
             .FirstOrDefaultAsync(r => r.CalendarEventId == 5, TestContext.Current.CancellationToken);
@@ -105,7 +105,7 @@ public class CalendarEventReminderRepositoryTests : IDisposable
             MakeReminder(10, "Push", 20),
             MakeReminder(20, "Email", 30));
 
-        await _sut.DeleteByCalendarEventIdAsync(10L);
+        await _sut.DeleteByCalendarEventIdAsync(10L, TestContext.Current.CancellationToken);
 
         Assert.False(await _context.CalendarEventReminders.AnyAsync(r => r.CalendarEventId == 10, TestContext.Current.CancellationToken));
         Assert.True(await _context.CalendarEventReminders.AnyAsync(r => r.CalendarEventId == 20, TestContext.Current.CancellationToken));
@@ -115,7 +115,7 @@ public class CalendarEventReminderRepositoryTests : IDisposable
     [Fact]
     public async Task DeleteCalendarEventReminderAsync_ReturnsZero_WhenNoRemindersMatch()
     {
-        await _sut.DeleteByCalendarEventIdAsync(999L);
+        await _sut.DeleteByCalendarEventIdAsync(999L, TestContext.Current.CancellationToken);
 
         Assert.False(await _context.CalendarEventReminders.AnyAsync(TestContext.Current.CancellationToken));
     }

@@ -65,7 +65,7 @@ public class FixedExpenditureRepositoryTests : IDisposable
             MakeFixedExpenditure("alice@example.com", "Insurance"),
             MakeFixedExpenditure("bob@example.com", "Gym"));
 
-        List<FixedExpenditure> result = await _sut.GetByAccountEmailAsync("alice@example.com");
+        List<FixedExpenditure> result = await _sut.GetByAccountEmailAsync("alice@example.com", TestContext.Current.CancellationToken);
 
         Assert.Equal(2, result.Count);
         Assert.All(result, fe => Assert.Equal("alice@example.com", fe.AccountEmail.Value));
@@ -75,7 +75,7 @@ public class FixedExpenditureRepositoryTests : IDisposable
     [Fact]
     public async Task GetFixedExpendituresAsync_ReturnsEmpty_WhenNoItemsForEmail()
     {
-        List<FixedExpenditure> result = await _sut.GetByAccountEmailAsync("nobody@example.com");
+        List<FixedExpenditure> result = await _sut.GetByAccountEmailAsync("nobody@example.com", TestContext.Current.CancellationToken);
 
         Assert.Empty(result);
     }
@@ -104,7 +104,7 @@ public class FixedExpenditureRepositoryTests : IDisposable
             created: DateTime.UtcNow,
             updated: DateTime.UtcNow);
 
-        await _sut.CreateAsync(fixedExpenditure);
+        await _sut.CreateAsync(fixedExpenditure, TestContext.Current.CancellationToken);
 
         EfFixedExpenditure? saved = await _context.FixedExpenditures.FirstOrDefaultAsync(
             fe => fe.AccountEmail == "alice@example.com" && fe.Content == "Property tax", TestContext.Current.CancellationToken);
@@ -142,7 +142,7 @@ public class FixedExpenditureRepositoryTests : IDisposable
             created: efItem.Created,
             updated: DateTime.UtcNow);
 
-        await _sut.UpdateEntityAsync(fixedExpenditure);
+        await _sut.UpdateEntityAsync(fixedExpenditure, TestContext.Current.CancellationToken);
 
         EfFixedExpenditure? updated = await _context.FixedExpenditures.FirstOrDefaultAsync(fe => fe.Id == id, TestContext.Current.CancellationToken);
         Assert.NotNull(updated);
@@ -161,7 +161,7 @@ public class FixedExpenditureRepositoryTests : IDisposable
         await SeedAsync(efItem);
         long id = efItem.Id;
 
-        await _sut.DeleteByIdAsync(id);
+        await _sut.DeleteByIdAsync(id, TestContext.Current.CancellationToken);
 
         EfFixedExpenditure? deleted = await _context.FixedExpenditures.FirstOrDefaultAsync(fe => fe.Id == id, TestContext.Current.CancellationToken);
         Assert.Null(deleted);
@@ -175,7 +175,7 @@ public class FixedExpenditureRepositoryTests : IDisposable
         var efItem2 = MakeFixedExpenditure("alice@example.com", "Spotify");
         await SeedAsync(efItem1, efItem2);
 
-        await _sut.DeleteByIdAsync(efItem1.Id);
+        await _sut.DeleteByIdAsync(efItem1.Id, TestContext.Current.CancellationToken);
 
         List<EfFixedExpenditure> remaining = await _context.FixedExpenditures.ToListAsync(TestContext.Current.CancellationToken);
         Assert.Single(remaining);

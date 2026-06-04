@@ -93,7 +93,7 @@ public class DashboardServiceTests
         _expenditureRepo.Setup(r => r.GetFirstByAccountEmailOrderedByCreatedAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((Expenditure?)null);
         var sut = CreateSut();
 
-        DashboardSummary summary = await sut.GetSummaryAsync(email, "2025", "3", "UTC");
+        DashboardSummary summary = await sut.GetSummaryAsync(email, "2025", "3", "UTC", TestContext.Current.CancellationToken);
 
         Assert.Equal(2025, summary.SelectedYear);
         Assert.Equal(3, summary.SelectedMonth);
@@ -111,7 +111,7 @@ public class DashboardServiceTests
         _expenditureRepo.Setup(r => r.GetFirstByAccountEmailOrderedByCreatedAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((Expenditure?)null);
         var sut = CreateSut();
 
-        DashboardSummary summary = await sut.GetSummaryAsync(email, "bad", "bad", "UTC");
+        DashboardSummary summary = await sut.GetSummaryAsync(email, "bad", "bad", "UTC", TestContext.Current.CancellationToken);
 
         Assert.Equal(DateTime.UtcNow.Year, summary.SelectedYear);
         Assert.Equal(DateTime.UtcNow.Month, summary.SelectedMonth);
@@ -135,7 +135,7 @@ public class DashboardServiceTests
         SetupEmptyFinancials(email);
         var sut = CreateSut();
 
-        DashboardSummary summary = await sut.GetSummaryAsync(email, "2025", "1", "UTC");
+        DashboardSummary summary = await sut.GetSummaryAsync(email, "2025", "1", "UTC", TestContext.Current.CancellationToken);
 
         // Most-used unit is KRW (2 assets) — computed in-memory, no DB write
         Assert.Equal("KRW", summary.DefaultMonetaryUnit);
@@ -154,7 +154,7 @@ public class DashboardServiceTests
         _expenditureRepo.Setup(r => r.GetFirstByAccountEmailOrderedByCreatedAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((Expenditure?)null);
         var sut = CreateSut();
 
-        DashboardSummary summary = await sut.GetSummaryAsync(email, "2025", "1", "UTC");
+        DashboardSummary summary = await sut.GetSummaryAsync(email, "2025", "1", "UTC", TestContext.Current.CancellationToken);
 
         Assert.Null(summary.DefaultMonetaryUnit);
         _accountRepo.Verify(r => r.UpdateEntityAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>()), Times.Never);
@@ -171,7 +171,7 @@ public class DashboardServiceTests
         _fixedExpenditureRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
         var sut = CreateSut();
 
-        NotificationCounts counts = await sut.GetNoticeCountsAsync(email, 7);
+        NotificationCounts counts = await sut.GetNoticeCountsAsync(email, 7, TestContext.Current.CancellationToken);
 
         Assert.Equal(0, counts.FixedIncomesNoticed);
         Assert.Equal(0, counts.FixedExpendituresNoticed);
@@ -227,7 +227,7 @@ public class DashboardServiceTests
         ]);
         var sut = CreateSut();
 
-        NotificationCounts counts = await sut.GetNoticeCountsAsync(email, 7);
+        NotificationCounts counts = await sut.GetNoticeCountsAsync(email, 7, TestContext.Current.CancellationToken);
 
         Assert.Equal(1, counts.FixedIncomesExpired);
         Assert.Equal(1, counts.FixedExpendituresExpired);
@@ -262,7 +262,7 @@ public class DashboardServiceTests
         _fixedExpenditureRepo.Setup(r => r.GetByAccountEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
         var sut = CreateSut();
 
-        NotificationCounts counts = await sut.GetNoticeCountsAsync(email, 7);
+        NotificationCounts counts = await sut.GetNoticeCountsAsync(email, 7, TestContext.Current.CancellationToken);
 
         Assert.Equal(1, counts.FixedIncomesNoticed);
     }

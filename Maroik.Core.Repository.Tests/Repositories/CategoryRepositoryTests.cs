@@ -57,7 +57,7 @@ public class CategoryRepositoryTests : IDisposable
             MakeCategory("Dashboard", order: 1),
             MakeCategory("Finance", order: 2));
 
-        IEnumerable<Category> result = await _sut.GetAllAsync();
+        IEnumerable<Category> result = await _sut.GetAllAsync(TestContext.Current.CancellationToken);
 
         Assert.Equal(2, result.Count());
     }
@@ -66,7 +66,7 @@ public class CategoryRepositoryTests : IDisposable
     [Fact]
     public async Task GetAllAsync_ReturnsEmpty_WhenNoCategories()
     {
-        IEnumerable<Category> result = await _sut.GetAllAsync();
+        IEnumerable<Category> result = await _sut.GetAllAsync(TestContext.Current.CancellationToken);
 
         Assert.Empty(result);
     }
@@ -87,7 +87,7 @@ public class CategoryRepositoryTests : IDisposable
             role: Role.User,
             order: 5);
 
-        await _sut.CreateAsync(category);
+        await _sut.CreateAsync(category, TestContext.Current.CancellationToken);
 
         EfCategory? saved = await _context.Categories.FirstOrDefaultAsync(c => c.Name == "NewMenu", TestContext.Current.CancellationToken);
         Assert.NotNull(saved);
@@ -114,7 +114,7 @@ public class CategoryRepositoryTests : IDisposable
             role: Role.Admin,
             order: 10);
 
-        await _sut.UpdateEntityAsync(category);
+        await _sut.UpdateEntityAsync(category, TestContext.Current.CancellationToken);
 
         EfCategory? updated = await _context.Categories.FirstOrDefaultAsync(c => c.Id == efCategory.Id, TestContext.Current.CancellationToken);
         Assert.NotNull(updated);
@@ -132,7 +132,7 @@ public class CategoryRepositoryTests : IDisposable
         await SeedAsync(MakeCategory("ToDelete"));
         EfCategory efCategory = await _context.Categories.FirstAsync(TestContext.Current.CancellationToken);
 
-        await _sut.DeleteByIdAsync(efCategory.Id);
+        await _sut.DeleteByIdAsync(efCategory.Id, TestContext.Current.CancellationToken);
 
         EfCategory? deleted = await _context.Categories.FirstOrDefaultAsync(c => c.Id == efCategory.Id, TestContext.Current.CancellationToken);
         Assert.Null(deleted);
@@ -145,7 +145,7 @@ public class CategoryRepositoryTests : IDisposable
         await SeedAsync(MakeCategory("Cat1", order: 1), MakeCategory("Cat2", order: 2));
         List<EfCategory> all = await _context.Categories.ToListAsync(TestContext.Current.CancellationToken);
 
-        await _sut.DeleteByIdAsync(all[0].Id);
+        await _sut.DeleteByIdAsync(all[0].Id, TestContext.Current.CancellationToken);
 
         List<EfCategory> remaining = await _context.Categories.ToListAsync(TestContext.Current.CancellationToken);
         Assert.Single(remaining);

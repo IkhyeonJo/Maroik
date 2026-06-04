@@ -55,7 +55,7 @@ public class CalendarSharedRepositoryTests : IDisposable
             MakeShared(1, anonymous: true),
             MakeShared(2));
 
-        List<CalendarShared> result = await _sut.GetAllAsync();
+        List<CalendarShared> result = await _sut.GetAllAsync(TestContext.Current.CancellationToken);
 
         Assert.Equal(3, result.Count);
     }
@@ -64,7 +64,7 @@ public class CalendarSharedRepositoryTests : IDisposable
     [Fact]
     public async Task GetCalendarSharedAsync_ReturnsEmpty_WhenNoEntriesExist()
     {
-        List<CalendarShared> result = await _sut.GetAllAsync();
+        List<CalendarShared> result = await _sut.GetAllAsync(TestContext.Current.CancellationToken);
 
         Assert.Empty(result);
     }
@@ -80,7 +80,7 @@ public class CalendarSharedRepositoryTests : IDisposable
             user: true,
             anonymous: false);
 
-        await _sut.CreateAsync(shared);
+        await _sut.CreateAsync(shared, TestContext.Current.CancellationToken);
 
         EfCalendarShared? saved = await _context.CalendarShareds.FindAsync(new object[] { 10L }, TestContext.Current.CancellationToken);
         Assert.NotNull(saved);
@@ -101,7 +101,7 @@ public class CalendarSharedRepositoryTests : IDisposable
             user: true,
             anonymous: true);
 
-        await _sut.UpdateEntityAsync(shared);
+        await _sut.UpdateEntityAsync(shared, TestContext.Current.CancellationToken);
 
         EfCalendarShared? updated = await _context.CalendarShareds.FindAsync(new object[] { 20L }, TestContext.Current.CancellationToken);
         Assert.NotNull(updated);

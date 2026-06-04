@@ -60,7 +60,7 @@ public class IncomeRepositoryTests : IDisposable
             MakeIncome("alice@example.com", "SavingsB"),
             MakeIncome("bob@example.com", "BobSavings"));
 
-        List<Income> result = await _sut.GetByAccountEmailAsync("alice@example.com");
+        List<Income> result = await _sut.GetByAccountEmailAsync("alice@example.com", TestContext.Current.CancellationToken);
 
         Assert.Equal(2, result.Count);
         Assert.All(result, i => Assert.Equal("alice@example.com", i.AccountEmail.Value));
@@ -70,7 +70,7 @@ public class IncomeRepositoryTests : IDisposable
     [Fact]
     public async Task GetIncomesAsync_ReturnsEmpty_WhenNoIncomesForEmail()
     {
-        List<Income> result = await _sut.GetByAccountEmailAsync("nobody@example.com");
+        List<Income> result = await _sut.GetByAccountEmailAsync("nobody@example.com", TestContext.Current.CancellationToken);
 
         Assert.Empty(result);
     }
@@ -94,7 +94,7 @@ public class IncomeRepositoryTests : IDisposable
             created: DateTime.UtcNow,
             updated: DateTime.UtcNow);
 
-        await _sut.CreateAsync(income);
+        await _sut.CreateAsync(income, TestContext.Current.CancellationToken);
 
         EfIncome? saved = await _context.Incomes.FirstOrDefaultAsync(
             i => i.AccountEmail == "alice@example.com" && i.Content == "Monthly salary", TestContext.Current.CancellationToken);
@@ -125,7 +125,7 @@ public class IncomeRepositoryTests : IDisposable
             created: efIncome.Created,
             updated: DateTime.UtcNow);
 
-        await _sut.UpdateEntityAsync(income);
+        await _sut.UpdateEntityAsync(income, TestContext.Current.CancellationToken);
 
         EfIncome? updated = await _context.Incomes.FirstOrDefaultAsync(i => i.Id == id, TestContext.Current.CancellationToken);
         Assert.NotNull(updated);
@@ -143,7 +143,7 @@ public class IncomeRepositoryTests : IDisposable
         await SeedAsync(efIncome);
         long id = efIncome.Id;
 
-        await _sut.DeleteByIdAsync(id);
+        await _sut.DeleteByIdAsync(id, TestContext.Current.CancellationToken);
 
         EfIncome? deleted = await _context.Incomes.FirstOrDefaultAsync(i => i.Id == id, TestContext.Current.CancellationToken);
         Assert.Null(deleted);
@@ -157,7 +157,7 @@ public class IncomeRepositoryTests : IDisposable
         var efIncome2 = MakeIncome("alice@example.com", "SavingsB");
         await SeedAsync(efIncome1, efIncome2);
 
-        await _sut.DeleteByIdAsync(efIncome1.Id);
+        await _sut.DeleteByIdAsync(efIncome1.Id, TestContext.Current.CancellationToken);
 
         List<EfIncome> remaining = await _context.Incomes.ToListAsync(TestContext.Current.CancellationToken);
         Assert.Single(remaining);

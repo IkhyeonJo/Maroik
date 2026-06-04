@@ -77,7 +77,7 @@ public class AccountRepositoryIntegrationTests : IAsyncLifetime
             MakeOrm("alice@example.com", "Alice"),
             MakeOrm("bob@example.com", "Bob"));
 
-        List<Account> result = await _sut.GetAllAsync();
+        List<Account> result = await _sut.GetAllAsync(TestContext.Current.CancellationToken);
 
         Assert.Equal(2, result.Count);
     }
@@ -106,10 +106,10 @@ public class AccountRepositoryIntegrationTests : IAsyncLifetime
             message: null,
             deleted: false);
 
-        await _sut.CreateAsync(account);
+        await _sut.CreateAsync(account, TestContext.Current.CancellationToken);
         _context.ChangeTracker.Clear();
 
-        Account? retrieved = await _sut.FindByEmailAsync("newuser@example.com");
+        Account? retrieved = await _sut.FindByEmailAsync("newuser@example.com", TestContext.Current.CancellationToken);
 
         Assert.NotNull(retrieved);
         Assert.Equal("NewUser", retrieved.Nickname);
@@ -142,10 +142,10 @@ public class AccountRepositoryIntegrationTests : IAsyncLifetime
             message: null,
             deleted: false);
 
-        await _sut.UpdateEntityAsync(updated);
+        await _sut.UpdateEntityAsync(updated, TestContext.Current.CancellationToken);
         _context.ChangeTracker.Clear();
 
-        Account? result = await _sut.FindByEmailAsync("alice@example.com");
+        Account? result = await _sut.FindByEmailAsync("alice@example.com", TestContext.Current.CancellationToken);
 
         Assert.NotNull(result);
         Assert.Equal(Role.Admin, result.Role);
@@ -180,7 +180,7 @@ public class AccountRepositoryIntegrationTests : IAsyncLifetime
 
         // PostgreSQL enforces the PK/unique constraint — InMemory does not
         await Assert.ThrowsAsync<DbUpdateException>(
-            () => _sut.CreateAsync(duplicate));
+            () => _sut.CreateAsync(duplicate, TestContext.Current.CancellationToken));
     }
 
     // -- Soft delete visibility -----------------------------------------------
@@ -196,7 +196,7 @@ public class AccountRepositoryIntegrationTests : IAsyncLifetime
             deleted);
 
         // Repository has no implicit soft-delete filter; GetAllAsync returns all accounts.
-        List<Account> result = await _sut.GetAllAsync();
+        List<Account> result = await _sut.GetAllAsync(TestContext.Current.CancellationToken);
 
         Assert.DoesNotContain(result, a => a.Email.Value == "deleted@example.com" && !a.Deleted);
         Assert.Contains(result, a => a.Email.Value == "active@example.com");
